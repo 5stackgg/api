@@ -1,0 +1,44 @@
+table:
+  name: player_match_map_stats
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      foreign_key_constraint_on: steam_id
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+  - name: match_map
+    using:
+      foreign_key_constraint_on: match_map_id
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - steam_id
+        - match_id
+        - match_map_id
+        - kills
+        - hs_kills
+        - knife_kills
+        - zeus_kills
+        - assists
+        - flash_assists
+        - deaths
+        - damage
+        - team_damage
+        - he_damage
+        - molotov_damage
+        - flashes_thrown
+        - enemies_flashed
+        - team_flashed
+        - flash_duration_sum
+        - flash_duration_count
+        - two_kill_rounds
+        - three_kill_rounds
+        - four_kill_rounds
+        - five_kill_rounds
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""

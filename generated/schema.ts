@@ -6914,6 +6914,10 @@ export interface mutation_root {
     delete_player_kills_by_weapon: (player_kills_by_weapon_mutation_response | null)
     /** delete single row from the table: "player_kills_by_weapon" */
     delete_player_kills_by_weapon_by_pk: (player_kills_by_weapon | null)
+    /** delete data from the table: "player_match_map_stats" */
+    delete_player_match_map_stats: (player_match_map_stats_mutation_response | null)
+    /** delete single row from the table: "player_match_map_stats" */
+    delete_player_match_map_stats_by_pk: (player_match_map_stats | null)
     /** delete data from the table: "player_objectives" */
     delete_player_objectives: (player_objectives_mutation_response | null)
     /** delete single row from the table: "player_objectives" */
@@ -7259,6 +7263,10 @@ export interface mutation_root {
     insert_player_kills_by_weapon_one: (player_kills_by_weapon | null)
     /** insert a single row into the table: "player_kills" */
     insert_player_kills_one: (player_kills | null)
+    /** insert data into the table: "player_match_map_stats" */
+    insert_player_match_map_stats: (player_match_map_stats_mutation_response | null)
+    /** insert a single row into the table: "player_match_map_stats" */
+    insert_player_match_map_stats_one: (player_match_map_stats | null)
     /** insert data into the table: "player_objectives" */
     insert_player_objectives: (player_objectives_mutation_response | null)
     /** insert a single row into the table: "player_objectives" */
@@ -7771,6 +7779,12 @@ export interface mutation_root {
     update_player_kills_by_weapon_many: ((player_kills_by_weapon_mutation_response | null)[] | null)
     /** update multiples rows of table: "player_kills" */
     update_player_kills_many: ((player_kills_mutation_response | null)[] | null)
+    /** update data of the table: "player_match_map_stats" */
+    update_player_match_map_stats: (player_match_map_stats_mutation_response | null)
+    /** update single row of the table: "player_match_map_stats" */
+    update_player_match_map_stats_by_pk: (player_match_map_stats | null)
+    /** update multiples rows of table: "player_match_map_stats" */
+    update_player_match_map_stats_many: ((player_match_map_stats_mutation_response | null)[] | null)
     /** update data of the table: "player_objectives" */
     update_player_objectives: (player_objectives_mutation_response | null)
     /** update single row of the table: "player_objectives" */
@@ -8684,16 +8698,32 @@ export interface player_damages_variance_fields {
 
 /** columns and relationships of "player_elo" */
 export interface player_elo {
+    actual_score: (Scalars['float8'] | null)
+    assists: (Scalars['Int'] | null)
     change: Scalars['numeric']
     created_at: Scalars['timestamptz']
     current: Scalars['numeric']
+    damage: (Scalars['Int'] | null)
+    damage_percent: (Scalars['float8'] | null)
+    deaths: (Scalars['Int'] | null)
+    expected_score: (Scalars['float8'] | null)
     impact: (Scalars['numeric'] | null)
+    k_factor: (Scalars['Int'] | null)
+    kda: (Scalars['float8'] | null)
+    kills: (Scalars['Int'] | null)
+    map_losses: (Scalars['Int'] | null)
+    map_wins: (Scalars['Int'] | null)
     /** An object relationship */
     match: matches
     match_id: Scalars['uuid']
+    opponent_team_elo_avg: (Scalars['float8'] | null)
+    performance_multiplier: (Scalars['float8'] | null)
     /** An object relationship */
     player: players
+    player_team_elo_avg: (Scalars['float8'] | null)
+    series_multiplier: (Scalars['Int'] | null)
     steam_id: Scalars['bigint']
+    team_avg_kda: (Scalars['float8'] | null)
     type: e_match_types_enum
     __typename: 'player_elo'
 }
@@ -8726,10 +8756,26 @@ export interface player_elo_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface player_elo_avg_fields {
+    actual_score: (Scalars['Float'] | null)
+    assists: (Scalars['Float'] | null)
     change: (Scalars['Float'] | null)
     current: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    damage_percent: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    expected_score: (Scalars['Float'] | null)
     impact: (Scalars['Float'] | null)
+    k_factor: (Scalars['Float'] | null)
+    kda: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    map_losses: (Scalars['Float'] | null)
+    map_wins: (Scalars['Float'] | null)
+    opponent_team_elo_avg: (Scalars['Float'] | null)
+    performance_multiplier: (Scalars['Float'] | null)
+    player_team_elo_avg: (Scalars['Float'] | null)
+    series_multiplier: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
+    team_avg_kda: (Scalars['Float'] | null)
     __typename: 'player_elo_avg_fields'
 }
 
@@ -8740,24 +8786,56 @@ export type player_elo_constraint = 'player_elo_pkey'
 
 /** aggregate max on columns */
 export interface player_elo_max_fields {
+    actual_score: (Scalars['float8'] | null)
+    assists: (Scalars['Int'] | null)
     change: (Scalars['numeric'] | null)
     created_at: (Scalars['timestamptz'] | null)
     current: (Scalars['numeric'] | null)
+    damage: (Scalars['Int'] | null)
+    damage_percent: (Scalars['float8'] | null)
+    deaths: (Scalars['Int'] | null)
+    expected_score: (Scalars['float8'] | null)
     impact: (Scalars['numeric'] | null)
+    k_factor: (Scalars['Int'] | null)
+    kda: (Scalars['float8'] | null)
+    kills: (Scalars['Int'] | null)
+    map_losses: (Scalars['Int'] | null)
+    map_wins: (Scalars['Int'] | null)
     match_id: (Scalars['uuid'] | null)
+    opponent_team_elo_avg: (Scalars['float8'] | null)
+    performance_multiplier: (Scalars['float8'] | null)
+    player_team_elo_avg: (Scalars['float8'] | null)
+    series_multiplier: (Scalars['Int'] | null)
     steam_id: (Scalars['bigint'] | null)
+    team_avg_kda: (Scalars['float8'] | null)
     __typename: 'player_elo_max_fields'
 }
 
 
 /** aggregate min on columns */
 export interface player_elo_min_fields {
+    actual_score: (Scalars['float8'] | null)
+    assists: (Scalars['Int'] | null)
     change: (Scalars['numeric'] | null)
     created_at: (Scalars['timestamptz'] | null)
     current: (Scalars['numeric'] | null)
+    damage: (Scalars['Int'] | null)
+    damage_percent: (Scalars['float8'] | null)
+    deaths: (Scalars['Int'] | null)
+    expected_score: (Scalars['float8'] | null)
     impact: (Scalars['numeric'] | null)
+    k_factor: (Scalars['Int'] | null)
+    kda: (Scalars['float8'] | null)
+    kills: (Scalars['Int'] | null)
+    map_losses: (Scalars['Int'] | null)
+    map_wins: (Scalars['Int'] | null)
     match_id: (Scalars['uuid'] | null)
+    opponent_team_elo_avg: (Scalars['float8'] | null)
+    performance_multiplier: (Scalars['float8'] | null)
+    player_team_elo_avg: (Scalars['float8'] | null)
+    series_multiplier: (Scalars['Int'] | null)
     steam_id: (Scalars['bigint'] | null)
+    team_avg_kda: (Scalars['float8'] | null)
     __typename: 'player_elo_min_fields'
 }
 
@@ -8773,79 +8851,191 @@ export interface player_elo_mutation_response {
 
 
 /** select columns of table "player_elo" */
-export type player_elo_select_column = 'change' | 'created_at' | 'current' | 'impact' | 'match_id' | 'steam_id' | 'type'
+export type player_elo_select_column = 'actual_score' | 'assists' | 'change' | 'created_at' | 'current' | 'damage' | 'damage_percent' | 'deaths' | 'expected_score' | 'impact' | 'k_factor' | 'kda' | 'kills' | 'map_losses' | 'map_wins' | 'match_id' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'series_multiplier' | 'steam_id' | 'team_avg_kda' | 'type'
 
 
 /** aggregate stddev on columns */
 export interface player_elo_stddev_fields {
+    actual_score: (Scalars['Float'] | null)
+    assists: (Scalars['Float'] | null)
     change: (Scalars['Float'] | null)
     current: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    damage_percent: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    expected_score: (Scalars['Float'] | null)
     impact: (Scalars['Float'] | null)
+    k_factor: (Scalars['Float'] | null)
+    kda: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    map_losses: (Scalars['Float'] | null)
+    map_wins: (Scalars['Float'] | null)
+    opponent_team_elo_avg: (Scalars['Float'] | null)
+    performance_multiplier: (Scalars['Float'] | null)
+    player_team_elo_avg: (Scalars['Float'] | null)
+    series_multiplier: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
+    team_avg_kda: (Scalars['Float'] | null)
     __typename: 'player_elo_stddev_fields'
 }
 
 
 /** aggregate stddev_pop on columns */
 export interface player_elo_stddev_pop_fields {
+    actual_score: (Scalars['Float'] | null)
+    assists: (Scalars['Float'] | null)
     change: (Scalars['Float'] | null)
     current: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    damage_percent: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    expected_score: (Scalars['Float'] | null)
     impact: (Scalars['Float'] | null)
+    k_factor: (Scalars['Float'] | null)
+    kda: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    map_losses: (Scalars['Float'] | null)
+    map_wins: (Scalars['Float'] | null)
+    opponent_team_elo_avg: (Scalars['Float'] | null)
+    performance_multiplier: (Scalars['Float'] | null)
+    player_team_elo_avg: (Scalars['Float'] | null)
+    series_multiplier: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
+    team_avg_kda: (Scalars['Float'] | null)
     __typename: 'player_elo_stddev_pop_fields'
 }
 
 
 /** aggregate stddev_samp on columns */
 export interface player_elo_stddev_samp_fields {
+    actual_score: (Scalars['Float'] | null)
+    assists: (Scalars['Float'] | null)
     change: (Scalars['Float'] | null)
     current: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    damage_percent: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    expected_score: (Scalars['Float'] | null)
     impact: (Scalars['Float'] | null)
+    k_factor: (Scalars['Float'] | null)
+    kda: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    map_losses: (Scalars['Float'] | null)
+    map_wins: (Scalars['Float'] | null)
+    opponent_team_elo_avg: (Scalars['Float'] | null)
+    performance_multiplier: (Scalars['Float'] | null)
+    player_team_elo_avg: (Scalars['Float'] | null)
+    series_multiplier: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
+    team_avg_kda: (Scalars['Float'] | null)
     __typename: 'player_elo_stddev_samp_fields'
 }
 
 
 /** aggregate sum on columns */
 export interface player_elo_sum_fields {
+    actual_score: (Scalars['float8'] | null)
+    assists: (Scalars['Int'] | null)
     change: (Scalars['numeric'] | null)
     current: (Scalars['numeric'] | null)
+    damage: (Scalars['Int'] | null)
+    damage_percent: (Scalars['float8'] | null)
+    deaths: (Scalars['Int'] | null)
+    expected_score: (Scalars['float8'] | null)
     impact: (Scalars['numeric'] | null)
+    k_factor: (Scalars['Int'] | null)
+    kda: (Scalars['float8'] | null)
+    kills: (Scalars['Int'] | null)
+    map_losses: (Scalars['Int'] | null)
+    map_wins: (Scalars['Int'] | null)
+    opponent_team_elo_avg: (Scalars['float8'] | null)
+    performance_multiplier: (Scalars['float8'] | null)
+    player_team_elo_avg: (Scalars['float8'] | null)
+    series_multiplier: (Scalars['Int'] | null)
     steam_id: (Scalars['bigint'] | null)
+    team_avg_kda: (Scalars['float8'] | null)
     __typename: 'player_elo_sum_fields'
 }
 
 
 /** update columns of table "player_elo" */
-export type player_elo_update_column = 'change' | 'created_at' | 'current' | 'impact' | 'match_id' | 'steam_id' | 'type'
+export type player_elo_update_column = 'actual_score' | 'assists' | 'change' | 'created_at' | 'current' | 'damage' | 'damage_percent' | 'deaths' | 'expected_score' | 'impact' | 'k_factor' | 'kda' | 'kills' | 'map_losses' | 'map_wins' | 'match_id' | 'opponent_team_elo_avg' | 'performance_multiplier' | 'player_team_elo_avg' | 'series_multiplier' | 'steam_id' | 'team_avg_kda' | 'type'
 
 
 /** aggregate var_pop on columns */
 export interface player_elo_var_pop_fields {
+    actual_score: (Scalars['Float'] | null)
+    assists: (Scalars['Float'] | null)
     change: (Scalars['Float'] | null)
     current: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    damage_percent: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    expected_score: (Scalars['Float'] | null)
     impact: (Scalars['Float'] | null)
+    k_factor: (Scalars['Float'] | null)
+    kda: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    map_losses: (Scalars['Float'] | null)
+    map_wins: (Scalars['Float'] | null)
+    opponent_team_elo_avg: (Scalars['Float'] | null)
+    performance_multiplier: (Scalars['Float'] | null)
+    player_team_elo_avg: (Scalars['Float'] | null)
+    series_multiplier: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
+    team_avg_kda: (Scalars['Float'] | null)
     __typename: 'player_elo_var_pop_fields'
 }
 
 
 /** aggregate var_samp on columns */
 export interface player_elo_var_samp_fields {
+    actual_score: (Scalars['Float'] | null)
+    assists: (Scalars['Float'] | null)
     change: (Scalars['Float'] | null)
     current: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    damage_percent: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    expected_score: (Scalars['Float'] | null)
     impact: (Scalars['Float'] | null)
+    k_factor: (Scalars['Float'] | null)
+    kda: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    map_losses: (Scalars['Float'] | null)
+    map_wins: (Scalars['Float'] | null)
+    opponent_team_elo_avg: (Scalars['Float'] | null)
+    performance_multiplier: (Scalars['Float'] | null)
+    player_team_elo_avg: (Scalars['Float'] | null)
+    series_multiplier: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
+    team_avg_kda: (Scalars['Float'] | null)
     __typename: 'player_elo_var_samp_fields'
 }
 
 
 /** aggregate variance on columns */
 export interface player_elo_variance_fields {
+    actual_score: (Scalars['Float'] | null)
+    assists: (Scalars['Float'] | null)
     change: (Scalars['Float'] | null)
     current: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    damage_percent: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    expected_score: (Scalars['Float'] | null)
     impact: (Scalars['Float'] | null)
+    k_factor: (Scalars['Float'] | null)
+    kda: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    map_losses: (Scalars['Float'] | null)
+    map_wins: (Scalars['Float'] | null)
+    opponent_team_elo_avg: (Scalars['Float'] | null)
+    performance_multiplier: (Scalars['Float'] | null)
+    player_team_elo_avg: (Scalars['Float'] | null)
+    series_multiplier: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
+    team_avg_kda: (Scalars['Float'] | null)
     __typename: 'player_elo_variance_fields'
 }
 
@@ -9382,6 +9572,683 @@ export interface player_kills_variance_fields {
     attacker_steam_id: (Scalars['Float'] | null)
     round: (Scalars['Float'] | null)
     __typename: 'player_kills_variance_fields'
+}
+
+
+/** columns and relationships of "player_match_map_stats" */
+export interface player_match_map_stats {
+    assists: Scalars['Int']
+    damage: Scalars['Int']
+    deaths: Scalars['Int']
+    enemies_flashed: Scalars['Int']
+    five_kill_rounds: Scalars['Int']
+    flash_assists: Scalars['Int']
+    flash_duration_count: Scalars['Int']
+    flash_duration_sum: Scalars['numeric']
+    flashes_thrown: Scalars['Int']
+    four_kill_rounds: Scalars['Int']
+    he_damage: Scalars['Int']
+    hs_kills: Scalars['Int']
+    kills: Scalars['Int']
+    knife_kills: Scalars['Int']
+    /** An object relationship */
+    match: matches
+    match_id: Scalars['uuid']
+    /** An object relationship */
+    match_map: match_maps
+    match_map_id: Scalars['uuid']
+    molotov_damage: Scalars['Int']
+    /** An object relationship */
+    player: players
+    steam_id: Scalars['bigint']
+    team_damage: Scalars['Int']
+    team_flashed: Scalars['Int']
+    three_kill_rounds: Scalars['Int']
+    two_kill_rounds: Scalars['Int']
+    updated_at: Scalars['timestamptz']
+    zeus_kills: Scalars['Int']
+    __typename: 'player_match_map_stats'
+}
+
+
+/** aggregated selection of "player_match_map_stats" */
+export interface player_match_map_stats_aggregate {
+    aggregate: (player_match_map_stats_aggregate_fields | null)
+    nodes: player_match_map_stats[]
+    __typename: 'player_match_map_stats_aggregate'
+}
+
+
+/** aggregate fields of "player_match_map_stats" */
+export interface player_match_map_stats_aggregate_fields {
+    avg: (player_match_map_stats_avg_fields | null)
+    count: Scalars['Int']
+    max: (player_match_map_stats_max_fields | null)
+    min: (player_match_map_stats_min_fields | null)
+    stddev: (player_match_map_stats_stddev_fields | null)
+    stddev_pop: (player_match_map_stats_stddev_pop_fields | null)
+    stddev_samp: (player_match_map_stats_stddev_samp_fields | null)
+    sum: (player_match_map_stats_sum_fields | null)
+    var_pop: (player_match_map_stats_var_pop_fields | null)
+    var_samp: (player_match_map_stats_var_samp_fields | null)
+    variance: (player_match_map_stats_variance_fields | null)
+    __typename: 'player_match_map_stats_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface player_match_map_stats_avg_fields {
+    assists: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    enemies_flashed: (Scalars['Float'] | null)
+    five_kill_rounds: (Scalars['Float'] | null)
+    flash_assists: (Scalars['Float'] | null)
+    flash_duration_count: (Scalars['Float'] | null)
+    flash_duration_sum: (Scalars['Float'] | null)
+    flashes_thrown: (Scalars['Float'] | null)
+    four_kill_rounds: (Scalars['Float'] | null)
+    he_damage: (Scalars['Float'] | null)
+    hs_kills: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    knife_kills: (Scalars['Float'] | null)
+    molotov_damage: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    team_damage: (Scalars['Float'] | null)
+    team_flashed: (Scalars['Float'] | null)
+    three_kill_rounds: (Scalars['Float'] | null)
+    two_kill_rounds: (Scalars['Float'] | null)
+    zeus_kills: (Scalars['Float'] | null)
+    __typename: 'player_match_map_stats_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "player_match_map_stats" */
+export type player_match_map_stats_constraint = 'player_match_map_stats_pkey'
+
+
+/** aggregate max on columns */
+export interface player_match_map_stats_max_fields {
+    assists: (Scalars['Int'] | null)
+    damage: (Scalars['Int'] | null)
+    deaths: (Scalars['Int'] | null)
+    enemies_flashed: (Scalars['Int'] | null)
+    five_kill_rounds: (Scalars['Int'] | null)
+    flash_assists: (Scalars['Int'] | null)
+    flash_duration_count: (Scalars['Int'] | null)
+    flash_duration_sum: (Scalars['numeric'] | null)
+    flashes_thrown: (Scalars['Int'] | null)
+    four_kill_rounds: (Scalars['Int'] | null)
+    he_damage: (Scalars['Int'] | null)
+    hs_kills: (Scalars['Int'] | null)
+    kills: (Scalars['Int'] | null)
+    knife_kills: (Scalars['Int'] | null)
+    match_id: (Scalars['uuid'] | null)
+    match_map_id: (Scalars['uuid'] | null)
+    molotov_damage: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    team_damage: (Scalars['Int'] | null)
+    team_flashed: (Scalars['Int'] | null)
+    three_kill_rounds: (Scalars['Int'] | null)
+    two_kill_rounds: (Scalars['Int'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    zeus_kills: (Scalars['Int'] | null)
+    __typename: 'player_match_map_stats_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface player_match_map_stats_min_fields {
+    assists: (Scalars['Int'] | null)
+    damage: (Scalars['Int'] | null)
+    deaths: (Scalars['Int'] | null)
+    enemies_flashed: (Scalars['Int'] | null)
+    five_kill_rounds: (Scalars['Int'] | null)
+    flash_assists: (Scalars['Int'] | null)
+    flash_duration_count: (Scalars['Int'] | null)
+    flash_duration_sum: (Scalars['numeric'] | null)
+    flashes_thrown: (Scalars['Int'] | null)
+    four_kill_rounds: (Scalars['Int'] | null)
+    he_damage: (Scalars['Int'] | null)
+    hs_kills: (Scalars['Int'] | null)
+    kills: (Scalars['Int'] | null)
+    knife_kills: (Scalars['Int'] | null)
+    match_id: (Scalars['uuid'] | null)
+    match_map_id: (Scalars['uuid'] | null)
+    molotov_damage: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    team_damage: (Scalars['Int'] | null)
+    team_flashed: (Scalars['Int'] | null)
+    three_kill_rounds: (Scalars['Int'] | null)
+    two_kill_rounds: (Scalars['Int'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    zeus_kills: (Scalars['Int'] | null)
+    __typename: 'player_match_map_stats_min_fields'
+}
+
+
+/** response of any mutation on the table "player_match_map_stats" */
+export interface player_match_map_stats_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: player_match_map_stats[]
+    __typename: 'player_match_map_stats_mutation_response'
+}
+
+
+/** select columns of table "player_match_map_stats" */
+export type player_match_map_stats_select_column = 'assists' | 'damage' | 'deaths' | 'enemies_flashed' | 'five_kill_rounds' | 'flash_assists' | 'flash_duration_count' | 'flash_duration_sum' | 'flashes_thrown' | 'four_kill_rounds' | 'he_damage' | 'hs_kills' | 'kills' | 'knife_kills' | 'match_id' | 'match_map_id' | 'molotov_damage' | 'steam_id' | 'team_damage' | 'team_flashed' | 'three_kill_rounds' | 'two_kill_rounds' | 'updated_at' | 'zeus_kills'
+
+
+/** aggregate stddev on columns */
+export interface player_match_map_stats_stddev_fields {
+    assists: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    enemies_flashed: (Scalars['Float'] | null)
+    five_kill_rounds: (Scalars['Float'] | null)
+    flash_assists: (Scalars['Float'] | null)
+    flash_duration_count: (Scalars['Float'] | null)
+    flash_duration_sum: (Scalars['Float'] | null)
+    flashes_thrown: (Scalars['Float'] | null)
+    four_kill_rounds: (Scalars['Float'] | null)
+    he_damage: (Scalars['Float'] | null)
+    hs_kills: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    knife_kills: (Scalars['Float'] | null)
+    molotov_damage: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    team_damage: (Scalars['Float'] | null)
+    team_flashed: (Scalars['Float'] | null)
+    three_kill_rounds: (Scalars['Float'] | null)
+    two_kill_rounds: (Scalars['Float'] | null)
+    zeus_kills: (Scalars['Float'] | null)
+    __typename: 'player_match_map_stats_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_match_map_stats_stddev_pop_fields {
+    assists: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    enemies_flashed: (Scalars['Float'] | null)
+    five_kill_rounds: (Scalars['Float'] | null)
+    flash_assists: (Scalars['Float'] | null)
+    flash_duration_count: (Scalars['Float'] | null)
+    flash_duration_sum: (Scalars['Float'] | null)
+    flashes_thrown: (Scalars['Float'] | null)
+    four_kill_rounds: (Scalars['Float'] | null)
+    he_damage: (Scalars['Float'] | null)
+    hs_kills: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    knife_kills: (Scalars['Float'] | null)
+    molotov_damage: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    team_damage: (Scalars['Float'] | null)
+    team_flashed: (Scalars['Float'] | null)
+    three_kill_rounds: (Scalars['Float'] | null)
+    two_kill_rounds: (Scalars['Float'] | null)
+    zeus_kills: (Scalars['Float'] | null)
+    __typename: 'player_match_map_stats_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_match_map_stats_stddev_samp_fields {
+    assists: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    enemies_flashed: (Scalars['Float'] | null)
+    five_kill_rounds: (Scalars['Float'] | null)
+    flash_assists: (Scalars['Float'] | null)
+    flash_duration_count: (Scalars['Float'] | null)
+    flash_duration_sum: (Scalars['Float'] | null)
+    flashes_thrown: (Scalars['Float'] | null)
+    four_kill_rounds: (Scalars['Float'] | null)
+    he_damage: (Scalars['Float'] | null)
+    hs_kills: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    knife_kills: (Scalars['Float'] | null)
+    molotov_damage: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    team_damage: (Scalars['Float'] | null)
+    team_flashed: (Scalars['Float'] | null)
+    three_kill_rounds: (Scalars['Float'] | null)
+    two_kill_rounds: (Scalars['Float'] | null)
+    zeus_kills: (Scalars['Float'] | null)
+    __typename: 'player_match_map_stats_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface player_match_map_stats_sum_fields {
+    assists: (Scalars['Int'] | null)
+    damage: (Scalars['Int'] | null)
+    deaths: (Scalars['Int'] | null)
+    enemies_flashed: (Scalars['Int'] | null)
+    five_kill_rounds: (Scalars['Int'] | null)
+    flash_assists: (Scalars['Int'] | null)
+    flash_duration_count: (Scalars['Int'] | null)
+    flash_duration_sum: (Scalars['numeric'] | null)
+    flashes_thrown: (Scalars['Int'] | null)
+    four_kill_rounds: (Scalars['Int'] | null)
+    he_damage: (Scalars['Int'] | null)
+    hs_kills: (Scalars['Int'] | null)
+    kills: (Scalars['Int'] | null)
+    knife_kills: (Scalars['Int'] | null)
+    molotov_damage: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    team_damage: (Scalars['Int'] | null)
+    team_flashed: (Scalars['Int'] | null)
+    three_kill_rounds: (Scalars['Int'] | null)
+    two_kill_rounds: (Scalars['Int'] | null)
+    zeus_kills: (Scalars['Int'] | null)
+    __typename: 'player_match_map_stats_sum_fields'
+}
+
+
+/** update columns of table "player_match_map_stats" */
+export type player_match_map_stats_update_column = 'assists' | 'damage' | 'deaths' | 'enemies_flashed' | 'five_kill_rounds' | 'flash_assists' | 'flash_duration_count' | 'flash_duration_sum' | 'flashes_thrown' | 'four_kill_rounds' | 'he_damage' | 'hs_kills' | 'kills' | 'knife_kills' | 'match_id' | 'match_map_id' | 'molotov_damage' | 'steam_id' | 'team_damage' | 'team_flashed' | 'three_kill_rounds' | 'two_kill_rounds' | 'updated_at' | 'zeus_kills'
+
+
+/** aggregate var_pop on columns */
+export interface player_match_map_stats_var_pop_fields {
+    assists: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    enemies_flashed: (Scalars['Float'] | null)
+    five_kill_rounds: (Scalars['Float'] | null)
+    flash_assists: (Scalars['Float'] | null)
+    flash_duration_count: (Scalars['Float'] | null)
+    flash_duration_sum: (Scalars['Float'] | null)
+    flashes_thrown: (Scalars['Float'] | null)
+    four_kill_rounds: (Scalars['Float'] | null)
+    he_damage: (Scalars['Float'] | null)
+    hs_kills: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    knife_kills: (Scalars['Float'] | null)
+    molotov_damage: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    team_damage: (Scalars['Float'] | null)
+    team_flashed: (Scalars['Float'] | null)
+    three_kill_rounds: (Scalars['Float'] | null)
+    two_kill_rounds: (Scalars['Float'] | null)
+    zeus_kills: (Scalars['Float'] | null)
+    __typename: 'player_match_map_stats_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_match_map_stats_var_samp_fields {
+    assists: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    enemies_flashed: (Scalars['Float'] | null)
+    five_kill_rounds: (Scalars['Float'] | null)
+    flash_assists: (Scalars['Float'] | null)
+    flash_duration_count: (Scalars['Float'] | null)
+    flash_duration_sum: (Scalars['Float'] | null)
+    flashes_thrown: (Scalars['Float'] | null)
+    four_kill_rounds: (Scalars['Float'] | null)
+    he_damage: (Scalars['Float'] | null)
+    hs_kills: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    knife_kills: (Scalars['Float'] | null)
+    molotov_damage: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    team_damage: (Scalars['Float'] | null)
+    team_flashed: (Scalars['Float'] | null)
+    three_kill_rounds: (Scalars['Float'] | null)
+    two_kill_rounds: (Scalars['Float'] | null)
+    zeus_kills: (Scalars['Float'] | null)
+    __typename: 'player_match_map_stats_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface player_match_map_stats_variance_fields {
+    assists: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    enemies_flashed: (Scalars['Float'] | null)
+    five_kill_rounds: (Scalars['Float'] | null)
+    flash_assists: (Scalars['Float'] | null)
+    flash_duration_count: (Scalars['Float'] | null)
+    flash_duration_sum: (Scalars['Float'] | null)
+    flashes_thrown: (Scalars['Float'] | null)
+    four_kill_rounds: (Scalars['Float'] | null)
+    he_damage: (Scalars['Float'] | null)
+    hs_kills: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    knife_kills: (Scalars['Float'] | null)
+    molotov_damage: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    team_damage: (Scalars['Float'] | null)
+    team_flashed: (Scalars['Float'] | null)
+    three_kill_rounds: (Scalars['Float'] | null)
+    two_kill_rounds: (Scalars['Float'] | null)
+    zeus_kills: (Scalars['Float'] | null)
+    __typename: 'player_match_map_stats_variance_fields'
+}
+
+
+/** columns and relationships of "player_match_stats_v" */
+export interface player_match_stats_v {
+    assists: (Scalars['Int'] | null)
+    avg_flash_duration: (Scalars['numeric'] | null)
+    damage: (Scalars['Int'] | null)
+    deaths: (Scalars['Int'] | null)
+    enemies_flashed: (Scalars['Int'] | null)
+    five_kill_rounds: (Scalars['Int'] | null)
+    flash_assists: (Scalars['Int'] | null)
+    flashes_thrown: (Scalars['Int'] | null)
+    four_kill_rounds: (Scalars['Int'] | null)
+    he_damage: (Scalars['Int'] | null)
+    hs_kills: (Scalars['Int'] | null)
+    kills: (Scalars['Int'] | null)
+    knife_kills: (Scalars['Int'] | null)
+    match_id: (Scalars['uuid'] | null)
+    molotov_damage: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    team_damage: (Scalars['Int'] | null)
+    team_flashed: (Scalars['Int'] | null)
+    three_kill_rounds: (Scalars['Int'] | null)
+    two_kill_rounds: (Scalars['Int'] | null)
+    zeus_kills: (Scalars['Int'] | null)
+    __typename: 'player_match_stats_v'
+}
+
+
+/** aggregated selection of "player_match_stats_v" */
+export interface player_match_stats_v_aggregate {
+    aggregate: (player_match_stats_v_aggregate_fields | null)
+    nodes: player_match_stats_v[]
+    __typename: 'player_match_stats_v_aggregate'
+}
+
+
+/** aggregate fields of "player_match_stats_v" */
+export interface player_match_stats_v_aggregate_fields {
+    avg: (player_match_stats_v_avg_fields | null)
+    count: Scalars['Int']
+    max: (player_match_stats_v_max_fields | null)
+    min: (player_match_stats_v_min_fields | null)
+    stddev: (player_match_stats_v_stddev_fields | null)
+    stddev_pop: (player_match_stats_v_stddev_pop_fields | null)
+    stddev_samp: (player_match_stats_v_stddev_samp_fields | null)
+    sum: (player_match_stats_v_sum_fields | null)
+    var_pop: (player_match_stats_v_var_pop_fields | null)
+    var_samp: (player_match_stats_v_var_samp_fields | null)
+    variance: (player_match_stats_v_variance_fields | null)
+    __typename: 'player_match_stats_v_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface player_match_stats_v_avg_fields {
+    assists: (Scalars['Float'] | null)
+    avg_flash_duration: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    enemies_flashed: (Scalars['Float'] | null)
+    five_kill_rounds: (Scalars['Float'] | null)
+    flash_assists: (Scalars['Float'] | null)
+    flashes_thrown: (Scalars['Float'] | null)
+    four_kill_rounds: (Scalars['Float'] | null)
+    he_damage: (Scalars['Float'] | null)
+    hs_kills: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    knife_kills: (Scalars['Float'] | null)
+    molotov_damage: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    team_damage: (Scalars['Float'] | null)
+    team_flashed: (Scalars['Float'] | null)
+    three_kill_rounds: (Scalars['Float'] | null)
+    two_kill_rounds: (Scalars['Float'] | null)
+    zeus_kills: (Scalars['Float'] | null)
+    __typename: 'player_match_stats_v_avg_fields'
+}
+
+
+/** aggregate max on columns */
+export interface player_match_stats_v_max_fields {
+    assists: (Scalars['Int'] | null)
+    avg_flash_duration: (Scalars['numeric'] | null)
+    damage: (Scalars['Int'] | null)
+    deaths: (Scalars['Int'] | null)
+    enemies_flashed: (Scalars['Int'] | null)
+    five_kill_rounds: (Scalars['Int'] | null)
+    flash_assists: (Scalars['Int'] | null)
+    flashes_thrown: (Scalars['Int'] | null)
+    four_kill_rounds: (Scalars['Int'] | null)
+    he_damage: (Scalars['Int'] | null)
+    hs_kills: (Scalars['Int'] | null)
+    kills: (Scalars['Int'] | null)
+    knife_kills: (Scalars['Int'] | null)
+    match_id: (Scalars['uuid'] | null)
+    molotov_damage: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    team_damage: (Scalars['Int'] | null)
+    team_flashed: (Scalars['Int'] | null)
+    three_kill_rounds: (Scalars['Int'] | null)
+    two_kill_rounds: (Scalars['Int'] | null)
+    zeus_kills: (Scalars['Int'] | null)
+    __typename: 'player_match_stats_v_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface player_match_stats_v_min_fields {
+    assists: (Scalars['Int'] | null)
+    avg_flash_duration: (Scalars['numeric'] | null)
+    damage: (Scalars['Int'] | null)
+    deaths: (Scalars['Int'] | null)
+    enemies_flashed: (Scalars['Int'] | null)
+    five_kill_rounds: (Scalars['Int'] | null)
+    flash_assists: (Scalars['Int'] | null)
+    flashes_thrown: (Scalars['Int'] | null)
+    four_kill_rounds: (Scalars['Int'] | null)
+    he_damage: (Scalars['Int'] | null)
+    hs_kills: (Scalars['Int'] | null)
+    kills: (Scalars['Int'] | null)
+    knife_kills: (Scalars['Int'] | null)
+    match_id: (Scalars['uuid'] | null)
+    molotov_damage: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    team_damage: (Scalars['Int'] | null)
+    team_flashed: (Scalars['Int'] | null)
+    three_kill_rounds: (Scalars['Int'] | null)
+    two_kill_rounds: (Scalars['Int'] | null)
+    zeus_kills: (Scalars['Int'] | null)
+    __typename: 'player_match_stats_v_min_fields'
+}
+
+
+/** select columns of table "player_match_stats_v" */
+export type player_match_stats_v_select_column = 'assists' | 'avg_flash_duration' | 'damage' | 'deaths' | 'enemies_flashed' | 'five_kill_rounds' | 'flash_assists' | 'flashes_thrown' | 'four_kill_rounds' | 'he_damage' | 'hs_kills' | 'kills' | 'knife_kills' | 'match_id' | 'molotov_damage' | 'steam_id' | 'team_damage' | 'team_flashed' | 'three_kill_rounds' | 'two_kill_rounds' | 'zeus_kills'
+
+
+/** aggregate stddev on columns */
+export interface player_match_stats_v_stddev_fields {
+    assists: (Scalars['Float'] | null)
+    avg_flash_duration: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    enemies_flashed: (Scalars['Float'] | null)
+    five_kill_rounds: (Scalars['Float'] | null)
+    flash_assists: (Scalars['Float'] | null)
+    flashes_thrown: (Scalars['Float'] | null)
+    four_kill_rounds: (Scalars['Float'] | null)
+    he_damage: (Scalars['Float'] | null)
+    hs_kills: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    knife_kills: (Scalars['Float'] | null)
+    molotov_damage: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    team_damage: (Scalars['Float'] | null)
+    team_flashed: (Scalars['Float'] | null)
+    three_kill_rounds: (Scalars['Float'] | null)
+    two_kill_rounds: (Scalars['Float'] | null)
+    zeus_kills: (Scalars['Float'] | null)
+    __typename: 'player_match_stats_v_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_match_stats_v_stddev_pop_fields {
+    assists: (Scalars['Float'] | null)
+    avg_flash_duration: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    enemies_flashed: (Scalars['Float'] | null)
+    five_kill_rounds: (Scalars['Float'] | null)
+    flash_assists: (Scalars['Float'] | null)
+    flashes_thrown: (Scalars['Float'] | null)
+    four_kill_rounds: (Scalars['Float'] | null)
+    he_damage: (Scalars['Float'] | null)
+    hs_kills: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    knife_kills: (Scalars['Float'] | null)
+    molotov_damage: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    team_damage: (Scalars['Float'] | null)
+    team_flashed: (Scalars['Float'] | null)
+    three_kill_rounds: (Scalars['Float'] | null)
+    two_kill_rounds: (Scalars['Float'] | null)
+    zeus_kills: (Scalars['Float'] | null)
+    __typename: 'player_match_stats_v_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_match_stats_v_stddev_samp_fields {
+    assists: (Scalars['Float'] | null)
+    avg_flash_duration: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    enemies_flashed: (Scalars['Float'] | null)
+    five_kill_rounds: (Scalars['Float'] | null)
+    flash_assists: (Scalars['Float'] | null)
+    flashes_thrown: (Scalars['Float'] | null)
+    four_kill_rounds: (Scalars['Float'] | null)
+    he_damage: (Scalars['Float'] | null)
+    hs_kills: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    knife_kills: (Scalars['Float'] | null)
+    molotov_damage: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    team_damage: (Scalars['Float'] | null)
+    team_flashed: (Scalars['Float'] | null)
+    three_kill_rounds: (Scalars['Float'] | null)
+    two_kill_rounds: (Scalars['Float'] | null)
+    zeus_kills: (Scalars['Float'] | null)
+    __typename: 'player_match_stats_v_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface player_match_stats_v_sum_fields {
+    assists: (Scalars['Int'] | null)
+    avg_flash_duration: (Scalars['numeric'] | null)
+    damage: (Scalars['Int'] | null)
+    deaths: (Scalars['Int'] | null)
+    enemies_flashed: (Scalars['Int'] | null)
+    five_kill_rounds: (Scalars['Int'] | null)
+    flash_assists: (Scalars['Int'] | null)
+    flashes_thrown: (Scalars['Int'] | null)
+    four_kill_rounds: (Scalars['Int'] | null)
+    he_damage: (Scalars['Int'] | null)
+    hs_kills: (Scalars['Int'] | null)
+    kills: (Scalars['Int'] | null)
+    knife_kills: (Scalars['Int'] | null)
+    molotov_damage: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    team_damage: (Scalars['Int'] | null)
+    team_flashed: (Scalars['Int'] | null)
+    three_kill_rounds: (Scalars['Int'] | null)
+    two_kill_rounds: (Scalars['Int'] | null)
+    zeus_kills: (Scalars['Int'] | null)
+    __typename: 'player_match_stats_v_sum_fields'
+}
+
+
+/** aggregate var_pop on columns */
+export interface player_match_stats_v_var_pop_fields {
+    assists: (Scalars['Float'] | null)
+    avg_flash_duration: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    enemies_flashed: (Scalars['Float'] | null)
+    five_kill_rounds: (Scalars['Float'] | null)
+    flash_assists: (Scalars['Float'] | null)
+    flashes_thrown: (Scalars['Float'] | null)
+    four_kill_rounds: (Scalars['Float'] | null)
+    he_damage: (Scalars['Float'] | null)
+    hs_kills: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    knife_kills: (Scalars['Float'] | null)
+    molotov_damage: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    team_damage: (Scalars['Float'] | null)
+    team_flashed: (Scalars['Float'] | null)
+    three_kill_rounds: (Scalars['Float'] | null)
+    two_kill_rounds: (Scalars['Float'] | null)
+    zeus_kills: (Scalars['Float'] | null)
+    __typename: 'player_match_stats_v_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_match_stats_v_var_samp_fields {
+    assists: (Scalars['Float'] | null)
+    avg_flash_duration: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    enemies_flashed: (Scalars['Float'] | null)
+    five_kill_rounds: (Scalars['Float'] | null)
+    flash_assists: (Scalars['Float'] | null)
+    flashes_thrown: (Scalars['Float'] | null)
+    four_kill_rounds: (Scalars['Float'] | null)
+    he_damage: (Scalars['Float'] | null)
+    hs_kills: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    knife_kills: (Scalars['Float'] | null)
+    molotov_damage: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    team_damage: (Scalars['Float'] | null)
+    team_flashed: (Scalars['Float'] | null)
+    three_kill_rounds: (Scalars['Float'] | null)
+    two_kill_rounds: (Scalars['Float'] | null)
+    zeus_kills: (Scalars['Float'] | null)
+    __typename: 'player_match_stats_v_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface player_match_stats_v_variance_fields {
+    assists: (Scalars['Float'] | null)
+    avg_flash_duration: (Scalars['Float'] | null)
+    damage: (Scalars['Float'] | null)
+    deaths: (Scalars['Float'] | null)
+    enemies_flashed: (Scalars['Float'] | null)
+    five_kill_rounds: (Scalars['Float'] | null)
+    flash_assists: (Scalars['Float'] | null)
+    flashes_thrown: (Scalars['Float'] | null)
+    four_kill_rounds: (Scalars['Float'] | null)
+    he_damage: (Scalars['Float'] | null)
+    hs_kills: (Scalars['Float'] | null)
+    kills: (Scalars['Float'] | null)
+    knife_kills: (Scalars['Float'] | null)
+    molotov_damage: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    team_damage: (Scalars['Float'] | null)
+    team_flashed: (Scalars['Float'] | null)
+    three_kill_rounds: (Scalars['Float'] | null)
+    two_kill_rounds: (Scalars['Float'] | null)
+    zeus_kills: (Scalars['Float'] | null)
+    __typename: 'player_match_stats_v_variance_fields'
 }
 
 
@@ -10283,6 +11150,14 @@ export interface players {
     losses_duel: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman: (Scalars['Int'] | null)
+    /** An array relationship */
+    match_map_stats: player_match_map_stats[]
+    /** An aggregate relationship */
+    match_map_stats_aggregate: player_match_map_stats_aggregate
+    /** An array relationship */
+    match_stats: player_match_stats_v[]
+    /** An aggregate relationship */
+    match_stats_aggregate: player_match_stats_v_aggregate
     /** A computed field, executes function "get_player_matches" */
     matches: (matches[] | null)
     /** A computed field, executes function "get_player_matchmaking_cooldown" */
@@ -11232,6 +12107,16 @@ export interface query_root {
     player_kills_by_weapon_aggregate: player_kills_by_weapon_aggregate
     /** fetch data from the table: "player_kills_by_weapon" using primary key columns */
     player_kills_by_weapon_by_pk: (player_kills_by_weapon | null)
+    /** fetch data from the table: "player_match_map_stats" */
+    player_match_map_stats: player_match_map_stats[]
+    /** fetch aggregated fields from the table: "player_match_map_stats" */
+    player_match_map_stats_aggregate: player_match_map_stats_aggregate
+    /** fetch data from the table: "player_match_map_stats" using primary key columns */
+    player_match_map_stats_by_pk: (player_match_map_stats | null)
+    /** fetch data from the table: "player_match_stats_v" */
+    player_match_stats_v: player_match_stats_v[]
+    /** fetch aggregated fields from the table: "player_match_stats_v" */
+    player_match_stats_v_aggregate: player_match_stats_v_aggregate
     /** An array relationship */
     player_objectives: player_objectives[]
     /** An aggregate relationship */
@@ -12382,6 +13267,20 @@ export interface subscription_root {
     player_kills_by_weapon_stream: player_kills_by_weapon[]
     /** fetch data from the table in a streaming manner: "player_kills" */
     player_kills_stream: player_kills[]
+    /** fetch data from the table: "player_match_map_stats" */
+    player_match_map_stats: player_match_map_stats[]
+    /** fetch aggregated fields from the table: "player_match_map_stats" */
+    player_match_map_stats_aggregate: player_match_map_stats_aggregate
+    /** fetch data from the table: "player_match_map_stats" using primary key columns */
+    player_match_map_stats_by_pk: (player_match_map_stats | null)
+    /** fetch data from the table in a streaming manner: "player_match_map_stats" */
+    player_match_map_stats_stream: player_match_map_stats[]
+    /** fetch data from the table: "player_match_stats_v" */
+    player_match_stats_v: player_match_stats_v[]
+    /** fetch aggregated fields from the table: "player_match_stats_v" */
+    player_match_stats_v_aggregate: player_match_stats_v_aggregate
+    /** fetch data from the table in a streaming manner: "player_match_stats_v" */
+    player_match_stats_v_stream: player_match_stats_v[]
     /** An array relationship */
     player_objectives: player_objectives[]
     /** An aggregate relationship */
@@ -28513,6 +29412,12 @@ export interface mutation_rootGenqlSelection{
     where: player_kills_by_weapon_bool_exp} })
     /** delete single row from the table: "player_kills_by_weapon" */
     delete_player_kills_by_weapon_by_pk?: (player_kills_by_weaponGenqlSelection & { __args: {player_steam_id: Scalars['bigint'], with: Scalars['String']} })
+    /** delete data from the table: "player_match_map_stats" */
+    delete_player_match_map_stats?: (player_match_map_stats_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: player_match_map_stats_bool_exp} })
+    /** delete single row from the table: "player_match_map_stats" */
+    delete_player_match_map_stats_by_pk?: (player_match_map_statsGenqlSelection & { __args: {match_map_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
     /** delete data from the table: "player_objectives" */
     delete_player_objectives?: (player_objectives_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -29394,6 +30299,18 @@ export interface mutation_rootGenqlSelection{
     object: player_kills_insert_input, 
     /** upsert condition */
     on_conflict?: (player_kills_on_conflict | null)} })
+    /** insert data into the table: "player_match_map_stats" */
+    insert_player_match_map_stats?: (player_match_map_stats_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: player_match_map_stats_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (player_match_map_stats_on_conflict | null)} })
+    /** insert a single row into the table: "player_match_map_stats" */
+    insert_player_match_map_stats_one?: (player_match_map_statsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: player_match_map_stats_insert_input, 
+    /** upsert condition */
+    on_conflict?: (player_match_map_stats_on_conflict | null)} })
     /** insert data into the table: "player_objectives" */
     insert_player_objectives?: (player_objectives_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -30852,6 +31769,24 @@ export interface mutation_rootGenqlSelection{
     update_player_kills_many?: (player_kills_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: player_kills_updates[]} })
+    /** update data of the table: "player_match_map_stats" */
+    update_player_match_map_stats?: (player_match_map_stats_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (player_match_map_stats_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (player_match_map_stats_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: player_match_map_stats_bool_exp} })
+    /** update single row of the table: "player_match_map_stats" */
+    update_player_match_map_stats_by_pk?: (player_match_map_statsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (player_match_map_stats_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (player_match_map_stats_set_input | null), pk_columns: player_match_map_stats_pk_columns_input} })
+    /** update multiples rows of table: "player_match_map_stats" */
+    update_player_match_map_stats_many?: (player_match_map_stats_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: player_match_map_stats_updates[]} })
     /** update data of the table: "player_objectives" */
     update_player_objectives?: (player_objectives_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -32522,16 +33457,32 @@ export interface player_damages_variance_order_by {armor?: (order_by | null),att
 
 /** columns and relationships of "player_elo" */
 export interface player_eloGenqlSelection{
+    actual_score?: boolean | number
+    assists?: boolean | number
     change?: boolean | number
     created_at?: boolean | number
     current?: boolean | number
+    damage?: boolean | number
+    damage_percent?: boolean | number
+    deaths?: boolean | number
+    expected_score?: boolean | number
     impact?: boolean | number
+    k_factor?: boolean | number
+    kda?: boolean | number
+    kills?: boolean | number
+    map_losses?: boolean | number
+    map_wins?: boolean | number
     /** An object relationship */
     match?: matchesGenqlSelection
     match_id?: boolean | number
+    opponent_team_elo_avg?: boolean | number
+    performance_multiplier?: boolean | number
     /** An object relationship */
     player?: playersGenqlSelection
+    player_team_elo_avg?: boolean | number
+    series_multiplier?: boolean | number
     steam_id?: boolean | number
+    team_avg_kda?: boolean | number
     type?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -32567,35 +33518,67 @@ export interface player_elo_aggregate_fieldsGenqlSelection{
 
 /** aggregate avg on columns */
 export interface player_elo_avg_fieldsGenqlSelection{
+    actual_score?: boolean | number
+    assists?: boolean | number
     change?: boolean | number
     current?: boolean | number
+    damage?: boolean | number
+    damage_percent?: boolean | number
+    deaths?: boolean | number
+    expected_score?: boolean | number
     impact?: boolean | number
+    k_factor?: boolean | number
+    kda?: boolean | number
+    kills?: boolean | number
+    map_losses?: boolean | number
+    map_wins?: boolean | number
+    opponent_team_elo_avg?: boolean | number
+    performance_multiplier?: boolean | number
+    player_team_elo_avg?: boolean | number
+    series_multiplier?: boolean | number
     steam_id?: boolean | number
+    team_avg_kda?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** Boolean expression to filter rows from the table "player_elo". All fields are combined with a logical 'AND'. */
-export interface player_elo_bool_exp {_and?: (player_elo_bool_exp[] | null),_not?: (player_elo_bool_exp | null),_or?: (player_elo_bool_exp[] | null),change?: (numeric_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current?: (numeric_comparison_exp | null),impact?: (numeric_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),steam_id?: (bigint_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
+export interface player_elo_bool_exp {_and?: (player_elo_bool_exp[] | null),_not?: (player_elo_bool_exp | null),_or?: (player_elo_bool_exp[] | null),actual_score?: (float8_comparison_exp | null),assists?: (Int_comparison_exp | null),change?: (numeric_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current?: (numeric_comparison_exp | null),damage?: (Int_comparison_exp | null),damage_percent?: (float8_comparison_exp | null),deaths?: (Int_comparison_exp | null),expected_score?: (float8_comparison_exp | null),impact?: (numeric_comparison_exp | null),k_factor?: (Int_comparison_exp | null),kda?: (float8_comparison_exp | null),kills?: (Int_comparison_exp | null),map_losses?: (Int_comparison_exp | null),map_wins?: (Int_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),opponent_team_elo_avg?: (float8_comparison_exp | null),performance_multiplier?: (float8_comparison_exp | null),player?: (players_bool_exp | null),player_team_elo_avg?: (float8_comparison_exp | null),series_multiplier?: (Int_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_avg_kda?: (float8_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "player_elo" */
-export interface player_elo_inc_input {change?: (Scalars['numeric'] | null),current?: (Scalars['numeric'] | null),impact?: (Scalars['numeric'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface player_elo_inc_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),change?: (Scalars['numeric'] | null),current?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),impact?: (Scalars['numeric'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_team_elo_avg?: (Scalars['float8'] | null),series_multiplier?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_avg_kda?: (Scalars['float8'] | null)}
 
 
 /** input type for inserting data into table "player_elo" */
-export interface player_elo_insert_input {change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),impact?: (Scalars['numeric'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),type?: (e_match_types_enum | null)}
+export interface player_elo_insert_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),impact?: (Scalars['numeric'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player?: (players_obj_rel_insert_input | null),player_team_elo_avg?: (Scalars['float8'] | null),series_multiplier?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate max on columns */
 export interface player_elo_max_fieldsGenqlSelection{
+    actual_score?: boolean | number
+    assists?: boolean | number
     change?: boolean | number
     created_at?: boolean | number
     current?: boolean | number
+    damage?: boolean | number
+    damage_percent?: boolean | number
+    deaths?: boolean | number
+    expected_score?: boolean | number
     impact?: boolean | number
+    k_factor?: boolean | number
+    kda?: boolean | number
+    kills?: boolean | number
+    map_losses?: boolean | number
+    map_wins?: boolean | number
     match_id?: boolean | number
+    opponent_team_elo_avg?: boolean | number
+    performance_multiplier?: boolean | number
+    player_team_elo_avg?: boolean | number
+    series_multiplier?: boolean | number
     steam_id?: boolean | number
+    team_avg_kda?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -32603,12 +33586,28 @@ export interface player_elo_max_fieldsGenqlSelection{
 
 /** aggregate min on columns */
 export interface player_elo_min_fieldsGenqlSelection{
+    actual_score?: boolean | number
+    assists?: boolean | number
     change?: boolean | number
     created_at?: boolean | number
     current?: boolean | number
+    damage?: boolean | number
+    damage_percent?: boolean | number
+    deaths?: boolean | number
+    expected_score?: boolean | number
     impact?: boolean | number
+    k_factor?: boolean | number
+    kda?: boolean | number
+    kills?: boolean | number
+    map_losses?: boolean | number
+    map_wins?: boolean | number
     match_id?: boolean | number
+    opponent_team_elo_avg?: boolean | number
+    performance_multiplier?: boolean | number
+    player_team_elo_avg?: boolean | number
+    series_multiplier?: boolean | number
     steam_id?: boolean | number
+    team_avg_kda?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -32630,7 +33629,7 @@ export interface player_elo_on_conflict {constraint: player_elo_constraint,updat
 
 
 /** Ordering options when selecting data from "player_elo". */
-export interface player_elo_order_by {change?: (order_by | null),created_at?: (order_by | null),current?: (order_by | null),impact?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),player?: (players_order_by | null),steam_id?: (order_by | null),type?: (order_by | null)}
+export interface player_elo_order_by {actual_score?: (order_by | null),assists?: (order_by | null),change?: (order_by | null),created_at?: (order_by | null),current?: (order_by | null),damage?: (order_by | null),damage_percent?: (order_by | null),deaths?: (order_by | null),expected_score?: (order_by | null),impact?: (order_by | null),k_factor?: (order_by | null),kda?: (order_by | null),kills?: (order_by | null),map_losses?: (order_by | null),map_wins?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),opponent_team_elo_avg?: (order_by | null),performance_multiplier?: (order_by | null),player?: (players_order_by | null),player_team_elo_avg?: (order_by | null),series_multiplier?: (order_by | null),steam_id?: (order_by | null),team_avg_kda?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: player_elo */
@@ -32638,15 +33637,31 @@ export interface player_elo_pk_columns_input {match_id: Scalars['uuid'],steam_id
 
 
 /** input type for updating data in table "player_elo" */
-export interface player_elo_set_input {change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),impact?: (Scalars['numeric'] | null),match_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),type?: (e_match_types_enum | null)}
+export interface player_elo_set_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),impact?: (Scalars['numeric'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_team_elo_avg?: (Scalars['float8'] | null),series_multiplier?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate stddev on columns */
 export interface player_elo_stddev_fieldsGenqlSelection{
+    actual_score?: boolean | number
+    assists?: boolean | number
     change?: boolean | number
     current?: boolean | number
+    damage?: boolean | number
+    damage_percent?: boolean | number
+    deaths?: boolean | number
+    expected_score?: boolean | number
     impact?: boolean | number
+    k_factor?: boolean | number
+    kda?: boolean | number
+    kills?: boolean | number
+    map_losses?: boolean | number
+    map_wins?: boolean | number
+    opponent_team_elo_avg?: boolean | number
+    performance_multiplier?: boolean | number
+    player_team_elo_avg?: boolean | number
+    series_multiplier?: boolean | number
     steam_id?: boolean | number
+    team_avg_kda?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -32654,10 +33669,26 @@ export interface player_elo_stddev_fieldsGenqlSelection{
 
 /** aggregate stddev_pop on columns */
 export interface player_elo_stddev_pop_fieldsGenqlSelection{
+    actual_score?: boolean | number
+    assists?: boolean | number
     change?: boolean | number
     current?: boolean | number
+    damage?: boolean | number
+    damage_percent?: boolean | number
+    deaths?: boolean | number
+    expected_score?: boolean | number
     impact?: boolean | number
+    k_factor?: boolean | number
+    kda?: boolean | number
+    kills?: boolean | number
+    map_losses?: boolean | number
+    map_wins?: boolean | number
+    opponent_team_elo_avg?: boolean | number
+    performance_multiplier?: boolean | number
+    player_team_elo_avg?: boolean | number
+    series_multiplier?: boolean | number
     steam_id?: boolean | number
+    team_avg_kda?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -32665,10 +33696,26 @@ export interface player_elo_stddev_pop_fieldsGenqlSelection{
 
 /** aggregate stddev_samp on columns */
 export interface player_elo_stddev_samp_fieldsGenqlSelection{
+    actual_score?: boolean | number
+    assists?: boolean | number
     change?: boolean | number
     current?: boolean | number
+    damage?: boolean | number
+    damage_percent?: boolean | number
+    deaths?: boolean | number
+    expected_score?: boolean | number
     impact?: boolean | number
+    k_factor?: boolean | number
+    kda?: boolean | number
+    kills?: boolean | number
+    map_losses?: boolean | number
+    map_wins?: boolean | number
+    opponent_team_elo_avg?: boolean | number
+    performance_multiplier?: boolean | number
+    player_team_elo_avg?: boolean | number
+    series_multiplier?: boolean | number
     steam_id?: boolean | number
+    team_avg_kda?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -32683,15 +33730,31 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface player_elo_stream_cursor_value_input {change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),impact?: (Scalars['numeric'] | null),match_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),type?: (e_match_types_enum | null)}
+export interface player_elo_stream_cursor_value_input {actual_score?: (Scalars['float8'] | null),assists?: (Scalars['Int'] | null),change?: (Scalars['numeric'] | null),created_at?: (Scalars['timestamptz'] | null),current?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_percent?: (Scalars['float8'] | null),deaths?: (Scalars['Int'] | null),expected_score?: (Scalars['float8'] | null),impact?: (Scalars['numeric'] | null),k_factor?: (Scalars['Int'] | null),kda?: (Scalars['float8'] | null),kills?: (Scalars['Int'] | null),map_losses?: (Scalars['Int'] | null),map_wins?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),opponent_team_elo_avg?: (Scalars['float8'] | null),performance_multiplier?: (Scalars['float8'] | null),player_team_elo_avg?: (Scalars['float8'] | null),series_multiplier?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_avg_kda?: (Scalars['float8'] | null),type?: (e_match_types_enum | null)}
 
 
 /** aggregate sum on columns */
 export interface player_elo_sum_fieldsGenqlSelection{
+    actual_score?: boolean | number
+    assists?: boolean | number
     change?: boolean | number
     current?: boolean | number
+    damage?: boolean | number
+    damage_percent?: boolean | number
+    deaths?: boolean | number
+    expected_score?: boolean | number
     impact?: boolean | number
+    k_factor?: boolean | number
+    kda?: boolean | number
+    kills?: boolean | number
+    map_losses?: boolean | number
+    map_wins?: boolean | number
+    opponent_team_elo_avg?: boolean | number
+    performance_multiplier?: boolean | number
+    player_team_elo_avg?: boolean | number
+    series_multiplier?: boolean | number
     steam_id?: boolean | number
+    team_avg_kda?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -32707,10 +33770,26 @@ where: player_elo_bool_exp}
 
 /** aggregate var_pop on columns */
 export interface player_elo_var_pop_fieldsGenqlSelection{
+    actual_score?: boolean | number
+    assists?: boolean | number
     change?: boolean | number
     current?: boolean | number
+    damage?: boolean | number
+    damage_percent?: boolean | number
+    deaths?: boolean | number
+    expected_score?: boolean | number
     impact?: boolean | number
+    k_factor?: boolean | number
+    kda?: boolean | number
+    kills?: boolean | number
+    map_losses?: boolean | number
+    map_wins?: boolean | number
+    opponent_team_elo_avg?: boolean | number
+    performance_multiplier?: boolean | number
+    player_team_elo_avg?: boolean | number
+    series_multiplier?: boolean | number
     steam_id?: boolean | number
+    team_avg_kda?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -32718,10 +33797,26 @@ export interface player_elo_var_pop_fieldsGenqlSelection{
 
 /** aggregate var_samp on columns */
 export interface player_elo_var_samp_fieldsGenqlSelection{
+    actual_score?: boolean | number
+    assists?: boolean | number
     change?: boolean | number
     current?: boolean | number
+    damage?: boolean | number
+    damage_percent?: boolean | number
+    deaths?: boolean | number
+    expected_score?: boolean | number
     impact?: boolean | number
+    k_factor?: boolean | number
+    kda?: boolean | number
+    kills?: boolean | number
+    map_losses?: boolean | number
+    map_wins?: boolean | number
+    opponent_team_elo_avg?: boolean | number
+    performance_multiplier?: boolean | number
+    player_team_elo_avg?: boolean | number
+    series_multiplier?: boolean | number
     steam_id?: boolean | number
+    team_avg_kda?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -32729,10 +33824,26 @@ export interface player_elo_var_samp_fieldsGenqlSelection{
 
 /** aggregate variance on columns */
 export interface player_elo_variance_fieldsGenqlSelection{
+    actual_score?: boolean | number
+    assists?: boolean | number
     change?: boolean | number
     current?: boolean | number
+    damage?: boolean | number
+    damage_percent?: boolean | number
+    deaths?: boolean | number
+    expected_score?: boolean | number
     impact?: boolean | number
+    k_factor?: boolean | number
+    kda?: boolean | number
+    kills?: boolean | number
+    map_losses?: boolean | number
+    map_wins?: boolean | number
+    opponent_team_elo_avg?: boolean | number
+    performance_multiplier?: boolean | number
+    player_team_elo_avg?: boolean | number
+    series_multiplier?: boolean | number
     steam_id?: boolean | number
+    team_avg_kda?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -33575,6 +34686,872 @@ export interface player_kills_variance_fieldsGenqlSelection{
 
 /** order by variance() on columns of table "player_kills" */
 export interface player_kills_variance_order_by {attacked_steam_id?: (order_by | null),attacker_steam_id?: (order_by | null),round?: (order_by | null)}
+
+
+/** columns and relationships of "player_match_map_stats" */
+export interface player_match_map_statsGenqlSelection{
+    assists?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flash_duration_count?: boolean | number
+    flash_duration_sum?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    /** An object relationship */
+    match?: matchesGenqlSelection
+    match_id?: boolean | number
+    /** An object relationship */
+    match_map?: match_mapsGenqlSelection
+    match_map_id?: boolean | number
+    molotov_damage?: boolean | number
+    /** An object relationship */
+    player?: playersGenqlSelection
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    updated_at?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "player_match_map_stats" */
+export interface player_match_map_stats_aggregateGenqlSelection{
+    aggregate?: player_match_map_stats_aggregate_fieldsGenqlSelection
+    nodes?: player_match_map_statsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface player_match_map_stats_aggregate_bool_exp {count?: (player_match_map_stats_aggregate_bool_exp_count | null)}
+
+export interface player_match_map_stats_aggregate_bool_exp_count {arguments?: (player_match_map_stats_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (player_match_map_stats_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "player_match_map_stats" */
+export interface player_match_map_stats_aggregate_fieldsGenqlSelection{
+    avg?: player_match_map_stats_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (player_match_map_stats_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: player_match_map_stats_max_fieldsGenqlSelection
+    min?: player_match_map_stats_min_fieldsGenqlSelection
+    stddev?: player_match_map_stats_stddev_fieldsGenqlSelection
+    stddev_pop?: player_match_map_stats_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: player_match_map_stats_stddev_samp_fieldsGenqlSelection
+    sum?: player_match_map_stats_sum_fieldsGenqlSelection
+    var_pop?: player_match_map_stats_var_pop_fieldsGenqlSelection
+    var_samp?: player_match_map_stats_var_samp_fieldsGenqlSelection
+    variance?: player_match_map_stats_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "player_match_map_stats" */
+export interface player_match_map_stats_aggregate_order_by {avg?: (player_match_map_stats_avg_order_by | null),count?: (order_by | null),max?: (player_match_map_stats_max_order_by | null),min?: (player_match_map_stats_min_order_by | null),stddev?: (player_match_map_stats_stddev_order_by | null),stddev_pop?: (player_match_map_stats_stddev_pop_order_by | null),stddev_samp?: (player_match_map_stats_stddev_samp_order_by | null),sum?: (player_match_map_stats_sum_order_by | null),var_pop?: (player_match_map_stats_var_pop_order_by | null),var_samp?: (player_match_map_stats_var_samp_order_by | null),variance?: (player_match_map_stats_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "player_match_map_stats" */
+export interface player_match_map_stats_arr_rel_insert_input {data: player_match_map_stats_insert_input[],
+/** upsert condition */
+on_conflict?: (player_match_map_stats_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface player_match_map_stats_avg_fieldsGenqlSelection{
+    assists?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flash_duration_count?: boolean | number
+    flash_duration_sum?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "player_match_map_stats" */
+export interface player_match_map_stats_avg_order_by {assists?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "player_match_map_stats". All fields are combined with a logical 'AND'. */
+export interface player_match_map_stats_bool_exp {_and?: (player_match_map_stats_bool_exp[] | null),_not?: (player_match_map_stats_bool_exp | null),_or?: (player_match_map_stats_bool_exp[] | null),assists?: (Int_comparison_exp | null),damage?: (Int_comparison_exp | null),deaths?: (Int_comparison_exp | null),enemies_flashed?: (Int_comparison_exp | null),five_kill_rounds?: (Int_comparison_exp | null),flash_assists?: (Int_comparison_exp | null),flash_duration_count?: (Int_comparison_exp | null),flash_duration_sum?: (numeric_comparison_exp | null),flashes_thrown?: (Int_comparison_exp | null),four_kill_rounds?: (Int_comparison_exp | null),he_damage?: (Int_comparison_exp | null),hs_kills?: (Int_comparison_exp | null),kills?: (Int_comparison_exp | null),knife_kills?: (Int_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),molotov_damage?: (Int_comparison_exp | null),player?: (players_bool_exp | null),steam_id?: (bigint_comparison_exp | null),team_damage?: (Int_comparison_exp | null),team_flashed?: (Int_comparison_exp | null),three_kill_rounds?: (Int_comparison_exp | null),two_kill_rounds?: (Int_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),zeus_kills?: (Int_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "player_match_map_stats" */
+export interface player_match_map_stats_inc_input {assists?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flash_duration_count?: (Scalars['Int'] | null),flash_duration_sum?: (Scalars['numeric'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),molotov_damage?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),zeus_kills?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "player_match_map_stats" */
+export interface player_match_map_stats_insert_input {assists?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flash_duration_count?: (Scalars['Int'] | null),flash_duration_sum?: (Scalars['numeric'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),molotov_damage?: (Scalars['Int'] | null),player?: (players_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),zeus_kills?: (Scalars['Int'] | null)}
+
+
+/** aggregate max on columns */
+export interface player_match_map_stats_max_fieldsGenqlSelection{
+    assists?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flash_duration_count?: boolean | number
+    flash_duration_sum?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    match_id?: boolean | number
+    match_map_id?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    updated_at?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "player_match_map_stats" */
+export interface player_match_map_stats_max_order_by {assists?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),updated_at?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface player_match_map_stats_min_fieldsGenqlSelection{
+    assists?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flash_duration_count?: boolean | number
+    flash_duration_sum?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    match_id?: boolean | number
+    match_map_id?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    updated_at?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "player_match_map_stats" */
+export interface player_match_map_stats_min_order_by {assists?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),updated_at?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** response of any mutation on the table "player_match_map_stats" */
+export interface player_match_map_stats_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: player_match_map_statsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "player_match_map_stats" */
+export interface player_match_map_stats_on_conflict {constraint: player_match_map_stats_constraint,update_columns?: player_match_map_stats_update_column[],where?: (player_match_map_stats_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "player_match_map_stats". */
+export interface player_match_map_stats_order_by {assists?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),molotov_damage?: (order_by | null),player?: (players_order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),updated_at?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** primary key columns input for table: player_match_map_stats */
+export interface player_match_map_stats_pk_columns_input {match_map_id: Scalars['uuid'],steam_id: Scalars['bigint']}
+
+
+/** input type for updating data in table "player_match_map_stats" */
+export interface player_match_map_stats_set_input {assists?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flash_duration_count?: (Scalars['Int'] | null),flash_duration_sum?: (Scalars['numeric'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),molotov_damage?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),zeus_kills?: (Scalars['Int'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface player_match_map_stats_stddev_fieldsGenqlSelection{
+    assists?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flash_duration_count?: boolean | number
+    flash_duration_sum?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "player_match_map_stats" */
+export interface player_match_map_stats_stddev_order_by {assists?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_match_map_stats_stddev_pop_fieldsGenqlSelection{
+    assists?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flash_duration_count?: boolean | number
+    flash_duration_sum?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "player_match_map_stats" */
+export interface player_match_map_stats_stddev_pop_order_by {assists?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_match_map_stats_stddev_samp_fieldsGenqlSelection{
+    assists?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flash_duration_count?: boolean | number
+    flash_duration_sum?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "player_match_map_stats" */
+export interface player_match_map_stats_stddev_samp_order_by {assists?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** Streaming cursor of the table "player_match_map_stats" */
+export interface player_match_map_stats_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: player_match_map_stats_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface player_match_map_stats_stream_cursor_value_input {assists?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flash_duration_count?: (Scalars['Int'] | null),flash_duration_sum?: (Scalars['numeric'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),molotov_damage?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),zeus_kills?: (Scalars['Int'] | null)}
+
+
+/** aggregate sum on columns */
+export interface player_match_map_stats_sum_fieldsGenqlSelection{
+    assists?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flash_duration_count?: boolean | number
+    flash_duration_sum?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "player_match_map_stats" */
+export interface player_match_map_stats_sum_order_by {assists?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+export interface player_match_map_stats_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (player_match_map_stats_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (player_match_map_stats_set_input | null),
+/** filter the rows which have to be updated */
+where: player_match_map_stats_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface player_match_map_stats_var_pop_fieldsGenqlSelection{
+    assists?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flash_duration_count?: boolean | number
+    flash_duration_sum?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "player_match_map_stats" */
+export interface player_match_map_stats_var_pop_order_by {assists?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface player_match_map_stats_var_samp_fieldsGenqlSelection{
+    assists?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flash_duration_count?: boolean | number
+    flash_duration_sum?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "player_match_map_stats" */
+export interface player_match_map_stats_var_samp_order_by {assists?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface player_match_map_stats_variance_fieldsGenqlSelection{
+    assists?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flash_duration_count?: boolean | number
+    flash_duration_sum?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "player_match_map_stats" */
+export interface player_match_map_stats_variance_order_by {assists?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** columns and relationships of "player_match_stats_v" */
+export interface player_match_stats_vGenqlSelection{
+    assists?: boolean | number
+    avg_flash_duration?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    match_id?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "player_match_stats_v" */
+export interface player_match_stats_v_aggregateGenqlSelection{
+    aggregate?: player_match_stats_v_aggregate_fieldsGenqlSelection
+    nodes?: player_match_stats_vGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface player_match_stats_v_aggregate_bool_exp {count?: (player_match_stats_v_aggregate_bool_exp_count | null)}
+
+export interface player_match_stats_v_aggregate_bool_exp_count {arguments?: (player_match_stats_v_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (player_match_stats_v_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "player_match_stats_v" */
+export interface player_match_stats_v_aggregate_fieldsGenqlSelection{
+    avg?: player_match_stats_v_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (player_match_stats_v_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: player_match_stats_v_max_fieldsGenqlSelection
+    min?: player_match_stats_v_min_fieldsGenqlSelection
+    stddev?: player_match_stats_v_stddev_fieldsGenqlSelection
+    stddev_pop?: player_match_stats_v_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: player_match_stats_v_stddev_samp_fieldsGenqlSelection
+    sum?: player_match_stats_v_sum_fieldsGenqlSelection
+    var_pop?: player_match_stats_v_var_pop_fieldsGenqlSelection
+    var_samp?: player_match_stats_v_var_samp_fieldsGenqlSelection
+    variance?: player_match_stats_v_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "player_match_stats_v" */
+export interface player_match_stats_v_aggregate_order_by {avg?: (player_match_stats_v_avg_order_by | null),count?: (order_by | null),max?: (player_match_stats_v_max_order_by | null),min?: (player_match_stats_v_min_order_by | null),stddev?: (player_match_stats_v_stddev_order_by | null),stddev_pop?: (player_match_stats_v_stddev_pop_order_by | null),stddev_samp?: (player_match_stats_v_stddev_samp_order_by | null),sum?: (player_match_stats_v_sum_order_by | null),var_pop?: (player_match_stats_v_var_pop_order_by | null),var_samp?: (player_match_stats_v_var_samp_order_by | null),variance?: (player_match_stats_v_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "player_match_stats_v" */
+export interface player_match_stats_v_arr_rel_insert_input {data: player_match_stats_v_insert_input[]}
+
+
+/** aggregate avg on columns */
+export interface player_match_stats_v_avg_fieldsGenqlSelection{
+    assists?: boolean | number
+    avg_flash_duration?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "player_match_stats_v" */
+export interface player_match_stats_v_avg_order_by {assists?: (order_by | null),avg_flash_duration?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "player_match_stats_v". All fields are combined with a logical 'AND'. */
+export interface player_match_stats_v_bool_exp {_and?: (player_match_stats_v_bool_exp[] | null),_not?: (player_match_stats_v_bool_exp | null),_or?: (player_match_stats_v_bool_exp[] | null),assists?: (Int_comparison_exp | null),avg_flash_duration?: (numeric_comparison_exp | null),damage?: (Int_comparison_exp | null),deaths?: (Int_comparison_exp | null),enemies_flashed?: (Int_comparison_exp | null),five_kill_rounds?: (Int_comparison_exp | null),flash_assists?: (Int_comparison_exp | null),flashes_thrown?: (Int_comparison_exp | null),four_kill_rounds?: (Int_comparison_exp | null),he_damage?: (Int_comparison_exp | null),hs_kills?: (Int_comparison_exp | null),kills?: (Int_comparison_exp | null),knife_kills?: (Int_comparison_exp | null),match_id?: (uuid_comparison_exp | null),molotov_damage?: (Int_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_damage?: (Int_comparison_exp | null),team_flashed?: (Int_comparison_exp | null),three_kill_rounds?: (Int_comparison_exp | null),two_kill_rounds?: (Int_comparison_exp | null),zeus_kills?: (Int_comparison_exp | null)}
+
+
+/** input type for inserting data into table "player_match_stats_v" */
+export interface player_match_stats_v_insert_input {assists?: (Scalars['Int'] | null),avg_flash_duration?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),molotov_damage?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),zeus_kills?: (Scalars['Int'] | null)}
+
+
+/** aggregate max on columns */
+export interface player_match_stats_v_max_fieldsGenqlSelection{
+    assists?: boolean | number
+    avg_flash_duration?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    match_id?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "player_match_stats_v" */
+export interface player_match_stats_v_max_order_by {assists?: (order_by | null),avg_flash_duration?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),match_id?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface player_match_stats_v_min_fieldsGenqlSelection{
+    assists?: boolean | number
+    avg_flash_duration?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    match_id?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "player_match_stats_v" */
+export interface player_match_stats_v_min_order_by {assists?: (order_by | null),avg_flash_duration?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),match_id?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** Ordering options when selecting data from "player_match_stats_v". */
+export interface player_match_stats_v_order_by {assists?: (order_by | null),avg_flash_duration?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),match_id?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** aggregate stddev on columns */
+export interface player_match_stats_v_stddev_fieldsGenqlSelection{
+    assists?: boolean | number
+    avg_flash_duration?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "player_match_stats_v" */
+export interface player_match_stats_v_stddev_order_by {assists?: (order_by | null),avg_flash_duration?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_match_stats_v_stddev_pop_fieldsGenqlSelection{
+    assists?: boolean | number
+    avg_flash_duration?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "player_match_stats_v" */
+export interface player_match_stats_v_stddev_pop_order_by {assists?: (order_by | null),avg_flash_duration?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_match_stats_v_stddev_samp_fieldsGenqlSelection{
+    assists?: boolean | number
+    avg_flash_duration?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "player_match_stats_v" */
+export interface player_match_stats_v_stddev_samp_order_by {assists?: (order_by | null),avg_flash_duration?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** Streaming cursor of the table "player_match_stats_v" */
+export interface player_match_stats_v_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: player_match_stats_v_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface player_match_stats_v_stream_cursor_value_input {assists?: (Scalars['Int'] | null),avg_flash_duration?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),molotov_damage?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),zeus_kills?: (Scalars['Int'] | null)}
+
+
+/** aggregate sum on columns */
+export interface player_match_stats_v_sum_fieldsGenqlSelection{
+    assists?: boolean | number
+    avg_flash_duration?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "player_match_stats_v" */
+export interface player_match_stats_v_sum_order_by {assists?: (order_by | null),avg_flash_duration?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** aggregate var_pop on columns */
+export interface player_match_stats_v_var_pop_fieldsGenqlSelection{
+    assists?: boolean | number
+    avg_flash_duration?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "player_match_stats_v" */
+export interface player_match_stats_v_var_pop_order_by {assists?: (order_by | null),avg_flash_duration?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface player_match_stats_v_var_samp_fieldsGenqlSelection{
+    assists?: boolean | number
+    avg_flash_duration?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "player_match_stats_v" */
+export interface player_match_stats_v_var_samp_order_by {assists?: (order_by | null),avg_flash_duration?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface player_match_stats_v_variance_fieldsGenqlSelection{
+    assists?: boolean | number
+    avg_flash_duration?: boolean | number
+    damage?: boolean | number
+    deaths?: boolean | number
+    enemies_flashed?: boolean | number
+    five_kill_rounds?: boolean | number
+    flash_assists?: boolean | number
+    flashes_thrown?: boolean | number
+    four_kill_rounds?: boolean | number
+    he_damage?: boolean | number
+    hs_kills?: boolean | number
+    kills?: boolean | number
+    knife_kills?: boolean | number
+    molotov_damage?: boolean | number
+    steam_id?: boolean | number
+    team_damage?: boolean | number
+    team_flashed?: boolean | number
+    three_kill_rounds?: boolean | number
+    two_kill_rounds?: boolean | number
+    zeus_kills?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "player_match_stats_v" */
+export interface player_match_stats_v_variance_order_by {assists?: (order_by | null),avg_flash_duration?: (order_by | null),damage?: (order_by | null),deaths?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),hs_kills?: (order_by | null),kills?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),two_kill_rounds?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** columns and relationships of "player_objectives" */
@@ -35249,6 +37226,54 @@ export interface playersGenqlSelection{
     losses_duel?: boolean | number
     /** A computed field, executes function "get_total_player_losses_wingman" */
     losses_wingman?: boolean | number
+    /** An array relationship */
+    match_map_stats?: (player_match_map_statsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_map_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_map_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_map_stats_bool_exp | null)} })
+    /** An aggregate relationship */
+    match_map_stats_aggregate?: (player_match_map_stats_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_map_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_map_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_map_stats_bool_exp | null)} })
+    /** An array relationship */
+    match_stats?: (player_match_stats_vGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_stats_v_bool_exp | null)} })
+    /** An aggregate relationship */
+    match_stats_aggregate?: (player_match_stats_v_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_stats_v_bool_exp | null)} })
     /** A computed field, executes function "get_player_matches" */
     matches?: (matchesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -35692,7 +37717,7 @@ export interface players_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "players". All fields are combined with a logical 'AND'. */
-export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_lobby_id?: (uuid_comparison_exp | null),custom_avatar_url?: (String_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),elo?: (jsonb_comparison_exp | null),elo_history?: (v_player_elo_bool_exp | null),elo_history_aggregate?: (v_player_elo_aggregate_bool_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),friends?: (my_friends_bool_exp | null),friends_aggregate?: (my_friends_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_banned?: (Boolean_comparison_exp | null),is_gagged?: (Boolean_comparison_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),is_in_lobby?: (Boolean_comparison_exp | null),is_muted?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),kills_by_weapons?: (player_kills_by_weapon_bool_exp | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_bool_exp | null),language?: (String_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),lobby_players?: (lobby_players_bool_exp | null),lobby_players_aggregate?: (lobby_players_aggregate_bool_exp | null),losses?: (Int_comparison_exp | null),losses_competitive?: (Int_comparison_exp | null),losses_duel?: (Int_comparison_exp | null),losses_wingman?: (Int_comparison_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),peak_elo?: (jsonb_comparison_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),roster_image_url?: (String_comparison_exp | null),sanctions?: (player_sanctions_bool_exp | null),sanctions_aggregate?: (player_sanctions_aggregate_bool_exp | null),stats?: (player_stats_bool_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournament_trophies?: (tournament_trophies_bool_exp | null),tournament_trophies_aggregate?: (tournament_trophies_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null),wins?: (Int_comparison_exp | null),wins_competitive?: (Int_comparison_exp | null),wins_duel?: (Int_comparison_exp | null),wins_wingman?: (Int_comparison_exp | null)}
+export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_lobby_id?: (uuid_comparison_exp | null),custom_avatar_url?: (String_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),elo?: (jsonb_comparison_exp | null),elo_history?: (v_player_elo_bool_exp | null),elo_history_aggregate?: (v_player_elo_aggregate_bool_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),friends?: (my_friends_bool_exp | null),friends_aggregate?: (my_friends_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_banned?: (Boolean_comparison_exp | null),is_gagged?: (Boolean_comparison_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),is_in_lobby?: (Boolean_comparison_exp | null),is_muted?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),kills_by_weapons?: (player_kills_by_weapon_bool_exp | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_bool_exp | null),language?: (String_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),lobby_players?: (lobby_players_bool_exp | null),lobby_players_aggregate?: (lobby_players_aggregate_bool_exp | null),losses?: (Int_comparison_exp | null),losses_competitive?: (Int_comparison_exp | null),losses_duel?: (Int_comparison_exp | null),losses_wingman?: (Int_comparison_exp | null),match_map_stats?: (player_match_map_stats_bool_exp | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_bool_exp | null),match_stats?: (player_match_stats_v_bool_exp | null),match_stats_aggregate?: (player_match_stats_v_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),peak_elo?: (jsonb_comparison_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),roster_image_url?: (String_comparison_exp | null),sanctions?: (player_sanctions_bool_exp | null),sanctions_aggregate?: (player_sanctions_aggregate_bool_exp | null),stats?: (player_stats_bool_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournament_trophies?: (tournament_trophies_bool_exp | null),tournament_trophies_aggregate?: (tournament_trophies_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null),wins?: (Int_comparison_exp | null),wins_competitive?: (Int_comparison_exp | null),wins_duel?: (Int_comparison_exp | null),wins_wingman?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "players" */
@@ -35700,7 +37725,7 @@ export interface players_inc_input {steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "players" */
-export interface players_insert_input {abandoned_matches?: (abandoned_matches_arr_rel_insert_input | null),assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),coach_lineups?: (match_lineups_arr_rel_insert_input | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),elo_history?: (v_player_elo_arr_rel_insert_input | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),friends?: (my_friends_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),kills_by_weapons?: (player_kills_by_weapon_arr_rel_insert_input | null),language?: (Scalars['String'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),lobby_players?: (lobby_players_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notifications?: (notifications_arr_rel_insert_input | null),objectives?: (player_objectives_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),roster_image_url?: (Scalars['String'] | null),sanctions?: (player_sanctions_arr_rel_insert_input | null),stats?: (player_stats_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournament_trophies?: (tournament_trophies_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
+export interface players_insert_input {abandoned_matches?: (abandoned_matches_arr_rel_insert_input | null),assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),coach_lineups?: (match_lineups_arr_rel_insert_input | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),elo_history?: (v_player_elo_arr_rel_insert_input | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),friends?: (my_friends_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),kills_by_weapons?: (player_kills_by_weapon_arr_rel_insert_input | null),language?: (Scalars['String'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),lobby_players?: (lobby_players_arr_rel_insert_input | null),match_map_stats?: (player_match_map_stats_arr_rel_insert_input | null),match_stats?: (player_match_stats_v_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notifications?: (notifications_arr_rel_insert_input | null),objectives?: (player_objectives_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),roster_image_url?: (Scalars['String'] | null),sanctions?: (player_sanctions_arr_rel_insert_input | null),stats?: (player_stats_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournament_trophies?: (tournament_trophies_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -35805,7 +37830,7 @@ export interface players_on_conflict {constraint: players_constraint,update_colu
 
 
 /** Ordering options when selecting data from "players". */
-export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),current_lobby_id?: (order_by | null),custom_avatar_url?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),elo_history_aggregate?: (v_player_elo_aggregate_order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),friends_aggregate?: (my_friends_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_banned?: (order_by | null),is_gagged?: (order_by | null),is_in_another_match?: (order_by | null),is_in_lobby?: (order_by | null),is_muted?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_order_by | null),language?: (order_by | null),last_sign_in_at?: (order_by | null),lobby_players_aggregate?: (lobby_players_aggregate_order_by | null),losses?: (order_by | null),losses_competitive?: (order_by | null),losses_duel?: (order_by | null),losses_wingman?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),peak_elo?: (order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),roster_image_url?: (order_by | null),sanctions_aggregate?: (player_sanctions_aggregate_order_by | null),stats?: (player_stats_order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournament_trophies_aggregate?: (tournament_trophies_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null),wins?: (order_by | null),wins_competitive?: (order_by | null),wins_duel?: (order_by | null),wins_wingman?: (order_by | null)}
+export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),current_lobby_id?: (order_by | null),custom_avatar_url?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),elo_history_aggregate?: (v_player_elo_aggregate_order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),friends_aggregate?: (my_friends_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_banned?: (order_by | null),is_gagged?: (order_by | null),is_in_another_match?: (order_by | null),is_in_lobby?: (order_by | null),is_muted?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_order_by | null),language?: (order_by | null),last_sign_in_at?: (order_by | null),lobby_players_aggregate?: (lobby_players_aggregate_order_by | null),losses?: (order_by | null),losses_competitive?: (order_by | null),losses_duel?: (order_by | null),losses_wingman?: (order_by | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_order_by | null),match_stats_aggregate?: (player_match_stats_v_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),peak_elo?: (order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),profile_url?: (order_by | null),role?: (order_by | null),roster_image_url?: (order_by | null),sanctions_aggregate?: (player_sanctions_aggregate_order_by | null),stats?: (player_stats_order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournament_trophies_aggregate?: (tournament_trophies_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null),wins?: (order_by | null),wins_competitive?: (order_by | null),wins_duel?: (order_by | null),wins_wingman?: (order_by | null)}
 
 
 /** primary key columns input for table: players */
@@ -37870,6 +39895,56 @@ export interface query_rootGenqlSelection{
     where?: (player_kills_by_weapon_bool_exp | null)} })
     /** fetch data from the table: "player_kills_by_weapon" using primary key columns */
     player_kills_by_weapon_by_pk?: (player_kills_by_weaponGenqlSelection & { __args: {player_steam_id: Scalars['bigint'], with: Scalars['String']} })
+    /** fetch data from the table: "player_match_map_stats" */
+    player_match_map_stats?: (player_match_map_statsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_map_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_map_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_map_stats_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_match_map_stats" */
+    player_match_map_stats_aggregate?: (player_match_map_stats_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_map_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_map_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_map_stats_bool_exp | null)} })
+    /** fetch data from the table: "player_match_map_stats" using primary key columns */
+    player_match_map_stats_by_pk?: (player_match_map_statsGenqlSelection & { __args: {match_map_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** fetch data from the table: "player_match_stats_v" */
+    player_match_stats_v?: (player_match_stats_vGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_stats_v_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_match_stats_v" */
+    player_match_stats_v_aggregate?: (player_match_stats_v_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_stats_v_bool_exp | null)} })
     /** An array relationship */
     player_objectives?: (player_objectivesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -41571,6 +43646,72 @@ export interface subscription_rootGenqlSelection{
     cursor: (player_kills_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (player_kills_bool_exp | null)} })
+    /** fetch data from the table: "player_match_map_stats" */
+    player_match_map_stats?: (player_match_map_statsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_map_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_map_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_map_stats_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_match_map_stats" */
+    player_match_map_stats_aggregate?: (player_match_map_stats_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_map_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_map_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_map_stats_bool_exp | null)} })
+    /** fetch data from the table: "player_match_map_stats" using primary key columns */
+    player_match_map_stats_by_pk?: (player_match_map_statsGenqlSelection & { __args: {match_map_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** fetch data from the table in a streaming manner: "player_match_map_stats" */
+    player_match_map_stats_stream?: (player_match_map_statsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (player_match_map_stats_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (player_match_map_stats_bool_exp | null)} })
+    /** fetch data from the table: "player_match_stats_v" */
+    player_match_stats_v?: (player_match_stats_vGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_stats_v_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_match_stats_v" */
+    player_match_stats_v_aggregate?: (player_match_stats_v_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_stats_v_bool_exp | null)} })
+    /** fetch data from the table in a streaming manner: "player_match_stats_v" */
+    player_match_stats_v_stream?: (player_match_stats_vGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (player_match_stats_v_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (player_match_stats_v_bool_exp | null)} })
     /** An array relationship */
     player_objectives?: (player_objectivesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -54417,6 +56558,222 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const player_match_map_stats_possibleTypes: string[] = ['player_match_map_stats']
+    export const isplayer_match_map_stats = (obj?: { __typename?: any } | null): obj is player_match_map_stats => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_map_stats"')
+      return player_match_map_stats_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_map_stats_aggregate_possibleTypes: string[] = ['player_match_map_stats_aggregate']
+    export const isplayer_match_map_stats_aggregate = (obj?: { __typename?: any } | null): obj is player_match_map_stats_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_map_stats_aggregate"')
+      return player_match_map_stats_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_map_stats_aggregate_fields_possibleTypes: string[] = ['player_match_map_stats_aggregate_fields']
+    export const isplayer_match_map_stats_aggregate_fields = (obj?: { __typename?: any } | null): obj is player_match_map_stats_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_map_stats_aggregate_fields"')
+      return player_match_map_stats_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_map_stats_avg_fields_possibleTypes: string[] = ['player_match_map_stats_avg_fields']
+    export const isplayer_match_map_stats_avg_fields = (obj?: { __typename?: any } | null): obj is player_match_map_stats_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_map_stats_avg_fields"')
+      return player_match_map_stats_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_map_stats_max_fields_possibleTypes: string[] = ['player_match_map_stats_max_fields']
+    export const isplayer_match_map_stats_max_fields = (obj?: { __typename?: any } | null): obj is player_match_map_stats_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_map_stats_max_fields"')
+      return player_match_map_stats_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_map_stats_min_fields_possibleTypes: string[] = ['player_match_map_stats_min_fields']
+    export const isplayer_match_map_stats_min_fields = (obj?: { __typename?: any } | null): obj is player_match_map_stats_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_map_stats_min_fields"')
+      return player_match_map_stats_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_map_stats_mutation_response_possibleTypes: string[] = ['player_match_map_stats_mutation_response']
+    export const isplayer_match_map_stats_mutation_response = (obj?: { __typename?: any } | null): obj is player_match_map_stats_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_map_stats_mutation_response"')
+      return player_match_map_stats_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_map_stats_stddev_fields_possibleTypes: string[] = ['player_match_map_stats_stddev_fields']
+    export const isplayer_match_map_stats_stddev_fields = (obj?: { __typename?: any } | null): obj is player_match_map_stats_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_map_stats_stddev_fields"')
+      return player_match_map_stats_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_map_stats_stddev_pop_fields_possibleTypes: string[] = ['player_match_map_stats_stddev_pop_fields']
+    export const isplayer_match_map_stats_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is player_match_map_stats_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_map_stats_stddev_pop_fields"')
+      return player_match_map_stats_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_map_stats_stddev_samp_fields_possibleTypes: string[] = ['player_match_map_stats_stddev_samp_fields']
+    export const isplayer_match_map_stats_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is player_match_map_stats_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_map_stats_stddev_samp_fields"')
+      return player_match_map_stats_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_map_stats_sum_fields_possibleTypes: string[] = ['player_match_map_stats_sum_fields']
+    export const isplayer_match_map_stats_sum_fields = (obj?: { __typename?: any } | null): obj is player_match_map_stats_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_map_stats_sum_fields"')
+      return player_match_map_stats_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_map_stats_var_pop_fields_possibleTypes: string[] = ['player_match_map_stats_var_pop_fields']
+    export const isplayer_match_map_stats_var_pop_fields = (obj?: { __typename?: any } | null): obj is player_match_map_stats_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_map_stats_var_pop_fields"')
+      return player_match_map_stats_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_map_stats_var_samp_fields_possibleTypes: string[] = ['player_match_map_stats_var_samp_fields']
+    export const isplayer_match_map_stats_var_samp_fields = (obj?: { __typename?: any } | null): obj is player_match_map_stats_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_map_stats_var_samp_fields"')
+      return player_match_map_stats_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_map_stats_variance_fields_possibleTypes: string[] = ['player_match_map_stats_variance_fields']
+    export const isplayer_match_map_stats_variance_fields = (obj?: { __typename?: any } | null): obj is player_match_map_stats_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_map_stats_variance_fields"')
+      return player_match_map_stats_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_stats_v_possibleTypes: string[] = ['player_match_stats_v']
+    export const isplayer_match_stats_v = (obj?: { __typename?: any } | null): obj is player_match_stats_v => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_stats_v"')
+      return player_match_stats_v_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_stats_v_aggregate_possibleTypes: string[] = ['player_match_stats_v_aggregate']
+    export const isplayer_match_stats_v_aggregate = (obj?: { __typename?: any } | null): obj is player_match_stats_v_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_stats_v_aggregate"')
+      return player_match_stats_v_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_stats_v_aggregate_fields_possibleTypes: string[] = ['player_match_stats_v_aggregate_fields']
+    export const isplayer_match_stats_v_aggregate_fields = (obj?: { __typename?: any } | null): obj is player_match_stats_v_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_stats_v_aggregate_fields"')
+      return player_match_stats_v_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_stats_v_avg_fields_possibleTypes: string[] = ['player_match_stats_v_avg_fields']
+    export const isplayer_match_stats_v_avg_fields = (obj?: { __typename?: any } | null): obj is player_match_stats_v_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_stats_v_avg_fields"')
+      return player_match_stats_v_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_stats_v_max_fields_possibleTypes: string[] = ['player_match_stats_v_max_fields']
+    export const isplayer_match_stats_v_max_fields = (obj?: { __typename?: any } | null): obj is player_match_stats_v_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_stats_v_max_fields"')
+      return player_match_stats_v_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_stats_v_min_fields_possibleTypes: string[] = ['player_match_stats_v_min_fields']
+    export const isplayer_match_stats_v_min_fields = (obj?: { __typename?: any } | null): obj is player_match_stats_v_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_stats_v_min_fields"')
+      return player_match_stats_v_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_stats_v_stddev_fields_possibleTypes: string[] = ['player_match_stats_v_stddev_fields']
+    export const isplayer_match_stats_v_stddev_fields = (obj?: { __typename?: any } | null): obj is player_match_stats_v_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_stats_v_stddev_fields"')
+      return player_match_stats_v_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_stats_v_stddev_pop_fields_possibleTypes: string[] = ['player_match_stats_v_stddev_pop_fields']
+    export const isplayer_match_stats_v_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is player_match_stats_v_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_stats_v_stddev_pop_fields"')
+      return player_match_stats_v_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_stats_v_stddev_samp_fields_possibleTypes: string[] = ['player_match_stats_v_stddev_samp_fields']
+    export const isplayer_match_stats_v_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is player_match_stats_v_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_stats_v_stddev_samp_fields"')
+      return player_match_stats_v_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_stats_v_sum_fields_possibleTypes: string[] = ['player_match_stats_v_sum_fields']
+    export const isplayer_match_stats_v_sum_fields = (obj?: { __typename?: any } | null): obj is player_match_stats_v_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_stats_v_sum_fields"')
+      return player_match_stats_v_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_stats_v_var_pop_fields_possibleTypes: string[] = ['player_match_stats_v_var_pop_fields']
+    export const isplayer_match_stats_v_var_pop_fields = (obj?: { __typename?: any } | null): obj is player_match_stats_v_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_stats_v_var_pop_fields"')
+      return player_match_stats_v_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_stats_v_var_samp_fields_possibleTypes: string[] = ['player_match_stats_v_var_samp_fields']
+    export const isplayer_match_stats_v_var_samp_fields = (obj?: { __typename?: any } | null): obj is player_match_stats_v_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_stats_v_var_samp_fields"')
+      return player_match_stats_v_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_stats_v_variance_fields_possibleTypes: string[] = ['player_match_stats_v_variance_fields']
+    export const isplayer_match_stats_v_variance_fields = (obj?: { __typename?: any } | null): obj is player_match_stats_v_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_stats_v_variance_fields"')
+      return player_match_stats_v_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const player_objectives_possibleTypes: string[] = ['player_objectives']
     export const isplayer_objectives = (obj?: { __typename?: any } | null): obj is player_objectives => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_objectives"')
@@ -59634,22 +61991,54 @@ export const enumPlayerEloConstraint = {
 }
 
 export const enumPlayerEloSelectColumn = {
+   actual_score: 'actual_score' as const,
+   assists: 'assists' as const,
    change: 'change' as const,
    created_at: 'created_at' as const,
    current: 'current' as const,
+   damage: 'damage' as const,
+   damage_percent: 'damage_percent' as const,
+   deaths: 'deaths' as const,
+   expected_score: 'expected_score' as const,
    impact: 'impact' as const,
+   k_factor: 'k_factor' as const,
+   kda: 'kda' as const,
+   kills: 'kills' as const,
+   map_losses: 'map_losses' as const,
+   map_wins: 'map_wins' as const,
    match_id: 'match_id' as const,
+   opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
+   performance_multiplier: 'performance_multiplier' as const,
+   player_team_elo_avg: 'player_team_elo_avg' as const,
+   series_multiplier: 'series_multiplier' as const,
    steam_id: 'steam_id' as const,
+   team_avg_kda: 'team_avg_kda' as const,
    type: 'type' as const
 }
 
 export const enumPlayerEloUpdateColumn = {
+   actual_score: 'actual_score' as const,
+   assists: 'assists' as const,
    change: 'change' as const,
    created_at: 'created_at' as const,
    current: 'current' as const,
+   damage: 'damage' as const,
+   damage_percent: 'damage_percent' as const,
+   deaths: 'deaths' as const,
+   expected_score: 'expected_score' as const,
    impact: 'impact' as const,
+   k_factor: 'k_factor' as const,
+   kda: 'kda' as const,
+   kills: 'kills' as const,
+   map_losses: 'map_losses' as const,
+   map_wins: 'map_wins' as const,
    match_id: 'match_id' as const,
+   opponent_team_elo_avg: 'opponent_team_elo_avg' as const,
+   performance_multiplier: 'performance_multiplier' as const,
+   player_team_elo_avg: 'player_team_elo_avg' as const,
+   series_multiplier: 'series_multiplier' as const,
    steam_id: 'steam_id' as const,
+   team_avg_kda: 'team_avg_kda' as const,
    type: 'type' as const
 }
 
@@ -59777,6 +62166,88 @@ export const enumPlayerKillsUpdateColumn = {
    thru_wall: 'thru_wall' as const,
    time: 'time' as const,
    with: 'with' as const
+}
+
+export const enumPlayerMatchMapStatsConstraint = {
+   player_match_map_stats_pkey: 'player_match_map_stats_pkey' as const
+}
+
+export const enumPlayerMatchMapStatsSelectColumn = {
+   assists: 'assists' as const,
+   damage: 'damage' as const,
+   deaths: 'deaths' as const,
+   enemies_flashed: 'enemies_flashed' as const,
+   five_kill_rounds: 'five_kill_rounds' as const,
+   flash_assists: 'flash_assists' as const,
+   flash_duration_count: 'flash_duration_count' as const,
+   flash_duration_sum: 'flash_duration_sum' as const,
+   flashes_thrown: 'flashes_thrown' as const,
+   four_kill_rounds: 'four_kill_rounds' as const,
+   he_damage: 'he_damage' as const,
+   hs_kills: 'hs_kills' as const,
+   kills: 'kills' as const,
+   knife_kills: 'knife_kills' as const,
+   match_id: 'match_id' as const,
+   match_map_id: 'match_map_id' as const,
+   molotov_damage: 'molotov_damage' as const,
+   steam_id: 'steam_id' as const,
+   team_damage: 'team_damage' as const,
+   team_flashed: 'team_flashed' as const,
+   three_kill_rounds: 'three_kill_rounds' as const,
+   two_kill_rounds: 'two_kill_rounds' as const,
+   updated_at: 'updated_at' as const,
+   zeus_kills: 'zeus_kills' as const
+}
+
+export const enumPlayerMatchMapStatsUpdateColumn = {
+   assists: 'assists' as const,
+   damage: 'damage' as const,
+   deaths: 'deaths' as const,
+   enemies_flashed: 'enemies_flashed' as const,
+   five_kill_rounds: 'five_kill_rounds' as const,
+   flash_assists: 'flash_assists' as const,
+   flash_duration_count: 'flash_duration_count' as const,
+   flash_duration_sum: 'flash_duration_sum' as const,
+   flashes_thrown: 'flashes_thrown' as const,
+   four_kill_rounds: 'four_kill_rounds' as const,
+   he_damage: 'he_damage' as const,
+   hs_kills: 'hs_kills' as const,
+   kills: 'kills' as const,
+   knife_kills: 'knife_kills' as const,
+   match_id: 'match_id' as const,
+   match_map_id: 'match_map_id' as const,
+   molotov_damage: 'molotov_damage' as const,
+   steam_id: 'steam_id' as const,
+   team_damage: 'team_damage' as const,
+   team_flashed: 'team_flashed' as const,
+   three_kill_rounds: 'three_kill_rounds' as const,
+   two_kill_rounds: 'two_kill_rounds' as const,
+   updated_at: 'updated_at' as const,
+   zeus_kills: 'zeus_kills' as const
+}
+
+export const enumPlayerMatchStatsVSelectColumn = {
+   assists: 'assists' as const,
+   avg_flash_duration: 'avg_flash_duration' as const,
+   damage: 'damage' as const,
+   deaths: 'deaths' as const,
+   enemies_flashed: 'enemies_flashed' as const,
+   five_kill_rounds: 'five_kill_rounds' as const,
+   flash_assists: 'flash_assists' as const,
+   flashes_thrown: 'flashes_thrown' as const,
+   four_kill_rounds: 'four_kill_rounds' as const,
+   he_damage: 'he_damage' as const,
+   hs_kills: 'hs_kills' as const,
+   kills: 'kills' as const,
+   knife_kills: 'knife_kills' as const,
+   match_id: 'match_id' as const,
+   molotov_damage: 'molotov_damage' as const,
+   steam_id: 'steam_id' as const,
+   team_damage: 'team_damage' as const,
+   team_flashed: 'team_flashed' as const,
+   three_kill_rounds: 'three_kill_rounds' as const,
+   two_kill_rounds: 'two_kill_rounds' as const,
+   zeus_kills: 'zeus_kills' as const
 }
 
 export const enumPlayerObjectivesConstraint = {

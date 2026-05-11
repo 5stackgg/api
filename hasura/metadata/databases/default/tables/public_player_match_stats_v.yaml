@@ -1,0 +1,31 @@
+table:
+  name: player_match_stats_v
+  schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - steam_id
+        - match_id
+        - kills
+        - hs_kills
+        - knife_kills
+        - zeus_kills
+        - assists
+        - flash_assists
+        - deaths
+        - damage
+        - team_damage
+        - he_damage
+        - molotov_damage
+        - flashes_thrown
+        - enemies_flashed
+        - team_flashed
+        - avg_flash_duration
+        - two_kill_rounds
+        - three_kill_rounds
+        - four_kill_rounds
+        - five_kill_rounds
+      filter: {}
+      allow_aggregations: true
+    comment: ""
