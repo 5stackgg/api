@@ -1,17 +1,7 @@
--- Recompute one map's per-player stats into player_match_map_stats from the
--- raw event tables. Called by the match_map_rounds trigger (see
--- hasura/triggers/match_map_rounds.sql) so the stats table only updates at
--- round-end — no mid-round leak.
---
--- Inlines the attacker_team <> attacked_team check rather than calling
--- is_team_kill/is_team_damage as row-typed functions; the row-typed call was
--- a hot spot in the EXPLAIN plan because Postgres couldn't push it through
--- the index. Only events whose round has a corresponding match_map_rounds
--- entry are counted, so mid-round events stay invisible until finalized.
---
--- Co-located here rather than in the migration so edits to the aggregation
--- logic are file-driven (the loader re-applies on digest change) instead of
--- requiring a new migration.
+-- Rebuild one map's player_match_map_stats from raw events. Fired by the
+-- match_map_rounds trigger at round-end (so mid-round events stay invisible).
+-- Inlines attacker_team <> attacked_team rather than calling is_team_kill/
+-- is_team_damage — row-typed function calls were a hot spot in EXPLAIN.
 
 CREATE OR REPLACE FUNCTION public.recompute_player_match_map_stats(p_match_map_id uuid)
 RETURNS void
@@ -25,13 +15,10 @@ BEGIN
   WHERE id = p_match_map_id;
 
   IF NOT FOUND THEN
-    -- Map gone (e.g. cascade delete): nothing to recompute.
     DELETE FROM public.player_match_map_stats WHERE match_map_id = p_match_map_id;
     RETURN;
   END IF;
 
-  -- Wipe-and-rewrite is simpler than diffing event-by-event and is fine because
-  -- it only runs at round boundaries (handful of times per map).
   DELETE FROM public.player_match_map_stats WHERE match_map_id = p_match_map_id;
 
   WITH finalized_rounds AS (
@@ -39,8 +26,6 @@ BEGIN
     FROM public.match_map_rounds
     WHERE match_map_id = p_match_map_id
   ),
-  -- Every steam_id that appears in any event for this map's finalized rounds.
-  -- This is the universe of rows we'll emit; missing aggregates default to 0.
   player_set AS (
     SELECT DISTINCT steam_id FROM (
       SELECT attacker_steam_id AS steam_id
@@ -136,8 +121,6 @@ BEGIN
     GROUP BY pf.attacker_steam_id
   ),
   utility_agg AS (
-    -- Enum values in e_utility_types are capitalised ('Flash', 'Smoke', ...);
-    -- the GraphQL layer uses e_utility_types_enum.Flash for the same string.
     SELECT
       pu.attacker_steam_id AS steam_id,
       COUNT(*) FILTER (WHERE pu.type = 'Flash')              AS flashes_thrown
@@ -146,8 +129,6 @@ BEGIN
       AND pu.round IN (SELECT round FROM finalized_rounds)
     GROUP BY pu.attacker_steam_id
   ),
-  -- multi-kills per round (suicide-excluded, matches v_player_multi_kills logic
-  -- but scoped to this map and finalized rounds only)
   multi_k_rounds AS (
     SELECT
       pk.attacker_steam_id AS steam_id,
@@ -205,23 +186,6 @@ BEGIN
 END;
 $$;
 
--- Idempotent backfill: any map whose stats are missing or whose function
--- definition predates the last edit gets re-computed. Cheap on subsequent
--- boots because the LEFT JOIN returns nothing when stats are already current.
--- Runs whenever this file's digest changes (so a function-logic fix here will
--- re-apply to existing matches without a separate migration).
-DO $$
-DECLARE
-  r record;
-BEGIN
-  FOR r IN
-    SELECT DISTINCT mmr.match_map_id
-    FROM public.match_map_rounds mmr
-    LEFT JOIN public.player_match_map_stats pmms
-      ON pmms.match_map_id = mmr.match_map_id
-    WHERE pmms.match_map_id IS NULL
-  LOOP
-    PERFORM public.recompute_player_match_map_stats(r.match_map_id);
-  END LOOP;
-END;
-$$;
+-- Re-run only when this file's digest changes — i.e. the aggregation logic
+-- above has actually been edited. Existing stats rows are rebuilt to match.
+SELECT public.recompute_all_player_match_map_stats();

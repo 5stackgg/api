@@ -1,10 +1,4 @@
--- All-maps rollup of player_match_map_stats. One row per (steam_id, match_id),
--- regardless of how many maps were played. Powers the "no specific map
--- selected" Overview tab on the match page.
---
--- Definition co-located with the table here rather than in the migration so
--- edits to the rollup logic are file-driven (re-applied on startup when the
--- digest changes) instead of requiring a new migration.
+-- All-maps rollup of player_match_map_stats. One row per (steam_id, match_id).
 
 CREATE OR REPLACE VIEW public.player_match_stats_v AS
 SELECT

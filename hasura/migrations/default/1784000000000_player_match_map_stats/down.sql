@@ -1,7 +1,6 @@
--- Drop both the table and the file-managed objects that depend on it. After a
--- down, restoring the file-managed function/view/trigger requires a fresh app
--- boot so the loader re-applies them (it re-applies on digest change, so touch
--- the relevant file to bump the digest if needed).
+-- Drops the table and file-managed objects that depend on it. After a down,
+-- the file-managed function/view/trigger only re-apply when their digest
+-- changes — touch the relevant file to force a re-apply.
 
 DROP TRIGGER IF EXISTS tai_match_map_rounds_recompute_stats ON public.match_map_rounds;
 DROP FUNCTION IF EXISTS public.tai_match_map_rounds_recompute_stats();

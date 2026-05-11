@@ -1,9 +1,5 @@
--- Maintains player_match_map_stats by recomputing one map's stats whenever
--- its round-summary row changes. Fires at round end (INSERT/UPDATE from
--- ScoreEvent's insert_match_map_rounds_one) and on restore_round (DELETE).
--- The recompute function itself lives in
--- hasura/functions/stats/recompute_player_match_map_stats.sql — that file is
--- loaded before this one (the loader applies functions/ before triggers/).
+-- Recomputes a map's stats whenever its round-summary row changes:
+-- INSERT/UPDATE at round end, DELETE on restore_round.
 
 CREATE OR REPLACE FUNCTION public.tai_match_map_rounds_recompute_stats()
 RETURNS trigger
