@@ -680,8 +680,12 @@ export class ClipsService {
       throw new Error(`render is ${row.status}`);
     }
 
-    const userSteamId = String(row.user_steam_id);
-    const key = ClipsService.GetClipThumbnailS3Key(userSteamId, jobId);
+    const userSteamId =
+      row.user_steam_id != null ? String(row.user_steam_id) : null;
+    const key = ClipsService.GetClipThumbnailS3Key(
+      userSteamId ?? "system",
+      jobId,
+    );
 
     await this.s3.put(key, fileStream);
 
@@ -713,8 +717,9 @@ export class ClipsService {
       throw new Error(`render is ${row.status}`);
     }
 
-    const userSteamId = String(row.user_steam_id);
-    const key = ClipsService.GetClipS3Key(userSteamId, jobId);
+    const userSteamId =
+      row.user_steam_id != null ? String(row.user_steam_id) : null;
+    const key = ClipsService.GetClipS3Key(userSteamId ?? "system", jobId);
 
     await this.s3.put(key, fileStream);
 
@@ -727,7 +732,10 @@ export class ClipsService {
       );
     }
 
-    const thumbnailKey = ClipsService.GetClipThumbnailS3Key(userSteamId, jobId);
+    const thumbnailKey = ClipsService.GetClipThumbnailS3Key(
+      userSteamId ?? "system",
+      jobId,
+    );
     let thumbnailUrl: string | null = null;
     let thumbnailSize = 0;
     try {
@@ -808,7 +816,7 @@ export class ClipsService {
       insert_match_clips_one: {
         __args: {
           object: {
-            user_steam_id: userSteamId,
+            ...(userSteamId ? { user_steam_id: userSteamId } : {}),
             target_steam_id: targetSteamId,
             match_map_id: row.match_map_id,
             match_map_demo_id: row.match_map_demo_id ?? null,
