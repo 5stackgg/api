@@ -1,15 +1,5 @@
 DROP VIEW IF EXISTS v_player_elo;
 
--- v_player_elo projects the persisted per-match elo metrics stored on
--- player_elo. Earlier revisions joined match_lineup_players, match_lineups,
--- matches, match_options, and recomputed everything via
--- get_elo_for_match() on every read. That made elo history lookups walk
--- idx_matches_created_at and call the function per candidate row.
---
--- All per-match metrics are now written by generate_player_elo_for_match(),
--- so the view is just a column rename + win/loss derivation. Lookups by
--- (steam_id, type) ORDER BY created_at DESC ride
--- idx_player_elo_steam_id_type_created_at.
 CREATE OR REPLACE VIEW v_player_elo AS
 SELECT
     pe.match_id,

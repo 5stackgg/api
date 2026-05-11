@@ -1,8 +1,3 @@
--- Persist per-match metrics that v_player_elo used to recompute on every read via
--- get_elo_for_match(). With these columns populated the view becomes a thin
--- projection over player_elo, and the (steam_id, type, created_at DESC) index
--- can drive elo_history lookups end-to-end.
-
 ALTER TABLE public.player_elo
   ADD COLUMN IF NOT EXISTS actual_score             double precision,
   ADD COLUMN IF NOT EXISTS expected_score           double precision,
@@ -21,9 +16,6 @@ ALTER TABLE public.player_elo
   ADD COLUMN IF NOT EXISTS map_losses               integer,
   ADD COLUMN IF NOT EXISTS series_multiplier        integer;
 
--- Backfill existing rows by recomputing once. get_player_elo_for_match is
--- deterministic w.r.t. (match, player) so this matches what fresh inserts
--- will now persist on their own.
 WITH calc AS (
   SELECT
     pe.steam_id,
