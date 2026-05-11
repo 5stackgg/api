@@ -1012,19 +1012,16 @@ export class GameStreamerService {
 
   public static GetBatchHighlightsJobName(
     matchMapId: string,
-    matchMapDemoId?: string,
+    matchMapDemoId: string,
   ) {
     const mapPart = matchMapId.replace(/-/g, "").slice(0, 8);
-    if (!matchMapDemoId) {
-      return `gs-batch-${mapPart}`;
-    }
     const demoPart = matchMapDemoId.replace(/-/g, "").slice(0, 8);
     return `gs-batch-${mapPart}-${demoPart}`;
   }
 
   public async getBatchHighlightsPodState(
     matchMapId: string,
-    matchMapDemoId?: string,
+    matchMapDemoId: string,
   ): Promise<"running" | "succeeded" | "failed" | "absent"> {
     const jobName = GameStreamerService.GetBatchHighlightsJobName(
       matchMapId,
@@ -1054,7 +1051,7 @@ export class GameStreamerService {
 
   public async getBatchPodFailureReason(
     matchMapId: string,
-    matchMapDemoId?: string,
+    matchMapDemoId: string,
   ): Promise<string | null> {
     const jobName = GameStreamerService.GetBatchHighlightsJobName(
       matchMapId,
@@ -1113,7 +1110,7 @@ export class GameStreamerService {
 
   public async killBatchHighlightsPod(
     matchMapId: string,
-    matchMapDemoId?: string,
+    matchMapDemoId: string,
   ): Promise<void> {
     const jobName = GameStreamerService.GetBatchHighlightsJobName(
       matchMapId,
@@ -1134,24 +1131,19 @@ export class GameStreamerService {
   public async dispatchBatchHighlights(
     matchMapId: string,
     jobs: Array<{ job_id: string; session_token: string; spec: unknown }>,
-    matchMapDemoId?: string,
+    matchMapDemoId: string,
   ): Promise<void> {
     if (jobs.length === 0) return;
 
-    const where = matchMapDemoId
-      ? { id: { _eq: matchMapDemoId } }
-      : { match_map_id: { _eq: matchMapId } };
     const { match_map_demos } = await this.hasura.query({
       match_map_demos: {
         __args: {
-          where,
-          order_by: matchMapDemoId
-            ? undefined
-            : [{ metadata_parsed_at: "desc_nulls_last" }, { id: "desc" }],
+          where: { id: { _eq: matchMapDemoId } },
           limit: 1,
         },
         id: true,
         match_id: true,
+        match_map_id: true,
         file: true,
         total_ticks: true,
         tick_rate: true,
@@ -1163,7 +1155,12 @@ export class GameStreamerService {
     const demo = match_map_demos?.[0];
     if (!demo?.file) {
       throw new Error(
-        `cannot dispatch batch highlights: no demo file for match_map ${matchMapId}`,
+        `cannot dispatch batch highlights: no demo file for demo ${matchMapDemoId}`,
+      );
+    }
+    if (String(demo.match_map_id) !== matchMapId) {
+      throw new Error(
+        `demo ${matchMapDemoId} does not belong to match_map ${matchMapId} (got ${demo.match_map_id})`,
       );
     }
     const matchId = String(demo.match_id);
@@ -1176,7 +1173,10 @@ export class GameStreamerService {
       "get",
     );
 
-    const nodeId = await this.claimGpuForBatchHighlights(matchMapId);
+    const nodeId = await this.claimGpuForBatchHighlights(
+      matchMapId,
+      resolvedDemoId,
+    );
     const jobName = GameStreamerService.GetBatchHighlightsJobName(
       matchMapId,
       resolvedDemoId,
@@ -1360,6 +1360,7 @@ export class GameStreamerService {
 
   private async claimGpuForBatchHighlights(
     matchMapId: string,
+    matchMapDemoId: string,
   ): Promise<string> {
     return this.postgres.transaction(async (client) => {
       const result = await client.query(
@@ -1368,11 +1369,12 @@ export class GameStreamerService {
             SET game_server_node_id = chosen.id
            FROM chosen
           WHERE clip_render_jobs.match_map_id = $1
+            AND clip_render_jobs.match_map_demo_id = $2
             AND clip_render_jobs.status IN ('queued','rendering','uploading')
             AND clip_render_jobs.game_server_node_id IS NULL
             AND chosen.id IS NOT NULL
          RETURNING clip_render_jobs.game_server_node_id`,
-        [matchMapId],
+        [matchMapId, matchMapDemoId],
       );
 
       const nodeId = result.rows[0]?.game_server_node_id as string | undefined;

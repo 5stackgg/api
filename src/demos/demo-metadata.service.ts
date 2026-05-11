@@ -68,13 +68,16 @@ export class DemoMetadataService {
     const demos = await this.fetchAllDemosForMap(matchMapId);
     if (demos.length === 0) return [];
 
-    const tasks = demos.map(async (demo) => {
+    const results: DemoRow[] = [];
+    for (const demo of demos) {
       if (demo.metadata_parsed_at && demo.total_ticks) {
-        return demo;
+        results.push(demo);
+        continue;
       }
       const existing = this.inFlight.get(demo.id);
       if (existing) {
-        return existing;
+        results.push(await existing);
+        continue;
       }
       const parsing = this.parseAndPersist(demo)
         .catch((error) => {
@@ -85,10 +88,9 @@ export class DemoMetadataService {
         })
         .finally(() => this.inFlight.delete(demo.id));
       this.inFlight.set(demo.id, parsing);
-      return parsing;
-    });
-
-    return Promise.all(tasks);
+      results.push(await parsing);
+    }
+    return results;
   }
 
   public async ensureParsedById(matchMapDemoId: string): Promise<void> {

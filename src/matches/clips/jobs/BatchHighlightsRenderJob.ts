@@ -35,14 +35,17 @@ export class BatchHighlightsRenderJob extends WorkerHost {
   async process(
     job: Job<{
       matchMapId: string;
-      matchMapDemoId?: string;
+      matchMapDemoId: string;
       dispatched?: boolean;
     }>,
   ): Promise<void> {
     const { matchMapId, matchMapDemoId, dispatched } = job.data;
-    const tag = matchMapDemoId
-      ? `[batch-highlights ${matchMapId} demo ${matchMapDemoId}]`
-      : `[batch-highlights ${matchMapId}]`;
+    if (!matchMapDemoId) {
+      throw new Error(
+        `batch-highlights job ${job.id} missing matchMapDemoId — refusing to dispatch map-wide`,
+      );
+    }
+    const tag = `[batch-highlights ${matchMapId} demo ${matchMapDemoId}]`;
 
     const inFlight = await this.fetchInFlightJobs(matchMapId, matchMapDemoId);
     if (inFlight.length === 0) {
@@ -112,21 +115,18 @@ export class BatchHighlightsRenderJob extends WorkerHost {
 
   private async fetchInFlightJobs(
     matchMapId: string,
-    matchMapDemoId?: string,
+    matchMapDemoId: string,
   ): Promise<
     Array<{ id: string; job_id: string; session_token: string; spec: unknown }>
   > {
-    const where: any = {
-      match_map_id: { _eq: matchMapId },
-      status: { _in: [...IN_FLIGHT_STATUSES] },
-    };
-    if (matchMapDemoId) {
-      where.match_map_demo_id = { _eq: matchMapDemoId };
-    }
     const { clip_render_jobs } = await this.hasura.query({
       clip_render_jobs: {
         __args: {
-          where,
+          where: {
+            match_map_id: { _eq: matchMapId },
+            match_map_demo_id: { _eq: matchMapDemoId },
+            status: { _in: [...IN_FLIGHT_STATUSES] },
+          },
           order_by: [{ created_at: "asc" }],
         },
         id: true,

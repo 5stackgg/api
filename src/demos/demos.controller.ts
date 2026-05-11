@@ -213,15 +213,15 @@ export class DemosController {
     if (demos.length === 0) {
       throw Error("no demo for this match map");
     }
-    await Promise.all(
-      demos.map((demo) =>
-        this.demoMetadata.reparseById(demo.id).catch((error) => {
-          this.logger.warn(
-            `[reparseDemo] match_map ${data.match_map_id} demo ${demo.id} failed: ${(error as Error)?.message}`,
-          );
-        }),
-      ),
-    );
+    for (const demo of demos) {
+      try {
+        await this.demoMetadata.reparseById(demo.id);
+      } catch (error) {
+        this.logger.warn(
+          `[reparseDemo] match_map ${data.match_map_id} demo ${demo.id} failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
     return { success: true };
   }
 

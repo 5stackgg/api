@@ -146,14 +146,14 @@ export class ClipsService {
             match_map_id: { _eq: matchMapId },
             status: { _in: [...IN_FLIGHT_STATUSES] },
           },
-          distinct_on: ["match_map_demo_id" as any],
+          distinct_on: ["match_map_demo_id"],
         },
-        match_map_demo_id: true as any,
+        match_map_demo_id: true,
       },
-    } as any);
-    const demoIds = ((inFlightRows ?? []) as Array<any>)
+    });
+    const demoIds = (inFlightRows ?? [])
       .map((r) => (r?.match_map_demo_id ? String(r.match_map_demo_id) : null))
-      .filter((id: string | null): id is string => !!id);
+      .filter((id): id is string => !!id);
 
     const { update_clip_render_jobs } = await this.hasura.mutation({
       update_clip_render_jobs: {
@@ -248,9 +248,10 @@ export class ClipsService {
     });
 
     const matchMapId = String(row.match_map_id);
-    const matchMapDemoId = row.match_map_demo_id
-      ? String(row.match_map_demo_id)
-      : undefined;
+    if (!row.match_map_demo_id) {
+      return;
+    }
+    const matchMapDemoId = String(row.match_map_demo_id);
     const expectedBatchPodName = GameStreamerService.GetBatchHighlightsJobName(
       matchMapId,
       matchMapDemoId,
@@ -264,9 +265,7 @@ export class ClipsService {
         __args: {
           where: {
             match_map_id: { _eq: matchMapId },
-            ...(matchMapDemoId
-              ? { match_map_demo_id: { _eq: matchMapDemoId } }
-              : {}),
+            match_map_demo_id: { _eq: matchMapDemoId },
             status: { _in: [...IN_FLIGHT_STATUSES] },
           },
         },
@@ -287,7 +286,7 @@ export class ClipsService {
       for (const queuedJob of jobs) {
         if (
           queuedJob.data?.matchMapId === matchMapId &&
-          (!matchMapDemoId || queuedJob.data?.matchMapDemoId === matchMapDemoId)
+          queuedJob.data?.matchMapDemoId === matchMapDemoId
         ) {
           await queuedJob.remove();
         }
@@ -344,11 +343,10 @@ export class ClipsService {
         id: true,
         k8s_job_name: true,
         status: true,
-        match_map_demo_id: true as any,
+        match_map_demo_id: true,
       },
-    } as any);
-    const rows = (match_demo_sessions ?? []) as any[];
-    const row = rows[0];
+    });
+    const row = match_demo_sessions?.[0];
     if (!row) return null;
     if (row.status !== "playing") return null;
     return {
@@ -429,16 +427,13 @@ export class ClipsService {
     targetSteamId: string,
     matchMapDemoId?: string,
   ): Promise<boolean> {
-    const where = matchMapDemoId
-      ? { id: { _eq: matchMapDemoId } }
-      : { match_map_id: { _eq: matchMapId } };
     const { match_map_demos } = await this.hasura.query({
       match_map_demos: {
         __args: {
-          where,
-          order_by: matchMapDemoId
-            ? undefined
-            : [{ metadata_parsed_at: "desc_nulls_last" }, { id: "desc" }],
+          where: matchMapDemoId
+            ? { id: { _eq: matchMapDemoId } }
+            : { match_map_id: { _eq: matchMapId } },
+          order_by: [{ metadata_parsed_at: "desc_nulls_last" }, { id: "desc" }],
           limit: 1,
         },
         players: true,
@@ -1414,16 +1409,13 @@ export class ClipsService {
     targetName?: string,
     matchMapDemoId?: string,
   ): Promise<ClipSpec> {
-    const where = matchMapDemoId
-      ? { id: { _eq: matchMapDemoId } }
-      : { match_map_id: { _eq: matchMapId } };
     const { match_map_demos } = await this.hasura.query({
       match_map_demos: {
         __args: {
-          where,
-          order_by: matchMapDemoId
-            ? undefined
-            : [{ metadata_parsed_at: "desc_nulls_last" }, { id: "desc" }],
+          where: matchMapDemoId
+            ? { id: { _eq: matchMapDemoId } }
+            : { match_map_id: { _eq: matchMapId } },
+          order_by: [{ metadata_parsed_at: "desc_nulls_last" }, { id: "desc" }],
           limit: 1,
         },
         id: true,
