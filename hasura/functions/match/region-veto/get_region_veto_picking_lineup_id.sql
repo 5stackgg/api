@@ -10,6 +10,13 @@ BEGIN
         RETURN NULL;
     END IF;
 
+    -- If a region is already locked in (e.g. only one was available so it was
+    -- auto-selected, or the decider was already chosen) there's nothing left
+    -- to veto — keep the UI from prompting for another pick.
+    IF match.region IS NOT NULL THEN
+        RETURN NULL;
+    END IF;
+
     SELECT COUNT(*) INTO total_picks
     FROM match_region_veto_picks mvp
     WHERE mvp.match_id = match.id;

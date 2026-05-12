@@ -329,6 +329,16 @@ BEGIN
         SELECT COUNT(*) INTO _match_map_count FROM match_maps WHERE match_id = NEW.id;
         SELECT * INTO _match_options FROM match_options WHERE id = NEW.match_options_id;
 
+        -- If region veto would be needed but only one region is actually
+        -- available (i.e. has servers attached), auto-select it instead of
+        -- entering region veto — otherwise the only region could be banned.
+        IF NEW.region IS NULL AND _match_options.region_veto = true THEN
+            SELECT sanitize_match_options_regions(NEW.match_options_id) INTO _regions;
+            IF array_length(_regions, 1) = 1 THEN
+                NEW.region = _regions[1];
+            END IF;
+        END IF;
+
         -- Check if region veto is needed (no region selected and no maps yet)
         IF NEW.region IS NULL AND _match_map_count = 0 AND _match_options.region_veto = true THEN
             NEW.status = 'Veto';
@@ -378,7 +388,15 @@ BEGIN
         WHERE id = NEW.match_options_id;
 
         IF has_region_veto THEN
-            NEW.region = NULL;
+            -- Defense in depth: only clear the region if there's more than one
+            -- viable option to veto from. If exactly one region is available,
+            -- pre-select it so the veto stage doesn't let it be banned.
+            SELECT sanitize_match_options_regions(NEW.match_options_id) INTO _regions;
+            IF array_length(_regions, 1) = 1 THEN
+                NEW.region = _regions[1];
+            ELSE
+                NEW.region = NULL;
+            END IF;
         END IF;
 
         IF _auto_cancellation THEN
@@ -395,6 +413,9 @@ BEGIN
     IF (NEW.status = 'Canceled' AND OLD.status != 'Canceled')  THEN
         NEW.cancels_at = NOW();
         NEW.ended_at = null;
+
+        DELETE FROM match_region_veto_picks WHERE match_id = NEW.id;
+        DELETE FROM match_map_veto_picks WHERE match_id = NEW.id;
     END IF;
 
     IF NEW.status = 'Live' AND OLD.status != 'Live' THEN

@@ -1237,28 +1237,6 @@ export class MatchesController {
       );
     }
 
-    // Clear veto bans so a restarted match doesn't inherit prior region/map
-    // bans (which could leave the only remaining region already banned and
-    // prevent the match from starting).
-    await this.hasura.mutation({
-      delete_match_region_veto_picks: {
-        __args: {
-          where: {
-            match_id: { _eq: match_id },
-          },
-        },
-        affected_rows: true,
-      },
-      delete_match_map_veto_picks: {
-        __args: {
-          where: {
-            match_id: { _eq: match_id },
-          },
-        },
-        affected_rows: true,
-      },
-    });
-
     await this.matchAssistant.updateMatchStatus(match_id, "Canceled");
 
     return {
