@@ -139,11 +139,11 @@ export class GameStreamerService {
           where: {
             match_id: { _eq: matchId },
             is_game_streamer: { _eq: true },
-          } as any,
+          },
           limit: 1,
         },
-        k8s_service_name: true as any,
-      } as any,
+        k8s_service_name: true,
+      },
     });
     const saved = (
       match_streams?.[0] as { k8s_service_name?: string | null } | undefined
@@ -1077,10 +1077,10 @@ export class GameStreamerService {
           where: {
             is_game_streamer: { _eq: true },
             game_server_node_id: { _eq: nodeId },
-          } as any,
+          },
         },
         match_id: true,
-      } as any,
+      },
     });
     for (const stream of (match_streams as Array<{ match_id: string }>) ?? []) {
       try {
@@ -1096,7 +1096,7 @@ export class GameStreamerService {
     const { match_demo_sessions } = await this.hasura.query({
       match_demo_sessions: {
         __args: {
-          where: { game_server_node_id: { _eq: nodeId } } as any,
+          where: { game_server_node_id: { _eq: nodeId } },
         },
         id: true,
         k8s_job_name: true,
@@ -1122,12 +1122,12 @@ export class GameStreamerService {
           where: {
             game_server_node_id: { _eq: nodeId },
             status: { _in: ["queued", "rendering", "uploading"] },
-          } as any,
-          distinct_on: ["match_map_id", "match_map_demo_id"] as any,
+          },
+          distinct_on: ["match_map_id", "match_map_demo_id"],
         },
         match_map_id: true,
         match_map_demo_id: true,
-      } as any,
+      },
     });
     for (const job of (clip_render_jobs as Array<{
       match_map_id: string;
@@ -1151,16 +1151,16 @@ export class GameStreamerService {
             where: {
               game_server_node_id: { _eq: nodeId },
               status: { _in: ["queued", "rendering", "uploading"] },
-            } as any,
+            },
             _set: {
               status: "cancelled",
               error_message: "cancelled by operator (gpu node)",
               last_status_at: "now()",
               game_server_node_id: null,
-            } as any,
+            },
           },
           affected_rows: true,
-        } as any,
+        },
       });
       cancelledRenderJobs =
         (update_clip_render_jobs?.affected_rows as number) ?? 0;
@@ -1231,15 +1231,15 @@ export class GameStreamerService {
           where: {
             match_id: { _eq: fromMatchId },
             is_game_streamer: { _eq: true },
-          } as any,
+          },
           limit: 1,
         },
         id: true,
         is_live: true,
         autodirector: true,
         mode: true,
-        k8s_service_name: true as any,
-      } as any,
+        k8s_service_name: true,
+      },
     });
     const from = fromRows?.[0] as
       | {
@@ -1265,7 +1265,7 @@ export class GameStreamerService {
           where: {
             match_id: { _eq: toMatchId },
             is_game_streamer: { _eq: true },
-          } as any,
+          },
           limit: 1,
         },
         id: true,
@@ -1350,29 +1350,18 @@ export class GameStreamerService {
       );
     }
 
-    const nowIso = new Date().toISOString();
-    const newLink = `${this.appConfig.gameStreamDomain}/${toMatchId}/`;
-    const switchHistory = JSON.stringify([
-      { status: "switching", at: nowIso, from: fromMatchId },
-    ]);
     await this.hasura.mutation({
       update_match_streams: {
         __args: {
-          where: { id: { _eq: from.id } } as any,
+          where: { id: { _eq: from.id } },
           _set: {
             match_id: toMatchId,
-            link: newLink,
             mode,
-            is_live: false,
-            status: "connecting_to_game",
-            status_history: switchHistory,
-            last_status_at: nowIso,
-            error_message: null,
             autodirector: true,
-          } as any,
+          },
         },
         affected_rows: true,
-      } as any,
+      },
     });
 
     this.logger.log(
@@ -1461,13 +1450,20 @@ export class GameStreamerService {
       const logs = await core.readNamespacedPodLog({
         name: pod.metadata.name,
         namespace: this.namespace,
-        tailLines: 5,
+        tailLines: 200,
       });
       const lines = String(logs ?? "")
         .split("\n")
         .map((l) => l.trim())
         .filter((l) => l.length > 0);
-      if (lines.length > 0) logTail = lines.join(" | ");
+      if (lines.length > 0) {
+        // Prefer ERROR:/WARN: lines from die()/warn() over routine noise.
+        const flagged = lines.filter((l) =>
+          /^\[[^\]]+\]\s+(ERROR|WARN):/i.test(l),
+        );
+        const picked = flagged.length > 0 ? flagged.slice(-5) : lines.slice(-5);
+        logTail = picked.join(" | ");
+      }
     } catch {}
 
     const parts: string[] = [];
