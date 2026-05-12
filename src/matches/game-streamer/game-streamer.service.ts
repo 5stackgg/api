@@ -34,7 +34,10 @@ export type DemoControlAction =
   | "reload"
   | "xray"
   | "hud"
-  | "demoui";
+  | "hud-mode"
+  | "demoui"
+  | "autodirector"
+  | "scoreboard";
 
 export const DEMO_CONTROL_ACTIONS: ReadonlySet<DemoControlAction> =
   new Set<DemoControlAction>([
@@ -50,11 +53,20 @@ export const DEMO_CONTROL_ACTIONS: ReadonlySet<DemoControlAction> =
     "reload",
     "xray",
     "hud",
+    "hud-mode",
     "demoui",
+    "autodirector",
+    "scoreboard",
   ]);
 
 const SPEC_PROXIED_DEMO_ACTIONS: ReadonlySet<DemoControlAction> =
-  new Set<DemoControlAction>(["slot", "hud"]);
+  new Set<DemoControlAction>([
+    "slot",
+    "hud",
+    "hud-mode",
+    "autodirector",
+    "scoreboard",
+  ]);
 
 const STATUS_HISTORY_CAP = 50;
 
@@ -87,6 +99,31 @@ export class GameStreamerService {
     this.namespace = this.gameServerConfig.namespace;
   }
 
+  private async resolveHudMode(): Promise<"horizontal" | "vertical"> {
+    let value: string | undefined;
+    try {
+      const { settings_by_pk } = await this.hasura.query({
+        settings_by_pk: {
+          __args: { name: "default_hud_mode" },
+          value: true,
+        },
+      });
+      value = settings_by_pk?.value ?? undefined;
+    } catch (error) {
+      this.logger.warn(
+        `failed to read default_hud_mode setting: ${(error as Error)?.message ?? error}`,
+      );
+    }
+    const candidate = value || process.env.HUD_MODE || "horizontal";
+    if (candidate === "vertical") return "vertical";
+    if (candidate === "horizontal" || candidate === "default")
+      return "horizontal";
+    this.logger.warn(
+      `default_hud_mode="${candidate}" is not one of horizontal|vertical — falling back to "horizontal"`,
+    );
+    return "horizontal";
+  }
+
   public static GetLiveJobId(matchId: string) {
     return `gs-live-${matchId}`;
   }
@@ -95,8 +132,27 @@ export class GameStreamerService {
     return `gs-live-${matchId}`;
   }
 
-  private getSpecServerUrl(matchId: string, action: string) {
-    const svc = GameStreamerService.GetLiveServiceName(matchId);
+  private async resolveLiveServiceName(matchId: string): Promise<string> {
+    const { match_streams } = await this.hasura.query({
+      match_streams: {
+        __args: {
+          where: {
+            match_id: { _eq: matchId },
+            is_game_streamer: { _eq: true },
+          },
+          limit: 1,
+        },
+        k8s_service_name: true,
+      },
+    });
+    const saved = (
+      match_streams?.[0] as { k8s_service_name?: string | null } | undefined
+    )?.k8s_service_name;
+    return saved || GameStreamerService.GetLiveServiceName(matchId);
+  }
+
+  private async getSpecServerUrl(matchId: string, action: string) {
+    const svc = await this.resolveLiveServiceName(matchId);
     return `http://${svc}.${this.namespace}.svc.cluster.local:1350/spec/${action}`;
   }
 
@@ -145,10 +201,19 @@ export class GameStreamerService {
 
   private async callSpec(
     matchId: string,
-    action: "click" | "jump" | "player" | "slot" | "autodirector",
+    action:
+      | "click"
+      | "jump"
+      | "player"
+      | "slot"
+      | "autodirector"
+      | "hud"
+      | "hud-mode"
+      | "xray"
+      | "scoreboard",
     body: Record<string, unknown> = {},
   ): Promise<unknown> {
-    const url = this.getSpecServerUrl(matchId, action);
+    const url = await this.getSpecServerUrl(matchId, action);
     let res: Response;
     try {
       res = await fetch(url, {
@@ -238,7 +303,7 @@ export class GameStreamerService {
       team_t_score: number;
     } | null;
   }> {
-    const svc = GameStreamerService.GetLiveServiceName(matchId);
+    const svc = await this.resolveLiveServiceName(matchId);
     const url = `http://${svc}.${this.namespace}.svc.cluster.local:1350/demo/state`;
     let res: Response;
     try {
@@ -260,6 +325,25 @@ export class GameStreamerService {
     }
     const body = (await res.json().catch(() => ({}))) as { gsi?: any };
     return { gsi: body?.gsi ?? null };
+  }
+
+  public async setLiveHudMode(
+    matchId: string,
+    mode: "default" | "horizontal" | "vertical",
+  ) {
+    return this.callSpec(matchId, "hud-mode", { mode });
+  }
+
+  public async specHud(matchId: string, visible: boolean) {
+    return this.callSpec(matchId, "hud", { visible });
+  }
+
+  public async specXray(matchId: string, enabled: boolean) {
+    return this.callSpec(matchId, "xray", { enabled });
+  }
+
+  public async specScoreboard(matchId: string, show: boolean) {
+    return this.callSpec(matchId, "scoreboard", { show });
   }
 
   public async specAutodirector(matchId: string, enabled: boolean) {
@@ -405,6 +489,7 @@ export class GameStreamerService {
       { name: "DEMO_FILE_NAME", value: options.demoFile },
       { name: "DEMO_SESSION_ID", value: sessionId },
       { name: "DEMO_SESSION_TOKEN", value: sessionToken },
+      { name: "HUD_MODE", value: await this.resolveHudMode() },
     ];
     if (options.roundTicks != null) {
       env.push({
@@ -770,10 +855,7 @@ export class GameStreamerService {
           role: "demo",
           "session-id": sessionId,
         },
-        ports: [
-          { name: "openhud", port: 1349, targetPort: "openhud" },
-          { name: "spec", port: 1350, targetPort: "spec" },
-        ],
+        ports: [{ name: "spec", port: 1350, targetPort: "spec" }],
       },
     };
 
@@ -946,6 +1028,7 @@ export class GameStreamerService {
 
     const reporterEnv: V1EnvVar[] = [
       { name: "MATCH_PASSWORD", value: match.password },
+      { name: "HUD_MODE", value: await this.resolveHudMode() },
     ];
 
     const jobName = GameStreamerService.GetLiveJobId(matchId);
@@ -974,8 +1057,124 @@ export class GameStreamerService {
     await this.createLiveService(matchId);
   }
 
+  public async stopGpuSession(nodeId: string): Promise<{
+    stopped_live: number;
+    stopped_demo_sessions: number;
+    cancelled_render_jobs: number;
+  }> {
+    let stoppedLive = 0;
+    let stoppedDemoSessions = 0;
+    let cancelledRenderJobs = 0;
+
+    const { match_streams } = await this.hasura.query({
+      match_streams: {
+        __args: {
+          where: {
+            is_game_streamer: { _eq: true },
+            game_server_node_id: { _eq: nodeId },
+          },
+        },
+        match_id: true,
+      },
+    });
+    for (const stream of (match_streams as Array<{ match_id: string }>) ?? []) {
+      try {
+        await this.stopLive(stream.match_id);
+        stoppedLive++;
+      } catch (error) {
+        this.logger.error(
+          `[stopGpuSession ${nodeId}] stopLive(${stream.match_id}) failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
+
+    const { match_demo_sessions } = await this.hasura.query({
+      match_demo_sessions: {
+        __args: {
+          where: { game_server_node_id: { _eq: nodeId } },
+        },
+        id: true,
+        k8s_job_name: true,
+      },
+    });
+    for (const session of (match_demo_sessions as Array<{
+      id: string;
+      k8s_job_name: string;
+    }>) ?? []) {
+      try {
+        await this.stopDemoSessionById(session.id, session.k8s_job_name);
+        stoppedDemoSessions++;
+      } catch (error) {
+        this.logger.error(
+          `[stopGpuSession ${nodeId}] stopDemoSessionById(${session.id}) failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
+
+    const { clip_render_jobs } = await this.hasura.query({
+      clip_render_jobs: {
+        __args: {
+          where: {
+            game_server_node_id: { _eq: nodeId },
+            status: { _in: ["queued", "rendering", "uploading"] },
+          },
+          distinct_on: ["match_map_id", "match_map_demo_id"],
+        },
+        match_map_id: true,
+        match_map_demo_id: true,
+      },
+    });
+    for (const job of (clip_render_jobs as Array<{
+      match_map_id: string;
+      match_map_demo_id: string;
+    }>) ?? []) {
+      try {
+        await this.killBatchHighlightsPod(
+          job.match_map_id,
+          job.match_map_demo_id,
+        );
+      } catch (error) {
+        this.logger.error(
+          `[stopGpuSession ${nodeId}] killBatchHighlightsPod(${job.match_map_id}, ${job.match_map_demo_id}) failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
+    if ((clip_render_jobs ?? []).length > 0) {
+      const { update_clip_render_jobs } = await this.hasura.mutation({
+        update_clip_render_jobs: {
+          __args: {
+            where: {
+              game_server_node_id: { _eq: nodeId },
+              status: { _in: ["queued", "rendering", "uploading"] },
+            },
+            _set: {
+              status: "cancelled",
+              error_message: "cancelled by operator (gpu node)",
+              last_status_at: "now()",
+              game_server_node_id: null,
+            },
+          },
+          affected_rows: true,
+        },
+      });
+      cancelledRenderJobs =
+        (update_clip_render_jobs?.affected_rows as number) ?? 0;
+    }
+
+    this.logger.log(
+      `[stopGpuSession ${nodeId}] stopped live=${stoppedLive} demo=${stoppedDemoSessions} render_jobs=${cancelledRenderJobs}`,
+    );
+
+    return {
+      stopped_live: stoppedLive,
+      stopped_demo_sessions: stoppedDemoSessions,
+      cancelled_render_jobs: cancelledRenderJobs,
+    };
+  }
+
   public async stopLive(matchId: string) {
-    const jobName = GameStreamerService.GetLiveJobId(matchId);
+    // Job name == Service name by construction.
+    const jobName = await this.resolveLiveServiceName(matchId);
     this.logger.log(`[${matchId}] stopping live stream`);
 
     let kubeError: unknown = null;
@@ -1008,6 +1207,192 @@ export class GameStreamerService {
     if (kubeError) {
       throw kubeError;
     }
+  }
+
+  public async switchLive(
+    fromMatchId: string,
+    toMatchId: string,
+    mode: "live" | "tv",
+  ) {
+    if (fromMatchId === toMatchId) {
+      throw new Error("from and to match are the same");
+    }
+    if (mode !== "live" && mode !== "tv") {
+      throw new Error("invalid mode");
+    }
+
+    const { match_streams: fromRows } = await this.hasura.query({
+      match_streams: {
+        __args: {
+          where: {
+            match_id: { _eq: fromMatchId },
+            is_game_streamer: { _eq: true },
+          },
+          limit: 1,
+        },
+        id: true,
+        is_live: true,
+        autodirector: true,
+        mode: true,
+        k8s_service_name: true,
+      },
+    });
+    const from = fromRows?.[0] as
+      | {
+          id: string;
+          is_live: boolean;
+          autodirector: boolean | null;
+          mode: string;
+          k8s_service_name: string | null;
+        }
+      | undefined;
+    if (!from) {
+      throw new Error(`no active game-streamer for match ${fromMatchId}`);
+    }
+    if (!from.is_live) {
+      throw new Error(
+        "source stream is not live yet — wait for boot to finish before switching",
+      );
+    }
+
+    const { match_streams: destRows } = await this.hasura.query({
+      match_streams: {
+        __args: {
+          where: {
+            match_id: { _eq: toMatchId },
+            is_game_streamer: { _eq: true },
+          },
+          limit: 1,
+        },
+        id: true,
+      },
+    });
+    if ((destRows ?? []).length > 0) {
+      throw new Error(`match ${toMatchId} already has an active stream`);
+    }
+
+    const { matches_by_pk: toMatch } = await this.hasura.query({
+      matches_by_pk: {
+        __args: { id: toMatchId },
+        id: true,
+        password: true,
+        server: {
+          host: true,
+          port: true,
+          tv_port: true,
+        },
+      },
+    });
+    if (!toMatch) {
+      throw new Error(`match ${toMatchId} not found`);
+    }
+    if (!toMatch.server) {
+      throw new Error(`match ${toMatchId} has no server assigned`);
+    }
+
+    const usePlaycast = await this.readUsePlaycast();
+    const connectEnv = await this.buildConnectEnv(
+      toMatchId,
+      toMatch.server,
+      toMatch.password,
+      usePlaycast,
+      mode,
+    );
+
+    const envMap: Record<string, string> = {};
+    for (const e of connectEnv) {
+      if (e.name && typeof e.value === "string") envMap[e.name] = e.value;
+    }
+    const switchBody: Record<string, unknown> = {
+      matchId: toMatchId,
+      oldMatchId: fromMatchId,
+      mode,
+      matchPassword: toMatch.password,
+    };
+    if (envMap.PLAYCAST_URL) {
+      switchBody.playcastUrl = envMap.PLAYCAST_URL;
+    } else if (envMap.CONNECT_TV_ADDR) {
+      switchBody.connect = {
+        addr: envMap.CONNECT_TV_ADDR,
+        password: envMap.CONNECT_TV_PASSWORD ?? "",
+      };
+    } else if (envMap.CONNECT_ADDR) {
+      switchBody.connect = {
+        addr: envMap.CONNECT_ADDR,
+        password: envMap.CONNECT_PASSWORD ?? "",
+      };
+    } else {
+      throw new Error("could not derive connect details for destination match");
+    }
+
+    // Resolve URL before mutating the row (resolveLiveServiceName keys off
+    // the row's current match_id), then repoint the row, then call spec-server.
+    // Revert the row on spec failure so the pod and row don't drift.
+    const url = await this.getSpecServerUrl(fromMatchId, "switch-match");
+
+    await this.hasura.mutation({
+      update_match_streams: {
+        __args: {
+          where: { id: { _eq: from.id } },
+          _set: {
+            match_id: toMatchId,
+            mode,
+            autodirector: true,
+          },
+        },
+        affected_rows: true,
+      },
+    });
+
+    const revert = async (reason: string) => {
+      try {
+        await this.hasura.mutation({
+          update_match_streams: {
+            __args: {
+              where: { id: { _eq: from.id } },
+              _set: {
+                match_id: fromMatchId,
+                mode: from.mode,
+                autodirector: from.autodirector ?? false,
+              },
+            },
+            affected_rows: true,
+          },
+        });
+      } catch (revertError) {
+        this.logger.error(
+          `[switchLive] ${fromMatchId} -> ${toMatchId} revert FAILED after ${reason}: ` +
+            `${(revertError as Error)?.message}. ` +
+            `match_streams.id=${from.id} stranded on match_id=${toMatchId}.`,
+        );
+      }
+    };
+
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(switchBody),
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch (error) {
+      await revert("spec-server unreachable");
+      throw new Error(
+        `spec-server switch-match unreachable: ${(error as Error)?.message}`,
+      );
+    }
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      await revert(`spec-server returned ${res.status}`);
+      throw new Error(
+        `spec-server switch-match -> ${res.status}: ${text.slice(0, 200)}`,
+      );
+    }
+
+    this.logger.log(
+      `[switchLive] ${fromMatchId} -> ${toMatchId} (mode=${mode}) repointed`,
+    );
   }
 
   public static GetBatchHighlightsJobName(
@@ -1091,13 +1476,20 @@ export class GameStreamerService {
       const logs = await core.readNamespacedPodLog({
         name: pod.metadata.name,
         namespace: this.namespace,
-        tailLines: 5,
+        tailLines: 200,
       });
       const lines = String(logs ?? "")
         .split("\n")
         .map((l) => l.trim())
         .filter((l) => l.length > 0);
-      if (lines.length > 0) logTail = lines.join(" | ");
+      if (lines.length > 0) {
+        // Prefer ERROR:/WARN: lines from die()/warn() over routine noise.
+        const flagged = lines.filter((l) =>
+          /^\[[^\]]+\]\s+(ERROR|WARN):/i.test(l),
+        );
+        const picked = flagged.length > 0 ? flagged.slice(-5) : lines.slice(-5);
+        logTail = picked.join(" | ");
+      }
     } catch {}
 
     const parts: string[] = [];
@@ -1193,6 +1585,7 @@ export class GameStreamerService {
       { name: "DEMO_URL", value: presignedDemoUrl },
       { name: "DEMO_FILE_NAME", value: demo.file as string },
       { name: "STATUS_API_BASE", value: resolveInClusterApiBase() },
+      { name: "HUD_MODE", value: await this.resolveHudMode() },
       { name: "CLIP_BATCH_MODE", value: "1" },
       {
         name: "CLIP_BATCH_JOBS",
@@ -1316,16 +1709,19 @@ export class GameStreamerService {
         [matchId],
       );
 
+      const serviceName = GameStreamerService.GetLiveServiceName(matchId);
       const result = await client.query(
         `WITH chosen AS (SELECT claim_free_gpu_node() AS id)
          INSERT INTO match_streams
            (match_id, title, link, priority, is_game_streamer, is_live,
-            mode, status, status_history, last_status_at, game_server_node_id)
-         SELECT $1, $2, $3, 0, true, false, $4, 'booting', $5::jsonb, now(), chosen.id
+            mode, status, status_history, last_status_at,
+            game_server_node_id, k8s_service_name)
+         SELECT $1, $2, $3, 0, true, false, $4, 'booting', $5::jsonb, now(),
+                chosen.id, $6
            FROM chosen
           WHERE chosen.id IS NOT NULL
          RETURNING game_server_node_id`,
-        [matchId, GAME_STREAMER_TITLE, link, mode, statusHistory],
+        [matchId, GAME_STREAMER_TITLE, link, mode, statusHistory, serviceName],
       );
 
       const nodeId = result.rows[0]?.game_server_node_id as string | undefined;
@@ -1464,10 +1860,7 @@ export class GameStreamerService {
           role: "live",
           "match-id": matchId,
         },
-        ports: [
-          { name: "openhud", port: 1349, targetPort: "openhud" },
-          { name: "spec", port: 1350, targetPort: "spec" },
-        ],
+        ports: [{ name: "spec", port: 1350, targetPort: "spec" }],
       },
     };
 
@@ -1478,7 +1871,7 @@ export class GameStreamerService {
   }
 
   private async deleteLiveService(matchId: string) {
-    const serviceName = GameStreamerService.GetLiveServiceName(matchId);
+    const serviceName = await this.resolveLiveServiceName(matchId);
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const core = kc.makeApiClient(CoreV1Api);
@@ -1787,16 +2180,13 @@ export class GameStreamerService {
                 securityContext: { privileged: true },
                 args,
                 ports: exposesSpecPorts
-                  ? [
-                      { name: "openhud", containerPort: 1349 },
-                      { name: "spec", containerPort: 1350 },
-                    ]
+                  ? [{ name: "spec", containerPort: 1350 }]
                   : undefined,
                 env: [
                   { name: "MATCH_ID", value: matchId },
                   { name: "DISPLAY_SIZEW", value: "1920" },
                   { name: "DISPLAY_SIZEH", value: "1080" },
-                  { name: "OPENHUD_AUTO_OVERLAY", value: "1" },
+                  { name: "API_BASE", value: resolveInClusterApiBase() },
                   // Forward the configured public HLS host so the streamer
                   // can log/print correct watch URLs (otherwise the scripts
                   // fall back to a hardcoded hls.5stack.gg).

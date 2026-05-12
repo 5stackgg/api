@@ -750,6 +750,37 @@ export class MatchesController {
   }
 
   @HasuraAction()
+  public async switchLiveMatch(data: {
+    from_match_id: string;
+    to_match_id: string;
+    mode: "live" | "tv";
+    user: User;
+  }) {
+    const { from_match_id, to_match_id, mode, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    if (!(await this.matchAssistant.isOrganizer(to_match_id, user))) {
+      throw Error("you are not an organizer for the destination match");
+    }
+    await this.gameStreamer.switchLive(from_match_id, to_match_id, mode);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async stopGpuSession(data: {
+    game_server_node_id: string;
+    user: User;
+  }) {
+    const { game_server_node_id, user } = data;
+    if (!isRoleAbove(user.role, "administrator")) {
+      throw Error("you must be an administrator");
+    }
+    await this.gameStreamer.stopGpuSession(game_server_node_id);
+    return { success: true };
+  }
+
+  @HasuraAction()
   public async specClick(data: {
     match_id: string;
     button: "left" | "right";
@@ -811,6 +842,48 @@ export class MatchesController {
       throw Error("you must have the streamer role or above");
     }
     await this.gameStreamer.specAutodirector(match_id, enabled);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async specHud(data: {
+    match_id: string;
+    visible: boolean;
+    user: User;
+  }) {
+    const { match_id, visible, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    await this.gameStreamer.specHud(match_id, visible);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async specXray(data: {
+    match_id: string;
+    enabled: boolean;
+    user: User;
+  }) {
+    const { match_id, enabled, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    await this.gameStreamer.specXray(match_id, enabled);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async specScoreboard(data: {
+    match_id: string;
+    show: boolean;
+    user: User;
+  }) {
+    const { match_id, show, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    await this.gameStreamer.specScoreboard(match_id, show);
     return { success: true };
   }
 
@@ -942,6 +1015,23 @@ export class MatchesController {
     const { match_id } = data;
     const state = await this.gameStreamer.getLiveSpecState(match_id);
     return state;
+  }
+
+  @HasuraAction()
+  public async setHudMode(data: {
+    match_id: string;
+    mode: string;
+    user: User;
+  }) {
+    const { match_id, mode, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    if (mode !== "default" && mode !== "horizontal" && mode !== "vertical") {
+      throw Error("mode must be one of default|horizontal|vertical");
+    }
+    await this.gameStreamer.setLiveHudMode(match_id, mode);
+    return { success: true };
   }
 
   @HasuraAction()

@@ -17518,6 +17518,7 @@ type match_streams {
   id: uuid!
   is_game_streamer: Boolean!
   is_live: Boolean!
+  k8s_service_name: String
   last_status_at: timestamptz
   link: String!
 
@@ -17645,6 +17646,7 @@ input match_streams_bool_exp {
   id: uuid_comparison_exp
   is_game_streamer: Boolean_comparison_exp
   is_live: Boolean_comparison_exp
+  k8s_service_name: String_comparison_exp
   last_status_at: timestamptz_comparison_exp
   link: String_comparison_exp
   match: matches_bool_exp
@@ -17706,6 +17708,7 @@ input match_streams_insert_input {
   id: uuid
   is_game_streamer: Boolean
   is_live: Boolean
+  k8s_service_name: String
   last_status_at: timestamptz
   link: String
   match: matches_obj_rel_insert_input
@@ -17723,6 +17726,7 @@ type match_streams_max_fields {
   error_message: String
   game_server_node_id: String
   id: uuid
+  k8s_service_name: String
   last_status_at: timestamptz
   link: String
   match_id: uuid
@@ -17740,6 +17744,7 @@ input match_streams_max_order_by {
   error_message: order_by
   game_server_node_id: order_by
   id: order_by
+  k8s_service_name: order_by
   last_status_at: order_by
   link: order_by
   match_id: order_by
@@ -17755,6 +17760,7 @@ type match_streams_min_fields {
   error_message: String
   game_server_node_id: String
   id: uuid
+  k8s_service_name: String
   last_status_at: timestamptz
   link: String
   match_id: uuid
@@ -17772,6 +17778,7 @@ input match_streams_min_order_by {
   error_message: order_by
   game_server_node_id: order_by
   id: order_by
+  k8s_service_name: order_by
   last_status_at: order_by
   link: order_by
   match_id: order_by
@@ -17811,6 +17818,7 @@ input match_streams_order_by {
   id: order_by
   is_game_streamer: order_by
   is_live: order_by
+  k8s_service_name: order_by
   last_status_at: order_by
   link: order_by
   match: matches_order_by
@@ -17854,6 +17862,9 @@ enum match_streams_select_column {
 
   """column name"""
   is_live
+
+  """column name"""
+  k8s_service_name
 
   """column name"""
   last_status_at
@@ -17921,6 +17932,7 @@ input match_streams_set_input {
   id: uuid
   is_game_streamer: Boolean
   is_live: Boolean
+  k8s_service_name: String
   last_status_at: timestamptz
   link: String
   match_id: uuid
@@ -17987,6 +17999,7 @@ input match_streams_stream_cursor_value_input {
   id: uuid
   is_game_streamer: Boolean
   is_live: Boolean
+  k8s_service_name: String
   last_status_at: timestamptz
   link: String
   match_id: uuid
@@ -18031,6 +18044,9 @@ enum match_streams_update_column {
 
   """column name"""
   is_live
+
+  """column name"""
+  k8s_service_name
 
   """column name"""
   last_status_at
@@ -23199,23 +23215,29 @@ type mutation_root {
   """scheduleMatch"""
   scheduleMatch(match_id: uuid!, time: timestamptz): SuccessOutput
   setGameNodeSchedulingState(enabled: Boolean!, game_server_node_id: String!): SuccessOutput
+  setHudMode(match_id: uuid!, mode: String!): SuccessOutput
 
   """setMatchWinner"""
   setMatchWinner(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
   setupGameServer: SetupGameServeOutput
   specAutodirector(enabled: Boolean!, match_id: uuid!): SuccessOutput
   specClick(button: String!, match_id: uuid!): SuccessOutput
+  specHud(match_id: uuid!, visible: Boolean!): SuccessOutput
   specJump(match_id: uuid!): SuccessOutput
   specPlayer(accountid: Int!, match_id: uuid!): SuccessOutput
+  specScoreboard(match_id: uuid!, show: Boolean!): SuccessOutput
   specSlot(match_id: uuid!, slot: Int!): SuccessOutput
+  specXray(enabled: Boolean!, match_id: uuid!): SuccessOutput
   startLive(match_id: uuid!, mode: String!): SuccessOutput
 
   """startMatch"""
   startMatch(match_id: uuid!, server_id: uuid): SuccessOutput
+  stopGpuSession(game_server_node_id: uuid!): SuccessOutput
   stopLive(match_id: uuid!): SuccessOutput
   stopWatchDemo(match_map_id: uuid!): SuccessOutput
   swapLineups(match_id: uuid!): SuccessOutput
   switchLineup(match_id: String!): SuccessOutput
+  switchLiveMatch(from_match_id: uuid!, mode: String!, to_match_id: uuid!): SuccessOutput
   syncSteamFriends: SuccessOutput
   testUpload: TestUploadResponse
   unlinkDiscord: SuccessOutput

@@ -5966,6 +5966,7 @@ export interface match_streams {
     id: Scalars['uuid']
     is_game_streamer: Scalars['Boolean']
     is_live: Scalars['Boolean']
+    k8s_service_name: (Scalars['String'] | null)
     last_status_at: (Scalars['timestamptz'] | null)
     link: Scalars['String']
     /** An object relationship */
@@ -6022,6 +6023,7 @@ export interface match_streams_max_fields {
     error_message: (Scalars['String'] | null)
     game_server_node_id: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
+    k8s_service_name: (Scalars['String'] | null)
     last_status_at: (Scalars['timestamptz'] | null)
     link: (Scalars['String'] | null)
     match_id: (Scalars['uuid'] | null)
@@ -6039,6 +6041,7 @@ export interface match_streams_min_fields {
     error_message: (Scalars['String'] | null)
     game_server_node_id: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
+    k8s_service_name: (Scalars['String'] | null)
     last_status_at: (Scalars['timestamptz'] | null)
     link: (Scalars['String'] | null)
     match_id: (Scalars['uuid'] | null)
@@ -6062,7 +6065,7 @@ export interface match_streams_mutation_response {
 
 
 /** select columns of table "match_streams" */
-export type match_streams_select_column = 'autodirector' | 'error_message' | 'game_server_node_id' | 'id' | 'is_game_streamer' | 'is_live' | 'last_status_at' | 'link' | 'match_id' | 'mode' | 'priority' | 'status' | 'status_history' | 'stream_url' | 'title'
+export type match_streams_select_column = 'autodirector' | 'error_message' | 'game_server_node_id' | 'id' | 'is_game_streamer' | 'is_live' | 'k8s_service_name' | 'last_status_at' | 'link' | 'match_id' | 'mode' | 'priority' | 'status' | 'status_history' | 'stream_url' | 'title'
 
 
 /** select "match_streams_aggregate_bool_exp_bool_and_arguments_columns" columns of table "match_streams" */
@@ -6102,7 +6105,7 @@ export interface match_streams_sum_fields {
 
 
 /** update columns of table "match_streams" */
-export type match_streams_update_column = 'autodirector' | 'error_message' | 'game_server_node_id' | 'id' | 'is_game_streamer' | 'is_live' | 'last_status_at' | 'link' | 'match_id' | 'mode' | 'priority' | 'status' | 'status_history' | 'stream_url' | 'title'
+export type match_streams_update_column = 'autodirector' | 'error_message' | 'game_server_node_id' | 'id' | 'is_game_streamer' | 'is_live' | 'k8s_service_name' | 'last_status_at' | 'link' | 'match_id' | 'mode' | 'priority' | 'status' | 'status_history' | 'stream_url' | 'title'
 
 
 /** aggregate var_pop on columns */
@@ -7389,21 +7392,27 @@ export interface mutation_root {
     /** scheduleMatch */
     scheduleMatch: (SuccessOutput | null)
     setGameNodeSchedulingState: (SuccessOutput | null)
+    setHudMode: (SuccessOutput | null)
     /** setMatchWinner */
     setMatchWinner: (SuccessOutput | null)
     setupGameServer: (SetupGameServeOutput | null)
     specAutodirector: (SuccessOutput | null)
     specClick: (SuccessOutput | null)
+    specHud: (SuccessOutput | null)
     specJump: (SuccessOutput | null)
     specPlayer: (SuccessOutput | null)
+    specScoreboard: (SuccessOutput | null)
     specSlot: (SuccessOutput | null)
+    specXray: (SuccessOutput | null)
     startLive: (SuccessOutput | null)
     /** startMatch */
     startMatch: (SuccessOutput | null)
+    stopGpuSession: (SuccessOutput | null)
     stopLive: (SuccessOutput | null)
     stopWatchDemo: (SuccessOutput | null)
     swapLineups: (SuccessOutput | null)
     switchLineup: (SuccessOutput | null)
+    switchLiveMatch: (SuccessOutput | null)
     syncSteamFriends: (SuccessOutput | null)
     testUpload: (TestUploadResponse | null)
     unlinkDiscord: (SuccessOutput | null)
@@ -27714,6 +27723,7 @@ export interface match_streamsGenqlSelection{
     id?: boolean | number
     is_game_streamer?: boolean | number
     is_live?: boolean | number
+    k8s_service_name?: boolean | number
     last_status_at?: boolean | number
     link?: boolean | number
     /** An object relationship */
@@ -27794,7 +27804,7 @@ export interface match_streams_avg_order_by {priority?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "match_streams". All fields are combined with a logical 'AND'. */
-export interface match_streams_bool_exp {_and?: (match_streams_bool_exp[] | null),_not?: (match_streams_bool_exp | null),_or?: (match_streams_bool_exp[] | null),autodirector?: (Boolean_comparison_exp | null),error_message?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_game_streamer?: (Boolean_comparison_exp | null),is_live?: (Boolean_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),link?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),mode?: (String_comparison_exp | null),priority?: (Int_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),stream_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null)}
+export interface match_streams_bool_exp {_and?: (match_streams_bool_exp[] | null),_not?: (match_streams_bool_exp | null),_or?: (match_streams_bool_exp[] | null),autodirector?: (Boolean_comparison_exp | null),error_message?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_game_streamer?: (Boolean_comparison_exp | null),is_live?: (Boolean_comparison_exp | null),k8s_service_name?: (String_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),link?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),mode?: (String_comparison_exp | null),priority?: (Int_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),stream_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -27814,7 +27824,7 @@ export interface match_streams_inc_input {priority?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "match_streams" */
-export interface match_streams_insert_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),mode?: (Scalars['String'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
+export interface match_streams_insert_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),k8s_service_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),mode?: (Scalars['String'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -27822,6 +27832,7 @@ export interface match_streams_max_fieldsGenqlSelection{
     error_message?: boolean | number
     game_server_node_id?: boolean | number
     id?: boolean | number
+    k8s_service_name?: boolean | number
     last_status_at?: boolean | number
     link?: boolean | number
     match_id?: boolean | number
@@ -27836,7 +27847,7 @@ export interface match_streams_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "match_streams" */
-export interface match_streams_max_order_by {error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match_id?: (order_by | null),mode?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
+export interface match_streams_max_order_by {error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_service_name?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match_id?: (order_by | null),mode?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -27844,6 +27855,7 @@ export interface match_streams_min_fieldsGenqlSelection{
     error_message?: boolean | number
     game_server_node_id?: boolean | number
     id?: boolean | number
+    k8s_service_name?: boolean | number
     last_status_at?: boolean | number
     link?: boolean | number
     match_id?: boolean | number
@@ -27858,7 +27870,7 @@ export interface match_streams_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "match_streams" */
-export interface match_streams_min_order_by {error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match_id?: (order_by | null),mode?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
+export interface match_streams_min_order_by {error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_service_name?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match_id?: (order_by | null),mode?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_streams" */
@@ -27877,7 +27889,7 @@ export interface match_streams_on_conflict {constraint: match_streams_constraint
 
 
 /** Ordering options when selecting data from "match_streams". */
-export interface match_streams_order_by {autodirector?: (order_by | null),error_message?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),is_game_streamer?: (order_by | null),is_live?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),mode?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
+export interface match_streams_order_by {autodirector?: (order_by | null),error_message?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),is_game_streamer?: (order_by | null),is_live?: (order_by | null),k8s_service_name?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),mode?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
 
 
 /** primary key columns input for table: match_streams */
@@ -27889,7 +27901,7 @@ export interface match_streams_prepend_input {status_history?: (Scalars['jsonb']
 
 
 /** input type for updating data in table "match_streams" */
-export interface match_streams_set_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),mode?: (Scalars['String'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
+export interface match_streams_set_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),k8s_service_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),mode?: (Scalars['String'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -27937,7 +27949,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_streams_stream_cursor_value_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),mode?: (Scalars['String'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
+export interface match_streams_stream_cursor_value_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),k8s_service_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),mode?: (Scalars['String'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -30629,21 +30641,27 @@ export interface mutation_rootGenqlSelection{
     /** scheduleMatch */
     scheduleMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], time?: (Scalars['timestamptz'] | null)} })
     setGameNodeSchedulingState?: (SuccessOutputGenqlSelection & { __args: {enabled: Scalars['Boolean'], game_server_node_id: Scalars['String']} })
+    setHudMode?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], mode: Scalars['String']} })
     /** setMatchWinner */
     setMatchWinner?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], winning_lineup_id: Scalars['uuid']} })
     setupGameServer?: SetupGameServeOutputGenqlSelection
     specAutodirector?: (SuccessOutputGenqlSelection & { __args: {enabled: Scalars['Boolean'], match_id: Scalars['uuid']} })
     specClick?: (SuccessOutputGenqlSelection & { __args: {button: Scalars['String'], match_id: Scalars['uuid']} })
+    specHud?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], visible: Scalars['Boolean']} })
     specJump?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     specPlayer?: (SuccessOutputGenqlSelection & { __args: {accountid: Scalars['Int'], match_id: Scalars['uuid']} })
+    specScoreboard?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], show: Scalars['Boolean']} })
     specSlot?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], slot: Scalars['Int']} })
+    specXray?: (SuccessOutputGenqlSelection & { __args: {enabled: Scalars['Boolean'], match_id: Scalars['uuid']} })
     startLive?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], mode: Scalars['String']} })
     /** startMatch */
     startMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], server_id?: (Scalars['uuid'] | null)} })
+    stopGpuSession?: (SuccessOutputGenqlSelection & { __args: {game_server_node_id: Scalars['uuid']} })
     stopLive?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     stopWatchDemo?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid']} })
     swapLineups?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     switchLineup?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
+    switchLiveMatch?: (SuccessOutputGenqlSelection & { __args: {from_match_id: Scalars['uuid'], mode: Scalars['String'], to_match_id: Scalars['uuid']} })
     syncSteamFriends?: SuccessOutputGenqlSelection
     testUpload?: TestUploadResponseGenqlSelection
     unlinkDiscord?: SuccessOutputGenqlSelection
@@ -61703,6 +61721,7 @@ export const enumMatchStreamsSelectColumn = {
    id: 'id' as const,
    is_game_streamer: 'is_game_streamer' as const,
    is_live: 'is_live' as const,
+   k8s_service_name: 'k8s_service_name' as const,
    last_status_at: 'last_status_at' as const,
    link: 'link' as const,
    match_id: 'match_id' as const,
@@ -61733,6 +61752,7 @@ export const enumMatchStreamsUpdateColumn = {
    id: 'id' as const,
    is_game_streamer: 'is_game_streamer' as const,
    is_live: 'is_live' as const,
+   k8s_service_name: 'k8s_service_name' as const,
    last_status_at: 'last_status_at' as const,
    link: 'link' as const,
    match_id: 'match_id' as const,

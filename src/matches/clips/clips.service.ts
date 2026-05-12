@@ -576,6 +576,7 @@ export class ClipsService {
     const { clip_render_jobs_by_pk: current } = await this.hasura.query({
       clip_render_jobs_by_pk: {
         __args: { id: jobId },
+        status: true,
         status_history: true,
       },
     });
@@ -586,19 +587,68 @@ export class ClipsService {
       return;
     }
 
+    // Boot ticks land in status_history without overwriting `status` —
+    // IN_FLIGHT_STATUSES filtering depends on the row status staying queued.
+    const isBoot = body.status === "booting";
+
     const prevHistory = current.status_history as
-      | Array<{ status: string; at: string }>
+      | Array<{
+          status: string;
+          at: string;
+          boot_stage?: string;
+          boot_progress?: number;
+        }>
       | null
       | undefined;
     const nextHistory = Array.isArray(prevHistory) ? [...prevHistory] : [];
-    nextHistory.push({ status: body.status, at: new Date().toISOString() });
+    const entry: Record<string, unknown> = {
+      status: body.status,
+      at: new Date().toISOString(),
+    };
+    if (isBoot) {
+      if (typeof body.boot_stage === "string" && body.boot_stage.length > 0) {
+        entry.boot_stage = body.boot_stage.slice(0, 64);
+      }
+      if (
+        typeof body.boot_progress === "number" &&
+        Number.isFinite(body.boot_progress)
+      ) {
+        entry.boot_progress = Math.max(0, Math.min(1, body.boot_progress));
+      }
+      // Coalesce within-stage ticks; new stage pushes a fresh entry.
+      const last = nextHistory[nextHistory.length - 1];
+      const lastBootStage =
+        last && last.status === "booting" ? (last as { boot_stage?: string }).boot_stage : undefined;
+      const lastStage =
+        last && last.status === "booting"
+          ? typeof lastBootStage === "string"
+            ? lastBootStage.split(":")[0]
+            : ""
+          : null;
+      const newStage =
+        typeof entry.boot_stage === "string"
+          ? (entry.boot_stage as string).split(":")[0]
+          : "";
+      if (lastStage !== null && lastStage === newStage) {
+        nextHistory[nextHistory.length - 1] = {
+          ...last,
+          ...entry,
+        } as typeof last;
+      } else {
+        nextHistory.push(entry as typeof last);
+      }
+    } else {
+      nextHistory.push(entry as { status: string; at: string });
+    }
     while (nextHistory.length > STATUS_HISTORY_CAP) nextHistory.shift();
 
     const set: Record<string, unknown> = {
-      status: body.status,
       status_history: nextHistory,
       last_status_at: "now()",
     };
+    if (!isBoot) {
+      set.status = body.status;
+    }
     if (
       typeof body.progress === "number" &&
       body.progress >= 0 &&
@@ -887,6 +937,12 @@ export class ClipsService {
         false,
       );
       if (!enabled) return 0;
+      if (!(await this.hasGpuNode())) {
+        this.logger.log(
+          `[auto-clips] demo ${matchMapDemoId} skipped: no GPU node registered`,
+        );
+        return 0;
+      }
     }
 
     const defaultVisibility = await this.readSetting(
@@ -1107,6 +1163,12 @@ export class ClipsService {
         false,
       );
       if (!enabled) return 0;
+      if (!(await this.hasGpuNode())) {
+        this.logger.log(
+          `[auto-clips] match ${matchId} skipped: no GPU node registered`,
+        );
+        return 0;
+      }
     }
 
     const defaultVisibility = await this.readSetting(
@@ -1385,6 +1447,21 @@ export class ClipsService {
       }
     }
     return queued;
+  }
+
+  /**
+   * Returns true when at least one GPU node is registered (regardless of
+   * online/offline status). Auto-generated highlights require a GPU node to
+   * exist — otherwise jobs would queue forever with nowhere to render.
+   */
+  private async hasGpuNode(): Promise<boolean> {
+    const { game_server_nodes_aggregate } = await this.hasura.query({
+      game_server_nodes_aggregate: {
+        __args: { where: { gpu: { _eq: true } } },
+        aggregate: { count: true },
+      },
+    });
+    return (game_server_nodes_aggregate?.aggregate?.count ?? 0) > 0;
   }
 
   private async readSetting(name: string, fallback: string): Promise<string> {

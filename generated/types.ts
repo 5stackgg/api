@@ -25818,6 +25818,9 @@ export default {
             "is_live": [
                 3
             ],
+            "k8s_service_name": [
+                48
+            ],
             "last_status_at": [
                 2447
             ],
@@ -26084,6 +26087,9 @@ export default {
             "is_live": [
                 4
             ],
+            "k8s_service_name": [
+                50
+            ],
             "last_status_at": [
                 2448
             ],
@@ -26173,6 +26179,9 @@ export default {
             "is_live": [
                 3
             ],
+            "k8s_service_name": [
+                48
+            ],
             "last_status_at": [
                 2447
             ],
@@ -26217,6 +26226,9 @@ export default {
             "id": [
                 2844
             ],
+            "k8s_service_name": [
+                48
+            ],
             "last_status_at": [
                 2447
             ],
@@ -26253,6 +26265,9 @@ export default {
                 1660
             ],
             "id": [
+                1660
+            ],
+            "k8s_service_name": [
                 1660
             ],
             "last_status_at": [
@@ -26293,6 +26308,9 @@ export default {
             "id": [
                 2844
             ],
+            "k8s_service_name": [
+                48
+            ],
             "last_status_at": [
                 2447
             ],
@@ -26329,6 +26347,9 @@ export default {
                 1660
             ],
             "id": [
+                1660
+            ],
+            "k8s_service_name": [
                 1660
             ],
             "last_status_at": [
@@ -26406,6 +26427,9 @@ export default {
             "is_live": [
                 1660
             ],
+            "k8s_service_name": [
+                1660
+            ],
             "last_status_at": [
                 1660
             ],
@@ -26477,6 +26501,9 @@ export default {
             ],
             "is_live": [
                 3
+            ],
+            "k8s_service_name": [
+                48
             ],
             "last_status_at": [
                 2447
@@ -26586,6 +26613,9 @@ export default {
             ],
             "is_live": [
                 3
+            ],
+            "k8s_service_name": [
+                48
             ],
             "last_status_at": [
                 2447
@@ -79022,6 +79052,19 @@ export default {
                     ]
                 }
             ],
+            "setHudMode": [
+                51,
+                {
+                    "match_id": [
+                        2844,
+                        "uuid!"
+                    ],
+                    "mode": [
+                        48,
+                        "String!"
+                    ]
+                }
+            ],
             "setMatchWinner": [
                 51,
                 {
@@ -79064,6 +79107,19 @@ export default {
                     ]
                 }
             ],
+            "specHud": [
+                51,
+                {
+                    "match_id": [
+                        2844,
+                        "uuid!"
+                    ],
+                    "visible": [
+                        3,
+                        "Boolean!"
+                    ]
+                }
+            ],
             "specJump": [
                 51,
                 {
@@ -79086,6 +79142,19 @@ export default {
                     ]
                 }
             ],
+            "specScoreboard": [
+                51,
+                {
+                    "match_id": [
+                        2844,
+                        "uuid!"
+                    ],
+                    "show": [
+                        3,
+                        "Boolean!"
+                    ]
+                }
+            ],
             "specSlot": [
                 51,
                 {
@@ -79096,6 +79165,19 @@ export default {
                     "slot": [
                         30,
                         "Int!"
+                    ]
+                }
+            ],
+            "specXray": [
+                51,
+                {
+                    "enabled": [
+                        3,
+                        "Boolean!"
+                    ],
+                    "match_id": [
+                        2844,
+                        "uuid!"
                     ]
                 }
             ],
@@ -79121,6 +79203,15 @@ export default {
                     ],
                     "server_id": [
                         2844
+                    ]
+                }
+            ],
+            "stopGpuSession": [
+                51,
+                {
+                    "game_server_node_id": [
+                        2844,
+                        "uuid!"
                     ]
                 }
             ],
@@ -79157,6 +79248,23 @@ export default {
                     "match_id": [
                         48,
                         "String!"
+                    ]
+                }
+            ],
+            "switchLiveMatch": [
+                51,
+                {
+                    "from_match_id": [
+                        2844,
+                        "uuid!"
+                    ],
+                    "mode": [
+                        48,
+                        "String!"
+                    ],
+                    "to_match_id": [
+                        2844,
+                        "uuid!"
                     ]
                 }
             ],

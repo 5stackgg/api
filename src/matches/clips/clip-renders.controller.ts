@@ -75,9 +75,11 @@ export class ClipRendersController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    this.logger.log(
-      `[clip ${jobId}] status POST: ${JSON.stringify(body ?? {})}`,
-    );
+    if (body?.status !== "booting") {
+      this.logger.log(
+        `[clip ${jobId}] status POST: ${JSON.stringify(body ?? {})}`,
+      );
+    }
 
     const session = await this.clips.validateClipRenderAuth(
       jobId,

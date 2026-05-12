@@ -362,6 +362,13 @@ type Mutation {
 }
 
 type Mutation {
+  setHudMode(
+    match_id: uuid!
+    mode: String!
+  ): SuccessOutput
+}
+
+type Mutation {
   specAutodirector(
     match_id: uuid!
     enabled: Boolean!
@@ -396,6 +403,27 @@ type Mutation {
 }
 
 type Mutation {
+  specHud(
+    match_id: uuid!
+    visible: Boolean!
+  ): SuccessOutput
+}
+
+type Mutation {
+  specXray(
+    match_id: uuid!
+    enabled: Boolean!
+  ): SuccessOutput
+}
+
+type Mutation {
+  specScoreboard(
+    match_id: uuid!
+    show: Boolean!
+  ): SuccessOutput
+}
+
+type Mutation {
   startLive(
     match_id: uuid!
     mode: String!
@@ -410,8 +438,22 @@ type Mutation {
 }
 
 type Mutation {
+  stopGpuSession(
+    game_server_node_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   stopLive(
     match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  switchLiveMatch(
+    from_match_id: uuid!
+    to_match_id: uuid!
+    mode: String!
   ): SuccessOutput
 }
 
