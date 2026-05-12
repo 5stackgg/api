@@ -330,11 +330,10 @@ BEGIN
         SELECT * INTO _match_options FROM match_options WHERE id = NEW.match_options_id;
 
         -- If region veto would be needed but only one region is actually
-        -- available (i.e. has servers attached), auto-select it instead of
-        -- entering region veto — otherwise the only region could be banned.
+        -- available, auto-select it — otherwise it could be banned during veto.
         IF NEW.region IS NULL AND _match_options.region_veto = true THEN
             SELECT sanitize_match_options_regions(NEW.match_options_id) INTO _regions;
-            IF array_length(_regions, 1) = 1 THEN
+            IF COALESCE(array_length(_regions, 1), 0) = 1 THEN
                 NEW.region = _regions[1];
             END IF;
         END IF;
@@ -388,11 +387,9 @@ BEGIN
         WHERE id = NEW.match_options_id;
 
         IF has_region_veto THEN
-            -- Defense in depth: only clear the region if there's more than one
-            -- viable option to veto from. If exactly one region is available,
-            -- pre-select it so the veto stage doesn't let it be banned.
+            -- Only clear region if more than one is viable; pre-select if exactly one.
             SELECT sanitize_match_options_regions(NEW.match_options_id) INTO _regions;
-            IF array_length(_regions, 1) = 1 THEN
+            IF COALESCE(array_length(_regions, 1), 0) = 1 THEN
                 NEW.region = _regions[1];
             ELSE
                 NEW.region = NULL;

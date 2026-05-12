@@ -4,18 +4,8 @@ import { ConfigService } from "@nestjs/config";
 import { HasuraService } from "../../hasura/hasura.service";
 import { AppConfig } from "src/configs/types/AppConfig";
 
-/**
- * Cluster-internal endpoint used by the in-pod HUD seeder
- * (game-streamer/src/lib/hud-manager.sh -> seed_hud_db) to fetch a
- * pre-flattened match shape — lineup metadata with absolute avatar/logo
- * URLs — for posting onward to JT's HUD Manager REST API.
- *
- * Mounted at /hud-data/:matchId (NOT under /matches) so it is excluded
- * from the public api ingress, which only exposes specific prefixes.
- * If you add this controller's base path to k8s/ingress, you'll be
- * leaking player names + steam ids to the open internet — gate it
- * with auth first.
- */
+// Cluster-internal — do not add /hud-data to the public api ingress without
+// adding auth first (leaks player names + steam ids).
 @Controller("hud-data")
 export class HudDataController {
   private readonly appConfig: AppConfig;
@@ -96,15 +86,6 @@ export class HudDataController {
       const teamId = team?.id ?? null;
       const players = (lu.lineup_players ?? []).map((lp) => {
         const p = lp.player;
-        this.logger.debug?.(
-          `[hud-data ${matchId}] raw player ${lp.steam_id}: ` +
-            `name=${p?.name ?? lp.placeholder_name ?? "?"} ` +
-            `team_id_for_match=${teamId ?? "<none>"} ` +
-            `roster_image_url=${p?.roster_image_url ?? "<null>"} ` +
-            `custom_avatar_url=${p?.custom_avatar_url ?? "<null>"} ` +
-            `avatar_url=${p?.avatar_url ?? "<null>"} ` +
-            `team_members=${JSON.stringify(p?.team_members ?? [])}`,
-        );
         const teamScoped =
           (teamId &&
             p?.team_members?.find((tm) => tm.team_id === teamId)
@@ -124,9 +105,18 @@ export class HudDataController {
         }
         const avatar = absolutize(raw ?? "");
         const playerName = p?.name || lp.placeholder_name || "Player";
-        this.logger.log(
+        this.logger.debug(
+          `[hud-data ${matchId}] raw player ${lp.steam_id}: ` +
+            `name=${playerName} ` +
+            `team_id_for_match=${teamId || "<none>"} ` +
+            `roster_image_url=${p?.roster_image_url || "<null>"} ` +
+            `custom_avatar_url=${p?.custom_avatar_url || "<null>"} ` +
+            `avatar_url=${p?.avatar_url || "<null>"} ` +
+            `team_members=${JSON.stringify(p?.team_members ?? [])}`,
+        );
+        this.logger.debug(
           `[hud-data ${matchId}] player ${playerName} (${lp.steam_id}) ` +
-            `team_id=${teamId ?? "<none>"} ` +
+            `team_id=${teamId || "<none>"} ` +
             `avatar_source=${source} url=${avatar || "<empty>"}`,
         );
         return {

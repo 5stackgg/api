@@ -156,11 +156,6 @@ export class GameStreamerService {
     return `http://${svc}.${this.namespace}.svc.cluster.local:1350/spec/${action}`;
   }
 
-  private async resolveLiveJobName(matchId: string): Promise<string> {
-    const svc = await this.resolveLiveServiceName(matchId);
-    return svc;
-  }
-
   // Wire `progress` arrives as a string from the bash reporter; coerce
   // and clamp to numeric(5,2) in 0..100, null otherwise.
   private parseProgress(raw: unknown): number | null {
@@ -1178,7 +1173,8 @@ export class GameStreamerService {
   }
 
   public async stopLive(matchId: string) {
-    const jobName = await this.resolveLiveJobName(matchId);
+    // Job name == Service name by construction.
+    const jobName = await this.resolveLiveServiceName(matchId);
     this.logger.log(`[${matchId}] stopping live stream`);
 
     let kubeError: unknown = null;
@@ -1329,26 +1325,10 @@ export class GameStreamerService {
       throw new Error("could not derive connect details for destination match");
     }
 
+    // Resolve URL before mutating the row (resolveLiveServiceName keys off
+    // the row's current match_id), then repoint the row, then call spec-server.
+    // Revert the row on spec failure so the pod and row don't drift.
     const url = await this.getSpecServerUrl(fromMatchId, "switch-match");
-    let res: Response;
-    try {
-      res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(switchBody),
-        signal: AbortSignal.timeout(10_000),
-      });
-    } catch (error) {
-      throw new Error(
-        `spec-server switch-match unreachable: ${(error as Error)?.message}`,
-      );
-    }
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      throw new Error(
-        `spec-server switch-match -> ${res.status}: ${text.slice(0, 200)}`,
-      );
-    }
 
     await this.hasura.mutation({
       update_match_streams: {
@@ -1363,6 +1343,52 @@ export class GameStreamerService {
         affected_rows: true,
       },
     });
+
+    const revert = async (reason: string) => {
+      try {
+        await this.hasura.mutation({
+          update_match_streams: {
+            __args: {
+              where: { id: { _eq: from.id } },
+              _set: {
+                match_id: fromMatchId,
+                mode: from.mode,
+                autodirector: from.autodirector ?? false,
+              },
+            },
+            affected_rows: true,
+          },
+        });
+      } catch (revertError) {
+        this.logger.error(
+          `[switchLive] ${fromMatchId} -> ${toMatchId} revert FAILED after ${reason}: ` +
+            `${(revertError as Error)?.message}. ` +
+            `match_streams.id=${from.id} stranded on match_id=${toMatchId}.`,
+        );
+      }
+    };
+
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(switchBody),
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch (error) {
+      await revert("spec-server unreachable");
+      throw new Error(
+        `spec-server switch-match unreachable: ${(error as Error)?.message}`,
+      );
+    }
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      await revert(`spec-server returned ${res.status}`);
+      throw new Error(
+        `spec-server switch-match -> ${res.status}: ${text.slice(0, 200)}`,
+      );
+    }
 
     this.logger.log(
       `[switchLive] ${fromMatchId} -> ${toMatchId} (mode=${mode}) repointed`,
