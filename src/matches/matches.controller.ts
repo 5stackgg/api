@@ -80,6 +80,177 @@ export class MatchesController {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
 
+  /**
+   * Curated team/player metadata for the game-streamer's HUD seed.
+   * Returns a flattened, pre-resolved shape so the streamer's seed_hud_db
+   * (src/lib/hud-manager.sh) can POST it straight to JTs Hud Manager's
+   * /api/{teams,players,match} without any GraphQL/Hasura plumbing:
+   *
+   *   {
+   *     "match": {
+   *       "id": "...",
+   *       "lineups": [
+   *         { "name": "...", "short_name": "...", "logo": "<absolute url>",
+   *           "players": [{ "steam_id": "...", "name": "...",
+   *                         "country": "...", "avatar": "<absolute url>" }] },
+   *         { ...team 2... }
+   *       ]
+   *     }
+   *   }
+   *
+   * No auth — the route is only reachable on the in-cluster Service
+   * (`http://api:5585/matches/:matchId/hud-data`), the payload contains
+   * nothing more sensitive than what the public match page already
+   * renders, and the streamer pod has no credentials we'd want to manage.
+   */
+  @Get(":matchId/hud-data")
+  public async getMatchHudData(
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const matchId = request.params.matchId;
+    // Avatars are served by the api (AvatarsController @ /avatars/*),
+    // not the web app, so absolutise against `apiDomain` —
+    // `webDomain` would point at 5stack.gg which doesn't serve those.
+    const apiDomain = (this.appConfig.apiDomain || "").replace(/\/$/, "");
+
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: { id: matchId },
+        id: true,
+        lineup_1: {
+          id: true,
+          name: true,
+          team: { id: true, name: true, short_name: true, avatar_url: true },
+          lineup_players: {
+            steam_id: true,
+            placeholder_name: true,
+            player: {
+              name: true,
+              country: true,
+              avatar_url: true,
+              custom_avatar_url: true,
+              roster_image_url: true,
+              team_members: { team_id: true, roster_image_url: true },
+            },
+          },
+        },
+        lineup_2: {
+          id: true,
+          name: true,
+          team: { id: true, name: true, short_name: true, avatar_url: true },
+          lineup_players: {
+            steam_id: true,
+            placeholder_name: true,
+            player: {
+              name: true,
+              country: true,
+              avatar_url: true,
+              custom_avatar_url: true,
+              roster_image_url: true,
+              team_members: { team_id: true, roster_image_url: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!match) {
+      response.status(404).json({ error: "match not found" });
+      return;
+    }
+
+    // Relative avatar paths (e.g. "/avatars/players/<hash>.jpg" served by
+    // AvatarsController) need a host prefix so the HUD <img src> resolves
+    // when rendered inside Electron on a host that doesn't share the
+    // streamer's API_BASE. Anything already absolute (steam CDN, etc.)
+    // passes through.
+    const absolutize = (url?: string | null): string => {
+      if (!url) return "";
+      if (/^(https?:|data:)/.test(url)) return url;
+      if (!apiDomain) return url;
+      return apiDomain + (url.startsWith("/") ? "" : "/") + url;
+    };
+
+    type LineupShape = NonNullable<typeof match.lineup_1>;
+    const lineupToHudShape = (lu: LineupShape | null) => {
+      if (!lu) return null;
+      const team = lu.team ?? null;
+      const teamId = team?.id ?? null;
+      const players = (lu.lineup_players ?? []).map((lp) => {
+        const p = lp.player;
+        // Dump the raw photo-related fields so a missing-but-expected
+        // image is debuggable from one log line. Each of these is a
+        // separate column in Hasura — if (e.g.) `roster_image_url` is
+        // set on the player but `team_members[team_id].roster_image_url`
+        // is null, you'll see that here before the resolution picks one.
+        this.logger.debug?.(
+          `[hud-data ${matchId}] raw player ${lp.steam_id}: ` +
+            `name=${p?.name ?? lp.placeholder_name ?? "?"} ` +
+            `team_id_for_match=${teamId ?? "<none>"} ` +
+            `roster_image_url=${p?.roster_image_url ?? "<null>"} ` +
+            `custom_avatar_url=${p?.custom_avatar_url ?? "<null>"} ` +
+            `avatar_url=${p?.avatar_url ?? "<null>"} ` +
+            `team_members=${JSON.stringify(p?.team_members ?? [])}`,
+        );
+        const teamScoped =
+          (teamId &&
+            p?.team_members?.find((tm) => tm.team_id === teamId)
+              ?.roster_image_url) ||
+          null;
+        // Only roster images count for the HUD — never fall back to
+        // Steam's avatar_url or the user's custom_avatar_url. Those are
+        // profile-facing photos (selfies, anime, etc.); the spectator
+        // HUD wants the team-uploaded official portrait or nothing at
+        // all, so an unset player renders the HUD's placeholder instead
+        // of a Steam selfie next to their teammates' jerseys.
+        let source: "team_roster" | "player_roster" | "none";
+        let raw: string | null;
+        if (teamScoped) {
+          source = "team_roster";
+          raw = teamScoped;
+        } else if (p?.roster_image_url) {
+          source = "player_roster";
+          raw = p.roster_image_url;
+        } else {
+          source = "none";
+          raw = null;
+        }
+        const avatar = absolutize(raw ?? "");
+        const playerName = p?.name || lp.placeholder_name || "Player";
+        this.logger.log(
+          `[hud-data ${matchId}] player ${playerName} (${lp.steam_id}) ` +
+            `team_id=${teamId ?? "<none>"} ` +
+            `avatar_source=${source} url=${avatar || "<empty>"}`,
+        );
+        return {
+          steam_id: lp.steam_id,
+          name: playerName,
+          country: p?.country || "us",
+          avatar,
+        };
+      });
+      return {
+        name: team?.name || lu.name || "Team",
+        short_name: team?.short_name || "",
+        logo: absolutize(team?.avatar_url),
+        players,
+      };
+    };
+
+    const payload = {
+      match: {
+        id: match.id,
+        lineups: [
+          lineupToHudShape(match.lineup_1),
+          lineupToHudShape(match.lineup_2),
+        ].filter((l): l is NonNullable<typeof l> => l !== null),
+      },
+    };
+
+    response.status(200).json(payload);
+  }
+
   @Get("current-match/:serverId")
   public async getMatchDetails(
     @Req() request: Request,
@@ -749,6 +920,47 @@ export class MatchesController {
     };
   }
 
+  // Hot-swap the live pod between two matches. Permission: streamer
+  // role or above on the destination — the source's organizer check
+  // is implicit (only an active stream they already own/operate can
+  // be repointed via the streamer pool). The from match's stream is
+  // not stopped, it's *repointed* to the destination match.
+  @HasuraAction()
+  public async switchLiveMatch(data: {
+    from_match_id: string;
+    to_match_id: string;
+    mode: "live" | "tv";
+    user: User;
+  }) {
+    const { from_match_id, to_match_id, mode, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    if (!(await this.matchAssistant.isOrganizer(to_match_id, user))) {
+      throw Error("you are not an organizer for the destination match");
+    }
+    await this.gameStreamer.switchLive(from_match_id, to_match_id, mode);
+    return { success: true };
+  }
+
+  // Admin-only fall-back from the GPU nodes page. Walks every kind of
+  // session that can claim a GPU (live stream, demo playback, batch
+  // highlights render) and tears down whatever it finds attached to
+  // the given node, so an operator can recover a stuck slot without
+  // hunting down the originating match.
+  @HasuraAction()
+  public async stopGpuSession(data: {
+    game_server_node_id: string;
+    user: User;
+  }) {
+    const { game_server_node_id, user } = data;
+    if (!isRoleAbove(user.role, "administrator")) {
+      throw Error("you must be an administrator");
+    }
+    await this.gameStreamer.stopGpuSession(game_server_node_id);
+    return { success: true };
+  }
+
   @HasuraAction()
   public async specClick(data: {
     match_id: string;
@@ -811,6 +1023,48 @@ export class MatchesController {
       throw Error("you must have the streamer role or above");
     }
     await this.gameStreamer.specAutodirector(match_id, enabled);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async specHud(data: {
+    match_id: string;
+    visible: boolean;
+    user: User;
+  }) {
+    const { match_id, visible, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    await this.gameStreamer.specHud(match_id, visible);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async specXray(data: {
+    match_id: string;
+    enabled: boolean;
+    user: User;
+  }) {
+    const { match_id, enabled, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    await this.gameStreamer.specXray(match_id, enabled);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async specScoreboard(data: {
+    match_id: string;
+    show: boolean;
+    user: User;
+  }) {
+    const { match_id, show, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    await this.gameStreamer.specScoreboard(match_id, show);
     return { success: true };
   }
 
@@ -942,6 +1196,27 @@ export class MatchesController {
     const { match_id } = data;
     const state = await this.gameStreamer.getLiveSpecState(match_id);
     return state;
+  }
+
+  // Hot-swap the live streamer's HUD bundle (default | horizontal |
+  // vertical). Ephemeral — a pod restart resets to the HUD_MODE env
+  // default. Demo playback uses the WebSocket `demo-session:control`
+  // channel (action "hud-mode") instead of this action.
+  @HasuraAction()
+  public async setHudMode(data: {
+    match_id: string;
+    mode: string;
+    user: User;
+  }) {
+    const { match_id, mode, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    if (mode !== "default" && mode !== "horizontal" && mode !== "vertical") {
+      throw Error("mode must be one of default|horizontal|vertical");
+    }
+    await this.gameStreamer.setLiveHudMode(match_id, mode);
+    return { success: true };
   }
 
   @HasuraAction()

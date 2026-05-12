@@ -65,6 +65,7 @@ select_permissions:
         - autodirector
         - status_history
         - game_server_node_id
+        - k8s_service_name
       filter: {}
     comment: ""
 update_permissions:

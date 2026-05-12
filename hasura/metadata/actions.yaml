@@ -449,6 +449,13 @@ actions:
       forward_client_headers: true
     permissions:
       - role: administrator
+  - name: setHudMode
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: user
   - name: setMatchWinner
     definition:
       kind: synchronous
@@ -499,6 +506,27 @@ actions:
       forward_client_headers: true
     permissions:
       - role: user
+  - name: specHud
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: user
+  - name: specXray
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: user
+  - name: specScoreboard
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: user
   - name: startLive
     definition:
       kind: synchronous
@@ -514,7 +542,21 @@ actions:
     permissions:
       - role: user
     comment: startMatch
+  - name: stopGpuSession
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
   - name: stopLive
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: user
+  - name: switchLiveMatch
     definition:
       kind: synchronous
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
