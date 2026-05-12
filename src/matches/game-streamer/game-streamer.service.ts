@@ -116,7 +116,8 @@ export class GameStreamerService {
     }
     const candidate = value || process.env.HUD_MODE || "horizontal";
     if (candidate === "vertical") return "vertical";
-    if (candidate === "horizontal" || candidate === "default") return "horizontal";
+    if (candidate === "horizontal" || candidate === "default")
+      return "horizontal";
     this.logger.warn(
       `default_hud_mode="${candidate}" is not one of horizontal|vertical — falling back to "horizontal"`,
     );
@@ -155,10 +156,6 @@ export class GameStreamerService {
     return `http://${svc}.${this.namespace}.svc.cluster.local:1350/spec/${action}`;
   }
 
-  // The Job + Service share the same `gs-live-${origMatchId}` pattern
-  // at startLive time, so a row's saved `k8s_service_name` doubles as
-  // the job name. Falling back to the matchId-derived name covers
-  // legacy rows that pre-date the column.
   private async resolveLiveJobName(matchId: string): Promise<string> {
     const svc = await this.resolveLiveServiceName(matchId);
     return svc;
@@ -335,34 +332,21 @@ export class GameStreamerService {
     return { gsi: body?.gsi ?? null };
   }
 
-  // Hot-swap the JTs Hud Manager overlay bundle without restarting
-  // the streamer pod. spec-server.mjs (/spec/hud-mode) proxies to
-  // hud-manager's POST /api/overlay/start which closeActiveOverlay()s
-  // the current BrowserWindow and openOverlayForHud()s the new one.
-  // Ephemeral: a pod restart will reset to the HUD_MODE env value.
   public async setLiveHudMode(
     matchId: string,
-    // "default" still accepted by spec-server for back-compat with
-    // already-stored settings; the UI only exposes horizontal/vertical.
     mode: "default" | "horizontal" | "vertical",
   ) {
     return this.callSpec(matchId, "hud-mode", { mode });
   }
 
-  // Toggle the JTs Hud Manager overlay window visibility (windowmap /
-  // windowunmap). True = visible, false = hidden.
   public async specHud(matchId: string, visible: boolean) {
     return this.callSpec(matchId, "hud", { visible });
   }
 
-  // Cycle spec_show_xray. Caller tracks the intended state locally;
-  // we just emit one cs2 keypress per intent change.
   public async specXray(matchId: string, enabled: boolean) {
     return this.callSpec(matchId, "xray", { enabled });
   }
 
-  // Momentary scoreboard hold. {show:true} on Tab-down,
-  // {show:false} on Tab-up — wires to cs2's +/-showscores.
   public async specScoreboard(matchId: string, show: boolean) {
     return this.callSpec(matchId, "scoreboard", { show });
   }
@@ -876,9 +860,7 @@ export class GameStreamerService {
           role: "demo",
           "session-id": sessionId,
         },
-        ports: [
-          { name: "spec", port: 1350, targetPort: "spec" },
-        ],
+        ports: [{ name: "spec", port: 1350, targetPort: "spec" }],
       },
     };
 
@@ -1080,13 +1062,6 @@ export class GameStreamerService {
     await this.createLiveService(matchId);
   }
 
-  // Operator escape hatch from the GPU nodes page: tear down whatever
-  // session is currently pinning this GPU node so the slot frees up
-  // without a per-kind round trip. A node can hold at most one of
-  // {live stream, demo session, batch-highlights} at a time (the
-  // claim_free_gpu_node() picker is exclusive), but we check all three
-  // to stay safe if the invariant ever drifts. Returns a summary of
-  // what was actually stopped so the action's caller can log it.
   public async stopGpuSession(nodeId: string): Promise<{
     stopped_live: number;
     stopped_demo_sessions: number;
@@ -1141,9 +1116,6 @@ export class GameStreamerService {
       }
     }
 
-    // Highlights renders use clip_render_jobs.game_server_node_id to claim
-    // the GPU. Distinct on demo so a multi-clip batch only kills its
-    // single pod once, then we cancel every row tied to that demo.
     const { clip_render_jobs } = await this.hasura.query({
       clip_render_jobs: {
         __args: {
@@ -1206,9 +1178,6 @@ export class GameStreamerService {
   }
 
   public async stopLive(matchId: string) {
-    // Resolve via the row — after switchLiveMatch the Job is still
-    // named after the *original* match id (where the pod first
-    // booted), so we can't just template gs-live-${current}.
     const jobName = await this.resolveLiveJobName(matchId);
     this.logger.log(`[${matchId}] stopping live stream`);
 
@@ -1244,18 +1213,6 @@ export class GameStreamerService {
     }
   }
 
-  // Hot-swap the live pod onto a different match without re-launching
-  // CS2/Steam. Saves the boot delay (steam + cs2 startup is 60-180s)
-  // when an operator wants to rotate broadcast focus across parallel
-  // matches running on the same GPU pool.
-  //
-  // The trick that makes this safe with the existing k8s wiring: the
-  // Service name (= Job name) is pinned to the row's k8s_service_name
-  // at startLive time, so we DON'T have to touch any k8s objects to
-  // switch. The pod keeps its match-id label (= original match), the
-  // Service still selects it, but match_streams.match_id is repointed
-  // and the in-pod spec-server pivots cs2 / capture / HUD onto the
-  // new match.
   public async switchLive(
     fromMatchId: string,
     toMatchId: string,
@@ -1268,9 +1225,6 @@ export class GameStreamerService {
       throw new Error("invalid mode");
     }
 
-    // 1. Source row — must exist and be is_live. Switching from a
-    // still-booting pod risks racing the cs2 launch's +connect arg,
-    // so we wait until cs2 has actually attached.
     const { match_streams: fromRows } = await this.hasura.query({
       match_streams: {
         __args: {
@@ -1305,7 +1259,6 @@ export class GameStreamerService {
       );
     }
 
-    // 2. Destination must not already own a game-streamer pod.
     const { match_streams: destRows } = await this.hasura.query({
       match_streams: {
         __args: {
@@ -1322,7 +1275,6 @@ export class GameStreamerService {
       throw new Error(`match ${toMatchId} already has an active stream`);
     }
 
-    // 3. Pull new match's server + password to build the connect env.
     const { matches_by_pk: toMatch } = await this.hasura.query({
       matches_by_pk: {
         __args: { id: toMatchId },
@@ -1351,9 +1303,6 @@ export class GameStreamerService {
       mode,
     );
 
-    // Flatten the env array into the shape spec-server expects. The
-    // bash flow on the pod re-derives env from this body so the
-    // mapping mirrors run-live.sh's three connect modes.
     const envMap: Record<string, string> = {};
     for (const e of connectEnv) {
       if (e.name && typeof e.value === "string") envMap[e.name] = e.value;
@@ -1380,9 +1329,6 @@ export class GameStreamerService {
       throw new Error("could not derive connect details for destination match");
     }
 
-    // 4. Talk to the pod via its pinned service — match-id label on
-    // the pod still matches the *original* match, so the Service URL
-    // we resolve through `from`'s row is what reaches spec-server.
     const url = await this.getSpecServerUrl(fromMatchId, "switch-match");
     let res: Response;
     try {
@@ -1404,11 +1350,6 @@ export class GameStreamerService {
       );
     }
 
-    // 5. Repoint match_streams to the new match. k8s_service_name +
-    // game_server_node_id stay put — same pod, new match. We reset
-    // is_live to false so the UI shows the "reconnecting" pipeline
-    // state until the pod's reporter posts status=live for the new
-    // row; status_history starts fresh for the same reason.
     const nowIso = new Date().toISOString();
     const newLink = `${this.appConfig.gameStreamDomain}/${toMatchId}/`;
     const switchHistory = JSON.stringify([
@@ -1427,8 +1368,6 @@ export class GameStreamerService {
             status_history: switchHistory,
             last_status_at: nowIso,
             error_message: null,
-            // Drop autodirector setting to its default-on for the new
-            // match; operators usually want a fresh take on each one.
             autodirector: true,
           } as any,
         },
@@ -1748,9 +1687,6 @@ export class GameStreamerService {
         [matchId],
       );
 
-      // Pin k8s_service_name at row creation. Stays stable for the
-      // pod's lifetime so switchLiveMatch can repoint match_id later
-      // without renaming any k8s objects.
       const serviceName = GameStreamerService.GetLiveServiceName(matchId);
       const result = await client.query(
         `WITH chosen AS (SELECT claim_free_gpu_node() AS id)
@@ -1902,9 +1838,7 @@ export class GameStreamerService {
           role: "live",
           "match-id": matchId,
         },
-        ports: [
-          { name: "spec", port: 1350, targetPort: "spec" },
-        ],
+        ports: [{ name: "spec", port: 1350, targetPort: "spec" }],
       },
     };
 
@@ -1915,9 +1849,6 @@ export class GameStreamerService {
   }
 
   private async deleteLiveService(matchId: string) {
-    // Resolve via the row in case switchLiveMatch repointed match_id —
-    // the Service is named after the *original* match id (where the
-    // pod first booted) and stays that way for the pod's lifetime.
     const serviceName = await this.resolveLiveServiceName(matchId);
     const kc = new KubeConfig();
     kc.loadFromDefault();
@@ -2233,16 +2164,7 @@ export class GameStreamerService {
                   { name: "MATCH_ID", value: matchId },
                   { name: "DISPLAY_SIZEW", value: "1920" },
                   { name: "DISPLAY_SIZEH", value: "1080" },
-                  // In-cluster api base — used by the streamer's
-                  // seed_hud_db to fetch /matches/:matchId/hud-data
-                  // (team logos + roster photos) and by the demo
-                  // status reporter as the API_BASE fallback.
                   { name: "API_BASE", value: resolveInClusterApiBase() },
-                  // HUD_MODE is intentionally NOT set here — each
-                  // caller (startLive / startDemoPlayback / batch-
-                  // highlights dispatch) awaits resolveHudMode() and
-                  // pushes the result into extraEnv so the
-                  // default_hud_mode Hasura setting is honoured.
                   // Forward the configured public HLS host so the streamer
                   // can log/print correct watch URLs (otherwise the scripts
                   // fall back to a hardcoded hls.5stack.gg).

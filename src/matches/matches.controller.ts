@@ -80,38 +80,12 @@ export class MatchesController {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
 
-  /**
-   * Curated team/player metadata for the game-streamer's HUD seed.
-   * Returns a flattened, pre-resolved shape so the streamer's seed_hud_db
-   * (src/lib/hud-manager.sh) can POST it straight to JTs Hud Manager's
-   * /api/{teams,players,match} without any GraphQL/Hasura plumbing:
-   *
-   *   {
-   *     "match": {
-   *       "id": "...",
-   *       "lineups": [
-   *         { "name": "...", "short_name": "...", "logo": "<absolute url>",
-   *           "players": [{ "steam_id": "...", "name": "...",
-   *                         "country": "...", "avatar": "<absolute url>" }] },
-   *         { ...team 2... }
-   *       ]
-   *     }
-   *   }
-   *
-   * No auth — the route is only reachable on the in-cluster Service
-   * (`http://api:5585/matches/:matchId/hud-data`), the payload contains
-   * nothing more sensitive than what the public match page already
-   * renders, and the streamer pod has no credentials we'd want to manage.
-   */
   @Get(":matchId/hud-data")
   public async getMatchHudData(
     @Req() request: Request,
     @Res() response: Response,
   ) {
     const matchId = request.params.matchId;
-    // Avatars are served by the api (AvatarsController @ /avatars/*),
-    // not the web app, so absolutise against `apiDomain` —
-    // `webDomain` would point at 5stack.gg which doesn't serve those.
     const apiDomain = (this.appConfig.apiDomain || "").replace(/\/$/, "");
 
     const { matches_by_pk: match } = await this.hasura.query({
@@ -160,11 +134,6 @@ export class MatchesController {
       return;
     }
 
-    // Relative avatar paths (e.g. "/avatars/players/<hash>.jpg" served by
-    // AvatarsController) need a host prefix so the HUD <img src> resolves
-    // when rendered inside Electron on a host that doesn't share the
-    // streamer's API_BASE. Anything already absolute (steam CDN, etc.)
-    // passes through.
     const absolutize = (url?: string | null): string => {
       if (!url) return "";
       if (/^(https?:|data:)/.test(url)) return url;
@@ -179,11 +148,6 @@ export class MatchesController {
       const teamId = team?.id ?? null;
       const players = (lu.lineup_players ?? []).map((lp) => {
         const p = lp.player;
-        // Dump the raw photo-related fields so a missing-but-expected
-        // image is debuggable from one log line. Each of these is a
-        // separate column in Hasura — if (e.g.) `roster_image_url` is
-        // set on the player but `team_members[team_id].roster_image_url`
-        // is null, you'll see that here before the resolution picks one.
         this.logger.debug?.(
           `[hud-data ${matchId}] raw player ${lp.steam_id}: ` +
             `name=${p?.name ?? lp.placeholder_name ?? "?"} ` +
@@ -198,12 +162,6 @@ export class MatchesController {
             p?.team_members?.find((tm) => tm.team_id === teamId)
               ?.roster_image_url) ||
           null;
-        // Only roster images count for the HUD — never fall back to
-        // Steam's avatar_url or the user's custom_avatar_url. Those are
-        // profile-facing photos (selfies, anime, etc.); the spectator
-        // HUD wants the team-uploaded official portrait or nothing at
-        // all, so an unset player renders the HUD's placeholder instead
-        // of a Steam selfie next to their teammates' jerseys.
         let source: "team_roster" | "player_roster" | "none";
         let raw: string | null;
         if (teamScoped) {
@@ -920,11 +878,6 @@ export class MatchesController {
     };
   }
 
-  // Hot-swap the live pod between two matches. Permission: streamer
-  // role or above on the destination — the source's organizer check
-  // is implicit (only an active stream they already own/operate can
-  // be repointed via the streamer pool). The from match's stream is
-  // not stopped, it's *repointed* to the destination match.
   @HasuraAction()
   public async switchLiveMatch(data: {
     from_match_id: string;
@@ -943,11 +896,6 @@ export class MatchesController {
     return { success: true };
   }
 
-  // Admin-only fall-back from the GPU nodes page. Walks every kind of
-  // session that can claim a GPU (live stream, demo playback, batch
-  // highlights render) and tears down whatever it finds attached to
-  // the given node, so an operator can recover a stuck slot without
-  // hunting down the originating match.
   @HasuraAction()
   public async stopGpuSession(data: {
     game_server_node_id: string;
@@ -1198,10 +1146,6 @@ export class MatchesController {
     return state;
   }
 
-  // Hot-swap the live streamer's HUD bundle (default | horizontal |
-  // vertical). Ephemeral — a pod restart resets to the HUD_MODE env
-  // default. Demo playback uses the WebSocket `demo-session:control`
-  // channel (action "hud-mode") instead of this action.
   @HasuraAction()
   public async setHudMode(data: {
     match_id: string;
@@ -1292,6 +1236,28 @@ export class MatchesController {
         "you are not a match organizer or the match is waiting for players to check in",
       );
     }
+
+    // Clear veto bans so a restarted match doesn't inherit prior region/map
+    // bans (which could leave the only remaining region already banned and
+    // prevent the match from starting).
+    await this.hasura.mutation({
+      delete_match_region_veto_picks: {
+        __args: {
+          where: {
+            match_id: { _eq: match_id },
+          },
+        },
+        affected_rows: true,
+      },
+      delete_match_map_veto_picks: {
+        __args: {
+          where: {
+            match_id: { _eq: match_id },
+          },
+        },
+        affected_rows: true,
+      },
+    });
 
     await this.matchAssistant.updateMatchStatus(match_id, "Canceled");
 
