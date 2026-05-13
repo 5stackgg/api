@@ -1086,7 +1086,7 @@ export class ClipsService {
 
     if (pendingObjects.length === 0) return 0;
 
-    const insertObjects = pendingObjects.map((p) => ({
+    const insertObjects = pendingObjects.map((p, index) => ({
       user_steam_id: options.isSystemInitiated
         ? null
         : options.actingUserSteamId
@@ -1101,6 +1101,7 @@ export class ClipsService {
       ),
       spec: p.spec,
       status: "queued",
+      sort_index: index,
       status_history: [
         {
           status: "queued",
@@ -1356,32 +1357,39 @@ export class ClipsService {
     }
 
     if (pendingObjects.length > 0) {
-      const insertObjects = pendingObjects.map((p) => ({
-        user_steam_id: options.isSystemInitiated
-          ? null
-          : options.actingUserSteamId
-            ? String(options.actingUserSteamId)
-            : null,
-        match_map_id: p.mapRowId,
-        match_map_demo_id: p.matchMapDemoId,
-        session_token: p.sessionToken,
-        k8s_job_name: GameStreamerService.GetBatchHighlightsJobName(
-          p.mapRowId,
-          p.matchMapDemoId,
-        ),
-        spec: p.spec,
-        status: "queued",
-        status_history: [
-          {
-            status: "queued",
-            at: new Date().toISOString(),
-            source: "auto_generate_match_clips",
-            target_steam_id: p.targetSteamId,
-            match_map_demo_id: p.matchMapDemoId,
-            default_visibility: defaultVisibility,
-          },
-        ],
-      }));
+      const indexByDemoKey = new Map<string, number>();
+      const insertObjects = pendingObjects.map((p) => {
+        const key = `${p.mapRowId}:${p.matchMapDemoId}`;
+        const idx = indexByDemoKey.get(key) ?? 0;
+        indexByDemoKey.set(key, idx + 1);
+        return {
+          user_steam_id: options.isSystemInitiated
+            ? null
+            : options.actingUserSteamId
+              ? String(options.actingUserSteamId)
+              : null,
+          match_map_id: p.mapRowId,
+          match_map_demo_id: p.matchMapDemoId,
+          session_token: p.sessionToken,
+          k8s_job_name: GameStreamerService.GetBatchHighlightsJobName(
+            p.mapRowId,
+            p.matchMapDemoId,
+          ),
+          spec: p.spec,
+          status: "queued",
+          sort_index: idx,
+          status_history: [
+            {
+              status: "queued",
+              at: new Date().toISOString(),
+              source: "auto_generate_match_clips",
+              target_steam_id: p.targetSteamId,
+              match_map_demo_id: p.matchMapDemoId,
+              default_visibility: defaultVisibility,
+            },
+          ],
+        };
+      });
       try {
         const { insert_clip_render_jobs } = await this.hasura.mutation({
           insert_clip_render_jobs: {
