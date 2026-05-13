@@ -1587,6 +1587,7 @@ export class GameStreamerService {
       { name: "STATUS_API_BASE", value: resolveInClusterApiBase() },
       { name: "HUD_MODE", value: await this.resolveHudMode() },
       { name: "CLIP_BATCH_MODE", value: "1" },
+      { name: "AUTODIRECTOR", value: "0" },
       {
         name: "CLIP_BATCH_JOBS",
         value: JSON.stringify(
