@@ -409,7 +409,11 @@ export class AvatarsService {
     teamId: string,
     user: User,
   ): Promise<void> {
-    if (user.role === "administrator") {
+    if (
+      user.role === "administrator" ||
+      user.role === "tournament_organizer" ||
+      user.role === "match_organizer"
+    ) {
       return;
     }
 

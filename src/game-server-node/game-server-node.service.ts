@@ -377,6 +377,8 @@ export class GameServerNodeService {
       throw new Error("Game server not found");
     }
 
+    await this.createVolumes(gameServerNodeId, game);
+
     if (game === "cs2" && !force) {
       const nodeBuildId = game_server_nodes_by_pk.build_id;
       const pinBuildId = game_server_nodes_by_pk.pinned_version?.build_id;
@@ -398,8 +400,6 @@ export class GameServerNodeService {
         }
       }
     }
-
-    await this.createVolumes(gameServerNodeId, game);
 
     this.logger.log(
       `Updating ${game === "csgo" ? "CSGO" : "CS2"} on node ${gameServerNodeId}`,

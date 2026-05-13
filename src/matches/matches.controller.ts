@@ -1079,11 +1079,17 @@ export class MatchesController {
     target_steam_id?: string | null;
     user: User;
   }) {
-    await this.clips.updateClip(data.user.steam_id, data.clip_id, {
-      title: data.title,
-      visibility: data.visibility,
-      target_steam_id: data.target_steam_id,
-    });
+    const isOperator = isRoleAbove(data.user.role, "streamer");
+    await this.clips.updateClip(
+      data.user.steam_id,
+      data.clip_id,
+      {
+        title: data.title,
+        visibility: data.visibility,
+        target_steam_id: data.target_steam_id,
+      },
+      isOperator,
+    );
     return { success: true };
   }
 
