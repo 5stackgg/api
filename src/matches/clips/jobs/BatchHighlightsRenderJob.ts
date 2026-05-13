@@ -127,7 +127,7 @@ export class BatchHighlightsRenderJob extends WorkerHost {
             match_map_demo_id: { _eq: matchMapDemoId },
             status: { _in: [...IN_FLIGHT_STATUSES] },
           },
-          order_by: [{ created_at: "asc" }],
+          order_by: [{ created_at: "asc" }, { sort_index: "asc" }],
         },
         id: true,
         session_token: true,
