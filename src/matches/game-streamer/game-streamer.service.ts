@@ -804,16 +804,21 @@ export class GameStreamerService {
       progress_stage,
     );
 
+    const statusChanged = current.status !== body.status;
+    const set: Record<string, unknown> = {
+      status: body.status,
+      error_message: body.error ?? null,
+      status_history: nextHistory,
+    };
+    if (statusChanged) {
+      set.last_status_at = "now()";
+    }
+
     await this.hasura.mutation({
       update_match_demo_sessions_by_pk: {
         __args: {
           pk_columns: { id: sessionId },
-          _set: {
-            status: body.status,
-            error_message: body.error ?? null,
-            last_status_at: "now()",
-            status_history: nextHistory,
-          },
+          _set: set,
         },
         id: true,
       },
@@ -2005,14 +2010,17 @@ export class GameStreamerService {
       progress_stage,
     );
 
-    const setClause = {
+    const statusChanged = row?.status !== body.status;
+    const setClause: Record<string, unknown> = {
       status: body.status,
       stream_url: body.stream_url ?? null,
       error_message: body.error ?? null,
-      last_status_at: "now()",
       is_live: body.status === "live",
       status_history: nextHistory,
     };
+    if (statusChanged) {
+      setClause.last_status_at = "now()";
+    }
 
     const result = await this.hasura.mutation({
       update_match_streams: {
