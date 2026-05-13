@@ -245,9 +245,9 @@ export class MatchesController {
 
     const match = matches_by_pk as typeof matches_by_pk & {
       is_lan: boolean;
-      show_elo_ranks: boolean;
       options: typeof matches_by_pk.options & {
         use_playcast: boolean;
+        show_elo_ranks: boolean;
         cfg_overrides: Record<string, string>;
       };
       lineup_1: typeof matches_by_pk.lineup_1 & {
@@ -291,7 +291,7 @@ export class MatchesController {
       },
     });
 
-    match.show_elo_ranks = fivestackRanksSetting?.value === "true";
+    match.options.show_elo_ranks = fivestackRanksSetting?.value === "true";
 
     const { match_type_cfgs } = await this.hasura.query({
       match_type_cfgs: {
