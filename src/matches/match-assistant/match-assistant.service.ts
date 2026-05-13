@@ -505,6 +505,7 @@ export class MatchAssistantService {
         password: true,
         server_id: true,
         max_players_per_lineup: true,
+        is_tournament_match: true,
         match_maps: {
           __args: {
             order_by: [
@@ -727,6 +728,23 @@ export class MatchAssistantService {
             );
           }
 
+          const fivestackRanksSettingName = match.is_tournament_match
+            ? "fivestack_ranks_tournaments"
+            : "fivestack_ranks_matches";
+
+          const { settings_by_pk: fivestackRanksSetting } =
+            await this.hasura.query({
+              settings_by_pk: {
+                __args: {
+                  name: fivestackRanksSettingName,
+                },
+                name: true,
+                value: true,
+              },
+            });
+
+          const showEloRanks = fivestackRanksSetting?.value === "true";
+
           await batch.createNamespacedJob({
             namespace: this.namespace,
             body: {
@@ -835,6 +853,9 @@ export class MatchAssistantService {
                             name: "STEAM_RELAY",
                             value: steamRelay ? "true" : "false",
                           },
+                          ...(showEloRanks
+                            ? [{ name: "SHOW_ELO_RANKS", value: "true" }]
+                            : []),
                         ],
                         volumeMounts: [
                           {

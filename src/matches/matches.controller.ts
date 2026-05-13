@@ -123,6 +123,7 @@ export class MatchesController {
         lineup_1_id: true,
         lineup_2_id: true,
         current_match_map_id: true,
+        is_tournament_match: true,
         server: {
           server_region: {
             is_lan: true,
@@ -179,6 +180,7 @@ export class MatchesController {
               is_banned: true,
               is_gagged: true,
               is_muted: true,
+              elo: true,
               roster_image_url: true,
               team_members: {
                 team_id: true,
@@ -206,6 +208,7 @@ export class MatchesController {
               is_banned: true,
               is_gagged: true,
               is_muted: true,
+              elo: true,
               roster_image_url: true,
               team_members: {
                 team_id: true,
@@ -244,6 +247,7 @@ export class MatchesController {
       is_lan: boolean;
       options: typeof matches_by_pk.options & {
         use_playcast: boolean;
+        show_elo_ranks: boolean;
         cfg_overrides: Record<string, string>;
       };
       lineup_1: typeof matches_by_pk.lineup_1 & {
@@ -272,6 +276,22 @@ export class MatchesController {
 
     match.is_lan = match.server.server_region.is_lan;
     delete match.server;
+
+    const fivestackRanksSettingName = match.is_tournament_match
+      ? "fivestack_ranks_tournaments"
+      : "fivestack_ranks_matches";
+
+    const { settings_by_pk: fivestackRanksSetting } = await this.hasura.query({
+      settings_by_pk: {
+        __args: {
+          name: fivestackRanksSettingName,
+        },
+        name: true,
+        value: true,
+      },
+    });
+
+    match.options.show_elo_ranks = fivestackRanksSetting?.value === "true";
 
     const { match_type_cfgs } = await this.hasura.query({
       match_type_cfgs: {
@@ -308,6 +328,15 @@ export class MatchesController {
       tournamentBracket?.team_2?.team?.short_name ||
       tournamentBracket?.team_2?.name;
 
+    const eloKey = match.options.type?.toLowerCase();
+    const getPlayerElo = (
+      elo: Record<string, unknown> | null | undefined,
+    ): number => {
+      const value = eloKey && elo ? elo[eloKey] : undefined;
+      const parsed = value != null ? Number(value) : NaN;
+      return Number.isFinite(parsed) ? parsed : 5000;
+    };
+
     const lineup1TeamId = match.lineup_1.team?.id;
     match.lineup_1.tag =
       lineup1TournamentTag || match.lineup_1.team?.short_name;
@@ -320,6 +349,7 @@ export class MatchesController {
         is_banned: player.player?.is_banned || false,
         is_gagged: player.player?.is_gagged || false,
         is_muted: player.player?.is_muted || false,
+        elo: getPlayerElo(player.player?.elo as Record<string, unknown>),
         roster_image_url:
           (lineup1TeamId &&
             player.player?.team_members?.find(
@@ -343,6 +373,7 @@ export class MatchesController {
         is_banned: player.player?.is_banned || false,
         is_gagged: player.player?.is_gagged || false,
         is_muted: player.player?.is_muted || false,
+        elo: getPlayerElo(player.player?.elo as Record<string, unknown>),
         roster_image_url:
           (lineup2TeamId &&
             player.player?.team_members?.find(

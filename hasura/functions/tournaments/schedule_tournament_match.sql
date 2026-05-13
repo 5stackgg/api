@@ -111,20 +111,32 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          _match_options_id := clone_match_options(_template_match_options_id);
      END IF;
 
+     -- Pre-link the bracket to the (about-to-exist) match id so triggers on
+     -- the matches insert (notably tai_match) can recognize this as a
+     -- tournament match via is_tournament_match(). The FK is deferrable so
+     -- pointing at a row that does not yet exist is fine within this txn.
+     _match_id := gen_random_uuid();
+
+     UPDATE tournament_brackets
+        SET match_id = _match_id
+      WHERE id = bracket.id;
+
      INSERT INTO matches (
+         id,
          status,
          organizer_steam_id,
          match_options_id,
          scheduled_at
      )
      VALUES (
+         _match_id,
          'PickingPlayers',
          tournament.organizer_steam_id,
          _match_options_id,
          GREATEST(COALESCE(bracket.scheduled_at, now()), now())
      )
-     RETURNING id, lineup_1_id, lineup_2_id
-       INTO _match_id, _lineup_1_id, _lineup_2_id;
+     RETURNING lineup_1_id, lineup_2_id
+       INTO _lineup_1_id, _lineup_2_id;
 
      SELECT tt.captain_steam_id
      INTO _captain_steam_id_1
@@ -169,10 +181,6 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      UPDATE matches
      SET status = 'WaitingForCheckIn'
      WHERE id = _match_id;
-
-     UPDATE tournament_brackets
-     SET match_id = _match_id
-     WHERE id = bracket.id;
 
      PERFORM calculate_tournament_bracket_start_times(tournament.id);
 
