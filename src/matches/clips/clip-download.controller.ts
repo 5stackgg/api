@@ -77,12 +77,6 @@ export class ClipDownloadController {
     return match_clips_by_pk;
   }
 
-  // Stream an S3 object with HTTP Range support. iOS Safari probes a
-  // `<video>` resource with `Range: bytes=0-1` before committing to
-  // playback; if the server replies 200 instead of 206 + Content-Range
-  // it aborts with "An error occurred trying to load the resource."
-  // Desktop browsers tolerate the 200, which is why this only surfaces
-  // on iOS.
   private async stream(
     key: string,
     contentType: string,
@@ -99,19 +93,13 @@ export class ClipDownloadController {
         response.status(404).json({ error: "not found" });
         return;
       }
-      this.logger.error(
-        `failed to stat ${key}: ${(error as Error)?.message}`,
-      );
+      this.logger.error(`failed to stat ${key}: ${(error as Error)?.message}`);
       response.status(500).json({ error: "internal" });
       return;
     }
 
     const size = stat.size;
     const safeName = (downloadName ?? "").replace(/[^a-zA-Z0-9._-]/g, "");
-    // `inline` for the player path, `attachment` only when explicitly
-    // requested via `?dl=1` (matches the cloudflare worker contract).
-    // The filename param on `inline` is still honored by browsers as
-    // the suggested name for an in-player "Save video as" action.
     const dispositionType = forceDownload ? "attachment" : "inline";
     const disposition =
       safeName.length > 0
@@ -161,9 +149,6 @@ export class ClipDownloadController {
     }
   }
 
-  // RFC 7233 single-range parser. Multi-range is rare in practice and
-  // not what video elements send — refuse anything we can't satisfy
-  // with a 416 above.
   private parseRange(
     header: string,
     size: number,
@@ -176,7 +161,6 @@ export class ClipDownloadController {
     let end: number;
     if (startStr === "" && endStr === "") return null;
     if (startStr === "") {
-      // Suffix range: last N bytes
       const suffix = parseInt(endStr, 10);
       if (!Number.isFinite(suffix) || suffix <= 0) return null;
       start = Math.max(0, size - suffix);
@@ -193,8 +177,6 @@ export class ClipDownloadController {
 
   private pipeWithCleanup(stream: NodeJS.ReadableStream, response: Response) {
     response.on("close", () => {
-      // Client disconnected mid-stream — abandon the s3 read so we
-      // don't leak the socket back to minio.
       (stream as unknown as { destroy?: () => void }).destroy?.();
     });
     stream.pipe(response);
