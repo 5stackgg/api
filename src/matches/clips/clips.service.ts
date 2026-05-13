@@ -618,7 +618,9 @@ export class ClipsService {
       // Coalesce within-stage ticks; new stage pushes a fresh entry.
       const last = nextHistory[nextHistory.length - 1];
       const lastBootStage =
-        last && last.status === "booting" ? (last as { boot_stage?: string }).boot_stage : undefined;
+        last && last.status === "booting"
+          ? (last as { boot_stage?: string }).boot_stage
+          : undefined;
       const lastStage =
         last && last.status === "booting"
           ? typeof lastBootStage === "string"

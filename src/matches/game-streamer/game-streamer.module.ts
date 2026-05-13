@@ -13,7 +13,11 @@ import { loggerFactory } from "../../utilities/LoggerFactory";
 
 @Module({
   imports: [HasuraModule, EncryptionModule, PostgresModule, S3Module],
-  controllers: [GameStreamerController, DemoSessionsController, HudDataController],
+  controllers: [
+    GameStreamerController,
+    DemoSessionsController,
+    HudDataController,
+  ],
   providers: [
     GameStreamerService,
     DemoSessionWatcherService,

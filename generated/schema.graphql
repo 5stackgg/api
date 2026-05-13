@@ -1355,6 +1355,7 @@ type clip_render_jobs {
   match_map_id: uuid!
   progress: numeric
   session_token: String!
+  sort_index: Int!
   spec(
     """JSON select path"""
     path: String
@@ -1442,6 +1443,7 @@ input clip_render_jobs_arr_rel_insert_input {
 """aggregate avg on columns"""
 type clip_render_jobs_avg_fields {
   progress: Float
+  sort_index: Float
   user_steam_id: Float
 }
 
@@ -1450,6 +1452,7 @@ order by avg() on columns of table "clip_render_jobs"
 """
 input clip_render_jobs_avg_order_by {
   progress: order_by
+  sort_index: order_by
   user_steam_id: order_by
 }
 
@@ -1475,6 +1478,7 @@ input clip_render_jobs_bool_exp {
   match_map_id: uuid_comparison_exp
   progress: numeric_comparison_exp
   session_token: String_comparison_exp
+  sort_index: Int_comparison_exp
   spec: jsonb_comparison_exp
   status: String_comparison_exp
   status_history: jsonb_comparison_exp
@@ -1521,6 +1525,7 @@ input type for incrementing numeric columns in table "clip_render_jobs"
 """
 input clip_render_jobs_inc_input {
   progress: numeric
+  sort_index: Int
   user_steam_id: bigint
 }
 
@@ -1543,6 +1548,7 @@ input clip_render_jobs_insert_input {
   match_map_id: uuid
   progress: numeric
   session_token: String
+  sort_index: Int
   spec: jsonb
   status: String
   status_history: jsonb
@@ -1563,6 +1569,7 @@ type clip_render_jobs_max_fields {
   match_map_id: uuid
   progress: numeric
   session_token: String
+  sort_index: Int
   status: String
   user_steam_id: bigint
 }
@@ -1582,6 +1589,7 @@ input clip_render_jobs_max_order_by {
   match_map_id: order_by
   progress: order_by
   session_token: order_by
+  sort_index: order_by
   status: order_by
   user_steam_id: order_by
 }
@@ -1599,6 +1607,7 @@ type clip_render_jobs_min_fields {
   match_map_id: uuid
   progress: numeric
   session_token: String
+  sort_index: Int
   status: String
   user_steam_id: bigint
 }
@@ -1618,6 +1627,7 @@ input clip_render_jobs_min_order_by {
   match_map_id: order_by
   progress: order_by
   session_token: order_by
+  sort_index: order_by
   status: order_by
   user_steam_id: order_by
 }
@@ -1659,6 +1669,7 @@ input clip_render_jobs_order_by {
   match_map_id: order_by
   progress: order_by
   session_token: order_by
+  sort_index: order_by
   spec: order_by
   status: order_by
   status_history: order_by
@@ -1715,6 +1726,9 @@ enum clip_render_jobs_select_column {
   session_token
 
   """column name"""
+  sort_index
+
+  """column name"""
   spec
 
   """column name"""
@@ -1742,6 +1756,7 @@ input clip_render_jobs_set_input {
   match_map_id: uuid
   progress: numeric
   session_token: String
+  sort_index: Int
   spec: jsonb
   status: String
   status_history: jsonb
@@ -1751,6 +1766,7 @@ input clip_render_jobs_set_input {
 """aggregate stddev on columns"""
 type clip_render_jobs_stddev_fields {
   progress: Float
+  sort_index: Float
   user_steam_id: Float
 }
 
@@ -1759,12 +1775,14 @@ order by stddev() on columns of table "clip_render_jobs"
 """
 input clip_render_jobs_stddev_order_by {
   progress: order_by
+  sort_index: order_by
   user_steam_id: order_by
 }
 
 """aggregate stddev_pop on columns"""
 type clip_render_jobs_stddev_pop_fields {
   progress: Float
+  sort_index: Float
   user_steam_id: Float
 }
 
@@ -1773,12 +1791,14 @@ order by stddev_pop() on columns of table "clip_render_jobs"
 """
 input clip_render_jobs_stddev_pop_order_by {
   progress: order_by
+  sort_index: order_by
   user_steam_id: order_by
 }
 
 """aggregate stddev_samp on columns"""
 type clip_render_jobs_stddev_samp_fields {
   progress: Float
+  sort_index: Float
   user_steam_id: Float
 }
 
@@ -1787,6 +1807,7 @@ order by stddev_samp() on columns of table "clip_render_jobs"
 """
 input clip_render_jobs_stddev_samp_order_by {
   progress: order_by
+  sort_index: order_by
   user_steam_id: order_by
 }
 
@@ -1814,6 +1835,7 @@ input clip_render_jobs_stream_cursor_value_input {
   match_map_id: uuid
   progress: numeric
   session_token: String
+  sort_index: Int
   spec: jsonb
   status: String
   status_history: jsonb
@@ -1823,6 +1845,7 @@ input clip_render_jobs_stream_cursor_value_input {
 """aggregate sum on columns"""
 type clip_render_jobs_sum_fields {
   progress: numeric
+  sort_index: Int
   user_steam_id: bigint
 }
 
@@ -1831,6 +1854,7 @@ order by sum() on columns of table "clip_render_jobs"
 """
 input clip_render_jobs_sum_order_by {
   progress: order_by
+  sort_index: order_by
   user_steam_id: order_by
 }
 
@@ -1870,6 +1894,9 @@ enum clip_render_jobs_update_column {
 
   """column name"""
   session_token
+
+  """column name"""
+  sort_index
 
   """column name"""
   spec
@@ -1919,6 +1946,7 @@ input clip_render_jobs_updates {
 """aggregate var_pop on columns"""
 type clip_render_jobs_var_pop_fields {
   progress: Float
+  sort_index: Float
   user_steam_id: Float
 }
 
@@ -1927,12 +1955,14 @@ order by var_pop() on columns of table "clip_render_jobs"
 """
 input clip_render_jobs_var_pop_order_by {
   progress: order_by
+  sort_index: order_by
   user_steam_id: order_by
 }
 
 """aggregate var_samp on columns"""
 type clip_render_jobs_var_samp_fields {
   progress: Float
+  sort_index: Float
   user_steam_id: Float
 }
 
@@ -1941,12 +1971,14 @@ order by var_samp() on columns of table "clip_render_jobs"
 """
 input clip_render_jobs_var_samp_order_by {
   progress: order_by
+  sort_index: order_by
   user_steam_id: order_by
 }
 
 """aggregate variance on columns"""
 type clip_render_jobs_variance_fields {
   progress: Float
+  sort_index: Float
   user_steam_id: Float
 }
 
@@ -1955,6 +1987,7 @@ order by variance() on columns of table "clip_render_jobs"
 """
 input clip_render_jobs_variance_order_by {
   progress: order_by
+  sort_index: order_by
   user_steam_id: order_by
 }
 

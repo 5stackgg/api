@@ -2777,6 +2777,9 @@ export default {
             "session_token": [
                 48
             ],
+            "sort_index": [
+                30
+            ],
             "spec": [
                 874,
                 {
@@ -2953,6 +2956,9 @@ export default {
             "progress": [
                 22
             ],
+            "sort_index": [
+                22
+            ],
             "user_steam_id": [
                 22
             ],
@@ -2962,6 +2968,9 @@ export default {
         },
         "clip_render_jobs_avg_order_by": {
             "progress": [
+                1660
+            ],
+            "sort_index": [
                 1660
             ],
             "user_steam_id": [
@@ -3026,6 +3035,9 @@ export default {
             "session_token": [
                 50
             ],
+            "sort_index": [
+                31
+            ],
             "spec": [
                 876
             ],
@@ -3083,6 +3095,9 @@ export default {
             "progress": [
                 1658
             ],
+            "sort_index": [
+                30
+            ],
             "user_steam_id": [
                 147
             ],
@@ -3135,6 +3150,9 @@ export default {
             ],
             "session_token": [
                 48
+            ],
+            "sort_index": [
+                30
             ],
             "spec": [
                 874
@@ -3189,6 +3207,9 @@ export default {
             "session_token": [
                 48
             ],
+            "sort_index": [
+                30
+            ],
             "status": [
                 48
             ],
@@ -3231,6 +3252,9 @@ export default {
                 1660
             ],
             "session_token": [
+                1660
+            ],
+            "sort_index": [
                 1660
             ],
             "status": [
@@ -3277,6 +3301,9 @@ export default {
             "session_token": [
                 48
             ],
+            "sort_index": [
+                30
+            ],
             "status": [
                 48
             ],
@@ -3319,6 +3346,9 @@ export default {
                 1660
             ],
             "session_token": [
+                1660
+            ],
+            "sort_index": [
                 1660
             ],
             "status": [
@@ -3402,6 +3432,9 @@ export default {
             "session_token": [
                 1660
             ],
+            "sort_index": [
+                1660
+            ],
             "spec": [
                 1660
             ],
@@ -3475,6 +3508,9 @@ export default {
             "session_token": [
                 48
             ],
+            "sort_index": [
+                30
+            ],
             "spec": [
                 874
             ],
@@ -3495,6 +3531,9 @@ export default {
             "progress": [
                 22
             ],
+            "sort_index": [
+                22
+            ],
             "user_steam_id": [
                 22
             ],
@@ -3504,6 +3543,9 @@ export default {
         },
         "clip_render_jobs_stddev_order_by": {
             "progress": [
+                1660
+            ],
+            "sort_index": [
                 1660
             ],
             "user_steam_id": [
@@ -3517,6 +3559,9 @@ export default {
             "progress": [
                 22
             ],
+            "sort_index": [
+                22
+            ],
             "user_steam_id": [
                 22
             ],
@@ -3526,6 +3571,9 @@ export default {
         },
         "clip_render_jobs_stddev_pop_order_by": {
             "progress": [
+                1660
+            ],
+            "sort_index": [
                 1660
             ],
             "user_steam_id": [
@@ -3539,6 +3587,9 @@ export default {
             "progress": [
                 22
             ],
+            "sort_index": [
+                22
+            ],
             "user_steam_id": [
                 22
             ],
@@ -3548,6 +3599,9 @@ export default {
         },
         "clip_render_jobs_stddev_samp_order_by": {
             "progress": [
+                1660
+            ],
+            "sort_index": [
                 1660
             ],
             "user_steam_id": [
@@ -3602,6 +3656,9 @@ export default {
             "session_token": [
                 48
             ],
+            "sort_index": [
+                30
+            ],
             "spec": [
                 874
             ],
@@ -3622,6 +3679,9 @@ export default {
             "progress": [
                 1658
             ],
+            "sort_index": [
+                30
+            ],
             "user_steam_id": [
                 147
             ],
@@ -3631,6 +3691,9 @@ export default {
         },
         "clip_render_jobs_sum_order_by": {
             "progress": [
+                1660
+            ],
+            "sort_index": [
                 1660
             ],
             "user_steam_id": [
@@ -3674,6 +3737,9 @@ export default {
             "progress": [
                 22
             ],
+            "sort_index": [
+                22
+            ],
             "user_steam_id": [
                 22
             ],
@@ -3683,6 +3749,9 @@ export default {
         },
         "clip_render_jobs_var_pop_order_by": {
             "progress": [
+                1660
+            ],
+            "sort_index": [
                 1660
             ],
             "user_steam_id": [
@@ -3696,6 +3765,9 @@ export default {
             "progress": [
                 22
             ],
+            "sort_index": [
+                22
+            ],
             "user_steam_id": [
                 22
             ],
@@ -3705,6 +3777,9 @@ export default {
         },
         "clip_render_jobs_var_samp_order_by": {
             "progress": [
+                1660
+            ],
+            "sort_index": [
                 1660
             ],
             "user_steam_id": [
@@ -3718,6 +3793,9 @@ export default {
             "progress": [
                 22
             ],
+            "sort_index": [
+                22
+            ],
             "user_steam_id": [
                 22
             ],
@@ -3727,6 +3805,9 @@ export default {
         },
         "clip_render_jobs_variance_order_by": {
             "progress": [
+                1660
+            ],
+            "sort_index": [
                 1660
             ],
             "user_steam_id": [
