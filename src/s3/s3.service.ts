@@ -84,6 +84,15 @@ export class S3Service {
     return await this.client.getObject(bucket, filename);
   }
 
+  public async getPartial(
+    filename: string,
+    offset: number,
+    length: number,
+    bucket: string = this.bucket,
+  ): Promise<Readable> {
+    return await this.client.getPartialObject(bucket, filename, offset, length);
+  }
+
   public async put(
     filename: string,
     stream: Readable | Buffer,
