@@ -38,6 +38,7 @@ async function bootstrap() {
   // }
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.disable("x-powered-by");
 
   if (process.env.RUN_MIGRATIONS || process.env.DEV) {
     const hasura = app.get(HasuraService);
