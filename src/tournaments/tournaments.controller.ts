@@ -28,6 +28,17 @@ export class TournamentsController {
     if (["Finished", "Cancelled", "CancelledMinTeams"].includes(status)) {
       await this.tournamentVoice.removeTournamentVoice(tournamentId);
     }
+
+    // Cancelling resets the bracket: drop the matches (and their demos) so
+    // they can be regenerated. tournament_brackets.match_id is ON DELETE
+    // SET NULL, so the brackets themselves stay in place.
+    if (status === "Cancelled" && data.old.status !== "Cancelled") {
+      const { demoCount, matchCount } =
+        await this.deleteTournamentMatches(tournamentId);
+      this.logger.log(
+        `[${tournamentId}] tournament cancelled, cleaned up ${demoCount} demo files across ${matchCount} matches`,
+      );
+    }
   }
 
   @HasuraAction()
@@ -62,6 +73,30 @@ export class TournamentsController {
       throw Error("cannot delete a live tournament");
     }
 
+    const { demoCount, matchCount } =
+      await this.deleteTournamentMatches(tournament_id);
+
+    await this.hasura.mutation({
+      delete_tournaments_by_pk: {
+        __args: {
+          id: tournament_id,
+        },
+        __typename: true,
+      },
+    });
+
+    this.logger.log(
+      `[${tournament_id}] tournament deleted, cleaned up ${demoCount} demo files across ${matchCount} matches`,
+    );
+
+    return {
+      success: true,
+    };
+  }
+
+  private async deleteTournamentMatches(
+    tournament_id: string,
+  ): Promise<{ demoCount: number; matchCount: number }> {
     // Query as admin to access demo file paths
     const { tournaments_by_pk: tournament } = await this.hasura.query({
       tournaments_by_pk: {
@@ -87,7 +122,7 @@ export class TournamentsController {
     const demos: Array<{ id: string; file: string }> = [];
     const matchIds: string[] = [];
 
-    for (const stage of tournament.stages || []) {
+    for (const stage of tournament?.stages || []) {
       for (const bracket of stage.brackets || []) {
         if (!bracket.match) {
           continue;
@@ -138,21 +173,6 @@ export class TournamentsController {
       }
     }
 
-    await this.hasura.mutation({
-      delete_tournaments_by_pk: {
-        __args: {
-          id: tournament_id,
-        },
-        __typename: true,
-      },
-    });
-
-    this.logger.log(
-      `[${tournament_id}] tournament deleted, cleaned up ${demos.length} demo files across ${matchIds.length} matches`,
-    );
-
-    return {
-      success: true,
-    };
+    return { demoCount: demos.length, matchCount: matchIds.length };
   }
 }
