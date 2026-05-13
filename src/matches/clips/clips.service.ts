@@ -366,6 +366,7 @@ export class ClipsService {
       visibility?: "private" | "unlisted" | "match" | "public";
       target_steam_id?: string | null;
     },
+    actorIsOperator = false,
   ): Promise<void> {
     const { match_clips_by_pk: row } = await this.hasura.query({
       match_clips_by_pk: {
@@ -378,7 +379,7 @@ export class ClipsService {
     if (!row) {
       throw new Error(`clip ${clipId} not found`);
     }
-    if (String(row.user_steam_id) !== String(userSteamId)) {
+    if (!actorIsOperator && String(row.user_steam_id) !== String(userSteamId)) {
       throw new Error("you can only edit your own clips");
     }
 
