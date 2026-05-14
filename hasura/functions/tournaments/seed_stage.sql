@@ -108,25 +108,30 @@ BEGIN
             -- For elimination brackets coming from RoundRobin/Swiss stages, use stage results
             -- Otherwise, lookup teams by seed
             IF previous_stage.id IS NOT NULL AND (previous_stage.type = 'RoundRobin' OR previous_stage.type = 'Swiss') THEN
-                IF team_1_seed_val IS NOT NULL THEN
-                    SELECT vtsr.tournament_team_id INTO team_1_id
-                    FROM v_team_stage_results vtsr
-                    JOIN tournament_teams tt ON tt.id = vtsr.tournament_team_id
-                    WHERE vtsr.tournament_stage_id = previous_stage.id
-                      AND tt.eligible_at IS NOT NULL
-                    OFFSET team_1_seed_val - 1
-                    LIMIT 1;
-                END IF;
+                -- Map next-stage seed N to (group, rank_in_group) of the previous
+                -- stage so groups cross-seed: with G groups, seed 1 = top of group 1,
+                -- seed 2 = top of group 2, seed G+1 = 2nd of group 1, and so on.
+                -- Falls back to a single group for Swiss (or RR with groups = 1),
+                -- which degenerates to plain top-N ordering.
+                DECLARE
+                    prev_groups int;
+                    group_idx int;
+                    rank_in_group int;
+                BEGIN
+                    prev_groups := GREATEST(COALESCE(previous_stage.groups, 1), 1);
 
-                IF team_2_seed_val IS NOT NULL THEN
-                    SELECT vtsr.tournament_team_id INTO team_2_id
-                    FROM v_team_stage_results vtsr
-                    JOIN tournament_teams tt ON tt.id = vtsr.tournament_team_id
-                    WHERE vtsr.tournament_stage_id = previous_stage.id
-                      AND tt.eligible_at IS NOT NULL
-                    OFFSET team_2_seed_val - 1
-                    LIMIT 1;
-                END IF;
+                    IF team_1_seed_val IS NOT NULL THEN
+                        group_idx := ((team_1_seed_val - 1) % prev_groups) + 1;
+                        rank_in_group := ((team_1_seed_val - 1) / prev_groups) + 1;
+                        team_1_id := get_team_at_stage_rank(previous_stage.id, group_idx, rank_in_group);
+                    END IF;
+
+                    IF team_2_seed_val IS NOT NULL THEN
+                        group_idx := ((team_2_seed_val - 1) % prev_groups) + 1;
+                        rank_in_group := ((team_2_seed_val - 1) / prev_groups) + 1;
+                        team_2_id := get_team_at_stage_rank(previous_stage.id, group_idx, rank_in_group);
+                    END IF;
+                END;
             ELSE
                 -- Find team with matching seed for position 1
                 IF team_1_seed_val IS NOT NULL THEN
