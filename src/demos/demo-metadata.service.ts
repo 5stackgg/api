@@ -70,6 +70,10 @@ export class DemoMetadataService {
     return this.fetchAllDemosForMap(matchMapId);
   }
 
+  public async getAllDemosForMatch(matchId: string): Promise<DemoRow[]> {
+    return this.fetchAllDemosForMatch(matchId);
+  }
+
   public async ensureAllParsedForMap(matchMapId: string): Promise<DemoRow[]> {
     const demos = await this.fetchAllDemosForMap(matchMapId);
     if (demos.length === 0) return [];
@@ -177,6 +181,28 @@ export class DemoMetadataService {
         __args: {
           where: { match_map_id: { _eq: matchMapId } },
           order_by: [{ metadata_parsed_at: "desc_nulls_last" }, { id: "desc" }],
+        },
+        id: true,
+        match_id: true,
+        match_map_id: true,
+        file: true,
+        total_ticks: true,
+        tick_rate: true,
+        round_ticks: true,
+        workshop_id: true,
+        cs2_build: true,
+        metadata_parsed_at: true,
+      },
+    });
+    return (match_map_demos as DemoRow[]) ?? [];
+  }
+
+  private async fetchAllDemosForMatch(matchId: string): Promise<DemoRow[]> {
+    const { match_map_demos } = await this.hasura.query({
+      match_map_demos: {
+        __args: {
+          where: { match_id: { _eq: matchId } },
+          order_by: [{ match_map_id: "asc" }, { id: "desc" }],
         },
         id: true,
         match_id: true,

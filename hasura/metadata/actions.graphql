@@ -324,6 +324,12 @@ type Mutation {
 }
 
 type Mutation {
+  reparseMatchDemos(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   requestNameChange(
     steam_id: bigint!
     name: String!

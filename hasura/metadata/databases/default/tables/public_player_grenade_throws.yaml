@@ -8,9 +8,18 @@ object_relationships:
   - name: match_map
     using:
       foreign_key_constraint_on: match_map_id
+  # Manual configuration (no DB FK) — see public_player_shots_fired.yaml
+  # for rationale. thrower_steam_id is also nullable here because mollies
+  # have nil thrower in Source 2 demos, which makes a DB FK extra awkward.
   - name: thrower
     using:
-      foreign_key_constraint_on: thrower_steam_id
+      manual_configuration:
+        column_mapping:
+          thrower_steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
 select_permissions:
   - role: guest
     permission:
