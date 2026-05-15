@@ -37,6 +37,8 @@ select_permissions:
         - total_deaths
         - total_kills
         - wins
+        - group_number
+        - rank
         - tournament_stage_id
         - tournament_team_id
       filter: {}
