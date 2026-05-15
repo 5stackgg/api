@@ -38,6 +38,23 @@ select_permissions:
         - three_kill_rounds
         - four_kill_rounds
         - five_kill_rounds
+        - trade_kill_opportunities
+        - trade_kill_attempts
+        - trade_kill_successes
+        - traded_death_opportunities
+        - traded_death_successes
+        - shots_fired
+        - hits
+        - headshot_hits
+        - time_to_damage_sum_s
+        - time_to_damage_count
+        - spotted_count
+        - spotted_with_damage_count
+        - he_throws
+        - molotov_throws
+        - smoke_throws
+        - decoy_throws
+        - rounds_played
         - updated_at
       filter: {}
       allow_aggregations: true

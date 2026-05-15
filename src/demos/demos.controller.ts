@@ -225,6 +225,32 @@ export class DemosController {
     return { success: true };
   }
 
+  // Reparses every demo across every map in a match. A Bo3/Bo5 with multiple
+  // demos per map would blow past the Hasura action timeout if we awaited the
+  // loop here — so we validate upfront and then run the work as fire-and-
+  // forget. reparseById's in-flight map dedupes concurrent calls for the same
+  // demo, and we run sequentially so a single host isn't trying to spawn N
+  // parser processes in parallel.
+  @HasuraAction()
+  public async reparseMatchDemos(data: { match_id: string }) {
+    const demos = await this.demoMetadata.getAllDemosForMatch(data.match_id);
+    if (demos.length === 0) {
+      throw Error("no demos for this match");
+    }
+    void (async () => {
+      for (const demo of demos) {
+        try {
+          await this.demoMetadata.reparseById(demo.id);
+        } catch (error) {
+          this.logger.warn(
+            `[reparseMatchDemos] match ${data.match_id} demo ${demo.id} failed: ${(error as Error)?.message}`,
+          );
+        }
+      }
+    })();
+    return { success: true };
+  }
+
   private async getDemo(demo: { id: string; file: string }) {
     if (!(await this.s3.has(demo.file))) {
       await this.hasura.mutation({

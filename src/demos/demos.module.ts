@@ -9,6 +9,7 @@ import { Queue } from "bullmq";
 import { CleanDemos } from "./jobs/CleanDemos";
 import { S3Module } from "src/s3/s3.module";
 import { HasuraModule } from "src/hasura/hasura.module";
+import { PostgresModule } from "src/postgres/postgres.module";
 import { getQueuesProcessors } from "src/utilities/QueueProcessors";
 import { DemoMetadataService } from "./demo-metadata.service";
 import { DemoParserService } from "./demo-parser.service";
@@ -17,6 +18,7 @@ import { DemoParserService } from "./demo-parser.service";
   imports: [
     S3Module,
     HasuraModule,
+    PostgresModule,
     BullModule.registerQueue({
       name: DemoQueues.Demos,
     }),

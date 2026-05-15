@@ -23,6 +23,25 @@ SELECT
   SUM(s.two_kill_rounds)::integer      AS two_kill_rounds,
   SUM(s.three_kill_rounds)::integer    AS three_kill_rounds,
   SUM(s.four_kill_rounds)::integer     AS four_kill_rounds,
-  SUM(s.five_kill_rounds)::integer     AS five_kill_rounds
+  SUM(s.five_kill_rounds)::integer     AS five_kill_rounds,
+  SUM(s.trade_kill_opportunities)::integer   AS trade_kill_opportunities,
+  SUM(s.trade_kill_attempts)::integer        AS trade_kill_attempts,
+  SUM(s.trade_kill_successes)::integer       AS trade_kill_successes,
+  SUM(s.traded_death_opportunities)::integer AS traded_death_opportunities,
+  SUM(s.traded_death_successes)::integer     AS traded_death_successes,
+  SUM(s.shots_fired)::integer                AS shots_fired,
+  SUM(s.hits)::integer                       AS hits,
+  SUM(s.headshot_hits)::integer              AS headshot_hits,
+  CASE WHEN SUM(s.time_to_damage_count) > 0
+       THEN (SUM(s.time_to_damage_sum_s) / SUM(s.time_to_damage_count))::numeric
+       ELSE 0::numeric
+  END                                        AS avg_time_to_damage_s,
+  SUM(s.spotted_count)::integer              AS spotted_count,
+  SUM(s.spotted_with_damage_count)::integer  AS spotted_with_damage_count,
+  SUM(s.he_throws)::integer                  AS he_throws,
+  SUM(s.molotov_throws)::integer             AS molotov_throws,
+  SUM(s.smoke_throws)::integer               AS smoke_throws,
+  SUM(s.decoy_throws)::integer               AS decoy_throws,
+  SUM(s.rounds_played)::integer              AS rounds_played
 FROM public.player_match_map_stats s
 GROUP BY s.steam_id, s.match_id;

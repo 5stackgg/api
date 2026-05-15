@@ -1,6 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../hasura/hasura.service";
-import { DemoParserService } from "./demo-parser.service";
+import { PostgresService } from "../postgres/postgres.service";
+import {
+  DemoParserService,
+  ParsedDemo,
+  ParsedGrenadeEvent,
+} from "./demo-parser.service";
 
 export type DemoRow = {
   id: string;
@@ -22,6 +27,7 @@ export class DemoMetadataService {
   constructor(
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
+    private readonly postgres: PostgresService,
     private readonly demoParser: DemoParserService,
   ) {}
 
@@ -62,6 +68,10 @@ export class DemoMetadataService {
 
   public async getAllDemosForMap(matchMapId: string): Promise<DemoRow[]> {
     return this.fetchAllDemosForMap(matchMapId);
+  }
+
+  public async getAllDemosForMatch(matchId: string): Promise<DemoRow[]> {
+    return this.fetchAllDemosForMatch(matchId);
   }
 
   public async ensureAllParsedForMap(matchMapId: string): Promise<DemoRow[]> {
@@ -187,6 +197,28 @@ export class DemoMetadataService {
     return (match_map_demos as DemoRow[]) ?? [];
   }
 
+  private async fetchAllDemosForMatch(matchId: string): Promise<DemoRow[]> {
+    const { match_map_demos } = await this.hasura.query({
+      match_map_demos: {
+        __args: {
+          where: { match_id: { _eq: matchId } },
+          order_by: [{ match_map_id: "asc" }, { id: "desc" }],
+        },
+        id: true,
+        match_id: true,
+        match_map_id: true,
+        file: true,
+        total_ticks: true,
+        tick_rate: true,
+        round_ticks: true,
+        workshop_id: true,
+        cs2_build: true,
+        metadata_parsed_at: true,
+      },
+    });
+    return (match_map_demos as DemoRow[]) ?? [];
+  }
+
   private async fetchDemoById(matchMapDemoId: string): Promise<DemoRow | null> {
     const { match_map_demos_by_pk } = await this.hasura.query({
       match_map_demos_by_pk: {
@@ -233,8 +265,11 @@ export class DemoMetadataService {
       },
     });
 
+    await this.persistDemoEvents(demo, parsed);
+    await this.runRecompute(demo.match_map_id);
+
     this.logger.log(
-      `[demo-parser] parsed ${demo.id}: ${parsed.total_ticks} ticks @ ${parsed.tick_rate} tps, ${parsed.round_ticks?.length ?? 0} rounds, ${parsed.kills?.length ?? 0} kills, ${parsed.bombs?.length ?? 0} bombs, map=${parsed.map_name ?? "<unknown>"}${parsed.workshop_id ? ` (workshop ${parsed.workshop_id})` : ""}`,
+      `[demo-parser] parsed ${demo.id}: ${parsed.total_ticks} ticks @ ${parsed.tick_rate} tps, ${parsed.round_ticks?.length ?? 0} rounds, ${parsed.kills?.length ?? 0} kills, ${parsed.bombs?.length ?? 0} bombs, ${parsed.shots_fired?.length ?? 0} shots, ${parsed.damages?.length ?? 0} dmg, ${parsed.spotted?.length ?? 0} spotted, ${parsed.grenade_throws?.length ?? 0} thrown, ${parsed.grenade_detonations?.length ?? 0} detonated, map=${parsed.map_name ?? "<unknown>"}${parsed.workshop_id ? ` (workshop ${parsed.workshop_id})` : ""}`,
     );
 
     return {
@@ -246,5 +281,148 @@ export class DemoMetadataService {
       cs2_build: parsed.cs2_build ?? null,
       metadata_parsed_at: new Date().toISOString(),
     };
+  }
+
+  // Demo-sourced events overwrite any prior demo parse for the same map
+  // (live GSI never writes here, so we never clobber GSI rows). Delete →
+  // bulk insert keeps the persisted set in sync with the latest parse.
+  private async persistDemoEvents(
+    demo: DemoRow,
+    parsed: ParsedDemo,
+  ): Promise<void> {
+    const matchMapId = demo.match_map_id;
+    const matchId = demo.match_id;
+
+    await this.postgres.transaction(async (client) => {
+      await client.query(
+        `DELETE FROM public.player_shots_fired      WHERE match_map_id = $1`,
+        [matchMapId],
+      );
+      await client.query(
+        `DELETE FROM public.player_spotted          WHERE match_map_id = $1`,
+        [matchMapId],
+      );
+      await client.query(
+        `DELETE FROM public.player_grenade_throws   WHERE match_map_id = $1`,
+        [matchMapId],
+      );
+
+      // Multi-row inserts capped at 1000 rows per round-trip so we don't
+      // blow past pg's 65k parameter ceiling on large competitive demos
+      // (a 40-min map can hit ~40k shots).
+      const CHUNK = 1000;
+
+      const shots = (parsed.shots_fired ?? []).filter((r) => r.attacker);
+      for (let i = 0; i < shots.length; i += CHUNK) {
+        const slice = shots.slice(i, i + CHUNK);
+        const values: unknown[] = [];
+        const tuples = slice.map((row, idx) => {
+          const base = idx * 7;
+          values.push(
+            matchId,
+            matchMapId,
+            row.round ?? 0,
+            row.tick,
+            BigInt(row.attacker as string),
+            row.attacker_team ?? null,
+            row.weapon ?? null,
+          );
+          return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7})`;
+        });
+        await client.query(
+          `INSERT INTO public.player_shots_fired
+             (match_id, match_map_id, round, tick, attacker_steam_id, attacker_team, "with")
+           VALUES ${tuples.join(",")}`,
+          values,
+        );
+      }
+
+      // Defensive: drop rows with missing spotter/spotted (the demo parser
+      // shouldn't emit them, but the columns are NOT NULL).
+      const spotted = (parsed.spotted ?? []).filter(
+        (r) => r.spotter && r.spotted,
+      );
+      for (let i = 0; i < spotted.length; i += CHUNK) {
+        const slice = spotted.slice(i, i + CHUNK);
+        const values: unknown[] = [];
+        const tuples = slice.map((row, idx) => {
+          const base = idx * 7;
+          values.push(
+            matchId,
+            matchMapId,
+            row.round ?? 0,
+            row.tick,
+            BigInt(row.spotter as string),
+            BigInt(row.spotted as string),
+            row.spotter_team ?? null,
+          );
+          return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7})`;
+        });
+        await client.query(
+          `INSERT INTO public.player_spotted
+             (match_id, match_map_id, round, tick, spotter_steam_id, spotted_steam_id, spotter_team)
+           VALUES ${tuples.join(",")}`,
+          values,
+        );
+      }
+
+      const throws: Array<ParsedGrenadeEvent & { phase: "thrown" | "detonated" }> =
+        [
+          ...(parsed.grenade_throws ?? []).map((g) => ({
+            ...g,
+            phase: "thrown" as const,
+          })),
+          ...(parsed.grenade_detonations ?? []).map((g) => ({
+            ...g,
+            phase: "detonated" as const,
+          })),
+        ];
+      for (let i = 0; i < throws.length; i += CHUNK) {
+        const slice = throws.slice(i, i + CHUNK);
+        const values: unknown[] = [];
+        const tuples = slice.map((row, idx) => {
+          const base = idx * 11;
+          // Throws carry ox/oy/oz; detonations carry x/y/z. We collapse
+          // both into one set of position columns since the meaning
+          // (point of interest at the recorded tick) is the same.
+          const px = row.phase === "thrown" ? row.ox : row.x;
+          const py = row.phase === "thrown" ? row.oy : row.y;
+          const pz = row.phase === "thrown" ? row.oz : row.z;
+          values.push(
+            matchId,
+            matchMapId,
+            row.round ?? 0,
+            row.tick,
+            row.thrower ? BigInt(row.thrower) : null,
+            row.thrower_team ?? null,
+            row.type,
+            row.phase,
+            px ?? null,
+            py ?? null,
+            pz ?? null,
+          );
+          return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8},$${base + 9},$${base + 10},$${base + 11})`;
+        });
+        await client.query(
+          `INSERT INTO public.player_grenade_throws
+             (match_id, match_map_id, round, tick, thrower_steam_id, thrower_team, type, phase, x, y, z)
+           VALUES ${tuples.join(",")}`,
+          values,
+        );
+      }
+    });
+  }
+
+  private async runRecompute(matchMapId: string): Promise<void> {
+    try {
+      await this.postgres.query(
+        `SELECT public.recompute_player_match_map_stats($1::uuid)`,
+        [matchMapId],
+      );
+    } catch (error) {
+      this.logger.warn(
+        `[demo-parser] recompute failed for match_map ${matchMapId}: ${(error as Error)?.message}`,
+      );
+    }
   }
 }

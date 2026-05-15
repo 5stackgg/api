@@ -1,0 +1,46 @@
+table:
+  name: player_spotted
+  schema: public
+object_relationships:
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+  - name: match_map
+    using:
+      foreign_key_constraint_on: match_map_id
+  # Manual configuration (no DB FK) — see public_player_shots_fired.yaml
+  # for rationale: demo-only steam_ids can appear here and a hard FK
+  # would block the insert.
+  - name: spotter
+    using:
+      manual_configuration:
+        column_mapping:
+          spotter_steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+  - name: spotted
+    using:
+      manual_configuration:
+        column_mapping:
+          spotted_steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - match_id
+        - match_map_id
+        - round
+        - tick
+        - spotter_steam_id
+        - spotted_steam_id
+        - spotter_team
+      filter: {}
+      allow_aggregations: true
+    comment: ""

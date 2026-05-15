@@ -35,6 +35,55 @@ export type ParsedPlayer = {
   name: string;
 };
 
+export type ParsedShotFired = {
+  tick: number;
+  round?: number;
+  attacker?: string;
+  attacker_team?: string;
+  weapon?: string;
+};
+
+export type ParsedDamageEvent = {
+  tick: number;
+  round?: number;
+  attacker?: string;
+  victim?: string;
+  attacker_team?: string;
+  victim_team?: string;
+  weapon?: string;
+  damage: number;
+  damage_armor?: number;
+  hitgroup?: number;
+  health?: number;
+  since_round_start?: number;
+};
+
+export type ParsedSpotted = {
+  tick: number;
+  round?: number;
+  spotter?: string;
+  spotted?: string;
+  spotter_team?: string;
+};
+
+// Grenade events come in two flavors with the same shape — distinguished by
+// `phase`. Throw rows always carry a thrower; detonate rows for molotov /
+// incendiary will have an empty thrower because CS2 demos null it out on
+// FireGrenadeStart (api-side attribution joins back to the prior throw).
+export type ParsedGrenadeEvent = {
+  tick: number;
+  round?: number;
+  thrower?: string;
+  thrower_team?: string;
+  type: "Flash" | "HE" | "Smoke" | "Molotov" | "Decoy";
+  ox?: number;
+  oy?: number;
+  oz?: number;
+  x?: number;
+  y?: number;
+  z?: number;
+};
+
 export type ParsedDemo = {
   total_ticks: number;
   tick_rate: number;
@@ -45,6 +94,11 @@ export type ParsedDemo = {
   kills: ParsedKill[];
   bombs: ParsedBomb[];
   players?: ParsedPlayer[];
+  shots_fired?: ParsedShotFired[];
+  damages?: ParsedDamageEvent[];
+  spotted?: ParsedSpotted[];
+  grenade_throws?: ParsedGrenadeEvent[];
+  grenade_detonations?: ParsedGrenadeEvent[];
 };
 
 @Injectable()
@@ -114,7 +168,7 @@ export class DemoParserService {
 
     const parsed = (await res.json()) as ParsedDemo;
     this.logger.log(
-      `[demo-parser] parsed: ${parsed.total_ticks} ticks @ ${parsed.tick_rate} tps, ${parsed.round_ticks?.length ?? 0} rounds, ${parsed.kills?.length ?? 0} kills, ${parsed.bombs?.length ?? 0} bombs, map=${parsed.map_name ?? "<unknown>"}${parsed.workshop_id ? ` (workshop ${parsed.workshop_id})` : ""}`,
+      `[demo-parser] parsed: ${parsed.total_ticks} ticks @ ${parsed.tick_rate} tps, ${parsed.round_ticks?.length ?? 0} rounds, ${parsed.kills?.length ?? 0} kills, ${parsed.bombs?.length ?? 0} bombs, ${parsed.shots_fired?.length ?? 0} shots, ${parsed.damages?.length ?? 0} dmg, ${parsed.spotted?.length ?? 0} spotted, ${parsed.grenade_throws?.length ?? 0} thrown, ${parsed.grenade_detonations?.length ?? 0} detonated, map=${parsed.map_name ?? "<unknown>"}${parsed.workshop_id ? ` (workshop ${parsed.workshop_id})` : ""}`,
     );
     return parsed;
   }
