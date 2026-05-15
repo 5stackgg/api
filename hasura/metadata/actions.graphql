@@ -450,6 +450,12 @@ type Mutation {
 }
 
 type Mutation {
+  reconnectLive(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   switchLiveMatch(
     from_match_id: uuid!
     to_match_id: uuid!

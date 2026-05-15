@@ -210,7 +210,8 @@ export class GameStreamerService {
       | "hud"
       | "hud-mode"
       | "xray"
-      | "scoreboard",
+      | "scoreboard"
+      | "reconnect",
     body: Record<string, unknown> = {},
   ): Promise<unknown> {
     const url = await this.getSpecServerUrl(matchId, action);
@@ -344,6 +345,40 @@ export class GameStreamerService {
 
   public async specScoreboard(matchId: string, show: boolean) {
     return this.callSpec(matchId, "scoreboard", { show });
+  }
+
+  public async reconnectLive(matchId: string) {
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: { id: matchId },
+        id: true,
+        status: true,
+        server: {
+          connected: true,
+          enabled: true,
+        },
+      },
+    });
+    if (!match) {
+      throw new Error(`match ${matchId} not found`);
+    }
+    if (match.status !== "Live") {
+      throw new Error(
+        `match is ${match.status} — can only reconnect to a Live match`,
+      );
+    }
+    if (!match.server) {
+      throw new Error("no server assigned for match");
+    }
+    if (match.server.enabled === false) {
+      throw new Error("the assigned server is disabled");
+    }
+    if (match.server.connected !== true) {
+      throw new Error(
+        "the assigned server is offline — wait for it to come online before reconnecting",
+      );
+    }
+    return this.callSpec(matchId, "reconnect");
   }
 
   public async specAutodirector(matchId: string, enabled: boolean) {
@@ -1002,11 +1037,14 @@ export class GameStreamerService {
       matches_by_pk: {
         __args: { id: matchId },
         id: true,
+        status: true,
         password: true,
         server: {
           host: true,
           port: true,
           tv_port: true,
+          connected: true,
+          enabled: true,
         },
       },
     });
@@ -1015,8 +1053,24 @@ export class GameStreamerService {
       throw new Error(`match ${matchId} not found`);
     }
 
+    if (match.status !== "Live") {
+      throw new Error(
+        `match is ${match.status} — wait for it to go Live before starting a stream`,
+      );
+    }
+
     if (!match.server) {
       throw new Error("no server assigned for match");
+    }
+
+    if (match.server.enabled === false) {
+      throw new Error("the assigned server is disabled");
+    }
+
+    if (match.server.connected !== true) {
+      throw new Error(
+        "the assigned server is offline — wait for it to come online before starting the stream",
+      );
     }
 
     const usePlaycast = await this.readUsePlaycast();
@@ -1280,19 +1334,35 @@ export class GameStreamerService {
       matches_by_pk: {
         __args: { id: toMatchId },
         id: true,
+        status: true,
         password: true,
         server: {
           host: true,
           port: true,
           tv_port: true,
+          connected: true,
+          enabled: true,
         },
       },
     });
     if (!toMatch) {
       throw new Error(`match ${toMatchId} not found`);
     }
+    if (toMatch.status !== "Live") {
+      throw new Error(
+        `destination match is ${toMatch.status} — can only switch to a Live match`,
+      );
+    }
     if (!toMatch.server) {
       throw new Error(`match ${toMatchId} has no server assigned`);
+    }
+    if (toMatch.server.enabled === false) {
+      throw new Error(`destination match's server is disabled`);
+    }
+    if (toMatch.server.connected !== true) {
+      throw new Error(
+        `destination match's server is offline — wait for it to come online before switching`,
+      );
     }
 
     const usePlaycast = await this.readUsePlaycast();

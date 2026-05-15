@@ -781,6 +781,16 @@ export class MatchesController {
   }
 
   @HasuraAction()
+  public async reconnectLive(data: { match_id: string; user: User }) {
+    const { match_id, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    await this.gameStreamer.reconnectLive(match_id);
+    return { success: true };
+  }
+
+  @HasuraAction()
   public async switchLiveMatch(data: {
     from_match_id: string;
     to_match_id: string;
