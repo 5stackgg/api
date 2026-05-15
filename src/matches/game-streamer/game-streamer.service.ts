@@ -1045,6 +1045,12 @@ export class GameStreamerService {
           tv_port: true,
           connected: true,
           enabled: true,
+          server_region: {
+            is_lan: true,
+          },
+          game_server_node: {
+            node_ip: true,
+          },
         },
       },
     });
@@ -1098,7 +1104,13 @@ export class GameStreamerService {
     kc.loadFromDefault();
     const batch = kc.makeApiClient(BatchV1Api);
 
-    this.logger.log(`[${matchId}] starting ${mode} stream on node ${nodeId}`);
+    const connectTarget =
+      connectEnv.find((e) => e.name === "CONNECT_ADDR")?.value ??
+      connectEnv.find((e) => e.name === "CONNECT_TV_ADDR")?.value ??
+      connectEnv.find((e) => e.name === "PLAYCAST_URL")?.value;
+    this.logger.log(
+      `[${matchId}] starting ${mode} stream on node ${nodeId} -> ${connectTarget}`,
+    );
 
     try {
       await batch.createNamespacedJob({
@@ -1342,6 +1354,12 @@ export class GameStreamerService {
           tv_port: true,
           connected: true,
           enabled: true,
+          server_region: {
+            is_lan: true,
+          },
+          game_server_node: {
+            node_ip: true,
+          },
         },
       },
     });
@@ -1863,6 +1881,8 @@ export class GameStreamerService {
       host: string;
       port: number;
       tv_port: number | null;
+      server_region?: { is_lan?: boolean | null } | null;
+      game_server_node?: { node_ip?: string | null } | null;
     },
     matchPassword: string,
     usePlaycast: boolean,
@@ -1904,8 +1924,13 @@ export class GameStreamerService {
     // IDs into a spectator slot (the server is started with extra slots:
     // `max_players_per_lineup * 2 + 3`), so the streamer ends up observing
     // rather than occupying a roster slot.
+    const liveHost =
+      server.server_region?.is_lan && server.game_server_node?.node_ip
+        ? server.game_server_node.node_ip
+        : server.host;
+
     return [
-      { name: "CONNECT_ADDR", value: `${server.host}:${server.port}` },
+      { name: "CONNECT_ADDR", value: `${liveHost}:${server.port}` },
       { name: "CONNECT_PASSWORD", value: matchPassword },
     ];
   }
@@ -2219,6 +2244,8 @@ export class GameStreamerService {
           spec: {
             restartPolicy: "Never",
             runtimeClassName: "nvidia",
+            hostNetwork: true,
+            dnsPolicy: "ClusterFirstWithHostNet",
             affinity: {
               nodeAffinity: {
                 requiredDuringSchedulingIgnoredDuringExecution: {
