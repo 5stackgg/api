@@ -54,6 +54,7 @@
 - "!include public_matches.yaml"
 - "!include public_notifications.yaml"
 - "!include public_player_assists.yaml"
+- "!include public_player_aim_stats_demo.yaml"
 - "!include public_player_damages.yaml"
 - "!include public_player_elo.yaml"
 - "!include public_player_flashes.yaml"

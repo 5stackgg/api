@@ -41,6 +41,8 @@ select_permissions:
         - molotov_throws
         - smoke_throws
         - decoy_throws
+        - counter_strafed_shots
+        - avg_crosshair_angle_deg
         - rounds_played
       filter: {}
       allow_aggregations: true

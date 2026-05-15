@@ -34,7 +34,7 @@ SELECT
   SUM(s.headshot_hits)::integer              AS headshot_hits,
   CASE WHEN SUM(s.time_to_damage_count) > 0
        THEN (SUM(s.time_to_damage_sum_s) / SUM(s.time_to_damage_count))::numeric
-       ELSE 0::numeric
+       ELSE NULL
   END                                        AS avg_time_to_damage_s,
   SUM(s.spotted_count)::integer              AS spotted_count,
   SUM(s.spotted_with_damage_count)::integer  AS spotted_with_damage_count,
@@ -42,6 +42,11 @@ SELECT
   SUM(s.molotov_throws)::integer             AS molotov_throws,
   SUM(s.smoke_throws)::integer               AS smoke_throws,
   SUM(s.decoy_throws)::integer               AS decoy_throws,
+  SUM(s.counter_strafed_shots)::integer      AS counter_strafed_shots,
+  CASE WHEN SUM(s.crosshair_angle_count) > 0
+       THEN (SUM(s.crosshair_angle_sum_deg) / SUM(s.crosshair_angle_count))::numeric
+       ELSE NULL
+  END                                        AS avg_crosshair_angle_deg,
   SUM(s.rounds_played)::integer              AS rounds_played
 FROM public.player_match_map_stats s
 GROUP BY s.steam_id, s.match_id;

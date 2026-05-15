@@ -306,10 +306,11 @@ export class DemoMetadataService {
         `DELETE FROM public.player_grenade_throws   WHERE match_map_id = $1`,
         [matchMapId],
       );
+      await client.query(
+        `DELETE FROM public.player_aim_stats_demo   WHERE match_map_id = $1`,
+        [matchMapId],
+      );
 
-      // Multi-row inserts capped at 1000 rows per round-trip so we don't
-      // blow past pg's 65k parameter ceiling on large competitive demos
-      // (a 40-min map can hit ~40k shots).
       const CHUNK = 1000;
 
       const shots = (parsed.shots_fired ?? []).filter((r) => r.attacker);
@@ -332,6 +333,96 @@ export class DemoMetadataService {
         await client.query(
           `INSERT INTO public.player_shots_fired
              (match_id, match_map_id, round, tick, attacker_steam_id, attacker_team, "with")
+           VALUES ${tuples.join(",")}`,
+          values,
+        );
+      }
+
+      type AimAgg = {
+        hits: number;
+        headshot_hits: number;
+        counter_strafed_shots: number;
+        crosshair_sum: number;
+        crosshair_count: number;
+        firstDamageByRound: Map<number, number>;
+      };
+      const aim = new Map<string, AimAgg>();
+      const getAgg = (sid: string): AimAgg => {
+        let a = aim.get(sid);
+        if (!a) {
+          a = {
+            hits: 0,
+            headshot_hits: 0,
+            counter_strafed_shots: 0,
+            crosshair_sum: 0,
+            crosshair_count: 0,
+            firstDamageByRound: new Map(),
+          };
+          aim.set(sid, a);
+        }
+        return a;
+      };
+      for (const s of parsed.shots_fired ?? []) {
+        if (!s.attacker) continue;
+        const a = getAgg(s.attacker);
+        if (s.counter_strafed) a.counter_strafed_shots += 1;
+        if (typeof s.crosshair_angle_deg === "number") {
+          a.crosshair_sum += s.crosshair_angle_deg;
+          a.crosshair_count += 1;
+        }
+      }
+      for (const d of parsed.damages ?? []) {
+        if (!d.attacker || !d.victim) continue;
+        if (d.attacker_team && d.attacker_team === d.victim_team) continue;
+        const a = getAgg(d.attacker);
+        a.hits += 1;
+        // demoinfocs HitGroup 1 = Head.
+        if (d.hitgroup === 1) a.headshot_hits += 1;
+        const round = d.round ?? 0;
+        const srs = Math.max(0, d.since_round_start ?? 0);
+        const cur = a.firstDamageByRound.get(round);
+        if (cur === undefined || srs < cur)
+          a.firstDamageByRound.set(round, srs);
+      }
+      const aimRows = Array.from(aim.entries()).map(([attacker, a]) => {
+        let ttdSum = 0;
+        for (const v of a.firstDamageByRound.values()) ttdSum += v;
+        return {
+          attacker,
+          hits: a.hits,
+          headshot_hits: a.headshot_hits,
+          counter_strafed_shots: a.counter_strafed_shots,
+          crosshair_angle_sum_deg: a.crosshair_sum,
+          crosshair_angle_count: a.crosshair_count,
+          time_to_damage_sum_s: ttdSum,
+          time_to_damage_count: a.firstDamageByRound.size,
+        };
+      });
+      for (let i = 0; i < aimRows.length; i += CHUNK) {
+        const slice = aimRows.slice(i, i + CHUNK);
+        const values: unknown[] = [];
+        const tuples = slice.map((row, idx) => {
+          const base = idx * 10;
+          values.push(
+            matchId,
+            matchMapId,
+            BigInt(row.attacker),
+            row.hits,
+            row.headshot_hits,
+            row.counter_strafed_shots,
+            row.crosshair_angle_sum_deg,
+            row.crosshair_angle_count,
+            row.time_to_damage_sum_s,
+            row.time_to_damage_count,
+          );
+          return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8},$${base + 9},$${base + 10})`;
+        });
+        await client.query(
+          `INSERT INTO public.player_aim_stats_demo
+             (match_id, match_map_id, attacker_steam_id,
+              hits, headshot_hits,
+              counter_strafed_shots, crosshair_angle_sum_deg, crosshair_angle_count,
+              time_to_damage_sum_s, time_to_damage_count)
            VALUES ${tuples.join(",")}`,
           values,
         );
@@ -366,17 +457,18 @@ export class DemoMetadataService {
         );
       }
 
-      const throws: Array<ParsedGrenadeEvent & { phase: "thrown" | "detonated" }> =
-        [
-          ...(parsed.grenade_throws ?? []).map((g) => ({
-            ...g,
-            phase: "thrown" as const,
-          })),
-          ...(parsed.grenade_detonations ?? []).map((g) => ({
-            ...g,
-            phase: "detonated" as const,
-          })),
-        ];
+      const throws: Array<
+        ParsedGrenadeEvent & { phase: "thrown" | "detonated" }
+      > = [
+        ...(parsed.grenade_throws ?? []).map((g) => ({
+          ...g,
+          phase: "thrown" as const,
+        })),
+        ...(parsed.grenade_detonations ?? []).map((g) => ({
+          ...g,
+          phase: "detonated" as const,
+        })),
+      ];
       for (let i = 0; i < throws.length; i += CHUNK) {
         const slice = throws.slice(i, i + CHUNK);
         const values: unknown[] = [];

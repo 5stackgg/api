@@ -41,6 +41,9 @@ export type ParsedShotFired = {
   attacker?: string;
   attacker_team?: string;
   weapon?: string;
+  speed?: number;
+  counter_strafed?: boolean;
+  crosshair_angle_deg?: number;
 };
 
 export type ParsedDamageEvent = {
