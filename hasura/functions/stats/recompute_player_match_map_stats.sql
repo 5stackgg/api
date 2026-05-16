@@ -69,6 +69,10 @@ BEGIN
         FROM public.player_grenade_throws pgt
         WHERE pgt.match_map_id = p_match_map_id
           AND pgt.round IN (SELECT round FROM finalized_rounds)
+      UNION
+      SELECT pad.attacker_steam_id
+        FROM public.player_aim_stats_demo pad
+        WHERE pad.match_map_id = p_match_map_id
     ) ids
     WHERE steam_id IS NOT NULL
   ),
@@ -261,8 +265,6 @@ BEGIN
       AND round IN (SELECT round FROM finalized_rounds)
     GROUP BY attacked_steam_id
   ),
-  -- Demo-parser-sourced raw events. Live GSI never writes here; rows
-  -- show up only after demo ingestion calls back into the recompute.
   shots_agg AS (
     SELECT attacker_steam_id AS steam_id, COUNT(*) AS shots_fired
     FROM public.player_shots_fired
@@ -270,43 +272,33 @@ BEGIN
       AND round IN (SELECT round FROM finalized_rounds)
     GROUP BY attacker_steam_id
   ),
-  hits_agg AS (
+  has_aim_demo AS (
+    SELECT EXISTS (
+      SELECT 1 FROM public.player_aim_stats_demo
+      WHERE match_map_id = p_match_map_id
+    ) AS present
+  ),
+  aim_demo_agg AS (
+    SELECT
+      attacker_steam_id AS steam_id,
+      hits, headshot_hits,
+      counter_strafed_shots, crosshair_angle_sum_deg, crosshair_angle_count,
+      time_to_damage_sum_s, time_to_damage_count
+    FROM public.player_aim_stats_demo
+    WHERE match_map_id = p_match_map_id
+  ),
+  hits_fallback AS (
     SELECT
       pd.attacker_steam_id AS steam_id,
-      COUNT(*) FILTER (WHERE pd.attacker_team <> pd.attacked_team)                                       AS hits,
-      COUNT(*) FILTER (WHERE pd.attacker_team <> pd.attacked_team AND pd.hitgroup = 'head')              AS headshot_hits
+      COUNT(*) FILTER (WHERE pd.attacker_team <> pd.attacked_team)                                 AS hits,
+      -- GSI hitgroup is the engine's localized "Head" string; lower-case for compare.
+      COUNT(*) FILTER (WHERE pd.attacker_team <> pd.attacked_team AND LOWER(pd.hitgroup) = 'head') AS headshot_hits
     FROM public.player_damages pd
     WHERE pd.match_map_id = p_match_map_id
       AND pd.attacker_steam_id IS NOT NULL
       AND pd.round::integer IN (SELECT round FROM finalized_rounds)
+      AND NOT (SELECT present FROM has_aim_demo)
     GROUP BY pd.attacker_steam_id
-  ),
-  -- Time-to-damage: per round, take the first damage event by attacker A
-  -- (relative to round start), then average across rounds. Rounds where A
-  -- dealt no damage are excluded from the count, not counted as zero —
-  -- Leetify uses the same definition.
-  ttd_per_round AS (
-    SELECT
-      pd.attacker_steam_id AS steam_id,
-      pd.round::integer    AS round,
-      MIN(EXTRACT(EPOCH FROM (pd.time - r.time))) AS first_damage_s
-    FROM public.player_damages pd
-    JOIN public.match_map_rounds r
-      ON r.match_map_id = pd.match_map_id
-     AND r.round        = pd.round::integer
-    WHERE pd.match_map_id = p_match_map_id
-      AND pd.attacker_steam_id IS NOT NULL
-      AND pd.attacker_team <> pd.attacked_team
-      AND pd.round::integer IN (SELECT round FROM finalized_rounds)
-    GROUP BY pd.attacker_steam_id, pd.round::integer
-  ),
-  ttd_agg AS (
-    SELECT steam_id,
-           COALESCE(SUM(first_damage_s), 0)::numeric AS time_to_damage_sum_s,
-           COUNT(*)::integer                         AS time_to_damage_count
-    FROM ttd_per_round
-    WHERE first_damage_s IS NOT NULL AND first_damage_s >= 0
-    GROUP BY steam_id
   ),
   spotted_agg AS (
     SELECT
@@ -365,6 +357,7 @@ BEGIN
     time_to_damage_sum_s, time_to_damage_count,
     spotted_count, spotted_with_damage_count,
     he_throws, molotov_throws, smoke_throws, decoy_throws,
+    counter_strafed_shots, crosshair_angle_sum_deg, crosshair_angle_count,
     rounds_played
   )
   SELECT
@@ -386,13 +379,17 @@ BEGIN
     COALESCE(tdo.traded_death_opportunities, 0),
     COALESCE(tda.traded_death_successes, 0),
     COALESCE(sa.shots_fired, 0),
-    COALESCE(ha.hits, 0),         COALESCE(ha.headshot_hits, 0),
-    COALESCE(ttd.time_to_damage_sum_s, 0),
-    COALESCE(ttd.time_to_damage_count, 0),
+    COALESCE(ad.hits, hf.hits, 0),
+    COALESCE(ad.headshot_hits, hf.headshot_hits, 0),
+    COALESCE(ad.time_to_damage_sum_s, 0),
+    COALESCE(ad.time_to_damage_count, 0),
     COALESCE(spa.spotted_count, 0),
     COALESCE(spa.spotted_with_damage_count, 0),
     COALESCE(ta.he_throws, 0),    COALESCE(ta.molotov_throws, 0),
     COALESCE(ta.smoke_throws, 0), COALESCE(ta.decoy_throws, 0),
+    COALESCE(ad.counter_strafed_shots, 0),
+    COALESCE(ad.crosshair_angle_sum_deg, 0),
+    COALESCE(ad.crosshair_angle_count, 0),
     (SELECT rounds_played FROM rounds_played_const)
   FROM player_set ps
   LEFT JOIN kills_agg          ka  ON ka.steam_id  = ps.steam_id
@@ -407,8 +404,8 @@ BEGIN
   LEFT JOIN traded_death_agg   tda ON tda.steam_id = ps.steam_id
   LEFT JOIN traded_death_opp_agg tdo ON tdo.steam_id = ps.steam_id
   LEFT JOIN shots_agg          sa  ON sa.steam_id  = ps.steam_id
-  LEFT JOIN hits_agg           ha  ON ha.steam_id  = ps.steam_id
-  LEFT JOIN ttd_agg            ttd ON ttd.steam_id = ps.steam_id
+  LEFT JOIN aim_demo_agg       ad  ON ad.steam_id  = ps.steam_id
+  LEFT JOIN hits_fallback      hf  ON hf.steam_id  = ps.steam_id
   LEFT JOIN spotted_agg        spa ON spa.steam_id = ps.steam_id
   LEFT JOIN throws_agg         ta  ON ta.steam_id  = ps.steam_id;
 END;

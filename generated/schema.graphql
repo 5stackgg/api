@@ -20902,6 +20902,19 @@ type mutation_root {
   delete_notifications_by_pk(id: uuid!): notifications
 
   """
+  delete data from the table: "player_aim_stats_demo"
+  """
+  delete_player_aim_stats_demo(
+    """filter the rows which have to be deleted"""
+    where: player_aim_stats_demo_bool_exp!
+  ): player_aim_stats_demo_mutation_response
+
+  """
+  delete single row from the table: "player_aim_stats_demo"
+  """
+  delete_player_aim_stats_demo_by_pk(attacker_steam_id: bigint!, match_map_id: uuid!): player_aim_stats_demo
+
+  """
   delete data from the table: "player_assists"
   """
   delete_player_assists(
@@ -22560,6 +22573,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: notifications_on_conflict
   ): notifications
+
+  """
+  insert data into the table: "player_aim_stats_demo"
+  """
+  insert_player_aim_stats_demo(
+    """the rows to be inserted"""
+    objects: [player_aim_stats_demo_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: player_aim_stats_demo_on_conflict
+  ): player_aim_stats_demo_mutation_response
+
+  """
+  insert a single row into the table: "player_aim_stats_demo"
+  """
+  insert_player_aim_stats_demo_one(
+    """the row to be inserted"""
+    object: player_aim_stats_demo_insert_input!
+
+    """upsert condition"""
+    on_conflict: player_aim_stats_demo_on_conflict
+  ): player_aim_stats_demo
 
   """
   insert data into the table: "player_assists"
@@ -25383,6 +25418,40 @@ type mutation_root {
   ): [notifications_mutation_response]
 
   """
+  update data of the table: "player_aim_stats_demo"
+  """
+  update_player_aim_stats_demo(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_aim_stats_demo_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_aim_stats_demo_set_input
+
+    """filter the rows which have to be updated"""
+    where: player_aim_stats_demo_bool_exp!
+  ): player_aim_stats_demo_mutation_response
+
+  """
+  update single row of the table: "player_aim_stats_demo"
+  """
+  update_player_aim_stats_demo_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_aim_stats_demo_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_aim_stats_demo_set_input
+    pk_columns: player_aim_stats_demo_pk_columns_input!
+  ): player_aim_stats_demo
+
+  """
+  update multiples rows of table: "player_aim_stats_demo"
+  """
+  update_player_aim_stats_demo_many(
+    """updates to execute, in order"""
+    updates: [player_aim_stats_demo_updates!]!
+  ): [player_aim_stats_demo_mutation_response]
+
+  """
   update data of the table: "player_assists"
   """
   update_player_assists(
@@ -27715,6 +27784,409 @@ enum order_by {
 
   """in descending order, nulls last"""
   desc_nulls_last
+}
+
+"""
+columns and relationships of "player_aim_stats_demo"
+"""
+type player_aim_stats_demo {
+  """An object relationship"""
+  attacker: players
+  attacker_steam_id: bigint!
+  counter_strafed_shots: Int!
+  crosshair_angle_count: Int!
+  crosshair_angle_sum_deg: numeric!
+  headshot_hits: Int!
+  hits: Int!
+
+  """An object relationship"""
+  match: matches!
+  match_id: uuid!
+
+  """An object relationship"""
+  match_map: match_maps!
+  match_map_id: uuid!
+  time_to_damage_count: Int!
+  time_to_damage_sum_s: numeric!
+}
+
+"""
+aggregated selection of "player_aim_stats_demo"
+"""
+type player_aim_stats_demo_aggregate {
+  aggregate: player_aim_stats_demo_aggregate_fields
+  nodes: [player_aim_stats_demo!]!
+}
+
+"""
+aggregate fields of "player_aim_stats_demo"
+"""
+type player_aim_stats_demo_aggregate_fields {
+  avg: player_aim_stats_demo_avg_fields
+  count(columns: [player_aim_stats_demo_select_column!], distinct: Boolean): Int!
+  max: player_aim_stats_demo_max_fields
+  min: player_aim_stats_demo_min_fields
+  stddev: player_aim_stats_demo_stddev_fields
+  stddev_pop: player_aim_stats_demo_stddev_pop_fields
+  stddev_samp: player_aim_stats_demo_stddev_samp_fields
+  sum: player_aim_stats_demo_sum_fields
+  var_pop: player_aim_stats_demo_var_pop_fields
+  var_samp: player_aim_stats_demo_var_samp_fields
+  variance: player_aim_stats_demo_variance_fields
+}
+
+"""aggregate avg on columns"""
+type player_aim_stats_demo_avg_fields {
+  attacker_steam_id: Float
+  counter_strafed_shots: Float
+  crosshair_angle_count: Float
+  crosshair_angle_sum_deg: Float
+  headshot_hits: Float
+  hits: Float
+  time_to_damage_count: Float
+  time_to_damage_sum_s: Float
+}
+
+"""
+Boolean expression to filter rows from the table "player_aim_stats_demo". All fields are combined with a logical 'AND'.
+"""
+input player_aim_stats_demo_bool_exp {
+  _and: [player_aim_stats_demo_bool_exp!]
+  _not: player_aim_stats_demo_bool_exp
+  _or: [player_aim_stats_demo_bool_exp!]
+  attacker: players_bool_exp
+  attacker_steam_id: bigint_comparison_exp
+  counter_strafed_shots: Int_comparison_exp
+  crosshair_angle_count: Int_comparison_exp
+  crosshair_angle_sum_deg: numeric_comparison_exp
+  headshot_hits: Int_comparison_exp
+  hits: Int_comparison_exp
+  match: matches_bool_exp
+  match_id: uuid_comparison_exp
+  match_map: match_maps_bool_exp
+  match_map_id: uuid_comparison_exp
+  time_to_damage_count: Int_comparison_exp
+  time_to_damage_sum_s: numeric_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "player_aim_stats_demo"
+"""
+enum player_aim_stats_demo_constraint {
+  """
+  unique or primary key constraint on columns "attacker_steam_id", "match_map_id"
+  """
+  player_aim_stats_demo_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "player_aim_stats_demo"
+"""
+input player_aim_stats_demo_inc_input {
+  attacker_steam_id: bigint
+  counter_strafed_shots: Int
+  crosshair_angle_count: Int
+  crosshair_angle_sum_deg: numeric
+  headshot_hits: Int
+  hits: Int
+  time_to_damage_count: Int
+  time_to_damage_sum_s: numeric
+}
+
+"""
+input type for inserting data into table "player_aim_stats_demo"
+"""
+input player_aim_stats_demo_insert_input {
+  attacker: players_obj_rel_insert_input
+  attacker_steam_id: bigint
+  counter_strafed_shots: Int
+  crosshair_angle_count: Int
+  crosshair_angle_sum_deg: numeric
+  headshot_hits: Int
+  hits: Int
+  match: matches_obj_rel_insert_input
+  match_id: uuid
+  match_map: match_maps_obj_rel_insert_input
+  match_map_id: uuid
+  time_to_damage_count: Int
+  time_to_damage_sum_s: numeric
+}
+
+"""aggregate max on columns"""
+type player_aim_stats_demo_max_fields {
+  attacker_steam_id: bigint
+  counter_strafed_shots: Int
+  crosshair_angle_count: Int
+  crosshair_angle_sum_deg: numeric
+  headshot_hits: Int
+  hits: Int
+  match_id: uuid
+  match_map_id: uuid
+  time_to_damage_count: Int
+  time_to_damage_sum_s: numeric
+}
+
+"""aggregate min on columns"""
+type player_aim_stats_demo_min_fields {
+  attacker_steam_id: bigint
+  counter_strafed_shots: Int
+  crosshair_angle_count: Int
+  crosshair_angle_sum_deg: numeric
+  headshot_hits: Int
+  hits: Int
+  match_id: uuid
+  match_map_id: uuid
+  time_to_damage_count: Int
+  time_to_damage_sum_s: numeric
+}
+
+"""
+response of any mutation on the table "player_aim_stats_demo"
+"""
+type player_aim_stats_demo_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [player_aim_stats_demo!]!
+}
+
+"""
+on_conflict condition type for table "player_aim_stats_demo"
+"""
+input player_aim_stats_demo_on_conflict {
+  constraint: player_aim_stats_demo_constraint!
+  update_columns: [player_aim_stats_demo_update_column!]! = []
+  where: player_aim_stats_demo_bool_exp
+}
+
+"""Ordering options when selecting data from "player_aim_stats_demo"."""
+input player_aim_stats_demo_order_by {
+  attacker: players_order_by
+  attacker_steam_id: order_by
+  counter_strafed_shots: order_by
+  crosshair_angle_count: order_by
+  crosshair_angle_sum_deg: order_by
+  headshot_hits: order_by
+  hits: order_by
+  match: matches_order_by
+  match_id: order_by
+  match_map: match_maps_order_by
+  match_map_id: order_by
+  time_to_damage_count: order_by
+  time_to_damage_sum_s: order_by
+}
+
+"""primary key columns input for table: player_aim_stats_demo"""
+input player_aim_stats_demo_pk_columns_input {
+  attacker_steam_id: bigint!
+  match_map_id: uuid!
+}
+
+"""
+select columns of table "player_aim_stats_demo"
+"""
+enum player_aim_stats_demo_select_column {
+  """column name"""
+  attacker_steam_id
+
+  """column name"""
+  counter_strafed_shots
+
+  """column name"""
+  crosshair_angle_count
+
+  """column name"""
+  crosshair_angle_sum_deg
+
+  """column name"""
+  headshot_hits
+
+  """column name"""
+  hits
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  time_to_damage_count
+
+  """column name"""
+  time_to_damage_sum_s
+}
+
+"""
+input type for updating data in table "player_aim_stats_demo"
+"""
+input player_aim_stats_demo_set_input {
+  attacker_steam_id: bigint
+  counter_strafed_shots: Int
+  crosshair_angle_count: Int
+  crosshair_angle_sum_deg: numeric
+  headshot_hits: Int
+  hits: Int
+  match_id: uuid
+  match_map_id: uuid
+  time_to_damage_count: Int
+  time_to_damage_sum_s: numeric
+}
+
+"""aggregate stddev on columns"""
+type player_aim_stats_demo_stddev_fields {
+  attacker_steam_id: Float
+  counter_strafed_shots: Float
+  crosshair_angle_count: Float
+  crosshair_angle_sum_deg: Float
+  headshot_hits: Float
+  hits: Float
+  time_to_damage_count: Float
+  time_to_damage_sum_s: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type player_aim_stats_demo_stddev_pop_fields {
+  attacker_steam_id: Float
+  counter_strafed_shots: Float
+  crosshair_angle_count: Float
+  crosshair_angle_sum_deg: Float
+  headshot_hits: Float
+  hits: Float
+  time_to_damage_count: Float
+  time_to_damage_sum_s: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type player_aim_stats_demo_stddev_samp_fields {
+  attacker_steam_id: Float
+  counter_strafed_shots: Float
+  crosshair_angle_count: Float
+  crosshair_angle_sum_deg: Float
+  headshot_hits: Float
+  hits: Float
+  time_to_damage_count: Float
+  time_to_damage_sum_s: Float
+}
+
+"""
+Streaming cursor of the table "player_aim_stats_demo"
+"""
+input player_aim_stats_demo_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: player_aim_stats_demo_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input player_aim_stats_demo_stream_cursor_value_input {
+  attacker_steam_id: bigint
+  counter_strafed_shots: Int
+  crosshair_angle_count: Int
+  crosshair_angle_sum_deg: numeric
+  headshot_hits: Int
+  hits: Int
+  match_id: uuid
+  match_map_id: uuid
+  time_to_damage_count: Int
+  time_to_damage_sum_s: numeric
+}
+
+"""aggregate sum on columns"""
+type player_aim_stats_demo_sum_fields {
+  attacker_steam_id: bigint
+  counter_strafed_shots: Int
+  crosshair_angle_count: Int
+  crosshair_angle_sum_deg: numeric
+  headshot_hits: Int
+  hits: Int
+  time_to_damage_count: Int
+  time_to_damage_sum_s: numeric
+}
+
+"""
+update columns of table "player_aim_stats_demo"
+"""
+enum player_aim_stats_demo_update_column {
+  """column name"""
+  attacker_steam_id
+
+  """column name"""
+  counter_strafed_shots
+
+  """column name"""
+  crosshair_angle_count
+
+  """column name"""
+  crosshair_angle_sum_deg
+
+  """column name"""
+  headshot_hits
+
+  """column name"""
+  hits
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  time_to_damage_count
+
+  """column name"""
+  time_to_damage_sum_s
+}
+
+input player_aim_stats_demo_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: player_aim_stats_demo_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: player_aim_stats_demo_set_input
+
+  """filter the rows which have to be updated"""
+  where: player_aim_stats_demo_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type player_aim_stats_demo_var_pop_fields {
+  attacker_steam_id: Float
+  counter_strafed_shots: Float
+  crosshair_angle_count: Float
+  crosshair_angle_sum_deg: Float
+  headshot_hits: Float
+  hits: Float
+  time_to_damage_count: Float
+  time_to_damage_sum_s: Float
+}
+
+"""aggregate var_samp on columns"""
+type player_aim_stats_demo_var_samp_fields {
+  attacker_steam_id: Float
+  counter_strafed_shots: Float
+  crosshair_angle_count: Float
+  crosshair_angle_sum_deg: Float
+  headshot_hits: Float
+  hits: Float
+  time_to_damage_count: Float
+  time_to_damage_sum_s: Float
+}
+
+"""aggregate variance on columns"""
+type player_aim_stats_demo_variance_fields {
+  attacker_steam_id: Float
+  counter_strafed_shots: Float
+  crosshair_angle_count: Float
+  crosshair_angle_sum_deg: Float
+  headshot_hits: Float
+  hits: Float
+  time_to_damage_count: Float
+  time_to_damage_sum_s: Float
 }
 
 """
@@ -31761,6 +32233,9 @@ columns and relationships of "player_match_map_stats"
 """
 type player_match_map_stats {
   assists: Int!
+  counter_strafed_shots: Int!
+  crosshair_angle_count: Int!
+  crosshair_angle_sum_deg: numeric!
   damage: Int!
   deaths: Int!
   decoy_throws: Int!
@@ -31878,6 +32353,9 @@ input player_match_map_stats_arr_rel_insert_input {
 """aggregate avg on columns"""
 type player_match_map_stats_avg_fields {
   assists: Float
+  counter_strafed_shots: Float
+  crosshair_angle_count: Float
+  crosshair_angle_sum_deg: Float
   damage: Float
   deaths: Float
   decoy_throws: Float
@@ -31922,6 +32400,9 @@ order by avg() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_avg_order_by {
   assists: order_by
+  counter_strafed_shots: order_by
+  crosshair_angle_count: order_by
+  crosshair_angle_sum_deg: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -31969,6 +32450,9 @@ input player_match_map_stats_bool_exp {
   _not: player_match_map_stats_bool_exp
   _or: [player_match_map_stats_bool_exp!]
   assists: Int_comparison_exp
+  counter_strafed_shots: Int_comparison_exp
+  crosshair_angle_count: Int_comparison_exp
+  crosshair_angle_sum_deg: numeric_comparison_exp
   damage: Int_comparison_exp
   deaths: Int_comparison_exp
   decoy_throws: Int_comparison_exp
@@ -32029,6 +32513,9 @@ input type for incrementing numeric columns in table "player_match_map_stats"
 """
 input player_match_map_stats_inc_input {
   assists: Int
+  counter_strafed_shots: Int
+  crosshair_angle_count: Int
+  crosshair_angle_sum_deg: numeric
   damage: Int
   deaths: Int
   decoy_throws: Int
@@ -32073,6 +32560,9 @@ input type for inserting data into table "player_match_map_stats"
 """
 input player_match_map_stats_insert_input {
   assists: Int
+  counter_strafed_shots: Int
+  crosshair_angle_count: Int
+  crosshair_angle_sum_deg: numeric
   damage: Int
   deaths: Int
   decoy_throws: Int
@@ -32121,6 +32611,9 @@ input player_match_map_stats_insert_input {
 """aggregate max on columns"""
 type player_match_map_stats_max_fields {
   assists: Int
+  counter_strafed_shots: Int
+  crosshair_angle_count: Int
+  crosshair_angle_sum_deg: numeric
   damage: Int
   deaths: Int
   decoy_throws: Int
@@ -32168,6 +32661,9 @@ order by max() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_max_order_by {
   assists: order_by
+  counter_strafed_shots: order_by
+  crosshair_angle_count: order_by
+  crosshair_angle_sum_deg: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -32213,6 +32709,9 @@ input player_match_map_stats_max_order_by {
 """aggregate min on columns"""
 type player_match_map_stats_min_fields {
   assists: Int
+  counter_strafed_shots: Int
+  crosshair_angle_count: Int
+  crosshair_angle_sum_deg: numeric
   damage: Int
   deaths: Int
   decoy_throws: Int
@@ -32260,6 +32759,9 @@ order by min() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_min_order_by {
   assists: order_by
+  counter_strafed_shots: order_by
+  crosshair_angle_count: order_by
+  crosshair_angle_sum_deg: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -32325,6 +32827,9 @@ input player_match_map_stats_on_conflict {
 """Ordering options when selecting data from "player_match_map_stats"."""
 input player_match_map_stats_order_by {
   assists: order_by
+  counter_strafed_shots: order_by
+  crosshair_angle_count: order_by
+  crosshair_angle_sum_deg: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -32382,6 +32887,15 @@ select columns of table "player_match_map_stats"
 enum player_match_map_stats_select_column {
   """column name"""
   assists
+
+  """column name"""
+  counter_strafed_shots
+
+  """column name"""
+  crosshair_angle_count
+
+  """column name"""
+  crosshair_angle_sum_deg
 
   """column name"""
   damage
@@ -32509,6 +33023,9 @@ input type for updating data in table "player_match_map_stats"
 """
 input player_match_map_stats_set_input {
   assists: Int
+  counter_strafed_shots: Int
+  crosshair_angle_count: Int
+  crosshair_angle_sum_deg: numeric
   damage: Int
   deaths: Int
   decoy_throws: Int
@@ -32554,6 +33071,9 @@ input player_match_map_stats_set_input {
 """aggregate stddev on columns"""
 type player_match_map_stats_stddev_fields {
   assists: Float
+  counter_strafed_shots: Float
+  crosshair_angle_count: Float
+  crosshair_angle_sum_deg: Float
   damage: Float
   deaths: Float
   decoy_throws: Float
@@ -32598,6 +33118,9 @@ order by stddev() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_stddev_order_by {
   assists: order_by
+  counter_strafed_shots: order_by
+  crosshair_angle_count: order_by
+  crosshair_angle_sum_deg: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -32640,6 +33163,9 @@ input player_match_map_stats_stddev_order_by {
 """aggregate stddev_pop on columns"""
 type player_match_map_stats_stddev_pop_fields {
   assists: Float
+  counter_strafed_shots: Float
+  crosshair_angle_count: Float
+  crosshair_angle_sum_deg: Float
   damage: Float
   deaths: Float
   decoy_throws: Float
@@ -32684,6 +33210,9 @@ order by stddev_pop() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_stddev_pop_order_by {
   assists: order_by
+  counter_strafed_shots: order_by
+  crosshair_angle_count: order_by
+  crosshair_angle_sum_deg: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -32726,6 +33255,9 @@ input player_match_map_stats_stddev_pop_order_by {
 """aggregate stddev_samp on columns"""
 type player_match_map_stats_stddev_samp_fields {
   assists: Float
+  counter_strafed_shots: Float
+  crosshair_angle_count: Float
+  crosshair_angle_sum_deg: Float
   damage: Float
   deaths: Float
   decoy_throws: Float
@@ -32770,6 +33302,9 @@ order by stddev_samp() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_stddev_samp_order_by {
   assists: order_by
+  counter_strafed_shots: order_by
+  crosshair_angle_count: order_by
+  crosshair_angle_sum_deg: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -32823,6 +33358,9 @@ input player_match_map_stats_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input player_match_map_stats_stream_cursor_value_input {
   assists: Int
+  counter_strafed_shots: Int
+  crosshair_angle_count: Int
+  crosshair_angle_sum_deg: numeric
   damage: Int
   deaths: Int
   decoy_throws: Int
@@ -32868,6 +33406,9 @@ input player_match_map_stats_stream_cursor_value_input {
 """aggregate sum on columns"""
 type player_match_map_stats_sum_fields {
   assists: Int
+  counter_strafed_shots: Int
+  crosshair_angle_count: Int
+  crosshair_angle_sum_deg: numeric
   damage: Int
   deaths: Int
   decoy_throws: Int
@@ -32912,6 +33453,9 @@ order by sum() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_sum_order_by {
   assists: order_by
+  counter_strafed_shots: order_by
+  crosshair_angle_count: order_by
+  crosshair_angle_sum_deg: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -32957,6 +33501,15 @@ update columns of table "player_match_map_stats"
 enum player_match_map_stats_update_column {
   """column name"""
   assists
+
+  """column name"""
+  counter_strafed_shots
+
+  """column name"""
+  crosshair_angle_count
+
+  """column name"""
+  crosshair_angle_sum_deg
 
   """column name"""
   damage
@@ -33093,6 +33646,9 @@ input player_match_map_stats_updates {
 """aggregate var_pop on columns"""
 type player_match_map_stats_var_pop_fields {
   assists: Float
+  counter_strafed_shots: Float
+  crosshair_angle_count: Float
+  crosshair_angle_sum_deg: Float
   damage: Float
   deaths: Float
   decoy_throws: Float
@@ -33137,6 +33693,9 @@ order by var_pop() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_var_pop_order_by {
   assists: order_by
+  counter_strafed_shots: order_by
+  crosshair_angle_count: order_by
+  crosshair_angle_sum_deg: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -33179,6 +33738,9 @@ input player_match_map_stats_var_pop_order_by {
 """aggregate var_samp on columns"""
 type player_match_map_stats_var_samp_fields {
   assists: Float
+  counter_strafed_shots: Float
+  crosshair_angle_count: Float
+  crosshair_angle_sum_deg: Float
   damage: Float
   deaths: Float
   decoy_throws: Float
@@ -33223,6 +33785,9 @@ order by var_samp() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_var_samp_order_by {
   assists: order_by
+  counter_strafed_shots: order_by
+  crosshair_angle_count: order_by
+  crosshair_angle_sum_deg: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -33265,6 +33830,9 @@ input player_match_map_stats_var_samp_order_by {
 """aggregate variance on columns"""
 type player_match_map_stats_variance_fields {
   assists: Float
+  counter_strafed_shots: Float
+  crosshair_angle_count: Float
+  crosshair_angle_sum_deg: Float
   damage: Float
   deaths: Float
   decoy_throws: Float
@@ -33309,6 +33877,9 @@ order by variance() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_variance_order_by {
   assists: order_by
+  counter_strafed_shots: order_by
+  crosshair_angle_count: order_by
+  crosshair_angle_sum_deg: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -33353,8 +33924,10 @@ columns and relationships of "player_match_stats_v"
 """
 type player_match_stats_v {
   assists: Int
+  avg_crosshair_angle_deg: numeric
   avg_flash_duration: numeric
   avg_time_to_damage_s: numeric
+  counter_strafed_shots: Int
   damage: Int
   deaths: Int
   decoy_throws: Int
@@ -33454,8 +34027,10 @@ input player_match_stats_v_arr_rel_insert_input {
 """aggregate avg on columns"""
 type player_match_stats_v_avg_fields {
   assists: Float
+  avg_crosshair_angle_deg: Float
   avg_flash_duration: Float
   avg_time_to_damage_s: Float
+  counter_strafed_shots: Float
   damage: Float
   deaths: Float
   decoy_throws: Float
@@ -33496,8 +34071,10 @@ order by avg() on columns of table "player_match_stats_v"
 """
 input player_match_stats_v_avg_order_by {
   assists: order_by
+  avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -33541,8 +34118,10 @@ input player_match_stats_v_bool_exp {
   _not: player_match_stats_v_bool_exp
   _or: [player_match_stats_v_bool_exp!]
   assists: Int_comparison_exp
+  avg_crosshair_angle_deg: numeric_comparison_exp
   avg_flash_duration: numeric_comparison_exp
   avg_time_to_damage_s: numeric_comparison_exp
+  counter_strafed_shots: Int_comparison_exp
   damage: Int_comparison_exp
   deaths: Int_comparison_exp
   decoy_throws: Int_comparison_exp
@@ -33584,8 +34163,10 @@ input type for inserting data into table "player_match_stats_v"
 """
 input player_match_stats_v_insert_input {
   assists: Int
+  avg_crosshair_angle_deg: numeric
   avg_flash_duration: numeric
   avg_time_to_damage_s: numeric
+  counter_strafed_shots: Int
   damage: Int
   deaths: Int
   decoy_throws: Int
@@ -33625,8 +34206,10 @@ input player_match_stats_v_insert_input {
 """aggregate max on columns"""
 type player_match_stats_v_max_fields {
   assists: Int
+  avg_crosshair_angle_deg: numeric
   avg_flash_duration: numeric
   avg_time_to_damage_s: numeric
+  counter_strafed_shots: Int
   damage: Int
   deaths: Int
   decoy_throws: Int
@@ -33668,8 +34251,10 @@ order by max() on columns of table "player_match_stats_v"
 """
 input player_match_stats_v_max_order_by {
   assists: order_by
+  avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -33709,8 +34294,10 @@ input player_match_stats_v_max_order_by {
 """aggregate min on columns"""
 type player_match_stats_v_min_fields {
   assists: Int
+  avg_crosshair_angle_deg: numeric
   avg_flash_duration: numeric
   avg_time_to_damage_s: numeric
+  counter_strafed_shots: Int
   damage: Int
   deaths: Int
   decoy_throws: Int
@@ -33752,8 +34339,10 @@ order by min() on columns of table "player_match_stats_v"
 """
 input player_match_stats_v_min_order_by {
   assists: order_by
+  avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -33793,8 +34382,10 @@ input player_match_stats_v_min_order_by {
 """Ordering options when selecting data from "player_match_stats_v"."""
 input player_match_stats_v_order_by {
   assists: order_by
+  avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -33839,10 +34430,16 @@ enum player_match_stats_v_select_column {
   assists
 
   """column name"""
+  avg_crosshair_angle_deg
+
+  """column name"""
   avg_flash_duration
 
   """column name"""
   avg_time_to_damage_s
+
+  """column name"""
+  counter_strafed_shots
 
   """column name"""
   damage
@@ -33950,8 +34547,10 @@ enum player_match_stats_v_select_column {
 """aggregate stddev on columns"""
 type player_match_stats_v_stddev_fields {
   assists: Float
+  avg_crosshair_angle_deg: Float
   avg_flash_duration: Float
   avg_time_to_damage_s: Float
+  counter_strafed_shots: Float
   damage: Float
   deaths: Float
   decoy_throws: Float
@@ -33992,8 +34591,10 @@ order by stddev() on columns of table "player_match_stats_v"
 """
 input player_match_stats_v_stddev_order_by {
   assists: order_by
+  avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -34032,8 +34633,10 @@ input player_match_stats_v_stddev_order_by {
 """aggregate stddev_pop on columns"""
 type player_match_stats_v_stddev_pop_fields {
   assists: Float
+  avg_crosshair_angle_deg: Float
   avg_flash_duration: Float
   avg_time_to_damage_s: Float
+  counter_strafed_shots: Float
   damage: Float
   deaths: Float
   decoy_throws: Float
@@ -34074,8 +34677,10 @@ order by stddev_pop() on columns of table "player_match_stats_v"
 """
 input player_match_stats_v_stddev_pop_order_by {
   assists: order_by
+  avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -34114,8 +34719,10 @@ input player_match_stats_v_stddev_pop_order_by {
 """aggregate stddev_samp on columns"""
 type player_match_stats_v_stddev_samp_fields {
   assists: Float
+  avg_crosshair_angle_deg: Float
   avg_flash_duration: Float
   avg_time_to_damage_s: Float
+  counter_strafed_shots: Float
   damage: Float
   deaths: Float
   decoy_throws: Float
@@ -34156,8 +34763,10 @@ order by stddev_samp() on columns of table "player_match_stats_v"
 """
 input player_match_stats_v_stddev_samp_order_by {
   assists: order_by
+  avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -34207,8 +34816,10 @@ input player_match_stats_v_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input player_match_stats_v_stream_cursor_value_input {
   assists: Int
+  avg_crosshair_angle_deg: numeric
   avg_flash_duration: numeric
   avg_time_to_damage_s: numeric
+  counter_strafed_shots: Int
   damage: Int
   deaths: Int
   decoy_throws: Int
@@ -34248,8 +34859,10 @@ input player_match_stats_v_stream_cursor_value_input {
 """aggregate sum on columns"""
 type player_match_stats_v_sum_fields {
   assists: Int
+  avg_crosshair_angle_deg: numeric
   avg_flash_duration: numeric
   avg_time_to_damage_s: numeric
+  counter_strafed_shots: Int
   damage: Int
   deaths: Int
   decoy_throws: Int
@@ -34290,8 +34903,10 @@ order by sum() on columns of table "player_match_stats_v"
 """
 input player_match_stats_v_sum_order_by {
   assists: order_by
+  avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -34330,8 +34945,10 @@ input player_match_stats_v_sum_order_by {
 """aggregate var_pop on columns"""
 type player_match_stats_v_var_pop_fields {
   assists: Float
+  avg_crosshair_angle_deg: Float
   avg_flash_duration: Float
   avg_time_to_damage_s: Float
+  counter_strafed_shots: Float
   damage: Float
   deaths: Float
   decoy_throws: Float
@@ -34372,8 +34989,10 @@ order by var_pop() on columns of table "player_match_stats_v"
 """
 input player_match_stats_v_var_pop_order_by {
   assists: order_by
+  avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -34412,8 +35031,10 @@ input player_match_stats_v_var_pop_order_by {
 """aggregate var_samp on columns"""
 type player_match_stats_v_var_samp_fields {
   assists: Float
+  avg_crosshair_angle_deg: Float
   avg_flash_duration: Float
   avg_time_to_damage_s: Float
+  counter_strafed_shots: Float
   damage: Float
   deaths: Float
   decoy_throws: Float
@@ -34454,8 +35075,10 @@ order by var_samp() on columns of table "player_match_stats_v"
 """
 input player_match_stats_v_var_samp_order_by {
   assists: order_by
+  avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -34494,8 +35117,10 @@ input player_match_stats_v_var_samp_order_by {
 """aggregate variance on columns"""
 type player_match_stats_v_variance_fields {
   assists: Float
+  avg_crosshair_angle_deg: Float
   avg_flash_duration: Float
   avg_time_to_damage_s: Float
+  counter_strafed_shots: Float
   damage: Float
   deaths: Float
   decoy_throws: Float
@@ -34536,8 +35161,10 @@ order by variance() on columns of table "player_match_stats_v"
 """
 input player_match_stats_v_variance_order_by {
   assists: order_by
+  avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
   decoy_throws: order_by
@@ -42328,6 +42955,51 @@ type query_root {
   """fetch data from the table: "notifications" using primary key columns"""
   notifications_by_pk(id: uuid!): notifications
 
+  """
+  fetch data from the table: "player_aim_stats_demo"
+  """
+  player_aim_stats_demo(
+    """distinct select on columns"""
+    distinct_on: [player_aim_stats_demo_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_aim_stats_demo_order_by!]
+
+    """filter the rows returned"""
+    where: player_aim_stats_demo_bool_exp
+  ): [player_aim_stats_demo!]!
+
+  """
+  fetch aggregated fields from the table: "player_aim_stats_demo"
+  """
+  player_aim_stats_demo_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_aim_stats_demo_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_aim_stats_demo_order_by!]
+
+    """filter the rows returned"""
+    where: player_aim_stats_demo_bool_exp
+  ): player_aim_stats_demo_aggregate!
+
+  """
+  fetch data from the table: "player_aim_stats_demo" using primary key columns
+  """
+  player_aim_stats_demo_by_pk(attacker_steam_id: bigint!, match_map_id: uuid!): player_aim_stats_demo
+
   """An array relationship"""
   player_assists(
     """distinct select on columns"""
@@ -48837,6 +49509,65 @@ type subscription_root {
     """filter the rows returned"""
     where: notifications_bool_exp
   ): [notifications!]!
+
+  """
+  fetch data from the table: "player_aim_stats_demo"
+  """
+  player_aim_stats_demo(
+    """distinct select on columns"""
+    distinct_on: [player_aim_stats_demo_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_aim_stats_demo_order_by!]
+
+    """filter the rows returned"""
+    where: player_aim_stats_demo_bool_exp
+  ): [player_aim_stats_demo!]!
+
+  """
+  fetch aggregated fields from the table: "player_aim_stats_demo"
+  """
+  player_aim_stats_demo_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_aim_stats_demo_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_aim_stats_demo_order_by!]
+
+    """filter the rows returned"""
+    where: player_aim_stats_demo_bool_exp
+  ): player_aim_stats_demo_aggregate!
+
+  """
+  fetch data from the table: "player_aim_stats_demo" using primary key columns
+  """
+  player_aim_stats_demo_by_pk(attacker_steam_id: bigint!, match_map_id: uuid!): player_aim_stats_demo
+
+  """
+  fetch data from the table in a streaming manner: "player_aim_stats_demo"
+  """
+  player_aim_stats_demo_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [player_aim_stats_demo_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: player_aim_stats_demo_bool_exp
+  ): [player_aim_stats_demo!]!
 
   """An array relationship"""
   player_assists(
