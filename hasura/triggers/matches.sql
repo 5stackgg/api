@@ -282,7 +282,7 @@ DECLARE
     _auto_cancellation boolean;
     _auto_cancel_duration_override integer;
 BEGIN
-    SELECT auto_cancellation, auto_cancel_duration INTO _auto_cancellation, _auto_cancel_duration_override FROM match_options WHERE id = NEW.match_options_id;
+    SELECT auto_cancellation, auto_cancel_duration INTO _auto_cancellation, _auto_cancel_duration_override FROM resolve_match_auto_cancel(NEW.id);
     _auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_setting('auto_cancel_duration', '15')::int)::text || ' minutes';
 
     IF OLD.server_id IS NOT NULL AND (NEW.server_id IS NULL OR OLD.server_id != NEW.server_id) THEN
