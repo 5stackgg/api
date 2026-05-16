@@ -379,17 +379,6 @@ BEGIN
 END;
 $$;
 
--- ============================================================
--- Single-player rank lookup
--- Computes one player's rank within a category in ONE pass over get_leaderboard().
--- For value-ordered categories (elo, best_kdr, best_win_rate, highest_hs_pct)
--- the rank matches the leaderboard page exactly. For trophies the rank is
--- by gold count only — Olympic-style ordering is not preserved here.
--- ============================================================
-
--- Type-definition table for the function below. Created here (not in a
--- migration) so the function and its return type stay self-contained and
--- the function file can be re-applied independently.
 CREATE TABLE IF NOT EXISTS public.player_leaderboard_rank (
   player_steam_id TEXT NOT NULL,
   value FLOAT NOT NULL DEFAULT 0,

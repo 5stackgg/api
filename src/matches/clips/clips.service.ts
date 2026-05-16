@@ -708,8 +708,6 @@ export class ClipsService {
       );
       if (hit) return hit.round;
 
-      // Lead-in places start_tick before round.start — fall back to the
-      // nearest later round so pre-round footage still gets labeled.
       const next = rounds
         .filter((r) => r.start_tick >= tick)
         .sort((a, b) => a.start_tick - b.start_tick)[0];
