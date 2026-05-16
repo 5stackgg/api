@@ -378,3 +378,37 @@ BEGIN
   ORDER BY c.mvp DESC, c.gold DESC, c.silver DESC, c.bronze DESC;
 END;
 $$;
+
+CREATE TABLE IF NOT EXISTS public.player_leaderboard_rank (
+  player_steam_id TEXT NOT NULL,
+  value FLOAT NOT NULL DEFAULT 0,
+  rank INT NOT NULL DEFAULT 0,
+  total INT NOT NULL DEFAULT 0
+);
+
+CREATE OR REPLACE FUNCTION public.get_player_leaderboard_rank(
+  _category TEXT,
+  _window_days INT,
+  _player_steam_id TEXT,
+  _match_type TEXT DEFAULT NULL,
+  _exclude_tournaments BOOLEAN DEFAULT FALSE
+)
+RETURNS SETOF public.player_leaderboard_rank
+LANGUAGE plpgsql STABLE
+AS $$
+BEGIN
+  RETURN QUERY
+  WITH ranked AS (
+    SELECT
+      le.player_steam_id,
+      le.value,
+      (RANK() OVER (ORDER BY le.value DESC))::int AS rank,
+      (COUNT(*) OVER ())::int AS total
+    FROM public.get_leaderboard(_category, _window_days, _match_type, _exclude_tournaments) le
+  )
+  SELECT r.player_steam_id, r.value, r.rank, r.total
+  FROM ranked r
+  WHERE r.player_steam_id = _player_steam_id
+  LIMIT 1;
+END;
+$$;

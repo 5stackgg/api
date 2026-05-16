@@ -49,6 +49,7 @@ select_permissions:
         - visibility
         - created_at
         - kills_count
+        - round
         - size
       computed_fields:
         - download_url
@@ -70,6 +71,7 @@ select_permissions:
         - visibility
         - created_at
         - kills_count
+        - round
       computed_fields:
         - download_url
         - thumbnail_download_url
@@ -92,6 +94,7 @@ select_permissions:
         - match_map_id
         - match_map_demo_id
         - kills_count
+        - round
       computed_fields:
         - download_url
         - thumbnail_download_url

@@ -4023,6 +4023,7 @@ export interface match_clips {
     render_jobs: clip_render_jobs[]
     /** An aggregate relationship */
     render_jobs_aggregate: clip_render_jobs_aggregate
+    round: (Scalars['Int'] | null)
     size: Scalars['bigint']
     /** An object relationship */
     target: (players | null)
@@ -4068,6 +4069,7 @@ export interface match_clips_aggregate_fields {
 export interface match_clips_avg_fields {
     duration_ms: (Scalars['Float'] | null)
     kills_count: (Scalars['Float'] | null)
+    round: (Scalars['Float'] | null)
     size: (Scalars['Float'] | null)
     target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
@@ -4090,6 +4092,7 @@ export interface match_clips_max_fields {
     kills_count: (Scalars['Int'] | null)
     match_map_demo_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
+    round: (Scalars['Int'] | null)
     size: (Scalars['bigint'] | null)
     target_steam_id: (Scalars['bigint'] | null)
     /** A computed field, executes function "clip_thumbnail_download_url" */
@@ -4113,6 +4116,7 @@ export interface match_clips_min_fields {
     kills_count: (Scalars['Int'] | null)
     match_map_demo_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
+    round: (Scalars['Int'] | null)
     size: (Scalars['bigint'] | null)
     target_steam_id: (Scalars['bigint'] | null)
     /** A computed field, executes function "clip_thumbnail_download_url" */
@@ -4136,13 +4140,14 @@ export interface match_clips_mutation_response {
 
 
 /** select columns of table "match_clips" */
-export type match_clips_select_column = 'created_at' | 'duration_ms' | 'file' | 'id' | 'kills_count' | 'match_map_demo_id' | 'match_map_id' | 'size' | 'target_steam_id' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
+export type match_clips_select_column = 'created_at' | 'duration_ms' | 'file' | 'id' | 'kills_count' | 'match_map_demo_id' | 'match_map_id' | 'round' | 'size' | 'target_steam_id' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
 
 
 /** aggregate stddev on columns */
 export interface match_clips_stddev_fields {
     duration_ms: (Scalars['Float'] | null)
     kills_count: (Scalars['Float'] | null)
+    round: (Scalars['Float'] | null)
     size: (Scalars['Float'] | null)
     target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
@@ -4154,6 +4159,7 @@ export interface match_clips_stddev_fields {
 export interface match_clips_stddev_pop_fields {
     duration_ms: (Scalars['Float'] | null)
     kills_count: (Scalars['Float'] | null)
+    round: (Scalars['Float'] | null)
     size: (Scalars['Float'] | null)
     target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
@@ -4165,6 +4171,7 @@ export interface match_clips_stddev_pop_fields {
 export interface match_clips_stddev_samp_fields {
     duration_ms: (Scalars['Float'] | null)
     kills_count: (Scalars['Float'] | null)
+    round: (Scalars['Float'] | null)
     size: (Scalars['Float'] | null)
     target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
@@ -4176,6 +4183,7 @@ export interface match_clips_stddev_samp_fields {
 export interface match_clips_sum_fields {
     duration_ms: (Scalars['Int'] | null)
     kills_count: (Scalars['Int'] | null)
+    round: (Scalars['Int'] | null)
     size: (Scalars['bigint'] | null)
     target_steam_id: (Scalars['bigint'] | null)
     user_steam_id: (Scalars['bigint'] | null)
@@ -4184,13 +4192,14 @@ export interface match_clips_sum_fields {
 
 
 /** update columns of table "match_clips" */
-export type match_clips_update_column = 'created_at' | 'duration_ms' | 'file' | 'id' | 'kills_count' | 'match_map_demo_id' | 'match_map_id' | 'size' | 'target_steam_id' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
+export type match_clips_update_column = 'created_at' | 'duration_ms' | 'file' | 'id' | 'kills_count' | 'match_map_demo_id' | 'match_map_id' | 'round' | 'size' | 'target_steam_id' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
 
 
 /** aggregate var_pop on columns */
 export interface match_clips_var_pop_fields {
     duration_ms: (Scalars['Float'] | null)
     kills_count: (Scalars['Float'] | null)
+    round: (Scalars['Float'] | null)
     size: (Scalars['Float'] | null)
     target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
@@ -4202,6 +4211,7 @@ export interface match_clips_var_pop_fields {
 export interface match_clips_var_samp_fields {
     duration_ms: (Scalars['Float'] | null)
     kills_count: (Scalars['Float'] | null)
+    round: (Scalars['Float'] | null)
     size: (Scalars['Float'] | null)
     target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
@@ -4213,6 +4223,7 @@ export interface match_clips_var_samp_fields {
 export interface match_clips_variance_fields {
     duration_ms: (Scalars['Float'] | null)
     kills_count: (Scalars['Float'] | null)
+    round: (Scalars['Float'] | null)
     size: (Scalars['Float'] | null)
     target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
@@ -6936,6 +6947,8 @@ export interface mutation_root {
     delete_player_kills_by_weapon: (player_kills_by_weapon_mutation_response | null)
     /** delete single row from the table: "player_kills_by_weapon" */
     delete_player_kills_by_weapon_by_pk: (player_kills_by_weapon | null)
+    /** delete data from the table: "player_leaderboard_rank" */
+    delete_player_leaderboard_rank: (player_leaderboard_rank_mutation_response | null)
     /** delete data from the table: "player_match_map_stats" */
     delete_player_match_map_stats: (player_match_map_stats_mutation_response | null)
     /** delete single row from the table: "player_match_map_stats" */
@@ -7301,6 +7314,10 @@ export interface mutation_root {
     insert_player_kills_by_weapon_one: (player_kills_by_weapon | null)
     /** insert a single row into the table: "player_kills" */
     insert_player_kills_one: (player_kills | null)
+    /** insert data into the table: "player_leaderboard_rank" */
+    insert_player_leaderboard_rank: (player_leaderboard_rank_mutation_response | null)
+    /** insert a single row into the table: "player_leaderboard_rank" */
+    insert_player_leaderboard_rank_one: (player_leaderboard_rank | null)
     /** insert data into the table: "player_match_map_stats" */
     insert_player_match_map_stats: (player_match_map_stats_mutation_response | null)
     /** insert a single row into the table: "player_match_map_stats" */
@@ -7846,6 +7863,10 @@ export interface mutation_root {
     update_player_kills_by_weapon_many: ((player_kills_by_weapon_mutation_response | null)[] | null)
     /** update multiples rows of table: "player_kills" */
     update_player_kills_many: ((player_kills_mutation_response | null)[] | null)
+    /** update data of the table: "player_leaderboard_rank" */
+    update_player_leaderboard_rank: (player_leaderboard_rank_mutation_response | null)
+    /** update multiples rows of table: "player_leaderboard_rank" */
+    update_player_leaderboard_rank_many: ((player_leaderboard_rank_mutation_response | null)[] | null)
     /** update data of the table: "player_match_map_stats" */
     update_player_match_map_stats: (player_match_map_stats_mutation_response | null)
     /** update single row of the table: "player_match_map_stats" */
@@ -10133,6 +10154,145 @@ export interface player_kills_variance_fields {
     attacker_steam_id: (Scalars['Float'] | null)
     round: (Scalars['Float'] | null)
     __typename: 'player_kills_variance_fields'
+}
+
+
+/** columns and relationships of "player_leaderboard_rank" */
+export interface player_leaderboard_rank {
+    player_steam_id: Scalars['String']
+    rank: Scalars['Int']
+    total: Scalars['Int']
+    value: Scalars['float8']
+    __typename: 'player_leaderboard_rank'
+}
+
+export interface player_leaderboard_rank_aggregate {
+    aggregate: (player_leaderboard_rank_aggregate_fields | null)
+    nodes: player_leaderboard_rank[]
+    __typename: 'player_leaderboard_rank_aggregate'
+}
+
+
+/** aggregate fields of "player_leaderboard_rank" */
+export interface player_leaderboard_rank_aggregate_fields {
+    avg: (player_leaderboard_rank_avg_fields | null)
+    count: Scalars['Int']
+    max: (player_leaderboard_rank_max_fields | null)
+    min: (player_leaderboard_rank_min_fields | null)
+    stddev: (player_leaderboard_rank_stddev_fields | null)
+    stddev_pop: (player_leaderboard_rank_stddev_pop_fields | null)
+    stddev_samp: (player_leaderboard_rank_stddev_samp_fields | null)
+    sum: (player_leaderboard_rank_sum_fields | null)
+    var_pop: (player_leaderboard_rank_var_pop_fields | null)
+    var_samp: (player_leaderboard_rank_var_samp_fields | null)
+    variance: (player_leaderboard_rank_variance_fields | null)
+    __typename: 'player_leaderboard_rank_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface player_leaderboard_rank_avg_fields {
+    rank: (Scalars['Float'] | null)
+    total: (Scalars['Float'] | null)
+    value: (Scalars['Float'] | null)
+    __typename: 'player_leaderboard_rank_avg_fields'
+}
+
+
+/** aggregate max on columns */
+export interface player_leaderboard_rank_max_fields {
+    player_steam_id: (Scalars['String'] | null)
+    rank: (Scalars['Int'] | null)
+    total: (Scalars['Int'] | null)
+    value: (Scalars['float8'] | null)
+    __typename: 'player_leaderboard_rank_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface player_leaderboard_rank_min_fields {
+    player_steam_id: (Scalars['String'] | null)
+    rank: (Scalars['Int'] | null)
+    total: (Scalars['Int'] | null)
+    value: (Scalars['float8'] | null)
+    __typename: 'player_leaderboard_rank_min_fields'
+}
+
+
+/** response of any mutation on the table "player_leaderboard_rank" */
+export interface player_leaderboard_rank_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: player_leaderboard_rank[]
+    __typename: 'player_leaderboard_rank_mutation_response'
+}
+
+
+/** select columns of table "player_leaderboard_rank" */
+export type player_leaderboard_rank_select_column = 'player_steam_id' | 'rank' | 'total' | 'value'
+
+
+/** aggregate stddev on columns */
+export interface player_leaderboard_rank_stddev_fields {
+    rank: (Scalars['Float'] | null)
+    total: (Scalars['Float'] | null)
+    value: (Scalars['Float'] | null)
+    __typename: 'player_leaderboard_rank_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_leaderboard_rank_stddev_pop_fields {
+    rank: (Scalars['Float'] | null)
+    total: (Scalars['Float'] | null)
+    value: (Scalars['Float'] | null)
+    __typename: 'player_leaderboard_rank_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_leaderboard_rank_stddev_samp_fields {
+    rank: (Scalars['Float'] | null)
+    total: (Scalars['Float'] | null)
+    value: (Scalars['Float'] | null)
+    __typename: 'player_leaderboard_rank_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface player_leaderboard_rank_sum_fields {
+    rank: (Scalars['Int'] | null)
+    total: (Scalars['Int'] | null)
+    value: (Scalars['float8'] | null)
+    __typename: 'player_leaderboard_rank_sum_fields'
+}
+
+
+/** aggregate var_pop on columns */
+export interface player_leaderboard_rank_var_pop_fields {
+    rank: (Scalars['Float'] | null)
+    total: (Scalars['Float'] | null)
+    value: (Scalars['Float'] | null)
+    __typename: 'player_leaderboard_rank_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_leaderboard_rank_var_samp_fields {
+    rank: (Scalars['Float'] | null)
+    total: (Scalars['Float'] | null)
+    value: (Scalars['Float'] | null)
+    __typename: 'player_leaderboard_rank_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface player_leaderboard_rank_variance_fields {
+    rank: (Scalars['Float'] | null)
+    total: (Scalars['Float'] | null)
+    value: (Scalars['Float'] | null)
+    __typename: 'player_leaderboard_rank_variance_fields'
 }
 
 
@@ -13394,6 +13554,10 @@ export interface query_root {
     get_leaderboard: leaderboard_entries[]
     /** execute function "get_leaderboard" and query aggregates on result of table type "leaderboard_entries" */
     get_leaderboard_aggregate: leaderboard_entries_aggregate
+    /** execute function "get_player_leaderboard_rank" which returns "player_leaderboard_rank" */
+    get_player_leaderboard_rank: player_leaderboard_rank[]
+    /** execute function "get_player_leaderboard_rank" and query aggregates on result of table type "player_leaderboard_rank" */
+    get_player_leaderboard_rank_aggregate: player_leaderboard_rank_aggregate
     /** fetch data from the table: "leaderboard_entries" */
     leaderboard_entries: leaderboard_entries[]
     /** fetch aggregated fields from the table: "leaderboard_entries" */
@@ -13574,6 +13738,10 @@ export interface query_root {
     player_kills_by_weapon_aggregate: player_kills_by_weapon_aggregate
     /** fetch data from the table: "player_kills_by_weapon" using primary key columns */
     player_kills_by_weapon_by_pk: (player_kills_by_weapon | null)
+    /** fetch data from the table: "player_leaderboard_rank" */
+    player_leaderboard_rank: player_leaderboard_rank[]
+    /** fetch aggregated fields from the table: "player_leaderboard_rank" */
+    player_leaderboard_rank_aggregate: player_leaderboard_rank_aggregate
     /** fetch data from the table: "player_match_map_stats" */
     player_match_map_stats: player_match_map_stats[]
     /** fetch aggregated fields from the table: "player_match_map_stats" */
@@ -14526,6 +14694,10 @@ export interface subscription_root {
     get_leaderboard: leaderboard_entries[]
     /** execute function "get_leaderboard" and query aggregates on result of table type "leaderboard_entries" */
     get_leaderboard_aggregate: leaderboard_entries_aggregate
+    /** execute function "get_player_leaderboard_rank" which returns "player_leaderboard_rank" */
+    get_player_leaderboard_rank: player_leaderboard_rank[]
+    /** execute function "get_player_leaderboard_rank" and query aggregates on result of table type "player_leaderboard_rank" */
+    get_player_leaderboard_rank_aggregate: player_leaderboard_rank_aggregate
     /** fetch data from the table: "leaderboard_entries" */
     leaderboard_entries: leaderboard_entries[]
     /** fetch aggregated fields from the table: "leaderboard_entries" */
@@ -14762,6 +14934,12 @@ export interface subscription_root {
     player_kills_by_weapon_stream: player_kills_by_weapon[]
     /** fetch data from the table in a streaming manner: "player_kills" */
     player_kills_stream: player_kills[]
+    /** fetch data from the table: "player_leaderboard_rank" */
+    player_leaderboard_rank: player_leaderboard_rank[]
+    /** fetch aggregated fields from the table: "player_leaderboard_rank" */
+    player_leaderboard_rank_aggregate: player_leaderboard_rank_aggregate
+    /** fetch data from the table in a streaming manner: "player_leaderboard_rank" */
+    player_leaderboard_rank_stream: player_leaderboard_rank[]
     /** fetch data from the table: "player_match_map_stats" */
     player_match_map_stats: player_match_map_stats[]
     /** fetch aggregated fields from the table: "player_match_map_stats" */
@@ -24900,6 +25078,8 @@ export interface game_versions_variance_fieldsGenqlSelection{
 
 export interface get_leaderboard_args {_category?: (Scalars['String'] | null),_exclude_tournaments?: (Scalars['Boolean'] | null),_match_type?: (Scalars['String'] | null),_window_days?: (Scalars['Int'] | null)}
 
+export interface get_player_leaderboard_rank_args {_category?: (Scalars['String'] | null),_exclude_tournaments?: (Scalars['Boolean'] | null),_match_type?: (Scalars['String'] | null),_player_steam_id?: (Scalars['String'] | null),_window_days?: (Scalars['Int'] | null)}
+
 
 /** Boolean expression to compare columns of type "inet". All fields are combined with logical 'AND'. */
 export interface inet_comparison_exp {_eq?: (Scalars['inet'] | null),_gt?: (Scalars['inet'] | null),_gte?: (Scalars['inet'] | null),_in?: (Scalars['inet'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['inet'] | null),_lte?: (Scalars['inet'] | null),_neq?: (Scalars['inet'] | null),_nin?: (Scalars['inet'][] | null)}
@@ -25884,6 +26064,7 @@ export interface match_clipsGenqlSelection{
     order_by?: (clip_render_jobs_order_by[] | null), 
     /** filter the rows returned */
     where?: (clip_render_jobs_bool_exp | null)} })
+    round?: boolean | number
     size?: boolean | number
     /** An object relationship */
     target?: playersGenqlSelection
@@ -25946,6 +26127,7 @@ on_conflict?: (match_clips_on_conflict | null)}
 export interface match_clips_avg_fieldsGenqlSelection{
     duration_ms?: boolean | number
     kills_count?: boolean | number
+    round?: boolean | number
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
@@ -25955,19 +26137,19 @@ export interface match_clips_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "match_clips" */
-export interface match_clips_avg_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_avg_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "match_clips". All fields are combined with a logical 'AND'. */
-export interface match_clips_bool_exp {_and?: (match_clips_bool_exp[] | null),_not?: (match_clips_bool_exp | null),_or?: (match_clips_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),download_url?: (String_comparison_exp | null),duration_ms?: (Int_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),kills_count?: (Int_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_demo?: (match_map_demos_bool_exp | null),match_map_demo_id?: (uuid_comparison_exp | null),match_map_id?: (uuid_comparison_exp | null),render_jobs?: (clip_render_jobs_bool_exp | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),size?: (bigint_comparison_exp | null),target?: (players_bool_exp | null),target_steam_id?: (bigint_comparison_exp | null),thumbnail_download_url?: (String_comparison_exp | null),thumbnail_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null),visibility?: (String_comparison_exp | null)}
+export interface match_clips_bool_exp {_and?: (match_clips_bool_exp[] | null),_not?: (match_clips_bool_exp | null),_or?: (match_clips_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),download_url?: (String_comparison_exp | null),duration_ms?: (Int_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),kills_count?: (Int_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_demo?: (match_map_demos_bool_exp | null),match_map_demo_id?: (uuid_comparison_exp | null),match_map_id?: (uuid_comparison_exp | null),render_jobs?: (clip_render_jobs_bool_exp | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),round?: (Int_comparison_exp | null),size?: (bigint_comparison_exp | null),target?: (players_bool_exp | null),target_steam_id?: (bigint_comparison_exp | null),thumbnail_download_url?: (String_comparison_exp | null),thumbnail_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null),visibility?: (String_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_clips" */
-export interface match_clips_inc_input {duration_ms?: (Scalars['Int'] | null),kills_count?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),user_steam_id?: (Scalars['bigint'] | null)}
+export interface match_clips_inc_input {duration_ms?: (Scalars['Int'] | null),kills_count?: (Scalars['Int'] | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),user_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "match_clips" */
-export interface match_clips_insert_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_demo?: (match_map_demos_obj_rel_insert_input | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),size?: (Scalars['bigint'] | null),target?: (players_obj_rel_insert_input | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
+export interface match_clips_insert_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_demo?: (match_map_demos_obj_rel_insert_input | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target?: (players_obj_rel_insert_input | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -25981,6 +26163,7 @@ export interface match_clips_max_fieldsGenqlSelection{
     kills_count?: boolean | number
     match_map_demo_id?: boolean | number
     match_map_id?: boolean | number
+    round?: boolean | number
     size?: boolean | number
     target_steam_id?: boolean | number
     /** A computed field, executes function "clip_thumbnail_download_url" */
@@ -25995,7 +26178,7 @@ export interface match_clips_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "match_clips" */
-export interface match_clips_max_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user_steam_id?: (order_by | null),visibility?: (order_by | null)}
+export interface match_clips_max_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user_steam_id?: (order_by | null),visibility?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -26009,6 +26192,7 @@ export interface match_clips_min_fieldsGenqlSelection{
     kills_count?: boolean | number
     match_map_demo_id?: boolean | number
     match_map_id?: boolean | number
+    round?: boolean | number
     size?: boolean | number
     target_steam_id?: boolean | number
     /** A computed field, executes function "clip_thumbnail_download_url" */
@@ -26023,7 +26207,7 @@ export interface match_clips_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "match_clips" */
-export interface match_clips_min_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user_steam_id?: (order_by | null),visibility?: (order_by | null)}
+export interface match_clips_min_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user_steam_id?: (order_by | null),visibility?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_clips" */
@@ -26048,7 +26232,7 @@ export interface match_clips_on_conflict {constraint: match_clips_constraint,upd
 
 
 /** Ordering options when selecting data from "match_clips". */
-export interface match_clips_order_by {created_at?: (order_by | null),download_url?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_demo?: (match_map_demos_order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_order_by | null),size?: (order_by | null),target?: (players_order_by | null),target_steam_id?: (order_by | null),thumbnail_download_url?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null),visibility?: (order_by | null)}
+export interface match_clips_order_by {created_at?: (order_by | null),download_url?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_demo?: (match_map_demos_order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_order_by | null),round?: (order_by | null),size?: (order_by | null),target?: (players_order_by | null),target_steam_id?: (order_by | null),thumbnail_download_url?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null),visibility?: (order_by | null)}
 
 
 /** primary key columns input for table: match_clips */
@@ -26056,13 +26240,14 @@ export interface match_clips_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_clips" */
-export interface match_clips_set_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
+export interface match_clips_set_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
 export interface match_clips_stddev_fieldsGenqlSelection{
     duration_ms?: boolean | number
     kills_count?: boolean | number
+    round?: boolean | number
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
@@ -26072,13 +26257,14 @@ export interface match_clips_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "match_clips" */
-export interface match_clips_stddev_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_stddev_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
 export interface match_clips_stddev_pop_fieldsGenqlSelection{
     duration_ms?: boolean | number
     kills_count?: boolean | number
+    round?: boolean | number
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
@@ -26088,13 +26274,14 @@ export interface match_clips_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "match_clips" */
-export interface match_clips_stddev_pop_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_stddev_pop_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
 export interface match_clips_stddev_samp_fieldsGenqlSelection{
     duration_ms?: boolean | number
     kills_count?: boolean | number
+    round?: boolean | number
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
@@ -26104,7 +26291,7 @@ export interface match_clips_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "match_clips" */
-export interface match_clips_stddev_samp_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_stddev_samp_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** Streaming cursor of the table "match_clips" */
@@ -26116,13 +26303,14 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_clips_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
+export interface match_clips_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
 export interface match_clips_sum_fieldsGenqlSelection{
     duration_ms?: boolean | number
     kills_count?: boolean | number
+    round?: boolean | number
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
@@ -26132,7 +26320,7 @@ export interface match_clips_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "match_clips" */
-export interface match_clips_sum_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_sum_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
 
 export interface match_clips_updates {
 /** increments the numeric columns with given value of the filtered values */
@@ -26147,6 +26335,7 @@ where: match_clips_bool_exp}
 export interface match_clips_var_pop_fieldsGenqlSelection{
     duration_ms?: boolean | number
     kills_count?: boolean | number
+    round?: boolean | number
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
@@ -26156,13 +26345,14 @@ export interface match_clips_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "match_clips" */
-export interface match_clips_var_pop_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_var_pop_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
 export interface match_clips_var_samp_fieldsGenqlSelection{
     duration_ms?: boolean | number
     kills_count?: boolean | number
+    round?: boolean | number
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
@@ -26172,13 +26362,14 @@ export interface match_clips_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "match_clips" */
-export interface match_clips_var_samp_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_var_samp_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** aggregate variance on columns */
 export interface match_clips_variance_fieldsGenqlSelection{
     duration_ms?: boolean | number
     kills_count?: boolean | number
+    round?: boolean | number
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
@@ -26188,7 +26379,7 @@ export interface match_clips_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "match_clips" */
-export interface match_clips_variance_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_variance_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** columns and relationships of "match_demo_sessions" */
@@ -30985,6 +31176,10 @@ export interface mutation_rootGenqlSelection{
     where: player_kills_by_weapon_bool_exp} })
     /** delete single row from the table: "player_kills_by_weapon" */
     delete_player_kills_by_weapon_by_pk?: (player_kills_by_weaponGenqlSelection & { __args: {player_steam_id: Scalars['bigint'], with: Scalars['String']} })
+    /** delete data from the table: "player_leaderboard_rank" */
+    delete_player_leaderboard_rank?: (player_leaderboard_rank_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: player_leaderboard_rank_bool_exp} })
     /** delete data from the table: "player_match_map_stats" */
     delete_player_match_map_stats?: (player_match_map_stats_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -31908,6 +32103,14 @@ export interface mutation_rootGenqlSelection{
     object: player_kills_insert_input, 
     /** upsert condition */
     on_conflict?: (player_kills_on_conflict | null)} })
+    /** insert data into the table: "player_leaderboard_rank" */
+    insert_player_leaderboard_rank?: (player_leaderboard_rank_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: player_leaderboard_rank_insert_input[]} })
+    /** insert a single row into the table: "player_leaderboard_rank" */
+    insert_player_leaderboard_rank_one?: (player_leaderboard_rankGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: player_leaderboard_rank_insert_input} })
     /** insert data into the table: "player_match_map_stats" */
     insert_player_match_map_stats?: (player_match_map_stats_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -33447,6 +33650,18 @@ export interface mutation_rootGenqlSelection{
     update_player_kills_many?: (player_kills_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: player_kills_updates[]} })
+    /** update data of the table: "player_leaderboard_rank" */
+    update_player_leaderboard_rank?: (player_leaderboard_rank_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (player_leaderboard_rank_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (player_leaderboard_rank_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: player_leaderboard_rank_bool_exp} })
+    /** update multiples rows of table: "player_leaderboard_rank" */
+    update_player_leaderboard_rank_many?: (player_leaderboard_rank_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: player_leaderboard_rank_updates[]} })
     /** update data of the table: "player_match_map_stats" */
     update_player_match_map_stats?: (player_match_map_stats_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -36982,6 +37197,195 @@ export interface player_kills_variance_fieldsGenqlSelection{
 
 /** order by variance() on columns of table "player_kills" */
 export interface player_kills_variance_order_by {attacked_steam_id?: (order_by | null),attacker_steam_id?: (order_by | null),round?: (order_by | null)}
+
+
+/** columns and relationships of "player_leaderboard_rank" */
+export interface player_leaderboard_rankGenqlSelection{
+    player_steam_id?: boolean | number
+    rank?: boolean | number
+    total?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface player_leaderboard_rank_aggregateGenqlSelection{
+    aggregate?: player_leaderboard_rank_aggregate_fieldsGenqlSelection
+    nodes?: player_leaderboard_rankGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "player_leaderboard_rank" */
+export interface player_leaderboard_rank_aggregate_fieldsGenqlSelection{
+    avg?: player_leaderboard_rank_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (player_leaderboard_rank_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: player_leaderboard_rank_max_fieldsGenqlSelection
+    min?: player_leaderboard_rank_min_fieldsGenqlSelection
+    stddev?: player_leaderboard_rank_stddev_fieldsGenqlSelection
+    stddev_pop?: player_leaderboard_rank_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: player_leaderboard_rank_stddev_samp_fieldsGenqlSelection
+    sum?: player_leaderboard_rank_sum_fieldsGenqlSelection
+    var_pop?: player_leaderboard_rank_var_pop_fieldsGenqlSelection
+    var_samp?: player_leaderboard_rank_var_samp_fieldsGenqlSelection
+    variance?: player_leaderboard_rank_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface player_leaderboard_rank_avg_fieldsGenqlSelection{
+    rank?: boolean | number
+    total?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "player_leaderboard_rank". All fields are combined with a logical 'AND'. */
+export interface player_leaderboard_rank_bool_exp {_and?: (player_leaderboard_rank_bool_exp[] | null),_not?: (player_leaderboard_rank_bool_exp | null),_or?: (player_leaderboard_rank_bool_exp[] | null),player_steam_id?: (String_comparison_exp | null),rank?: (Int_comparison_exp | null),total?: (Int_comparison_exp | null),value?: (float8_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "player_leaderboard_rank" */
+export interface player_leaderboard_rank_inc_input {rank?: (Scalars['Int'] | null),total?: (Scalars['Int'] | null),value?: (Scalars['float8'] | null)}
+
+
+/** input type for inserting data into table "player_leaderboard_rank" */
+export interface player_leaderboard_rank_insert_input {player_steam_id?: (Scalars['String'] | null),rank?: (Scalars['Int'] | null),total?: (Scalars['Int'] | null),value?: (Scalars['float8'] | null)}
+
+
+/** aggregate max on columns */
+export interface player_leaderboard_rank_max_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    rank?: boolean | number
+    total?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface player_leaderboard_rank_min_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    rank?: boolean | number
+    total?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "player_leaderboard_rank" */
+export interface player_leaderboard_rank_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: player_leaderboard_rankGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Ordering options when selecting data from "player_leaderboard_rank". */
+export interface player_leaderboard_rank_order_by {player_steam_id?: (order_by | null),rank?: (order_by | null),total?: (order_by | null),value?: (order_by | null)}
+
+
+/** input type for updating data in table "player_leaderboard_rank" */
+export interface player_leaderboard_rank_set_input {player_steam_id?: (Scalars['String'] | null),rank?: (Scalars['Int'] | null),total?: (Scalars['Int'] | null),value?: (Scalars['float8'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface player_leaderboard_rank_stddev_fieldsGenqlSelection{
+    rank?: boolean | number
+    total?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_leaderboard_rank_stddev_pop_fieldsGenqlSelection{
+    rank?: boolean | number
+    total?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_leaderboard_rank_stddev_samp_fieldsGenqlSelection{
+    rank?: boolean | number
+    total?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "player_leaderboard_rank" */
+export interface player_leaderboard_rank_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: player_leaderboard_rank_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface player_leaderboard_rank_stream_cursor_value_input {player_steam_id?: (Scalars['String'] | null),rank?: (Scalars['Int'] | null),total?: (Scalars['Int'] | null),value?: (Scalars['float8'] | null)}
+
+
+/** aggregate sum on columns */
+export interface player_leaderboard_rank_sum_fieldsGenqlSelection{
+    rank?: boolean | number
+    total?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface player_leaderboard_rank_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (player_leaderboard_rank_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (player_leaderboard_rank_set_input | null),
+/** filter the rows which have to be updated */
+where: player_leaderboard_rank_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface player_leaderboard_rank_var_pop_fieldsGenqlSelection{
+    rank?: boolean | number
+    total?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_leaderboard_rank_var_samp_fieldsGenqlSelection{
+    rank?: boolean | number
+    total?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface player_leaderboard_rank_variance_fieldsGenqlSelection{
+    rank?: boolean | number
+    total?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
 
 
 /** columns and relationships of "player_match_map_stats" */
@@ -42457,6 +42861,34 @@ export interface query_rootGenqlSelection{
     order_by?: (leaderboard_entries_order_by[] | null), 
     /** filter the rows returned */
     where?: (leaderboard_entries_bool_exp | null)} })
+    /** execute function "get_player_leaderboard_rank" which returns "player_leaderboard_rank" */
+    get_player_leaderboard_rank?: (player_leaderboard_rankGenqlSelection & { __args: {
+    /** input parameters for function "get_player_leaderboard_rank" */
+    args: get_player_leaderboard_rank_args, 
+    /** distinct select on columns */
+    distinct_on?: (player_leaderboard_rank_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_leaderboard_rank_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_leaderboard_rank_bool_exp | null)} })
+    /** execute function "get_player_leaderboard_rank" and query aggregates on result of table type "player_leaderboard_rank" */
+    get_player_leaderboard_rank_aggregate?: (player_leaderboard_rank_aggregateGenqlSelection & { __args: {
+    /** input parameters for function "get_player_leaderboard_rank_aggregate" */
+    args: get_player_leaderboard_rank_args, 
+    /** distinct select on columns */
+    distinct_on?: (player_leaderboard_rank_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_leaderboard_rank_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_leaderboard_rank_bool_exp | null)} })
     /** fetch data from the table: "leaderboard_entries" */
     leaderboard_entries?: (leaderboard_entriesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -43237,6 +43669,30 @@ export interface query_rootGenqlSelection{
     where?: (player_kills_by_weapon_bool_exp | null)} })
     /** fetch data from the table: "player_kills_by_weapon" using primary key columns */
     player_kills_by_weapon_by_pk?: (player_kills_by_weaponGenqlSelection & { __args: {player_steam_id: Scalars['bigint'], with: Scalars['String']} })
+    /** fetch data from the table: "player_leaderboard_rank" */
+    player_leaderboard_rank?: (player_leaderboard_rankGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_leaderboard_rank_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_leaderboard_rank_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_leaderboard_rank_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_leaderboard_rank" */
+    player_leaderboard_rank_aggregate?: (player_leaderboard_rank_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_leaderboard_rank_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_leaderboard_rank_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_leaderboard_rank_bool_exp | null)} })
     /** fetch data from the table: "player_match_map_stats" */
     player_match_map_stats?: (player_match_map_statsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -46092,6 +46548,34 @@ export interface subscription_rootGenqlSelection{
     order_by?: (leaderboard_entries_order_by[] | null), 
     /** filter the rows returned */
     where?: (leaderboard_entries_bool_exp | null)} })
+    /** execute function "get_player_leaderboard_rank" which returns "player_leaderboard_rank" */
+    get_player_leaderboard_rank?: (player_leaderboard_rankGenqlSelection & { __args: {
+    /** input parameters for function "get_player_leaderboard_rank" */
+    args: get_player_leaderboard_rank_args, 
+    /** distinct select on columns */
+    distinct_on?: (player_leaderboard_rank_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_leaderboard_rank_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_leaderboard_rank_bool_exp | null)} })
+    /** execute function "get_player_leaderboard_rank" and query aggregates on result of table type "player_leaderboard_rank" */
+    get_player_leaderboard_rank_aggregate?: (player_leaderboard_rank_aggregateGenqlSelection & { __args: {
+    /** input parameters for function "get_player_leaderboard_rank_aggregate" */
+    args: get_player_leaderboard_rank_args, 
+    /** distinct select on columns */
+    distinct_on?: (player_leaderboard_rank_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_leaderboard_rank_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_leaderboard_rank_bool_exp | null)} })
     /** fetch data from the table: "leaderboard_entries" */
     leaderboard_entries?: (leaderboard_entriesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -47108,6 +47592,38 @@ export interface subscription_rootGenqlSelection{
     cursor: (player_kills_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (player_kills_bool_exp | null)} })
+    /** fetch data from the table: "player_leaderboard_rank" */
+    player_leaderboard_rank?: (player_leaderboard_rankGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_leaderboard_rank_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_leaderboard_rank_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_leaderboard_rank_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_leaderboard_rank" */
+    player_leaderboard_rank_aggregate?: (player_leaderboard_rank_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_leaderboard_rank_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_leaderboard_rank_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_leaderboard_rank_bool_exp | null)} })
+    /** fetch data from the table in a streaming manner: "player_leaderboard_rank" */
+    player_leaderboard_rank_stream?: (player_leaderboard_rankGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (player_leaderboard_rank_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (player_leaderboard_rank_bool_exp | null)} })
     /** fetch data from the table: "player_match_map_stats" */
     player_match_map_stats?: (player_match_map_statsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -60348,6 +60864,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const player_leaderboard_rank_possibleTypes: string[] = ['player_leaderboard_rank']
+    export const isplayer_leaderboard_rank = (obj?: { __typename?: any } | null): obj is player_leaderboard_rank => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_leaderboard_rank"')
+      return player_leaderboard_rank_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_leaderboard_rank_aggregate_possibleTypes: string[] = ['player_leaderboard_rank_aggregate']
+    export const isplayer_leaderboard_rank_aggregate = (obj?: { __typename?: any } | null): obj is player_leaderboard_rank_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_leaderboard_rank_aggregate"')
+      return player_leaderboard_rank_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_leaderboard_rank_aggregate_fields_possibleTypes: string[] = ['player_leaderboard_rank_aggregate_fields']
+    export const isplayer_leaderboard_rank_aggregate_fields = (obj?: { __typename?: any } | null): obj is player_leaderboard_rank_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_leaderboard_rank_aggregate_fields"')
+      return player_leaderboard_rank_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_leaderboard_rank_avg_fields_possibleTypes: string[] = ['player_leaderboard_rank_avg_fields']
+    export const isplayer_leaderboard_rank_avg_fields = (obj?: { __typename?: any } | null): obj is player_leaderboard_rank_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_leaderboard_rank_avg_fields"')
+      return player_leaderboard_rank_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_leaderboard_rank_max_fields_possibleTypes: string[] = ['player_leaderboard_rank_max_fields']
+    export const isplayer_leaderboard_rank_max_fields = (obj?: { __typename?: any } | null): obj is player_leaderboard_rank_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_leaderboard_rank_max_fields"')
+      return player_leaderboard_rank_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_leaderboard_rank_min_fields_possibleTypes: string[] = ['player_leaderboard_rank_min_fields']
+    export const isplayer_leaderboard_rank_min_fields = (obj?: { __typename?: any } | null): obj is player_leaderboard_rank_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_leaderboard_rank_min_fields"')
+      return player_leaderboard_rank_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_leaderboard_rank_mutation_response_possibleTypes: string[] = ['player_leaderboard_rank_mutation_response']
+    export const isplayer_leaderboard_rank_mutation_response = (obj?: { __typename?: any } | null): obj is player_leaderboard_rank_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_leaderboard_rank_mutation_response"')
+      return player_leaderboard_rank_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_leaderboard_rank_stddev_fields_possibleTypes: string[] = ['player_leaderboard_rank_stddev_fields']
+    export const isplayer_leaderboard_rank_stddev_fields = (obj?: { __typename?: any } | null): obj is player_leaderboard_rank_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_leaderboard_rank_stddev_fields"')
+      return player_leaderboard_rank_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_leaderboard_rank_stddev_pop_fields_possibleTypes: string[] = ['player_leaderboard_rank_stddev_pop_fields']
+    export const isplayer_leaderboard_rank_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is player_leaderboard_rank_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_leaderboard_rank_stddev_pop_fields"')
+      return player_leaderboard_rank_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_leaderboard_rank_stddev_samp_fields_possibleTypes: string[] = ['player_leaderboard_rank_stddev_samp_fields']
+    export const isplayer_leaderboard_rank_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is player_leaderboard_rank_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_leaderboard_rank_stddev_samp_fields"')
+      return player_leaderboard_rank_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_leaderboard_rank_sum_fields_possibleTypes: string[] = ['player_leaderboard_rank_sum_fields']
+    export const isplayer_leaderboard_rank_sum_fields = (obj?: { __typename?: any } | null): obj is player_leaderboard_rank_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_leaderboard_rank_sum_fields"')
+      return player_leaderboard_rank_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_leaderboard_rank_var_pop_fields_possibleTypes: string[] = ['player_leaderboard_rank_var_pop_fields']
+    export const isplayer_leaderboard_rank_var_pop_fields = (obj?: { __typename?: any } | null): obj is player_leaderboard_rank_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_leaderboard_rank_var_pop_fields"')
+      return player_leaderboard_rank_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_leaderboard_rank_var_samp_fields_possibleTypes: string[] = ['player_leaderboard_rank_var_samp_fields']
+    export const isplayer_leaderboard_rank_var_samp_fields = (obj?: { __typename?: any } | null): obj is player_leaderboard_rank_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_leaderboard_rank_var_samp_fields"')
+      return player_leaderboard_rank_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_leaderboard_rank_variance_fields_possibleTypes: string[] = ['player_leaderboard_rank_variance_fields']
+    export const isplayer_leaderboard_rank_variance_fields = (obj?: { __typename?: any } | null): obj is player_leaderboard_rank_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_leaderboard_rank_variance_fields"')
+      return player_leaderboard_rank_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const player_match_map_stats_possibleTypes: string[] = ['player_match_map_stats']
     export const isplayer_match_map_stats = (obj?: { __typename?: any } | null): obj is player_match_map_stats => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_map_stats"')
@@ -65332,6 +65960,7 @@ export const enumMatchClipsSelectColumn = {
    kills_count: 'kills_count' as const,
    match_map_demo_id: 'match_map_demo_id' as const,
    match_map_id: 'match_map_id' as const,
+   round: 'round' as const,
    size: 'size' as const,
    target_steam_id: 'target_steam_id' as const,
    thumbnail_url: 'thumbnail_url' as const,
@@ -65348,6 +65977,7 @@ export const enumMatchClipsUpdateColumn = {
    kills_count: 'kills_count' as const,
    match_map_demo_id: 'match_map_demo_id' as const,
    match_map_id: 'match_map_id' as const,
+   round: 'round' as const,
    size: 'size' as const,
    target_steam_id: 'target_steam_id' as const,
    thumbnail_url: 'thumbnail_url' as const,
@@ -66261,6 +66891,13 @@ export const enumPlayerKillsUpdateColumn = {
    thru_wall: 'thru_wall' as const,
    time: 'time' as const,
    with: 'with' as const
+}
+
+export const enumPlayerLeaderboardRankSelectColumn = {
+   player_steam_id: 'player_steam_id' as const,
+   rank: 'rank' as const,
+   total: 'total' as const,
+   value: 'value' as const
 }
 
 export const enumPlayerMatchMapStatsConstraint = {

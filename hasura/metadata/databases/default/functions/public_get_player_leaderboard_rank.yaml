@@ -1,0 +1,8 @@
+function:
+  name: get_player_leaderboard_rank
+  schema: public
+configuration:
+  custom_root_fields: {}
+  exposed_as: query
+permissions:
+  - role: guest

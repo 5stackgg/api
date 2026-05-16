@@ -1573,8 +1573,7 @@ export class MatchesController {
       return;
     }
 
-    const becameOnline =
-      data.op === "INSERT" || data.old?.status !== "Online";
+    const becameOnline = data.op === "INSERT" || data.old?.status !== "Online";
 
     const { game_server_nodes_by_pk } = await this.hasura.query({
       game_server_nodes_by_pk: {
