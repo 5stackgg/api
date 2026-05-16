@@ -1,0 +1,14 @@
+table:
+  name: player_leaderboard_rank
+  schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - player_steam_id
+        - value
+        - rank
+        - total
+      filter: {}
+      allow_aggregations: true
+    comment: ""

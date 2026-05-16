@@ -670,6 +670,58 @@ export class ClipsService {
     });
   }
 
+  private async resolveClipRound(
+    matchMapId: string,
+    matchMapDemoId: string | null,
+    spec: ClipSpec | null,
+  ): Promise<number | null> {
+    const firstSegment = spec?.segments?.[0];
+    if (!firstSegment || typeof firstSegment.start_tick !== "number") {
+      return null;
+    }
+
+    try {
+      const { match_map_demos } = await this.hasura.query({
+        match_map_demos: {
+          __args: {
+            where: matchMapDemoId
+              ? { id: { _eq: matchMapDemoId } }
+              : { match_map_id: { _eq: matchMapId } },
+            order_by: [
+              { metadata_parsed_at: "desc_nulls_last" },
+              { id: "desc" },
+            ],
+            limit: 1,
+          },
+          round_ticks: true,
+        },
+      });
+      const rounds =
+        (match_map_demos?.[0]?.round_ticks as
+          | Array<{ round: number; start_tick: number; end_tick: number }>
+          | undefined) ?? [];
+      if (rounds.length === 0) return null;
+
+      const tick = firstSegment.start_tick;
+      const hit = rounds.find(
+        (r) => tick >= r.start_tick && tick <= r.end_tick,
+      );
+      if (hit) return hit.round;
+
+      // Lead-in places start_tick before round.start — fall back to the
+      // nearest later round so pre-round footage still gets labeled.
+      const next = rounds
+        .filter((r) => r.start_tick >= tick)
+        .sort((a, b) => a.start_tick - b.start_tick)[0];
+      return next?.round ?? null;
+    } catch (error) {
+      this.logger.warn(
+        `[clip] round resolve failed for match_map ${matchMapId}: ${(error as Error)?.message}`,
+      );
+      return null;
+    }
+  }
+
   private async countKillsForSpec(
     matchMapId: string,
     spec: ClipSpec | null,
@@ -865,6 +917,12 @@ export class ClipsService {
       targetSteamId,
     );
 
+    const round = await this.resolveClipRound(
+      row.match_map_id,
+      row.match_map_demo_id ? String(row.match_map_demo_id) : null,
+      spec,
+    );
+
     const { insert_match_clips_one } = await this.hasura.mutation({
       insert_match_clips_one: {
         __args: {
@@ -878,6 +936,7 @@ export class ClipsService {
             file: key,
             thumbnail_url: thumbnailUrl,
             kills_count: killsCount,
+            round,
             visibility,
             size: videoSize + thumbnailSize,
           },
@@ -942,7 +1001,8 @@ export class ClipsService {
       if (!enabled) return 0;
     }
     if (!(await this.hasGpuNode())) {
-      const msg = "no GPU node registered — auto-clips need a GPU node to exist (offline is fine, jobs will queue and dispatch once it's back online)";
+      const msg =
+        "no GPU node registered — auto-clips need a GPU node to exist (offline is fine, jobs will queue and dispatch once it's back online)";
       if (options.force) {
         throw new Error(msg);
       }
@@ -1171,7 +1231,8 @@ export class ClipsService {
       if (!enabled) return 0;
     }
     if (!(await this.hasGpuNode())) {
-      const msg = "no GPU node registered — auto-clips need a GPU node to exist (offline is fine, jobs will queue and dispatch once it's back online)";
+      const msg =
+        "no GPU node registered — auto-clips need a GPU node to exist (offline is fine, jobs will queue and dispatch once it's back online)";
       if (options.force) {
         throw new Error(msg);
       }

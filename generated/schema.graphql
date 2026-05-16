@@ -9327,6 +9327,14 @@ input get_leaderboard_args {
   _window_days: Int
 }
 
+input get_player_leaderboard_rank_args {
+  _category: String
+  _exclude_tournaments: Boolean
+  _match_type: String
+  _player_steam_id: String
+  _window_days: Int
+}
+
 scalar inet
 
 """
@@ -11029,6 +11037,7 @@ type match_clips {
     """filter the rows returned"""
     where: clip_render_jobs_bool_exp
   ): clip_render_jobs_aggregate!
+  round: Int
   size: bigint!
 
   """An object relationship"""
@@ -11115,6 +11124,7 @@ input match_clips_arr_rel_insert_input {
 type match_clips_avg_fields {
   duration_ms: Float
   kills_count: Float
+  round: Float
   size: Float
   target_steam_id: Float
   user_steam_id: Float
@@ -11126,6 +11136,7 @@ order by avg() on columns of table "match_clips"
 input match_clips_avg_order_by {
   duration_ms: order_by
   kills_count: order_by
+  round: order_by
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
@@ -11150,6 +11161,7 @@ input match_clips_bool_exp {
   match_map_id: uuid_comparison_exp
   render_jobs: clip_render_jobs_bool_exp
   render_jobs_aggregate: clip_render_jobs_aggregate_bool_exp
+  round: Int_comparison_exp
   size: bigint_comparison_exp
   target: players_bool_exp
   target_steam_id: bigint_comparison_exp
@@ -11177,6 +11189,7 @@ input type for incrementing numeric columns in table "match_clips"
 input match_clips_inc_input {
   duration_ms: Int
   kills_count: Int
+  round: Int
   size: bigint
   target_steam_id: bigint
   user_steam_id: bigint
@@ -11196,6 +11209,7 @@ input match_clips_insert_input {
   match_map_demo_id: uuid
   match_map_id: uuid
   render_jobs: clip_render_jobs_arr_rel_insert_input
+  round: Int
   size: bigint
   target: players_obj_rel_insert_input
   target_steam_id: bigint
@@ -11220,6 +11234,7 @@ type match_clips_max_fields {
   kills_count: Int
   match_map_demo_id: uuid
   match_map_id: uuid
+  round: Int
   size: bigint
   target_steam_id: bigint
 
@@ -11244,6 +11259,7 @@ input match_clips_max_order_by {
   kills_count: order_by
   match_map_demo_id: order_by
   match_map_id: order_by
+  round: order_by
   size: order_by
   target_steam_id: order_by
   thumbnail_url: order_by
@@ -11266,6 +11282,7 @@ type match_clips_min_fields {
   kills_count: Int
   match_map_demo_id: uuid
   match_map_id: uuid
+  round: Int
   size: bigint
   target_steam_id: bigint
 
@@ -11290,6 +11307,7 @@ input match_clips_min_order_by {
   kills_count: order_by
   match_map_demo_id: order_by
   match_map_id: order_by
+  round: order_by
   size: order_by
   target_steam_id: order_by
   thumbnail_url: order_by
@@ -11341,6 +11359,7 @@ input match_clips_order_by {
   match_map_demo_id: order_by
   match_map_id: order_by
   render_jobs_aggregate: clip_render_jobs_aggregate_order_by
+  round: order_by
   size: order_by
   target: players_order_by
   target_steam_id: order_by
@@ -11383,6 +11402,9 @@ enum match_clips_select_column {
   match_map_id
 
   """column name"""
+  round
+
+  """column name"""
   size
 
   """column name"""
@@ -11412,6 +11434,7 @@ input match_clips_set_input {
   kills_count: Int
   match_map_demo_id: uuid
   match_map_id: uuid
+  round: Int
   size: bigint
   target_steam_id: bigint
   thumbnail_url: String
@@ -11424,6 +11447,7 @@ input match_clips_set_input {
 type match_clips_stddev_fields {
   duration_ms: Float
   kills_count: Float
+  round: Float
   size: Float
   target_steam_id: Float
   user_steam_id: Float
@@ -11435,6 +11459,7 @@ order by stddev() on columns of table "match_clips"
 input match_clips_stddev_order_by {
   duration_ms: order_by
   kills_count: order_by
+  round: order_by
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
@@ -11444,6 +11469,7 @@ input match_clips_stddev_order_by {
 type match_clips_stddev_pop_fields {
   duration_ms: Float
   kills_count: Float
+  round: Float
   size: Float
   target_steam_id: Float
   user_steam_id: Float
@@ -11455,6 +11481,7 @@ order by stddev_pop() on columns of table "match_clips"
 input match_clips_stddev_pop_order_by {
   duration_ms: order_by
   kills_count: order_by
+  round: order_by
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
@@ -11464,6 +11491,7 @@ input match_clips_stddev_pop_order_by {
 type match_clips_stddev_samp_fields {
   duration_ms: Float
   kills_count: Float
+  round: Float
   size: Float
   target_steam_id: Float
   user_steam_id: Float
@@ -11475,6 +11503,7 @@ order by stddev_samp() on columns of table "match_clips"
 input match_clips_stddev_samp_order_by {
   duration_ms: order_by
   kills_count: order_by
+  round: order_by
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
@@ -11500,6 +11529,7 @@ input match_clips_stream_cursor_value_input {
   kills_count: Int
   match_map_demo_id: uuid
   match_map_id: uuid
+  round: Int
   size: bigint
   target_steam_id: bigint
   thumbnail_url: String
@@ -11512,6 +11542,7 @@ input match_clips_stream_cursor_value_input {
 type match_clips_sum_fields {
   duration_ms: Int
   kills_count: Int
+  round: Int
   size: bigint
   target_steam_id: bigint
   user_steam_id: bigint
@@ -11523,6 +11554,7 @@ order by sum() on columns of table "match_clips"
 input match_clips_sum_order_by {
   duration_ms: order_by
   kills_count: order_by
+  round: order_by
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
@@ -11552,6 +11584,9 @@ enum match_clips_update_column {
 
   """column name"""
   match_map_id
+
+  """column name"""
+  round
 
   """column name"""
   size
@@ -11587,6 +11622,7 @@ input match_clips_updates {
 type match_clips_var_pop_fields {
   duration_ms: Float
   kills_count: Float
+  round: Float
   size: Float
   target_steam_id: Float
   user_steam_id: Float
@@ -11598,6 +11634,7 @@ order by var_pop() on columns of table "match_clips"
 input match_clips_var_pop_order_by {
   duration_ms: order_by
   kills_count: order_by
+  round: order_by
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
@@ -11607,6 +11644,7 @@ input match_clips_var_pop_order_by {
 type match_clips_var_samp_fields {
   duration_ms: Float
   kills_count: Float
+  round: Float
   size: Float
   target_steam_id: Float
   user_steam_id: Float
@@ -11618,6 +11656,7 @@ order by var_samp() on columns of table "match_clips"
 input match_clips_var_samp_order_by {
   duration_ms: order_by
   kills_count: order_by
+  round: order_by
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
@@ -11627,6 +11666,7 @@ input match_clips_var_samp_order_by {
 type match_clips_variance_fields {
   duration_ms: Float
   kills_count: Float
+  round: Float
   size: Float
   target_steam_id: Float
   user_steam_id: Float
@@ -11638,6 +11678,7 @@ order by variance() on columns of table "match_clips"
 input match_clips_variance_order_by {
   duration_ms: order_by
   kills_count: order_by
+  round: order_by
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
@@ -21011,6 +21052,14 @@ type mutation_root {
   delete_player_kills_by_weapon_by_pk(player_steam_id: bigint!, with: String!): player_kills_by_weapon
 
   """
+  delete data from the table: "player_leaderboard_rank"
+  """
+  delete_player_leaderboard_rank(
+    """filter the rows which have to be deleted"""
+    where: player_leaderboard_rank_bool_exp!
+  ): player_leaderboard_rank_mutation_response
+
+  """
   delete data from the table: "player_match_map_stats"
   """
   delete_player_match_map_stats(
@@ -22754,6 +22803,22 @@ type mutation_root {
     """upsert condition"""
     on_conflict: player_kills_on_conflict
   ): player_kills
+
+  """
+  insert data into the table: "player_leaderboard_rank"
+  """
+  insert_player_leaderboard_rank(
+    """the rows to be inserted"""
+    objects: [player_leaderboard_rank_insert_input!]!
+  ): player_leaderboard_rank_mutation_response
+
+  """
+  insert a single row into the table: "player_leaderboard_rank"
+  """
+  insert_player_leaderboard_rank_one(
+    """the row to be inserted"""
+    object: player_leaderboard_rank_insert_input!
+  ): player_leaderboard_rank
 
   """
   insert data into the table: "player_match_map_stats"
@@ -25693,6 +25758,28 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [player_kills_updates!]!
   ): [player_kills_mutation_response]
+
+  """
+  update data of the table: "player_leaderboard_rank"
+  """
+  update_player_leaderboard_rank(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_leaderboard_rank_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_leaderboard_rank_set_input
+
+    """filter the rows which have to be updated"""
+    where: player_leaderboard_rank_bool_exp!
+  ): player_leaderboard_rank_mutation_response
+
+  """
+  update multiples rows of table: "player_leaderboard_rank"
+  """
+  update_player_leaderboard_rank_many(
+    """updates to execute, in order"""
+    updates: [player_leaderboard_rank_updates!]!
+  ): [player_leaderboard_rank_mutation_response]
 
   """
   update data of the table: "player_match_map_stats"
@@ -32369,6 +32456,218 @@ input player_kills_variance_order_by {
   attacked_steam_id: order_by
   attacker_steam_id: order_by
   round: order_by
+}
+
+"""
+columns and relationships of "player_leaderboard_rank"
+"""
+type player_leaderboard_rank {
+  player_steam_id: String!
+  rank: Int!
+  total: Int!
+  value: float8!
+}
+
+type player_leaderboard_rank_aggregate {
+  aggregate: player_leaderboard_rank_aggregate_fields
+  nodes: [player_leaderboard_rank!]!
+}
+
+"""
+aggregate fields of "player_leaderboard_rank"
+"""
+type player_leaderboard_rank_aggregate_fields {
+  avg: player_leaderboard_rank_avg_fields
+  count(columns: [player_leaderboard_rank_select_column!], distinct: Boolean): Int!
+  max: player_leaderboard_rank_max_fields
+  min: player_leaderboard_rank_min_fields
+  stddev: player_leaderboard_rank_stddev_fields
+  stddev_pop: player_leaderboard_rank_stddev_pop_fields
+  stddev_samp: player_leaderboard_rank_stddev_samp_fields
+  sum: player_leaderboard_rank_sum_fields
+  var_pop: player_leaderboard_rank_var_pop_fields
+  var_samp: player_leaderboard_rank_var_samp_fields
+  variance: player_leaderboard_rank_variance_fields
+}
+
+"""aggregate avg on columns"""
+type player_leaderboard_rank_avg_fields {
+  rank: Float
+  total: Float
+  value: Float
+}
+
+"""
+Boolean expression to filter rows from the table "player_leaderboard_rank". All fields are combined with a logical 'AND'.
+"""
+input player_leaderboard_rank_bool_exp {
+  _and: [player_leaderboard_rank_bool_exp!]
+  _not: player_leaderboard_rank_bool_exp
+  _or: [player_leaderboard_rank_bool_exp!]
+  player_steam_id: String_comparison_exp
+  rank: Int_comparison_exp
+  total: Int_comparison_exp
+  value: float8_comparison_exp
+}
+
+"""
+input type for incrementing numeric columns in table "player_leaderboard_rank"
+"""
+input player_leaderboard_rank_inc_input {
+  rank: Int
+  total: Int
+  value: float8
+}
+
+"""
+input type for inserting data into table "player_leaderboard_rank"
+"""
+input player_leaderboard_rank_insert_input {
+  player_steam_id: String
+  rank: Int
+  total: Int
+  value: float8
+}
+
+"""aggregate max on columns"""
+type player_leaderboard_rank_max_fields {
+  player_steam_id: String
+  rank: Int
+  total: Int
+  value: float8
+}
+
+"""aggregate min on columns"""
+type player_leaderboard_rank_min_fields {
+  player_steam_id: String
+  rank: Int
+  total: Int
+  value: float8
+}
+
+"""
+response of any mutation on the table "player_leaderboard_rank"
+"""
+type player_leaderboard_rank_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [player_leaderboard_rank!]!
+}
+
+"""Ordering options when selecting data from "player_leaderboard_rank"."""
+input player_leaderboard_rank_order_by {
+  player_steam_id: order_by
+  rank: order_by
+  total: order_by
+  value: order_by
+}
+
+"""
+select columns of table "player_leaderboard_rank"
+"""
+enum player_leaderboard_rank_select_column {
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  rank
+
+  """column name"""
+  total
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "player_leaderboard_rank"
+"""
+input player_leaderboard_rank_set_input {
+  player_steam_id: String
+  rank: Int
+  total: Int
+  value: float8
+}
+
+"""aggregate stddev on columns"""
+type player_leaderboard_rank_stddev_fields {
+  rank: Float
+  total: Float
+  value: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type player_leaderboard_rank_stddev_pop_fields {
+  rank: Float
+  total: Float
+  value: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type player_leaderboard_rank_stddev_samp_fields {
+  rank: Float
+  total: Float
+  value: Float
+}
+
+"""
+Streaming cursor of the table "player_leaderboard_rank"
+"""
+input player_leaderboard_rank_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: player_leaderboard_rank_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input player_leaderboard_rank_stream_cursor_value_input {
+  player_steam_id: String
+  rank: Int
+  total: Int
+  value: float8
+}
+
+"""aggregate sum on columns"""
+type player_leaderboard_rank_sum_fields {
+  rank: Int
+  total: Int
+  value: float8
+}
+
+input player_leaderboard_rank_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: player_leaderboard_rank_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: player_leaderboard_rank_set_input
+
+  """filter the rows which have to be updated"""
+  where: player_leaderboard_rank_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type player_leaderboard_rank_var_pop_fields {
+  rank: Float
+  total: Float
+  value: Float
+}
+
+"""aggregate var_samp on columns"""
+type player_leaderboard_rank_var_samp_fields {
+  rank: Float
+  total: Float
+  value: Float
+}
+
+"""aggregate variance on columns"""
+type player_leaderboard_rank_variance_fields {
+  rank: Float
+  total: Float
+  value: Float
 }
 
 """
@@ -42535,6 +42834,56 @@ type query_root {
   ): leaderboard_entries_aggregate!
 
   """
+  execute function "get_player_leaderboard_rank" which returns "player_leaderboard_rank"
+  """
+  get_player_leaderboard_rank(
+    """
+    input parameters for function "get_player_leaderboard_rank"
+    """
+    args: get_player_leaderboard_rank_args!
+
+    """distinct select on columns"""
+    distinct_on: [player_leaderboard_rank_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_leaderboard_rank_order_by!]
+
+    """filter the rows returned"""
+    where: player_leaderboard_rank_bool_exp
+  ): [player_leaderboard_rank!]!
+
+  """
+  execute function "get_player_leaderboard_rank" and query aggregates on result of table type "player_leaderboard_rank"
+  """
+  get_player_leaderboard_rank_aggregate(
+    """
+    input parameters for function "get_player_leaderboard_rank_aggregate"
+    """
+    args: get_player_leaderboard_rank_args!
+
+    """distinct select on columns"""
+    distinct_on: [player_leaderboard_rank_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_leaderboard_rank_order_by!]
+
+    """filter the rows returned"""
+    where: player_leaderboard_rank_bool_exp
+  ): player_leaderboard_rank_aggregate!
+
+  """
   fetch data from the table: "leaderboard_entries"
   """
   leaderboard_entries(
@@ -43797,6 +44146,46 @@ type query_root {
   fetch data from the table: "player_kills_by_weapon" using primary key columns
   """
   player_kills_by_weapon_by_pk(player_steam_id: bigint!, with: String!): player_kills_by_weapon
+
+  """
+  fetch data from the table: "player_leaderboard_rank"
+  """
+  player_leaderboard_rank(
+    """distinct select on columns"""
+    distinct_on: [player_leaderboard_rank_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_leaderboard_rank_order_by!]
+
+    """filter the rows returned"""
+    where: player_leaderboard_rank_bool_exp
+  ): [player_leaderboard_rank!]!
+
+  """
+  fetch aggregated fields from the table: "player_leaderboard_rank"
+  """
+  player_leaderboard_rank_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_leaderboard_rank_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_leaderboard_rank_order_by!]
+
+    """filter the rows returned"""
+    where: player_leaderboard_rank_bool_exp
+  ): player_leaderboard_rank_aggregate!
 
   """
   fetch data from the table: "player_match_map_stats"
@@ -48788,6 +49177,56 @@ type subscription_root {
   ): leaderboard_entries_aggregate!
 
   """
+  execute function "get_player_leaderboard_rank" which returns "player_leaderboard_rank"
+  """
+  get_player_leaderboard_rank(
+    """
+    input parameters for function "get_player_leaderboard_rank"
+    """
+    args: get_player_leaderboard_rank_args!
+
+    """distinct select on columns"""
+    distinct_on: [player_leaderboard_rank_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_leaderboard_rank_order_by!]
+
+    """filter the rows returned"""
+    where: player_leaderboard_rank_bool_exp
+  ): [player_leaderboard_rank!]!
+
+  """
+  execute function "get_player_leaderboard_rank" and query aggregates on result of table type "player_leaderboard_rank"
+  """
+  get_player_leaderboard_rank_aggregate(
+    """
+    input parameters for function "get_player_leaderboard_rank_aggregate"
+    """
+    args: get_player_leaderboard_rank_args!
+
+    """distinct select on columns"""
+    distinct_on: [player_leaderboard_rank_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_leaderboard_rank_order_by!]
+
+    """filter the rows returned"""
+    where: player_leaderboard_rank_bool_exp
+  ): player_leaderboard_rank_aggregate!
+
+  """
   fetch data from the table: "leaderboard_entries"
   """
   leaderboard_entries(
@@ -50464,6 +50903,60 @@ type subscription_root {
     """filter the rows returned"""
     where: player_kills_bool_exp
   ): [player_kills!]!
+
+  """
+  fetch data from the table: "player_leaderboard_rank"
+  """
+  player_leaderboard_rank(
+    """distinct select on columns"""
+    distinct_on: [player_leaderboard_rank_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_leaderboard_rank_order_by!]
+
+    """filter the rows returned"""
+    where: player_leaderboard_rank_bool_exp
+  ): [player_leaderboard_rank!]!
+
+  """
+  fetch aggregated fields from the table: "player_leaderboard_rank"
+  """
+  player_leaderboard_rank_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_leaderboard_rank_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_leaderboard_rank_order_by!]
+
+    """filter the rows returned"""
+    where: player_leaderboard_rank_bool_exp
+  ): player_leaderboard_rank_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "player_leaderboard_rank"
+  """
+  player_leaderboard_rank_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [player_leaderboard_rank_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: player_leaderboard_rank_bool_exp
+  ): [player_leaderboard_rank!]!
 
   """
   fetch data from the table: "player_match_map_stats"

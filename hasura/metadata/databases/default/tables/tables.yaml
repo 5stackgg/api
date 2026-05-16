@@ -61,6 +61,7 @@
 - "!include public_player_grenade_throws.yaml"
 - "!include public_player_kills.yaml"
 - "!include public_player_kills_by_weapon.yaml"
+- "!include public_player_leaderboard_rank.yaml"
 - "!include public_player_match_map_stats.yaml"
 - "!include public_player_match_stats_v.yaml"
 - "!include public_player_objectives.yaml"

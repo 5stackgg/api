@@ -156,7 +156,10 @@ export class DemosController {
     });
 
     if (
-      demos.find(({ file, size }) => file === demo && size !== null && size !== undefined)
+      demos.find(
+        ({ file, size }) =>
+          file === demo && size !== null && size !== undefined,
+      )
     ) {
       return response.status(406).json({
         error: "already uploaded",
@@ -228,12 +231,7 @@ export class DemosController {
     }
 
     const file = `${matchId}/${mapId}/demos/${demo}`;
-    const matchMapDemoId = await this.upsertDemoRow(
-      matchId,
-      mapId,
-      file,
-      null,
-    );
+    const matchMapDemoId = await this.upsertDemoRow(matchId, mapId, file, null);
 
     if (!matchMapDemoId) {
       return response.status(500).json({ error: "failed to upsert demo row" });
