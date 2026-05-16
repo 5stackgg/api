@@ -33,8 +33,12 @@ DECLARE
     _live_match_timeout_override integer;
     _live_match_timeout text;
 BEGIN
-    SELECT mo.auto_cancellation, mo.auto_cancel_duration, mo.live_match_timeout
-    INTO _auto_cancellation, _auto_cancel_duration_override, _live_match_timeout_override
+    SELECT auto_cancellation, auto_cancel_duration
+    INTO _auto_cancellation, _auto_cancel_duration_override
+    FROM resolve_match_auto_cancel(NEW.match_id);
+
+    SELECT mo.live_match_timeout
+    INTO _live_match_timeout_override
     FROM matches m
     INNER JOIN match_options mo ON mo.id = m.match_options_id
     WHERE m.id = NEW.match_id;
