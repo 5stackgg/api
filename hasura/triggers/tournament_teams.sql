@@ -19,8 +19,21 @@ BEGIN
        FROM teams
        WHERE id = NEW.team_id;
 
+       -- If the explicit captain isn't on the team's roster (e.g. an organizer
+       -- adding someone else's team), fall back to the team's own captain/owner
+       -- so the after-insert roster check doesn't fail.
+       IF NEW.captain_steam_id IS NOT NULL
+           AND NOT EXISTS (
+               SELECT 1
+               FROM team_roster tr
+               WHERE tr.team_id = NEW.team_id
+                 AND tr.player_steam_id = NEW.captain_steam_id
+           ) THEN
+           NEW.captain_steam_id = NULL;
+       END IF;
+
        IF NEW.captain_steam_id IS NULL THEN
-           NEW.captain_steam_id = COALESCE(_session_steam_id, _team_captain_steam_id, NEW.owner_steam_id);
+           NEW.captain_steam_id = COALESCE(_team_captain_steam_id, NEW.owner_steam_id, _session_steam_id);
        END IF;
     ELSIF NEW.captain_steam_id IS NULL THEN
        NEW.captain_steam_id = COALESCE(NEW.owner_steam_id, _session_steam_id);
