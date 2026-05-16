@@ -226,10 +226,7 @@ BEGIN
     GROUP BY trader_steam_id
   ),
   trade_kill_opp_agg AS (
-    -- For every enemy kill V, every teammate of V who was still alive at
-    -- v.time gets one "trade kill opportunity". Alive = no earlier death
-    -- this round.
-    SELECT tm.steam_id, COUNT(*) AS trade_kill_opportunities
+    SELECT tm.steam_id, COUNT(DISTINCT v.round) AS trade_kill_opportunities
     FROM public.player_kills v
     JOIN player_round_team tm
       ON tm.match_map_id = v.match_map_id
@@ -281,8 +278,10 @@ BEGIN
   aim_demo_agg AS (
     SELECT
       attacker_steam_id AS steam_id,
-      hits, headshot_hits,
-      counter_strafed_shots, crosshair_angle_sum_deg, crosshair_angle_count,
+      hits, headshot_hits, non_awp_hits, hits_at_spotted,
+      shots_at_spotted, counter_strafe_eligible_shots, counter_strafed_shots,
+      spray_shots, spray_hits,
+      crosshair_angle_sum_deg, crosshair_angle_count,
       time_to_damage_sum_s, time_to_damage_count
     FROM public.player_aim_stats_demo
     WHERE match_map_id = p_match_map_id
@@ -353,11 +352,13 @@ BEGIN
     two_kill_rounds, three_kill_rounds, four_kill_rounds, five_kill_rounds,
     trade_kill_opportunities, trade_kill_attempts, trade_kill_successes,
     traded_death_opportunities, traded_death_successes,
-    shots_fired, hits, headshot_hits,
+    shots_fired, hits, headshot_hits, non_awp_hits, hits_at_spotted, shots_at_spotted,
     time_to_damage_sum_s, time_to_damage_count,
     spotted_count, spotted_with_damage_count,
     he_throws, molotov_throws, smoke_throws, decoy_throws,
-    counter_strafed_shots, crosshair_angle_sum_deg, crosshair_angle_count,
+    counter_strafed_shots, counter_strafe_eligible_shots,
+    spray_shots, spray_hits,
+    crosshair_angle_sum_deg, crosshair_angle_count,
     rounds_played
   )
   SELECT
@@ -381,6 +382,9 @@ BEGIN
     COALESCE(sa.shots_fired, 0),
     COALESCE(ad.hits, hf.hits, 0),
     COALESCE(ad.headshot_hits, hf.headshot_hits, 0),
+    COALESCE(ad.non_awp_hits, hf.hits, 0),
+    COALESCE(ad.hits_at_spotted, 0),
+    COALESCE(ad.shots_at_spotted, 0),
     COALESCE(ad.time_to_damage_sum_s, 0),
     COALESCE(ad.time_to_damage_count, 0),
     COALESCE(spa.spotted_count, 0),
@@ -388,6 +392,9 @@ BEGIN
     COALESCE(ta.he_throws, 0),    COALESCE(ta.molotov_throws, 0),
     COALESCE(ta.smoke_throws, 0), COALESCE(ta.decoy_throws, 0),
     COALESCE(ad.counter_strafed_shots, 0),
+    COALESCE(ad.counter_strafe_eligible_shots, 0),
+    COALESCE(ad.spray_shots, 0),
+    COALESCE(ad.spray_hits, 0),
     COALESCE(ad.crosshair_angle_sum_deg, 0),
     COALESCE(ad.crosshair_angle_count, 0),
     (SELECT rounds_played FROM rounds_played_const)

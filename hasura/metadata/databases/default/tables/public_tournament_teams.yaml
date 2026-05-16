@@ -61,6 +61,7 @@ insert_permissions:
         - name
         - owner_steam_id
         - seed
+        - short_name
         - team_id
         - tournament_id
     comment: ""
@@ -100,6 +101,7 @@ insert_permissions:
       columns:
         - captain_steam_id
         - name
+        - short_name
         - team_id
         - tournament_id
     comment: ""
@@ -114,6 +116,7 @@ select_permissions:
         - name
         - owner_steam_id
         - seed
+        - short_name
         - team_id
         - tournament_id
       computed_fields:
@@ -128,6 +131,7 @@ update_permissions:
         - captain_steam_id
         - name
         - seed
+        - short_name
       filter: {}
       check: null
     comment: ""
@@ -136,6 +140,7 @@ update_permissions:
       columns:
         - captain_steam_id
         - name
+        - short_name
       filter:
         _or:
           - team:

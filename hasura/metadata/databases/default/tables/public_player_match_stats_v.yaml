@@ -42,6 +42,12 @@ select_permissions:
         - smoke_throws
         - decoy_throws
         - counter_strafed_shots
+        - counter_strafe_eligible_shots
+        - non_awp_hits
+        - hits_at_spotted
+        - shots_at_spotted
+        - spray_shots
+        - spray_hits
         - avg_crosshair_angle_deg
         - rounds_played
       filter: {}

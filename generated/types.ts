@@ -31309,6 +31309,9 @@ export default {
             "attacker_steam_id": [
                 147
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -31324,6 +31327,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "match": [
                 1502
             ],
@@ -31335,6 +31341,18 @@ export default {
             ],
             "match_map_id": [
                 2952
+            ],
+            "non_awp_hits": [
+                30
+            ],
+            "shots_at_spotted": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
+                30
             ],
             "time_to_damage_count": [
                 30
@@ -31408,6 +31426,9 @@ export default {
             "attacker_steam_id": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -31421,6 +31442,21 @@ export default {
                 22
             ],
             "hits": [
+                22
+            ],
+            "hits_at_spotted": [
+                22
+            ],
+            "non_awp_hits": [
+                22
+            ],
+            "shots_at_spotted": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "time_to_damage_count": [
@@ -31449,6 +31485,9 @@ export default {
             "attacker_steam_id": [
                 148
             ],
+            "counter_strafe_eligible_shots": [
+                31
+            ],
             "counter_strafed_shots": [
                 31
             ],
@@ -31464,6 +31503,9 @@ export default {
             "hits": [
                 31
             ],
+            "hits_at_spotted": [
+                31
+            ],
             "match": [
                 1511
             ],
@@ -31475,6 +31517,18 @@ export default {
             ],
             "match_map_id": [
                 2953
+            ],
+            "non_awp_hits": [
+                31
+            ],
+            "shots_at_spotted": [
+                31
+            ],
+            "spray_hits": [
+                31
+            ],
+            "spray_shots": [
+                31
             ],
             "time_to_damage_count": [
                 31
@@ -31491,6 +31545,9 @@ export default {
             "attacker_steam_id": [
                 147
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -31504,6 +31561,21 @@ export default {
                 30
             ],
             "hits": [
+                30
+            ],
+            "hits_at_spotted": [
+                30
+            ],
+            "non_awp_hits": [
+                30
+            ],
+            "shots_at_spotted": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "time_to_damage_count": [
@@ -31523,6 +31595,9 @@ export default {
             "attacker_steam_id": [
                 147
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -31538,6 +31613,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "match": [
                 1520
             ],
@@ -31549,6 +31627,18 @@ export default {
             ],
             "match_map_id": [
                 2952
+            ],
+            "non_awp_hits": [
+                30
+            ],
+            "shots_at_spotted": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
+                30
             ],
             "time_to_damage_count": [
                 30
@@ -31564,6 +31654,9 @@ export default {
             "attacker_steam_id": [
                 147
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -31579,11 +31672,26 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "match_id": [
                 2952
             ],
             "match_map_id": [
                 2952
+            ],
+            "non_awp_hits": [
+                30
+            ],
+            "shots_at_spotted": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
+                30
             ],
             "time_to_damage_count": [
                 30
@@ -31599,6 +31707,9 @@ export default {
             "attacker_steam_id": [
                 147
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -31614,11 +31725,26 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "match_id": [
                 2952
             ],
             "match_map_id": [
                 2952
+            ],
+            "non_awp_hits": [
+                30
+            ],
+            "shots_at_spotted": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
+                30
             ],
             "time_to_damage_count": [
                 30
@@ -31662,6 +31788,9 @@ export default {
             "attacker_steam_id": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -31677,6 +31806,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "match": [
                 1522
             ],
@@ -31687,6 +31819,18 @@ export default {
                 1360
             ],
             "match_map_id": [
+                1660
+            ],
+            "non_awp_hits": [
+                1660
+            ],
+            "shots_at_spotted": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "time_to_damage_count": [
@@ -31715,6 +31859,9 @@ export default {
             "attacker_steam_id": [
                 147
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -31730,11 +31877,26 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "match_id": [
                 2952
             ],
             "match_map_id": [
                 2952
+            ],
+            "non_awp_hits": [
+                30
+            ],
+            "shots_at_spotted": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
+                30
             ],
             "time_to_damage_count": [
                 30
@@ -31750,6 +31912,9 @@ export default {
             "attacker_steam_id": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -31763,6 +31928,21 @@ export default {
                 22
             ],
             "hits": [
+                22
+            ],
+            "hits_at_spotted": [
+                22
+            ],
+            "non_awp_hits": [
+                22
+            ],
+            "shots_at_spotted": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "time_to_damage_count": [
@@ -31779,6 +31959,9 @@ export default {
             "attacker_steam_id": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -31792,6 +31975,21 @@ export default {
                 22
             ],
             "hits": [
+                22
+            ],
+            "hits_at_spotted": [
+                22
+            ],
+            "non_awp_hits": [
+                22
+            ],
+            "shots_at_spotted": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "time_to_damage_count": [
@@ -31808,6 +32006,9 @@ export default {
             "attacker_steam_id": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -31821,6 +32022,21 @@ export default {
                 22
             ],
             "hits": [
+                22
+            ],
+            "hits_at_spotted": [
+                22
+            ],
+            "non_awp_hits": [
+                22
+            ],
+            "shots_at_spotted": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "time_to_damage_count": [
@@ -31848,6 +32064,9 @@ export default {
             "attacker_steam_id": [
                 147
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -31863,11 +32082,26 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "match_id": [
                 2952
             ],
             "match_map_id": [
                 2952
+            ],
+            "non_awp_hits": [
+                30
+            ],
+            "shots_at_spotted": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
+                30
             ],
             "time_to_damage_count": [
                 30
@@ -31883,6 +32117,9 @@ export default {
             "attacker_steam_id": [
                 147
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -31896,6 +32133,21 @@ export default {
                 30
             ],
             "hits": [
+                30
+            ],
+            "hits_at_spotted": [
+                30
+            ],
+            "non_awp_hits": [
+                30
+            ],
+            "shots_at_spotted": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "time_to_damage_count": [
@@ -31927,6 +32179,9 @@ export default {
             "attacker_steam_id": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -31940,6 +32195,21 @@ export default {
                 22
             ],
             "hits": [
+                22
+            ],
+            "hits_at_spotted": [
+                22
+            ],
+            "non_awp_hits": [
+                22
+            ],
+            "shots_at_spotted": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "time_to_damage_count": [
@@ -31956,6 +32226,9 @@ export default {
             "attacker_steam_id": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -31969,6 +32242,21 @@ export default {
                 22
             ],
             "hits": [
+                22
+            ],
+            "hits_at_spotted": [
+                22
+            ],
+            "non_awp_hits": [
+                22
+            ],
+            "shots_at_spotted": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "time_to_damage_count": [
@@ -31985,6 +32273,9 @@ export default {
             "attacker_steam_id": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -31998,6 +32289,21 @@ export default {
                 22
             ],
             "hits": [
+                22
+            ],
+            "hits_at_spotted": [
+                22
+            ],
+            "non_awp_hits": [
+                22
+            ],
+            "shots_at_spotted": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "time_to_damage_count": [
@@ -38910,6 +39216,9 @@ export default {
             "assists": [
                 30
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -38961,6 +39270,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "hs_kills": [
                 30
             ],
@@ -38988,10 +39300,16 @@ export default {
             "molotov_throws": [
                 30
             ],
+            "non_awp_hits": [
+                30
+            ],
             "player": [
                 2279
             ],
             "rounds_played": [
+                30
+            ],
+            "shots_at_spotted": [
                 30
             ],
             "shots_fired": [
@@ -39004,6 +39322,12 @@ export default {
                 30
             ],
             "spotted_with_damage_count": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "steam_id": [
@@ -39188,6 +39512,9 @@ export default {
             "assists": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -39239,6 +39566,9 @@ export default {
             "hits": [
                 22
             ],
+            "hits_at_spotted": [
+                22
+            ],
             "hs_kills": [
                 22
             ],
@@ -39254,7 +39584,13 @@ export default {
             "molotov_throws": [
                 22
             ],
+            "non_awp_hits": [
+                22
+            ],
             "rounds_played": [
+                22
+            ],
+            "shots_at_spotted": [
                 22
             ],
             "shots_fired": [
@@ -39267,6 +39603,12 @@ export default {
                 22
             ],
             "spotted_with_damage_count": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "steam_id": [
@@ -39316,6 +39658,9 @@ export default {
             "assists": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -39367,6 +39712,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -39382,7 +39730,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -39395,6 +39749,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -39453,6 +39813,9 @@ export default {
             "assists": [
                 31
             ],
+            "counter_strafe_eligible_shots": [
+                31
+            ],
             "counter_strafed_shots": [
                 31
             ],
@@ -39504,6 +39867,9 @@ export default {
             "hits": [
                 31
             ],
+            "hits_at_spotted": [
+                31
+            ],
             "hs_kills": [
                 31
             ],
@@ -39531,10 +39897,16 @@ export default {
             "molotov_throws": [
                 31
             ],
+            "non_awp_hits": [
+                31
+            ],
             "player": [
                 2283
             ],
             "rounds_played": [
+                31
+            ],
+            "shots_at_spotted": [
                 31
             ],
             "shots_fired": [
@@ -39547,6 +39919,12 @@ export default {
                 31
             ],
             "spotted_with_damage_count": [
+                31
+            ],
+            "spray_hits": [
+                31
+            ],
+            "spray_shots": [
                 31
             ],
             "steam_id": [
@@ -39600,6 +39978,9 @@ export default {
             "assists": [
                 30
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -39651,6 +40032,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "hs_kills": [
                 30
             ],
@@ -39666,7 +40050,13 @@ export default {
             "molotov_throws": [
                 30
             ],
+            "non_awp_hits": [
+                30
+            ],
             "rounds_played": [
+                30
+            ],
+            "shots_at_spotted": [
                 30
             ],
             "shots_fired": [
@@ -39679,6 +40069,12 @@ export default {
                 30
             ],
             "spotted_with_damage_count": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "steam_id": [
@@ -39728,6 +40124,9 @@ export default {
             "assists": [
                 30
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -39779,6 +40178,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "hs_kills": [
                 30
             ],
@@ -39806,10 +40208,16 @@ export default {
             "molotov_throws": [
                 30
             ],
+            "non_awp_hits": [
+                30
+            ],
             "player": [
                 2290
             ],
             "rounds_played": [
+                30
+            ],
+            "shots_at_spotted": [
                 30
             ],
             "shots_fired": [
@@ -39822,6 +40230,12 @@ export default {
                 30
             ],
             "spotted_with_damage_count": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "steam_id": [
@@ -39874,6 +40288,9 @@ export default {
             "assists": [
                 30
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -39925,6 +40342,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "hs_kills": [
                 30
             ],
@@ -39946,7 +40366,13 @@ export default {
             "molotov_throws": [
                 30
             ],
+            "non_awp_hits": [
+                30
+            ],
             "rounds_played": [
+                30
+            ],
+            "shots_at_spotted": [
                 30
             ],
             "shots_fired": [
@@ -39959,6 +40385,12 @@ export default {
                 30
             ],
             "spotted_with_damage_count": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "steam_id": [
@@ -40011,6 +40443,9 @@ export default {
             "assists": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -40062,6 +40497,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -40083,7 +40521,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -40096,6 +40540,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -40148,6 +40598,9 @@ export default {
             "assists": [
                 30
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -40199,6 +40652,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "hs_kills": [
                 30
             ],
@@ -40220,7 +40676,13 @@ export default {
             "molotov_throws": [
                 30
             ],
+            "non_awp_hits": [
+                30
+            ],
             "rounds_played": [
+                30
+            ],
+            "shots_at_spotted": [
                 30
             ],
             "shots_fired": [
@@ -40233,6 +40695,12 @@ export default {
                 30
             ],
             "spotted_with_damage_count": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "steam_id": [
@@ -40285,6 +40753,9 @@ export default {
             "assists": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -40336,6 +40807,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -40357,7 +40831,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -40370,6 +40850,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -40447,6 +40933,9 @@ export default {
             "assists": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -40498,6 +40987,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -40525,10 +41017,16 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "player": [
                 2292
             ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -40541,6 +41039,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -40605,6 +41109,9 @@ export default {
             "assists": [
                 30
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -40656,6 +41163,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "hs_kills": [
                 30
             ],
@@ -40677,7 +41187,13 @@ export default {
             "molotov_throws": [
                 30
             ],
+            "non_awp_hits": [
+                30
+            ],
             "rounds_played": [
+                30
+            ],
+            "shots_at_spotted": [
                 30
             ],
             "shots_fired": [
@@ -40690,6 +41206,12 @@ export default {
                 30
             ],
             "spotted_with_damage_count": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "steam_id": [
@@ -40742,6 +41264,9 @@ export default {
             "assists": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -40793,6 +41318,9 @@ export default {
             "hits": [
                 22
             ],
+            "hits_at_spotted": [
+                22
+            ],
             "hs_kills": [
                 22
             ],
@@ -40808,7 +41336,13 @@ export default {
             "molotov_throws": [
                 22
             ],
+            "non_awp_hits": [
+                22
+            ],
             "rounds_played": [
+                22
+            ],
+            "shots_at_spotted": [
                 22
             ],
             "shots_fired": [
@@ -40821,6 +41355,12 @@ export default {
                 22
             ],
             "spotted_with_damage_count": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "steam_id": [
@@ -40870,6 +41410,9 @@ export default {
             "assists": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -40921,6 +41464,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -40936,7 +41482,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -40949,6 +41501,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -40998,6 +41556,9 @@ export default {
             "assists": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -41049,6 +41610,9 @@ export default {
             "hits": [
                 22
             ],
+            "hits_at_spotted": [
+                22
+            ],
             "hs_kills": [
                 22
             ],
@@ -41064,7 +41628,13 @@ export default {
             "molotov_throws": [
                 22
             ],
+            "non_awp_hits": [
+                22
+            ],
             "rounds_played": [
+                22
+            ],
+            "shots_at_spotted": [
                 22
             ],
             "shots_fired": [
@@ -41077,6 +41647,12 @@ export default {
                 22
             ],
             "spotted_with_damage_count": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "steam_id": [
@@ -41126,6 +41702,9 @@ export default {
             "assists": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -41177,6 +41756,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -41192,7 +41774,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -41205,6 +41793,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -41254,6 +41848,9 @@ export default {
             "assists": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -41305,6 +41902,9 @@ export default {
             "hits": [
                 22
             ],
+            "hits_at_spotted": [
+                22
+            ],
             "hs_kills": [
                 22
             ],
@@ -41320,7 +41920,13 @@ export default {
             "molotov_throws": [
                 22
             ],
+            "non_awp_hits": [
+                22
+            ],
             "rounds_played": [
+                22
+            ],
+            "shots_at_spotted": [
                 22
             ],
             "shots_fired": [
@@ -41333,6 +41939,12 @@ export default {
                 22
             ],
             "spotted_with_damage_count": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "steam_id": [
@@ -41382,6 +41994,9 @@ export default {
             "assists": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -41433,6 +42048,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -41448,7 +42066,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -41461,6 +42085,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -41521,6 +42151,9 @@ export default {
             "assists": [
                 30
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -41572,6 +42205,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "hs_kills": [
                 30
             ],
@@ -41593,7 +42229,13 @@ export default {
             "molotov_throws": [
                 30
             ],
+            "non_awp_hits": [
+                30
+            ],
             "rounds_played": [
+                30
+            ],
+            "shots_at_spotted": [
                 30
             ],
             "shots_fired": [
@@ -41606,6 +42248,12 @@ export default {
                 30
             ],
             "spotted_with_damage_count": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "steam_id": [
@@ -41658,6 +42306,9 @@ export default {
             "assists": [
                 30
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -41709,6 +42360,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "hs_kills": [
                 30
             ],
@@ -41724,7 +42378,13 @@ export default {
             "molotov_throws": [
                 30
             ],
+            "non_awp_hits": [
+                30
+            ],
             "rounds_played": [
+                30
+            ],
+            "shots_at_spotted": [
                 30
             ],
             "shots_fired": [
@@ -41737,6 +42397,12 @@ export default {
                 30
             ],
             "spotted_with_damage_count": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "steam_id": [
@@ -41786,6 +42452,9 @@ export default {
             "assists": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -41837,6 +42506,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -41852,7 +42524,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -41865,6 +42543,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -41929,6 +42613,9 @@ export default {
             "assists": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -41980,6 +42667,9 @@ export default {
             "hits": [
                 22
             ],
+            "hits_at_spotted": [
+                22
+            ],
             "hs_kills": [
                 22
             ],
@@ -41995,7 +42685,13 @@ export default {
             "molotov_throws": [
                 22
             ],
+            "non_awp_hits": [
+                22
+            ],
             "rounds_played": [
+                22
+            ],
+            "shots_at_spotted": [
                 22
             ],
             "shots_fired": [
@@ -42008,6 +42704,12 @@ export default {
                 22
             ],
             "spotted_with_damage_count": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "steam_id": [
@@ -42057,6 +42759,9 @@ export default {
             "assists": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -42108,6 +42813,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -42123,7 +42831,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -42136,6 +42850,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -42185,6 +42905,9 @@ export default {
             "assists": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -42236,6 +42959,9 @@ export default {
             "hits": [
                 22
             ],
+            "hits_at_spotted": [
+                22
+            ],
             "hs_kills": [
                 22
             ],
@@ -42251,7 +42977,13 @@ export default {
             "molotov_throws": [
                 22
             ],
+            "non_awp_hits": [
+                22
+            ],
             "rounds_played": [
+                22
+            ],
+            "shots_at_spotted": [
                 22
             ],
             "shots_fired": [
@@ -42264,6 +42996,12 @@ export default {
                 22
             ],
             "spotted_with_damage_count": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "steam_id": [
@@ -42313,6 +43051,9 @@ export default {
             "assists": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -42364,6 +43105,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -42379,7 +43123,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -42392,6 +43142,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -42441,6 +43197,9 @@ export default {
             "assists": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -42492,6 +43251,9 @@ export default {
             "hits": [
                 22
             ],
+            "hits_at_spotted": [
+                22
+            ],
             "hs_kills": [
                 22
             ],
@@ -42507,7 +43269,13 @@ export default {
             "molotov_throws": [
                 22
             ],
+            "non_awp_hits": [
+                22
+            ],
             "rounds_played": [
+                22
+            ],
+            "shots_at_spotted": [
                 22
             ],
             "shots_fired": [
@@ -42520,6 +43288,12 @@ export default {
                 22
             ],
             "spotted_with_damage_count": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "steam_id": [
@@ -42569,6 +43343,9 @@ export default {
             "assists": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -42620,6 +43397,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -42635,7 +43415,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -42648,6 +43434,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -42706,6 +43498,9 @@ export default {
             "avg_time_to_damage_s": [
                 1658
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -42745,6 +43540,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "hs_kills": [
                 30
             ],
@@ -42763,7 +43561,13 @@ export default {
             "molotov_throws": [
                 30
             ],
+            "non_awp_hits": [
+                30
+            ],
             "rounds_played": [
+                30
+            ],
+            "shots_at_spotted": [
                 30
             ],
             "shots_fired": [
@@ -42776,6 +43580,12 @@ export default {
                 30
             ],
             "spotted_with_damage_count": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "steam_id": [
@@ -42957,6 +43767,9 @@ export default {
             "avg_time_to_damage_s": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -42996,6 +43809,9 @@ export default {
             "hits": [
                 22
             ],
+            "hits_at_spotted": [
+                22
+            ],
             "hs_kills": [
                 22
             ],
@@ -43011,7 +43827,13 @@ export default {
             "molotov_throws": [
                 22
             ],
+            "non_awp_hits": [
+                22
+            ],
             "rounds_played": [
+                22
+            ],
+            "shots_at_spotted": [
                 22
             ],
             "shots_fired": [
@@ -43024,6 +43846,12 @@ export default {
                 22
             ],
             "spotted_with_damage_count": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "steam_id": [
@@ -43076,6 +43904,9 @@ export default {
             "avg_time_to_damage_s": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -43115,6 +43946,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -43130,7 +43964,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -43143,6 +43983,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -43204,6 +44050,9 @@ export default {
             "avg_time_to_damage_s": [
                 1659
             ],
+            "counter_strafe_eligible_shots": [
+                31
+            ],
             "counter_strafed_shots": [
                 31
             ],
@@ -43243,6 +44092,9 @@ export default {
             "hits": [
                 31
             ],
+            "hits_at_spotted": [
+                31
+            ],
             "hs_kills": [
                 31
             ],
@@ -43261,7 +44113,13 @@ export default {
             "molotov_throws": [
                 31
             ],
+            "non_awp_hits": [
+                31
+            ],
             "rounds_played": [
+                31
+            ],
+            "shots_at_spotted": [
                 31
             ],
             "shots_fired": [
@@ -43274,6 +44132,12 @@ export default {
                 31
             ],
             "spotted_with_damage_count": [
+                31
+            ],
+            "spray_hits": [
+                31
+            ],
+            "spray_shots": [
                 31
             ],
             "steam_id": [
@@ -43326,6 +44190,9 @@ export default {
             "avg_time_to_damage_s": [
                 1658
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -43365,6 +44232,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "hs_kills": [
                 30
             ],
@@ -43383,7 +44253,13 @@ export default {
             "molotov_throws": [
                 30
             ],
+            "non_awp_hits": [
+                30
+            ],
             "rounds_played": [
+                30
+            ],
+            "shots_at_spotted": [
                 30
             ],
             "shots_fired": [
@@ -43396,6 +44272,12 @@ export default {
                 30
             ],
             "spotted_with_damage_count": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "steam_id": [
@@ -43448,6 +44330,9 @@ export default {
             "avg_time_to_damage_s": [
                 1658
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -43487,6 +44372,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "hs_kills": [
                 30
             ],
@@ -43505,7 +44393,13 @@ export default {
             "molotov_throws": [
                 30
             ],
+            "non_awp_hits": [
+                30
+            ],
             "rounds_played": [
+                30
+            ],
+            "shots_at_spotted": [
                 30
             ],
             "shots_fired": [
@@ -43518,6 +44412,12 @@ export default {
                 30
             ],
             "spotted_with_damage_count": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "steam_id": [
@@ -43570,6 +44470,9 @@ export default {
             "avg_time_to_damage_s": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -43609,6 +44512,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -43627,7 +44533,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -43640,6 +44552,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -43692,6 +44610,9 @@ export default {
             "avg_time_to_damage_s": [
                 1658
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -43731,6 +44652,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "hs_kills": [
                 30
             ],
@@ -43749,7 +44673,13 @@ export default {
             "molotov_throws": [
                 30
             ],
+            "non_awp_hits": [
+                30
+            ],
             "rounds_played": [
+                30
+            ],
+            "shots_at_spotted": [
                 30
             ],
             "shots_fired": [
@@ -43762,6 +44692,12 @@ export default {
                 30
             ],
             "spotted_with_damage_count": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "steam_id": [
@@ -43814,6 +44750,9 @@ export default {
             "avg_time_to_damage_s": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -43853,6 +44792,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -43871,7 +44813,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -43884,6 +44832,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -43936,6 +44890,9 @@ export default {
             "avg_time_to_damage_s": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -43975,6 +44932,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -43993,7 +44953,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -44006,6 +44972,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -44059,6 +45031,9 @@ export default {
             "avg_time_to_damage_s": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -44098,6 +45073,9 @@ export default {
             "hits": [
                 22
             ],
+            "hits_at_spotted": [
+                22
+            ],
             "hs_kills": [
                 22
             ],
@@ -44113,7 +45091,13 @@ export default {
             "molotov_throws": [
                 22
             ],
+            "non_awp_hits": [
+                22
+            ],
             "rounds_played": [
+                22
+            ],
+            "shots_at_spotted": [
                 22
             ],
             "shots_fired": [
@@ -44126,6 +45110,12 @@ export default {
                 22
             ],
             "spotted_with_damage_count": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "steam_id": [
@@ -44178,6 +45168,9 @@ export default {
             "avg_time_to_damage_s": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -44217,6 +45210,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -44232,7 +45228,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -44245,6 +45247,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -44297,6 +45305,9 @@ export default {
             "avg_time_to_damage_s": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -44336,6 +45347,9 @@ export default {
             "hits": [
                 22
             ],
+            "hits_at_spotted": [
+                22
+            ],
             "hs_kills": [
                 22
             ],
@@ -44351,7 +45365,13 @@ export default {
             "molotov_throws": [
                 22
             ],
+            "non_awp_hits": [
+                22
+            ],
             "rounds_played": [
+                22
+            ],
+            "shots_at_spotted": [
                 22
             ],
             "shots_fired": [
@@ -44364,6 +45384,12 @@ export default {
                 22
             ],
             "spotted_with_damage_count": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "steam_id": [
@@ -44416,6 +45442,9 @@ export default {
             "avg_time_to_damage_s": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -44455,6 +45484,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -44470,7 +45502,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -44483,6 +45521,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -44535,6 +45579,9 @@ export default {
             "avg_time_to_damage_s": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -44574,6 +45621,9 @@ export default {
             "hits": [
                 22
             ],
+            "hits_at_spotted": [
+                22
+            ],
             "hs_kills": [
                 22
             ],
@@ -44589,7 +45639,13 @@ export default {
             "molotov_throws": [
                 22
             ],
+            "non_awp_hits": [
+                22
+            ],
             "rounds_played": [
+                22
+            ],
+            "shots_at_spotted": [
                 22
             ],
             "shots_fired": [
@@ -44602,6 +45658,12 @@ export default {
                 22
             ],
             "spotted_with_damage_count": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "steam_id": [
@@ -44654,6 +45716,9 @@ export default {
             "avg_time_to_damage_s": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -44693,6 +45758,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -44708,7 +45776,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -44721,6 +45795,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -44784,6 +45864,9 @@ export default {
             "avg_time_to_damage_s": [
                 1658
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -44823,6 +45906,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "hs_kills": [
                 30
             ],
@@ -44841,7 +45927,13 @@ export default {
             "molotov_throws": [
                 30
             ],
+            "non_awp_hits": [
+                30
+            ],
             "rounds_played": [
+                30
+            ],
+            "shots_at_spotted": [
                 30
             ],
             "shots_fired": [
@@ -44854,6 +45946,12 @@ export default {
                 30
             ],
             "spotted_with_damage_count": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "steam_id": [
@@ -44906,6 +46004,9 @@ export default {
             "avg_time_to_damage_s": [
                 1658
             ],
+            "counter_strafe_eligible_shots": [
+                30
+            ],
             "counter_strafed_shots": [
                 30
             ],
@@ -44945,6 +46046,9 @@ export default {
             "hits": [
                 30
             ],
+            "hits_at_spotted": [
+                30
+            ],
             "hs_kills": [
                 30
             ],
@@ -44960,7 +46064,13 @@ export default {
             "molotov_throws": [
                 30
             ],
+            "non_awp_hits": [
+                30
+            ],
             "rounds_played": [
+                30
+            ],
+            "shots_at_spotted": [
                 30
             ],
             "shots_fired": [
@@ -44973,6 +46083,12 @@ export default {
                 30
             ],
             "spotted_with_damage_count": [
+                30
+            ],
+            "spray_hits": [
+                30
+            ],
+            "spray_shots": [
                 30
             ],
             "steam_id": [
@@ -45025,6 +46141,9 @@ export default {
             "avg_time_to_damage_s": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -45064,6 +46183,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -45079,7 +46201,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -45092,6 +46220,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -45144,6 +46278,9 @@ export default {
             "avg_time_to_damage_s": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -45183,6 +46320,9 @@ export default {
             "hits": [
                 22
             ],
+            "hits_at_spotted": [
+                22
+            ],
             "hs_kills": [
                 22
             ],
@@ -45198,7 +46338,13 @@ export default {
             "molotov_throws": [
                 22
             ],
+            "non_awp_hits": [
+                22
+            ],
             "rounds_played": [
+                22
+            ],
+            "shots_at_spotted": [
                 22
             ],
             "shots_fired": [
@@ -45211,6 +46357,12 @@ export default {
                 22
             ],
             "spotted_with_damage_count": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "steam_id": [
@@ -45263,6 +46415,9 @@ export default {
             "avg_time_to_damage_s": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -45302,6 +46457,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -45317,7 +46475,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -45330,6 +46494,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -45382,6 +46552,9 @@ export default {
             "avg_time_to_damage_s": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -45421,6 +46594,9 @@ export default {
             "hits": [
                 22
             ],
+            "hits_at_spotted": [
+                22
+            ],
             "hs_kills": [
                 22
             ],
@@ -45436,7 +46612,13 @@ export default {
             "molotov_throws": [
                 22
             ],
+            "non_awp_hits": [
+                22
+            ],
             "rounds_played": [
+                22
+            ],
+            "shots_at_spotted": [
                 22
             ],
             "shots_fired": [
@@ -45449,6 +46631,12 @@ export default {
                 22
             ],
             "spotted_with_damage_count": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "steam_id": [
@@ -45501,6 +46689,9 @@ export default {
             "avg_time_to_damage_s": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -45540,6 +46731,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -45555,7 +46749,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -45568,6 +46768,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -45620,6 +46826,9 @@ export default {
             "avg_time_to_damage_s": [
                 22
             ],
+            "counter_strafe_eligible_shots": [
+                22
+            ],
             "counter_strafed_shots": [
                 22
             ],
@@ -45659,6 +46868,9 @@ export default {
             "hits": [
                 22
             ],
+            "hits_at_spotted": [
+                22
+            ],
             "hs_kills": [
                 22
             ],
@@ -45674,7 +46886,13 @@ export default {
             "molotov_throws": [
                 22
             ],
+            "non_awp_hits": [
+                22
+            ],
             "rounds_played": [
+                22
+            ],
+            "shots_at_spotted": [
                 22
             ],
             "shots_fired": [
@@ -45687,6 +46905,12 @@ export default {
                 22
             ],
             "spotted_with_damage_count": [
+                22
+            ],
+            "spray_hits": [
+                22
+            ],
+            "spray_shots": [
                 22
             ],
             "steam_id": [
@@ -45739,6 +46963,9 @@ export default {
             "avg_time_to_damage_s": [
                 1660
             ],
+            "counter_strafe_eligible_shots": [
+                1660
+            ],
             "counter_strafed_shots": [
                 1660
             ],
@@ -45778,6 +47005,9 @@ export default {
             "hits": [
                 1660
             ],
+            "hits_at_spotted": [
+                1660
+            ],
             "hs_kills": [
                 1660
             ],
@@ -45793,7 +47023,13 @@ export default {
             "molotov_throws": [
                 1660
             ],
+            "non_awp_hits": [
+                1660
+            ],
             "rounds_played": [
+                1660
+            ],
+            "shots_at_spotted": [
                 1660
             ],
             "shots_fired": [
@@ -45806,6 +47042,12 @@ export default {
                 1660
             ],
             "spotted_with_damage_count": [
+                1660
+            ],
+            "spray_hits": [
+                1660
+            ],
+            "spray_shots": [
                 1660
             ],
             "steam_id": [
@@ -61840,6 +63082,9 @@ export default {
             "seed": [
                 30
             ],
+            "short_name": [
+                48
+            ],
             "team": [
                 2512
             ],
@@ -62071,6 +63316,9 @@ export default {
             "seed": [
                 31
             ],
+            "short_name": [
+                50
+            ],
             "team": [
                 2521
             ],
@@ -62139,6 +63387,9 @@ export default {
             "seed": [
                 30
             ],
+            "short_name": [
+                48
+            ],
             "team": [
                 2530
             ],
@@ -62177,6 +63428,9 @@ export default {
             "seed": [
                 30
             ],
+            "short_name": [
+                48
+            ],
             "team_id": [
                 2952
             ],
@@ -62207,6 +63461,9 @@ export default {
                 1660
             ],
             "seed": [
+                1660
+            ],
+            "short_name": [
                 1660
             ],
             "team_id": [
@@ -62241,6 +63498,9 @@ export default {
             "seed": [
                 30
             ],
+            "short_name": [
+                48
+            ],
             "team_id": [
                 2952
             ],
@@ -62271,6 +63531,9 @@ export default {
                 1660
             ],
             "seed": [
+                1660
+            ],
+            "short_name": [
                 1660
             ],
             "team_id": [
@@ -62359,6 +63622,9 @@ export default {
             "seed": [
                 1660
             ],
+            "short_name": [
+                1660
+            ],
             "team": [
                 2532
             ],
@@ -62405,6 +63671,9 @@ export default {
             ],
             "seed": [
                 30
+            ],
+            "short_name": [
+                48
             ],
             "team_id": [
                 2952
@@ -62532,6 +63801,9 @@ export default {
             ],
             "seed": [
                 30
+            ],
+            "short_name": [
+                48
             ],
             "team_id": [
                 2952
@@ -65922,6 +67194,9 @@ export default {
             "live_in_progress": [
                 3
             ],
+            "registered_gpu_nodes": [
+                30
+            ],
             "total_gpu_nodes": [
                 30
             ],
@@ -65994,6 +67269,9 @@ export default {
             "id": [
                 22
             ],
+            "registered_gpu_nodes": [
+                22
+            ],
             "total_gpu_nodes": [
                 22
             ],
@@ -66026,6 +67304,9 @@ export default {
             "live_in_progress": [
                 4
             ],
+            "registered_gpu_nodes": [
+                31
+            ],
             "total_gpu_nodes": [
                 31
             ],
@@ -66040,6 +67321,9 @@ export default {
             "id": [
                 30
             ],
+            "registered_gpu_nodes": [
+                30
+            ],
             "total_gpu_nodes": [
                 30
             ],
@@ -66052,6 +67336,9 @@ export default {
                 30
             ],
             "id": [
+                30
+            ],
+            "registered_gpu_nodes": [
                 30
             ],
             "total_gpu_nodes": [
@@ -66077,6 +67364,9 @@ export default {
             "live_in_progress": [
                 1660
             ],
+            "registered_gpu_nodes": [
+                1660
+            ],
             "total_gpu_nodes": [
                 1660
             ],
@@ -66090,6 +67380,9 @@ export default {
                 22
             ],
             "id": [
+                22
+            ],
+            "registered_gpu_nodes": [
                 22
             ],
             "total_gpu_nodes": [
@@ -66106,6 +67399,9 @@ export default {
             "id": [
                 22
             ],
+            "registered_gpu_nodes": [
+                22
+            ],
             "total_gpu_nodes": [
                 22
             ],
@@ -66118,6 +67414,9 @@ export default {
                 22
             ],
             "id": [
+                22
+            ],
+            "registered_gpu_nodes": [
                 22
             ],
             "total_gpu_nodes": [
@@ -66154,6 +67453,9 @@ export default {
             "live_in_progress": [
                 3
             ],
+            "registered_gpu_nodes": [
+                30
+            ],
             "total_gpu_nodes": [
                 30
             ],
@@ -66166,6 +67468,9 @@ export default {
                 30
             ],
             "id": [
+                30
+            ],
+            "registered_gpu_nodes": [
                 30
             ],
             "total_gpu_nodes": [
@@ -66182,6 +67487,9 @@ export default {
             "id": [
                 22
             ],
+            "registered_gpu_nodes": [
+                22
+            ],
             "total_gpu_nodes": [
                 22
             ],
@@ -66196,6 +67504,9 @@ export default {
             "id": [
                 22
             ],
+            "registered_gpu_nodes": [
+                22
+            ],
             "total_gpu_nodes": [
                 22
             ],
@@ -66208,6 +67519,9 @@ export default {
                 22
             ],
             "id": [
+                22
+            ],
+            "registered_gpu_nodes": [
                 22
             ],
             "total_gpu_nodes": [
