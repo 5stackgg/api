@@ -1,3 +1,4 @@
+DROP VIEW IF EXISTS public.player_match_stats_v;
 CREATE OR REPLACE VIEW public.player_match_stats_v AS
 SELECT
   s.steam_id,
