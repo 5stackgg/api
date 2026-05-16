@@ -220,12 +220,14 @@ export class MatchesController {
         tournament_brackets: {
           team_1: {
             name: true,
+            short_name: true,
             team: {
               short_name: true,
             },
           },
           team_2: {
             name: true,
+            short_name: true,
             team: {
               short_name: true,
             },
@@ -321,11 +323,13 @@ export class MatchesController {
     }
 
     const tournamentBracket = match.tournament_brackets?.at(0);
-    const lineup1TournamentTag =
+    const lineup1TournamentTag: string | undefined =
       tournamentBracket?.team_1?.team?.short_name ||
+      (tournamentBracket?.team_1?.short_name as string | undefined) ||
       tournamentBracket?.team_1?.name;
-    const lineup2TournamentTag =
+    const lineup2TournamentTag: string | undefined =
       tournamentBracket?.team_2?.team?.short_name ||
+      (tournamentBracket?.team_2?.short_name as string | undefined) ||
       tournamentBracket?.team_2?.name;
 
     const eloKey = match.options.type?.toLowerCase();
@@ -415,9 +419,9 @@ export class MatchesController {
     const demoId = (newRow.id ?? oldRow.id) as string | undefined;
     if (!matchId || !matchMapId || !demoId) return;
 
-    const becameParsed =
+    const isFirstParse =
       !!newRow.metadata_parsed_at && !oldRow.metadata_parsed_at;
-    if (!becameParsed) return;
+    if (!isFirstParse) return;
 
     try {
       const queued = await this.clips.autoGenerateForDemo(
@@ -1569,11 +1573,15 @@ export class MatchesController {
       return;
     }
 
+    const becameOnline =
+      data.op === "INSERT" || data.old?.status !== "Online";
+
     const { game_server_nodes_by_pk } = await this.hasura.query({
       game_server_nodes_by_pk: {
         __args: {
           id: data.new.id,
         },
+        gpu: true,
         servers_aggregate: {
           __args: {
             where: {
@@ -1588,6 +1596,14 @@ export class MatchesController {
         },
       },
     });
+
+    if (becameOnline && game_server_nodes_by_pk?.gpu) {
+      void this.clips.reconcileQueuedHighlights().catch((error) => {
+        this.logger.warn(
+          `[node-online ${data.new.id}] reconcile-highlights failed: ${(error as Error)?.message}`,
+        );
+      });
+    }
 
     const totalMatchesToFind =
       game_server_nodes_by_pk.servers_aggregate.aggregate.count;

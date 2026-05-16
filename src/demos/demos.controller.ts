@@ -11,16 +11,19 @@ import { Request, Response } from "express";
 import { HasuraService } from "../hasura/hasura.service";
 import { HasuraAction } from "../hasura/hasura.controller";
 import { S3Service } from "../s3/s3.service";
+import { PostgresService } from "../postgres/postgres.service";
 import archiver from "archiver";
 import zlib from "zlib";
 import path from "path";
 import { DemoMetadataService } from "./demo-metadata.service";
+import { ParsedDemo } from "./demo-parser.service";
 
 @Controller("/demos/:matchId")
 export class DemosController {
   constructor(
     protected readonly s3: S3Service,
     protected readonly hasura: HasuraService,
+    protected readonly postgres: PostgresService,
     protected readonly logger: Logger,
     protected readonly demoMetadata: DemoMetadataService,
   ) {}
@@ -152,7 +155,9 @@ export class DemosController {
       },
     });
 
-    if (demos.find(({ file }) => file === demo)) {
+    if (
+      demos.find(({ file, size }) => file === demo && size !== null && size !== undefined)
+    ) {
       return response.status(406).json({
         error: "already uploaded",
       });
@@ -176,8 +181,12 @@ export class DemosController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    const { matchId } = request.params;
-    const { mapId, demo } = request.body;
+    const matchId = request.params.matchId as string;
+    const { mapId, demo } = request.body as {
+      mapId?: string;
+      demo?: string;
+      size?: number;
+    };
 
     if (!matchId || !mapId || !demo) {
       return response.status(400).json({
@@ -185,26 +194,80 @@ export class DemosController {
       });
     }
 
-    const { insert_match_map_demos_one } = await this.hasura.mutation({
-      insert_match_map_demos_one: {
-        __args: {
-          object: {
-            match_id: matchId,
-            match_map_id: mapId,
-            file: `${matchId}/${mapId}/demos/${demo}`,
-            size: request.body.size,
-          },
-        },
-        id: true,
-      },
-    });
+    const file = `${matchId}/${mapId}/demos/${demo}`;
+    const matchMapDemoId = await this.upsertDemoRow(
+      matchId,
+      mapId,
+      file,
+      request.body.size,
+    );
 
-    const matchMapDemoId = insert_match_map_demos_one?.id;
     if (matchMapDemoId) {
       void this.demoMetadata.ensureParsedById(matchMapDemoId);
     }
 
     return response.status(200).send();
+  }
+
+  @Post("parsed")
+  public async markDemoAsParsed(
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const matchId = request.params.matchId as string;
+    const { mapId, demo, parsed } = request.body as {
+      mapId?: string;
+      demo?: string;
+      parsed?: ParsedDemo;
+    };
+
+    if (!matchId || !mapId || !demo || !parsed) {
+      return response.status(400).json({
+        error: "missing params",
+      });
+    }
+
+    const file = `${matchId}/${mapId}/demos/${demo}`;
+    const matchMapDemoId = await this.upsertDemoRow(
+      matchId,
+      mapId,
+      file,
+      null,
+    );
+
+    if (!matchMapDemoId) {
+      return response.status(500).json({ error: "failed to upsert demo row" });
+    }
+
+    await this.demoMetadata.persistParsed(matchMapDemoId, parsed);
+
+    return response.status(200).json({ matchMapDemoId });
+  }
+
+  private async upsertDemoRow(
+    matchId: string,
+    mapId: string,
+    file: string,
+    size: number | null,
+  ): Promise<string | null> {
+    const bindings = [matchId, mapId, file, size as number] as [
+      string,
+      string,
+      string,
+      number,
+    ];
+    const rows = await this.postgres.query<Array<{ id: string }>>(
+      `WITH ins AS (
+         INSERT INTO public.match_map_demos (match_id, match_map_id, file, size)
+         VALUES ($1::uuid, $2::uuid, $3, $4::int)
+         ON CONFLICT (match_map_id, file) DO UPDATE
+           SET size = COALESCE(EXCLUDED.size, public.match_map_demos.size)
+         RETURNING id
+       )
+       SELECT id FROM ins`,
+      bindings,
+    );
+    return rows?.[0]?.id ?? null;
   }
 
   @HasuraAction()

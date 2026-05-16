@@ -91,34 +91,9 @@ export class HudDataController {
             p?.team_members?.find((tm) => tm.team_id === teamId)
               ?.roster_image_url) ||
           null;
-        let source: "team_roster" | "player_roster" | "none";
-        let raw: string | null;
-        if (teamScoped) {
-          source = "team_roster";
-          raw = teamScoped;
-        } else if (p?.roster_image_url) {
-          source = "player_roster";
-          raw = p.roster_image_url;
-        } else {
-          source = "none";
-          raw = null;
-        }
+        const raw = teamScoped ?? p?.roster_image_url ?? null;
         const avatar = absolutize(raw ?? "");
         const playerName = p?.name || lp.placeholder_name || "Player";
-        this.logger.debug(
-          `[hud-data ${matchId}] raw player ${lp.steam_id}: ` +
-            `name=${playerName} ` +
-            `team_id_for_match=${teamId || "<none>"} ` +
-            `roster_image_url=${p?.roster_image_url || "<null>"} ` +
-            `custom_avatar_url=${p?.custom_avatar_url || "<null>"} ` +
-            `avatar_url=${p?.avatar_url || "<null>"} ` +
-            `team_members=${JSON.stringify(p?.team_members ?? [])}`,
-        );
-        this.logger.debug(
-          `[hud-data ${matchId}] player ${playerName} (${lp.steam_id}) ` +
-            `team_id=${teamId || "<none>"} ` +
-            `avatar_source=${source} url=${avatar || "<empty>"}`,
-        );
         return {
           steam_id: lp.steam_id,
           name: playerName,

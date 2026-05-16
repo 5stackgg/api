@@ -17,6 +17,7 @@ import {
   BatchHighlightsRenderJob,
   BatchHighlightsRenderJobEvents,
 } from "./jobs/BatchHighlightsRenderJob";
+import { ReconcileQueuedHighlights } from "./jobs/ReconcileQueuedHighlights";
 
 @Module({
   imports: [
@@ -42,13 +43,17 @@ import {
     BatchHighlightsRenderJob,
     BatchHighlightsRenderJobEvents,
     CleanClips,
+    ReconcileQueuedHighlights,
     ...getQueuesProcessors("Clips"),
     loggerFactory(),
   ],
   exports: [ClipsService],
 })
 export class ClipsModule {
-  constructor(@InjectQueue(MatchQueues.Clips) clipsQueue: Queue) {
+  constructor(
+    @InjectQueue(MatchQueues.Clips) clipsQueue: Queue,
+    clipsService: ClipsService,
+  ) {
     if (process.env.RUN_MIGRATIONS) {
       return;
     }
@@ -62,5 +67,17 @@ export class ClipsModule {
         },
       },
     );
+
+    void clipsQueue.add(
+      ReconcileQueuedHighlights.name,
+      {},
+      {
+        repeat: {
+          pattern: "*/5 * * * *",
+        },
+      },
+    );
+
+    void clipsService.reconcileQueuedHighlights().catch(() => {});
   }
 }

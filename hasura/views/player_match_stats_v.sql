@@ -30,24 +30,30 @@ SELECT
   SUM(s.trade_kill_successes)::integer       AS trade_kill_successes,
   SUM(s.traded_death_opportunities)::integer AS traded_death_opportunities,
   SUM(s.traded_death_successes)::integer     AS traded_death_successes,
-  SUM(s.shots_fired)::integer                AS shots_fired,
-  SUM(s.hits)::integer                       AS hits,
-  SUM(s.headshot_hits)::integer              AS headshot_hits,
+  SUM(s.shots_fired)::integer                       AS shots_fired,
+  SUM(s.hits)::integer                              AS hits,
+  SUM(s.headshot_hits)::integer                     AS headshot_hits,
+  SUM(s.non_awp_hits)::integer                      AS non_awp_hits,
+  SUM(s.hits_at_spotted)::integer                   AS hits_at_spotted,
+  SUM(s.shots_at_spotted)::integer                  AS shots_at_spotted,
   CASE WHEN SUM(s.time_to_damage_count) > 0
        THEN (SUM(s.time_to_damage_sum_s) / SUM(s.time_to_damage_count))::numeric
        ELSE NULL
-  END                                        AS avg_time_to_damage_s,
-  SUM(s.spotted_count)::integer              AS spotted_count,
-  SUM(s.spotted_with_damage_count)::integer  AS spotted_with_damage_count,
-  SUM(s.he_throws)::integer                  AS he_throws,
-  SUM(s.molotov_throws)::integer             AS molotov_throws,
-  SUM(s.smoke_throws)::integer               AS smoke_throws,
-  SUM(s.decoy_throws)::integer               AS decoy_throws,
-  SUM(s.counter_strafed_shots)::integer      AS counter_strafed_shots,
+  END                                               AS avg_time_to_damage_s,
+  SUM(s.spotted_count)::integer                     AS spotted_count,
+  SUM(s.spotted_with_damage_count)::integer         AS spotted_with_damage_count,
+  SUM(s.he_throws)::integer                         AS he_throws,
+  SUM(s.molotov_throws)::integer                    AS molotov_throws,
+  SUM(s.smoke_throws)::integer                      AS smoke_throws,
+  SUM(s.decoy_throws)::integer                      AS decoy_throws,
+  SUM(s.counter_strafed_shots)::integer             AS counter_strafed_shots,
+  SUM(s.counter_strafe_eligible_shots)::integer     AS counter_strafe_eligible_shots,
+  SUM(s.spray_shots)::integer                       AS spray_shots,
+  SUM(s.spray_hits)::integer                        AS spray_hits,
   CASE WHEN SUM(s.crosshair_angle_count) > 0
        THEN (SUM(s.crosshair_angle_sum_deg) / SUM(s.crosshair_angle_count))::numeric
        ELSE NULL
-  END                                        AS avg_crosshair_angle_deg,
-  SUM(s.rounds_played)::integer              AS rounds_played
+  END                                               AS avg_crosshair_angle_deg,
+  SUM(s.rounds_played)::integer                     AS rounds_played
 FROM public.player_match_map_stats s
 GROUP BY s.steam_id, s.match_id;

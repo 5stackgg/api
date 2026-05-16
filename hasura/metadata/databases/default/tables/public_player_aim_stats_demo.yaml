@@ -26,7 +26,13 @@ select_permissions:
         - attacker_steam_id
         - hits
         - headshot_hits
+        - non_awp_hits
+        - hits_at_spotted
+        - shots_at_spotted
+        - counter_strafe_eligible_shots
         - counter_strafed_shots
+        - spray_shots
+        - spray_hits
         - crosshair_angle_sum_deg
         - crosshair_angle_count
         - time_to_damage_sum_s

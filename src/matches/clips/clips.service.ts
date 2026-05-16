@@ -940,12 +940,14 @@ export class ClipsService {
         false,
       );
       if (!enabled) return 0;
-      if (!(await this.hasGpuNode())) {
-        this.logger.log(
-          `[auto-clips] demo ${matchMapDemoId} skipped: no GPU node registered`,
-        );
-        return 0;
+    }
+    if (!(await this.hasGpuNode())) {
+      const msg = "no GPU node registered — auto-clips need a GPU node to exist (offline is fine, jobs will queue and dispatch once it's back online)";
+      if (options.force) {
+        throw new Error(msg);
       }
+      this.logger.log(`[auto-clips] demo ${matchMapDemoId} skipped: ${msg}`);
+      return 0;
     }
 
     const defaultVisibility = await this.readSetting(
@@ -1167,12 +1169,14 @@ export class ClipsService {
         false,
       );
       if (!enabled) return 0;
-      if (!(await this.hasGpuNode())) {
-        this.logger.log(
-          `[auto-clips] match ${matchId} skipped: no GPU node registered`,
-        );
-        return 0;
+    }
+    if (!(await this.hasGpuNode())) {
+      const msg = "no GPU node registered — auto-clips need a GPU node to exist (offline is fine, jobs will queue and dispatch once it's back online)";
+      if (options.force) {
+        throw new Error(msg);
       }
+      this.logger.log(`[auto-clips] match ${matchId} skipped: ${msg}`);
+      return 0;
     }
 
     const defaultVisibility = await this.readSetting(
@@ -1460,11 +1464,6 @@ export class ClipsService {
     return queued;
   }
 
-  /**
-   * Returns true when at least one GPU node is registered (regardless of
-   * online/offline status). Auto-generated highlights require a GPU node to
-   * exist — otherwise jobs would queue forever with nowhere to render.
-   */
   private async hasGpuNode(): Promise<boolean> {
     const { game_server_nodes_aggregate } = await this.hasura.query({
       game_server_nodes_aggregate: {
@@ -1473,6 +1472,109 @@ export class ClipsService {
       },
     });
     return (game_server_nodes_aggregate?.aggregate?.count ?? 0) > 0;
+  }
+
+  public async reconcileQueuedHighlights(): Promise<number> {
+    const { clip_render_jobs } = await this.hasura.query({
+      clip_render_jobs: {
+        __args: {
+          where: {
+            status: { _eq: "queued" },
+            k8s_job_name: { _like: "gs-batch-%" },
+            match_map_demo_id: { _is_null: false },
+          },
+          distinct_on: ["match_map_id", "match_map_demo_id"],
+          order_by: [
+            { match_map_id: "asc" },
+            { match_map_demo_id: "asc" },
+            { created_at: "asc" },
+          ],
+        },
+        match_map_id: true,
+        match_map_demo_id: true,
+      },
+    });
+
+    const rows = clip_render_jobs ?? [];
+    if (rows.length === 0) return 0;
+
+    const liveStates: Array<
+      "delayed" | "waiting" | "active" | "paused" | "waiting-children"
+    > = ["delayed", "waiting", "active", "paused", "waiting-children"];
+    const queuedBullMqJobs = await this.batchQueue.getJobs(liveStates);
+    const jobsByPair = new Map<string, typeof queuedBullMqJobs>();
+    for (const j of queuedBullMqJobs) {
+      if (j.name !== BATCH_HIGHLIGHTS_JOB_NAME) continue;
+      const data = (j.data ?? {}) as {
+        matchMapId?: string;
+        matchMapDemoId?: string;
+      };
+      if (!data.matchMapId || !data.matchMapDemoId) continue;
+      const key = `${data.matchMapId}:${data.matchMapDemoId}`;
+      const bucket = jobsByPair.get(key) ?? [];
+      bucket.push(j);
+      jobsByPair.set(key, bucket);
+    }
+
+    let touched = 0;
+    for (const row of rows) {
+      const mmId = row.match_map_id ? String(row.match_map_id) : null;
+      const mmDemoId = row.match_map_demo_id
+        ? String(row.match_map_demo_id)
+        : null;
+      if (!mmId || !mmDemoId) continue;
+      const key = `${mmId}:${mmDemoId}`;
+      const companions = jobsByPair.get(key) ?? [];
+
+      if (companions.length === 0) {
+        try {
+          await this.batchQueue.add(
+            BATCH_HIGHLIGHTS_JOB_NAME,
+            { matchMapId: mmId, matchMapDemoId: mmDemoId },
+            { jobId: `${mmId}-${mmDemoId}-reconcile-${Date.now()}` },
+          );
+          touched++;
+          this.logger.log(
+            `[reconcile-highlights] re-enqueued orphaned batch for ${key}`,
+          );
+        } catch (error) {
+          this.logger.warn(
+            `[reconcile-highlights] enqueue failed for ${key}: ${(error as Error)?.message}`,
+          );
+        }
+        continue;
+      }
+
+      for (const companion of companions) {
+        let state: string | null = null;
+        try {
+          state = await companion.getState();
+        } catch (error) {
+          this.logger.warn(
+            `[reconcile-highlights] getState failed for ${key} job ${companion.id}: ${(error as Error)?.message}`,
+          );
+          continue;
+        }
+        if (state !== "delayed") continue;
+        try {
+          await companion.promote();
+          touched++;
+          this.logger.log(
+            `[reconcile-highlights] promoted delayed batch for ${key} (job ${companion.id})`,
+          );
+        } catch (error) {
+          this.logger.warn(
+            `[reconcile-highlights] promote failed for ${key} job ${companion.id}: ${(error as Error)?.message}`,
+          );
+        }
+      }
+    }
+    if (touched > 0) {
+      this.logger.log(
+        `[reconcile-highlights] touched ${touched} batch job(s) (enqueued + promoted)`,
+      );
+    }
+    return touched;
   }
 
   private async readSetting(name: string, fallback: string): Promise<string> {

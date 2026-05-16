@@ -13808,7 +13808,7 @@ type match_map_demos {
     """JSON select path"""
     path: String
   ): jsonb
-  size: Int!
+  size: Int
   tick_rate: Float
   total_ticks: Int
   workshop_id: String
@@ -13946,6 +13946,11 @@ enum match_map_demos_constraint {
   unique or primary key constraint on columns "id"
   """
   match_demos_pkey
+
+  """
+  unique or primary key constraint on columns "file", "match_map_id"
+  """
+  match_map_demos_match_map_id_file_key
 }
 
 """
@@ -27793,11 +27798,13 @@ type player_aim_stats_demo {
   """An object relationship"""
   attacker: players
   attacker_steam_id: bigint!
+  counter_strafe_eligible_shots: Int!
   counter_strafed_shots: Int!
   crosshair_angle_count: Int!
   crosshair_angle_sum_deg: numeric!
   headshot_hits: Int!
   hits: Int!
+  hits_at_spotted: Int!
 
   """An object relationship"""
   match: matches!
@@ -27806,6 +27813,10 @@ type player_aim_stats_demo {
   """An object relationship"""
   match_map: match_maps!
   match_map_id: uuid!
+  non_awp_hits: Int!
+  shots_at_spotted: Int!
+  spray_hits: Int!
+  spray_shots: Int!
   time_to_damage_count: Int!
   time_to_damage_sum_s: numeric!
 }
@@ -27838,11 +27849,17 @@ type player_aim_stats_demo_aggregate_fields {
 """aggregate avg on columns"""
 type player_aim_stats_demo_avg_fields {
   attacker_steam_id: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
+  non_awp_hits: Float
+  shots_at_spotted: Float
+  spray_hits: Float
+  spray_shots: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
 }
@@ -27856,15 +27873,21 @@ input player_aim_stats_demo_bool_exp {
   _or: [player_aim_stats_demo_bool_exp!]
   attacker: players_bool_exp
   attacker_steam_id: bigint_comparison_exp
+  counter_strafe_eligible_shots: Int_comparison_exp
   counter_strafed_shots: Int_comparison_exp
   crosshair_angle_count: Int_comparison_exp
   crosshair_angle_sum_deg: numeric_comparison_exp
   headshot_hits: Int_comparison_exp
   hits: Int_comparison_exp
+  hits_at_spotted: Int_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   match_map: match_maps_bool_exp
   match_map_id: uuid_comparison_exp
+  non_awp_hits: Int_comparison_exp
+  shots_at_spotted: Int_comparison_exp
+  spray_hits: Int_comparison_exp
+  spray_shots: Int_comparison_exp
   time_to_damage_count: Int_comparison_exp
   time_to_damage_sum_s: numeric_comparison_exp
 }
@@ -27884,11 +27907,17 @@ input type for incrementing numeric columns in table "player_aim_stats_demo"
 """
 input player_aim_stats_demo_inc_input {
   attacker_steam_id: bigint
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
+  non_awp_hits: Int
+  shots_at_spotted: Int
+  spray_hits: Int
+  spray_shots: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
 }
@@ -27899,15 +27928,21 @@ input type for inserting data into table "player_aim_stats_demo"
 input player_aim_stats_demo_insert_input {
   attacker: players_obj_rel_insert_input
   attacker_steam_id: bigint
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   match: matches_obj_rel_insert_input
   match_id: uuid
   match_map: match_maps_obj_rel_insert_input
   match_map_id: uuid
+  non_awp_hits: Int
+  shots_at_spotted: Int
+  spray_hits: Int
+  spray_shots: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
 }
@@ -27915,13 +27950,19 @@ input player_aim_stats_demo_insert_input {
 """aggregate max on columns"""
 type player_aim_stats_demo_max_fields {
   attacker_steam_id: bigint
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   match_id: uuid
   match_map_id: uuid
+  non_awp_hits: Int
+  shots_at_spotted: Int
+  spray_hits: Int
+  spray_shots: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
 }
@@ -27929,13 +27970,19 @@ type player_aim_stats_demo_max_fields {
 """aggregate min on columns"""
 type player_aim_stats_demo_min_fields {
   attacker_steam_id: bigint
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   match_id: uuid
   match_map_id: uuid
+  non_awp_hits: Int
+  shots_at_spotted: Int
+  spray_hits: Int
+  spray_shots: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
 }
@@ -27964,15 +28011,21 @@ input player_aim_stats_demo_on_conflict {
 input player_aim_stats_demo_order_by {
   attacker: players_order_by
   attacker_steam_id: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   crosshair_angle_count: order_by
   crosshair_angle_sum_deg: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   match: matches_order_by
   match_id: order_by
   match_map: match_maps_order_by
   match_map_id: order_by
+  non_awp_hits: order_by
+  shots_at_spotted: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   time_to_damage_count: order_by
   time_to_damage_sum_s: order_by
 }
@@ -27991,6 +28044,9 @@ enum player_aim_stats_demo_select_column {
   attacker_steam_id
 
   """column name"""
+  counter_strafe_eligible_shots
+
+  """column name"""
   counter_strafed_shots
 
   """column name"""
@@ -28006,10 +28062,25 @@ enum player_aim_stats_demo_select_column {
   hits
 
   """column name"""
+  hits_at_spotted
+
+  """column name"""
   match_id
 
   """column name"""
   match_map_id
+
+  """column name"""
+  non_awp_hits
+
+  """column name"""
+  shots_at_spotted
+
+  """column name"""
+  spray_hits
+
+  """column name"""
+  spray_shots
 
   """column name"""
   time_to_damage_count
@@ -28023,13 +28094,19 @@ input type for updating data in table "player_aim_stats_demo"
 """
 input player_aim_stats_demo_set_input {
   attacker_steam_id: bigint
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   match_id: uuid
   match_map_id: uuid
+  non_awp_hits: Int
+  shots_at_spotted: Int
+  spray_hits: Int
+  spray_shots: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
 }
@@ -28037,11 +28114,17 @@ input player_aim_stats_demo_set_input {
 """aggregate stddev on columns"""
 type player_aim_stats_demo_stddev_fields {
   attacker_steam_id: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
+  non_awp_hits: Float
+  shots_at_spotted: Float
+  spray_hits: Float
+  spray_shots: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
 }
@@ -28049,11 +28132,17 @@ type player_aim_stats_demo_stddev_fields {
 """aggregate stddev_pop on columns"""
 type player_aim_stats_demo_stddev_pop_fields {
   attacker_steam_id: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
+  non_awp_hits: Float
+  shots_at_spotted: Float
+  spray_hits: Float
+  spray_shots: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
 }
@@ -28061,11 +28150,17 @@ type player_aim_stats_demo_stddev_pop_fields {
 """aggregate stddev_samp on columns"""
 type player_aim_stats_demo_stddev_samp_fields {
   attacker_steam_id: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
+  non_awp_hits: Float
+  shots_at_spotted: Float
+  spray_hits: Float
+  spray_shots: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
 }
@@ -28084,13 +28179,19 @@ input player_aim_stats_demo_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input player_aim_stats_demo_stream_cursor_value_input {
   attacker_steam_id: bigint
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   match_id: uuid
   match_map_id: uuid
+  non_awp_hits: Int
+  shots_at_spotted: Int
+  spray_hits: Int
+  spray_shots: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
 }
@@ -28098,11 +28199,17 @@ input player_aim_stats_demo_stream_cursor_value_input {
 """aggregate sum on columns"""
 type player_aim_stats_demo_sum_fields {
   attacker_steam_id: bigint
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
+  non_awp_hits: Int
+  shots_at_spotted: Int
+  spray_hits: Int
+  spray_shots: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
 }
@@ -28113,6 +28220,9 @@ update columns of table "player_aim_stats_demo"
 enum player_aim_stats_demo_update_column {
   """column name"""
   attacker_steam_id
+
+  """column name"""
+  counter_strafe_eligible_shots
 
   """column name"""
   counter_strafed_shots
@@ -28130,10 +28240,25 @@ enum player_aim_stats_demo_update_column {
   hits
 
   """column name"""
+  hits_at_spotted
+
+  """column name"""
   match_id
 
   """column name"""
   match_map_id
+
+  """column name"""
+  non_awp_hits
+
+  """column name"""
+  shots_at_spotted
+
+  """column name"""
+  spray_hits
+
+  """column name"""
+  spray_shots
 
   """column name"""
   time_to_damage_count
@@ -28156,11 +28281,17 @@ input player_aim_stats_demo_updates {
 """aggregate var_pop on columns"""
 type player_aim_stats_demo_var_pop_fields {
   attacker_steam_id: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
+  non_awp_hits: Float
+  shots_at_spotted: Float
+  spray_hits: Float
+  spray_shots: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
 }
@@ -28168,11 +28299,17 @@ type player_aim_stats_demo_var_pop_fields {
 """aggregate var_samp on columns"""
 type player_aim_stats_demo_var_samp_fields {
   attacker_steam_id: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
+  non_awp_hits: Float
+  shots_at_spotted: Float
+  spray_hits: Float
+  spray_shots: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
 }
@@ -28180,11 +28317,17 @@ type player_aim_stats_demo_var_samp_fields {
 """aggregate variance on columns"""
 type player_aim_stats_demo_variance_fields {
   attacker_steam_id: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
+  non_awp_hits: Float
+  shots_at_spotted: Float
+  spray_hits: Float
+  spray_shots: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
 }
@@ -32233,6 +32376,7 @@ columns and relationships of "player_match_map_stats"
 """
 type player_match_map_stats {
   assists: Int!
+  counter_strafe_eligible_shots: Int!
   counter_strafed_shots: Int!
   crosshair_angle_count: Int!
   crosshair_angle_sum_deg: numeric!
@@ -32250,6 +32394,7 @@ type player_match_map_stats {
   he_throws: Int!
   headshot_hits: Int!
   hits: Int!
+  hits_at_spotted: Int!
   hs_kills: Int!
   kills: Int!
   knife_kills: Int!
@@ -32263,14 +32408,18 @@ type player_match_map_stats {
   match_map_id: uuid!
   molotov_damage: Int!
   molotov_throws: Int!
+  non_awp_hits: Int!
 
   """An object relationship"""
   player: players!
   rounds_played: Int!
+  shots_at_spotted: Int!
   shots_fired: Int!
   smoke_throws: Int!
   spotted_count: Int!
   spotted_with_damage_count: Int!
+  spray_hits: Int!
+  spray_shots: Int!
   steam_id: bigint!
   team_damage: Int!
   team_flashed: Int!
@@ -32353,6 +32502,7 @@ input player_match_map_stats_arr_rel_insert_input {
 """aggregate avg on columns"""
 type player_match_map_stats_avg_fields {
   assists: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
@@ -32370,16 +32520,21 @@ type player_match_map_stats_avg_fields {
   he_throws: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
   hs_kills: Float
   kills: Float
   knife_kills: Float
   molotov_damage: Float
   molotov_throws: Float
+  non_awp_hits: Float
   rounds_played: Float
+  shots_at_spotted: Float
   shots_fired: Float
   smoke_throws: Float
   spotted_count: Float
   spotted_with_damage_count: Float
+  spray_hits: Float
+  spray_shots: Float
   steam_id: Float
   team_damage: Float
   team_flashed: Float
@@ -32400,6 +32555,7 @@ order by avg() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_avg_order_by {
   assists: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   crosshair_angle_count: order_by
   crosshair_angle_sum_deg: order_by
@@ -32417,16 +32573,21 @@ input player_match_map_stats_avg_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -32450,6 +32611,7 @@ input player_match_map_stats_bool_exp {
   _not: player_match_map_stats_bool_exp
   _or: [player_match_map_stats_bool_exp!]
   assists: Int_comparison_exp
+  counter_strafe_eligible_shots: Int_comparison_exp
   counter_strafed_shots: Int_comparison_exp
   crosshair_angle_count: Int_comparison_exp
   crosshair_angle_sum_deg: numeric_comparison_exp
@@ -32467,6 +32629,7 @@ input player_match_map_stats_bool_exp {
   he_throws: Int_comparison_exp
   headshot_hits: Int_comparison_exp
   hits: Int_comparison_exp
+  hits_at_spotted: Int_comparison_exp
   hs_kills: Int_comparison_exp
   kills: Int_comparison_exp
   knife_kills: Int_comparison_exp
@@ -32476,12 +32639,16 @@ input player_match_map_stats_bool_exp {
   match_map_id: uuid_comparison_exp
   molotov_damage: Int_comparison_exp
   molotov_throws: Int_comparison_exp
+  non_awp_hits: Int_comparison_exp
   player: players_bool_exp
   rounds_played: Int_comparison_exp
+  shots_at_spotted: Int_comparison_exp
   shots_fired: Int_comparison_exp
   smoke_throws: Int_comparison_exp
   spotted_count: Int_comparison_exp
   spotted_with_damage_count: Int_comparison_exp
+  spray_hits: Int_comparison_exp
+  spray_shots: Int_comparison_exp
   steam_id: bigint_comparison_exp
   team_damage: Int_comparison_exp
   team_flashed: Int_comparison_exp
@@ -32513,6 +32680,7 @@ input type for incrementing numeric columns in table "player_match_map_stats"
 """
 input player_match_map_stats_inc_input {
   assists: Int
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
@@ -32530,16 +32698,21 @@ input player_match_map_stats_inc_input {
   he_throws: Int
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   hs_kills: Int
   kills: Int
   knife_kills: Int
   molotov_damage: Int
   molotov_throws: Int
+  non_awp_hits: Int
   rounds_played: Int
+  shots_at_spotted: Int
   shots_fired: Int
   smoke_throws: Int
   spotted_count: Int
   spotted_with_damage_count: Int
+  spray_hits: Int
+  spray_shots: Int
   steam_id: bigint
   team_damage: Int
   team_flashed: Int
@@ -32560,6 +32733,7 @@ input type for inserting data into table "player_match_map_stats"
 """
 input player_match_map_stats_insert_input {
   assists: Int
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
@@ -32577,6 +32751,7 @@ input player_match_map_stats_insert_input {
   he_throws: Int
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   hs_kills: Int
   kills: Int
   knife_kills: Int
@@ -32586,12 +32761,16 @@ input player_match_map_stats_insert_input {
   match_map_id: uuid
   molotov_damage: Int
   molotov_throws: Int
+  non_awp_hits: Int
   player: players_obj_rel_insert_input
   rounds_played: Int
+  shots_at_spotted: Int
   shots_fired: Int
   smoke_throws: Int
   spotted_count: Int
   spotted_with_damage_count: Int
+  spray_hits: Int
+  spray_shots: Int
   steam_id: bigint
   team_damage: Int
   team_flashed: Int
@@ -32611,6 +32790,7 @@ input player_match_map_stats_insert_input {
 """aggregate max on columns"""
 type player_match_map_stats_max_fields {
   assists: Int
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
@@ -32628,6 +32808,7 @@ type player_match_map_stats_max_fields {
   he_throws: Int
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   hs_kills: Int
   kills: Int
   knife_kills: Int
@@ -32635,11 +32816,15 @@ type player_match_map_stats_max_fields {
   match_map_id: uuid
   molotov_damage: Int
   molotov_throws: Int
+  non_awp_hits: Int
   rounds_played: Int
+  shots_at_spotted: Int
   shots_fired: Int
   smoke_throws: Int
   spotted_count: Int
   spotted_with_damage_count: Int
+  spray_hits: Int
+  spray_shots: Int
   steam_id: bigint
   team_damage: Int
   team_flashed: Int
@@ -32661,6 +32846,7 @@ order by max() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_max_order_by {
   assists: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   crosshair_angle_count: order_by
   crosshair_angle_sum_deg: order_by
@@ -32678,6 +32864,7 @@ input player_match_map_stats_max_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
@@ -32685,11 +32872,15 @@ input player_match_map_stats_max_order_by {
   match_map_id: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -32709,6 +32900,7 @@ input player_match_map_stats_max_order_by {
 """aggregate min on columns"""
 type player_match_map_stats_min_fields {
   assists: Int
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
@@ -32726,6 +32918,7 @@ type player_match_map_stats_min_fields {
   he_throws: Int
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   hs_kills: Int
   kills: Int
   knife_kills: Int
@@ -32733,11 +32926,15 @@ type player_match_map_stats_min_fields {
   match_map_id: uuid
   molotov_damage: Int
   molotov_throws: Int
+  non_awp_hits: Int
   rounds_played: Int
+  shots_at_spotted: Int
   shots_fired: Int
   smoke_throws: Int
   spotted_count: Int
   spotted_with_damage_count: Int
+  spray_hits: Int
+  spray_shots: Int
   steam_id: bigint
   team_damage: Int
   team_flashed: Int
@@ -32759,6 +32956,7 @@ order by min() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_min_order_by {
   assists: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   crosshair_angle_count: order_by
   crosshair_angle_sum_deg: order_by
@@ -32776,6 +32974,7 @@ input player_match_map_stats_min_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
@@ -32783,11 +32982,15 @@ input player_match_map_stats_min_order_by {
   match_map_id: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -32827,6 +33030,7 @@ input player_match_map_stats_on_conflict {
 """Ordering options when selecting data from "player_match_map_stats"."""
 input player_match_map_stats_order_by {
   assists: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   crosshair_angle_count: order_by
   crosshair_angle_sum_deg: order_by
@@ -32844,6 +33048,7 @@ input player_match_map_stats_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
@@ -32853,12 +33058,16 @@ input player_match_map_stats_order_by {
   match_map_id: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   player: players_order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -32887,6 +33096,9 @@ select columns of table "player_match_map_stats"
 enum player_match_map_stats_select_column {
   """column name"""
   assists
+
+  """column name"""
+  counter_strafe_eligible_shots
 
   """column name"""
   counter_strafed_shots
@@ -32940,6 +33152,9 @@ enum player_match_map_stats_select_column {
   hits
 
   """column name"""
+  hits_at_spotted
+
+  """column name"""
   hs_kills
 
   """column name"""
@@ -32961,7 +33176,13 @@ enum player_match_map_stats_select_column {
   molotov_throws
 
   """column name"""
+  non_awp_hits
+
+  """column name"""
   rounds_played
+
+  """column name"""
+  shots_at_spotted
 
   """column name"""
   shots_fired
@@ -32974,6 +33195,12 @@ enum player_match_map_stats_select_column {
 
   """column name"""
   spotted_with_damage_count
+
+  """column name"""
+  spray_hits
+
+  """column name"""
+  spray_shots
 
   """column name"""
   steam_id
@@ -33023,6 +33250,7 @@ input type for updating data in table "player_match_map_stats"
 """
 input player_match_map_stats_set_input {
   assists: Int
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
@@ -33040,6 +33268,7 @@ input player_match_map_stats_set_input {
   he_throws: Int
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   hs_kills: Int
   kills: Int
   knife_kills: Int
@@ -33047,11 +33276,15 @@ input player_match_map_stats_set_input {
   match_map_id: uuid
   molotov_damage: Int
   molotov_throws: Int
+  non_awp_hits: Int
   rounds_played: Int
+  shots_at_spotted: Int
   shots_fired: Int
   smoke_throws: Int
   spotted_count: Int
   spotted_with_damage_count: Int
+  spray_hits: Int
+  spray_shots: Int
   steam_id: bigint
   team_damage: Int
   team_flashed: Int
@@ -33071,6 +33304,7 @@ input player_match_map_stats_set_input {
 """aggregate stddev on columns"""
 type player_match_map_stats_stddev_fields {
   assists: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
@@ -33088,16 +33322,21 @@ type player_match_map_stats_stddev_fields {
   he_throws: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
   hs_kills: Float
   kills: Float
   knife_kills: Float
   molotov_damage: Float
   molotov_throws: Float
+  non_awp_hits: Float
   rounds_played: Float
+  shots_at_spotted: Float
   shots_fired: Float
   smoke_throws: Float
   spotted_count: Float
   spotted_with_damage_count: Float
+  spray_hits: Float
+  spray_shots: Float
   steam_id: Float
   team_damage: Float
   team_flashed: Float
@@ -33118,6 +33357,7 @@ order by stddev() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_stddev_order_by {
   assists: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   crosshair_angle_count: order_by
   crosshair_angle_sum_deg: order_by
@@ -33135,16 +33375,21 @@ input player_match_map_stats_stddev_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -33163,6 +33408,7 @@ input player_match_map_stats_stddev_order_by {
 """aggregate stddev_pop on columns"""
 type player_match_map_stats_stddev_pop_fields {
   assists: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
@@ -33180,16 +33426,21 @@ type player_match_map_stats_stddev_pop_fields {
   he_throws: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
   hs_kills: Float
   kills: Float
   knife_kills: Float
   molotov_damage: Float
   molotov_throws: Float
+  non_awp_hits: Float
   rounds_played: Float
+  shots_at_spotted: Float
   shots_fired: Float
   smoke_throws: Float
   spotted_count: Float
   spotted_with_damage_count: Float
+  spray_hits: Float
+  spray_shots: Float
   steam_id: Float
   team_damage: Float
   team_flashed: Float
@@ -33210,6 +33461,7 @@ order by stddev_pop() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_stddev_pop_order_by {
   assists: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   crosshair_angle_count: order_by
   crosshair_angle_sum_deg: order_by
@@ -33227,16 +33479,21 @@ input player_match_map_stats_stddev_pop_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -33255,6 +33512,7 @@ input player_match_map_stats_stddev_pop_order_by {
 """aggregate stddev_samp on columns"""
 type player_match_map_stats_stddev_samp_fields {
   assists: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
@@ -33272,16 +33530,21 @@ type player_match_map_stats_stddev_samp_fields {
   he_throws: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
   hs_kills: Float
   kills: Float
   knife_kills: Float
   molotov_damage: Float
   molotov_throws: Float
+  non_awp_hits: Float
   rounds_played: Float
+  shots_at_spotted: Float
   shots_fired: Float
   smoke_throws: Float
   spotted_count: Float
   spotted_with_damage_count: Float
+  spray_hits: Float
+  spray_shots: Float
   steam_id: Float
   team_damage: Float
   team_flashed: Float
@@ -33302,6 +33565,7 @@ order by stddev_samp() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_stddev_samp_order_by {
   assists: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   crosshair_angle_count: order_by
   crosshair_angle_sum_deg: order_by
@@ -33319,16 +33583,21 @@ input player_match_map_stats_stddev_samp_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -33358,6 +33627,7 @@ input player_match_map_stats_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input player_match_map_stats_stream_cursor_value_input {
   assists: Int
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
@@ -33375,6 +33645,7 @@ input player_match_map_stats_stream_cursor_value_input {
   he_throws: Int
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   hs_kills: Int
   kills: Int
   knife_kills: Int
@@ -33382,11 +33653,15 @@ input player_match_map_stats_stream_cursor_value_input {
   match_map_id: uuid
   molotov_damage: Int
   molotov_throws: Int
+  non_awp_hits: Int
   rounds_played: Int
+  shots_at_spotted: Int
   shots_fired: Int
   smoke_throws: Int
   spotted_count: Int
   spotted_with_damage_count: Int
+  spray_hits: Int
+  spray_shots: Int
   steam_id: bigint
   team_damage: Int
   team_flashed: Int
@@ -33406,6 +33681,7 @@ input player_match_map_stats_stream_cursor_value_input {
 """aggregate sum on columns"""
 type player_match_map_stats_sum_fields {
   assists: Int
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
@@ -33423,16 +33699,21 @@ type player_match_map_stats_sum_fields {
   he_throws: Int
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   hs_kills: Int
   kills: Int
   knife_kills: Int
   molotov_damage: Int
   molotov_throws: Int
+  non_awp_hits: Int
   rounds_played: Int
+  shots_at_spotted: Int
   shots_fired: Int
   smoke_throws: Int
   spotted_count: Int
   spotted_with_damage_count: Int
+  spray_hits: Int
+  spray_shots: Int
   steam_id: bigint
   team_damage: Int
   team_flashed: Int
@@ -33453,6 +33734,7 @@ order by sum() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_sum_order_by {
   assists: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   crosshair_angle_count: order_by
   crosshair_angle_sum_deg: order_by
@@ -33470,16 +33752,21 @@ input player_match_map_stats_sum_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -33501,6 +33788,9 @@ update columns of table "player_match_map_stats"
 enum player_match_map_stats_update_column {
   """column name"""
   assists
+
+  """column name"""
+  counter_strafe_eligible_shots
 
   """column name"""
   counter_strafed_shots
@@ -33554,6 +33844,9 @@ enum player_match_map_stats_update_column {
   hits
 
   """column name"""
+  hits_at_spotted
+
+  """column name"""
   hs_kills
 
   """column name"""
@@ -33575,7 +33868,13 @@ enum player_match_map_stats_update_column {
   molotov_throws
 
   """column name"""
+  non_awp_hits
+
+  """column name"""
   rounds_played
+
+  """column name"""
+  shots_at_spotted
 
   """column name"""
   shots_fired
@@ -33588,6 +33887,12 @@ enum player_match_map_stats_update_column {
 
   """column name"""
   spotted_with_damage_count
+
+  """column name"""
+  spray_hits
+
+  """column name"""
+  spray_shots
 
   """column name"""
   steam_id
@@ -33646,6 +33951,7 @@ input player_match_map_stats_updates {
 """aggregate var_pop on columns"""
 type player_match_map_stats_var_pop_fields {
   assists: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
@@ -33663,16 +33969,21 @@ type player_match_map_stats_var_pop_fields {
   he_throws: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
   hs_kills: Float
   kills: Float
   knife_kills: Float
   molotov_damage: Float
   molotov_throws: Float
+  non_awp_hits: Float
   rounds_played: Float
+  shots_at_spotted: Float
   shots_fired: Float
   smoke_throws: Float
   spotted_count: Float
   spotted_with_damage_count: Float
+  spray_hits: Float
+  spray_shots: Float
   steam_id: Float
   team_damage: Float
   team_flashed: Float
@@ -33693,6 +34004,7 @@ order by var_pop() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_var_pop_order_by {
   assists: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   crosshair_angle_count: order_by
   crosshair_angle_sum_deg: order_by
@@ -33710,16 +34022,21 @@ input player_match_map_stats_var_pop_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -33738,6 +34055,7 @@ input player_match_map_stats_var_pop_order_by {
 """aggregate var_samp on columns"""
 type player_match_map_stats_var_samp_fields {
   assists: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
@@ -33755,16 +34073,21 @@ type player_match_map_stats_var_samp_fields {
   he_throws: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
   hs_kills: Float
   kills: Float
   knife_kills: Float
   molotov_damage: Float
   molotov_throws: Float
+  non_awp_hits: Float
   rounds_played: Float
+  shots_at_spotted: Float
   shots_fired: Float
   smoke_throws: Float
   spotted_count: Float
   spotted_with_damage_count: Float
+  spray_hits: Float
+  spray_shots: Float
   steam_id: Float
   team_damage: Float
   team_flashed: Float
@@ -33785,6 +34108,7 @@ order by var_samp() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_var_samp_order_by {
   assists: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   crosshair_angle_count: order_by
   crosshair_angle_sum_deg: order_by
@@ -33802,16 +34126,21 @@ input player_match_map_stats_var_samp_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -33830,6 +34159,7 @@ input player_match_map_stats_var_samp_order_by {
 """aggregate variance on columns"""
 type player_match_map_stats_variance_fields {
   assists: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
@@ -33847,16 +34177,21 @@ type player_match_map_stats_variance_fields {
   he_throws: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
   hs_kills: Float
   kills: Float
   knife_kills: Float
   molotov_damage: Float
   molotov_throws: Float
+  non_awp_hits: Float
   rounds_played: Float
+  shots_at_spotted: Float
   shots_fired: Float
   smoke_throws: Float
   spotted_count: Float
   spotted_with_damage_count: Float
+  spray_hits: Float
+  spray_shots: Float
   steam_id: Float
   team_damage: Float
   team_flashed: Float
@@ -33877,6 +34212,7 @@ order by variance() on columns of table "player_match_map_stats"
 """
 input player_match_map_stats_variance_order_by {
   assists: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   crosshair_angle_count: order_by
   crosshair_angle_sum_deg: order_by
@@ -33894,16 +34230,21 @@ input player_match_map_stats_variance_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -33927,6 +34268,7 @@ type player_match_stats_v {
   avg_crosshair_angle_deg: numeric
   avg_flash_duration: numeric
   avg_time_to_damage_s: numeric
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   damage: Int
   deaths: Int
@@ -33940,17 +34282,22 @@ type player_match_stats_v {
   he_throws: Int
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   hs_kills: Int
   kills: Int
   knife_kills: Int
   match_id: uuid
   molotov_damage: Int
   molotov_throws: Int
+  non_awp_hits: Int
   rounds_played: Int
+  shots_at_spotted: Int
   shots_fired: Int
   smoke_throws: Int
   spotted_count: Int
   spotted_with_damage_count: Int
+  spray_hits: Int
+  spray_shots: Int
   steam_id: bigint
   team_damage: Int
   team_flashed: Int
@@ -34030,6 +34377,7 @@ type player_match_stats_v_avg_fields {
   avg_crosshair_angle_deg: Float
   avg_flash_duration: Float
   avg_time_to_damage_s: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   damage: Float
   deaths: Float
@@ -34043,16 +34391,21 @@ type player_match_stats_v_avg_fields {
   he_throws: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
   hs_kills: Float
   kills: Float
   knife_kills: Float
   molotov_damage: Float
   molotov_throws: Float
+  non_awp_hits: Float
   rounds_played: Float
+  shots_at_spotted: Float
   shots_fired: Float
   smoke_throws: Float
   spotted_count: Float
   spotted_with_damage_count: Float
+  spray_hits: Float
+  spray_shots: Float
   steam_id: Float
   team_damage: Float
   team_flashed: Float
@@ -34074,6 +34427,7 @@ input player_match_stats_v_avg_order_by {
   avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
@@ -34087,16 +34441,21 @@ input player_match_stats_v_avg_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -34121,6 +34480,7 @@ input player_match_stats_v_bool_exp {
   avg_crosshair_angle_deg: numeric_comparison_exp
   avg_flash_duration: numeric_comparison_exp
   avg_time_to_damage_s: numeric_comparison_exp
+  counter_strafe_eligible_shots: Int_comparison_exp
   counter_strafed_shots: Int_comparison_exp
   damage: Int_comparison_exp
   deaths: Int_comparison_exp
@@ -34134,17 +34494,22 @@ input player_match_stats_v_bool_exp {
   he_throws: Int_comparison_exp
   headshot_hits: Int_comparison_exp
   hits: Int_comparison_exp
+  hits_at_spotted: Int_comparison_exp
   hs_kills: Int_comparison_exp
   kills: Int_comparison_exp
   knife_kills: Int_comparison_exp
   match_id: uuid_comparison_exp
   molotov_damage: Int_comparison_exp
   molotov_throws: Int_comparison_exp
+  non_awp_hits: Int_comparison_exp
   rounds_played: Int_comparison_exp
+  shots_at_spotted: Int_comparison_exp
   shots_fired: Int_comparison_exp
   smoke_throws: Int_comparison_exp
   spotted_count: Int_comparison_exp
   spotted_with_damage_count: Int_comparison_exp
+  spray_hits: Int_comparison_exp
+  spray_shots: Int_comparison_exp
   steam_id: bigint_comparison_exp
   team_damage: Int_comparison_exp
   team_flashed: Int_comparison_exp
@@ -34166,6 +34531,7 @@ input player_match_stats_v_insert_input {
   avg_crosshair_angle_deg: numeric
   avg_flash_duration: numeric
   avg_time_to_damage_s: numeric
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   damage: Int
   deaths: Int
@@ -34179,17 +34545,22 @@ input player_match_stats_v_insert_input {
   he_throws: Int
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   hs_kills: Int
   kills: Int
   knife_kills: Int
   match_id: uuid
   molotov_damage: Int
   molotov_throws: Int
+  non_awp_hits: Int
   rounds_played: Int
+  shots_at_spotted: Int
   shots_fired: Int
   smoke_throws: Int
   spotted_count: Int
   spotted_with_damage_count: Int
+  spray_hits: Int
+  spray_shots: Int
   steam_id: bigint
   team_damage: Int
   team_flashed: Int
@@ -34209,6 +34580,7 @@ type player_match_stats_v_max_fields {
   avg_crosshair_angle_deg: numeric
   avg_flash_duration: numeric
   avg_time_to_damage_s: numeric
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   damage: Int
   deaths: Int
@@ -34222,17 +34594,22 @@ type player_match_stats_v_max_fields {
   he_throws: Int
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   hs_kills: Int
   kills: Int
   knife_kills: Int
   match_id: uuid
   molotov_damage: Int
   molotov_throws: Int
+  non_awp_hits: Int
   rounds_played: Int
+  shots_at_spotted: Int
   shots_fired: Int
   smoke_throws: Int
   spotted_count: Int
   spotted_with_damage_count: Int
+  spray_hits: Int
+  spray_shots: Int
   steam_id: bigint
   team_damage: Int
   team_flashed: Int
@@ -34254,6 +34631,7 @@ input player_match_stats_v_max_order_by {
   avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
@@ -34267,17 +34645,22 @@ input player_match_stats_v_max_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   match_id: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -34297,6 +34680,7 @@ type player_match_stats_v_min_fields {
   avg_crosshair_angle_deg: numeric
   avg_flash_duration: numeric
   avg_time_to_damage_s: numeric
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   damage: Int
   deaths: Int
@@ -34310,17 +34694,22 @@ type player_match_stats_v_min_fields {
   he_throws: Int
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   hs_kills: Int
   kills: Int
   knife_kills: Int
   match_id: uuid
   molotov_damage: Int
   molotov_throws: Int
+  non_awp_hits: Int
   rounds_played: Int
+  shots_at_spotted: Int
   shots_fired: Int
   smoke_throws: Int
   spotted_count: Int
   spotted_with_damage_count: Int
+  spray_hits: Int
+  spray_shots: Int
   steam_id: bigint
   team_damage: Int
   team_flashed: Int
@@ -34342,6 +34731,7 @@ input player_match_stats_v_min_order_by {
   avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
@@ -34355,17 +34745,22 @@ input player_match_stats_v_min_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   match_id: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -34385,6 +34780,7 @@ input player_match_stats_v_order_by {
   avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
@@ -34398,17 +34794,22 @@ input player_match_stats_v_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   match_id: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -34437,6 +34838,9 @@ enum player_match_stats_v_select_column {
 
   """column name"""
   avg_time_to_damage_s
+
+  """column name"""
+  counter_strafe_eligible_shots
 
   """column name"""
   counter_strafed_shots
@@ -34478,6 +34882,9 @@ enum player_match_stats_v_select_column {
   hits
 
   """column name"""
+  hits_at_spotted
+
+  """column name"""
   hs_kills
 
   """column name"""
@@ -34496,7 +34903,13 @@ enum player_match_stats_v_select_column {
   molotov_throws
 
   """column name"""
+  non_awp_hits
+
+  """column name"""
   rounds_played
+
+  """column name"""
+  shots_at_spotted
 
   """column name"""
   shots_fired
@@ -34509,6 +34922,12 @@ enum player_match_stats_v_select_column {
 
   """column name"""
   spotted_with_damage_count
+
+  """column name"""
+  spray_hits
+
+  """column name"""
+  spray_shots
 
   """column name"""
   steam_id
@@ -34550,6 +34969,7 @@ type player_match_stats_v_stddev_fields {
   avg_crosshair_angle_deg: Float
   avg_flash_duration: Float
   avg_time_to_damage_s: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   damage: Float
   deaths: Float
@@ -34563,16 +34983,21 @@ type player_match_stats_v_stddev_fields {
   he_throws: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
   hs_kills: Float
   kills: Float
   knife_kills: Float
   molotov_damage: Float
   molotov_throws: Float
+  non_awp_hits: Float
   rounds_played: Float
+  shots_at_spotted: Float
   shots_fired: Float
   smoke_throws: Float
   spotted_count: Float
   spotted_with_damage_count: Float
+  spray_hits: Float
+  spray_shots: Float
   steam_id: Float
   team_damage: Float
   team_flashed: Float
@@ -34594,6 +35019,7 @@ input player_match_stats_v_stddev_order_by {
   avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
@@ -34607,16 +35033,21 @@ input player_match_stats_v_stddev_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -34636,6 +35067,7 @@ type player_match_stats_v_stddev_pop_fields {
   avg_crosshair_angle_deg: Float
   avg_flash_duration: Float
   avg_time_to_damage_s: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   damage: Float
   deaths: Float
@@ -34649,16 +35081,21 @@ type player_match_stats_v_stddev_pop_fields {
   he_throws: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
   hs_kills: Float
   kills: Float
   knife_kills: Float
   molotov_damage: Float
   molotov_throws: Float
+  non_awp_hits: Float
   rounds_played: Float
+  shots_at_spotted: Float
   shots_fired: Float
   smoke_throws: Float
   spotted_count: Float
   spotted_with_damage_count: Float
+  spray_hits: Float
+  spray_shots: Float
   steam_id: Float
   team_damage: Float
   team_flashed: Float
@@ -34680,6 +35117,7 @@ input player_match_stats_v_stddev_pop_order_by {
   avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
@@ -34693,16 +35131,21 @@ input player_match_stats_v_stddev_pop_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -34722,6 +35165,7 @@ type player_match_stats_v_stddev_samp_fields {
   avg_crosshair_angle_deg: Float
   avg_flash_duration: Float
   avg_time_to_damage_s: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   damage: Float
   deaths: Float
@@ -34735,16 +35179,21 @@ type player_match_stats_v_stddev_samp_fields {
   he_throws: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
   hs_kills: Float
   kills: Float
   knife_kills: Float
   molotov_damage: Float
   molotov_throws: Float
+  non_awp_hits: Float
   rounds_played: Float
+  shots_at_spotted: Float
   shots_fired: Float
   smoke_throws: Float
   spotted_count: Float
   spotted_with_damage_count: Float
+  spray_hits: Float
+  spray_shots: Float
   steam_id: Float
   team_damage: Float
   team_flashed: Float
@@ -34766,6 +35215,7 @@ input player_match_stats_v_stddev_samp_order_by {
   avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
@@ -34779,16 +35229,21 @@ input player_match_stats_v_stddev_samp_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -34819,6 +35274,7 @@ input player_match_stats_v_stream_cursor_value_input {
   avg_crosshair_angle_deg: numeric
   avg_flash_duration: numeric
   avg_time_to_damage_s: numeric
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   damage: Int
   deaths: Int
@@ -34832,17 +35288,22 @@ input player_match_stats_v_stream_cursor_value_input {
   he_throws: Int
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   hs_kills: Int
   kills: Int
   knife_kills: Int
   match_id: uuid
   molotov_damage: Int
   molotov_throws: Int
+  non_awp_hits: Int
   rounds_played: Int
+  shots_at_spotted: Int
   shots_fired: Int
   smoke_throws: Int
   spotted_count: Int
   spotted_with_damage_count: Int
+  spray_hits: Int
+  spray_shots: Int
   steam_id: bigint
   team_damage: Int
   team_flashed: Int
@@ -34862,6 +35323,7 @@ type player_match_stats_v_sum_fields {
   avg_crosshair_angle_deg: numeric
   avg_flash_duration: numeric
   avg_time_to_damage_s: numeric
+  counter_strafe_eligible_shots: Int
   counter_strafed_shots: Int
   damage: Int
   deaths: Int
@@ -34875,16 +35337,21 @@ type player_match_stats_v_sum_fields {
   he_throws: Int
   headshot_hits: Int
   hits: Int
+  hits_at_spotted: Int
   hs_kills: Int
   kills: Int
   knife_kills: Int
   molotov_damage: Int
   molotov_throws: Int
+  non_awp_hits: Int
   rounds_played: Int
+  shots_at_spotted: Int
   shots_fired: Int
   smoke_throws: Int
   spotted_count: Int
   spotted_with_damage_count: Int
+  spray_hits: Int
+  spray_shots: Int
   steam_id: bigint
   team_damage: Int
   team_flashed: Int
@@ -34906,6 +35373,7 @@ input player_match_stats_v_sum_order_by {
   avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
@@ -34919,16 +35387,21 @@ input player_match_stats_v_sum_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -34948,6 +35421,7 @@ type player_match_stats_v_var_pop_fields {
   avg_crosshair_angle_deg: Float
   avg_flash_duration: Float
   avg_time_to_damage_s: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   damage: Float
   deaths: Float
@@ -34961,16 +35435,21 @@ type player_match_stats_v_var_pop_fields {
   he_throws: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
   hs_kills: Float
   kills: Float
   knife_kills: Float
   molotov_damage: Float
   molotov_throws: Float
+  non_awp_hits: Float
   rounds_played: Float
+  shots_at_spotted: Float
   shots_fired: Float
   smoke_throws: Float
   spotted_count: Float
   spotted_with_damage_count: Float
+  spray_hits: Float
+  spray_shots: Float
   steam_id: Float
   team_damage: Float
   team_flashed: Float
@@ -34992,6 +35471,7 @@ input player_match_stats_v_var_pop_order_by {
   avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
@@ -35005,16 +35485,21 @@ input player_match_stats_v_var_pop_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -35034,6 +35519,7 @@ type player_match_stats_v_var_samp_fields {
   avg_crosshair_angle_deg: Float
   avg_flash_duration: Float
   avg_time_to_damage_s: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   damage: Float
   deaths: Float
@@ -35047,16 +35533,21 @@ type player_match_stats_v_var_samp_fields {
   he_throws: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
   hs_kills: Float
   kills: Float
   knife_kills: Float
   molotov_damage: Float
   molotov_throws: Float
+  non_awp_hits: Float
   rounds_played: Float
+  shots_at_spotted: Float
   shots_fired: Float
   smoke_throws: Float
   spotted_count: Float
   spotted_with_damage_count: Float
+  spray_hits: Float
+  spray_shots: Float
   steam_id: Float
   team_damage: Float
   team_flashed: Float
@@ -35078,6 +35569,7 @@ input player_match_stats_v_var_samp_order_by {
   avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
@@ -35091,16 +35583,21 @@ input player_match_stats_v_var_samp_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -35120,6 +35617,7 @@ type player_match_stats_v_variance_fields {
   avg_crosshair_angle_deg: Float
   avg_flash_duration: Float
   avg_time_to_damage_s: Float
+  counter_strafe_eligible_shots: Float
   counter_strafed_shots: Float
   damage: Float
   deaths: Float
@@ -35133,16 +35631,21 @@ type player_match_stats_v_variance_fields {
   he_throws: Float
   headshot_hits: Float
   hits: Float
+  hits_at_spotted: Float
   hs_kills: Float
   kills: Float
   knife_kills: Float
   molotov_damage: Float
   molotov_throws: Float
+  non_awp_hits: Float
   rounds_played: Float
+  shots_at_spotted: Float
   shots_fired: Float
   smoke_throws: Float
   spotted_count: Float
   spotted_with_damage_count: Float
+  spray_hits: Float
+  spray_shots: Float
   steam_id: Float
   team_damage: Float
   team_flashed: Float
@@ -35164,6 +35667,7 @@ input player_match_stats_v_variance_order_by {
   avg_crosshair_angle_deg: order_by
   avg_flash_duration: order_by
   avg_time_to_damage_s: order_by
+  counter_strafe_eligible_shots: order_by
   counter_strafed_shots: order_by
   damage: order_by
   deaths: order_by
@@ -35177,16 +35681,21 @@ input player_match_stats_v_variance_order_by {
   he_throws: order_by
   headshot_hits: order_by
   hits: order_by
+  hits_at_spotted: order_by
   hs_kills: order_by
   kills: order_by
   knife_kills: order_by
   molotov_damage: order_by
   molotov_throws: order_by
+  non_awp_hits: order_by
   rounds_played: order_by
+  shots_at_spotted: order_by
   shots_fired: order_by
   smoke_throws: order_by
   spotted_count: order_by
   spotted_with_damage_count: order_by
+  spray_hits: order_by
+  spray_shots: order_by
   steam_id: order_by
   team_damage: order_by
   team_flashed: order_by
@@ -56291,6 +56800,7 @@ type tournament_teams {
     where: tournament_team_roster_bool_exp
   ): tournament_team_roster_aggregate!
   seed: Int
+  short_name: String
 
   """An object relationship"""
   team: teams
@@ -56402,6 +56912,7 @@ input tournament_teams_bool_exp {
   roster: tournament_team_roster_bool_exp
   roster_aggregate: tournament_team_roster_aggregate_bool_exp
   seed: Int_comparison_exp
+  short_name: String_comparison_exp
   team: teams_bool_exp
   team_id: uuid_comparison_exp
   tournament: tournaments_bool_exp
@@ -56463,6 +56974,7 @@ input tournament_teams_insert_input {
   results: v_team_stage_results_obj_rel_insert_input
   roster: tournament_team_roster_arr_rel_insert_input
   seed: Int
+  short_name: String
   team: teams_obj_rel_insert_input
   team_id: uuid
   tournament: tournaments_obj_rel_insert_input
@@ -56478,6 +56990,7 @@ type tournament_teams_max_fields {
   name: String
   owner_steam_id: bigint
   seed: Int
+  short_name: String
   team_id: uuid
   tournament_id: uuid
 }
@@ -56493,6 +57006,7 @@ input tournament_teams_max_order_by {
   name: order_by
   owner_steam_id: order_by
   seed: order_by
+  short_name: order_by
   team_id: order_by
   tournament_id: order_by
 }
@@ -56506,6 +57020,7 @@ type tournament_teams_min_fields {
   name: String
   owner_steam_id: bigint
   seed: Int
+  short_name: String
   team_id: uuid
   tournament_id: uuid
 }
@@ -56521,6 +57036,7 @@ input tournament_teams_min_order_by {
   name: order_by
   owner_steam_id: order_by
   seed: order_by
+  short_name: order_by
   team_id: order_by
   tournament_id: order_by
 }
@@ -56570,6 +57086,7 @@ input tournament_teams_order_by {
   results: v_team_stage_results_order_by
   roster_aggregate: tournament_team_roster_aggregate_order_by
   seed: order_by
+  short_name: order_by
   team: teams_order_by
   team_id: order_by
   tournament: tournaments_order_by
@@ -56607,6 +57124,9 @@ enum tournament_teams_select_column {
   seed
 
   """column name"""
+  short_name
+
+  """column name"""
   team_id
 
   """column name"""
@@ -56624,6 +57144,7 @@ input tournament_teams_set_input {
   name: String
   owner_steam_id: bigint
   seed: Int
+  short_name: String
   team_id: uuid
   tournament_id: uuid
 }
@@ -56696,6 +57217,7 @@ input tournament_teams_stream_cursor_value_input {
   name: String
   owner_steam_id: bigint
   seed: Int
+  short_name: String
   team_id: uuid
   tournament_id: uuid
 }
@@ -56740,6 +57262,9 @@ enum tournament_teams_update_column {
 
   """column name"""
   seed
+
+  """column name"""
+  short_name
 
   """column name"""
   team_id
@@ -59113,6 +59638,7 @@ type v_gpu_pool_status {
   highlights_in_progress: Boolean
   id: Int
   live_in_progress: Boolean
+  registered_gpu_nodes: Int
   total_gpu_nodes: Int
 }
 
@@ -59145,6 +59671,7 @@ type v_gpu_pool_status_aggregate_fields {
 type v_gpu_pool_status_avg_fields {
   free_gpu_nodes: Float
   id: Float
+  registered_gpu_nodes: Float
   total_gpu_nodes: Float
 }
 
@@ -59160,6 +59687,7 @@ input v_gpu_pool_status_bool_exp {
   highlights_in_progress: Boolean_comparison_exp
   id: Int_comparison_exp
   live_in_progress: Boolean_comparison_exp
+  registered_gpu_nodes: Int_comparison_exp
   total_gpu_nodes: Int_comparison_exp
 }
 
@@ -59167,6 +59695,7 @@ input v_gpu_pool_status_bool_exp {
 type v_gpu_pool_status_max_fields {
   free_gpu_nodes: Int
   id: Int
+  registered_gpu_nodes: Int
   total_gpu_nodes: Int
 }
 
@@ -59174,6 +59703,7 @@ type v_gpu_pool_status_max_fields {
 type v_gpu_pool_status_min_fields {
   free_gpu_nodes: Int
   id: Int
+  registered_gpu_nodes: Int
   total_gpu_nodes: Int
 }
 
@@ -59184,6 +59714,7 @@ input v_gpu_pool_status_order_by {
   highlights_in_progress: order_by
   id: order_by
   live_in_progress: order_by
+  registered_gpu_nodes: order_by
   total_gpu_nodes: order_by
 }
 
@@ -59207,6 +59738,9 @@ enum v_gpu_pool_status_select_column {
   live_in_progress
 
   """column name"""
+  registered_gpu_nodes
+
+  """column name"""
   total_gpu_nodes
 }
 
@@ -59214,6 +59748,7 @@ enum v_gpu_pool_status_select_column {
 type v_gpu_pool_status_stddev_fields {
   free_gpu_nodes: Float
   id: Float
+  registered_gpu_nodes: Float
   total_gpu_nodes: Float
 }
 
@@ -59221,6 +59756,7 @@ type v_gpu_pool_status_stddev_fields {
 type v_gpu_pool_status_stddev_pop_fields {
   free_gpu_nodes: Float
   id: Float
+  registered_gpu_nodes: Float
   total_gpu_nodes: Float
 }
 
@@ -59228,6 +59764,7 @@ type v_gpu_pool_status_stddev_pop_fields {
 type v_gpu_pool_status_stddev_samp_fields {
   free_gpu_nodes: Float
   id: Float
+  registered_gpu_nodes: Float
   total_gpu_nodes: Float
 }
 
@@ -59249,6 +59786,7 @@ input v_gpu_pool_status_stream_cursor_value_input {
   highlights_in_progress: Boolean
   id: Int
   live_in_progress: Boolean
+  registered_gpu_nodes: Int
   total_gpu_nodes: Int
 }
 
@@ -59256,6 +59794,7 @@ input v_gpu_pool_status_stream_cursor_value_input {
 type v_gpu_pool_status_sum_fields {
   free_gpu_nodes: Int
   id: Int
+  registered_gpu_nodes: Int
   total_gpu_nodes: Int
 }
 
@@ -59263,6 +59802,7 @@ type v_gpu_pool_status_sum_fields {
 type v_gpu_pool_status_var_pop_fields {
   free_gpu_nodes: Float
   id: Float
+  registered_gpu_nodes: Float
   total_gpu_nodes: Float
 }
 
@@ -59270,6 +59810,7 @@ type v_gpu_pool_status_var_pop_fields {
 type v_gpu_pool_status_var_samp_fields {
   free_gpu_nodes: Float
   id: Float
+  registered_gpu_nodes: Float
   total_gpu_nodes: Float
 }
 
@@ -59277,6 +59818,7 @@ type v_gpu_pool_status_var_samp_fields {
 type v_gpu_pool_status_variance_fields {
   free_gpu_nodes: Float
   id: Float
+  registered_gpu_nodes: Float
   total_gpu_nodes: Float
 }
 

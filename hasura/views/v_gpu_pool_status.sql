@@ -22,4 +22,8 @@ select
   exists (
     select 1 from clip_render_jobs
      where status in ('queued', 'rendering', 'uploading')
-  ) as highlights_in_progress;
+  ) as highlights_in_progress,
+  (select count(*)::int
+     from game_server_nodes
+    where gpu = true
+      and enabled = true) as registered_gpu_nodes;

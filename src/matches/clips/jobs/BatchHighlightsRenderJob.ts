@@ -17,7 +17,7 @@ import { HasuraService } from "../../../hasura/hasura.service";
 import { IN_FLIGHT_STATUSES } from "../clips.constants";
 
 const CHECK_DELAY_MS = 10_000;
-const GPU_BUSY_RETRY_MS = 30_000;
+const GPU_BUSY_RETRY_MS = 60_000;
 
 @UseQueue("Clips", MatchQueues.Clips, {
   concurrency: 1,
@@ -63,7 +63,7 @@ export class BatchHighlightsRenderJob extends WorkerHost {
         );
       } catch (error) {
         if (error instanceof NoGpuAvailableError) {
-          this.logger.log(
+          this.logger.debug(
             `${tag} no GPU free, retrying in ${GPU_BUSY_RETRY_MS / 1000}s`,
           );
           return this.delayUntilNext(job, GPU_BUSY_RETRY_MS);
