@@ -22998,6 +22998,9 @@ export default {
             ]
         },
         "match_maps": {
+            "clips_count": [
+                30
+            ],
             "created_at": [
                 2579
             ],
@@ -23107,6 +23110,9 @@ export default {
             "is_current_map": [
                 3
             ],
+            "latest_clip_at": [
+                2579
+            ],
             "lineup_1_score": [
                 30
             ],
@@ -23133,6 +23139,50 @@ export default {
             ],
             "match": [
                 1503
+            ],
+            "match_clips": [
+                1013,
+                {
+                    "distinct_on": [
+                        1035,
+                        "[match_clips_select_column!]"
+                    ],
+                    "limit": [
+                        30
+                    ],
+                    "offset": [
+                        30
+                    ],
+                    "order_by": [
+                        1033,
+                        "[match_clips_order_by!]"
+                    ],
+                    "where": [
+                        1022
+                    ]
+                }
+            ],
+            "match_clips_aggregate": [
+                1014,
+                {
+                    "distinct_on": [
+                        1035,
+                        "[match_clips_select_column!]"
+                    ],
+                    "limit": [
+                        30
+                    ],
+                    "offset": [
+                        30
+                    ],
+                    "order_by": [
+                        1033,
+                        "[match_clips_order_by!]"
+                    ],
+                    "where": [
+                        1022
+                    ]
+                }
             ],
             "match_id": [
                 2976
@@ -23359,6 +23409,12 @@ export default {
                         2230
                     ]
                 }
+            ],
+            "public_clips_count": [
+                30
+            ],
+            "public_latest_clip_at": [
+                2579
             ],
             "rounds": [
                 1276,
@@ -23638,6 +23694,9 @@ export default {
             ]
         },
         "match_maps_avg_fields": {
+            "clips_count": [
+                22
+            ],
             "demos_total_size": [
                 30
             ],
@@ -23656,11 +23715,17 @@ export default {
             "order": [
                 22
             ],
+            "public_clips_count": [
+                22
+            ],
             "__typename": [
                 48
             ]
         },
         "match_maps_avg_order_by": {
+            "clips_count": [
+                1661
+            ],
             "lineup_1_timeouts_available": [
                 1661
             ],
@@ -23668,6 +23733,9 @@ export default {
                 1661
             ],
             "order": [
+                1661
+            ],
+            "public_clips_count": [
                 1661
             ],
             "__typename": [
@@ -23683,6 +23751,9 @@ export default {
             ],
             "_or": [
                 1350
+            ],
+            "clips_count": [
+                31
             ],
             "created_at": [
                 2580
@@ -23717,6 +23788,9 @@ export default {
             "is_current_map": [
                 4
             ],
+            "latest_clip_at": [
+                2580
+            ],
             "lineup_1_score": [
                 31
             ],
@@ -23743,6 +23817,12 @@ export default {
             ],
             "match": [
                 1512
+            ],
+            "match_clips": [
+                1022
+            ],
+            "match_clips_aggregate": [
+                1015
             ],
             "match_id": [
                 2977
@@ -23780,6 +23860,12 @@ export default {
             "player_unused_utilities_aggregate": [
                 2223
             ],
+            "public_clips_count": [
+                31
+            ],
+            "public_latest_clip_at": [
+                2580
+            ],
             "rounds": [
                 1285
             ],
@@ -23813,6 +23899,9 @@ export default {
         },
         "match_maps_constraint": {},
         "match_maps_inc_input": {
+            "clips_count": [
+                30
+            ],
             "lineup_1_timeouts_available": [
                 30
             ],
@@ -23822,11 +23911,17 @@ export default {
             "order": [
                 30
             ],
+            "public_clips_count": [
+                30
+            ],
             "__typename": [
                 48
             ]
         },
         "match_maps_insert_input": {
+            "clips_count": [
+                30
+            ],
             "created_at": [
                 2579
             ],
@@ -23844,6 +23939,9 @@ export default {
             ],
             "id": [
                 2976
+            ],
+            "latest_clip_at": [
+                2579
             ],
             "lineup_1_side": [
                 578
@@ -23866,6 +23964,9 @@ export default {
             "match": [
                 1521
             ],
+            "match_clips": [
+                1019
+            ],
             "match_id": [
                 2976
             ],
@@ -23886,6 +23987,12 @@ export default {
             ],
             "player_unused_utilities": [
                 2227
+            ],
+            "public_clips_count": [
+                30
+            ],
+            "public_latest_clip_at": [
+                2579
             ],
             "rounds": [
                 1282
@@ -23910,6 +24017,9 @@ export default {
             ]
         },
         "match_maps_max_fields": {
+            "clips_count": [
+                30
+            ],
             "created_at": [
                 2579
             ],
@@ -23924,6 +24034,9 @@ export default {
             ],
             "id": [
                 2976
+            ],
+            "latest_clip_at": [
+                2579
             ],
             "lineup_1_score": [
                 30
@@ -23946,6 +24059,12 @@ export default {
             "order": [
                 30
             ],
+            "public_clips_count": [
+                30
+            ],
+            "public_latest_clip_at": [
+                2579
+            ],
             "started_at": [
                 2579
             ],
@@ -23957,6 +24076,9 @@ export default {
             ]
         },
         "match_maps_max_order_by": {
+            "clips_count": [
+                1661
+            ],
             "created_at": [
                 1661
             ],
@@ -23964,6 +24086,9 @@ export default {
                 1661
             ],
             "id": [
+                1661
+            ],
+            "latest_clip_at": [
                 1661
             ],
             "lineup_1_timeouts_available": [
@@ -23979,6 +24104,12 @@ export default {
                 1661
             ],
             "order": [
+                1661
+            ],
+            "public_clips_count": [
+                1661
+            ],
+            "public_latest_clip_at": [
                 1661
             ],
             "started_at": [
@@ -23992,6 +24123,9 @@ export default {
             ]
         },
         "match_maps_min_fields": {
+            "clips_count": [
+                30
+            ],
             "created_at": [
                 2579
             ],
@@ -24006,6 +24140,9 @@ export default {
             ],
             "id": [
                 2976
+            ],
+            "latest_clip_at": [
+                2579
             ],
             "lineup_1_score": [
                 30
@@ -24028,6 +24165,12 @@ export default {
             "order": [
                 30
             ],
+            "public_clips_count": [
+                30
+            ],
+            "public_latest_clip_at": [
+                2579
+            ],
             "started_at": [
                 2579
             ],
@@ -24039,6 +24182,9 @@ export default {
             ]
         },
         "match_maps_min_order_by": {
+            "clips_count": [
+                1661
+            ],
             "created_at": [
                 1661
             ],
@@ -24046,6 +24192,9 @@ export default {
                 1661
             ],
             "id": [
+                1661
+            ],
+            "latest_clip_at": [
                 1661
             ],
             "lineup_1_timeouts_available": [
@@ -24061,6 +24210,12 @@ export default {
                 1661
             ],
             "order": [
+                1661
+            ],
+            "public_clips_count": [
+                1661
+            ],
+            "public_latest_clip_at": [
                 1661
             ],
             "started_at": [
@@ -24110,6 +24265,9 @@ export default {
             ]
         },
         "match_maps_order_by": {
+            "clips_count": [
+                1661
+            ],
             "created_at": [
                 1661
             ],
@@ -24135,6 +24293,9 @@ export default {
                 1661
             ],
             "is_current_map": [
+                1661
+            ],
+            "latest_clip_at": [
                 1661
             ],
             "lineup_1_score": [
@@ -24164,6 +24325,9 @@ export default {
             "match": [
                 1523
             ],
+            "match_clips_aggregate": [
+                1018
+            ],
             "match_id": [
                 1661
             ],
@@ -24184,6 +24348,12 @@ export default {
             ],
             "player_unused_utilities_aggregate": [
                 2226
+            ],
+            "public_clips_count": [
+                1661
+            ],
+            "public_latest_clip_at": [
+                1661
             ],
             "rounds_aggregate": [
                 1281
@@ -24217,6 +24387,9 @@ export default {
         },
         "match_maps_select_column": {},
         "match_maps_set_input": {
+            "clips_count": [
+                30
+            ],
             "created_at": [
                 2579
             ],
@@ -24225,6 +24398,9 @@ export default {
             ],
             "id": [
                 2976
+            ],
+            "latest_clip_at": [
+                2579
             ],
             "lineup_1_side": [
                 578
@@ -24247,6 +24423,12 @@ export default {
             "order": [
                 30
             ],
+            "public_clips_count": [
+                30
+            ],
+            "public_latest_clip_at": [
+                2579
+            ],
             "started_at": [
                 2579
             ],
@@ -24261,6 +24443,9 @@ export default {
             ]
         },
         "match_maps_stddev_fields": {
+            "clips_count": [
+                22
+            ],
             "demos_total_size": [
                 30
             ],
@@ -24277,6 +24462,9 @@ export default {
                 22
             ],
             "order": [
+                22
+            ],
+            "public_clips_count": [
                 22
             ],
             "__typename": [
@@ -24284,6 +24472,9 @@ export default {
             ]
         },
         "match_maps_stddev_order_by": {
+            "clips_count": [
+                1661
+            ],
             "lineup_1_timeouts_available": [
                 1661
             ],
@@ -24291,6 +24482,9 @@ export default {
                 1661
             ],
             "order": [
+                1661
+            ],
+            "public_clips_count": [
                 1661
             ],
             "__typename": [
@@ -24298,6 +24492,9 @@ export default {
             ]
         },
         "match_maps_stddev_pop_fields": {
+            "clips_count": [
+                22
+            ],
             "demos_total_size": [
                 30
             ],
@@ -24314,6 +24511,9 @@ export default {
                 22
             ],
             "order": [
+                22
+            ],
+            "public_clips_count": [
                 22
             ],
             "__typename": [
@@ -24321,6 +24521,9 @@ export default {
             ]
         },
         "match_maps_stddev_pop_order_by": {
+            "clips_count": [
+                1661
+            ],
             "lineup_1_timeouts_available": [
                 1661
             ],
@@ -24330,11 +24533,17 @@ export default {
             "order": [
                 1661
             ],
+            "public_clips_count": [
+                1661
+            ],
             "__typename": [
                 48
             ]
         },
         "match_maps_stddev_samp_fields": {
+            "clips_count": [
+                22
+            ],
             "demos_total_size": [
                 30
             ],
@@ -24353,11 +24562,17 @@ export default {
             "order": [
                 22
             ],
+            "public_clips_count": [
+                22
+            ],
             "__typename": [
                 48
             ]
         },
         "match_maps_stddev_samp_order_by": {
+            "clips_count": [
+                1661
+            ],
             "lineup_1_timeouts_available": [
                 1661
             ],
@@ -24365,6 +24580,9 @@ export default {
                 1661
             ],
             "order": [
+                1661
+            ],
+            "public_clips_count": [
                 1661
             ],
             "__typename": [
@@ -24383,6 +24601,9 @@ export default {
             ]
         },
         "match_maps_stream_cursor_value_input": {
+            "clips_count": [
+                30
+            ],
             "created_at": [
                 2579
             ],
@@ -24391,6 +24612,9 @@ export default {
             ],
             "id": [
                 2976
+            ],
+            "latest_clip_at": [
+                2579
             ],
             "lineup_1_side": [
                 578
@@ -24413,6 +24637,12 @@ export default {
             "order": [
                 30
             ],
+            "public_clips_count": [
+                30
+            ],
+            "public_latest_clip_at": [
+                2579
+            ],
             "started_at": [
                 2579
             ],
@@ -24427,6 +24657,9 @@ export default {
             ]
         },
         "match_maps_sum_fields": {
+            "clips_count": [
+                30
+            ],
             "demos_total_size": [
                 30
             ],
@@ -24445,11 +24678,17 @@ export default {
             "order": [
                 30
             ],
+            "public_clips_count": [
+                30
+            ],
             "__typename": [
                 48
             ]
         },
         "match_maps_sum_order_by": {
+            "clips_count": [
+                1661
+            ],
             "lineup_1_timeouts_available": [
                 1661
             ],
@@ -24457,6 +24696,9 @@ export default {
                 1661
             ],
             "order": [
+                1661
+            ],
+            "public_clips_count": [
                 1661
             ],
             "__typename": [
@@ -24479,6 +24721,9 @@ export default {
             ]
         },
         "match_maps_var_pop_fields": {
+            "clips_count": [
+                22
+            ],
             "demos_total_size": [
                 30
             ],
@@ -24495,6 +24740,9 @@ export default {
                 22
             ],
             "order": [
+                22
+            ],
+            "public_clips_count": [
                 22
             ],
             "__typename": [
@@ -24502,6 +24750,9 @@ export default {
             ]
         },
         "match_maps_var_pop_order_by": {
+            "clips_count": [
+                1661
+            ],
             "lineup_1_timeouts_available": [
                 1661
             ],
@@ -24509,6 +24760,9 @@ export default {
                 1661
             ],
             "order": [
+                1661
+            ],
+            "public_clips_count": [
                 1661
             ],
             "__typename": [
@@ -24516,6 +24770,9 @@ export default {
             ]
         },
         "match_maps_var_samp_fields": {
+            "clips_count": [
+                22
+            ],
             "demos_total_size": [
                 30
             ],
@@ -24532,6 +24789,9 @@ export default {
                 22
             ],
             "order": [
+                22
+            ],
+            "public_clips_count": [
                 22
             ],
             "__typename": [
@@ -24539,6 +24799,9 @@ export default {
             ]
         },
         "match_maps_var_samp_order_by": {
+            "clips_count": [
+                1661
+            ],
             "lineup_1_timeouts_available": [
                 1661
             ],
@@ -24548,11 +24811,17 @@ export default {
             "order": [
                 1661
             ],
+            "public_clips_count": [
+                1661
+            ],
             "__typename": [
                 48
             ]
         },
         "match_maps_variance_fields": {
+            "clips_count": [
+                22
+            ],
             "demos_total_size": [
                 30
             ],
@@ -24571,11 +24840,17 @@ export default {
             "order": [
                 22
             ],
+            "public_clips_count": [
+                22
+            ],
             "__typename": [
                 48
             ]
         },
         "match_maps_variance_order_by": {
+            "clips_count": [
+                1661
+            ],
             "lineup_1_timeouts_available": [
                 1661
             ],
@@ -24583,6 +24858,9 @@ export default {
                 1661
             ],
             "order": [
+                1661
+            ],
+            "public_clips_count": [
                 1661
             ],
             "__typename": [

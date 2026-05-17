@@ -1,12 +1,3 @@
--- Maintains the denormalised clip-summary columns on match_maps
--- (clips_count / public_clips_count / latest_clip_at / public_latest_clip_at).
--- Owned by the 1799000000000_match_clip_summary_on_match_maps migration —
--- this file (re)creates the trigger functions on every startup.
-
--- Recompute the summary for one match_map_id from scratch. Used by UPDATE
--- and DELETE triggers (INSERT has its own cheap fast-path). The UPDATE is
--- a safe no-op if the parent match_map is being cascade-deleted in the
--- same transaction.
 CREATE OR REPLACE FUNCTION public.recompute_match_clip_summary(p_match_map_id uuid)
     RETURNS void
     LANGUAGE sql
@@ -30,8 +21,6 @@ CREATE OR REPLACE FUNCTION public.recompute_match_clip_summary(p_match_map_id uu
 $$;
 
 
--- INSERT: cheap fast path — increment counts, GREATEST() the latest_at
--- columns. No subquery needed.
 CREATE OR REPLACE FUNCTION public.tai_match_clips_summary()
     RETURNS TRIGGER
     LANGUAGE plpgsql
@@ -60,9 +49,6 @@ CREATE TRIGGER tai_match_clips_summary
     EXECUTE FUNCTION public.tai_match_clips_summary();
 
 
--- UPDATE: only matters when a summary-affecting column changes. Visibility
--- and created_at recompute the same row; match_map_id (rare) recomputes
--- both sides.
 CREATE OR REPLACE FUNCTION public.tau_match_clips_summary()
     RETURNS TRIGGER
     LANGUAGE plpgsql
@@ -86,7 +72,6 @@ CREATE TRIGGER tau_match_clips_summary
     EXECUTE FUNCTION public.tau_match_clips_summary();
 
 
--- DELETE: recompute. Safe no-op when match_map is being cascade-deleted.
 CREATE OR REPLACE FUNCTION public.tad_match_clips_summary()
     RETURNS TRIGGER
     LANGUAGE plpgsql

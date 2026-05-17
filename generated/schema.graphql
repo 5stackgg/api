@@ -15547,6 +15547,7 @@ input match_map_veto_picks_updates {
 columns and relationships of "match_maps"
 """
 type match_maps {
+  clips_count: Int!
   created_at: timestamptz!
 
   """An array relationship"""
@@ -15640,6 +15641,7 @@ type match_maps {
   A computed field, executes function "is_current_match_map"
   """
   is_current_map: Boolean
+  latest_clip_at: timestamptz
 
   """
   A computed field, executes function "lineup_1_score"
@@ -15661,6 +15663,42 @@ type match_maps {
 
   """An object relationship"""
   match: matches!
+
+  """An array relationship"""
+  match_clips(
+    """distinct select on columns"""
+    distinct_on: [match_clips_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_clips_order_by!]
+
+    """filter the rows returned"""
+    where: match_clips_bool_exp
+  ): [match_clips!]!
+
+  """An aggregate relationship"""
+  match_clips_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_clips_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_clips_order_by!]
+
+    """filter the rows returned"""
+    where: match_clips_bool_exp
+  ): match_clips_aggregate!
   match_id: uuid!
 
   """An array relationship"""
@@ -15843,6 +15881,8 @@ type match_maps {
     """filter the rows returned"""
     where: player_unused_utility_bool_exp
   ): player_unused_utility_aggregate!
+  public_clips_count: Int!
+  public_latest_clip_at: timestamptz
 
   """An array relationship"""
   rounds(
@@ -16021,6 +16061,8 @@ input match_maps_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type match_maps_avg_fields {
+  clips_count: Float
+
   """
   A computed field, executes function "match_map_demo_total_size"
   """
@@ -16038,15 +16080,18 @@ type match_maps_avg_fields {
   lineup_2_score: Int
   lineup_2_timeouts_available: Float
   order: Float
+  public_clips_count: Float
 }
 
 """
 order by avg() on columns of table "match_maps"
 """
 input match_maps_avg_order_by {
+  clips_count: order_by
   lineup_1_timeouts_available: order_by
   lineup_2_timeouts_available: order_by
   order: order_by
+  public_clips_count: order_by
 }
 
 """
@@ -16056,6 +16101,7 @@ input match_maps_bool_exp {
   _and: [match_maps_bool_exp!]
   _not: match_maps_bool_exp
   _or: [match_maps_bool_exp!]
+  clips_count: Int_comparison_exp
   created_at: timestamptz_comparison_exp
   demos: match_map_demos_bool_exp
   demos_aggregate: match_map_demos_aggregate_bool_exp
@@ -16067,6 +16113,7 @@ input match_maps_bool_exp {
   flashes_aggregate: player_flashes_aggregate_bool_exp
   id: uuid_comparison_exp
   is_current_map: Boolean_comparison_exp
+  latest_clip_at: timestamptz_comparison_exp
   lineup_1_score: Int_comparison_exp
   lineup_1_side: e_sides_enum_comparison_exp
   lineup_1_timeouts_available: Int_comparison_exp
@@ -16076,6 +16123,8 @@ input match_maps_bool_exp {
   map: maps_bool_exp
   map_id: uuid_comparison_exp
   match: matches_bool_exp
+  match_clips: match_clips_bool_exp
+  match_clips_aggregate: match_clips_aggregate_bool_exp
   match_id: uuid_comparison_exp
   objectives: player_objectives_bool_exp
   objectives_aggregate: player_objectives_aggregate_bool_exp
@@ -16088,6 +16137,8 @@ input match_maps_bool_exp {
   player_kills_aggregate: player_kills_aggregate_bool_exp
   player_unused_utilities: player_unused_utility_bool_exp
   player_unused_utilities_aggregate: player_unused_utility_aggregate_bool_exp
+  public_clips_count: Int_comparison_exp
+  public_latest_clip_at: timestamptz_comparison_exp
   rounds: match_map_rounds_bool_exp
   rounds_aggregate: match_map_rounds_aggregate_bool_exp
   started_at: timestamptz_comparison_exp
@@ -16118,21 +16169,25 @@ enum match_maps_constraint {
 input type for incrementing numeric columns in table "match_maps"
 """
 input match_maps_inc_input {
+  clips_count: Int
   lineup_1_timeouts_available: Int
   lineup_2_timeouts_available: Int
   order: Int
+  public_clips_count: Int
 }
 
 """
 input type for inserting data into table "match_maps"
 """
 input match_maps_insert_input {
+  clips_count: Int
   created_at: timestamptz
   demos: match_map_demos_arr_rel_insert_input
   e_match_map_status: e_match_map_status_obj_rel_insert_input
   ended_at: timestamptz
   flashes: player_flashes_arr_rel_insert_input
   id: uuid
+  latest_clip_at: timestamptz
   lineup_1_side: e_sides_enum
   lineup_1_timeouts_available: Int
   lineup_2_side: e_sides_enum
@@ -16140,6 +16195,7 @@ input match_maps_insert_input {
   map: maps_obj_rel_insert_input
   map_id: uuid
   match: matches_obj_rel_insert_input
+  match_clips: match_clips_arr_rel_insert_input
   match_id: uuid
   objectives: player_objectives_arr_rel_insert_input
   order: Int
@@ -16147,6 +16203,8 @@ input match_maps_insert_input {
   player_damages: player_damages_arr_rel_insert_input
   player_kills: player_kills_arr_rel_insert_input
   player_unused_utilities: player_unused_utility_arr_rel_insert_input
+  public_clips_count: Int
+  public_latest_clip_at: timestamptz
   rounds: match_map_rounds_arr_rel_insert_input
   started_at: timestamptz
   status: e_match_map_status_enum
@@ -16157,6 +16215,7 @@ input match_maps_insert_input {
 
 """aggregate max on columns"""
 type match_maps_max_fields {
+  clips_count: Int
   created_at: timestamptz
 
   """
@@ -16170,6 +16229,7 @@ type match_maps_max_fields {
   demos_total_size: Int
   ended_at: timestamptz
   id: uuid
+  latest_clip_at: timestamptz
 
   """
   A computed field, executes function "lineup_1_score"
@@ -16185,6 +16245,8 @@ type match_maps_max_fields {
   map_id: uuid
   match_id: uuid
   order: Int
+  public_clips_count: Int
+  public_latest_clip_at: timestamptz
   started_at: timestamptz
   winning_lineup_id: uuid
 }
@@ -16193,20 +16255,25 @@ type match_maps_max_fields {
 order by max() on columns of table "match_maps"
 """
 input match_maps_max_order_by {
+  clips_count: order_by
   created_at: order_by
   ended_at: order_by
   id: order_by
+  latest_clip_at: order_by
   lineup_1_timeouts_available: order_by
   lineup_2_timeouts_available: order_by
   map_id: order_by
   match_id: order_by
   order: order_by
+  public_clips_count: order_by
+  public_latest_clip_at: order_by
   started_at: order_by
   winning_lineup_id: order_by
 }
 
 """aggregate min on columns"""
 type match_maps_min_fields {
+  clips_count: Int
   created_at: timestamptz
 
   """
@@ -16220,6 +16287,7 @@ type match_maps_min_fields {
   demos_total_size: Int
   ended_at: timestamptz
   id: uuid
+  latest_clip_at: timestamptz
 
   """
   A computed field, executes function "lineup_1_score"
@@ -16235,6 +16303,8 @@ type match_maps_min_fields {
   map_id: uuid
   match_id: uuid
   order: Int
+  public_clips_count: Int
+  public_latest_clip_at: timestamptz
   started_at: timestamptz
   winning_lineup_id: uuid
 }
@@ -16243,14 +16313,18 @@ type match_maps_min_fields {
 order by min() on columns of table "match_maps"
 """
 input match_maps_min_order_by {
+  clips_count: order_by
   created_at: order_by
   ended_at: order_by
   id: order_by
+  latest_clip_at: order_by
   lineup_1_timeouts_available: order_by
   lineup_2_timeouts_available: order_by
   map_id: order_by
   match_id: order_by
   order: order_by
+  public_clips_count: order_by
+  public_latest_clip_at: order_by
   started_at: order_by
   winning_lineup_id: order_by
 }
@@ -16287,6 +16361,7 @@ input match_maps_on_conflict {
 
 """Ordering options when selecting data from "match_maps"."""
 input match_maps_order_by {
+  clips_count: order_by
   created_at: order_by
   demos_aggregate: match_map_demos_aggregate_order_by
   demos_download_url: order_by
@@ -16296,6 +16371,7 @@ input match_maps_order_by {
   flashes_aggregate: player_flashes_aggregate_order_by
   id: order_by
   is_current_map: order_by
+  latest_clip_at: order_by
   lineup_1_score: order_by
   lineup_1_side: order_by
   lineup_1_timeouts_available: order_by
@@ -16305,6 +16381,7 @@ input match_maps_order_by {
   map: maps_order_by
   map_id: order_by
   match: matches_order_by
+  match_clips_aggregate: match_clips_aggregate_order_by
   match_id: order_by
   objectives_aggregate: player_objectives_aggregate_order_by
   order: order_by
@@ -16312,6 +16389,8 @@ input match_maps_order_by {
   player_damages_aggregate: player_damages_aggregate_order_by
   player_kills_aggregate: player_kills_aggregate_order_by
   player_unused_utilities_aggregate: player_unused_utility_aggregate_order_by
+  public_clips_count: order_by
+  public_latest_clip_at: order_by
   rounds_aggregate: match_map_rounds_aggregate_order_by
   started_at: order_by
   status: order_by
@@ -16330,6 +16409,9 @@ select columns of table "match_maps"
 """
 enum match_maps_select_column {
   """column name"""
+  clips_count
+
+  """column name"""
   created_at
 
   """column name"""
@@ -16337,6 +16419,9 @@ enum match_maps_select_column {
 
   """column name"""
   id
+
+  """column name"""
+  latest_clip_at
 
   """column name"""
   lineup_1_side
@@ -16358,6 +16443,12 @@ enum match_maps_select_column {
 
   """column name"""
   order
+
+  """column name"""
+  public_clips_count
+
+  """column name"""
+  public_latest_clip_at
 
   """column name"""
   started_at
@@ -16373,9 +16464,11 @@ enum match_maps_select_column {
 input type for updating data in table "match_maps"
 """
 input match_maps_set_input {
+  clips_count: Int
   created_at: timestamptz
   ended_at: timestamptz
   id: uuid
+  latest_clip_at: timestamptz
   lineup_1_side: e_sides_enum
   lineup_1_timeouts_available: Int
   lineup_2_side: e_sides_enum
@@ -16383,6 +16476,8 @@ input match_maps_set_input {
   map_id: uuid
   match_id: uuid
   order: Int
+  public_clips_count: Int
+  public_latest_clip_at: timestamptz
   started_at: timestamptz
   status: e_match_map_status_enum
   winning_lineup_id: uuid
@@ -16390,6 +16485,8 @@ input match_maps_set_input {
 
 """aggregate stddev on columns"""
 type match_maps_stddev_fields {
+  clips_count: Float
+
   """
   A computed field, executes function "match_map_demo_total_size"
   """
@@ -16407,19 +16504,24 @@ type match_maps_stddev_fields {
   lineup_2_score: Int
   lineup_2_timeouts_available: Float
   order: Float
+  public_clips_count: Float
 }
 
 """
 order by stddev() on columns of table "match_maps"
 """
 input match_maps_stddev_order_by {
+  clips_count: order_by
   lineup_1_timeouts_available: order_by
   lineup_2_timeouts_available: order_by
   order: order_by
+  public_clips_count: order_by
 }
 
 """aggregate stddev_pop on columns"""
 type match_maps_stddev_pop_fields {
+  clips_count: Float
+
   """
   A computed field, executes function "match_map_demo_total_size"
   """
@@ -16437,19 +16539,24 @@ type match_maps_stddev_pop_fields {
   lineup_2_score: Int
   lineup_2_timeouts_available: Float
   order: Float
+  public_clips_count: Float
 }
 
 """
 order by stddev_pop() on columns of table "match_maps"
 """
 input match_maps_stddev_pop_order_by {
+  clips_count: order_by
   lineup_1_timeouts_available: order_by
   lineup_2_timeouts_available: order_by
   order: order_by
+  public_clips_count: order_by
 }
 
 """aggregate stddev_samp on columns"""
 type match_maps_stddev_samp_fields {
+  clips_count: Float
+
   """
   A computed field, executes function "match_map_demo_total_size"
   """
@@ -16467,15 +16574,18 @@ type match_maps_stddev_samp_fields {
   lineup_2_score: Int
   lineup_2_timeouts_available: Float
   order: Float
+  public_clips_count: Float
 }
 
 """
 order by stddev_samp() on columns of table "match_maps"
 """
 input match_maps_stddev_samp_order_by {
+  clips_count: order_by
   lineup_1_timeouts_available: order_by
   lineup_2_timeouts_available: order_by
   order: order_by
+  public_clips_count: order_by
 }
 
 """
@@ -16491,9 +16601,11 @@ input match_maps_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input match_maps_stream_cursor_value_input {
+  clips_count: Int
   created_at: timestamptz
   ended_at: timestamptz
   id: uuid
+  latest_clip_at: timestamptz
   lineup_1_side: e_sides_enum
   lineup_1_timeouts_available: Int
   lineup_2_side: e_sides_enum
@@ -16501,6 +16613,8 @@ input match_maps_stream_cursor_value_input {
   map_id: uuid
   match_id: uuid
   order: Int
+  public_clips_count: Int
+  public_latest_clip_at: timestamptz
   started_at: timestamptz
   status: e_match_map_status_enum
   winning_lineup_id: uuid
@@ -16508,6 +16622,8 @@ input match_maps_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type match_maps_sum_fields {
+  clips_count: Int
+
   """
   A computed field, executes function "match_map_demo_total_size"
   """
@@ -16525,21 +16641,27 @@ type match_maps_sum_fields {
   lineup_2_score: Int
   lineup_2_timeouts_available: Int
   order: Int
+  public_clips_count: Int
 }
 
 """
 order by sum() on columns of table "match_maps"
 """
 input match_maps_sum_order_by {
+  clips_count: order_by
   lineup_1_timeouts_available: order_by
   lineup_2_timeouts_available: order_by
   order: order_by
+  public_clips_count: order_by
 }
 
 """
 update columns of table "match_maps"
 """
 enum match_maps_update_column {
+  """column name"""
+  clips_count
+
   """column name"""
   created_at
 
@@ -16548,6 +16670,9 @@ enum match_maps_update_column {
 
   """column name"""
   id
+
+  """column name"""
+  latest_clip_at
 
   """column name"""
   lineup_1_side
@@ -16569,6 +16694,12 @@ enum match_maps_update_column {
 
   """column name"""
   order
+
+  """column name"""
+  public_clips_count
+
+  """column name"""
+  public_latest_clip_at
 
   """column name"""
   started_at
@@ -16593,6 +16724,8 @@ input match_maps_updates {
 
 """aggregate var_pop on columns"""
 type match_maps_var_pop_fields {
+  clips_count: Float
+
   """
   A computed field, executes function "match_map_demo_total_size"
   """
@@ -16610,19 +16743,24 @@ type match_maps_var_pop_fields {
   lineup_2_score: Int
   lineup_2_timeouts_available: Float
   order: Float
+  public_clips_count: Float
 }
 
 """
 order by var_pop() on columns of table "match_maps"
 """
 input match_maps_var_pop_order_by {
+  clips_count: order_by
   lineup_1_timeouts_available: order_by
   lineup_2_timeouts_available: order_by
   order: order_by
+  public_clips_count: order_by
 }
 
 """aggregate var_samp on columns"""
 type match_maps_var_samp_fields {
+  clips_count: Float
+
   """
   A computed field, executes function "match_map_demo_total_size"
   """
@@ -16640,19 +16778,24 @@ type match_maps_var_samp_fields {
   lineup_2_score: Int
   lineup_2_timeouts_available: Float
   order: Float
+  public_clips_count: Float
 }
 
 """
 order by var_samp() on columns of table "match_maps"
 """
 input match_maps_var_samp_order_by {
+  clips_count: order_by
   lineup_1_timeouts_available: order_by
   lineup_2_timeouts_available: order_by
   order: order_by
+  public_clips_count: order_by
 }
 
 """aggregate variance on columns"""
 type match_maps_variance_fields {
+  clips_count: Float
+
   """
   A computed field, executes function "match_map_demo_total_size"
   """
@@ -16670,15 +16813,18 @@ type match_maps_variance_fields {
   lineup_2_score: Int
   lineup_2_timeouts_available: Float
   order: Float
+  public_clips_count: Float
 }
 
 """
 order by variance() on columns of table "match_maps"
 """
 input match_maps_variance_order_by {
+  clips_count: order_by
   lineup_1_timeouts_available: order_by
   lineup_2_timeouts_available: order_by
   order: order_by
+  public_clips_count: order_by
 }
 
 """
