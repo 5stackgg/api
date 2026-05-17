@@ -5393,6 +5393,7 @@ export type match_map_veto_picks_update_column = 'created_at' | 'id' | 'map_id' 
 
 /** columns and relationships of "match_maps" */
 export interface match_maps {
+    clips_count: Scalars['Int']
     created_at: Scalars['timestamptz']
     /** An array relationship */
     demos: match_map_demos[]
@@ -5412,6 +5413,7 @@ export interface match_maps {
     id: Scalars['uuid']
     /** A computed field, executes function "is_current_match_map" */
     is_current_map: (Scalars['Boolean'] | null)
+    latest_clip_at: (Scalars['timestamptz'] | null)
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score: (Scalars['Int'] | null)
     lineup_1_side: e_sides_enum
@@ -5425,6 +5427,10 @@ export interface match_maps {
     map_id: Scalars['uuid']
     /** An object relationship */
     match: matches
+    /** An array relationship */
+    match_clips: match_clips[]
+    /** An aggregate relationship */
+    match_clips_aggregate: match_clips_aggregate
     match_id: Scalars['uuid']
     /** An array relationship */
     objectives: player_objectives[]
@@ -5447,6 +5453,8 @@ export interface match_maps {
     player_unused_utilities: player_unused_utility[]
     /** An aggregate relationship */
     player_unused_utilities_aggregate: player_unused_utility_aggregate
+    public_clips_count: Scalars['Int']
+    public_latest_clip_at: (Scalars['timestamptz'] | null)
     /** An array relationship */
     rounds: match_map_rounds[]
     /** An aggregate relationship */
@@ -5493,6 +5501,7 @@ export interface match_maps_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface match_maps_avg_fields {
+    clips_count: (Scalars['Float'] | null)
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
@@ -5502,6 +5511,7 @@ export interface match_maps_avg_fields {
     lineup_2_score: (Scalars['Int'] | null)
     lineup_2_timeouts_available: (Scalars['Float'] | null)
     order: (Scalars['Float'] | null)
+    public_clips_count: (Scalars['Float'] | null)
     __typename: 'match_maps_avg_fields'
 }
 
@@ -5512,6 +5522,7 @@ export type match_maps_constraint = 'match_maps_match_id_order_key' | 'match_map
 
 /** aggregate max on columns */
 export interface match_maps_max_fields {
+    clips_count: (Scalars['Int'] | null)
     created_at: (Scalars['timestamptz'] | null)
     /** A computed field, executes function "match_map_demo_download_url" */
     demos_download_url: (Scalars['String'] | null)
@@ -5519,6 +5530,7 @@ export interface match_maps_max_fields {
     demos_total_size: (Scalars['Int'] | null)
     ended_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
+    latest_clip_at: (Scalars['timestamptz'] | null)
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score: (Scalars['Int'] | null)
     lineup_1_timeouts_available: (Scalars['Int'] | null)
@@ -5528,6 +5540,8 @@ export interface match_maps_max_fields {
     map_id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     order: (Scalars['Int'] | null)
+    public_clips_count: (Scalars['Int'] | null)
+    public_latest_clip_at: (Scalars['timestamptz'] | null)
     started_at: (Scalars['timestamptz'] | null)
     winning_lineup_id: (Scalars['uuid'] | null)
     __typename: 'match_maps_max_fields'
@@ -5536,6 +5550,7 @@ export interface match_maps_max_fields {
 
 /** aggregate min on columns */
 export interface match_maps_min_fields {
+    clips_count: (Scalars['Int'] | null)
     created_at: (Scalars['timestamptz'] | null)
     /** A computed field, executes function "match_map_demo_download_url" */
     demos_download_url: (Scalars['String'] | null)
@@ -5543,6 +5558,7 @@ export interface match_maps_min_fields {
     demos_total_size: (Scalars['Int'] | null)
     ended_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
+    latest_clip_at: (Scalars['timestamptz'] | null)
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score: (Scalars['Int'] | null)
     lineup_1_timeouts_available: (Scalars['Int'] | null)
@@ -5552,6 +5568,8 @@ export interface match_maps_min_fields {
     map_id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     order: (Scalars['Int'] | null)
+    public_clips_count: (Scalars['Int'] | null)
+    public_latest_clip_at: (Scalars['timestamptz'] | null)
     started_at: (Scalars['timestamptz'] | null)
     winning_lineup_id: (Scalars['uuid'] | null)
     __typename: 'match_maps_min_fields'
@@ -5569,11 +5587,12 @@ export interface match_maps_mutation_response {
 
 
 /** select columns of table "match_maps" */
-export type match_maps_select_column = 'created_at' | 'ended_at' | 'id' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'map_id' | 'match_id' | 'order' | 'started_at' | 'status' | 'winning_lineup_id'
+export type match_maps_select_column = 'clips_count' | 'created_at' | 'ended_at' | 'id' | 'latest_clip_at' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'map_id' | 'match_id' | 'order' | 'public_clips_count' | 'public_latest_clip_at' | 'started_at' | 'status' | 'winning_lineup_id'
 
 
 /** aggregate stddev on columns */
 export interface match_maps_stddev_fields {
+    clips_count: (Scalars['Float'] | null)
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
@@ -5583,12 +5602,14 @@ export interface match_maps_stddev_fields {
     lineup_2_score: (Scalars['Int'] | null)
     lineup_2_timeouts_available: (Scalars['Float'] | null)
     order: (Scalars['Float'] | null)
+    public_clips_count: (Scalars['Float'] | null)
     __typename: 'match_maps_stddev_fields'
 }
 
 
 /** aggregate stddev_pop on columns */
 export interface match_maps_stddev_pop_fields {
+    clips_count: (Scalars['Float'] | null)
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
@@ -5598,12 +5619,14 @@ export interface match_maps_stddev_pop_fields {
     lineup_2_score: (Scalars['Int'] | null)
     lineup_2_timeouts_available: (Scalars['Float'] | null)
     order: (Scalars['Float'] | null)
+    public_clips_count: (Scalars['Float'] | null)
     __typename: 'match_maps_stddev_pop_fields'
 }
 
 
 /** aggregate stddev_samp on columns */
 export interface match_maps_stddev_samp_fields {
+    clips_count: (Scalars['Float'] | null)
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
@@ -5613,12 +5636,14 @@ export interface match_maps_stddev_samp_fields {
     lineup_2_score: (Scalars['Int'] | null)
     lineup_2_timeouts_available: (Scalars['Float'] | null)
     order: (Scalars['Float'] | null)
+    public_clips_count: (Scalars['Float'] | null)
     __typename: 'match_maps_stddev_samp_fields'
 }
 
 
 /** aggregate sum on columns */
 export interface match_maps_sum_fields {
+    clips_count: (Scalars['Int'] | null)
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
@@ -5628,16 +5653,18 @@ export interface match_maps_sum_fields {
     lineup_2_score: (Scalars['Int'] | null)
     lineup_2_timeouts_available: (Scalars['Int'] | null)
     order: (Scalars['Int'] | null)
+    public_clips_count: (Scalars['Int'] | null)
     __typename: 'match_maps_sum_fields'
 }
 
 
 /** update columns of table "match_maps" */
-export type match_maps_update_column = 'created_at' | 'ended_at' | 'id' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'map_id' | 'match_id' | 'order' | 'started_at' | 'status' | 'winning_lineup_id'
+export type match_maps_update_column = 'clips_count' | 'created_at' | 'ended_at' | 'id' | 'latest_clip_at' | 'lineup_1_side' | 'lineup_1_timeouts_available' | 'lineup_2_side' | 'lineup_2_timeouts_available' | 'map_id' | 'match_id' | 'order' | 'public_clips_count' | 'public_latest_clip_at' | 'started_at' | 'status' | 'winning_lineup_id'
 
 
 /** aggregate var_pop on columns */
 export interface match_maps_var_pop_fields {
+    clips_count: (Scalars['Float'] | null)
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
@@ -5647,12 +5674,14 @@ export interface match_maps_var_pop_fields {
     lineup_2_score: (Scalars['Int'] | null)
     lineup_2_timeouts_available: (Scalars['Float'] | null)
     order: (Scalars['Float'] | null)
+    public_clips_count: (Scalars['Float'] | null)
     __typename: 'match_maps_var_pop_fields'
 }
 
 
 /** aggregate var_samp on columns */
 export interface match_maps_var_samp_fields {
+    clips_count: (Scalars['Float'] | null)
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
@@ -5662,12 +5691,14 @@ export interface match_maps_var_samp_fields {
     lineup_2_score: (Scalars['Int'] | null)
     lineup_2_timeouts_available: (Scalars['Float'] | null)
     order: (Scalars['Float'] | null)
+    public_clips_count: (Scalars['Float'] | null)
     __typename: 'match_maps_var_samp_fields'
 }
 
 
 /** aggregate variance on columns */
 export interface match_maps_variance_fields {
+    clips_count: (Scalars['Float'] | null)
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size: (Scalars['Int'] | null)
     /** A computed field, executes function "lineup_1_score" */
@@ -5677,6 +5708,7 @@ export interface match_maps_variance_fields {
     lineup_2_score: (Scalars['Int'] | null)
     lineup_2_timeouts_available: (Scalars['Float'] | null)
     order: (Scalars['Float'] | null)
+    public_clips_count: (Scalars['Float'] | null)
     __typename: 'match_maps_variance_fields'
 }
 
@@ -28424,6 +28456,7 @@ where: match_map_veto_picks_bool_exp}
 
 /** columns and relationships of "match_maps" */
 export interface match_mapsGenqlSelection{
+    clips_count?: boolean | number
     created_at?: boolean | number
     /** An array relationship */
     demos?: (match_map_demosGenqlSelection & { __args?: {
@@ -28483,6 +28516,7 @@ export interface match_mapsGenqlSelection{
     id?: boolean | number
     /** A computed field, executes function "is_current_match_map" */
     is_current_map?: boolean | number
+    latest_clip_at?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score?: boolean | number
     lineup_1_side?: boolean | number
@@ -28496,6 +28530,30 @@ export interface match_mapsGenqlSelection{
     map_id?: boolean | number
     /** An object relationship */
     match?: matchesGenqlSelection
+    /** An array relationship */
+    match_clips?: (match_clipsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_clips_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_clips_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_clips_bool_exp | null)} })
+    /** An aggregate relationship */
+    match_clips_aggregate?: (match_clips_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_clips_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_clips_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_clips_bool_exp | null)} })
     match_id?: boolean | number
     /** An array relationship */
     objectives?: (player_objectivesGenqlSelection & { __args?: {
@@ -28618,6 +28676,8 @@ export interface match_mapsGenqlSelection{
     order_by?: (player_unused_utility_order_by[] | null), 
     /** filter the rows returned */
     where?: (player_unused_utility_bool_exp | null)} })
+    public_clips_count?: boolean | number
+    public_latest_clip_at?: boolean | number
     /** An array relationship */
     rounds?: (match_map_roundsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -28741,6 +28801,7 @@ on_conflict?: (match_maps_on_conflict | null)}
 
 /** aggregate avg on columns */
 export interface match_maps_avg_fieldsGenqlSelection{
+    clips_count?: boolean | number
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
@@ -28750,29 +28811,31 @@ export interface match_maps_avg_fieldsGenqlSelection{
     lineup_2_score?: boolean | number
     lineup_2_timeouts_available?: boolean | number
     order?: boolean | number
+    public_clips_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by avg() on columns of table "match_maps" */
-export interface match_maps_avg_order_by {lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null)}
+export interface match_maps_avg_order_by {clips_count?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null),public_clips_count?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "match_maps". All fields are combined with a logical 'AND'. */
-export interface match_maps_bool_exp {_and?: (match_maps_bool_exp[] | null),_not?: (match_maps_bool_exp | null),_or?: (match_maps_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),demos?: (match_map_demos_bool_exp | null),demos_aggregate?: (match_map_demos_aggregate_bool_exp | null),demos_download_url?: (String_comparison_exp | null),demos_total_size?: (Int_comparison_exp | null),e_match_map_status?: (e_match_map_status_bool_exp | null),ended_at?: (timestamptz_comparison_exp | null),flashes?: (player_flashes_bool_exp | null),flashes_aggregate?: (player_flashes_aggregate_bool_exp | null),id?: (uuid_comparison_exp | null),is_current_map?: (Boolean_comparison_exp | null),lineup_1_score?: (Int_comparison_exp | null),lineup_1_side?: (e_sides_enum_comparison_exp | null),lineup_1_timeouts_available?: (Int_comparison_exp | null),lineup_2_score?: (Int_comparison_exp | null),lineup_2_side?: (e_sides_enum_comparison_exp | null),lineup_2_timeouts_available?: (Int_comparison_exp | null),map?: (maps_bool_exp | null),map_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),order?: (Int_comparison_exp | null),player_assists?: (player_assists_bool_exp | null),player_assists_aggregate?: (player_assists_aggregate_bool_exp | null),player_damages?: (player_damages_bool_exp | null),player_damages_aggregate?: (player_damages_aggregate_bool_exp | null),player_kills?: (player_kills_bool_exp | null),player_kills_aggregate?: (player_kills_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),rounds?: (match_map_rounds_bool_exp | null),rounds_aggregate?: (match_map_rounds_aggregate_bool_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (e_match_map_status_enum_comparison_exp | null),utility?: (player_utility_bool_exp | null),utility_aggregate?: (player_utility_aggregate_bool_exp | null),vetos?: (match_map_veto_picks_bool_exp | null),vetos_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),winning_lineup_id?: (uuid_comparison_exp | null)}
+export interface match_maps_bool_exp {_and?: (match_maps_bool_exp[] | null),_not?: (match_maps_bool_exp | null),_or?: (match_maps_bool_exp[] | null),clips_count?: (Int_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),demos?: (match_map_demos_bool_exp | null),demos_aggregate?: (match_map_demos_aggregate_bool_exp | null),demos_download_url?: (String_comparison_exp | null),demos_total_size?: (Int_comparison_exp | null),e_match_map_status?: (e_match_map_status_bool_exp | null),ended_at?: (timestamptz_comparison_exp | null),flashes?: (player_flashes_bool_exp | null),flashes_aggregate?: (player_flashes_aggregate_bool_exp | null),id?: (uuid_comparison_exp | null),is_current_map?: (Boolean_comparison_exp | null),latest_clip_at?: (timestamptz_comparison_exp | null),lineup_1_score?: (Int_comparison_exp | null),lineup_1_side?: (e_sides_enum_comparison_exp | null),lineup_1_timeouts_available?: (Int_comparison_exp | null),lineup_2_score?: (Int_comparison_exp | null),lineup_2_side?: (e_sides_enum_comparison_exp | null),lineup_2_timeouts_available?: (Int_comparison_exp | null),map?: (maps_bool_exp | null),map_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_clips?: (match_clips_bool_exp | null),match_clips_aggregate?: (match_clips_aggregate_bool_exp | null),match_id?: (uuid_comparison_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),order?: (Int_comparison_exp | null),player_assists?: (player_assists_bool_exp | null),player_assists_aggregate?: (player_assists_aggregate_bool_exp | null),player_damages?: (player_damages_bool_exp | null),player_damages_aggregate?: (player_damages_aggregate_bool_exp | null),player_kills?: (player_kills_bool_exp | null),player_kills_aggregate?: (player_kills_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),public_clips_count?: (Int_comparison_exp | null),public_latest_clip_at?: (timestamptz_comparison_exp | null),rounds?: (match_map_rounds_bool_exp | null),rounds_aggregate?: (match_map_rounds_aggregate_bool_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (e_match_map_status_enum_comparison_exp | null),utility?: (player_utility_bool_exp | null),utility_aggregate?: (player_utility_aggregate_bool_exp | null),vetos?: (match_map_veto_picks_bool_exp | null),vetos_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),winning_lineup_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_maps" */
-export interface match_maps_inc_input {lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),order?: (Scalars['Int'] | null)}
+export interface match_maps_inc_input {clips_count?: (Scalars['Int'] | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),order?: (Scalars['Int'] | null),public_clips_count?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "match_maps" */
-export interface match_maps_insert_input {created_at?: (Scalars['timestamptz'] | null),demos?: (match_map_demos_arr_rel_insert_input | null),e_match_map_status?: (e_match_map_status_obj_rel_insert_input | null),ended_at?: (Scalars['timestamptz'] | null),flashes?: (player_flashes_arr_rel_insert_input | null),id?: (Scalars['uuid'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),map?: (maps_obj_rel_insert_input | null),map_id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),objectives?: (player_objectives_arr_rel_insert_input | null),order?: (Scalars['Int'] | null),player_assists?: (player_assists_arr_rel_insert_input | null),player_damages?: (player_damages_arr_rel_insert_input | null),player_kills?: (player_kills_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),rounds?: (match_map_rounds_arr_rel_insert_input | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_map_status_enum | null),utility?: (player_utility_arr_rel_insert_input | null),vetos?: (match_map_veto_picks_arr_rel_insert_input | null),winning_lineup_id?: (Scalars['uuid'] | null)}
+export interface match_maps_insert_input {clips_count?: (Scalars['Int'] | null),created_at?: (Scalars['timestamptz'] | null),demos?: (match_map_demos_arr_rel_insert_input | null),e_match_map_status?: (e_match_map_status_obj_rel_insert_input | null),ended_at?: (Scalars['timestamptz'] | null),flashes?: (player_flashes_arr_rel_insert_input | null),id?: (Scalars['uuid'] | null),latest_clip_at?: (Scalars['timestamptz'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),map?: (maps_obj_rel_insert_input | null),map_id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_clips?: (match_clips_arr_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),objectives?: (player_objectives_arr_rel_insert_input | null),order?: (Scalars['Int'] | null),player_assists?: (player_assists_arr_rel_insert_input | null),player_damages?: (player_damages_arr_rel_insert_input | null),player_kills?: (player_kills_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),public_clips_count?: (Scalars['Int'] | null),public_latest_clip_at?: (Scalars['timestamptz'] | null),rounds?: (match_map_rounds_arr_rel_insert_input | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_map_status_enum | null),utility?: (player_utility_arr_rel_insert_input | null),vetos?: (match_map_veto_picks_arr_rel_insert_input | null),winning_lineup_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
 export interface match_maps_max_fieldsGenqlSelection{
+    clips_count?: boolean | number
     created_at?: boolean | number
     /** A computed field, executes function "match_map_demo_download_url" */
     demos_download_url?: boolean | number
@@ -28780,6 +28843,7 @@ export interface match_maps_max_fieldsGenqlSelection{
     demos_total_size?: boolean | number
     ended_at?: boolean | number
     id?: boolean | number
+    latest_clip_at?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score?: boolean | number
     lineup_1_timeouts_available?: boolean | number
@@ -28789,6 +28853,8 @@ export interface match_maps_max_fieldsGenqlSelection{
     map_id?: boolean | number
     match_id?: boolean | number
     order?: boolean | number
+    public_clips_count?: boolean | number
+    public_latest_clip_at?: boolean | number
     started_at?: boolean | number
     winning_lineup_id?: boolean | number
     __typename?: boolean | number
@@ -28797,11 +28863,12 @@ export interface match_maps_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "match_maps" */
-export interface match_maps_max_order_by {created_at?: (order_by | null),ended_at?: (order_by | null),id?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),map_id?: (order_by | null),match_id?: (order_by | null),order?: (order_by | null),started_at?: (order_by | null),winning_lineup_id?: (order_by | null)}
+export interface match_maps_max_order_by {clips_count?: (order_by | null),created_at?: (order_by | null),ended_at?: (order_by | null),id?: (order_by | null),latest_clip_at?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),map_id?: (order_by | null),match_id?: (order_by | null),order?: (order_by | null),public_clips_count?: (order_by | null),public_latest_clip_at?: (order_by | null),started_at?: (order_by | null),winning_lineup_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface match_maps_min_fieldsGenqlSelection{
+    clips_count?: boolean | number
     created_at?: boolean | number
     /** A computed field, executes function "match_map_demo_download_url" */
     demos_download_url?: boolean | number
@@ -28809,6 +28876,7 @@ export interface match_maps_min_fieldsGenqlSelection{
     demos_total_size?: boolean | number
     ended_at?: boolean | number
     id?: boolean | number
+    latest_clip_at?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
     lineup_1_score?: boolean | number
     lineup_1_timeouts_available?: boolean | number
@@ -28818,6 +28886,8 @@ export interface match_maps_min_fieldsGenqlSelection{
     map_id?: boolean | number
     match_id?: boolean | number
     order?: boolean | number
+    public_clips_count?: boolean | number
+    public_latest_clip_at?: boolean | number
     started_at?: boolean | number
     winning_lineup_id?: boolean | number
     __typename?: boolean | number
@@ -28826,7 +28896,7 @@ export interface match_maps_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "match_maps" */
-export interface match_maps_min_order_by {created_at?: (order_by | null),ended_at?: (order_by | null),id?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),map_id?: (order_by | null),match_id?: (order_by | null),order?: (order_by | null),started_at?: (order_by | null),winning_lineup_id?: (order_by | null)}
+export interface match_maps_min_order_by {clips_count?: (order_by | null),created_at?: (order_by | null),ended_at?: (order_by | null),id?: (order_by | null),latest_clip_at?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),map_id?: (order_by | null),match_id?: (order_by | null),order?: (order_by | null),public_clips_count?: (order_by | null),public_latest_clip_at?: (order_by | null),started_at?: (order_by | null),winning_lineup_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_maps" */
@@ -28851,7 +28921,7 @@ export interface match_maps_on_conflict {constraint: match_maps_constraint,updat
 
 
 /** Ordering options when selecting data from "match_maps". */
-export interface match_maps_order_by {created_at?: (order_by | null),demos_aggregate?: (match_map_demos_aggregate_order_by | null),demos_download_url?: (order_by | null),demos_total_size?: (order_by | null),e_match_map_status?: (e_match_map_status_order_by | null),ended_at?: (order_by | null),flashes_aggregate?: (player_flashes_aggregate_order_by | null),id?: (order_by | null),is_current_map?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_side?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_side?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),map?: (maps_order_by | null),map_id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),order?: (order_by | null),player_assists_aggregate?: (player_assists_aggregate_order_by | null),player_damages_aggregate?: (player_damages_aggregate_order_by | null),player_kills_aggregate?: (player_kills_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),rounds_aggregate?: (match_map_rounds_aggregate_order_by | null),started_at?: (order_by | null),status?: (order_by | null),utility_aggregate?: (player_utility_aggregate_order_by | null),vetos_aggregate?: (match_map_veto_picks_aggregate_order_by | null),winning_lineup_id?: (order_by | null)}
+export interface match_maps_order_by {clips_count?: (order_by | null),created_at?: (order_by | null),demos_aggregate?: (match_map_demos_aggregate_order_by | null),demos_download_url?: (order_by | null),demos_total_size?: (order_by | null),e_match_map_status?: (e_match_map_status_order_by | null),ended_at?: (order_by | null),flashes_aggregate?: (player_flashes_aggregate_order_by | null),id?: (order_by | null),is_current_map?: (order_by | null),latest_clip_at?: (order_by | null),lineup_1_score?: (order_by | null),lineup_1_side?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_score?: (order_by | null),lineup_2_side?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),map?: (maps_order_by | null),map_id?: (order_by | null),match?: (matches_order_by | null),match_clips_aggregate?: (match_clips_aggregate_order_by | null),match_id?: (order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),order?: (order_by | null),player_assists_aggregate?: (player_assists_aggregate_order_by | null),player_damages_aggregate?: (player_damages_aggregate_order_by | null),player_kills_aggregate?: (player_kills_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),public_clips_count?: (order_by | null),public_latest_clip_at?: (order_by | null),rounds_aggregate?: (match_map_rounds_aggregate_order_by | null),started_at?: (order_by | null),status?: (order_by | null),utility_aggregate?: (player_utility_aggregate_order_by | null),vetos_aggregate?: (match_map_veto_picks_aggregate_order_by | null),winning_lineup_id?: (order_by | null)}
 
 
 /** primary key columns input for table: match_maps */
@@ -28859,11 +28929,12 @@ export interface match_maps_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_maps" */
-export interface match_maps_set_input {created_at?: (Scalars['timestamptz'] | null),ended_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),map_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),order?: (Scalars['Int'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_map_status_enum | null),winning_lineup_id?: (Scalars['uuid'] | null)}
+export interface match_maps_set_input {clips_count?: (Scalars['Int'] | null),created_at?: (Scalars['timestamptz'] | null),ended_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),latest_clip_at?: (Scalars['timestamptz'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),map_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),order?: (Scalars['Int'] | null),public_clips_count?: (Scalars['Int'] | null),public_latest_clip_at?: (Scalars['timestamptz'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_map_status_enum | null),winning_lineup_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate stddev on columns */
 export interface match_maps_stddev_fieldsGenqlSelection{
+    clips_count?: boolean | number
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
@@ -28873,17 +28944,19 @@ export interface match_maps_stddev_fieldsGenqlSelection{
     lineup_2_score?: boolean | number
     lineup_2_timeouts_available?: boolean | number
     order?: boolean | number
+    public_clips_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by stddev() on columns of table "match_maps" */
-export interface match_maps_stddev_order_by {lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null)}
+export interface match_maps_stddev_order_by {clips_count?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null),public_clips_count?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
 export interface match_maps_stddev_pop_fieldsGenqlSelection{
+    clips_count?: boolean | number
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
@@ -28893,17 +28966,19 @@ export interface match_maps_stddev_pop_fieldsGenqlSelection{
     lineup_2_score?: boolean | number
     lineup_2_timeouts_available?: boolean | number
     order?: boolean | number
+    public_clips_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by stddev_pop() on columns of table "match_maps" */
-export interface match_maps_stddev_pop_order_by {lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null)}
+export interface match_maps_stddev_pop_order_by {clips_count?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null),public_clips_count?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
 export interface match_maps_stddev_samp_fieldsGenqlSelection{
+    clips_count?: boolean | number
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
@@ -28913,13 +28988,14 @@ export interface match_maps_stddev_samp_fieldsGenqlSelection{
     lineup_2_score?: boolean | number
     lineup_2_timeouts_available?: boolean | number
     order?: boolean | number
+    public_clips_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by stddev_samp() on columns of table "match_maps" */
-export interface match_maps_stddev_samp_order_by {lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null)}
+export interface match_maps_stddev_samp_order_by {clips_count?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null),public_clips_count?: (order_by | null)}
 
 
 /** Streaming cursor of the table "match_maps" */
@@ -28931,11 +29007,12 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_maps_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),ended_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),map_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),order?: (Scalars['Int'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_map_status_enum | null),winning_lineup_id?: (Scalars['uuid'] | null)}
+export interface match_maps_stream_cursor_value_input {clips_count?: (Scalars['Int'] | null),created_at?: (Scalars['timestamptz'] | null),ended_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),latest_clip_at?: (Scalars['timestamptz'] | null),lineup_1_side?: (e_sides_enum | null),lineup_1_timeouts_available?: (Scalars['Int'] | null),lineup_2_side?: (e_sides_enum | null),lineup_2_timeouts_available?: (Scalars['Int'] | null),map_id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),order?: (Scalars['Int'] | null),public_clips_count?: (Scalars['Int'] | null),public_latest_clip_at?: (Scalars['timestamptz'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (e_match_map_status_enum | null),winning_lineup_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
 export interface match_maps_sum_fieldsGenqlSelection{
+    clips_count?: boolean | number
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
@@ -28945,13 +29022,14 @@ export interface match_maps_sum_fieldsGenqlSelection{
     lineup_2_score?: boolean | number
     lineup_2_timeouts_available?: boolean | number
     order?: boolean | number
+    public_clips_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by sum() on columns of table "match_maps" */
-export interface match_maps_sum_order_by {lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null)}
+export interface match_maps_sum_order_by {clips_count?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null),public_clips_count?: (order_by | null)}
 
 export interface match_maps_updates {
 /** increments the numeric columns with given value of the filtered values */
@@ -28964,6 +29042,7 @@ where: match_maps_bool_exp}
 
 /** aggregate var_pop on columns */
 export interface match_maps_var_pop_fieldsGenqlSelection{
+    clips_count?: boolean | number
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
@@ -28973,17 +29052,19 @@ export interface match_maps_var_pop_fieldsGenqlSelection{
     lineup_2_score?: boolean | number
     lineup_2_timeouts_available?: boolean | number
     order?: boolean | number
+    public_clips_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by var_pop() on columns of table "match_maps" */
-export interface match_maps_var_pop_order_by {lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null)}
+export interface match_maps_var_pop_order_by {clips_count?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null),public_clips_count?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
 export interface match_maps_var_samp_fieldsGenqlSelection{
+    clips_count?: boolean | number
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
@@ -28993,17 +29074,19 @@ export interface match_maps_var_samp_fieldsGenqlSelection{
     lineup_2_score?: boolean | number
     lineup_2_timeouts_available?: boolean | number
     order?: boolean | number
+    public_clips_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by var_samp() on columns of table "match_maps" */
-export interface match_maps_var_samp_order_by {lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null)}
+export interface match_maps_var_samp_order_by {clips_count?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null),public_clips_count?: (order_by | null)}
 
 
 /** aggregate variance on columns */
 export interface match_maps_variance_fieldsGenqlSelection{
+    clips_count?: boolean | number
     /** A computed field, executes function "match_map_demo_total_size" */
     demos_total_size?: boolean | number
     /** A computed field, executes function "lineup_1_score" */
@@ -29013,13 +29096,14 @@ export interface match_maps_variance_fieldsGenqlSelection{
     lineup_2_score?: boolean | number
     lineup_2_timeouts_available?: boolean | number
     order?: boolean | number
+    public_clips_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by variance() on columns of table "match_maps" */
-export interface match_maps_variance_order_by {lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null)}
+export interface match_maps_variance_order_by {clips_count?: (order_by | null),lineup_1_timeouts_available?: (order_by | null),lineup_2_timeouts_available?: (order_by | null),order?: (order_by | null),public_clips_count?: (order_by | null)}
 
 
 /** columns and relationships of "match_options" */
@@ -66225,9 +66309,11 @@ export const enumMatchMapsConstraint = {
 }
 
 export const enumMatchMapsSelectColumn = {
+   clips_count: 'clips_count' as const,
    created_at: 'created_at' as const,
    ended_at: 'ended_at' as const,
    id: 'id' as const,
+   latest_clip_at: 'latest_clip_at' as const,
    lineup_1_side: 'lineup_1_side' as const,
    lineup_1_timeouts_available: 'lineup_1_timeouts_available' as const,
    lineup_2_side: 'lineup_2_side' as const,
@@ -66235,15 +66321,19 @@ export const enumMatchMapsSelectColumn = {
    map_id: 'map_id' as const,
    match_id: 'match_id' as const,
    order: 'order' as const,
+   public_clips_count: 'public_clips_count' as const,
+   public_latest_clip_at: 'public_latest_clip_at' as const,
    started_at: 'started_at' as const,
    status: 'status' as const,
    winning_lineup_id: 'winning_lineup_id' as const
 }
 
 export const enumMatchMapsUpdateColumn = {
+   clips_count: 'clips_count' as const,
    created_at: 'created_at' as const,
    ended_at: 'ended_at' as const,
    id: 'id' as const,
+   latest_clip_at: 'latest_clip_at' as const,
    lineup_1_side: 'lineup_1_side' as const,
    lineup_1_timeouts_available: 'lineup_1_timeouts_available' as const,
    lineup_2_side: 'lineup_2_side' as const,
@@ -66251,6 +66341,8 @@ export const enumMatchMapsUpdateColumn = {
    map_id: 'map_id' as const,
    match_id: 'match_id' as const,
    order: 'order' as const,
+   public_clips_count: 'public_clips_count' as const,
+   public_latest_clip_at: 'public_latest_clip_at' as const,
    started_at: 'started_at' as const,
    status: 'status' as const,
    winning_lineup_id: 'winning_lineup_id' as const

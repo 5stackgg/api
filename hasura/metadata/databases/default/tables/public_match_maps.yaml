@@ -19,6 +19,13 @@ array_relationships:
         table:
           name: match_map_demos
           schema: public
+  - name: match_clips
+    using:
+      foreign_key_constraint_on:
+        column: match_map_id
+        table:
+          name: match_clips
+          schema: public
   - name: flashes
     using:
       foreign_key_constraint_on:
@@ -152,6 +159,10 @@ select_permissions:
         - map_id
         - match_id
         - winning_lineup_id
+        - clips_count
+        - public_clips_count
+        - latest_clip_at
+        - public_latest_clip_at
       computed_fields:
         - demos_download_url
         - demos_total_size
@@ -159,6 +170,7 @@ select_permissions:
         - lineup_1_score
         - lineup_2_score
       filter: {}
+      allow_aggregations: true
     comment: ""
 update_permissions:
   - role: administrator
