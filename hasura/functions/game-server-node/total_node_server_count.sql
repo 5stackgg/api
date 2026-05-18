@@ -1,14 +1,10 @@
-CREATE OR REPLACE FUNCTION public.total_node_server_count(game_server_node public.game_server_nodes) RETURNS INT
-    LANGUAGE plpgsql STABLE
-    AS $$
-DECLARE
-    server_count INT;
-BEGIN
-    SELECT COUNT(*)
-    INTO server_count
+CREATE OR REPLACE FUNCTION public.total_node_server_count(game_server_node public.game_server_nodes)
+RETURNS int
+LANGUAGE sql
+STABLE
+AS $$
+    SELECT COUNT(*)::int
     FROM servers s
     WHERE s.game_server_node_id = game_server_node.id
-    and enabled = true;
-    RETURN server_count;
-END;
+      AND s.enabled = true;
 $$;

@@ -1,9 +1,7 @@
 CREATE OR REPLACE FUNCTION public.is_team_assist(player_assist public.player_assists)
 RETURNS boolean
-LANGUAGE plpgsql
+LANGUAGE sql
 STABLE
 AS $$
-BEGIN
-    RETURN player_assist.attacker_team = player_assist.attacked_team;
-END
+    SELECT player_assist.attacker_team = player_assist.attacked_team;
 $$;

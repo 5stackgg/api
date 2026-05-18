@@ -1,16 +1,12 @@
-CREATE OR REPLACE FUNCTION public.has_active_matches(match_options public.match_options) RETURNS boolean
-    LANGUAGE plpgsql STABLE
-    AS $$
-DECLARE
-    match_exists boolean;
-BEGIN
+CREATE OR REPLACE FUNCTION public.has_active_matches(match_options public.match_options)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+AS $$
     SELECT EXISTS (
         SELECT 1
-        FROM match_options mo
-        INNER JOIN matches m ON m.match_options_id = mo.id
-        WHERE mo.id = match_options.id 
-        AND m.status in ('Live', 'Finished', 'Forfeit', 'Tie', 'Surrendered')
-    ) INTO match_exists;
-    RETURN match_exists;
-END;
+        FROM matches m
+        WHERE m.match_options_id = match_options.id
+          AND m.status IN ('Live', 'Finished', 'Forfeit', 'Tie', 'Surrendered')
+    );
 $$;
