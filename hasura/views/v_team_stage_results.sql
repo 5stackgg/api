@@ -4,6 +4,20 @@
 -- chain that advance_round_robin_teams / get_team_at_stage_rank / seed_stage use
 -- to promote teams to the next stage. The UI reads `rank` directly so it never
 -- disagrees with bracket progression.
+--
+-- Two ordering columns are exposed and share the SAME ORDER BY so they can never
+-- disagree:
+--   - `rank`      : ROW_NUMBER, unique & deterministic. Used by the UI display
+--                   and by get_team_at_stage_rank() for OFFSET-based seeding.
+--   - `placement` : RANK, ties allowed. Used by calculate_tournament_trophies()
+--                   so multiple teams sharing a final-stage placement suppress
+--                   the bronze award when appropriate.
+--
+-- For DoubleElimination stages, the ordering is by elimination point rather
+-- than raw wins (a DE runner-up that came up through the losers bracket has
+-- more wins than the champion, so wins-based ordering puts silver above gold).
+-- For RoundRobin / Swiss / SingleElimination the DE keys collapse to constants
+-- and the existing wins-based tiebreaker chain is used unchanged.
 CREATE OR REPLACE VIEW public.v_team_stage_results AS
 WITH team_brackets AS (
     -- Get all brackets for each team in each stage
@@ -259,6 +273,31 @@ team_groups AS (
       AND tb.bracket_path = 'WB'
     GROUP BY tb.team_id, tb.tournament_stage_id, ts.type
 ),
+stage_types AS (
+    -- Stage type per stage, used to switch the ORDER BY to DE-aware ranking
+    -- for DoubleElimination stages while leaving every other format on the
+    -- existing wins-based chain.
+    SELECT id AS tournament_stage_id, type AS stage_type
+    FROM tournament_stages
+),
+team_elimination AS (
+    -- DE-only: each team's single elimination point. A bracket eliminates its
+    -- loser iff loser_parent_bracket_id IS NULL (true for LB matches and the
+    -- Grand Final, never for pre-GF WB matches whose loser drops into LB).
+    -- The champion has no row here; the GF loser has a row with path='WB' at
+    -- the highest round; LB losers have rows at their LB round.
+    SELECT DISTINCT ON (tmr.team_id, tmr.tournament_stage_id)
+        tmr.team_id,
+        tmr.tournament_stage_id,
+        tb.path  AS elim_path,
+        tb.round AS elim_round
+    FROM team_match_results tmr
+    JOIN tournament_brackets tb ON tb.id = tmr.bracket_id
+    WHERE tmr.winning_lineup_id IS NOT NULL
+      AND tmr.winning_lineup_id != tmr.team_lineup_id
+      AND tb.loser_parent_bracket_id IS NULL
+    ORDER BY tmr.team_id, tmr.tournament_stage_id, tb.round DESC
+),
 stage_rows AS (
     SELECT
         ass.team_id as tournament_team_id,
@@ -280,7 +319,10 @@ stage_rows AS (
         END as team_kdr,
         COALESCE(hth_matches.head_to_head_match_wins, 0)::int as head_to_head_match_wins,
         COALESCE(hth_rounds.head_to_head_rounds_won, 0)::int as head_to_head_rounds_won,
-        COALESCE(tg.group_number, 1)::int as group_number
+        COALESCE(tg.group_number, 1)::int as group_number,
+        st.stage_type,
+        te.elim_path,
+        te.elim_round
     FROM aggregated_stats ass
     LEFT JOIN team_kills_deaths tkd ON tkd.team_id = ass.team_id
         AND tkd.tournament_stage_id = ass.tournament_stage_id
@@ -292,10 +334,13 @@ stage_rows AS (
         AND ams.tournament_stage_id = ass.tournament_stage_id
     LEFT JOIN team_groups tg ON tg.team_id = ass.team_id
         AND tg.tournament_stage_id = ass.tournament_stage_id
+    LEFT JOIN stage_types st ON st.tournament_stage_id = ass.tournament_stage_id
+    LEFT JOIN team_elimination te ON te.team_id = ass.team_id
+        AND te.tournament_stage_id = ass.tournament_stage_id
 )
--- Column order MUST keep the original 15 columns first (tournament_team_id ..
--- head_to_head_rounds_won) so CREATE OR REPLACE VIEW can replace the deployed
--- view; new columns (`group_number`, `rank`) are appended at the end.
+-- Column order MUST keep the original 16 columns first (tournament_team_id ..
+-- group_number) and `rank` next so existing consumers (UI, get_team_at_stage_rank)
+-- keep working. `placement` is appended at the end for the trophy calculator.
 SELECT
     sr.tournament_team_id,
     sr.tournament_stage_id,
@@ -313,25 +358,44 @@ SELECT
     sr.head_to_head_match_wins,
     sr.head_to_head_rounds_won,
     sr.group_number,
-    ROW_NUMBER() OVER (
-        PARTITION BY sr.tournament_stage_id, sr.group_number
-        ORDER BY
-            sr.wins DESC,
-            sr.head_to_head_match_wins DESC,
-            sr.head_to_head_rounds_won DESC,
-            CASE
-                WHEN sr.maps_lost > 0
-                THEN (sr.maps_won::float / sr.maps_lost::float)
-                ELSE sr.maps_won::float
-            END DESC,
-            CASE
-                WHEN sr.rounds_lost > 0
-                THEN (sr.rounds_won::float / sr.rounds_lost::float)
-                ELSE sr.rounds_won::float
-            END DESC,
-            sr.team_kdr DESC,
-            -- Deterministic final tiebreaker so identical stats produce a stable
-            -- ordering across calls (e.g. for OFFSET-based seeding in seed_stage).
-            sr.tournament_team_id ASC
-    )::int as rank
-FROM stage_rows sr;
+    (ROW_NUMBER() OVER w)::int as rank,
+    (RANK() OVER w)::int as placement
+FROM stage_rows sr
+WINDOW w AS (
+    PARTITION BY sr.tournament_stage_id, sr.group_number
+    ORDER BY
+        -- DE only: still-alive teams sort above eliminated teams.
+        CASE WHEN sr.stage_type = 'DoubleElimination'
+             THEN (sr.elim_round IS NOT NULL)::int
+             ELSE 0
+        END ASC,
+        -- DE only: GF (path='WB') above LB at equal round.
+        CASE WHEN sr.stage_type = 'DoubleElimination' AND sr.elim_path = 'WB' THEN 1
+             WHEN sr.stage_type = 'DoubleElimination' AND sr.elim_path = 'LB' THEN 0
+             ELSE 0
+        END DESC,
+        -- DE only: later elimination round = better placement.
+        CASE WHEN sr.stage_type = 'DoubleElimination'
+             THEN sr.elim_round
+             ELSE NULL
+        END DESC NULLS FIRST,
+        -- Existing tiebreaker chain — unchanged for RR/Swiss/SingleElim, and
+        -- per-tier tiebreak for DE rows in the same elimination tier.
+        sr.wins DESC,
+        sr.head_to_head_match_wins DESC,
+        sr.head_to_head_rounds_won DESC,
+        CASE
+            WHEN sr.maps_lost > 0
+            THEN (sr.maps_won::float / sr.maps_lost::float)
+            ELSE sr.maps_won::float
+        END DESC,
+        CASE
+            WHEN sr.rounds_lost > 0
+            THEN (sr.rounds_won::float / sr.rounds_lost::float)
+            ELSE sr.rounds_won::float
+        END DESC,
+        sr.team_kdr DESC,
+        -- Deterministic final tiebreaker so identical stats produce a stable
+        -- ordering across calls (e.g. for OFFSET-based seeding in seed_stage).
+        sr.tournament_team_id ASC
+);

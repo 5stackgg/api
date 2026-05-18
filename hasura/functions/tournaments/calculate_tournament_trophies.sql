@@ -5,9 +5,6 @@ AS $$
 DECLARE
     _trophies_enabled boolean;
     _final_stage_id uuid;
-    _final_stage_type text;
-    _final_stage_third_place_match boolean;
-    _final_round int;
     _winning_team_id uuid;
     _runner_up_team_id uuid;
     _third_team_id uuid;
@@ -29,8 +26,8 @@ BEGIN
     -- Placement is decided by the LAST stage. Earlier stages are qualifiers;
     -- their standings don't reflect the tournament result (a team can go
     -- undefeated in Swiss yet lose the playoff final).
-    SELECT id, type, third_place_match
-      INTO _final_stage_id, _final_stage_type, _final_stage_third_place_match
+    SELECT id
+      INTO _final_stage_id
     FROM public.tournament_stages
     WHERE tournament_id = _tournament_id
     ORDER BY "order" DESC
@@ -40,141 +37,29 @@ BEGIN
         RETURN;
     END IF;
 
-    IF _final_stage_type IN ('SingleElimination', 'DoubleElimination') THEN
-        -- Final bracket: terminal WB match. In single-elim with a 3rd place
-        -- match the final is still match_number=1 at the highest round; the
-        -- bronze match sits at match_number=2 in that same round.
-        -- In double-elim the grand final is WB at round = wb_rounds + 1.
-        WITH final_match AS (
-            SELECT
-                tb.round,
-                tb.tournament_team_id_1,
-                tb.tournament_team_id_2,
-                m.winning_lineup_id,
-                m.lineup_1_id,
-                m.lineup_2_id
-            FROM public.tournament_brackets tb
-            LEFT JOIN public.matches m ON m.id = tb.match_id
-            WHERE tb.tournament_stage_id = _final_stage_id
-              AND tb.path = 'WB'
-              AND tb.match_number = 1
-            ORDER BY tb.round DESC
-            LIMIT 1
-        )
-        SELECT
-            fm.round,
-            CASE
-                WHEN fm.winning_lineup_id = fm.lineup_1_id THEN fm.tournament_team_id_1
-                WHEN fm.winning_lineup_id = fm.lineup_2_id THEN fm.tournament_team_id_2
-            END,
-            CASE
-                WHEN fm.winning_lineup_id = fm.lineup_1_id THEN fm.tournament_team_id_2
-                WHEN fm.winning_lineup_id = fm.lineup_2_id THEN fm.tournament_team_id_1
-            END
-          INTO _final_round, _winning_team_id, _runner_up_team_id
-        FROM final_match fm;
+    -- Placement comes from v_team_stage_results, which is the single source of
+    -- truth for tournament ordering (DE uses elimination round, RR/Swiss/SE
+    -- use wins-based tiebreakers). The view's `placement` column shares ranks
+    -- on ties, which lets us suppress the bronze when 3rd is contested
+    -- (e.g. SingleElim with no third_place_match → both SF losers tied).
+    WITH ranked AS (
+        SELECT tournament_team_id, placement
+        FROM public.v_team_stage_results
+        WHERE tournament_stage_id = _final_stage_id
+    ),
+    tie_counts AS (
+        SELECT placement, COUNT(*) AS team_count
+        FROM ranked GROUP BY placement
+    )
+    SELECT
+        MIN(CASE WHEN r.placement = 1 THEN r.tournament_team_id END),
+        MIN(CASE WHEN r.placement = 2 THEN r.tournament_team_id END),
+        MIN(CASE WHEN r.placement = 3 AND tc.team_count = 1 THEN r.tournament_team_id END)
+      INTO _winning_team_id, _runner_up_team_id, _third_team_id
+    FROM ranked r
+    JOIN tie_counts tc USING (placement);
 
-        IF _final_stage_type = 'SingleElimination' THEN
-            -- Single-elim has a definite 3rd place only when the stage
-            -- explicitly created and completed a bronze match. Otherwise the
-            -- semifinal losers are tied for 3rd, so no bronze is awarded.
-            IF _final_stage_third_place_match = true THEN
-                WITH third_match AS (
-                    SELECT
-                        tb.tournament_team_id_1,
-                        tb.tournament_team_id_2,
-                        m.winning_lineup_id,
-                        m.lineup_1_id,
-                        m.lineup_2_id
-                    FROM public.tournament_brackets tb
-                    LEFT JOIN public.matches m ON m.id = tb.match_id
-                    WHERE tb.tournament_stage_id = _final_stage_id
-                      AND tb.path = 'WB'
-                      AND tb.round = _final_round
-                      AND tb.match_number = 2
-                      AND tb.finished = true
-                      AND m.winning_lineup_id IS NOT NULL
-                    ORDER BY tb.round DESC
-                    LIMIT 1
-                )
-                SELECT
-                    CASE
-                        WHEN tm.winning_lineup_id = tm.lineup_1_id THEN tm.tournament_team_id_1
-                        WHEN tm.winning_lineup_id = tm.lineup_2_id THEN tm.tournament_team_id_2
-                    END
-                  INTO _third_team_id
-                FROM third_match tm;
-
-                _award_third := _third_team_id IS NOT NULL;
-            ELSE
-                _third_team_id := NULL;
-                _award_third := false;
-            END IF;
-        ELSE
-            -- Double-elim: loser of the LB final takes 3rd.
-            WITH lb_final AS (
-                SELECT
-                    tb.tournament_team_id_1,
-                    tb.tournament_team_id_2,
-                    m.winning_lineup_id,
-                    m.lineup_1_id,
-                    m.lineup_2_id
-                FROM public.tournament_brackets tb
-                LEFT JOIN public.matches m ON m.id = tb.match_id
-                WHERE tb.tournament_stage_id = _final_stage_id
-                  AND tb.path = 'LB'
-                  AND tb.finished = true
-                  AND m.winning_lineup_id IS NOT NULL
-                ORDER BY tb.round DESC, tb.match_number ASC
-                LIMIT 1
-            )
-            SELECT
-                CASE
-                    WHEN lf.winning_lineup_id = lf.lineup_1_id THEN lf.tournament_team_id_2
-                    WHEN lf.winning_lineup_id = lf.lineup_2_id THEN lf.tournament_team_id_1
-                END
-              INTO _third_team_id
-            FROM lb_final lf;
-
-            _award_third := _third_team_id IS NOT NULL;
-        END IF;
-    ELSE
-        -- Round-robin / Swiss finals: no bracket to read, so fall back to
-        -- standings scoped to the final stage only. Gold/silver pick the
-        -- first team at each rank (ties still award all tied teams below);
-        -- 3rd place only awards when a single team holds it.
-        WITH ranked AS (
-            SELECT
-                r.tournament_team_id,
-                RANK() OVER (
-                    ORDER BY r.wins DESC,
-                             r.head_to_head_match_wins DESC,
-                             r.head_to_head_rounds_won DESC,
-                             CASE WHEN r.maps_lost > 0
-                                  THEN r.maps_won::float / r.maps_lost::float
-                                  ELSE r.maps_won::float END DESC,
-                             CASE WHEN r.rounds_lost > 0
-                                  THEN r.rounds_won::float / r.rounds_lost::float
-                                  ELSE r.rounds_won::float END DESC,
-                             r.team_kdr DESC
-                ) AS placement
-            FROM public.v_team_stage_results r
-            WHERE r.tournament_stage_id = _final_stage_id
-        ),
-        tie_counts AS (
-            SELECT placement, COUNT(*) AS team_count
-            FROM ranked GROUP BY placement
-        )
-        SELECT
-            MIN(CASE WHEN r.placement = 1 THEN r.tournament_team_id END),
-            MIN(CASE WHEN r.placement = 2 THEN r.tournament_team_id END),
-            MIN(CASE WHEN r.placement = 3 AND tc.team_count = 1 THEN r.tournament_team_id END)
-          INTO _winning_team_id, _runner_up_team_id, _third_team_id
-        FROM ranked r
-        JOIN tie_counts tc USING (placement);
-
-        _award_third := _third_team_id IS NOT NULL;
-    END IF;
+    _award_third := _third_team_id IS NOT NULL;
 
     -- Defensive guard for malformed brackets or stale data: a team cannot
     -- receive both a placement medal and bronze in the same calculation.
