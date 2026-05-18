@@ -169,32 +169,55 @@ aggregated_stats AS (
     GROUP BY ms.team_id, ms.tournament_stage_id
 ),
 team_kills_deaths AS (
-    -- Calculate total kills and deaths for each team in this stage
+    -- Total kills and deaths per team per stage.
+    --
+    -- The earlier implementation joined player_kills on match_id alone and
+    -- ran an EXISTS lookup against match_lineup_players for every kill row
+    -- to decide whether the attacker / attacked belonged to the team. That
+    -- scaled with kills-per-match and was the dominant cost on the
+    -- tournaments_by_pk plan. Splitting into kills-by and kills-against
+    -- branches lets the planner drive each branch from the
+    -- (match_id, attacker_steam_id) / (match_id, attacked_steam_id) indexes
+    -- on player_kills via the team's roster, then we sum flags in one pass.
+    -- Suicides (attacker = attacked) stay excluded; friendly fire still
+    -- counts as both a kill and a death for the team.
     SELECT
-        tmr.team_id,
-        tmr.tournament_stage_id,
-        COUNT(*) FILTER (WHERE
-            pk.attacker_steam_id IS NOT NULL
-            AND EXISTS (
-                SELECT 1 FROM match_lineup_players mlp
-                WHERE mlp.match_lineup_id = tmr.team_lineup_id
-                  AND mlp.steam_id = pk.attacker_steam_id
-            )
-            AND pk.attacker_steam_id != pk.attacked_steam_id  -- Exclude suicides
-        )::int as total_kills,
-        COUNT(*) FILTER (WHERE
-            pk.attacked_steam_id IS NOT NULL
-            AND EXISTS (
-                SELECT 1 FROM match_lineup_players mlp
-                WHERE mlp.match_lineup_id = tmr.team_lineup_id
-                  AND mlp.steam_id = pk.attacked_steam_id
-            )
-            AND pk.attacker_steam_id != pk.attacked_steam_id  -- Exclude suicides
-        )::int as total_deaths
-    FROM team_match_results tmr
-    JOIN player_kills pk ON pk.match_id = tmr.match_id
-    WHERE tmr.match_id IS NOT NULL
-    GROUP BY tmr.team_id, tmr.tournament_stage_id
+        team_id,
+        tournament_stage_id,
+        SUM(kill_flag)::int as total_kills,
+        SUM(death_flag)::int as total_deaths
+    FROM (
+        SELECT
+            tmr.team_id,
+            tmr.tournament_stage_id,
+            1 as kill_flag,
+            0 as death_flag
+        FROM team_match_results tmr
+        JOIN match_lineup_players mlp
+          ON mlp.match_lineup_id = tmr.team_lineup_id
+        JOIN player_kills pk
+          ON pk.match_id = tmr.match_id
+         AND pk.attacker_steam_id = mlp.steam_id
+         AND pk.attacker_steam_id != pk.attacked_steam_id
+        WHERE tmr.match_id IS NOT NULL
+
+        UNION ALL
+
+        SELECT
+            tmr.team_id,
+            tmr.tournament_stage_id,
+            0,
+            1
+        FROM team_match_results tmr
+        JOIN match_lineup_players mlp
+          ON mlp.match_lineup_id = tmr.team_lineup_id
+        JOIN player_kills pk
+          ON pk.match_id = tmr.match_id
+         AND pk.attacked_steam_id = mlp.steam_id
+         AND pk.attacker_steam_id != pk.attacked_steam_id
+        WHERE tmr.match_id IS NOT NULL
+    ) kill_events
+    GROUP BY team_id, tournament_stage_id
 ),
 team_wins_per_stage AS (
     -- Calculate wins per team per stage (needed to find tied teams)
