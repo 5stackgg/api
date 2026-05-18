@@ -39,6 +39,7 @@ select_permissions:
         - wins
         - group_number
         - rank
+        - placement
         - tournament_stage_id
         - tournament_team_id
       filter: {}

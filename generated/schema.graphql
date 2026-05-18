@@ -63140,6 +63140,7 @@ type v_team_stage_results {
   maps_won: Int
   matches_played: Int
   matches_remaining: Int
+  placement: Int
   rank: Int
   rounds_lost: Int
   rounds_won: Int
@@ -63301,6 +63302,7 @@ type v_team_stage_results_avg_fields {
   maps_won: Float
   matches_played: Float
   matches_remaining: Float
+  placement: Float
   rank: Float
   rounds_lost: Float
   rounds_won: Float
@@ -63322,6 +63324,7 @@ input v_team_stage_results_avg_order_by {
   maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
+  placement: order_by
   rank: order_by
   rounds_lost: order_by
   rounds_won: order_by
@@ -63346,6 +63349,7 @@ input v_team_stage_results_bool_exp {
   maps_won: Int_comparison_exp
   matches_played: Int_comparison_exp
   matches_remaining: Int_comparison_exp
+  placement: Int_comparison_exp
   rank: Int_comparison_exp
   rounds_lost: Int_comparison_exp
   rounds_won: Int_comparison_exp
@@ -63371,6 +63375,7 @@ input v_team_stage_results_insert_input {
   maps_won: Int
   matches_played: Int
   matches_remaining: Int
+  placement: Int
   rank: Int
   rounds_lost: Int
   rounds_won: Int
@@ -63394,6 +63399,7 @@ type v_team_stage_results_max_fields {
   maps_won: Int
   matches_played: Int
   matches_remaining: Int
+  placement: Int
   rank: Int
   rounds_lost: Int
   rounds_won: Int
@@ -63417,6 +63423,7 @@ input v_team_stage_results_max_order_by {
   maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
+  placement: order_by
   rank: order_by
   rounds_lost: order_by
   rounds_won: order_by
@@ -63438,6 +63445,7 @@ type v_team_stage_results_min_fields {
   maps_won: Int
   matches_played: Int
   matches_remaining: Int
+  placement: Int
   rank: Int
   rounds_lost: Int
   rounds_won: Int
@@ -63461,6 +63469,7 @@ input v_team_stage_results_min_order_by {
   maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
+  placement: order_by
   rank: order_by
   rounds_lost: order_by
   rounds_won: order_by
@@ -63489,6 +63498,7 @@ input v_team_stage_results_order_by {
   maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
+  placement: order_by
   rank: order_by
   rounds_lost: order_by
   rounds_won: order_by
@@ -63529,6 +63539,9 @@ enum v_team_stage_results_select_column {
 
   """column name"""
   matches_remaining
+
+  """column name"""
+  placement
 
   """column name"""
   rank
@@ -63632,6 +63645,7 @@ type v_team_stage_results_stddev_fields {
   maps_won: Float
   matches_played: Float
   matches_remaining: Float
+  placement: Float
   rank: Float
   rounds_lost: Float
   rounds_won: Float
@@ -63653,6 +63667,7 @@ input v_team_stage_results_stddev_order_by {
   maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
+  placement: order_by
   rank: order_by
   rounds_lost: order_by
   rounds_won: order_by
@@ -63672,6 +63687,7 @@ type v_team_stage_results_stddev_pop_fields {
   maps_won: Float
   matches_played: Float
   matches_remaining: Float
+  placement: Float
   rank: Float
   rounds_lost: Float
   rounds_won: Float
@@ -63693,6 +63709,7 @@ input v_team_stage_results_stddev_pop_order_by {
   maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
+  placement: order_by
   rank: order_by
   rounds_lost: order_by
   rounds_won: order_by
@@ -63712,6 +63729,7 @@ type v_team_stage_results_stddev_samp_fields {
   maps_won: Float
   matches_played: Float
   matches_remaining: Float
+  placement: Float
   rank: Float
   rounds_lost: Float
   rounds_won: Float
@@ -63733,6 +63751,7 @@ input v_team_stage_results_stddev_samp_order_by {
   maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
+  placement: order_by
   rank: order_by
   rounds_lost: order_by
   rounds_won: order_by
@@ -63763,6 +63782,7 @@ input v_team_stage_results_stream_cursor_value_input {
   maps_won: Int
   matches_played: Int
   matches_remaining: Int
+  placement: Int
   rank: Int
   rounds_lost: Int
   rounds_won: Int
@@ -63784,6 +63804,7 @@ type v_team_stage_results_sum_fields {
   maps_won: Int
   matches_played: Int
   matches_remaining: Int
+  placement: Int
   rank: Int
   rounds_lost: Int
   rounds_won: Int
@@ -63805,6 +63826,7 @@ input v_team_stage_results_sum_order_by {
   maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
+  placement: order_by
   rank: order_by
   rounds_lost: order_by
   rounds_won: order_by
@@ -63824,6 +63846,7 @@ type v_team_stage_results_var_pop_fields {
   maps_won: Float
   matches_played: Float
   matches_remaining: Float
+  placement: Float
   rank: Float
   rounds_lost: Float
   rounds_won: Float
@@ -63845,6 +63868,7 @@ input v_team_stage_results_var_pop_order_by {
   maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
+  placement: order_by
   rank: order_by
   rounds_lost: order_by
   rounds_won: order_by
@@ -63864,6 +63888,7 @@ type v_team_stage_results_var_samp_fields {
   maps_won: Float
   matches_played: Float
   matches_remaining: Float
+  placement: Float
   rank: Float
   rounds_lost: Float
   rounds_won: Float
@@ -63885,6 +63910,7 @@ input v_team_stage_results_var_samp_order_by {
   maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
+  placement: order_by
   rank: order_by
   rounds_lost: order_by
   rounds_won: order_by
@@ -63904,6 +63930,7 @@ type v_team_stage_results_variance_fields {
   maps_won: Float
   matches_played: Float
   matches_remaining: Float
+  placement: Float
   rank: Float
   rounds_lost: Float
   rounds_won: Float
@@ -63925,6 +63952,7 @@ input v_team_stage_results_variance_order_by {
   maps_won: order_by
   matches_played: order_by
   matches_remaining: order_by
+  placement: order_by
   rank: order_by
   rounds_lost: order_by
   rounds_won: order_by

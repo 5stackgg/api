@@ -73033,6 +73033,9 @@ export default {
             "matches_remaining": [
                 30
             ],
+            "placement": [
+                30
+            ],
             "rank": [
                 30
             ],
@@ -73406,6 +73409,9 @@ export default {
             "matches_remaining": [
                 22
             ],
+            "placement": [
+                22
+            ],
             "rank": [
                 22
             ],
@@ -73454,6 +73460,9 @@ export default {
                 1661
             ],
             "matches_remaining": [
+                1661
+            ],
+            "placement": [
                 1661
             ],
             "rank": [
@@ -73513,6 +73522,9 @@ export default {
                 31
             ],
             "matches_remaining": [
+                31
+            ],
+            "placement": [
                 31
             ],
             "rank": [
@@ -73577,6 +73589,9 @@ export default {
             "matches_remaining": [
                 30
             ],
+            "placement": [
+                30
+            ],
             "rank": [
                 30
             ],
@@ -73639,6 +73654,9 @@ export default {
             "matches_remaining": [
                 30
             ],
+            "placement": [
+                30
+            ],
             "rank": [
                 30
             ],
@@ -73693,6 +73711,9 @@ export default {
                 1661
             ],
             "matches_remaining": [
+                1661
+            ],
+            "placement": [
                 1661
             ],
             "rank": [
@@ -73751,6 +73772,9 @@ export default {
             "matches_remaining": [
                 30
             ],
+            "placement": [
+                30
+            ],
             "rank": [
                 30
             ],
@@ -73805,6 +73829,9 @@ export default {
                 1661
             ],
             "matches_remaining": [
+                1661
+            ],
+            "placement": [
                 1661
             ],
             "rank": [
@@ -73869,6 +73896,9 @@ export default {
                 1661
             ],
             "matches_remaining": [
+                1661
+            ],
+            "placement": [
                 1661
             ],
             "rank": [
@@ -73942,6 +73972,9 @@ export default {
             "matches_remaining": [
                 22
             ],
+            "placement": [
+                22
+            ],
             "rank": [
                 22
             ],
@@ -73990,6 +74023,9 @@ export default {
                 1661
             ],
             "matches_remaining": [
+                1661
+            ],
+            "placement": [
                 1661
             ],
             "rank": [
@@ -74042,6 +74078,9 @@ export default {
             "matches_remaining": [
                 22
             ],
+            "placement": [
+                22
+            ],
             "rank": [
                 22
             ],
@@ -74090,6 +74129,9 @@ export default {
                 1661
             ],
             "matches_remaining": [
+                1661
+            ],
+            "placement": [
                 1661
             ],
             "rank": [
@@ -74142,6 +74184,9 @@ export default {
             "matches_remaining": [
                 22
             ],
+            "placement": [
+                22
+            ],
             "rank": [
                 22
             ],
@@ -74190,6 +74235,9 @@ export default {
                 1661
             ],
             "matches_remaining": [
+                1661
+            ],
+            "placement": [
                 1661
             ],
             "rank": [
@@ -74253,6 +74301,9 @@ export default {
             "matches_remaining": [
                 30
             ],
+            "placement": [
+                30
+            ],
             "rank": [
                 30
             ],
@@ -74309,6 +74360,9 @@ export default {
             "matches_remaining": [
                 30
             ],
+            "placement": [
+                30
+            ],
             "rank": [
                 30
             ],
@@ -74357,6 +74411,9 @@ export default {
                 1661
             ],
             "matches_remaining": [
+                1661
+            ],
+            "placement": [
                 1661
             ],
             "rank": [
@@ -74409,6 +74466,9 @@ export default {
             "matches_remaining": [
                 22
             ],
+            "placement": [
+                22
+            ],
             "rank": [
                 22
             ],
@@ -74457,6 +74517,9 @@ export default {
                 1661
             ],
             "matches_remaining": [
+                1661
+            ],
+            "placement": [
                 1661
             ],
             "rank": [
@@ -74509,6 +74572,9 @@ export default {
             "matches_remaining": [
                 22
             ],
+            "placement": [
+                22
+            ],
             "rank": [
                 22
             ],
@@ -74557,6 +74623,9 @@ export default {
                 1661
             ],
             "matches_remaining": [
+                1661
+            ],
+            "placement": [
                 1661
             ],
             "rank": [
@@ -74609,6 +74678,9 @@ export default {
             "matches_remaining": [
                 22
             ],
+            "placement": [
+                22
+            ],
             "rank": [
                 22
             ],
@@ -74657,6 +74729,9 @@ export default {
                 1661
             ],
             "matches_remaining": [
+                1661
+            ],
+            "placement": [
                 1661
             ],
             "rank": [
