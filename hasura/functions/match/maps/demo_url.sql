@@ -7,13 +7,19 @@ CREATE OR REPLACE FUNCTION public.demo_download_url(match_map_demos public.match
     DECLARE
         worker_url text;
         demos_domain text;
+        version text;
     BEGIN
+        version := COALESCE(
+            EXTRACT(EPOCH FROM match_map_demos.created_at)::bigint::text,
+            '0'
+        );
+
         SELECT value INTO worker_url
         FROM settings
         WHERE name = 'cloudflare_worker_url';
 
         IF worker_url IS NOT NULL THEN
-            RETURN CONCAT(worker_url, '/demo?file=', match_map_demos.file);
+            RETURN CONCAT(worker_url, '/demo?file=', match_map_demos.file, '&v=', version);
         END IF;
 
         SELECT value INTO demos_domain
@@ -27,7 +33,8 @@ CREATE OR REPLACE FUNCTION public.demo_download_url(match_map_demos public.match
         RETURN CONCAT(
             demos_domain,
             '/demos/', match_map_demos.match_id,
-            '/map/', match_map_demos.match_map_id
+            '/map/', match_map_demos.match_map_id,
+            '?v=', version
         );
     END;
 $$;

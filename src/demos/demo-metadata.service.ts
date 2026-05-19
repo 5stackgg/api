@@ -361,6 +361,8 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     z: p.z,
     yaw: p.yaw ?? null,
     health: (p as { health?: number }).health ?? null,
+    has_bomb: p.has_bomb ?? false,
+    has_defuser: p.has_defuser ?? false,
   }));
 
   const shots_fired = (parsed.shots_fired ?? []).map((s) => ({
@@ -411,6 +413,7 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     players: parsed.players ?? [],
     kills: parsed.kills ?? [],
     bombs: parsed.bombs ?? [],
+    kit_drops: parsed.kit_drops ?? [],
     positions,
     shots_fired,
     grenade_throws,

@@ -8,6 +8,7 @@ CREATE OR REPLACE FUNCTION public.clip_download_url(match_clips public.match_cli
         slug text;
         basename text;
         download_name text;
+        version text;
     BEGIN
         IF match_clips.file IS NULL THEN
             RETURN NULL;
@@ -32,12 +33,17 @@ CREATE OR REPLACE FUNCTION public.clip_download_url(match_clips public.match_cli
             download_name := basename;
         END IF;
 
+        version := COALESCE(
+            EXTRACT(EPOCH FROM match_clips.created_at)::bigint::text,
+            '0'
+        );
+
         SELECT value INTO worker_url
         FROM settings
         WHERE name = 'cloudflare_worker_url';
 
         IF worker_url IS NOT NULL THEN
-            RETURN CONCAT(worker_url, '/', match_clips.file, '?name=', download_name);
+            RETURN CONCAT(worker_url, '/', match_clips.file, '?name=', download_name, '&v=', version);
         END IF;
 
         SELECT value INTO demos_domain
@@ -48,6 +54,6 @@ CREATE OR REPLACE FUNCTION public.clip_download_url(match_clips public.match_cli
             RETURN NULL;
         END IF;
 
-        RETURN CONCAT(demos_domain, '/clips/', match_clips.id, '?name=', download_name);
+        RETURN CONCAT(demos_domain, '/clips/', match_clips.id, '?name=', download_name, '&v=', version);
     END;
 $$;
