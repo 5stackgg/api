@@ -1,4 +1,3 @@
--- Indexes
 DROP INDEX IF EXISTS public.idx_player_positions_mm_attacker;
 DROP INDEX IF EXISTS public.idx_player_positions_mm_round_tick;
 DROP INDEX IF EXISTS public.idx_player_shots_fired_mm_attacker_round_tick;
@@ -10,11 +9,9 @@ DROP INDEX IF EXISTS public.idx_player_kills_map_round_attacker;
 DROP INDEX IF EXISTS public.uq_player_round_inventory_mm_round_attacker;
 DROP INDEX IF EXISTS public.idx_player_round_inventory_mm_attacker;
 
--- Tables
 DROP TABLE IF EXISTS public.player_positions;
 DROP TABLE IF EXISTS public.player_round_inventory;
 
--- Columns on existing tables
 ALTER TABLE public.player_shots_fired
   DROP COLUMN IF EXISTS ammo_in_magazine;
 
