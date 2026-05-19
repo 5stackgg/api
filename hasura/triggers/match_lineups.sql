@@ -47,6 +47,10 @@ BEGIN
         RETURN NEW;
     END IF;
 
+    IF is_tournament_match(_match) THEN
+        RETURN NEW;
+    END IF;
+
     SELECT t.captain_steam_id
     INTO _team_captain_steam_id
     FROM teams t

@@ -178,6 +178,20 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
            AND steam_id = _captain_steam_id_2;
      END IF;
 
+     UPDATE match_lineups
+        SET team_id = tt.team_id
+       FROM tournament_teams tt
+      WHERE match_lineups.id = _lineup_1_id
+        AND tt.id = bracket.tournament_team_id_1
+        AND tt.team_id IS NOT NULL;
+
+     UPDATE match_lineups
+        SET team_id = tt.team_id
+       FROM tournament_teams tt
+      WHERE match_lineups.id = _lineup_2_id
+        AND tt.id = bracket.tournament_team_id_2
+        AND tt.team_id IS NOT NULL;
+
      UPDATE matches
      SET status = 'WaitingForCheckIn'
      WHERE id = _match_id;

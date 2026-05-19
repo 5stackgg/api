@@ -91,12 +91,17 @@ BEGIN
         FOR player_steam_id IN
             SELECT tr.player_steam_id
             FROM team_roster tr
+            INNER JOIN teams t ON t.id = tr.team_id
             LEFT JOIN tournament_team_roster ttr
                 ON ttr.player_steam_id = tr.player_steam_id
                AND ttr.tournament_id = NEW.tournament_id
             WHERE tr.team_id = NEW.team_id
               AND ttr.player_steam_id IS NULL
             ORDER BY
+                CASE
+                    WHEN tr.player_steam_id = COALESCE(NEW.captain_steam_id, t.captain_steam_id) THEN 0
+                    ELSE 1
+                END,
                 CASE tr.status
                     WHEN 'Starter' THEN 1
                     WHEN 'Substitute' THEN 2
