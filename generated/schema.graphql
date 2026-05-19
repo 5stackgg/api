@@ -13841,6 +13841,12 @@ type match_map_demos {
   match_map: match_maps!
   match_map_id: uuid!
   metadata_parsed_at: timestamptz
+  playback_file: String
+
+  """
+  A computed field, executes function "demo_playback_url"
+  """
+  playback_url: String
   players(
     """JSON select path"""
     path: String
@@ -13971,6 +13977,8 @@ input match_map_demos_bool_exp {
   match_map: match_maps_bool_exp
   match_map_id: uuid_comparison_exp
   metadata_parsed_at: timestamptz_comparison_exp
+  playback_file: String_comparison_exp
+  playback_url: String_comparison_exp
   players: jsonb_comparison_exp
   round_ticks: jsonb_comparison_exp
   size: Int_comparison_exp
@@ -14052,6 +14060,7 @@ input match_map_demos_insert_input {
   match_map: match_maps_obj_rel_insert_input
   match_map_id: uuid
   metadata_parsed_at: timestamptz
+  playback_file: String
   players: jsonb
   round_ticks: jsonb
   size: Int
@@ -14076,6 +14085,12 @@ type match_map_demos_max_fields {
   match_id: uuid
   match_map_id: uuid
   metadata_parsed_at: timestamptz
+  playback_file: String
+
+  """
+  A computed field, executes function "demo_playback_url"
+  """
+  playback_url: String
   size: Int
   tick_rate: Float
   total_ticks: Int
@@ -14095,6 +14110,7 @@ input match_map_demos_max_order_by {
   match_id: order_by
   match_map_id: order_by
   metadata_parsed_at: order_by
+  playback_file: order_by
   size: order_by
   tick_rate: order_by
   total_ticks: order_by
@@ -14117,6 +14133,12 @@ type match_map_demos_min_fields {
   match_id: uuid
   match_map_id: uuid
   metadata_parsed_at: timestamptz
+  playback_file: String
+
+  """
+  A computed field, executes function "demo_playback_url"
+  """
+  playback_url: String
   size: Int
   tick_rate: Float
   total_ticks: Int
@@ -14136,6 +14158,7 @@ input match_map_demos_min_order_by {
   match_id: order_by
   match_map_id: order_by
   metadata_parsed_at: order_by
+  playback_file: order_by
   size: order_by
   tick_rate: order_by
   total_ticks: order_by
@@ -14191,6 +14214,8 @@ input match_map_demos_order_by {
   match_map: match_maps_order_by
   match_map_id: order_by
   metadata_parsed_at: order_by
+  playback_file: order_by
+  playback_url: order_by
   players: order_by
   round_ticks: order_by
   size: order_by
@@ -14250,6 +14275,9 @@ enum match_map_demos_select_column {
   metadata_parsed_at
 
   """column name"""
+  playback_file
+
+  """column name"""
   players
 
   """column name"""
@@ -14282,6 +14310,7 @@ input match_map_demos_set_input {
   match_id: uuid
   match_map_id: uuid
   metadata_parsed_at: timestamptz
+  playback_file: String
   players: jsonb
   round_ticks: jsonb
   size: Int
@@ -14368,6 +14397,7 @@ input match_map_demos_stream_cursor_value_input {
   match_id: uuid
   match_map_id: uuid
   metadata_parsed_at: timestamptz
+  playback_file: String
   players: jsonb
   round_ticks: jsonb
   size: Int
@@ -14427,6 +14457,9 @@ enum match_map_demos_update_column {
 
   """column name"""
   metadata_parsed_at
+
+  """column name"""
+  playback_file
 
   """column name"""
   players
@@ -37678,6 +37711,7 @@ type player_positions {
   alive: Boolean!
   attacker_steam_id: bigint!
   attacker_team: String
+  health: smallint
   id: bigint!
 
   """An object relationship"""
@@ -37726,6 +37760,7 @@ type player_positions_aggregate_fields {
 """aggregate avg on columns"""
 type player_positions_avg_fields {
   attacker_steam_id: Float
+  health: Float
   id: Float
   round: Float
   tick: Float
@@ -37745,6 +37780,7 @@ input player_positions_bool_exp {
   alive: Boolean_comparison_exp
   attacker_steam_id: bigint_comparison_exp
   attacker_team: String_comparison_exp
+  health: smallint_comparison_exp
   id: bigint_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
@@ -37774,6 +37810,7 @@ input type for incrementing numeric columns in table "player_positions"
 """
 input player_positions_inc_input {
   attacker_steam_id: bigint
+  health: smallint
   id: bigint
   round: Int
   tick: Int
@@ -37790,6 +37827,7 @@ input player_positions_insert_input {
   alive: Boolean
   attacker_steam_id: bigint
   attacker_team: String
+  health: smallint
   id: bigint
   match: matches_obj_rel_insert_input
   match_id: uuid
@@ -37808,6 +37846,7 @@ input player_positions_insert_input {
 type player_positions_max_fields {
   attacker_steam_id: bigint
   attacker_team: String
+  health: smallint
   id: bigint
   match_id: uuid
   match_map_id: uuid
@@ -37823,6 +37862,7 @@ type player_positions_max_fields {
 type player_positions_min_fields {
   attacker_steam_id: bigint
   attacker_team: String
+  health: smallint
   id: bigint
   match_id: uuid
   match_map_id: uuid
@@ -37859,6 +37899,7 @@ input player_positions_order_by {
   alive: order_by
   attacker_steam_id: order_by
   attacker_team: order_by
+  health: order_by
   id: order_by
   match: matches_order_by
   match_id: order_by
@@ -37890,6 +37931,9 @@ enum player_positions_select_column {
 
   """column name"""
   attacker_team
+
+  """column name"""
+  health
 
   """column name"""
   id
@@ -37926,6 +37970,7 @@ input player_positions_set_input {
   alive: Boolean
   attacker_steam_id: bigint
   attacker_team: String
+  health: smallint
   id: bigint
   match_id: uuid
   match_map_id: uuid
@@ -37940,6 +37985,7 @@ input player_positions_set_input {
 """aggregate stddev on columns"""
 type player_positions_stddev_fields {
   attacker_steam_id: Float
+  health: Float
   id: Float
   round: Float
   tick: Float
@@ -37952,6 +37998,7 @@ type player_positions_stddev_fields {
 """aggregate stddev_pop on columns"""
 type player_positions_stddev_pop_fields {
   attacker_steam_id: Float
+  health: Float
   id: Float
   round: Float
   tick: Float
@@ -37964,6 +38011,7 @@ type player_positions_stddev_pop_fields {
 """aggregate stddev_samp on columns"""
 type player_positions_stddev_samp_fields {
   attacker_steam_id: Float
+  health: Float
   id: Float
   round: Float
   tick: Float
@@ -37989,6 +38037,7 @@ input player_positions_stream_cursor_value_input {
   alive: Boolean
   attacker_steam_id: bigint
   attacker_team: String
+  health: smallint
   id: bigint
   match_id: uuid
   match_map_id: uuid
@@ -38003,6 +38052,7 @@ input player_positions_stream_cursor_value_input {
 """aggregate sum on columns"""
 type player_positions_sum_fields {
   attacker_steam_id: bigint
+  health: smallint
   id: bigint
   round: Int
   tick: Int
@@ -38024,6 +38074,9 @@ enum player_positions_update_column {
 
   """column name"""
   attacker_team
+
+  """column name"""
+  health
 
   """column name"""
   id
@@ -38067,6 +38120,7 @@ input player_positions_updates {
 """aggregate var_pop on columns"""
 type player_positions_var_pop_fields {
   attacker_steam_id: Float
+  health: Float
   id: Float
   round: Float
   tick: Float
@@ -38079,6 +38133,7 @@ type player_positions_var_pop_fields {
 """aggregate var_samp on columns"""
 type player_positions_var_samp_fields {
   attacker_steam_id: Float
+  health: Float
   id: Float
   round: Float
   tick: Float
@@ -38091,6 +38146,7 @@ type player_positions_var_samp_fields {
 """aggregate variance on columns"""
 type player_positions_variance_fields {
   attacker_steam_id: Float
+  health: Float
   id: Float
   round: Float
   tick: Float
@@ -49006,6 +49062,23 @@ input settings_updates {
 
   """filter the rows which have to be updated"""
   where: settings_bool_exp!
+}
+
+scalar smallint
+
+"""
+Boolean expression to compare columns of type "smallint". All fields are combined with logical 'AND'.
+"""
+input smallint_comparison_exp {
+  _eq: smallint
+  _gt: smallint
+  _gte: smallint
+  _in: [smallint!]
+  _is_null: Boolean
+  _lt: smallint
+  _lte: smallint
+  _neq: smallint
+  _nin: [smallint!]
 }
 
 type subscription_root {

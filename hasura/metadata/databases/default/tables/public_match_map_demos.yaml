@@ -36,6 +36,11 @@ computed_fields:
       function:
         name: demo_download_url
         schema: public
+  - name: playback_url
+    definition:
+      function:
+        name: demo_playback_url
+        schema: public
 select_permissions:
   - role: guest
     permission:
@@ -58,6 +63,7 @@ select_permissions:
         - created_at
       computed_fields:
         - download_url
+        - playback_url
       filter: {}
       allow_aggregations: true
     comment: ""
