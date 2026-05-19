@@ -18,8 +18,11 @@
 -- more wins than the champion, so wins-based ordering puts silver above gold).
 -- For RoundRobin / Swiss / SingleElimination the DE keys collapse to constants
 -- and the existing wins-based tiebreaker chain is used unchanged.
+-- CTEs are `NOT MATERIALIZED` to encourage the planner to inline them so the
+-- outer Hasura filter (tournament_stage_id / tournament_team_id) has a chance
+-- to propagate to base tables instead of running each CTE over the whole DB.
 CREATE OR REPLACE VIEW public.v_team_stage_results AS
-WITH team_brackets AS (
+WITH team_brackets AS NOT MATERIALIZED (
     -- Get all brackets for each team in each stage
     SELECT
         tb.tournament_team_id_1 as team_id,
@@ -47,7 +50,7 @@ WITH team_brackets AS (
     FROM tournament_brackets tb
     WHERE tb.tournament_team_id_2 IS NOT NULL
 ),
-team_match_results AS (
+team_match_results AS NOT MATERIALIZED (
     -- Get match results for each team
     SELECT
         tb.team_id,
@@ -70,7 +73,7 @@ team_match_results AS (
     FROM team_brackets tb
     LEFT JOIN matches m ON m.id = tb.match_id
 ),
-match_stats AS (
+match_stats AS NOT MATERIALIZED (
     -- Calculate wins, losses, and games played per match
     SELECT
         tmr.team_id,
@@ -84,7 +87,7 @@ match_stats AS (
              AND tmr.winning_lineup_id != tmr.team_lineup_id THEN 1 ELSE 0 END as loss
     FROM team_match_results tmr
 ),
-round_stats AS (
+round_stats AS NOT MATERIALIZED (
     -- Calculate rounds won and lost per team per match
     SELECT
         tmr.team_id,
@@ -104,7 +107,7 @@ round_stats AS (
     WHERE tmr.match_id IS NOT NULL
     GROUP BY tmr.team_id, tmr.tournament_stage_id, tmr.match_id
 ),
-map_stats AS (
+map_stats AS NOT MATERIALIZED (
     -- Calculate maps won and lost per team per match
     SELECT
         tmr.team_id,
@@ -125,7 +128,7 @@ map_stats AS (
     WHERE tmr.match_id IS NOT NULL
     GROUP BY tmr.team_id, tmr.tournament_stage_id, tmr.match_id, mm.id
 ),
-map_wins_losses AS (
+map_wins_losses AS NOT MATERIALIZED (
     -- Determine which team won each map (team with more rounds won on that map)
     SELECT
         ms.team_id,
@@ -135,7 +138,7 @@ map_wins_losses AS (
         CASE WHEN ms.rounds_won_on_map < ms.rounds_lost_on_map THEN 1 ELSE 0 END as map_lost
     FROM map_stats ms
 ),
-aggregated_map_stats AS (
+aggregated_map_stats AS NOT MATERIALIZED (
     -- Aggregate maps won and lost per team per stage
     SELECT
         mwl.team_id,
@@ -145,7 +148,7 @@ aggregated_map_stats AS (
     FROM map_wins_losses mwl
     GROUP BY mwl.team_id, mwl.tournament_stage_id
 ),
-aggregated_stats AS (
+aggregated_stats AS NOT MATERIALIZED (
     -- Aggregate all stats per team per stage
     SELECT
         ms.team_id,
@@ -168,7 +171,7 @@ aggregated_stats AS (
         AND rs.match_id = ms.match_id
     GROUP BY ms.team_id, ms.tournament_stage_id
 ),
-team_kills_deaths AS (
+team_kills_deaths AS NOT MATERIALIZED (
     -- Total kills and deaths per team per stage.
     --
     -- The earlier implementation joined player_kills on match_id alone and
@@ -219,7 +222,7 @@ team_kills_deaths AS (
     ) kill_events
     GROUP BY team_id, tournament_stage_id
 ),
-team_wins_per_stage AS (
+team_wins_per_stage AS NOT MATERIALIZED (
     -- Calculate wins per team per stage (needed to find tied teams)
     SELECT
         ms.team_id,
@@ -228,7 +231,7 @@ team_wins_per_stage AS (
     FROM match_stats ms
     GROUP BY ms.team_id, ms.tournament_stage_id
 ),
-team_head_to_head_matches AS (
+team_head_to_head_matches AS NOT MATERIALIZED (
     -- Calculate head-to-head match wins for each team in this stage
     -- Only counts match wins against teams with the same number of wins (tied teams)
     SELECT
@@ -248,7 +251,7 @@ team_head_to_head_matches AS (
     WHERE tmr1.winning_lineup_id IS NOT NULL
     GROUP BY tmr1.team_id, tmr1.tournament_stage_id
 ),
-team_head_to_head_rounds AS (
+team_head_to_head_rounds AS NOT MATERIALIZED (
     -- Calculate head-to-head rounds won for each team in this stage
     -- Only counts rounds won in matches against teams with the same number of wins (tied teams)
     SELECT
@@ -273,7 +276,7 @@ team_head_to_head_rounds AS (
     WHERE tmr1.match_id IS NOT NULL
     GROUP BY tmr1.team_id, tmr1.tournament_stage_id
 ),
-team_groups AS (
+team_groups AS NOT MATERIALIZED (
     -- Each team's group within the stage. Takes the winner-bracket group only
     -- (loser-bracket entries inherit a different `group` value in DE formats)
     -- and falls back to the lowest group number if a team appears in several.
@@ -296,14 +299,14 @@ team_groups AS (
       AND tb.bracket_path = 'WB'
     GROUP BY tb.team_id, tb.tournament_stage_id, ts.type
 ),
-stage_types AS (
+stage_types AS NOT MATERIALIZED (
     -- Stage type per stage, used to switch the ORDER BY to DE-aware ranking
     -- for DoubleElimination stages while leaving every other format on the
     -- existing wins-based chain.
     SELECT id AS tournament_stage_id, type AS stage_type
     FROM tournament_stages
 ),
-team_elimination AS (
+team_elimination AS NOT MATERIALIZED (
     -- DE-only: each team's single elimination point. A bracket eliminates its
     -- loser iff loser_parent_bracket_id IS NULL (true for LB matches and the
     -- Grand Final, never for pre-GF WB matches whose loser drops into LB).
@@ -321,7 +324,7 @@ team_elimination AS (
       AND tb.loser_parent_bracket_id IS NULL
     ORDER BY tmr.team_id, tmr.tournament_stage_id, tb.round DESC
 ),
-stage_rows AS (
+stage_rows AS NOT MATERIALIZED (
     SELECT
         ass.team_id as tournament_team_id,
         ass.tournament_stage_id,
