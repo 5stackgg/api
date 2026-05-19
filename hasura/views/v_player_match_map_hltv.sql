@@ -1,7 +1,3 @@
--- Per-player per-map HLTV 2.0 rating + KAST.
--- HLTV 2.0 formula:
---   rating = 0.0073*KAST + 0.3591*KPR - 0.5329*DPR + 0.2372*Impact + 0.0032*ADR + 0.1587
---   Impact = 2.13*KPR + 0.42*APR - 0.41
 CREATE OR REPLACE VIEW public.v_player_match_map_hltv AS
 WITH per_round AS (
   SELECT

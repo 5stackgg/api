@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS public.player_positions (
   y                 real NOT NULL,
   z                 real NOT NULL,
   yaw               real,
+  health            smallint,
   CONSTRAINT player_positions_match_map_id_fkey
     FOREIGN KEY (match_map_id) REFERENCES public.match_maps(id) ON DELETE CASCADE,
   CONSTRAINT player_positions_match_id_fkey

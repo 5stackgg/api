@@ -40,7 +40,7 @@ BEGIN
 
   INSERT INTO public.player_positions
     (match_id, match_map_id, round, tick, attacker_steam_id, attacker_team,
-     alive, x, y, z, yaw)
+     alive, x, y, z, yaw, health)
   SELECT
     v_match_id,
     v_match_map_id,
@@ -52,7 +52,8 @@ BEGIN
     (elem->>'x')::real,
     (elem->>'y')::real,
     (elem->>'z')::real,
-    NULLIF(elem->>'yaw', '')::real
+    NULLIF(elem->>'yaw', '')::real,
+    NULLIF(elem->>'health', '')::smallint
   FROM jsonb_array_elements(COALESCE(p_parsed->'positions', '[]'::jsonb)) elem
   WHERE NULLIF(elem->>'attacker', '') IS NOT NULL;
 

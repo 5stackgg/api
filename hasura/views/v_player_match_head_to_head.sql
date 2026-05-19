@@ -1,5 +1,3 @@
--- Per-match player-vs-player aggregation: kills, damage, flash count.
--- One row per (match_id, attacker_steam_id, attacked_steam_id) pair.
 CREATE OR REPLACE VIEW public.v_player_match_head_to_head AS
 WITH kills AS (
   SELECT

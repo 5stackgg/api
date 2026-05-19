@@ -272,10 +272,6 @@ BEGIN
     GROUP BY tm.steam_id
   ),
   traded_death_agg AS (
-    -- A player can only die once per round; DISTINCT round collapses any
-    -- (victim, round) pair that had multiple traders.
-    -- traded_death_attempts counts every trade pair (multiple teammates
-    -- may have tried), traded_death_successes collapses to distinct rounds.
     SELECT
       victim_steam_id AS steam_id,
       COUNT(*)                  AS traded_death_attempts,
@@ -300,7 +296,6 @@ BEGIN
     GROUP BY attacker_steam_id
   ),
   inventory_agg AS (
-    -- Sum of grenades carried at freezetime-end per player.
     SELECT
       attacker_steam_id AS steam_id,
       SUM(flash)::int   AS flash_carried,
@@ -314,7 +309,6 @@ BEGIN
     GROUP BY attacker_steam_id
   ),
   throws_per_player AS (
-    -- Count thrown grenades per player per type (round-filtered).
     SELECT
       thrower_steam_id AS steam_id,
       COUNT(*) FILTER (WHERE type = 'Flash'   AND phase = 'thrown') AS flash_thrown,
@@ -329,8 +323,6 @@ BEGIN
     GROUP BY thrower_steam_id
   ),
   unused_util_agg AS (
-    -- "Bought but not thrown" valued at CS2 grenade prices:
-    -- flash $200, smoke $300, HE $300, molotov/inc $400, decoy $50.
     SELECT
       i.steam_id,
       (
@@ -344,10 +336,6 @@ BEGIN
     LEFT JOIN throws_per_player t USING (steam_id)
   ),
   wasted_mag_agg AS (
-    -- Detect reloads as upward jumps in ammo_in_magazine between
-    -- consecutive shots (same player, same round, same weapon).
-    -- The shot BEFORE the jump still had `ammo_in_magazine - 1`
-    -- bullets left after firing — those got dumped on reload.
     WITH ordered AS (
       SELECT
         attacker_steam_id AS steam_id,

@@ -7,10 +7,6 @@ WITH t_matches AS (
     JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
     WHERE tb.match_id IS NOT NULL
 ),
--- Kills, deaths and headshots come from the same player_kills rows. Unpivot
--- each kill into one row per side via LATERAL VALUES so player_kills is
--- scanned (and the chunk indexes hit) once instead of twice, then aggregate
--- both sides together keyed by player.
 kd_agg AS (
     SELECT
         tm.tournament_id,

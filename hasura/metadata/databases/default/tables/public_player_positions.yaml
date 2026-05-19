@@ -32,6 +32,7 @@ select_permissions:
         - y
         - z
         - yaw
+        - health
       filter: {}
       allow_aggregations: true
     comment: ""

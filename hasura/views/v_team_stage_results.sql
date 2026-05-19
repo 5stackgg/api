@@ -169,18 +169,6 @@ aggregated_stats AS (
     GROUP BY ms.team_id, ms.tournament_stage_id
 ),
 team_kills_deaths AS (
-    -- Total kills and deaths per team per stage.
-    --
-    -- The earlier implementation joined player_kills on match_id alone and
-    -- ran an EXISTS lookup against match_lineup_players for every kill row
-    -- to decide whether the attacker / attacked belonged to the team. That
-    -- scaled with kills-per-match and was the dominant cost on the
-    -- tournaments_by_pk plan. Splitting into kills-by and kills-against
-    -- branches lets the planner drive each branch from the
-    -- (match_id, attacker_steam_id) / (match_id, attacked_steam_id) indexes
-    -- on player_kills via the team's roster, then we sum flags in one pass.
-    -- Suicides (attacker = attacked) stay excluded; friendly fire still
-    -- counts as both a kill and a death for the team.
     SELECT
         team_id,
         tournament_stage_id,
