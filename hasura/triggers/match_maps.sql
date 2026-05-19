@@ -43,8 +43,8 @@ BEGIN
     INNER JOIN match_options mo ON mo.id = m.match_options_id
     WHERE m.id = NEW.match_id;
 
-    _auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_setting('auto_cancel_duration', '15')::int)::text || ' minutes';
-    _live_match_timeout := COALESCE(_live_match_timeout_override, get_setting('live_match_timeout', '180')::int)::text || ' minutes';
+    _auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_int_setting('auto_cancel_duration', 15))::text || ' minutes';
+    _live_match_timeout := COALESCE(_live_match_timeout_override, get_int_setting('live_match_timeout', 180))::text || ' minutes';
 
     IF NEW.status = 'Warmup' THEN
         IF _auto_cancellation THEN

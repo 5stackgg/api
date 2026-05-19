@@ -283,7 +283,7 @@ DECLARE
     _auto_cancel_duration_override integer;
 BEGIN
     SELECT auto_cancellation, auto_cancel_duration INTO _auto_cancellation, _auto_cancel_duration_override FROM resolve_match_auto_cancel(NEW.id);
-    _auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_setting('auto_cancel_duration', '15')::int)::text || ' minutes';
+    _auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_int_setting('auto_cancel_duration', 15))::text || ' minutes';
 
     IF OLD.server_id IS NOT NULL AND (NEW.server_id IS NULL OR OLD.server_id != NEW.server_id) THEN
         UPDATE servers SET reserved_by_match_id = null WHERE id = OLD.server_id;
