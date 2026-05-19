@@ -423,6 +423,16 @@ export class MatchesController {
       !!newRow.metadata_parsed_at && !oldRow.metadata_parsed_at;
     if (!isFirstParse) return;
 
+    // Skip if clip_render_jobs already exist — Hasura may re-fire this
+    // event on reparse and we don't want to nuke the existing clips.
+    const { clip_render_jobs_aggregate } = await this.hasura.query({
+      clip_render_jobs_aggregate: {
+        __args: { where: { match_map_demo_id: { _eq: demoId } } },
+        aggregate: { count: true },
+      },
+    });
+    if ((clip_render_jobs_aggregate?.aggregate?.count ?? 0) > 0) return;
+
     try {
       const queued = await this.clips.autoGenerateForDemo(
         matchId,

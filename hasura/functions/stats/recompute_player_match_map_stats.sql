@@ -73,6 +73,11 @@ BEGIN
       SELECT pad.attacker_steam_id
         FROM public.player_aim_stats_demo pad
         WHERE pad.match_map_id = p_match_map_id
+      UNION
+      SELECT pri.attacker_steam_id
+        FROM public.player_round_inventory pri
+        WHERE pri.match_map_id = p_match_map_id
+          AND pri.round IN (SELECT round FROM finalized_rounds)
     ) ids
     WHERE steam_id IS NOT NULL
   ),
@@ -82,7 +87,13 @@ BEGIN
       COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team)                                AS kills,
       COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND pk.headshot)                AS hs_kills,
       COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND pk."with" LIKE 'knife%')    AS knife_kills,
-      COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND pk."with" = 'taser')        AS zeus_kills
+      COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND pk."with" = 'taser')        AS zeus_kills,
+      COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND pk.attacker_team = 't')     AS kills_t,
+      COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND pk.attacker_team = 'ct')    AS kills_ct,
+      COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND pk.headshot
+                        AND pk.attacker_team = 't')                                                AS hs_kills_t,
+      COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND pk.headshot
+                        AND pk.attacker_team = 'ct')                                               AS hs_kills_ct
     FROM public.player_kills pk
     WHERE pk.match_map_id = p_match_map_id
       AND pk.attacker_steam_id IS NOT NULL
@@ -90,7 +101,11 @@ BEGIN
     GROUP BY pk.attacker_steam_id
   ),
   deaths_agg AS (
-    SELECT pk.attacked_steam_id AS steam_id, COUNT(*) AS deaths
+    SELECT
+      pk.attacked_steam_id AS steam_id,
+      COUNT(*)                                              AS deaths,
+      COUNT(*) FILTER (WHERE pk.attacked_team = 't')        AS deaths_t,
+      COUNT(*) FILTER (WHERE pk.attacked_team = 'ct')       AS deaths_ct
     FROM public.player_kills pk
     WHERE pk.match_map_id = p_match_map_id
       AND pk.round IN (SELECT round FROM finalized_rounds)
@@ -99,8 +114,10 @@ BEGIN
   assists_agg AS (
     SELECT
       pa.attacker_steam_id AS steam_id,
-      COUNT(*) FILTER (WHERE pa.attacker_team <> pa.attacked_team)                        AS assists,
-      COUNT(*) FILTER (WHERE pa.attacker_team <> pa.attacked_team AND pa.flash)           AS flash_assists
+      COUNT(*) FILTER (WHERE pa.attacker_team <> pa.attacked_team)                                  AS assists,
+      COUNT(*) FILTER (WHERE pa.attacker_team <> pa.attacked_team AND pa.flash)                     AS flash_assists,
+      COUNT(*) FILTER (WHERE pa.attacker_team <> pa.attacked_team AND pa.attacker_team = 't')       AS assists_t,
+      COUNT(*) FILTER (WHERE pa.attacker_team <> pa.attacked_team AND pa.attacker_team = 'ct')      AS assists_ct
     FROM public.player_assists pa
     WHERE pa.match_map_id = p_match_map_id
       AND pa.round IN (SELECT round FROM finalized_rounds)
@@ -115,7 +132,10 @@ BEGIN
       COALESCE(SUM(pd.damage) FILTER (
         WHERE pd.attacker_team <> pd.attacked_team
           AND pd."with" IN ('molotov', 'inferno')
-      ), 0)::integer                                                                                                       AS molotov_damage
+      ), 0)::integer                                                                                                       AS molotov_damage,
+      COALESCE(SUM(pd.damage) FILTER (WHERE pd.attacker_team = pd.attacked_team AND pd."with" = 'hegrenade'), 0)::integer  AS he_team_damage,
+      COALESCE(SUM(pd.damage) FILTER (WHERE pd.attacker_team <> pd.attacked_team AND pd.attacker_team = 't'), 0)::integer  AS damage_t,
+      COALESCE(SUM(pd.damage) FILTER (WHERE pd.attacker_team <> pd.attacked_team AND pd.attacker_team = 'ct'), 0)::integer AS damage_ct
     FROM public.player_damages pd
     WHERE pd.match_map_id = p_match_map_id
       AND pd.attacker_steam_id IS NOT NULL
@@ -189,6 +209,14 @@ BEGIN
     ) u
     WHERE steam_id IS NOT NULL
   ),
+  rounds_per_side_agg AS (
+    SELECT
+      steam_id,
+      COUNT(DISTINCT round) FILTER (WHERE team = 't')  AS rounds_t,
+      COUNT(DISTINCT round) FILTER (WHERE team = 'ct') AS rounds_ct
+    FROM player_round_team
+    GROUP BY steam_id
+  ),
   -- Trade pairs: a victim V was killed by A; a teammate of V then kills A
   -- within 5 seconds. Each row is one (victim death, trader kill) pair.
   -- player_kills.time is timestamptz → use interval arithmetic.
@@ -214,9 +242,6 @@ BEGIN
       AND victim.round IN (SELECT round FROM finalized_rounds)
   ),
   trade_kill_agg AS (
-    -- Under the 5s-window definition, every trade kill that happened counts
-    -- as both an attempt and a success (Leetify exposes them as separate
-    -- columns for symmetry; we keep the same shape).
     SELECT
       trader_steam_id AS steam_id,
       COUNT(*)        AS trade_kill_attempts,
@@ -249,7 +274,12 @@ BEGIN
   traded_death_agg AS (
     -- A player can only die once per round; DISTINCT round collapses any
     -- (victim, round) pair that had multiple traders.
-    SELECT victim_steam_id AS steam_id, COUNT(DISTINCT round) AS traded_death_successes
+    -- traded_death_attempts counts every trade pair (multiple teammates
+    -- may have tried), traded_death_successes collapses to distinct rounds.
+    SELECT
+      victim_steam_id AS steam_id,
+      COUNT(*)                  AS traded_death_attempts,
+      COUNT(DISTINCT round)     AS traded_death_successes
     FROM trade_pairs
     WHERE victim_steam_id IS NOT NULL
     GROUP BY victim_steam_id
@@ -268,6 +298,78 @@ BEGIN
     WHERE match_map_id = p_match_map_id
       AND round IN (SELECT round FROM finalized_rounds)
     GROUP BY attacker_steam_id
+  ),
+  inventory_agg AS (
+    -- Sum of grenades carried at freezetime-end per player.
+    SELECT
+      attacker_steam_id AS steam_id,
+      SUM(flash)::int   AS flash_carried,
+      SUM(smoke)::int   AS smoke_carried,
+      SUM(he)::int      AS he_carried,
+      SUM(molotov)::int AS molotov_carried,
+      SUM(decoy)::int   AS decoy_carried
+    FROM public.player_round_inventory
+    WHERE match_map_id = p_match_map_id
+      AND round IN (SELECT round FROM finalized_rounds)
+    GROUP BY attacker_steam_id
+  ),
+  throws_per_player AS (
+    -- Count thrown grenades per player per type (round-filtered).
+    SELECT
+      thrower_steam_id AS steam_id,
+      COUNT(*) FILTER (WHERE type = 'Flash'   AND phase = 'thrown') AS flash_thrown,
+      COUNT(*) FILTER (WHERE type = 'Smoke'   AND phase = 'thrown') AS smoke_thrown,
+      COUNT(*) FILTER (WHERE type = 'HE'      AND phase = 'thrown') AS he_thrown,
+      COUNT(*) FILTER (WHERE type = 'Molotov' AND phase = 'thrown') AS molotov_thrown,
+      COUNT(*) FILTER (WHERE type = 'Decoy'   AND phase = 'thrown') AS decoy_thrown
+    FROM public.player_grenade_throws
+    WHERE match_map_id = p_match_map_id
+      AND thrower_steam_id IS NOT NULL
+      AND round IN (SELECT round FROM finalized_rounds)
+    GROUP BY thrower_steam_id
+  ),
+  unused_util_agg AS (
+    -- "Bought but not thrown" valued at CS2 grenade prices:
+    -- flash $200, smoke $300, HE $300, molotov/inc $400, decoy $50.
+    SELECT
+      i.steam_id,
+      (
+        GREATEST(i.flash_carried   - COALESCE(t.flash_thrown,   0), 0) * 200
+      + GREATEST(i.smoke_carried   - COALESCE(t.smoke_thrown,   0), 0) * 300
+      + GREATEST(i.he_carried      - COALESCE(t.he_thrown,      0), 0) * 300
+      + GREATEST(i.molotov_carried - COALESCE(t.molotov_thrown, 0), 0) * 400
+      + GREATEST(i.decoy_carried   - COALESCE(t.decoy_thrown,   0), 0) * 50
+      )::int AS unused_utility_value
+    FROM inventory_agg i
+    LEFT JOIN throws_per_player t USING (steam_id)
+  ),
+  wasted_mag_agg AS (
+    -- Detect reloads as upward jumps in ammo_in_magazine between
+    -- consecutive shots (same player, same round, same weapon).
+    -- The shot BEFORE the jump still had `ammo_in_magazine - 1`
+    -- bullets left after firing — those got dumped on reload.
+    WITH ordered AS (
+      SELECT
+        attacker_steam_id AS steam_id,
+        round,
+        "with"            AS weapon,
+        ammo_in_magazine,
+        LEAD(ammo_in_magazine) OVER (
+          PARTITION BY attacker_steam_id, round, "with"
+          ORDER BY tick
+        ) AS next_ammo
+      FROM public.player_shots_fired
+      WHERE match_map_id = p_match_map_id
+        AND round IN (SELECT round FROM finalized_rounds)
+        AND ammo_in_magazine IS NOT NULL
+    )
+    SELECT
+      steam_id,
+      SUM(GREATEST(ammo_in_magazine - 1, 0))::integer AS wasted_magazine_shots
+    FROM ordered
+    WHERE next_ammo IS NOT NULL
+      AND next_ammo > ammo_in_magazine
+    GROUP BY steam_id
   ),
   has_aim_demo AS (
     SELECT EXISTS (
@@ -346,12 +448,12 @@ BEGIN
     kills, hs_kills, knife_kills, zeus_kills,
     assists, flash_assists,
     deaths,
-    damage, team_damage, he_damage, molotov_damage,
+    damage, team_damage, he_damage, molotov_damage, he_team_damage,
     flashes_thrown, enemies_flashed, team_flashed,
     flash_duration_sum, flash_duration_count,
     two_kill_rounds, three_kill_rounds, four_kill_rounds, five_kill_rounds,
     trade_kill_opportunities, trade_kill_attempts, trade_kill_successes,
-    traded_death_opportunities, traded_death_successes,
+    traded_death_opportunities, traded_death_attempts, traded_death_successes,
     shots_fired, hits, headshot_hits, non_awp_hits, hits_at_spotted, shots_at_spotted,
     time_to_damage_sum_s, time_to_damage_count,
     spotted_count, spotted_with_damage_count,
@@ -359,6 +461,13 @@ BEGIN
     counter_strafed_shots, counter_strafe_eligible_shots,
     spray_shots, spray_hits,
     crosshair_angle_sum_deg, crosshair_angle_count,
+    wasted_magazine_shots,
+    unused_utility_value,
+    kills_t, kills_ct, hs_kills_t, hs_kills_ct,
+    deaths_t, deaths_ct,
+    damage_t, damage_ct,
+    assists_t, assists_ct,
+    rounds_t, rounds_ct,
     rounds_played
   )
   SELECT
@@ -369,6 +478,7 @@ BEGIN
     COALESCE(da.deaths, 0),
     COALESCE(dmg.damage, 0),         COALESCE(dmg.team_damage, 0),
     COALESCE(dmg.he_damage, 0),      COALESCE(dmg.molotov_damage, 0),
+    COALESCE(dmg.he_team_damage, 0),
     COALESCE(ua.flashes_thrown, 0),
     COALESCE(fa.enemies_flashed, 0), COALESCE(fa.team_flashed, 0),
     COALESCE(fa.flash_duration_sum, 0), COALESCE(fa.flash_duration_count, 0),
@@ -378,6 +488,7 @@ BEGIN
     COALESCE(tka.trade_kill_attempts, 0),
     COALESCE(tka.trade_kill_successes, 0),
     COALESCE(tdo.traded_death_opportunities, 0),
+    COALESCE(tda.traded_death_attempts, 0),
     COALESCE(tda.traded_death_successes, 0),
     COALESCE(sa.shots_fired, 0),
     COALESCE(ad.hits, hf.hits, 0),
@@ -397,6 +508,14 @@ BEGIN
     COALESCE(ad.spray_hits, 0),
     COALESCE(ad.crosshair_angle_sum_deg, 0),
     COALESCE(ad.crosshair_angle_count, 0),
+    COALESCE(wma.wasted_magazine_shots, 0),
+    COALESCE(uu.unused_utility_value, 0),
+    COALESCE(ka.kills_t, 0),    COALESCE(ka.kills_ct, 0),
+    COALESCE(ka.hs_kills_t, 0), COALESCE(ka.hs_kills_ct, 0),
+    COALESCE(da.deaths_t, 0),   COALESCE(da.deaths_ct, 0),
+    COALESCE(dmg.damage_t, 0),  COALESCE(dmg.damage_ct, 0),
+    COALESCE(aa.assists_t, 0),  COALESCE(aa.assists_ct, 0),
+    COALESCE(rps.rounds_t, 0),  COALESCE(rps.rounds_ct, 0),
     (SELECT rounds_played FROM rounds_played_const)
   FROM player_set ps
   LEFT JOIN kills_agg          ka  ON ka.steam_id  = ps.steam_id
@@ -414,7 +533,10 @@ BEGIN
   LEFT JOIN aim_demo_agg       ad  ON ad.steam_id  = ps.steam_id
   LEFT JOIN hits_fallback      hf  ON hf.steam_id  = ps.steam_id
   LEFT JOIN spotted_agg        spa ON spa.steam_id = ps.steam_id
-  LEFT JOIN throws_agg         ta  ON ta.steam_id  = ps.steam_id;
+  LEFT JOIN throws_agg         ta  ON ta.steam_id  = ps.steam_id
+  LEFT JOIN wasted_mag_agg     wma ON wma.steam_id = ps.steam_id
+  LEFT JOIN unused_util_agg    uu  ON uu.steam_id  = ps.steam_id
+  LEFT JOIN rounds_per_side_agg rps ON rps.steam_id = ps.steam_id;
 END;
 $$;
 

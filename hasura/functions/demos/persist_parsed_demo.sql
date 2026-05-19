@@ -31,13 +31,51 @@ BEGIN
     metadata_parsed_at = now()
    WHERE id = p_match_map_demo_id;
 
-  DELETE FROM public.player_shots_fired    WHERE match_map_id = v_match_map_id;
-  DELETE FROM public.player_spotted        WHERE match_map_id = v_match_map_id;
-  DELETE FROM public.player_grenade_throws WHERE match_map_id = v_match_map_id;
-  DELETE FROM public.player_aim_stats_demo WHERE match_map_id = v_match_map_id;
+  DELETE FROM public.player_shots_fired       WHERE match_map_id = v_match_map_id;
+  DELETE FROM public.player_spotted           WHERE match_map_id = v_match_map_id;
+  DELETE FROM public.player_grenade_throws    WHERE match_map_id = v_match_map_id;
+  DELETE FROM public.player_aim_stats_demo    WHERE match_map_id = v_match_map_id;
+  DELETE FROM public.player_round_inventory   WHERE match_map_id = v_match_map_id;
+  DELETE FROM public.player_positions         WHERE match_map_id = v_match_map_id;
+
+  INSERT INTO public.player_positions
+    (match_id, match_map_id, round, tick, attacker_steam_id, attacker_team,
+     alive, x, y, z, yaw)
+  SELECT
+    v_match_id,
+    v_match_map_id,
+    COALESCE((elem->>'round')::int, 0),
+    (elem->>'tick')::int,
+    (elem->>'attacker')::bigint,
+    NULLIF(elem->>'team', ''),
+    COALESCE((elem->>'alive')::boolean, false),
+    (elem->>'x')::real,
+    (elem->>'y')::real,
+    (elem->>'z')::real,
+    NULLIF(elem->>'yaw', '')::real
+  FROM jsonb_array_elements(COALESCE(p_parsed->'positions', '[]'::jsonb)) elem
+  WHERE NULLIF(elem->>'attacker', '') IS NOT NULL;
+
+  INSERT INTO public.player_round_inventory
+    (match_id, match_map_id, round, attacker_steam_id, attacker_team,
+     flash, smoke, he, molotov, decoy)
+  SELECT
+    v_match_id,
+    v_match_map_id,
+    COALESCE((elem->>'round')::int, 0),
+    (elem->>'attacker')::bigint,
+    NULLIF(elem->>'team', ''),
+    COALESCE((elem->>'flash')::int, 0),
+    COALESCE((elem->>'smoke')::int, 0),
+    COALESCE((elem->>'he')::int, 0),
+    COALESCE((elem->>'molotov')::int, 0),
+    COALESCE((elem->>'decoy')::int, 0)
+  FROM jsonb_array_elements(COALESCE(p_parsed->'round_inventory', '[]'::jsonb)) elem
+  WHERE NULLIF(elem->>'attacker', '') IS NOT NULL
+  ON CONFLICT DO NOTHING;
 
   INSERT INTO public.player_shots_fired
-    (match_id, match_map_id, round, tick, attacker_steam_id, attacker_team, "with")
+    (match_id, match_map_id, round, tick, attacker_steam_id, attacker_team, "with", ammo_in_magazine)
   SELECT
     v_match_id,
     v_match_map_id,
@@ -45,7 +83,8 @@ BEGIN
     (elem->>'tick')::int,
     (elem->>'attacker')::bigint,
     NULLIF(elem->>'attacker_team', ''),
-    NULLIF(elem->>'weapon', '')
+    NULLIF(elem->>'weapon', ''),
+    NULLIF(elem->>'ammo_in_magazine', '')::int
   FROM jsonb_array_elements(COALESCE(p_parsed->'shots_fired', '[]'::jsonb)) elem
   WHERE NULLIF(elem->>'attacker', '') IS NOT NULL;
 

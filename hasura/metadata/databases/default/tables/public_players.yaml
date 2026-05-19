@@ -121,6 +121,15 @@ array_relationships:
         table:
           name: lobby_players
           schema: public
+  - name: match_map_hltv
+    using:
+      manual_configuration:
+        column_mapping:
+          steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: v_player_match_map_hltv
+          schema: public
   - name: match_map_stats
     using:
       foreign_key_constraint_on:

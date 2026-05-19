@@ -1,0 +1,48 @@
+table:
+  name: v_player_match_map_hltv
+  schema: public
+object_relationships:
+  - name: match
+    using:
+      manual_configuration:
+        column_mapping:
+          match_id: id
+        insertion_order: null
+        remote_table:
+          name: matches
+          schema: public
+  - name: match_map
+    using:
+      manual_configuration:
+        column_mapping:
+          match_map_id: id
+        insertion_order: null
+        remote_table:
+          name: match_maps
+          schema: public
+  - name: player
+    using:
+      manual_configuration:
+        column_mapping:
+          steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - adr
+        - apr
+        - dpr
+        - hltv_rating
+        - kast_pct
+        - kpr
+        - match_id
+        - match_map_id
+        - rounds_played
+        - steam_id
+      filter: {}
+      allow_aggregations: true
+    comment: ""

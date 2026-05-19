@@ -1,0 +1,46 @@
+table:
+  name: v_player_match_head_to_head
+  schema: public
+object_relationships:
+  - name: attacker
+    using:
+      manual_configuration:
+        column_mapping:
+          attacker_steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+  - name: attacked
+    using:
+      manual_configuration:
+        column_mapping:
+          attacked_steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+  - name: match
+    using:
+      manual_configuration:
+        column_mapping:
+          match_id: id
+        insertion_order: null
+        remote_table:
+          name: matches
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - match_id
+        - attacker_steam_id
+        - attacked_steam_id
+        - kills
+        - headshot_kills
+        - damage_dealt
+        - hits
+        - flash_count
+      filter: {}
+      allow_aggregations: true
+    comment: ""

@@ -44,6 +44,30 @@ export type ParsedShotFired = {
   speed?: number;
   counter_strafed?: boolean;
   crosshair_angle_deg?: number;
+  ammo_in_magazine?: number;
+};
+
+export type ParsedPosition = {
+  tick: number;
+  round?: number;
+  attacker?: string;
+  team?: string;
+  alive?: boolean;
+  x: number;
+  y: number;
+  z: number;
+  yaw?: number;
+};
+
+export type ParsedRoundInventory = {
+  round?: number;
+  attacker?: string;
+  team?: string;
+  flash?: number;
+  smoke?: number;
+  he?: number;
+  molotov?: number;
+  decoy?: number;
 };
 
 export type ParsedDamageEvent = {
@@ -98,6 +122,8 @@ export type ParsedDemo = {
   bombs: ParsedBomb[];
   players?: ParsedPlayer[];
   shots_fired?: ParsedShotFired[];
+  round_inventory?: ParsedRoundInventory[];
+  positions?: ParsedPosition[];
   damages?: ParsedDamageEvent[];
   spotted?: ParsedSpotted[];
   grenade_throws?: ParsedGrenadeEvent[];

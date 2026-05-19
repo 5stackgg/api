@@ -5,7 +5,6 @@ import { e_match_types_enum } from "generated";
 import { MatchmakingLobby } from "./types/MatchmakingLobby";
 import Redis from "ioredis";
 
-// Mock the problematic modules before importing the service
 jest.mock("../matches/match-assistant/match-assistant.service", () => ({
   MatchAssistantService: jest.fn().mockImplementation(() => ({
     createMatchBasedOnType: jest.fn(),
@@ -31,7 +30,6 @@ describe("MatchmakeService", () => {
   let logger: Logger;
 
   beforeEach(async () => {
-    // Create mock Redis instance
     mockRedis = {
       set: jest.fn().mockResolvedValue("OK"),
       get: jest.fn().mockResolvedValue(null),
@@ -49,7 +47,6 @@ describe("MatchmakeService", () => {
       eval: jest.fn().mockResolvedValue(1),
     } as any;
 
-    // Create mock services
     mockHasura = {
       query: jest.fn(),
       mutation: jest.fn(),
@@ -119,9 +116,6 @@ describe("MatchmakeService", () => {
       const type: e_match_types_enum = "Competitive";
       const requiredPlayers = 10; // Competitive requires 10 players
 
-      // Create 15 players across multiple lobbies
-      // We'll create 3 lobbies: one with 5 players, one with 5 players, and one with 5 players
-      // This should create 1 match with 10 players (5+5), leaving 5 players unmatched
       const lobbies: MatchmakingLobby[] = [
         {
           lobbyId: "lobby-1",
@@ -167,42 +161,32 @@ describe("MatchmakeService", () => {
         },
       );
 
-      // Mock createMatchConfirmation by spying on the method
       const createMatchConfirmationSpy = jest.spyOn(
         service as any,
         "createMatchConfirmation",
       );
 
-      // Call the private method using bracket notation
       const result = await (service as any).createMatches(
         region,
         type,
         lobbies,
       );
 
-      // Verify that createMatchConfirmation was called exactly once
       expect(createMatchConfirmationSpy).toHaveBeenCalledTimes(1);
 
-      // Verify the match confirmation was called with correct parameters
       const callArgs = createMatchConfirmationSpy.mock.calls[0];
       expect(callArgs[0]).toBe(region);
       expect(callArgs[1]).toBe(type);
 
       const { team1, team2 } = callArgs[2];
 
-      // Verify each team has exactly 5 players (half of 10)
       expect(team1.players.length).toBe(5);
       expect(team2.players.length).toBe(5);
 
-      // Verify total players in the match is 10
       expect(team1.players.length + team2.players.length).toBe(requiredPlayers);
 
-      // Note: The method returns 0 after successfully creating a match
-      // The remaining 5 players would be handled in a recursive call, but that result isn't returned
-      // The important thing is that exactly 1 match was created with 10 players
       expect(result).toBe(0);
 
-      // Verify claimLobby was called (via redis.eval) for each lobby
       expect(mockRedis.eval).toHaveBeenCalled();
 
       createMatchConfirmationSpy.mockRestore();
@@ -212,7 +196,6 @@ describe("MatchmakeService", () => {
       const region = "us-east";
       const type: e_match_types_enum = "Competitive";
 
-      // Create only 8 players (less than required 10)
       const lobbies: MatchmakingLobby[] = [
         {
           lobbyId: "lobby-1",
@@ -257,10 +240,8 @@ describe("MatchmakeService", () => {
         lobbies,
       );
 
-      // Should not create a match
       expect(createMatchConfirmationSpy).not.toHaveBeenCalled();
 
-      // Should return the number of players that couldn't be matched
       expect(result).toBe(8);
 
       createMatchConfirmationSpy.mockRestore();

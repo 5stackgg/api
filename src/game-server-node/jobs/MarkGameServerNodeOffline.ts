@@ -36,6 +36,31 @@ export class MarkGameServerNodeOffline extends WorkerHost {
       },
     });
 
+    await this.hasura.mutation({
+      update_notifications: {
+        __args: {
+          where: {
+            type: { _eq: "GameNodeStatus" },
+            entity_id: { _eq: job.data.node },
+            title: {
+              _in: [
+                "Game Server Node Disk Space Critical",
+                "Game Server Node Low Disk Space",
+              ],
+            },
+            deletable: { _eq: false },
+            deleted_at: { _is_null: true },
+          },
+          _set: { deletable: true },
+        },
+        __typename: true,
+      },
+    });
+
+    if (!update_game_server_nodes_by_pk) {
+      return;
+    }
+
     await this.notifications.send(
       "GameNodeStatus",
       {
