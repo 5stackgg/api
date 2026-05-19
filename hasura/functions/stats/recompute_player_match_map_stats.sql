@@ -55,20 +55,10 @@ BEGIN
         WHERE pu.match_map_id = p_match_map_id
           AND pu.round IN (SELECT round FROM finalized_rounds)
       UNION
-      SELECT psf.attacker_steam_id
-        FROM public.player_shots_fired psf
-        WHERE psf.match_map_id = p_match_map_id
-          AND psf.round IN (SELECT round FROM finalized_rounds)
-      UNION
-      SELECT psp.spotter_steam_id
-        FROM public.player_spotted psp
-        WHERE psp.match_map_id = p_match_map_id
-          AND psp.round IN (SELECT round FROM finalized_rounds)
-      UNION
-      SELECT pgt.thrower_steam_id
-        FROM public.player_grenade_throws pgt
-        WHERE pgt.match_map_id = p_match_map_id
-          AND pgt.round IN (SELECT round FROM finalized_rounds)
+      SELECT pa.steam_id
+        FROM public.player_match_map_event_aggregates pa
+        WHERE pa.match_map_id = p_match_map_id
+          AND pa.round IN (SELECT round FROM finalized_rounds)
       UNION
       SELECT pad.attacker_steam_id
         FROM public.player_aim_stats_demo pad
@@ -289,11 +279,11 @@ BEGIN
     GROUP BY attacked_steam_id
   ),
   shots_agg AS (
-    SELECT attacker_steam_id AS steam_id, COUNT(*) AS shots_fired
-    FROM public.player_shots_fired
+    SELECT steam_id, SUM(shots_fired)::int AS shots_fired
+    FROM public.player_match_map_event_aggregates
     WHERE match_map_id = p_match_map_id
       AND round IN (SELECT round FROM finalized_rounds)
-    GROUP BY attacker_steam_id
+    GROUP BY steam_id
   ),
   inventory_agg AS (
     SELECT
@@ -310,17 +300,16 @@ BEGIN
   ),
   throws_per_player AS (
     SELECT
-      thrower_steam_id AS steam_id,
-      COUNT(*) FILTER (WHERE type = 'Flash'   AND phase = 'thrown') AS flash_thrown,
-      COUNT(*) FILTER (WHERE type = 'Smoke'   AND phase = 'thrown') AS smoke_thrown,
-      COUNT(*) FILTER (WHERE type = 'HE'      AND phase = 'thrown') AS he_thrown,
-      COUNT(*) FILTER (WHERE type = 'Molotov' AND phase = 'thrown') AS molotov_thrown,
-      COUNT(*) FILTER (WHERE type = 'Decoy'   AND phase = 'thrown') AS decoy_thrown
-    FROM public.player_grenade_throws
+      steam_id,
+      SUM(flash_thrown)::int   AS flash_thrown,
+      SUM(smoke_thrown)::int   AS smoke_thrown,
+      SUM(he_thrown)::int      AS he_thrown,
+      SUM(molotov_thrown)::int AS molotov_thrown,
+      SUM(decoy_thrown)::int   AS decoy_thrown
+    FROM public.player_match_map_event_aggregates
     WHERE match_map_id = p_match_map_id
-      AND thrower_steam_id IS NOT NULL
       AND round IN (SELECT round FROM finalized_rounds)
-    GROUP BY thrower_steam_id
+    GROUP BY steam_id
   ),
   unused_util_agg AS (
     SELECT
@@ -336,27 +325,10 @@ BEGIN
     LEFT JOIN throws_per_player t USING (steam_id)
   ),
   wasted_mag_agg AS (
-    WITH ordered AS (
-      SELECT
-        attacker_steam_id AS steam_id,
-        round,
-        "with"            AS weapon,
-        ammo_in_magazine,
-        LEAD(ammo_in_magazine) OVER (
-          PARTITION BY attacker_steam_id, round, "with"
-          ORDER BY tick
-        ) AS next_ammo
-      FROM public.player_shots_fired
-      WHERE match_map_id = p_match_map_id
-        AND round IN (SELECT round FROM finalized_rounds)
-        AND ammo_in_magazine IS NOT NULL
-    )
-    SELECT
-      steam_id,
-      SUM(GREATEST(ammo_in_magazine - 1, 0))::integer AS wasted_magazine_shots
-    FROM ordered
-    WHERE next_ammo IS NOT NULL
-      AND next_ammo > ammo_in_magazine
+    SELECT steam_id, SUM(wasted_magazine_shots)::int AS wasted_magazine_shots
+    FROM public.player_match_map_event_aggregates
+    WHERE match_map_id = p_match_map_id
+      AND round IN (SELECT round FROM finalized_rounds)
     GROUP BY steam_id
   ),
   has_aim_demo AS (
@@ -391,41 +363,25 @@ BEGIN
   ),
   spotted_agg AS (
     SELECT
-      ps.spotter_steam_id AS steam_id,
-      COUNT(*) AS spotted_count,
-      COUNT(*) FILTER (
-        WHERE EXISTS (
-          SELECT 1
-          FROM public.player_damages pd
-          WHERE pd.match_map_id      = ps.match_map_id
-            AND pd.round::integer    = ps.round
-            AND pd.attacker_steam_id = ps.spotter_steam_id
-            AND pd.attacked_steam_id = ps.spotted_steam_id
-            AND pd.attacker_team    <> pd.attacked_team
-            -- Demo ticks aren't directly comparable to GSI wall-clock,
-            -- so we widen to "anywhere in this same round" for the v1.
-            -- A tick-based version comes in once demo ingestion writes
-            -- player_damages.tick too.
-        )
-      ) AS spotted_with_damage_count
-    FROM public.player_spotted ps
-    WHERE ps.match_map_id = p_match_map_id
-      AND ps.round IN (SELECT round FROM finalized_rounds)
-    GROUP BY ps.spotter_steam_id
+      steam_id,
+      SUM(spotted_count)::int             AS spotted_count,
+      SUM(spotted_with_damage_count)::int AS spotted_with_damage_count
+    FROM public.player_match_map_event_aggregates
+    WHERE match_map_id = p_match_map_id
+      AND round IN (SELECT round FROM finalized_rounds)
+    GROUP BY steam_id
   ),
   throws_agg AS (
     SELECT
-      thrower_steam_id AS steam_id,
-      COUNT(*) FILTER (WHERE type = 'HE')      AS he_throws,
-      COUNT(*) FILTER (WHERE type = 'Molotov') AS molotov_throws,
-      COUNT(*) FILTER (WHERE type = 'Smoke')   AS smoke_throws,
-      COUNT(*) FILTER (WHERE type = 'Decoy')   AS decoy_throws
-    FROM public.player_grenade_throws
+      steam_id,
+      SUM(he_thrown)::int      AS he_throws,
+      SUM(molotov_thrown)::int AS molotov_throws,
+      SUM(smoke_thrown)::int   AS smoke_throws,
+      SUM(decoy_thrown)::int   AS decoy_throws
+    FROM public.player_match_map_event_aggregates
     WHERE match_map_id = p_match_map_id
-      AND phase = 'thrown'
-      AND thrower_steam_id IS NOT NULL
       AND round IN (SELECT round FROM finalized_rounds)
-    GROUP BY thrower_steam_id
+    GROUP BY steam_id
   ),
   -- Same value for every player in the map; precomputed once.
   rounds_played_const AS (

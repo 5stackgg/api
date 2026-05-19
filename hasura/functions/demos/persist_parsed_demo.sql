@@ -31,31 +31,9 @@ BEGIN
     metadata_parsed_at = now()
    WHERE id = p_match_map_demo_id;
 
-  DELETE FROM public.player_shots_fired       WHERE match_map_id = v_match_map_id;
-  DELETE FROM public.player_spotted           WHERE match_map_id = v_match_map_id;
-  DELETE FROM public.player_grenade_throws    WHERE match_map_id = v_match_map_id;
-  DELETE FROM public.player_aim_stats_demo    WHERE match_map_id = v_match_map_id;
-  DELETE FROM public.player_round_inventory   WHERE match_map_id = v_match_map_id;
-  DELETE FROM public.player_positions         WHERE match_map_id = v_match_map_id;
-
-  INSERT INTO public.player_positions
-    (match_id, match_map_id, round, tick, attacker_steam_id, attacker_team,
-     alive, x, y, z, yaw, health)
-  SELECT
-    v_match_id,
-    v_match_map_id,
-    COALESCE((elem->>'round')::int, 0),
-    (elem->>'tick')::int,
-    (elem->>'attacker')::bigint,
-    NULLIF(elem->>'team', ''),
-    COALESCE((elem->>'alive')::boolean, false),
-    (elem->>'x')::real,
-    (elem->>'y')::real,
-    (elem->>'z')::real,
-    NULLIF(elem->>'yaw', '')::real,
-    NULLIF(elem->>'health', '')::smallint
-  FROM jsonb_array_elements(COALESCE(p_parsed->'positions', '[]'::jsonb)) elem
-  WHERE NULLIF(elem->>'attacker', '') IS NOT NULL;
+  DELETE FROM public.player_aim_stats_demo            WHERE match_map_id = v_match_map_id;
+  DELETE FROM public.player_round_inventory           WHERE match_map_id = v_match_map_id;
+  DELETE FROM public.player_match_map_event_aggregates WHERE match_map_id = v_match_map_id;
 
   INSERT INTO public.player_round_inventory
     (match_id, match_map_id, round, attacker_steam_id, attacker_team,
@@ -74,20 +52,6 @@ BEGIN
   FROM jsonb_array_elements(COALESCE(p_parsed->'round_inventory', '[]'::jsonb)) elem
   WHERE NULLIF(elem->>'attacker', '') IS NOT NULL
   ON CONFLICT DO NOTHING;
-
-  INSERT INTO public.player_shots_fired
-    (match_id, match_map_id, round, tick, attacker_steam_id, attacker_team, "with", ammo_in_magazine)
-  SELECT
-    v_match_id,
-    v_match_map_id,
-    COALESCE((elem->>'round')::int, 0),
-    (elem->>'tick')::int,
-    (elem->>'attacker')::bigint,
-    NULLIF(elem->>'attacker_team', ''),
-    NULLIF(elem->>'weapon', ''),
-    NULLIF(elem->>'ammo_in_magazine', '')::int
-  FROM jsonb_array_elements(COALESCE(p_parsed->'shots_fired', '[]'::jsonb)) elem
-  WHERE NULLIF(elem->>'attacker', '') IS NOT NULL;
 
   WITH
     shots AS (
@@ -183,49 +147,118 @@ BEGIN
   LEFT JOIN shots_agg   sa ON sa.attacker = a.attacker
   LEFT JOIN damages_agg da ON da.attacker = a.attacker;
 
-  INSERT INTO public.player_spotted
-    (match_id, match_map_id, round, tick, spotter_steam_id, spotted_steam_id, spotter_team)
+  WITH
+    shots_raw AS (
+      SELECT
+        COALESCE((elem->>'round')::int, 0) AS round,
+        (elem->>'attacker')::bigint        AS steam_id,
+        (elem->>'tick')::int               AS tick,
+        NULLIF(elem->>'weapon', '')        AS weapon,
+        NULLIF(elem->>'ammo_in_magazine', '')::int AS ammo
+      FROM jsonb_array_elements(COALESCE(p_parsed->'shots_fired', '[]'::jsonb)) elem
+      WHERE NULLIF(elem->>'attacker', '') IS NOT NULL
+    ),
+    shots_per AS (
+      SELECT round, steam_id, COUNT(*)::int AS shots_fired
+      FROM shots_raw
+      GROUP BY round, steam_id
+    ),
+    wasted_per AS (
+      SELECT round, steam_id,
+             SUM(GREATEST(ammo - 1, 0))::int AS wasted_magazine_shots
+      FROM (
+        SELECT round, steam_id, ammo,
+               LEAD(ammo) OVER (PARTITION BY steam_id, round, weapon ORDER BY tick) AS next_ammo
+        FROM shots_raw
+        WHERE ammo IS NOT NULL
+      ) o
+      WHERE next_ammo IS NOT NULL AND next_ammo > ammo
+      GROUP BY round, steam_id
+    ),
+    spotted_raw AS (
+      SELECT
+        COALESCE((elem->>'round')::int, 0) AS round,
+        (elem->>'spotter')::bigint         AS spotter,
+        (elem->>'spotted')::bigint         AS spotted
+      FROM jsonb_array_elements(COALESCE(p_parsed->'spotted', '[]'::jsonb)) elem
+      WHERE NULLIF(elem->>'spotter', '') IS NOT NULL
+        AND NULLIF(elem->>'spotted', '') IS NOT NULL
+    ),
+    spotted_per AS (
+      SELECT round, spotter AS steam_id, COUNT(*)::int AS spotted_count
+      FROM spotted_raw
+      GROUP BY round, spotter
+    ),
+    damages_raw AS (
+      SELECT
+        COALESCE((elem->>'round')::int, 0) AS round,
+        (elem->>'attacker')::bigint        AS attacker,
+        (elem->>'victim')::bigint          AS victim,
+        NULLIF(elem->>'attacker_team', '') AS attacker_team,
+        NULLIF(elem->>'victim_team', '')   AS victim_team
+      FROM jsonb_array_elements(COALESCE(p_parsed->'damages', '[]'::jsonb)) elem
+      WHERE NULLIF(elem->>'attacker', '') IS NOT NULL
+        AND NULLIF(elem->>'victim', '') IS NOT NULL
+    ),
+    spotted_with_dmg_per AS (
+      SELECT sr.round, sr.spotter AS steam_id,
+             COUNT(DISTINCT sr.spotted)::int AS spotted_with_damage_count
+      FROM spotted_raw sr
+      WHERE EXISTS (
+        SELECT 1 FROM damages_raw dr
+        WHERE dr.round = sr.round
+          AND dr.attacker = sr.spotter
+          AND dr.victim = sr.spotted
+          AND dr.attacker_team IS DISTINCT FROM dr.victim_team
+      )
+      GROUP BY sr.round, sr.spotter
+    ),
+    grenades_per AS (
+      SELECT
+        COALESCE((elem->>'round')::int, 0)         AS round,
+        NULLIF(elem->>'thrower', '')::bigint       AS steam_id,
+        COUNT(*) FILTER (WHERE elem->>'type' = 'Flash')::int   AS flash_thrown,
+        COUNT(*) FILTER (WHERE elem->>'type' = 'Smoke')::int   AS smoke_thrown,
+        COUNT(*) FILTER (WHERE elem->>'type' = 'HE')::int      AS he_thrown,
+        COUNT(*) FILTER (WHERE elem->>'type' = 'Molotov')::int AS molotov_thrown,
+        COUNT(*) FILTER (WHERE elem->>'type' = 'Decoy')::int   AS decoy_thrown
+      FROM jsonb_array_elements(COALESCE(p_parsed->'grenade_throws', '[]'::jsonb)) elem
+      WHERE NULLIF(elem->>'thrower', '') IS NOT NULL
+      GROUP BY (elem->>'round')::int, NULLIF(elem->>'thrower', '')::bigint
+    )
+  INSERT INTO public.player_match_map_event_aggregates (
+    match_id, match_map_id, round, steam_id,
+    shots_fired, wasted_magazine_shots,
+    spotted_count, spotted_with_damage_count,
+    flash_thrown, smoke_thrown, he_thrown, molotov_thrown, decoy_thrown
+  )
   SELECT
     v_match_id,
     v_match_map_id,
-    COALESCE((elem->>'round')::int, 0),
-    (elem->>'tick')::int,
-    (elem->>'spotter')::bigint,
-    (elem->>'spotted')::bigint,
-    NULLIF(elem->>'spotter_team', '')
-  FROM jsonb_array_elements(COALESCE(p_parsed->'spotted', '[]'::jsonb)) elem
-  WHERE NULLIF(elem->>'spotter', '') IS NOT NULL
-    AND NULLIF(elem->>'spotted', '') IS NOT NULL;
-
-  INSERT INTO public.player_grenade_throws
-    (match_id, match_map_id, round, tick, thrower_steam_id, thrower_team, type, phase, x, y, z)
-  SELECT
-    v_match_id,
-    v_match_map_id,
-    COALESCE((elem->>'round')::int, 0),
-    (elem->>'tick')::int,
-    NULLIF(elem->>'thrower', '')::bigint,
-    NULLIF(elem->>'thrower_team', ''),
-    elem->>'type',
-    'thrown',
-    NULLIF(elem->>'ox', '')::numeric,
-    NULLIF(elem->>'oy', '')::numeric,
-    NULLIF(elem->>'oz', '')::numeric
-  FROM jsonb_array_elements(COALESCE(p_parsed->'grenade_throws', '[]'::jsonb)) elem
-  UNION ALL
-  SELECT
-    v_match_id,
-    v_match_map_id,
-    COALESCE((elem->>'round')::int, 0),
-    (elem->>'tick')::int,
-    NULLIF(elem->>'thrower', '')::bigint,
-    NULLIF(elem->>'thrower_team', ''),
-    elem->>'type',
-    'detonated',
-    NULLIF(elem->>'x', '')::numeric,
-    NULLIF(elem->>'y', '')::numeric,
-    NULLIF(elem->>'z', '')::numeric
-  FROM jsonb_array_elements(COALESCE(p_parsed->'grenade_detonations', '[]'::jsonb)) elem;
+    COALESCE(sp.round, wp.round, spp.round, swd.round, gp.round),
+    COALESCE(sp.steam_id, wp.steam_id, spp.steam_id, swd.steam_id, gp.steam_id),
+    COALESCE(sp.shots_fired, 0),
+    COALESCE(wp.wasted_magazine_shots, 0),
+    COALESCE(spp.spotted_count, 0),
+    COALESCE(swd.spotted_with_damage_count, 0),
+    COALESCE(gp.flash_thrown, 0),
+    COALESCE(gp.smoke_thrown, 0),
+    COALESCE(gp.he_thrown, 0),
+    COALESCE(gp.molotov_thrown, 0),
+    COALESCE(gp.decoy_thrown, 0)
+  FROM shots_per sp
+  FULL OUTER JOIN wasted_per wp
+    ON wp.round = sp.round AND wp.steam_id = sp.steam_id
+  FULL OUTER JOIN spotted_per spp
+    ON spp.round    = COALESCE(sp.round, wp.round)
+   AND spp.steam_id = COALESCE(sp.steam_id, wp.steam_id)
+  FULL OUTER JOIN spotted_with_dmg_per swd
+    ON swd.round    = COALESCE(sp.round, wp.round, spp.round)
+   AND swd.steam_id = COALESCE(sp.steam_id, wp.steam_id, spp.steam_id)
+  FULL OUTER JOIN grenades_per gp
+    ON gp.round    = COALESCE(sp.round, wp.round, spp.round, swd.round)
+   AND gp.steam_id = COALESCE(sp.steam_id, wp.steam_id, spp.steam_id, swd.steam_id)
+  WHERE COALESCE(sp.steam_id, wp.steam_id, spp.steam_id, swd.steam_id, gp.steam_id) IS NOT NULL;
 
   PERFORM public.recompute_player_match_map_stats(v_match_map_id);
 END;
