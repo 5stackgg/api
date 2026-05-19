@@ -97,6 +97,20 @@ export class TypeSenseService {
         sort: true,
         index: true,
       },
+      { name: "avatar_url", type: "string", optional: true, index: false },
+      {
+        name: "custom_avatar_url",
+        type: "string",
+        optional: true,
+        index: false,
+      },
+      {
+        name: "roster_image_url",
+        type: "string",
+        optional: true,
+        index: false,
+      },
+      { name: "profile_url", type: "string", optional: true, index: false },
     ];
 
     const exists = await this.client.collections("players").exists();
@@ -217,6 +231,9 @@ export class TypeSenseService {
         role: true,
         country: true,
         avatar_url: true,
+        custom_avatar_url: true,
+        roster_image_url: true,
+        profile_url: true,
         is_banned: true,
         is_gagged: true,
         is_muted: true,

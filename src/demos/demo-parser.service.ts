@@ -25,9 +25,31 @@ export type ParsedKill = {
 
 export type ParsedBomb = {
   tick: number;
-  type: "planted" | "defused" | "exploded";
+  type:
+    | "planted"
+    | "defused"
+    | "exploded"
+    | "plant_begin"
+    | "plant_abort"
+    | "defuse_begin"
+    | "defuse_abort"
+    | "dropped"
+    | "pickup";
   player?: string;
   site?: "A" | "B";
+  has_kit?: boolean;
+  x?: number;
+  y?: number;
+  z?: number;
+};
+
+export type ParsedKitDrop = {
+  tick: number;
+  round?: number;
+  player?: string;
+  x: number;
+  y: number;
+  z: number;
 };
 
 export type ParsedPlayer = {
@@ -57,6 +79,11 @@ export type ParsedPosition = {
   y: number;
   z: number;
   yaw?: number;
+  health?: number;
+  armor?: number;
+  helmet?: boolean;
+  has_bomb?: boolean;
+  has_defuser?: boolean;
 };
 
 export type ParsedRoundInventory = {
@@ -128,6 +155,7 @@ export type ParsedDemo = {
   spotted?: ParsedSpotted[];
   grenade_throws?: ParsedGrenadeEvent[];
   grenade_detonations?: ParsedGrenadeEvent[];
+  kit_drops?: ParsedKitDrop[];
 };
 
 @Injectable()

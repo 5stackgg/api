@@ -120,6 +120,28 @@ export class GameServerNodeModule implements OnApplicationBootstrap {
   }
 
   public async onApplicationBootstrap() {
+    // Clear any open disk-space alerts on boot. If the underlying disk is
+    // still over threshold, the next ping re-creates the alert within ~30s;
+    // if the node is gone, the stale alert disappears for good.
+    await this.hasura.mutation({
+      update_notifications: {
+        __args: {
+          where: {
+            type: { _eq: "GameNodeStatus" },
+            title: {
+              _in: [
+                "Game Server Node Disk Space Critical",
+                "Game Server Node Low Disk Space",
+              ],
+            },
+            deleted_at: { _is_null: true },
+          },
+          _set: { deleted_at: new Date().toISOString() },
+        },
+        __typename: true,
+      },
+    });
+
     const { game_server_nodes } = await this.hasura.query({
       game_server_nodes: {
         __args: {
