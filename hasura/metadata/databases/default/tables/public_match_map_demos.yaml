@@ -49,6 +49,7 @@ select_permissions:
         - match_id
         - match_map_id
         - size
+        - playback_size
         - total_ticks
         - tick_rate
         - duration_seconds

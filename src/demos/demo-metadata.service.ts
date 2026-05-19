@@ -330,9 +330,10 @@ export class DemoMetadataService {
     await this.s3.put(key, gz);
     await this.postgres.query(
       `UPDATE public.match_map_demos
-         SET playback_file = $1
-       WHERE id = $2::uuid`,
-      [key, matchMapDemoId],
+         SET playback_file = $1,
+             playback_size = $2::int
+       WHERE id = $3::uuid`,
+      [key, gz.byteLength, matchMapDemoId],
     );
     this.logger.log(
       `[playback-blob] uploaded ${key} ` +
@@ -361,6 +362,8 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     z: p.z,
     yaw: p.yaw ?? null,
     health: (p as { health?: number }).health ?? null,
+    armor: (p as { armor?: number }).armor ?? null,
+    helmet: (p as { helmet?: boolean }).helmet ?? false,
     has_bomb: p.has_bomb ?? false,
     has_defuser: p.has_defuser ?? false,
   }));

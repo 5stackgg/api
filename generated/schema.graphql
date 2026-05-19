@@ -13842,6 +13842,7 @@ type match_map_demos {
   match_map_id: uuid!
   metadata_parsed_at: timestamptz
   playback_file: String
+  playback_size: Int
 
   """
   A computed field, executes function "demo_playback_url"
@@ -13935,6 +13936,7 @@ input match_map_demos_arr_rel_insert_input {
 """aggregate avg on columns"""
 type match_map_demos_avg_fields {
   duration_seconds: Float
+  playback_size: Float
   size: Float
   tick_rate: Float
   total_ticks: Float
@@ -13945,6 +13947,7 @@ order by avg() on columns of table "match_map_demos"
 """
 input match_map_demos_avg_order_by {
   duration_seconds: order_by
+  playback_size: order_by
   size: order_by
   tick_rate: order_by
   total_ticks: order_by
@@ -13978,6 +13981,7 @@ input match_map_demos_bool_exp {
   match_map_id: uuid_comparison_exp
   metadata_parsed_at: timestamptz_comparison_exp
   playback_file: String_comparison_exp
+  playback_size: Int_comparison_exp
   playback_url: String_comparison_exp
   players: jsonb_comparison_exp
   round_ticks: jsonb_comparison_exp
@@ -14036,6 +14040,7 @@ input match_map_demos_delete_key_input {
 input type for incrementing numeric columns in table "match_map_demos"
 """
 input match_map_demos_inc_input {
+  playback_size: Int
   size: Int
   tick_rate: Float
   total_ticks: Int
@@ -14061,6 +14066,7 @@ input match_map_demos_insert_input {
   match_map_id: uuid
   metadata_parsed_at: timestamptz
   playback_file: String
+  playback_size: Int
   players: jsonb
   round_ticks: jsonb
   size: Int
@@ -14086,6 +14092,7 @@ type match_map_demos_max_fields {
   match_map_id: uuid
   metadata_parsed_at: timestamptz
   playback_file: String
+  playback_size: Int
 
   """
   A computed field, executes function "demo_playback_url"
@@ -14111,6 +14118,7 @@ input match_map_demos_max_order_by {
   match_map_id: order_by
   metadata_parsed_at: order_by
   playback_file: order_by
+  playback_size: order_by
   size: order_by
   tick_rate: order_by
   total_ticks: order_by
@@ -14134,6 +14142,7 @@ type match_map_demos_min_fields {
   match_map_id: uuid
   metadata_parsed_at: timestamptz
   playback_file: String
+  playback_size: Int
 
   """
   A computed field, executes function "demo_playback_url"
@@ -14159,6 +14168,7 @@ input match_map_demos_min_order_by {
   match_map_id: order_by
   metadata_parsed_at: order_by
   playback_file: order_by
+  playback_size: order_by
   size: order_by
   tick_rate: order_by
   total_ticks: order_by
@@ -14215,6 +14225,7 @@ input match_map_demos_order_by {
   match_map_id: order_by
   metadata_parsed_at: order_by
   playback_file: order_by
+  playback_size: order_by
   playback_url: order_by
   players: order_by
   round_ticks: order_by
@@ -14278,6 +14289,9 @@ enum match_map_demos_select_column {
   playback_file
 
   """column name"""
+  playback_size
+
+  """column name"""
   players
 
   """column name"""
@@ -14311,6 +14325,7 @@ input match_map_demos_set_input {
   match_map_id: uuid
   metadata_parsed_at: timestamptz
   playback_file: String
+  playback_size: Int
   players: jsonb
   round_ticks: jsonb
   size: Int
@@ -14322,6 +14337,7 @@ input match_map_demos_set_input {
 """aggregate stddev on columns"""
 type match_map_demos_stddev_fields {
   duration_seconds: Float
+  playback_size: Float
   size: Float
   tick_rate: Float
   total_ticks: Float
@@ -14332,6 +14348,7 @@ order by stddev() on columns of table "match_map_demos"
 """
 input match_map_demos_stddev_order_by {
   duration_seconds: order_by
+  playback_size: order_by
   size: order_by
   tick_rate: order_by
   total_ticks: order_by
@@ -14340,6 +14357,7 @@ input match_map_demos_stddev_order_by {
 """aggregate stddev_pop on columns"""
 type match_map_demos_stddev_pop_fields {
   duration_seconds: Float
+  playback_size: Float
   size: Float
   tick_rate: Float
   total_ticks: Float
@@ -14350,6 +14368,7 @@ order by stddev_pop() on columns of table "match_map_demos"
 """
 input match_map_demos_stddev_pop_order_by {
   duration_seconds: order_by
+  playback_size: order_by
   size: order_by
   tick_rate: order_by
   total_ticks: order_by
@@ -14358,6 +14377,7 @@ input match_map_demos_stddev_pop_order_by {
 """aggregate stddev_samp on columns"""
 type match_map_demos_stddev_samp_fields {
   duration_seconds: Float
+  playback_size: Float
   size: Float
   tick_rate: Float
   total_ticks: Float
@@ -14368,6 +14388,7 @@ order by stddev_samp() on columns of table "match_map_demos"
 """
 input match_map_demos_stddev_samp_order_by {
   duration_seconds: order_by
+  playback_size: order_by
   size: order_by
   tick_rate: order_by
   total_ticks: order_by
@@ -14398,6 +14419,7 @@ input match_map_demos_stream_cursor_value_input {
   match_map_id: uuid
   metadata_parsed_at: timestamptz
   playback_file: String
+  playback_size: Int
   players: jsonb
   round_ticks: jsonb
   size: Int
@@ -14409,6 +14431,7 @@ input match_map_demos_stream_cursor_value_input {
 """aggregate sum on columns"""
 type match_map_demos_sum_fields {
   duration_seconds: Float
+  playback_size: Int
   size: Int
   tick_rate: Float
   total_ticks: Int
@@ -14419,6 +14442,7 @@ order by sum() on columns of table "match_map_demos"
 """
 input match_map_demos_sum_order_by {
   duration_seconds: order_by
+  playback_size: order_by
   size: order_by
   tick_rate: order_by
   total_ticks: order_by
@@ -14460,6 +14484,9 @@ enum match_map_demos_update_column {
 
   """column name"""
   playback_file
+
+  """column name"""
+  playback_size
 
   """column name"""
   players
@@ -14515,6 +14542,7 @@ input match_map_demos_updates {
 """aggregate var_pop on columns"""
 type match_map_demos_var_pop_fields {
   duration_seconds: Float
+  playback_size: Float
   size: Float
   tick_rate: Float
   total_ticks: Float
@@ -14525,6 +14553,7 @@ order by var_pop() on columns of table "match_map_demos"
 """
 input match_map_demos_var_pop_order_by {
   duration_seconds: order_by
+  playback_size: order_by
   size: order_by
   tick_rate: order_by
   total_ticks: order_by
@@ -14533,6 +14562,7 @@ input match_map_demos_var_pop_order_by {
 """aggregate var_samp on columns"""
 type match_map_demos_var_samp_fields {
   duration_seconds: Float
+  playback_size: Float
   size: Float
   tick_rate: Float
   total_ticks: Float
@@ -14543,6 +14573,7 @@ order by var_samp() on columns of table "match_map_demos"
 """
 input match_map_demos_var_samp_order_by {
   duration_seconds: order_by
+  playback_size: order_by
   size: order_by
   tick_rate: order_by
   total_ticks: order_by
@@ -14551,6 +14582,7 @@ input match_map_demos_var_samp_order_by {
 """aggregate variance on columns"""
 type match_map_demos_variance_fields {
   duration_seconds: Float
+  playback_size: Float
   size: Float
   tick_rate: Float
   total_ticks: Float
@@ -14561,6 +14593,7 @@ order by variance() on columns of table "match_map_demos"
 """
 input match_map_demos_variance_order_by {
   duration_seconds: order_by
+  playback_size: order_by
   size: order_by
   tick_rate: order_by
   total_ticks: order_by

@@ -62,12 +62,15 @@ export class CleanDemos extends WorkerHost {
         aggregate: {
           sum: {
             size: true,
+            playback_size: true,
           },
         },
       },
     });
 
-    this.totalStoredBytes = match_map_demos_aggregate.aggregate.sum.size;
+    this.totalStoredBytes =
+      (match_map_demos_aggregate.aggregate.sum.size ?? 0) +
+      (match_map_demos_aggregate.aggregate.sum.playback_size ?? 0);
 
     return await this.deleteOldDemos();
   }
@@ -81,7 +84,7 @@ export class CleanDemos extends WorkerHost {
 
     if (demosToDelete.length > 0) {
       this.logger.log(
-        `Marked ${demosToDelete.length} demos for deletion, freeing up ${this.formatStorageSize(demosToDelete.reduce((total, demo) => total + demo.size, 0))}`,
+        `Marked ${demosToDelete.length} demos for deletion, freeing up ${this.formatStorageSize(demosToDelete.reduce((total, demo) => total + (demo.size ?? 0) + (demo.playback_size ?? 0), 0))}`,
       );
       for (const demo of demosToDelete) {
         await this.demoMetadata.deleteDemo(demo.id);
@@ -96,6 +99,7 @@ export class CleanDemos extends WorkerHost {
     Array<{
       id: string;
       size: number;
+      playback_size: number | null;
       file: string;
     }>
   > {
@@ -124,6 +128,7 @@ export class CleanDemos extends WorkerHost {
         },
         id: true,
         size: true,
+        playback_size: true,
         file: true,
       },
     });
@@ -132,7 +137,7 @@ export class CleanDemos extends WorkerHost {
 
     for (const demo of match_map_demos) {
       demosToDelete.push(demo);
-      this.totalStoredBytes -= demo.size;
+      this.totalStoredBytes -= (demo.size ?? 0) + (demo.playback_size ?? 0);
 
       if (this.totalStoredBytes > this.maxStorageInBytes) {
         break;

@@ -20166,6 +20166,9 @@ export default {
             "playback_file": [
                 48
             ],
+            "playback_size": [
+                30
+            ],
             "playback_url": [
                 48
             ],
@@ -20354,6 +20357,9 @@ export default {
             "duration_seconds": [
                 22
             ],
+            "playback_size": [
+                22
+            ],
             "size": [
                 22
             ],
@@ -20369,6 +20375,9 @@ export default {
         },
         "match_map_demos_avg_order_by": {
             "duration_seconds": [
+                1661
+            ],
+            "playback_size": [
                 1661
             ],
             "size": [
@@ -20457,6 +20466,9 @@ export default {
             "playback_file": [
                 50
             ],
+            "playback_size": [
+                31
+            ],
             "playback_url": [
                 50
             ],
@@ -20535,6 +20547,9 @@ export default {
             ]
         },
         "match_map_demos_inc_input": {
+            "playback_size": [
+                30
+            ],
             "size": [
                 30
             ],
@@ -20597,6 +20612,9 @@ export default {
             "playback_file": [
                 48
             ],
+            "playback_size": [
+                30
+            ],
             "players": [
                 875
             ],
@@ -20653,6 +20671,9 @@ export default {
             "playback_file": [
                 48
             ],
+            "playback_size": [
+                30
+            ],
             "playback_url": [
                 48
             ],
@@ -20701,6 +20722,9 @@ export default {
                 1661
             ],
             "playback_file": [
+                1661
+            ],
+            "playback_size": [
                 1661
             ],
             "size": [
@@ -20753,6 +20777,9 @@ export default {
             "playback_file": [
                 48
             ],
+            "playback_size": [
+                30
+            ],
             "playback_url": [
                 48
             ],
@@ -20801,6 +20828,9 @@ export default {
                 1661
             ],
             "playback_file": [
+                1661
+            ],
+            "playback_size": [
                 1661
             ],
             "size": [
@@ -20910,6 +20940,9 @@ export default {
             "playback_file": [
                 1661
             ],
+            "playback_size": [
+                1661
+            ],
             "playback_url": [
                 1661
             ],
@@ -20995,6 +21028,9 @@ export default {
             "playback_file": [
                 48
             ],
+            "playback_size": [
+                30
+            ],
             "players": [
                 875
             ],
@@ -21021,6 +21057,9 @@ export default {
             "duration_seconds": [
                 22
             ],
+            "playback_size": [
+                22
+            ],
             "size": [
                 22
             ],
@@ -21036,6 +21075,9 @@ export default {
         },
         "match_map_demos_stddev_order_by": {
             "duration_seconds": [
+                1661
+            ],
+            "playback_size": [
                 1661
             ],
             "size": [
@@ -21055,6 +21097,9 @@ export default {
             "duration_seconds": [
                 22
             ],
+            "playback_size": [
+                22
+            ],
             "size": [
                 22
             ],
@@ -21070,6 +21115,9 @@ export default {
         },
         "match_map_demos_stddev_pop_order_by": {
             "duration_seconds": [
+                1661
+            ],
+            "playback_size": [
                 1661
             ],
             "size": [
@@ -21089,6 +21137,9 @@ export default {
             "duration_seconds": [
                 22
             ],
+            "playback_size": [
+                22
+            ],
             "size": [
                 22
             ],
@@ -21104,6 +21155,9 @@ export default {
         },
         "match_map_demos_stddev_samp_order_by": {
             "duration_seconds": [
+                1661
+            ],
+            "playback_size": [
                 1661
             ],
             "size": [
@@ -21167,6 +21221,9 @@ export default {
             "playback_file": [
                 48
             ],
+            "playback_size": [
+                30
+            ],
             "players": [
                 875
             ],
@@ -21193,6 +21250,9 @@ export default {
             "duration_seconds": [
                 22
             ],
+            "playback_size": [
+                30
+            ],
             "size": [
                 30
             ],
@@ -21208,6 +21268,9 @@ export default {
         },
         "match_map_demos_sum_order_by": {
             "duration_seconds": [
+                1661
+            ],
+            "playback_size": [
                 1661
             ],
             "size": [
@@ -21257,6 +21320,9 @@ export default {
             "duration_seconds": [
                 22
             ],
+            "playback_size": [
+                22
+            ],
             "size": [
                 22
             ],
@@ -21272,6 +21338,9 @@ export default {
         },
         "match_map_demos_var_pop_order_by": {
             "duration_seconds": [
+                1661
+            ],
+            "playback_size": [
                 1661
             ],
             "size": [
@@ -21291,6 +21360,9 @@ export default {
             "duration_seconds": [
                 22
             ],
+            "playback_size": [
+                22
+            ],
             "size": [
                 22
             ],
@@ -21306,6 +21378,9 @@ export default {
         },
         "match_map_demos_var_samp_order_by": {
             "duration_seconds": [
+                1661
+            ],
+            "playback_size": [
                 1661
             ],
             "size": [
@@ -21325,6 +21400,9 @@ export default {
             "duration_seconds": [
                 22
             ],
+            "playback_size": [
+                22
+            ],
             "size": [
                 22
             ],
@@ -21340,6 +21418,9 @@ export default {
         },
         "match_map_demos_variance_order_by": {
             "duration_seconds": [
+                1661
+            ],
+            "playback_size": [
                 1661
             ],
             "size": [

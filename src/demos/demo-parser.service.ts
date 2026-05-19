@@ -79,6 +79,9 @@ export type ParsedPosition = {
   y: number;
   z: number;
   yaw?: number;
+  health?: number;
+  armor?: number;
+  helmet?: boolean;
   has_bomb?: boolean;
   has_defuser?: boolean;
 };
