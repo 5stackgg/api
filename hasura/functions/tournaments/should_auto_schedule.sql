@@ -1,17 +1,10 @@
-CREATE OR REPLACE FUNCTION public.should_auto_schedule(
-    _tournament_stage_id uuid
-)
+CREATE OR REPLACE FUNCTION public.should_auto_schedule(_tournament_stage_id uuid)
 RETURNS boolean
-LANGUAGE plpgsql STABLE
+LANGUAGE sql
+STABLE
 AS $$
-DECLARE
-    _tournament RECORD;
-BEGIN
-    SELECT t.status, t.auto_start INTO _tournament
+    SELECT COALESCE(t.status != 'Paused' AND t.auto_start, false)
     FROM tournaments t
     JOIN tournament_stages ts ON ts.tournament_id = t.id
     WHERE ts.id = _tournament_stage_id;
-
-    RETURN COALESCE(_tournament.status != 'Paused' AND _tournament.auto_start, false);
-END;
 $$;

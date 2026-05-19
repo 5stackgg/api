@@ -8,6 +8,7 @@ import { loggerFactory } from "../utilities/LoggerFactory";
 import { Queue } from "bullmq";
 import { CleanDemos } from "./jobs/CleanDemos";
 import { S3Module } from "src/s3/s3.module";
+import { AuthModule } from "src/auth/auth.module";
 import { HasuraModule } from "src/hasura/hasura.module";
 import { PostgresModule } from "src/postgres/postgres.module";
 import { getQueuesProcessors } from "src/utilities/QueueProcessors";
@@ -17,6 +18,7 @@ import { DemoParserService } from "./demo-parser.service";
 @Module({
   imports: [
     S3Module,
+    AuthModule,
     HasuraModule,
     PostgresModule,
     BullModule.registerQueue({

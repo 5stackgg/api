@@ -423,6 +423,14 @@ export class MatchesController {
       !!newRow.metadata_parsed_at && !oldRow.metadata_parsed_at;
     if (!isFirstParse) return;
 
+    const { clip_render_jobs_aggregate } = await this.hasura.query({
+      clip_render_jobs_aggregate: {
+        __args: { where: { match_map_demo_id: { _eq: demoId } } },
+        aggregate: { count: true },
+      },
+    });
+    if ((clip_render_jobs_aggregate?.aggregate?.count ?? 0) > 0) return;
+
     try {
       const queued = await this.clips.autoGenerateForDemo(
         matchId,

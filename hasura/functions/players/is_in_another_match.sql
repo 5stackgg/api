@@ -1,22 +1,12 @@
 CREATE OR REPLACE FUNCTION public.is_in_another_match(player public.players)
- RETURNS boolean
- LANGUAGE plpgsql
- STABLE
+RETURNS boolean
+LANGUAGE sql
+STABLE
 AS $$
-BEGIN
-    RETURN EXISTS (
+    SELECT EXISTS (
         SELECT 1
         FROM get_player_matches(player) AS pm
-        WHERE
-        (
-            pm.status = 'Live'
-            or
-            pm.status = 'Veto'
-            or
-            pm.status = 'WaitingForCheckIn'
-            or
-            pm.status = 'WaitingForServer'
-        )
+        WHERE pm.status IN ('Live', 'Veto', 'WaitingForCheckIn', 'WaitingForServer')
         AND NOT EXISTS (
             SELECT 1
             FROM tournament_brackets tb
@@ -26,5 +16,4 @@ BEGIN
               AND t.status = 'Paused'
         )
     );
-END;
-$$
+$$;

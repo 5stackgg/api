@@ -5,21 +5,10 @@
 -- re-checks organizer status server-side.
 CREATE OR REPLACE FUNCTION public.can_stream_live(match public.matches, hasura_session json)
 RETURNS boolean
-LANGUAGE plpgsql STABLE
+LANGUAGE sql
+STABLE
 AS $$
-BEGIN
-    IF NOT is_match_organizer(match, hasura_session) THEN
-        RETURN false;
-    END IF;
-
-    IF match.status <> 'Live' THEN
-        RETURN false;
-    END IF;
-
-    IF match.server_id IS NULL THEN
-        RETURN false;
-    END IF;
-
-    RETURN true;
-END;
+    SELECT match.status = 'Live'
+        AND match.server_id IS NOT NULL
+        AND is_match_organizer(match, hasura_session);
 $$;

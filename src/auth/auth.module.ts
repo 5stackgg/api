@@ -9,6 +9,7 @@ import { loggerFactory } from "../utilities/LoggerFactory";
 import { CacheModule } from "../cache/cache.module";
 import { RedisModule } from "../redis/redis.module";
 import { ApiKeys } from "./ApiKeys";
+import { ApiKeyGuard } from "./strategies/ApiKeyGuard";
 
 @Module({
   imports: [
@@ -21,12 +22,13 @@ import { ApiKeys } from "./ApiKeys";
   ],
   providers: [
     ApiKeys,
+    ApiKeyGuard,
     SteamStrategy,
     DiscordStrategy,
     SteamSerializer,
     loggerFactory(),
   ],
-  exports: [ApiKeys],
+  exports: [ApiKeys, ApiKeyGuard],
   controllers: [AuthController],
 })
 export class AuthModule {}

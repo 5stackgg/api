@@ -3,7 +3,7 @@ import { WorkerHost } from "@nestjs/bullmq";
 import { DemoQueues } from "../enums/DemoQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { HasuraService } from "../../hasura/hasura.service";
-import { S3Service } from "../../s3/s3.service";
+import { DemoMetadataService } from "../demo-metadata.service";
 
 @UseQueue("Demos", DemoQueues.Demos)
 export class CleanDemos extends WorkerHost {
@@ -12,7 +12,7 @@ export class CleanDemos extends WorkerHost {
   private totalStoredBytes: number;
 
   constructor(
-    private readonly s3: S3Service,
+    private readonly demoMetadata: DemoMetadataService,
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
   ) {
@@ -84,13 +84,7 @@ export class CleanDemos extends WorkerHost {
         `Marked ${demosToDelete.length} demos for deletion, freeing up ${this.formatStorageSize(demosToDelete.reduce((total, demo) => total + demo.size, 0))}`,
       );
       for (const demo of demosToDelete) {
-        await this.s3.remove(demo.file);
-        await this.hasura.mutation({
-          delete_match_map_demos_by_pk: {
-            __args: { id: demo.id },
-            __typename: true,
-          },
-        });
+        await this.demoMetadata.deleteDemo(demo.id);
         break;
       }
     }

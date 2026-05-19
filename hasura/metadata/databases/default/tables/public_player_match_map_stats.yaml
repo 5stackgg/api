@@ -29,6 +29,7 @@ select_permissions:
         - team_damage
         - he_damage
         - molotov_damage
+        - he_team_damage
         - flashes_thrown
         - enemies_flashed
         - team_flashed
@@ -42,8 +43,23 @@ select_permissions:
         - trade_kill_attempts
         - trade_kill_successes
         - traded_death_opportunities
+        - traded_death_attempts
         - traded_death_successes
         - shots_fired
+        - wasted_magazine_shots
+        - unused_utility_value
+        - kills_t
+        - kills_ct
+        - hs_kills_t
+        - hs_kills_ct
+        - deaths_t
+        - deaths_ct
+        - damage_t
+        - damage_ct
+        - assists_t
+        - assists_ct
+        - rounds_t
+        - rounds_ct
         - hits
         - headshot_hits
         - time_to_damage_sum_s

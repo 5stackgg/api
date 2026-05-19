@@ -6,7 +6,11 @@ import {
   StreamableFile,
   Logger,
   Res,
+  UseGuards,
+  Header,
+  NotFoundException,
 } from "@nestjs/common";
+import { ApiKeyGuard } from "../auth/strategies/ApiKeyGuard";
 import { Request, Response } from "express";
 import { HasuraService } from "../hasura/hasura.service";
 import { HasuraAction } from "../hasura/hasura.controller";
@@ -15,7 +19,7 @@ import { PostgresService } from "../postgres/postgres.service";
 import archiver from "archiver";
 import zlib from "zlib";
 import path from "path";
-import { DemoMetadataService } from "./demo-metadata.service";
+import { DemoMetadataService, playbackBlobKey } from "./demo-metadata.service";
 import { ParsedDemo } from "./demo-parser.service";
 
 @Controller("/demos/:matchId")
@@ -28,6 +32,7 @@ export class DemosController {
     protected readonly demoMetadata: DemoMetadataService,
   ) {}
 
+  @UseGuards(ApiKeyGuard)
   @Get("map/:mapId")
   public async downloadDemo(@Req() request: Request) {
     const { matchId, mapId } = request.params;
@@ -83,6 +88,24 @@ export class DemosController {
       type: "application/zip",
       disposition: `attachment; filename="${matchId}-${mapId}-demos.zip"`,
     });
+  }
+
+  @UseGuards(ApiKeyGuard)
+  @Header("Content-Type", "application/octet-stream")
+  @Header("Cache-Control", "private, max-age=300")
+  @Get("map/:mapId/playback")
+  public async downloadPlaybackBlob(
+    @Req() request: Request,
+  ): Promise<StreamableFile> {
+    const matchId = request.params.matchId as string;
+    const mapId = request.params.mapId as string;
+    const key = playbackBlobKey(matchId, mapId);
+
+    if (!(await this.s3.has(key))) {
+      throw new NotFoundException("playback blob missing");
+    }
+
+    return new StreamableFile(await this.s3.get(key));
   }
 
   @Post("pre-signed")
@@ -314,14 +337,7 @@ export class DemosController {
 
   private async getDemo(demo: { id: string; file: string }) {
     if (!(await this.s3.has(demo.file))) {
-      await this.hasura.mutation({
-        delete_match_map_demos_by_pk: {
-          __args: {
-            id: demo.id,
-          },
-          __typename: true,
-        },
-      });
+      await this.demoMetadata.deleteDemo(demo.id);
       throw Error("demo missing");
     }
 

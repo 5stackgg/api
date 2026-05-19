@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.idx_tournament_brackets_parent_bracket_id;
