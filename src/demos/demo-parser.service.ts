@@ -95,6 +95,11 @@ export type ParsedRoundInventory = {
   he?: number;
   molotov?: number;
   decoy?: number;
+  primary?: string;
+  secondary?: string;
+  armor?: number;
+  helmet?: boolean;
+  kit?: boolean;
 };
 
 export type ParsedDamageEvent = {

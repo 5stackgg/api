@@ -379,17 +379,20 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
   const mapGrenade = (
     g: ParsedDemo["grenade_throws"][number],
     phase: string,
-  ) => ({
-    round: g.round ?? 0,
-    tick: g.tick,
-    thrower_steam_id: g.thrower ?? null,
-    thrower_team: g.thrower_team ?? null,
-    type: g.type,
-    phase,
-    x: g.x ?? 0,
-    y: g.y ?? 0,
-    z: g.z ?? 0,
-  });
+  ) => {
+    const isThrow = phase === "thrown";
+    return {
+      round: g.round ?? 0,
+      tick: g.tick,
+      thrower_steam_id: g.thrower ?? null,
+      thrower_team: g.thrower_team ?? null,
+      type: g.type,
+      phase,
+      x: (isThrow ? g.ox : g.x) ?? 0,
+      y: (isThrow ? g.oy : g.y) ?? 0,
+      z: (isThrow ? g.oz : g.z) ?? 0,
+    };
+  };
   const grenade_throws = [
     ...(parsed.grenade_throws ?? []).map((g) => mapGrenade(g, "thrown")),
     ...(parsed.grenade_detonations ?? []).map((g) =>
@@ -404,6 +407,22 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     attacked_steam_id: d.victim ?? null,
     damage: d.damage,
     health: d.health ?? null,
+  }));
+
+  const round_inventory = (parsed.round_inventory ?? []).map((r) => ({
+    round: r.round ?? 0,
+    steam_id: r.attacker ?? null,
+    team: r.team ?? null,
+    flash: r.flash ?? 0,
+    smoke: r.smoke ?? 0,
+    he: r.he ?? 0,
+    molotov: r.molotov ?? 0,
+    decoy: r.decoy ?? 0,
+    primary: r.primary ?? null,
+    secondary: r.secondary ?? null,
+    armor: r.armor ?? 0,
+    helmet: r.helmet ?? false,
+    kit: r.kit ?? false,
   }));
 
   return {
@@ -421,5 +440,6 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     shots_fired,
     grenade_throws,
     damages,
+    round_inventory,
   };
 }
