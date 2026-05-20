@@ -26,6 +26,11 @@ export interface ClipSpec {
   };
   destination: "library" | "download";
   title?: string;
+  // Chip-display fields (game-streamer bakes them when CLIP_BAKE_BRANDING=1).
   target_name?: string;
+  target_avatar_url?: string;
+  map_name?: string;
+  round?: number;
+  kills_count?: number;
   visibility?: "private" | "unlisted" | "public" | "match";
 }

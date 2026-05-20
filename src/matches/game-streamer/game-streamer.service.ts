@@ -1716,6 +1716,12 @@ export class GameStreamerService {
     if (demo.cs2_build) {
       env.push({ name: "CS2_BUILD", value: String(demo.cs2_build) });
     }
+    // Defaults to "1" during the test phase; set CLIP_BAKE_BRANDING=0
+    // in the api env to disable globally.
+    env.push({
+      name: "CLIP_BAKE_BRANDING",
+      value: process.env.CLIP_BAKE_BRANDING ?? "1",
+    });
 
     this.logger.log(
       `[batch-highlights ${matchMapId}] dispatching ${jobs.length} job(s) to pod ${jobName} on node ${nodeId}`,
