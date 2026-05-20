@@ -85488,6 +85488,18 @@ export default {
                     ]
                 }
             ],
+            "clearClipRenderBatch": [
+                51,
+                {
+                    "match_map_id": [
+                        2895,
+                        "uuid!"
+                    ]
+                }
+            ],
+            "clearFinishedClipRenders": [
+                51
+            ],
             "createApiKey": [
                 2,
                 {

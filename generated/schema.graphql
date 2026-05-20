@@ -20454,6 +20454,14 @@ type mutation_root {
 
   """checkIntoMatch"""
   checkIntoMatch(match_id: uuid!): SuccessOutput
+
+  """
+  Delete terminal-state clip_render_jobs rows for a single match_map batch.
+  """
+  clearClipRenderBatch(match_map_id: uuid!): SuccessOutput
+
+  """Delete all terminal-state clip_render_jobs rows platform-wide."""
+  clearFinishedClipRenders: SuccessOutput
   createApiKey(label: String!): ApiKeyResponse
 
   """

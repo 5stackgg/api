@@ -6736,6 +6736,10 @@ export interface mutation_root {
     cancelMatch: (SuccessOutput | null)
     /** checkIntoMatch */
     checkIntoMatch: (SuccessOutput | null)
+    /** Delete terminal-state clip_render_jobs rows for a single match_map batch. */
+    clearClipRenderBatch: (SuccessOutput | null)
+    /** Delete all terminal-state clip_render_jobs rows platform-wide. */
+    clearFinishedClipRenders: (SuccessOutput | null)
     createApiKey: (ApiKeyResponse | null)
     /** Build a multi-segment ClipSpec from a player+preset and dispatch render */
     createClipFromPreset: (CreateClipRenderOutput | null)
@@ -31067,6 +31071,10 @@ export interface mutation_rootGenqlSelection{
     cancelMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     /** checkIntoMatch */
     checkIntoMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
+    /** Delete terminal-state clip_render_jobs rows for a single match_map batch. */
+    clearClipRenderBatch?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid']} })
+    /** Delete all terminal-state clip_render_jobs rows platform-wide. */
+    clearFinishedClipRenders?: SuccessOutputGenqlSelection
     createApiKey?: (ApiKeyResponseGenqlSelection & { __args: {label: Scalars['String']} })
     /** Build a multi-segment ClipSpec from a player+preset and dispatch render */
     createClipFromPreset?: (CreateClipRenderOutputGenqlSelection & { __args: {fps?: (Scalars['Int'] | null), match_map_id: Scalars['uuid'], preset: Scalars['String'], resolution?: (Scalars['String'] | null), target_name?: (Scalars['String'] | null), target_steam_id: Scalars['String'], title?: (Scalars['String'] | null)} })

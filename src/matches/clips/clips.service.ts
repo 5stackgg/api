@@ -14,6 +14,7 @@ import { ClipRenderStatusDto } from "./types/ClipRenderStatusDto";
 import {
   BATCH_HIGHLIGHTS_JOB_NAME,
   IN_FLIGHT_STATUSES,
+  TERMINAL_STATUSES,
   resolveInClusterApiBase,
 } from "./clips.constants";
 
@@ -205,6 +206,243 @@ export class ClipsService {
       `[cancel-batch ${matchMapId}] cancelled ${cancelled} row(s) across ${demoIds.length} demo(s) and torn down pods`,
     );
     return cancelled;
+  }
+
+  public async clearClipRenderBatch(matchMapId: string): Promise<number> {
+    const { delete_clip_render_jobs } = await this.hasura.mutation({
+      delete_clip_render_jobs: {
+        __args: {
+          where: {
+            match_map_id: { _eq: matchMapId },
+            status: { _in: [...TERMINAL_STATUSES] },
+          },
+        },
+        affected_rows: true,
+      },
+    });
+    const cleared =
+      (delete_clip_render_jobs?.affected_rows as number | undefined) ?? 0;
+    this.logger.log(
+      `[clear-batch ${matchMapId}] cleared ${cleared} terminal row(s)`,
+    );
+    return cleared;
+  }
+
+  // Re-inserts rows via the BATCH path (status=queued + dedicated
+  // BatchHighlights pod), bypassing the interactive createClipRender
+  // flow which requires the user to have a live demo session open.
+  private async enqueueBatchClipRenders(
+    rows: Array<{
+      user_steam_id: unknown;
+      match_map_id: unknown;
+      match_map_demo_id: unknown;
+      spec: unknown;
+    }>,
+    label: string,
+  ): Promise<number> {
+    const byDemo = new Map<
+      string,
+      {
+        matchMapId: string;
+        matchMapDemoId: string;
+        objects: Array<Record<string, unknown>>;
+      }
+    >();
+
+    for (const r of rows) {
+      const matchMapId = r.match_map_id ? String(r.match_map_id) : null;
+      const matchMapDemoId = r.match_map_demo_id
+        ? String(r.match_map_demo_id)
+        : null;
+      if (!matchMapId || !matchMapDemoId || !r.spec) {
+        this.logger.warn(
+          `[${label}] skip row: missing match_map_id / match_map_demo_id / spec`,
+        );
+        continue;
+      }
+      const key = `${matchMapId}:${matchMapDemoId}`;
+      const bucket = byDemo.get(key) ?? {
+        matchMapId,
+        matchMapDemoId,
+        objects: [],
+      };
+      bucket.objects.push({
+        user_steam_id: r.user_steam_id ? String(r.user_steam_id) : null,
+        match_map_id: matchMapId,
+        match_map_demo_id: matchMapDemoId,
+        session_token: randomBytes(24).toString("hex"),
+        k8s_job_name: GameStreamerService.GetBatchHighlightsJobName(
+          matchMapId,
+          matchMapDemoId,
+        ),
+        spec: r.spec,
+        status: "queued",
+        sort_index: bucket.objects.length,
+        status_history: [
+          { status: "queued", at: new Date().toISOString(), source: label },
+        ],
+      });
+      byDemo.set(key, bucket);
+    }
+
+    let inserted = 0;
+    for (const { matchMapId, matchMapDemoId, objects } of byDemo.values()) {
+      if (objects.length === 0) continue;
+      try {
+        const { insert_clip_render_jobs } = await this.hasura.mutation({
+          insert_clip_render_jobs: {
+            __args: { objects: objects as any },
+            returning: { id: true },
+          },
+        });
+        const n = (
+          (insert_clip_render_jobs?.returning as Array<{ id: string }>) ?? []
+        ).length;
+        inserted += n;
+      } catch (error) {
+        this.logger.warn(
+          `[${label} ${matchMapId}/${matchMapDemoId}] insert failed: ${(error as Error)?.message}`,
+        );
+        continue;
+      }
+
+      try {
+        const existing = await this.batchQueue.getJobs([
+          "delayed",
+          "waiting",
+          "active",
+          "paused",
+        ]);
+        const alreadyEnqueued = existing.some(
+          (j) =>
+            j.name === BATCH_HIGHLIGHTS_JOB_NAME &&
+            j.data?.matchMapId === matchMapId &&
+            j.data?.matchMapDemoId === matchMapDemoId,
+        );
+        if (!alreadyEnqueued) {
+          await this.batchQueue.add(
+            BATCH_HIGHLIGHTS_JOB_NAME,
+            { matchMapId, matchMapDemoId },
+            { jobId: `${matchMapId}-${matchMapDemoId}-${Date.now()}` },
+          );
+        }
+      } catch (error) {
+        this.logger.warn(
+          `[${label} ${matchMapId}/${matchMapDemoId}] enqueue failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
+
+    return inserted;
+  }
+
+  public async retryClipRenderBatch(
+    matchMapId: string,
+    onlyFailed: boolean,
+  ): Promise<number> {
+    const statuses = onlyFailed
+      ? (["error", "cancelled"] as const)
+      : TERMINAL_STATUSES;
+
+    const { clip_render_jobs: rows } = await this.hasura.query({
+      clip_render_jobs: {
+        __args: {
+          where: {
+            match_map_id: { _eq: matchMapId },
+            status: { _in: [...statuses] },
+          },
+        },
+        id: true,
+        user_steam_id: true,
+        match_map_id: true,
+        match_map_demo_id: true,
+        spec: true,
+      },
+    });
+    if (!rows?.length) return 0;
+
+    const ids = rows.map((r) => String(r.id));
+    await this.hasura.mutation({
+      delete_clip_render_jobs: {
+        __args: { where: { id: { _in: ids } } },
+        affected_rows: true,
+      },
+    });
+
+    const retried = await this.enqueueBatchClipRenders(
+      rows as any,
+      `retry-batch ${matchMapId}`,
+    );
+
+    this.logger.log(
+      `[retry-batch ${matchMapId}] deleted ${ids.length} terminal row(s), re-queued ${retried} (onlyFailed=${onlyFailed})`,
+    );
+    return retried;
+  }
+
+  public async requeueClipRender(jobId: string): Promise<void> {
+    // Delete-then-recreate via the BATCH path so it doesn't require
+    // the user to have an active demo session (createClipRender does).
+    const { clip_render_jobs_by_pk: row } = await this.hasura.query({
+      clip_render_jobs_by_pk: {
+        __args: { id: jobId },
+        id: true,
+        user_steam_id: true,
+        match_map_id: true,
+        match_map_demo_id: true,
+        status: true,
+        spec: true,
+      },
+    });
+    if (!row) {
+      throw new Error(`clip render ${jobId} not found`);
+    }
+    const status = String(row.status);
+    if (status !== "error" && status !== "cancelled" && status !== "done") {
+      throw new Error(
+        `clip render ${jobId} is not in a terminal state (status=${status})`,
+      );
+    }
+    if (!row.spec) {
+      throw new Error(`clip render ${jobId} has no spec to re-create from`);
+    }
+    if (!row.match_map_demo_id) {
+      throw new Error(
+        `clip render ${jobId} has no match_map_demo_id — cannot dispatch via batch worker`,
+      );
+    }
+
+    await this.hasura.mutation({
+      delete_clip_render_jobs_by_pk: {
+        __args: { id: jobId },
+        id: true,
+      },
+    });
+
+    const inserted = await this.enqueueBatchClipRenders(
+      [row as any],
+      `requeue ${jobId}`,
+    );
+    if (inserted === 0) {
+      throw new Error(`failed to re-queue clip render ${jobId}`);
+    }
+  }
+
+  public async clearFinishedClipRenders(): Promise<number> {
+    const { delete_clip_render_jobs } = await this.hasura.mutation({
+      delete_clip_render_jobs: {
+        __args: {
+          where: {
+            status: { _in: [...TERMINAL_STATUSES] },
+          },
+        },
+        affected_rows: true,
+      },
+    });
+    const cleared =
+      (delete_clip_render_jobs?.affected_rows as number | undefined) ?? 0;
+    this.logger.log(`[clear-finished] cleared ${cleared} terminal row(s)`);
+    return cleared;
   }
 
   public async cancelClipRender(userSteamId: string, jobId: string) {

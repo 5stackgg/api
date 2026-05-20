@@ -58,6 +58,16 @@ type Mutation {
 }
 
 type Mutation {
+  clearClipRenderBatch(
+    match_map_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  clearFinishedClipRenders: SuccessOutput
+}
+
+type Mutation {
   createApiKey(
     label: String!
   ): ApiKeyResponse
@@ -330,6 +340,12 @@ type Mutation {
 }
 
 type Mutation {
+  requeueClipRender(
+    job_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   requestNameChange(
     steam_id: bigint!
     name: String!
@@ -339,6 +355,13 @@ type Mutation {
 type Mutation {
   restartService(
     service: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  retryClipRenderBatch(
+    match_map_id: uuid!
+    only_failed: Boolean
   ): SuccessOutput
 }
 

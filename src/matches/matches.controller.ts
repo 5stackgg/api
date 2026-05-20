@@ -1064,6 +1064,52 @@ export class MatchesController {
   }
 
   @HasuraAction()
+  public async clearClipRenderBatch(data: {
+    match_map_id: string;
+    user: User;
+  }) {
+    if (!isRoleAbove(data.user.role, "administrator")) {
+      throw Error("only administrators can clear render queue batches");
+    }
+    await this.clips.clearClipRenderBatch(data.match_map_id);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async clearFinishedClipRenders(data: { user: User }) {
+    if (!isRoleAbove(data.user.role, "administrator")) {
+      throw Error("only administrators can clear the render queue");
+    }
+    await this.clips.clearFinishedClipRenders();
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async requeueClipRender(data: { job_id: string; user: User }) {
+    if (!isRoleAbove(data.user.role, "administrator")) {
+      throw Error("only administrators can re-queue clip renders");
+    }
+    await this.clips.requeueClipRender(data.job_id);
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async retryClipRenderBatch(data: {
+    match_map_id: string;
+    only_failed?: boolean | null;
+    user: User;
+  }) {
+    if (!isRoleAbove(data.user.role, "administrator")) {
+      throw Error("only administrators can retry render batches");
+    }
+    const retried = await this.clips.retryClipRenderBatch(
+      data.match_map_id,
+      data.only_failed === true,
+    );
+    return { success: true, retried };
+  }
+
+  @HasuraAction()
   public async getLiveStreamSpecState(data: { match_id: string; user: User }) {
     const { match_id } = data;
     const state = await this.gameStreamer.getLiveSpecState(match_id);
