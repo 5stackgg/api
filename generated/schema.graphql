@@ -23612,6 +23612,9 @@ type mutation_root {
   setGameNodeSchedulingState(enabled: Boolean!, game_server_node_id: String!): SuccessOutput
   setHudMode(match_id: uuid!, mode: String!): SuccessOutput
 
+  """setMapWinner"""
+  setMapWinner(match_id: uuid!, match_map_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
+
   """setMatchWinner"""
   setMatchWinner(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
   setupGameServer: SetupGameServeOutput

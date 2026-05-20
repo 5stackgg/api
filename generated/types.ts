@@ -89633,6 +89633,23 @@ export default {
                     ]
                 }
             ],
+            "setMapWinner": [
+                51,
+                {
+                    "match_id": [
+                        2895,
+                        "uuid!"
+                    ],
+                    "match_map_id": [
+                        2895,
+                        "uuid!"
+                    ],
+                    "winning_lineup_id": [
+                        2895,
+                        "uuid!"
+                    ]
+                }
+            ],
             "setMatchWinner": [
                 51,
                 {

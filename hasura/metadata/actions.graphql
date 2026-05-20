@@ -364,6 +364,14 @@ type Mutation {
 }
 
 type Mutation {
+  setMapWinner(
+    match_id: uuid!
+    match_map_id: uuid!
+    winning_lineup_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   setupGameServer: SetupGameServeOutput
 }
 
