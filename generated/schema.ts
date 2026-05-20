@@ -7488,6 +7488,8 @@ export interface mutation_root {
     scheduleMatch: (SuccessOutput | null)
     setGameNodeSchedulingState: (SuccessOutput | null)
     setHudMode: (SuccessOutput | null)
+    /** setMapWinner */
+    setMapWinner: (SuccessOutput | null)
     /** setMatchWinner */
     setMatchWinner: (SuccessOutput | null)
     setupGameServer: (SetupGameServeOutput | null)
@@ -32699,6 +32701,8 @@ export interface mutation_rootGenqlSelection{
     scheduleMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], time?: (Scalars['timestamptz'] | null)} })
     setGameNodeSchedulingState?: (SuccessOutputGenqlSelection & { __args: {enabled: Scalars['Boolean'], game_server_node_id: Scalars['String']} })
     setHudMode?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], mode: Scalars['String']} })
+    /** setMapWinner */
+    setMapWinner?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], match_map_id: Scalars['uuid'], winning_lineup_id: Scalars['uuid']} })
     /** setMatchWinner */
     setMatchWinner?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], winning_lineup_id: Scalars['uuid']} })
     setupGameServer?: SetupGameServeOutputGenqlSelection

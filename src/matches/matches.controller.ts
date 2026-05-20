@@ -1234,6 +1234,95 @@ export class MatchesController {
   }
 
   @HasuraAction()
+  public async setMapWinner(data: {
+    user: User;
+    match_id: string;
+    match_map_id: string;
+    winning_lineup_id: string;
+  }) {
+    const { match_id, match_map_id, user, winning_lineup_id } = data;
+
+    if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
+      throw Error("you are not a match organizer");
+    }
+
+    const { match_maps_by_pk: targetMap } = await this.hasura.query({
+      match_maps_by_pk: {
+        __args: { id: match_map_id },
+        id: true,
+        match_id: true,
+      },
+    });
+
+    if (!targetMap || targetMap.match_id !== match_id) {
+      throw Error("map not found for this match");
+    }
+
+    await this.hasura.mutation({
+      update_match_maps_by_pk: {
+        __args: {
+          pk_columns: { id: match_map_id },
+          _set: { winning_lineup_id },
+        },
+        id: true,
+      },
+    });
+
+    const { matches_by_pk: matchAfter } = await this.hasura.query({
+      matches_by_pk: {
+        __args: { id: match_id },
+        lineup_1_id: true,
+        lineup_2_id: true,
+        winning_lineup_id: true,
+        options: { best_of: true },
+        match_maps: {
+          winning_lineup_id: true,
+        },
+      },
+    });
+
+    if (!matchAfter) {
+      return { success: true };
+    }
+
+    const bestOf = matchAfter.options?.best_of ?? 0;
+    const needed = Math.floor(bestOf / 2) + 1;
+
+    let lineup1Wins = 0;
+    let lineup2Wins = 0;
+    for (const map of matchAfter.match_maps ?? []) {
+      if (map.winning_lineup_id === matchAfter.lineup_1_id) {
+        lineup1Wins += 1;
+      } else if (map.winning_lineup_id === matchAfter.lineup_2_id) {
+        lineup2Wins += 1;
+      }
+    }
+
+    let computedMatchWinner: string | null = null;
+    if (lineup1Wins >= needed) {
+      computedMatchWinner = matchAfter.lineup_1_id;
+    } else if (lineup2Wins >= needed) {
+      computedMatchWinner = matchAfter.lineup_2_id;
+    }
+
+    if (computedMatchWinner !== matchAfter.winning_lineup_id) {
+      await this.hasura.mutation({
+        update_matches_by_pk: {
+          __args: {
+            pk_columns: { id: match_id },
+            _set: { winning_lineup_id: computedMatchWinner },
+          },
+          id: true,
+        },
+      });
+    }
+
+    return {
+      success: true,
+    };
+  }
+
+  @HasuraAction()
   public async PreviewTournamentMatchReset(data: {
     user: User;
     match_id: string;
