@@ -720,6 +720,57 @@ export class ClipsService {
     }
   }
 
+  private async resolveChipMeta(
+    matchMapId: string,
+    targetSteamId: string | null,
+  ): Promise<{
+    mapName: string | null;
+    playerName: string | null;
+    avatarUrl: string | null;
+  }> {
+    try {
+      const { match_maps_by_pk, players } = await this.hasura.query({
+        match_maps_by_pk: {
+          __args: { id: matchMapId },
+          map: { name: true },
+        },
+        ...(targetSteamId
+          ? {
+              players: {
+                __args: {
+                  where: { steam_id: { _eq: targetSteamId } },
+                  limit: 1,
+                },
+                name: true,
+                avatar_url: true,
+                custom_avatar_url: true,
+              },
+            }
+          : {}),
+      });
+      const mapName =
+        (match_maps_by_pk?.map?.name as string | undefined) ?? null;
+      const player = (players?.[0] ?? null) as {
+        name?: string | null;
+        avatar_url?: string | null;
+        custom_avatar_url?: string | null;
+      } | null;
+      return {
+        mapName,
+        playerName: player?.name?.trim() || null,
+        avatarUrl:
+          player?.custom_avatar_url?.trim() ||
+          player?.avatar_url?.trim() ||
+          null,
+      };
+    } catch (error) {
+      this.logger.warn(
+        `[clip] chip meta resolve failed for match_map ${matchMapId}: ${(error as Error)?.message}`,
+      );
+      return { mapName: null, playerName: null, avatarUrl: null };
+    }
+  }
+
   private async countKillsForSpec(
     matchMapId: string,
     spec: ClipSpec | null,
@@ -1885,13 +1936,35 @@ export class ClipsService {
       return `${playerLabel} — Highlights`;
     })();
 
+    const chipKillsCount = myKills.filter((k) =>
+      merged.some((s) => k.tick >= s.start_tick && k.tick <= s.end_tick),
+    ).length;
+    // Round only meaningful when the clip stays inside a single round.
+    let chipRound: number | null = null;
+    if ((preset === "best_round" && merged.length > 0) || merged.length === 1) {
+      const firstTick = merged[0].start_tick;
+      const hit = rounds.find(
+        (r) => firstTick >= r.start_tick && firstTick <= r.end_tick,
+      );
+      chipRound = hit?.round ?? null;
+    }
+    const { mapName, playerName, avatarUrl } = await this.resolveChipMeta(
+      matchMapId,
+      targetSteamId,
+    );
+    const resolvedName = playerName || playerLabel;
+
     const result: ClipSpec = {
       match_map_id: matchMapId,
       segments: merged,
       output: { format: "mp4", resolution: output.resolution, fps: output.fps },
       destination: "library",
       title: title ?? autoTitle,
-      target_name: playerLabel,
+      target_name: resolvedName,
+      ...(avatarUrl ? { target_avatar_url: avatarUrl } : {}),
+      ...(mapName ? { map_name: mapName } : {}),
+      ...(chipRound != null ? { round: chipRound } : {}),
+      ...(chipKillsCount > 0 ? { kills_count: chipKillsCount } : {}),
     };
     return result;
   }

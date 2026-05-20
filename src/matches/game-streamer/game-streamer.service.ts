@@ -124,6 +124,47 @@ export class GameStreamerService {
     return "horizontal";
   }
 
+  private async readSetting(name: string): Promise<string | undefined> {
+    try {
+      const { settings_by_pk } = await this.hasura.query({
+        settings_by_pk: {
+          __args: { name },
+          value: true,
+        },
+      });
+      return settings_by_pk?.value ?? undefined;
+    } catch (error) {
+      this.logger.warn(
+        `failed to read ${name} setting: ${(error as Error)?.message ?? error}`,
+      );
+      return undefined;
+    }
+  }
+
+  private async resolveLiveVideoCodec(): Promise<"h265" | "h264"> {
+    const value =
+      (await this.readSetting("live_video_codec")) ||
+      process.env.LIVE_VIDEO_CODEC ||
+      "h265";
+    return value === "h264" ? "h264" : "h265";
+  }
+
+  private async resolveClipVideoCodec(): Promise<"h265" | "h264"> {
+    const value =
+      (await this.readSetting("clip_video_codec")) ||
+      process.env.CLIP_VIDEO_CODEC ||
+      "h265";
+    return value === "h264" ? "h264" : "h265";
+  }
+
+  private async resolveClipBakeBranding(): Promise<"0" | "1"> {
+    const value =
+      (await this.readSetting("clip_bake_branding")) ??
+      process.env.CLIP_BAKE_BRANDING ??
+      "1";
+    return value === "false" || value === "0" ? "0" : "1";
+  }
+
   public static GetLiveJobId(matchId: string) {
     return `gs-live-${matchId}`;
   }
@@ -525,6 +566,8 @@ export class GameStreamerService {
       { name: "DEMO_SESSION_ID", value: sessionId },
       { name: "DEMO_SESSION_TOKEN", value: sessionToken },
       { name: "HUD_MODE", value: await this.resolveHudMode() },
+      { name: "CLIP_VIDEO_CODEC", value: await this.resolveClipVideoCodec() },
+      { name: "CLIP_BAKE_BRANDING", value: await this.resolveClipBakeBranding() },
     ];
     if (options.roundTicks != null) {
       env.push({
@@ -1094,6 +1137,9 @@ export class GameStreamerService {
     const reporterEnv: V1EnvVar[] = [
       { name: "MATCH_PASSWORD", value: match.password },
       { name: "HUD_MODE", value: await this.resolveHudMode() },
+      { name: "LIVE_VIDEO_CODEC", value: await this.resolveLiveVideoCodec() },
+      { name: "CLIP_VIDEO_CODEC", value: await this.resolveClipVideoCodec() },
+      { name: "CLIP_BAKE_BRANDING", value: await this.resolveClipBakeBranding() },
     ];
 
     const jobName = GameStreamerService.GetLiveJobId(matchId);
@@ -1716,6 +1762,14 @@ export class GameStreamerService {
     if (demo.cs2_build) {
       env.push({ name: "CS2_BUILD", value: String(demo.cs2_build) });
     }
+    env.push({
+      name: "CLIP_VIDEO_CODEC",
+      value: await this.resolveClipVideoCodec(),
+    });
+    env.push({
+      name: "CLIP_BAKE_BRANDING",
+      value: await this.resolveClipBakeBranding(),
+    });
 
     this.logger.log(
       `[batch-highlights ${matchMapId}] dispatching ${jobs.length} job(s) to pod ${jobName} on node ${nodeId}`,
