@@ -18,6 +18,25 @@ object_relationships:
     using:
       foreign_key_constraint_on: user_steam_id
 select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - user_steam_id
+        - match_map_id
+        - match_map_demo_id
+        - status
+        - progress
+        - error_message
+        - clip_id
+        - status_history
+        - last_status_at
+        - created_at
+        - sort_index
+        - spec
+        - game_server_node_id
+      filter: {}
+      allow_aggregations: true
   - role: match_organizer
     permission:
       columns:

@@ -69,6 +69,22 @@ actions:
     permissions:
       - role: user
     comment: checkIntoMatch
+  - name: clearClipRenderBatch
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Delete terminal-state clip_render_jobs rows for a single match_map batch.
+  - name: clearFinishedClipRenders
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Delete all terminal-state clip_render_jobs rows platform-wide.
   - name: createApiKey
     definition:
       kind: synchronous
@@ -428,6 +444,14 @@ actions:
     permissions:
       - role: administrator
     comment: Re-parse all demos across every map for a match (admin only). Fires in the background and returns immediately.
+  - name: requeueClipRender
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Reset a terminal-state clip_render_jobs row back to queued and re-enqueue the batch worker (admin only).
   - name: requestNameChange
     definition:
       kind: synchronous
@@ -442,6 +466,14 @@ actions:
       forward_client_headers: true
     permissions:
       - role: administrator
+  - name: retryClipRenderBatch
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Delete terminal clip_render_jobs rows for a match_map (all or only failed/cancelled) and re-create them from their saved specs.
   - name: scheduleMatch
     definition:
       kind: synchronous

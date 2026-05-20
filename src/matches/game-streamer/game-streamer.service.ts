@@ -567,7 +567,10 @@ export class GameStreamerService {
       { name: "DEMO_SESSION_TOKEN", value: sessionToken },
       { name: "HUD_MODE", value: await this.resolveHudMode() },
       { name: "CLIP_VIDEO_CODEC", value: await this.resolveClipVideoCodec() },
-      { name: "CLIP_BAKE_BRANDING", value: await this.resolveClipBakeBranding() },
+      {
+        name: "CLIP_BAKE_BRANDING",
+        value: await this.resolveClipBakeBranding(),
+      },
     ];
     if (options.roundTicks != null) {
       env.push({
@@ -1139,7 +1142,10 @@ export class GameStreamerService {
       { name: "HUD_MODE", value: await this.resolveHudMode() },
       { name: "LIVE_VIDEO_CODEC", value: await this.resolveLiveVideoCodec() },
       { name: "CLIP_VIDEO_CODEC", value: await this.resolveClipVideoCodec() },
-      { name: "CLIP_BAKE_BRANDING", value: await this.resolveClipBakeBranding() },
+      {
+        name: "CLIP_BAKE_BRANDING",
+        value: await this.resolveClipBakeBranding(),
+      },
     ];
 
     const jobName = GameStreamerService.GetLiveJobId(matchId);
