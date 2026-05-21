@@ -30,6 +30,22 @@ export class HudDataController {
       matches_by_pk: {
         __args: { id: matchId },
         id: true,
+        options: { best_of: true },
+        match_maps: {
+          __args: { order_by: [{ order: "asc" }] },
+          id: true,
+          order: true,
+          status: true,
+          lineup_1_score: true,
+          lineup_2_score: true,
+          winning_lineup_id: true,
+          map: { name: true },
+          vetos: {
+            type: true,
+            match_lineup_id: true,
+            side: true,
+          },
+        },
         lineup_1: {
           id: true,
           name: true,
@@ -112,10 +128,29 @@ export class HudDataController {
     const payload = {
       match: {
         id: match.id,
+        best_of: match.options?.best_of ?? 1,
+        lineup_1_id: match.lineup_1?.id ?? null,
+        lineup_2_id: match.lineup_2?.id ?? null,
         lineups: [
           lineupToHudShape(match.lineup_1),
           lineupToHudShape(match.lineup_2),
         ].filter((l): l is NonNullable<typeof l> => l !== null),
+        match_maps: (match.match_maps ?? []).map((mm) => {
+          const mapPick = (mm.vetos ?? []).find(
+            (v) => v.type === "Pick" || v.type === "Decider",
+          );
+          return {
+            id: mm.id,
+            order: mm.order,
+            status: mm.status,
+            map_name: mm.map?.name ?? "",
+            lineup_1_score: mm.lineup_1_score ?? 0,
+            lineup_2_score: mm.lineup_2_score ?? 0,
+            winning_lineup_id: mm.winning_lineup_id ?? null,
+            picked_by_lineup_id: mapPick?.match_lineup_id ?? null,
+            pick_type: mapPick?.type ?? "Decider",
+          };
+        }),
       },
     };
 

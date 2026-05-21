@@ -42,6 +42,7 @@ export type DemoControlAction =
   | "xray"
   | "hud"
   | "hud-mode"
+  | "hud-sides"
   | "demoui"
   | "autodirector"
   | "scoreboard";
@@ -61,6 +62,7 @@ export const DEMO_CONTROL_ACTIONS: ReadonlySet<DemoControlAction> =
     "xray",
     "hud",
     "hud-mode",
+    "hud-sides",
     "demoui",
     "autodirector",
     "scoreboard",
@@ -71,6 +73,7 @@ const SPEC_PROXIED_DEMO_ACTIONS: ReadonlySet<DemoControlAction> =
     "slot",
     "hud",
     "hud-mode",
+    "hud-sides",
     "autodirector",
     "scoreboard",
   ]);
@@ -278,6 +281,7 @@ export class GameStreamerService {
       | "autodirector"
       | "hud"
       | "hud-mode"
+      | "hud-sides"
       | "xray"
       | "scoreboard"
       | "reconnect",
@@ -406,6 +410,10 @@ export class GameStreamerService {
 
   public async specHud(matchId: string, visible: boolean) {
     return this.callSpec(matchId, "hud", { visible });
+  }
+
+  public async specHudSides(matchId: string) {
+    return this.callSpec(matchId, "hud-sides", {});
   }
 
   public async specXray(matchId: string, enabled: boolean) {

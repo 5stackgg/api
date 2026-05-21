@@ -2,7 +2,7 @@ table:
   name: v_gpu_pool_status
   schema: public
 select_permissions:
-  - role: streamer
+  - role: match_organizer
     permission:
       columns:
         - id
@@ -14,7 +14,7 @@ select_permissions:
         - highlights_in_progress
       filter: {}
     comment: ""
-  - role: match_organizer
+  - role: streamer
     permission:
       columns:
         - id

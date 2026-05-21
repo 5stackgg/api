@@ -12,6 +12,16 @@ object_relationships:
     using:
       foreign_key_constraint_on: team_id
 select_permissions:
+  - role: tournament_organizer
+    permission:
+      columns:
+        - invited_by_player_steam_id
+        - steam_id
+        - created_at
+        - id
+        - team_id
+      filter: {}
+    comment: ""
   - role: user
     permission:
       columns:
@@ -38,6 +48,10 @@ select_permissions:
                               _eq: Invite
     comment: ""
 delete_permissions:
+  - role: tournament_organizer
+    permission:
+      filter: {}
+    comment: ""
   - role: user
     permission:
       filter:

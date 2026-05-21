@@ -19,19 +19,19 @@ array_relationships:
         table:
           name: match_map_demos
           schema: public
-  - name: match_clips
-    using:
-      foreign_key_constraint_on:
-        column: match_map_id
-        table:
-          name: match_clips
-          schema: public
   - name: flashes
     using:
       foreign_key_constraint_on:
         column: match_map_id
         table:
           name: player_flashes
+          schema: public
+  - name: match_clips
+    using:
+      foreign_key_constraint_on:
+        column: match_map_id
+        table:
+          name: match_clips
           schema: public
   - name: objectives
     using:
