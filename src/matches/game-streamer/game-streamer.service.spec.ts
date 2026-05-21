@@ -39,6 +39,7 @@ describe("GameStreamerService.validateDemoSessionAuth", () => {
         hasura as any,
         {} as any,
         {} as any,
+        { getConnection: jest.fn(() => ({})) } as any,
       ),
       hasura,
     };

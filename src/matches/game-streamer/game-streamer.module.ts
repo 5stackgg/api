@@ -9,10 +9,17 @@ import { HasuraModule } from "../../hasura/hasura.module";
 import { EncryptionModule } from "../../encryption/encryption.module";
 import { PostgresModule } from "../../postgres/postgres.module";
 import { S3Module } from "../../s3/s3.module";
+import { RedisModule } from "../../redis/redis.module";
 import { loggerFactory } from "../../utilities/LoggerFactory";
 
 @Module({
-  imports: [HasuraModule, EncryptionModule, PostgresModule, S3Module],
+  imports: [
+    HasuraModule,
+    EncryptionModule,
+    PostgresModule,
+    S3Module,
+    RedisModule,
+  ],
   controllers: [
     GameStreamerController,
     DemoSessionsController,
