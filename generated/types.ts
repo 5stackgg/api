@@ -54328,6 +54328,9 @@ export default {
                     ]
                 }
             ],
+            "show_match_ready_modal": [
+                3
+            ],
             "stats": [
                 2112
             ],
@@ -55014,6 +55017,9 @@ export default {
             "sanctions_aggregate": [
                 2073
             ],
+            "show_match_ready_modal": [
+                4
+            ],
             "stats": [
                 2116
             ],
@@ -55204,6 +55210,9 @@ export default {
             ],
             "sanctions": [
                 2077
+            ],
+            "show_match_ready_modal": [
+                3
             ],
             "stats": [
                 2123
@@ -55568,6 +55577,9 @@ export default {
             "sanctions_aggregate": [
                 2076
             ],
+            "show_match_ready_modal": [
+                1661
+            ],
             "stats": [
                 2125
             ],
@@ -55662,6 +55674,9 @@ export default {
             ],
             "roster_image_url": [
                 48
+            ],
+            "show_match_ready_modal": [
+                3
             ],
             "steam_id": [
                 147
@@ -55822,6 +55837,9 @@ export default {
             ],
             "roster_image_url": [
                 48
+            ],
+            "show_match_ready_modal": [
+                3
             ],
             "steam_id": [
                 147
@@ -89598,12 +89616,33 @@ export default {
                     ]
                 }
             ],
+            "requeueClipRender": [
+                51,
+                {
+                    "job_id": [
+                        2895,
+                        "uuid!"
+                    ]
+                }
+            ],
             "restartService": [
                 51,
                 {
                     "service": [
                         48,
                         "String!"
+                    ]
+                }
+            ],
+            "retryClipRenderBatch": [
+                51,
+                {
+                    "match_map_id": [
+                        2895,
+                        "uuid!"
+                    ],
+                    "only_failed": [
+                        3
                     ]
                 }
             ],
