@@ -8,9 +8,11 @@ import {
   V1Service,
 } from "@kubernetes/client-node";
 import { ConfigService } from "@nestjs/config";
+import { Redis } from "ioredis";
 import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";
 import { S3Service } from "../../s3/s3.service";
+import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
 import { timingSafeStringEqual } from "../../utilities/timingSafeStringEqual";
 import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
@@ -18,6 +20,11 @@ import { AppConfig } from "../../configs/types/AppConfig";
 import { SteamConfig } from "../../configs/types/SteamConfig";
 import { randomBytes } from "node:crypto";
 import { resolveInClusterApiBase } from "../clips/clips.constants";
+
+// Snapshot TTL is a touch over 2x the producer's 30s cadence so a
+// consumer reading mid-cycle always sees a fresh-or-just-stale frame.
+const SNAPSHOT_REDIS_TTL_SECONDS = 75;
+const snapshotRedisKey = (matchId: string) => `gs:snapshot:${matchId}`;
 
 type StreamerMode = "live" | "create-clips" | "demo" | "batch-highlights";
 
@@ -85,6 +92,7 @@ export class GameStreamerService {
   private readonly gameServerConfig: GameServersConfig;
   private readonly appConfig: AppConfig;
   private readonly steamConfig: SteamConfig;
+  private readonly redis: Redis;
 
   constructor(
     private readonly logger: Logger,
@@ -92,11 +100,31 @@ export class GameStreamerService {
     private readonly hasura: HasuraService,
     private readonly postgres: PostgresService,
     private readonly s3: S3Service,
+    private readonly redisManager: RedisManagerService,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
     this.appConfig = this.config.get<AppConfig>("app");
     this.steamConfig = this.config.get<SteamConfig>("steam");
     this.namespace = this.gameServerConfig.namespace;
+    this.redis = this.redisManager.getConnection();
+  }
+
+  public async storeSnapshot(matchId: string, image: Buffer): Promise<void> {
+    if (!image || image.length === 0) {
+      throw new Error("empty snapshot payload");
+    }
+    await this.redis.setex(
+      snapshotRedisKey(matchId),
+      SNAPSHOT_REDIS_TTL_SECONDS,
+      image,
+    );
+  }
+
+  public async getSnapshot(matchId: string): Promise<Buffer | null> {
+    // getBuffer() preserves binary bytes; the string-typed get() would
+    // re-encode JPEG bytes as utf8 and corrupt them.
+    const buffer = await this.redis.getBuffer(snapshotRedisKey(matchId));
+    return buffer ?? null;
   }
 
   private async resolveHudMode(): Promise<"horizontal" | "vertical"> {

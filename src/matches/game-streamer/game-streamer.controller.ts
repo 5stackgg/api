@@ -1,15 +1,24 @@
 import {
   Body,
   Controller,
+  Get,
   Logger,
+  MaxFileSizeValidator,
+  NotFoundException,
   Param,
+  ParseFilePipe,
   Post,
   Req,
   Res,
+  UploadedFile,
+  UseInterceptors,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { Request, Response } from "express";
 import { GameStreamerService } from "./game-streamer.service";
 import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
+
+const SNAPSHOT_MAX_BYTES = 2 * 1024 * 1024;
 
 @Controller("game-streamer/:matchId")
 export class GameStreamerController {
@@ -54,5 +63,57 @@ export class GameStreamerController {
       return response.status(500).json({ error: "internal" });
     }
     response.status(204).end();
+  }
+
+  @Post("snapshot")
+  @UseInterceptors(FileInterceptor("file"))
+  public async putSnapshot(
+    @Param("matchId") matchId: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [new MaxFileSizeValidator({ maxSize: SNAPSHOT_MAX_BYTES })],
+      }),
+    )
+    file: Express.Multer.File,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    if (
+      !(await this.gameStreamer.validateStatusOriginAuth(
+        matchId,
+        request.headers["x-origin-auth"],
+      ))
+    ) {
+      this.logger.warn(
+        `[${matchId}] snapshot POST rejected: invalid x-origin-auth`,
+      );
+      return response.status(401).end();
+    }
+
+    try {
+      await this.gameStreamer.storeSnapshot(matchId, file.buffer);
+    } catch (error) {
+      this.logger.error(
+        `[${matchId}] storeSnapshot failed: ${(error as Error)?.message}`,
+        (error as Error)?.stack,
+      );
+      return response.status(500).json({ error: "internal" });
+    }
+    return response.status(204).end();
+  }
+
+  @Get("snapshot")
+  public async getSnapshot(
+    @Param("matchId") matchId: string,
+    @Res() response: Response,
+  ) {
+    const image = await this.gameStreamer.getSnapshot(matchId);
+    if (!image) {
+      throw new NotFoundException("no snapshot available");
+    }
+    response.setHeader("Content-Type", "image/jpeg");
+    response.setHeader("Cache-Control", "public, max-age=15");
+    response.setHeader("Content-Length", String(image.length));
+    return response.status(200).end(image);
   }
 }
