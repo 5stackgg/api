@@ -1999,7 +1999,18 @@ export class ClipsService {
     const tail = Math.round(tickRate * 3);
     const CLUSTER_GAP_SECS = 10;
     const clusterGapTicks = Math.round(tickRate * CLUSTER_GAP_SECS);
-    const clamp = (t: number) => Math.max(0, Math.min(t, totalTicks || t));
+    // Demo's total_ticks is the literal last observed tick — i.e. gameover.
+    // Playing a segment up to that tick triggers the engine's gameover
+    // transition and auto-closes the demo, breaking every subsequent job
+    // in the same batch. Hold segments a few seconds short of demo end.
+    const SAFETY_SECS = 3;
+    const safetyTicks = Math.round(tickRate * SAFETY_SECS);
+    const maxClipEnd = totalTicks > 0 ? totalTicks - safetyTicks : 0;
+    const clamp = (t: number) =>
+      Math.max(0, maxClipEnd > 0 ? Math.min(t, maxClipEnd) : t);
+    const MIN_SEGMENT_TICKS = Math.round(tickRate * 1.5);
+    const segmentIsViable = (s: { start_tick: number; end_tick: number }) =>
+      s.end_tick - s.start_tick >= MIN_SEGMENT_TICKS;
 
     const clusterKills = (
       ks: Array<{ tick: number }>,
@@ -2059,40 +2070,30 @@ export class ClipsService {
         segments.push(...clusterKills(inRound));
       }
     } else if (preset === "best_round") {
-      let best: {
-        round: number;
+      // Build all viable candidates so that if the kill-leader round
+      // happens to be the final round (kills land past the safety
+      // margin), we naturally fall through to the next-best round
+      // instead of producing an empty/unrenderable clip.
+      const candidates: Array<{
         count: number;
         span: number;
-        start: number;
-        end: number;
-      } | null = null;
+        segs: Array<{ start_tick: number; end_tick: number }>;
+      }> = [];
       for (const r of rounds) {
         const inRound = myKills
           .filter((k) => k.tick >= r.start_tick && k.tick <= r.end_tick)
           .sort((a, b) => a.tick - b.tick);
         const count = inRound.length;
         if (count === 0) continue;
+        const segs = clusterKills(inRound).filter(segmentIsViable);
+        if (segs.length === 0) continue;
         const span = count >= 2 ? inRound[count - 1].tick - inRound[0].tick : 0;
-        if (
-          !best ||
-          count > best.count ||
-          (count === best.count && span < best.span)
-        ) {
-          best = {
-            round: r.round,
-            count,
-            span,
-            start: r.start_tick,
-            end: r.end_tick,
-          };
-        }
+        candidates.push({ count, span, segs });
       }
-      if (best && best.count > 0) {
-        stats.bestRoundKills = best.count;
-        const inRound = myKills
-          .filter((k) => k.tick >= best!.start && k.tick <= best!.end)
-          .sort((a, b) => a.tick - b.tick);
-        segments = clusterKills(inRound);
+      candidates.sort((a, b) => b.count - a.count || a.span - b.span);
+      if (candidates.length > 0) {
+        stats.bestRoundKills = candidates[0].count;
+        segments = candidates[0].segs;
       }
     } else if (preset === "recap") {
       segments = clusterKills(myKills);
@@ -2109,6 +2110,8 @@ export class ClipsService {
       ];
       stats.usedFallback = true;
     }
+
+    segments = segments.filter(segmentIsViable);
 
     if (segments.length === 0) {
       throw new Error(
