@@ -2,12 +2,6 @@ table:
   name: player_aim_stats_demo
   schema: public
 object_relationships:
-  - name: match
-    using:
-      foreign_key_constraint_on: match_id
-  - name: match_map
-    using:
-      foreign_key_constraint_on: match_map_id
   - name: attacker
     using:
       manual_configuration:
@@ -17,6 +11,12 @@ object_relationships:
         remote_table:
           name: players
           schema: public
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+  - name: match_map
+    using:
+      foreign_key_constraint_on: match_map_id
 select_permissions:
   - role: guest
     permission:

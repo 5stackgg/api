@@ -96,7 +96,7 @@ select_permissions:
       allow_aggregations: true
     comment: ""
 update_permissions:
-  - role: administrator
+  - role: tournament_organizer
     permission:
       columns:
         - captain_steam_id
@@ -126,7 +126,7 @@ update_permissions:
       check: {}
     comment: ""
 delete_permissions:
-  - role: administrator
+  - role: tournament_organizer
     permission:
       filter: {}
     comment: ""

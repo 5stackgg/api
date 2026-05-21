@@ -305,6 +305,12 @@ type Mutation {
 }
 
 type Mutation {
+  reconnectLive(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   refreshAllPlayers: SuccessOutput
 }
 
@@ -340,15 +346,15 @@ type Mutation {
 }
 
 type Mutation {
-  requeueClipRender(
-    job_id: uuid!
+  requestNameChange(
+    steam_id: bigint!
+    name: String!
   ): SuccessOutput
 }
 
 type Mutation {
-  requestNameChange(
-    steam_id: bigint!
-    name: String!
+  requeueClipRender(
+    job_id: uuid!
   ): SuccessOutput
 }
 
@@ -380,9 +386,9 @@ type Mutation {
 }
 
 type Mutation {
-  setMatchWinner(
+  setHudMode(
     match_id: uuid!
-    winning_lineup_id: uuid!
+    mode: String!
   ): SuccessOutput
 }
 
@@ -395,14 +401,14 @@ type Mutation {
 }
 
 type Mutation {
-  setupGameServer: SetupGameServeOutput
+  setMatchWinner(
+    match_id: uuid!
+    winning_lineup_id: uuid!
+  ): SuccessOutput
 }
 
 type Mutation {
-  setHudMode(
-    match_id: uuid!
-    mode: String!
-  ): SuccessOutput
+  setupGameServer: SetupGameServeOutput
 }
 
 type Mutation {
@@ -420,6 +426,19 @@ type Mutation {
 }
 
 type Mutation {
+  specHud(
+    match_id: uuid!
+    visible: Boolean!
+  ): SuccessOutput
+}
+
+type Mutation {
+  specHudSides(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   specJump(
     match_id: uuid!
   ): SuccessOutput
@@ -433,6 +452,13 @@ type Mutation {
 }
 
 type Mutation {
+  specScoreboard(
+    match_id: uuid!
+    show: Boolean!
+  ): SuccessOutput
+}
+
+type Mutation {
   specSlot(
     match_id: uuid!
     slot: Int!
@@ -440,23 +466,9 @@ type Mutation {
 }
 
 type Mutation {
-  specHud(
-    match_id: uuid!
-    visible: Boolean!
-  ): SuccessOutput
-}
-
-type Mutation {
   specXray(
     match_id: uuid!
     enabled: Boolean!
-  ): SuccessOutput
-}
-
-type Mutation {
-  specScoreboard(
-    match_id: uuid!
-    show: Boolean!
   ): SuccessOutput
 }
 
@@ -487,20 +499,6 @@ type Mutation {
 }
 
 type Mutation {
-  reconnectLive(
-    match_id: uuid!
-  ): SuccessOutput
-}
-
-type Mutation {
-  switchLiveMatch(
-    from_match_id: uuid!
-    to_match_id: uuid!
-    mode: String!
-  ): SuccessOutput
-}
-
-type Mutation {
   stopWatchDemo(
     match_map_id: uuid!
   ): SuccessOutput
@@ -515,6 +513,14 @@ type Mutation {
 type Mutation {
   switchLineup(
     match_id: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  switchLiveMatch(
+    from_match_id: uuid!
+    to_match_id: uuid!
+    mode: String!
   ): SuccessOutput
 }
 

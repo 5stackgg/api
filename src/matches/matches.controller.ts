@@ -908,6 +908,16 @@ export class MatchesController {
   }
 
   @HasuraAction()
+  public async specHudSides(data: { match_id: string; user: User }) {
+    const { match_id, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    await this.gameStreamer.specHudSides(match_id);
+    return { success: true };
+  }
+
+  @HasuraAction()
   public async specXray(data: {
     match_id: string;
     enabled: boolean;

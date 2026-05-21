@@ -16,19 +16,19 @@ array_relationships:
         table:
           name: clip_render_jobs
           schema: public
-  - name: match_clips
-    using:
-      foreign_key_constraint_on:
-        column: match_map_demo_id
-        table:
-          name: match_clips
-          schema: public
   - name: demo_sessions
     using:
       foreign_key_constraint_on:
         column: match_map_demo_id
         table:
           name: match_demo_sessions
+          schema: public
+  - name: match_clips
+    using:
+      foreign_key_constraint_on:
+        column: match_map_demo_id
+        table:
+          name: match_clips
           schema: public
 computed_fields:
   - name: download_url
