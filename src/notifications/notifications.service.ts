@@ -4,17 +4,11 @@ import { ConfigService } from "@nestjs/config";
 import { HasuraService } from "../hasura/hasura.service";
 import { AppConfig } from "src/configs/types/AppConfig";
 import {
-  e_match_status_enum,
   e_notification_types_enum,
   e_player_roles_enum,
   tournaments,
 } from "generated/schema";
-import {
-  NOTIFIABLE_STATUSES,
-  STATUS_LABELS,
-  STATUS_COLORS,
-  DISCORD_COLORS,
-} from "./utilities/constants";
+import { DISCORD_COLORS } from "./utilities/constants";
 
 @Injectable()
 export class NotificationsService {
@@ -114,15 +108,7 @@ export class NotificationsService {
     }
   }
 
-  async sendMatchStatusNotification(
-    matchId: string,
-    newStatus: e_match_status_enum,
-    _oldStatus: e_match_status_enum,
-  ) {
-    if (!NOTIFIABLE_STATUSES.has(newStatus)) {
-      return;
-    }
-
+  async sendMatchWaitingForServerNotification(matchId: string) {
     try {
       const { tournament_brackets } = await this.hasura.query({
         tournament_brackets: {
@@ -143,18 +129,7 @@ export class NotificationsService {
               discord_notifications_enabled: true,
               discord_webhook: true,
               discord_role_id: true,
-              discord_notify_PickingPlayers: true,
-              discord_notify_Scheduled: true,
-              discord_notify_WaitingForCheckIn: true,
               discord_notify_WaitingForServer: true,
-              discord_notify_Veto: true,
-              discord_notify_Live: true,
-              discord_notify_Finished: true,
-              discord_notify_Tie: true,
-              discord_notify_Canceled: true,
-              discord_notify_Forfeit: true,
-              discord_notify_Surrendered: true,
-              discord_notify_MapPaused: true,
             },
           },
         },
@@ -162,12 +137,11 @@ export class NotificationsService {
 
       const tournament = tournament_brackets?.at(0)?.stage.tournament;
 
-      const readableStatus = STATUS_LABELS[newStatus] || newStatus;
       const matchUrl = `${this.appConfig.webDomain}/matches/${matchId}`;
-      const title = `Match Status: ${readableStatus}`;
+      const title = "Match Status: Waiting for Server";
 
       if (!tournament) {
-        const message = `Match status changed to <b>${readableStatus}</b>. <a href="${matchUrl}">View Match</a>`;
+        const message = `Match is waiting for a server. <a href="${matchUrl}">View Match</a>`;
 
         const { matches_by_pk } = await this.hasura.query({
           matches_by_pk: {
@@ -201,24 +175,22 @@ export class NotificationsService {
 
         const shouldNotifyDiscord = await this.shouldSendDiscordNotification(
           null,
-          `discord_match_notify_${newStatus}`,
+          "discord_match_notify_WaitingForServer",
         );
         if (shouldNotifyDiscord) {
-          const discordMessage = `Match status changed to **${readableStatus}**. [View Match](${matchUrl})`;
-          const color = STATUS_COLORS[newStatus] ?? DISCORD_COLORS.GRAY;
+          const discordMessage = `Match is waiting for a server. [View Match](${matchUrl})`;
           await this.sendDiscordMatchNotification(
             title,
             discordMessage,
-            color,
+            DISCORD_COLORS.RED,
             null,
           );
         }
         return;
       }
 
-      // Tournament case
       const tournamentContext = ` in tournament <b>${tournament.name}</b>`;
-      const message = `Match status changed to <b>${readableStatus}</b>${tournamentContext}. <a href="${matchUrl}">View Match</a>`;
+      const message = `Match is waiting for a server${tournamentContext}. <a href="${matchUrl}">View Match</a>`;
 
       const organizerSteamIds = new Set<string>();
       organizerSteamIds.add(String(tournament.organizer_steam_id));
@@ -245,26 +217,23 @@ export class NotificationsService {
         entity_id: matchId,
       });
 
-      const notifyKey =
-        `discord_notify_${newStatus}` as keyof typeof tournament;
       const shouldNotifyDiscord = await this.shouldSendDiscordNotification(
-        tournament[notifyKey] as boolean | null | undefined,
-        `discord_match_notify_${newStatus}`,
+        tournament.discord_notify_WaitingForServer,
+        "discord_match_notify_WaitingForServer",
       );
       if (shouldNotifyDiscord) {
         const discordTournamentContext = ` in tournament **${tournament.name}**`;
-        const discordMessage = `Match status changed to **${readableStatus}**${discordTournamentContext}. [View Match](${matchUrl})`;
-        const color = STATUS_COLORS[newStatus] ?? DISCORD_COLORS.GRAY;
+        const discordMessage = `Match is waiting for a server${discordTournamentContext}. [View Match](${matchUrl})`;
         await this.sendDiscordMatchNotification(
           title,
           discordMessage,
-          color,
+          DISCORD_COLORS.RED,
           tournament,
         );
       }
     } catch (error) {
       this.logger.error(
-        `Error sending match status notification for match ${matchId}`,
+        `Error sending match waiting for server notification for match ${matchId}`,
         error,
       );
     }

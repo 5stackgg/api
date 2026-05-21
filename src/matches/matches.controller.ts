@@ -11,7 +11,6 @@ import { DiscordBotOverviewService } from "../discord-bot/discord-bot-overview/d
 import { DiscordBotMessagingService } from "../discord-bot/discord-bot-messaging/discord-bot-messaging.service";
 import { DiscordBotVoiceChannelsService } from "../discord-bot/discord-bot-voice-channels/discord-bot-voice-channels.service";
 import {
-  e_match_status_enum,
   match_map_veto_picks_set_input,
   match_map_demos_set_input,
   matches_set_input,
@@ -458,14 +457,10 @@ export class MatchesController {
 
     if (
       data.op === "UPDATE" &&
-      data.old.status !== data.new.status &&
-      data.new.status
+      data.new.status === "WaitingForServer" &&
+      data.old.status !== "WaitingForServer"
     ) {
-      void this.notifications.sendMatchStatusNotification(
-        matchId,
-        data.new.status as e_match_status_enum,
-        data.old.status as e_match_status_enum,
-      );
+      void this.notifications.sendMatchWaitingForServerNotification(matchId);
     }
 
     if (
