@@ -429,6 +429,7 @@ select_permissions:
         - profile_url
         - role
         - roster_image_url
+        - show_match_ready_modal
         - steam_id
       computed_fields:
         - current_lobby_id
@@ -471,6 +472,7 @@ update_permissions:
       columns:
         - country
         - language
+        - show_match_ready_modal
       filter:
         steam_id:
           _eq: X-Hasura-User-Id

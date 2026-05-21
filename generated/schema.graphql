@@ -23613,7 +23613,17 @@ type mutation_root {
   """
   reparseMatchDemos(match_id: uuid!): SuccessOutput
   requestNameChange(name: String!, steam_id: bigint!): SuccessOutput
+
+  """
+  Reset a terminal-state clip_render_jobs row back to queued and re-enqueue the batch worker (admin only).
+  """
+  requeueClipRender(job_id: uuid!): SuccessOutput
   restartService(service: String!): SuccessOutput
+
+  """
+  Delete terminal clip_render_jobs rows for a match_map (all or only failed/cancelled) and re-create them from their saved specs.
+  """
+  retryClipRenderBatch(match_map_id: uuid!, only_failed: Boolean): SuccessOutput
 
   """scheduleMatch"""
   scheduleMatch(match_id: uuid!, time: timestamptz): SuccessOutput
@@ -39710,6 +39720,7 @@ type players {
     """filter the rows returned"""
     where: player_sanctions_bool_exp
   ): player_sanctions_aggregate!
+  show_match_ready_modal: Boolean!
 
   """An object relationship"""
   stats: player_stats
@@ -40170,6 +40181,7 @@ input players_bool_exp {
   roster_image_url: String_comparison_exp
   sanctions: player_sanctions_bool_exp
   sanctions_aggregate: player_sanctions_aggregate_bool_exp
+  show_match_ready_modal: Boolean_comparison_exp
   stats: player_stats_bool_exp
   steam_id: bigint_comparison_exp
   team_invites: team_invites_bool_exp
@@ -40262,6 +40274,7 @@ input players_insert_input {
   role: e_player_roles_enum
   roster_image_url: String
   sanctions: player_sanctions_arr_rel_insert_input
+  show_match_ready_modal: Boolean
   stats: player_stats_obj_rel_insert_input
   steam_id: bigint
   team_invites: team_invites_arr_rel_insert_input
@@ -40496,6 +40509,7 @@ input players_order_by {
   role: order_by
   roster_image_url: order_by
   sanctions_aggregate: player_sanctions_aggregate_order_by
+  show_match_ready_modal: order_by
   stats: player_stats_order_by
   steam_id: order_by
   team_invites_aggregate: team_invites_aggregate_order_by
@@ -40559,6 +40573,9 @@ enum players_select_column {
   roster_image_url
 
   """column name"""
+  show_match_ready_modal
+
+  """column name"""
   steam_id
 }
 
@@ -40578,6 +40595,7 @@ input players_set_input {
   profile_url: String
   role: e_player_roles_enum
   roster_image_url: String
+  show_match_ready_modal: Boolean
   steam_id: bigint
 }
 
@@ -40753,6 +40771,7 @@ input players_stream_cursor_value_input {
   profile_url: String
   role: e_player_roles_enum
   roster_image_url: String
+  show_match_ready_modal: Boolean
   steam_id: bigint
 }
 
@@ -40844,6 +40863,9 @@ enum players_update_column {
 
   """column name"""
   roster_image_url
+
+  """column name"""
+  show_match_ready_modal
 
   """column name"""
   steam_id
