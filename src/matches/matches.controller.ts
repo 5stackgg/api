@@ -1158,7 +1158,8 @@ export class MatchesController {
       data.target_steam_id,
       data.preset,
       {
-        resolution: data.resolution ?? "1080p",
+        resolution:
+          data.resolution ?? (await this.gameStreamer.resolveClipResolution()),
         fps: data.fps ?? (await this.gameStreamer.resolveClipFps()),
       },
       data.title,

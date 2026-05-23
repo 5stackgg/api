@@ -202,6 +202,14 @@ export class GameStreamerService {
     return value === "30" ? 30 : 60;
   }
 
+  public async resolveClipResolution(): Promise<"720p" | "1080p"> {
+    const value =
+      (await this.readSetting("clip_resolution")) ??
+      process.env.CLIP_RESOLUTION ??
+      "1080p";
+    return value === "720p" ? "720p" : "1080p";
+  }
+
   public static GetLiveJobId(matchId: string) {
     return `gs-live-${matchId}`;
   }
