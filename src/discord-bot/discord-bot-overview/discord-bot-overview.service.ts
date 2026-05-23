@@ -89,6 +89,7 @@ export class DiscordBotOverviewService {
           break;
         case "Paused":
         case "Surrendered":
+        case "WaitingForTV":
         case "UploadingDemo":
           color = 16016479;
           break;

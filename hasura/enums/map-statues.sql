@@ -5,6 +5,7 @@ insert into e_match_map_status ("value", "description") values
     ('Paused', 'Paused'),
     ('Scheduled', 'Scheduled'),
     ('Overtime', 'Overtime'),
+    ('WaitingForTV', 'WaitingForTV'),
     ('UploadingDemo', 'UploadingDemo'),
     ('Finished', 'Finished'),
     ('Canceled', 'Canceled'),
