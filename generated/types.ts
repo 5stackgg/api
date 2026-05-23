@@ -10882,6 +10882,22 @@ export default {
             "cpu_threads_per_core": [
                 30
             ],
+            "cs2_launch_options": [
+                875,
+                {
+                    "path": [
+                        48
+                    ]
+                }
+            ],
+            "cs2_video_settings": [
+                875,
+                {
+                    "path": [
+                        48
+                    ]
+                }
+            ],
             "csgo_build_id": [
                 30
             ],
@@ -11190,6 +11206,12 @@ export default {
             "cpu_governor_info": [
                 875
             ],
+            "cs2_launch_options": [
+                875
+            ],
+            "cs2_video_settings": [
+                875
+            ],
             "gpu_info": [
                 875
             ],
@@ -11321,6 +11343,12 @@ export default {
             "cpu_threads_per_core": [
                 31
             ],
+            "cs2_launch_options": [
+                877
+            ],
+            "cs2_video_settings": [
+                877
+            ],
             "csgo_build_id": [
                 31
             ],
@@ -11426,6 +11454,12 @@ export default {
             "cpu_governor_info": [
                 48
             ],
+            "cs2_launch_options": [
+                48
+            ],
+            "cs2_video_settings": [
+                48
+            ],
             "gpu_info": [
                 48
             ],
@@ -11440,6 +11474,12 @@ export default {
             "cpu_governor_info": [
                 30
             ],
+            "cs2_launch_options": [
+                30
+            ],
+            "cs2_video_settings": [
+                30
+            ],
             "gpu_info": [
                 30
             ],
@@ -11452,6 +11492,12 @@ export default {
                 48
             ],
             "cpu_governor_info": [
+                48
+            ],
+            "cs2_launch_options": [
+                48
+            ],
+            "cs2_video_settings": [
                 48
             ],
             "gpu_info": [
@@ -11517,6 +11563,12 @@ export default {
             ],
             "cpu_threads_per_core": [
                 30
+            ],
+            "cs2_launch_options": [
+                875
+            ],
+            "cs2_video_settings": [
+                875
             ],
             "csgo_build_id": [
                 30
@@ -11912,6 +11964,12 @@ export default {
             "cpu_threads_per_core": [
                 1661
             ],
+            "cs2_launch_options": [
+                1661
+            ],
+            "cs2_video_settings": [
+                1661
+            ],
             "csgo_build_id": [
                 1661
             ],
@@ -12021,6 +12079,12 @@ export default {
             "cpu_governor_info": [
                 875
             ],
+            "cs2_launch_options": [
+                875
+            ],
+            "cs2_video_settings": [
+                875
+            ],
             "gpu_info": [
                 875
             ],
@@ -12049,6 +12113,12 @@ export default {
             ],
             "cpu_threads_per_core": [
                 30
+            ],
+            "cs2_launch_options": [
+                875
+            ],
+            "cs2_video_settings": [
+                875
             ],
             "csgo_build_id": [
                 30
@@ -12398,6 +12468,12 @@ export default {
             ],
             "cpu_threads_per_core": [
                 30
+            ],
+            "cs2_launch_options": [
+                875
+            ],
+            "cs2_video_settings": [
+                875
             ],
             "csgo_build_id": [
                 30

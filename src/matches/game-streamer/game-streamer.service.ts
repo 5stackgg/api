@@ -196,6 +196,12 @@ export class GameStreamerService {
     return value === "false" || value === "0" ? "0" : "1";
   }
 
+  public async resolveClipFps(): Promise<30 | 60> {
+    const value =
+      (await this.readSetting("clip_fps")) ?? process.env.CLIP_FPS ?? "60";
+    return value === "30" ? 30 : 60;
+  }
+
   public static GetLiveJobId(matchId: string) {
     return `gs-live-${matchId}`;
   }
@@ -626,6 +632,8 @@ export class GameStreamerService {
     if (options.cs2Build) {
       env.push({ name: "CS2_BUILD", value: options.cs2Build });
     }
+
+    env.push(...(await this.buildNodeCs2OptionsEnv(nodeId)));
 
     const kc = new KubeConfig();
     kc.loadFromDefault();
@@ -1184,6 +1192,8 @@ export class GameStreamerService {
       },
     ];
 
+    const nodeCs2Env = await this.buildNodeCs2OptionsEnv(nodeId);
+
     const jobName = GameStreamerService.GetLiveJobId(matchId);
 
     await this.deleteJob(jobName);
@@ -1206,6 +1216,7 @@ export class GameStreamerService {
         body: this.buildJobSpec(jobName, matchId, "live", nodeId, [
           ...connectEnv,
           ...reporterEnv,
+          ...nodeCs2Env,
         ]),
       });
     } catch (error) {
@@ -1812,6 +1823,7 @@ export class GameStreamerService {
       name: "CLIP_BAKE_BRANDING",
       value: await this.resolveClipBakeBranding(),
     });
+    env.push(...(await this.buildNodeCs2OptionsEnv(nodeId)));
 
     this.logger.log(
       `[batch-highlights ${matchMapId}] dispatching ${jobs.length} job(s) to pod ${jobName} on node ${nodeId}`,
@@ -1969,6 +1981,26 @@ export class GameStreamerService {
       }
       return nodeId;
     });
+  }
+
+  private async buildNodeCs2OptionsEnv(
+    nodeId: string,
+  ): Promise<V1EnvVar[]> {
+    const { game_server_nodes_by_pk: node } = await this.hasura.query({
+      game_server_nodes_by_pk: {
+        __args: { id: nodeId },
+        cs2_video_settings: true,
+      },
+    });
+    return [
+      {
+        name: "CS2_VIDEO_SETTINGS",
+        value: JSON.stringify(
+          (node as { cs2_video_settings?: unknown } | null)
+            ?.cs2_video_settings ?? {},
+        ),
+      },
+    ];
   }
 
   private async buildConnectEnv(
