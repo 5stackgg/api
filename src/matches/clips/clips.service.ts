@@ -39,7 +39,12 @@ export class ClipsService {
   }
 
   private static filterValidKills<
-    T extends { killer?: string; victim?: string },
+    T extends {
+      killer?: string;
+      victim?: string;
+      killer_team?: string;
+      victim_team?: string;
+    },
   >(kills: ReadonlyArray<T> | undefined | null): T[] {
     if (!kills) return [];
     return kills.filter((k) => {
@@ -47,6 +52,9 @@ export class ClipsService {
       if (!killer) return false;
       const victim = k?.victim ? String(k.victim) : "";
       if (victim && killer === victim) return false;
+      const killerTeam = k?.killer_team ? String(k.killer_team) : "";
+      const victimTeam = k?.victim_team ? String(k.victim_team) : "";
+      if (killerTeam && victimTeam && killerTeam === victimTeam) return false;
       return true;
     });
   }
@@ -2108,7 +2116,13 @@ export class ClipsService {
           .sort((a, b) => a.tick - b.tick);
         const count = inRound.length;
         if (count === 0) continue;
-        const segs = clusterKills(inRound).filter(segmentIsViable);
+        const roundCap = r.end_tick > 0 ? r.end_tick : maxClipEnd;
+        const segs = clusterKills(inRound)
+          .map((s) => ({
+            start_tick: s.start_tick,
+            end_tick: Math.min(s.end_tick, roundCap),
+          }))
+          .filter(segmentIsViable);
         if (segs.length === 0) continue;
         const span = count >= 2 ? inRound[count - 1].tick - inRound[0].tick : 0;
         candidates.push({ count, span, segs });
