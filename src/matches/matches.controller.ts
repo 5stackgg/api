@@ -1159,7 +1159,7 @@ export class MatchesController {
       data.preset,
       {
         resolution: data.resolution ?? "1080p",
-        fps: data.fps ?? 60,
+        fps: data.fps ?? (await this.gameStreamer.resolveClipFps()),
       },
       data.title,
       data.target_name,

@@ -60,6 +60,7 @@ select_permissions:
         - cpu_governor_info
         - cpu_sockets
         - cpu_threads_per_core
+        - cs2_video_settings
         - csgo_build_id
         - demo_network_limiter
         - disk_available_gb
@@ -93,6 +94,7 @@ update_permissions:
   - role: administrator
     permission:
       columns:
+        - cs2_video_settings
         - demo_network_limiter
         - enabled
         - end_port_range
