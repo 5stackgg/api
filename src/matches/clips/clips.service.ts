@@ -38,6 +38,19 @@ export class ClipsService {
     return `clips/${userSteamId}/${jobId}.jpg`;
   }
 
+  private static filterValidKills<
+    T extends { killer?: string; victim?: string },
+  >(kills: ReadonlyArray<T> | undefined | null): T[] {
+    if (!kills) return [];
+    return kills.filter((k) => {
+      const killer = k?.killer ? String(k.killer) : "";
+      if (!killer) return false;
+      const victim = k?.victim ? String(k.victim) : "";
+      if (victim && killer === victim) return false;
+      return true;
+    });
+  }
+
   public async createClipRender(
     userSteamId: string,
     spec: ClipSpec,
@@ -1025,12 +1038,13 @@ export class ClipsService {
         },
       });
       const demo = match_map_demos?.[0];
-      const kills =
-        (demo?.kills as Array<{
+      const kills = ClipsService.filterValidKills(
+        demo?.kills as Array<{
           tick: number;
           killer?: string;
           victim?: string;
-        }>) ?? [];
+        }>,
+      );
       if (kills.length === 0) return 0;
 
       let count = 0;
@@ -1351,7 +1365,9 @@ export class ClipsService {
       );
     }
 
-    const kills = (demo.kills as Array<{ killer?: string }> | undefined) ?? [];
+    const kills = ClipsService.filterValidKills(
+      demo.kills as Array<{ killer?: string; victim?: string }> | undefined,
+    );
     if (kills.length === 0) return 0;
 
     const killers = new Set<string>();
@@ -1593,8 +1609,11 @@ export class ClipsService {
     const allKillers = new Set<string>();
     for (const demos of parsedDemosByMap.values()) {
       for (const demo of demos) {
-        const kills =
-          (demo?.kills as Array<{ killer?: string }> | undefined) ?? [];
+        const kills = ClipsService.filterValidKills(
+          demo?.kills as
+            | Array<{ killer?: string; victim?: string }>
+            | undefined,
+        );
         for (const k of kills) if (k.killer) allKillers.add(k.killer);
       }
     }
@@ -1672,8 +1691,11 @@ export class ClipsService {
     }> = [];
     for (const [mapRowId, demos] of parsedDemosByMap) {
       for (const demo of demos) {
-        const kills =
-          (demo?.kills as Array<{ killer?: string }> | undefined) ?? [];
+        const kills = ClipsService.filterValidKills(
+          demo?.kills as
+            | Array<{ killer?: string; victim?: string }>
+            | undefined,
+        );
         if (kills.length === 0) continue;
 
         const killers = new Set<string>();
@@ -1979,14 +2001,15 @@ export class ClipsService {
     }
     const tickRate = (demo.tick_rate as number) || 64;
     const totalTicks = (demo.total_ticks as number) || 0;
-    const kills =
-      (demo.kills as Array<{
+    const kills = ClipsService.filterValidKills(
+      demo.kills as Array<{
         tick: number;
         killer?: string;
         victim?: string;
         weapon?: string;
         headshot?: boolean;
-      }>) ?? [];
+      }>,
+    );
     const rounds =
       (demo.round_ticks as Array<{
         round: number;
