@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS public._leaderboard_trophies(INT);
+
 CREATE OR REPLACE FUNCTION public.get_leaderboard(
   _category TEXT,
   _window_days INT,
@@ -21,7 +23,7 @@ BEGIN
     RETURN QUERY SELECT * FROM _leaderboard_hs_pct(_window_days, _match_type, _exclude_tournaments);
 
   ELSIF _category = 'trophies' THEN
-    RETURN QUERY SELECT * FROM _leaderboard_trophies(_window_days);
+    RETURN QUERY SELECT * FROM _leaderboard_trophies(_window_days, _match_type);
 
   ELSE
     RAISE EXCEPTION 'Invalid category: %. Must be one of: elo, best_kdr, best_win_rate, highest_hs_pct, trophies', _category;
@@ -209,8 +211,8 @@ BEGIN
       COUNT(*) as kill_count,
       COUNT(DISTINCT pk.match_id)::int as match_count
     FROM player_kills pk
-    LEFT JOIN matches m ON (_match_type IS NOT NULL AND m.id = pk.match_id)
-    LEFT JOIN match_options mo ON (_match_type IS NOT NULL AND mo.id = m.match_options_id)
+    JOIN matches m ON m.id = pk.match_id
+    JOIN match_options mo ON mo.id = m.match_options_id
     WHERE pk.attacker_steam_id IS NOT NULL
       AND pk.attacker_steam_id != pk.attacked_steam_id
       AND (_window_days = 0 OR pk.time >= NOW() - make_interval(days => _window_days))
@@ -223,8 +225,8 @@ BEGIN
       dk.attacked_steam_id as steam_id,
       COUNT(*) as death_count
     FROM player_kills dk
-    LEFT JOIN matches m2 ON (_match_type IS NOT NULL AND m2.id = dk.match_id)
-    LEFT JOIN match_options mo2 ON (_match_type IS NOT NULL AND mo2.id = m2.match_options_id)
+    JOIN matches m2 ON m2.id = dk.match_id
+    JOIN match_options mo2 ON mo2.id = m2.match_options_id
     WHERE 1=1
       AND (_window_days = 0 OR dk.time >= NOW() - make_interval(days => _window_days))
       AND (_match_type IS NULL OR mo2.type = _match_type)
@@ -246,7 +248,6 @@ BEGIN
   FROM kills k
   LEFT JOIN deaths d ON d.steam_id = k.steam_id
   JOIN players p ON p.steam_id = k.steam_id
-  WHERE k.match_count >= 5
   ORDER BY value DESC;
 END;
 $$;
@@ -293,7 +294,6 @@ BEGIN
   FROM player_matches pm
   JOIN players p ON p.steam_id = pm.steam_id
   GROUP BY pm.steam_id, p.name, p.avatar_url, p.country
-  HAVING COUNT(*) >= 5
   ORDER BY value DESC;
 END;
 $$;
@@ -323,15 +323,14 @@ BEGIN
     COUNT(DISTINCT pk.match_id)::int as matches_played
   FROM player_kills pk
   JOIN players p ON p.steam_id = pk.attacker_steam_id
-  LEFT JOIN matches m ON (_match_type IS NOT NULL AND m.id = pk.match_id)
-  LEFT JOIN match_options mo ON (_match_type IS NOT NULL AND mo.id = m.match_options_id)
+  JOIN matches m ON m.id = pk.match_id
+  JOIN match_options mo ON mo.id = m.match_options_id
   WHERE pk.attacker_steam_id IS NOT NULL
     AND pk.attacker_steam_id != pk.attacked_steam_id
     AND (_window_days = 0 OR pk.time >= NOW() - make_interval(days => _window_days))
     AND (_match_type IS NULL OR mo.type = _match_type)
     AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pk.match_id))
   GROUP BY pk.attacker_steam_id, p.name, p.avatar_url, p.country
-  HAVING COUNT(*) >= 25
   ORDER BY value DESC;
 END;
 $$;
@@ -342,7 +341,8 @@ $$;
 -- matches_played = total trophies. Olympic medal-table ordering.
 -- ============================================================
 CREATE OR REPLACE FUNCTION public._leaderboard_trophies(
-  _window_days INT
+  _window_days INT,
+  _match_type TEXT DEFAULT NULL
 )
 RETURNS SETOF public.leaderboard_entries
 LANGUAGE plpgsql STABLE
@@ -359,8 +359,10 @@ BEGIN
       COUNT(*)::int as total
     FROM tournament_trophies tt
     JOIN tournaments t ON t.id = tt.tournament_id
+    JOIN match_options mo ON mo.id = t.match_options_id
     WHERE tt.player_steam_id IS NOT NULL
       AND (_window_days = 0 OR t.start >= NOW() - make_interval(days => _window_days))
+      AND (_match_type IS NULL OR mo.type = _match_type)
     GROUP BY tt.player_steam_id
   )
   SELECT
