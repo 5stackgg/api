@@ -212,6 +212,11 @@ computed_fields:
       function:
         name: get_current_match_map
         schema: public
+  - name: effective_at
+    definition:
+      function:
+        name: get_match_effective_at
+        schema: public
   - name: invite_code
     definition:
       function:
@@ -528,6 +533,7 @@ select_permissions:
         - connection_link
         - connection_string
         - current_match_map_id
+        - effective_at
         - invite_code
         - is_captain
         - is_coach
@@ -585,6 +591,7 @@ select_permissions:
         - connection_link
         - connection_string
         - current_match_map_id
+        - effective_at
         - invite_code
         - is_captain
         - is_coach

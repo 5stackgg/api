@@ -18727,6 +18727,11 @@ type matches {
   """An object relationship"""
   e_region: server_regions
 
+  """
+  A computed field, executes function "get_match_effective_at"
+  """
+  effective_at: timestamptz
+
   """An array relationship"""
   elo_changes(
     """distinct select on columns"""
@@ -19491,6 +19496,7 @@ input matches_bool_exp {
   demos_aggregate: match_map_demos_aggregate_bool_exp
   e_match_status: e_match_status_bool_exp
   e_region: server_regions_bool_exp
+  effective_at: timestamptz_comparison_exp
   elo_changes: v_player_elo_bool_exp
   elo_changes_aggregate: v_player_elo_aggregate_bool_exp
   ended_at: timestamptz_comparison_exp
@@ -19659,6 +19665,11 @@ type matches_max_fields {
   A computed field, executes function "get_current_match_map"
   """
   current_match_map_id: uuid
+
+  """
+  A computed field, executes function "get_match_effective_at"
+  """
+  effective_at: timestamptz
   ended_at: timestamptz
   id: uuid
 
@@ -19761,6 +19772,11 @@ type matches_min_fields {
   A computed field, executes function "get_current_match_map"
   """
   current_match_map_id: uuid
+
+  """
+  A computed field, executes function "get_match_effective_at"
+  """
+  effective_at: timestamptz
   ended_at: timestamptz
   id: uuid
 
@@ -19892,6 +19908,7 @@ input matches_order_by {
   demos_aggregate: match_map_demos_aggregate_order_by
   e_match_status: e_match_status_order_by
   e_region: server_regions_order_by
+  effective_at: order_by
   elo_changes_aggregate: v_player_elo_aggregate_order_by
   ended_at: order_by
   id: order_by
@@ -23639,6 +23656,7 @@ type mutation_root {
   specAutodirector(enabled: Boolean!, match_id: uuid!): SuccessOutput
   specClick(button: String!, match_id: uuid!): SuccessOutput
   specHud(match_id: uuid!, visible: Boolean!): SuccessOutput
+  specHudSides(match_id: uuid!): SuccessOutput
   specJump(match_id: uuid!): SuccessOutput
   specPlayer(accountid: Int!, match_id: uuid!): SuccessOutput
   specScoreboard(match_id: uuid!, show: Boolean!): SuccessOutput

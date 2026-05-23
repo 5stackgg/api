@@ -27663,6 +27663,9 @@ export default {
             "e_region": [
                 2278
             ],
+            "effective_at": [
+                2498
+            ],
             "elo_changes": [
                 2975,
                 {
@@ -28645,6 +28648,9 @@ export default {
             "e_region": [
                 2282
             ],
+            "effective_at": [
+                2499
+            ],
             "elo_changes": [
                 2994
             ],
@@ -29006,6 +29012,9 @@ export default {
             "current_match_map_id": [
                 2895
             ],
+            "effective_at": [
+                2498
+            ],
             "ended_at": [
                 2498
             ],
@@ -29147,6 +29156,9 @@ export default {
             ],
             "current_match_map_id": [
                 2895
+            ],
+            "effective_at": [
+                2498
             ],
             "ended_at": [
                 2498
@@ -29358,6 +29370,9 @@ export default {
             ],
             "e_region": [
                 2290
+            ],
+            "effective_at": [
+                1661
             ],
             "elo_changes_aggregate": [
                 2990
@@ -89753,6 +89768,15 @@ export default {
                     "visible": [
                         3,
                         "Boolean!"
+                    ]
+                }
+            ],
+            "specHudSides": [
+                51,
+                {
+                    "match_id": [
+                        2895,
+                        "uuid!"
                     ]
                 }
             ],

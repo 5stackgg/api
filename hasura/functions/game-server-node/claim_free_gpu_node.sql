@@ -22,7 +22,6 @@ as $$
   select id
     from game_server_nodes
    where gpu = true
-     and enabled = true
      and status = 'Online'
      and id not in (select id from busy_nodes)
    order by id
