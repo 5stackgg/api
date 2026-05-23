@@ -3622,6 +3622,9 @@ enum e_match_map_status_enum {
   """UploadingDemo"""
   UploadingDemo
 
+  """WaitingForTV"""
+  WaitingForTV
+
   """Warmup"""
   Warmup
 }
