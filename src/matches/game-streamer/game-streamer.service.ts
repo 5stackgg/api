@@ -1992,15 +1992,22 @@ export class GameStreamerService {
         cs2_video_settings: true,
       },
     });
-    return [
-      {
-        name: "CS2_VIDEO_SETTINGS",
-        value: JSON.stringify(
-          (node as { cs2_video_settings?: unknown } | null)
-            ?.cs2_video_settings ?? {},
-        ),
-      },
+    const settings =
+      (node as { cs2_video_settings?: Record<string, number> } | null)
+        ?.cs2_video_settings ?? {};
+    const env: V1EnvVar[] = [
+      { name: "CS2_VIDEO_SETTINGS", value: JSON.stringify(settings) },
     ];
+    // Resolution drives both the Xorg virtual screen and the cs2
+    // -width / -height launch args. Default (1920x1080) is implicit
+    // streamer-side; we emit CS2_DISPLAY_RES only when the node opted
+    // into a non-default size (currently 2560x1440).
+    const w = settings["setting.defaultres"];
+    const h = settings["setting.defaultresheight"];
+    if (typeof w === "number" && typeof h === "number") {
+      env.push({ name: "CS2_DISPLAY_RES", value: `${w}x${h}` });
+    }
+    return env;
   }
 
   private async buildConnectEnv(
