@@ -19,6 +19,28 @@ import { IN_FLIGHT_STATUSES } from "../clips.constants";
 const CHECK_DELAY_MS = 10_000;
 const GPU_BUSY_RETRY_MS = 60_000;
 
+function clipFirstTick(spec: unknown): number {
+  const segments = Array.isArray((spec as any)?.segments)
+    ? (spec as any).segments
+    : [];
+  return segments.reduce((min: number, s: any) => {
+    const tick = Number(s?.start_tick);
+    return Number.isFinite(tick) ? Math.min(min, tick) : min;
+  }, Number.POSITIVE_INFINITY);
+}
+
+function clipLastActionTick(spec: unknown): number {
+  const segments = Array.isArray((spec as any)?.segments)
+    ? (spec as any).segments
+    : [];
+  return segments.reduce((max: number, s: any) => {
+    const killTick = Number(s?.kill_tick);
+    const endTick = Number(s?.end_tick);
+    const tick = Number.isFinite(killTick) ? killTick : endTick;
+    return Number.isFinite(tick) ? Math.max(max, tick) : max;
+  }, 0);
+}
+
 @UseQueue("Clips", MatchQueues.Clips, {
   concurrency: 1,
 })
@@ -127,19 +149,26 @@ export class BatchHighlightsRenderJob extends WorkerHost {
             match_map_demo_id: { _eq: matchMapDemoId },
             status: { _in: [...IN_FLIGHT_STATUSES] },
           },
-          order_by: [{ created_at: "asc" }, { sort_index: "asc" }],
+          order_by: [{ sort_index: "asc_nulls_last" }, { created_at: "asc" }],
         },
         id: true,
         session_token: true,
         spec: true,
       },
     });
-    return (clip_render_jobs ?? []).map((row: any) => ({
-      id: String(row.id),
-      job_id: String(row.id),
-      session_token: String(row.session_token),
-      spec: row.spec,
-    }));
+    return (clip_render_jobs ?? [])
+      .map((row: any) => ({
+        id: String(row.id),
+        job_id: String(row.id),
+        session_token: String(row.session_token),
+        spec: row.spec,
+      }))
+      .sort((a, b) => {
+        const byLastAction =
+          clipLastActionTick(a.spec) - clipLastActionTick(b.spec);
+        if (byLastAction !== 0) return byLastAction;
+        return clipFirstTick(a.spec) - clipFirstTick(b.spec);
+      });
   }
 
   private async failInFlightJobs(jobIds: string[], reason: string) {
