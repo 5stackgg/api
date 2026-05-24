@@ -2022,6 +2022,7 @@ export class ClipsService {
       (demo.round_ticks as Array<{
         round: number;
         start_tick: number;
+        freeze_end_tick?: number;
         end_tick: number;
       }>) ?? [];
 
@@ -2080,6 +2081,20 @@ export class ClipsService {
       usedFallback: false,
     };
 
+    // freeze_end_tick > 0 — parser uses omitempty so a zero freeze
+    // tick serializes as missing; >0 keeps that case on start_tick.
+    const roundKillWindow = (r: {
+      start_tick: number;
+      freeze_end_tick?: number;
+      end_tick: number;
+    }) => {
+      const lo =
+        typeof r.freeze_end_tick === "number" && r.freeze_end_tick > 0
+          ? r.freeze_end_tick
+          : r.start_tick;
+      return { lo, hi: r.end_tick };
+    };
+
     if (preset === "knife") {
       const knife = myKills.filter((k) =>
         (k.weapon ?? "").toLowerCase().includes("knife"),
@@ -2091,8 +2106,9 @@ export class ClipsService {
       }));
     } else if (preset === "multikills") {
       for (const r of rounds) {
+        const { lo, hi } = roundKillWindow(r);
         const inRound = myKills.filter(
-          (k) => k.tick >= r.start_tick && k.tick <= r.end_tick,
+          (k) => k.tick >= lo && k.tick <= hi,
         );
         if (inRound.length < 2) continue;
         const bucket = Math.min(5, inRound.length);
@@ -2111,12 +2127,13 @@ export class ClipsService {
         segs: Array<{ start_tick: number; end_tick: number }>;
       }> = [];
       for (const r of rounds) {
+        const { lo, hi } = roundKillWindow(r);
         const inRound = myKills
-          .filter((k) => k.tick >= r.start_tick && k.tick <= r.end_tick)
+          .filter((k) => k.tick >= lo && k.tick <= hi)
           .sort((a, b) => a.tick - b.tick);
         const count = inRound.length;
         if (count === 0) continue;
-        const roundCap = r.end_tick > 0 ? r.end_tick : maxClipEnd;
+        const roundCap = hi > 0 ? hi : maxClipEnd;
         const segs = clusterKills(inRound)
           .map((s) => ({
             start_tick: s.start_tick,
