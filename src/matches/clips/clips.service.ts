@@ -17,8 +17,8 @@ import {
   TERMINAL_STATUSES,
   resolveInClusterApiBase,
 } from "./clips.constants";
-
 const STATUS_HISTORY_CAP = 50;
+const LAST_TICK_FOR_MALFORMED = Number.MAX_SAFE_INTEGER;
 
 type ClipSegmentSpec = ClipSpec["segments"][number];
 
@@ -40,6 +40,63 @@ export class ClipsService {
     return `clips/${userSteamId}/${jobId}.jpg`;
   }
 
+  public static clipFirstTick(spec: unknown): number {
+    let min: number | null = null;
+    for (const s of ClipsService.asSegments(spec)) {
+      const t = ClipsService.toFiniteNumber(s?.start_tick);
+      if (t === null) continue;
+      if (min === null || t < min) min = t;
+    }
+    return min ?? LAST_TICK_FOR_MALFORMED;
+  }
+
+  public static clipLastActionTick(spec: unknown): number {
+    let max: number | null = null;
+    for (const s of ClipsService.asSegments(spec)) {
+      const kill = ClipsService.toFiniteNumber(s?.kill_tick);
+      const end = ClipsService.toFiniteNumber(s?.end_tick);
+      const tick = kill ?? end;
+      if (tick === null) continue;
+      if (max === null || tick > max) max = tick;
+    }
+    return max ?? LAST_TICK_FOR_MALFORMED;
+  }
+
+  public static compareHighlightJobs<T extends { spec: unknown }>(
+    a: T,
+    b: T,
+  ): number {
+    const byLastAction =
+      ClipsService.clipLastActionTick(a.spec) -
+      ClipsService.clipLastActionTick(b.spec);
+    if (byLastAction !== 0) return byLastAction;
+    return (
+      ClipsService.clipFirstTick(a.spec) - ClipsService.clipFirstTick(b.spec)
+    );
+  }
+
+  public static orderHighlightJobs<T extends { spec: unknown }>(
+    rows: ReadonlyArray<T>,
+  ): T[] {
+    return [...rows].sort(ClipsService.compareHighlightJobs);
+  }
+
+  private static asSegments(spec: unknown): Array<{
+    start_tick?: unknown;
+    end_tick?: unknown;
+    kill_tick?: unknown;
+  }> {
+    const segments = (spec as { segments?: unknown } | null | undefined)
+      ?.segments;
+    return Array.isArray(segments) ? segments : [];
+  }
+
+  private static toFiniteNumber(v: unknown): number | null {
+    if (v === null || v === undefined || v === "") return null;
+    const n = typeof v === "number" ? v : Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
   private static filterValidKills<
     T extends {
       killer?: string;
@@ -59,42 +116,6 @@ export class ClipsService {
       if (killerTeam && victimTeam && killerTeam === victimTeam) return false;
       return true;
     });
-  }
-
-  private static clipFirstTick(spec: ClipSpec): number {
-    return spec.segments.reduce(
-      (min, s) => Math.min(min, s.start_tick),
-      Number.POSITIVE_INFINITY,
-    );
-  }
-
-  private static clipLastActionTick(spec: ClipSpec): number {
-    return spec.segments.reduce((max, s) => {
-      const actionTick =
-        typeof s.kill_tick === "number" && Number.isFinite(s.kill_tick)
-          ? s.kill_tick
-          : s.end_tick;
-      return Math.max(max, actionTick);
-    }, 0);
-  }
-
-  private static compareHighlightJobs<
-    T extends { targetSteamId: string; spec: ClipSpec },
-  >(a: T, b: T): number {
-    const byLastAction =
-      ClipsService.clipLastActionTick(a.spec) -
-      ClipsService.clipLastActionTick(b.spec);
-    if (byLastAction !== 0) return byLastAction;
-
-    return ClipsService.clipFirstTick(a.spec) - ClipsService.clipFirstTick(b.spec);
-  }
-
-  private static orderHighlightJobs<
-    T extends { targetSteamId: string; spec: ClipSpec },
-  >(rows: T[]): T[] {
-    return [...rows].sort((a, b) =>
-      ClipsService.compareHighlightJobs(a, b),
-    );
   }
 
   public async createClipRender(
@@ -147,7 +168,6 @@ export class ClipsService {
     }
 
     const dims = spec.output.resolution === "720p" ? "1280x720" : "1920x1080";
-    const renderSpeed = this.resolveRenderSpeed();
     const totalTicks = spec.segments.reduce(
       (acc, s) => acc + (s.end_tick - s.start_tick),
       0,
@@ -155,7 +175,6 @@ export class ClipsService {
 
     this.logger.log(
       `[clip ${jobId}] dispatching to pod=${session.id} ` +
-        `speed=${renderSpeed}x ` +
         `segments=${spec.segments.length} total_ticks=${totalTicks} ` +
         `output=${dims}@${spec.output.fps}fps ` +
         `dest=${spec.destination}`,
@@ -169,11 +188,11 @@ export class ClipsService {
         segments: spec.segments.map((s) => ({
           start_tick: s.start_tick,
           end_tick: s.end_tick,
+          kill_tick: s.kill_tick,
           pov_steam_id: s.pov_steam_id,
         })),
         output_dims: dims,
         output_fps: spec.output.fps,
-        render_speed: renderSpeed,
       });
     } catch (error) {
       this.logger.error(
@@ -604,20 +623,6 @@ export class ClipsService {
         `[cancel ${jobId}] pod kill failed: ${(error as Error)?.message}`,
       );
     }
-  }
-
-  private resolveRenderSpeed(): number {
-    const raw = process.env.CLIP_RENDER_SPEED;
-    if (!raw) return 1;
-    const parsed = parseInt(raw, 10);
-    if (!Number.isFinite(parsed) || parsed < 1) return 1;
-    if (parsed > 4) {
-      this.logger.warn(
-        `[clips] CLIP_RENDER_SPEED='${raw}' clamped to 4 (anything higher destabilises cs2)`,
-      );
-      return 4;
-    }
-    return parsed;
   }
 
   private async findActiveDemoSession(
@@ -1830,6 +1835,7 @@ export class ClipsService {
               id: true,
               match_map_id: true,
               match_map_demo_id: true,
+              session_token: true,
             },
           },
         });
@@ -1839,12 +1845,16 @@ export class ClipsService {
                 id: string;
                 match_map_id: string;
                 match_map_demo_id: string;
+                session_token: string;
               }>
             | undefined) ?? [];
-        for (let i = 0; i < returning.length; i++) {
-          const inserted = returning[i];
-          const pending = orderedPendingObjects[i];
-          if (!inserted?.id || !pending) continue;
+        const pendingByToken = new Map(
+          orderedPendingObjects.map((p) => [p.sessionToken, p]),
+        );
+        for (const inserted of returning) {
+          if (!inserted?.id || !inserted?.session_token) continue;
+          const pending = pendingByToken.get(inserted.session_token);
+          if (!pending) continue;
           const key = `${inserted.match_map_id}:${inserted.match_map_demo_id}`;
           const entry = perDemo.get(key) ?? {
             matchMapId: String(inserted.match_map_id),
@@ -2075,7 +2085,7 @@ export class ClipsService {
 
     const myKills = kills.filter((k) => k.killer === targetSteamId);
     const lead = Math.round(tickRate * 5);
-    const tail = Math.round(tickRate * 3);
+    const tail = Math.round(tickRate * 1);
     const CLUSTER_GAP_SECS = 10;
     const clusterGapTicks = Math.round(tickRate * CLUSTER_GAP_SECS);
     // Demo's total_ticks is the literal last observed tick — i.e. gameover.

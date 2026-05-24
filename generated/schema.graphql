@@ -79,7 +79,6 @@ input ClipOverlayInput {
 input ClipSegmentInput {
   end_tick: Int!
   pov_steam_id: String
-  speed: Float
   start_tick: Int!
 }
 

@@ -19,28 +19,6 @@ import { IN_FLIGHT_STATUSES } from "../clips.constants";
 const CHECK_DELAY_MS = 10_000;
 const GPU_BUSY_RETRY_MS = 60_000;
 
-function clipFirstTick(spec: unknown): number {
-  const segments = Array.isArray((spec as any)?.segments)
-    ? (spec as any).segments
-    : [];
-  return segments.reduce((min: number, s: any) => {
-    const tick = Number(s?.start_tick);
-    return Number.isFinite(tick) ? Math.min(min, tick) : min;
-  }, Number.POSITIVE_INFINITY);
-}
-
-function clipLastActionTick(spec: unknown): number {
-  const segments = Array.isArray((spec as any)?.segments)
-    ? (spec as any).segments
-    : [];
-  return segments.reduce((max: number, s: any) => {
-    const killTick = Number(s?.kill_tick);
-    const endTick = Number(s?.end_tick);
-    const tick = Number.isFinite(killTick) ? killTick : endTick;
-    return Number.isFinite(tick) ? Math.max(max, tick) : max;
-  }, 0);
-}
-
 @UseQueue("Clips", MatchQueues.Clips, {
   concurrency: 1,
 })
@@ -163,12 +141,7 @@ export class BatchHighlightsRenderJob extends WorkerHost {
         session_token: String(row.session_token),
         spec: row.spec,
       }))
-      .sort((a, b) => {
-        const byLastAction =
-          clipLastActionTick(a.spec) - clipLastActionTick(b.spec);
-        if (byLastAction !== 0) return byLastAction;
-        return clipFirstTick(a.spec) - clipFirstTick(b.spec);
-      });
+      .sort(ClipsService.compareHighlightJobs);
   }
 
   private async failInFlightJobs(jobIds: string[], reason: string) {

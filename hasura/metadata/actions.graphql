@@ -584,7 +584,6 @@ input SampleInput {
 input ClipSegmentInput {
   start_tick: Int!
   end_tick: Int!
-  speed: Float
   pov_steam_id: String
 }
 

@@ -775,11 +775,11 @@ export class GameStreamerService {
       segments: Array<{
         start_tick: number;
         end_tick: number;
+        kill_tick?: number;
         pov_steam_id?: string;
       }>;
       output_dims: string;
       output_fps: number;
-      render_speed?: number;
     },
   ) {
     const url = this.getDemoSpecUrl(sessionId, "render-clip", "demo");
