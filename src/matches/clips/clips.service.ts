@@ -20,6 +20,8 @@ import {
 
 const STATUS_HISTORY_CAP = 50;
 
+type ClipSegmentSpec = ClipSpec["segments"][number];
+
 @Injectable()
 export class ClipsService {
   constructor(
@@ -57,6 +59,42 @@ export class ClipsService {
       if (killerTeam && victimTeam && killerTeam === victimTeam) return false;
       return true;
     });
+  }
+
+  private static clipFirstTick(spec: ClipSpec): number {
+    return spec.segments.reduce(
+      (min, s) => Math.min(min, s.start_tick),
+      Number.POSITIVE_INFINITY,
+    );
+  }
+
+  private static clipLastActionTick(spec: ClipSpec): number {
+    return spec.segments.reduce((max, s) => {
+      const actionTick =
+        typeof s.kill_tick === "number" && Number.isFinite(s.kill_tick)
+          ? s.kill_tick
+          : s.end_tick;
+      return Math.max(max, actionTick);
+    }, 0);
+  }
+
+  private static compareHighlightJobs<
+    T extends { targetSteamId: string; spec: ClipSpec },
+  >(a: T, b: T): number {
+    const byLastAction =
+      ClipsService.clipLastActionTick(a.spec) -
+      ClipsService.clipLastActionTick(b.spec);
+    if (byLastAction !== 0) return byLastAction;
+
+    return ClipsService.clipFirstTick(a.spec) - ClipsService.clipFirstTick(b.spec);
+  }
+
+  private static orderHighlightJobs<
+    T extends { targetSteamId: string; spec: ClipSpec },
+  >(rows: T[]): T[] {
+    return [...rows].sort((a, b) =>
+      ClipsService.compareHighlightJobs(a, b),
+    );
   }
 
   public async createClipRender(
@@ -1374,7 +1412,9 @@ export class ClipsService {
     }
 
     const kills = ClipsService.filterValidKills(
-      demo.kills as Array<{ killer?: string; victim?: string }> | undefined,
+      demo.kills as
+        | Array<{ tick?: number; killer?: string; victim?: string }>
+        | undefined,
     );
     if (kills.length === 0) return 0;
 
@@ -1461,8 +1501,9 @@ export class ClipsService {
     }
 
     if (pendingObjects.length === 0) return 0;
+    const orderedPendingObjects = ClipsService.orderHighlightJobs(pendingObjects);
 
-    const insertObjects = pendingObjects.map((p, index) => ({
+    const insertObjects = orderedPendingObjects.map((p, index) => ({
       user_steam_id: options.isSystemInitiated
         ? null
         : options.actingUserSteamId
@@ -1701,7 +1742,7 @@ export class ClipsService {
       for (const demo of demos) {
         const kills = ClipsService.filterValidKills(
           demo?.kills as
-            | Array<{ killer?: string; victim?: string }>
+            | Array<{ tick?: number; killer?: string; victim?: string }>
             | undefined,
         );
         if (kills.length === 0) continue;
@@ -1742,8 +1783,14 @@ export class ClipsService {
     }
 
     if (pendingObjects.length > 0) {
+      const orderedPendingObjects = [...pendingObjects].sort((a, b) => {
+        const aKey = `${a.mapRowId}:${a.matchMapDemoId}`;
+        const bKey = `${b.mapRowId}:${b.matchMapDemoId}`;
+        if (aKey !== bKey) return aKey.localeCompare(bKey);
+        return ClipsService.compareHighlightJobs(a, b);
+      });
       const indexByDemoKey = new Map<string, number>();
-      const insertObjects = pendingObjects.map((p) => {
+      const insertObjects = orderedPendingObjects.map((p) => {
         const key = `${p.mapRowId}:${p.matchMapDemoId}`;
         const idx = indexByDemoKey.get(key) ?? 0;
         indexByDemoKey.set(key, idx + 1);
@@ -1796,7 +1843,7 @@ export class ClipsService {
             | undefined) ?? [];
         for (let i = 0; i < returning.length; i++) {
           const inserted = returning[i];
-          const pending = pendingObjects[i];
+          const pending = orderedPendingObjects[i];
           if (!inserted?.id || !pending) continue;
           const key = `${inserted.match_map_id}:${inserted.match_map_demo_id}`;
           const entry = perDemo.get(key) ?? {
@@ -2044,12 +2091,10 @@ export class ClipsService {
     const segmentIsViable = (s: { start_tick: number; end_tick: number }) =>
       s.end_tick - s.start_tick >= MIN_SEGMENT_TICKS;
 
-    const clusterKills = (
-      ks: Array<{ tick: number }>,
-    ): Array<{ start_tick: number; end_tick: number }> => {
+    const clusterKills = (ks: Array<{ tick: number }>): ClipSegmentSpec[] => {
       if (ks.length === 0) return [];
       const sorted = [...ks].sort((a, b) => a.tick - b.tick);
-      const out: Array<{ start_tick: number; end_tick: number }> = [];
+      const out: ClipSegmentSpec[] = [];
       let clusterStart = sorted[0].tick;
       let clusterEnd = sorted[0].tick;
       for (let i = 1; i < sorted.length; i++) {
@@ -2061,6 +2106,7 @@ export class ClipsService {
         out.push({
           start_tick: clamp(clusterStart - lead),
           end_tick: clamp(clusterEnd + tail),
+          kill_tick: clusterEnd,
         });
         clusterStart = sorted[i].tick;
         clusterEnd = sorted[i].tick;
@@ -2068,11 +2114,12 @@ export class ClipsService {
       out.push({
         start_tick: clamp(clusterStart - lead),
         end_tick: clamp(clusterEnd + tail),
+        kill_tick: clusterEnd,
       });
       return out;
     };
 
-    let segments: Array<{ start_tick: number; end_tick: number }> = [];
+    let segments: ClipSegmentSpec[] = [];
     const stats = {
       knifeKills: 0,
       multiKillBuckets: { 2: 0, 3: 0, 4: 0, 5: 0 } as Record<number, number>,
@@ -2103,6 +2150,7 @@ export class ClipsService {
       segments = knife.map((k) => ({
         start_tick: clamp(k.tick - lead),
         end_tick: clamp(k.tick + tail),
+        kill_tick: k.tick,
       }));
     } else if (preset === "multikills") {
       for (const r of rounds) {
@@ -2124,7 +2172,7 @@ export class ClipsService {
       const candidates: Array<{
         count: number;
         span: number;
-        segs: Array<{ start_tick: number; end_tick: number }>;
+        segs: ClipSegmentSpec[];
       }> = [];
       for (const r of rounds) {
         const { lo, hi } = roundKillWindow(r);
@@ -2138,6 +2186,7 @@ export class ClipsService {
           .map((s) => ({
             start_tick: s.start_tick,
             end_tick: Math.min(s.end_tick, roundCap),
+            ...(s.kill_tick != null ? { kill_tick: s.kill_tick } : {}),
           }))
           .filter(segmentIsViable);
         if (segs.length === 0) continue;
@@ -2160,6 +2209,7 @@ export class ClipsService {
         {
           start_tick: clamp(fallback.tick - lead),
           end_tick: clamp(fallback.tick + tail),
+          kill_tick: fallback.tick,
         },
       ];
       stats.usedFallback = true;
@@ -2178,12 +2228,16 @@ export class ClipsService {
     const merged: Array<{
       start_tick: number;
       end_tick: number;
+      kill_tick?: number;
       pov_steam_id?: string;
     }> = [];
     for (const s of segments) {
       const last = merged[merged.length - 1];
       if (last && s.start_tick <= last.end_tick + joinGap) {
         last.end_tick = Math.max(last.end_tick, s.end_tick);
+        if (s.kill_tick != null) {
+          last.kill_tick = Math.max(last.kill_tick ?? s.kill_tick, s.kill_tick);
+        }
       } else {
         merged.push({ ...s, pov_steam_id: targetSteamId });
       }
