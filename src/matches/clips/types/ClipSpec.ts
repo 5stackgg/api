@@ -4,7 +4,6 @@ export interface ClipSpec {
     start_tick: number;
     end_tick: number;
     kill_tick?: number;
-    speed?: number;
     pov_steam_id?: string;
   }>;
   overlays?: Array<{

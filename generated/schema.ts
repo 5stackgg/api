@@ -19789,7 +19789,7 @@ export interface ClipOutputInput {format: Scalars['String'],fps: Scalars['Int'],
 
 export interface ClipOverlayInput {end_ms: Scalars['Int'],payload?: (Scalars['jsonb'] | null),start_ms: Scalars['Int'],type: Scalars['String']}
 
-export interface ClipSegmentInput {end_tick: Scalars['Int'],pov_steam_id?: (Scalars['String'] | null),speed?: (Scalars['Float'] | null),start_tick: Scalars['Int']}
+export interface ClipSegmentInput {end_tick: Scalars['Int'],pov_steam_id?: (Scalars['String'] | null),start_tick: Scalars['Int']}
 
 export interface ClipSpecInput {audio?: (ClipAudioInput | null),destination: Scalars['String'],match_map_id: Scalars['uuid'],output: ClipOutputInput,overlays?: (ClipOverlayInput[] | null),segments: ClipSegmentInput[],title?: (Scalars['String'] | null)}
 

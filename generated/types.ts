@@ -540,9 +540,6 @@ export default {
             "pov_steam_id": [
                 48
             ],
-            "speed": [
-                22
-            ],
             "start_tick": [
                 30
             ],
