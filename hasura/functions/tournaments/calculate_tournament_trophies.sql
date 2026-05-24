@@ -42,22 +42,30 @@ BEGIN
     -- use wins-based tiebreakers). The view's `placement` column shares ranks
     -- on ties, which lets us suppress the bronze when 3rd is contested
     -- (e.g. SingleElim with no third_place_match → both SF losers tied).
-    WITH ranked AS (
-        SELECT tournament_team_id, placement
-        FROM public.v_team_stage_results
-        WHERE tournament_stage_id = _final_stage_id
-    ),
-    tie_counts AS (
-        SELECT placement, COUNT(*) AS team_count
-        FROM ranked GROUP BY placement
-    )
-    SELECT
-        MIN(CASE WHEN r.placement = 1 THEN r.tournament_team_id END),
-        MIN(CASE WHEN r.placement = 2 THEN r.tournament_team_id END),
-        MIN(CASE WHEN r.placement = 3 AND tc.team_count = 1 THEN r.tournament_team_id END)
-      INTO _winning_team_id, _runner_up_team_id, _third_team_id
-    FROM ranked r
-    JOIN tie_counts tc USING (placement);
+    -- Separate scalar selects keep this off `min(uuid)`, which Postgres lacks.
+    SELECT tournament_team_id INTO _winning_team_id
+    FROM public.v_team_stage_results
+    WHERE tournament_stage_id = _final_stage_id
+      AND placement = 1
+    ORDER BY tournament_team_id::text
+    LIMIT 1;
+
+    SELECT tournament_team_id INTO _runner_up_team_id
+    FROM public.v_team_stage_results
+    WHERE tournament_stage_id = _final_stage_id
+      AND placement = 2
+    ORDER BY tournament_team_id::text
+    LIMIT 1;
+
+    SELECT tournament_team_id INTO _third_team_id
+    FROM public.v_team_stage_results
+    WHERE tournament_stage_id = _final_stage_id
+      AND placement = 3
+      AND (
+        SELECT COUNT(*) FROM public.v_team_stage_results
+        WHERE tournament_stage_id = _final_stage_id AND placement = 3
+      ) = 1
+    LIMIT 1;
 
     _award_third := _third_team_id IS NOT NULL;
 
