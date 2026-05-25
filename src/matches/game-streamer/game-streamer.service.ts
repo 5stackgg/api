@@ -26,6 +26,10 @@ import { resolveInClusterApiBase } from "../clips/clips.constants";
 const SNAPSHOT_REDIS_TTL_SECONDS = 75;
 const snapshotRedisKey = (matchId: string) => `gs:snapshot:${matchId}`;
 
+const STREAM_VIEWERS_TTL_SECONDS = 90;
+const STREAM_VIEWERS_INDEX_KEY = "stream:viewers:index";
+const streamViewersKey = (matchId: string) => `stream:viewers:${matchId}`;
+
 type StreamerMode = "live" | "create-clips" | "demo" | "batch-highlights";
 
 export type DemoControlAction =
@@ -128,6 +132,86 @@ export class GameStreamerService {
     // re-encode JPEG bytes as utf8 and corrupt them.
     const buffer = await this.redis.getBuffer(snapshotRedisKey(matchId));
     return buffer ?? null;
+  }
+
+  public async pollMediaMtxViewers(): Promise<void> {
+    const base = process.env.MEDIAMTX_API_BASE || "http://mediamtx:9997";
+    const url = `${base.replace(/\/$/, "")}/v3/paths/list`;
+
+    let res: Response;
+    try {
+      res = await fetch(url, { signal: AbortSignal.timeout(5_000) });
+    } catch (error) {
+      const cause = (error as { cause?: { code?: string; message?: string } })
+        ?.cause;
+      throw new Error(
+        `mediamtx ${url} fetch failed: ${cause?.code ?? cause?.message ?? (error as Error)?.message}`,
+      );
+    }
+    if (!res.ok) {
+      throw new Error(
+        `mediamtx ${url} returned ${res.status} ${res.statusText}`,
+      );
+    }
+
+    const payload = (await res.json()) as {
+      items?: Array<{ name?: string; readers?: unknown[] }>;
+    };
+
+    const counts = new Map<string, number>();
+    for (const item of payload.items ?? []) {
+      const matchId = item?.name;
+      if (!matchId) continue;
+      counts.set(
+        matchId,
+        Array.isArray(item.readers) ? item.readers.length : 0,
+      );
+    }
+
+    const previous = await this.redis.smembers(STREAM_VIEWERS_INDEX_KEY);
+    const pipeline = this.redis.pipeline();
+
+    for (const [matchId, count] of counts) {
+      pipeline.setex(
+        streamViewersKey(matchId),
+        STREAM_VIEWERS_TTL_SECONDS,
+        String(count),
+      );
+      pipeline.sadd(STREAM_VIEWERS_INDEX_KEY, matchId);
+    }
+
+    for (const matchId of previous) {
+      if (!counts.has(matchId)) {
+        pipeline.del(streamViewersKey(matchId));
+        pipeline.srem(STREAM_VIEWERS_INDEX_KEY, matchId);
+      }
+    }
+
+    await pipeline.exec();
+  }
+
+  public async getStreamViewerCounts(
+    matchIds?: string[],
+  ): Promise<Record<string, number>> {
+    const ids =
+      matchIds && matchIds.length > 0
+        ? matchIds
+        : await this.redis.smembers(STREAM_VIEWERS_INDEX_KEY);
+
+    if (ids.length === 0) {
+      return {};
+    }
+
+    const values = await this.redis.mget(ids.map(streamViewersKey));
+    const result: Record<string, number> = {};
+    ids.forEach((id, index) => {
+      const raw = values[index];
+      if (raw === null || raw === undefined) return;
+      const n = Number(raw);
+      if (!Number.isFinite(n)) return;
+      result[id] = n;
+    });
+    return result;
   }
 
   private async resolveHudMode(): Promise<"horizontal" | "vertical"> {
@@ -1991,9 +2075,7 @@ export class GameStreamerService {
     });
   }
 
-  private async buildNodeCs2OptionsEnv(
-    nodeId: string,
-  ): Promise<V1EnvVar[]> {
+  private async buildNodeCs2OptionsEnv(nodeId: string): Promise<V1EnvVar[]> {
     const { game_server_nodes_by_pk: node } = await this.hasura.query({
       game_server_nodes_by_pk: {
         __args: { id: nodeId },
