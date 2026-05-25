@@ -1,4 +1,4 @@
-import { Controller, Get, Logger, Req, Res } from "@nestjs/common";
+import { Controller, Get, Logger, Query, Req, Res } from "@nestjs/common";
 import { Request, Response } from "express";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
@@ -77,6 +77,19 @@ export class MatchesController {
     private readonly clips: ClipsService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
+  }
+
+  @Get("stream-viewers")
+  public async getStreamViewers(
+    @Query("match_ids") matchIdsParam?: string,
+  ): Promise<Record<string, number>> {
+    const matchIds = matchIdsParam
+      ? matchIdsParam
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean)
+      : undefined;
+    return this.gameStreamer.getStreamViewerCounts(matchIds);
   }
 
   @Get("current-match/:serverId")

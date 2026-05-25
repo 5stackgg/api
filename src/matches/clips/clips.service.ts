@@ -1506,7 +1506,8 @@ export class ClipsService {
     }
 
     if (pendingObjects.length === 0) return 0;
-    const orderedPendingObjects = ClipsService.orderHighlightJobs(pendingObjects);
+    const orderedPendingObjects =
+      ClipsService.orderHighlightJobs(pendingObjects);
 
     const insertObjects = orderedPendingObjects.map((p, index) => ({
       user_steam_id: options.isSystemInitiated
@@ -2165,9 +2166,7 @@ export class ClipsService {
     } else if (preset === "multikills") {
       for (const r of rounds) {
         const { lo, hi } = roundKillWindow(r);
-        const inRound = myKills.filter(
-          (k) => k.tick >= lo && k.tick <= hi,
-        );
+        const inRound = myKills.filter((k) => k.tick >= lo && k.tick <= hi);
         if (inRound.length < 2) continue;
         const bucket = Math.min(5, inRound.length);
         stats.multiKillBuckets[bucket] =

@@ -37,6 +37,7 @@ import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
 import { SocketsModule } from "../sockets/sockets.module";
 import { CleanAbandonedMatches } from "./jobs/CleanAbandonedMatches";
 import { ReapIdleDemoSessions } from "./jobs/ReapIdleDemoSessions";
+import { PollMediaMtxViewers } from "./jobs/PollMediaMtxViewers";
 import { MatchMaking } from "src/matchmaking/matchmaking.module";
 import { MatchEventsGateway } from "./match-events.gateway";
 import { PostgresModule } from "src/postgres/postgres.module";
@@ -121,6 +122,7 @@ import { ClipsModule } from "./clips/clips.module";
     CancelInvalidTournaments,
     CleanAbandonedMatches,
     ReapIdleDemoSessions,
+    PollMediaMtxViewers,
     EloCalculation,
     ...getQueuesProcessors("Matches"),
     ...Object.values(MatchEvents),
@@ -215,6 +217,16 @@ export class MatchesModule implements NestModule {
       {
         repeat: {
           pattern: "* * * * *",
+        },
+      },
+    );
+
+    void scheduleMatchQueue.add(
+      PollMediaMtxViewers.name,
+      {},
+      {
+        repeat: {
+          every: 30_000,
         },
       },
     );
