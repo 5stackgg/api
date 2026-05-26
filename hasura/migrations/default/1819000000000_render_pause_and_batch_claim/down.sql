@@ -1,5 +1,3 @@
-drop function if exists public.claim_free_gpu_node_for_batch();
-
 drop index if exists "public"."clip_render_jobs_paused_in_flight_idx";
 
 alter table "public"."clip_render_jobs"

@@ -32,6 +32,10 @@ export class DemosController {
     protected readonly demoMetadata: DemoMetadataService,
   ) {}
 
+  private static isValidDemoName(demo: unknown): demo is string {
+    return typeof demo === "string" && /^[a-zA-Z0-9._-]+\.dem$/.test(demo);
+  }
+
   @UseGuards(ApiKeyGuard)
   @Get("map/:mapId")
   public async downloadDemo(@Req() request: Request) {
@@ -120,6 +124,12 @@ export class DemosController {
     if (!matchId || !mapId || !demo) {
       return response.status(400).json({
         error: "missing params",
+      });
+    }
+
+    if (!DemosController.isValidDemoName(demo)) {
+      return response.status(400).json({
+        error: "invalid demo filename",
       });
     }
 
@@ -220,6 +230,12 @@ export class DemosController {
       });
     }
 
+    if (!DemosController.isValidDemoName(demo)) {
+      return response.status(400).json({
+        error: "invalid demo filename",
+      });
+    }
+
     const file = `${matchId}/${mapId}/demos/${demo}`;
     const matchMapDemoId = await this.upsertDemoRow(
       matchId,
@@ -250,6 +266,12 @@ export class DemosController {
     if (!matchId || !mapId || !demo || !parsed) {
       return response.status(400).json({
         error: "missing params",
+      });
+    }
+
+    if (!DemosController.isValidDemoName(demo)) {
+      return response.status(400).json({
+        error: "invalid demo filename",
       });
     }
 

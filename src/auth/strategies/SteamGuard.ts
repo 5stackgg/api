@@ -46,9 +46,13 @@ export class SteamGuard extends AuthGuard("steam") {
       const request = context.switchToHttp().getRequest();
 
       const { redirect } = request.query;
+      const webDomain = this.config.get<AppConfig>("app").webDomain;
 
-      if (redirect) {
-        request.session.redirect = redirect as string;
+      if (
+        typeof redirect === "string" &&
+        SteamGuard.isSafeRedirect(redirect, webDomain)
+      ) {
+        request.session.redirect = redirect;
       }
 
       if (!request.url || (!request.user && request.url.startsWith("/auth"))) {
@@ -66,6 +70,16 @@ export class SteamGuard extends AuthGuard("steam") {
       return !!request.user;
     } catch (error) {
       this.logger.warn("error", error);
+      return false;
+    }
+  }
+
+  private static isSafeRedirect(redirect: string, webDomain: string): boolean {
+    if (!redirect) return false;
+    if (redirect.startsWith("/") && !redirect.startsWith("//")) return true;
+    try {
+      return new URL(redirect).origin === new URL(webDomain).origin;
+    } catch {
       return false;
     }
   }
