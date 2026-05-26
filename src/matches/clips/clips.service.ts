@@ -292,8 +292,8 @@ export class ClipsService {
         __args: {
           where: {
             is_game_streamer: { _eq: true },
-            status: { _nin: ["errored"] as any },
-          } as any,
+            status: { _nin: ["errored"] },
+          },
           limit: 1,
         },
         id: true,
@@ -313,13 +313,13 @@ export class ClipsService {
       matches: {
         __args: {
           where: {
-            status: { _eq: "Live" as any },
+            status: { _eq: "Live" },
             server: {
               game_server_node: {
                 gpu: { _eq: true },
               },
             },
-          } as any,
+          },
           limit: 1,
         },
         id: true,
@@ -336,7 +336,7 @@ export class ClipsService {
             game_server_node_id: { _eq: nodeId },
             status: { _in: [...IN_FLIGHT_STATUSES] },
             paused: { _eq: false },
-          } as any,
+          },
           distinct_on: ["match_map_id"],
         },
         match_map_id: true,
@@ -388,7 +388,7 @@ export class ClipsService {
             match_map_id: { _eq: matchMapId },
             status: { _in: [...IN_FLIGHT_STATUSES] },
             ...nodeFilter,
-          } as any,
+          },
           distinct_on: ["match_map_demo_id"],
         },
         match_map_demo_id: true,
@@ -405,12 +405,12 @@ export class ClipsService {
             match_map_id: { _eq: matchMapId },
             status: { _in: [...IN_FLIGHT_STATUSES] },
             ...nodeFilter,
-          } as any,
+          },
           _set: {
             paused: true,
             status: "queued",
             game_server_node_id: null,
-          } as any,
+          },
         },
         affected_rows: true,
       },
@@ -464,10 +464,10 @@ export class ClipsService {
           where: {
             match_map_id: { _eq: matchMapId },
             paused: { _eq: true },
-          } as any,
+          },
           _set: {
             paused: false,
-          } as any,
+          },
         },
         affected_rows: true,
       },
@@ -540,7 +540,7 @@ export class ClipsService {
           where: {
             paused: { _eq: true },
             status: { _eq: "queued" },
-          } as any,
+          },
           distinct_on: ["match_map_id"],
         },
         match_map_id: true,

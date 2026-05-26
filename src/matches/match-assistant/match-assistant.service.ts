@@ -444,7 +444,7 @@ export class MatchAssistantService {
                     }
                   : {}),
               },
-            } as any,
+            },
             id: true,
           },
         });
