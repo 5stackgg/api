@@ -2130,7 +2130,7 @@ export class GameStreamerService {
   ): Promise<string> {
     return this.postgres.transaction(async (client) => {
       const result = await client.query(
-        `WITH chosen AS (SELECT claim_free_gpu_node() AS id)
+        `WITH chosen AS (SELECT claim_free_gpu_node_for_batch() AS id)
          UPDATE clip_render_jobs
             SET game_server_node_id = chosen.id
            FROM chosen

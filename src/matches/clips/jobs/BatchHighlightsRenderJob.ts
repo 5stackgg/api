@@ -95,9 +95,8 @@ export class BatchHighlightsRenderJob extends WorkerHost {
     );
     if (pausedQueued.length > 0 && podState !== "failed") {
       this.logger.log(
-        `${tag} pod ${podState} with ${pausedQueued.length} queued+paused row(s) — paused exit, leaving rows queued for resume`,
+        `${tag} pod ${podState} with ${pausedQueued.length} queued+paused row(s) — paused exit`,
       );
-      await this.onGpuFreed(tag);
       return;
     }
 
@@ -172,7 +171,8 @@ export class BatchHighlightsRenderJob extends WorkerHost {
             match_map_id: { _eq: matchMapId },
             match_map_demo_id: { _eq: matchMapDemoId },
             status: { _in: [...IN_FLIGHT_STATUSES] },
-          },
+            paused: { _eq: false },
+          } as any,
           order_by: [{ sort_index: "asc_nulls_last" }, { created_at: "asc" }],
         },
         id: true,

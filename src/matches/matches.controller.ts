@@ -569,6 +569,8 @@ export class MatchesController {
         },
       });
 
+      await this.handleGpuFreed();
+
       return;
     }
 
@@ -633,7 +635,54 @@ export class MatchesController {
       }
     }
 
+    if (
+      status === "Live" &&
+      data.old.status !== "Live" &&
+      match.server?.game_server_node_id
+    ) {
+      await this.maybePauseRendersForServerNode(
+        matchId,
+        String(match.server.game_server_node_id),
+      );
+    }
+
     await this.discordMatchOverview.updateMatchOverview(matchId);
+  }
+
+  private async maybePauseRendersForServerNode(
+    matchId: string,
+    gameServerNodeId: string,
+  ) {
+    try {
+      const { settings_by_pk } = await this.hasura.query({
+        settings_by_pk: {
+          __args: { name: "pause_renders_during_active_match" },
+          value: true,
+        },
+      });
+      if (settings_by_pk?.value !== "true") return;
+
+      const { game_server_nodes_by_pk } = await this.hasura.query({
+        game_server_nodes_by_pk: {
+          __args: { id: gameServerNodeId },
+          gpu: true,
+        },
+      });
+      if (game_server_nodes_by_pk?.gpu !== true) return;
+
+      const paused = await this.clips.pauseInFlightBatchesOnNode(
+        gameServerNodeId,
+      );
+      if (paused > 0) {
+        this.logger.log(
+          `[${matchId}] match Live on GPU node ${gameServerNodeId} — paused ${paused} render row(s) on that node`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `[${matchId}] maybePauseRendersForServerNode failed: ${(error as Error)?.message}`,
+      );
+    }
   }
 
   private async removeDiscordIntegration(matchId: string) {
@@ -778,9 +827,10 @@ export class MatchesController {
       throw Error("invalid mode");
     }
 
-    const result = await this.gameStreamer.startLive(match_id, mode);
+    let result = await this.gameStreamer.startLive(match_id, mode);
     if (result.status === "pending") {
       await this.clips.pauseAllInFlightBatches();
+      result = await this.gameStreamer.startLive(match_id, mode);
     }
 
     return {
@@ -1095,6 +1145,7 @@ export class MatchesController {
       throw Error("only operators can pause a render batch");
     }
     const paused = await this.clips.pauseClipRenderBatch(data.match_map_id);
+    await this.gameStreamer.promotePendingLiveStreams();
     return { success: true, paused };
   }
 
