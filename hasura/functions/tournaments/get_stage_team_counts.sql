@@ -9,14 +9,28 @@ BEGIN
     FROM tournament_stages
     WHERE tournament_id = _tournament_id AND "order" = _stage_order;
 
-    -- If tournament is in Setup status, use max_teams for bracket planning
-    IF _tournament_status != 'Live' AND _tournament_status != 'Finished' THEN
+    -- Only Setup/RegistrationOpen plan the bracket against max_teams; in every
+    -- other status (RegistrationClosed, Live, Paused, Finished, Cancelled*)
+    -- the eligible-team count is final, so size the bracket to that instead
+    -- of padding unfilled slots with byes.
+    IF _tournament_status IN ('Setup', 'RegistrationOpen') THEN
         effective_teams := stage_max_teams;
     ELSE
         IF _stage_order = 1 THEN
             SELECT COUNT(*) INTO effective_teams
                 FROM tournament_teams
                 WHERE tournament_id = _tournament_id AND eligible_at IS NOT NULL;
+
+            -- Downstream bracket math in update_tournament_stages takes
+            -- LOG(teams_per_group), which raises on 0 and produces an empty
+            -- bracket on 1. Before the tournament is Live/Finished the count
+            -- is not yet final, so fall back to max_teams when it can't form
+            -- a valid bracket — admins can still edit stages, and the
+            -- placeholder bracket renders. In Live/Finished we accept the
+            -- real count: those statuses are gated by tournament_has_min_teams.
+            IF effective_teams < 2 AND _tournament_status NOT IN ('Live', 'Finished') THEN
+                effective_teams := stage_max_teams;
+            END IF;
         ELSE
             -- Get the previous stage to check its type
             DECLARE
