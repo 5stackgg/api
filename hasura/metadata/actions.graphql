@@ -58,6 +58,18 @@ type Mutation {
 }
 
 type Mutation {
+  pauseClipRenderBatch(
+    match_map_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  resumeClipRenderBatch(
+    match_map_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   clearClipRenderBatch(
     match_map_id: uuid!
   ): SuccessOutput

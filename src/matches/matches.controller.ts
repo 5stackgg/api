@@ -778,10 +778,14 @@ export class MatchesController {
       throw Error("invalid mode");
     }
 
-    await this.gameStreamer.startLive(match_id, mode);
+    const result = await this.gameStreamer.startLive(match_id, mode);
+    if (result.status === "pending") {
+      await this.clips.pauseAllInFlightBatches();
+    }
 
     return {
       success: true,
+      pending: result.status === "pending",
     };
   }
 
@@ -794,6 +798,7 @@ export class MatchesController {
     }
 
     await this.gameStreamer.stopLive(match_id);
+    await this.handleGpuFreed();
 
     return {
       success: true,
@@ -1079,6 +1084,30 @@ export class MatchesController {
     }
     const cancelled = await this.clips.cancelClipRenderBatch(data.match_map_id);
     return { success: true, cancelled };
+  }
+
+  @HasuraAction()
+  public async pauseClipRenderBatch(data: {
+    match_map_id: string;
+    user: User;
+  }) {
+    if (!isRoleAbove(data.user.role, "streamer")) {
+      throw Error("only operators can pause a render batch");
+    }
+    const paused = await this.clips.pauseClipRenderBatch(data.match_map_id);
+    return { success: true, paused };
+  }
+
+  @HasuraAction()
+  public async resumeClipRenderBatch(data: {
+    match_map_id: string;
+    user: User;
+  }) {
+    if (!isRoleAbove(data.user.role, "streamer")) {
+      throw Error("only operators can resume a render batch");
+    }
+    const resumed = await this.clips.resumeClipRenderBatch(data.match_map_id);
+    return { success: true, resumed };
   }
 
   @HasuraAction()
@@ -2138,5 +2167,19 @@ export class MatchesController {
     }
 
     await this.matchAssistant.sendServerMatchId(match.id);
+  }
+
+  private async handleGpuFreed() {
+    try {
+      const { promoted } = await this.gameStreamer.promotePendingLiveStreams();
+      if (promoted.length === 0) {
+        await this.clips.resumeAllPausedBatches();
+      }
+    } catch (error) {
+      this.logger.error(
+        `handleGpuFreed failed: ${(error as Error)?.message}`,
+        (error as Error)?.stack,
+      );
+    }
   }
 }

@@ -1214,7 +1214,10 @@ export class GameStreamerService {
     }
   }
 
-  public async startLive(matchId: string, mode: "live" | "tv") {
+  public async startLive(
+    matchId: string,
+    mode: "live" | "tv",
+  ): Promise<{ status: "booting" | "pending" }> {
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
         __args: { id: matchId },
@@ -1264,6 +1267,12 @@ export class GameStreamerService {
     const usePlaycast = await this.readUsePlaycast();
 
     const nodeId = await this.claimGpuForLive(matchId, mode);
+    if (nodeId === null) {
+      this.logger.log(
+        `[${matchId}] no GPU free — match_streams row inserted as pending`,
+      );
+      return { status: "pending" };
+    }
 
     const connectEnv = await this.buildConnectEnv(
       matchId,
@@ -1317,6 +1326,55 @@ export class GameStreamerService {
     }
 
     await this.createLiveService(matchId);
+
+    return { status: "booting" };
+  }
+
+  public async promotePendingLiveStreams(): Promise<{
+    promoted: string[];
+    stillPending: number;
+  }> {
+    const { match_streams } = await this.hasura.query({
+      match_streams: {
+        __args: {
+          where: {
+            is_game_streamer: { _eq: true },
+            status: { _eq: "pending" },
+          },
+          order_by: [{ last_status_at: "asc" }],
+        },
+        match_id: true,
+        mode: true,
+      },
+    });
+    const rows = (match_streams as Array<{
+      match_id: string;
+      mode: string | null;
+    }>) ?? [];
+    const promoted: string[] = [];
+    for (const row of rows) {
+      const matchId = String(row.match_id);
+      const mode = row.mode === "tv" ? "tv" : "live";
+      try {
+        const result = await this.startLive(matchId, mode);
+        if (result.status === "booting") {
+          promoted.push(matchId);
+        } else {
+          break;
+        }
+      } catch (error) {
+        this.logger.warn(
+          `[promote-pending ${matchId}] startLive failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
+    const stillPending = rows.length - promoted.length;
+    if (promoted.length > 0) {
+      this.logger.log(
+        `[promote-pending] promoted ${promoted.length} match(es), ${stillPending} still pending`,
+      );
+    }
+    return { promoted, stillPending };
   }
 
   public async stopGpuSession(nodeId: string): Promise<{
@@ -1991,10 +2049,11 @@ export class GameStreamerService {
   private async claimGpuForLive(
     matchId: string,
     mode: "live" | "tv",
-  ): Promise<string> {
+  ): Promise<string | null> {
     const link = `${this.appConfig.gameStreamDomain}/${matchId}/`;
     const nowIso = new Date().toISOString();
-    const statusHistory = JSON.stringify([{ status: "booting", at: nowIso }]);
+    const bootingHistory = JSON.stringify([{ status: "booting", at: nowIso }]);
+    const pendingHistory = JSON.stringify([{ status: "pending", at: nowIso }]);
 
     return this.postgres.transaction(async (client) => {
       await client.query(
@@ -2015,14 +2074,31 @@ export class GameStreamerService {
            FROM chosen
           WHERE chosen.id IS NOT NULL
          RETURNING game_server_node_id`,
-        [matchId, GAME_STREAMER_TITLE, link, mode, statusHistory, serviceName],
+        [matchId, GAME_STREAMER_TITLE, link, mode, bootingHistory, serviceName],
       );
 
       const nodeId = result.rows[0]?.game_server_node_id as string | undefined;
-      if (!nodeId) {
+      if (nodeId) return nodeId;
+
+      const { rows: gpuRows } = await client.query(
+        `SELECT count(*)::int AS n
+           FROM game_server_nodes
+          WHERE gpu = true AND enabled = true AND status = 'Online'`,
+      );
+      const registeredGpus = (gpuRows[0]?.n as number | undefined) ?? 0;
+      if (registeredGpus === 0) {
         throw new NoGpuAvailableError();
       }
-      return nodeId;
+
+      await client.query(
+        `INSERT INTO match_streams
+           (match_id, title, link, priority, is_game_streamer, is_live,
+            mode, status, status_history, last_status_at, k8s_service_name)
+         VALUES ($1, $2, $3, 0, true, false,
+                 $4, 'pending', $5::jsonb, now(), $6)`,
+        [matchId, GAME_STREAMER_TITLE, link, mode, pendingHistory, serviceName],
+      );
+      return null;
     });
   }
 

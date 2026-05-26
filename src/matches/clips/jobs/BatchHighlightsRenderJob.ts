@@ -89,6 +89,18 @@ export class BatchHighlightsRenderJob extends WorkerHost {
       return this.delayUntilNext(job, CHECK_DELAY_MS);
     }
 
+    const pausedQueued = await this.fetchPausedQueued(
+      matchMapId,
+      matchMapDemoId,
+    );
+    if (pausedQueued.length > 0 && podState !== "failed") {
+      this.logger.log(
+        `${tag} pod ${podState} with ${pausedQueued.length} queued+paused row(s) — paused exit, leaving rows queued for resume`,
+      );
+      await this.onGpuFreed(tag);
+      return;
+    }
+
     const reason =
       (await this.gameStreamer.getBatchPodFailureReason(
         matchMapId,
@@ -106,6 +118,40 @@ export class BatchHighlightsRenderJob extends WorkerHost {
       inFlight.map((j) => j.id),
       reason,
     );
+    await this.onGpuFreed(tag);
+  }
+
+  private async onGpuFreed(tag: string) {
+    try {
+      const { promoted } = await this.gameStreamer.promotePendingLiveStreams();
+      if (promoted.length === 0) {
+        await this.clips.resumeAllPausedBatches();
+      }
+    } catch (error) {
+      this.logger.warn(
+        `${tag} onGpuFreed failed: ${(error as Error)?.message}`,
+      );
+    }
+  }
+
+  private async fetchPausedQueued(
+    matchMapId: string,
+    matchMapDemoId: string,
+  ): Promise<string[]> {
+    const { clip_render_jobs } = await this.hasura.query({
+      clip_render_jobs: {
+        __args: {
+          where: {
+            match_map_id: { _eq: matchMapId },
+            match_map_demo_id: { _eq: matchMapDemoId },
+            paused: { _eq: true },
+            status: { _eq: "queued" },
+          },
+        },
+        id: true,
+      },
+    });
+    return (clip_render_jobs ?? []).map((r: any) => String(r.id));
   }
 
   private async delayUntilNext(job: Job, ms: number): Promise<void> {

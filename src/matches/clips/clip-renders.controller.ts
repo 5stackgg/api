@@ -39,6 +39,23 @@ export class ClipRendersController {
     return response.status(200).json({ status: row.status });
   }
 
+  @Get("control")
+  public async getControl(
+    @Param("jobId") jobId: string,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const session = await this.clips.validateClipRenderAuth(
+      jobId,
+      request.headers["x-origin-auth"],
+    );
+    if (!session) {
+      return response.status(401).end();
+    }
+    const shouldPause = await this.clips.isJobPaused(jobId);
+    return response.status(200).json({ should_pause: shouldPause });
+  }
+
   @Post("title")
   public async updateTitle(
     @Param("jobId") jobId: string,
