@@ -569,6 +569,8 @@ export class MatchesController {
         },
       });
 
+      await this.handleGpuFreed();
+
       return;
     }
 
@@ -633,7 +635,53 @@ export class MatchesController {
       }
     }
 
+    if (
+      status === "Live" &&
+      data.old.status !== "Live" &&
+      match.server?.game_server_node_id
+    ) {
+      await this.maybePauseRendersForServerNode(
+        matchId,
+        String(match.server.game_server_node_id),
+      );
+    }
+
     await this.discordMatchOverview.updateMatchOverview(matchId);
+  }
+
+  private async maybePauseRendersForServerNode(
+    matchId: string,
+    gameServerNodeId: string,
+  ) {
+    try {
+      const { settings_by_pk } = await this.hasura.query({
+        settings_by_pk: {
+          __args: { name: "pause_renders_during_active_match" },
+          value: true,
+        },
+      });
+      if (settings_by_pk?.value !== "true") return;
+
+      const { game_server_nodes_by_pk } = await this.hasura.query({
+        game_server_nodes_by_pk: {
+          __args: { id: gameServerNodeId },
+          gpu: true,
+        },
+      });
+      if (game_server_nodes_by_pk?.gpu !== true) return;
+
+      const paused =
+        await this.clips.pauseInFlightBatchesOnNode(gameServerNodeId);
+      if (paused > 0) {
+        this.logger.log(
+          `[${matchId}] match Live on GPU node ${gameServerNodeId} — paused ${paused} render row(s) on that node`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `[${matchId}] maybePauseRendersForServerNode failed: ${(error as Error)?.message}`,
+      );
+    }
   }
 
   private async removeDiscordIntegration(matchId: string) {
@@ -778,10 +826,15 @@ export class MatchesController {
       throw Error("invalid mode");
     }
 
-    await this.gameStreamer.startLive(match_id, mode);
+    let result = await this.gameStreamer.startLive(match_id, mode);
+    if (result.status === "pending") {
+      await this.clips.pauseAllInFlightBatches();
+      result = await this.gameStreamer.startLive(match_id, mode);
+    }
 
     return {
       success: true,
+      pending: result.status === "pending",
     };
   }
 
@@ -794,6 +847,7 @@ export class MatchesController {
     }
 
     await this.gameStreamer.stopLive(match_id);
+    await this.handleGpuFreed();
 
     return {
       success: true,
@@ -1079,6 +1133,31 @@ export class MatchesController {
     }
     const cancelled = await this.clips.cancelClipRenderBatch(data.match_map_id);
     return { success: true, cancelled };
+  }
+
+  @HasuraAction()
+  public async pauseClipRenderBatch(data: {
+    match_map_id: string;
+    user: User;
+  }) {
+    if (!isRoleAbove(data.user.role, "streamer")) {
+      throw Error("only operators can pause a render batch");
+    }
+    const paused = await this.clips.pauseClipRenderBatch(data.match_map_id);
+    await this.gameStreamer.promotePendingLiveStreams();
+    return { success: true, paused };
+  }
+
+  @HasuraAction()
+  public async resumeClipRenderBatch(data: {
+    match_map_id: string;
+    user: User;
+  }) {
+    if (!isRoleAbove(data.user.role, "streamer")) {
+      throw Error("only operators can resume a render batch");
+    }
+    const resumed = await this.clips.resumeClipRenderBatch(data.match_map_id);
+    return { success: true, resumed };
   }
 
   @HasuraAction()
@@ -2138,5 +2217,19 @@ export class MatchesController {
     }
 
     await this.matchAssistant.sendServerMatchId(match.id);
+  }
+
+  private async handleGpuFreed() {
+    try {
+      const { promoted } = await this.gameStreamer.promotePendingLiveStreams();
+      if (promoted.length === 0) {
+        await this.clips.resumeAllPausedBatches();
+      }
+    } catch (error) {
+      this.logger.error(
+        `handleGpuFreed failed: ${(error as Error)?.message}`,
+        (error as Error)?.stack,
+      );
+    }
   }
 }

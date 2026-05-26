@@ -801,6 +801,7 @@ export interface clip_render_jobs {
     match_map_demo: (match_map_demos | null)
     match_map_demo_id: (Scalars['uuid'] | null)
     match_map_id: Scalars['uuid']
+    paused: Scalars['Boolean']
     progress: (Scalars['numeric'] | null)
     session_token: Scalars['String']
     sort_index: Scalars['Int']
@@ -903,7 +904,15 @@ export interface clip_render_jobs_mutation_response {
 
 
 /** select columns of table "clip_render_jobs" */
-export type clip_render_jobs_select_column = 'clip_id' | 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_status_at' | 'match_map_demo_id' | 'match_map_id' | 'progress' | 'session_token' | 'sort_index' | 'spec' | 'status' | 'status_history' | 'user_steam_id'
+export type clip_render_jobs_select_column = 'clip_id' | 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_status_at' | 'match_map_demo_id' | 'match_map_id' | 'paused' | 'progress' | 'session_token' | 'sort_index' | 'spec' | 'status' | 'status_history' | 'user_steam_id'
+
+
+/** select "clip_render_jobs_aggregate_bool_exp_bool_and_arguments_columns" columns of table "clip_render_jobs" */
+export type clip_render_jobs_select_column_clip_render_jobs_aggregate_bool_exp_bool_and_arguments_columns = 'paused'
+
+
+/** select "clip_render_jobs_aggregate_bool_exp_bool_or_arguments_columns" columns of table "clip_render_jobs" */
+export type clip_render_jobs_select_column_clip_render_jobs_aggregate_bool_exp_bool_or_arguments_columns = 'paused'
 
 
 /** aggregate stddev on columns */
@@ -943,7 +952,7 @@ export interface clip_render_jobs_sum_fields {
 
 
 /** update columns of table "clip_render_jobs" */
-export type clip_render_jobs_update_column = 'clip_id' | 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_status_at' | 'match_map_demo_id' | 'match_map_id' | 'progress' | 'session_token' | 'sort_index' | 'spec' | 'status' | 'status_history' | 'user_steam_id'
+export type clip_render_jobs_update_column = 'clip_id' | 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_status_at' | 'match_map_demo_id' | 'match_map_id' | 'paused' | 'progress' | 'session_token' | 'sort_index' | 'spec' | 'status' | 'status_history' | 'user_steam_id'
 
 
 /** aggregate var_pop on columns */
@@ -7478,6 +7487,8 @@ export interface mutation_root {
     logout: (SuccessOutput | null)
     /** Move file or directory on game server */
     moveServerItem: (SuccessOutput | null)
+    /** Flag in-flight clip_render_jobs paused; pod halts after current highlight. */
+    pauseClipRenderBatch: (SuccessOutput | null)
     randomizeTeams: (SuccessOutput | null)
     rebootMatchServer: (SuccessOutput | null)
     /** execute VOLATILE function "recalculate_tournament_trophies" which returns "tournament_trophies" */
@@ -7498,6 +7509,8 @@ export interface mutation_root {
     /** Reset a terminal-state clip_render_jobs row back to queued and re-enqueue the batch worker (admin only). */
     requeueClipRender: (SuccessOutput | null)
     restartService: (SuccessOutput | null)
+    /** Clear paused flag and re-enqueue remaining queued clip_render_jobs. */
+    resumeClipRenderBatch: (SuccessOutput | null)
     /** Delete terminal clip_render_jobs rows for a match_map (all or only failed/cancelled) and re-create them from their saved specs. */
     retryClipRenderBatch: (SuccessOutput | null)
     /** scheduleMatch */
@@ -20826,6 +20839,7 @@ export interface clip_render_jobsGenqlSelection{
     match_map_demo?: match_map_demosGenqlSelection
     match_map_demo_id?: boolean | number
     match_map_id?: boolean | number
+    paused?: boolean | number
     progress?: boolean | number
     session_token?: boolean | number
     sort_index?: boolean | number
@@ -20852,7 +20866,11 @@ export interface clip_render_jobs_aggregateGenqlSelection{
     __scalar?: boolean | number
 }
 
-export interface clip_render_jobs_aggregate_bool_exp {count?: (clip_render_jobs_aggregate_bool_exp_count | null)}
+export interface clip_render_jobs_aggregate_bool_exp {bool_and?: (clip_render_jobs_aggregate_bool_exp_bool_and | null),bool_or?: (clip_render_jobs_aggregate_bool_exp_bool_or | null),count?: (clip_render_jobs_aggregate_bool_exp_count | null)}
+
+export interface clip_render_jobs_aggregate_bool_exp_bool_and {arguments: clip_render_jobs_select_column_clip_render_jobs_aggregate_bool_exp_bool_and_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (clip_render_jobs_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface clip_render_jobs_aggregate_bool_exp_bool_or {arguments: clip_render_jobs_select_column_clip_render_jobs_aggregate_bool_exp_bool_or_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (clip_render_jobs_bool_exp | null),predicate: Boolean_comparison_exp}
 
 export interface clip_render_jobs_aggregate_bool_exp_count {arguments?: (clip_render_jobs_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (clip_render_jobs_bool_exp | null),predicate: Int_comparison_exp}
 
@@ -20904,7 +20922,7 @@ export interface clip_render_jobs_avg_order_by {progress?: (order_by | null),sor
 
 
 /** Boolean expression to filter rows from the table "clip_render_jobs". All fields are combined with a logical 'AND'. */
-export interface clip_render_jobs_bool_exp {_and?: (clip_render_jobs_bool_exp[] | null),_not?: (clip_render_jobs_bool_exp | null),_or?: (clip_render_jobs_bool_exp[] | null),clip?: (match_clips_bool_exp | null),clip_id?: (uuid_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),error_message?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),k8s_job_name?: (String_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_demo?: (match_map_demos_bool_exp | null),match_map_demo_id?: (uuid_comparison_exp | null),match_map_id?: (uuid_comparison_exp | null),progress?: (numeric_comparison_exp | null),session_token?: (String_comparison_exp | null),sort_index?: (Int_comparison_exp | null),spec?: (jsonb_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null)}
+export interface clip_render_jobs_bool_exp {_and?: (clip_render_jobs_bool_exp[] | null),_not?: (clip_render_jobs_bool_exp | null),_or?: (clip_render_jobs_bool_exp[] | null),clip?: (match_clips_bool_exp | null),clip_id?: (uuid_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),error_message?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),k8s_job_name?: (String_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_demo?: (match_map_demos_bool_exp | null),match_map_demo_id?: (uuid_comparison_exp | null),match_map_id?: (uuid_comparison_exp | null),paused?: (Boolean_comparison_exp | null),progress?: (numeric_comparison_exp | null),session_token?: (String_comparison_exp | null),sort_index?: (Int_comparison_exp | null),spec?: (jsonb_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -20924,7 +20942,7 @@ export interface clip_render_jobs_inc_input {progress?: (Scalars['numeric'] | nu
 
 
 /** input type for inserting data into table "clip_render_jobs" */
-export interface clip_render_jobs_insert_input {clip?: (match_clips_obj_rel_insert_input | null),clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_demo?: (match_map_demos_obj_rel_insert_input | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null)}
+export interface clip_render_jobs_insert_input {clip?: (match_clips_obj_rel_insert_input | null),clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_demo?: (match_map_demos_obj_rel_insert_input | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),paused?: (Scalars['Boolean'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate max on columns */
@@ -20993,7 +21011,7 @@ export interface clip_render_jobs_on_conflict {constraint: clip_render_jobs_cons
 
 
 /** Ordering options when selecting data from "clip_render_jobs". */
-export interface clip_render_jobs_order_by {clip?: (match_clips_order_by | null),clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_demo?: (match_map_demos_order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),sort_index?: (order_by | null),spec?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null)}
+export interface clip_render_jobs_order_by {clip?: (match_clips_order_by | null),clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_demo?: (match_map_demos_order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),paused?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),sort_index?: (order_by | null),spec?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** primary key columns input for table: clip_render_jobs */
@@ -21005,7 +21023,7 @@ export interface clip_render_jobs_prepend_input {spec?: (Scalars['jsonb'] | null
 
 
 /** input type for updating data in table "clip_render_jobs" */
-export interface clip_render_jobs_set_input {clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user_steam_id?: (Scalars['bigint'] | null)}
+export interface clip_render_jobs_set_input {clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),paused?: (Scalars['Boolean'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -21059,7 +21077,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface clip_render_jobs_stream_cursor_value_input {clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user_steam_id?: (Scalars['bigint'] | null)}
+export interface clip_render_jobs_stream_cursor_value_input {clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),paused?: (Scalars['Boolean'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate sum on columns */
@@ -32701,6 +32719,8 @@ export interface mutation_rootGenqlSelection{
     logout?: SuccessOutputGenqlSelection
     /** Move file or directory on game server */
     moveServerItem?: (SuccessOutputGenqlSelection & { __args: {dest_path: Scalars['String'], node_id: Scalars['String'], server_id?: (Scalars['String'] | null), source_path: Scalars['String']} })
+    /** Flag in-flight clip_render_jobs paused; pod halts after current highlight. */
+    pauseClipRenderBatch?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid']} })
     randomizeTeams?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     rebootMatchServer?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     /** execute VOLATILE function "recalculate_tournament_trophies" which returns "tournament_trophies" */
@@ -32733,6 +32753,8 @@ export interface mutation_rootGenqlSelection{
     /** Reset a terminal-state clip_render_jobs row back to queued and re-enqueue the batch worker (admin only). */
     requeueClipRender?: (SuccessOutputGenqlSelection & { __args: {job_id: Scalars['uuid']} })
     restartService?: (SuccessOutputGenqlSelection & { __args: {service: Scalars['String']} })
+    /** Clear paused flag and re-enqueue remaining queued clip_render_jobs. */
+    resumeClipRenderBatch?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid']} })
     /** Delete terminal clip_render_jobs rows for a match_map (all or only failed/cancelled) and re-create them from their saved specs. */
     retryClipRenderBatch?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid'], only_failed?: (Scalars['Boolean'] | null)} })
     /** scheduleMatch */
@@ -65299,6 +65321,7 @@ export const enumClipRenderJobsSelectColumn = {
    last_status_at: 'last_status_at' as const,
    match_map_demo_id: 'match_map_demo_id' as const,
    match_map_id: 'match_map_id' as const,
+   paused: 'paused' as const,
    progress: 'progress' as const,
    session_token: 'session_token' as const,
    sort_index: 'sort_index' as const,
@@ -65306,6 +65329,14 @@ export const enumClipRenderJobsSelectColumn = {
    status: 'status' as const,
    status_history: 'status_history' as const,
    user_steam_id: 'user_steam_id' as const
+}
+
+export const enumClipRenderJobsSelectColumnClipRenderJobsAggregateBoolExpBoolAndArgumentsColumns = {
+   paused: 'paused' as const
+}
+
+export const enumClipRenderJobsSelectColumnClipRenderJobsAggregateBoolExpBoolOrArgumentsColumns = {
+   paused: 'paused' as const
 }
 
 export const enumClipRenderJobsUpdateColumn = {
@@ -65318,6 +65349,7 @@ export const enumClipRenderJobsUpdateColumn = {
    last_status_at: 'last_status_at' as const,
    match_map_demo_id: 'match_map_demo_id' as const,
    match_map_id: 'match_map_id' as const,
+   paused: 'paused' as const,
    progress: 'progress' as const,
    session_token: 'session_token' as const,
    sort_index: 'sort_index' as const,

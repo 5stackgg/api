@@ -1352,6 +1352,7 @@ type clip_render_jobs {
   match_map_demo: match_map_demos
   match_map_demo_id: uuid
   match_map_id: uuid!
+  paused: Boolean!
   progress: numeric
   session_token: String!
   sort_index: Int!
@@ -1379,7 +1380,23 @@ type clip_render_jobs_aggregate {
 }
 
 input clip_render_jobs_aggregate_bool_exp {
+  bool_and: clip_render_jobs_aggregate_bool_exp_bool_and
+  bool_or: clip_render_jobs_aggregate_bool_exp_bool_or
   count: clip_render_jobs_aggregate_bool_exp_count
+}
+
+input clip_render_jobs_aggregate_bool_exp_bool_and {
+  arguments: clip_render_jobs_select_column_clip_render_jobs_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: clip_render_jobs_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input clip_render_jobs_aggregate_bool_exp_bool_or {
+  arguments: clip_render_jobs_select_column_clip_render_jobs_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: clip_render_jobs_bool_exp
+  predicate: Boolean_comparison_exp!
 }
 
 input clip_render_jobs_aggregate_bool_exp_count {
@@ -1475,6 +1492,7 @@ input clip_render_jobs_bool_exp {
   match_map_demo: match_map_demos_bool_exp
   match_map_demo_id: uuid_comparison_exp
   match_map_id: uuid_comparison_exp
+  paused: Boolean_comparison_exp
   progress: numeric_comparison_exp
   session_token: String_comparison_exp
   sort_index: Int_comparison_exp
@@ -1545,6 +1563,7 @@ input clip_render_jobs_insert_input {
   match_map_demo: match_map_demos_obj_rel_insert_input
   match_map_demo_id: uuid
   match_map_id: uuid
+  paused: Boolean
   progress: numeric
   session_token: String
   sort_index: Int
@@ -1666,6 +1685,7 @@ input clip_render_jobs_order_by {
   match_map_demo: match_map_demos_order_by
   match_map_demo_id: order_by
   match_map_id: order_by
+  paused: order_by
   progress: order_by
   session_token: order_by
   sort_index: order_by
@@ -1719,6 +1739,9 @@ enum clip_render_jobs_select_column {
   match_map_id
 
   """column name"""
+  paused
+
+  """column name"""
   progress
 
   """column name"""
@@ -1741,6 +1764,22 @@ enum clip_render_jobs_select_column {
 }
 
 """
+select "clip_render_jobs_aggregate_bool_exp_bool_and_arguments_columns" columns of table "clip_render_jobs"
+"""
+enum clip_render_jobs_select_column_clip_render_jobs_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  paused
+}
+
+"""
+select "clip_render_jobs_aggregate_bool_exp_bool_or_arguments_columns" columns of table "clip_render_jobs"
+"""
+enum clip_render_jobs_select_column_clip_render_jobs_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  paused
+}
+
+"""
 input type for updating data in table "clip_render_jobs"
 """
 input clip_render_jobs_set_input {
@@ -1753,6 +1792,7 @@ input clip_render_jobs_set_input {
   last_status_at: timestamptz
   match_map_demo_id: uuid
   match_map_id: uuid
+  paused: Boolean
   progress: numeric
   session_token: String
   sort_index: Int
@@ -1832,6 +1872,7 @@ input clip_render_jobs_stream_cursor_value_input {
   last_status_at: timestamptz
   match_map_demo_id: uuid
   match_map_id: uuid
+  paused: Boolean
   progress: numeric
   session_token: String
   sort_index: Int
@@ -1887,6 +1928,9 @@ enum clip_render_jobs_update_column {
 
   """column name"""
   match_map_id
+
+  """column name"""
+  paused
 
   """column name"""
   progress
@@ -23625,6 +23669,11 @@ type mutation_root {
 
   """Move file or directory on game server"""
   moveServerItem(dest_path: String!, node_id: String!, server_id: String, source_path: String!): SuccessOutput
+
+  """
+  Flag in-flight clip_render_jobs paused; pod halts after current highlight.
+  """
+  pauseClipRenderBatch(match_map_id: uuid!): SuccessOutput
   randomizeTeams(match_id: uuid!): SuccessOutput
   rebootMatchServer(match_id: uuid!): SuccessOutput
 
@@ -23678,6 +23727,9 @@ type mutation_root {
   """
   requeueClipRender(job_id: uuid!): SuccessOutput
   restartService(service: String!): SuccessOutput
+
+  """Clear paused flag and re-enqueue remaining queued clip_render_jobs."""
+  resumeClipRenderBatch(match_map_id: uuid!): SuccessOutput
 
   """
   Delete terminal clip_render_jobs rows for a match_map (all or only failed/cancelled) and re-create them from their saved specs.

@@ -419,6 +419,7 @@ export class MatchAssistantService {
           servers: {
             __args: {
               limit: 1,
+              order_by: [{ game_server_node: { gpu: "asc_nulls_first" } }],
               where: {
                 connected: {
                   _eq: true,
@@ -580,6 +581,7 @@ export class MatchAssistantService {
             __args: {
               limit: 1,
               order_by: [
+                { game_server_node: { gpu: "asc_nulls_first" } },
                 {
                   updated_at: "asc",
                 },

@@ -1,8 +1,10 @@
 import { Controller, Get, UseGuards, Req, Res, Logger } from "@nestjs/common";
 import { Request, Response } from "express";
+import { Throttle } from "@nestjs/throttler";
 import { SteamGuard } from "./strategies/SteamGuard";
 import { HasuraAction } from "../hasura/hasura.controller";
 import { DiscordGuard } from "./strategies/DiscordGuard";
+import { ThrottlerBehindProxyGuard } from "./strategies/ThrottlerBehindProxyGuard";
 import { CacheService } from "../cache/cache.service";
 import { HasuraService } from "../hasura/hasura.service";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
@@ -10,6 +12,8 @@ import { ApiKeys } from "./ApiKeys";
 import { BadRequestException } from "@nestjs/common";
 import { User } from "./types/User";
 import { SocketsService } from "src/sockets/sockets.service";
+
+const AUTH_THROTTLE = { default: { limit: 10, ttl: 60 * 1000 } };
 
 @Controller("auth")
 export class AuthController {
@@ -21,25 +25,29 @@ export class AuthController {
     private readonly logger: Logger,
   ) {}
 
-  @UseGuards(SteamGuard)
+  @UseGuards(ThrottlerBehindProxyGuard, SteamGuard)
+  @Throttle(AUTH_THROTTLE)
   @Get("steam")
   public async steamLogin(@Req() request: Request, @Res() res: Response) {
     return res.redirect(request.session.redirect || "/");
   }
 
-  @UseGuards(SteamGuard)
+  @UseGuards(ThrottlerBehindProxyGuard, SteamGuard)
+  @Throttle(AUTH_THROTTLE)
   @Get("steam/callback")
   public steamCallback(@Req() request: Request, @Res() res: Response) {
     return res.redirect(request.session.redirect || "/");
   }
 
-  @UseGuards(DiscordGuard)
+  @UseGuards(ThrottlerBehindProxyGuard, DiscordGuard)
+  @Throttle(AUTH_THROTTLE)
   @Get("discord")
   public async linkDiscord(@Req() request: Request, @Res() res: Response) {
     return res.redirect(request.session.redirect || "/");
   }
 
-  @UseGuards(DiscordGuard)
+  @UseGuards(ThrottlerBehindProxyGuard, DiscordGuard)
+  @Throttle(AUTH_THROTTLE)
   @Get("discord/callback")
   public linkDiscordCallback(@Req() request: Request, @Res() res: Response) {
     return res.redirect(request.session.redirect || "/");

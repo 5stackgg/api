@@ -286,6 +286,276 @@ export class ClipsService {
     return cancelled;
   }
 
+  public async isRenderResumeLocked(): Promise<boolean> {
+    const { match_streams } = await this.hasura.query({
+      match_streams: {
+        __args: {
+          where: {
+            is_game_streamer: { _eq: true },
+            status: { _nin: ["errored"] },
+          },
+          limit: 1,
+        },
+        id: true,
+      },
+    });
+    if ((match_streams ?? []).length > 0) return true;
+
+    const { settings_by_pk } = await this.hasura.query({
+      settings_by_pk: {
+        __args: { name: "pause_renders_during_active_match" },
+        value: true,
+      },
+    });
+    if (settings_by_pk?.value !== "true") return false;
+
+    const { matches } = await this.hasura.query({
+      matches: {
+        __args: {
+          where: {
+            status: { _eq: "Live" },
+            server: {
+              game_server_node: {
+                gpu: { _eq: true },
+              },
+            },
+          },
+          limit: 1,
+        },
+        id: true,
+      },
+    });
+    return (matches ?? []).length > 0;
+  }
+
+  public async pauseInFlightBatchesOnNode(nodeId: string): Promise<number> {
+    const { clip_render_jobs } = await this.hasura.query({
+      clip_render_jobs: {
+        __args: {
+          where: {
+            game_server_node_id: { _eq: nodeId },
+            status: { _in: [...IN_FLIGHT_STATUSES] },
+            paused: { _eq: false },
+          },
+          distinct_on: ["match_map_id"],
+        },
+        match_map_id: true,
+      },
+    });
+    const matchMapIds = (clip_render_jobs ?? [])
+      .map((r) => (r?.match_map_id ? String(r.match_map_id) : null))
+      .filter((id): id is string => !!id);
+    let total = 0;
+    for (const matchMapId of matchMapIds) {
+      total += await this.pauseClipRenderBatch(matchMapId, nodeId);
+    }
+    return total;
+  }
+
+  public async pauseAllInFlightBatches(): Promise<number> {
+    const { clip_render_jobs } = await this.hasura.query({
+      clip_render_jobs: {
+        __args: {
+          where: {
+            status: { _in: [...IN_FLIGHT_STATUSES] },
+            paused: { _eq: false },
+          },
+          distinct_on: ["match_map_id"],
+        },
+        match_map_id: true,
+      },
+    });
+    const matchMapIds = (clip_render_jobs ?? [])
+      .map((r) => (r?.match_map_id ? String(r.match_map_id) : null))
+      .filter((id): id is string => !!id);
+    let total = 0;
+    for (const matchMapId of matchMapIds) {
+      total += await this.pauseClipRenderBatch(matchMapId);
+    }
+    return total;
+  }
+
+  public async pauseClipRenderBatch(
+    matchMapId: string,
+    nodeId?: string,
+  ): Promise<number> {
+    const nodeFilter = nodeId ? { game_server_node_id: { _eq: nodeId } } : {};
+
+    const { clip_render_jobs: inFlightRows } = await this.hasura.query({
+      clip_render_jobs: {
+        __args: {
+          where: {
+            match_map_id: { _eq: matchMapId },
+            status: { _in: [...IN_FLIGHT_STATUSES] },
+            ...nodeFilter,
+          },
+          distinct_on: ["match_map_demo_id"],
+        },
+        match_map_demo_id: true,
+      },
+    });
+    const demoIds = (inFlightRows ?? [])
+      .map((r) => (r?.match_map_demo_id ? String(r.match_map_demo_id) : null))
+      .filter((id): id is string => !!id);
+
+    const { update_clip_render_jobs } = await this.hasura.mutation({
+      update_clip_render_jobs: {
+        __args: {
+          where: {
+            match_map_id: { _eq: matchMapId },
+            status: { _in: [...IN_FLIGHT_STATUSES] },
+            ...nodeFilter,
+          },
+          _set: {
+            paused: true,
+            status: "queued",
+            game_server_node_id: null,
+          },
+        },
+        affected_rows: true,
+      },
+    });
+    const paused = (update_clip_render_jobs?.affected_rows as number) ?? 0;
+
+    try {
+      const queued = await this.batchQueue.getJobs([
+        "delayed",
+        "waiting",
+        "active",
+        "paused",
+      ]);
+      for (const q of queued) {
+        if (q.data?.matchMapId === matchMapId) {
+          await q.remove();
+        }
+      }
+    } catch (error) {
+      this.logger.warn(
+        `[pause-batch ${matchMapId}] BullMQ remove failed: ${(error as Error)?.message}`,
+      );
+    }
+
+    for (const demoId of demoIds) {
+      try {
+        await this.gameStreamer.killBatchHighlightsPod(matchMapId, demoId);
+      } catch (error) {
+        this.logger.warn(
+          `[pause-batch ${matchMapId} demo ${demoId}] pod kill failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
+
+    this.logger.log(
+      `[pause-batch ${matchMapId}] paused ${paused} row(s) across ${demoIds.length} demo(s), pod(s) torn down`,
+    );
+    return paused;
+  }
+
+  public async resumeClipRenderBatch(matchMapId: string): Promise<number> {
+    if (await this.isRenderResumeLocked()) {
+      this.logger.log(
+        `[resume-batch ${matchMapId}] skipped — render-resume locked by active match on GPU node`,
+      );
+      return 0;
+    }
+    const { update_clip_render_jobs } = await this.hasura.mutation({
+      update_clip_render_jobs: {
+        __args: {
+          where: {
+            match_map_id: { _eq: matchMapId },
+            paused: { _eq: true },
+          },
+          _set: {
+            paused: false,
+          },
+        },
+        affected_rows: true,
+      },
+    });
+    const cleared = (update_clip_render_jobs?.affected_rows as number) ?? 0;
+    if (cleared === 0) {
+      return 0;
+    }
+
+    const { clip_render_jobs } = await this.hasura.query({
+      clip_render_jobs: {
+        __args: {
+          where: {
+            match_map_id: { _eq: matchMapId },
+            status: { _eq: "queued" },
+          },
+          distinct_on: ["match_map_demo_id"],
+        },
+        match_map_demo_id: true,
+      },
+    });
+    const demoIds = (clip_render_jobs ?? [])
+      .map((r) => (r?.match_map_demo_id ? String(r.match_map_demo_id) : null))
+      .filter((id): id is string => !!id);
+
+    for (const matchMapDemoId of demoIds) {
+      try {
+        const existing = await this.batchQueue.getJobs([
+          "delayed",
+          "waiting",
+          "active",
+          "paused",
+        ]);
+        const alreadyEnqueued = existing.some(
+          (j) =>
+            j.name === BATCH_HIGHLIGHTS_JOB_NAME &&
+            j.data?.matchMapId === matchMapId &&
+            j.data?.matchMapDemoId === matchMapDemoId,
+        );
+        if (!alreadyEnqueued) {
+          await this.batchQueue.add(
+            BATCH_HIGHLIGHTS_JOB_NAME,
+            { matchMapId, matchMapDemoId },
+            { jobId: `${matchMapId}-${matchMapDemoId}-${Date.now()}` },
+          );
+        }
+      } catch (error) {
+        this.logger.warn(
+          `[resume-batch ${matchMapId}/${matchMapDemoId}] enqueue failed: ${(error as Error)?.message}`,
+        );
+      }
+    }
+
+    this.logger.log(
+      `[resume-batch ${matchMapId}] cleared paused on ${cleared} row(s), re-enqueued ${demoIds.length} demo(s)`,
+    );
+    return cleared;
+  }
+
+  public async resumeAllPausedBatches(): Promise<number> {
+    if (await this.isRenderResumeLocked()) {
+      this.logger.log(
+        `[resume-all] skipped — render-resume locked by active match(es) on GPU node(s)`,
+      );
+      return 0;
+    }
+    const { clip_render_jobs } = await this.hasura.query({
+      clip_render_jobs: {
+        __args: {
+          where: {
+            paused: { _eq: true },
+            status: { _eq: "queued" },
+          },
+          distinct_on: ["match_map_id"],
+        },
+        match_map_id: true,
+      },
+    });
+    const matchMapIds = (clip_render_jobs ?? [])
+      .map((r) => (r?.match_map_id ? String(r.match_map_id) : null))
+      .filter((id): id is string => !!id);
+    let total = 0;
+    for (const matchMapId of matchMapIds) {
+      total += await this.resumeClipRenderBatch(matchMapId);
+    }
+    return total;
+  }
+
   public async clearClipRenderBatch(matchMapId: string): Promise<number> {
     const { delete_clip_render_jobs } = await this.hasura.mutation({
       delete_clip_render_jobs: {
