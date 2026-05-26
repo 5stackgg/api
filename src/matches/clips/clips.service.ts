@@ -286,10 +286,6 @@ export class ClipsService {
     return cancelled;
   }
 
-  // Global lock — paused batches on node B will wait for unrelated
-  // activity on node A. Acceptable for our single-GPU-pool setup; if
-  // multi-GPU resume granularity ever matters, scope per-node by
-  // tracking which node each batch was paused on.
   public async isRenderResumeLocked(): Promise<boolean> {
     const { match_streams } = await this.hasura.query({
       match_streams: {
