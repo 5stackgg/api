@@ -1347,10 +1347,11 @@ export class GameStreamerService {
         mode: true,
       },
     });
-    const rows = (match_streams as Array<{
-      match_id: string;
-      mode: string | null;
-    }>) ?? [];
+    const rows =
+      (match_streams as Array<{
+        match_id: string;
+        mode: string | null;
+      }>) ?? [];
     const promoted: string[] = [];
     for (const row of rows) {
       const matchId = String(row.match_id);

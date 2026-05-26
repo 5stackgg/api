@@ -347,7 +347,7 @@ export class ClipsService {
       .filter((id): id is string => !!id);
     let total = 0;
     for (const matchMapId of matchMapIds) {
-      total += await this.pauseClipRenderBatch(matchMapId);
+      total += await this.pauseClipRenderBatch(matchMapId, nodeId);
     }
     return total;
   }
@@ -375,14 +375,20 @@ export class ClipsService {
     return total;
   }
 
-  public async pauseClipRenderBatch(matchMapId: string): Promise<number> {
+  public async pauseClipRenderBatch(
+    matchMapId: string,
+    nodeId?: string,
+  ): Promise<number> {
+    const nodeFilter = nodeId ? { game_server_node_id: { _eq: nodeId } } : {};
+
     const { clip_render_jobs: inFlightRows } = await this.hasura.query({
       clip_render_jobs: {
         __args: {
           where: {
             match_map_id: { _eq: matchMapId },
             status: { _in: [...IN_FLIGHT_STATUSES] },
-          },
+            ...nodeFilter,
+          } as any,
           distinct_on: ["match_map_demo_id"],
         },
         match_map_demo_id: true,
@@ -398,6 +404,7 @@ export class ClipsService {
           where: {
             match_map_id: { _eq: matchMapId },
             status: { _in: [...IN_FLIGHT_STATUSES] },
+            ...nodeFilter,
           } as any,
           _set: {
             paused: true,

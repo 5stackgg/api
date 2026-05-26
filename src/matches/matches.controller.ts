@@ -670,9 +670,8 @@ export class MatchesController {
       });
       if (game_server_nodes_by_pk?.gpu !== true) return;
 
-      const paused = await this.clips.pauseInFlightBatchesOnNode(
-        gameServerNodeId,
-      );
+      const paused =
+        await this.clips.pauseInFlightBatchesOnNode(gameServerNodeId);
       if (paused > 0) {
         this.logger.log(
           `[${matchId}] match Live on GPU node ${gameServerNodeId} — paused ${paused} render row(s) on that node`,
