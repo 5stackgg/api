@@ -75,8 +75,15 @@ export class SteamGuard extends AuthGuard("steam") {
   }
 
   private static isSafeRedirect(redirect: string, webDomain: string): boolean {
-    if (!redirect) return false;
-    if (redirect.startsWith("/") && !redirect.startsWith("//")) return true;
+    if (!redirect) {
+      return false;
+    }
+    if (process.env.DEV) {
+      return true;
+    }
+    if (redirect.startsWith("/") && !redirect.startsWith("//")) {
+      return true;
+    }
     try {
       return new URL(redirect).origin === new URL(webDomain).origin;
     } catch {
