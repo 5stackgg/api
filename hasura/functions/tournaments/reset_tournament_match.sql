@@ -51,8 +51,8 @@ DECLARE
     source_tournament_id uuid;
     feeder record;
 BEGIN
-    IF _reset_status NOT IN ('Setup', 'Scheduled', 'WaitingForCheckIn') THEN
-        RAISE EXCEPTION 'reset status must be Setup, Scheduled, or WaitingForCheckIn' USING ERRCODE = '22000';
+    IF _reset_status NOT IN ('Scheduled', 'WaitingForCheckIn') THEN
+        RAISE EXCEPTION 'reset status must be Scheduled or WaitingForCheckIn' USING ERRCODE = '22000';
     END IF;
 
     SELECT tb.*
@@ -183,8 +183,11 @@ BEGIN
     WHERE tb.id = dc.id;
 
     UPDATE matches
-    SET winning_lineup_id = NULL,
-        status = _reset_status,
+    SET winning_lineup_id = _new_winning_lineup_id,
+        status = CASE
+            WHEN _new_winning_lineup_id IS NOT NULL THEN 'Finished'
+            ELSE _reset_status
+        END,
         scheduled_at = CASE
             WHEN _new_winning_lineup_id IS NULL AND _reset_status = 'Scheduled' THEN _scheduled_at
             ELSE NULL
@@ -193,12 +196,6 @@ BEGIN
         ended_at = NULL,
         cancels_at = NULL
     WHERE id = _match_id;
-
-    IF _new_winning_lineup_id IS NOT NULL THEN
-        UPDATE matches
-        SET winning_lineup_id = _new_winning_lineup_id
-        WHERE id = _match_id;
-    END IF;
 
     IF source_tournament_id IS NOT NULL THEN
         UPDATE tournaments

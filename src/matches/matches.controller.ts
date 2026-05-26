@@ -1552,13 +1552,9 @@ export class MatchesController {
     const resolvedScheduledAt =
       scheduled_at && scheduled_at.trim().length > 0 ? scheduled_at : null;
     const resolvedResetStatus =
-      reset_status === "Scheduled"
-        ? resolvedScheduledAt
-          ? "Scheduled"
-          : "WaitingForCheckIn"
-        : reset_status === "WaitingForCheckIn"
-          ? "WaitingForCheckIn"
-          : "Setup";
+      reset_status === "Scheduled" && resolvedScheduledAt
+        ? "Scheduled"
+        : "WaitingForCheckIn";
 
     await this.postgres.query(
       `SELECT * FROM reset_tournament_match($1::uuid, NULLIF($2::text, '')::uuid, $3::text, $4::timestamptz)`,
