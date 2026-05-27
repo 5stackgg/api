@@ -8,6 +8,7 @@ import hasura from "./hasura";
 import gameServers from "./game-servers";
 import typesense from "./typesense";
 import tailscale from "./tailscale";
+import faceit from "./faceit";
 
 export default [
   app,
@@ -20,4 +21,5 @@ export default [
   steam,
   typesense,
   tailscale,
+  faceit,
 ];

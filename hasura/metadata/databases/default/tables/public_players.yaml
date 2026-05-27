@@ -356,6 +356,12 @@ select_permissions:
         - avatar_url
         - country
         - custom_avatar_url
+        - faceit_elo
+        - faceit_nickname
+        - faceit_player_id
+        - faceit_skill_level
+        - faceit_updated_at
+        - faceit_url
         - language
         - name
         - name_registered
@@ -389,6 +395,12 @@ select_permissions:
         - avatar_url
         - country
         - custom_avatar_url
+        - faceit_elo
+        - faceit_nickname
+        - faceit_player_id
+        - faceit_skill_level
+        - faceit_updated_at
+        - faceit_url
         - language
         - last_sign_in_at
         - name
@@ -425,6 +437,12 @@ select_permissions:
         - avatar_url
         - country
         - custom_avatar_url
+        - faceit_elo
+        - faceit_nickname
+        - faceit_player_id
+        - faceit_skill_level
+        - faceit_updated_at
+        - faceit_url
         - language
         - name
         - name_registered

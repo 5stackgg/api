@@ -53649,6 +53649,24 @@ export default {
                     ]
                 }
             ],
+            "faceit_elo": [
+                30
+            ],
+            "faceit_nickname": [
+                48
+            ],
+            "faceit_player_id": [
+                48
+            ],
+            "faceit_skill_level": [
+                30
+            ],
+            "faceit_updated_at": [
+                2502
+            ],
+            "faceit_url": [
+                48
+            ],
             "flashed_by_players": [
                 1806,
                 {
@@ -54895,6 +54913,12 @@ export default {
             ]
         },
         "players_avg_fields": {
+            "faceit_elo": [
+                22
+            ],
+            "faceit_skill_level": [
+                22
+            ],
             "losses": [
                 30
             ],
@@ -55007,6 +55031,24 @@ export default {
             ],
             "elo_history_aggregate": [
                 2981
+            ],
+            "faceit_elo": [
+                31
+            ],
+            "faceit_nickname": [
+                50
+            ],
+            "faceit_player_id": [
+                50
+            ],
+            "faceit_skill_level": [
+                31
+            ],
+            "faceit_updated_at": [
+                2503
+            ],
+            "faceit_url": [
+                50
             ],
             "flashed_by_players": [
                 1817
@@ -55242,6 +55284,12 @@ export default {
         },
         "players_constraint": {},
         "players_inc_input": {
+            "faceit_elo": [
+                30
+            ],
+            "faceit_skill_level": [
+                30
+            ],
             "steam_id": [
                 147
             ],
@@ -55288,6 +55336,24 @@ export default {
             ],
             "elo_history": [
                 2995
+            ],
+            "faceit_elo": [
+                30
+            ],
+            "faceit_nickname": [
+                48
+            ],
+            "faceit_player_id": [
+                48
+            ],
+            "faceit_skill_level": [
+                30
+            ],
+            "faceit_updated_at": [
+                2502
+            ],
+            "faceit_url": [
+                48
             ],
             "flashed_by_players": [
                 1814
@@ -55414,6 +55480,24 @@ export default {
             "discord_id": [
                 48
             ],
+            "faceit_elo": [
+                30
+            ],
+            "faceit_nickname": [
+                48
+            ],
+            "faceit_player_id": [
+                48
+            ],
+            "faceit_skill_level": [
+                30
+            ],
+            "faceit_updated_at": [
+                2502
+            ],
+            "faceit_url": [
+                48
+            ],
             "language": [
                 48
             ],
@@ -55483,6 +55567,24 @@ export default {
                 48
             ],
             "discord_id": [
+                48
+            ],
+            "faceit_elo": [
+                30
+            ],
+            "faceit_nickname": [
+                48
+            ],
+            "faceit_player_id": [
+                48
+            ],
+            "faceit_skill_level": [
+                30
+            ],
+            "faceit_updated_at": [
+                2502
+            ],
+            "faceit_url": [
                 48
             ],
             "language": [
@@ -55618,6 +55720,24 @@ export default {
             ],
             "elo_history_aggregate": [
                 2994
+            ],
+            "faceit_elo": [
+                1665
+            ],
+            "faceit_nickname": [
+                1665
+            ],
+            "faceit_player_id": [
+                1665
+            ],
+            "faceit_skill_level": [
+                1665
+            ],
+            "faceit_updated_at": [
+                1665
+            ],
+            "faceit_url": [
+                1665
             ],
             "flashed_by_players_aggregate": [
                 1813
@@ -55804,6 +55924,24 @@ export default {
             "discord_id": [
                 48
             ],
+            "faceit_elo": [
+                30
+            ],
+            "faceit_nickname": [
+                48
+            ],
+            "faceit_player_id": [
+                48
+            ],
+            "faceit_skill_level": [
+                30
+            ],
+            "faceit_updated_at": [
+                2502
+            ],
+            "faceit_url": [
+                48
+            ],
             "language": [
                 48
             ],
@@ -55836,6 +55974,12 @@ export default {
             ]
         },
         "players_stddev_fields": {
+            "faceit_elo": [
+                22
+            ],
+            "faceit_skill_level": [
+                22
+            ],
             "losses": [
                 30
             ],
@@ -55871,6 +56015,12 @@ export default {
             ]
         },
         "players_stddev_pop_fields": {
+            "faceit_elo": [
+                22
+            ],
+            "faceit_skill_level": [
+                22
+            ],
             "losses": [
                 30
             ],
@@ -55906,6 +56056,12 @@ export default {
             ]
         },
         "players_stddev_samp_fields": {
+            "faceit_elo": [
+                22
+            ],
+            "faceit_skill_level": [
+                22
+            ],
             "losses": [
                 30
             ],
@@ -55967,6 +56123,24 @@ export default {
             "discord_id": [
                 48
             ],
+            "faceit_elo": [
+                30
+            ],
+            "faceit_nickname": [
+                48
+            ],
+            "faceit_player_id": [
+                48
+            ],
+            "faceit_skill_level": [
+                30
+            ],
+            "faceit_updated_at": [
+                2502
+            ],
+            "faceit_url": [
+                48
+            ],
             "language": [
                 48
             ],
@@ -55999,6 +56173,12 @@ export default {
             ]
         },
         "players_sum_fields": {
+            "faceit_elo": [
+                30
+            ],
+            "faceit_skill_level": [
+                30
+            ],
             "losses": [
                 30
             ],
@@ -56049,6 +56229,12 @@ export default {
             ]
         },
         "players_var_pop_fields": {
+            "faceit_elo": [
+                22
+            ],
+            "faceit_skill_level": [
+                22
+            ],
             "losses": [
                 30
             ],
@@ -56084,6 +56270,12 @@ export default {
             ]
         },
         "players_var_samp_fields": {
+            "faceit_elo": [
+                22
+            ],
+            "faceit_skill_level": [
+                22
+            ],
             "losses": [
                 30
             ],
@@ -56119,6 +56311,12 @@ export default {
             ]
         },
         "players_variance_fields": {
+            "faceit_elo": [
+                22
+            ],
+            "faceit_skill_level": [
+                22
+            ],
             "losses": [
                 30
             ],
@@ -89711,6 +89909,15 @@ export default {
             ],
             "refreshAllPlayers": [
                 51
+            ],
+            "refreshFaceitRank": [
+                51,
+                {
+                    "steam_id": [
+                        48,
+                        "String!"
+                    ]
+                }
             ],
             "registerName": [
                 51,

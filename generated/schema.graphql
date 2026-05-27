@@ -23705,6 +23705,7 @@ type mutation_root {
 
   """Refresh all players in Typesense index"""
   refreshAllPlayers: SuccessOutput
+  refreshFaceitRank(steam_id: String!): SuccessOutput
   registerName(name: String!): SuccessOutput
 
   """Remove dev fixture data (dev only)"""
@@ -39135,6 +39136,12 @@ type players {
     """filter the rows returned"""
     where: v_player_elo_bool_exp
   ): v_player_elo_aggregate!
+  faceit_elo: Int
+  faceit_nickname: String
+  faceit_player_id: String
+  faceit_skill_level: Int
+  faceit_updated_at: timestamptz
+  faceit_url: String
 
   """An array relationship"""
   flashed_by_players(
@@ -40163,6 +40170,9 @@ type players_aggregate_fields {
 
 """aggregate avg on columns"""
 type players_avg_fields {
+  faceit_elo: Float
+  faceit_skill_level: Float
+
   """
   A computed field, executes function "get_total_player_losses"
   """
@@ -40240,6 +40250,12 @@ input players_bool_exp {
   elo: jsonb_comparison_exp
   elo_history: v_player_elo_bool_exp
   elo_history_aggregate: v_player_elo_aggregate_bool_exp
+  faceit_elo: Int_comparison_exp
+  faceit_nickname: String_comparison_exp
+  faceit_player_id: String_comparison_exp
+  faceit_skill_level: Int_comparison_exp
+  faceit_updated_at: timestamptz_comparison_exp
+  faceit_url: String_comparison_exp
   flashed_by_players: player_flashes_bool_exp
   flashed_by_players_aggregate: player_flashes_aggregate_bool_exp
   flashed_players: player_flashes_bool_exp
@@ -40342,6 +40358,8 @@ enum players_constraint {
 input type for incrementing numeric columns in table "players"
 """
 input players_inc_input {
+  faceit_elo: Int
+  faceit_skill_level: Int
   steam_id: bigint
 }
 
@@ -40362,6 +40380,12 @@ input players_insert_input {
   deaths: player_kills_arr_rel_insert_input
   discord_id: String
   elo_history: v_player_elo_arr_rel_insert_input
+  faceit_elo: Int
+  faceit_nickname: String
+  faceit_player_id: String
+  faceit_skill_level: Int
+  faceit_updated_at: timestamptz
+  faceit_url: String
   flashed_by_players: player_flashes_arr_rel_insert_input
   flashed_players: player_flashes_arr_rel_insert_input
   friends: my_friends_arr_rel_insert_input
@@ -40410,6 +40434,12 @@ type players_max_fields {
   current_lobby_id: uuid
   custom_avatar_url: String
   discord_id: String
+  faceit_elo: Int
+  faceit_nickname: String
+  faceit_player_id: String
+  faceit_skill_level: Int
+  faceit_updated_at: timestamptz
+  faceit_url: String
   language: String
   last_sign_in_at: timestamptz
 
@@ -40480,6 +40510,12 @@ type players_min_fields {
   current_lobby_id: uuid
   custom_avatar_url: String
   discord_id: String
+  faceit_elo: Int
+  faceit_nickname: String
+  faceit_player_id: String
+  faceit_skill_level: Int
+  faceit_updated_at: timestamptz
+  faceit_url: String
   language: String
   last_sign_in_at: timestamptz
 
@@ -40585,6 +40621,12 @@ input players_order_by {
   discord_id: order_by
   elo: order_by
   elo_history_aggregate: v_player_elo_aggregate_order_by
+  faceit_elo: order_by
+  faceit_nickname: order_by
+  faceit_player_id: order_by
+  faceit_skill_level: order_by
+  faceit_updated_at: order_by
+  faceit_url: order_by
   flashed_by_players_aggregate: player_flashes_aggregate_order_by
   flashed_players_aggregate: player_flashes_aggregate_order_by
   friends_aggregate: my_friends_aggregate_order_by
@@ -40664,6 +40706,24 @@ enum players_select_column {
   discord_id
 
   """column name"""
+  faceit_elo
+
+  """column name"""
+  faceit_nickname
+
+  """column name"""
+  faceit_player_id
+
+  """column name"""
+  faceit_skill_level
+
+  """column name"""
+  faceit_updated_at
+
+  """column name"""
+  faceit_url
+
+  """column name"""
   language
 
   """column name"""
@@ -40700,6 +40760,12 @@ input players_set_input {
   created_at: timestamptz
   custom_avatar_url: String
   discord_id: String
+  faceit_elo: Int
+  faceit_nickname: String
+  faceit_player_id: String
+  faceit_skill_level: Int
+  faceit_updated_at: timestamptz
+  faceit_url: String
   language: String
   last_sign_in_at: timestamptz
   name: String
@@ -40713,6 +40779,9 @@ input players_set_input {
 
 """aggregate stddev on columns"""
 type players_stddev_fields {
+  faceit_elo: Float
+  faceit_skill_level: Float
+
   """
   A computed field, executes function "get_total_player_losses"
   """
@@ -40762,6 +40831,9 @@ type players_stddev_fields {
 
 """aggregate stddev_pop on columns"""
 type players_stddev_pop_fields {
+  faceit_elo: Float
+  faceit_skill_level: Float
+
   """
   A computed field, executes function "get_total_player_losses"
   """
@@ -40811,6 +40883,9 @@ type players_stddev_pop_fields {
 
 """aggregate stddev_samp on columns"""
 type players_stddev_samp_fields {
+  faceit_elo: Float
+  faceit_skill_level: Float
+
   """
   A computed field, executes function "get_total_player_losses"
   """
@@ -40876,6 +40951,12 @@ input players_stream_cursor_value_input {
   created_at: timestamptz
   custom_avatar_url: String
   discord_id: String
+  faceit_elo: Int
+  faceit_nickname: String
+  faceit_player_id: String
+  faceit_skill_level: Int
+  faceit_updated_at: timestamptz
+  faceit_url: String
   language: String
   last_sign_in_at: timestamptz
   name: String
@@ -40889,6 +40970,9 @@ input players_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type players_sum_fields {
+  faceit_elo: Int
+  faceit_skill_level: Int
+
   """
   A computed field, executes function "get_total_player_losses"
   """
@@ -40956,6 +41040,24 @@ enum players_update_column {
   discord_id
 
   """column name"""
+  faceit_elo
+
+  """column name"""
+  faceit_nickname
+
+  """column name"""
+  faceit_player_id
+
+  """column name"""
+  faceit_skill_level
+
+  """column name"""
+  faceit_updated_at
+
+  """column name"""
+  faceit_url
+
+  """column name"""
   language
 
   """column name"""
@@ -40996,6 +41098,9 @@ input players_updates {
 
 """aggregate var_pop on columns"""
 type players_var_pop_fields {
+  faceit_elo: Float
+  faceit_skill_level: Float
+
   """
   A computed field, executes function "get_total_player_losses"
   """
@@ -41045,6 +41150,9 @@ type players_var_pop_fields {
 
 """aggregate var_samp on columns"""
 type players_var_samp_fields {
+  faceit_elo: Float
+  faceit_skill_level: Float
+
   """
   A computed field, executes function "get_total_player_losses"
   """
@@ -41094,6 +41202,9 @@ type players_var_samp_fields {
 
 """aggregate variance on columns"""
 type players_variance_fields {
+  faceit_elo: Float
+  faceit_skill_level: Float
+
   """
   A computed field, executes function "get_total_player_losses"
   """
