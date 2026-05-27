@@ -540,6 +540,10 @@ type Mutation {
   syncSteamFriends: SuccessOutput
 }
 
+type Mutation {
+  refreshFaceitRank(steam_id: String!): SuccessOutput
+}
+
 type Query {
   telemetryStats: TelemetryStats!
 }

@@ -46,6 +46,7 @@ import { AvatarsModule } from "./avatars/avatars.module";
 import { TrophiesModule } from "./trophies/trophies.module";
 import { FixturesModule } from "./fixtures/fixtures.module";
 import { TournamentsModule } from "./tournaments/tournaments.module";
+import { FaceitModule } from "./faceit/faceit.module";
 
 @Module({
   imports: [
@@ -132,6 +133,7 @@ import { TournamentsModule } from "./tournaments/tournaments.module";
     TrophiesModule,
     FixturesModule,
     TournamentsModule,
+    FaceitModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],
