@@ -12,6 +12,7 @@ import { Redis } from "ioredis";
 import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";
 import { S3Service } from "../../s3/s3.service";
+import { DemoMetadataService } from "../../demos/demo-metadata.service";
 import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
 import { timingSafeStringEqual } from "../../utilities/timingSafeStringEqual";
 import { GameServersConfig } from "../../configs/types/GameServersConfig";
@@ -93,6 +94,26 @@ export class NoGpuAvailableError extends Error {
   }
 }
 
+export class NoSteamAccountAvailableError extends Error {
+  constructor(
+    message = "no Steam account available — add more accounts to the pool",
+  ) {
+    super(message);
+    this.name = "NoSteamAccountAvailableError";
+  }
+}
+
+export type ClaimedSteamAccount = {
+  id: string;
+  username: string;
+  password: string;
+};
+
+export type GpuClaim = {
+  nodeId: string;
+  steamAccount: ClaimedSteamAccount;
+};
+
 @Injectable()
 export class GameStreamerService {
   private readonly namespace: string;
@@ -108,6 +129,7 @@ export class GameStreamerService {
     private readonly postgres: PostgresService,
     private readonly s3: S3Service,
     private readonly redisManager: RedisManagerService,
+    private readonly demoMetadata: DemoMetadataService,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
     this.appConfig = this.config.get<AppConfig>("app");
@@ -683,13 +705,14 @@ export class GameStreamerService {
       },
     });
 
-    let nodeId: string;
+    let claim: GpuClaim;
     try {
-      nodeId = await this.claimGpuForDemoSession(sessionId);
+      claim = await this.claimGpuForDemoSession(sessionId);
     } catch (error) {
       await this.stopDemoSessionById(sessionId, jobName);
       throw error;
     }
+    const { nodeId, steamAccount } = claim;
 
     await this.deleteJob(jobName);
 
@@ -737,9 +760,15 @@ export class GameStreamerService {
 
     await batch.createNamespacedJob({
       namespace: this.namespace,
-      body: this.buildJobSpec(jobName, matchId, "demo", nodeId, env, {
-        "session-id": sessionId,
-      }),
+      body: this.buildJobSpec(
+        jobName,
+        matchId,
+        "demo",
+        nodeId,
+        env,
+        { "session-id": sessionId },
+        steamAccount,
+      ),
     });
 
     await this.createDemoService(sessionId);
@@ -1266,13 +1295,14 @@ export class GameStreamerService {
 
     const usePlaycast = await this.readUsePlaycast();
 
-    const nodeId = await this.claimGpuForLive(matchId, mode);
-    if (nodeId === null) {
+    const claim = await this.claimGpuForLive(matchId, mode);
+    if (claim === null) {
       this.logger.log(
         `[${matchId}] no GPU free — match_streams row inserted as pending`,
       );
       return { status: "pending" };
     }
+    const { nodeId, steamAccount } = claim;
 
     const connectEnv = await this.buildConnectEnv(
       matchId,
@@ -1314,11 +1344,15 @@ export class GameStreamerService {
     try {
       await batch.createNamespacedJob({
         namespace: this.namespace,
-        body: this.buildJobSpec(jobName, matchId, "live", nodeId, [
-          ...connectEnv,
-          ...reporterEnv,
-          ...nodeCs2Env,
-        ]),
+        body: this.buildJobSpec(
+          jobName,
+          matchId,
+          "live",
+          nodeId,
+          [...connectEnv, ...reporterEnv, ...nodeCs2Env],
+          {},
+          steamAccount,
+        ),
       });
     } catch (error) {
       await this.unregisterStreamRow(matchId);
@@ -1473,6 +1507,7 @@ export class GameStreamerService {
               error_message: "cancelled by operator (gpu node)",
               last_status_at: "now()",
               game_server_node_id: null,
+              steam_account_id: null,
             },
           },
           affected_rows: true,
@@ -1491,6 +1526,60 @@ export class GameStreamerService {
       stopped_demo_sessions: stoppedDemoSessions,
       cancelled_render_jobs: cancelledRenderJobs,
     };
+  }
+
+  public async clearSteamCache(nodeId: string): Promise<void> {
+    const busy = (await this.postgres.query<{ n: number }[]>(
+      `SELECT (
+         (SELECT count(*) FROM match_streams
+            WHERE is_game_streamer = true
+              AND status IS DISTINCT FROM 'errored'
+              AND game_server_node_id = $1)
+         + (SELECT count(*) FROM match_demo_sessions
+            WHERE status IS DISTINCT FROM 'errored'
+              AND game_server_node_id = $1)
+         + (SELECT count(*) FROM clip_render_jobs
+            WHERE status IN ('queued','rendering','uploading')
+              AND game_server_node_id = $1)
+       )::int AS n`,
+      [nodeId],
+    )) as Array<{ n: number }>;
+    if ((busy?.[0]?.n ?? 0) > 0) {
+      throw new Error(
+        "node is busy — stop the live/demo/render session before clearing the Steam cache",
+      );
+    }
+
+    const { game_server_nodes_by_pk } = await this.hasura.query({
+      game_server_nodes_by_pk: {
+        __args: { id: nodeId },
+        node_ip: true,
+      },
+    });
+    const nodeIp = game_server_nodes_by_pk?.node_ip;
+    if (!nodeIp) {
+      throw new Error(`node ${nodeId} has no node_ip — is the connector up?`);
+    }
+
+    const res = await fetch(
+      `http://${nodeIp}:8585/game-streamer/clear-steam-cache`,
+      { method: "POST" },
+    );
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(
+        `node connector ${nodeIp} returned ${res.status} clearing steam cache: ${body}`,
+      );
+    }
+    const json = (await res.json().catch(() => ({}))) as { removed?: number };
+
+    await this.postgres.query(
+      `UPDATE steam_accounts SET last_node_id = NULL WHERE last_node_id = $1`,
+      [nodeId],
+    );
+    this.logger.log(
+      `[clearSteamCache ${nodeId}] cleared ${json?.removed ?? 0} entries via connector ${nodeIp}`,
+    );
   }
 
   public async stopLive(matchId: string) {
@@ -1901,14 +1990,13 @@ export class GameStreamerService {
     const matchId = String(demo.match_id);
     const resolvedDemoId = String(demo.id);
 
-    const presignedDemoUrl = await this.s3.getPresignedUrl(
-      demo.file as string,
-      undefined,
+    const demoFile = demo.file as string;
+    const presignedDemoUrl = await this.demoMetadata.resolveDemoFetchUrl(
+      demoFile,
       60 * 60,
-      "get",
     );
 
-    const nodeId = await this.claimGpuForBatchHighlights(
+    const { nodeId, steamAccount } = await this.claimGpuForBatchHighlights(
       matchMapId,
       resolvedDemoId,
     );
@@ -2021,12 +2109,14 @@ export class GameStreamerService {
             "match-map-id": matchMapId,
             "match-map-demo-id": resolvedDemoId,
           },
+          steamAccount,
         ),
       });
     } catch (error) {
       await this.postgres.query(
         `UPDATE clip_render_jobs
-            SET game_server_node_id = NULL
+            SET game_server_node_id = NULL,
+                steam_account_id = NULL
           WHERE match_map_id = $1
             AND match_map_demo_id = $2
             AND status IN ('queued','rendering','uploading')`,
@@ -2047,10 +2137,44 @@ export class GameStreamerService {
     return settings_by_pk?.value === "true";
   }
 
+  private async claimSteamAccountForRow(
+    client: { query: (sql: string, params?: unknown[]) => Promise<any> },
+    tableName: "match_streams" | "match_demo_sessions" | "clip_render_jobs",
+    nodeId: string,
+    rowFilterSql: string,
+    rowFilterParams: unknown[],
+  ): Promise<ClaimedSteamAccount> {
+    const nodeParamIndex = rowFilterParams.length + 1;
+    const result = await client.query(
+      `WITH chosen AS (SELECT claim_free_steam_account($${nodeParamIndex}) AS id),
+            applied AS (
+              UPDATE ${tableName}
+                 SET steam_account_id = chosen.id
+                FROM chosen
+               WHERE ${rowFilterSql}
+                 AND chosen.id IS NOT NULL
+              RETURNING ${tableName}.steam_account_id
+            )
+       SELECT sa.id, sa.username, sa.password
+         FROM applied
+         JOIN steam_accounts sa ON sa.id = applied.steam_account_id`,
+      [...rowFilterParams, nodeId],
+    );
+    const row = result.rows[0];
+    if (!row?.id) {
+      throw new NoSteamAccountAvailableError();
+    }
+    return {
+      id: String(row.id),
+      username: String(row.username),
+      password: String(row.password),
+    };
+  }
+
   private async claimGpuForLive(
     matchId: string,
     mode: "live" | "tv",
-  ): Promise<string | null> {
+  ): Promise<GpuClaim | null> {
     const link = `${this.appConfig.gameStreamDomain}/${matchId}/`;
     const nowIso = new Date().toISOString();
     const bootingHistory = JSON.stringify([{ status: "booting", at: nowIso }]);
@@ -2074,12 +2198,22 @@ export class GameStreamerService {
                 chosen.id, $6
            FROM chosen
           WHERE chosen.id IS NOT NULL
-         RETURNING game_server_node_id`,
+         RETURNING id, game_server_node_id`,
         [matchId, GAME_STREAMER_TITLE, link, mode, bootingHistory, serviceName],
       );
 
-      const nodeId = result.rows[0]?.game_server_node_id as string | undefined;
-      if (nodeId) return nodeId;
+      const streamRow = result.rows[0];
+      const nodeId = streamRow?.game_server_node_id as string | undefined;
+      if (nodeId) {
+        const steamAccount = await this.claimSteamAccountForRow(
+          client,
+          "match_streams",
+          nodeId,
+          "match_streams.id = $1 AND match_streams.steam_account_id IS NULL",
+          [streamRow.id],
+        );
+        return { nodeId, steamAccount };
+      }
 
       const { rows: gpuRows } = await client.query(
         `SELECT count(*)::int AS n
@@ -2103,7 +2237,7 @@ export class GameStreamerService {
     });
   }
 
-  private async claimGpuForDemoSession(sessionId: string): Promise<string> {
+  private async claimGpuForDemoSession(sessionId: string): Promise<GpuClaim> {
     return this.postgres.transaction(async (client) => {
       const result = await client.query(
         `WITH chosen AS (SELECT claim_free_gpu_node() AS id)
@@ -2121,14 +2255,21 @@ export class GameStreamerService {
       if (!nodeId) {
         throw new NoGpuAvailableError();
       }
-      return nodeId;
+      const steamAccount = await this.claimSteamAccountForRow(
+        client,
+        "match_demo_sessions",
+        nodeId,
+        "match_demo_sessions.id = $1 AND match_demo_sessions.steam_account_id IS NULL",
+        [sessionId],
+      );
+      return { nodeId, steamAccount };
     });
   }
 
   private async claimGpuForBatchHighlights(
     matchMapId: string,
     matchMapDemoId: string,
-  ): Promise<string> {
+  ): Promise<GpuClaim> {
     return this.postgres.transaction(async (client) => {
       const result = await client.query(
         `WITH chosen AS (SELECT claim_free_gpu_node_for_batch() AS id)
@@ -2148,7 +2289,14 @@ export class GameStreamerService {
       if (!nodeId) {
         throw new NoGpuAvailableError();
       }
-      return nodeId;
+      const steamAccount = await this.claimSteamAccountForRow(
+        client,
+        "clip_render_jobs",
+        nodeId,
+        "clip_render_jobs.match_map_id = $1 AND clip_render_jobs.match_map_demo_id = $2 AND clip_render_jobs.status IN ('queued','rendering','uploading') AND clip_render_jobs.steam_account_id IS NULL",
+        [matchMapId, matchMapDemoId],
+      );
+      return { nodeId, steamAccount };
     });
   }
 
@@ -2502,7 +2650,11 @@ export class GameStreamerService {
     nodeId: string,
     extraEnv: V1EnvVar[],
     extraLabels: Record<string, string> = {},
+    steamAccount: ClaimedSteamAccount | null = null,
   ): V1Job {
+    const steamUser = steamAccount?.username ?? this.steamConfig.steamUser;
+    const steamPassword =
+      steamAccount?.password ?? this.steamConfig.steamPassword;
     const containerName =
       mode === "create-clips"
         ? "clips"
@@ -2606,26 +2758,11 @@ export class GameStreamerService {
                         },
                       ]
                     : []),
-                  // Steam credentials inlined from the API's own config
-                  // rather than mounting a `steam-secrets` K8s Secret —
-                  // matches game-server-node.service.ts (line ~519). The
-                  // pod requires both vars; setup-steam.sh aborts without
-                  // them via `require_env STEAM_USER STEAM_PASSWORD`.
-                  ...(this.steamConfig.steamUser
-                    ? [
-                        {
-                          name: "STEAM_USER",
-                          value: this.steamConfig.steamUser,
-                        },
-                      ]
+                  ...(steamUser
+                    ? [{ name: "STEAM_USER", value: steamUser }]
                     : []),
-                  ...(this.steamConfig.steamPassword
-                    ? [
-                        {
-                          name: "STEAM_PASSWORD",
-                          value: this.steamConfig.steamPassword,
-                        },
-                      ]
+                  ...(steamPassword
+                    ? [{ name: "STEAM_PASSWORD", value: steamPassword }]
                     : []),
                   ...extraEnv,
                 ],

@@ -1,0 +1,14 @@
+table:
+  name: v_steam_account_pool_status
+  schema: public
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - total_accounts
+        - free_accounts
+        - busy_accounts
+        - registered_accounts
+      filter: {}
+    comment: ""

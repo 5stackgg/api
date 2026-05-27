@@ -7,8 +7,17 @@ DECLARE
     filenames text[];
     demos_domain text;
 BEGIN
-    SELECT value INTO worker_url 
-    FROM settings 
+    IF EXISTS (
+        SELECT 1
+          FROM public.match_map_demos d
+         WHERE d.match_map_id = match_map.id
+           AND d.file ~* '^https?://'
+    ) THEN
+        RETURN NULL;
+    END IF;
+
+    SELECT value INTO worker_url
+    FROM settings
     WHERE name = 'cloudflare_worker_url';
 
     IF worker_url IS NOT NULL THEN

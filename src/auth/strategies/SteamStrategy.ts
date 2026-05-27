@@ -1,4 +1,5 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
 import { Strategy as _SteamStrategy } from "passport-steam";
 import { PassportStrategy } from "@nestjs/passport";
 import { HasuraService } from "../../hasura/hasura.service";
@@ -7,6 +8,7 @@ import { AppConfig } from "../../configs/types/AppConfig";
 import { ConfigService } from "@nestjs/config";
 import { SteamConfig } from "../../configs/types/SteamConfig";
 import { CacheService } from "../../cache/cache.service";
+import { SteamMatchHistoryService } from "../../steam-match-history/steam-match-history.service";
 import { e_player_roles_enum } from "../../../generated";
 
 interface SteamProfile {
@@ -38,6 +40,8 @@ export class SteamStrategy extends PassportStrategy(_SteamStrategy) {
     readonly config: ConfigService,
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
+    private readonly moduleRef: ModuleRef,
+    private readonly logger: Logger,
   ) {
     const webDomain = config.get<AppConfig>("app").webDomain;
 
@@ -97,6 +101,23 @@ export class SteamStrategy extends PassportStrategy(_SteamStrategy) {
       },
     });
 
+    this.fireRefreshes(profile._json.steamid);
+
     done(null, insert_players_one);
+  }
+
+  private fireRefreshes(steamId: string): void {
+    void (async () => {
+      try {
+        const service = this.moduleRef.get(SteamMatchHistoryService, {
+          strict: false,
+        });
+        await service.pollForUser(steamId);
+      } catch (err) {
+        this.logger.error(
+          `on-login match-history poll failed for ${steamId}: ${(err as Error)?.message ?? err}`,
+        );
+      }
+    })();
   }
 }

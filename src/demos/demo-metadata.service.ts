@@ -30,6 +30,20 @@ export class DemoMetadataService {
     private readonly demoParser: DemoParserService,
   ) {}
 
+  public static isExternalDemoUrl(file: string | null | undefined): boolean {
+    return !!file && /^https?:\/\//i.test(file);
+  }
+
+  public async resolveDemoFetchUrl(
+    file: string,
+    expiresSeconds = 60 * 60,
+  ): Promise<string> {
+    if (DemoMetadataService.isExternalDemoUrl(file)) {
+      return file;
+    }
+    return this.s3.getPresignedUrl(file, undefined, expiresSeconds, "get");
+  }
+
   public async ensureParsed(matchMapId: string): Promise<DemoRow> {
     const demo = await this.fetchDemoForMap(matchMapId);
     if (!demo) {
@@ -171,7 +185,7 @@ export class DemoMetadataService {
         metadata_parsed_at: true,
       },
     });
-    return (match_map_demos[0] as DemoRow) ?? null;
+    return (match_map_demos.at(0) as DemoRow) ?? null;
   }
 
   private async fetchAllDemosForMap(matchMapId: string): Promise<DemoRow[]> {
@@ -241,7 +255,12 @@ export class DemoMetadataService {
     this.logger.log(
       `[demo-parser] parsing match_map_demo ${demo.id} (file=${demo.file})`,
     );
-    const parsed = await this.demoParser.parseFromS3Key(demo.file, demo.id);
+    const parsed = DemoMetadataService.isExternalDemoUrl(demo.file)
+      ? await this.demoParser.parseFromUrl(demo.file)
+      : await this.demoParser.parseFromS3Key(demo.file, demo.id);
+    if (!parsed) {
+      throw new Error(`demo parse returned null for ${demo.id}`);
+    }
 
     await this.postgres.query(
       `SELECT public.persist_parsed_demo($1::uuid, $2::jsonb)`,
@@ -280,6 +299,8 @@ export class DemoMetadataService {
     );
 
     const demo = await this.fetchDemoById(matchMapDemoId);
+    await this.persistPremierRanks(parsed, demo?.match_id ?? null);
+
     if (demo) {
       await this.uploadPlaybackBlob(
         demo.match_id,
@@ -290,17 +311,63 @@ export class DemoMetadataService {
     }
   }
 
+  public async persistPremierRanks(
+    parsed: ParsedDemo,
+    matchId: string | null = null,
+  ): Promise<void> {
+    const premierEntries = (parsed.players ?? []).filter(
+      (p) => p.rank_type === 11 && (p.rank ?? 0) > 0 && p.steam_id,
+    );
+    if (premierEntries.length === 0) {
+      return;
+    }
+    const now = new Date().toISOString();
+    const steamIds = premierEntries.map((e) => BigInt(e.steam_id).toString());
+    const ranks = premierEntries.map((e) => {
+      const rank = Number(e.rank);
+      if (!Number.isInteger(rank)) {
+        throw new Error(`invalid premier rank for ${e.steam_id}: ${e.rank}`);
+      }
+      return rank;
+    });
+    await this.postgres.query(
+      `UPDATE public.players AS p
+         SET premier_rank = v.rank,
+             premier_rank_updated_at = $1::timestamptz
+         FROM UNNEST($2::bigint[], $3::int[]) AS v(steam_id, rank)
+         WHERE p.steam_id = v.steam_id`,
+      [now, steamIds, ranks],
+    );
+    if (matchId) {
+      await this.postgres.query(
+        `INSERT INTO public.player_premier_rank_history (steam_id, rank, match_id, observed_at)
+           SELECT v.steam_id, v.rank, $1::uuid, $2::timestamptz
+           FROM UNNEST($3::bigint[], $4::int[]) AS v(steam_id, rank)
+           WHERE EXISTS (SELECT 1 FROM public.players WHERE steam_id = v.steam_id)
+         ON CONFLICT (steam_id, match_id) DO UPDATE
+           SET rank = EXCLUDED.rank,
+               observed_at = EXCLUDED.observed_at`,
+        [matchId, now, steamIds, ranks],
+      );
+    }
+    this.logger.log(
+      `demo premier rank update wrote ${premierEntries.length} players`,
+    );
+  }
+
   public async deleteDemo(matchMapDemoId: string): Promise<void> {
     const demo = await this.fetchDemoById(matchMapDemoId);
     if (!demo) {
       return;
     }
-    try {
-      await this.s3.remove(demo.file);
-    } catch (error) {
-      this.logger.warn(
-        `[demo-delete] failed to remove .dem ${demo.file}: ${(error as Error)?.message}`,
-      );
+    if (!DemoMetadataService.isExternalDemoUrl(demo.file)) {
+      try {
+        await this.s3.remove(demo.file);
+      } catch (error) {
+        this.logger.warn(
+          `[demo-delete] failed to remove .dem ${demo.file}: ${(error as Error)?.message}`,
+        );
+      }
     }
     const blobKey = playbackBlobKey(demo.match_id, demo.match_map_id);
     try {
@@ -318,7 +385,7 @@ export class DemoMetadataService {
     });
   }
 
-  private async uploadPlaybackBlob(
+  public async uploadPlaybackBlob(
     matchId: string,
     matchMapId: string,
     matchMapDemoId: string,

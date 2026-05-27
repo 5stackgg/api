@@ -10,6 +10,7 @@ import { EncryptionModule } from "../../encryption/encryption.module";
 import { PostgresModule } from "../../postgres/postgres.module";
 import { S3Module } from "../../s3/s3.module";
 import { RedisModule } from "../../redis/redis.module";
+import { DemosModule } from "../../demos/demos.module";
 import { loggerFactory } from "../../utilities/LoggerFactory";
 
 @Module({
@@ -19,6 +20,7 @@ import { loggerFactory } from "../../utilities/LoggerFactory";
     PostgresModule,
     S3Module,
     RedisModule,
+    DemosModule,
   ],
   controllers: [
     GameStreamerController,

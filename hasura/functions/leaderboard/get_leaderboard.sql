@@ -97,6 +97,7 @@ BEGIN
         JOIN matches m ON m.id = ml.match_id
         JOIN match_options mo ON mo.id = m.match_options_id
         WHERE m.status = 'Finished'
+          AND m.source = '5stack'
           AND mlp.steam_id IS NOT NULL
           AND m.winning_lineup_id IS NOT NULL
           AND (_window_days = 0 OR m.ended_at >= NOW() - make_interval(days => _window_days))
@@ -165,6 +166,7 @@ BEGIN
         JOIN matches m ON m.id = ml.match_id
         JOIN match_options mo ON mo.id = m.match_options_id
         WHERE m.status = 'Finished'
+          AND m.source = '5stack'
           AND mlp.steam_id IS NOT NULL
           AND m.winning_lineup_id IS NOT NULL
           AND (_window_days = 0 OR m.ended_at >= NOW() - make_interval(days => _window_days))
@@ -215,6 +217,7 @@ BEGIN
     JOIN match_options mo ON mo.id = m.match_options_id
     WHERE pk.attacker_steam_id IS NOT NULL
       AND pk.attacker_steam_id != pk.attacked_steam_id
+      AND m.source = '5stack'
       AND (_window_days = 0 OR pk.time >= NOW() - make_interval(days => _window_days))
       AND (_match_type IS NULL OR mo.type = _match_type)
       AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pk.match_id))
@@ -228,6 +231,7 @@ BEGIN
     JOIN matches m2 ON m2.id = dk.match_id
     JOIN match_options mo2 ON mo2.id = m2.match_options_id
     WHERE 1=1
+      AND m2.source = '5stack'
       AND (_window_days = 0 OR dk.time >= NOW() - make_interval(days => _window_days))
       AND (_match_type IS NULL OR mo2.type = _match_type)
       AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = dk.match_id))
@@ -276,6 +280,7 @@ BEGIN
     JOIN matches m ON m.id = ml.match_id
     JOIN match_options mo ON mo.id = m.match_options_id
     WHERE m.status = 'Finished'
+      AND m.source = '5stack'
       AND mlp.steam_id IS NOT NULL
       AND m.winning_lineup_id IS NOT NULL
       AND (_window_days = 0 OR m.ended_at >= NOW() - make_interval(days => _window_days))
@@ -327,6 +332,7 @@ BEGIN
   JOIN match_options mo ON mo.id = m.match_options_id
   WHERE pk.attacker_steam_id IS NOT NULL
     AND pk.attacker_steam_id != pk.attacked_steam_id
+    AND m.source = '5stack'
     AND (_window_days = 0 OR pk.time >= NOW() - make_interval(days => _window_days))
     AND (_match_type IS NULL OR mo.type = _match_type)
     AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pk.match_id))

@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Logger } from "@nestjs/common";
 import { User } from "../auth/types/User";
 import { Injectable } from "@nestjs/common";
-import { e_match_types_enum } from "generated";
+import { e_map_pool_types_enum, e_match_types_enum } from "generated";
 import { InjectQueue } from "@nestjs/bullmq";
 import { MatchmakingTeam } from "./types/MatchmakingTeam";
 import { HasuraService } from "src/hasura/hasura.service";
@@ -814,9 +814,12 @@ export class MatchmakeService {
 
     await this.removeCancelMatchMakingJob(confirmationId);
 
+    // e_map_pool_types_enum doesn't include Premier (imports only).
+    const mapPoolType: e_map_pool_types_enum =
+      type === "Premier" ? "Competitive" : type;
     const match = await this.matchAssistant.createMatchBasedOnType(
-      type as e_match_types_enum,
-      type as e_match_types_enum,
+      type,
+      mapPoolType,
       {
         mr: type === "Competitive" ? 12 : 8,
         best_of: 1,

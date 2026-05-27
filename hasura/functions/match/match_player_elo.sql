@@ -311,7 +311,11 @@ BEGIN
     IF match_record IS NULL THEN
         RETURN 0;
     END IF;
-    
+
+    IF match_record.source IS DISTINCT FROM '5stack' THEN
+        RETURN 0;
+    END IF;
+
     -- Skip matches without a winning_lineup_id
     IF match_record.winning_lineup_id IS NULL THEN
         RAISE NOTICE 'Skipping match % as it has no winning_lineup_id', _match_id;

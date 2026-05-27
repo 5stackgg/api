@@ -3,6 +3,7 @@ import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { HasuraService } from "../hasura/hasura.service";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import { S3Service } from "../s3/s3.service";
+import { DemoMetadataService } from "../demos/demo-metadata.service";
 import { User } from "../auth/types/User";
 import { DiscordTournamentVoiceService } from "../discord-bot/discord-tournament-voice/discord-tournament-voice.service";
 import { tournaments_set_input } from "../../generated";
@@ -138,7 +139,9 @@ export class TournamentsController {
 
     for (const demo of demos) {
       try {
-        await this.s3.remove(demo.file);
+        if (!DemoMetadataService.isExternalDemoUrl(demo.file)) {
+          await this.s3.remove(demo.file);
+        }
         await this.hasura.mutation({
           delete_match_map_demos_by_pk: {
             __args: {

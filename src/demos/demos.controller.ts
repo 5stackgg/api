@@ -19,6 +19,7 @@ import { PostgresService } from "../postgres/postgres.service";
 import archiver from "archiver";
 import zlib from "zlib";
 import path from "path";
+import { Readable } from "stream";
 import { DemoMetadataService, playbackBlobKey } from "./demo-metadata.service";
 import { ParsedDemo } from "./demo-parser.service";
 
@@ -358,6 +359,14 @@ export class DemosController {
   }
 
   private async getDemo(demo: { id: string; file: string }) {
+    if (DemoMetadataService.isExternalDemoUrl(demo.file)) {
+      const res = await fetch(demo.file);
+      if (!res.ok || !res.body) {
+        throw new Error(`upstream demo fetch ${res.status}`);
+      }
+      return Readable.fromWeb(res.body as any);
+    }
+
     if (!(await this.s3.has(demo.file))) {
       await this.demoMetadata.deleteDemo(demo.id);
       throw Error("demo missing");

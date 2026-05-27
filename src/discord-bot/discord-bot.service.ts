@@ -41,6 +41,7 @@ export class DiscordBotService {
     Duel: undefined,
     Wingman: undefined,
     Competitive: undefined,
+    Premier: undefined,
   };
 
   constructor(
