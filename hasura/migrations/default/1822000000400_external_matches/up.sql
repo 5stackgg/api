@@ -1,4 +1,4 @@
--- Player columns for Premier rank snapshot.
+-- Player columns for the global Premier rank snapshot.
 ALTER TABLE "public"."players"
   ADD COLUMN IF NOT EXISTS "premier_rank" integer,
   ADD COLUMN IF NOT EXISTS "premier_rank_updated_at" timestamptz;
@@ -25,7 +25,6 @@ ON CONFLICT (value) DO UPDATE SET "description" = EXCLUDED."description";
 ALTER TABLE "public"."matches"
   ADD COLUMN IF NOT EXISTS "source" text NOT NULL DEFAULT '5stack';
 
--- Indexes for the source-filtered query mix.
 CREATE INDEX IF NOT EXISTS idx_matches_5stack_ended_at
   ON public.matches (ended_at DESC)
   WHERE source = '5stack' AND ended_at IS NOT NULL;
@@ -70,12 +69,16 @@ CREATE TABLE IF NOT EXISTS "public"."pending_match_import_players" (
 CREATE INDEX IF NOT EXISTS idx_pending_match_import_players_steam_id
   ON public.pending_match_import_players (steam_id);
 
--- Premier rank snapshots, keyed by (player, match) so retries upsert
--- and match deletion cascades cleanly.
+-- Per-match Valve rank history. Premier (rank_type 11) is global (map_id NULL);
+-- Wingman (6) and Competitive (7) are per map. previous_rank stores the prior
+-- rank of the same type (and map, for skill groups) so the delta is exact.
 CREATE TABLE IF NOT EXISTS "public"."player_premier_rank_history" (
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
   "steam_id" bigint NOT NULL,
   "rank" integer NOT NULL,
+  "rank_type" integer NOT NULL DEFAULT 11,
+  "previous_rank" integer,
+  "map_id" uuid,
   "match_id" uuid NOT NULL,
   "observed_at" timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY ("id"),
@@ -83,11 +86,46 @@ CREATE TABLE IF NOT EXISTS "public"."player_premier_rank_history" (
   FOREIGN KEY ("match_id") REFERENCES "public"."matches"("id") ON UPDATE cascade ON DELETE cascade
 );
 
+-- Converge columns if the table pre-existed from an earlier migration.
+ALTER TABLE "public"."player_premier_rank_history"
+  ADD COLUMN IF NOT EXISTS "rank_type" integer NOT NULL DEFAULT 11,
+  ADD COLUMN IF NOT EXISTS "previous_rank" integer,
+  ADD COLUMN IF NOT EXISTS "map_id" uuid;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'player_rank_history_map_id_fkey'
+      AND table_name = 'player_premier_rank_history'
+  ) THEN
+    ALTER TABLE "public"."player_premier_rank_history"
+      ADD CONSTRAINT "player_rank_history_map_id_fkey"
+      FOREIGN KEY ("map_id") REFERENCES "public"."maps"("id")
+      ON UPDATE cascade ON DELETE set null;
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_player_premier_rank_history_steam_observed
   ON public.player_premier_rank_history (steam_id, observed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_player_premier_rank_history_steam_type_observed
+  ON public.player_premier_rank_history (steam_id, rank_type, observed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_player_rank_history_steam_type_map_observed
+  ON public.player_premier_rank_history (steam_id, rank_type, map_id, observed_at DESC);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_player_premier_rank_history_steam_match
-  ON public.player_premier_rank_history (steam_id, match_id);
+-- Uniqueness is per (player, match, rank_type). Drop the older steam+match
+-- index if a prior migration created it.
+DROP INDEX IF EXISTS public.uq_player_premier_rank_history_steam_match;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_player_premier_rank_history_steam_match_type
+  ON public.player_premier_rank_history (steam_id, match_id, rank_type);
+
+-- Competitive/Wingman are per map (history only) — drop any global snapshot
+-- columns an earlier migration may have added.
+ALTER TABLE "public"."players"
+  DROP COLUMN IF EXISTS "competitive_rank",
+  DROP COLUMN IF EXISTS "competitive_rank_updated_at",
+  DROP COLUMN IF EXISTS "wingman_rank",
+  DROP COLUMN IF EXISTS "wingman_rank_updated_at";
 
 -- match_map_demos.match_id was the only RESTRICT FK to matches; flip it
 -- to CASCADE so `DELETE FROM matches` cleans up the demo metadata row.
