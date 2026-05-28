@@ -48,6 +48,9 @@ export class SteamMatchHistoryController {
     if (request.user.role !== "administrator") {
       throw new ForbiddenException("administrator access required");
     }
+    if (!(await this.service.isImportingAllowed())) {
+      throw new ForbiddenException("external match imports are disabled");
+    }
     if (!file?.buffer || file.buffer.length === 0) {
       throw new BadRequestException("empty file");
     }

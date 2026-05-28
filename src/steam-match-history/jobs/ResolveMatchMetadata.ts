@@ -50,21 +50,13 @@ export class ResolveMatchMetadata extends WorkerHost {
     }
 
     if (!this.steamGc.isAvailable()) {
-      await this.markFailed(
-        valve_match_id,
-        row.share_code,
-        "steam gc not configured",
-      );
+      await this.markFailed(valve_match_id, "steam gc not configured");
       return;
     }
 
     const resolved = await this.steamGc.resolveShareCode(row.share_code);
     if (!resolved) {
-      await this.markFailed(
-        valve_match_id,
-        row.share_code,
-        "gc returned no demo url",
-      );
+      await this.markFailed(valve_match_id, "gc returned no demo url");
       return;
     }
 
@@ -95,19 +87,9 @@ export class ResolveMatchMetadata extends WorkerHost {
     );
   }
 
-  private async markFailed(
-    valveMatchId: string,
-    shareCode: string,
-    reason: string,
-  ): Promise<void> {
-    const file = `external/valve/${shareCode}.dem`;
-    await this.postgres.query(
-      `DELETE FROM public.matches
-         WHERE id IN (
-           SELECT match_id FROM public.match_map_demos WHERE file = $1
-         )`,
-      [file],
-    );
+  private async markFailed(valveMatchId: string, reason: string): Promise<void> {
+    // No match exists yet at the resolve stage (it's created later during
+    // parse/import), so there is nothing to clean up here beyond the status.
     await this.postgres.query(
       `UPDATE public.pending_match_imports
          SET status = 'Failed', error = $2

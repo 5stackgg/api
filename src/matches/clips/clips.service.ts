@@ -1632,6 +1632,16 @@ export class ClipsService {
         false,
       );
       if (!enabled) return 0;
+
+      const { matches_by_pk } = await this.hasura.query({
+        matches_by_pk: { __args: { id: matchId }, source: true },
+      });
+      if (!(await this.importedAutoClipsAllowed(matches_by_pk?.source))) {
+        this.logger.log(
+          `[auto-clips] demo ${matchMapDemoId} skipped: imported-match auto highlights disabled (source=${matches_by_pk?.source})`,
+        );
+        return 0;
+      }
     }
     if (!(await this.hasGpuNode())) {
       const msg =
@@ -1905,6 +1915,7 @@ export class ClipsService {
       matches_by_pk: {
         __args: { id: matchId },
         id: true,
+        source: true,
         match_maps: {
           id: true,
           demos: {
@@ -1921,6 +1932,15 @@ export class ClipsService {
     });
     if (!match) {
       this.logger.warn(`[auto-clips] match ${matchId} not found`);
+      return 0;
+    }
+    if (
+      !options.force &&
+      !(await this.importedAutoClipsAllowed((match as { source?: string }).source))
+    ) {
+      this.logger.log(
+        `[auto-clips] match ${matchId} skipped: imported-match auto highlights disabled (source=${(match as { source?: string }).source})`,
+      );
       return 0;
     }
 
@@ -2424,6 +2444,20 @@ export class ClipsService {
       this.logger.log(
         `[reconcile-highlights] reaped orphan resource claims for ${o.matchMapId}:${o.matchMapDemoId}`,
       );
+      try {
+        await this.batchQueue.add(
+          BATCH_HIGHLIGHTS_JOB_NAME,
+          { matchMapId: o.matchMapId, matchMapDemoId: o.matchMapDemoId },
+          { jobId: `${o.matchMapId}-${o.matchMapDemoId}-reap-${Date.now()}` },
+        );
+        this.logger.log(
+          `[reconcile-highlights] re-armed batch watchdog for orphaned in-flight ${o.matchMapId}:${o.matchMapDemoId}`,
+        );
+      } catch (error) {
+        this.logger.warn(
+          `[reconcile-highlights] re-arm enqueue failed for ${o.matchMapId}:${o.matchMapDemoId}: ${(error as Error)?.message}`,
+        );
+      }
     }
   }
 
@@ -2443,6 +2477,17 @@ export class ClipsService {
   ): Promise<boolean> {
     const raw = await this.readSetting(name, fallback ? "true" : "false");
     return raw === "true" || raw === "1";
+  }
+
+  // Imported (non-5stack) matches only get auto highlights when the operator
+  // has explicitly opted in, separately from the main auto-highlights toggle.
+  private async importedAutoClipsAllowed(
+    source: string | null | undefined,
+  ): Promise<boolean> {
+    if (!source || source === "5stack") {
+      return true;
+    }
+    return this.readBoolSetting("auto_generate_match_clips_imported", false);
   }
 
   public async buildPresetSpec(

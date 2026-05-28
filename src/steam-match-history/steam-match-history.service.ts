@@ -41,6 +41,15 @@ export class SteamMatchHistoryService {
     return !!this.steamApiKey;
   }
 
+  // Operator-facing kill switch (public.external_matches_enabled). Absent or
+  // anything other than "false" means imports are allowed.
+  public async isImportingAllowed(): Promise<boolean> {
+    const rows = await this.postgres.query<Array<{ value: string }>>(
+      `SELECT value FROM public.settings WHERE name = 'public.external_matches_enabled' LIMIT 1`,
+    );
+    return rows.at(0)?.value !== "false";
+  }
+
   public async linkAccount(
     steamId: string,
     authCode: string,
@@ -48,6 +57,10 @@ export class SteamMatchHistoryService {
   ): Promise<{ ok: boolean; error?: string }> {
     if (!this.isEnabled()) {
       return { ok: false, error: "STEAM_WEB_API_KEY not configured" };
+    }
+
+    if (!(await this.isImportingAllowed())) {
+      return { ok: false, error: "external match imports are disabled" };
     }
 
     const probe = await this.fetchNextShareCode(
@@ -108,6 +121,9 @@ export class SteamMatchHistoryService {
     steamId: string,
     valveMatchId: string,
   ): Promise<{ ok: boolean; error?: string }> {
+    if (!(await this.isImportingAllowed())) {
+      return { ok: false, error: "external match imports are disabled" };
+    }
     const isRequester = await this.isPendingRequester(steamId, valveMatchId);
     if (!isRequester) {
       return { ok: false, error: "not a requester for this import" };
@@ -168,6 +184,14 @@ export class SteamMatchHistoryService {
         collected: 0,
         lastShareCode: null,
         error: "STEAM_WEB_API_KEY not configured",
+      };
+    }
+
+    if (!(await this.isImportingAllowed())) {
+      return {
+        collected: 0,
+        lastShareCode: null,
+        error: "external match imports are disabled",
       };
     }
 
@@ -267,6 +291,13 @@ export class SteamMatchHistoryService {
     if (!this.isEnabled()) {
       this.logger.warn(
         "steam-match-history pollAllActive skipped: STEAM_WEB_API_KEY not configured",
+      );
+      return;
+    }
+
+    if (!(await this.isImportingAllowed())) {
+      this.logger.log(
+        "steam-match-history pollAllActive skipped: external match imports disabled",
       );
       return;
     }
