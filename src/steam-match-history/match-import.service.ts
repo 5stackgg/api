@@ -94,25 +94,40 @@ export class MatchImportService {
       startedAt: matchStartTime ?? null,
     });
 
-    const matchMapId = await this.insertMatchMap(
-      matchId,
-      mapId,
-      matchStartTime ?? null,
-    );
-    const demoId = await this.insertMatchMapDemo(matchId, matchMapId, file);
+    let matchMapId: string;
+    let demoId: string;
+    try {
+      matchMapId = await this.insertMatchMap(matchId, mapId, matchStartTime ?? null);
+      demoId = await this.insertMatchMapDemo(matchId, matchMapId, file);
 
-    await this.postgres.query(
-      `SELECT public.persist_imported_demo($1::uuid, $2::jsonb)`,
-      [demoId, JSON.stringify(parsed)],
-    );
+      // persist_imported_demo writes rounds/kills/stats and the premier rank
+      // history + players.premier_rank in one shot, so there is no separate
+      // JS premier-rank write here.
+      await this.postgres.query(
+        `SELECT public.persist_imported_demo($1::uuid, $2::jsonb)`,
+        [demoId, JSON.stringify(parsed)],
+      );
+    } catch (error) {
+      // Roll back the half-written match; otherwise findExistingByFile treats
+      // it as "already imported" and the retry skips it permanently.
+      await this.rollbackMatch(matchId, [lineup1Id, lineup2Id]);
+      throw error;
+    }
 
-    await this.demoMetadata.persistPremierRanks(parsed, matchId);
-    await this.demoMetadata.uploadPlaybackBlob(
-      matchId,
-      matchMapId,
-      demoId,
-      parsed,
-    );
+    // Playback blob is supplementary — a failure here must not discard an
+    // otherwise complete import.
+    try {
+      await this.demoMetadata.uploadPlaybackBlob(
+        matchId,
+        matchMapId,
+        demoId,
+        parsed,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `playback blob upload failed for match ${matchId}: ${(error as Error)?.message ?? String(error)}`,
+      );
+    }
 
     this.logger.log(
       `imported ${source} match ${matchId}: ${matchType} on ${parsed.map_name} ` +
@@ -122,11 +137,45 @@ export class MatchImportService {
     return { matchId };
   }
 
+  // Deleting the match cascades to its match_maps/demos/rounds/stats; the
+  // freshly-created lineups carry no match_id, so remove them explicitly.
+  private async rollbackMatch(
+    matchId: string,
+    lineupIds: string[],
+  ): Promise<void> {
+    try {
+      await this.postgres.query(`DELETE FROM public.matches WHERE id = $1::uuid`, [
+        matchId,
+      ]);
+      await this.postgres.query(
+        `DELETE FROM public.match_lineups WHERE id = ANY($1::uuid[])`,
+        [lineupIds],
+      );
+    } catch (error) {
+      this.logger.error(
+        `failed to roll back partial import for match ${matchId}`,
+        error,
+      );
+    }
+  }
+
   private static detectMatchType(players: ParsedPlayer[]): MatchType {
-    const rankTypes = players
-      .map((p) => p.rank_type)
-      .filter((rt): rt is number => typeof rt === "number" && rt > 0);
-    const observed = rankTypes.at(0);
+    // A single mislabeled player shouldn't flip the match type, so take the
+    // most common rank_type across the lobby rather than the first seen.
+    const counts = new Map<number, number>();
+    for (const p of players) {
+      if (typeof p.rank_type === "number" && p.rank_type > 0) {
+        counts.set(p.rank_type, (counts.get(p.rank_type) ?? 0) + 1);
+      }
+    }
+    let observed: number | undefined;
+    let best = 0;
+    for (const [rankType, count] of counts) {
+      if (count > best) {
+        best = count;
+        observed = rankType;
+      }
+    }
     if (observed === 7) {
       return "Wingman";
     }
@@ -141,7 +190,19 @@ export class MatchImportService {
 
   private static computeStartingSides(parsed: ParsedDemo): Map<string, Side> {
     const sides = new Map<string, Side>();
-    const kills = parsed.kills ?? [];
+    // A player's side must be read from round 1 — sides swap at halftime, so
+    // a player's first kill later in the demo can be on the opposite side and
+    // would scramble the lineup split.
+    const firstRound = (parsed.round_ticks ?? [])
+      .filter((r) => r.round > 0)
+      .sort((a, b) => a.round - b.round)
+      .at(0);
+    const allKills = parsed.kills ?? [];
+    const kills = firstRound
+      ? allKills.filter(
+          (k) => k.tick >= firstRound.start_tick && k.tick <= firstRound.end_tick,
+        )
+      : allKills;
     for (const kill of kills) {
       const killerTeam = MatchImportService.normalizeTeam(kill.killer_team);
       const victimTeam = MatchImportService.normalizeTeam(kill.victim_team);
