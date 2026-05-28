@@ -46,7 +46,6 @@ export class ParseImportedDemo extends WorkerHost {
     if (!row.demo_url) {
       await this.markFailed(
         valve_match_id,
-        row.share_code,
         "no demo url cached — resolve step missing",
       );
       return;
@@ -62,7 +61,6 @@ export class ParseImportedDemo extends WorkerHost {
     } catch (err) {
       await this.markFailed(
         valve_match_id,
-        row.share_code,
         (err as Error)?.message ?? String(err),
       );
       throw err;
@@ -76,7 +74,7 @@ export class ParseImportedDemo extends WorkerHost {
   ): Promise<void> {
     const parsed = await this.demoParser.parseFromUrl(demoUrl);
     if (!parsed) {
-      await this.markFailed(valveMatchId, shareCode, "demo parse failed");
+      await this.markFailed(valveMatchId, "demo parse failed");
       return;
     }
 
@@ -96,11 +94,7 @@ export class ParseImportedDemo extends WorkerHost {
       matchStartTime,
     );
     if (!result.matchId) {
-      await this.markFailed(
-        valveMatchId,
-        shareCode,
-        result.skipped ?? "import failed",
-      );
+      await this.markFailed(valveMatchId, result.skipped ?? "import failed");
       return;
     }
 
@@ -114,19 +108,10 @@ export class ParseImportedDemo extends WorkerHost {
     );
   }
 
-  private async markFailed(
-    valveMatchId: string,
-    shareCode: string,
-    reason: string,
-  ): Promise<void> {
-    const file = `external/valve/${shareCode}.dem`;
-    await this.postgres.query(
-      `DELETE FROM public.matches
-         WHERE id IN (
-           SELECT match_id FROM public.match_map_demos WHERE file = $1
-         )`,
-      [file],
-    );
+  private async markFailed(valveMatchId: string, reason: string): Promise<void> {
+    // No match cleanup here: importExternalDemo rolls back its own
+    // partially-written match when it throws, so reaching this point means
+    // either nothing was created or the rollback already ran.
     await this.postgres.query(
       `UPDATE public.pending_match_imports
          SET status = 'Failed', error = $2
