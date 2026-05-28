@@ -82,6 +82,7 @@ AS $$
 DECLARE
   v_match_id          uuid;
   v_match_map_id      uuid;
+  v_map_id            uuid;
   v_match_options_id  uuid;
   v_lineup_1_id       uuid;
   v_lineup_2_id       uuid;
@@ -105,6 +106,9 @@ BEGIN
 
   SELECT mr INTO v_mr FROM public.match_options WHERE id = v_match_options_id;
   v_mr := COALESCE(v_mr, 12);
+
+  -- Map for this demo — skill-group ranks (Competitive/Wingman) are per map.
+  SELECT map_id INTO v_map_id FROM public.match_maps WHERE id = v_match_map_id;
 
   PERFORM public.persist_parsed_demo(p_match_map_demo_id, p_parsed);
 
@@ -344,30 +348,63 @@ BEGIN
          started_at        = COALESCE(started_at, v_start_time)
    WHERE id = v_match_id;
 
-  WITH premier_players AS (
+  -- Per-match rank history for every tracked Valve rank type: Wingman (6),
+  -- Competitive skill group (7) and Premier (11). previous_rank is the
+  -- player's last observed rank of the SAME type (and map, for the per-map
+  -- skill groups) before this match, so the per-match delta is exact.
+  WITH ranked_players AS (
     SELECT
       (elem->>'steam_id')::bigint AS steam_id,
-      (elem->>'rank')::int        AS rank
+      (elem->>'rank')::int        AS rank,
+      (elem->>'rank_type')::int   AS rank_type
     FROM jsonb_array_elements(COALESCE(p_parsed->'players', '[]'::jsonb)) elem
-    WHERE (elem->>'rank_type')::int = 11
+    WHERE (elem->>'rank_type')::int IN (6, 7, 11)
       AND COALESCE((elem->>'rank')::int, 0) > 0
       AND elem->>'steam_id' IS NOT NULL
+      AND EXISTS (
+        SELECT 1 FROM public.players p WHERE p.steam_id = (elem->>'steam_id')::bigint
+      )
   )
-  INSERT INTO public.player_premier_rank_history (steam_id, rank, match_id, observed_at)
-  SELECT pp.steam_id, pp.rank, v_match_id, v_ended_at
-    FROM premier_players pp
-   WHERE EXISTS (SELECT 1 FROM public.players p WHERE p.steam_id = pp.steam_id)
-  ON CONFLICT (steam_id, match_id) DO UPDATE
-    SET rank = EXCLUDED.rank,
-        observed_at = EXCLUDED.observed_at;
+  INSERT INTO public.player_premier_rank_history
+    (steam_id, rank, rank_type, map_id, previous_rank, match_id, observed_at)
+  SELECT
+    rp.steam_id,
+    rp.rank,
+    rp.rank_type,
+    -- Premier is global (no map); Competitive/Wingman are per map.
+    CASE WHEN rp.rank_type = 11 THEN NULL ELSE v_map_id END AS map_id,
+    (
+      SELECT h.rank
+        FROM public.player_premier_rank_history h
+       WHERE h.steam_id = rp.steam_id
+         AND h.rank_type = rp.rank_type
+         AND h.match_id <> v_match_id
+         AND h.observed_at < v_ended_at
+         -- Skill-group delta is vs this player's previous rank ON THE SAME MAP.
+         AND (rp.rank_type = 11 OR h.map_id = v_map_id)
+       ORDER BY h.observed_at DESC
+       LIMIT 1
+    ) AS previous_rank,
+    CASE WHEN rp.rank_type = 11 THEN NULL ELSE v_map_id END,
+    v_match_id,
+    v_ended_at
+    FROM ranked_players rp
+  ON CONFLICT (steam_id, match_id, rank_type) DO UPDATE
+    SET rank          = EXCLUDED.rank,
+        map_id        = EXCLUDED.map_id,
+        previous_rank = EXCLUDED.previous_rank,
+        observed_at   = EXCLUDED.observed_at;
 
+  -- Premier is the only global snapshot kept on the player row. Competitive
+  -- and Wingman are per-map, so they live only in the history table (read the
+  -- latest row per map). The guard keeps an out-of-order import from
+  -- clobbering a newer rating.
   UPDATE public.players p
      SET premier_rank = pp.rank,
          premier_rank_updated_at = v_ended_at
     FROM (
-      SELECT
-        (elem->>'steam_id')::bigint AS steam_id,
-        (elem->>'rank')::int        AS rank
+      SELECT (elem->>'steam_id')::bigint AS steam_id,
+             (elem->>'rank')::int        AS rank
       FROM jsonb_array_elements(COALESCE(p_parsed->'players', '[]'::jsonb)) elem
       WHERE (elem->>'rank_type')::int = 11
         AND COALESCE((elem->>'rank')::int, 0) > 0

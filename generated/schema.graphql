@@ -20648,7 +20648,6 @@ type mutation_root {
 
   """Delete all terminal-state clip_render_jobs rows platform-wide."""
   clearFinishedClipRenders: SuccessOutput
-  clearGpuNodeSteamCache(game_server_node_id: uuid!): SuccessOutput
   clearPendingMatchImport(valve_match_id: String!): PendingMatchImportActionOutput
   createApiKey(label: String!): ApiKeyResponse
 
@@ -38349,7 +38348,9 @@ type player_premier_rank_history {
 
   """An object relationship"""
   player: players!
+  previous_rank: Int
   rank: Int!
+  rank_type: Int!
   steam_id: bigint!
 }
 
@@ -38418,7 +38419,9 @@ input player_premier_rank_history_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type player_premier_rank_history_avg_fields {
+  previous_rank: Float
   rank: Float
+  rank_type: Float
   steam_id: Float
 }
 
@@ -38426,7 +38429,9 @@ type player_premier_rank_history_avg_fields {
 order by avg() on columns of table "player_premier_rank_history"
 """
 input player_premier_rank_history_avg_order_by {
+  previous_rank: order_by
   rank: order_by
+  rank_type: order_by
   steam_id: order_by
 }
 
@@ -38442,7 +38447,9 @@ input player_premier_rank_history_bool_exp {
   match_id: uuid_comparison_exp
   observed_at: timestamptz_comparison_exp
   player: players_bool_exp
+  previous_rank: Int_comparison_exp
   rank: Int_comparison_exp
+  rank_type: Int_comparison_exp
   steam_id: bigint_comparison_exp
 }
 
@@ -38456,16 +38463,18 @@ enum player_premier_rank_history_constraint {
   player_premier_rank_history_pkey
 
   """
-  unique or primary key constraint on columns "steam_id", "match_id"
+  unique or primary key constraint on columns "steam_id", "rank_type", "match_id"
   """
-  uq_player_premier_rank_history_steam_match
+  uq_player_premier_rank_history_steam_match_type
 }
 
 """
 input type for incrementing numeric columns in table "player_premier_rank_history"
 """
 input player_premier_rank_history_inc_input {
+  previous_rank: Int
   rank: Int
+  rank_type: Int
   steam_id: bigint
 }
 
@@ -38478,7 +38487,9 @@ input player_premier_rank_history_insert_input {
   match_id: uuid
   observed_at: timestamptz
   player: players_obj_rel_insert_input
+  previous_rank: Int
   rank: Int
+  rank_type: Int
   steam_id: bigint
 }
 
@@ -38487,7 +38498,9 @@ type player_premier_rank_history_max_fields {
   id: uuid
   match_id: uuid
   observed_at: timestamptz
+  previous_rank: Int
   rank: Int
+  rank_type: Int
   steam_id: bigint
 }
 
@@ -38498,7 +38511,9 @@ input player_premier_rank_history_max_order_by {
   id: order_by
   match_id: order_by
   observed_at: order_by
+  previous_rank: order_by
   rank: order_by
+  rank_type: order_by
   steam_id: order_by
 }
 
@@ -38507,7 +38522,9 @@ type player_premier_rank_history_min_fields {
   id: uuid
   match_id: uuid
   observed_at: timestamptz
+  previous_rank: Int
   rank: Int
+  rank_type: Int
   steam_id: bigint
 }
 
@@ -38518,7 +38535,9 @@ input player_premier_rank_history_min_order_by {
   id: order_by
   match_id: order_by
   observed_at: order_by
+  previous_rank: order_by
   rank: order_by
+  rank_type: order_by
   steam_id: order_by
 }
 
@@ -38551,7 +38570,9 @@ input player_premier_rank_history_order_by {
   match_id: order_by
   observed_at: order_by
   player: players_order_by
+  previous_rank: order_by
   rank: order_by
+  rank_type: order_by
   steam_id: order_by
 }
 
@@ -38574,7 +38595,13 @@ enum player_premier_rank_history_select_column {
   observed_at
 
   """column name"""
+  previous_rank
+
+  """column name"""
   rank
+
+  """column name"""
+  rank_type
 
   """column name"""
   steam_id
@@ -38587,13 +38614,17 @@ input player_premier_rank_history_set_input {
   id: uuid
   match_id: uuid
   observed_at: timestamptz
+  previous_rank: Int
   rank: Int
+  rank_type: Int
   steam_id: bigint
 }
 
 """aggregate stddev on columns"""
 type player_premier_rank_history_stddev_fields {
+  previous_rank: Float
   rank: Float
+  rank_type: Float
   steam_id: Float
 }
 
@@ -38601,13 +38632,17 @@ type player_premier_rank_history_stddev_fields {
 order by stddev() on columns of table "player_premier_rank_history"
 """
 input player_premier_rank_history_stddev_order_by {
+  previous_rank: order_by
   rank: order_by
+  rank_type: order_by
   steam_id: order_by
 }
 
 """aggregate stddev_pop on columns"""
 type player_premier_rank_history_stddev_pop_fields {
+  previous_rank: Float
   rank: Float
+  rank_type: Float
   steam_id: Float
 }
 
@@ -38615,13 +38650,17 @@ type player_premier_rank_history_stddev_pop_fields {
 order by stddev_pop() on columns of table "player_premier_rank_history"
 """
 input player_premier_rank_history_stddev_pop_order_by {
+  previous_rank: order_by
   rank: order_by
+  rank_type: order_by
   steam_id: order_by
 }
 
 """aggregate stddev_samp on columns"""
 type player_premier_rank_history_stddev_samp_fields {
+  previous_rank: Float
   rank: Float
+  rank_type: Float
   steam_id: Float
 }
 
@@ -38629,7 +38668,9 @@ type player_premier_rank_history_stddev_samp_fields {
 order by stddev_samp() on columns of table "player_premier_rank_history"
 """
 input player_premier_rank_history_stddev_samp_order_by {
+  previous_rank: order_by
   rank: order_by
+  rank_type: order_by
   steam_id: order_by
 }
 
@@ -38649,13 +38690,17 @@ input player_premier_rank_history_stream_cursor_value_input {
   id: uuid
   match_id: uuid
   observed_at: timestamptz
+  previous_rank: Int
   rank: Int
+  rank_type: Int
   steam_id: bigint
 }
 
 """aggregate sum on columns"""
 type player_premier_rank_history_sum_fields {
+  previous_rank: Int
   rank: Int
+  rank_type: Int
   steam_id: bigint
 }
 
@@ -38663,7 +38708,9 @@ type player_premier_rank_history_sum_fields {
 order by sum() on columns of table "player_premier_rank_history"
 """
 input player_premier_rank_history_sum_order_by {
+  previous_rank: order_by
   rank: order_by
+  rank_type: order_by
   steam_id: order_by
 }
 
@@ -38681,7 +38728,13 @@ enum player_premier_rank_history_update_column {
   observed_at
 
   """column name"""
+  previous_rank
+
+  """column name"""
   rank
+
+  """column name"""
+  rank_type
 
   """column name"""
   steam_id
@@ -38700,7 +38753,9 @@ input player_premier_rank_history_updates {
 
 """aggregate var_pop on columns"""
 type player_premier_rank_history_var_pop_fields {
+  previous_rank: Float
   rank: Float
+  rank_type: Float
   steam_id: Float
 }
 
@@ -38708,13 +38763,17 @@ type player_premier_rank_history_var_pop_fields {
 order by var_pop() on columns of table "player_premier_rank_history"
 """
 input player_premier_rank_history_var_pop_order_by {
+  previous_rank: order_by
   rank: order_by
+  rank_type: order_by
   steam_id: order_by
 }
 
 """aggregate var_samp on columns"""
 type player_premier_rank_history_var_samp_fields {
+  previous_rank: Float
   rank: Float
+  rank_type: Float
   steam_id: Float
 }
 
@@ -38722,13 +38781,17 @@ type player_premier_rank_history_var_samp_fields {
 order by var_samp() on columns of table "player_premier_rank_history"
 """
 input player_premier_rank_history_var_samp_order_by {
+  previous_rank: order_by
   rank: order_by
+  rank_type: order_by
   steam_id: order_by
 }
 
 """aggregate variance on columns"""
 type player_premier_rank_history_variance_fields {
+  previous_rank: Float
   rank: Float
+  rank_type: Float
   steam_id: Float
 }
 
@@ -38736,7 +38799,9 @@ type player_premier_rank_history_variance_fields {
 order by variance() on columns of table "player_premier_rank_history"
 """
 input player_premier_rank_history_variance_order_by {
+  previous_rank: order_by
   rank: order_by
+  rank_type: order_by
   steam_id: order_by
 }
 
@@ -40819,6 +40884,8 @@ type players {
     """filter the rows returned"""
     where: match_lineups_bool_exp
   ): match_lineups_aggregate!
+  competitive_rank: Int
+  competitive_rank_updated_at: timestamptz
   country: String
   created_at: timestamptz
 
@@ -42039,6 +42106,8 @@ type players {
     """filter the rows returned"""
     where: player_utility_bool_exp
   ): player_utility_aggregate!
+  wingman_rank: Int
+  wingman_rank_updated_at: timestamptz
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -42088,6 +42157,7 @@ type players_aggregate_fields {
 
 """aggregate avg on columns"""
 type players_avg_fields {
+  competitive_rank: Float
   faceit_elo: Float
   faceit_skill_level: Float
 
@@ -42117,6 +42187,7 @@ type players_avg_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  wingman_rank: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -42155,6 +42226,8 @@ input players_bool_exp {
   avatar_url: String_comparison_exp
   coach_lineups: match_lineups_bool_exp
   coach_lineups_aggregate: match_lineups_aggregate_bool_exp
+  competitive_rank: Int_comparison_exp
+  competitive_rank_updated_at: timestamptz_comparison_exp
   country: String_comparison_exp
   created_at: timestamptz_comparison_exp
   current_lobby_id: uuid_comparison_exp
@@ -42253,6 +42326,8 @@ input players_bool_exp {
   tournaments_aggregate: tournaments_aggregate_bool_exp
   utility_thrown: player_utility_bool_exp
   utility_thrown_aggregate: player_utility_aggregate_bool_exp
+  wingman_rank: Int_comparison_exp
+  wingman_rank_updated_at: timestamptz_comparison_exp
   wins: Int_comparison_exp
   wins_competitive: Int_comparison_exp
   wins_duel: Int_comparison_exp
@@ -42283,10 +42358,12 @@ enum players_constraint {
 input type for incrementing numeric columns in table "players"
 """
 input players_inc_input {
+  competitive_rank: Int
   faceit_elo: Int
   faceit_skill_level: Int
   premier_rank: Int
   steam_id: bigint
+  wingman_rank: Int
 }
 
 """
@@ -42298,6 +42375,8 @@ input players_insert_input {
   assited_by_players: player_assists_arr_rel_insert_input
   avatar_url: String
   coach_lineups: match_lineups_arr_rel_insert_input
+  competitive_rank: Int
+  competitive_rank_updated_at: timestamptz
   country: String
   created_at: timestamptz
   custom_avatar_url: String
@@ -42350,11 +42429,15 @@ input players_insert_input {
   tournament_trophies: tournament_trophies_arr_rel_insert_input
   tournaments: tournaments_arr_rel_insert_input
   utility_thrown: player_utility_arr_rel_insert_input
+  wingman_rank: Int
+  wingman_rank_updated_at: timestamptz
 }
 
 """aggregate max on columns"""
 type players_max_fields {
   avatar_url: String
+  competitive_rank: Int
+  competitive_rank_updated_at: timestamptz
   country: String
   created_at: timestamptz
 
@@ -42408,6 +42491,8 @@ type players_max_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  wingman_rank: Int
+  wingman_rank_updated_at: timestamptz
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -42433,6 +42518,8 @@ type players_max_fields {
 """aggregate min on columns"""
 type players_min_fields {
   avatar_url: String
+  competitive_rank: Int
+  competitive_rank_updated_at: timestamptz
   country: String
   created_at: timestamptz
 
@@ -42486,6 +42573,8 @@ type players_min_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  wingman_rank: Int
+  wingman_rank_updated_at: timestamptz
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -42545,6 +42634,8 @@ input players_order_by {
   assited_by_players_aggregate: player_assists_aggregate_order_by
   avatar_url: order_by
   coach_lineups_aggregate: match_lineups_aggregate_order_by
+  competitive_rank: order_by
+  competitive_rank_updated_at: order_by
   country: order_by
   created_at: order_by
   current_lobby_id: order_by
@@ -42613,6 +42704,8 @@ input players_order_by {
   tournament_trophies_aggregate: tournament_trophies_aggregate_order_by
   tournaments_aggregate: tournaments_aggregate_order_by
   utility_thrown_aggregate: player_utility_aggregate_order_by
+  wingman_rank: order_by
+  wingman_rank_updated_at: order_by
   wins: order_by
   wins_competitive: order_by
   wins_duel: order_by
@@ -42630,6 +42723,12 @@ select columns of table "players"
 enum players_select_column {
   """column name"""
   avatar_url
+
+  """column name"""
+  competitive_rank
+
+  """column name"""
+  competitive_rank_updated_at
 
   """column name"""
   country
@@ -42693,6 +42792,12 @@ enum players_select_column {
 
   """column name"""
   steam_id
+
+  """column name"""
+  wingman_rank
+
+  """column name"""
+  wingman_rank_updated_at
 }
 
 """
@@ -42700,6 +42805,8 @@ input type for updating data in table "players"
 """
 input players_set_input {
   avatar_url: String
+  competitive_rank: Int
+  competitive_rank_updated_at: timestamptz
   country: String
   created_at: timestamptz
   custom_avatar_url: String
@@ -42721,10 +42828,13 @@ input players_set_input {
   roster_image_url: String
   show_match_ready_modal: Boolean
   steam_id: bigint
+  wingman_rank: Int
+  wingman_rank_updated_at: timestamptz
 }
 
 """aggregate stddev on columns"""
 type players_stddev_fields {
+  competitive_rank: Float
   faceit_elo: Float
   faceit_skill_level: Float
 
@@ -42754,6 +42864,7 @@ type players_stddev_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  wingman_rank: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -42778,6 +42889,7 @@ type players_stddev_fields {
 
 """aggregate stddev_pop on columns"""
 type players_stddev_pop_fields {
+  competitive_rank: Float
   faceit_elo: Float
   faceit_skill_level: Float
 
@@ -42807,6 +42919,7 @@ type players_stddev_pop_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  wingman_rank: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -42831,6 +42944,7 @@ type players_stddev_pop_fields {
 
 """aggregate stddev_samp on columns"""
 type players_stddev_samp_fields {
+  competitive_rank: Float
   faceit_elo: Float
   faceit_skill_level: Float
 
@@ -42860,6 +42974,7 @@ type players_stddev_samp_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  wingman_rank: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -42896,6 +43011,8 @@ input players_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input players_stream_cursor_value_input {
   avatar_url: String
+  competitive_rank: Int
+  competitive_rank_updated_at: timestamptz
   country: String
   created_at: timestamptz
   custom_avatar_url: String
@@ -42917,10 +43034,13 @@ input players_stream_cursor_value_input {
   roster_image_url: String
   show_match_ready_modal: Boolean
   steam_id: bigint
+  wingman_rank: Int
+  wingman_rank_updated_at: timestamptz
 }
 
 """aggregate sum on columns"""
 type players_sum_fields {
+  competitive_rank: Int
   faceit_elo: Int
   faceit_skill_level: Int
 
@@ -42950,6 +43070,7 @@ type players_sum_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  wingman_rank: Int
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -42978,6 +43099,12 @@ update columns of table "players"
 enum players_update_column {
   """column name"""
   avatar_url
+
+  """column name"""
+  competitive_rank
+
+  """column name"""
+  competitive_rank_updated_at
 
   """column name"""
   country
@@ -43041,6 +43168,12 @@ enum players_update_column {
 
   """column name"""
   steam_id
+
+  """column name"""
+  wingman_rank
+
+  """column name"""
+  wingman_rank_updated_at
 }
 
 input players_updates {
@@ -43056,6 +43189,7 @@ input players_updates {
 
 """aggregate var_pop on columns"""
 type players_var_pop_fields {
+  competitive_rank: Float
   faceit_elo: Float
   faceit_skill_level: Float
 
@@ -43085,6 +43219,7 @@ type players_var_pop_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  wingman_rank: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -43109,6 +43244,7 @@ type players_var_pop_fields {
 
 """aggregate var_samp on columns"""
 type players_var_samp_fields {
+  competitive_rank: Float
   faceit_elo: Float
   faceit_skill_level: Float
 
@@ -43138,6 +43274,7 @@ type players_var_samp_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  wingman_rank: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -43162,6 +43299,7 @@ type players_var_samp_fields {
 
 """aggregate variance on columns"""
 type players_variance_fields {
+  competitive_rank: Float
   faceit_elo: Float
   faceit_skill_level: Float
 
@@ -43191,6 +43329,7 @@ type players_variance_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  wingman_rank: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -49600,7 +49739,6 @@ type steam_accounts {
     where: clip_render_jobs_bool_exp
   ): clip_render_jobs_aggregate!
   created_at: timestamptz!
-  enabled: Boolean!
   id: uuid!
 
   """An object relationship"""
@@ -49718,7 +49856,6 @@ input steam_accounts_bool_exp {
   clip_render_jobs: clip_render_jobs_bool_exp
   clip_render_jobs_aggregate: clip_render_jobs_aggregate_bool_exp
   created_at: timestamptz_comparison_exp
-  enabled: Boolean_comparison_exp
   id: uuid_comparison_exp
   last_node: game_server_nodes_bool_exp
   last_node_id: String_comparison_exp
@@ -49752,7 +49889,6 @@ input type for inserting data into table "steam_accounts"
 input steam_accounts_insert_input {
   clip_render_jobs: clip_render_jobs_arr_rel_insert_input
   created_at: timestamptz
-  enabled: Boolean
   id: uuid
   last_node: game_server_nodes_obj_rel_insert_input
   last_node_id: String
@@ -49807,7 +49943,6 @@ input steam_accounts_on_conflict {
 input steam_accounts_order_by {
   clip_render_jobs_aggregate: clip_render_jobs_aggregate_order_by
   created_at: order_by
-  enabled: order_by
   id: order_by
   last_node: game_server_nodes_order_by
   last_node_id: order_by
@@ -49831,9 +49966,6 @@ enum steam_accounts_select_column {
   created_at
 
   """column name"""
-  enabled
-
-  """column name"""
   id
 
   """column name"""
@@ -49854,7 +49986,6 @@ input type for updating data in table "steam_accounts"
 """
 input steam_accounts_set_input {
   created_at: timestamptz
-  enabled: Boolean
   id: uuid
   last_node_id: String
   password: String
@@ -49876,7 +50007,6 @@ input steam_accounts_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input steam_accounts_stream_cursor_value_input {
   created_at: timestamptz
-  enabled: Boolean
   id: uuid
   last_node_id: String
   password: String
@@ -49890,9 +50020,6 @@ update columns of table "steam_accounts"
 enum steam_accounts_update_column {
   """column name"""
   created_at
-
-  """column name"""
-  enabled
 
   """column name"""
   id
@@ -66745,7 +66872,6 @@ type v_steam_account_pool_status {
   busy_accounts: Int
   free_accounts: Int
   id: Int
-  registered_accounts: Int
   total_accounts: Int
 }
 
@@ -66779,7 +66905,6 @@ type v_steam_account_pool_status_avg_fields {
   busy_accounts: Float
   free_accounts: Float
   id: Float
-  registered_accounts: Float
   total_accounts: Float
 }
 
@@ -66793,7 +66918,6 @@ input v_steam_account_pool_status_bool_exp {
   busy_accounts: Int_comparison_exp
   free_accounts: Int_comparison_exp
   id: Int_comparison_exp
-  registered_accounts: Int_comparison_exp
   total_accounts: Int_comparison_exp
 }
 
@@ -66802,7 +66926,6 @@ type v_steam_account_pool_status_max_fields {
   busy_accounts: Int
   free_accounts: Int
   id: Int
-  registered_accounts: Int
   total_accounts: Int
 }
 
@@ -66811,7 +66934,6 @@ type v_steam_account_pool_status_min_fields {
   busy_accounts: Int
   free_accounts: Int
   id: Int
-  registered_accounts: Int
   total_accounts: Int
 }
 
@@ -66822,7 +66944,6 @@ input v_steam_account_pool_status_order_by {
   busy_accounts: order_by
   free_accounts: order_by
   id: order_by
-  registered_accounts: order_by
   total_accounts: order_by
 }
 
@@ -66840,9 +66961,6 @@ enum v_steam_account_pool_status_select_column {
   id
 
   """column name"""
-  registered_accounts
-
-  """column name"""
   total_accounts
 }
 
@@ -66851,7 +66969,6 @@ type v_steam_account_pool_status_stddev_fields {
   busy_accounts: Float
   free_accounts: Float
   id: Float
-  registered_accounts: Float
   total_accounts: Float
 }
 
@@ -66860,7 +66977,6 @@ type v_steam_account_pool_status_stddev_pop_fields {
   busy_accounts: Float
   free_accounts: Float
   id: Float
-  registered_accounts: Float
   total_accounts: Float
 }
 
@@ -66869,7 +66985,6 @@ type v_steam_account_pool_status_stddev_samp_fields {
   busy_accounts: Float
   free_accounts: Float
   id: Float
-  registered_accounts: Float
   total_accounts: Float
 }
 
@@ -66889,7 +67004,6 @@ input v_steam_account_pool_status_stream_cursor_value_input {
   busy_accounts: Int
   free_accounts: Int
   id: Int
-  registered_accounts: Int
   total_accounts: Int
 }
 
@@ -66898,7 +67012,6 @@ type v_steam_account_pool_status_sum_fields {
   busy_accounts: Int
   free_accounts: Int
   id: Int
-  registered_accounts: Int
   total_accounts: Int
 }
 
@@ -66907,7 +67020,6 @@ type v_steam_account_pool_status_var_pop_fields {
   busy_accounts: Float
   free_accounts: Float
   id: Float
-  registered_accounts: Float
   total_accounts: Float
 }
 
@@ -66916,7 +67028,6 @@ type v_steam_account_pool_status_var_samp_fields {
   busy_accounts: Float
   free_accounts: Float
   id: Float
-  registered_accounts: Float
   total_accounts: Float
 }
 
@@ -66925,7 +67036,6 @@ type v_steam_account_pool_status_variance_fields {
   busy_accounts: Float
   free_accounts: Float
   id: Float
-  registered_accounts: Float
   total_accounts: Float
 }
 

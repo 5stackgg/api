@@ -52,7 +52,10 @@ export class MatchImportService {
       return { matchId: null, skipped: "no players in demo" };
     }
 
-    const matchType = MatchImportService.detectMatchType(players);
+    const matchType = MatchImportService.detectMatchType(parsed);
+    this.logger.log(
+      `match-type detect: type=${matchType} players=${parsed.player_count ?? players.length} overtime=${parsed.overtime_enabled ?? false} maxRounds=${parsed.max_rounds ?? "?"} rankTypes=${[...new Set(players.map((p) => p.rank_type ?? 0))].join(",")}`,
+    );
     const mapId = await this.resolveMapId(parsed.map_name, matchType);
     if (!mapId) {
       return {
@@ -159,9 +162,14 @@ export class MatchImportService {
     }
   }
 
-  private static detectMatchType(players: ParsedPlayer[]): MatchType {
-    // A single mislabeled player shouldn't flip the match type, so take the
-    // most common rank_type across the lobby rather than the first seen.
+  private static detectMatchType(parsed: ParsedDemo): MatchType {
+    const players = parsed.players ?? [];
+    // rank_type is authoritative WHEN present (Valve values):
+    //   6 = Wingman, 7 = Competitive, 11 = Premier (10 = unranked/practice).
+    // CS2 sometimes ships no rank_type, so fall back to the game rules:
+    //   2v2            -> Wingman
+    //   5v5 + overtime -> Premier      (Premier forces a winner)
+    //   5v5, no OT     -> Competitive  (can end in a draw)
     const counts = new Map<number, number>();
     for (const p of players) {
       if (typeof p.rank_type === "number" && p.rank_type > 0) {
@@ -176,16 +184,24 @@ export class MatchImportService {
         observed = rankType;
       }
     }
-    if (observed === 7) {
-      return "Wingman";
-    }
     if (observed === 11) {
       return "Premier";
     }
-    if (observed === 12) {
+    if (observed === 6) {
+      return "Wingman";
+    }
+    if (observed === 7) {
       return "Competitive";
     }
-    return players.length <= 4 ? "Wingman" : "Competitive";
+
+    const playerCount = parsed.player_count ?? players.length;
+    if (playerCount > 0 && playerCount <= 4) {
+      return "Wingman";
+    }
+    if (parsed.overtime_enabled) {
+      return "Premier";
+    }
+    return "Competitive";
   }
 
   private static computeStartingSides(parsed: ParsedDemo): Map<string, Side> {

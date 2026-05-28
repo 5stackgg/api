@@ -6788,7 +6788,6 @@ export interface mutation_root {
     clearClipRenderBatch: (SuccessOutput | null)
     /** Delete all terminal-state clip_render_jobs rows platform-wide. */
     clearFinishedClipRenders: (SuccessOutput | null)
-    clearGpuNodeSteamCache: (SuccessOutput | null)
     clearPendingMatchImport: (PendingMatchImportActionOutput | null)
     createApiKey: (ApiKeyResponse | null)
     /** Build a multi-segment ClipSpec from a player+preset and dispatch render */
@@ -12283,7 +12282,9 @@ export interface player_premier_rank_history {
     observed_at: Scalars['timestamptz']
     /** An object relationship */
     player: players
+    previous_rank: (Scalars['Int'] | null)
     rank: Scalars['Int']
+    rank_type: Scalars['Int']
     steam_id: Scalars['bigint']
     __typename: 'player_premier_rank_history'
 }
@@ -12316,14 +12317,16 @@ export interface player_premier_rank_history_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface player_premier_rank_history_avg_fields {
+    previous_rank: (Scalars['Float'] | null)
     rank: (Scalars['Float'] | null)
+    rank_type: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'player_premier_rank_history_avg_fields'
 }
 
 
 /** unique or primary key constraints on table "player_premier_rank_history" */
-export type player_premier_rank_history_constraint = 'player_premier_rank_history_pkey' | 'uq_player_premier_rank_history_steam_match'
+export type player_premier_rank_history_constraint = 'player_premier_rank_history_pkey' | 'uq_player_premier_rank_history_steam_match_type'
 
 
 /** aggregate max on columns */
@@ -12331,7 +12334,9 @@ export interface player_premier_rank_history_max_fields {
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     observed_at: (Scalars['timestamptz'] | null)
+    previous_rank: (Scalars['Int'] | null)
     rank: (Scalars['Int'] | null)
+    rank_type: (Scalars['Int'] | null)
     steam_id: (Scalars['bigint'] | null)
     __typename: 'player_premier_rank_history_max_fields'
 }
@@ -12342,7 +12347,9 @@ export interface player_premier_rank_history_min_fields {
     id: (Scalars['uuid'] | null)
     match_id: (Scalars['uuid'] | null)
     observed_at: (Scalars['timestamptz'] | null)
+    previous_rank: (Scalars['Int'] | null)
     rank: (Scalars['Int'] | null)
+    rank_type: (Scalars['Int'] | null)
     steam_id: (Scalars['bigint'] | null)
     __typename: 'player_premier_rank_history_min_fields'
 }
@@ -12359,12 +12366,14 @@ export interface player_premier_rank_history_mutation_response {
 
 
 /** select columns of table "player_premier_rank_history" */
-export type player_premier_rank_history_select_column = 'id' | 'match_id' | 'observed_at' | 'rank' | 'steam_id'
+export type player_premier_rank_history_select_column = 'id' | 'match_id' | 'observed_at' | 'previous_rank' | 'rank' | 'rank_type' | 'steam_id'
 
 
 /** aggregate stddev on columns */
 export interface player_premier_rank_history_stddev_fields {
+    previous_rank: (Scalars['Float'] | null)
     rank: (Scalars['Float'] | null)
+    rank_type: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'player_premier_rank_history_stddev_fields'
 }
@@ -12372,7 +12381,9 @@ export interface player_premier_rank_history_stddev_fields {
 
 /** aggregate stddev_pop on columns */
 export interface player_premier_rank_history_stddev_pop_fields {
+    previous_rank: (Scalars['Float'] | null)
     rank: (Scalars['Float'] | null)
+    rank_type: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'player_premier_rank_history_stddev_pop_fields'
 }
@@ -12380,7 +12391,9 @@ export interface player_premier_rank_history_stddev_pop_fields {
 
 /** aggregate stddev_samp on columns */
 export interface player_premier_rank_history_stddev_samp_fields {
+    previous_rank: (Scalars['Float'] | null)
     rank: (Scalars['Float'] | null)
+    rank_type: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'player_premier_rank_history_stddev_samp_fields'
 }
@@ -12388,19 +12401,23 @@ export interface player_premier_rank_history_stddev_samp_fields {
 
 /** aggregate sum on columns */
 export interface player_premier_rank_history_sum_fields {
+    previous_rank: (Scalars['Int'] | null)
     rank: (Scalars['Int'] | null)
+    rank_type: (Scalars['Int'] | null)
     steam_id: (Scalars['bigint'] | null)
     __typename: 'player_premier_rank_history_sum_fields'
 }
 
 
 /** update columns of table "player_premier_rank_history" */
-export type player_premier_rank_history_update_column = 'id' | 'match_id' | 'observed_at' | 'rank' | 'steam_id'
+export type player_premier_rank_history_update_column = 'id' | 'match_id' | 'observed_at' | 'previous_rank' | 'rank' | 'rank_type' | 'steam_id'
 
 
 /** aggregate var_pop on columns */
 export interface player_premier_rank_history_var_pop_fields {
+    previous_rank: (Scalars['Float'] | null)
     rank: (Scalars['Float'] | null)
+    rank_type: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'player_premier_rank_history_var_pop_fields'
 }
@@ -12408,7 +12425,9 @@ export interface player_premier_rank_history_var_pop_fields {
 
 /** aggregate var_samp on columns */
 export interface player_premier_rank_history_var_samp_fields {
+    previous_rank: (Scalars['Float'] | null)
     rank: (Scalars['Float'] | null)
+    rank_type: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'player_premier_rank_history_var_samp_fields'
 }
@@ -12416,7 +12435,9 @@ export interface player_premier_rank_history_var_samp_fields {
 
 /** aggregate variance on columns */
 export interface player_premier_rank_history_variance_fields {
+    previous_rank: (Scalars['Float'] | null)
     rank: (Scalars['Float'] | null)
+    rank_type: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'player_premier_rank_history_variance_fields'
 }
@@ -13238,6 +13259,8 @@ export interface players {
     coach_lineups: match_lineups[]
     /** An aggregate relationship */
     coach_lineups_aggregate: match_lineups_aggregate
+    competitive_rank: (Scalars['Int'] | null)
+    competitive_rank_updated_at: (Scalars['timestamptz'] | null)
     country: (Scalars['String'] | null)
     created_at: (Scalars['timestamptz'] | null)
     /** A computed field, executes function "get_player_current_lobby_id" */
@@ -13413,6 +13436,8 @@ export interface players {
     utility_thrown: player_utility[]
     /** An aggregate relationship */
     utility_thrown_aggregate: player_utility_aggregate
+    wingman_rank: (Scalars['Int'] | null)
+    wingman_rank_updated_at: (Scalars['timestamptz'] | null)
     /** A computed field, executes function "get_total_player_wins" */
     wins: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -13452,6 +13477,7 @@ export interface players_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface players_avg_fields {
+    competitive_rank: (Scalars['Float'] | null)
     faceit_elo: (Scalars['Float'] | null)
     faceit_skill_level: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_losses" */
@@ -13466,6 +13492,7 @@ export interface players_avg_fields {
     steam_id: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_matches" */
     total_matches: (Scalars['Int'] | null)
+    wingman_rank: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_wins" */
     wins: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -13485,6 +13512,8 @@ export type players_constraint = 'players_discord_id_key' | 'players_pkey' | 'pl
 /** aggregate max on columns */
 export interface players_max_fields {
     avatar_url: (Scalars['String'] | null)
+    competitive_rank: (Scalars['Int'] | null)
+    competitive_rank_updated_at: (Scalars['timestamptz'] | null)
     country: (Scalars['String'] | null)
     created_at: (Scalars['timestamptz'] | null)
     /** A computed field, executes function "get_player_current_lobby_id" */
@@ -13517,6 +13546,8 @@ export interface players_max_fields {
     steam_id: (Scalars['bigint'] | null)
     /** A computed field, executes function "get_total_player_matches" */
     total_matches: (Scalars['Int'] | null)
+    wingman_rank: (Scalars['Int'] | null)
+    wingman_rank_updated_at: (Scalars['timestamptz'] | null)
     /** A computed field, executes function "get_total_player_wins" */
     wins: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -13532,6 +13563,8 @@ export interface players_max_fields {
 /** aggregate min on columns */
 export interface players_min_fields {
     avatar_url: (Scalars['String'] | null)
+    competitive_rank: (Scalars['Int'] | null)
+    competitive_rank_updated_at: (Scalars['timestamptz'] | null)
     country: (Scalars['String'] | null)
     created_at: (Scalars['timestamptz'] | null)
     /** A computed field, executes function "get_player_current_lobby_id" */
@@ -13564,6 +13597,8 @@ export interface players_min_fields {
     steam_id: (Scalars['bigint'] | null)
     /** A computed field, executes function "get_total_player_matches" */
     total_matches: (Scalars['Int'] | null)
+    wingman_rank: (Scalars['Int'] | null)
+    wingman_rank_updated_at: (Scalars['timestamptz'] | null)
     /** A computed field, executes function "get_total_player_wins" */
     wins: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -13587,11 +13622,12 @@ export interface players_mutation_response {
 
 
 /** select columns of table "players" */
-export type players_select_column = 'avatar_url' | 'country' | 'created_at' | 'custom_avatar_url' | 'discord_id' | 'faceit_elo' | 'faceit_nickname' | 'faceit_player_id' | 'faceit_skill_level' | 'faceit_updated_at' | 'faceit_url' | 'language' | 'last_sign_in_at' | 'name' | 'name_registered' | 'premier_rank' | 'premier_rank_updated_at' | 'profile_url' | 'role' | 'roster_image_url' | 'show_match_ready_modal' | 'steam_id'
+export type players_select_column = 'avatar_url' | 'competitive_rank' | 'competitive_rank_updated_at' | 'country' | 'created_at' | 'custom_avatar_url' | 'discord_id' | 'faceit_elo' | 'faceit_nickname' | 'faceit_player_id' | 'faceit_skill_level' | 'faceit_updated_at' | 'faceit_url' | 'language' | 'last_sign_in_at' | 'name' | 'name_registered' | 'premier_rank' | 'premier_rank_updated_at' | 'profile_url' | 'role' | 'roster_image_url' | 'show_match_ready_modal' | 'steam_id' | 'wingman_rank' | 'wingman_rank_updated_at'
 
 
 /** aggregate stddev on columns */
 export interface players_stddev_fields {
+    competitive_rank: (Scalars['Float'] | null)
     faceit_elo: (Scalars['Float'] | null)
     faceit_skill_level: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_losses" */
@@ -13606,6 +13642,7 @@ export interface players_stddev_fields {
     steam_id: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_matches" */
     total_matches: (Scalars['Int'] | null)
+    wingman_rank: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_wins" */
     wins: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -13620,6 +13657,7 @@ export interface players_stddev_fields {
 
 /** aggregate stddev_pop on columns */
 export interface players_stddev_pop_fields {
+    competitive_rank: (Scalars['Float'] | null)
     faceit_elo: (Scalars['Float'] | null)
     faceit_skill_level: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_losses" */
@@ -13634,6 +13672,7 @@ export interface players_stddev_pop_fields {
     steam_id: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_matches" */
     total_matches: (Scalars['Int'] | null)
+    wingman_rank: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_wins" */
     wins: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -13648,6 +13687,7 @@ export interface players_stddev_pop_fields {
 
 /** aggregate stddev_samp on columns */
 export interface players_stddev_samp_fields {
+    competitive_rank: (Scalars['Float'] | null)
     faceit_elo: (Scalars['Float'] | null)
     faceit_skill_level: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_losses" */
@@ -13662,6 +13702,7 @@ export interface players_stddev_samp_fields {
     steam_id: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_matches" */
     total_matches: (Scalars['Int'] | null)
+    wingman_rank: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_wins" */
     wins: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -13676,6 +13717,7 @@ export interface players_stddev_samp_fields {
 
 /** aggregate sum on columns */
 export interface players_sum_fields {
+    competitive_rank: (Scalars['Int'] | null)
     faceit_elo: (Scalars['Int'] | null)
     faceit_skill_level: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_losses" */
@@ -13690,6 +13732,7 @@ export interface players_sum_fields {
     steam_id: (Scalars['bigint'] | null)
     /** A computed field, executes function "get_total_player_matches" */
     total_matches: (Scalars['Int'] | null)
+    wingman_rank: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins" */
     wins: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -13703,11 +13746,12 @@ export interface players_sum_fields {
 
 
 /** update columns of table "players" */
-export type players_update_column = 'avatar_url' | 'country' | 'created_at' | 'custom_avatar_url' | 'discord_id' | 'faceit_elo' | 'faceit_nickname' | 'faceit_player_id' | 'faceit_skill_level' | 'faceit_updated_at' | 'faceit_url' | 'language' | 'last_sign_in_at' | 'name' | 'name_registered' | 'premier_rank' | 'premier_rank_updated_at' | 'profile_url' | 'role' | 'roster_image_url' | 'show_match_ready_modal' | 'steam_id'
+export type players_update_column = 'avatar_url' | 'competitive_rank' | 'competitive_rank_updated_at' | 'country' | 'created_at' | 'custom_avatar_url' | 'discord_id' | 'faceit_elo' | 'faceit_nickname' | 'faceit_player_id' | 'faceit_skill_level' | 'faceit_updated_at' | 'faceit_url' | 'language' | 'last_sign_in_at' | 'name' | 'name_registered' | 'premier_rank' | 'premier_rank_updated_at' | 'profile_url' | 'role' | 'roster_image_url' | 'show_match_ready_modal' | 'steam_id' | 'wingman_rank' | 'wingman_rank_updated_at'
 
 
 /** aggregate var_pop on columns */
 export interface players_var_pop_fields {
+    competitive_rank: (Scalars['Float'] | null)
     faceit_elo: (Scalars['Float'] | null)
     faceit_skill_level: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_losses" */
@@ -13722,6 +13766,7 @@ export interface players_var_pop_fields {
     steam_id: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_matches" */
     total_matches: (Scalars['Int'] | null)
+    wingman_rank: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_wins" */
     wins: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -13736,6 +13781,7 @@ export interface players_var_pop_fields {
 
 /** aggregate var_samp on columns */
 export interface players_var_samp_fields {
+    competitive_rank: (Scalars['Float'] | null)
     faceit_elo: (Scalars['Float'] | null)
     faceit_skill_level: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_losses" */
@@ -13750,6 +13796,7 @@ export interface players_var_samp_fields {
     steam_id: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_matches" */
     total_matches: (Scalars['Int'] | null)
+    wingman_rank: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_wins" */
     wins: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -13764,6 +13811,7 @@ export interface players_var_samp_fields {
 
 /** aggregate variance on columns */
 export interface players_variance_fields {
+    competitive_rank: (Scalars['Float'] | null)
     faceit_elo: (Scalars['Float'] | null)
     faceit_skill_level: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_losses" */
@@ -13778,6 +13826,7 @@ export interface players_variance_fields {
     steam_id: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_matches" */
     total_matches: (Scalars['Int'] | null)
+    wingman_rank: (Scalars['Float'] | null)
     /** A computed field, executes function "get_total_player_wins" */
     wins: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -15055,7 +15104,6 @@ export interface steam_accounts {
     /** An aggregate relationship */
     clip_render_jobs_aggregate: clip_render_jobs_aggregate
     created_at: Scalars['timestamptz']
-    enabled: Scalars['Boolean']
     id: Scalars['uuid']
     /** An object relationship */
     last_node: (game_server_nodes | null)
@@ -15131,11 +15179,11 @@ export interface steam_accounts_mutation_response {
 
 
 /** select columns of table "steam_accounts" */
-export type steam_accounts_select_column = 'created_at' | 'enabled' | 'id' | 'last_node_id' | 'password' | 'updated_at' | 'username'
+export type steam_accounts_select_column = 'created_at' | 'id' | 'last_node_id' | 'password' | 'updated_at' | 'username'
 
 
 /** update columns of table "steam_accounts" */
-export type steam_accounts_update_column = 'created_at' | 'enabled' | 'id' | 'last_node_id' | 'password' | 'updated_at' | 'username'
+export type steam_accounts_update_column = 'created_at' | 'id' | 'last_node_id' | 'password' | 'updated_at' | 'username'
 
 export interface subscription_root {
     /** fetch data from the table: "_map_pool" */
@@ -19866,7 +19914,6 @@ export interface v_steam_account_pool_status {
     busy_accounts: (Scalars['Int'] | null)
     free_accounts: (Scalars['Int'] | null)
     id: (Scalars['Int'] | null)
-    registered_accounts: (Scalars['Int'] | null)
     total_accounts: (Scalars['Int'] | null)
     __typename: 'v_steam_account_pool_status'
 }
@@ -19902,7 +19949,6 @@ export interface v_steam_account_pool_status_avg_fields {
     busy_accounts: (Scalars['Float'] | null)
     free_accounts: (Scalars['Float'] | null)
     id: (Scalars['Float'] | null)
-    registered_accounts: (Scalars['Float'] | null)
     total_accounts: (Scalars['Float'] | null)
     __typename: 'v_steam_account_pool_status_avg_fields'
 }
@@ -19913,7 +19959,6 @@ export interface v_steam_account_pool_status_max_fields {
     busy_accounts: (Scalars['Int'] | null)
     free_accounts: (Scalars['Int'] | null)
     id: (Scalars['Int'] | null)
-    registered_accounts: (Scalars['Int'] | null)
     total_accounts: (Scalars['Int'] | null)
     __typename: 'v_steam_account_pool_status_max_fields'
 }
@@ -19924,14 +19969,13 @@ export interface v_steam_account_pool_status_min_fields {
     busy_accounts: (Scalars['Int'] | null)
     free_accounts: (Scalars['Int'] | null)
     id: (Scalars['Int'] | null)
-    registered_accounts: (Scalars['Int'] | null)
     total_accounts: (Scalars['Int'] | null)
     __typename: 'v_steam_account_pool_status_min_fields'
 }
 
 
 /** select columns of table "v_steam_account_pool_status" */
-export type v_steam_account_pool_status_select_column = 'busy_accounts' | 'free_accounts' | 'id' | 'registered_accounts' | 'total_accounts'
+export type v_steam_account_pool_status_select_column = 'busy_accounts' | 'free_accounts' | 'id' | 'total_accounts'
 
 
 /** aggregate stddev on columns */
@@ -19939,7 +19983,6 @@ export interface v_steam_account_pool_status_stddev_fields {
     busy_accounts: (Scalars['Float'] | null)
     free_accounts: (Scalars['Float'] | null)
     id: (Scalars['Float'] | null)
-    registered_accounts: (Scalars['Float'] | null)
     total_accounts: (Scalars['Float'] | null)
     __typename: 'v_steam_account_pool_status_stddev_fields'
 }
@@ -19950,7 +19993,6 @@ export interface v_steam_account_pool_status_stddev_pop_fields {
     busy_accounts: (Scalars['Float'] | null)
     free_accounts: (Scalars['Float'] | null)
     id: (Scalars['Float'] | null)
-    registered_accounts: (Scalars['Float'] | null)
     total_accounts: (Scalars['Float'] | null)
     __typename: 'v_steam_account_pool_status_stddev_pop_fields'
 }
@@ -19961,7 +20003,6 @@ export interface v_steam_account_pool_status_stddev_samp_fields {
     busy_accounts: (Scalars['Float'] | null)
     free_accounts: (Scalars['Float'] | null)
     id: (Scalars['Float'] | null)
-    registered_accounts: (Scalars['Float'] | null)
     total_accounts: (Scalars['Float'] | null)
     __typename: 'v_steam_account_pool_status_stddev_samp_fields'
 }
@@ -19972,7 +20013,6 @@ export interface v_steam_account_pool_status_sum_fields {
     busy_accounts: (Scalars['Int'] | null)
     free_accounts: (Scalars['Int'] | null)
     id: (Scalars['Int'] | null)
-    registered_accounts: (Scalars['Int'] | null)
     total_accounts: (Scalars['Int'] | null)
     __typename: 'v_steam_account_pool_status_sum_fields'
 }
@@ -19983,7 +20023,6 @@ export interface v_steam_account_pool_status_var_pop_fields {
     busy_accounts: (Scalars['Float'] | null)
     free_accounts: (Scalars['Float'] | null)
     id: (Scalars['Float'] | null)
-    registered_accounts: (Scalars['Float'] | null)
     total_accounts: (Scalars['Float'] | null)
     __typename: 'v_steam_account_pool_status_var_pop_fields'
 }
@@ -19994,7 +20033,6 @@ export interface v_steam_account_pool_status_var_samp_fields {
     busy_accounts: (Scalars['Float'] | null)
     free_accounts: (Scalars['Float'] | null)
     id: (Scalars['Float'] | null)
-    registered_accounts: (Scalars['Float'] | null)
     total_accounts: (Scalars['Float'] | null)
     __typename: 'v_steam_account_pool_status_var_samp_fields'
 }
@@ -20005,7 +20043,6 @@ export interface v_steam_account_pool_status_variance_fields {
     busy_accounts: (Scalars['Float'] | null)
     free_accounts: (Scalars['Float'] | null)
     id: (Scalars['Float'] | null)
-    registered_accounts: (Scalars['Float'] | null)
     total_accounts: (Scalars['Float'] | null)
     __typename: 'v_steam_account_pool_status_variance_fields'
 }
@@ -32223,7 +32260,6 @@ export interface mutation_rootGenqlSelection{
     clearClipRenderBatch?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid']} })
     /** Delete all terminal-state clip_render_jobs rows platform-wide. */
     clearFinishedClipRenders?: SuccessOutputGenqlSelection
-    clearGpuNodeSteamCache?: (SuccessOutputGenqlSelection & { __args: {game_server_node_id: Scalars['uuid']} })
     clearPendingMatchImport?: (PendingMatchImportActionOutputGenqlSelection & { __args: {valve_match_id: Scalars['String']} })
     createApiKey?: (ApiKeyResponseGenqlSelection & { __args: {label: Scalars['String']} })
     /** Build a multi-segment ClipSpec from a player+preset and dispatch render */
@@ -41172,7 +41208,9 @@ export interface player_premier_rank_historyGenqlSelection{
     observed_at?: boolean | number
     /** An object relationship */
     player?: playersGenqlSelection
+    previous_rank?: boolean | number
     rank?: boolean | number
+    rank_type?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -41222,7 +41260,9 @@ on_conflict?: (player_premier_rank_history_on_conflict | null)}
 
 /** aggregate avg on columns */
 export interface player_premier_rank_history_avg_fieldsGenqlSelection{
+    previous_rank?: boolean | number
     rank?: boolean | number
+    rank_type?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -41230,19 +41270,19 @@ export interface player_premier_rank_history_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "player_premier_rank_history" */
-export interface player_premier_rank_history_avg_order_by {rank?: (order_by | null),steam_id?: (order_by | null)}
+export interface player_premier_rank_history_avg_order_by {previous_rank?: (order_by | null),rank?: (order_by | null),rank_type?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "player_premier_rank_history". All fields are combined with a logical 'AND'. */
-export interface player_premier_rank_history_bool_exp {_and?: (player_premier_rank_history_bool_exp[] | null),_not?: (player_premier_rank_history_bool_exp | null),_or?: (player_premier_rank_history_bool_exp[] | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),observed_at?: (timestamptz_comparison_exp | null),player?: (players_bool_exp | null),rank?: (Int_comparison_exp | null),steam_id?: (bigint_comparison_exp | null)}
+export interface player_premier_rank_history_bool_exp {_and?: (player_premier_rank_history_bool_exp[] | null),_not?: (player_premier_rank_history_bool_exp | null),_or?: (player_premier_rank_history_bool_exp[] | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),observed_at?: (timestamptz_comparison_exp | null),player?: (players_bool_exp | null),previous_rank?: (Int_comparison_exp | null),rank?: (Int_comparison_exp | null),rank_type?: (Int_comparison_exp | null),steam_id?: (bigint_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "player_premier_rank_history" */
-export interface player_premier_rank_history_inc_input {rank?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface player_premier_rank_history_inc_input {previous_rank?: (Scalars['Int'] | null),rank?: (Scalars['Int'] | null),rank_type?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "player_premier_rank_history" */
-export interface player_premier_rank_history_insert_input {id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),observed_at?: (Scalars['timestamptz'] | null),player?: (players_obj_rel_insert_input | null),rank?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface player_premier_rank_history_insert_input {id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),observed_at?: (Scalars['timestamptz'] | null),player?: (players_obj_rel_insert_input | null),previous_rank?: (Scalars['Int'] | null),rank?: (Scalars['Int'] | null),rank_type?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate max on columns */
@@ -41250,7 +41290,9 @@ export interface player_premier_rank_history_max_fieldsGenqlSelection{
     id?: boolean | number
     match_id?: boolean | number
     observed_at?: boolean | number
+    previous_rank?: boolean | number
     rank?: boolean | number
+    rank_type?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -41258,7 +41300,7 @@ export interface player_premier_rank_history_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "player_premier_rank_history" */
-export interface player_premier_rank_history_max_order_by {id?: (order_by | null),match_id?: (order_by | null),observed_at?: (order_by | null),rank?: (order_by | null),steam_id?: (order_by | null)}
+export interface player_premier_rank_history_max_order_by {id?: (order_by | null),match_id?: (order_by | null),observed_at?: (order_by | null),previous_rank?: (order_by | null),rank?: (order_by | null),rank_type?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -41266,7 +41308,9 @@ export interface player_premier_rank_history_min_fieldsGenqlSelection{
     id?: boolean | number
     match_id?: boolean | number
     observed_at?: boolean | number
+    previous_rank?: boolean | number
     rank?: boolean | number
+    rank_type?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -41274,7 +41318,7 @@ export interface player_premier_rank_history_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "player_premier_rank_history" */
-export interface player_premier_rank_history_min_order_by {id?: (order_by | null),match_id?: (order_by | null),observed_at?: (order_by | null),rank?: (order_by | null),steam_id?: (order_by | null)}
+export interface player_premier_rank_history_min_order_by {id?: (order_by | null),match_id?: (order_by | null),observed_at?: (order_by | null),previous_rank?: (order_by | null),rank?: (order_by | null),rank_type?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "player_premier_rank_history" */
@@ -41293,7 +41337,7 @@ export interface player_premier_rank_history_on_conflict {constraint: player_pre
 
 
 /** Ordering options when selecting data from "player_premier_rank_history". */
-export interface player_premier_rank_history_order_by {id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),observed_at?: (order_by | null),player?: (players_order_by | null),rank?: (order_by | null),steam_id?: (order_by | null)}
+export interface player_premier_rank_history_order_by {id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),observed_at?: (order_by | null),player?: (players_order_by | null),previous_rank?: (order_by | null),rank?: (order_by | null),rank_type?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** primary key columns input for table: player_premier_rank_history */
@@ -41301,12 +41345,14 @@ export interface player_premier_rank_history_pk_columns_input {id: Scalars['uuid
 
 
 /** input type for updating data in table "player_premier_rank_history" */
-export interface player_premier_rank_history_set_input {id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),observed_at?: (Scalars['timestamptz'] | null),rank?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface player_premier_rank_history_set_input {id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),observed_at?: (Scalars['timestamptz'] | null),previous_rank?: (Scalars['Int'] | null),rank?: (Scalars['Int'] | null),rank_type?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate stddev on columns */
 export interface player_premier_rank_history_stddev_fieldsGenqlSelection{
+    previous_rank?: boolean | number
     rank?: boolean | number
+    rank_type?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -41314,12 +41360,14 @@ export interface player_premier_rank_history_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "player_premier_rank_history" */
-export interface player_premier_rank_history_stddev_order_by {rank?: (order_by | null),steam_id?: (order_by | null)}
+export interface player_premier_rank_history_stddev_order_by {previous_rank?: (order_by | null),rank?: (order_by | null),rank_type?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
 export interface player_premier_rank_history_stddev_pop_fieldsGenqlSelection{
+    previous_rank?: boolean | number
     rank?: boolean | number
+    rank_type?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -41327,12 +41375,14 @@ export interface player_premier_rank_history_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "player_premier_rank_history" */
-export interface player_premier_rank_history_stddev_pop_order_by {rank?: (order_by | null),steam_id?: (order_by | null)}
+export interface player_premier_rank_history_stddev_pop_order_by {previous_rank?: (order_by | null),rank?: (order_by | null),rank_type?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
 export interface player_premier_rank_history_stddev_samp_fieldsGenqlSelection{
+    previous_rank?: boolean | number
     rank?: boolean | number
+    rank_type?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -41340,7 +41390,7 @@ export interface player_premier_rank_history_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "player_premier_rank_history" */
-export interface player_premier_rank_history_stddev_samp_order_by {rank?: (order_by | null),steam_id?: (order_by | null)}
+export interface player_premier_rank_history_stddev_samp_order_by {previous_rank?: (order_by | null),rank?: (order_by | null),rank_type?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** Streaming cursor of the table "player_premier_rank_history" */
@@ -41352,12 +41402,14 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface player_premier_rank_history_stream_cursor_value_input {id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),observed_at?: (Scalars['timestamptz'] | null),rank?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface player_premier_rank_history_stream_cursor_value_input {id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),observed_at?: (Scalars['timestamptz'] | null),previous_rank?: (Scalars['Int'] | null),rank?: (Scalars['Int'] | null),rank_type?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate sum on columns */
 export interface player_premier_rank_history_sum_fieldsGenqlSelection{
+    previous_rank?: boolean | number
     rank?: boolean | number
+    rank_type?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -41365,7 +41417,7 @@ export interface player_premier_rank_history_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "player_premier_rank_history" */
-export interface player_premier_rank_history_sum_order_by {rank?: (order_by | null),steam_id?: (order_by | null)}
+export interface player_premier_rank_history_sum_order_by {previous_rank?: (order_by | null),rank?: (order_by | null),rank_type?: (order_by | null),steam_id?: (order_by | null)}
 
 export interface player_premier_rank_history_updates {
 /** increments the numeric columns with given value of the filtered values */
@@ -41378,7 +41430,9 @@ where: player_premier_rank_history_bool_exp}
 
 /** aggregate var_pop on columns */
 export interface player_premier_rank_history_var_pop_fieldsGenqlSelection{
+    previous_rank?: boolean | number
     rank?: boolean | number
+    rank_type?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -41386,12 +41440,14 @@ export interface player_premier_rank_history_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "player_premier_rank_history" */
-export interface player_premier_rank_history_var_pop_order_by {rank?: (order_by | null),steam_id?: (order_by | null)}
+export interface player_premier_rank_history_var_pop_order_by {previous_rank?: (order_by | null),rank?: (order_by | null),rank_type?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
 export interface player_premier_rank_history_var_samp_fieldsGenqlSelection{
+    previous_rank?: boolean | number
     rank?: boolean | number
+    rank_type?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -41399,12 +41455,14 @@ export interface player_premier_rank_history_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "player_premier_rank_history" */
-export interface player_premier_rank_history_var_samp_order_by {rank?: (order_by | null),steam_id?: (order_by | null)}
+export interface player_premier_rank_history_var_samp_order_by {previous_rank?: (order_by | null),rank?: (order_by | null),rank_type?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** aggregate variance on columns */
 export interface player_premier_rank_history_variance_fieldsGenqlSelection{
+    previous_rank?: boolean | number
     rank?: boolean | number
+    rank_type?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -41412,7 +41470,7 @@ export interface player_premier_rank_history_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "player_premier_rank_history" */
-export interface player_premier_rank_history_variance_order_by {rank?: (order_by | null),steam_id?: (order_by | null)}
+export interface player_premier_rank_history_variance_order_by {previous_rank?: (order_by | null),rank?: (order_by | null),rank_type?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** columns and relationships of "player_sanctions" */
@@ -42729,6 +42787,8 @@ export interface playersGenqlSelection{
     order_by?: (match_lineups_order_by[] | null), 
     /** filter the rows returned */
     where?: (match_lineups_bool_exp | null)} })
+    competitive_rank?: boolean | number
+    competitive_rank_updated_at?: boolean | number
     country?: boolean | number
     created_at?: boolean | number
     /** A computed field, executes function "get_player_current_lobby_id" */
@@ -43528,6 +43588,8 @@ export interface playersGenqlSelection{
     order_by?: (player_utility_order_by[] | null), 
     /** filter the rows returned */
     where?: (player_utility_bool_exp | null)} })
+    wingman_rank?: boolean | number
+    wingman_rank_updated_at?: boolean | number
     /** A computed field, executes function "get_total_player_wins" */
     wins?: boolean | number
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -43570,6 +43632,7 @@ export interface players_aggregate_fieldsGenqlSelection{
 
 /** aggregate avg on columns */
 export interface players_avg_fieldsGenqlSelection{
+    competitive_rank?: boolean | number
     faceit_elo?: boolean | number
     faceit_skill_level?: boolean | number
     /** A computed field, executes function "get_total_player_losses" */
@@ -43584,6 +43647,7 @@ export interface players_avg_fieldsGenqlSelection{
     steam_id?: boolean | number
     /** A computed field, executes function "get_total_player_matches" */
     total_matches?: boolean | number
+    wingman_rank?: boolean | number
     /** A computed field, executes function "get_total_player_wins" */
     wins?: boolean | number
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -43598,20 +43662,22 @@ export interface players_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "players". All fields are combined with a logical 'AND'. */
-export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_lobby_id?: (uuid_comparison_exp | null),custom_avatar_url?: (String_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),elo?: (jsonb_comparison_exp | null),elo_history?: (v_player_elo_bool_exp | null),elo_history_aggregate?: (v_player_elo_aggregate_bool_exp | null),faceit_elo?: (Int_comparison_exp | null),faceit_nickname?: (String_comparison_exp | null),faceit_player_id?: (String_comparison_exp | null),faceit_skill_level?: (Int_comparison_exp | null),faceit_updated_at?: (timestamptz_comparison_exp | null),faceit_url?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),friends?: (my_friends_bool_exp | null),friends_aggregate?: (my_friends_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_banned?: (Boolean_comparison_exp | null),is_gagged?: (Boolean_comparison_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),is_in_lobby?: (Boolean_comparison_exp | null),is_muted?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),kills_by_weapons?: (player_kills_by_weapon_bool_exp | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_bool_exp | null),language?: (String_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),lobby_players?: (lobby_players_bool_exp | null),lobby_players_aggregate?: (lobby_players_aggregate_bool_exp | null),losses?: (Int_comparison_exp | null),losses_competitive?: (Int_comparison_exp | null),losses_duel?: (Int_comparison_exp | null),losses_wingman?: (Int_comparison_exp | null),match_map_hltv?: (v_player_match_map_hltv_bool_exp | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_bool_exp | null),match_map_stats?: (player_match_map_stats_bool_exp | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_bool_exp | null),match_stats?: (player_match_stats_v_bool_exp | null),match_stats_aggregate?: (player_match_stats_v_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),peak_elo?: (jsonb_comparison_exp | null),pending_match_imports?: (pending_match_import_players_bool_exp | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),premier_rank?: (Int_comparison_exp | null),premier_rank_history?: (player_premier_rank_history_bool_exp | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_bool_exp | null),premier_rank_updated_at?: (timestamptz_comparison_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),roster_image_url?: (String_comparison_exp | null),sanctions?: (player_sanctions_bool_exp | null),sanctions_aggregate?: (player_sanctions_aggregate_bool_exp | null),show_match_ready_modal?: (Boolean_comparison_exp | null),stats?: (player_stats_bool_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournament_trophies?: (tournament_trophies_bool_exp | null),tournament_trophies_aggregate?: (tournament_trophies_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null),wins?: (Int_comparison_exp | null),wins_competitive?: (Int_comparison_exp | null),wins_duel?: (Int_comparison_exp | null),wins_wingman?: (Int_comparison_exp | null)}
+export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),competitive_rank?: (Int_comparison_exp | null),competitive_rank_updated_at?: (timestamptz_comparison_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_lobby_id?: (uuid_comparison_exp | null),custom_avatar_url?: (String_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),elo?: (jsonb_comparison_exp | null),elo_history?: (v_player_elo_bool_exp | null),elo_history_aggregate?: (v_player_elo_aggregate_bool_exp | null),faceit_elo?: (Int_comparison_exp | null),faceit_nickname?: (String_comparison_exp | null),faceit_player_id?: (String_comparison_exp | null),faceit_skill_level?: (Int_comparison_exp | null),faceit_updated_at?: (timestamptz_comparison_exp | null),faceit_url?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),friends?: (my_friends_bool_exp | null),friends_aggregate?: (my_friends_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_banned?: (Boolean_comparison_exp | null),is_gagged?: (Boolean_comparison_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),is_in_lobby?: (Boolean_comparison_exp | null),is_muted?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),kills_by_weapons?: (player_kills_by_weapon_bool_exp | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_bool_exp | null),language?: (String_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),lobby_players?: (lobby_players_bool_exp | null),lobby_players_aggregate?: (lobby_players_aggregate_bool_exp | null),losses?: (Int_comparison_exp | null),losses_competitive?: (Int_comparison_exp | null),losses_duel?: (Int_comparison_exp | null),losses_wingman?: (Int_comparison_exp | null),match_map_hltv?: (v_player_match_map_hltv_bool_exp | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_bool_exp | null),match_map_stats?: (player_match_map_stats_bool_exp | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_bool_exp | null),match_stats?: (player_match_stats_v_bool_exp | null),match_stats_aggregate?: (player_match_stats_v_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),peak_elo?: (jsonb_comparison_exp | null),pending_match_imports?: (pending_match_import_players_bool_exp | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),premier_rank?: (Int_comparison_exp | null),premier_rank_history?: (player_premier_rank_history_bool_exp | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_bool_exp | null),premier_rank_updated_at?: (timestamptz_comparison_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),roster_image_url?: (String_comparison_exp | null),sanctions?: (player_sanctions_bool_exp | null),sanctions_aggregate?: (player_sanctions_aggregate_bool_exp | null),show_match_ready_modal?: (Boolean_comparison_exp | null),stats?: (player_stats_bool_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournament_trophies?: (tournament_trophies_bool_exp | null),tournament_trophies_aggregate?: (tournament_trophies_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null),wingman_rank?: (Int_comparison_exp | null),wingman_rank_updated_at?: (timestamptz_comparison_exp | null),wins?: (Int_comparison_exp | null),wins_competitive?: (Int_comparison_exp | null),wins_duel?: (Int_comparison_exp | null),wins_wingman?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "players" */
-export interface players_inc_input {faceit_elo?: (Scalars['Int'] | null),faceit_skill_level?: (Scalars['Int'] | null),premier_rank?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface players_inc_input {competitive_rank?: (Scalars['Int'] | null),faceit_elo?: (Scalars['Int'] | null),faceit_skill_level?: (Scalars['Int'] | null),premier_rank?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),wingman_rank?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "players" */
-export interface players_insert_input {abandoned_matches?: (abandoned_matches_arr_rel_insert_input | null),assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),coach_lineups?: (match_lineups_arr_rel_insert_input | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),elo_history?: (v_player_elo_arr_rel_insert_input | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),friends?: (my_friends_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),kills_by_weapons?: (player_kills_by_weapon_arr_rel_insert_input | null),language?: (Scalars['String'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),lobby_players?: (lobby_players_arr_rel_insert_input | null),match_map_hltv?: (v_player_match_map_hltv_arr_rel_insert_input | null),match_map_stats?: (player_match_map_stats_arr_rel_insert_input | null),match_stats?: (player_match_stats_v_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notifications?: (notifications_arr_rel_insert_input | null),objectives?: (player_objectives_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),pending_match_imports?: (pending_match_import_players_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),premier_rank?: (Scalars['Int'] | null),premier_rank_history?: (player_premier_rank_history_arr_rel_insert_input | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),roster_image_url?: (Scalars['String'] | null),sanctions?: (player_sanctions_arr_rel_insert_input | null),show_match_ready_modal?: (Scalars['Boolean'] | null),stats?: (player_stats_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournament_trophies?: (tournament_trophies_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
+export interface players_insert_input {abandoned_matches?: (abandoned_matches_arr_rel_insert_input | null),assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),coach_lineups?: (match_lineups_arr_rel_insert_input | null),competitive_rank?: (Scalars['Int'] | null),competitive_rank_updated_at?: (Scalars['timestamptz'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),elo_history?: (v_player_elo_arr_rel_insert_input | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),friends?: (my_friends_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),kills_by_weapons?: (player_kills_by_weapon_arr_rel_insert_input | null),language?: (Scalars['String'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),lobby_players?: (lobby_players_arr_rel_insert_input | null),match_map_hltv?: (v_player_match_map_hltv_arr_rel_insert_input | null),match_map_stats?: (player_match_map_stats_arr_rel_insert_input | null),match_stats?: (player_match_stats_v_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notifications?: (notifications_arr_rel_insert_input | null),objectives?: (player_objectives_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),pending_match_imports?: (pending_match_import_players_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),premier_rank?: (Scalars['Int'] | null),premier_rank_history?: (player_premier_rank_history_arr_rel_insert_input | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),roster_image_url?: (Scalars['String'] | null),sanctions?: (player_sanctions_arr_rel_insert_input | null),show_match_ready_modal?: (Scalars['Boolean'] | null),stats?: (player_stats_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournament_trophies?: (tournament_trophies_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null),wingman_rank?: (Scalars['Int'] | null),wingman_rank_updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate max on columns */
 export interface players_max_fieldsGenqlSelection{
     avatar_url?: boolean | number
+    competitive_rank?: boolean | number
+    competitive_rank_updated_at?: boolean | number
     country?: boolean | number
     created_at?: boolean | number
     /** A computed field, executes function "get_player_current_lobby_id" */
@@ -43644,6 +43710,8 @@ export interface players_max_fieldsGenqlSelection{
     steam_id?: boolean | number
     /** A computed field, executes function "get_total_player_matches" */
     total_matches?: boolean | number
+    wingman_rank?: boolean | number
+    wingman_rank_updated_at?: boolean | number
     /** A computed field, executes function "get_total_player_wins" */
     wins?: boolean | number
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -43660,6 +43728,8 @@ export interface players_max_fieldsGenqlSelection{
 /** aggregate min on columns */
 export interface players_min_fieldsGenqlSelection{
     avatar_url?: boolean | number
+    competitive_rank?: boolean | number
+    competitive_rank_updated_at?: boolean | number
     country?: boolean | number
     created_at?: boolean | number
     /** A computed field, executes function "get_player_current_lobby_id" */
@@ -43692,6 +43762,8 @@ export interface players_min_fieldsGenqlSelection{
     steam_id?: boolean | number
     /** A computed field, executes function "get_total_player_matches" */
     total_matches?: boolean | number
+    wingman_rank?: boolean | number
+    wingman_rank_updated_at?: boolean | number
     /** A computed field, executes function "get_total_player_wins" */
     wins?: boolean | number
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -43727,7 +43799,7 @@ export interface players_on_conflict {constraint: players_constraint,update_colu
 
 
 /** Ordering options when selecting data from "players". */
-export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),current_lobby_id?: (order_by | null),custom_avatar_url?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),elo_history_aggregate?: (v_player_elo_aggregate_order_by | null),faceit_elo?: (order_by | null),faceit_nickname?: (order_by | null),faceit_player_id?: (order_by | null),faceit_skill_level?: (order_by | null),faceit_updated_at?: (order_by | null),faceit_url?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),friends_aggregate?: (my_friends_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_banned?: (order_by | null),is_gagged?: (order_by | null),is_in_another_match?: (order_by | null),is_in_lobby?: (order_by | null),is_muted?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_order_by | null),language?: (order_by | null),last_sign_in_at?: (order_by | null),lobby_players_aggregate?: (lobby_players_aggregate_order_by | null),losses?: (order_by | null),losses_competitive?: (order_by | null),losses_duel?: (order_by | null),losses_wingman?: (order_by | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_order_by | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_order_by | null),match_stats_aggregate?: (player_match_stats_v_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),peak_elo?: (order_by | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),premier_rank?: (order_by | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_order_by | null),premier_rank_updated_at?: (order_by | null),profile_url?: (order_by | null),role?: (order_by | null),roster_image_url?: (order_by | null),sanctions_aggregate?: (player_sanctions_aggregate_order_by | null),show_match_ready_modal?: (order_by | null),stats?: (player_stats_order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournament_trophies_aggregate?: (tournament_trophies_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null),wins?: (order_by | null),wins_competitive?: (order_by | null),wins_duel?: (order_by | null),wins_wingman?: (order_by | null)}
+export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),competitive_rank?: (order_by | null),competitive_rank_updated_at?: (order_by | null),country?: (order_by | null),created_at?: (order_by | null),current_lobby_id?: (order_by | null),custom_avatar_url?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),elo_history_aggregate?: (v_player_elo_aggregate_order_by | null),faceit_elo?: (order_by | null),faceit_nickname?: (order_by | null),faceit_player_id?: (order_by | null),faceit_skill_level?: (order_by | null),faceit_updated_at?: (order_by | null),faceit_url?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),friends_aggregate?: (my_friends_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_banned?: (order_by | null),is_gagged?: (order_by | null),is_in_another_match?: (order_by | null),is_in_lobby?: (order_by | null),is_muted?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_order_by | null),language?: (order_by | null),last_sign_in_at?: (order_by | null),lobby_players_aggregate?: (lobby_players_aggregate_order_by | null),losses?: (order_by | null),losses_competitive?: (order_by | null),losses_duel?: (order_by | null),losses_wingman?: (order_by | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_order_by | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_order_by | null),match_stats_aggregate?: (player_match_stats_v_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),peak_elo?: (order_by | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),premier_rank?: (order_by | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_order_by | null),premier_rank_updated_at?: (order_by | null),profile_url?: (order_by | null),role?: (order_by | null),roster_image_url?: (order_by | null),sanctions_aggregate?: (player_sanctions_aggregate_order_by | null),show_match_ready_modal?: (order_by | null),stats?: (player_stats_order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournament_trophies_aggregate?: (tournament_trophies_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null),wingman_rank?: (order_by | null),wingman_rank_updated_at?: (order_by | null),wins?: (order_by | null),wins_competitive?: (order_by | null),wins_duel?: (order_by | null),wins_wingman?: (order_by | null)}
 
 
 /** primary key columns input for table: players */
@@ -43735,11 +43807,12 @@ export interface players_pk_columns_input {steam_id: Scalars['bigint']}
 
 
 /** input type for updating data in table "players" */
-export interface players_set_input {avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),discord_id?: (Scalars['String'] | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),language?: (Scalars['String'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),premier_rank?: (Scalars['Int'] | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),roster_image_url?: (Scalars['String'] | null),show_match_ready_modal?: (Scalars['Boolean'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface players_set_input {avatar_url?: (Scalars['String'] | null),competitive_rank?: (Scalars['Int'] | null),competitive_rank_updated_at?: (Scalars['timestamptz'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),discord_id?: (Scalars['String'] | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),language?: (Scalars['String'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),premier_rank?: (Scalars['Int'] | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),roster_image_url?: (Scalars['String'] | null),show_match_ready_modal?: (Scalars['Boolean'] | null),steam_id?: (Scalars['bigint'] | null),wingman_rank?: (Scalars['Int'] | null),wingman_rank_updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate stddev on columns */
 export interface players_stddev_fieldsGenqlSelection{
+    competitive_rank?: boolean | number
     faceit_elo?: boolean | number
     faceit_skill_level?: boolean | number
     /** A computed field, executes function "get_total_player_losses" */
@@ -43754,6 +43827,7 @@ export interface players_stddev_fieldsGenqlSelection{
     steam_id?: boolean | number
     /** A computed field, executes function "get_total_player_matches" */
     total_matches?: boolean | number
+    wingman_rank?: boolean | number
     /** A computed field, executes function "get_total_player_wins" */
     wins?: boolean | number
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -43769,6 +43843,7 @@ export interface players_stddev_fieldsGenqlSelection{
 
 /** aggregate stddev_pop on columns */
 export interface players_stddev_pop_fieldsGenqlSelection{
+    competitive_rank?: boolean | number
     faceit_elo?: boolean | number
     faceit_skill_level?: boolean | number
     /** A computed field, executes function "get_total_player_losses" */
@@ -43783,6 +43858,7 @@ export interface players_stddev_pop_fieldsGenqlSelection{
     steam_id?: boolean | number
     /** A computed field, executes function "get_total_player_matches" */
     total_matches?: boolean | number
+    wingman_rank?: boolean | number
     /** A computed field, executes function "get_total_player_wins" */
     wins?: boolean | number
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -43798,6 +43874,7 @@ export interface players_stddev_pop_fieldsGenqlSelection{
 
 /** aggregate stddev_samp on columns */
 export interface players_stddev_samp_fieldsGenqlSelection{
+    competitive_rank?: boolean | number
     faceit_elo?: boolean | number
     faceit_skill_level?: boolean | number
     /** A computed field, executes function "get_total_player_losses" */
@@ -43812,6 +43889,7 @@ export interface players_stddev_samp_fieldsGenqlSelection{
     steam_id?: boolean | number
     /** A computed field, executes function "get_total_player_matches" */
     total_matches?: boolean | number
+    wingman_rank?: boolean | number
     /** A computed field, executes function "get_total_player_wins" */
     wins?: boolean | number
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -43834,11 +43912,12 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface players_stream_cursor_value_input {avatar_url?: (Scalars['String'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),discord_id?: (Scalars['String'] | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),language?: (Scalars['String'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),premier_rank?: (Scalars['Int'] | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),roster_image_url?: (Scalars['String'] | null),show_match_ready_modal?: (Scalars['Boolean'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface players_stream_cursor_value_input {avatar_url?: (Scalars['String'] | null),competitive_rank?: (Scalars['Int'] | null),competitive_rank_updated_at?: (Scalars['timestamptz'] | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),discord_id?: (Scalars['String'] | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),language?: (Scalars['String'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),premier_rank?: (Scalars['Int'] | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),roster_image_url?: (Scalars['String'] | null),show_match_ready_modal?: (Scalars['Boolean'] | null),steam_id?: (Scalars['bigint'] | null),wingman_rank?: (Scalars['Int'] | null),wingman_rank_updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate sum on columns */
 export interface players_sum_fieldsGenqlSelection{
+    competitive_rank?: boolean | number
     faceit_elo?: boolean | number
     faceit_skill_level?: boolean | number
     /** A computed field, executes function "get_total_player_losses" */
@@ -43853,6 +43932,7 @@ export interface players_sum_fieldsGenqlSelection{
     steam_id?: boolean | number
     /** A computed field, executes function "get_total_player_matches" */
     total_matches?: boolean | number
+    wingman_rank?: boolean | number
     /** A computed field, executes function "get_total_player_wins" */
     wins?: boolean | number
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -43876,6 +43956,7 @@ where: players_bool_exp}
 
 /** aggregate var_pop on columns */
 export interface players_var_pop_fieldsGenqlSelection{
+    competitive_rank?: boolean | number
     faceit_elo?: boolean | number
     faceit_skill_level?: boolean | number
     /** A computed field, executes function "get_total_player_losses" */
@@ -43890,6 +43971,7 @@ export interface players_var_pop_fieldsGenqlSelection{
     steam_id?: boolean | number
     /** A computed field, executes function "get_total_player_matches" */
     total_matches?: boolean | number
+    wingman_rank?: boolean | number
     /** A computed field, executes function "get_total_player_wins" */
     wins?: boolean | number
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -43905,6 +43987,7 @@ export interface players_var_pop_fieldsGenqlSelection{
 
 /** aggregate var_samp on columns */
 export interface players_var_samp_fieldsGenqlSelection{
+    competitive_rank?: boolean | number
     faceit_elo?: boolean | number
     faceit_skill_level?: boolean | number
     /** A computed field, executes function "get_total_player_losses" */
@@ -43919,6 +44002,7 @@ export interface players_var_samp_fieldsGenqlSelection{
     steam_id?: boolean | number
     /** A computed field, executes function "get_total_player_matches" */
     total_matches?: boolean | number
+    wingman_rank?: boolean | number
     /** A computed field, executes function "get_total_player_wins" */
     wins?: boolean | number
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -43934,6 +44018,7 @@ export interface players_var_samp_fieldsGenqlSelection{
 
 /** aggregate variance on columns */
 export interface players_variance_fieldsGenqlSelection{
+    competitive_rank?: boolean | number
     faceit_elo?: boolean | number
     faceit_skill_level?: boolean | number
     /** A computed field, executes function "get_total_player_losses" */
@@ -43948,6 +44033,7 @@ export interface players_variance_fieldsGenqlSelection{
     steam_id?: boolean | number
     /** A computed field, executes function "get_total_player_matches" */
     total_matches?: boolean | number
+    wingman_rank?: boolean | number
     /** A computed field, executes function "get_total_player_wins" */
     wins?: boolean | number
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -47739,7 +47825,6 @@ export interface steam_accountsGenqlSelection{
     /** filter the rows returned */
     where?: (clip_render_jobs_bool_exp | null)} })
     created_at?: boolean | number
-    enabled?: boolean | number
     id?: boolean | number
     /** An object relationship */
     last_node?: game_server_nodesGenqlSelection
@@ -47820,11 +47905,11 @@ export interface steam_accounts_aggregate_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "steam_accounts". All fields are combined with a logical 'AND'. */
-export interface steam_accounts_bool_exp {_and?: (steam_accounts_bool_exp[] | null),_not?: (steam_accounts_bool_exp | null),_or?: (steam_accounts_bool_exp[] | null),clip_render_jobs?: (clip_render_jobs_bool_exp | null),clip_render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),created_at?: (timestamptz_comparison_exp | null),enabled?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),last_node?: (game_server_nodes_bool_exp | null),last_node_id?: (String_comparison_exp | null),match_demo_sessions?: (match_demo_sessions_bool_exp | null),match_demo_sessions_aggregate?: (match_demo_sessions_aggregate_bool_exp | null),match_streams?: (match_streams_bool_exp | null),match_streams_aggregate?: (match_streams_aggregate_bool_exp | null),password?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),username?: (String_comparison_exp | null)}
+export interface steam_accounts_bool_exp {_and?: (steam_accounts_bool_exp[] | null),_not?: (steam_accounts_bool_exp | null),_or?: (steam_accounts_bool_exp[] | null),clip_render_jobs?: (clip_render_jobs_bool_exp | null),clip_render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),last_node?: (game_server_nodes_bool_exp | null),last_node_id?: (String_comparison_exp | null),match_demo_sessions?: (match_demo_sessions_bool_exp | null),match_demo_sessions_aggregate?: (match_demo_sessions_aggregate_bool_exp | null),match_streams?: (match_streams_bool_exp | null),match_streams_aggregate?: (match_streams_aggregate_bool_exp | null),password?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),username?: (String_comparison_exp | null)}
 
 
 /** input type for inserting data into table "steam_accounts" */
-export interface steam_accounts_insert_input {clip_render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),created_at?: (Scalars['timestamptz'] | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),last_node?: (game_server_nodes_obj_rel_insert_input | null),last_node_id?: (Scalars['String'] | null),match_demo_sessions?: (match_demo_sessions_arr_rel_insert_input | null),match_streams?: (match_streams_arr_rel_insert_input | null),password?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),username?: (Scalars['String'] | null)}
+export interface steam_accounts_insert_input {clip_render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),last_node?: (game_server_nodes_obj_rel_insert_input | null),last_node_id?: (Scalars['String'] | null),match_demo_sessions?: (match_demo_sessions_arr_rel_insert_input | null),match_streams?: (match_streams_arr_rel_insert_input | null),password?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),username?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -47869,7 +47954,7 @@ export interface steam_accounts_on_conflict {constraint: steam_accounts_constrai
 
 
 /** Ordering options when selecting data from "steam_accounts". */
-export interface steam_accounts_order_by {clip_render_jobs_aggregate?: (clip_render_jobs_aggregate_order_by | null),created_at?: (order_by | null),enabled?: (order_by | null),id?: (order_by | null),last_node?: (game_server_nodes_order_by | null),last_node_id?: (order_by | null),match_demo_sessions_aggregate?: (match_demo_sessions_aggregate_order_by | null),match_streams_aggregate?: (match_streams_aggregate_order_by | null),password?: (order_by | null),updated_at?: (order_by | null),username?: (order_by | null)}
+export interface steam_accounts_order_by {clip_render_jobs_aggregate?: (clip_render_jobs_aggregate_order_by | null),created_at?: (order_by | null),id?: (order_by | null),last_node?: (game_server_nodes_order_by | null),last_node_id?: (order_by | null),match_demo_sessions_aggregate?: (match_demo_sessions_aggregate_order_by | null),match_streams_aggregate?: (match_streams_aggregate_order_by | null),password?: (order_by | null),updated_at?: (order_by | null),username?: (order_by | null)}
 
 
 /** primary key columns input for table: steam_accounts */
@@ -47877,7 +47962,7 @@ export interface steam_accounts_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "steam_accounts" */
-export interface steam_accounts_set_input {created_at?: (Scalars['timestamptz'] | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),last_node_id?: (Scalars['String'] | null),password?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),username?: (Scalars['String'] | null)}
+export interface steam_accounts_set_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),last_node_id?: (Scalars['String'] | null),password?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),username?: (Scalars['String'] | null)}
 
 
 /** Streaming cursor of the table "steam_accounts" */
@@ -47889,7 +47974,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface steam_accounts_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),last_node_id?: (Scalars['String'] | null),password?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),username?: (Scalars['String'] | null)}
+export interface steam_accounts_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),last_node_id?: (Scalars['String'] | null),password?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),username?: (Scalars['String'] | null)}
 
 export interface steam_accounts_updates {
 /** sets the columns of the filtered rows to the given values */
@@ -57650,7 +57735,6 @@ export interface v_steam_account_pool_statusGenqlSelection{
     busy_accounts?: boolean | number
     free_accounts?: boolean | number
     id?: boolean | number
-    registered_accounts?: boolean | number
     total_accounts?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -57689,7 +57773,6 @@ export interface v_steam_account_pool_status_avg_fieldsGenqlSelection{
     busy_accounts?: boolean | number
     free_accounts?: boolean | number
     id?: boolean | number
-    registered_accounts?: boolean | number
     total_accounts?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -57697,7 +57780,7 @@ export interface v_steam_account_pool_status_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "v_steam_account_pool_status". All fields are combined with a logical 'AND'. */
-export interface v_steam_account_pool_status_bool_exp {_and?: (v_steam_account_pool_status_bool_exp[] | null),_not?: (v_steam_account_pool_status_bool_exp | null),_or?: (v_steam_account_pool_status_bool_exp[] | null),busy_accounts?: (Int_comparison_exp | null),free_accounts?: (Int_comparison_exp | null),id?: (Int_comparison_exp | null),registered_accounts?: (Int_comparison_exp | null),total_accounts?: (Int_comparison_exp | null)}
+export interface v_steam_account_pool_status_bool_exp {_and?: (v_steam_account_pool_status_bool_exp[] | null),_not?: (v_steam_account_pool_status_bool_exp | null),_or?: (v_steam_account_pool_status_bool_exp[] | null),busy_accounts?: (Int_comparison_exp | null),free_accounts?: (Int_comparison_exp | null),id?: (Int_comparison_exp | null),total_accounts?: (Int_comparison_exp | null)}
 
 
 /** aggregate max on columns */
@@ -57705,7 +57788,6 @@ export interface v_steam_account_pool_status_max_fieldsGenqlSelection{
     busy_accounts?: boolean | number
     free_accounts?: boolean | number
     id?: boolean | number
-    registered_accounts?: boolean | number
     total_accounts?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -57717,7 +57799,6 @@ export interface v_steam_account_pool_status_min_fieldsGenqlSelection{
     busy_accounts?: boolean | number
     free_accounts?: boolean | number
     id?: boolean | number
-    registered_accounts?: boolean | number
     total_accounts?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -57725,7 +57806,7 @@ export interface v_steam_account_pool_status_min_fieldsGenqlSelection{
 
 
 /** Ordering options when selecting data from "v_steam_account_pool_status". */
-export interface v_steam_account_pool_status_order_by {busy_accounts?: (order_by | null),free_accounts?: (order_by | null),id?: (order_by | null),registered_accounts?: (order_by | null),total_accounts?: (order_by | null)}
+export interface v_steam_account_pool_status_order_by {busy_accounts?: (order_by | null),free_accounts?: (order_by | null),id?: (order_by | null),total_accounts?: (order_by | null)}
 
 
 /** aggregate stddev on columns */
@@ -57733,7 +57814,6 @@ export interface v_steam_account_pool_status_stddev_fieldsGenqlSelection{
     busy_accounts?: boolean | number
     free_accounts?: boolean | number
     id?: boolean | number
-    registered_accounts?: boolean | number
     total_accounts?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -57745,7 +57825,6 @@ export interface v_steam_account_pool_status_stddev_pop_fieldsGenqlSelection{
     busy_accounts?: boolean | number
     free_accounts?: boolean | number
     id?: boolean | number
-    registered_accounts?: boolean | number
     total_accounts?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -57757,7 +57836,6 @@ export interface v_steam_account_pool_status_stddev_samp_fieldsGenqlSelection{
     busy_accounts?: boolean | number
     free_accounts?: boolean | number
     id?: boolean | number
-    registered_accounts?: boolean | number
     total_accounts?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -57773,7 +57851,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface v_steam_account_pool_status_stream_cursor_value_input {busy_accounts?: (Scalars['Int'] | null),free_accounts?: (Scalars['Int'] | null),id?: (Scalars['Int'] | null),registered_accounts?: (Scalars['Int'] | null),total_accounts?: (Scalars['Int'] | null)}
+export interface v_steam_account_pool_status_stream_cursor_value_input {busy_accounts?: (Scalars['Int'] | null),free_accounts?: (Scalars['Int'] | null),id?: (Scalars['Int'] | null),total_accounts?: (Scalars['Int'] | null)}
 
 
 /** aggregate sum on columns */
@@ -57781,7 +57859,6 @@ export interface v_steam_account_pool_status_sum_fieldsGenqlSelection{
     busy_accounts?: boolean | number
     free_accounts?: boolean | number
     id?: boolean | number
-    registered_accounts?: boolean | number
     total_accounts?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -57793,7 +57870,6 @@ export interface v_steam_account_pool_status_var_pop_fieldsGenqlSelection{
     busy_accounts?: boolean | number
     free_accounts?: boolean | number
     id?: boolean | number
-    registered_accounts?: boolean | number
     total_accounts?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -57805,7 +57881,6 @@ export interface v_steam_account_pool_status_var_samp_fieldsGenqlSelection{
     busy_accounts?: boolean | number
     free_accounts?: boolean | number
     id?: boolean | number
-    registered_accounts?: boolean | number
     total_accounts?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -57817,7 +57892,6 @@ export interface v_steam_account_pool_status_variance_fieldsGenqlSelection{
     busy_accounts?: boolean | number
     free_accounts?: boolean | number
     id?: boolean | number
-    registered_accounts?: boolean | number
     total_accounts?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -71052,14 +71126,16 @@ export const enumPlayerObjectivesUpdateColumn = {
 
 export const enumPlayerPremierRankHistoryConstraint = {
    player_premier_rank_history_pkey: 'player_premier_rank_history_pkey' as const,
-   uq_player_premier_rank_history_steam_match: 'uq_player_premier_rank_history_steam_match' as const
+   uq_player_premier_rank_history_steam_match_type: 'uq_player_premier_rank_history_steam_match_type' as const
 }
 
 export const enumPlayerPremierRankHistorySelectColumn = {
    id: 'id' as const,
    match_id: 'match_id' as const,
    observed_at: 'observed_at' as const,
+   previous_rank: 'previous_rank' as const,
    rank: 'rank' as const,
+   rank_type: 'rank_type' as const,
    steam_id: 'steam_id' as const
 }
 
@@ -71067,7 +71143,9 @@ export const enumPlayerPremierRankHistoryUpdateColumn = {
    id: 'id' as const,
    match_id: 'match_id' as const,
    observed_at: 'observed_at' as const,
+   previous_rank: 'previous_rank' as const,
    rank: 'rank' as const,
+   rank_type: 'rank_type' as const,
    steam_id: 'steam_id' as const
 }
 
@@ -71197,6 +71275,8 @@ export const enumPlayersConstraint = {
 
 export const enumPlayersSelectColumn = {
    avatar_url: 'avatar_url' as const,
+   competitive_rank: 'competitive_rank' as const,
+   competitive_rank_updated_at: 'competitive_rank_updated_at' as const,
    country: 'country' as const,
    created_at: 'created_at' as const,
    custom_avatar_url: 'custom_avatar_url' as const,
@@ -71217,11 +71297,15 @@ export const enumPlayersSelectColumn = {
    role: 'role' as const,
    roster_image_url: 'roster_image_url' as const,
    show_match_ready_modal: 'show_match_ready_modal' as const,
-   steam_id: 'steam_id' as const
+   steam_id: 'steam_id' as const,
+   wingman_rank: 'wingman_rank' as const,
+   wingman_rank_updated_at: 'wingman_rank_updated_at' as const
 }
 
 export const enumPlayersUpdateColumn = {
    avatar_url: 'avatar_url' as const,
+   competitive_rank: 'competitive_rank' as const,
+   competitive_rank_updated_at: 'competitive_rank_updated_at' as const,
    country: 'country' as const,
    created_at: 'created_at' as const,
    custom_avatar_url: 'custom_avatar_url' as const,
@@ -71242,7 +71326,9 @@ export const enumPlayersUpdateColumn = {
    role: 'role' as const,
    roster_image_url: 'roster_image_url' as const,
    show_match_ready_modal: 'show_match_ready_modal' as const,
-   steam_id: 'steam_id' as const
+   steam_id: 'steam_id' as const,
+   wingman_rank: 'wingman_rank' as const,
+   wingman_rank_updated_at: 'wingman_rank_updated_at' as const
 }
 
 export const enumPluginVersionsConstraint = {
@@ -71373,7 +71459,6 @@ export const enumSteamAccountsConstraint = {
 
 export const enumSteamAccountsSelectColumn = {
    created_at: 'created_at' as const,
-   enabled: 'enabled' as const,
    id: 'id' as const,
    last_node_id: 'last_node_id' as const,
    password: 'password' as const,
@@ -71383,7 +71468,6 @@ export const enumSteamAccountsSelectColumn = {
 
 export const enumSteamAccountsUpdateColumn = {
    created_at: 'created_at' as const,
-   enabled: 'enabled' as const,
    id: 'id' as const,
    last_node_id: 'last_node_id' as const,
    password: 'password' as const,
@@ -72048,7 +72132,6 @@ export const enumVSteamAccountPoolStatusSelectColumn = {
    busy_accounts: 'busy_accounts' as const,
    free_accounts: 'free_accounts' as const,
    id: 'id' as const,
-   registered_accounts: 'registered_accounts' as const,
    total_accounts: 'total_accounts' as const
 }
 

@@ -14,6 +14,9 @@ select_permissions:
       columns:
         - steam_id
         - rank
+        - rank_type
+        - previous_rank
+        - map_id
         - match_id
         - observed_at
       filter: {}
@@ -23,6 +26,9 @@ select_permissions:
       columns:
         - steam_id
         - rank
+        - rank_type
+        - previous_rank
+        - map_id
         - match_id
         - observed_at
       filter: {}

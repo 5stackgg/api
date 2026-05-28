@@ -153,6 +153,11 @@ export type ParsedDemo = {
   map_name?: string;
   workshop_id?: string;
   cs2_build?: string;
+  // Match-type signals from the demo's game rules.
+  server_name?: string;
+  max_rounds?: number;
+  overtime_enabled?: boolean;
+  player_count?: number;
   round_ticks: ParsedRound[];
   kills: ParsedKill[];
   bombs: ParsedBomb[];

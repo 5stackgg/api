@@ -299,7 +299,7 @@ export class DemoMetadataService {
     );
 
     const demo = await this.fetchDemoById(matchMapDemoId);
-    await this.persistPremierRanks(parsed, demo?.match_id ?? null);
+    await this.persistRanks(parsed, demo?.match_id ?? null);
 
     if (demo) {
       await this.uploadPlaybackBlob(
@@ -311,48 +311,77 @@ export class DemoMetadataService {
     }
   }
 
-  public async persistPremierRanks(
+  // Persists every tracked Valve rank type observed in the demo: Wingman (6),
+  // Competitive skill group (7) and Premier (11). Premier is global (snapshot
+  // on the player row); Competitive/Wingman are PER MAP so they live only in
+  // the history table, tagged with the match's map_id. previous_rank is the
+  // last observed rank of the same type (and map, for skill groups) so the
+  // per-match delta is exact.
+  public async persistRanks(
     parsed: ParsedDemo,
     matchId: string | null = null,
   ): Promise<void> {
-    const premierEntries = (parsed.players ?? []).filter(
-      (p) => p.rank_type === 11 && (p.rank ?? 0) > 0 && p.steam_id,
+    const RANK_TYPES = new Set([6, 7, 11]);
+    const entries = (parsed.players ?? []).filter(
+      (p) =>
+        RANK_TYPES.has(Number(p.rank_type)) &&
+        (p.rank ?? 0) > 0 &&
+        p.steam_id,
     );
-    if (premierEntries.length === 0) {
+    if (entries.length === 0) {
       return;
     }
     const now = new Date().toISOString();
-    const steamIds = premierEntries.map((e) => BigInt(e.steam_id).toString());
-    const ranks = premierEntries.map((e) => {
+    const steamIds = entries.map((e) => BigInt(e.steam_id).toString());
+    const ranks = entries.map((e) => {
       const rank = Number(e.rank);
       if (!Number.isInteger(rank)) {
-        throw new Error(`invalid premier rank for ${e.steam_id}: ${e.rank}`);
+        throw new Error(`invalid rank for ${e.steam_id}: ${e.rank}`);
       }
       return rank;
     });
+    const rankTypes = entries.map((e) => Number(e.rank_type));
+
+    // Global snapshot — Premier only (Competitive/Wingman are per map).
     await this.postgres.query(
       `UPDATE public.players AS p
          SET premier_rank = v.rank,
              premier_rank_updated_at = $1::timestamptz
          FROM UNNEST($2::bigint[], $3::int[]) AS v(steam_id, rank)
-         WHERE p.steam_id = v.steam_id`,
-      [now, steamIds, ranks],
+         WHERE p.steam_id = v.steam_id
+           AND (p.premier_rank_updated_at IS NULL OR p.premier_rank_updated_at <= $1::timestamptz)`,
+      [
+        now,
+        steamIds.filter((_, i) => rankTypes[i] === 11),
+        ranks.filter((_, i) => rankTypes[i] === 11),
+      ],
     );
     if (matchId) {
       await this.postgres.query(
-        `INSERT INTO public.player_premier_rank_history (steam_id, rank, match_id, observed_at)
-           SELECT v.steam_id, v.rank, $1::uuid, $2::timestamptz
-           FROM UNNEST($3::bigint[], $4::int[]) AS v(steam_id, rank)
+        `INSERT INTO public.player_premier_rank_history
+           (steam_id, rank, rank_type, map_id, previous_rank, match_id, observed_at)
+           SELECT v.steam_id, v.rank, v.rank_type,
+             CASE WHEN v.rank_type = 11 THEN NULL ELSE mm.map_id END,
+             (SELECT h.rank FROM public.player_premier_rank_history h
+               WHERE h.steam_id = v.steam_id AND h.rank_type = v.rank_type
+                 AND h.match_id <> $1::uuid AND h.observed_at < $2::timestamptz
+                 AND (v.rank_type = 11 OR h.map_id = mm.map_id)
+               ORDER BY h.observed_at DESC LIMIT 1),
+             $1::uuid, $2::timestamptz
+           FROM UNNEST($3::bigint[], $4::int[], $5::int[]) AS v(steam_id, rank, rank_type)
+           LEFT JOIN LATERAL (
+             SELECT map_id FROM public.match_maps WHERE match_id = $1::uuid LIMIT 1
+           ) mm ON true
            WHERE EXISTS (SELECT 1 FROM public.players WHERE steam_id = v.steam_id)
-         ON CONFLICT (steam_id, match_id) DO UPDATE
+         ON CONFLICT (steam_id, match_id, rank_type) DO UPDATE
            SET rank = EXCLUDED.rank,
+               map_id = EXCLUDED.map_id,
+               previous_rank = EXCLUDED.previous_rank,
                observed_at = EXCLUDED.observed_at`,
-        [matchId, now, steamIds, ranks],
+        [matchId, now, steamIds, ranks, rankTypes],
       );
     }
-    this.logger.log(
-      `demo premier rank update wrote ${premierEntries.length} players`,
-    );
+    this.logger.log(`demo rank update wrote ${entries.length} players`);
   }
 
   public async deleteDemo(matchMapDemoId: string): Promise<void> {

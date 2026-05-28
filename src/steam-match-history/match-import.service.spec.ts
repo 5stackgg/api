@@ -2,11 +2,17 @@ import { MatchImportService } from "./match-import.service";
 
 // detectMatchType / computeStartingSides are pure private statics; reach them
 // directly rather than standing up the whole Nest service with its deps.
-const detectMatchType = (
+const detectMatchTypeRaw = (
   MatchImportService as unknown as {
-    detectMatchType: (players: unknown[]) => string;
+    detectMatchType: (parsed: unknown) => string;
   }
 ).detectMatchType;
+
+// The detector now takes the parsed demo (players + game-rule signals).
+const detectMatchType = (
+  players: unknown[],
+  rules: { overtime_enabled?: boolean; player_count?: number } = {},
+) => detectMatchTypeRaw({ players, ...rules });
 
 const computeStartingSides = (
   MatchImportService as unknown as {
@@ -25,10 +31,16 @@ describe("MatchImportService.detectMatchType", () => {
     expect(detectMatchType(players)).toBe("Premier");
   });
 
-  it("maps rank_type 7 to Wingman", () => {
+  it("maps Valve rank types (6=Wingman, 7=Competitive, 11=Premier)", () => {
+    expect(
+      detectMatchType([{ steam_id: "1", name: "a", rank_type: 6 }]),
+    ).toBe("Wingman");
     expect(
       detectMatchType([{ steam_id: "1", name: "a", rank_type: 7 }]),
-    ).toBe("Wingman");
+    ).toBe("Competitive");
+    expect(
+      detectMatchType([{ steam_id: "1", name: "a", rank_type: 11 }]),
+    ).toBe("Premier");
   });
 
   it("falls back to player count when no rank_type is present", () => {
@@ -38,6 +50,28 @@ describe("MatchImportService.detectMatchType", () => {
     }));
     expect(detectMatchType(five)).toBe("Competitive");
     expect(detectMatchType(five.slice(0, 3))).toBe("Wingman");
+  });
+
+  it("classifies 5v5 by overtime when rank_type is absent (CS2 competitive)", () => {
+    const five = Array.from({ length: 5 }, (_, i) => ({
+      steam_id: String(i),
+      name: "x",
+    }));
+    // No overtime -> Competitive; overtime enabled -> Premier.
+    expect(detectMatchType(five, { player_count: 10 })).toBe("Competitive");
+    expect(
+      detectMatchType(five, { player_count: 10, overtime_enabled: true }),
+    ).toBe("Premier");
+  });
+
+  it("treats 2v2 as Wingman regardless of overtime", () => {
+    const four = Array.from({ length: 4 }, (_, i) => ({
+      steam_id: String(i),
+      name: "x",
+    }));
+    expect(
+      detectMatchType(four, { player_count: 4, overtime_enabled: true }),
+    ).toBe("Wingman");
   });
 });
 
