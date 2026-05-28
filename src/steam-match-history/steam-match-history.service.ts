@@ -80,6 +80,17 @@ export class SteamMatchHistoryService {
     });
 
     this.logger.log(`steam-match-history linked steam_id=${steamId}`);
+
+    void (async () => {
+      try {
+        await this.pollForUser(steamId);
+      } catch (error) {
+        this.logger.warn(
+          `steam-match-history initial poll failed for ${steamId}: ${(error as Error)?.message}`,
+        );
+      }
+    })();
+
     return { ok: true };
   }
 

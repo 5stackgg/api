@@ -504,11 +504,6 @@ type Mutation {
   ): SuccessOutput
 }
 
-type Mutation {
-  clearGpuNodeSteamCache(
-    game_server_node_id: uuid!
-  ): SuccessOutput
-}
 
 type Mutation {
   stopLive(

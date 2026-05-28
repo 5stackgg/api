@@ -1241,10 +1241,7 @@ export class ClipsService {
     if (body.error) {
       set.error_message = body.error;
     }
-    if (
-      !isBoot &&
-      ["completed", "error", "cancelled"].includes(body.status)
-    ) {
+    if (!isBoot && ["completed", "error", "cancelled"].includes(body.status)) {
       set.game_server_node_id = null;
       set.steam_account_id = null;
     }

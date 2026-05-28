@@ -5,6 +5,7 @@ as $$
   select id
     from game_server_nodes
    where gpu = true
+     and enabled = true
      and status = 'Online'
      and id not in (select * from gpu_busy_node_ids())
      and id not in (

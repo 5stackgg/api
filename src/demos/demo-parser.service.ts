@@ -302,10 +302,7 @@ export class DemoParserService {
         signal: AbortSignal.timeout(5 * 60_000),
       });
     } catch (error) {
-      this.logger.error(
-        `[demo-parser] unreachable for external url`,
-        error,
-      );
+      this.logger.error(`[demo-parser] unreachable for external url`, error);
       return null;
     }
 

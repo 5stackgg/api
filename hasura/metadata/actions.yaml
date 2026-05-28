@@ -629,13 +629,6 @@ actions:
       forward_client_headers: true
     permissions:
       - role: administrator
-  - name: clearGpuNodeSteamCache
-    definition:
-      kind: synchronous
-      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
-      forward_client_headers: true
-    permissions:
-      - role: administrator
   - name: stopLive
     definition:
       kind: synchronous

@@ -33,7 +33,6 @@ select_permissions:
       columns:
         - id
         - username
-        - enabled
         - last_node_id
         - created_at
         - updated_at
@@ -47,7 +46,6 @@ insert_permissions:
       columns:
         - username
         - password
-        - enabled
     comment: ""
 update_permissions:
   - role: administrator
@@ -55,7 +53,6 @@ update_permissions:
       columns:
         - username
         - password
-        - enabled
       filter: {}
       check: null
     comment: ""

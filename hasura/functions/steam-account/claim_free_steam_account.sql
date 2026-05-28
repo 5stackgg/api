@@ -6,14 +6,12 @@ declare
   v_id uuid;
 begin
   -- Prefer the account this node last logged in with so the
-  -- per-account Steam cache (game files, login keys) stays warm and
-  -- subsequent pod boots skip the cold-cache download.
+  -- per-account Steam cache stays warm.
   if p_node_id is not null then
     select id
       into v_id
       from steam_accounts
-     where enabled = true
-       and last_node_id = p_node_id
+     where last_node_id = p_node_id
        and id not in (select * from busy_steam_account_ids())
      order by id
      for update skip locked
@@ -24,8 +22,7 @@ begin
     select id
       into v_id
       from steam_accounts
-     where enabled = true
-       and id not in (select * from busy_steam_account_ids())
+     where id not in (select * from busy_steam_account_ids())
      order by id
      for update skip locked
      limit 1;

@@ -1528,60 +1528,6 @@ export class GameStreamerService {
     };
   }
 
-  public async clearSteamCache(nodeId: string): Promise<void> {
-    const busy = (await this.postgres.query<{ n: number }[]>(
-      `SELECT (
-         (SELECT count(*) FROM match_streams
-            WHERE is_game_streamer = true
-              AND status IS DISTINCT FROM 'errored'
-              AND game_server_node_id = $1)
-         + (SELECT count(*) FROM match_demo_sessions
-            WHERE status IS DISTINCT FROM 'errored'
-              AND game_server_node_id = $1)
-         + (SELECT count(*) FROM clip_render_jobs
-            WHERE status IN ('queued','rendering','uploading')
-              AND game_server_node_id = $1)
-       )::int AS n`,
-      [nodeId],
-    )) as Array<{ n: number }>;
-    if ((busy?.[0]?.n ?? 0) > 0) {
-      throw new Error(
-        "node is busy — stop the live/demo/render session before clearing the Steam cache",
-      );
-    }
-
-    const { game_server_nodes_by_pk } = await this.hasura.query({
-      game_server_nodes_by_pk: {
-        __args: { id: nodeId },
-        node_ip: true,
-      },
-    });
-    const nodeIp = game_server_nodes_by_pk?.node_ip;
-    if (!nodeIp) {
-      throw new Error(`node ${nodeId} has no node_ip — is the connector up?`);
-    }
-
-    const res = await fetch(
-      `http://${nodeIp}:8585/game-streamer/clear-steam-cache`,
-      { method: "POST" },
-    );
-    if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      throw new Error(
-        `node connector ${nodeIp} returned ${res.status} clearing steam cache: ${body}`,
-      );
-    }
-    const json = (await res.json().catch(() => ({}))) as { removed?: number };
-
-    await this.postgres.query(
-      `UPDATE steam_accounts SET last_node_id = NULL WHERE last_node_id = $1`,
-      [nodeId],
-    );
-    this.logger.log(
-      `[clearSteamCache ${nodeId}] cleared ${json?.removed ?? 0} entries via connector ${nodeIp}`,
-    );
-  }
-
   public async stopLive(matchId: string) {
     // Job name == Service name by construction.
     const jobName = await this.resolveLiveServiceName(matchId);

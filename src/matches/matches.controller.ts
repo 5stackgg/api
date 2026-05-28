@@ -472,9 +472,7 @@ export class MatchesController {
     const status = data.new.status;
 
     // Imported matches skip the entire 5stack lifecycle (server, lobby, ELO).
-    const source = (data.new.source ?? data.old?.source) as
-      | string
-      | undefined;
+    const source = (data.new.source ?? data.old?.source) as string | undefined;
     if (source && source !== "5stack") {
       return;
     }
@@ -903,19 +901,6 @@ export class MatchesController {
       throw Error("you must be an administrator");
     }
     await this.gameStreamer.stopGpuSession(game_server_node_id);
-    return { success: true };
-  }
-
-  @HasuraAction()
-  public async clearGpuNodeSteamCache(data: {
-    game_server_node_id: string;
-    user: User;
-  }) {
-    const { game_server_node_id, user } = data;
-    if (!isRoleAbove(user.role, "administrator")) {
-      throw Error("you must be an administrator");
-    }
-    await this.gameStreamer.clearSteamCache(game_server_node_id);
     return { success: true };
   }
 

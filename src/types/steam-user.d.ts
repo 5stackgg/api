@@ -13,10 +13,7 @@ declare module "steam-user" {
   }
 
   class SteamUser extends EventEmitter {
-    constructor(options?: {
-      enablePicsCache?: boolean;
-      autoRelogin?: boolean;
-    });
+    constructor(options?: { enablePicsCache?: boolean; autoRelogin?: boolean });
     steamID?: SteamID | null;
     logOn(details: LogOnDetails): void;
     logOff(): void;
