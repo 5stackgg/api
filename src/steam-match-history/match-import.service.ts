@@ -54,7 +54,7 @@ export class MatchImportService {
 
     const matchType = MatchImportService.detectMatchType(parsed);
     this.logger.log(
-      `match-type detect: type=${matchType} players=${parsed.player_count ?? players.length} overtime=${parsed.overtime_enabled ?? false} maxRounds=${parsed.max_rounds ?? "?"} rankTypes=${[...new Set(players.map((p) => p.rank_type ?? 0))].join(",")}`,
+      `match-type detect: type=${matchType} players=${parsed.player_count ?? players.length} overtime=${parsed.overtime_enabled ?? false} faceit=${MatchImportService.isFaceitServer(parsed.server_name)} rankTypes=${[...new Set(players.map((p) => p.rank_type ?? 0))].join(",")}`,
     );
     const mapId = await this.resolveMapId(parsed.map_name, matchType);
     if (!mapId) {
@@ -164,12 +164,9 @@ export class MatchImportService {
 
   private static detectMatchType(parsed: ParsedDemo): MatchType {
     const players = parsed.players ?? [];
-    // rank_type is authoritative WHEN present (Valve values):
-    //   6 = Wingman, 7 = Competitive, 11 = Premier (10 = unranked/practice).
-    // CS2 sometimes ships no rank_type, so fall back to the game rules:
-    //   2v2            -> Wingman
-    //   5v5 + overtime -> Premier      (Premier forces a winner)
-    //   5v5, no OT     -> Competitive  (can end in a draw)
+    // Valve rank_type is the primary signal: 6=Wingman, 7=Competitive,
+    // 11=Premier, 10=private lobby (FACEIT/practice). Majority across the
+    // lobby so one mislabeled player can't flip the type.
     const counts = new Map<number, number>();
     for (const p of players) {
       if (typeof p.rank_type === "number" && p.rank_type > 0) {
@@ -187,21 +184,34 @@ export class MatchImportService {
     if (observed === 11) {
       return "Premier";
     }
-    if (observed === 6) {
-      return "Wingman";
-    }
     if (observed === 7) {
       return "Competitive";
     }
+    if (observed === 6) {
+      return "Wingman";
+    }
 
     const playerCount = parsed.player_count ?? players.length;
-    if (playerCount > 0 && playerCount <= 4) {
+    const isWingman = playerCount > 0 && playerCount <= 4;
+
+    // 10 = private lobby (FACEIT/practice): never Premier even with overtime;
+    // Premier is exclusively rank_type 11.
+    if (observed === 10) {
+      return isWingman ? "Wingman" : "Competitive";
+    }
+
+    // No rank_type at all — fall back to game rules.
+    if (isWingman) {
       return "Wingman";
     }
     if (parsed.overtime_enabled) {
       return "Premier";
     }
     return "Competitive";
+  }
+
+  static isFaceitServer(serverName?: string | null): boolean {
+    return /faceit/i.test(serverName ?? "");
   }
 
   private static computeStartingSides(parsed: ParsedDemo): Map<string, Side> {

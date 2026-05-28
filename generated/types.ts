@@ -51889,6 +51889,9 @@ export default {
             "id": [
                 3057
             ],
+            "map_id": [
+                3057
+            ],
             "match": [
                 1510
             ],
@@ -52096,6 +52099,9 @@ export default {
             "id": [
                 3058
             ],
+            "map_id": [
+                3058
+            ],
             "match": [
                 1519
             ],
@@ -52146,6 +52152,9 @@ export default {
             "id": [
                 3057
             ],
+            "map_id": [
+                3057
+            ],
             "match": [
                 1528
             ],
@@ -52178,6 +52187,9 @@ export default {
             "id": [
                 3057
             ],
+            "map_id": [
+                3057
+            ],
             "match_id": [
                 3057
             ],
@@ -52202,6 +52214,9 @@ export default {
         },
         "player_premier_rank_history_max_order_by": {
             "id": [
+                1668
+            ],
+            "map_id": [
                 1668
             ],
             "match_id": [
@@ -52230,6 +52245,9 @@ export default {
             "id": [
                 3057
             ],
+            "map_id": [
+                3057
+            ],
             "match_id": [
                 3057
             ],
@@ -52254,6 +52272,9 @@ export default {
         },
         "player_premier_rank_history_min_order_by": {
             "id": [
+                1668
+            ],
+            "map_id": [
                 1668
             ],
             "match_id": [
@@ -52307,6 +52328,9 @@ export default {
             "id": [
                 1668
             ],
+            "map_id": [
+                1668
+            ],
             "match": [
                 1530
             ],
@@ -52346,6 +52370,9 @@ export default {
         "player_premier_rank_history_select_column": {},
         "player_premier_rank_history_set_input": {
             "id": [
+                3057
+            ],
+            "map_id": [
                 3057
             ],
             "match_id": [
@@ -52485,6 +52512,9 @@ export default {
         },
         "player_premier_rank_history_stream_cursor_value_input": {
             "id": [
+                3057
+            ],
+            "map_id": [
                 3057
             ],
             "match_id": [
@@ -55896,12 +55926,6 @@ export default {
                     ]
                 }
             ],
-            "competitive_rank": [
-                30
-            ],
-            "competitive_rank_updated_at": [
-                2660
-            ],
             "country": [
                 51
             ],
@@ -57384,12 +57408,6 @@ export default {
                     ]
                 }
             ],
-            "wingman_rank": [
-                30
-            ],
-            "wingman_rank_updated_at": [
-                2660
-            ],
             "wins": [
                 30
             ],
@@ -57465,9 +57483,6 @@ export default {
             ]
         },
         "players_avg_fields": {
-            "competitive_rank": [
-                22
-            ],
             "faceit_elo": [
                 22
             ],
@@ -57494,9 +57509,6 @@ export default {
             ],
             "total_matches": [
                 30
-            ],
-            "wingman_rank": [
-                22
             ],
             "wins": [
                 30
@@ -57550,12 +57562,6 @@ export default {
             ],
             "coach_lineups_aggregate": [
                 1196
-            ],
-            "competitive_rank": [
-                31
-            ],
-            "competitive_rank_updated_at": [
-                2661
             ],
             "country": [
                 53
@@ -57851,12 +57857,6 @@ export default {
             "utility_thrown_aggregate": [
                 2327
             ],
-            "wingman_rank": [
-                31
-            ],
-            "wingman_rank_updated_at": [
-                2661
-            ],
             "wins": [
                 31
             ],
@@ -57875,9 +57875,6 @@ export default {
         },
         "players_constraint": {},
         "players_inc_input": {
-            "competitive_rank": [
-                30
-            ],
             "faceit_elo": [
                 30
             ],
@@ -57889,9 +57886,6 @@ export default {
             ],
             "steam_id": [
                 150
-            ],
-            "wingman_rank": [
-                30
             ],
             "__typename": [
                 51
@@ -57912,12 +57906,6 @@ export default {
             ],
             "coach_lineups": [
                 1200
-            ],
-            "competitive_rank": [
-                30
-            ],
-            "competitive_rank_updated_at": [
-                2660
             ],
             "country": [
                 51
@@ -58075,12 +58063,6 @@ export default {
             "utility_thrown": [
                 2331
             ],
-            "wingman_rank": [
-                30
-            ],
-            "wingman_rank_updated_at": [
-                2660
-            ],
             "__typename": [
                 51
             ]
@@ -58088,12 +58070,6 @@ export default {
         "players_max_fields": {
             "avatar_url": [
                 51
-            ],
-            "competitive_rank": [
-                30
-            ],
-            "competitive_rank_updated_at": [
-                2660
             ],
             "country": [
                 51
@@ -58169,12 +58145,6 @@ export default {
             ],
             "total_matches": [
                 30
-            ],
-            "wingman_rank": [
-                30
-            ],
-            "wingman_rank_updated_at": [
-                2660
             ],
             "wins": [
                 30
@@ -58196,12 +58166,6 @@ export default {
             "avatar_url": [
                 51
             ],
-            "competitive_rank": [
-                30
-            ],
-            "competitive_rank_updated_at": [
-                2660
-            ],
             "country": [
                 51
             ],
@@ -58276,12 +58240,6 @@ export default {
             ],
             "total_matches": [
                 30
-            ],
-            "wingman_rank": [
-                30
-            ],
-            "wingman_rank_updated_at": [
-                2660
             ],
             "wins": [
                 30
@@ -58350,12 +58308,6 @@ export default {
             ],
             "coach_lineups_aggregate": [
                 1199
-            ],
-            "competitive_rank": [
-                1668
-            ],
-            "competitive_rank_updated_at": [
-                1668
             ],
             "country": [
                 1668
@@ -58561,12 +58513,6 @@ export default {
             "utility_thrown_aggregate": [
                 2330
             ],
-            "wingman_rank": [
-                1668
-            ],
-            "wingman_rank_updated_at": [
-                1668
-            ],
             "wins": [
                 1668
             ],
@@ -58595,12 +58541,6 @@ export default {
         "players_set_input": {
             "avatar_url": [
                 51
-            ],
-            "competitive_rank": [
-                30
-            ],
-            "competitive_rank_updated_at": [
-                2660
             ],
             "country": [
                 51
@@ -58665,20 +58605,11 @@ export default {
             "steam_id": [
                 150
             ],
-            "wingman_rank": [
-                30
-            ],
-            "wingman_rank_updated_at": [
-                2660
-            ],
             "__typename": [
                 51
             ]
         },
         "players_stddev_fields": {
-            "competitive_rank": [
-                22
-            ],
             "faceit_elo": [
                 22
             ],
@@ -58705,9 +58636,6 @@ export default {
             ],
             "total_matches": [
                 30
-            ],
-            "wingman_rank": [
-                22
             ],
             "wins": [
                 30
@@ -58726,9 +58654,6 @@ export default {
             ]
         },
         "players_stddev_pop_fields": {
-            "competitive_rank": [
-                22
-            ],
             "faceit_elo": [
                 22
             ],
@@ -58755,9 +58680,6 @@ export default {
             ],
             "total_matches": [
                 30
-            ],
-            "wingman_rank": [
-                22
             ],
             "wins": [
                 30
@@ -58776,9 +58698,6 @@ export default {
             ]
         },
         "players_stddev_samp_fields": {
-            "competitive_rank": [
-                22
-            ],
             "faceit_elo": [
                 22
             ],
@@ -58805,9 +58724,6 @@ export default {
             ],
             "total_matches": [
                 30
-            ],
-            "wingman_rank": [
-                22
             ],
             "wins": [
                 30
@@ -58840,12 +58756,6 @@ export default {
             "avatar_url": [
                 51
             ],
-            "competitive_rank": [
-                30
-            ],
-            "competitive_rank_updated_at": [
-                2660
-            ],
             "country": [
                 51
             ],
@@ -58909,20 +58819,11 @@ export default {
             "steam_id": [
                 150
             ],
-            "wingman_rank": [
-                30
-            ],
-            "wingman_rank_updated_at": [
-                2660
-            ],
             "__typename": [
                 51
             ]
         },
         "players_sum_fields": {
-            "competitive_rank": [
-                30
-            ],
             "faceit_elo": [
                 30
             ],
@@ -58948,9 +58849,6 @@ export default {
                 150
             ],
             "total_matches": [
-                30
-            ],
-            "wingman_rank": [
                 30
             ],
             "wins": [
@@ -58985,9 +58883,6 @@ export default {
             ]
         },
         "players_var_pop_fields": {
-            "competitive_rank": [
-                22
-            ],
             "faceit_elo": [
                 22
             ],
@@ -59014,9 +58909,6 @@ export default {
             ],
             "total_matches": [
                 30
-            ],
-            "wingman_rank": [
-                22
             ],
             "wins": [
                 30
@@ -59035,9 +58927,6 @@ export default {
             ]
         },
         "players_var_samp_fields": {
-            "competitive_rank": [
-                22
-            ],
             "faceit_elo": [
                 22
             ],
@@ -59064,9 +58953,6 @@ export default {
             ],
             "total_matches": [
                 30
-            ],
-            "wingman_rank": [
-                22
             ],
             "wins": [
                 30
@@ -59085,9 +58971,6 @@ export default {
             ]
         },
         "players_variance_fields": {
-            "competitive_rank": [
-                22
-            ],
             "faceit_elo": [
                 22
             ],
@@ -59114,9 +58997,6 @@ export default {
             ],
             "total_matches": [
                 30
-            ],
-            "wingman_rank": [
-                22
             ],
             "wins": [
                 30

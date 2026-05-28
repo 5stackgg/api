@@ -38340,6 +38340,7 @@ columns and relationships of "player_premier_rank_history"
 """
 type player_premier_rank_history {
   id: uuid!
+  map_id: uuid
 
   """An object relationship"""
   match: matches!
@@ -38443,6 +38444,7 @@ input player_premier_rank_history_bool_exp {
   _not: player_premier_rank_history_bool_exp
   _or: [player_premier_rank_history_bool_exp!]
   id: uuid_comparison_exp
+  map_id: uuid_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   observed_at: timestamptz_comparison_exp
@@ -38483,6 +38485,7 @@ input type for inserting data into table "player_premier_rank_history"
 """
 input player_premier_rank_history_insert_input {
   id: uuid
+  map_id: uuid
   match: matches_obj_rel_insert_input
   match_id: uuid
   observed_at: timestamptz
@@ -38496,6 +38499,7 @@ input player_premier_rank_history_insert_input {
 """aggregate max on columns"""
 type player_premier_rank_history_max_fields {
   id: uuid
+  map_id: uuid
   match_id: uuid
   observed_at: timestamptz
   previous_rank: Int
@@ -38509,6 +38513,7 @@ order by max() on columns of table "player_premier_rank_history"
 """
 input player_premier_rank_history_max_order_by {
   id: order_by
+  map_id: order_by
   match_id: order_by
   observed_at: order_by
   previous_rank: order_by
@@ -38520,6 +38525,7 @@ input player_premier_rank_history_max_order_by {
 """aggregate min on columns"""
 type player_premier_rank_history_min_fields {
   id: uuid
+  map_id: uuid
   match_id: uuid
   observed_at: timestamptz
   previous_rank: Int
@@ -38533,6 +38539,7 @@ order by min() on columns of table "player_premier_rank_history"
 """
 input player_premier_rank_history_min_order_by {
   id: order_by
+  map_id: order_by
   match_id: order_by
   observed_at: order_by
   previous_rank: order_by
@@ -38566,6 +38573,7 @@ Ordering options when selecting data from "player_premier_rank_history".
 """
 input player_premier_rank_history_order_by {
   id: order_by
+  map_id: order_by
   match: matches_order_by
   match_id: order_by
   observed_at: order_by
@@ -38587,6 +38595,9 @@ select columns of table "player_premier_rank_history"
 enum player_premier_rank_history_select_column {
   """column name"""
   id
+
+  """column name"""
+  map_id
 
   """column name"""
   match_id
@@ -38612,6 +38623,7 @@ input type for updating data in table "player_premier_rank_history"
 """
 input player_premier_rank_history_set_input {
   id: uuid
+  map_id: uuid
   match_id: uuid
   observed_at: timestamptz
   previous_rank: Int
@@ -38688,6 +38700,7 @@ input player_premier_rank_history_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input player_premier_rank_history_stream_cursor_value_input {
   id: uuid
+  map_id: uuid
   match_id: uuid
   observed_at: timestamptz
   previous_rank: Int
@@ -38720,6 +38733,9 @@ update columns of table "player_premier_rank_history"
 enum player_premier_rank_history_update_column {
   """column name"""
   id
+
+  """column name"""
+  map_id
 
   """column name"""
   match_id
@@ -40884,8 +40900,6 @@ type players {
     """filter the rows returned"""
     where: match_lineups_bool_exp
   ): match_lineups_aggregate!
-  competitive_rank: Int
-  competitive_rank_updated_at: timestamptz
   country: String
   created_at: timestamptz
 
@@ -42106,8 +42120,6 @@ type players {
     """filter the rows returned"""
     where: player_utility_bool_exp
   ): player_utility_aggregate!
-  wingman_rank: Int
-  wingman_rank_updated_at: timestamptz
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -42157,7 +42169,6 @@ type players_aggregate_fields {
 
 """aggregate avg on columns"""
 type players_avg_fields {
-  competitive_rank: Float
   faceit_elo: Float
   faceit_skill_level: Float
 
@@ -42187,7 +42198,6 @@ type players_avg_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
-  wingman_rank: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -42226,8 +42236,6 @@ input players_bool_exp {
   avatar_url: String_comparison_exp
   coach_lineups: match_lineups_bool_exp
   coach_lineups_aggregate: match_lineups_aggregate_bool_exp
-  competitive_rank: Int_comparison_exp
-  competitive_rank_updated_at: timestamptz_comparison_exp
   country: String_comparison_exp
   created_at: timestamptz_comparison_exp
   current_lobby_id: uuid_comparison_exp
@@ -42326,8 +42334,6 @@ input players_bool_exp {
   tournaments_aggregate: tournaments_aggregate_bool_exp
   utility_thrown: player_utility_bool_exp
   utility_thrown_aggregate: player_utility_aggregate_bool_exp
-  wingman_rank: Int_comparison_exp
-  wingman_rank_updated_at: timestamptz_comparison_exp
   wins: Int_comparison_exp
   wins_competitive: Int_comparison_exp
   wins_duel: Int_comparison_exp
@@ -42358,12 +42364,10 @@ enum players_constraint {
 input type for incrementing numeric columns in table "players"
 """
 input players_inc_input {
-  competitive_rank: Int
   faceit_elo: Int
   faceit_skill_level: Int
   premier_rank: Int
   steam_id: bigint
-  wingman_rank: Int
 }
 
 """
@@ -42375,8 +42379,6 @@ input players_insert_input {
   assited_by_players: player_assists_arr_rel_insert_input
   avatar_url: String
   coach_lineups: match_lineups_arr_rel_insert_input
-  competitive_rank: Int
-  competitive_rank_updated_at: timestamptz
   country: String
   created_at: timestamptz
   custom_avatar_url: String
@@ -42429,15 +42431,11 @@ input players_insert_input {
   tournament_trophies: tournament_trophies_arr_rel_insert_input
   tournaments: tournaments_arr_rel_insert_input
   utility_thrown: player_utility_arr_rel_insert_input
-  wingman_rank: Int
-  wingman_rank_updated_at: timestamptz
 }
 
 """aggregate max on columns"""
 type players_max_fields {
   avatar_url: String
-  competitive_rank: Int
-  competitive_rank_updated_at: timestamptz
   country: String
   created_at: timestamptz
 
@@ -42491,8 +42489,6 @@ type players_max_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
-  wingman_rank: Int
-  wingman_rank_updated_at: timestamptz
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -42518,8 +42514,6 @@ type players_max_fields {
 """aggregate min on columns"""
 type players_min_fields {
   avatar_url: String
-  competitive_rank: Int
-  competitive_rank_updated_at: timestamptz
   country: String
   created_at: timestamptz
 
@@ -42573,8 +42567,6 @@ type players_min_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
-  wingman_rank: Int
-  wingman_rank_updated_at: timestamptz
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -42634,8 +42626,6 @@ input players_order_by {
   assited_by_players_aggregate: player_assists_aggregate_order_by
   avatar_url: order_by
   coach_lineups_aggregate: match_lineups_aggregate_order_by
-  competitive_rank: order_by
-  competitive_rank_updated_at: order_by
   country: order_by
   created_at: order_by
   current_lobby_id: order_by
@@ -42704,8 +42694,6 @@ input players_order_by {
   tournament_trophies_aggregate: tournament_trophies_aggregate_order_by
   tournaments_aggregate: tournaments_aggregate_order_by
   utility_thrown_aggregate: player_utility_aggregate_order_by
-  wingman_rank: order_by
-  wingman_rank_updated_at: order_by
   wins: order_by
   wins_competitive: order_by
   wins_duel: order_by
@@ -42723,12 +42711,6 @@ select columns of table "players"
 enum players_select_column {
   """column name"""
   avatar_url
-
-  """column name"""
-  competitive_rank
-
-  """column name"""
-  competitive_rank_updated_at
 
   """column name"""
   country
@@ -42792,12 +42774,6 @@ enum players_select_column {
 
   """column name"""
   steam_id
-
-  """column name"""
-  wingman_rank
-
-  """column name"""
-  wingman_rank_updated_at
 }
 
 """
@@ -42805,8 +42781,6 @@ input type for updating data in table "players"
 """
 input players_set_input {
   avatar_url: String
-  competitive_rank: Int
-  competitive_rank_updated_at: timestamptz
   country: String
   created_at: timestamptz
   custom_avatar_url: String
@@ -42828,13 +42802,10 @@ input players_set_input {
   roster_image_url: String
   show_match_ready_modal: Boolean
   steam_id: bigint
-  wingman_rank: Int
-  wingman_rank_updated_at: timestamptz
 }
 
 """aggregate stddev on columns"""
 type players_stddev_fields {
-  competitive_rank: Float
   faceit_elo: Float
   faceit_skill_level: Float
 
@@ -42864,7 +42835,6 @@ type players_stddev_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
-  wingman_rank: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -42889,7 +42859,6 @@ type players_stddev_fields {
 
 """aggregate stddev_pop on columns"""
 type players_stddev_pop_fields {
-  competitive_rank: Float
   faceit_elo: Float
   faceit_skill_level: Float
 
@@ -42919,7 +42888,6 @@ type players_stddev_pop_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
-  wingman_rank: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -42944,7 +42912,6 @@ type players_stddev_pop_fields {
 
 """aggregate stddev_samp on columns"""
 type players_stddev_samp_fields {
-  competitive_rank: Float
   faceit_elo: Float
   faceit_skill_level: Float
 
@@ -42974,7 +42941,6 @@ type players_stddev_samp_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
-  wingman_rank: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -43011,8 +42977,6 @@ input players_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input players_stream_cursor_value_input {
   avatar_url: String
-  competitive_rank: Int
-  competitive_rank_updated_at: timestamptz
   country: String
   created_at: timestamptz
   custom_avatar_url: String
@@ -43034,13 +42998,10 @@ input players_stream_cursor_value_input {
   roster_image_url: String
   show_match_ready_modal: Boolean
   steam_id: bigint
-  wingman_rank: Int
-  wingman_rank_updated_at: timestamptz
 }
 
 """aggregate sum on columns"""
 type players_sum_fields {
-  competitive_rank: Int
   faceit_elo: Int
   faceit_skill_level: Int
 
@@ -43070,7 +43031,6 @@ type players_sum_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
-  wingman_rank: Int
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -43099,12 +43059,6 @@ update columns of table "players"
 enum players_update_column {
   """column name"""
   avatar_url
-
-  """column name"""
-  competitive_rank
-
-  """column name"""
-  competitive_rank_updated_at
 
   """column name"""
   country
@@ -43168,12 +43122,6 @@ enum players_update_column {
 
   """column name"""
   steam_id
-
-  """column name"""
-  wingman_rank
-
-  """column name"""
-  wingman_rank_updated_at
 }
 
 input players_updates {
@@ -43189,7 +43137,6 @@ input players_updates {
 
 """aggregate var_pop on columns"""
 type players_var_pop_fields {
-  competitive_rank: Float
   faceit_elo: Float
   faceit_skill_level: Float
 
@@ -43219,7 +43166,6 @@ type players_var_pop_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
-  wingman_rank: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -43244,7 +43190,6 @@ type players_var_pop_fields {
 
 """aggregate var_samp on columns"""
 type players_var_samp_fields {
-  competitive_rank: Float
   faceit_elo: Float
   faceit_skill_level: Float
 
@@ -43274,7 +43219,6 @@ type players_var_samp_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
-  wingman_rank: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -43299,7 +43243,6 @@ type players_var_samp_fields {
 
 """aggregate variance on columns"""
 type players_variance_fields {
-  competitive_rank: Float
   faceit_elo: Float
   faceit_skill_level: Float
 
@@ -43329,7 +43272,6 @@ type players_variance_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
-  wingman_rank: Float
 
   """
   A computed field, executes function "get_total_player_wins"

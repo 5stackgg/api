@@ -348,10 +348,9 @@ BEGIN
          started_at        = COALESCE(started_at, v_start_time)
    WHERE id = v_match_id;
 
-  -- Per-match rank history for every tracked Valve rank type: Wingman (6),
-  -- Competitive skill group (7) and Premier (11). previous_rank is the
-  -- player's last observed rank of the SAME type (and map, for the per-map
-  -- skill groups) before this match, so the per-match delta is exact.
+  -- Per-match rank history: Wingman (6), Competitive (7), Premier (11).
+  -- previous_rank is the player's prior rank of the same type (and map, for
+  -- the per-map skill groups) so the per-match delta is exact.
   WITH ranked_players AS (
     SELECT
       (elem->>'steam_id')::bigint AS steam_id,
@@ -395,10 +394,8 @@ BEGIN
         previous_rank = EXCLUDED.previous_rank,
         observed_at   = EXCLUDED.observed_at;
 
-  -- Premier is the only global snapshot kept on the player row. Competitive
-  -- and Wingman are per-map, so they live only in the history table (read the
-  -- latest row per map). The guard keeps an out-of-order import from
-  -- clobbering a newer rating.
+  -- Premier is the only global snapshot (Competitive/Wingman are per-map).
+  -- The guard keeps an out-of-order import from clobbering a newer rating.
   UPDATE public.players p
      SET premier_rank = pp.rank,
          premier_rank_updated_at = v_ended_at

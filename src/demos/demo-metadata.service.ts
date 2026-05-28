@@ -311,12 +311,9 @@ export class DemoMetadataService {
     }
   }
 
-  // Persists every tracked Valve rank type observed in the demo: Wingman (6),
-  // Competitive skill group (7) and Premier (11). Premier is global (snapshot
-  // on the player row); Competitive/Wingman are PER MAP so they live only in
-  // the history table, tagged with the match's map_id. previous_rank is the
-  // last observed rank of the same type (and map, for skill groups) so the
-  // per-match delta is exact.
+  // Persists Valve ranks: Wingman (6), Competitive (7), Premier (11). Premier
+  // is a global snapshot on the player row; Wingman/Competitive are per-map and
+  // live only in the history table, tagged with map_id.
   public async persistRanks(
     parsed: ParsedDemo,
     matchId: string | null = null,

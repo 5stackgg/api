@@ -64,6 +64,17 @@ describe("MatchImportService.detectMatchType", () => {
     ).toBe("Premier");
   });
 
+  it("treats rank_type 10 (private/FACEIT) as Competitive, never Premier", () => {
+    const five = Array.from({ length: 5 }, (_, i) => ({
+      steam_id: String(i),
+      name: "x",
+      rank_type: 10,
+    }));
+    expect(
+      detectMatchType(five, { player_count: 10, overtime_enabled: true }),
+    ).toBe("Competitive");
+  });
+
   it("treats 2v2 as Wingman regardless of overtime", () => {
     const four = Array.from({ length: 4 }, (_, i) => ({
       steam_id: String(i),
