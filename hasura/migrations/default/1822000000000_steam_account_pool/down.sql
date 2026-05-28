@@ -17,5 +17,4 @@ ALTER TABLE "public"."match_streams"
   DROP COLUMN IF EXISTS "steam_account_id";
 
 DROP INDEX IF EXISTS "steam_accounts_last_node_id_idx";
-DROP INDEX IF EXISTS "steam_accounts_enabled_idx";
 DROP TABLE IF EXISTS "public"."steam_accounts";

@@ -2,7 +2,6 @@ CREATE TABLE IF NOT EXISTS "public"."steam_accounts" (
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
   "username" text NOT NULL,
   "password" text NOT NULL,
-  "enabled" boolean NOT NULL DEFAULT true,
   "last_node_id" text NULL,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL DEFAULT now(),
@@ -13,13 +12,10 @@ CREATE TABLE IF NOT EXISTS "public"."steam_accounts" (
     ON UPDATE CASCADE ON DELETE SET NULL
 );
 
-CREATE INDEX IF NOT EXISTS "steam_accounts_enabled_idx"
-  ON "public"."steam_accounts" ("enabled")
-  WHERE "enabled" = true;
-
 CREATE INDEX IF NOT EXISTS "steam_accounts_last_node_id_idx"
   ON "public"."steam_accounts" ("last_node_id")
   WHERE "last_node_id" IS NOT NULL;
+
 
 ALTER TABLE "public"."match_streams"
   ADD COLUMN IF NOT EXISTS "steam_account_id" uuid NULL;
