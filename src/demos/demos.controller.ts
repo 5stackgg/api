@@ -20,7 +20,7 @@ import archiver from "archiver";
 import zlib from "zlib";
 import path from "path";
 import { Readable } from "stream";
-import { DemoMetadataService, playbackBlobKey } from "./demo-metadata.service";
+import { DemoMetadataService, demoKey } from "./demo-metadata.service";
 import { ParsedDemo } from "./demo-parser.service";
 
 @Controller("/demos/:matchId")
@@ -104,9 +104,17 @@ export class DemosController {
   ): Promise<StreamableFile> {
     const matchId = request.params.matchId as string;
     const mapId = request.params.mapId as string;
-    const key = playbackBlobKey(matchId, mapId);
 
-    if (!(await this.s3.has(key))) {
+    const rows = await this.postgres.query<Array<{ playback_file: string }>>(
+      `SELECT playback_file FROM public.match_map_demos
+        WHERE match_id = $1::uuid AND match_map_id = $2::uuid
+          AND playback_file IS NOT NULL
+        LIMIT 1`,
+      [matchId, mapId],
+    );
+    const key = rows.at(0)?.playback_file ?? null;
+
+    if (!key || !(await this.s3.has(key))) {
       throw new NotFoundException("playback blob missing");
     }
 
@@ -201,7 +209,7 @@ export class DemosController {
     }
 
     const presignedUrl = await this.s3.getPresignedUrl(
-      `${matchId}/${mapId}/demos/${demo}`,
+      demoKey(matchId as string, mapId, demo),
       undefined,
       undefined,
       undefined,
@@ -237,7 +245,7 @@ export class DemosController {
       });
     }
 
-    const file = `${matchId}/${mapId}/demos/${demo}`;
+    const file = demoKey(matchId, mapId, demo);
     const matchMapDemoId = await this.upsertDemoRow(
       matchId,
       mapId,
@@ -276,7 +284,7 @@ export class DemosController {
       });
     }
 
-    const file = `${matchId}/${mapId}/demos/${demo}`;
+    const file = demoKey(matchId, mapId, demo);
     const matchMapDemoId = await this.upsertDemoRow(matchId, mapId, file, null);
 
     if (!matchMapDemoId) {

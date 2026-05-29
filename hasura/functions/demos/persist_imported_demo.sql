@@ -348,7 +348,7 @@ BEGIN
          started_at        = COALESCE(started_at, v_start_time)
    WHERE id = v_match_id;
 
-  -- Per-match rank history: Wingman (6), Competitive (7), Premier (11).
+  -- Per-match rank history: Wingman (6), Competitive (7/12), Premier (11).
   -- previous_rank is the player's prior rank of the same type (and map, for
   -- the per-map skill groups) so the per-match delta is exact.
   WITH ranked_players AS (
@@ -359,7 +359,7 @@ BEGIN
       NULLIF((elem->>'previous_rank')::int, 0) AS demo_previous_rank,
       CASE WHEN (elem->>'rank_type')::int = 11 THEN NULL ELSE v_map_id END AS map_id
     FROM jsonb_array_elements(COALESCE(p_parsed->'players', '[]'::jsonb)) elem
-    WHERE (elem->>'rank_type')::int IN (6, 7, 11)
+    WHERE (elem->>'rank_type')::int IN (6, 7, 11, 12)
       AND COALESCE((elem->>'rank')::int, 0) > 0
       AND elem->>'steam_id' IS NOT NULL
       AND EXISTS (

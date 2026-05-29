@@ -6,6 +6,7 @@ import { UseQueue } from "src/utilities/QueueProcessors";
 import { PostgresService } from "../../postgres/postgres.service";
 import { SteamMatchHistoryQueues } from "../enums/SteamMatchHistoryQueues";
 import { SteamGcService } from "../steam-gc.service";
+import { MatchImportService } from "../match-import.service";
 import { ParseImportedDemo } from "./ParseImportedDemo";
 
 export type ResolveMatchMetadataPayload = {
@@ -21,6 +22,7 @@ export class ResolveMatchMetadata extends WorkerHost {
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
     private readonly steamGc: SteamGcService,
+    private readonly matchImport: MatchImportService,
     @InjectQueue(SteamMatchHistoryQueues.ParseImportedDemo)
     private readonly parseQueue: Queue,
   ) {
@@ -60,18 +62,21 @@ export class ResolveMatchMetadata extends WorkerHost {
       return;
     }
 
+    const matchStartTime =
+      resolved.matchStartTime ??
+      (await this.matchImport.resolveDemoStartTime(resolved.demoUrl));
+
+    this.logger.log(
+      `resolved valve_match_id=${valve_match_id} map=${resolved.mapName ?? "<none>"} matchStartTime=${matchStartTime ?? "<none>"} [source=${resolved.matchStartTime ? "gc-matchtime" : matchStartTime ? "demo-cdn-last-modified" : "none"}] demoUrl=${resolved.demoUrl}`,
+    );
+
     await this.postgres.query(
       `UPDATE public.pending_match_imports
          SET map_name = $2,
              match_start_time = $3,
              demo_url = $4
        WHERE valve_match_id = $1::numeric`,
-      [
-        valve_match_id,
-        resolved.mapName,
-        resolved.matchStartTime,
-        resolved.demoUrl,
-      ],
+      [valve_match_id, resolved.mapName, matchStartTime, resolved.demoUrl],
     );
 
     await this.enqueueParse(valve_match_id);
