@@ -33,9 +33,13 @@ export class ResolveMatchMetadata extends WorkerHost {
     const { valve_match_id } = job.data;
 
     const rows = await this.postgres.query<
-      Array<{ share_code: string; demo_url: string | null }>
+      Array<{
+        share_code: string;
+        demo_url: string | null;
+        match_start_time: string | null;
+      }>
     >(
-      `SELECT share_code, demo_url
+      `SELECT share_code, demo_url, match_start_time
          FROM public.pending_match_imports
         WHERE valve_match_id = $1::numeric`,
       [valve_match_id],
@@ -47,7 +51,11 @@ export class ResolveMatchMetadata extends WorkerHost {
 
     // Already resolved (retry path) — straight to parse.
     if (row.demo_url) {
-      await this.enqueueParse(valve_match_id);
+      await this.enqueueParse(valve_match_id, {
+        share_code: row.share_code,
+        demo_url: row.demo_url,
+        match_start_time: row.match_start_time,
+      });
       return;
     }
 
@@ -79,16 +87,31 @@ export class ResolveMatchMetadata extends WorkerHost {
       [valve_match_id, resolved.mapName, matchStartTime, resolved.demoUrl],
     );
 
-    await this.enqueueParse(valve_match_id);
+    await this.enqueueParse(valve_match_id, {
+      share_code: row.share_code,
+      demo_url: resolved.demoUrl,
+      match_start_time: matchStartTime,
+    });
   }
 
-  private async enqueueParse(valveMatchId: string): Promise<void> {
+  private async enqueueParse(
+    valveMatchId: string,
+    extra: {
+      share_code: string;
+      demo_url: string | null;
+      match_start_time: string | null;
+    },
+  ): Promise<void> {
     const jobId = `parse-${valveMatchId}`;
     await this.parseQueue.remove(jobId).catch(() => {});
     await this.parseQueue.add(
       ParseImportedDemo.name,
-      { valve_match_id: valveMatchId },
-      { jobId, attempts: 1 },
+      { valve_match_id: valveMatchId, ...extra },
+      {
+        jobId,
+        attempts: 3,
+        backoff: { type: "exponential", delay: 15_000 },
+      },
     );
   }
 

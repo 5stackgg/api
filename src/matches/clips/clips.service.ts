@@ -1077,6 +1077,40 @@ export class ClipsService {
     }
   }
 
+  public async deleteClipsForMatch(matchId: string): Promise<void> {
+    const { match_clips } = await this.hasura.query({
+      match_clips: {
+        __args: {
+          where: { match_map: { match_id: { _eq: matchId } } },
+        },
+        id: true,
+        file: true,
+        thumbnail_url: true,
+      },
+    });
+
+    for (const clip of match_clips) {
+      for (const key of [clip.file, clip.thumbnail_url]) {
+        if (!key) {
+          continue;
+        }
+        try {
+          await this.s3.remove(key);
+        } catch (error) {
+          this.logger.warn(
+            `[clip ${clip.id}] failed to remove ${key}: ${(error as Error)?.message}`,
+          );
+        }
+      }
+      await this.hasura.mutation({
+        delete_match_clips_by_pk: {
+          __args: { id: clip.id },
+          __typename: true,
+        },
+      });
+    }
+  }
+
   public async validateClipRenderAuth(
     jobId: string,
     originAuth: unknown,

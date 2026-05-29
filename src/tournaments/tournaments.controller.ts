@@ -2,8 +2,8 @@ import { Controller, Logger } from "@nestjs/common";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { HasuraService } from "../hasura/hasura.service";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
-import { S3Service } from "../s3/s3.service";
 import { DemoMetadataService } from "../demos/demo-metadata.service";
+import { ClipsService } from "../matches/clips/clips.service";
 import { User } from "../auth/types/User";
 import { DiscordTournamentVoiceService } from "../discord-bot/discord-tournament-voice/discord-tournament-voice.service";
 import { tournaments_set_input } from "../../generated";
@@ -13,7 +13,8 @@ export class TournamentsController {
   constructor(
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
-    private readonly s3: S3Service,
+    private readonly demoMetadata: DemoMetadataService,
+    private readonly clips: ClipsService,
     private readonly tournamentVoice: DiscordTournamentVoiceService,
   ) {}
 
@@ -34,10 +35,9 @@ export class TournamentsController {
     // they can be regenerated. tournament_brackets.match_id is ON DELETE
     // SET NULL, so the brackets themselves stay in place.
     if (status === "Cancelled" && data.old.status !== "Cancelled") {
-      const { demoCount, matchCount } =
-        await this.deleteTournamentMatches(tournamentId);
+      const { matchCount } = await this.deleteTournamentMatches(tournamentId);
       this.logger.log(
-        `[${tournamentId}] tournament cancelled, cleaned up ${demoCount} demo files across ${matchCount} matches`,
+        `[${tournamentId}] tournament cancelled, cleaned up assets across ${matchCount} matches`,
       );
     }
   }
@@ -74,8 +74,7 @@ export class TournamentsController {
       throw Error("cannot delete a live tournament");
     }
 
-    const { demoCount, matchCount } =
-      await this.deleteTournamentMatches(tournament_id);
+    const { matchCount } = await this.deleteTournamentMatches(tournament_id);
 
     await this.hasura.mutation({
       delete_tournaments_by_pk: {
@@ -87,7 +86,7 @@ export class TournamentsController {
     });
 
     this.logger.log(
-      `[${tournament_id}] tournament deleted, cleaned up ${demoCount} demo files across ${matchCount} matches`,
+      `[${tournament_id}] tournament deleted, cleaned up assets across ${matchCount} matches`,
     );
 
     return {
@@ -97,8 +96,7 @@ export class TournamentsController {
 
   private async deleteTournamentMatches(
     tournament_id: string,
-  ): Promise<{ demoCount: number; matchCount: number }> {
-    // Query as admin to access demo file paths
+  ): Promise<{ matchCount: number }> {
     const { tournaments_by_pk: tournament } = await this.hasura.query({
       tournaments_by_pk: {
         __args: {
@@ -108,58 +106,27 @@ export class TournamentsController {
           brackets: {
             match: {
               id: true,
-              match_maps: {
-                demos: {
-                  id: true,
-                  file: true,
-                },
-              },
             },
           },
         },
       },
     });
 
-    const demos: Array<{ id: string; file: string }> = [];
     const matchIds: string[] = [];
-
     for (const stage of tournament?.stages || []) {
       for (const bracket of stage.brackets || []) {
-        if (!bracket.match) {
-          continue;
+        if (bracket.match) {
+          matchIds.push(bracket.match.id);
         }
-        matchIds.push(bracket.match.id);
-        for (const matchMap of bracket.match.match_maps || []) {
-          for (const demo of matchMap.demos || []) {
-            demos.push(demo);
-          }
-        }
-      }
-    }
-
-    for (const demo of demos) {
-      try {
-        if (!DemoMetadataService.isExternalDemoUrl(demo.file)) {
-          await this.s3.remove(demo.file);
-        }
-        await this.hasura.mutation({
-          delete_match_map_demos_by_pk: {
-            __args: {
-              id: demo.id,
-            },
-            __typename: true,
-          },
-        });
-      } catch (error) {
-        this.logger.error(
-          `[${tournament_id}] failed to clean up demo ${demo.id}`,
-          error,
-        );
       }
     }
 
     for (const matchId of matchIds) {
       try {
+        // Purge S3 assets (demos + playback blobs, clip videos + thumbnails)
+        // before deleting the match, which cascades the DB rows.
+        await this.clips.deleteClipsForMatch(matchId);
+        await this.demoMetadata.deleteDemosForMatch(matchId);
         await this.hasura.mutation({
           delete_matches_by_pk: {
             __args: {
@@ -176,6 +143,6 @@ export class TournamentsController {
       }
     }
 
-    return { demoCount: demos.length, matchCount: matchIds.length };
+    return { matchCount: matchIds.length };
   }
 }

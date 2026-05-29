@@ -6,6 +6,7 @@ import { Queue } from "bullmq";
 import { HasuraModule } from "../hasura/hasura.module";
 import { CacheModule } from "../cache/cache.module";
 import { DemosModule } from "../demos/demos.module";
+import { ClipsModule } from "../matches/clips/clips.module";
 import { PostgresModule } from "../postgres/postgres.module";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
@@ -44,6 +45,7 @@ import { ParseImportedDemo } from "./jobs/ParseImportedDemo";
     HasuraModule,
     CacheModule,
     DemosModule,
+    ClipsModule,
     PostgresModule,
   ],
   providers: [
