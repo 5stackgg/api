@@ -32,17 +32,11 @@ export class FaceitService {
 
   public async refreshPlayer(steamId: string): Promise<boolean> {
     if (!this.isEnabled()) {
-      this.logger.warn(
-        `faceit refresh skipped for ${steamId}: FACEIT_API_KEY not configured`,
-      );
       return false;
     }
 
     const cacheKey = FaceitService.cacheKey(steamId);
     if (await this.cache.has(cacheKey)) {
-      this.logger.log(
-        `faceit refresh skipped for ${steamId}: within ${FaceitService.REFRESH_INTERVAL_SECONDS}s lock`,
-      );
       return false;
     }
 

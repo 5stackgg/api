@@ -7,6 +7,7 @@ import { ClipsService } from "./clips.service";
 import { ClipRendersController } from "./clip-renders.controller";
 import { ClipDownloadController } from "./clip-download.controller";
 import { HasuraModule } from "../../hasura/hasura.module";
+import { PostgresModule } from "../../postgres/postgres.module";
 import { S3Module } from "../../s3/s3.module";
 import { GameStreamerModule } from "../game-streamer/game-streamer.module";
 import { MatchQueues } from "../enums/MatchQueues";
@@ -22,6 +23,7 @@ import { ReconcileQueuedHighlights } from "./jobs/ReconcileQueuedHighlights";
 @Module({
   imports: [
     HasuraModule,
+    PostgresModule,
     S3Module,
     GameStreamerModule,
     BullModule.registerQueue({

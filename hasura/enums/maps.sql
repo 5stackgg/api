@@ -1,7 +1,8 @@
 insert into e_match_types ("value", "description") values
     ('Competitive', 'The classic 5 vs 5 competitive experience with full team coordination'),
     ('Wingman', 'Team up with a friend and compete in fast-paced 2v2 matches'),
-    ('Duel', 'A competitive 1 vs 1 experience, perfect for practicing individual skill')
+    ('Duel', 'A competitive 1 vs 1 experience, perfect for practicing individual skill'),
+    ('Premier', 'Valve Premier matchmaking — 5 vs 5 with CS Rating')
 on conflict(value) do update set "description" = EXCLUDED."description";
 
 insert into e_game_cfg_types ("value", "description") values

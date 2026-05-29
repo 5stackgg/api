@@ -307,12 +307,15 @@ export class MatchesController {
 
     match.options.show_elo_ranks = fivestackRanksSetting?.value === "true";
 
+    // e_game_cfg_types_enum doesn't include Premier (imports only).
+    const cfgType =
+      match.options.type === "Premier" ? "Competitive" : match.options.type;
     const { match_type_cfgs } = await this.hasura.query({
       match_type_cfgs: {
         __args: {
           where: {
             type: {
-              _in: ["Lan", match.options.type],
+              _in: ["Lan", cfgType],
             },
           },
         },
@@ -467,6 +470,12 @@ export class MatchesController {
     const matchId = (data.new.id || data.old.id) as string;
 
     const status = data.new.status;
+
+    // Imported matches skip the entire 5stack lifecycle (server, lobby, ELO).
+    const source = (data.new.source ?? data.old?.source) as string | undefined;
+    if (source && source !== "5stack") {
+      return;
+    }
 
     if (
       data.op === "UPDATE" &&
@@ -1046,11 +1055,9 @@ export class MatchesController {
       throw Error("demo metadata not ready — try again in a moment");
     }
 
-    const presignedDemoUrl = await this.s3.getPresignedUrl(
+    const presignedDemoUrl = await this.demoMetadata.resolveDemoFetchUrl(
       demo.file,
-      undefined,
       60 * 60,
-      "get",
     );
 
     const session = await this.gameStreamer.startDemoPlayback(
@@ -2149,7 +2156,9 @@ export class MatchesController {
     });
 
     for (const demo of match_map_demos) {
-      await this.s3.remove(demo.file);
+      if (!DemoMetadataService.isExternalDemoUrl(demo.file)) {
+        await this.s3.remove(demo.file);
+      }
       await this.hasura.mutation({
         delete_match_map_demos_by_pk: {
           __args: {

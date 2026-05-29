@@ -1,0 +1,28 @@
+table:
+  name: player_steam_match_auth
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      foreign_key_constraint_on: steam_id
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - steam_id
+        - last_known_share_code
+        - last_polled_at
+        - last_error
+        - created_at
+        - updated_at
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""

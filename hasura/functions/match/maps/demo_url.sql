@@ -9,6 +9,10 @@ CREATE OR REPLACE FUNCTION public.demo_download_url(match_map_demos public.match
         demos_domain text;
         version text;
     BEGIN
+        IF match_map_demos.file ~* '^https?://' THEN
+            RETURN match_map_demos.file;
+        END IF;
+
         version := COALESCE(
             EXTRACT(EPOCH FROM match_map_demos.created_at)::bigint::text,
             '0'

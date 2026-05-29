@@ -1,0 +1,27 @@
+table:
+  name: pending_match_imports
+  schema: public
+array_relationships:
+  - name: players
+    using:
+      foreign_key_constraint_on:
+        column: valve_match_id
+        table:
+          name: pending_match_import_players
+          schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - valve_match_id
+        - status
+        - error
+        - map_name
+        - match_start_time
+        - created_at
+        - updated_at
+      filter:
+        players:
+          steam_id:
+            _eq: X-Hasura-User-Id
+    comment: ""

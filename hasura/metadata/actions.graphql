@@ -504,6 +504,7 @@ type Mutation {
   ): SuccessOutput
 }
 
+
 type Mutation {
   stopLive(
     match_id: uuid!
@@ -542,6 +543,45 @@ type Mutation {
 
 type Mutation {
   refreshFaceitRank(steam_id: String!): SuccessOutput
+}
+
+type SteamMatchHistoryLinkOutput {
+  success: Boolean!
+  error: String
+}
+
+type SteamMatchHistoryPollOutput {
+  success: Boolean!
+  collected: Int!
+  error: String
+}
+
+type Mutation {
+  linkSteamMatchHistory(
+    auth_code: String!
+    share_code: String!
+  ): SteamMatchHistoryLinkOutput
+}
+
+type Mutation {
+  unlinkSteamMatchHistory: SuccessOutput
+}
+
+type Mutation {
+  pollSteamMatchHistory: SteamMatchHistoryPollOutput
+}
+
+type PendingMatchImportActionOutput {
+  success: Boolean!
+  error: String
+}
+
+type Mutation {
+  retryPendingMatchImport(valve_match_id: String!): PendingMatchImportActionOutput
+}
+
+type Mutation {
+  clearPendingMatchImport(valve_match_id: String!): PendingMatchImportActionOutput
 }
 
 type Query {

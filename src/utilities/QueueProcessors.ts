@@ -24,7 +24,8 @@ type Modules =
   | "TypeSense"
   | "Matchmaking"
   | "Telemetry"
-  | "DedicatedServers";
+  | "DedicatedServers"
+  | "SteamMatchHistory";
 
 export type UseQueueOptions = {
   concurrency?: number;

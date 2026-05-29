@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { Readable } from "node:stream";
 import { e_player_roles_enum } from "generated/schema";
 import { HasuraService } from "../../hasura/hasura.service";
+import { PostgresService } from "../../postgres/postgres.service";
 import { S3Service } from "../../s3/s3.service";
 import { GameStreamerService } from "../game-streamer/game-streamer.service";
 import { InjectQueue } from "@nestjs/bullmq";
@@ -27,6 +28,7 @@ export class ClipsService {
   constructor(
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
+    private readonly postgres: PostgresService,
     private readonly s3: S3Service,
     private readonly gameStreamer: GameStreamerService,
     @InjectQueue(MatchQueues.Clips)
@@ -206,6 +208,8 @@ export class ClipsService {
               status: "error",
               error_message: `dispatch failed: ${(error as Error)?.message}`,
               last_status_at: "now()",
+              game_server_node_id: null,
+              steam_account_id: null,
             },
           },
           id: true,
@@ -245,6 +249,8 @@ export class ClipsService {
             status: "cancelled",
             error_message: "cancelled by operator (batch)",
             last_status_at: "now()",
+            game_server_node_id: null,
+            steam_account_id: null,
           },
         },
         affected_rows: true,
@@ -410,6 +416,7 @@ export class ClipsService {
             paused: true,
             status: "queued",
             game_server_node_id: null,
+            steam_account_id: null,
           },
         },
         affected_rows: true,
@@ -1234,6 +1241,10 @@ export class ClipsService {
     if (body.error) {
       set.error_message = body.error;
     }
+    if (!isBoot && ["completed", "error", "cancelled"].includes(body.status)) {
+      set.game_server_node_id = null;
+      set.steam_account_id = null;
+    }
     await this.hasura.mutation({
       update_clip_render_jobs_by_pk: {
         __args: { pk_columns: { id: jobId }, _set: set },
@@ -1621,6 +1632,16 @@ export class ClipsService {
         false,
       );
       if (!enabled) return 0;
+
+      const { matches_by_pk } = await this.hasura.query({
+        matches_by_pk: { __args: { id: matchId }, source: true },
+      });
+      if (!(await this.importedAutoClipsAllowed(matches_by_pk?.source))) {
+        this.logger.log(
+          `[auto-clips] demo ${matchMapDemoId} skipped: imported-match auto highlights disabled (source=${matches_by_pk?.source})`,
+        );
+        return 0;
+      }
     }
     if (!(await this.hasGpuNode())) {
       const msg =
@@ -1693,8 +1714,25 @@ export class ClipsService {
     );
     if (kills.length === 0) return 0;
 
-    const killers = new Set<string>();
-    for (const k of kills) if (k.killer) killers.add(k.killer);
+    const rawKillers = new Set<string>();
+    for (const k of kills) {
+      if (k.killer) {
+        rawKillers.add(k.killer);
+      }
+    }
+    const killers = await this.filterLoggedInSteamIds(rawKillers);
+    if (killers.size === 0) {
+      this.logger.log(
+        `[auto-clips] demo ${matchMapDemoId} skipped: no killers have logged in to the platform`,
+      );
+      return 0;
+    }
+    const filteredOut = rawKillers.size - killers.size;
+    if (filteredOut > 0) {
+      this.logger.log(
+        `[auto-clips] demo ${matchMapDemoId} skipping ${filteredOut} killer(s) without platform login`,
+      );
+    }
 
     const players =
       (demo.players as
@@ -1877,6 +1915,7 @@ export class ClipsService {
       matches_by_pk: {
         __args: { id: matchId },
         id: true,
+        source: true,
         match_maps: {
           id: true,
           demos: {
@@ -1893,6 +1932,17 @@ export class ClipsService {
     });
     if (!match) {
       this.logger.warn(`[auto-clips] match ${matchId} not found`);
+      return 0;
+    }
+    if (
+      !options.force &&
+      !(await this.importedAutoClipsAllowed(
+        (match as { source?: string }).source,
+      ))
+    ) {
+      this.logger.log(
+        `[auto-clips] match ${matchId} skipped: imported-match auto highlights disabled (source=${(match as { source?: string }).source})`,
+      );
       return 0;
     }
 
@@ -1931,7 +1981,7 @@ export class ClipsService {
       if (parsed.length > 0) parsedDemosByMap.set(String(mapRow.id), parsed);
     }
 
-    const allKillers = new Set<string>();
+    const rawKillers = new Set<string>();
     for (const demos of parsedDemosByMap.values()) {
       for (const demo of demos) {
         const kills = ClipsService.filterValidKills(
@@ -1939,8 +1989,25 @@ export class ClipsService {
             | Array<{ killer?: string; victim?: string }>
             | undefined,
         );
-        for (const k of kills) if (k.killer) allKillers.add(k.killer);
+        for (const k of kills) {
+          if (k.killer) {
+            rawKillers.add(k.killer);
+          }
+        }
       }
+    }
+    const allKillers = await this.filterLoggedInSteamIds(rawKillers);
+    if (allKillers.size === 0) {
+      this.logger.log(
+        `[auto-clips] match ${matchId} skipped: no killers have logged in to the platform`,
+      );
+      return 0;
+    }
+    const filteredOut = rawKillers.size - allKillers.size;
+    if (filteredOut > 0) {
+      this.logger.log(
+        `[auto-clips] match ${matchId} skipping ${filteredOut} killer(s) without platform login`,
+      );
     }
 
     const buildNameMapFromMatch = (m: any) => {
@@ -2021,10 +2088,16 @@ export class ClipsService {
             | Array<{ tick?: number; killer?: string; victim?: string }>
             | undefined,
         );
-        if (kills.length === 0) continue;
+        if (kills.length === 0) {
+          continue;
+        }
 
         const killers = new Set<string>();
-        for (const k of kills) if (k.killer) killers.add(k.killer);
+        for (const k of kills) {
+          if (k.killer && allKillers.has(k.killer)) {
+            killers.add(k.killer);
+          }
+        }
 
         for (const targetSteamId of killers) {
           try {
@@ -2170,6 +2243,31 @@ export class ClipsService {
     return queued;
   }
 
+  private async filterLoggedInSteamIds(
+    steamIds: Iterable<string>,
+  ): Promise<Set<string>> {
+    const ids = Array.from(new Set(steamIds));
+    if (ids.length === 0) {
+      return new Set();
+    }
+    const { players } = await this.hasura.query({
+      players: {
+        __args: {
+          where: {
+            steam_id: { _in: ids },
+            last_sign_in_at: { _is_null: false },
+          },
+        },
+        steam_id: true,
+      },
+    });
+    return new Set(
+      ((players ?? []) as Array<{ steam_id: string | number }>).map((p) =>
+        String(p.steam_id),
+      ),
+    );
+  }
+
   private async hasGpuNode(): Promise<boolean> {
     const { game_server_nodes_aggregate } = await this.hasura.query({
       game_server_nodes_aggregate: {
@@ -2181,6 +2279,8 @@ export class ClipsService {
   }
 
   public async reconcileQueuedHighlights(): Promise<number> {
+    await this.reapOrphanResourceClaims();
+
     const { clip_render_jobs } = await this.hasura.query({
       clip_render_jobs: {
         __args: {
@@ -2283,6 +2383,86 @@ export class ClipsService {
     return touched;
   }
 
+  private async reapOrphanResourceClaims(): Promise<void> {
+    const rows = await this.postgres.query<
+      Array<{ match_map_id: string; match_map_demo_id: string }>
+    >(
+      `SELECT DISTINCT match_map_id::text AS match_map_id,
+                       match_map_demo_id::text AS match_map_demo_id
+         FROM public.clip_render_jobs
+        WHERE status IN ('queued','rendering','uploading')
+          AND match_map_demo_id IS NOT NULL
+          AND (game_server_node_id IS NOT NULL OR steam_account_id IS NOT NULL)`,
+    );
+    if (rows.length === 0) {
+      return;
+    }
+
+    const livePairs = new Set<string>();
+    const liveStates: Array<
+      "delayed" | "waiting" | "active" | "paused" | "waiting-children"
+    > = ["delayed", "waiting", "active", "paused", "waiting-children"];
+    const bullJobs = await this.batchQueue.getJobs(liveStates);
+    for (const j of bullJobs) {
+      if (j.name !== BATCH_HIGHLIGHTS_JOB_NAME) {
+        continue;
+      }
+      const d = (j.data ?? {}) as {
+        matchMapId?: string;
+        matchMapDemoId?: string;
+      };
+      if (d.matchMapId && d.matchMapDemoId) {
+        livePairs.add(`${d.matchMapId}:${d.matchMapDemoId}`);
+      }
+    }
+
+    const orphanIds: { matchMapId: string; matchMapDemoId: string }[] = [];
+    for (const row of rows) {
+      const key = `${row.match_map_id}:${row.match_map_demo_id}`;
+      if (livePairs.has(key)) {
+        continue;
+      }
+      const podState = await this.gameStreamer
+        .getBatchHighlightsPodState(row.match_map_id, row.match_map_demo_id)
+        .catch(() => "absent" as const);
+      if (podState === "absent") {
+        orphanIds.push({
+          matchMapId: row.match_map_id,
+          matchMapDemoId: row.match_map_demo_id,
+        });
+      }
+    }
+
+    for (const o of orphanIds) {
+      await this.postgres.query(
+        `UPDATE public.clip_render_jobs
+            SET game_server_node_id = NULL,
+                steam_account_id = NULL
+          WHERE match_map_id = $1::uuid
+            AND match_map_demo_id = $2::uuid
+            AND status IN ('queued','rendering','uploading')`,
+        [o.matchMapId, o.matchMapDemoId],
+      );
+      this.logger.log(
+        `[reconcile-highlights] reaped orphan resource claims for ${o.matchMapId}:${o.matchMapDemoId}`,
+      );
+      try {
+        await this.batchQueue.add(
+          BATCH_HIGHLIGHTS_JOB_NAME,
+          { matchMapId: o.matchMapId, matchMapDemoId: o.matchMapDemoId },
+          { jobId: `${o.matchMapId}-${o.matchMapDemoId}-reap-${Date.now()}` },
+        );
+        this.logger.log(
+          `[reconcile-highlights] re-armed batch watchdog for orphaned in-flight ${o.matchMapId}:${o.matchMapDemoId}`,
+        );
+      } catch (error) {
+        this.logger.warn(
+          `[reconcile-highlights] re-arm enqueue failed for ${o.matchMapId}:${o.matchMapDemoId}: ${(error as Error)?.message}`,
+        );
+      }
+    }
+  }
+
   private async readSetting(name: string, fallback: string): Promise<string> {
     const { settings_by_pk } = await this.hasura.query({
       settings_by_pk: {
@@ -2299,6 +2479,17 @@ export class ClipsService {
   ): Promise<boolean> {
     const raw = await this.readSetting(name, fallback ? "true" : "false");
     return raw === "true" || raw === "1";
+  }
+
+  // Imported (non-5stack) matches only get auto highlights when the operator
+  // has explicitly opted in, separately from the main auto-highlights toggle.
+  private async importedAutoClipsAllowed(
+    source: string | null | undefined,
+  ): Promise<boolean> {
+    if (!source || source === "5stack") {
+      return true;
+    }
+    return this.readBoolSetting("auto_generate_match_clips_imported", false);
   }
 
   public async buildPresetSpec(

@@ -16,6 +16,8 @@ export type ParsedKill = {
   killer?: string;
   victim?: string;
   assist?: string;
+  killer_team?: string;
+  victim_team?: string;
   weapon?: string;
   headshot?: boolean;
   wallbang?: boolean;
@@ -55,6 +57,10 @@ export type ParsedKitDrop = {
 export type ParsedPlayer = {
   steam_id: string;
   name: string;
+  rank?: number;
+  rank_type?: number;
+  previous_rank?: number;
+  win_count?: number;
 };
 
 export type ParsedShotFired = {
@@ -149,6 +155,11 @@ export type ParsedDemo = {
   map_name?: string;
   workshop_id?: string;
   cs2_build?: string;
+  // Match-type signals from the demo's game rules.
+  server_name?: string;
+  max_rounds?: number;
+  overtime_enabled?: boolean;
+  player_count?: number;
   round_ticks: ParsedRound[];
   kills: ParsedKill[];
   bombs: ParsedBomb[];
@@ -160,6 +171,16 @@ export type ParsedDemo = {
   spotted?: ParsedSpotted[];
   grenade_throws?: ParsedGrenadeEvent[];
   grenade_detonations?: ParsedGrenadeEvent[];
+  flashes?: Array<{
+    tick: number;
+    round?: number;
+    attacker?: string;
+    attacker_team?: string;
+    victim?: string;
+    victim_team?: string;
+    duration?: number;
+    team_flash?: boolean;
+  }>;
   kit_drops?: ParsedKitDrop[];
 };
 
@@ -233,5 +254,73 @@ export class DemoParserService {
       `[demo-parser] parsed: ${parsed.total_ticks} ticks @ ${parsed.tick_rate} tps, ${parsed.round_ticks?.length ?? 0} rounds, ${parsed.kills?.length ?? 0} kills, ${parsed.bombs?.length ?? 0} bombs, ${parsed.shots_fired?.length ?? 0} shots, ${parsed.damages?.length ?? 0} dmg, ${parsed.spotted?.length ?? 0} spotted, ${parsed.grenade_throws?.length ?? 0} thrown, ${parsed.grenade_detonations?.length ?? 0} detonated, map=${parsed.map_name ?? "<unknown>"}${parsed.workshop_id ? ` (workshop ${parsed.workshop_id})` : ""}`,
     );
     return parsed;
+  }
+
+  public async parseFromBuffer(
+    buffer: Buffer,
+    filename = "upload.dem",
+  ): Promise<ParsedDemo | null> {
+    const url = `${this.appConfig.demoParserUrl}/parse-file`;
+    this.logger.log(
+      `[demo-parser] POST ${url} (buffer ${buffer.length} bytes)`,
+    );
+
+    const form = new FormData();
+    form.append(
+      "demo",
+      new Blob([Uint8Array.from(buffer)], {
+        type: "application/octet-stream",
+      }),
+      filename,
+    );
+
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        body: form,
+        signal: AbortSignal.timeout(10 * 60_000),
+      });
+    } catch (error) {
+      this.logger.error(`[demo-parser] unreachable for buffer upload`, error);
+      return null;
+    }
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      this.logger.error(
+        `[demo-parser] ${res.status}: ${text.slice(0, 300).trim()}`,
+      );
+      return null;
+    }
+    return (await res.json()) as ParsedDemo;
+  }
+
+  public async parseFromUrl(demoUrl: string): Promise<ParsedDemo | null> {
+    const url = `${this.appConfig.demoParserUrl}/parse`;
+    this.logger.log(`[demo-parser] POST ${url} (external url)`);
+
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ match_map_demo_id: "", demo_url: demoUrl }),
+        signal: AbortSignal.timeout(5 * 60_000),
+      });
+    } catch (error) {
+      this.logger.error(`[demo-parser] unreachable for external url`, error);
+      return null;
+    }
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      this.logger.error(
+        `[demo-parser] ${res.status}: ${text.slice(0, 300).trim()}`,
+      );
+      return null;
+    }
+
+    return (await res.json()) as ParsedDemo;
   }
 }

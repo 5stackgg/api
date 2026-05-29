@@ -1,0 +1,63 @@
+table:
+  name: steam_accounts
+  schema: public
+object_relationships:
+  - name: last_node
+    using:
+      foreign_key_constraint_on: last_node_id
+array_relationships:
+  - name: clip_render_jobs
+    using:
+      foreign_key_constraint_on:
+        column: steam_account_id
+        table:
+          name: clip_render_jobs
+          schema: public
+  - name: match_streams
+    using:
+      foreign_key_constraint_on:
+        column: steam_account_id
+        table:
+          name: match_streams
+          schema: public
+  - name: match_demo_sessions
+    using:
+      foreign_key_constraint_on:
+        column: steam_account_id
+        table:
+          name: match_demo_sessions
+          schema: public
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - username
+        - last_node_id
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - username
+        - password
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - username
+        - password
+      filter: {}
+      check: null
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""

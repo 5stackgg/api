@@ -25,5 +25,4 @@ select
   ) as highlights_in_progress,
   (select count(*)::int
      from game_server_nodes
-    where gpu = true
-      and enabled = true) as registered_gpu_nodes;
+    where gpu = true) as registered_gpu_nodes;

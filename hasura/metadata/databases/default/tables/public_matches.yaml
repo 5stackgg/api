@@ -518,6 +518,7 @@ select_permissions:
         - scheduled_at
         - server_error
         - server_id
+        - source
         - started_at
         - status
         - winning_lineup_id
@@ -576,6 +577,7 @@ select_permissions:
         - scheduled_at
         - server_error
         - server_id
+        - source
         - started_at
         - status
         - winning_lineup_id

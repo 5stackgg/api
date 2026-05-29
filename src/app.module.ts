@@ -47,6 +47,7 @@ import { TrophiesModule } from "./trophies/trophies.module";
 import { FixturesModule } from "./fixtures/fixtures.module";
 import { TournamentsModule } from "./tournaments/tournaments.module";
 import { FaceitModule } from "./faceit/faceit.module";
+import { SteamMatchHistoryModule } from "./steam-match-history/steam-match-history.module";
 
 @Module({
   imports: [
@@ -134,6 +135,7 @@ import { FaceitModule } from "./faceit/faceit.module";
     FixturesModule,
     TournamentsModule,
     FaceitModule,
+    SteamMatchHistoryModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],

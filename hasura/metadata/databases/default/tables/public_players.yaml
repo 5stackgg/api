@@ -190,6 +190,20 @@ array_relationships:
         table:
           name: player_unused_utility
           schema: public
+  - name: pending_match_imports
+    using:
+      foreign_key_constraint_on:
+        column: steam_id
+        table:
+          name: pending_match_import_players
+          schema: public
+  - name: premier_rank_history
+    using:
+      foreign_key_constraint_on:
+        column: steam_id
+        table:
+          name: player_premier_rank_history
+          schema: public
   - name: sanctions
     using:
       foreign_key_constraint_on:
@@ -365,6 +379,8 @@ select_permissions:
         - language
         - name
         - name_registered
+        - premier_rank
+        - premier_rank_updated_at
         - profile_url
         - role
         - roster_image_url
@@ -405,6 +421,8 @@ select_permissions:
         - last_sign_in_at
         - name
         - name_registered
+        - premier_rank
+        - premier_rank_updated_at
         - profile_url
         - role
         - roster_image_url
@@ -446,6 +464,8 @@ select_permissions:
         - language
         - name
         - name_registered
+        - premier_rank
+        - premier_rank_updated_at
         - profile_url
         - role
         - roster_image_url

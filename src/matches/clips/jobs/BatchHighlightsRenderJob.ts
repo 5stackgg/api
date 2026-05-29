@@ -12,12 +12,14 @@ import { ClipsService } from "../clips.service";
 import {
   GameStreamerService,
   NoGpuAvailableError,
+  NoSteamAccountAvailableError,
 } from "../../game-streamer/game-streamer.service";
 import { HasuraService } from "../../../hasura/hasura.service";
 import { IN_FLIGHT_STATUSES } from "../clips.constants";
 
 const CHECK_DELAY_MS = 10_000;
 const GPU_BUSY_RETRY_MS = 60_000;
+const STEAM_BUSY_RETRY_MS = 60_000;
 
 @UseQueue("Clips", MatchQueues.Clips, {
   concurrency: 1,
@@ -67,6 +69,12 @@ export class BatchHighlightsRenderJob extends WorkerHost {
             `${tag} no GPU free, retrying in ${GPU_BUSY_RETRY_MS / 1000}s`,
           );
           return this.delayUntilNext(job, GPU_BUSY_RETRY_MS);
+        }
+        if (error instanceof NoSteamAccountAvailableError) {
+          this.logger.log(
+            `${tag} no Steam account in pool — add accounts under Settings → Steam Accounts. Retrying in ${STEAM_BUSY_RETRY_MS / 1000}s`,
+          );
+          return this.delayUntilNext(job, STEAM_BUSY_RETRY_MS);
         }
         const msg = (error as Error)?.message ?? "dispatch failed";
         this.logger.error(`${tag} dispatch failed: ${msg}`);

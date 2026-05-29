@@ -37,7 +37,7 @@ import { DemoParserService } from "./demo-parser.service";
     ...getQueuesProcessors("Demos"),
     loggerFactory(),
   ],
-  exports: [DemoMetadataService],
+  exports: [DemoMetadataService, DemoParserService],
 })
 export class DemosModule {
   constructor(@InjectQueue(DemoQueues.Demos) cleanDemosQueue: Queue) {

@@ -1,0 +1,21 @@
+table:
+  name: pending_match_import_players
+  schema: public
+object_relationships:
+  - name: pending_match_import
+    using:
+      foreign_key_constraint_on: valve_match_id
+  - name: player
+    using:
+      foreign_key_constraint_on: steam_id
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - valve_match_id
+        - steam_id
+        - created_at
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""

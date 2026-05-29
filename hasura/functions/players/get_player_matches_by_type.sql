@@ -12,6 +12,7 @@ BEGIN
     INNER JOIN match_options mo ON mo.id = m.match_options_id
     WHERE mlp.steam_id = player.steam_id
     AND m.winning_lineup_id = mlp.match_lineup_id
+    AND m.source = '5stack'
     AND mo."type" = _match_type;
 
     RETURN total_matches;
@@ -32,6 +33,7 @@ BEGIN
     INNER JOIN match_options mo ON mo.id = m.match_options_id
     WHERE mlp.steam_id = player.steam_id
     AND m.winning_lineup_id != mlp.match_lineup_id
+    AND m.source = '5stack'
     AND mo."type" = _match_type;
 
     RETURN total_matches;

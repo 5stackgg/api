@@ -52,12 +52,15 @@ export class FixturesController {
           DELETE FROM player_elo
           WHERE match_id IN (
             SELECT id FROM matches
-            WHERE ended_at IS NOT NULL AND winning_lineup_id IS NOT NULL
+            WHERE ended_at IS NOT NULL
+              AND winning_lineup_id IS NOT NULL
+              AND source = '5stack'
           );
           FOR m IN
             SELECT id FROM matches
             WHERE ended_at IS NOT NULL
               AND winning_lineup_id IS NOT NULL
+              AND source = '5stack'
             ORDER BY created_at ASC
           LOOP
             PERFORM generate_player_elo_for_match(m.id);

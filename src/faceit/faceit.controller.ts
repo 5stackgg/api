@@ -13,16 +13,11 @@ export class FaceitController {
   public async refreshFaceitRank(data: {
     steam_id: string;
   }): Promise<{ success: boolean }> {
-    this.logger.log(`action refreshFaceitRank steam_id=${data.steam_id}`);
-
     if (!data.steam_id || !/^\d{5,20}$/.test(data.steam_id)) {
       throw new BadRequestException("invalid steam_id");
     }
 
     if (!this.faceitService.isEnabled()) {
-      this.logger.warn(
-        `faceit refresh requested for ${data.steam_id} but FACEIT_API_KEY not configured`,
-      );
       return { success: false };
     }
 

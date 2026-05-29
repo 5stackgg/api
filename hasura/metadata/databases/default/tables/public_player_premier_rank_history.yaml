@@ -1,0 +1,35 @@
+table:
+  name: player_premier_rank_history
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      foreign_key_constraint_on: steam_id
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - steam_id
+        - rank
+        - rank_type
+        - previous_rank
+        - map_id
+        - match_id
+        - observed_at
+      filter: {}
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - steam_id
+        - rank
+        - rank_type
+        - previous_rank
+        - map_id
+        - match_id
+        - observed_at
+      filter: {}
+    comment: ""

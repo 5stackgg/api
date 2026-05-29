@@ -4,6 +4,7 @@ import { S3Service } from "../../s3/s3.service";
 import { MatchQueues } from "../enums/MatchQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { HasuraService } from "../../hasura/hasura.service";
+import { DemoMetadataService } from "../../demos/demo-metadata.service";
 
 @UseQueue("Matches", MatchQueues.ScheduledMatches)
 export class RemoveCancelledMatches extends WorkerHost {
@@ -65,7 +66,9 @@ export class RemoveCancelledMatches extends WorkerHost {
     for (const match of matches) {
       for (const matchMap of match.match_maps) {
         for (const demo of matchMap.demos) {
-          await this.s3Service.remove(demo.file);
+          if (!DemoMetadataService.isExternalDemoUrl(demo.file)) {
+            await this.s3Service.remove(demo.file);
+          }
           await this.hasura.mutation({
             delete_match_map_demos_by_pk: {
               __args: {
