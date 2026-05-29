@@ -59,6 +59,8 @@ export type ParsedPlayer = {
   name: string;
   rank?: number;
   rank_type?: number;
+  previous_rank?: number;
+  win_count?: number;
 };
 
 export type ParsedShotFired = {

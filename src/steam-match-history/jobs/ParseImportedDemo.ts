@@ -94,7 +94,12 @@ export class ParseImportedDemo extends WorkerHost {
 
     const parsed = await this.demoParser.parseFromUrl(demoUrl);
     if (!parsed) {
-      await this.markFailed(valveMatchId, shareCode, "demo parse failed", demoUrl);
+      await this.markFailed(
+        valveMatchId,
+        shareCode,
+        "demo parse failed",
+        demoUrl,
+      );
       return;
     }
 

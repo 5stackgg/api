@@ -32,15 +32,15 @@ describe("MatchImportService.detectMatchType", () => {
   });
 
   it("maps Valve rank types (6=Wingman, 7=Competitive, 11=Premier)", () => {
-    expect(
-      detectMatchType([{ steam_id: "1", name: "a", rank_type: 6 }]),
-    ).toBe("Wingman");
-    expect(
-      detectMatchType([{ steam_id: "1", name: "a", rank_type: 7 }]),
-    ).toBe("Competitive");
-    expect(
-      detectMatchType([{ steam_id: "1", name: "a", rank_type: 11 }]),
-    ).toBe("Premier");
+    expect(detectMatchType([{ steam_id: "1", name: "a", rank_type: 6 }])).toBe(
+      "Wingman",
+    );
+    expect(detectMatchType([{ steam_id: "1", name: "a", rank_type: 7 }])).toBe(
+      "Competitive",
+    );
+    expect(detectMatchType([{ steam_id: "1", name: "a", rank_type: 11 }])).toBe(
+      "Premier",
+    );
   });
 
   it("falls back to player count when no rank_type is present", () => {
@@ -94,9 +94,21 @@ describe("MatchImportService.computeStartingSides", () => {
         { round: 13, start_tick: 1300, end_tick: 1400 },
       ],
       kills: [
-        { tick: 50, killer: "A", killer_team: "CT", victim: "B", victim_team: "TERRORIST" },
+        {
+          tick: 50,
+          killer: "A",
+          killer_team: "CT",
+          victim: "B",
+          victim_team: "TERRORIST",
+        },
         // C's only kill is after the halftime swap — must not define its side.
-        { tick: 1350, killer: "C", killer_team: "CT", victim: "A", victim_team: "TERRORIST" },
+        {
+          tick: 1350,
+          killer: "C",
+          killer_team: "CT",
+          victim: "A",
+          victim_team: "TERRORIST",
+        },
       ],
     };
     const sides = computeStartingSides(parsed);
@@ -109,7 +121,13 @@ describe("MatchImportService.computeStartingSides", () => {
     const parsed = {
       round_ticks: [] as unknown[],
       kills: [
-        { tick: 1350, killer: "C", killer_team: "CT", victim: "A", victim_team: "TERRORIST" },
+        {
+          tick: 1350,
+          killer: "C",
+          killer_team: "CT",
+          victim: "A",
+          victim_team: "TERRORIST",
+        },
       ],
     };
     const sides = computeStartingSides(parsed);

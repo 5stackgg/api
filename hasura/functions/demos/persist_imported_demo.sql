@@ -353,9 +353,11 @@ BEGIN
   -- the per-map skill groups) so the per-match delta is exact.
   WITH ranked_players AS (
     SELECT
-      (elem->>'steam_id')::bigint AS steam_id,
-      (elem->>'rank')::int        AS rank,
-      (elem->>'rank_type')::int   AS rank_type
+      (elem->>'steam_id')::bigint              AS steam_id,
+      (elem->>'rank')::int                     AS rank,
+      (elem->>'rank_type')::int                AS rank_type,
+      NULLIF((elem->>'previous_rank')::int, 0) AS demo_previous_rank,
+      CASE WHEN (elem->>'rank_type')::int = 11 THEN NULL ELSE v_map_id END AS map_id
     FROM jsonb_array_elements(COALESCE(p_parsed->'players', '[]'::jsonb)) elem
     WHERE (elem->>'rank_type')::int IN (6, 7, 11)
       AND COALESCE((elem->>'rank')::int, 0) > 0
@@ -370,21 +372,23 @@ BEGIN
     rp.steam_id,
     rp.rank,
     rp.rank_type,
-    -- Premier is global (no map); Competitive/Wingman are per map.
-    CASE WHEN rp.rank_type = 11 THEN NULL ELSE v_map_id END AS map_id,
-    (
-      SELECT h.rank
-        FROM public.player_premier_rank_history h
-       WHERE h.steam_id = rp.steam_id
-         AND h.rank_type = rp.rank_type
-         AND h.match_id <> v_match_id
-         AND h.observed_at < v_ended_at
-         -- Skill-group delta is vs this player's previous rank ON THE SAME MAP.
-         AND (rp.rank_type = 11 OR h.map_id = v_map_id)
-       ORDER BY h.observed_at DESC
-       LIMIT 1
-    ) AS previous_rank,
-    CASE WHEN rp.rank_type = 11 THEN NULL ELSE v_map_id END,
+    rp.map_id,
+    -- The demo's RankOld is the true pre-match rank; fall back to our own
+    -- history (same type, and map for skill groups) when it's absent.
+    COALESCE(
+      rp.demo_previous_rank,
+      (
+        SELECT h.rank
+          FROM public.player_premier_rank_history h
+         WHERE h.steam_id = rp.steam_id
+           AND h.rank_type = rp.rank_type
+           AND h.match_id <> v_match_id
+           AND h.observed_at < v_ended_at
+           AND (rp.rank_type = 11 OR h.map_id = rp.map_id)
+         ORDER BY h.observed_at DESC
+         LIMIT 1
+      )
+    ),
     v_match_id,
     v_ended_at
     FROM ranked_players rp

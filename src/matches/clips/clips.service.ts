@@ -1936,7 +1936,9 @@ export class ClipsService {
     }
     if (
       !options.force &&
-      !(await this.importedAutoClipsAllowed((match as { source?: string }).source))
+      !(await this.importedAutoClipsAllowed(
+        (match as { source?: string }).source,
+      ))
     ) {
       this.logger.log(
         `[auto-clips] match ${matchId} skipped: imported-match auto highlights disabled (source=${(match as { source?: string }).source})`,

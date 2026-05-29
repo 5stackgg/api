@@ -321,9 +321,7 @@ export class DemoMetadataService {
     const RANK_TYPES = new Set([6, 7, 11]);
     const entries = (parsed.players ?? []).filter(
       (p) =>
-        RANK_TYPES.has(Number(p.rank_type)) &&
-        (p.rank ?? 0) > 0 &&
-        p.steam_id,
+        RANK_TYPES.has(Number(p.rank_type)) && (p.rank ?? 0) > 0 && p.steam_id,
     );
     if (entries.length === 0) {
       return;
@@ -338,6 +336,10 @@ export class DemoMetadataService {
       return rank;
     });
     const rankTypes = entries.map((e) => Number(e.rank_type));
+    const previousRanks = entries.map((e) => {
+      const pr = Number(e.previous_rank);
+      return Number.isInteger(pr) && pr > 0 ? pr : null;
+    });
 
     // Global snapshot — Premier only (Competitive/Wingman are per map).
     await this.postgres.query(
@@ -359,13 +361,17 @@ export class DemoMetadataService {
            (steam_id, rank, rank_type, map_id, previous_rank, match_id, observed_at)
            SELECT v.steam_id, v.rank, v.rank_type,
              CASE WHEN v.rank_type = 11 THEN NULL ELSE mm.map_id END,
-             (SELECT h.rank FROM public.player_premier_rank_history h
-               WHERE h.steam_id = v.steam_id AND h.rank_type = v.rank_type
-                 AND h.match_id <> $1::uuid AND h.observed_at < $2::timestamptz
-                 AND (v.rank_type = 11 OR h.map_id = mm.map_id)
-               ORDER BY h.observed_at DESC LIMIT 1),
+             COALESCE(
+               v.previous_rank,
+               (SELECT h.rank FROM public.player_premier_rank_history h
+                 WHERE h.steam_id = v.steam_id AND h.rank_type = v.rank_type
+                   AND h.match_id <> $1::uuid AND h.observed_at < $2::timestamptz
+                   AND (v.rank_type = 11 OR h.map_id = mm.map_id)
+                 ORDER BY h.observed_at DESC LIMIT 1)
+             ),
              $1::uuid, $2::timestamptz
-           FROM UNNEST($3::bigint[], $4::int[], $5::int[]) AS v(steam_id, rank, rank_type)
+           FROM UNNEST($3::bigint[], $4::int[], $5::int[], $6::int[])
+             AS v(steam_id, rank, rank_type, previous_rank)
            LEFT JOIN LATERAL (
              SELECT map_id FROM public.match_maps WHERE match_id = $1::uuid LIMIT 1
            ) mm ON true
@@ -375,7 +381,7 @@ export class DemoMetadataService {
                map_id = EXCLUDED.map_id,
                previous_rank = EXCLUDED.previous_rank,
                observed_at = EXCLUDED.observed_at`,
-        [matchId, now, steamIds, ranks, rankTypes],
+        [matchId, now, steamIds, ranks, rankTypes, previousRanks],
       );
     }
     this.logger.log(`demo rank update wrote ${entries.length} players`);

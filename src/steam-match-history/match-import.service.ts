@@ -100,7 +100,11 @@ export class MatchImportService {
     let matchMapId: string;
     let demoId: string;
     try {
-      matchMapId = await this.insertMatchMap(matchId, mapId, matchStartTime ?? null);
+      matchMapId = await this.insertMatchMap(
+        matchId,
+        mapId,
+        matchStartTime ?? null,
+      );
       demoId = await this.insertMatchMapDemo(matchId, matchMapId, file);
 
       // persist_imported_demo writes rounds/kills/stats and the premier rank
@@ -147,9 +151,10 @@ export class MatchImportService {
     lineupIds: string[],
   ): Promise<void> {
     try {
-      await this.postgres.query(`DELETE FROM public.matches WHERE id = $1::uuid`, [
-        matchId,
-      ]);
+      await this.postgres.query(
+        `DELETE FROM public.matches WHERE id = $1::uuid`,
+        [matchId],
+      );
       await this.postgres.query(
         `DELETE FROM public.match_lineups WHERE id = ANY($1::uuid[])`,
         [lineupIds],
@@ -226,7 +231,8 @@ export class MatchImportService {
     const allKills = parsed.kills ?? [];
     const kills = firstRound
       ? allKills.filter(
-          (k) => k.tick >= firstRound.start_tick && k.tick <= firstRound.end_tick,
+          (k) =>
+            k.tick >= firstRound.start_tick && k.tick <= firstRound.end_tick,
         )
       : allKills;
     for (const kill of kills) {

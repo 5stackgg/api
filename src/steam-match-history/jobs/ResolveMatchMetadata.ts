@@ -87,7 +87,10 @@ export class ResolveMatchMetadata extends WorkerHost {
     );
   }
 
-  private async markFailed(valveMatchId: string, reason: string): Promise<void> {
+  private async markFailed(
+    valveMatchId: string,
+    reason: string,
+  ): Promise<void> {
     // No match exists yet at the resolve stage (it's created later during
     // parse/import), so there is nothing to clean up here beyond the status.
     await this.postgres.query(
