@@ -67,7 +67,7 @@ export class DemosController {
     if (demos.length === 1) {
       const demo = demos.at(0);
       return new StreamableFile(await this.getDemo(demo), {
-        disposition: `attachment; filename="${demo.file}"`,
+        disposition: `attachment; filename="${path.basename(demo.file)}"`,
       });
     }
 

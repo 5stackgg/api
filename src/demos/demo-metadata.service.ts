@@ -420,6 +420,18 @@ export class DemoMetadataService {
     });
   }
 
+  public async deleteDemosForMatch(matchId: string): Promise<void> {
+    const { match_map_demos } = await this.hasura.query({
+      match_map_demos: {
+        __args: { where: { match_id: { _eq: matchId } } },
+        id: true,
+      },
+    });
+    for (const demo of match_map_demos) {
+      await this.deleteDemo(demo.id);
+    }
+  }
+
   public async uploadPlaybackBlob(
     matchId: string,
     matchMapId: string,

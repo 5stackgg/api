@@ -4,21 +4,35 @@ LANGUAGE plpgsql
 IMMUTABLE
 AS $$
 DECLARE
-  v_ot_half int;
+  v_r0        int;
+  v_ot_mr     constant int := 6;
+  v_ot_round  int;
+  v_ot_number int;
+  v_block     int;
+  v_flip      boolean;
 BEGIN
-  IF _round <= _mr THEN
-    RETURN 'TERRORIST';
-  ELSIF _round <= _mr * 2 THEN
+  -- Mirror of game-server TeamUtility.GetLineupSide (keep in sync).
+  -- lineup_1 starts TERRORIST; GetLineupSide is 0-indexed, round_ticks 1-indexed.
+  v_r0 := _round - 1;
+
+  IF v_r0 < _mr * 2 THEN
+    IF v_r0 < _mr THEN
+      RETURN 'TERRORIST';
+    END IF;
     RETURN 'CT';
   END IF;
-  -- Overtime is mr3 in Valve MM — every 3 rounds the side swaps,
-  -- starting with lineup_1 on T for the first OT half.
-  v_ot_half := ((_round - _mr * 2 - 1) / 3);
-  IF (v_ot_half % 2) = 0 THEN
-    RETURN 'TERRORIST';
+
+  v_ot_round  := v_r0 - (_mr * 2);
+  v_ot_number := (v_ot_round / v_ot_mr) + 1;
+  v_block     := v_ot_round % v_ot_mr;
+
+  IF (v_ot_number % 2) = 1 THEN
+    v_flip := v_block < (v_ot_mr / 2);
   ELSE
-    RETURN 'CT';
+    v_flip := v_block >= (v_ot_mr / 2);
   END IF;
+
+  RETURN CASE WHEN v_flip THEN 'CT' ELSE 'TERRORIST' END;
 END;
 $$;
 

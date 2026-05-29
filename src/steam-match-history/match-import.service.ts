@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { DemoMetadataService } from "../demos/demo-metadata.service";
+import { ClipsService } from "../matches/clips/clips.service";
 import { ParsedDemo, ParsedPlayer } from "../demos/demo-parser.service";
 import { e_match_types_enum } from "../../generated";
 
@@ -26,6 +27,7 @@ export class MatchImportService {
     private readonly hasura: HasuraService,
     private readonly postgres: PostgresService,
     private readonly demoMetadata: DemoMetadataService,
+    private readonly clips: ClipsService,
     private readonly config: ConfigService,
   ) {
     this.steamApiKey = this.config.get<string>("steam.steamApiKey") ?? "";
@@ -324,6 +326,10 @@ export class MatchImportService {
       [source, externalId],
     );
     for (const match of rows) {
+      // Purge S3 assets (demo .dem + playback blob, clip videos + thumbnails)
+      // before the row is gone — the match delete only cascades DB rows.
+      await this.clips.deleteClipsForMatch(match.id);
+      await this.demoMetadata.deleteDemosForMatch(match.id);
       await this.postgres.query(
         `DELETE FROM public.matches WHERE id = $1::uuid`,
         [match.id],

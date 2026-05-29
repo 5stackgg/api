@@ -2140,34 +2140,8 @@ export class MatchesController {
       throw Error("cannot delete a live match");
     }
 
-    const { match_map_demos } = await this.hasura.query({
-      match_map_demos: {
-        __args: {
-          limit: 10,
-          where: {
-            match_id: {
-              _eq: match_id,
-            },
-          },
-        },
-        id: true,
-        file: true,
-      },
-    });
-
-    for (const demo of match_map_demos) {
-      if (!DemoMetadataService.isExternalDemoUrl(demo.file)) {
-        await this.s3.remove(demo.file);
-      }
-      await this.hasura.mutation({
-        delete_match_map_demos_by_pk: {
-          __args: {
-            id: demo.id,
-          },
-          __typename: true,
-        },
-      });
-    }
+    await this.clips.deleteClipsForMatch(match_id);
+    await this.demoMetadata.deleteDemosForMatch(match_id);
 
     await this.hasura.mutation({
       delete_matches_by_pk: {
