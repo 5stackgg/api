@@ -11,7 +11,6 @@ import { ConfigService } from "@nestjs/config";
 import { Redis } from "ioredis";
 import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";
-import { S3Service } from "../../s3/s3.service";
 import { DemoMetadataService } from "../../demos/demo-metadata.service";
 import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
 import { timingSafeStringEqual } from "../../utilities/timingSafeStringEqual";
@@ -50,7 +49,8 @@ export type DemoControlAction =
   | "hud-sides"
   | "demoui"
   | "autodirector"
-  | "scoreboard";
+  | "scoreboard"
+  | "skip-shaders";
 
 export const DEMO_CONTROL_ACTIONS: ReadonlySet<DemoControlAction> =
   new Set<DemoControlAction>([
@@ -71,6 +71,7 @@ export const DEMO_CONTROL_ACTIONS: ReadonlySet<DemoControlAction> =
     "demoui",
     "autodirector",
     "scoreboard",
+    "skip-shaders",
   ]);
 
 const SPEC_PROXIED_DEMO_ACTIONS: ReadonlySet<DemoControlAction> =
@@ -81,6 +82,8 @@ const SPEC_PROXIED_DEMO_ACTIONS: ReadonlySet<DemoControlAction> =
     "hud-sides",
     "autodirector",
     "scoreboard",
+    // routes to the demo pod's /spec/skip-shaders (drops the skip marker)
+    "skip-shaders",
   ]);
 
 const STATUS_HISTORY_CAP = 50;
@@ -127,7 +130,6 @@ export class GameStreamerService {
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly postgres: PostgresService,
-    private readonly s3: S3Service,
     private readonly redisManager: RedisManagerService,
     private readonly demoMetadata: DemoMetadataService,
   ) {
@@ -404,7 +406,8 @@ export class GameStreamerService {
       | "hud-sides"
       | "xray"
       | "scoreboard"
-      | "reconnect",
+      | "reconnect"
+      | "skip-shaders",
     body: Record<string, unknown> = {},
   ): Promise<unknown> {
     const url = await this.getSpecServerUrl(matchId, action);
@@ -576,6 +579,14 @@ export class GameStreamerService {
       );
     }
     return this.callSpec(matchId, "reconnect");
+  }
+
+  // Operator "Skip shaders": tell the booting pod to stop waiting on the
+  // Vulkan shader compile and launch cs2 immediately. Happens during boot
+  // (pod is up but not yet Live), so unlike reconnectLive it doesn't gate
+  // on match status — it just signals the pod's spec-server.
+  public async skipShaders(matchId: string) {
+    return this.callSpec(matchId, "skip-shaders");
   }
 
   public async specAutodirector(matchId: string, enabled: boolean) {
@@ -1321,6 +1332,9 @@ export class GameStreamerService {
         name: "CLIP_BAKE_BRANDING",
         value: await this.resolveClipBakeBranding(),
       },
+      // Shader pre-caching is on by default in the pod for every mode now
+      // (see common.sh SHADER_PRECACHE). Operators skip a slow cold compile
+      // per-match at runtime via the "Skip shaders" control, not via env.
     ];
 
     const nodeCs2Env = await this.buildNodeCs2OptionsEnv(nodeId);
@@ -2680,7 +2694,10 @@ export class GameStreamerService {
             containers: [
               {
                 name: containerName,
-                image: "ghcr.io/5stackgg/game-streamer:latest",
+                // Override with GAME_STREAMER_IMAGE to point pods at a test
+                // image (e.g. ghcr.io/5stackgg/game-streamer:dev). Defaults
+                // to the published :latest. See configs/game-servers.ts.
+                image: this.gameServerConfig.gameStreamerImage,
                 // Mutable tag; force each pod start to resolve the latest digest.
                 imagePullPolicy: "Always",
                 securityContext: { privileged: true },
@@ -2701,6 +2718,18 @@ export class GameStreamerService {
                         {
                           name: "GAME_STREAM_DOMAIN",
                           value: process.env.GAME_STREAM_DOMAIN,
+                        },
+                      ]
+                    : []),
+                  // DEBUG_STREAM=1 in the api env → pod starts capturing the
+                  // moment X is up (before Steam), so you can watch a boot
+                  // hang live via the HLS URL it logs ("WATCH"). Off unless
+                  // explicitly set. Read per-request, so no restart caching.
+                  ...(process.env.DEBUG_STREAM
+                    ? [
+                        {
+                          name: "DEBUG_STREAM",
+                          value: process.env.DEBUG_STREAM,
                         },
                       ]
                     : []),

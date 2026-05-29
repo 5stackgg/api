@@ -8,6 +8,8 @@ select_permissions:
         - id
         - total_gpu_nodes
         - free_gpu_nodes
+        - free_gpu_nodes_for_batch
+        - renders_paused_for_active_match
         - registered_gpu_nodes
         - live_in_progress
         - demo_in_progress
@@ -20,6 +22,8 @@ select_permissions:
         - id
         - total_gpu_nodes
         - free_gpu_nodes
+        - free_gpu_nodes_for_batch
+        - renders_paused_for_active_match
         - registered_gpu_nodes
         - live_in_progress
         - demo_in_progress

@@ -459,7 +459,11 @@ export class SteamMatchHistoryService {
     await this.resolveQueue.add(
       ResolveMatchMetadata.name,
       { valve_match_id: valveMatchId },
-      { jobId, attempts: 1 },
+      {
+        jobId,
+        attempts: 5,
+        backoff: { type: "exponential", delay: 30_000 },
+      },
     );
   }
 

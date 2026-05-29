@@ -323,6 +323,12 @@ type Mutation {
 }
 
 type Mutation {
+  skipShaders(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   refreshAllPlayers: SuccessOutput
 }
 

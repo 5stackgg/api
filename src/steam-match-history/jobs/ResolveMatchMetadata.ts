@@ -5,7 +5,7 @@ import { Queue } from "bullmq";
 import { UseQueue } from "src/utilities/QueueProcessors";
 import { PostgresService } from "../../postgres/postgres.service";
 import { SteamMatchHistoryQueues } from "../enums/SteamMatchHistoryQueues";
-import { SteamGcService } from "../steam-gc.service";
+import { SteamGcService, ResolvedMatch } from "../steam-gc.service";
 import { MatchImportService } from "../match-import.service";
 import { ParseImportedDemo } from "./ParseImportedDemo";
 
@@ -64,7 +64,17 @@ export class ResolveMatchMetadata extends WorkerHost {
       return;
     }
 
-    const resolved = await this.steamGc.resolveShareCode(row.share_code);
+    let resolved: ResolvedMatch | null;
+    try {
+      resolved = await this.steamGc.resolveShareCode(row.share_code);
+    } catch (error) {
+      // Connection-level failure (e.g. session replaced) — let BullMQ retry
+      // with backoff instead of marking the match permanently failed.
+      this.logger.warn(
+        `steam-gc resolve failed for ${valve_match_id}, will retry: ${(error as Error).message}`,
+      );
+      throw error;
+    }
     if (!resolved) {
       await this.markFailed(valve_match_id, "gc returned no demo url");
       return;

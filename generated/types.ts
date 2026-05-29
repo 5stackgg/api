@@ -72412,6 +72412,9 @@ export default {
             "free_gpu_nodes": [
                 30
             ],
+            "free_gpu_nodes_for_batch": [
+                30
+            ],
             "highlights_in_progress": [
                 3
             ],
@@ -72423,6 +72426,9 @@ export default {
             ],
             "registered_gpu_nodes": [
                 30
+            ],
+            "renders_paused_for_active_match": [
+                3
             ],
             "total_gpu_nodes": [
                 30
@@ -72493,6 +72499,9 @@ export default {
             "free_gpu_nodes": [
                 22
             ],
+            "free_gpu_nodes_for_batch": [
+                22
+            ],
             "id": [
                 22
             ],
@@ -72522,6 +72531,9 @@ export default {
             "free_gpu_nodes": [
                 31
             ],
+            "free_gpu_nodes_for_batch": [
+                31
+            ],
             "highlights_in_progress": [
                 4
             ],
@@ -72534,6 +72546,9 @@ export default {
             "registered_gpu_nodes": [
                 31
             ],
+            "renders_paused_for_active_match": [
+                4
+            ],
             "total_gpu_nodes": [
                 31
             ],
@@ -72543,6 +72558,9 @@ export default {
         },
         "v_gpu_pool_status_max_fields": {
             "free_gpu_nodes": [
+                30
+            ],
+            "free_gpu_nodes_for_batch": [
                 30
             ],
             "id": [
@@ -72560,6 +72578,9 @@ export default {
         },
         "v_gpu_pool_status_min_fields": {
             "free_gpu_nodes": [
+                30
+            ],
+            "free_gpu_nodes_for_batch": [
                 30
             ],
             "id": [
@@ -72582,6 +72603,9 @@ export default {
             "free_gpu_nodes": [
                 1668
             ],
+            "free_gpu_nodes_for_batch": [
+                1668
+            ],
             "highlights_in_progress": [
                 1668
             ],
@@ -72594,6 +72618,9 @@ export default {
             "registered_gpu_nodes": [
                 1668
             ],
+            "renders_paused_for_active_match": [
+                1668
+            ],
             "total_gpu_nodes": [
                 1668
             ],
@@ -72604,6 +72631,9 @@ export default {
         "v_gpu_pool_status_select_column": {},
         "v_gpu_pool_status_stddev_fields": {
             "free_gpu_nodes": [
+                22
+            ],
+            "free_gpu_nodes_for_batch": [
                 22
             ],
             "id": [
@@ -72623,6 +72653,9 @@ export default {
             "free_gpu_nodes": [
                 22
             ],
+            "free_gpu_nodes_for_batch": [
+                22
+            ],
             "id": [
                 22
             ],
@@ -72638,6 +72671,9 @@ export default {
         },
         "v_gpu_pool_status_stddev_samp_fields": {
             "free_gpu_nodes": [
+                22
+            ],
+            "free_gpu_nodes_for_batch": [
                 22
             ],
             "id": [
@@ -72671,6 +72707,9 @@ export default {
             "free_gpu_nodes": [
                 30
             ],
+            "free_gpu_nodes_for_batch": [
+                30
+            ],
             "highlights_in_progress": [
                 3
             ],
@@ -72683,6 +72722,9 @@ export default {
             "registered_gpu_nodes": [
                 30
             ],
+            "renders_paused_for_active_match": [
+                3
+            ],
             "total_gpu_nodes": [
                 30
             ],
@@ -72692,6 +72734,9 @@ export default {
         },
         "v_gpu_pool_status_sum_fields": {
             "free_gpu_nodes": [
+                30
+            ],
+            "free_gpu_nodes_for_batch": [
                 30
             ],
             "id": [
@@ -72711,6 +72756,9 @@ export default {
             "free_gpu_nodes": [
                 22
             ],
+            "free_gpu_nodes_for_batch": [
+                22
+            ],
             "id": [
                 22
             ],
@@ -72728,6 +72776,9 @@ export default {
             "free_gpu_nodes": [
                 22
             ],
+            "free_gpu_nodes_for_batch": [
+                22
+            ],
             "id": [
                 22
             ],
@@ -72743,6 +72794,9 @@ export default {
         },
         "v_gpu_pool_status_variance_fields": {
             "free_gpu_nodes": [
+                22
+            ],
+            "free_gpu_nodes_for_batch": [
                 22
             ],
             "id": [
@@ -94139,6 +94193,15 @@ export default {
             ],
             "setupGameServer": [
                 46
+            ],
+            "skipShaders": [
+                54,
+                {
+                    "match_id": [
+                        3057,
+                        "uuid!"
+                    ]
+                }
             ],
             "specAutodirector": [
                 54,
