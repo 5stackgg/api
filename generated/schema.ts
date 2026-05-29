@@ -12276,6 +12276,8 @@ export interface player_objectives_variance_fields {
 /** columns and relationships of "player_premier_rank_history" */
 export interface player_premier_rank_history {
     id: Scalars['uuid']
+    /** An object relationship */
+    map: (maps | null)
     map_id: (Scalars['uuid'] | null)
     /** An object relationship */
     match: matches
@@ -41177,6 +41179,8 @@ export interface player_objectives_variance_order_by {player_steam_id?: (order_b
 /** columns and relationships of "player_premier_rank_history" */
 export interface player_premier_rank_historyGenqlSelection{
     id?: boolean | number
+    /** An object relationship */
+    map?: mapsGenqlSelection
     map_id?: boolean | number
     /** An object relationship */
     match?: matchesGenqlSelection
@@ -41250,7 +41254,7 @@ export interface player_premier_rank_history_avg_order_by {previous_rank?: (orde
 
 
 /** Boolean expression to filter rows from the table "player_premier_rank_history". All fields are combined with a logical 'AND'. */
-export interface player_premier_rank_history_bool_exp {_and?: (player_premier_rank_history_bool_exp[] | null),_not?: (player_premier_rank_history_bool_exp | null),_or?: (player_premier_rank_history_bool_exp[] | null),id?: (uuid_comparison_exp | null),map_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),observed_at?: (timestamptz_comparison_exp | null),player?: (players_bool_exp | null),previous_rank?: (Int_comparison_exp | null),rank?: (Int_comparison_exp | null),rank_type?: (Int_comparison_exp | null),steam_id?: (bigint_comparison_exp | null)}
+export interface player_premier_rank_history_bool_exp {_and?: (player_premier_rank_history_bool_exp[] | null),_not?: (player_premier_rank_history_bool_exp | null),_or?: (player_premier_rank_history_bool_exp[] | null),id?: (uuid_comparison_exp | null),map?: (maps_bool_exp | null),map_id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),observed_at?: (timestamptz_comparison_exp | null),player?: (players_bool_exp | null),previous_rank?: (Int_comparison_exp | null),rank?: (Int_comparison_exp | null),rank_type?: (Int_comparison_exp | null),steam_id?: (bigint_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "player_premier_rank_history" */
@@ -41258,7 +41262,7 @@ export interface player_premier_rank_history_inc_input {previous_rank?: (Scalars
 
 
 /** input type for inserting data into table "player_premier_rank_history" */
-export interface player_premier_rank_history_insert_input {id?: (Scalars['uuid'] | null),map_id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),observed_at?: (Scalars['timestamptz'] | null),player?: (players_obj_rel_insert_input | null),previous_rank?: (Scalars['Int'] | null),rank?: (Scalars['Int'] | null),rank_type?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface player_premier_rank_history_insert_input {id?: (Scalars['uuid'] | null),map?: (maps_obj_rel_insert_input | null),map_id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),observed_at?: (Scalars['timestamptz'] | null),player?: (players_obj_rel_insert_input | null),previous_rank?: (Scalars['Int'] | null),rank?: (Scalars['Int'] | null),rank_type?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate max on columns */
@@ -41315,7 +41319,7 @@ export interface player_premier_rank_history_on_conflict {constraint: player_pre
 
 
 /** Ordering options when selecting data from "player_premier_rank_history". */
-export interface player_premier_rank_history_order_by {id?: (order_by | null),map_id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),observed_at?: (order_by | null),player?: (players_order_by | null),previous_rank?: (order_by | null),rank?: (order_by | null),rank_type?: (order_by | null),steam_id?: (order_by | null)}
+export interface player_premier_rank_history_order_by {id?: (order_by | null),map?: (maps_order_by | null),map_id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),observed_at?: (order_by | null),player?: (players_order_by | null),previous_rank?: (order_by | null),rank?: (order_by | null),rank_type?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** primary key columns input for table: player_premier_rank_history */

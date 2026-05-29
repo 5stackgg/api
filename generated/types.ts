@@ -51889,6 +51889,9 @@ export default {
             "id": [
                 3057
             ],
+            "map": [
+                991
+            ],
             "map_id": [
                 3057
             ],
@@ -52099,6 +52102,9 @@ export default {
             "id": [
                 3058
             ],
+            "map": [
+                1000
+            ],
             "map_id": [
                 3058
             ],
@@ -52151,6 +52157,9 @@ export default {
         "player_premier_rank_history_insert_input": {
             "id": [
                 3057
+            ],
+            "map": [
+                1008
             ],
             "map_id": [
                 3057
@@ -52327,6 +52336,9 @@ export default {
         "player_premier_rank_history_order_by": {
             "id": [
                 1668
+            ],
+            "map": [
+                1010
             ],
             "map_id": [
                 1668
