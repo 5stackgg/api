@@ -10,6 +10,7 @@ export type DemoRow = {
   match_id: string;
   match_map_id: string;
   file: string;
+  playback_file: string | null;
   total_ticks: number | null;
   tick_rate: number | null;
   round_ticks: unknown;
@@ -240,6 +241,7 @@ export class DemoMetadataService {
         match_id: true,
         match_map_id: true,
         file: true,
+        playback_file: true,
         total_ticks: true,
         tick_rate: true,
         round_ticks: true,
@@ -401,13 +403,14 @@ export class DemoMetadataService {
         );
       }
     }
-    const blobKey = playbackBlobKey(demo.match_id, demo.match_map_id);
-    try {
-      await this.s3.remove(blobKey);
-    } catch (error) {
-      this.logger.warn(
-        `[demo-delete] failed to remove playback blob ${blobKey}: ${(error as Error)?.message}`,
-      );
+    if (demo.playback_file) {
+      try {
+        await this.s3.remove(demo.playback_file);
+      } catch (error) {
+        this.logger.warn(
+          `[demo-delete] failed to remove playback blob ${demo.playback_file}: ${(error as Error)?.message}`,
+        );
+      }
     }
     await this.hasura.mutation({
       delete_match_map_demos_by_pk: {
@@ -445,8 +448,12 @@ export class DemoMetadataService {
   }
 }
 
+export function demoKey(matchId: string, mapId: string, demo: string): string {
+  return `demos/${matchId}/${mapId}/${demo}`;
+}
+
 export function playbackBlobKey(matchId: string, matchMapId: string): string {
-  return `${matchId}/${matchMapId}/playback/playback.json.gz`;
+  return `demos/${matchId}/${matchMapId}/playback/playback.json.gz`;
 }
 
 function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {

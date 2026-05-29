@@ -18921,6 +18921,7 @@ type matches {
     where: v_player_elo_bool_exp
   ): v_player_elo_aggregate!
   ended_at: timestamptz
+  external_id: String
   id: uuid!
 
   """
@@ -19654,6 +19655,7 @@ input matches_bool_exp {
   elo_changes: v_player_elo_bool_exp
   elo_changes_aggregate: v_player_elo_aggregate_bool_exp
   ended_at: timestamptz_comparison_exp
+  external_id: String_comparison_exp
   id: uuid_comparison_exp
   invite_code: String_comparison_exp
   invites: match_invites_bool_exp
@@ -19746,6 +19748,11 @@ enum matches_constraint {
   unique or primary key constraint on columns "id"
   """
   matches_pkey
+
+  """
+  unique or primary key constraint on columns "external_id", "source"
+  """
+  uq_matches_source_external_id
 }
 
 """
@@ -19766,6 +19773,7 @@ input matches_insert_input {
   e_region: server_regions_obj_rel_insert_input
   elo_changes: v_player_elo_arr_rel_insert_input
   ended_at: timestamptz
+  external_id: String
   id: uuid
   invites: match_invites_arr_rel_insert_input
   label: String
@@ -19827,6 +19835,7 @@ type matches_max_fields {
   """
   effective_at: timestamptz
   ended_at: timestamptz
+  external_id: String
   id: uuid
 
   """
@@ -19895,6 +19904,7 @@ input matches_max_order_by {
   cancels_at: order_by
   created_at: order_by
   ended_at: order_by
+  external_id: order_by
   id: order_by
   label: order_by
   lineup_1_id: order_by
@@ -19936,6 +19946,7 @@ type matches_min_fields {
   """
   effective_at: timestamptz
   ended_at: timestamptz
+  external_id: String
   id: uuid
 
   """
@@ -20004,6 +20015,7 @@ input matches_min_order_by {
   cancels_at: order_by
   created_at: order_by
   ended_at: order_by
+  external_id: order_by
   id: order_by
   label: order_by
   lineup_1_id: order_by
@@ -20071,6 +20083,7 @@ input matches_order_by {
   effective_at: order_by
   elo_changes_aggregate: v_player_elo_aggregate_order_by
   ended_at: order_by
+  external_id: order_by
   id: order_by
   invite_code: order_by
   invites_aggregate: match_invites_aggregate_order_by
@@ -20146,6 +20159,9 @@ enum matches_select_column {
   ended_at
 
   """column name"""
+  external_id
+
+  """column name"""
   id
 
   """column name"""
@@ -20198,6 +20214,7 @@ input matches_set_input {
   cancels_at: timestamptz
   created_at: timestamptz
   ended_at: timestamptz
+  external_id: String
   id: uuid
   label: String
   lineup_1_id: uuid
@@ -20294,6 +20311,7 @@ input matches_stream_cursor_value_input {
   cancels_at: timestamptz
   created_at: timestamptz
   ended_at: timestamptz
+  external_id: String
   id: uuid
   label: String
   lineup_1_id: uuid
@@ -20344,6 +20362,9 @@ enum matches_update_column {
 
   """column name"""
   ended_at
+
+  """column name"""
+  external_id
 
   """column name"""
   id

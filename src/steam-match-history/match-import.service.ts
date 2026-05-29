@@ -37,12 +37,17 @@ export class MatchImportService {
     sourceKey: string,
     demoUrl?: string,
     matchStartTime?: string | null,
+    externalId?: string | null,
   ): Promise<{ matchId: string | null; skipped?: string }> {
     const file = demoUrl ?? `external/${source}/${sourceKey}.dem`;
 
-    const existing = await this.findExistingByFile(file);
-    if (existing) {
-      return { matchId: existing, skipped: "already imported" };
+    if (externalId) {
+      await this.deleteExistingExternalMatch(source, externalId);
+    } else {
+      const existing = await this.findExistingByFile(file);
+      if (existing) {
+        return { matchId: existing, skipped: "already imported" };
+      }
     }
 
     const players = (parsed.players ?? []).filter(
@@ -89,22 +94,37 @@ export class MatchImportService {
     await this.insertLineupPlayers(lineup1Id, lineup1Players);
     await this.insertLineupPlayers(lineup2Id, lineup2Players);
 
+    let startedAt = matchStartTime ?? null;
+    let startSource = startedAt ? "gc-matchtime" : "none";
+    if (!startedAt) {
+      startedAt = await this.resolveDemoStartTime(demoUrl);
+      if (startedAt) {
+        startSource = "demo-cdn-last-modified";
+      }
+    }
+    this.logger.log(
+      `match date for ${source}/${sourceKey}: ${startedAt ?? "<none — will stamp import time>"} [source=${startSource}]`,
+    );
+
     const matchId = await this.insertMatch({
       source,
       lineup1Id,
       lineup2Id,
       matchOptionsId,
-      startedAt: matchStartTime ?? null,
+      startedAt,
     });
+
+    if (externalId) {
+      await this.postgres.query(
+        `UPDATE public.matches SET external_id = $2 WHERE id = $1::uuid`,
+        [matchId, externalId],
+      );
+    }
 
     let matchMapId: string;
     let demoId: string;
     try {
-      matchMapId = await this.insertMatchMap(
-        matchId,
-        mapId,
-        matchStartTime ?? null,
-      );
+      matchMapId = await this.insertMatchMap(matchId, mapId, startedAt);
       demoId = await this.insertMatchMapDemo(matchId, matchMapId, file);
 
       // persist_imported_demo writes rounds/kills/stats and the premier rank
@@ -169,9 +189,7 @@ export class MatchImportService {
 
   private static detectMatchType(parsed: ParsedDemo): MatchType {
     const players = parsed.players ?? [];
-    // Valve rank_type is the primary signal: 6=Wingman, 7=Competitive,
-    // 11=Premier, 10=private lobby (FACEIT/practice). Majority across the
-    // lobby so one mislabeled player can't flip the type.
+    // rank_type: 6=Wingman, 7/12=Competitive, 11=Premier, 10=private lobby.
     const counts = new Map<number, number>();
     for (const p of players) {
       if (typeof p.rank_type === "number" && p.rank_type > 0) {
@@ -189,7 +207,7 @@ export class MatchImportService {
     if (observed === 11) {
       return "Premier";
     }
-    if (observed === 7) {
+    if (observed === 7 || observed === 12) {
       return "Competitive";
     }
     if (observed === 6) {
@@ -287,6 +305,39 @@ export class MatchImportService {
       }
     }
     return [t, ct];
+  }
+
+  private async deleteExistingExternalMatch(
+    source: string,
+    externalId: string,
+  ): Promise<void> {
+    const rows = await this.postgres.query<
+      Array<{
+        id: string;
+        lineup_1_id: string | null;
+        lineup_2_id: string | null;
+      }>
+    >(
+      `SELECT id, lineup_1_id, lineup_2_id
+         FROM public.matches
+        WHERE source = $1 AND external_id = $2`,
+      [source, externalId],
+    );
+    for (const match of rows) {
+      await this.postgres.query(
+        `DELETE FROM public.matches WHERE id = $1::uuid`,
+        [match.id],
+      );
+      const lineupIds = [match.lineup_1_id, match.lineup_2_id].filter(
+        (id): id is string => !!id,
+      );
+      if (lineupIds.length > 0) {
+        await this.postgres.query(
+          `DELETE FROM public.match_lineups WHERE id = ANY($1::uuid[])`,
+          [lineupIds],
+        );
+      }
+    }
   }
 
   private async findExistingByFile(file: string): Promise<string | null> {
@@ -512,6 +563,41 @@ export class MatchImportService {
         __typename: true,
       },
     });
+  }
+
+  public async resolveDemoStartTime(demoUrl?: string): Promise<string | null> {
+    if (!demoUrl || !/^https?:\/\//i.test(demoUrl)) {
+      return null;
+    }
+    try {
+      const res = await fetch(demoUrl, {
+        method: "HEAD",
+        signal: AbortSignal.timeout(15_000),
+      });
+      const lastModified = res.headers.get("last-modified");
+      if (!lastModified) {
+        this.logger.warn(
+          `demo CDN returned no Last-Modified header for ${demoUrl}`,
+        );
+        return null;
+      }
+      const ts = new Date(lastModified);
+      if (Number.isNaN(ts.getTime())) {
+        this.logger.warn(
+          `demo CDN Last-Modified unparseable ("${lastModified}") for ${demoUrl}`,
+        );
+        return null;
+      }
+      this.logger.log(
+        `demo CDN Last-Modified="${lastModified}" -> ${ts.toISOString()} for ${demoUrl}`,
+      );
+      return ts.toISOString();
+    } catch (error) {
+      this.logger.warn(
+        `demo timestamp lookup failed for ${demoUrl}: ${(error as Error)?.message ?? String(error)}`,
+      );
+      return null;
+    }
   }
 
   private async insertMatch(args: {
