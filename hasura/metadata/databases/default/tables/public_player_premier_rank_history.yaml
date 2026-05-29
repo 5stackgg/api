@@ -8,6 +8,9 @@ object_relationships:
   - name: match
     using:
       foreign_key_constraint_on: match_id
+  - name: map
+    using:
+      foreign_key_constraint_on: map_id
 select_permissions:
   - role: guest
     permission:

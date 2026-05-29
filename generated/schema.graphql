@@ -38340,6 +38340,9 @@ columns and relationships of "player_premier_rank_history"
 """
 type player_premier_rank_history {
   id: uuid!
+
+  """An object relationship"""
+  map: maps
   map_id: uuid
 
   """An object relationship"""
@@ -38444,6 +38447,7 @@ input player_premier_rank_history_bool_exp {
   _not: player_premier_rank_history_bool_exp
   _or: [player_premier_rank_history_bool_exp!]
   id: uuid_comparison_exp
+  map: maps_bool_exp
   map_id: uuid_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
@@ -38485,6 +38489,7 @@ input type for inserting data into table "player_premier_rank_history"
 """
 input player_premier_rank_history_insert_input {
   id: uuid
+  map: maps_obj_rel_insert_input
   map_id: uuid
   match: matches_obj_rel_insert_input
   match_id: uuid
@@ -38573,6 +38578,7 @@ Ordering options when selecting data from "player_premier_rank_history".
 """
 input player_premier_rank_history_order_by {
   id: order_by
+  map: maps_order_by
   map_id: order_by
   match: matches_order_by
   match_id: order_by
