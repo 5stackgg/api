@@ -581,10 +581,8 @@ export class GameStreamerService {
     return this.callSpec(matchId, "reconnect");
   }
 
-  // Operator "Skip shaders": tell the booting pod to stop waiting on the
-  // Vulkan shader compile and launch cs2 immediately. Happens during boot
-  // (pod is up but not yet Live), so unlike reconnectLive it doesn't gate
-  // on match status — it just signals the pod's spec-server.
+  // Operator "Skip shaders": signal the booting pod to launch cs2 now.
+  // Unlike reconnectLive, no match-status gate (runs during boot).
   public async skipShaders(matchId: string) {
     return this.callSpec(matchId, "skip-shaders");
   }
@@ -1332,9 +1330,7 @@ export class GameStreamerService {
         name: "CLIP_BAKE_BRANDING",
         value: await this.resolveClipBakeBranding(),
       },
-      // Shader pre-caching is on by default in the pod for every mode now
-      // (see common.sh SHADER_PRECACHE). Operators skip a slow cold compile
-      // per-match at runtime via the "Skip shaders" control, not via env.
+      // (shader pre-caching is pod-default on; skipped per-match at runtime)
     ];
 
     const nodeCs2Env = await this.buildNodeCs2OptionsEnv(nodeId);
@@ -2694,9 +2690,7 @@ export class GameStreamerService {
             containers: [
               {
                 name: containerName,
-                // Override with GAME_STREAMER_IMAGE to point pods at a test
-                // image (e.g. ghcr.io/5stackgg/game-streamer:dev). Defaults
-                // to the published :latest. See configs/game-servers.ts.
+                // Override via GAME_STREAMER_IMAGE (see configs/game-servers.ts).
                 image: this.gameServerConfig.gameStreamerImage,
                 // Mutable tag; force each pod start to resolve the latest digest.
                 imagePullPolicy: "Always",
@@ -2721,10 +2715,8 @@ export class GameStreamerService {
                         },
                       ]
                     : []),
-                  // DEBUG_STREAM=1 in the api env → pod starts capturing the
-                  // moment X is up (before Steam), so you can watch a boot
-                  // hang live via the HLS URL it logs ("WATCH"). Off unless
-                  // explicitly set. Read per-request, so no restart caching.
+                  // DEBUG_STREAM=1 → pod captures from boot (watch a hang
+                  // via the "WATCH" HLS URL it logs).
                   ...(process.env.DEBUG_STREAM
                     ? [
                         {

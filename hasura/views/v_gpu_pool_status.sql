@@ -1,5 +1,8 @@
 create or replace view public.v_gpu_pool_status as
 with pool as (
+  -- GPUs that can actually take work: present, enabled, online.
+  -- This is the "available" denominator basis; registered_gpu_nodes
+  -- (below) is the total regardless of enabled/online state.
   select id
     from game_server_nodes
    where gpu = true
@@ -7,20 +10,12 @@ with pool as (
      and status = 'Online'
 ),
 busy as (
+  -- taken by a process (live stream / demo / highlight render)
   select * from gpu_busy_node_ids()
 ),
 batch_blocked as (
-  -- nodes a batch render can't claim because a live match is using them and
-  -- pause_renders_during_active_match is on (mirrors claim_free_gpu_node_for_batch)
-  select s.game_server_node_id as id
-    from matches m
-    join servers s on s.id = m.server_id
-   where m.status = 'Live'
-     and s.game_server_node_id is not null
-     and (
-       select value from settings
-        where name = 'pause_renders_during_active_match'
-     ) = 'true'
+  -- render-only: live match on node + pause_renders_during_active_match
+  select * from gpu_batch_blocked_node_ids()
 )
 select
   1 as id,
@@ -46,11 +41,11 @@ select
   -- doesn't try to rename existing positional columns
   (select count(*) from pool
     where id not in (select * from busy)
-      and id not in (select id from batch_blocked))::int as free_gpu_nodes_for_batch,
+      and id not in (select * from batch_blocked))::int as free_gpu_nodes_for_batch,
   -- true when an otherwise-idle GPU is held back from batch renders only
   -- because a live match is running on it
   exists (
     select 1 from pool
      where id not in (select * from busy)
-       and id in (select id from batch_blocked)
+       and id in (select * from batch_blocked)
   ) as renders_paused_for_active_match;
