@@ -2733,15 +2733,16 @@ export class GameStreamerService {
                     : []),
                   ...extraEnv,
                 ],
+                // No CPU request/limit — 1 streamer per GPU node, so let it
+                // use every core (uncapped = no CFS throttling; the CPU-bound
+                // shader compile wants them all). GPU + memory still bounded.
                 resources: {
                   limits: {
                     memory: "16Gi",
-                    cpu: "8",
                     "nvidia.com/gpu": "1",
                   },
                   requests: {
                     memory: "2Gi",
-                    cpu: "1",
                     "nvidia.com/gpu": "1",
                   },
                 },
