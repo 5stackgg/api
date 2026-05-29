@@ -12,12 +12,16 @@ import { CacheService } from "../cache/cache.service";
 const CS2_APP_ID = 730;
 const REFRESH_TOKEN_CACHE_KEY = "steam-gc:refresh-token";
 const REQUEST_TIMEOUT_MS = 30_000;
+const GC_READY_TIMEOUT_MS = 30_000;
+const IDLE_LOGOFF_MS = 5 * 60_000;
 
 export type ResolvedMatch = {
   demoUrl: string;
   mapName: string | null;
   matchStartTime: string | null;
 };
+
+export class SteamGcConnectionError extends Error {}
 
 @Injectable()
 export class SteamGcService
@@ -26,7 +30,8 @@ export class SteamGcService
   private client?: SteamUser;
   private cs?: GlobalOffensive;
   private gcReady = false;
-  private starting = false;
+  private connecting?: Promise<void>;
+  private idleTimer?: NodeJS.Timeout;
 
   constructor(
     private readonly logger: Logger,
@@ -45,31 +50,44 @@ export class SteamGcService
     return this.gcReady;
   }
 
-  async onApplicationBootstrap(): Promise<void> {
+  onApplicationBootstrap(): void {
     if (!this.isAvailable()) {
       this.logger.warn(
         "steam-gc disabled: STEAM_USER / STEAM_PASSWORD not configured",
       );
-      return;
     }
-    void this.connect();
   }
 
-  async onApplicationShutdown(): Promise<void> {
-    this.client?.logOff();
+  onApplicationShutdown(): void {
+    this.teardown();
+  }
+
+  private async ensureReady(): Promise<void> {
+    if (this.gcReady && this.cs) {
+      return;
+    }
+    if (!this.connecting) {
+      this.connecting = this.connect().finally(() => {
+        this.connecting = undefined;
+      });
+    }
+    await this.connecting;
   }
 
   private async connect(): Promise<void> {
-    if (this.starting) {
-      return;
-    }
-    this.starting = true;
-
     const client = new SteamUser({
       enablePicsCache: false,
       autoRelogin: true,
     });
     const cs = new GlobalOffensive(client);
+
+    let settled = false;
+    let resolveReady!: () => void;
+    let rejectReady!: (err: Error) => void;
+    const ready = new Promise<void>((resolve, reject) => {
+      resolveReady = resolve;
+      rejectReady = reject;
+    });
 
     client.on("refreshToken", async (token: string) => {
       this.logger.log("steam-gc received refresh token, persisting to redis");
@@ -89,14 +107,33 @@ export class SteamGcService
       if (err.message.toLowerCase().includes("invalidpassword")) {
         void this.cache.put(REFRESH_TOKEN_CACHE_KEY, "");
       }
+      if (!settled) {
+        settled = true;
+        rejectReady(new SteamGcConnectionError(err.message));
+      }
+      // Any client-level error (LogonSessionReplaced, dropped session, etc.)
+      // leaves a dead GC. Discard the client so the next request logs in fresh.
+      if (this.client === client) {
+        this.teardown();
+      }
     });
 
     cs.on("connectedToGC", () => {
+      if (this.cs !== cs) {
+        return;
+      }
       this.gcReady = true;
       this.logger.log("steam-gc gc connected");
+      if (!settled) {
+        settled = true;
+        resolveReady();
+      }
     });
 
     cs.on("disconnectedFromGC", (reason: number) => {
+      if (this.cs !== cs) {
+        return;
+      }
       this.gcReady = false;
       this.logger.log(`steam-gc gc disconnected (${reason})`);
     });
@@ -104,6 +141,29 @@ export class SteamGcService
     this.client = client;
     this.cs = cs;
 
+    await this.logOn(client);
+
+    const timer = setTimeout(() => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      rejectReady(
+        new SteamGcConnectionError("timed out waiting for gc connection"),
+      );
+      if (this.client === client) {
+        this.teardown();
+      }
+    }, GC_READY_TIMEOUT_MS);
+
+    try {
+      await ready;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  private async logOn(client: SteamUser): Promise<void> {
     const refreshToken = await this.cache.get(REFRESH_TOKEN_CACHE_KEY);
     if (refreshToken && typeof refreshToken === "string") {
       this.logger.log("steam-gc logging in with stored refresh token");
@@ -115,44 +175,79 @@ export class SteamGcService
         password: this.config.get<string>("steam.steamPassword"),
       });
     }
+  }
 
-    this.starting = false;
+  private teardown(): void {
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer);
+      this.idleTimer = undefined;
+    }
+    this.gcReady = false;
+    const client = this.client;
+    const cs = this.cs;
+    this.client = undefined;
+    this.cs = undefined;
+    cs?.removeAllListeners();
+    if (client) {
+      client.removeAllListeners();
+      try {
+        client.logOff();
+      } catch {
+        // already disconnected
+      }
+    }
+  }
+
+  private armIdleTimer(): void {
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer);
+    }
+    this.idleTimer = setTimeout(() => {
+      this.logger.log("steam-gc idle, logging off");
+      this.teardown();
+    }, IDLE_LOGOFF_MS);
+    this.idleTimer.unref?.();
   }
 
   public async resolveShareCode(
     shareCode: string,
   ): Promise<ResolvedMatch | null> {
-    if (!this.cs || !this.gcReady) {
-      this.logger.warn(`steam-gc not ready, cannot resolve ${shareCode}`);
-      return null;
-    }
+    await this.ensureReady();
 
     const cs = this.cs;
-    return new Promise((resolve) => {
-      const timer = setTimeout(() => {
-        cs.removeListener("matchList", onMatchList);
-        this.logger.warn(`steam-gc timeout resolving ${shareCode}`);
-        resolve(null);
-      }, REQUEST_TIMEOUT_MS);
+    if (!cs) {
+      throw new SteamGcConnectionError("steam-gc not connected");
+    }
 
-      const onMatchList = (matches: unknown): void => {
-        clearTimeout(timer);
-        cs.removeListener("matchList", onMatchList);
-        resolve(SteamGcService.extractMatchInfo(matches));
-      };
+    try {
+      return await new Promise<ResolvedMatch | null>((resolve) => {
+        const timer = setTimeout(() => {
+          cs.removeListener("matchList", onMatchList);
+          this.logger.warn(`steam-gc timeout resolving ${shareCode}`);
+          resolve(null);
+        }, REQUEST_TIMEOUT_MS);
 
-      cs.on("matchList", onMatchList);
-      try {
-        cs.requestGame(shareCode);
-      } catch (err) {
-        clearTimeout(timer);
-        cs.removeListener("matchList", onMatchList);
-        this.logger.error(
-          `steam-gc requestGame threw for ${shareCode}: ${(err as Error).message}`,
-        );
-        resolve(null);
-      }
-    });
+        const onMatchList = (matches: unknown): void => {
+          clearTimeout(timer);
+          cs.removeListener("matchList", onMatchList);
+          resolve(SteamGcService.extractMatchInfo(matches));
+        };
+
+        cs.on("matchList", onMatchList);
+        try {
+          cs.requestGame(shareCode);
+        } catch (err) {
+          clearTimeout(timer);
+          cs.removeListener("matchList", onMatchList);
+          this.logger.error(
+            `steam-gc requestGame threw for ${shareCode}: ${(err as Error).message}`,
+          );
+          resolve(null);
+        }
+      });
+    } finally {
+      this.armIdleTimer();
+    }
   }
 
   private static extractMatchInfo(matches: unknown): ResolvedMatch | null {

@@ -11,7 +11,6 @@ import { ConfigService } from "@nestjs/config";
 import { Redis } from "ioredis";
 import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";
-import { S3Service } from "../../s3/s3.service";
 import { DemoMetadataService } from "../../demos/demo-metadata.service";
 import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
 import { timingSafeStringEqual } from "../../utilities/timingSafeStringEqual";
@@ -50,7 +49,8 @@ export type DemoControlAction =
   | "hud-sides"
   | "demoui"
   | "autodirector"
-  | "scoreboard";
+  | "scoreboard"
+  | "skip-shaders";
 
 export const DEMO_CONTROL_ACTIONS: ReadonlySet<DemoControlAction> =
   new Set<DemoControlAction>([
@@ -71,6 +71,7 @@ export const DEMO_CONTROL_ACTIONS: ReadonlySet<DemoControlAction> =
     "demoui",
     "autodirector",
     "scoreboard",
+    "skip-shaders",
   ]);
 
 const SPEC_PROXIED_DEMO_ACTIONS: ReadonlySet<DemoControlAction> =
@@ -81,6 +82,8 @@ const SPEC_PROXIED_DEMO_ACTIONS: ReadonlySet<DemoControlAction> =
     "hud-sides",
     "autodirector",
     "scoreboard",
+    // routes to the demo pod's /spec/skip-shaders (drops the skip marker)
+    "skip-shaders",
   ]);
 
 const STATUS_HISTORY_CAP = 50;
@@ -127,7 +130,6 @@ export class GameStreamerService {
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
     private readonly postgres: PostgresService,
-    private readonly s3: S3Service,
     private readonly redisManager: RedisManagerService,
     private readonly demoMetadata: DemoMetadataService,
   ) {
@@ -404,7 +406,8 @@ export class GameStreamerService {
       | "hud-sides"
       | "xray"
       | "scoreboard"
-      | "reconnect",
+      | "reconnect"
+      | "skip-shaders",
     body: Record<string, unknown> = {},
   ): Promise<unknown> {
     const url = await this.getSpecServerUrl(matchId, action);
@@ -576,6 +579,12 @@ export class GameStreamerService {
       );
     }
     return this.callSpec(matchId, "reconnect");
+  }
+
+  // Operator "Skip shaders": signal the booting pod to launch cs2 now.
+  // Unlike reconnectLive, no match-status gate (runs during boot).
+  public async skipShaders(matchId: string) {
+    return this.callSpec(matchId, "skip-shaders");
   }
 
   public async specAutodirector(matchId: string, enabled: boolean) {
@@ -1321,6 +1330,7 @@ export class GameStreamerService {
         name: "CLIP_BAKE_BRANDING",
         value: await this.resolveClipBakeBranding(),
       },
+      // (shader pre-caching is pod-default on; skipped per-match at runtime)
     ];
 
     const nodeCs2Env = await this.buildNodeCs2OptionsEnv(nodeId);
@@ -2680,7 +2690,8 @@ export class GameStreamerService {
             containers: [
               {
                 name: containerName,
-                image: "ghcr.io/5stackgg/game-streamer:latest",
+                // Override via GAME_STREAMER_IMAGE (see configs/game-servers.ts).
+                image: this.gameServerConfig.gameStreamerImage,
                 // Mutable tag; force each pod start to resolve the latest digest.
                 imagePullPolicy: "Always",
                 securityContext: { privileged: true },
@@ -2704,6 +2715,16 @@ export class GameStreamerService {
                         },
                       ]
                     : []),
+                  // DEBUG_STREAM=1 → pod captures from boot (watch a hang
+                  // via the "WATCH" HLS URL it logs).
+                  ...(process.env.DEBUG_STREAM
+                    ? [
+                        {
+                          name: "DEBUG_STREAM",
+                          value: process.env.DEBUG_STREAM,
+                        },
+                      ]
+                    : []),
                   ...(steamUser
                     ? [{ name: "STEAM_USER", value: steamUser }]
                     : []),
@@ -2712,15 +2733,16 @@ export class GameStreamerService {
                     : []),
                   ...extraEnv,
                 ],
+                // No CPU request/limit — 1 streamer per GPU node, so let it
+                // use every core (uncapped = no CFS throttling; the CPU-bound
+                // shader compile wants them all). GPU + memory still bounded.
                 resources: {
                   limits: {
                     memory: "16Gi",
-                    cpu: "8",
                     "nvidia.com/gpu": "1",
                   },
                   requests: {
                     memory: "2Gi",
-                    cpu: "1",
                     "nvidia.com/gpu": "1",
                   },
                 },

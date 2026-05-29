@@ -24031,6 +24031,7 @@ type mutation_root {
   """setMatchWinner"""
   setMatchWinner(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
   setupGameServer: SetupGameServeOutput
+  skipShaders(match_id: uuid!): SuccessOutput
   specAutodirector(enabled: Boolean!, match_id: uuid!): SuccessOutput
   specClick(button: String!, match_id: uuid!): SuccessOutput
   specHud(match_id: uuid!, visible: Boolean!): SuccessOutput
@@ -63261,10 +63262,12 @@ columns and relationships of "v_gpu_pool_status"
 type v_gpu_pool_status {
   demo_in_progress: Boolean
   free_gpu_nodes: Int
+  free_gpu_nodes_for_batch: Int
   highlights_in_progress: Boolean
   id: Int
   live_in_progress: Boolean
   registered_gpu_nodes: Int
+  renders_paused_for_active_match: Boolean
   total_gpu_nodes: Int
 }
 
@@ -63296,6 +63299,7 @@ type v_gpu_pool_status_aggregate_fields {
 """aggregate avg on columns"""
 type v_gpu_pool_status_avg_fields {
   free_gpu_nodes: Float
+  free_gpu_nodes_for_batch: Float
   id: Float
   registered_gpu_nodes: Float
   total_gpu_nodes: Float
@@ -63310,16 +63314,19 @@ input v_gpu_pool_status_bool_exp {
   _or: [v_gpu_pool_status_bool_exp!]
   demo_in_progress: Boolean_comparison_exp
   free_gpu_nodes: Int_comparison_exp
+  free_gpu_nodes_for_batch: Int_comparison_exp
   highlights_in_progress: Boolean_comparison_exp
   id: Int_comparison_exp
   live_in_progress: Boolean_comparison_exp
   registered_gpu_nodes: Int_comparison_exp
+  renders_paused_for_active_match: Boolean_comparison_exp
   total_gpu_nodes: Int_comparison_exp
 }
 
 """aggregate max on columns"""
 type v_gpu_pool_status_max_fields {
   free_gpu_nodes: Int
+  free_gpu_nodes_for_batch: Int
   id: Int
   registered_gpu_nodes: Int
   total_gpu_nodes: Int
@@ -63328,6 +63335,7 @@ type v_gpu_pool_status_max_fields {
 """aggregate min on columns"""
 type v_gpu_pool_status_min_fields {
   free_gpu_nodes: Int
+  free_gpu_nodes_for_batch: Int
   id: Int
   registered_gpu_nodes: Int
   total_gpu_nodes: Int
@@ -63337,10 +63345,12 @@ type v_gpu_pool_status_min_fields {
 input v_gpu_pool_status_order_by {
   demo_in_progress: order_by
   free_gpu_nodes: order_by
+  free_gpu_nodes_for_batch: order_by
   highlights_in_progress: order_by
   id: order_by
   live_in_progress: order_by
   registered_gpu_nodes: order_by
+  renders_paused_for_active_match: order_by
   total_gpu_nodes: order_by
 }
 
@@ -63355,6 +63365,9 @@ enum v_gpu_pool_status_select_column {
   free_gpu_nodes
 
   """column name"""
+  free_gpu_nodes_for_batch
+
+  """column name"""
   highlights_in_progress
 
   """column name"""
@@ -63367,12 +63380,16 @@ enum v_gpu_pool_status_select_column {
   registered_gpu_nodes
 
   """column name"""
+  renders_paused_for_active_match
+
+  """column name"""
   total_gpu_nodes
 }
 
 """aggregate stddev on columns"""
 type v_gpu_pool_status_stddev_fields {
   free_gpu_nodes: Float
+  free_gpu_nodes_for_batch: Float
   id: Float
   registered_gpu_nodes: Float
   total_gpu_nodes: Float
@@ -63381,6 +63398,7 @@ type v_gpu_pool_status_stddev_fields {
 """aggregate stddev_pop on columns"""
 type v_gpu_pool_status_stddev_pop_fields {
   free_gpu_nodes: Float
+  free_gpu_nodes_for_batch: Float
   id: Float
   registered_gpu_nodes: Float
   total_gpu_nodes: Float
@@ -63389,6 +63407,7 @@ type v_gpu_pool_status_stddev_pop_fields {
 """aggregate stddev_samp on columns"""
 type v_gpu_pool_status_stddev_samp_fields {
   free_gpu_nodes: Float
+  free_gpu_nodes_for_batch: Float
   id: Float
   registered_gpu_nodes: Float
   total_gpu_nodes: Float
@@ -63409,16 +63428,19 @@ input v_gpu_pool_status_stream_cursor_input {
 input v_gpu_pool_status_stream_cursor_value_input {
   demo_in_progress: Boolean
   free_gpu_nodes: Int
+  free_gpu_nodes_for_batch: Int
   highlights_in_progress: Boolean
   id: Int
   live_in_progress: Boolean
   registered_gpu_nodes: Int
+  renders_paused_for_active_match: Boolean
   total_gpu_nodes: Int
 }
 
 """aggregate sum on columns"""
 type v_gpu_pool_status_sum_fields {
   free_gpu_nodes: Int
+  free_gpu_nodes_for_batch: Int
   id: Int
   registered_gpu_nodes: Int
   total_gpu_nodes: Int
@@ -63427,6 +63449,7 @@ type v_gpu_pool_status_sum_fields {
 """aggregate var_pop on columns"""
 type v_gpu_pool_status_var_pop_fields {
   free_gpu_nodes: Float
+  free_gpu_nodes_for_batch: Float
   id: Float
   registered_gpu_nodes: Float
   total_gpu_nodes: Float
@@ -63435,6 +63458,7 @@ type v_gpu_pool_status_var_pop_fields {
 """aggregate var_samp on columns"""
 type v_gpu_pool_status_var_samp_fields {
   free_gpu_nodes: Float
+  free_gpu_nodes_for_batch: Float
   id: Float
   registered_gpu_nodes: Float
   total_gpu_nodes: Float
@@ -63443,6 +63467,7 @@ type v_gpu_pool_status_var_samp_fields {
 """aggregate variance on columns"""
 type v_gpu_pool_status_variance_fields {
   free_gpu_nodes: Float
+  free_gpu_nodes_for_batch: Float
   id: Float
   registered_gpu_nodes: Float
   total_gpu_nodes: Float

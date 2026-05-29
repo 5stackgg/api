@@ -82,7 +82,7 @@ export class ParseImportedDemo extends WorkerHost {
       await this.runImport(valve_match_id, shareCode, demoUrl, matchStartTime);
     } catch (err) {
       const lastAttempt =
-        (job.attemptsMade ?? 0) >= ((job.opts.attempts ?? 1) - 1);
+        (job.attemptsMade ?? 0) >= (job.opts.attempts ?? 1) - 1;
       if (lastAttempt) {
         await this.markFailed(
           valve_match_id,
