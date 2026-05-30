@@ -17,13 +17,11 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      _match_options_id UUID;
      _round_best_of int;
      _swiss_match_type text;
-     _min_players_per_lineup int;
  BEGIN
    	IF bracket.match_id IS NOT NULL THEN
    	 RETURN bracket.match_id;
    	END IF;
     
-    -- If bracket is already finished, don't try to schedule it
     IF bracket.finished = true THEN
         RAISE NOTICE 'schedule_tournament_match: bracket % already finished, skipping', bracket.id;
         RETURN NULL;
@@ -34,27 +32,23 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
         RETURN NULL;
     END IF;
 
-     -- For all other cases, we require two teams to schedule a match
      IF bracket.tournament_team_id_1 IS NULL OR bracket.tournament_team_id_2 IS NULL THEN
          RAISE NOTICE 'schedule_tournament_match: bracket % missing one team (t1=%, t2=%), skipping',
              bracket.id, bracket.tournament_team_id_1, bracket.tournament_team_id_2;
          RETURN NULL;
      END IF;
 
-     -- Fetch stage values
      SELECT ts.* INTO stage
      FROM tournament_brackets tb
      INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
      WHERE tb.id = bracket.id;
 
-     -- Fetch tournament values
      SELECT t.* INTO tournament
      FROM tournament_brackets tb
      INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
      INNER JOIN tournaments t ON t.id = ts.tournament_id
      WHERE tb.id = bracket.id;
 
-     -- Check bracket first (organizer overrides), then stage, then tournament
      IF bracket.match_options_id IS NOT NULL THEN
          _template_match_options_id := bracket.match_options_id;
      ELSIF stage.match_options_id IS NOT NULL THEN
@@ -63,9 +57,6 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          _template_match_options_id := tournament.match_options_id;
      END IF;
 
-    -- Enforce match_mode:
-    -- - admin mode requires an explicit organizer-set schedule on the bracket
-    -- - other modes can continue existing auto-scheduling behavior
     DECLARE
         _match_mode text;
     BEGIN
@@ -78,10 +69,8 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
         END IF;
     END;
 
-     -- Per-round best_of resolution (only when bracket has no custom match_options)
      IF bracket.match_options_id IS NULL THEN
          IF stage.type = 'Swiss' THEN
-             -- Swiss: decode group (wins*100+losses) to determine match type
              DECLARE
                  _wins int;
                  _losses int;
@@ -102,7 +91,6 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
              _round_best_of := get_bracket_best_of(stage.id, bracket.path, bracket.round);
          END IF;
 
-         -- If round best_of differs from the resolved match_options, clone with new best_of
          IF _round_best_of IS NOT NULL THEN
              _match_options_id := clone_match_options_with_best_of(_template_match_options_id, _round_best_of);
          END IF;
@@ -112,10 +100,6 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          _match_options_id := clone_match_options(_template_match_options_id);
      END IF;
 
-     -- Pre-link the bracket to the (about-to-exist) match id so triggers on
-     -- the matches insert (notably tai_match) can recognize this as a
-     -- tournament match via is_tournament_match(). The FK is deferrable so
-     -- pointing at a row that does not yet exist is fine within this txn.
      _match_id := gen_random_uuid();
 
      UPDATE tournament_brackets
@@ -139,11 +123,6 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      RETURNING lineup_1_id, lineup_2_id
        INTO _lineup_1_id, _lineup_2_id;
 
-     SELECT match_min_players_per_lineup(m)
-     INTO _min_players_per_lineup
-     FROM matches m
-     WHERE m.id = _match_id;
-
      SELECT tt.captain_steam_id
      INTO _captain_steam_id_1
      FROM tournament_teams tt
@@ -155,48 +134,16 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      WHERE tt.id = bracket.tournament_team_id_2;
 
      FOR member IN
-         SELECT ttr.*
-         FROM tournament_team_roster ttr
-         INNER JOIN tournament_teams tt
-           ON tt.id = ttr.tournament_team_id
-         LEFT JOIN team_roster tr
-           ON tr.team_id = tt.team_id
-          AND tr.player_steam_id = ttr.player_steam_id
-         WHERE ttr.tournament_team_id = bracket.tournament_team_id_1
-         ORDER BY
-             CASE WHEN ttr.player_steam_id = _captain_steam_id_1 THEN 0 ELSE 1 END,
-             CASE tr.status
-                 WHEN 'Starter' THEN 1
-                 WHEN 'Substitute' THEN 2
-                 WHEN 'Benched' THEN 3
-                 ELSE 4
-             END,
-             ttr.player_steam_id
-         LIMIT _min_players_per_lineup
+         SELECT * FROM tournament_team_roster
+         WHERE tournament_team_id = bracket.tournament_team_id_1
      LOOP
          INSERT INTO match_lineup_players (match_lineup_id, steam_id)
          VALUES (_lineup_1_id, member.player_steam_id);
      END LOOP;
 
      FOR member IN
-         SELECT ttr.*
-         FROM tournament_team_roster ttr
-         INNER JOIN tournament_teams tt
-           ON tt.id = ttr.tournament_team_id
-         LEFT JOIN team_roster tr
-           ON tr.team_id = tt.team_id
-          AND tr.player_steam_id = ttr.player_steam_id
-         WHERE ttr.tournament_team_id = bracket.tournament_team_id_2
-         ORDER BY
-             CASE WHEN ttr.player_steam_id = _captain_steam_id_2 THEN 0 ELSE 1 END,
-             CASE tr.status
-                 WHEN 'Starter' THEN 1
-                 WHEN 'Substitute' THEN 2
-                 WHEN 'Benched' THEN 3
-                 ELSE 4
-             END,
-             ttr.player_steam_id
-         LIMIT _min_players_per_lineup
+         SELECT * FROM tournament_team_roster
+         WHERE tournament_team_id = bracket.tournament_team_id_2
      LOOP
          INSERT INTO match_lineup_players (match_lineup_id, steam_id)
          VALUES (_lineup_2_id, member.player_steam_id);
