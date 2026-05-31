@@ -78,6 +78,10 @@ select_permissions:
         - pin_plugin_version
         - public_ip
         - region
+        - shader_bake_progress
+        - shader_bake_progress_stage
+        - shader_bake_status
+        - shader_bake_status_history
         - start_port_range
         - status
         - supports_cpu_pinning

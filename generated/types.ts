@@ -11151,6 +11151,23 @@ export default {
                     ]
                 }
             ],
+            "shader_bake_progress": [
+                1666
+            ],
+            "shader_bake_progress_stage": [
+                51
+            ],
+            "shader_bake_status": [
+                51
+            ],
+            "shader_bake_status_history": [
+                882,
+                {
+                    "path": [
+                        51
+                    ]
+                }
+            ],
             "start_port_range": [
                 30
             ],
@@ -11356,6 +11373,9 @@ export default {
             "gpu_info": [
                 882
             ],
+            "shader_bake_status_history": [
+                882
+            ],
             "__typename": [
                 51
             ]
@@ -11405,6 +11425,9 @@ export default {
             "pin_build_id": [
                 22
             ],
+            "shader_bake_progress": [
+                22
+            ],
             "start_port_range": [
                 22
             ],
@@ -11444,6 +11467,9 @@ export default {
                 1668
             ],
             "pin_build_id": [
+                1668
+            ],
+            "shader_bake_progress": [
                 1668
             ],
             "start_port_range": [
@@ -11559,6 +11585,18 @@ export default {
             "servers_aggregate": [
                 2451
             ],
+            "shader_bake_progress": [
+                1667
+            ],
+            "shader_bake_progress_stage": [
+                53
+            ],
+            "shader_bake_status": [
+                53
+            ],
+            "shader_bake_status_history": [
+                884
+            ],
             "start_port_range": [
                 31
             ],
@@ -11604,6 +11642,9 @@ export default {
             "gpu_info": [
                 51
             ],
+            "shader_bake_status_history": [
+                51
+            ],
             "__typename": [
                 51
             ]
@@ -11624,6 +11665,9 @@ export default {
             "gpu_info": [
                 30
             ],
+            "shader_bake_status_history": [
+                30
+            ],
             "__typename": [
                 51
             ]
@@ -11642,6 +11686,9 @@ export default {
                 51
             ],
             "gpu_info": [
+                51
+            ],
+            "shader_bake_status_history": [
                 51
             ],
             "__typename": [
@@ -11678,6 +11725,9 @@ export default {
             ],
             "pin_build_id": [
                 30
+            ],
+            "shader_bake_progress": [
+                1666
             ],
             "start_port_range": [
                 30
@@ -11774,6 +11824,18 @@ export default {
             "servers": [
                 2457
             ],
+            "shader_bake_progress": [
+                1666
+            ],
+            "shader_bake_progress_stage": [
+                51
+            ],
+            "shader_bake_status": [
+                51
+            ],
+            "shader_bake_status_history": [
+                882
+            ],
             "start_port_range": [
                 30
             ],
@@ -11848,6 +11910,15 @@ export default {
             "region": [
                 51
             ],
+            "shader_bake_progress": [
+                1666
+            ],
+            "shader_bake_progress_stage": [
+                51
+            ],
+            "shader_bake_status": [
+                51
+            ],
             "start_port_range": [
                 30
             ],
@@ -11908,6 +11979,15 @@ export default {
                 1668
             ],
             "region": [
+                1668
+            ],
+            "shader_bake_progress": [
+                1668
+            ],
+            "shader_bake_progress_stage": [
+                1668
+            ],
+            "shader_bake_status": [
                 1668
             ],
             "start_port_range": [
@@ -11972,6 +12052,15 @@ export default {
             "region": [
                 51
             ],
+            "shader_bake_progress": [
+                1666
+            ],
+            "shader_bake_progress_stage": [
+                51
+            ],
+            "shader_bake_status": [
+                51
+            ],
             "start_port_range": [
                 30
             ],
@@ -12032,6 +12121,15 @@ export default {
                 1668
             ],
             "region": [
+                1668
+            ],
+            "shader_bake_progress": [
+                1668
+            ],
+            "shader_bake_progress_stage": [
+                1668
+            ],
+            "shader_bake_status": [
                 1668
             ],
             "start_port_range": [
@@ -12177,6 +12275,18 @@ export default {
             "servers_aggregate": [
                 2456
             ],
+            "shader_bake_progress": [
+                1668
+            ],
+            "shader_bake_progress_stage": [
+                1668
+            ],
+            "shader_bake_status": [
+                1668
+            ],
+            "shader_bake_status_history": [
+                1668
+            ],
             "start_port_range": [
                 1668
             ],
@@ -12227,6 +12337,9 @@ export default {
                 882
             ],
             "gpu_info": [
+                882
+            ],
+            "shader_bake_status_history": [
                 882
             ],
             "__typename": [
@@ -12312,6 +12425,18 @@ export default {
             "region": [
                 51
             ],
+            "shader_bake_progress": [
+                1666
+            ],
+            "shader_bake_progress_stage": [
+                51
+            ],
+            "shader_bake_status": [
+                51
+            ],
+            "shader_bake_status_history": [
+                882
+            ],
             "start_port_range": [
                 30
             ],
@@ -12368,6 +12493,9 @@ export default {
             "pin_build_id": [
                 22
             ],
+            "shader_bake_progress": [
+                22
+            ],
             "start_port_range": [
                 22
             ],
@@ -12407,6 +12535,9 @@ export default {
                 1668
             ],
             "pin_build_id": [
+                1668
+            ],
+            "shader_bake_progress": [
                 1668
             ],
             "start_port_range": [
@@ -12450,6 +12581,9 @@ export default {
             "pin_build_id": [
                 22
             ],
+            "shader_bake_progress": [
+                22
+            ],
             "start_port_range": [
                 22
             ],
@@ -12489,6 +12623,9 @@ export default {
                 1668
             ],
             "pin_build_id": [
+                1668
+            ],
+            "shader_bake_progress": [
                 1668
             ],
             "start_port_range": [
@@ -12532,6 +12669,9 @@ export default {
             "pin_build_id": [
                 22
             ],
+            "shader_bake_progress": [
+                22
+            ],
             "start_port_range": [
                 22
             ],
@@ -12571,6 +12711,9 @@ export default {
                 1668
             ],
             "pin_build_id": [
+                1668
+            ],
+            "shader_bake_progress": [
                 1668
             ],
             "start_port_range": [
@@ -12667,6 +12810,18 @@ export default {
             "region": [
                 51
             ],
+            "shader_bake_progress": [
+                1666
+            ],
+            "shader_bake_progress_stage": [
+                51
+            ],
+            "shader_bake_status": [
+                51
+            ],
+            "shader_bake_status_history": [
+                882
+            ],
             "start_port_range": [
                 30
             ],
@@ -12723,6 +12878,9 @@ export default {
             "pin_build_id": [
                 30
             ],
+            "shader_bake_progress": [
+                1666
+            ],
             "start_port_range": [
                 30
             ],
@@ -12762,6 +12920,9 @@ export default {
                 1668
             ],
             "pin_build_id": [
+                1668
+            ],
+            "shader_bake_progress": [
                 1668
             ],
             "start_port_range": [
@@ -12835,6 +12996,9 @@ export default {
             "pin_build_id": [
                 22
             ],
+            "shader_bake_progress": [
+                22
+            ],
             "start_port_range": [
                 22
             ],
@@ -12874,6 +13038,9 @@ export default {
                 1668
             ],
             "pin_build_id": [
+                1668
+            ],
+            "shader_bake_progress": [
                 1668
             ],
             "start_port_range": [
@@ -12917,6 +13084,9 @@ export default {
             "pin_build_id": [
                 22
             ],
+            "shader_bake_progress": [
+                22
+            ],
             "start_port_range": [
                 22
             ],
@@ -12956,6 +13126,9 @@ export default {
                 1668
             ],
             "pin_build_id": [
+                1668
+            ],
+            "shader_bake_progress": [
                 1668
             ],
             "start_port_range": [
@@ -12999,6 +13172,9 @@ export default {
             "pin_build_id": [
                 22
             ],
+            "shader_bake_progress": [
+                22
+            ],
             "start_port_range": [
                 22
             ],
@@ -13038,6 +13214,9 @@ export default {
                 1668
             ],
             "pin_build_id": [
+                1668
+            ],
+            "shader_bake_progress": [
                 1668
             ],
             "start_port_range": [
@@ -89663,12 +89842,30 @@ export default {
                     ]
                 }
             ],
+            "bakeShaders": [
+                54,
+                {
+                    "game_server_node_id": [
+                        3057,
+                        "uuid!"
+                    ]
+                }
+            ],
             "callForOrganizer": [
                 54,
                 {
                     "match_id": [
                         51,
                         "String!"
+                    ]
+                }
+            ],
+            "cancelBakeShaders": [
+                54,
+                {
+                    "game_server_node_id": [
+                        3057,
+                        "uuid!"
                     ]
                 }
             ],

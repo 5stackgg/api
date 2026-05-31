@@ -612,6 +612,18 @@ type Mutation {
 }
 
 type Mutation {
+  bakeShaders(
+    game_server_node_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  cancelBakeShaders(
+    game_server_node_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   updateCs(
     game_server_node_id: uuid
     game: String

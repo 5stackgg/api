@@ -1,10 +1,12 @@
-import { WorkerHost } from "@nestjs/bullmq";
+import { InjectQueue, WorkerHost } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { GameServerQueues } from "../enums/GameServerQueues";
 import { Logger } from "@nestjs/common";
 import { GameServerNodeService } from "../game-server-node.service";
 import { HasuraService } from "src/hasura/hasura.service";
 import { NotificationsService } from "src/notifications/notifications.service";
+import { BakeShaders } from "./BakeShaders";
 
 type Depot = {
   systemdefined?: string;
@@ -43,6 +45,8 @@ export class CheckGameUpdate extends WorkerHost {
     protected readonly gameServerNodeService: GameServerNodeService,
     protected readonly hasuraService: HasuraService,
     protected readonly notifications: NotificationsService,
+    @InjectQueue(GameServerQueues.BakeShaders)
+    protected readonly bakeQueue: Queue,
   ) {
     super();
   }
@@ -231,6 +235,39 @@ export class CheckGameUpdate extends WorkerHost {
     });
 
     await this.gameServerNodeService.updateCs();
+
+    await this.queueShaderBakes();
+  }
+
+  private async queueShaderBakes(): Promise<void> {
+    const { game_server_nodes } = await this.hasuraService.query({
+      game_server_nodes: {
+        __args: {
+          where: {
+            gpu: { _eq: true },
+            enabled: { _eq: true },
+          },
+        },
+        id: true,
+      },
+    });
+
+    for (const node of game_server_nodes) {
+      await this.bakeQueue.add(
+        BakeShaders.name,
+        {
+          gameServerNodeId: node.id,
+          attempt: 0,
+        },
+        {
+          jobId: `bake.${node.id}.0`,
+          delay: 120 * 1000,
+          attempts: 1,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      );
+    }
   }
 
   private async getGameData(): Promise<GameData> {

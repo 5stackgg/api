@@ -28,6 +28,8 @@ import { CheckServerPluginVersions } from "./jobs/CheckServerPluginVersions";
 import { HasuraService } from "src/hasura/hasura.service";
 import { GetPluginVersions } from "./jobs/GetPluginVersions";
 import { K8sModule } from "src/k8s/k8s.module";
+import { GameStreamerModule } from "../matches/game-streamer/game-streamer.module";
+import { BakeShaders } from "./jobs/BakeShaders";
 
 @Module({
   providers: [
@@ -38,6 +40,7 @@ import { K8sModule } from "src/k8s/k8s.module";
     MarkGameServerNodeOnline,
     MarkDedicatedServerOffline,
     CheckServerPluginVersions,
+    BakeShaders,
     ...getQueuesProcessors("GameServerNode"),
     loggerFactory(),
   ],
@@ -49,6 +52,7 @@ import { K8sModule } from "src/k8s/k8s.module";
     NotificationsModule,
     RconModule,
     K8sModule,
+    GameStreamerModule,
     BullModule.registerQueue(
       {
         name: GameServerQueues.GameUpdate,
@@ -58,6 +62,9 @@ import { K8sModule } from "src/k8s/k8s.module";
       },
       {
         name: GameServerQueues.PluginVersion,
+      },
+      {
+        name: GameServerQueues.BakeShaders,
       },
     ),
     BullBoardModule.forFeature(
@@ -71,6 +78,10 @@ import { K8sModule } from "src/k8s/k8s.module";
       },
       {
         name: GameServerQueues.PluginVersion,
+        adapter: BullMQAdapter,
+      },
+      {
+        name: GameServerQueues.BakeShaders,
         adapter: BullMQAdapter,
       },
     ),
