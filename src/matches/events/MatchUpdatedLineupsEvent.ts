@@ -18,6 +18,10 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
   public async process() {
     const match = await this.matchAssistant.getMatchLineups(this.matchId);
 
+    if (!match) {
+      return;
+    }
+
     const players: Array<{
       steam_id?: string;
       captain: boolean;

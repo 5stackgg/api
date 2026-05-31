@@ -23,8 +23,17 @@ export class HudDataController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    const matchId = request.params.matchId;
+    const matchId = String(request.params.matchId ?? "");
     const apiDomain = (this.appConfig.apiDomain || "").replace(/\/$/, "");
+
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        matchId,
+      )
+    ) {
+      response.status(404).json({ error: "match not found" });
+      return;
+    }
 
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
