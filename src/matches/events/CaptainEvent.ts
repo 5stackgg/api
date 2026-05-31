@@ -8,6 +8,10 @@ export default class CaptainEvent extends MatchEventProcessor<{
   public async process() {
     const match = await this.matchAssistant.getMatchLineups(this.matchId);
 
+    if (!match) {
+      return;
+    }
+
     const lineup_player = match.lineup_players.find((lineup_player) => {
       if (lineup_player.steam_id) {
         return lineup_player.steam_id.toString() === this.data.steam_id;
