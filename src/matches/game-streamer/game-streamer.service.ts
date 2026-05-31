@@ -3,8 +3,10 @@ import {
   BatchV1Api,
   CoreV1Api,
   KubeConfig,
+  Log,
   V1Job,
   V1EnvVar,
+  V1Pod,
   V1Service,
 } from "@kubernetes/client-node";
 import { ConfigService } from "@nestjs/config";
@@ -19,7 +21,9 @@ import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { SteamConfig } from "../../configs/types/SteamConfig";
 import { randomBytes } from "node:crypto";
+import { PassThrough } from "node:stream";
 import { resolveInClusterApiBase } from "../clips/clips.constants";
+import { LoggingService } from "../../k8s/logging/logging.service";
 
 // Snapshot TTL is a touch over 2x the producer's 30s cadence so a
 // consumer reading mid-cycle always sees a fresh-or-just-stale frame.
@@ -30,7 +34,12 @@ const STREAM_VIEWERS_TTL_SECONDS = 90;
 const STREAM_VIEWERS_INDEX_KEY = "stream:viewers:index";
 const streamViewersKey = (matchId: string) => `stream:viewers:${matchId}`;
 
-type StreamerMode = "live" | "create-clips" | "demo" | "batch-highlights";
+type StreamerMode =
+  | "live"
+  | "create-clips"
+  | "demo"
+  | "batch-highlights"
+  | "warm-shaders";
 
 export type DemoControlAction =
   | "pause"
@@ -97,6 +106,13 @@ export class NoGpuAvailableError extends Error {
   }
 }
 
+export class NodeBusyError extends Error {
+  constructor(message = "node is busy with an active session") {
+    super(message);
+    this.name = "NodeBusyError";
+  }
+}
+
 export class NoSteamAccountAvailableError extends Error {
   constructor(
     message = "no Steam account available — add more accounts to the pool",
@@ -132,6 +148,7 @@ export class GameStreamerService {
     private readonly postgres: PostgresService,
     private readonly redisManager: RedisManagerService,
     private readonly demoMetadata: DemoMetadataService,
+    private readonly loggingService: LoggingService,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
     this.appConfig = this.config.get<AppConfig>("app");
@@ -2585,6 +2602,313 @@ export class GameStreamerService {
     }
   }
 
+  public static GET_BAKE_JOB_NAME(gameServerNodeId: string): string {
+    return `shader-bake-${gameServerNodeId.replaceAll(".", "-")}`;
+  }
+
+  public async isNodeBusy(gameServerNodeId: string): Promise<boolean> {
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const core = kc.makeApiClient(CoreV1Api);
+
+    const pods = await core.listNamespacedPod({
+      namespace: this.namespace,
+      labelSelector: "app=game-streamer",
+    });
+
+    for (const pod of pods.items) {
+      if (pod.spec?.nodeName !== gameServerNodeId) {
+        continue;
+      }
+      if (pod.metadata?.labels?.role === "warm-shaders") {
+        continue;
+      }
+      const phase = pod.status?.phase;
+      if (phase === "Running" || phase === "Pending") {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public async bakeShaders(gameServerNodeId: string): Promise<void> {
+    const { game_server_nodes_by_pk: node } = await this.hasura.query({
+      game_server_nodes_by_pk: {
+        __args: { id: gameServerNodeId },
+        id: true,
+        gpu: true,
+        shader_bake_status: true,
+      },
+    });
+
+    if (!node) {
+      throw new Error("Game server node not found");
+    }
+
+    if (!node.gpu) {
+      throw new Error("Game server node is not a GPU node");
+    }
+
+    if (await this.isNodeBusy(gameServerNodeId)) {
+      throw new NodeBusyError();
+    }
+
+    const jobName = GameStreamerService.GET_BAKE_JOB_NAME(gameServerNodeId);
+
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const batch = kc.makeApiClient(BatchV1Api);
+
+    // Always tear down any prior bake (a failed/finished Job lingers and
+    // would otherwise block a fresh start) before launching a new one.
+    await this.deleteJob(jobName);
+    await this.waitForJobGone(jobName);
+
+    this.logger.log(
+      `[bake ${gameServerNodeId}] starting shader bake (job=${jobName})`,
+    );
+
+    await batch.createNamespacedJob({
+      namespace: this.namespace,
+      body: this.buildJobSpec(
+        jobName,
+        gameServerNodeId,
+        "warm-shaders",
+        gameServerNodeId,
+        [],
+        { "node-id": gameServerNodeId },
+      ),
+    });
+
+    await this.setBakeStatus(gameServerNodeId, "Initializing");
+
+    setTimeout(() => {
+      void this.monitorBakeShaders(gameServerNodeId, 3);
+    }, 5000);
+  }
+
+  public async cancelBakeShaders(gameServerNodeId: string): Promise<void> {
+    const jobName = GameStreamerService.GET_BAKE_JOB_NAME(gameServerNodeId);
+    this.logger.log(`[bake ${gameServerNodeId}] cancelling shader bake`);
+    await this.deleteJob(jobName);
+    await this.setBakeStatus(gameServerNodeId, null);
+  }
+
+  private async waitForJobGone(jobName: string, attempts = 20): Promise<void> {
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const batch = kc.makeApiClient(BatchV1Api);
+
+    for (let i = 0; i < attempts; i++) {
+      try {
+        await batch.readNamespacedJob({
+          name: jobName,
+          namespace: this.namespace,
+        });
+      } catch {
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+
+  private async setBakeStatus(
+    gameServerNodeId: string,
+    status: string | null,
+  ): Promise<void> {
+    await this.hasura.mutation({
+      update_game_server_nodes_by_pk: {
+        __args: {
+          pk_columns: { id: gameServerNodeId },
+          _set: {
+            shader_bake_status: status,
+            ...(status === null
+              ? {
+                  shader_bake_progress: null,
+                  shader_bake_progress_stage: null,
+                }
+              : {}),
+          },
+        },
+        id: true,
+      },
+    });
+  }
+
+  // Poll the bake Job for completion and refresh progress from a log
+  // snapshot each tick. Completion is driven by Job status (not the log
+  // stream lifecycle) so the status/progress stays live through pod launch
+  // — the warm container has no logs yet while the init container runs, and
+  // a follow stream would otherwise end early and wipe the status.
+  public async monitorBakeShaders(
+    gameServerNodeId: string,
+    attempts = 0,
+  ): Promise<void> {
+    const jobName = GameStreamerService.GET_BAKE_JOB_NAME(gameServerNodeId);
+
+    let status: Awaited<ReturnType<typeof this.loggingService.getJobStatus>>;
+    try {
+      status = await this.loggingService.getJobStatus(jobName);
+    } catch {
+      status = null;
+    }
+
+    if (!status) {
+      // Right after create the Job may not be visible yet; retry a few
+      // times before assuming it's gone.
+      if (attempts > 0) {
+        setTimeout(() => {
+          void this.monitorBakeShaders(gameServerNodeId, attempts - 1);
+        }, 5000);
+        return;
+      }
+      await this.setBakeStatus(gameServerNodeId, null);
+      return;
+    }
+
+    if ((status.succeeded ?? 0) > 0) {
+      await this.setBakeStatus(gameServerNodeId, null);
+      return;
+    }
+
+    if ((status.failed ?? 0) > 0) {
+      await this.setBakeStatus(gameServerNodeId, "errored");
+      return;
+    }
+
+    await this.refreshBakeProgress(gameServerNodeId, jobName);
+
+    setTimeout(() => {
+      void this.monitorBakeShaders(gameServerNodeId, 3);
+    }, 5000);
+  }
+
+  private async refreshBakeProgress(
+    gameServerNodeId: string,
+    jobName: string,
+  ): Promise<void> {
+    let pod: V1Pod | undefined;
+    try {
+      pod = await this.loggingService.getJobPod(jobName);
+    } catch {
+      return;
+    }
+    if (!pod) {
+      return;
+    }
+
+    const logs = await this.readPodLogSnapshot(pod);
+    if (!logs) {
+      return;
+    }
+
+    let shaderMatch: RegExpMatchArray | null = null;
+    let launching = false;
+    for (const line of logs.split("\n")) {
+      const match = line.match(
+        /processing Vulkan shaders: ([0-9.]+)% \((\d+)\/(\d+)\)/,
+      );
+      if (match) {
+        shaderMatch = match;
+      }
+      if (line.includes("launching cs2") || line.includes("applaunch 730")) {
+        launching = true;
+      }
+    }
+
+    if (shaderMatch) {
+      await this.writeBakeProgress(
+        gameServerNodeId,
+        "processing_shaders",
+        parseFloat(shaderMatch[1]),
+        `${shaderMatch[2]} / ${shaderMatch[3]}`,
+      );
+    } else if (launching) {
+      await this.writeBakeProgress(
+        gameServerNodeId,
+        "launching_cs2",
+        null,
+        null,
+      );
+    }
+  }
+
+  private readPodLogSnapshot(pod: V1Pod): Promise<string> {
+    return new Promise((resolve) => {
+      const kc = new KubeConfig();
+      kc.loadFromDefault();
+      const logApi = new Log(kc);
+      const container = pod.spec?.containers?.[0]?.name ?? "";
+      const chunks: Buffer[] = [];
+      const stream = new PassThrough();
+
+      let settled = false;
+      const done = () => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        stream.destroy();
+        resolve(Buffer.concat(chunks).toString("utf8"));
+      };
+
+      stream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+      stream.on("end", done);
+      stream.on("close", done);
+      stream.on("error", done);
+
+      void logApi
+        .log(this.namespace, pod.metadata!.name!, container, stream, {
+          follow: false,
+          tailLines: 200,
+          pretty: false,
+          timestamps: false,
+        })
+        .catch(() => done());
+
+      setTimeout(done, 4000);
+    });
+  }
+
+  private async writeBakeProgress(
+    gameServerNodeId: string,
+    status: string,
+    progress: number | null,
+    progress_stage: string | null,
+  ): Promise<void> {
+    const { game_server_nodes_by_pk: node } = await this.hasura.query({
+      game_server_nodes_by_pk: {
+        __args: { id: gameServerNodeId },
+        shader_bake_status: true,
+        shader_bake_status_history: true,
+      },
+    });
+
+    const nextHistory = this.nextStatusHistory(
+      node?.shader_bake_status_history,
+      node?.shader_bake_status,
+      status,
+      progress,
+      progress_stage,
+    );
+
+    await this.hasura.mutation({
+      update_game_server_nodes_by_pk: {
+        __args: {
+          pk_columns: { id: gameServerNodeId },
+          _set: {
+            shader_bake_status: status,
+            shader_bake_progress: progress,
+            shader_bake_progress_stage: progress_stage,
+            shader_bake_status_history: nextHistory,
+          },
+        },
+        id: true,
+      },
+    });
+  }
+
   private async unregisterStreamRow(matchId: string) {
     await this.hasura.mutation({
       delete_match_streams: {
@@ -2618,7 +2942,9 @@ export class GameStreamerService {
           ? "demo"
           : mode === "batch-highlights"
             ? "batch"
-            : "live";
+            : mode === "warm-shaders"
+              ? "warm"
+              : "live";
     const args =
       mode === "live"
         ? ["live"]
@@ -2626,7 +2952,9 @@ export class GameStreamerService {
           ? ["demo"]
           : mode === "batch-highlights"
             ? ["batch-highlights"]
-            : ["create-clips"];
+            : mode === "warm-shaders"
+              ? ["warm-shaders"]
+              : ["create-clips"];
     const exposesSpecPorts =
       mode === "live" || mode === "demo" || mode === "batch-highlights";
 

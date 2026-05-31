@@ -7972,6 +7972,13 @@ type game_server_nodes {
     """filter the rows returned"""
     where: servers_bool_exp
   ): servers_aggregate!
+  shader_bake_progress: numeric
+  shader_bake_progress_stage: String
+  shader_bake_status: String
+  shader_bake_status_history(
+    """JSON select path"""
+    path: String
+  ): jsonb!
   start_port_range: Int
   status: e_game_server_node_statuses_enum
   supports_cpu_pinning: Boolean!
@@ -8064,6 +8071,7 @@ input game_server_nodes_append_input {
   cs2_launch_options: jsonb
   cs2_video_settings: jsonb
   gpu_info: jsonb
+  shader_bake_status_history: jsonb
 }
 
 """
@@ -8092,6 +8100,7 @@ type game_server_nodes_avg_fields {
   disk_used_percent: Float
   end_port_range: Float
   pin_build_id: Float
+  shader_bake_progress: Float
   start_port_range: Float
 
   """
@@ -8114,6 +8123,7 @@ input game_server_nodes_avg_order_by {
   disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  shader_bake_progress: order_by
   start_port_range: order_by
 }
 
@@ -8156,6 +8166,10 @@ input game_server_nodes_bool_exp {
   region: String_comparison_exp
   servers: servers_bool_exp
   servers_aggregate: servers_aggregate_bool_exp
+  shader_bake_progress: numeric_comparison_exp
+  shader_bake_progress_stage: String_comparison_exp
+  shader_bake_status: String_comparison_exp
+  shader_bake_status_history: jsonb_comparison_exp
   start_port_range: Int_comparison_exp
   status: e_game_server_node_statuses_enum_comparison_exp
   supports_cpu_pinning: Boolean_comparison_exp
@@ -8185,6 +8199,7 @@ input game_server_nodes_delete_at_path_input {
   cs2_launch_options: [String!]
   cs2_video_settings: [String!]
   gpu_info: [String!]
+  shader_bake_status_history: [String!]
 }
 
 """
@@ -8196,6 +8211,7 @@ input game_server_nodes_delete_elem_input {
   cs2_launch_options: Int
   cs2_video_settings: Int
   gpu_info: Int
+  shader_bake_status_history: Int
 }
 
 """
@@ -8207,6 +8223,7 @@ input game_server_nodes_delete_key_input {
   cs2_launch_options: String
   cs2_video_settings: String
   gpu_info: String
+  shader_bake_status_history: String
 }
 
 """
@@ -8223,6 +8240,7 @@ input game_server_nodes_inc_input {
   disk_used_percent: Int
   end_port_range: Int
   pin_build_id: Int
+  shader_bake_progress: numeric
   start_port_range: Int
 }
 
@@ -8259,6 +8277,10 @@ input game_server_nodes_insert_input {
   public_ip: inet
   region: String
   servers: servers_arr_rel_insert_input
+  shader_bake_progress: numeric
+  shader_bake_progress_stage: String
+  shader_bake_status: String
+  shader_bake_status_history: jsonb
   start_port_range: Int
   status: e_game_server_node_statuses_enum
   supports_cpu_pinning: Boolean
@@ -8289,6 +8311,9 @@ type game_server_nodes_max_fields {
   pin_build_id: Int
   pin_plugin_version: String
   region: String
+  shader_bake_progress: numeric
+  shader_bake_progress_stage: String
+  shader_bake_status: String
   start_port_range: Int
   token: String
 
@@ -8318,6 +8343,9 @@ input game_server_nodes_max_order_by {
   pin_build_id: order_by
   pin_plugin_version: order_by
   region: order_by
+  shader_bake_progress: order_by
+  shader_bake_progress_stage: order_by
+  shader_bake_status: order_by
   start_port_range: order_by
   token: order_by
   update_status: order_by
@@ -8344,6 +8372,9 @@ type game_server_nodes_min_fields {
   pin_build_id: Int
   pin_plugin_version: String
   region: String
+  shader_bake_progress: numeric
+  shader_bake_progress_stage: String
+  shader_bake_status: String
   start_port_range: Int
   token: String
 
@@ -8373,6 +8404,9 @@ input game_server_nodes_min_order_by {
   pin_build_id: order_by
   pin_plugin_version: order_by
   region: order_by
+  shader_bake_progress: order_by
+  shader_bake_progress_stage: order_by
+  shader_bake_status: order_by
   start_port_range: order_by
   token: order_by
   update_status: order_by
@@ -8441,6 +8475,10 @@ input game_server_nodes_order_by {
   public_ip: order_by
   region: order_by
   servers_aggregate: servers_aggregate_order_by
+  shader_bake_progress: order_by
+  shader_bake_progress_stage: order_by
+  shader_bake_status: order_by
+  shader_bake_status_history: order_by
   start_port_range: order_by
   status: order_by
   supports_cpu_pinning: order_by
@@ -8463,6 +8501,7 @@ input game_server_nodes_prepend_input {
   cs2_launch_options: jsonb
   cs2_video_settings: jsonb
   gpu_info: jsonb
+  shader_bake_status_history: jsonb
 }
 
 """
@@ -8543,6 +8582,18 @@ enum game_server_nodes_select_column {
 
   """column name"""
   region
+
+  """column name"""
+  shader_bake_progress
+
+  """column name"""
+  shader_bake_progress_stage
+
+  """column name"""
+  shader_bake_status
+
+  """column name"""
+  shader_bake_status_history
 
   """column name"""
   start_port_range
@@ -8626,6 +8677,10 @@ input game_server_nodes_set_input {
   pin_plugin_version: String
   public_ip: inet
   region: String
+  shader_bake_progress: numeric
+  shader_bake_progress_stage: String
+  shader_bake_status: String
+  shader_bake_status_history: jsonb
   start_port_range: Int
   status: e_game_server_node_statuses_enum
   supports_cpu_pinning: Boolean
@@ -8650,6 +8705,7 @@ type game_server_nodes_stddev_fields {
   disk_used_percent: Float
   end_port_range: Float
   pin_build_id: Float
+  shader_bake_progress: Float
   start_port_range: Float
 
   """
@@ -8672,6 +8728,7 @@ input game_server_nodes_stddev_order_by {
   disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  shader_bake_progress: order_by
   start_port_range: order_by
 }
 
@@ -8691,6 +8748,7 @@ type game_server_nodes_stddev_pop_fields {
   disk_used_percent: Float
   end_port_range: Float
   pin_build_id: Float
+  shader_bake_progress: Float
   start_port_range: Float
 
   """
@@ -8713,6 +8771,7 @@ input game_server_nodes_stddev_pop_order_by {
   disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  shader_bake_progress: order_by
   start_port_range: order_by
 }
 
@@ -8732,6 +8791,7 @@ type game_server_nodes_stddev_samp_fields {
   disk_used_percent: Float
   end_port_range: Float
   pin_build_id: Float
+  shader_bake_progress: Float
   start_port_range: Float
 
   """
@@ -8754,6 +8814,7 @@ input game_server_nodes_stddev_samp_order_by {
   disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  shader_bake_progress: order_by
   start_port_range: order_by
 }
 
@@ -8795,6 +8856,10 @@ input game_server_nodes_stream_cursor_value_input {
   pin_plugin_version: String
   public_ip: inet
   region: String
+  shader_bake_progress: numeric
+  shader_bake_progress_stage: String
+  shader_bake_status: String
+  shader_bake_status_history: jsonb
   start_port_range: Int
   status: e_game_server_node_statuses_enum
   supports_cpu_pinning: Boolean
@@ -8819,6 +8884,7 @@ type game_server_nodes_sum_fields {
   disk_used_percent: Int
   end_port_range: Int
   pin_build_id: Int
+  shader_bake_progress: numeric
   start_port_range: Int
 
   """
@@ -8841,6 +8907,7 @@ input game_server_nodes_sum_order_by {
   disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  shader_bake_progress: order_by
   start_port_range: order_by
 }
 
@@ -8924,6 +8991,18 @@ enum game_server_nodes_update_column {
   region
 
   """column name"""
+  shader_bake_progress
+
+  """column name"""
+  shader_bake_progress_stage
+
+  """column name"""
+  shader_bake_status
+
+  """column name"""
+  shader_bake_status_history
+
+  """column name"""
   start_port_range
 
   """column name"""
@@ -8990,6 +9069,7 @@ type game_server_nodes_var_pop_fields {
   disk_used_percent: Float
   end_port_range: Float
   pin_build_id: Float
+  shader_bake_progress: Float
   start_port_range: Float
 
   """
@@ -9012,6 +9092,7 @@ input game_server_nodes_var_pop_order_by {
   disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  shader_bake_progress: order_by
   start_port_range: order_by
 }
 
@@ -9031,6 +9112,7 @@ type game_server_nodes_var_samp_fields {
   disk_used_percent: Float
   end_port_range: Float
   pin_build_id: Float
+  shader_bake_progress: Float
   start_port_range: Float
 
   """
@@ -9053,6 +9135,7 @@ input game_server_nodes_var_samp_order_by {
   disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  shader_bake_progress: order_by
   start_port_range: order_by
 }
 
@@ -9072,6 +9155,7 @@ type game_server_nodes_variance_fields {
   disk_used_percent: Float
   end_port_range: Float
   pin_build_id: Float
+  shader_bake_progress: Float
   start_port_range: Float
 
   """
@@ -9094,6 +9178,7 @@ input game_server_nodes_variance_order_by {
   disk_used_percent: order_by
   end_port_range: order_by
   pin_build_id: order_by
+  shader_bake_progress: order_by
   start_port_range: order_by
 }
 
@@ -20647,8 +20732,16 @@ type mutation_root {
   acceptInvite(invite_id: uuid!, type: String!): SuccessOutput
   approveNameChange(name: String!, steam_id: bigint!): SuccessOutput
 
+  """Launch a Vulkan shader pre-bake Job on a GPU node"""
+  bakeShaders(game_server_node_id: uuid!): SuccessOutput
+
   """callForOrganizer"""
   callForOrganizer(match_id: String!): SuccessOutput
+
+  """
+  Cancel an in-progress or stuck Vulkan shader pre-bake Job on a GPU node
+  """
+  cancelBakeShaders(game_server_node_id: uuid!): SuccessOutput
 
   """Cancel an in-flight clip render and tear down the K8s job"""
   cancelClipRender(job_id: uuid!): SuccessOutput

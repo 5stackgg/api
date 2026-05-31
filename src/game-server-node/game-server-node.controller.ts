@@ -7,6 +7,7 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { GameServerQueues } from "./enums/GameServerQueues";
 import { Queue } from "bullmq";
 import { MarkDedicatedServerOffline } from "./jobs/MarkDedicatedServerOffline";
+import { BakeShaders } from "./jobs/BakeShaders";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "../configs/types/AppConfig";
 import { Request, Response } from "express";
@@ -22,6 +23,7 @@ import { HasuraEventData } from "src/hasura/types/HasuraEventData";
 import { game_server_nodes_set_input } from "generated/schema";
 import { NotificationsService } from "../notifications/notifications.service";
 import { DISCORD_COLORS } from "../notifications/utilities/constants";
+import { GameStreamerService } from "../matches/game-streamer/game-streamer.service";
 
 @Controller("game-server-node")
 export class GameServerNodeController {
@@ -39,9 +41,12 @@ export class GameServerNodeController {
     protected readonly loggingService: LoggingService,
     protected readonly gameServerNodeService: GameServerNodeService,
     protected readonly notifications: NotificationsService,
+    protected readonly gameStreamerService: GameStreamerService,
     @InjectQueue(GameServerQueues.GameUpdate) private gameUpdateQueue: Queue,
     @InjectQueue(GameServerQueues.NodeOffline)
     private readonly nodeOfflineQueue: Queue,
+    @InjectQueue(GameServerQueues.BakeShaders)
+    private readonly bakeShadersQueue: Queue,
   ) {
     this.appConfig = this.config.get<AppConfig>("app");
   }
@@ -318,6 +323,39 @@ export class GameServerNodeController {
       true,
       data.game ?? "cs2",
     );
+
+    return {
+      success: true,
+    };
+  }
+
+  @HasuraAction()
+  public async bakeShaders(data: { game_server_node_id: string }) {
+    await this.bakeShadersQueue.add(
+      BakeShaders.name,
+      {
+        gameServerNodeId: data.game_server_node_id,
+        attempt: 0,
+      },
+      {
+        jobId: `bake.${data.game_server_node_id}.manual`,
+        attempts: 1,
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
+
+    return {
+      success: true,
+    };
+  }
+
+  @HasuraAction()
+  public async cancelBakeShaders(data: { game_server_node_id: string }) {
+    await this.bakeShadersQueue.remove(
+      `bake.${data.game_server_node_id}.manual`,
+    );
+    await this.gameStreamerService.cancelBakeShaders(data.game_server_node_id);
 
     return {
       success: true,
