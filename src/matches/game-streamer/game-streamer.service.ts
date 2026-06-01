@@ -3,10 +3,8 @@ import {
   BatchV1Api,
   CoreV1Api,
   KubeConfig,
-  Log,
   V1Job,
   V1EnvVar,
-  V1Pod,
   V1Service,
 } from "@kubernetes/client-node";
 import { ConfigService } from "@nestjs/config";
@@ -20,7 +18,6 @@ import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { SteamConfig } from "../../configs/types/SteamConfig";
-import { PassThrough } from "node:stream";
 import { resolveInClusterApiBase } from "../clips/clips.constants";
 import { LoggingService } from "../../k8s/logging/logging.service";
 
@@ -2732,6 +2729,14 @@ export class GameStreamerService {
       `[bake ${gameServerNodeId}] starting shader bake (job=${jobName})`,
     );
 
+    // Warm the shaders against the node's real video settings (resolution /
+    // quality drive the pipeline set) so the cache matches live; without this
+    // the bake runs in auto mode and warms the wrong pipelines.
+    const bakeEnv = [
+      { name: "BAKE_NODE_ID", value: gameServerNodeId },
+      ...(await this.buildNodeCs2OptionsEnv(gameServerNodeId)),
+    ];
+
     await batch.createNamespacedJob({
       namespace: this.namespace,
       body: this.buildJobSpec(
@@ -2739,7 +2744,7 @@ export class GameStreamerService {
         gameServerNodeId,
         "warm-shaders",
         gameServerNodeId,
-        [],
+        bakeEnv,
         { "node-id": gameServerNodeId },
       ),
     });
@@ -2840,98 +2845,57 @@ export class GameStreamerService {
       return;
     }
 
-    await this.refreshBakeProgress(gameServerNodeId, jobName);
-
+    // progress is posted by the pod (reportBakeStatus); only watch terminal state
     setTimeout(() => {
       void this.monitorBakeShaders(gameServerNodeId, 3);
     }, 5000);
   }
 
-  private async refreshBakeProgress(
+  public async reportBakeStatus(
     gameServerNodeId: string,
-    jobName: string,
+    body: GameStreamerStatusDto,
   ): Promise<void> {
-    let pod: V1Pod | undefined;
-    try {
-      pod = await this.loggingService.getJobPod(jobName);
-    } catch {
-      return;
-    }
-    if (!pod) {
-      return;
-    }
-
-    const logs = await this.readPodLogSnapshot(pod);
-    if (!logs) {
-      return;
-    }
-
-    let shaderMatch: RegExpMatchArray | null = null;
-    let launching = false;
-    for (const line of logs.split("\n")) {
-      const match = line.match(
-        /processing Vulkan shaders: ([0-9.]+)% \((\d+)\/(\d+)\)/,
-      );
-      if (match) {
-        shaderMatch = match;
-      }
-      if (line.includes("launching cs2") || line.includes("applaunch 730")) {
-        launching = true;
-      }
-    }
-
-    if (shaderMatch) {
-      await this.writeBakeProgress(
-        gameServerNodeId,
-        "processing_shaders",
-        parseFloat(shaderMatch[1]),
-        `${shaderMatch[2]} / ${shaderMatch[3]}`,
-      );
-    } else if (launching) {
-      await this.writeBakeProgress(
-        gameServerNodeId,
-        "launching_cs2",
-        null,
-        null,
-      );
-    }
-  }
-
-  private readPodLogSnapshot(pod: V1Pod): Promise<string> {
-    return new Promise((resolve) => {
-      const kc = new KubeConfig();
-      kc.loadFromDefault();
-      const logApi = new Log(kc);
-      const container = pod.spec?.containers?.[0]?.name ?? "";
-      const chunks: Buffer[] = [];
-      const stream = new PassThrough();
-
-      let settled = false;
-      const done = () => {
-        if (settled) {
-          return;
-        }
-        settled = true;
-        stream.destroy();
-        resolve(Buffer.concat(chunks).toString("utf8"));
-      };
-
-      stream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
-      stream.on("end", done);
-      stream.on("close", done);
-      stream.on("error", done);
-
-      void logApi
-        .log(this.namespace, pod.metadata!.name!, container, stream, {
-          follow: false,
-          tailLines: 200,
-          pretty: false,
-          timestamps: false,
-        })
-        .catch(() => done());
-
-      setTimeout(done, 4000);
+    const { game_server_nodes_by_pk: node } = await this.hasura.query({
+      game_server_nodes_by_pk: {
+        __args: { id: gameServerNodeId },
+        id: true,
+        shader_bake_status: true,
+      },
     });
+    if (!node) {
+      this.logger.warn(
+        `[bake ${gameServerNodeId}] reportBakeStatus: node missing`,
+      );
+      return;
+    }
+
+    // setup also reports sub-stages (launching_steam, logging_in) — collapse
+    // anything unknown to the pre-bake lead-in.
+    const ORDER: Record<string, number> = {
+      Initializing: 0,
+      downloading_cs2: 1,
+      launching_cs2: 2,
+      processing_shaders: 3,
+      errored: 99,
+    };
+    const status =
+      body.status in ORDER && body.status !== "Initializing"
+        ? body.status
+        : "Initializing";
+
+    // Never regress the pipeline: a stale tick (e.g. setup re-reporting after
+    // download) must not flip a completed stage back to pending. errored wins.
+    const current = ORDER[node.shader_bake_status ?? "Initializing"] ?? 0;
+    if (status !== "errored" && (ORDER[status] ?? 0) < current) {
+      return;
+    }
+
+    await this.writeBakeProgress(
+      gameServerNodeId,
+      status,
+      this.parseProgress(body.progress),
+      this.parseProgressStage(body.progress_stage),
+    );
   }
 
   private async writeBakeProgress(
