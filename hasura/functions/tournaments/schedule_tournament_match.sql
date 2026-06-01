@@ -17,7 +17,7 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      _match_options_id UUID;
      _round_best_of int;
      _swiss_match_type text;
-     _min_players_per_lineup int;
+     _max_players_per_lineup int;
  BEGIN
    	IF bracket.match_id IS NOT NULL THEN
    	 RETURN bracket.match_id;
@@ -139,10 +139,8 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      RETURNING lineup_1_id, lineup_2_id
        INTO _lineup_1_id, _lineup_2_id;
 
-     SELECT match_min_players_per_lineup(m)
-     INTO _min_players_per_lineup
-     FROM matches m
-     WHERE m.id = _match_id;
+     SELECT tournament_max_players_per_lineup(tournament)
+     INTO _max_players_per_lineup;
 
      SELECT tt.captain_steam_id
      INTO _captain_steam_id_1
@@ -172,7 +170,7 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
                  ELSE 4
              END,
              ttr.player_steam_id
-         LIMIT _min_players_per_lineup
+         LIMIT _max_players_per_lineup
      LOOP
          INSERT INTO match_lineup_players (match_lineup_id, steam_id)
          VALUES (_lineup_1_id, member.player_steam_id);
@@ -196,7 +194,7 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
                  ELSE 4
              END,
              ttr.player_steam_id
-         LIMIT _min_players_per_lineup
+         LIMIT _max_players_per_lineup
      LOOP
          INSERT INTO match_lineup_players (match_lineup_id, steam_id)
          VALUES (_lineup_2_id, member.player_steam_id);
