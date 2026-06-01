@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { GameStreamerService } from "./game-streamer.service";
 import { GameStreamerController } from "./game-streamer.controller";
 import { DemoSessionsController } from "./demo-sessions.controller";
+import { GameServerNodeBakeController } from "./game-server-node-bake.controller";
 import { HudDataController } from "./hud-data.controller";
 import { DemoSessionWatcherService } from "./demo-session-watcher.service";
 import { DemoSessionWatcherGateway } from "./demo-session-watcher.gateway";
@@ -27,6 +28,7 @@ import { loggerFactory } from "../../utilities/LoggerFactory";
   controllers: [
     GameStreamerController,
     DemoSessionsController,
+    GameServerNodeBakeController,
     HudDataController,
   ],
   providers: [
