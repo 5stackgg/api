@@ -2729,6 +2729,14 @@ export class GameStreamerService {
       `[bake ${gameServerNodeId}] starting shader bake (job=${jobName})`,
     );
 
+    // Warm the shaders against the node's real video settings (resolution /
+    // quality drive the pipeline set) so the cache matches live; without this
+    // the bake runs in auto mode and warms the wrong pipelines.
+    const bakeEnv = [
+      { name: "BAKE_NODE_ID", value: gameServerNodeId },
+      ...(await this.buildNodeCs2OptionsEnv(gameServerNodeId)),
+    ];
+
     await batch.createNamespacedJob({
       namespace: this.namespace,
       body: this.buildJobSpec(
@@ -2736,7 +2744,7 @@ export class GameStreamerService {
         gameServerNodeId,
         "warm-shaders",
         gameServerNodeId,
-        [{ name: "BAKE_NODE_ID", value: gameServerNodeId }],
+        bakeEnv,
         { "node-id": gameServerNodeId },
       ),
     });
@@ -2851,6 +2859,7 @@ export class GameStreamerService {
       game_server_nodes_by_pk: {
         __args: { id: gameServerNodeId },
         id: true,
+        shader_bake_status: true,
       },
     });
     if (!node) {
@@ -2860,16 +2869,26 @@ export class GameStreamerService {
       return;
     }
 
-    // collapse setup sub-stages (launching_steam, logging_in) to the pre-bake lead-in
-    const BAKE_STATUSES = new Set([
-      "downloading_cs2",
-      "launching_cs2",
-      "processing_shaders",
-      "errored",
-    ]);
-    const status = BAKE_STATUSES.has(body.status)
-      ? body.status
-      : "Initializing";
+    // setup also reports sub-stages (launching_steam, logging_in) — collapse
+    // anything unknown to the pre-bake lead-in.
+    const ORDER: Record<string, number> = {
+      Initializing: 0,
+      downloading_cs2: 1,
+      launching_cs2: 2,
+      processing_shaders: 3,
+      errored: 99,
+    };
+    const status =
+      body.status in ORDER && body.status !== "Initializing"
+        ? body.status
+        : "Initializing";
+
+    // Never regress the pipeline: a stale tick (e.g. setup re-reporting after
+    // download) must not flip a completed stage back to pending. errored wins.
+    const current = ORDER[node.shader_bake_status ?? "Initializing"] ?? 0;
+    if (status !== "errored" && (ORDER[status] ?? 0) < current) {
+      return;
+    }
 
     await this.writeBakeProgress(
       gameServerNodeId,

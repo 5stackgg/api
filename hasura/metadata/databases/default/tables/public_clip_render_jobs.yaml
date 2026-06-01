@@ -28,6 +28,7 @@ select_permissions:
         - status
         - progress
         - error_message
+        - k8s_job_name
         - clip_id
         - status_history
         - last_status_at
@@ -48,6 +49,7 @@ select_permissions:
         - status
         - progress
         - error_message
+        - k8s_job_name
         - clip_id
         - status_history
         - last_status_at
@@ -67,6 +69,7 @@ select_permissions:
         - status
         - progress
         - error_message
+        - k8s_job_name
         - clip_id
         - status_history
         - last_status_at
@@ -86,6 +89,7 @@ select_permissions:
         - status
         - progress
         - error_message
+        - k8s_job_name
         - clip_id
         - status_history
         - last_status_at

@@ -10,6 +10,7 @@ import { HasuraEvent } from "src/hasura/hasura.controller";
 import { HasuraEventData } from "src/hasura/types/HasuraEventData";
 import { settings_set_input } from "generated/schema";
 import { GameServerNodeService } from "src/game-server-node/game-server-node.service";
+import { GameStreamerService } from "src/matches/game-streamer/game-streamer.service";
 import { LoggingService } from "src/k8s/logging/logging.service";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { PassThrough } from "stream";
@@ -68,7 +69,12 @@ export class SystemController {
       return;
     }
 
-    const isJob = service.startsWith("cs-update:") || service.startsWith("m-");
+    // m- = match jobs, gs- = game-streamer jobs; both read by job-name label.
+    const isJob =
+      service.startsWith("cs-update:") ||
+      service.startsWith("shader-bake:") ||
+      service.startsWith("m-") ||
+      service.startsWith("gs-");
 
     const stream = new PassThrough();
 
@@ -104,7 +110,11 @@ export class SystemController {
           ? GameServerNodeService.GET_UPDATE_JOB_NAME(
               service.replace("cs-update:", ""),
             )
-          : service,
+          : service.startsWith("shader-bake:")
+            ? GameStreamerService.GET_BAKE_JOB_NAME(
+                service.replace("shader-bake:", ""),
+              )
+            : service,
         stream,
         tailLines,
         !!previous,

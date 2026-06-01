@@ -10,6 +10,7 @@ import {
 import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { GameServerNodeService } from "src/game-server-node/game-server-node.service";
+import { GameStreamerService } from "src/matches/game-streamer/game-streamer.service";
 import { LoggingService } from "src/k8s/logging/logging.service";
 
 interface ActiveLogStream {
@@ -51,12 +52,21 @@ export class SystemGateway {
       return;
     }
 
-    const isJob = service.startsWith("cs-update:") || service.startsWith("m-");
+    // m- = match jobs, gs- = game-streamer jobs; both read by job-name label.
+    const isJob =
+      service.startsWith("cs-update:") ||
+      service.startsWith("shader-bake:") ||
+      service.startsWith("m-") ||
+      service.startsWith("gs-");
     const resolvedService = service.startsWith("cs-update:")
       ? GameServerNodeService.GET_UPDATE_JOB_NAME(
           service.replace("cs-update:", ""),
         )
-      : service;
+      : service.startsWith("shader-bake:")
+        ? GameStreamerService.GET_BAKE_JOB_NAME(
+            service.replace("shader-bake:", ""),
+          )
+        : service;
 
     const previousActive = activeLogStreams.get(client);
     if (previousActive) {
