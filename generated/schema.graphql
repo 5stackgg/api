@@ -564,6 +564,7 @@ type TournamentMatchResetImpact {
 }
 
 type WatchDemoOutput {
+  match_map_id: String
   session_id: String!
   stream_url: String!
   success: Boolean!
@@ -11916,7 +11917,6 @@ type match_demo_sessions {
   match_map_demo: match_map_demos
   match_map_demo_id: uuid
   match_map_id: uuid!
-  session_token: String!
   status: String!
   status_history(
     """JSON select path"""
@@ -12031,7 +12031,6 @@ input match_demo_sessions_bool_exp {
   match_map_demo: match_map_demos_bool_exp
   match_map_demo_id: uuid_comparison_exp
   match_map_id: uuid_comparison_exp
-  session_token: String_comparison_exp
   status: String_comparison_exp
   status_history: jsonb_comparison_exp
   steam_account_id: uuid_comparison_exp
@@ -12101,7 +12100,6 @@ input match_demo_sessions_insert_input {
   match_map_demo: match_map_demos_obj_rel_insert_input
   match_map_demo_id: uuid
   match_map_id: uuid
-  session_token: String
   status: String
   status_history: jsonb
   steam_account_id: uuid
@@ -12122,7 +12120,6 @@ type match_demo_sessions_max_fields {
   match_id: uuid
   match_map_demo_id: uuid
   match_map_id: uuid
-  session_token: String
   status: String
   steam_account_id: uuid
   stream_url: String
@@ -12143,7 +12140,6 @@ input match_demo_sessions_max_order_by {
   match_id: order_by
   match_map_demo_id: order_by
   match_map_id: order_by
-  session_token: order_by
   status: order_by
   steam_account_id: order_by
   stream_url: order_by
@@ -12162,7 +12158,6 @@ type match_demo_sessions_min_fields {
   match_id: uuid
   match_map_demo_id: uuid
   match_map_id: uuid
-  session_token: String
   status: String
   steam_account_id: uuid
   stream_url: String
@@ -12183,7 +12178,6 @@ input match_demo_sessions_min_order_by {
   match_id: order_by
   match_map_demo_id: order_by
   match_map_id: order_by
-  session_token: order_by
   status: order_by
   steam_account_id: order_by
   stream_url: order_by
@@ -12226,7 +12220,6 @@ input match_demo_sessions_order_by {
   match_map_demo: match_map_demos_order_by
   match_map_demo_id: order_by
   match_map_id: order_by
-  session_token: order_by
   status: order_by
   status_history: order_by
   steam_account_id: order_by
@@ -12280,9 +12273,6 @@ enum match_demo_sessions_select_column {
   match_map_id
 
   """column name"""
-  session_token
-
-  """column name"""
   status
 
   """column name"""
@@ -12312,7 +12302,6 @@ input match_demo_sessions_set_input {
   match_id: uuid
   match_map_demo_id: uuid
   match_map_id: uuid
-  session_token: String
   status: String
   status_history: jsonb
   steam_account_id: uuid
@@ -12379,7 +12368,6 @@ input match_demo_sessions_stream_cursor_value_input {
   match_id: uuid
   match_map_demo_id: uuid
   match_map_id: uuid
-  session_token: String
   status: String
   status_history: jsonb
   steam_account_id: uuid
@@ -12432,9 +12420,6 @@ enum match_demo_sessions_update_column {
 
   """column name"""
   match_map_id
-
-  """column name"""
-  session_token
 
   """column name"""
   status
@@ -20731,6 +20716,11 @@ type mutation_root {
   """accept team invite"""
   acceptInvite(invite_id: uuid!, type: String!): SuccessOutput
   approveNameChange(name: String!, steam_id: bigint!): SuccessOutput
+
+  """
+  Dev-only — attach the demo player to a standing dev game-streamer pod (no Job boot)
+  """
+  attachDemo: WatchDemoOutput
 
   """Launch a Vulkan shader pre-bake Job on a GPU node"""
   bakeShaders(game_server_node_id: uuid!): SuccessOutput
