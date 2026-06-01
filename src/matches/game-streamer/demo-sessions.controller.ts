@@ -4,10 +4,9 @@ import {
   Logger,
   Param,
   Post,
-  Req,
   Res,
 } from "@nestjs/common";
-import { Request, Response } from "express";
+import { Response } from "express";
 import { GameStreamerService } from "./game-streamer.service";
 import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 
@@ -22,23 +21,11 @@ export class DemoSessionsController {
   public async reportStatus(
     @Param("sessionId") sessionId: string,
     @Body() body: GameStreamerStatusDto,
-    @Req() request: Request,
     @Res() response: Response,
   ) {
     this.logger.log(
       `[demo ${sessionId}] status POST: ${JSON.stringify(body ?? {})}`,
     );
-
-    const session = await this.gameStreamer.validateDemoSessionAuth(
-      sessionId,
-      request.headers["x-origin-auth"],
-    );
-    if (!session) {
-      this.logger.warn(
-        `[demo ${sessionId}] status POST rejected: invalid x-origin-auth`,
-      );
-      return response.status(401).end();
-    }
 
     if (!body || typeof body.status !== "string" || body.status.length === 0) {
       this.logger.warn(

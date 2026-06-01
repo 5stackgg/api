@@ -1099,6 +1099,30 @@ export class MatchesController {
     return { success: true };
   }
 
+  // DEV ONLY — attach the demo player to THE standing hand-launched gs-demo-dev
+  // pod instead of booting a Job. Takes no ids: the pod self-describes them
+  // (session-id label + MATCH_MAP_ID/MATCH_ID env), so the web uses a constant
+  // /demo/dev URL. Throws if no dev=true pod is running (i.e. always, in prod).
+  // Streamer+ only — it's a dev tool and the match is derived from the pod.
+  @HasuraAction()
+  public async attachDemo(data: { user: User }) {
+    const { user } = data;
+    this.logger.log(`attachDemo invoked: user=${user?.steam_id}`);
+
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+
+    const session = await this.gameStreamer.attachDemoSession(user.steam_id);
+
+    return {
+      success: true,
+      session_id: session.sessionId,
+      stream_url: session.streamUrl,
+      match_map_id: session.matchMapId,
+    };
+  }
+
   @HasuraAction()
   public async createClips(data: { match_id: string; user: User }) {
     const { match_id, user } = data;

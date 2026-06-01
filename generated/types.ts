@@ -1679,6 +1679,9 @@ export default {
             ]
         },
         "WatchDemoOutput": {
+            "match_map_id": [
+                51
+            ],
             "session_id": [
                 51
             ],
@@ -17419,9 +17422,6 @@ export default {
             "match_map_id": [
                 3057
             ],
-            "session_token": [
-                51
-            ],
             "status": [
                 51
             ],
@@ -17657,9 +17657,6 @@ export default {
             "match_map_id": [
                 3058
             ],
-            "session_token": [
-                53
-            ],
             "status": [
                 53
             ],
@@ -17758,9 +17755,6 @@ export default {
             "match_map_id": [
                 3057
             ],
-            "session_token": [
-                51
-            ],
             "status": [
                 51
             ],
@@ -17814,9 +17808,6 @@ export default {
             "match_map_id": [
                 3057
             ],
-            "session_token": [
-                51
-            ],
             "status": [
                 51
             ],
@@ -17862,9 +17853,6 @@ export default {
                 1668
             ],
             "match_map_id": [
-                1668
-            ],
-            "session_token": [
                 1668
             ],
             "status": [
@@ -17914,9 +17902,6 @@ export default {
             "match_map_id": [
                 3057
             ],
-            "session_token": [
-                51
-            ],
             "status": [
                 51
             ],
@@ -17962,9 +17947,6 @@ export default {
                 1668
             ],
             "match_map_id": [
-                1668
-            ],
-            "session_token": [
                 1668
             ],
             "status": [
@@ -18051,9 +18033,6 @@ export default {
             "match_map_id": [
                 1668
             ],
-            "session_token": [
-                1668
-            ],
             "status": [
                 1668
             ],
@@ -18123,9 +18102,6 @@ export default {
             ],
             "match_map_id": [
                 3057
-            ],
-            "session_token": [
-                51
             ],
             "status": [
                 51
@@ -18235,9 +18211,6 @@ export default {
             ],
             "match_map_id": [
                 3057
-            ],
-            "session_token": [
-                51
             ],
             "status": [
                 51
@@ -89841,6 +89814,9 @@ export default {
                         "bigint!"
                     ]
                 }
+            ],
+            "attachDemo": [
+                63
             ],
             "bakeShaders": [
                 54,

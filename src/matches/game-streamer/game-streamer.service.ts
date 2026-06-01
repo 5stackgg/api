@@ -20,7 +20,6 @@ import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { SteamConfig } from "../../configs/types/SteamConfig";
-import { randomBytes } from "node:crypto";
 import { PassThrough } from "node:stream";
 import { resolveInClusterApiBase } from "../clips/clips.constants";
 import { LoggingService } from "../../k8s/logging/logging.service";
@@ -691,8 +690,6 @@ export class GameStreamerService {
       await this.stopDemoSessionById(existing.id, existing.k8s_job_name);
     }
 
-    const sessionToken = randomBytes(24).toString("hex");
-
     const streamUrl = `${this.appConfig.gameStreamDomain}/${matchId}/`;
 
     const bootIso = new Date().toISOString();
@@ -705,7 +702,6 @@ export class GameStreamerService {
             match_map_demo_id: options.demoId,
             watcher_steam_id: userSteamId,
             k8s_job_name: "pending",
-            session_token: sessionToken,
             stream_url: streamUrl,
             status: "booting",
             status_history: [{ status: "booting", at: bootIso }],
@@ -747,7 +743,6 @@ export class GameStreamerService {
       { name: "DEMO_URL", value: options.presignedDemoUrl },
       { name: "DEMO_FILE_NAME", value: options.demoFile },
       { name: "DEMO_SESSION_ID", value: sessionId },
-      { name: "DEMO_SESSION_TOKEN", value: sessionToken },
       { name: "HUD_MODE", value: await this.resolveHudMode() },
       { name: "CLIP_VIDEO_CODEC", value: await this.resolveClipVideoCodec() },
       {
@@ -804,6 +799,119 @@ export class GameStreamerService {
       sessionId,
       matchId,
     };
+  }
+
+  /**
+   * DEV ONLY — attach the demo player to the standing gs-demo-dev pod instead of
+   * booting a Job. Derives the ids from that pod (session-id label + MATCH_MAP_ID
+   * / MATCH_ID env) so the web can use a constant /demo/dev URL, registers a
+   * match_demo_sessions row + Service selecting it, and returns the resolved ids.
+   * Gated: production has no dev=true pod, so this throws. Reaper-safe.
+   */
+  public async attachDemoSession(userSteamId: string): Promise<{
+    streamUrl: string;
+    sessionId: string;
+    matchId: string;
+    matchMapId: string;
+  }> {
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const core = kc.makeApiClient(CoreV1Api);
+
+    const pods = await core.listNamespacedPod({
+      namespace: this.namespace,
+      labelSelector: "app=game-streamer,role=demo,dev=true",
+    });
+    const pod = (pods.items ?? []).find(
+      (p) =>
+        (p.status?.phase ?? "") === "Running" &&
+        !!p.metadata?.labels?.["session-id"],
+    );
+    if (!pod) {
+      throw new Error(
+        "no standing dev demo pod found — start the gs-demo-dev pod " +
+          "(a Running pod labelled dev=true with a session-id) first",
+      );
+    }
+    const sessionId = pod.metadata!.labels!["session-id"]!;
+    const env = pod.spec?.containers?.[0]?.env ?? [];
+    const envVal = (name: string) =>
+      env.find((e) => e.name === name)?.value ?? undefined;
+    const matchMapId = envVal("MATCH_MAP_ID");
+    const matchId = envVal("MATCH_ID") ?? pod.metadata?.labels?.["match-id"];
+    if (!matchMapId || !matchId) {
+      throw new Error(
+        `dev demo pod ${pod.metadata?.name} is missing MATCH_MAP_ID/MATCH_ID`,
+      );
+    }
+
+    // Resolve the demo for this map — match_map_demo_id is a FK on the row.
+    const { match_map_demos } = await this.hasura.query({
+      match_map_demos: {
+        __args: { where: { match_map_id: { _eq: matchMapId } }, limit: 1 },
+        id: true,
+      },
+    });
+    const demoId = match_map_demos?.[0]?.id;
+    if (!demoId) {
+      throw new Error(`no demo row for match_map ${matchMapId}`);
+    }
+
+    // A stale session for this (user, map) under a different id would trip the
+    // per-user-per-map unique constraint — clear it before we upsert ours.
+    const existing = await this.findDemoSession(matchMapId, userSteamId);
+    if (existing && existing.id !== sessionId) {
+      await this.stopDemoSessionById(existing.id, existing.k8s_job_name);
+    }
+
+    const streamUrl = `${this.appConfig.gameStreamDomain}/${matchId}/`;
+    const nowIso = new Date().toISOString();
+
+    // Upsert keyed on the pod's session id. status=playing (the pod is already
+    // mid-playback and reports 'playing' only once); the page gates controls on
+    // it, so seed it directly.
+    await this.hasura.mutation({
+      insert_match_demo_sessions_one: {
+        __args: {
+          object: {
+            id: sessionId,
+            match_id: matchId,
+            match_map_id: matchMapId,
+            match_map_demo_id: demoId,
+            watcher_steam_id: userSteamId,
+            k8s_job_name: "dev-attach",
+            stream_url: streamUrl,
+            status: "playing",
+            status_history: [{ status: "playing", at: nowIso }],
+            last_activity_at: nowIso,
+          },
+          on_conflict: {
+            constraint: "match_demo_sessions_pkey" as any,
+            update_columns: [
+              "match_id",
+              "match_map_id",
+              "match_map_demo_id",
+              "watcher_steam_id",
+              "k8s_job_name",
+              "stream_url",
+              "status",
+              "last_activity_at",
+            ] as any,
+          },
+        },
+        id: true,
+      },
+    });
+
+    // Service selects the dev pod by its session-id label (same shape the
+    // Job-boot path uses) so getDemoSpecUrl/demoControl resolve to it.
+    await this.createDemoService(sessionId);
+
+    this.logger.log(
+      `[demo ${sessionId}] DEV attach -> pod ${pod.metadata?.name} (map ${matchMapId})`,
+    );
+
+    return { streamUrl, sessionId, matchId, matchMapId };
   }
 
   public async stopDemoPlayback(matchMapId: string, userSteamId: string) {
@@ -969,7 +1077,6 @@ export class GameStreamerService {
         },
         id: true,
         k8s_job_name: true,
-        session_token: true,
         status: true,
       },
     });
@@ -1001,50 +1108,6 @@ export class GameStreamerService {
         id: true,
       },
     });
-  }
-
-  public async validateDemoSessionAuth(
-    sessionId: string,
-    originAuth: unknown,
-  ): Promise<{ id: string; match_id: string; match_map_id: string } | null> {
-    if (!originAuth || typeof originAuth !== "string") {
-      return null;
-    }
-    const colonIndex = originAuth.indexOf(":");
-    if (colonIndex === -1) {
-      return null;
-    }
-    const headerSessionId = originAuth.substring(0, colonIndex);
-    const presentedToken = originAuth.substring(colonIndex + 1);
-
-    if (!timingSafeStringEqual(headerSessionId, sessionId)) {
-      return null;
-    }
-
-    const { match_demo_sessions } = await this.hasura.query({
-      match_demo_sessions: {
-        __args: {
-          where: { id: { _eq: sessionId } },
-          limit: 1,
-        },
-        id: true,
-        match_id: true,
-        match_map_id: true,
-        session_token: true,
-      },
-    });
-    const row = match_demo_sessions?.[0];
-    if (!row?.session_token) return null;
-
-    if (!timingSafeStringEqual(row.session_token, presentedToken)) {
-      return null;
-    }
-
-    return {
-      id: row.id,
-      match_id: row.match_id,
-      match_map_id: row.match_map_id,
-    };
   }
 
   public async reportDemoStatus(
