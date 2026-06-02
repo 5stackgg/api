@@ -24,7 +24,9 @@ import { LoggingService } from "../../k8s/logging/logging.service";
 // Snapshot TTL is a touch over 2x the producer's 30s cadence so a
 // consumer reading mid-cycle always sees a fresh-or-just-stale frame.
 const SNAPSHOT_REDIS_TTL_SECONDS = 75;
-const snapshotRedisKey = (matchId: string) => `gs:snapshot:${matchId}`;
+export type SnapshotKind = "live" | "demo" | "bake" | "clips";
+const snapshotRedisKey = (kind: SnapshotKind, id: string) =>
+  `gs:snapshot:${kind}:${id}`;
 
 const STREAM_VIEWERS_TTL_SECONDS = 90;
 const STREAM_VIEWERS_INDEX_KEY = "stream:viewers:index";
@@ -153,21 +155,32 @@ export class GameStreamerService {
     this.redis = this.redisManager.getConnection();
   }
 
-  public async storeSnapshot(matchId: string, image: Buffer): Promise<void> {
+  public async storeSnapshot(
+    kind: SnapshotKind,
+    id: string,
+    image: Buffer,
+  ): Promise<void> {
     if (!image || image.length === 0) {
       throw new Error("empty snapshot payload");
     }
     await this.redis.setex(
-      snapshotRedisKey(matchId),
+      snapshotRedisKey(kind, id),
       SNAPSHOT_REDIS_TTL_SECONDS,
       image,
     );
+    await this.redis.publish(
+      "broadcast-message",
+      JSON.stringify({ event: "snapshot:updated", data: { kind, id } }),
+    );
   }
 
-  public async getSnapshot(matchId: string): Promise<Buffer | null> {
+  public async getSnapshot(
+    kind: SnapshotKind,
+    id: string,
+  ): Promise<Buffer | null> {
     // getBuffer() preserves binary bytes; the string-typed get() would
     // re-encode JPEG bytes as utf8 and corrupt them.
-    const buffer = await this.redis.getBuffer(snapshotRedisKey(matchId));
+    const buffer = await this.redis.getBuffer(snapshotRedisKey(kind, id));
     return buffer ?? null;
   }
 
@@ -518,17 +531,8 @@ export class GameStreamerService {
     let res: Response;
     try {
       res = await fetch(url, { signal: AbortSignal.timeout(3_000) });
-    } catch (error) {
-      const cause = (error as Error)?.cause as { code?: string } | undefined;
-      const code = cause?.code ?? (error as { code?: string })?.code;
-      if (
-        code === "ENOTFOUND" ||
-        code === "EAI_AGAIN" ||
-        code === "ECONNREFUSED"
-      ) {
-        return { gsi: null };
-      }
-      throw new Error(`spec state unreachable: ${(error as Error)?.message}`);
+    } catch {
+      return { gsi: null };
     }
     if (!res.ok) {
       return { gsi: null };

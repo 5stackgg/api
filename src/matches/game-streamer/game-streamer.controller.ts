@@ -91,7 +91,7 @@ export class GameStreamerController {
     }
 
     try {
-      await this.gameStreamer.storeSnapshot(matchId, file.buffer);
+      await this.gameStreamer.storeSnapshot("live", matchId, file.buffer);
     } catch (error) {
       this.logger.error(
         `[${matchId}] storeSnapshot failed: ${(error as Error)?.message}`,
@@ -107,7 +107,7 @@ export class GameStreamerController {
     @Param("matchId") matchId: string,
     @Res() response: Response,
   ) {
-    const image = await this.gameStreamer.getSnapshot(matchId);
+    const image = await this.gameStreamer.getSnapshot("live", matchId);
     if (!image) {
       throw new NotFoundException("no snapshot available");
     }

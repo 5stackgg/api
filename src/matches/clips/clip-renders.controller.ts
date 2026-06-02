@@ -2,21 +2,30 @@ import {
   Controller,
   Get,
   Logger,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   Post,
   Req,
   Res,
   Body,
+  UploadedFile,
+  UseInterceptors,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { Request, Response } from "express";
 import { ClipsService } from "./clips.service";
 import { ClipRenderStatusDto } from "./types/ClipRenderStatusDto";
+import { GameStreamerService } from "../game-streamer/game-streamer.service";
+
+const SNAPSHOT_MAX_BYTES = 2 * 1024 * 1024;
 
 @Controller("clip-renders/:jobId")
 export class ClipRendersController {
   constructor(
     private readonly logger: Logger,
     private readonly clips: ClipsService,
+    private readonly gameStreamer: GameStreamerService,
   ) {}
 
   @Get("status")
@@ -147,6 +156,42 @@ export class ClipRendersController {
       );
       response.status(500).json({ error: (error as Error)?.message });
     }
+  }
+
+  @Post("snapshot")
+  @UseInterceptors(FileInterceptor("file"))
+  public async putSnapshot(
+    @Param("jobId") jobId: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [new MaxFileSizeValidator({ maxSize: SNAPSHOT_MAX_BYTES })],
+      }),
+    )
+    file: Express.Multer.File,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const session = await this.clips.validateClipRenderAuth(
+      jobId,
+      request.headers["x-origin-auth"],
+    );
+    if (!session) {
+      this.logger.warn(
+        `[clip ${jobId}] snapshot rejected: invalid x-origin-auth`,
+      );
+      return response.status(401).end();
+    }
+
+    try {
+      await this.gameStreamer.storeSnapshot("clips", jobId, file.buffer);
+    } catch (error) {
+      this.logger.error(
+        `[clip ${jobId}] storeSnapshot failed: ${(error as Error)?.message}`,
+        (error as Error)?.stack,
+      );
+      return response.status(500).json({ error: "internal" });
+    }
+    return response.status(204).end();
   }
 
   @Post("thumbnail")
