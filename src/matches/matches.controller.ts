@@ -1313,7 +1313,7 @@ export class MatchesController {
   public async updateClip(data: {
     clip_id: string;
     title?: string | null;
-    visibility?: "private" | "unlisted" | "match" | "public";
+    visibility?: "private" | "match" | "public";
     target_steam_id?: string | null;
     user: User;
   }) {

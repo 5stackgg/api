@@ -77,9 +77,7 @@ select_permissions:
         - thumbnail_download_url
       filter:
         visibility:
-          _in:
-            - public
-            - unlisted
+          _eq: public
       allow_aggregations: true
   - role: user
     permission:
@@ -106,8 +104,6 @@ select_permissions:
               _eq: X-Hasura-User-Id
           - visibility:
               _eq: public
-          - visibility:
-              _eq: unlisted
           - _and:
               - visibility:
                   _eq: match
