@@ -2,13 +2,20 @@ import {
   Body,
   Controller,
   Logger,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   Post,
   Res,
+  UploadedFile,
+  UseInterceptors,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { Response } from "express";
 import { GameStreamerService } from "./game-streamer.service";
 import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
+
+const SNAPSHOT_MAX_BYTES = 2 * 1024 * 1024;
 
 @Controller("demo-sessions/:sessionId")
 export class DemoSessionsController {
@@ -44,5 +51,29 @@ export class DemoSessionsController {
       return response.status(500).json({ error: "internal" });
     }
     response.status(204).end();
+  }
+
+  @Post("snapshot")
+  @UseInterceptors(FileInterceptor("file"))
+  public async putSnapshot(
+    @Param("sessionId") sessionId: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [new MaxFileSizeValidator({ maxSize: SNAPSHOT_MAX_BYTES })],
+      }),
+    )
+    file: Express.Multer.File,
+    @Res() response: Response,
+  ) {
+    try {
+      await this.gameStreamer.storeSnapshot("demo", sessionId, file.buffer);
+    } catch (error) {
+      this.logger.error(
+        `[demo ${sessionId}] storeSnapshot failed: ${(error as Error)?.message}`,
+        (error as Error)?.stack,
+      );
+      return response.status(500).json({ error: "internal" });
+    }
+    return response.status(204).end();
   }
 }
