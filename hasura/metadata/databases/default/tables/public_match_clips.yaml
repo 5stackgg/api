@@ -77,7 +77,8 @@ select_permissions:
         - thumbnail_download_url
       filter:
         visibility:
-          _eq: public
+          _neq:
+            - private
       allow_aggregations: true
   - role: user
     permission:
