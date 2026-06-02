@@ -68,7 +68,10 @@ select_permissions:
         - enabled
         - end_port_range
         - gpu
+        - gpu_demos_enabled
         - gpu_info
+        - gpu_rendering_enabled
+        - gpu_streaming_enabled
         - id
         - label
         - lan_ip
@@ -102,6 +105,9 @@ update_permissions:
         - demo_network_limiter
         - enabled
         - end_port_range
+        - gpu_demos_enabled
+        - gpu_rendering_enabled
+        - gpu_streaming_enabled
         - label
         - pin_build_id
         - pin_plugin_version

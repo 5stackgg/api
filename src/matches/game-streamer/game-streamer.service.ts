@@ -2255,7 +2255,7 @@ export class GameStreamerService {
       const { rows: gpuRows } = await client.query(
         `SELECT count(*)::int AS n
            FROM game_server_nodes
-          WHERE gpu = true AND enabled = true AND status = 'Online'`,
+          WHERE gpu = true AND enabled = true AND gpu_streaming_enabled = true AND status = 'Online'`,
       );
       const registeredGpus = (gpuRows[0]?.n as number | undefined) ?? 0;
       if (registeredGpus === 0) {
@@ -2277,7 +2277,7 @@ export class GameStreamerService {
   private async claimGpuForDemoSession(sessionId: string): Promise<GpuClaim> {
     return this.postgres.transaction(async (client) => {
       const result = await client.query(
-        `WITH chosen AS (SELECT claim_free_gpu_node() AS id)
+        `WITH chosen AS (SELECT claim_free_gpu_node_for_demo() AS id)
          UPDATE match_demo_sessions
             SET game_server_node_id = chosen.id
            FROM chosen
@@ -2375,6 +2375,11 @@ export class GameStreamerService {
     usePlaycast: boolean,
     mode: "live" | "tv",
   ): Promise<V1EnvVar[]> {
+    const host =
+      server.server_region?.is_lan && server.game_server_node?.node_ip
+        ? server.game_server_node.node_ip
+        : server.host;
+
     // tv mode: respect the GOTV/Playcast path so the broadcast carries the
     // configured tv_delay. Playcast (when enabled) wins over the server's
     // tv_port — same precedence as get_match_tv_connection_string().
@@ -2395,7 +2400,7 @@ export class GameStreamerService {
       return [
         {
           name: "CONNECT_TV_ADDR",
-          value: `${server.host}:${server.tv_port}`,
+          value: `${host}:${server.tv_port}`,
         },
         { name: "CONNECT_TV_PASSWORD", value: matchPassword },
       ];
@@ -2411,13 +2416,8 @@ export class GameStreamerService {
     // IDs into a spectator slot (the server is started with extra slots:
     // `max_players_per_lineup * 2 + 3`), so the streamer ends up observing
     // rather than occupying a roster slot.
-    const liveHost =
-      server.server_region?.is_lan && server.game_server_node?.node_ip
-        ? server.game_server_node.node_ip
-        : server.host;
-
     return [
-      { name: "CONNECT_ADDR", value: `${liveHost}:${server.port}` },
+      { name: "CONNECT_ADDR", value: `${host}:${server.port}` },
       { name: "CONNECT_PASSWORD", value: matchPassword },
     ];
   }
