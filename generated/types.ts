@@ -11108,6 +11108,9 @@ export default {
             "gpu": [
                 3
             ],
+            "gpu_demos_enabled": [
+                3
+            ],
             "gpu_info": [
                 917,
                 {
@@ -11115,6 +11118,12 @@ export default {
                         54
                     ]
                 }
+            ],
+            "gpu_rendering_enabled": [
+                3
+            ],
+            "gpu_streaming_enabled": [
+                3
             ],
             "id": [
                 54
@@ -11585,8 +11594,17 @@ export default {
             "gpu": [
                 4
             ],
+            "gpu_demos_enabled": [
+                4
+            ],
             "gpu_info": [
                 919
+            ],
+            "gpu_rendering_enabled": [
+                4
+            ],
+            "gpu_streaming_enabled": [
+                4
             ],
             "id": [
                 56
@@ -11830,8 +11848,17 @@ export default {
             "gpu": [
                 3
             ],
+            "gpu_demos_enabled": [
+                3
+            ],
             "gpu_info": [
                 917
+            ],
+            "gpu_rendering_enabled": [
+                3
+            ],
+            "gpu_streaming_enabled": [
+                3
             ],
             "id": [
                 54
@@ -12278,7 +12305,16 @@ export default {
             "gpu": [
                 1703
             ],
+            "gpu_demos_enabled": [
+                1703
+            ],
             "gpu_info": [
+                1703
+            ],
+            "gpu_rendering_enabled": [
+                1703
+            ],
+            "gpu_streaming_enabled": [
                 1703
             ],
             "id": [
@@ -12437,8 +12473,17 @@ export default {
             "gpu": [
                 3
             ],
+            "gpu_demos_enabled": [
+                3
+            ],
             "gpu_info": [
                 917
+            ],
+            "gpu_rendering_enabled": [
+                3
+            ],
+            "gpu_streaming_enabled": [
+                3
             ],
             "id": [
                 54
@@ -12822,8 +12867,17 @@ export default {
             "gpu": [
                 3
             ],
+            "gpu_demos_enabled": [
+                3
+            ],
             "gpu_info": [
                 917
+            ],
+            "gpu_rendering_enabled": [
+                3
+            ],
+            "gpu_streaming_enabled": [
+                3
             ],
             "id": [
                 54

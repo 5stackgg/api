@@ -7935,10 +7935,13 @@ type game_server_nodes {
   enabled: Boolean!
   end_port_range: Int
   gpu: Boolean!
+  gpu_demos_enabled: Boolean!
   gpu_info(
     """JSON select path"""
     path: String
   ): jsonb
+  gpu_rendering_enabled: Boolean!
+  gpu_streaming_enabled: Boolean!
   id: String!
   label: String
   lan_ip: inet
@@ -8172,7 +8175,10 @@ input game_server_nodes_bool_exp {
   enabled: Boolean_comparison_exp
   end_port_range: Int_comparison_exp
   gpu: Boolean_comparison_exp
+  gpu_demos_enabled: Boolean_comparison_exp
   gpu_info: jsonb_comparison_exp
+  gpu_rendering_enabled: Boolean_comparison_exp
+  gpu_streaming_enabled: Boolean_comparison_exp
   id: String_comparison_exp
   label: String_comparison_exp
   lan_ip: inet_comparison_exp
@@ -8285,7 +8291,10 @@ input game_server_nodes_insert_input {
   enabled: Boolean
   end_port_range: Int
   gpu: Boolean
+  gpu_demos_enabled: Boolean
   gpu_info: jsonb
+  gpu_rendering_enabled: Boolean
+  gpu_streaming_enabled: Boolean
   id: String
   label: String
   lan_ip: inet
@@ -8482,7 +8491,10 @@ input game_server_nodes_order_by {
   enabled: order_by
   end_port_range: order_by
   gpu: order_by
+  gpu_demos_enabled: order_by
   gpu_info: order_by
+  gpu_rendering_enabled: order_by
+  gpu_streaming_enabled: order_by
   id: order_by
   label: order_by
   lan_ip: order_by
@@ -8574,7 +8586,16 @@ enum game_server_nodes_select_column {
   gpu
 
   """column name"""
+  gpu_demos_enabled
+
+  """column name"""
   gpu_info
+
+  """column name"""
+  gpu_rendering_enabled
+
+  """column name"""
+  gpu_streaming_enabled
 
   """column name"""
   id
@@ -8645,6 +8666,15 @@ enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_a
   gpu
 
   """column name"""
+  gpu_demos_enabled
+
+  """column name"""
+  gpu_rendering_enabled
+
+  """column name"""
+  gpu_streaming_enabled
+
+  """column name"""
   supports_cpu_pinning
 
   """column name"""
@@ -8660,6 +8690,15 @@ enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_o
 
   """column name"""
   gpu
+
+  """column name"""
+  gpu_demos_enabled
+
+  """column name"""
+  gpu_rendering_enabled
+
+  """column name"""
+  gpu_streaming_enabled
 
   """column name"""
   supports_cpu_pinning
@@ -8687,7 +8726,10 @@ input game_server_nodes_set_input {
   enabled: Boolean
   end_port_range: Int
   gpu: Boolean
+  gpu_demos_enabled: Boolean
   gpu_info: jsonb
+  gpu_rendering_enabled: Boolean
+  gpu_streaming_enabled: Boolean
   id: String
   label: String
   lan_ip: inet
@@ -8866,7 +8908,10 @@ input game_server_nodes_stream_cursor_value_input {
   enabled: Boolean
   end_port_range: Int
   gpu: Boolean
+  gpu_demos_enabled: Boolean
   gpu_info: jsonb
+  gpu_rendering_enabled: Boolean
+  gpu_streaming_enabled: Boolean
   id: String
   label: String
   lan_ip: inet
@@ -8981,7 +9026,16 @@ enum game_server_nodes_update_column {
   gpu
 
   """column name"""
+  gpu_demos_enabled
+
+  """column name"""
   gpu_info
+
+  """column name"""
+  gpu_rendering_enabled
+
+  """column name"""
+  gpu_streaming_enabled
 
   """column name"""
   id
