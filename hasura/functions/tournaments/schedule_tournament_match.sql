@@ -5,6 +5,7 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      tournament tournaments;
      stage tournament_stages;
      member RECORD;
+     _lineup RECORD;
      _lineup_1_id UUID;
      _lineup_2_id UUID;
      _captain_steam_id_1 bigint;
@@ -17,6 +18,7 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      _match_options_id UUID;
      _round_best_of int;
      _swiss_match_type text;
+     _max_players_per_lineup int;
  BEGIN
    	IF bracket.match_id IS NOT NULL THEN
    	 RETURN bracket.match_id;
@@ -138,6 +140,12 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      RETURNING lineup_1_id, lineup_2_id
        INTO _lineup_1_id, _lineup_2_id;
 
+     -- Cap by the match's own options (a clone), not the tournament default.
+     SELECT match_max_players_per_lineup(m)
+     INTO _max_players_per_lineup
+     FROM matches m
+     WHERE m.id = _match_id;
+
      SELECT tt.captain_steam_id
      INTO _captain_steam_id_1
      FROM tournament_teams tt
@@ -148,20 +156,35 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      FROM tournament_teams tt
      WHERE tt.id = bracket.tournament_team_id_2;
 
-     FOR member IN
-         SELECT * FROM tournament_team_roster
-         WHERE tournament_team_id = bracket.tournament_team_id_1
+     FOR _lineup IN
+         SELECT * FROM (VALUES
+             (_lineup_1_id, bracket.tournament_team_id_1, _captain_steam_id_1),
+             (_lineup_2_id, bracket.tournament_team_id_2, _captain_steam_id_2)
+         ) AS l(match_lineup_id, tournament_team_id, captain_steam_id)
      LOOP
-         INSERT INTO match_lineup_players (match_lineup_id, steam_id)
-         VALUES (_lineup_1_id, member.player_steam_id);
-     END LOOP;
-
-     FOR member IN
-         SELECT * FROM tournament_team_roster
-         WHERE tournament_team_id = bracket.tournament_team_id_2
-     LOOP
-         INSERT INTO match_lineup_players (match_lineup_id, steam_id)
-         VALUES (_lineup_2_id, member.player_steam_id);
+         FOR member IN
+             SELECT ttr.*
+             FROM tournament_team_roster ttr
+             INNER JOIN tournament_teams tt
+               ON tt.id = ttr.tournament_team_id
+             LEFT JOIN team_roster tr
+               ON tr.team_id = tt.team_id
+              AND tr.player_steam_id = ttr.player_steam_id
+             WHERE ttr.tournament_team_id = _lineup.tournament_team_id
+             ORDER BY
+                 CASE WHEN ttr.player_steam_id = _lineup.captain_steam_id THEN 0 ELSE 1 END,
+                 CASE tr.status
+                     WHEN 'Starter' THEN 1
+                     WHEN 'Substitute' THEN 2
+                     WHEN 'Benched' THEN 3
+                     ELSE 4
+                 END,
+                 ttr.player_steam_id
+             LIMIT _max_players_per_lineup
+         LOOP
+             INSERT INTO match_lineup_players (match_lineup_id, steam_id)
+             VALUES (_lineup.match_lineup_id, member.player_steam_id);
+         END LOOP;
      END LOOP;
 
      IF _captain_steam_id_1 IS NOT NULL THEN
