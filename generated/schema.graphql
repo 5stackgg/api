@@ -268,6 +268,11 @@ input Int_comparison_exp {
   _nin: [Int!]
 }
 
+type KickResult {
+  kicked: Boolean!
+  message: String
+}
+
 type LiveSpecGsi {
   map_name: String
   map_phase: String
@@ -381,6 +386,17 @@ type QueryStat {
   temp_blks_written: Int!
   total_exec_time: Float!
   total_rows: Int!
+}
+
+type SanctionResult {
+  enforced: Boolean!
+  id: String
+  message: String
+}
+
+type ServerPlayer {
+  name: String!
+  steam_id: String!
 }
 
 type SetupGameServeOutput {
@@ -4934,6 +4950,9 @@ enum e_player_roles_enum {
 
   """Ability Manage Matches and bypass restrictions"""
   match_organizer
+
+  """Ability to moderate public servers and players"""
+  moderator
 
   """Streamer"""
   streamer
@@ -9524,6 +9543,338 @@ type game_versions_var_samp_fields {
 
 """aggregate variance on columns"""
 type game_versions_variance_fields {
+  build_id: Float
+}
+
+"""
+columns and relationships of "gamedata_signature_validations"
+"""
+type gamedata_signature_validations {
+  branch: String!
+  build_id: Int!
+
+  """An object relationship"""
+  game_version: game_versions!
+  id: uuid!
+  results(
+    """JSON select path"""
+    path: String
+  ): jsonb
+  status: String!
+  validated_at: timestamptz!
+}
+
+"""
+aggregated selection of "gamedata_signature_validations"
+"""
+type gamedata_signature_validations_aggregate {
+  aggregate: gamedata_signature_validations_aggregate_fields
+  nodes: [gamedata_signature_validations!]!
+}
+
+"""
+aggregate fields of "gamedata_signature_validations"
+"""
+type gamedata_signature_validations_aggregate_fields {
+  avg: gamedata_signature_validations_avg_fields
+  count(columns: [gamedata_signature_validations_select_column!], distinct: Boolean): Int!
+  max: gamedata_signature_validations_max_fields
+  min: gamedata_signature_validations_min_fields
+  stddev: gamedata_signature_validations_stddev_fields
+  stddev_pop: gamedata_signature_validations_stddev_pop_fields
+  stddev_samp: gamedata_signature_validations_stddev_samp_fields
+  sum: gamedata_signature_validations_sum_fields
+  var_pop: gamedata_signature_validations_var_pop_fields
+  var_samp: gamedata_signature_validations_var_samp_fields
+  variance: gamedata_signature_validations_variance_fields
+}
+
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input gamedata_signature_validations_append_input {
+  results: jsonb
+}
+
+"""aggregate avg on columns"""
+type gamedata_signature_validations_avg_fields {
+  build_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "gamedata_signature_validations". All fields are combined with a logical 'AND'.
+"""
+input gamedata_signature_validations_bool_exp {
+  _and: [gamedata_signature_validations_bool_exp!]
+  _not: gamedata_signature_validations_bool_exp
+  _or: [gamedata_signature_validations_bool_exp!]
+  branch: String_comparison_exp
+  build_id: Int_comparison_exp
+  game_version: game_versions_bool_exp
+  id: uuid_comparison_exp
+  results: jsonb_comparison_exp
+  status: String_comparison_exp
+  validated_at: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "gamedata_signature_validations"
+"""
+enum gamedata_signature_validations_constraint {
+  """
+  unique or primary key constraint on columns "build_id", "branch"
+  """
+  gamedata_signature_validations_build_branch_idx
+
+  """
+  unique or primary key constraint on columns "id"
+  """
+  gamedata_signature_validations_pkey
+}
+
+"""
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input gamedata_signature_validations_delete_at_path_input {
+  results: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input gamedata_signature_validations_delete_elem_input {
+  results: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input gamedata_signature_validations_delete_key_input {
+  results: String
+}
+
+"""
+input type for incrementing numeric columns in table "gamedata_signature_validations"
+"""
+input gamedata_signature_validations_inc_input {
+  build_id: Int
+}
+
+"""
+input type for inserting data into table "gamedata_signature_validations"
+"""
+input gamedata_signature_validations_insert_input {
+  branch: String
+  build_id: Int
+  game_version: game_versions_obj_rel_insert_input
+  id: uuid
+  results: jsonb
+  status: String
+  validated_at: timestamptz
+}
+
+"""aggregate max on columns"""
+type gamedata_signature_validations_max_fields {
+  branch: String
+  build_id: Int
+  id: uuid
+  status: String
+  validated_at: timestamptz
+}
+
+"""aggregate min on columns"""
+type gamedata_signature_validations_min_fields {
+  branch: String
+  build_id: Int
+  id: uuid
+  status: String
+  validated_at: timestamptz
+}
+
+"""
+response of any mutation on the table "gamedata_signature_validations"
+"""
+type gamedata_signature_validations_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [gamedata_signature_validations!]!
+}
+
+"""
+on_conflict condition type for table "gamedata_signature_validations"
+"""
+input gamedata_signature_validations_on_conflict {
+  constraint: gamedata_signature_validations_constraint!
+  update_columns: [gamedata_signature_validations_update_column!]! = []
+  where: gamedata_signature_validations_bool_exp
+}
+
+"""
+Ordering options when selecting data from "gamedata_signature_validations".
+"""
+input gamedata_signature_validations_order_by {
+  branch: order_by
+  build_id: order_by
+  game_version: game_versions_order_by
+  id: order_by
+  results: order_by
+  status: order_by
+  validated_at: order_by
+}
+
+"""primary key columns input for table: gamedata_signature_validations"""
+input gamedata_signature_validations_pk_columns_input {
+  id: uuid!
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input gamedata_signature_validations_prepend_input {
+  results: jsonb
+}
+
+"""
+select columns of table "gamedata_signature_validations"
+"""
+enum gamedata_signature_validations_select_column {
+  """column name"""
+  branch
+
+  """column name"""
+  build_id
+
+  """column name"""
+  id
+
+  """column name"""
+  results
+
+  """column name"""
+  status
+
+  """column name"""
+  validated_at
+}
+
+"""
+input type for updating data in table "gamedata_signature_validations"
+"""
+input gamedata_signature_validations_set_input {
+  branch: String
+  build_id: Int
+  id: uuid
+  results: jsonb
+  status: String
+  validated_at: timestamptz
+}
+
+"""aggregate stddev on columns"""
+type gamedata_signature_validations_stddev_fields {
+  build_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type gamedata_signature_validations_stddev_pop_fields {
+  build_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type gamedata_signature_validations_stddev_samp_fields {
+  build_id: Float
+}
+
+"""
+Streaming cursor of the table "gamedata_signature_validations"
+"""
+input gamedata_signature_validations_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: gamedata_signature_validations_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input gamedata_signature_validations_stream_cursor_value_input {
+  branch: String
+  build_id: Int
+  id: uuid
+  results: jsonb
+  status: String
+  validated_at: timestamptz
+}
+
+"""aggregate sum on columns"""
+type gamedata_signature_validations_sum_fields {
+  build_id: Int
+}
+
+"""
+update columns of table "gamedata_signature_validations"
+"""
+enum gamedata_signature_validations_update_column {
+  """column name"""
+  branch
+
+  """column name"""
+  build_id
+
+  """column name"""
+  id
+
+  """column name"""
+  results
+
+  """column name"""
+  status
+
+  """column name"""
+  validated_at
+}
+
+input gamedata_signature_validations_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: gamedata_signature_validations_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: gamedata_signature_validations_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: gamedata_signature_validations_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: gamedata_signature_validations_delete_key_input
+
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: gamedata_signature_validations_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: gamedata_signature_validations_prepend_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: gamedata_signature_validations_set_input
+
+  """filter the rows which have to be updated"""
+  where: gamedata_signature_validations_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type gamedata_signature_validations_var_pop_fields {
+  build_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type gamedata_signature_validations_var_samp_fields {
+  build_id: Float
+}
+
+"""aggregate variance on columns"""
+type gamedata_signature_validations_variance_fields {
   build_id: Float
 }
 
@@ -21222,6 +21573,19 @@ type mutation_root {
   delete_game_versions_by_pk(build_id: Int!): game_versions
 
   """
+  delete data from the table: "gamedata_signature_validations"
+  """
+  delete_gamedata_signature_validations(
+    """filter the rows which have to be deleted"""
+    where: gamedata_signature_validations_bool_exp!
+  ): gamedata_signature_validations_mutation_response
+
+  """
+  delete single row from the table: "gamedata_signature_validations"
+  """
+  delete_gamedata_signature_validations_by_pk(id: uuid!): gamedata_signature_validations
+
+  """
   delete data from the table: "leaderboard_entries"
   """
   delete_leaderboard_entries(
@@ -22733,6 +23097,28 @@ type mutation_root {
   ): game_versions
 
   """
+  insert data into the table: "gamedata_signature_validations"
+  """
+  insert_gamedata_signature_validations(
+    """the rows to be inserted"""
+    objects: [gamedata_signature_validations_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: gamedata_signature_validations_on_conflict
+  ): gamedata_signature_validations_mutation_response
+
+  """
+  insert a single row into the table: "gamedata_signature_validations"
+  """
+  insert_gamedata_signature_validations_one(
+    """the row to be inserted"""
+    object: gamedata_signature_validations_insert_input!
+
+    """upsert condition"""
+    on_conflict: gamedata_signature_validations_on_conflict
+  ): gamedata_signature_validations
+
+  """
   insert data into the table: "leaderboard_entries"
   """
   insert_leaderboard_entries(
@@ -24022,6 +24408,7 @@ type mutation_root {
     object: v_pool_maps_insert_input!
   ): v_pool_maps
   joinLineup(code: String, lineup_id: String!, match_id: String!): SuccessOutput
+  kickServerPlayer(reason: String, serverId: String!, steam_id: String!): KickResult!
   leaveLineup(match_id: String!): SuccessOutput
   linkSteamMatchHistory(auth_code: String!, share_code: String!): SteamMatchHistoryLinkOutput
 
@@ -24102,6 +24489,7 @@ type mutation_root {
   """
   retryClipRenderBatch(match_map_id: uuid!, only_failed: Boolean): SuccessOutput
   retryPendingMatchImport(valve_match_id: String!): PendingMatchImportActionOutput
+  sanctionServerPlayer(duration: Float, reason: String, serverId: String, steam_id: String!, type: String!): SanctionResult!
 
   """scheduleMatch"""
   scheduleMatch(match_id: uuid!, time: timestamptz): SuccessOutput
@@ -24138,6 +24526,7 @@ type mutation_root {
   testUpload: TestUploadResponse
   unlinkDiscord: SuccessOutput
   unlinkSteamMatchHistory: SuccessOutput
+  unsanctionServerPlayer(serverId: String, steam_id: String!, type: String!): SanctionResult!
 
   """Owner-only patch for clip title / visibility / target_steam_id."""
   updateClip(clip_id: uuid!, target_steam_id: String, title: String, visibility: String): SuccessOutput
@@ -25263,6 +25652,82 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [game_versions_updates!]!
   ): [game_versions_mutation_response]
+
+  """
+  update data of the table: "gamedata_signature_validations"
+  """
+  update_gamedata_signature_validations(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: gamedata_signature_validations_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: gamedata_signature_validations_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: gamedata_signature_validations_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: gamedata_signature_validations_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: gamedata_signature_validations_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: gamedata_signature_validations_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: gamedata_signature_validations_set_input
+
+    """filter the rows which have to be updated"""
+    where: gamedata_signature_validations_bool_exp!
+  ): gamedata_signature_validations_mutation_response
+
+  """
+  update single row of the table: "gamedata_signature_validations"
+  """
+  update_gamedata_signature_validations_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: gamedata_signature_validations_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: gamedata_signature_validations_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: gamedata_signature_validations_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: gamedata_signature_validations_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: gamedata_signature_validations_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: gamedata_signature_validations_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: gamedata_signature_validations_set_input
+    pk_columns: gamedata_signature_validations_pk_columns_input!
+  ): gamedata_signature_validations
+
+  """
+  update multiples rows of table: "gamedata_signature_validations"
+  """
+  update_gamedata_signature_validations_many(
+    """updates to execute, in order"""
+    updates: [gamedata_signature_validations_updates!]!
+  ): [gamedata_signature_validations_mutation_response]
 
   """
   update data of the table: "leaderboard_entries"
@@ -27411,6 +27876,11 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [v_pool_maps_updates!]!
   ): [v_pool_maps_mutation_response]
+
+  """
+  Validate CS2 gamedata signatures/offsets on a node (5stack.gg test instance only)
+  """
+  validateGamedata(game_server_node_id: uuid!): SuccessOutput
 
   """
   Spawn a per-user game-streamer pod to play back a finished match's demo
@@ -45119,6 +45589,51 @@ type query_root {
   """fetch data from the table: "game_versions" using primary key columns"""
   game_versions_by_pk(build_id: Int!): game_versions
 
+  """
+  fetch data from the table: "gamedata_signature_validations"
+  """
+  gamedata_signature_validations(
+    """distinct select on columns"""
+    distinct_on: [gamedata_signature_validations_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [gamedata_signature_validations_order_by!]
+
+    """filter the rows returned"""
+    where: gamedata_signature_validations_bool_exp
+  ): [gamedata_signature_validations!]!
+
+  """
+  fetch aggregated fields from the table: "gamedata_signature_validations"
+  """
+  gamedata_signature_validations_aggregate(
+    """distinct select on columns"""
+    distinct_on: [gamedata_signature_validations_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [gamedata_signature_validations_order_by!]
+
+    """filter the rows returned"""
+    where: gamedata_signature_validations_bool_exp
+  ): gamedata_signature_validations_aggregate!
+
+  """
+  fetch data from the table: "gamedata_signature_validations" using primary key columns
+  """
+  gamedata_signature_validations_by_pk(id: uuid!): gamedata_signature_validations
+
   """Get list of active connections"""
   getActiveConnections: [ActiveConnection]!
 
@@ -45134,6 +45649,7 @@ type query_root {
   """Get database-wide statistics"""
   getDatabaseStats: DatabaseStats!
   getDedicatedServerInfo: [DedicatedSeverInfo]!
+  getDedicatedServerPlayers(serverId: String!): [ServerPlayer!]!
 
   """Get index I/O statistics"""
   getIndexIOStats(schemas: [String!]): [IndexIOStat]!
@@ -52062,6 +52578,65 @@ type subscription_root {
     """filter the rows returned"""
     where: game_versions_bool_exp
   ): [game_versions!]!
+
+  """
+  fetch data from the table: "gamedata_signature_validations"
+  """
+  gamedata_signature_validations(
+    """distinct select on columns"""
+    distinct_on: [gamedata_signature_validations_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [gamedata_signature_validations_order_by!]
+
+    """filter the rows returned"""
+    where: gamedata_signature_validations_bool_exp
+  ): [gamedata_signature_validations!]!
+
+  """
+  fetch aggregated fields from the table: "gamedata_signature_validations"
+  """
+  gamedata_signature_validations_aggregate(
+    """distinct select on columns"""
+    distinct_on: [gamedata_signature_validations_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [gamedata_signature_validations_order_by!]
+
+    """filter the rows returned"""
+    where: gamedata_signature_validations_bool_exp
+  ): gamedata_signature_validations_aggregate!
+
+  """
+  fetch data from the table: "gamedata_signature_validations" using primary key columns
+  """
+  gamedata_signature_validations_by_pk(id: uuid!): gamedata_signature_validations
+
+  """
+  fetch data from the table in a streaming manner: "gamedata_signature_validations"
+  """
+  gamedata_signature_validations_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [gamedata_signature_validations_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: gamedata_signature_validations_bool_exp
+  ): [gamedata_signature_validations!]!
 
   """
   execute function "get_leaderboard" which returns "leaderboard_entries"

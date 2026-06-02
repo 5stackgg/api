@@ -468,6 +468,214 @@ export class DedicatedServersService {
     }
   }
 
+  public async getServerPlayerList(
+    serverId: string,
+  ): Promise<Array<{ steam_id: string; name: string; userid: string | null }>> {
+    const { servers_by_pk: server } = await this.hasura.query({
+      servers_by_pk: {
+        __args: { id: serverId },
+        game: true,
+      },
+    });
+
+    if (!server) {
+      throw Error(`unable to find server ${serverId}`);
+    }
+
+    const rcon = await this.RconService.connect(serverId);
+    if (!rcon) {
+      throw Error(`unable to connect to rcon for server ${serverId}`);
+    }
+
+    try {
+      if (server.game === "csgo") {
+        return this.parseStatusText(await rcon.send("status"));
+      }
+
+      return this.parseStatusJson(await rcon.send("status_json"));
+    } finally {
+      await this.RconService.disconnect(serverId);
+    }
+  }
+
+  public async resolveServerUserId(
+    serverId: string,
+    steamId: string,
+  ): Promise<string | null> {
+    const rcon = await this.RconService.connect(serverId);
+    if (!rcon) {
+      return null;
+    }
+
+    try {
+      const output = await rcon.send("status");
+      const userid = this.parseUserIdFromStatus(output, steamId);
+
+      if (!userid) {
+        this.logger.warn(
+          `could not resolve userid for ${steamId} on ${serverId}; status output:\n${output}`,
+        );
+      }
+
+      return userid;
+    } finally {
+      await this.RconService.disconnect(serverId);
+    }
+  }
+
+  private parseUserIdFromStatus(
+    output: string,
+    steamId: string,
+  ): string | null {
+    let steamId3: string | null = null;
+    let steamLegacy: RegExp | null = null;
+
+    try {
+      const accountId = BigInt(steamId) - 76561197960265728n;
+      steamId3 = `[U:1:${accountId}]`;
+      const authServer = accountId % 2n;
+      const accountNumber = accountId / 2n;
+      steamLegacy = new RegExp(`STEAM_[0-9]:${authServer}:${accountNumber}\\b`);
+    } catch {
+      steamId3 = null;
+    }
+
+    for (const rawLine of output.split(/\r?\n/)) {
+      const line = rawLine.trim();
+
+      const matches =
+        (steamId3 && line.includes(steamId3)) ||
+        line.includes(steamId) ||
+        (steamLegacy !== null && steamLegacy.test(line));
+
+      if (!matches) {
+        continue;
+      }
+
+      const beforeName = line.match(/(\d+)\s+"/);
+      if (beforeName) {
+        return beforeName[1];
+      }
+
+      const anyNumber = line.match(/\d+/);
+      if (anyNumber) {
+        return anyNumber[0];
+      }
+    }
+
+    return null;
+  }
+
+  private parseStatusJson(
+    raw: string,
+  ): Array<{ steam_id: string; name: string; userid: string | null }> {
+    let status: Record<string, unknown>;
+    try {
+      status = JSON.parse(raw);
+    } catch {
+      return [];
+    }
+
+    const clients = (status.clients ||
+      status.players ||
+      (status.server as Record<string, unknown>)?.clients ||
+      []) as Array<Record<string, unknown>>;
+
+    if (!Array.isArray(clients)) {
+      return [];
+    }
+
+    const players: Array<{
+      steam_id: string;
+      name: string;
+      userid: string | null;
+    }> = [];
+
+    for (const client of clients) {
+      const steamId =
+        client.steamid64 ||
+        client.steamid ||
+        client.steamId ||
+        client.xuid ||
+        client.accountid;
+
+      if (
+        !steamId ||
+        client.fake_player ||
+        client.is_bot ||
+        client.bot ||
+        !this.isRealSteamId(`${steamId}`)
+      ) {
+        continue;
+      }
+
+      const userid =
+        client.userid ??
+        client.userId ??
+        client.user_id ??
+        client.id ??
+        client.slot;
+
+      players.push({
+        steam_id: `${steamId}`,
+        name: `${client.name ?? ""}`,
+        userid: userid != null ? `${userid}` : null,
+      });
+    }
+
+    return players;
+  }
+
+  private isRealSteamId(steamId: string): boolean {
+    if (!/^\d+$/.test(steamId)) {
+      return false;
+    }
+
+    try {
+      const id = BigInt(steamId);
+      return id >= 76561197960265728n && id <= 76561202255233023n;
+    } catch {
+      return false;
+    }
+  }
+
+  private parseStatusText(
+    raw: string,
+  ): Array<{ steam_id: string; name: string; userid: string | null }> {
+    const players: Array<{
+      steam_id: string;
+      name: string;
+      userid: string | null;
+    }> = [];
+
+    for (const line of raw.split(/\r?\n/)) {
+      const steamMatch = line.match(/STEAM_(\d):(\d):(\d+)/);
+      if (!steamMatch) {
+        continue;
+      }
+
+      const useridMatch = line.match(/^#\s*(\d+)/);
+      const nameMatch = line.match(/"([^"]*)"/);
+
+      const universe = BigInt(steamMatch[1]);
+      const authServer = BigInt(steamMatch[2]);
+      const accountNumber = BigInt(steamMatch[3]);
+      const steamId64 =
+        76561197960265728n +
+        (universe > 0n ? (universe - 1n) << 56n : 0n) +
+        accountNumber * 2n +
+        authServer;
+
+      players.push({
+        steam_id: steamId64.toString(),
+        name: nameMatch ? nameMatch[1] : "",
+        userid: useridMatch ? useridMatch[1] : null,
+      });
+    }
+
+    return players;
+  }
+
   public async pingDedicatedServer(serverId: string): Promise<void> {
     const { servers_by_pk: server } = await this.hasura.query({
       servers_by_pk: {

@@ -39,6 +39,7 @@ import { SystemService } from "./system/system.service";
 import { ClientsModule } from "@nestjs/microservices";
 import { Transport } from "@nestjs/microservices";
 import { DedicatedServersModule } from "./dedicated-servers/dedicated-servers.module";
+import { SanctionsModule } from "./sanctions/sanctions.module";
 import { K8sModule } from "./k8s/k8s.module";
 import { FileManagerModule } from "./file-manager/file-manager.module";
 import { BrandingModule } from "./branding/branding.module";
@@ -127,6 +128,7 @@ import { SteamMatchHistoryModule } from "./steam-match-history/steam-match-histo
     InvitesModule,
     DemosModule,
     DedicatedServersModule,
+    SanctionsModule,
     K8sModule,
     FileManagerModule,
     BrandingModule,

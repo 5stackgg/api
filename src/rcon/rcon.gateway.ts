@@ -6,16 +6,12 @@ import {
 } from "@nestjs/websockets";
 import { RconService } from "../rcon/rcon.service";
 import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketClient";
-import { HasuraService } from "src/hasura/hasura.service";
 
 @WebSocketGateway({
   path: "/ws/web",
 })
 export class RconGateway {
-  constructor(
-    private readonly hasura: HasuraService,
-    private readonly rconService: RconService,
-  ) {}
+  constructor(private readonly rconService: RconService) {}
 
   @SubscribeMessage("rcon")
   async rconEvent(
@@ -34,35 +30,6 @@ export class RconGateway {
       client.user.role === "streamer"
     ) {
       return;
-    }
-
-    const { servers_by_pk: server } = await this.hasura.query({
-      servers_by_pk: {
-        __args: {
-          id: data.serverId,
-        },
-        current_match: {
-          id: true,
-        },
-      },
-    });
-
-    if (server?.current_match && client.user.role !== "administrator") {
-      const { matches_by_pk } = await this.hasura.query(
-        {
-          matches_by_pk: {
-            __args: {
-              id: server.current_match.id,
-            },
-            is_organizer: true,
-          },
-        },
-        client.user.steam_id,
-      );
-
-      if (!matches_by_pk?.is_organizer) {
-        return;
-      }
     }
 
     const rcon = await this.rconService.connect(data.serverId);

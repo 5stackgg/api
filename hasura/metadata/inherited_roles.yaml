@@ -3,7 +3,10 @@
     - tournament_organizer
 - role_name: match_organizer
   role_set:
-    - verified_user
+    - moderator
+- role_name: moderator
+  role_set:
+    - streamer
 - role_name: streamer
   role_set:
     - verified_user

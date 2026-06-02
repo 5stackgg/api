@@ -6,6 +6,8 @@ import { DedicatedServersService } from "./dedicated-servers.service";
 import { HasuraService } from "src/hasura/hasura.service";
 import { HasuraAction } from "src/hasura/hasura.controller";
 import { game_server_nodes_set_input } from "generated/schema";
+import { User } from "src/auth/types/User";
+import { isRoleAbove } from "src/utilities/isRoleAbove";
 
 @Controller("dedicated-servers")
 export class DedicatedServersController {
@@ -104,5 +106,43 @@ export class DedicatedServersController {
   @HasuraAction()
   public async getDedicatedServerInfo() {
     return await this.dedicatedServersService.getAllDedicatedServerStats();
+  }
+
+  @HasuraAction()
+  public async getDedicatedServerPlayers(data: {
+    serverId: string;
+    user: User;
+  }) {
+    const { serverId, user } = data;
+
+    if (!user || !isRoleAbove(user.role, "moderator")) {
+      throw Error("you are not allowed to view server players");
+    }
+
+    const players =
+      await this.dedicatedServersService.getServerPlayerList(serverId);
+
+    if (players.length > 0) {
+      await this.hasura.mutation({
+        insert_players: {
+          __args: {
+            objects: players.map((player) => ({
+              steam_id: player.steam_id,
+              name: player.name || `Player ${player.steam_id}`,
+            })),
+            on_conflict: {
+              constraint: "players_pkey",
+              update_columns: [],
+            },
+          },
+          __typename: true,
+        },
+      });
+    }
+
+    return players.map((player) => ({
+      steam_id: player.steam_id,
+      name: player.name,
+    }));
   }
 }

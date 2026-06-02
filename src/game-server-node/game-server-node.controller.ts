@@ -8,6 +8,7 @@ import { GameServerQueues } from "./enums/GameServerQueues";
 import { Queue } from "bullmq";
 import { MarkDedicatedServerOffline } from "./jobs/MarkDedicatedServerOffline";
 import { BakeShaders } from "./jobs/BakeShaders";
+import { ValidateGamedata } from "./jobs/ValidateGamedata";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "../configs/types/AppConfig";
 import { Request, Response } from "express";
@@ -47,6 +48,8 @@ export class GameServerNodeController {
     private readonly nodeOfflineQueue: Queue,
     @InjectQueue(GameServerQueues.BakeShaders)
     private readonly bakeShadersQueue: Queue,
+    @InjectQueue(GameServerQueues.ValidateGamedata)
+    private readonly validateGamedataQueue: Queue,
   ) {
     this.appConfig = this.config.get<AppConfig>("app");
   }
@@ -322,6 +325,48 @@ export class GameServerNodeController {
       data.game_server_node_id,
       true,
       data.game ?? "cs2",
+    );
+
+    return {
+      success: true,
+    };
+  }
+
+  @HasuraAction()
+  public async validateGamedata(data: { game_server_node_id: string }) {
+    if (process.env.WEB_DOMAIN !== "5stack.gg") {
+      return {
+        success: false,
+      };
+    }
+
+    const { game_server_nodes_by_pk } = await this.hasura.query({
+      game_server_nodes_by_pk: {
+        __args: {
+          id: data.game_server_node_id,
+        },
+        build_id: true,
+      },
+    });
+
+    if (!game_server_nodes_by_pk?.build_id) {
+      return {
+        success: false,
+      };
+    }
+
+    await this.validateGamedataQueue.add(
+      ValidateGamedata.name,
+      {
+        gameServerNodeId: data.game_server_node_id,
+        buildId: game_server_nodes_by_pk.build_id,
+      },
+      {
+        jobId: `validate.${data.game_server_node_id}.manual`,
+        attempts: 1,
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
     );
 
     return {

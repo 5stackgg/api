@@ -11,18 +11,6 @@ object_relationships:
   - name: sanctioned_by
     using:
       foreign_key_constraint_on: sanctioned_by_steam_id
-insert_permissions:
-  - role: match_organizer
-    permission:
-      check: {}
-      set:
-        sanctioned_by_steam_id: x-hasura-user-id
-      columns:
-        - player_steam_id
-        - reason
-        - remove_sanction_date
-        - type
-    comment: ""
 select_permissions:
   - role: guest
     permission:
@@ -44,10 +32,12 @@ update_permissions:
       filter: {}
       check: null
     comment: ""
-delete_permissions:
-  - role: match_organizer
+  - role: moderator
     permission:
+      columns:
+        - remove_sanction_date
       filter: {}
+      check: null
     comment: ""
 event_triggers:
   - name: player_sanctions

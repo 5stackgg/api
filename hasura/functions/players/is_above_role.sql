@@ -4,10 +4,10 @@ LANGUAGE sql
 STABLE
 AS $$
     SELECT array_position(
-        ARRAY['guest', 'user', 'verified_user', 'streamer', 'match_organizer', 'tournament_organizer', 'administrator', 'admin'],
+        ARRAY['guest', 'user', 'verified_user', 'streamer', 'moderator', 'match_organizer', 'tournament_organizer', 'administrator', 'admin'],
         hasura_session ->> 'x-hasura-role'
     ) >= array_position(
-        ARRAY['guest', 'user', 'verified_user', 'streamer', 'match_organizer', 'tournament_organizer', 'administrator', 'admin'],
+        ARRAY['guest', 'user', 'verified_user', 'streamer', 'moderator', 'match_organizer', 'tournament_organizer', 'administrator', 'admin'],
         role::text
     );
 $$;
@@ -18,10 +18,10 @@ LANGUAGE sql
 STABLE
 AS $$
     SELECT array_position(
-        ARRAY['guest', 'user', 'verified_user', 'streamer', 'match_organizer', 'tournament_organizer', 'administrator', 'admin'],
+        ARRAY['guest', 'user', 'verified_user', 'streamer', 'moderator', 'match_organizer', 'tournament_organizer', 'administrator', 'admin'],
         role::text
     ) <= array_position(
-        ARRAY['guest', 'user', 'verified_user', 'streamer', 'match_organizer', 'tournament_organizer', 'administrator', 'admin'],
+        ARRAY['guest', 'user', 'verified_user', 'streamer', 'moderator', 'match_organizer', 'tournament_organizer', 'administrator', 'admin'],
         user_role
     );
 $$;
