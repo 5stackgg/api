@@ -1,4 +1,3 @@
-import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 
 export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
@@ -59,10 +58,6 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
           },
         });
       }
-    }
-
-    if (players.length < ExpectedPlayers[match.options.type]) {
-      return;
     }
 
     // remove anyone not in the match

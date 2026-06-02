@@ -108,27 +108,30 @@ describe("MatchUpdatedLineupsEvent", () => {
     });
   });
 
-  it("ignores partial lineup updates", async () => {
-    const { processor, hasura } = buildProcessor([]);
+  it("processes partial lineup updates", async () => {
+    const { processor, hasura } = buildProcessor(["1", "2", "3"]);
 
     processor.setData("match-1", {
       lineups: {
-        lineup_1: lineups.lineup_1,
-        lineup_2: lineups.lineup_2.slice(0, 4),
+        lineup_1: lineups.lineup_1.slice(0, 2),
+        lineup_2: [],
       },
     });
 
     await processor.process();
 
-    expect(hasura.mutation).not.toHaveBeenCalledWith(
+    expect(hasura.mutation).toHaveBeenCalledWith(
       expect.objectContaining({
         delete_match_lineup_players: expect.any(Object),
       }),
     );
-    expect(hasura.mutation).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        insert_match_lineup_players: expect.any(Object),
-      }),
-    );
+    expect(hasura.mutation).toHaveBeenCalledWith({
+      insert_match_lineup_players: {
+        __args: {
+          objects: [],
+        },
+        affected_rows: true,
+      },
+    });
   });
 });
