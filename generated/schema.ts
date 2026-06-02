@@ -1616,6 +1616,75 @@ export type e_map_pool_types_select_column = 'description' | 'value'
 export type e_map_pool_types_update_column = 'description' | 'value'
 
 
+/** columns and relationships of "e_match_clip_visibility" */
+export interface e_match_clip_visibility {
+    description: Scalars['String']
+    /** An array relationship */
+    match_clips: match_clips[]
+    /** An aggregate relationship */
+    match_clips_aggregate: match_clips_aggregate
+    value: Scalars['String']
+    __typename: 'e_match_clip_visibility'
+}
+
+
+/** aggregated selection of "e_match_clip_visibility" */
+export interface e_match_clip_visibility_aggregate {
+    aggregate: (e_match_clip_visibility_aggregate_fields | null)
+    nodes: e_match_clip_visibility[]
+    __typename: 'e_match_clip_visibility_aggregate'
+}
+
+
+/** aggregate fields of "e_match_clip_visibility" */
+export interface e_match_clip_visibility_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_match_clip_visibility_max_fields | null)
+    min: (e_match_clip_visibility_min_fields | null)
+    __typename: 'e_match_clip_visibility_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_match_clip_visibility" */
+export type e_match_clip_visibility_constraint = 'e_match_clip_visibility_pkey'
+
+export type e_match_clip_visibility_enum = 'match' | 'private' | 'public'
+
+
+/** aggregate max on columns */
+export interface e_match_clip_visibility_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_match_clip_visibility_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_match_clip_visibility_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_match_clip_visibility_min_fields'
+}
+
+
+/** response of any mutation on the table "e_match_clip_visibility" */
+export interface e_match_clip_visibility_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_match_clip_visibility[]
+    __typename: 'e_match_clip_visibility_mutation_response'
+}
+
+
+/** select columns of table "e_match_clip_visibility" */
+export type e_match_clip_visibility_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_match_clip_visibility" */
+export type e_match_clip_visibility_update_column = 'description' | 'value'
+
+
 /** columns and relationships of "e_match_map_status" */
 export interface e_match_map_status {
     description: Scalars['String']
@@ -4248,7 +4317,7 @@ export interface match_clips {
     /** An object relationship */
     user: (players | null)
     user_steam_id: (Scalars['bigint'] | null)
-    visibility: Scalars['String']
+    visibility: e_match_clip_visibility_enum
     __typename: 'match_clips'
 }
 
@@ -4313,7 +4382,6 @@ export interface match_clips_max_fields {
     thumbnail_url: (Scalars['String'] | null)
     title: (Scalars['String'] | null)
     user_steam_id: (Scalars['bigint'] | null)
-    visibility: (Scalars['String'] | null)
     __typename: 'match_clips_max_fields'
 }
 
@@ -4337,7 +4405,6 @@ export interface match_clips_min_fields {
     thumbnail_url: (Scalars['String'] | null)
     title: (Scalars['String'] | null)
     user_steam_id: (Scalars['bigint'] | null)
-    visibility: (Scalars['String'] | null)
     __typename: 'match_clips_min_fields'
 }
 
@@ -7038,6 +7105,10 @@ export interface mutation_root {
     delete_e_map_pool_types: (e_map_pool_types_mutation_response | null)
     /** delete single row from the table: "e_map_pool_types" */
     delete_e_map_pool_types_by_pk: (e_map_pool_types | null)
+    /** delete data from the table: "e_match_clip_visibility" */
+    delete_e_match_clip_visibility: (e_match_clip_visibility_mutation_response | null)
+    /** delete single row from the table: "e_match_clip_visibility" */
+    delete_e_match_clip_visibility_by_pk: (e_match_clip_visibility | null)
     /** delete data from the table: "e_match_map_status" */
     delete_e_match_map_status: (e_match_map_status_mutation_response | null)
     /** delete single row from the table: "e_match_map_status" */
@@ -7413,6 +7484,10 @@ export interface mutation_root {
     insert_e_map_pool_types: (e_map_pool_types_mutation_response | null)
     /** insert a single row into the table: "e_map_pool_types" */
     insert_e_map_pool_types_one: (e_map_pool_types | null)
+    /** insert data into the table: "e_match_clip_visibility" */
+    insert_e_match_clip_visibility: (e_match_clip_visibility_mutation_response | null)
+    /** insert a single row into the table: "e_match_clip_visibility" */
+    insert_e_match_clip_visibility_one: (e_match_clip_visibility | null)
     /** insert data into the table: "e_match_map_status" */
     insert_e_match_map_status: (e_match_map_status_mutation_response | null)
     /** insert a single row into the table: "e_match_map_status" */
@@ -7894,6 +7969,12 @@ export interface mutation_root {
     update_e_map_pool_types_by_pk: (e_map_pool_types | null)
     /** update multiples rows of table: "e_map_pool_types" */
     update_e_map_pool_types_many: ((e_map_pool_types_mutation_response | null)[] | null)
+    /** update data of the table: "e_match_clip_visibility" */
+    update_e_match_clip_visibility: (e_match_clip_visibility_mutation_response | null)
+    /** update single row of the table: "e_match_clip_visibility" */
+    update_e_match_clip_visibility_by_pk: (e_match_clip_visibility | null)
+    /** update multiples rows of table: "e_match_clip_visibility" */
+    update_e_match_clip_visibility_many: ((e_match_clip_visibility_mutation_response | null)[] | null)
     /** update data of the table: "e_match_map_status" */
     update_e_match_map_status: (e_match_map_status_mutation_response | null)
     /** update single row of the table: "e_match_map_status" */
@@ -14225,6 +14306,12 @@ export interface query_root {
     e_map_pool_types_aggregate: e_map_pool_types_aggregate
     /** fetch data from the table: "e_map_pool_types" using primary key columns */
     e_map_pool_types_by_pk: (e_map_pool_types | null)
+    /** fetch data from the table: "e_match_clip_visibility" */
+    e_match_clip_visibility: e_match_clip_visibility[]
+    /** fetch aggregated fields from the table: "e_match_clip_visibility" */
+    e_match_clip_visibility_aggregate: e_match_clip_visibility_aggregate
+    /** fetch data from the table: "e_match_clip_visibility" using primary key columns */
+    e_match_clip_visibility_by_pk: (e_match_clip_visibility | null)
     /** fetch data from the table: "e_match_map_status" */
     e_match_map_status: e_match_map_status[]
     /** fetch aggregated fields from the table: "e_match_map_status" */
@@ -15472,6 +15559,14 @@ export interface subscription_root {
     e_map_pool_types_by_pk: (e_map_pool_types | null)
     /** fetch data from the table in a streaming manner: "e_map_pool_types" */
     e_map_pool_types_stream: e_map_pool_types[]
+    /** fetch data from the table: "e_match_clip_visibility" */
+    e_match_clip_visibility: e_match_clip_visibility[]
+    /** fetch aggregated fields from the table: "e_match_clip_visibility" */
+    e_match_clip_visibility_aggregate: e_match_clip_visibility_aggregate
+    /** fetch data from the table: "e_match_clip_visibility" using primary key columns */
+    e_match_clip_visibility_by_pk: (e_match_clip_visibility | null)
+    /** fetch data from the table in a streaming manner: "e_match_clip_visibility" */
+    e_match_clip_visibility_stream: e_match_clip_visibility[]
     /** fetch data from the table: "e_match_map_status" */
     e_match_map_status: e_match_map_status[]
     /** fetch aggregated fields from the table: "e_match_map_status" */
@@ -23447,6 +23542,133 @@ _set?: (e_map_pool_types_set_input | null),
 where: e_map_pool_types_bool_exp}
 
 
+/** columns and relationships of "e_match_clip_visibility" */
+export interface e_match_clip_visibilityGenqlSelection{
+    description?: boolean | number
+    /** An array relationship */
+    match_clips?: (match_clipsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_clips_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_clips_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_clips_bool_exp | null)} })
+    /** An aggregate relationship */
+    match_clips_aggregate?: (match_clips_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_clips_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_clips_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_clips_bool_exp | null)} })
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_match_clip_visibility" */
+export interface e_match_clip_visibility_aggregateGenqlSelection{
+    aggregate?: e_match_clip_visibility_aggregate_fieldsGenqlSelection
+    nodes?: e_match_clip_visibilityGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_match_clip_visibility" */
+export interface e_match_clip_visibility_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_match_clip_visibility_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_match_clip_visibility_max_fieldsGenqlSelection
+    min?: e_match_clip_visibility_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_match_clip_visibility". All fields are combined with a logical 'AND'. */
+export interface e_match_clip_visibility_bool_exp {_and?: (e_match_clip_visibility_bool_exp[] | null),_not?: (e_match_clip_visibility_bool_exp | null),_or?: (e_match_clip_visibility_bool_exp[] | null),description?: (String_comparison_exp | null),match_clips?: (match_clips_bool_exp | null),match_clips_aggregate?: (match_clips_aggregate_bool_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_match_clip_visibility_enum". All fields are combined with logical 'AND'. */
+export interface e_match_clip_visibility_enum_comparison_exp {_eq?: (e_match_clip_visibility_enum | null),_in?: (e_match_clip_visibility_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_match_clip_visibility_enum | null),_nin?: (e_match_clip_visibility_enum[] | null)}
+
+
+/** input type for inserting data into table "e_match_clip_visibility" */
+export interface e_match_clip_visibility_insert_input {description?: (Scalars['String'] | null),match_clips?: (match_clips_arr_rel_insert_input | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_match_clip_visibility_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_match_clip_visibility_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_match_clip_visibility" */
+export interface e_match_clip_visibility_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_match_clip_visibilityGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_match_clip_visibility" */
+export interface e_match_clip_visibility_on_conflict {constraint: e_match_clip_visibility_constraint,update_columns?: e_match_clip_visibility_update_column[],where?: (e_match_clip_visibility_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_match_clip_visibility". */
+export interface e_match_clip_visibility_order_by {description?: (order_by | null),match_clips_aggregate?: (match_clips_aggregate_order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_match_clip_visibility */
+export interface e_match_clip_visibility_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_match_clip_visibility" */
+export interface e_match_clip_visibility_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_match_clip_visibility" */
+export interface e_match_clip_visibility_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_match_clip_visibility_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_match_clip_visibility_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_match_clip_visibility_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_match_clip_visibility_set_input | null),
+/** filter the rows which have to be updated */
+where: e_match_clip_visibility_bool_exp}
+
+
 /** columns and relationships of "e_match_map_status" */
 export interface e_match_map_statusGenqlSelection{
     description?: boolean | number
@@ -27982,7 +28204,7 @@ export interface match_clips_avg_order_by {duration_ms?: (order_by | null),kills
 
 
 /** Boolean expression to filter rows from the table "match_clips". All fields are combined with a logical 'AND'. */
-export interface match_clips_bool_exp {_and?: (match_clips_bool_exp[] | null),_not?: (match_clips_bool_exp | null),_or?: (match_clips_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),download_url?: (String_comparison_exp | null),duration_ms?: (Int_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),kills_count?: (Int_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_demo?: (match_map_demos_bool_exp | null),match_map_demo_id?: (uuid_comparison_exp | null),match_map_id?: (uuid_comparison_exp | null),render_jobs?: (clip_render_jobs_bool_exp | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),round?: (Int_comparison_exp | null),size?: (bigint_comparison_exp | null),target?: (players_bool_exp | null),target_steam_id?: (bigint_comparison_exp | null),thumbnail_download_url?: (String_comparison_exp | null),thumbnail_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null),visibility?: (String_comparison_exp | null)}
+export interface match_clips_bool_exp {_and?: (match_clips_bool_exp[] | null),_not?: (match_clips_bool_exp | null),_or?: (match_clips_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),download_url?: (String_comparison_exp | null),duration_ms?: (Int_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),kills_count?: (Int_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_demo?: (match_map_demos_bool_exp | null),match_map_demo_id?: (uuid_comparison_exp | null),match_map_id?: (uuid_comparison_exp | null),render_jobs?: (clip_render_jobs_bool_exp | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),round?: (Int_comparison_exp | null),size?: (bigint_comparison_exp | null),target?: (players_bool_exp | null),target_steam_id?: (bigint_comparison_exp | null),thumbnail_download_url?: (String_comparison_exp | null),thumbnail_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null),visibility?: (e_match_clip_visibility_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_clips" */
@@ -27990,7 +28212,7 @@ export interface match_clips_inc_input {duration_ms?: (Scalars['Int'] | null),ki
 
 
 /** input type for inserting data into table "match_clips" */
-export interface match_clips_insert_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_demo?: (match_map_demos_obj_rel_insert_input | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target?: (players_obj_rel_insert_input | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
+export interface match_clips_insert_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_demo?: (match_map_demos_obj_rel_insert_input | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target?: (players_obj_rel_insert_input | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (e_match_clip_visibility_enum | null)}
 
 
 /** aggregate max on columns */
@@ -28012,14 +28234,13 @@ export interface match_clips_max_fieldsGenqlSelection{
     thumbnail_url?: boolean | number
     title?: boolean | number
     user_steam_id?: boolean | number
-    visibility?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by max() on columns of table "match_clips" */
-export interface match_clips_max_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user_steam_id?: (order_by | null),visibility?: (order_by | null)}
+export interface match_clips_max_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -28041,14 +28262,13 @@ export interface match_clips_min_fieldsGenqlSelection{
     thumbnail_url?: boolean | number
     title?: boolean | number
     user_steam_id?: boolean | number
-    visibility?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by min() on columns of table "match_clips" */
-export interface match_clips_min_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user_steam_id?: (order_by | null),visibility?: (order_by | null)}
+export interface match_clips_min_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_clips" */
@@ -28081,7 +28301,7 @@ export interface match_clips_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_clips" */
-export interface match_clips_set_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
+export interface match_clips_set_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (e_match_clip_visibility_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -28144,7 +28364,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_clips_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (Scalars['String'] | null)}
+export interface match_clips_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (e_match_clip_visibility_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -32831,6 +33051,12 @@ export interface mutation_rootGenqlSelection{
     where: e_map_pool_types_bool_exp} })
     /** delete single row from the table: "e_map_pool_types" */
     delete_e_map_pool_types_by_pk?: (e_map_pool_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_match_clip_visibility" */
+    delete_e_match_clip_visibility?: (e_match_clip_visibility_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_match_clip_visibility_bool_exp} })
+    /** delete single row from the table: "e_match_clip_visibility" */
+    delete_e_match_clip_visibility_by_pk?: (e_match_clip_visibilityGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_match_map_status" */
     delete_e_match_map_status?: (e_match_map_status_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -33468,6 +33694,18 @@ export interface mutation_rootGenqlSelection{
     object: e_map_pool_types_insert_input, 
     /** upsert condition */
     on_conflict?: (e_map_pool_types_on_conflict | null)} })
+    /** insert data into the table: "e_match_clip_visibility" */
+    insert_e_match_clip_visibility?: (e_match_clip_visibility_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_match_clip_visibility_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_match_clip_visibility_on_conflict | null)} })
+    /** insert a single row into the table: "e_match_clip_visibility" */
+    insert_e_match_clip_visibility_one?: (e_match_clip_visibilityGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_match_clip_visibility_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_match_clip_visibility_on_conflict | null)} })
     /** insert data into the table: "e_match_map_status" */
     insert_e_match_map_status?: (e_match_map_status_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -34737,6 +34975,20 @@ export interface mutation_rootGenqlSelection{
     update_e_map_pool_types_many?: (e_map_pool_types_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_map_pool_types_updates[]} })
+    /** update data of the table: "e_match_clip_visibility" */
+    update_e_match_clip_visibility?: (e_match_clip_visibility_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_match_clip_visibility_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_match_clip_visibility_bool_exp} })
+    /** update single row of the table: "e_match_clip_visibility" */
+    update_e_match_clip_visibility_by_pk?: (e_match_clip_visibilityGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_match_clip_visibility_set_input | null), pk_columns: e_match_clip_visibility_pk_columns_input} })
+    /** update multiples rows of table: "e_match_clip_visibility" */
+    update_e_match_clip_visibility_many?: (e_match_clip_visibility_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_match_clip_visibility_updates[]} })
     /** update data of the table: "e_match_map_status" */
     update_e_match_map_status?: (e_match_map_status_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -45062,6 +45314,32 @@ export interface query_rootGenqlSelection{
     where?: (e_map_pool_types_bool_exp | null)} })
     /** fetch data from the table: "e_map_pool_types" using primary key columns */
     e_map_pool_types_by_pk?: (e_map_pool_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_match_clip_visibility" */
+    e_match_clip_visibility?: (e_match_clip_visibilityGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_match_clip_visibility_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_match_clip_visibility_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_match_clip_visibility_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_match_clip_visibility" */
+    e_match_clip_visibility_aggregate?: (e_match_clip_visibility_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_match_clip_visibility_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_match_clip_visibility_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_match_clip_visibility_bool_exp | null)} })
+    /** fetch data from the table: "e_match_clip_visibility" using primary key columns */
+    e_match_clip_visibility_by_pk?: (e_match_clip_visibilityGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_match_map_status" */
     e_match_map_status?: (e_match_map_statusGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -48940,6 +49218,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_map_pool_types_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_map_pool_types_bool_exp | null)} })
+    /** fetch data from the table: "e_match_clip_visibility" */
+    e_match_clip_visibility?: (e_match_clip_visibilityGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_match_clip_visibility_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_match_clip_visibility_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_match_clip_visibility_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_match_clip_visibility" */
+    e_match_clip_visibility_aggregate?: (e_match_clip_visibility_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_match_clip_visibility_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_match_clip_visibility_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_match_clip_visibility_bool_exp | null)} })
+    /** fetch data from the table: "e_match_clip_visibility" using primary key columns */
+    e_match_clip_visibility_by_pk?: (e_match_clip_visibilityGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_match_clip_visibility" */
+    e_match_clip_visibility_stream?: (e_match_clip_visibilityGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_match_clip_visibility_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_match_clip_visibility_bool_exp | null)} })
     /** fetch data from the table: "e_match_map_status" */
     e_match_map_status?: (e_match_map_statusGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -60791,6 +61103,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const e_match_clip_visibility_possibleTypes: string[] = ['e_match_clip_visibility']
+    export const ise_match_clip_visibility = (obj?: { __typename?: any } | null): obj is e_match_clip_visibility => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_match_clip_visibility"')
+      return e_match_clip_visibility_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_match_clip_visibility_aggregate_possibleTypes: string[] = ['e_match_clip_visibility_aggregate']
+    export const ise_match_clip_visibility_aggregate = (obj?: { __typename?: any } | null): obj is e_match_clip_visibility_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_match_clip_visibility_aggregate"')
+      return e_match_clip_visibility_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_match_clip_visibility_aggregate_fields_possibleTypes: string[] = ['e_match_clip_visibility_aggregate_fields']
+    export const ise_match_clip_visibility_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_match_clip_visibility_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_match_clip_visibility_aggregate_fields"')
+      return e_match_clip_visibility_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_match_clip_visibility_max_fields_possibleTypes: string[] = ['e_match_clip_visibility_max_fields']
+    export const ise_match_clip_visibility_max_fields = (obj?: { __typename?: any } | null): obj is e_match_clip_visibility_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_match_clip_visibility_max_fields"')
+      return e_match_clip_visibility_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_match_clip_visibility_min_fields_possibleTypes: string[] = ['e_match_clip_visibility_min_fields']
+    export const ise_match_clip_visibility_min_fields = (obj?: { __typename?: any } | null): obj is e_match_clip_visibility_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_match_clip_visibility_min_fields"')
+      return e_match_clip_visibility_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_match_clip_visibility_mutation_response_possibleTypes: string[] = ['e_match_clip_visibility_mutation_response']
+    export const ise_match_clip_visibility_mutation_response = (obj?: { __typename?: any } | null): obj is e_match_clip_visibility_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_match_clip_visibility_mutation_response"')
+      return e_match_clip_visibility_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const e_match_map_status_possibleTypes: string[] = ['e_match_map_status']
     export const ise_match_map_status = (obj?: { __typename?: any } | null): obj is e_match_map_status => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_match_map_status"')
@@ -69977,6 +70337,26 @@ export const enumEMapPoolTypesSelectColumn = {
 }
 
 export const enumEMapPoolTypesUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEMatchClipVisibilityConstraint = {
+   e_match_clip_visibility_pkey: 'e_match_clip_visibility_pkey' as const
+}
+
+export const enumEMatchClipVisibilityEnum = {
+   match: 'match' as const,
+   private: 'private' as const,
+   public: 'public' as const
+}
+
+export const enumEMatchClipVisibilitySelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEMatchClipVisibilityUpdateColumn = {
    description: 'description' as const,
    value: 'value' as const
 }

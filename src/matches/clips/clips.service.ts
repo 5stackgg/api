@@ -942,7 +942,7 @@ export class ClipsService {
     clipId: string,
     patch: {
       title?: string | null;
-      visibility?: "private" | "unlisted" | "match" | "public";
+      visibility?: "private" | "match" | "public";
       target_steam_id?: string | null;
     },
     actorIsOperator = false,
@@ -968,7 +968,7 @@ export class ClipsService {
       set.title = trimmed && trimmed.length > 0 ? trimmed : null;
     }
     if (patch.visibility !== undefined) {
-      const allowed = ["private", "unlisted", "match", "public"];
+      const allowed = ["private", "match", "public"];
       if (!allowed.includes(patch.visibility)) {
         throw new Error(
           `invalid visibility "${patch.visibility}" — must be one of ${allowed.join(", ")}`,

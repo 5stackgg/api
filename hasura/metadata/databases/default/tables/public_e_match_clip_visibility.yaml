@@ -1,0 +1,34 @@
+table:
+  name: e_match_clip_visibility
+  schema: public
+is_enum: true
+array_relationships:
+  - name: match_clips
+    using:
+      foreign_key_constraint_on:
+        column: visibility
+        table:
+          name: match_clips
+          schema: public
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""
+  - role: guest
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""

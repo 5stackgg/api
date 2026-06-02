@@ -3603,6 +3603,220 @@ input e_map_pool_types_updates {
 }
 
 """
+columns and relationships of "e_match_clip_visibility"
+"""
+type e_match_clip_visibility {
+  description: String!
+
+  """An array relationship"""
+  match_clips(
+    """distinct select on columns"""
+    distinct_on: [match_clips_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_clips_order_by!]
+
+    """filter the rows returned"""
+    where: match_clips_bool_exp
+  ): [match_clips!]!
+
+  """An aggregate relationship"""
+  match_clips_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_clips_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_clips_order_by!]
+
+    """filter the rows returned"""
+    where: match_clips_bool_exp
+  ): match_clips_aggregate!
+  value: String!
+}
+
+"""
+aggregated selection of "e_match_clip_visibility"
+"""
+type e_match_clip_visibility_aggregate {
+  aggregate: e_match_clip_visibility_aggregate_fields
+  nodes: [e_match_clip_visibility!]!
+}
+
+"""
+aggregate fields of "e_match_clip_visibility"
+"""
+type e_match_clip_visibility_aggregate_fields {
+  count(columns: [e_match_clip_visibility_select_column!], distinct: Boolean): Int!
+  max: e_match_clip_visibility_max_fields
+  min: e_match_clip_visibility_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_match_clip_visibility". All fields are combined with a logical 'AND'.
+"""
+input e_match_clip_visibility_bool_exp {
+  _and: [e_match_clip_visibility_bool_exp!]
+  _not: e_match_clip_visibility_bool_exp
+  _or: [e_match_clip_visibility_bool_exp!]
+  description: String_comparison_exp
+  match_clips: match_clips_bool_exp
+  match_clips_aggregate: match_clips_aggregate_bool_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_match_clip_visibility"
+"""
+enum e_match_clip_visibility_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_match_clip_visibility_pkey
+}
+
+enum e_match_clip_visibility_enum {
+  """Visible to match participants and organizers"""
+  match
+
+  """Only visible to the owner"""
+  private
+
+  """Listed in the highlights feed"""
+  public
+}
+
+"""
+Boolean expression to compare columns of type "e_match_clip_visibility_enum". All fields are combined with logical 'AND'.
+"""
+input e_match_clip_visibility_enum_comparison_exp {
+  _eq: e_match_clip_visibility_enum
+  _in: [e_match_clip_visibility_enum!]
+  _is_null: Boolean
+  _neq: e_match_clip_visibility_enum
+  _nin: [e_match_clip_visibility_enum!]
+}
+
+"""
+input type for inserting data into table "e_match_clip_visibility"
+"""
+input e_match_clip_visibility_insert_input {
+  description: String
+  match_clips: match_clips_arr_rel_insert_input
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_match_clip_visibility_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_match_clip_visibility_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_match_clip_visibility"
+"""
+type e_match_clip_visibility_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_match_clip_visibility!]!
+}
+
+"""
+on_conflict condition type for table "e_match_clip_visibility"
+"""
+input e_match_clip_visibility_on_conflict {
+  constraint: e_match_clip_visibility_constraint!
+  update_columns: [e_match_clip_visibility_update_column!]! = []
+  where: e_match_clip_visibility_bool_exp
+}
+
+"""Ordering options when selecting data from "e_match_clip_visibility"."""
+input e_match_clip_visibility_order_by {
+  description: order_by
+  match_clips_aggregate: match_clips_aggregate_order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_match_clip_visibility"""
+input e_match_clip_visibility_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_match_clip_visibility"
+"""
+enum e_match_clip_visibility_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_match_clip_visibility"
+"""
+input e_match_clip_visibility_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_match_clip_visibility"
+"""
+input e_match_clip_visibility_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_match_clip_visibility_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_match_clip_visibility_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_match_clip_visibility"
+"""
+enum e_match_clip_visibility_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_match_clip_visibility_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_match_clip_visibility_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_match_clip_visibility_bool_exp!
+}
+
+"""
 columns and relationships of "e_match_map_status"
 """
 type e_match_map_status {
@@ -11666,7 +11880,7 @@ type match_clips {
   """An object relationship"""
   user: players
   user_steam_id: bigint
-  visibility: String!
+  visibility: e_match_clip_visibility_enum!
 }
 
 """
@@ -11782,7 +11996,7 @@ input match_clips_bool_exp {
   title: String_comparison_exp
   user: players_bool_exp
   user_steam_id: bigint_comparison_exp
-  visibility: String_comparison_exp
+  visibility: e_match_clip_visibility_enum_comparison_exp
 }
 
 """
@@ -11829,7 +12043,7 @@ input match_clips_insert_input {
   title: String
   user: players_obj_rel_insert_input
   user_steam_id: bigint
-  visibility: String
+  visibility: e_match_clip_visibility_enum
 }
 
 """aggregate max on columns"""
@@ -11857,7 +12071,6 @@ type match_clips_max_fields {
   thumbnail_url: String
   title: String
   user_steam_id: bigint
-  visibility: String
 }
 
 """
@@ -11877,7 +12090,6 @@ input match_clips_max_order_by {
   thumbnail_url: order_by
   title: order_by
   user_steam_id: order_by
-  visibility: order_by
 }
 
 """aggregate min on columns"""
@@ -11905,7 +12117,6 @@ type match_clips_min_fields {
   thumbnail_url: String
   title: String
   user_steam_id: bigint
-  visibility: String
 }
 
 """
@@ -11925,7 +12136,6 @@ input match_clips_min_order_by {
   thumbnail_url: order_by
   title: order_by
   user_steam_id: order_by
-  visibility: order_by
 }
 
 """
@@ -12052,7 +12262,7 @@ input match_clips_set_input {
   thumbnail_url: String
   title: String
   user_steam_id: bigint
-  visibility: String
+  visibility: e_match_clip_visibility_enum
 }
 
 """aggregate stddev on columns"""
@@ -12147,7 +12357,7 @@ input match_clips_stream_cursor_value_input {
   thumbnail_url: String
   title: String
   user_steam_id: bigint
-  visibility: String
+  visibility: e_match_clip_visibility_enum
 }
 
 """aggregate sum on columns"""
@@ -21341,6 +21551,19 @@ type mutation_root {
   delete_e_map_pool_types_by_pk(value: String!): e_map_pool_types
 
   """
+  delete data from the table: "e_match_clip_visibility"
+  """
+  delete_e_match_clip_visibility(
+    """filter the rows which have to be deleted"""
+    where: e_match_clip_visibility_bool_exp!
+  ): e_match_clip_visibility_mutation_response
+
+  """
+  delete single row from the table: "e_match_clip_visibility"
+  """
+  delete_e_match_clip_visibility_by_pk(value: String!): e_match_clip_visibility
+
+  """
   delete data from the table: "e_match_map_status"
   """
   delete_e_match_map_status(
@@ -22665,6 +22888,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_map_pool_types_on_conflict
   ): e_map_pool_types
+
+  """
+  insert data into the table: "e_match_clip_visibility"
+  """
+  insert_e_match_clip_visibility(
+    """the rows to be inserted"""
+    objects: [e_match_clip_visibility_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_match_clip_visibility_on_conflict
+  ): e_match_clip_visibility_mutation_response
+
+  """
+  insert a single row into the table: "e_match_clip_visibility"
+  """
+  insert_e_match_clip_visibility_one(
+    """the row to be inserted"""
+    object: e_match_clip_visibility_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_match_clip_visibility_on_conflict
+  ): e_match_clip_visibility
 
   """
   insert data into the table: "e_match_map_status"
@@ -24988,6 +25233,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_map_pool_types_updates!]!
   ): [e_map_pool_types_mutation_response]
+
+  """
+  update data of the table: "e_match_clip_visibility"
+  """
+  update_e_match_clip_visibility(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_match_clip_visibility_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_match_clip_visibility_bool_exp!
+  ): e_match_clip_visibility_mutation_response
+
+  """
+  update single row of the table: "e_match_clip_visibility"
+  """
+  update_e_match_clip_visibility_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_match_clip_visibility_set_input
+    pk_columns: e_match_clip_visibility_pk_columns_input!
+  ): e_match_clip_visibility
+
+  """
+  update multiples rows of table: "e_match_clip_visibility"
+  """
+  update_e_match_clip_visibility_many(
+    """updates to execute, in order"""
+    updates: [e_match_clip_visibility_updates!]!
+  ): [e_match_clip_visibility_mutation_response]
 
   """
   update data of the table: "e_match_map_status"
@@ -44678,6 +44951,51 @@ type query_root {
   e_map_pool_types_by_pk(value: String!): e_map_pool_types
 
   """
+  fetch data from the table: "e_match_clip_visibility"
+  """
+  e_match_clip_visibility(
+    """distinct select on columns"""
+    distinct_on: [e_match_clip_visibility_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_match_clip_visibility_order_by!]
+
+    """filter the rows returned"""
+    where: e_match_clip_visibility_bool_exp
+  ): [e_match_clip_visibility!]!
+
+  """
+  fetch aggregated fields from the table: "e_match_clip_visibility"
+  """
+  e_match_clip_visibility_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_match_clip_visibility_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_match_clip_visibility_order_by!]
+
+    """filter the rows returned"""
+    where: e_match_clip_visibility_bool_exp
+  ): e_match_clip_visibility_aggregate!
+
+  """
+  fetch data from the table: "e_match_clip_visibility" using primary key columns
+  """
+  e_match_clip_visibility_by_pk(value: String!): e_match_clip_visibility
+
+  """
   fetch data from the table: "e_match_map_status"
   """
   e_match_map_status(
@@ -51358,6 +51676,65 @@ type subscription_root {
     """filter the rows returned"""
     where: e_map_pool_types_bool_exp
   ): [e_map_pool_types!]!
+
+  """
+  fetch data from the table: "e_match_clip_visibility"
+  """
+  e_match_clip_visibility(
+    """distinct select on columns"""
+    distinct_on: [e_match_clip_visibility_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_match_clip_visibility_order_by!]
+
+    """filter the rows returned"""
+    where: e_match_clip_visibility_bool_exp
+  ): [e_match_clip_visibility!]!
+
+  """
+  fetch aggregated fields from the table: "e_match_clip_visibility"
+  """
+  e_match_clip_visibility_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_match_clip_visibility_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_match_clip_visibility_order_by!]
+
+    """filter the rows returned"""
+    where: e_match_clip_visibility_bool_exp
+  ): e_match_clip_visibility_aggregate!
+
+  """
+  fetch data from the table: "e_match_clip_visibility" using primary key columns
+  """
+  e_match_clip_visibility_by_pk(value: String!): e_match_clip_visibility
+
+  """
+  fetch data from the table in a streaming manner: "e_match_clip_visibility"
+  """
+  e_match_clip_visibility_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_match_clip_visibility_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_match_clip_visibility_bool_exp
+  ): [e_match_clip_visibility!]!
 
   """
   fetch data from the table: "e_match_map_status"

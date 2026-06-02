@@ -105,8 +105,6 @@ select_permissions:
               _eq: X-Hasura-User-Id
           - visibility:
               _eq: public
-          - visibility:
-              _eq: unlisted
           - _and:
               - visibility:
                   _eq: match

@@ -32,5 +32,5 @@ export interface ClipSpec {
   map_name?: string;
   round?: number;
   kills_count?: number;
-  visibility?: "private" | "unlisted" | "public" | "match";
+  visibility?: "private" | "public" | "match";
 }

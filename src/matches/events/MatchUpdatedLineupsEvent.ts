@@ -65,7 +65,7 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
       }
     }
 
-    if (players.length < ExpectedPlayers[match.options.type] * 2) {
+    if (players.length < ExpectedPlayers[match.options.type]) {
       return;
     }
 
