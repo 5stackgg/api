@@ -3,7 +3,6 @@ import { ConfigService } from "@nestjs/config";
 import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { DemoMetadataService } from "../demos/demo-metadata.service";
-import { ClipsService } from "../matches/clips/clips.service";
 import { ParsedDemo, ParsedPlayer } from "../demos/demo-parser.service";
 import { e_match_types_enum } from "../../generated";
 
@@ -27,7 +26,6 @@ export class MatchImportService {
     private readonly hasura: HasuraService,
     private readonly postgres: PostgresService,
     private readonly demoMetadata: DemoMetadataService,
-    private readonly clips: ClipsService,
     private readonly config: ConfigService,
   ) {
     this.steamApiKey = this.config.get<string>("steam.steamApiKey") ?? "";
@@ -44,7 +42,10 @@ export class MatchImportService {
     const file = demoUrl ?? `external/${source}/${sourceKey}.dem`;
 
     if (externalId) {
-      await this.deleteExistingExternalMatch(source, externalId);
+      const existing = await this.findExistingExternalMatch(source, externalId);
+      if (existing) {
+        return { matchId: existing, skipped: "already imported" };
+      }
     } else {
       const existing = await this.findExistingByFile(file);
       if (existing) {
@@ -309,41 +310,18 @@ export class MatchImportService {
     return [t, ct];
   }
 
-  private async deleteExistingExternalMatch(
+  public async findExistingExternalMatch(
     source: string,
     externalId: string,
-  ): Promise<void> {
-    const rows = await this.postgres.query<
-      Array<{
-        id: string;
-        lineup_1_id: string | null;
-        lineup_2_id: string | null;
-      }>
-    >(
-      `SELECT id, lineup_1_id, lineup_2_id
+  ): Promise<string | null> {
+    const rows = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT id
          FROM public.matches
-        WHERE source = $1 AND external_id = $2`,
+        WHERE source = $1 AND external_id = $2
+        LIMIT 1`,
       [source, externalId],
     );
-    for (const match of rows) {
-      // Purge S3 assets (demo .dem + playback blob, clip videos + thumbnails)
-      // before the row is gone — the match delete only cascades DB rows.
-      await this.clips.deleteClipsForMatch(match.id);
-      await this.demoMetadata.deleteDemosForMatch(match.id);
-      await this.postgres.query(
-        `DELETE FROM public.matches WHERE id = $1::uuid`,
-        [match.id],
-      );
-      const lineupIds = [match.lineup_1_id, match.lineup_2_id].filter(
-        (id): id is string => !!id,
-      );
-      if (lineupIds.length > 0) {
-        await this.postgres.query(
-          `DELETE FROM public.match_lineups WHERE id = ANY($1::uuid[])`,
-          [lineupIds],
-        );
-      }
-    }
+    return rows.at(0)?.id ?? null;
   }
 
   private async findExistingByFile(file: string): Promise<string | null> {
