@@ -36,6 +36,7 @@ import { SystemModule } from "src/system/system.module";
     ...getQueuesProcessors("DedicatedServers"),
     loggerFactory(),
   ],
+  exports: [DedicatedServersService],
   controllers: [DedicatedServersController],
 })
 export class DedicatedServersModule {

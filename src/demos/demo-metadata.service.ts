@@ -274,6 +274,7 @@ export class DemoMetadataService {
       demo.match_map_id,
       demo.id,
       parsed,
+      demo.playback_file,
     );
 
     this.logger.log(
@@ -309,6 +310,7 @@ export class DemoMetadataService {
         demo.match_map_id,
         demo.id,
         parsed,
+        demo.playback_file,
       );
     }
   }
@@ -437,8 +439,9 @@ export class DemoMetadataService {
     matchMapId: string,
     matchMapDemoId: string,
     parsed: ParsedDemo,
+    prevPlaybackFile: string | null = null,
   ): Promise<void> {
-    const key = playbackBlobKey(matchId, matchMapId);
+    const key = playbackBlobKey(matchId, matchMapId, Date.now());
     const blob = buildPlaybackBlob(matchMapId, parsed);
     const gz = zlib.gzipSync(Buffer.from(JSON.stringify(blob)));
     await this.s3.put(key, gz);
@@ -449,6 +452,15 @@ export class DemoMetadataService {
        WHERE id = $3::uuid`,
       [key, gz.byteLength, matchMapDemoId],
     );
+    if (prevPlaybackFile && prevPlaybackFile !== key) {
+      try {
+        await this.s3.remove(prevPlaybackFile);
+      } catch (error) {
+        this.logger.warn(
+          `[playback-blob] failed to remove old blob ${prevPlaybackFile}: ${(error as Error)?.message}`,
+        );
+      }
+    }
     this.logger.log(
       `[playback-blob] uploaded ${key} ` +
         `(${gz.byteLength} bytes gzipped, ` +
@@ -464,8 +476,12 @@ export function demoKey(matchId: string, mapId: string, demo: string): string {
   return `demos/${matchId}/${mapId}/${demo}`;
 }
 
-export function playbackBlobKey(matchId: string, matchMapId: string): string {
-  return `demos/${matchId}/${matchMapId}/playback/playback.json.gz`;
+export function playbackBlobKey(
+  matchId: string,
+  matchMapId: string,
+  version: number,
+): string {
+  return `demos/${matchId}/${matchMapId}/playback/playback.${version}.json.gz`;
 }
 
 function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
@@ -502,6 +518,7 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     return {
       round: g.round ?? 0,
       tick: g.tick,
+      grenade_id: g.gid ?? null,
       thrower_steam_id: g.thrower ?? null,
       thrower_team: g.thrower_team ?? null,
       type: g.type,
@@ -544,7 +561,7 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
   }));
 
   return {
-    schema_version: 1,
+    schema_version: 2,
     match_map_id: matchMapId,
     tick_rate: parsed.tick_rate,
     total_ticks: parsed.total_ticks,

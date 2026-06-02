@@ -152,6 +152,34 @@ select_permissions:
           _eq: true
       allow_aggregations: true
     comment: ""
+  - role: moderator
+    permission:
+      columns:
+        - boot_status
+        - boot_status_detail
+        - connected
+        - enabled
+        - game
+        - host
+        - id
+        - is_dedicated
+        - label
+        - max_players
+        - plugin_version
+        - port
+        - rcon_status
+        - region
+        - reserved_by_match_id
+        - tv_port
+        - type
+      computed_fields:
+        - connection_link
+        - connection_string
+      filter:
+        is_dedicated:
+          _eq: true
+      allow_aggregations: true
+    comment: ""
 update_permissions:
   - role: administrator
     permission:

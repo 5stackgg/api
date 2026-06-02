@@ -214,6 +214,12 @@ export interface IndexStat {
     __typename: 'IndexStat'
 }
 
+export interface KickResult {
+    kicked: Scalars['Boolean']
+    message: (Scalars['String'] | null)
+    __typename: 'KickResult'
+}
+
 export interface LiveSpecGsi {
     map_name: (Scalars['String'] | null)
     map_phase: (Scalars['String'] | null)
@@ -341,6 +347,19 @@ export interface QueryStat {
     total_exec_time: Scalars['Float']
     total_rows: Scalars['Int']
     __typename: 'QueryStat'
+}
+
+export interface SanctionResult {
+    enforced: Scalars['Boolean']
+    id: (Scalars['String'] | null)
+    message: (Scalars['String'] | null)
+    __typename: 'SanctionResult'
+}
+
+export interface ServerPlayer {
+    name: Scalars['String']
+    steam_id: Scalars['String']
+    __typename: 'ServerPlayer'
 }
 
 export interface SetupGameServeOutput {
@@ -2031,7 +2050,7 @@ export interface e_player_roles_aggregate_fields {
 /** unique or primary key constraints on table "e_player_roles" */
 export type e_player_roles_constraint = 'e_player_roles_pkey'
 
-export type e_player_roles_enum = 'administrator' | 'match_organizer' | 'streamer' | 'tournament_organizer' | 'user' | 'verified_user'
+export type e_player_roles_enum = 'administrator' | 'match_organizer' | 'moderator' | 'streamer' | 'tournament_organizer' | 'user' | 'verified_user'
 
 
 /** aggregate max on columns */
@@ -3507,6 +3526,145 @@ export interface game_versions_var_samp_fields {
 export interface game_versions_variance_fields {
     build_id: (Scalars['Float'] | null)
     __typename: 'game_versions_variance_fields'
+}
+
+
+/** columns and relationships of "gamedata_signature_validations" */
+export interface gamedata_signature_validations {
+    branch: Scalars['String']
+    build_id: Scalars['Int']
+    /** An object relationship */
+    game_version: game_versions
+    id: Scalars['uuid']
+    results: (Scalars['jsonb'] | null)
+    status: Scalars['String']
+    validated_at: Scalars['timestamptz']
+    __typename: 'gamedata_signature_validations'
+}
+
+
+/** aggregated selection of "gamedata_signature_validations" */
+export interface gamedata_signature_validations_aggregate {
+    aggregate: (gamedata_signature_validations_aggregate_fields | null)
+    nodes: gamedata_signature_validations[]
+    __typename: 'gamedata_signature_validations_aggregate'
+}
+
+
+/** aggregate fields of "gamedata_signature_validations" */
+export interface gamedata_signature_validations_aggregate_fields {
+    avg: (gamedata_signature_validations_avg_fields | null)
+    count: Scalars['Int']
+    max: (gamedata_signature_validations_max_fields | null)
+    min: (gamedata_signature_validations_min_fields | null)
+    stddev: (gamedata_signature_validations_stddev_fields | null)
+    stddev_pop: (gamedata_signature_validations_stddev_pop_fields | null)
+    stddev_samp: (gamedata_signature_validations_stddev_samp_fields | null)
+    sum: (gamedata_signature_validations_sum_fields | null)
+    var_pop: (gamedata_signature_validations_var_pop_fields | null)
+    var_samp: (gamedata_signature_validations_var_samp_fields | null)
+    variance: (gamedata_signature_validations_variance_fields | null)
+    __typename: 'gamedata_signature_validations_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface gamedata_signature_validations_avg_fields {
+    build_id: (Scalars['Float'] | null)
+    __typename: 'gamedata_signature_validations_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "gamedata_signature_validations" */
+export type gamedata_signature_validations_constraint = 'gamedata_signature_validations_build_branch_idx' | 'gamedata_signature_validations_pkey'
+
+
+/** aggregate max on columns */
+export interface gamedata_signature_validations_max_fields {
+    branch: (Scalars['String'] | null)
+    build_id: (Scalars['Int'] | null)
+    id: (Scalars['uuid'] | null)
+    status: (Scalars['String'] | null)
+    validated_at: (Scalars['timestamptz'] | null)
+    __typename: 'gamedata_signature_validations_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface gamedata_signature_validations_min_fields {
+    branch: (Scalars['String'] | null)
+    build_id: (Scalars['Int'] | null)
+    id: (Scalars['uuid'] | null)
+    status: (Scalars['String'] | null)
+    validated_at: (Scalars['timestamptz'] | null)
+    __typename: 'gamedata_signature_validations_min_fields'
+}
+
+
+/** response of any mutation on the table "gamedata_signature_validations" */
+export interface gamedata_signature_validations_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: gamedata_signature_validations[]
+    __typename: 'gamedata_signature_validations_mutation_response'
+}
+
+
+/** select columns of table "gamedata_signature_validations" */
+export type gamedata_signature_validations_select_column = 'branch' | 'build_id' | 'id' | 'results' | 'status' | 'validated_at'
+
+
+/** aggregate stddev on columns */
+export interface gamedata_signature_validations_stddev_fields {
+    build_id: (Scalars['Float'] | null)
+    __typename: 'gamedata_signature_validations_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface gamedata_signature_validations_stddev_pop_fields {
+    build_id: (Scalars['Float'] | null)
+    __typename: 'gamedata_signature_validations_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface gamedata_signature_validations_stddev_samp_fields {
+    build_id: (Scalars['Float'] | null)
+    __typename: 'gamedata_signature_validations_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface gamedata_signature_validations_sum_fields {
+    build_id: (Scalars['Int'] | null)
+    __typename: 'gamedata_signature_validations_sum_fields'
+}
+
+
+/** update columns of table "gamedata_signature_validations" */
+export type gamedata_signature_validations_update_column = 'branch' | 'build_id' | 'id' | 'results' | 'status' | 'validated_at'
+
+
+/** aggregate var_pop on columns */
+export interface gamedata_signature_validations_var_pop_fields {
+    build_id: (Scalars['Float'] | null)
+    __typename: 'gamedata_signature_validations_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface gamedata_signature_validations_var_samp_fields {
+    build_id: (Scalars['Float'] | null)
+    __typename: 'gamedata_signature_validations_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface gamedata_signature_validations_variance_fields {
+    build_id: (Scalars['Float'] | null)
+    __typename: 'gamedata_signature_validations_variance_fields'
 }
 
 
@@ -6965,6 +7123,10 @@ export interface mutation_root {
     delete_game_versions: (game_versions_mutation_response | null)
     /** delete single row from the table: "game_versions" */
     delete_game_versions_by_pk: (game_versions | null)
+    /** delete data from the table: "gamedata_signature_validations" */
+    delete_gamedata_signature_validations: (gamedata_signature_validations_mutation_response | null)
+    /** delete single row from the table: "gamedata_signature_validations" */
+    delete_gamedata_signature_validations_by_pk: (gamedata_signature_validations | null)
     /** delete data from the table: "leaderboard_entries" */
     delete_leaderboard_entries: (leaderboard_entries_mutation_response | null)
     /** delete data from the table: "lobbies" */
@@ -7336,6 +7498,10 @@ export interface mutation_root {
     insert_game_versions: (game_versions_mutation_response | null)
     /** insert a single row into the table: "game_versions" */
     insert_game_versions_one: (game_versions | null)
+    /** insert data into the table: "gamedata_signature_validations" */
+    insert_gamedata_signature_validations: (gamedata_signature_validations_mutation_response | null)
+    /** insert a single row into the table: "gamedata_signature_validations" */
+    insert_gamedata_signature_validations_one: (gamedata_signature_validations | null)
     /** insert data into the table: "leaderboard_entries" */
     insert_leaderboard_entries: (leaderboard_entries_mutation_response | null)
     /** insert a single row into the table: "leaderboard_entries" */
@@ -7577,6 +7743,7 @@ export interface mutation_root {
     /** insert a single row into the table: "v_pool_maps" */
     insert_v_pool_maps_one: (v_pool_maps | null)
     joinLineup: (SuccessOutput | null)
+    kickServerPlayer: KickResult
     leaveLineup: (SuccessOutput | null)
     linkSteamMatchHistory: (SteamMatchHistoryLinkOutput | null)
     /** Load dev fixture data (dev only) */
@@ -7614,6 +7781,7 @@ export interface mutation_root {
     /** Delete terminal clip_render_jobs rows for a match_map (all or only failed/cancelled) and re-create them from their saved specs. */
     retryClipRenderBatch: (SuccessOutput | null)
     retryPendingMatchImport: (PendingMatchImportActionOutput | null)
+    sanctionServerPlayer: SanctionResult
     /** scheduleMatch */
     scheduleMatch: (SuccessOutput | null)
     setGameNodeSchedulingState: (SuccessOutput | null)
@@ -7646,6 +7814,7 @@ export interface mutation_root {
     testUpload: (TestUploadResponse | null)
     unlinkDiscord: (SuccessOutput | null)
     unlinkSteamMatchHistory: (SuccessOutput | null)
+    unsanctionServerPlayer: SanctionResult
     /** Owner-only patch for clip title / visibility / target_steam_id. */
     updateClip: (SuccessOutput | null)
     updateCs: (SuccessOutput | null)
@@ -7854,6 +8023,12 @@ export interface mutation_root {
     update_game_versions_by_pk: (game_versions | null)
     /** update multiples rows of table: "game_versions" */
     update_game_versions_many: ((game_versions_mutation_response | null)[] | null)
+    /** update data of the table: "gamedata_signature_validations" */
+    update_gamedata_signature_validations: (gamedata_signature_validations_mutation_response | null)
+    /** update single row of the table: "gamedata_signature_validations" */
+    update_gamedata_signature_validations_by_pk: (gamedata_signature_validations | null)
+    /** update multiples rows of table: "gamedata_signature_validations" */
+    update_gamedata_signature_validations_many: ((gamedata_signature_validations_mutation_response | null)[] | null)
     /** update data of the table: "leaderboard_entries" */
     update_leaderboard_entries: (leaderboard_entries_mutation_response | null)
     /** update multiples rows of table: "leaderboard_entries" */
@@ -8204,6 +8379,8 @@ export interface mutation_root {
     update_v_pool_maps: (v_pool_maps_mutation_response | null)
     /** update multiples rows of table: "v_pool_maps" */
     update_v_pool_maps_many: ((v_pool_maps_mutation_response | null)[] | null)
+    /** Validate CS2 gamedata signatures/offsets on a node (5stack.gg test instance only) */
+    validateGamedata: (SuccessOutput | null)
     /** Spawn a per-user game-streamer pod to play back a finished match's demo */
     watchDemo: (WatchDemoOutput | null)
     /** Write content to file on game server */
@@ -14177,6 +14354,12 @@ export interface query_root {
     game_versions_aggregate: game_versions_aggregate
     /** fetch data from the table: "game_versions" using primary key columns */
     game_versions_by_pk: (game_versions | null)
+    /** fetch data from the table: "gamedata_signature_validations" */
+    gamedata_signature_validations: gamedata_signature_validations[]
+    /** fetch aggregated fields from the table: "gamedata_signature_validations" */
+    gamedata_signature_validations_aggregate: gamedata_signature_validations_aggregate
+    /** fetch data from the table: "gamedata_signature_validations" using primary key columns */
+    gamedata_signature_validations_by_pk: (gamedata_signature_validations | null)
     /** Get list of active connections */
     getActiveConnections: (ActiveConnection | null)[]
     /** Get currently executing queries */
@@ -14188,6 +14371,7 @@ export interface query_root {
     /** Get database-wide statistics */
     getDatabaseStats: DatabaseStats
     getDedicatedServerInfo: (DedicatedSeverInfo | null)[]
+    getDedicatedServerPlayers: ServerPlayer[]
     /** Get index I/O statistics */
     getIndexIOStats: (IndexIOStat | null)[]
     /** Get index usage statistics */
@@ -15461,6 +15645,14 @@ export interface subscription_root {
     game_versions_by_pk: (game_versions | null)
     /** fetch data from the table in a streaming manner: "game_versions" */
     game_versions_stream: game_versions[]
+    /** fetch data from the table: "gamedata_signature_validations" */
+    gamedata_signature_validations: gamedata_signature_validations[]
+    /** fetch aggregated fields from the table: "gamedata_signature_validations" */
+    gamedata_signature_validations_aggregate: gamedata_signature_validations_aggregate
+    /** fetch data from the table: "gamedata_signature_validations" using primary key columns */
+    gamedata_signature_validations_by_pk: (gamedata_signature_validations | null)
+    /** fetch data from the table in a streaming manner: "gamedata_signature_validations" */
+    gamedata_signature_validations_stream: gamedata_signature_validations[]
     /** execute function "get_leaderboard" which returns "leaderboard_entries" */
     get_leaderboard: leaderboard_entries[]
     /** execute function "get_leaderboard" and query aggregates on result of table type "leaderboard_entries" */
@@ -21118,6 +21310,13 @@ export interface IndexStatGenqlSelection{
 /** Boolean expression to compare columns of type "Int". All fields are combined with logical 'AND'. */
 export interface Int_comparison_exp {_eq?: (Scalars['Int'] | null),_gt?: (Scalars['Int'] | null),_gte?: (Scalars['Int'] | null),_in?: (Scalars['Int'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['Int'] | null),_lte?: (Scalars['Int'] | null),_neq?: (Scalars['Int'] | null),_nin?: (Scalars['Int'][] | null)}
 
+export interface KickResultGenqlSelection{
+    kicked?: boolean | number
+    message?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface LiveSpecGsiGenqlSelection{
     map_name?: boolean | number
     map_phase?: boolean | number
@@ -21257,6 +21456,21 @@ export interface QueryStatGenqlSelection{
     temp_blks_written?: boolean | number
     total_exec_time?: boolean | number
     total_rows?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface SanctionResultGenqlSelection{
+    enforced?: boolean | number
+    id?: boolean | number
+    message?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface ServerPlayerGenqlSelection{
+    name?: boolean | number
+    steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -26471,6 +26685,227 @@ export interface game_versions_var_samp_fieldsGenqlSelection{
 
 /** aggregate variance on columns */
 export interface game_versions_variance_fieldsGenqlSelection{
+    build_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** columns and relationships of "gamedata_signature_validations" */
+export interface gamedata_signature_validationsGenqlSelection{
+    branch?: boolean | number
+    build_id?: boolean | number
+    /** An object relationship */
+    game_version?: game_versionsGenqlSelection
+    id?: boolean | number
+    results?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    status?: boolean | number
+    validated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "gamedata_signature_validations" */
+export interface gamedata_signature_validations_aggregateGenqlSelection{
+    aggregate?: gamedata_signature_validations_aggregate_fieldsGenqlSelection
+    nodes?: gamedata_signature_validationsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "gamedata_signature_validations" */
+export interface gamedata_signature_validations_aggregate_fieldsGenqlSelection{
+    avg?: gamedata_signature_validations_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (gamedata_signature_validations_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: gamedata_signature_validations_max_fieldsGenqlSelection
+    min?: gamedata_signature_validations_min_fieldsGenqlSelection
+    stddev?: gamedata_signature_validations_stddev_fieldsGenqlSelection
+    stddev_pop?: gamedata_signature_validations_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: gamedata_signature_validations_stddev_samp_fieldsGenqlSelection
+    sum?: gamedata_signature_validations_sum_fieldsGenqlSelection
+    var_pop?: gamedata_signature_validations_var_pop_fieldsGenqlSelection
+    var_samp?: gamedata_signature_validations_var_samp_fieldsGenqlSelection
+    variance?: gamedata_signature_validations_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** append existing jsonb value of filtered columns with new jsonb value */
+export interface gamedata_signature_validations_append_input {results?: (Scalars['jsonb'] | null)}
+
+
+/** aggregate avg on columns */
+export interface gamedata_signature_validations_avg_fieldsGenqlSelection{
+    build_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "gamedata_signature_validations". All fields are combined with a logical 'AND'. */
+export interface gamedata_signature_validations_bool_exp {_and?: (gamedata_signature_validations_bool_exp[] | null),_not?: (gamedata_signature_validations_bool_exp | null),_or?: (gamedata_signature_validations_bool_exp[] | null),branch?: (String_comparison_exp | null),build_id?: (Int_comparison_exp | null),game_version?: (game_versions_bool_exp | null),id?: (uuid_comparison_exp | null),results?: (jsonb_comparison_exp | null),status?: (String_comparison_exp | null),validated_at?: (timestamptz_comparison_exp | null)}
+
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export interface gamedata_signature_validations_delete_at_path_input {results?: (Scalars['String'][] | null)}
+
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export interface gamedata_signature_validations_delete_elem_input {results?: (Scalars['Int'] | null)}
+
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export interface gamedata_signature_validations_delete_key_input {results?: (Scalars['String'] | null)}
+
+
+/** input type for incrementing numeric columns in table "gamedata_signature_validations" */
+export interface gamedata_signature_validations_inc_input {build_id?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "gamedata_signature_validations" */
+export interface gamedata_signature_validations_insert_input {branch?: (Scalars['String'] | null),build_id?: (Scalars['Int'] | null),game_version?: (game_versions_obj_rel_insert_input | null),id?: (Scalars['uuid'] | null),results?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),validated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate max on columns */
+export interface gamedata_signature_validations_max_fieldsGenqlSelection{
+    branch?: boolean | number
+    build_id?: boolean | number
+    id?: boolean | number
+    status?: boolean | number
+    validated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface gamedata_signature_validations_min_fieldsGenqlSelection{
+    branch?: boolean | number
+    build_id?: boolean | number
+    id?: boolean | number
+    status?: boolean | number
+    validated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "gamedata_signature_validations" */
+export interface gamedata_signature_validations_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: gamedata_signature_validationsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "gamedata_signature_validations" */
+export interface gamedata_signature_validations_on_conflict {constraint: gamedata_signature_validations_constraint,update_columns?: gamedata_signature_validations_update_column[],where?: (gamedata_signature_validations_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "gamedata_signature_validations". */
+export interface gamedata_signature_validations_order_by {branch?: (order_by | null),build_id?: (order_by | null),game_version?: (game_versions_order_by | null),id?: (order_by | null),results?: (order_by | null),status?: (order_by | null),validated_at?: (order_by | null)}
+
+
+/** primary key columns input for table: gamedata_signature_validations */
+export interface gamedata_signature_validations_pk_columns_input {id: Scalars['uuid']}
+
+
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export interface gamedata_signature_validations_prepend_input {results?: (Scalars['jsonb'] | null)}
+
+
+/** input type for updating data in table "gamedata_signature_validations" */
+export interface gamedata_signature_validations_set_input {branch?: (Scalars['String'] | null),build_id?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),results?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),validated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface gamedata_signature_validations_stddev_fieldsGenqlSelection{
+    build_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface gamedata_signature_validations_stddev_pop_fieldsGenqlSelection{
+    build_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface gamedata_signature_validations_stddev_samp_fieldsGenqlSelection{
+    build_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "gamedata_signature_validations" */
+export interface gamedata_signature_validations_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: gamedata_signature_validations_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface gamedata_signature_validations_stream_cursor_value_input {branch?: (Scalars['String'] | null),build_id?: (Scalars['Int'] | null),id?: (Scalars['uuid'] | null),results?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),validated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate sum on columns */
+export interface gamedata_signature_validations_sum_fieldsGenqlSelection{
+    build_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface gamedata_signature_validations_updates {
+/** append existing jsonb value of filtered columns with new jsonb value */
+_append?: (gamedata_signature_validations_append_input | null),
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+_delete_at_path?: (gamedata_signature_validations_delete_at_path_input | null),
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+_delete_elem?: (gamedata_signature_validations_delete_elem_input | null),
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+_delete_key?: (gamedata_signature_validations_delete_key_input | null),
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (gamedata_signature_validations_inc_input | null),
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+_prepend?: (gamedata_signature_validations_prepend_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (gamedata_signature_validations_set_input | null),
+/** filter the rows which have to be updated */
+where: gamedata_signature_validations_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface gamedata_signature_validations_var_pop_fieldsGenqlSelection{
+    build_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface gamedata_signature_validations_var_samp_fieldsGenqlSelection{
+    build_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface gamedata_signature_validations_variance_fieldsGenqlSelection{
     build_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -32522,6 +32957,12 @@ export interface mutation_rootGenqlSelection{
     where: game_versions_bool_exp} })
     /** delete single row from the table: "game_versions" */
     delete_game_versions_by_pk?: (game_versionsGenqlSelection & { __args: {build_id: Scalars['Int']} })
+    /** delete data from the table: "gamedata_signature_validations" */
+    delete_gamedata_signature_validations?: (gamedata_signature_validations_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: gamedata_signature_validations_bool_exp} })
+    /** delete single row from the table: "gamedata_signature_validations" */
+    delete_gamedata_signature_validations_by_pk?: (gamedata_signature_validationsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "leaderboard_entries" */
     delete_leaderboard_entries?: (leaderboard_entries_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -33285,6 +33726,18 @@ export interface mutation_rootGenqlSelection{
     object: game_versions_insert_input, 
     /** upsert condition */
     on_conflict?: (game_versions_on_conflict | null)} })
+    /** insert data into the table: "gamedata_signature_validations" */
+    insert_gamedata_signature_validations?: (gamedata_signature_validations_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: gamedata_signature_validations_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (gamedata_signature_validations_on_conflict | null)} })
+    /** insert a single row into the table: "gamedata_signature_validations" */
+    insert_gamedata_signature_validations_one?: (gamedata_signature_validationsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: gamedata_signature_validations_insert_input, 
+    /** upsert condition */
+    on_conflict?: (gamedata_signature_validations_on_conflict | null)} })
     /** insert data into the table: "leaderboard_entries" */
     insert_leaderboard_entries?: (leaderboard_entries_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -33986,6 +34439,7 @@ export interface mutation_rootGenqlSelection{
     /** the row to be inserted */
     object: v_pool_maps_insert_input} })
     joinLineup?: (SuccessOutputGenqlSelection & { __args: {code?: (Scalars['String'] | null), lineup_id: Scalars['String'], match_id: Scalars['String']} })
+    kickServerPlayer?: (KickResultGenqlSelection & { __args: {reason?: (Scalars['String'] | null), serverId: Scalars['String'], steam_id: Scalars['String']} })
     leaveLineup?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     linkSteamMatchHistory?: (SteamMatchHistoryLinkOutputGenqlSelection & { __args: {auth_code: Scalars['String'], share_code: Scalars['String']} })
     /** Load dev fixture data (dev only) */
@@ -34035,6 +34489,7 @@ export interface mutation_rootGenqlSelection{
     /** Delete terminal clip_render_jobs rows for a match_map (all or only failed/cancelled) and re-create them from their saved specs. */
     retryClipRenderBatch?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid'], only_failed?: (Scalars['Boolean'] | null)} })
     retryPendingMatchImport?: (PendingMatchImportActionOutputGenqlSelection & { __args: {valve_match_id: Scalars['String']} })
+    sanctionServerPlayer?: (SanctionResultGenqlSelection & { __args: {duration?: (Scalars['Float'] | null), reason?: (Scalars['String'] | null), serverId?: (Scalars['String'] | null), steam_id: Scalars['String'], type: Scalars['String']} })
     /** scheduleMatch */
     scheduleMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], time?: (Scalars['timestamptz'] | null)} })
     setGameNodeSchedulingState?: (SuccessOutputGenqlSelection & { __args: {enabled: Scalars['Boolean'], game_server_node_id: Scalars['String']} })
@@ -34067,6 +34522,7 @@ export interface mutation_rootGenqlSelection{
     testUpload?: TestUploadResponseGenqlSelection
     unlinkDiscord?: SuccessOutputGenqlSelection
     unlinkSteamMatchHistory?: SuccessOutputGenqlSelection
+    unsanctionServerPlayer?: (SanctionResultGenqlSelection & { __args: {serverId?: (Scalars['String'] | null), steam_id: Scalars['String'], type: Scalars['String']} })
     /** Owner-only patch for clip title / visibility / target_steam_id. */
     updateClip?: (SuccessOutputGenqlSelection & { __args: {clip_id: Scalars['uuid'], target_steam_id?: (Scalars['String'] | null), title?: (Scalars['String'] | null), visibility?: (Scalars['String'] | null)} })
     updateCs?: (SuccessOutputGenqlSelection & { __args?: {game?: (Scalars['String'] | null), game_server_node_id?: (Scalars['uuid'] | null)} })
@@ -34635,6 +35091,44 @@ export interface mutation_rootGenqlSelection{
     update_game_versions_many?: (game_versions_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: game_versions_updates[]} })
+    /** update data of the table: "gamedata_signature_validations" */
+    update_gamedata_signature_validations?: (gamedata_signature_validations_mutation_responseGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (gamedata_signature_validations_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (gamedata_signature_validations_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (gamedata_signature_validations_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (gamedata_signature_validations_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (gamedata_signature_validations_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (gamedata_signature_validations_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (gamedata_signature_validations_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: gamedata_signature_validations_bool_exp} })
+    /** update single row of the table: "gamedata_signature_validations" */
+    update_gamedata_signature_validations_by_pk?: (gamedata_signature_validationsGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (gamedata_signature_validations_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (gamedata_signature_validations_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (gamedata_signature_validations_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (gamedata_signature_validations_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (gamedata_signature_validations_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (gamedata_signature_validations_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (gamedata_signature_validations_set_input | null), pk_columns: gamedata_signature_validations_pk_columns_input} })
+    /** update multiples rows of table: "gamedata_signature_validations" */
+    update_gamedata_signature_validations_many?: (gamedata_signature_validations_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: gamedata_signature_validations_updates[]} })
     /** update data of the table: "leaderboard_entries" */
     update_leaderboard_entries?: (leaderboard_entries_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -35753,6 +36247,8 @@ export interface mutation_rootGenqlSelection{
     update_v_pool_maps_many?: (v_pool_maps_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: v_pool_maps_updates[]} })
+    /** Validate CS2 gamedata signatures/offsets on a node (5stack.gg test instance only) */
+    validateGamedata?: (SuccessOutputGenqlSelection & { __args: {game_server_node_id: Scalars['uuid']} })
     /** Spawn a per-user game-streamer pod to play back a finished match's demo */
     watchDemo?: (WatchDemoOutputGenqlSelection & { __args: {match_map_demo_id?: (Scalars['uuid'] | null), match_map_id: Scalars['uuid']} })
     /** Write content to file on game server */
@@ -45132,6 +45628,32 @@ export interface query_rootGenqlSelection{
     where?: (game_versions_bool_exp | null)} })
     /** fetch data from the table: "game_versions" using primary key columns */
     game_versions_by_pk?: (game_versionsGenqlSelection & { __args: {build_id: Scalars['Int']} })
+    /** fetch data from the table: "gamedata_signature_validations" */
+    gamedata_signature_validations?: (gamedata_signature_validationsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (gamedata_signature_validations_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (gamedata_signature_validations_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (gamedata_signature_validations_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "gamedata_signature_validations" */
+    gamedata_signature_validations_aggregate?: (gamedata_signature_validations_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (gamedata_signature_validations_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (gamedata_signature_validations_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (gamedata_signature_validations_bool_exp | null)} })
+    /** fetch data from the table: "gamedata_signature_validations" using primary key columns */
+    gamedata_signature_validations_by_pk?: (gamedata_signature_validationsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** Get list of active connections */
     getActiveConnections?: ActiveConnectionGenqlSelection
     /** Get currently executing queries */
@@ -45143,6 +45665,7 @@ export interface query_rootGenqlSelection{
     /** Get database-wide statistics */
     getDatabaseStats?: DatabaseStatsGenqlSelection
     getDedicatedServerInfo?: DedicatedSeverInfoGenqlSelection
+    getDedicatedServerPlayers?: (ServerPlayerGenqlSelection & { __args: {serverId: Scalars['String']} })
     /** Get index I/O statistics */
     getIndexIOStats?: (IndexIOStatGenqlSelection & { __args?: {schemas?: (Scalars['String'][] | null)} })
     /** Get index usage statistics */
@@ -49159,6 +49682,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (game_versions_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (game_versions_bool_exp | null)} })
+    /** fetch data from the table: "gamedata_signature_validations" */
+    gamedata_signature_validations?: (gamedata_signature_validationsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (gamedata_signature_validations_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (gamedata_signature_validations_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (gamedata_signature_validations_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "gamedata_signature_validations" */
+    gamedata_signature_validations_aggregate?: (gamedata_signature_validations_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (gamedata_signature_validations_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (gamedata_signature_validations_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (gamedata_signature_validations_bool_exp | null)} })
+    /** fetch data from the table: "gamedata_signature_validations" using primary key columns */
+    gamedata_signature_validations_by_pk?: (gamedata_signature_validationsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "gamedata_signature_validations" */
+    gamedata_signature_validations_stream?: (gamedata_signature_validationsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (gamedata_signature_validations_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (gamedata_signature_validations_bool_exp | null)} })
     /** execute function "get_leaderboard" which returns "leaderboard_entries" */
     get_leaderboard?: (leaderboard_entriesGenqlSelection & { __args: {
     /** input parameters for function "get_leaderboard" */
@@ -59140,6 +59697,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const KickResult_possibleTypes: string[] = ['KickResult']
+    export const isKickResult = (obj?: { __typename?: any } | null): obj is KickResult => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isKickResult"')
+      return KickResult_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const LiveSpecGsi_possibleTypes: string[] = ['LiveSpecGsi']
     export const isLiveSpecGsi = (obj?: { __typename?: any } | null): obj is LiveSpecGsi => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isLiveSpecGsi"')
@@ -59248,6 +59813,22 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isQueryStat = (obj?: { __typename?: any } | null): obj is QueryStat => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isQueryStat"')
       return QueryStat_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const SanctionResult_possibleTypes: string[] = ['SanctionResult']
+    export const isSanctionResult = (obj?: { __typename?: any } | null): obj is SanctionResult => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isSanctionResult"')
+      return SanctionResult_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const ServerPlayer_possibleTypes: string[] = ['ServerPlayer']
+    export const isServerPlayer = (obj?: { __typename?: any } | null): obj is ServerPlayer => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isServerPlayer"')
+      return ServerPlayer_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -61448,6 +62029,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isgame_versions_variance_fields = (obj?: { __typename?: any } | null): obj is game_versions_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isgame_versions_variance_fields"')
       return game_versions_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const gamedata_signature_validations_possibleTypes: string[] = ['gamedata_signature_validations']
+    export const isgamedata_signature_validations = (obj?: { __typename?: any } | null): obj is gamedata_signature_validations => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgamedata_signature_validations"')
+      return gamedata_signature_validations_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const gamedata_signature_validations_aggregate_possibleTypes: string[] = ['gamedata_signature_validations_aggregate']
+    export const isgamedata_signature_validations_aggregate = (obj?: { __typename?: any } | null): obj is gamedata_signature_validations_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgamedata_signature_validations_aggregate"')
+      return gamedata_signature_validations_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const gamedata_signature_validations_aggregate_fields_possibleTypes: string[] = ['gamedata_signature_validations_aggregate_fields']
+    export const isgamedata_signature_validations_aggregate_fields = (obj?: { __typename?: any } | null): obj is gamedata_signature_validations_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgamedata_signature_validations_aggregate_fields"')
+      return gamedata_signature_validations_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const gamedata_signature_validations_avg_fields_possibleTypes: string[] = ['gamedata_signature_validations_avg_fields']
+    export const isgamedata_signature_validations_avg_fields = (obj?: { __typename?: any } | null): obj is gamedata_signature_validations_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgamedata_signature_validations_avg_fields"')
+      return gamedata_signature_validations_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const gamedata_signature_validations_max_fields_possibleTypes: string[] = ['gamedata_signature_validations_max_fields']
+    export const isgamedata_signature_validations_max_fields = (obj?: { __typename?: any } | null): obj is gamedata_signature_validations_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgamedata_signature_validations_max_fields"')
+      return gamedata_signature_validations_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const gamedata_signature_validations_min_fields_possibleTypes: string[] = ['gamedata_signature_validations_min_fields']
+    export const isgamedata_signature_validations_min_fields = (obj?: { __typename?: any } | null): obj is gamedata_signature_validations_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgamedata_signature_validations_min_fields"')
+      return gamedata_signature_validations_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const gamedata_signature_validations_mutation_response_possibleTypes: string[] = ['gamedata_signature_validations_mutation_response']
+    export const isgamedata_signature_validations_mutation_response = (obj?: { __typename?: any } | null): obj is gamedata_signature_validations_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgamedata_signature_validations_mutation_response"')
+      return gamedata_signature_validations_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const gamedata_signature_validations_stddev_fields_possibleTypes: string[] = ['gamedata_signature_validations_stddev_fields']
+    export const isgamedata_signature_validations_stddev_fields = (obj?: { __typename?: any } | null): obj is gamedata_signature_validations_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgamedata_signature_validations_stddev_fields"')
+      return gamedata_signature_validations_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const gamedata_signature_validations_stddev_pop_fields_possibleTypes: string[] = ['gamedata_signature_validations_stddev_pop_fields']
+    export const isgamedata_signature_validations_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is gamedata_signature_validations_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgamedata_signature_validations_stddev_pop_fields"')
+      return gamedata_signature_validations_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const gamedata_signature_validations_stddev_samp_fields_possibleTypes: string[] = ['gamedata_signature_validations_stddev_samp_fields']
+    export const isgamedata_signature_validations_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is gamedata_signature_validations_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgamedata_signature_validations_stddev_samp_fields"')
+      return gamedata_signature_validations_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const gamedata_signature_validations_sum_fields_possibleTypes: string[] = ['gamedata_signature_validations_sum_fields']
+    export const isgamedata_signature_validations_sum_fields = (obj?: { __typename?: any } | null): obj is gamedata_signature_validations_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgamedata_signature_validations_sum_fields"')
+      return gamedata_signature_validations_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const gamedata_signature_validations_var_pop_fields_possibleTypes: string[] = ['gamedata_signature_validations_var_pop_fields']
+    export const isgamedata_signature_validations_var_pop_fields = (obj?: { __typename?: any } | null): obj is gamedata_signature_validations_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgamedata_signature_validations_var_pop_fields"')
+      return gamedata_signature_validations_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const gamedata_signature_validations_var_samp_fields_possibleTypes: string[] = ['gamedata_signature_validations_var_samp_fields']
+    export const isgamedata_signature_validations_var_samp_fields = (obj?: { __typename?: any } | null): obj is gamedata_signature_validations_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgamedata_signature_validations_var_samp_fields"')
+      return gamedata_signature_validations_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const gamedata_signature_validations_variance_fields_possibleTypes: string[] = ['gamedata_signature_validations_variance_fields']
+    export const isgamedata_signature_validations_variance_fields = (obj?: { __typename?: any } | null): obj is gamedata_signature_validations_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isgamedata_signature_validations_variance_fields"')
+      return gamedata_signature_validations_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -69429,6 +70122,7 @@ export const enumEPlayerRolesConstraint = {
 export const enumEPlayerRolesEnum = {
    administrator: 'administrator' as const,
    match_organizer: 'match_organizer' as const,
+   moderator: 'moderator' as const,
    streamer: 'streamer' as const,
    tournament_organizer: 'tournament_organizer' as const,
    user: 'user' as const,
@@ -69840,6 +70534,29 @@ export const enumGameVersionsUpdateColumn = {
    downloads: 'downloads' as const,
    updated_at: 'updated_at' as const,
    version: 'version' as const
+}
+
+export const enumGamedataSignatureValidationsConstraint = {
+   gamedata_signature_validations_build_branch_idx: 'gamedata_signature_validations_build_branch_idx' as const,
+   gamedata_signature_validations_pkey: 'gamedata_signature_validations_pkey' as const
+}
+
+export const enumGamedataSignatureValidationsSelectColumn = {
+   branch: 'branch' as const,
+   build_id: 'build_id' as const,
+   id: 'id' as const,
+   results: 'results' as const,
+   status: 'status' as const,
+   validated_at: 'validated_at' as const
+}
+
+export const enumGamedataSignatureValidationsUpdateColumn = {
+   branch: 'branch' as const,
+   build_id: 'build_id' as const,
+   id: 'id' as const,
+   results: 'results' as const,
+   status: 'status' as const,
+   validated_at: 'validated_at' as const
 }
 
 export const enumLeaderboardEntriesSelectColumn = {

@@ -2170,6 +2170,10 @@ export class MatchesController {
       },
     });
 
+    if (!matches_by_pk) {
+      throw Error("match not found");
+    }
+
     if (matches_by_pk.status === "Live") {
       throw Error("cannot delete a live match");
     }

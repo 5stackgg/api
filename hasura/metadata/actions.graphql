@@ -186,6 +186,38 @@ type Query {
 }
 
 type Query {
+  getDedicatedServerPlayers(
+    serverId: String!
+  ): [ServerPlayer!]!
+}
+
+type Mutation {
+  sanctionServerPlayer(
+    serverId: String
+    steam_id: String!
+    type: String!
+    reason: String
+    duration: Float
+  ): SanctionResult!
+}
+
+type Mutation {
+  unsanctionServerPlayer(
+    serverId: String
+    steam_id: String!
+    type: String!
+  ): SanctionResult!
+}
+
+type Mutation {
+  kickServerPlayer(
+    serverId: String!
+    steam_id: String!
+    reason: String
+  ): KickResult!
+}
+
+type Query {
   getIndexIOStats(
     schemas: [String!]
   ): [IndexIOStat]!
@@ -631,6 +663,10 @@ type Mutation {
 }
 
 type Mutation {
+  validateGamedata(game_server_node_id: uuid!): SuccessOutput
+}
+
+type Mutation {
   updateServices: SuccessOutput
 }
 
@@ -866,6 +902,22 @@ type DedicatedSeverInfo {
   players: Int!
   map: String!
   lastPing: String!
+}
+
+type ServerPlayer {
+  steam_id: String!
+  name: String!
+}
+
+type SanctionResult {
+  id: String
+  enforced: Boolean!
+  message: String
+}
+
+type KickResult {
+  kicked: Boolean!
+  message: String
 }
 
 type FileItem {

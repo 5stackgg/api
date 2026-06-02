@@ -138,6 +138,7 @@ export type ParsedSpotted = {
 export type ParsedGrenadeEvent = {
   tick: number;
   round?: number;
+  gid?: number;
   thrower?: string;
   thrower_team?: string;
   type: "Flash" | "HE" | "Smoke" | "Molotov" | "Decoy";

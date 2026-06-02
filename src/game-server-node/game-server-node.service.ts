@@ -1,7 +1,12 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../hasura/hasura.service";
 import { e_game_server_node_statuses_enum } from "../../generated";
-import { KubeConfig, CoreV1Api, BatchV1Api } from "@kubernetes/client-node";
+import {
+  KubeConfig,
+  CoreV1Api,
+  BatchV1Api,
+  V1Pod,
+} from "@kubernetes/client-node";
 import { GameServersConfig } from "src/configs/types/GameServersConfig";
 import { ConfigService } from "@nestjs/config";
 import { GpuDevice, NodeStats } from "./interfaces/NodeStats";
@@ -13,6 +18,24 @@ import { PassThrough } from "stream";
 import { SteamConfig } from "src/configs/types/SteamConfig";
 import { isJsonEqual } from "@utilities/isJsonEqual";
 import { NodeDisk } from "./interfaces/NodeDisk";
+
+export type GamedataValidationResult = {
+  build_id?: number | null;
+  status: "pass" | "fail" | "error";
+  broken: Array<{
+    set: string;
+    signature: string;
+    kind?: "signature" | "vtable";
+    count: number | null;
+  }>;
+  warnings?: Array<{
+    set: string;
+    signature: string;
+    count: number;
+  }>;
+  results?: Array<Record<string, unknown>>;
+  error?: string;
+};
 
 @Injectable()
 export class GameServerNodeService {
@@ -767,6 +790,245 @@ export class GameServerNodeService {
         },
       });
     }
+  }
+
+  public static GET_VALIDATE_GAMEDATA_JOB_NAME(
+    buildId: number,
+    branch = "public",
+  ) {
+    const sanitizedBranch = branch.replace(/[^a-z0-9]/gi, "-").toLowerCase();
+    return `validate-gamedata-${buildId}-${sanitizedBranch}`;
+  }
+
+  public async validateGamedata(
+    gameServerNodeId: string,
+    buildId: number,
+    branch = "public",
+  ): Promise<GamedataValidationResult | null> {
+    const jobName = GameServerNodeService.GET_VALIDATE_GAMEDATA_JOB_NAME(
+      buildId,
+      branch,
+    );
+
+    const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(".", "-");
+    const serverfilesVolumeName = `serverfiles-${sanitizedGameServerNodeId}`;
+
+    await this.batchApi
+      .deleteNamespacedJob({
+        name: jobName,
+        namespace: this.namespace,
+        propagationPolicy: "Background",
+        gracePeriodSeconds: 0,
+      })
+      .catch((error) => {
+        if (error.code?.toString() !== "404") {
+          throw error;
+        }
+      });
+
+    await this.batchApi.createNamespacedJob({
+      namespace: this.namespace,
+      body: {
+        apiVersion: "batch/v1",
+        kind: "Job",
+        metadata: {
+          name: jobName,
+        },
+        spec: {
+          template: {
+            metadata: {
+              labels: {
+                app: "validate-gamedata",
+              },
+            },
+            spec: {
+              affinity: {
+                nodeAffinity: {
+                  requiredDuringSchedulingIgnoredDuringExecution: {
+                    nodeSelectorTerms: [
+                      {
+                        matchExpressions: [
+                          {
+                            key: "kubernetes.io/hostname",
+                            operator: "In",
+                            values: [gameServerNodeId],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              },
+              restartPolicy: "Never",
+              containers: [
+                {
+                  name: "validate-gamedata",
+                  image: "ghcr.io/5stackgg/gamedata-validator:latest",
+                  args: ["--build-id", buildId.toString()],
+                  volumeMounts: [
+                    {
+                      name: serverfilesVolumeName,
+                      mountPath: "/serverdata/serverfiles",
+                      readOnly: true,
+                    },
+                  ],
+                  resources: {
+                    requests: {
+                      cpu: "500m",
+                      memory: "2Gi",
+                    },
+                    limits: {
+                      memory: "6Gi",
+                    },
+                  },
+                },
+              ],
+              volumes: [
+                {
+                  name: serverfilesVolumeName,
+                  persistentVolumeClaim: {
+                    claimName: `${serverfilesVolumeName}-claim`,
+                    readOnly: true,
+                  },
+                },
+              ],
+            },
+          },
+          backoffLimit: 0,
+          ttlSecondsAfterFinished: 60 * 60 * 24 * 7,
+        },
+      },
+    });
+
+    const result = await this.waitForGamedataValidation(jobName);
+
+    await this.hasura.mutation({
+      delete_gamedata_signature_validations: {
+        __args: {
+          where: {
+            build_id: { _eq: buildId },
+            branch: { _eq: branch },
+          },
+        },
+        affected_rows: true,
+      },
+    });
+
+    await this.hasura.mutation({
+      insert_gamedata_signature_validations_one: {
+        __args: {
+          object: {
+            build_id: buildId,
+            branch,
+            status: result?.status ?? "error",
+            results: result ?? null,
+          },
+        },
+        id: true,
+      },
+    });
+
+    return result;
+  }
+
+  private async waitForGamedataValidation(
+    jobName: string,
+    timeoutMs = 30 * 60 * 1000,
+  ): Promise<GamedataValidationResult | null> {
+    const start = Date.now();
+
+    while (Date.now() - start < timeoutMs) {
+      const status = await this.loggingService.getJobStatus(jobName);
+      if (status?.succeeded || status?.failed) {
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
+
+    const pod = await this.loggingService.getJobPod(jobName);
+    if (!pod?.metadata?.name) {
+      this.logger.error(`[validate-gamedata] no pod found for ${jobName}`);
+      return {
+        status: "error",
+        broken: [],
+        error: "no pod was scheduled for the validation job",
+      };
+    }
+
+    const reason = GameServerNodeService.podFailureReason(pod);
+
+    let logs: string;
+    try {
+      logs = await this.coreApi.readNamespacedPodLog({
+        name: pod.metadata.name,
+        namespace: this.namespace,
+      });
+    } catch {
+      this.logger.error(
+        `[validate-gamedata] ${jobName} produced no logs${reason ? `: ${reason}` : ""}`,
+      );
+      return {
+        status: "error",
+        broken: [],
+        error: reason ?? "could not read pod logs (container never started)",
+      };
+    }
+
+    const result = GameServerNodeService.parseValidationResult(logs);
+    if (!result) {
+      return {
+        status: "error",
+        broken: [],
+        error: reason ?? "no validation result was found in the pod logs",
+      };
+    }
+    return result;
+  }
+
+  private static podFailureReason(pod: V1Pod): string | null {
+    const statuses = [
+      ...(pod.status?.initContainerStatuses ?? []),
+      ...(pod.status?.containerStatuses ?? []),
+    ];
+
+    for (const containerStatus of statuses) {
+      const waiting = containerStatus.state?.waiting;
+      if (waiting?.reason) {
+        return waiting.message
+          ? `${waiting.reason}: ${waiting.message}`
+          : waiting.reason;
+      }
+
+      const terminated = containerStatus.state?.terminated;
+      if (terminated && terminated.exitCode !== 0) {
+        const detail = terminated.message ? `: ${terminated.message}` : "";
+        return `${terminated.reason ?? "terminated"}${detail} (exit ${terminated.exitCode})`;
+      }
+    }
+
+    if (pod.status?.phase === "Failed" && pod.status?.message) {
+      return pod.status.message;
+    }
+
+    return null;
+  }
+
+  private static parseValidationResult(
+    logs: string,
+  ): GamedataValidationResult | null {
+    const marker = "GAMEDATA_VALIDATION_RESULT ";
+    for (const line of String(logs ?? "").split("\n")) {
+      const index = line.indexOf(marker);
+      if (index === -1) {
+        continue;
+      }
+      try {
+        return JSON.parse(line.slice(index + marker.length).trim());
+      } catch {
+        return null;
+      }
+    }
+    return null;
   }
 
   private async createVolume(

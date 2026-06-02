@@ -41,26 +41,23 @@ export class NotificationsService {
     }>,
     color?: number,
     deletable?: boolean,
+    routing?: {
+      webhook?: string;
+      role?: string;
+    },
   ) {
-    const { settings_by_pk: discord_support_webhook } = await this.hasura.query(
-      {
-        settings_by_pk: {
-          __args: {
-            name: "discord_support_webhook",
-          },
-          value: true,
-        },
-      },
-    );
+    const webhookSetting = routing?.webhook ?? "discord_support_webhook";
+    const roleSetting = routing?.role ?? "discord_support_role_id";
 
-    const { settings_by_pk: discord_role_id } = await this.hasura.query({
-      settings_by_pk: {
-        __args: {
-          name: "discord_support_role_id",
-        },
-        value: true,
-      },
-    });
+    let webhook = await this.getSettingValue(webhookSetting);
+    if (!webhook && webhookSetting !== "discord_support_webhook") {
+      webhook = await this.getSettingValue("discord_support_webhook");
+    }
+
+    let roleId = await this.getSettingValue(roleSetting);
+    if (!roleId && roleSetting !== "discord_support_role_id") {
+      roleId = await this.getSettingValue("discord_support_role_id");
+    }
 
     await this.hasura.mutation({
       insert_notifications_one: {
@@ -76,16 +73,14 @@ export class NotificationsService {
       },
     });
 
-    if (discord_support_webhook?.value) {
+    if (webhook) {
       try {
         const description = new TurndownService().turndown(
           notification.message,
         );
-        const content = discord_role_id?.value
-          ? `<@&${discord_role_id.value}>`
-          : undefined;
+        const content = roleId ? `<@&${roleId}>` : undefined;
 
-        await fetch(discord_support_webhook.value, {
+        await fetch(webhook, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -106,6 +101,18 @@ export class NotificationsService {
         this.logger.error("Error sending discord notification", error);
       }
     }
+  }
+
+  private async getSettingValue(name: string): Promise<string | undefined> {
+    const { settings_by_pk } = await this.hasura.query({
+      settings_by_pk: {
+        __args: {
+          name,
+        },
+        value: true,
+      },
+    });
+    return settings_by_pk?.value ?? undefined;
   }
 
   async sendMatchWaitingForServerNotification(matchId: string) {
@@ -478,15 +485,10 @@ export class NotificationsService {
     let roleId = tournament?.discord_role_id || null;
 
     if (!roleId) {
-      const { settings_by_pk: roleIdSetting } = await this.hasura.query({
-        settings_by_pk: {
-          __args: {
-            name: "discord_match_notifications_role_id",
-          },
-          value: true,
-        },
-      });
-      roleId = roleIdSetting?.value;
+      roleId =
+        (await this.getSettingValue("discord_match_notifications_role_id")) ||
+        (await this.getSettingValue("discord_support_role_id")) ||
+        null;
     }
 
     const content = this.formatRoleMentions(roleId);

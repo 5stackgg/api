@@ -30,6 +30,7 @@ import { GetPluginVersions } from "./jobs/GetPluginVersions";
 import { K8sModule } from "src/k8s/k8s.module";
 import { GameStreamerModule } from "../matches/game-streamer/game-streamer.module";
 import { BakeShaders } from "./jobs/BakeShaders";
+import { ValidateGamedata } from "./jobs/ValidateGamedata";
 
 @Module({
   providers: [
@@ -41,6 +42,7 @@ import { BakeShaders } from "./jobs/BakeShaders";
     MarkDedicatedServerOffline,
     CheckServerPluginVersions,
     BakeShaders,
+    ValidateGamedata,
     ...getQueuesProcessors("GameServerNode"),
     loggerFactory(),
   ],
@@ -66,6 +68,9 @@ import { BakeShaders } from "./jobs/BakeShaders";
       {
         name: GameServerQueues.BakeShaders,
       },
+      {
+        name: GameServerQueues.ValidateGamedata,
+      },
     ),
     BullBoardModule.forFeature(
       {
@@ -82,6 +87,10 @@ import { BakeShaders } from "./jobs/BakeShaders";
       },
       {
         name: GameServerQueues.BakeShaders,
+        adapter: BullMQAdapter,
+      },
+      {
+        name: GameServerQueues.ValidateGamedata,
         adapter: BullMQAdapter,
       },
     ),

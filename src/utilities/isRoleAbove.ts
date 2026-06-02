@@ -4,6 +4,7 @@ const roleOrder: e_player_roles_enum[] = [
   "user",
   "verified_user",
   "streamer",
+  "moderator",
   "match_organizer",
   "tournament_organizer",
   "administrator",
