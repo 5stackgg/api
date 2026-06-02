@@ -75,7 +75,7 @@ export class PostgresModule {
       {},
       {
         repeat: {
-          pattern: "0 0 * * *",
+          pattern: "0 0 * * 0",
         },
       },
     );

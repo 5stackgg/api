@@ -54,24 +54,31 @@ export class ReindexTables extends WorkerHost {
   }
 
   private async getTablesToReindex() {
-    // TODO - im not sure what todo about hypertables
+    // REINDEX CONCURRENTLY is not supported on TimescaleDB hypertables, so we
+    // exclude them dynamically rather than maintaining a hardcoded list.
+    const [{ exists: hasTimescale }] = await this.postgres.query<
+      Array<{ exists: boolean }>
+    >(`SELECT EXISTS (
+        SELECT 1 FROM pg_extension WHERE extname = 'timescaledb'
+      ) as exists`);
+
+    const hypertableFilter = hasTimescale
+      ? `AND NOT EXISTS (
+          SELECT 1 FROM timescaledb_information.hypertables h
+          WHERE h.hypertable_schema = t.schemaname
+            AND h.hypertable_name = t.tablename
+        )`
+      : "";
+
     const tables = await this.postgres.query<
       Array<{
         tablename: string;
         schemaname: string;
       }>
-    >(`SELECT tablename, schemaname FROM pg_tables 
-        WHERE (schemaname = 'public') 
-        AND NOT tablename LIKE 'e_%'
-        AND tablename NOT IN (
-          'player_utility',
-          'player_flashes',
-          'player_assists',
-          'player_damages',
-          'player_objectives',
-          'player_kills',
-          'player_sanctions'
-        )
+    >(`SELECT t.tablename, t.schemaname FROM pg_tables t
+        WHERE (t.schemaname = 'public')
+        AND NOT t.tablename LIKE 'e_%'
+        ${hypertableFilter}
       `);
     return tables.map((table) => `${table.schemaname}."${table.tablename}"`);
   }
