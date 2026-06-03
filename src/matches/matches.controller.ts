@@ -1004,6 +1004,16 @@ export class MatchesController {
   }
 
   @HasuraAction()
+  public async refreshLiveHud(data: { match_id: string; user: User }) {
+    const { match_id, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
+    await this.gameStreamer.refreshLiveHud(match_id);
+    return { success: true };
+  }
+
+  @HasuraAction()
   public async specXray(data: {
     match_id: string;
     enabled: boolean;

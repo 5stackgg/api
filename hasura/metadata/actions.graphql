@@ -489,6 +489,12 @@ type Mutation {
 }
 
 type Mutation {
+  refreshLiveHud(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   specJump(
     match_id: uuid!
   ): SuccessOutput

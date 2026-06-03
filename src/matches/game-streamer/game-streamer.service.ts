@@ -429,6 +429,7 @@ export class GameStreamerService {
       | "autodirector"
       | "hud"
       | "hud-mode"
+      | "hud-reload"
       | "hud-sides"
       | "xray"
       | "scoreboard"
@@ -546,6 +547,10 @@ export class GameStreamerService {
     mode: "default" | "horizontal" | "vertical",
   ) {
     return this.callSpec(matchId, "hud-mode", { mode });
+  }
+
+  public async refreshLiveHud(matchId: string) {
+    return this.callSpec(matchId, "hud-reload", {});
   }
 
   public async specHud(matchId: string, visible: boolean) {
