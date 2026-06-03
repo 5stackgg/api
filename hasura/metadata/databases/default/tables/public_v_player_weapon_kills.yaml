@@ -1,0 +1,15 @@
+table:
+  name: v_player_weapon_kills
+  schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - player_steam_id
+        - source
+        - with
+        - kill_count
+        - type
+      filter: {}
+      allow_aggregations: true
+    comment: ""
