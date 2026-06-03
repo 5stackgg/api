@@ -64537,14 +64537,19 @@ input uuid_comparison_exp {
 columns and relationships of "v_gpu_pool_status"
 """
 type v_gpu_pool_status {
+  demo_free_gpu_nodes: Int
   demo_in_progress: Boolean
+  demo_total_gpu_nodes: Int
   free_gpu_nodes: Int
   free_gpu_nodes_for_batch: Int
   highlights_in_progress: Boolean
   id: Int
   live_in_progress: Boolean
   registered_gpu_nodes: Int
+  rendering_total_gpu_nodes: Int
   renders_paused_for_active_match: Boolean
+  streaming_free_gpu_nodes: Int
+  streaming_total_gpu_nodes: Int
   total_gpu_nodes: Int
 }
 
@@ -64575,10 +64580,15 @@ type v_gpu_pool_status_aggregate_fields {
 
 """aggregate avg on columns"""
 type v_gpu_pool_status_avg_fields {
+  demo_free_gpu_nodes: Float
+  demo_total_gpu_nodes: Float
   free_gpu_nodes: Float
   free_gpu_nodes_for_batch: Float
   id: Float
   registered_gpu_nodes: Float
+  rendering_total_gpu_nodes: Float
+  streaming_free_gpu_nodes: Float
+  streaming_total_gpu_nodes: Float
   total_gpu_nodes: Float
 }
 
@@ -64589,45 +64599,65 @@ input v_gpu_pool_status_bool_exp {
   _and: [v_gpu_pool_status_bool_exp!]
   _not: v_gpu_pool_status_bool_exp
   _or: [v_gpu_pool_status_bool_exp!]
+  demo_free_gpu_nodes: Int_comparison_exp
   demo_in_progress: Boolean_comparison_exp
+  demo_total_gpu_nodes: Int_comparison_exp
   free_gpu_nodes: Int_comparison_exp
   free_gpu_nodes_for_batch: Int_comparison_exp
   highlights_in_progress: Boolean_comparison_exp
   id: Int_comparison_exp
   live_in_progress: Boolean_comparison_exp
   registered_gpu_nodes: Int_comparison_exp
+  rendering_total_gpu_nodes: Int_comparison_exp
   renders_paused_for_active_match: Boolean_comparison_exp
+  streaming_free_gpu_nodes: Int_comparison_exp
+  streaming_total_gpu_nodes: Int_comparison_exp
   total_gpu_nodes: Int_comparison_exp
 }
 
 """aggregate max on columns"""
 type v_gpu_pool_status_max_fields {
+  demo_free_gpu_nodes: Int
+  demo_total_gpu_nodes: Int
   free_gpu_nodes: Int
   free_gpu_nodes_for_batch: Int
   id: Int
   registered_gpu_nodes: Int
+  rendering_total_gpu_nodes: Int
+  streaming_free_gpu_nodes: Int
+  streaming_total_gpu_nodes: Int
   total_gpu_nodes: Int
 }
 
 """aggregate min on columns"""
 type v_gpu_pool_status_min_fields {
+  demo_free_gpu_nodes: Int
+  demo_total_gpu_nodes: Int
   free_gpu_nodes: Int
   free_gpu_nodes_for_batch: Int
   id: Int
   registered_gpu_nodes: Int
+  rendering_total_gpu_nodes: Int
+  streaming_free_gpu_nodes: Int
+  streaming_total_gpu_nodes: Int
   total_gpu_nodes: Int
 }
 
 """Ordering options when selecting data from "v_gpu_pool_status"."""
 input v_gpu_pool_status_order_by {
+  demo_free_gpu_nodes: order_by
   demo_in_progress: order_by
+  demo_total_gpu_nodes: order_by
   free_gpu_nodes: order_by
   free_gpu_nodes_for_batch: order_by
   highlights_in_progress: order_by
   id: order_by
   live_in_progress: order_by
   registered_gpu_nodes: order_by
+  rendering_total_gpu_nodes: order_by
   renders_paused_for_active_match: order_by
+  streaming_free_gpu_nodes: order_by
+  streaming_total_gpu_nodes: order_by
   total_gpu_nodes: order_by
 }
 
@@ -64636,7 +64666,13 @@ select columns of table "v_gpu_pool_status"
 """
 enum v_gpu_pool_status_select_column {
   """column name"""
+  demo_free_gpu_nodes
+
+  """column name"""
   demo_in_progress
+
+  """column name"""
+  demo_total_gpu_nodes
 
   """column name"""
   free_gpu_nodes
@@ -64657,7 +64693,16 @@ enum v_gpu_pool_status_select_column {
   registered_gpu_nodes
 
   """column name"""
+  rendering_total_gpu_nodes
+
+  """column name"""
   renders_paused_for_active_match
+
+  """column name"""
+  streaming_free_gpu_nodes
+
+  """column name"""
+  streaming_total_gpu_nodes
 
   """column name"""
   total_gpu_nodes
@@ -64665,28 +64710,43 @@ enum v_gpu_pool_status_select_column {
 
 """aggregate stddev on columns"""
 type v_gpu_pool_status_stddev_fields {
+  demo_free_gpu_nodes: Float
+  demo_total_gpu_nodes: Float
   free_gpu_nodes: Float
   free_gpu_nodes_for_batch: Float
   id: Float
   registered_gpu_nodes: Float
+  rendering_total_gpu_nodes: Float
+  streaming_free_gpu_nodes: Float
+  streaming_total_gpu_nodes: Float
   total_gpu_nodes: Float
 }
 
 """aggregate stddev_pop on columns"""
 type v_gpu_pool_status_stddev_pop_fields {
+  demo_free_gpu_nodes: Float
+  demo_total_gpu_nodes: Float
   free_gpu_nodes: Float
   free_gpu_nodes_for_batch: Float
   id: Float
   registered_gpu_nodes: Float
+  rendering_total_gpu_nodes: Float
+  streaming_free_gpu_nodes: Float
+  streaming_total_gpu_nodes: Float
   total_gpu_nodes: Float
 }
 
 """aggregate stddev_samp on columns"""
 type v_gpu_pool_status_stddev_samp_fields {
+  demo_free_gpu_nodes: Float
+  demo_total_gpu_nodes: Float
   free_gpu_nodes: Float
   free_gpu_nodes_for_batch: Float
   id: Float
   registered_gpu_nodes: Float
+  rendering_total_gpu_nodes: Float
+  streaming_free_gpu_nodes: Float
+  streaming_total_gpu_nodes: Float
   total_gpu_nodes: Float
 }
 
@@ -64703,50 +64763,75 @@ input v_gpu_pool_status_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input v_gpu_pool_status_stream_cursor_value_input {
+  demo_free_gpu_nodes: Int
   demo_in_progress: Boolean
+  demo_total_gpu_nodes: Int
   free_gpu_nodes: Int
   free_gpu_nodes_for_batch: Int
   highlights_in_progress: Boolean
   id: Int
   live_in_progress: Boolean
   registered_gpu_nodes: Int
+  rendering_total_gpu_nodes: Int
   renders_paused_for_active_match: Boolean
+  streaming_free_gpu_nodes: Int
+  streaming_total_gpu_nodes: Int
   total_gpu_nodes: Int
 }
 
 """aggregate sum on columns"""
 type v_gpu_pool_status_sum_fields {
+  demo_free_gpu_nodes: Int
+  demo_total_gpu_nodes: Int
   free_gpu_nodes: Int
   free_gpu_nodes_for_batch: Int
   id: Int
   registered_gpu_nodes: Int
+  rendering_total_gpu_nodes: Int
+  streaming_free_gpu_nodes: Int
+  streaming_total_gpu_nodes: Int
   total_gpu_nodes: Int
 }
 
 """aggregate var_pop on columns"""
 type v_gpu_pool_status_var_pop_fields {
+  demo_free_gpu_nodes: Float
+  demo_total_gpu_nodes: Float
   free_gpu_nodes: Float
   free_gpu_nodes_for_batch: Float
   id: Float
   registered_gpu_nodes: Float
+  rendering_total_gpu_nodes: Float
+  streaming_free_gpu_nodes: Float
+  streaming_total_gpu_nodes: Float
   total_gpu_nodes: Float
 }
 
 """aggregate var_samp on columns"""
 type v_gpu_pool_status_var_samp_fields {
+  demo_free_gpu_nodes: Float
+  demo_total_gpu_nodes: Float
   free_gpu_nodes: Float
   free_gpu_nodes_for_batch: Float
   id: Float
   registered_gpu_nodes: Float
+  rendering_total_gpu_nodes: Float
+  streaming_free_gpu_nodes: Float
+  streaming_total_gpu_nodes: Float
   total_gpu_nodes: Float
 }
 
 """aggregate variance on columns"""
 type v_gpu_pool_status_variance_fields {
+  demo_free_gpu_nodes: Float
+  demo_total_gpu_nodes: Float
   free_gpu_nodes: Float
   free_gpu_nodes_for_batch: Float
   id: Float
   registered_gpu_nodes: Float
+  rendering_total_gpu_nodes: Float
+  streaming_free_gpu_nodes: Float
+  streaming_total_gpu_nodes: Float
   total_gpu_nodes: Float
 }
 

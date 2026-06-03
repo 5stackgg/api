@@ -14,6 +14,11 @@ select_permissions:
         - live_in_progress
         - demo_in_progress
         - highlights_in_progress
+        - streaming_total_gpu_nodes
+        - streaming_free_gpu_nodes
+        - demo_total_gpu_nodes
+        - demo_free_gpu_nodes
+        - rendering_total_gpu_nodes
       filter: {}
     comment: ""
   - role: streamer
@@ -28,5 +33,10 @@ select_permissions:
         - live_in_progress
         - demo_in_progress
         - highlights_in_progress
+        - streaming_total_gpu_nodes
+        - streaming_free_gpu_nodes
+        - demo_total_gpu_nodes
+        - demo_free_gpu_nodes
+        - rendering_total_gpu_nodes
       filter: {}
     comment: ""

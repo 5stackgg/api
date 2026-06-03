@@ -47,7 +47,7 @@ as $$
    where gpu = true
      and enabled = true
      and gpu_streaming_enabled = true
-     and status = 'Online'
+     and status in ('Online', 'NotAcceptingNewMatches')
      and id not in (select * from gpu_busy_node_ids())
    order by id
    for update skip locked
@@ -63,7 +63,7 @@ as $$
    where gpu = true
      and enabled = true
      and gpu_demos_enabled = true
-     and status = 'Online'
+     and status in ('Online', 'NotAcceptingNewMatches')
      and id not in (select * from gpu_busy_node_ids())
    order by id
    for update skip locked
@@ -79,7 +79,7 @@ as $$
    where gpu = true
      and enabled = true
      and gpu_rendering_enabled = true
-     and status = 'Online'
+     and status in ('Online', 'NotAcceptingNewMatches')
      and id not in (select * from gpu_busy_node_ids())
      and id not in (select * from gpu_batch_blocked_node_ids())
    order by id

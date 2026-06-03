@@ -73361,8 +73361,14 @@ export default {
             ]
         },
         "v_gpu_pool_status": {
+            "demo_free_gpu_nodes": [
+                30
+            ],
             "demo_in_progress": [
                 3
+            ],
+            "demo_total_gpu_nodes": [
+                30
             ],
             "free_gpu_nodes": [
                 30
@@ -73382,8 +73388,17 @@ export default {
             "registered_gpu_nodes": [
                 30
             ],
+            "rendering_total_gpu_nodes": [
+                30
+            ],
             "renders_paused_for_active_match": [
                 3
+            ],
+            "streaming_free_gpu_nodes": [
+                30
+            ],
+            "streaming_total_gpu_nodes": [
+                30
             ],
             "total_gpu_nodes": [
                 30
@@ -73451,6 +73466,12 @@ export default {
             ]
         },
         "v_gpu_pool_status_avg_fields": {
+            "demo_free_gpu_nodes": [
+                22
+            ],
+            "demo_total_gpu_nodes": [
+                22
+            ],
             "free_gpu_nodes": [
                 22
             ],
@@ -73461,6 +73482,15 @@ export default {
                 22
             ],
             "registered_gpu_nodes": [
+                22
+            ],
+            "rendering_total_gpu_nodes": [
+                22
+            ],
+            "streaming_free_gpu_nodes": [
+                22
+            ],
+            "streaming_total_gpu_nodes": [
                 22
             ],
             "total_gpu_nodes": [
@@ -73480,8 +73510,14 @@ export default {
             "_or": [
                 3118
             ],
+            "demo_free_gpu_nodes": [
+                31
+            ],
             "demo_in_progress": [
                 4
+            ],
+            "demo_total_gpu_nodes": [
+                31
             ],
             "free_gpu_nodes": [
                 31
@@ -73501,8 +73537,17 @@ export default {
             "registered_gpu_nodes": [
                 31
             ],
+            "rendering_total_gpu_nodes": [
+                31
+            ],
             "renders_paused_for_active_match": [
                 4
+            ],
+            "streaming_free_gpu_nodes": [
+                31
+            ],
+            "streaming_total_gpu_nodes": [
+                31
             ],
             "total_gpu_nodes": [
                 31
@@ -73512,6 +73557,12 @@ export default {
             ]
         },
         "v_gpu_pool_status_max_fields": {
+            "demo_free_gpu_nodes": [
+                30
+            ],
+            "demo_total_gpu_nodes": [
+                30
+            ],
             "free_gpu_nodes": [
                 30
             ],
@@ -73522,6 +73573,15 @@ export default {
                 30
             ],
             "registered_gpu_nodes": [
+                30
+            ],
+            "rendering_total_gpu_nodes": [
+                30
+            ],
+            "streaming_free_gpu_nodes": [
+                30
+            ],
+            "streaming_total_gpu_nodes": [
                 30
             ],
             "total_gpu_nodes": [
@@ -73532,6 +73592,12 @@ export default {
             ]
         },
         "v_gpu_pool_status_min_fields": {
+            "demo_free_gpu_nodes": [
+                30
+            ],
+            "demo_total_gpu_nodes": [
+                30
+            ],
             "free_gpu_nodes": [
                 30
             ],
@@ -73544,6 +73610,15 @@ export default {
             "registered_gpu_nodes": [
                 30
             ],
+            "rendering_total_gpu_nodes": [
+                30
+            ],
+            "streaming_free_gpu_nodes": [
+                30
+            ],
+            "streaming_total_gpu_nodes": [
+                30
+            ],
             "total_gpu_nodes": [
                 30
             ],
@@ -73552,7 +73627,13 @@ export default {
             ]
         },
         "v_gpu_pool_status_order_by": {
+            "demo_free_gpu_nodes": [
+                1723
+            ],
             "demo_in_progress": [
+                1723
+            ],
+            "demo_total_gpu_nodes": [
                 1723
             ],
             "free_gpu_nodes": [
@@ -73573,7 +73654,16 @@ export default {
             "registered_gpu_nodes": [
                 1723
             ],
+            "rendering_total_gpu_nodes": [
+                1723
+            ],
             "renders_paused_for_active_match": [
+                1723
+            ],
+            "streaming_free_gpu_nodes": [
+                1723
+            ],
+            "streaming_total_gpu_nodes": [
                 1723
             ],
             "total_gpu_nodes": [
@@ -73585,6 +73675,12 @@ export default {
         },
         "v_gpu_pool_status_select_column": {},
         "v_gpu_pool_status_stddev_fields": {
+            "demo_free_gpu_nodes": [
+                22
+            ],
+            "demo_total_gpu_nodes": [
+                22
+            ],
             "free_gpu_nodes": [
                 22
             ],
@@ -73595,6 +73691,15 @@ export default {
                 22
             ],
             "registered_gpu_nodes": [
+                22
+            ],
+            "rendering_total_gpu_nodes": [
+                22
+            ],
+            "streaming_free_gpu_nodes": [
+                22
+            ],
+            "streaming_total_gpu_nodes": [
                 22
             ],
             "total_gpu_nodes": [
@@ -73605,6 +73710,12 @@ export default {
             ]
         },
         "v_gpu_pool_status_stddev_pop_fields": {
+            "demo_free_gpu_nodes": [
+                22
+            ],
+            "demo_total_gpu_nodes": [
+                22
+            ],
             "free_gpu_nodes": [
                 22
             ],
@@ -73615,6 +73726,15 @@ export default {
                 22
             ],
             "registered_gpu_nodes": [
+                22
+            ],
+            "rendering_total_gpu_nodes": [
+                22
+            ],
+            "streaming_free_gpu_nodes": [
+                22
+            ],
+            "streaming_total_gpu_nodes": [
                 22
             ],
             "total_gpu_nodes": [
@@ -73625,6 +73745,12 @@ export default {
             ]
         },
         "v_gpu_pool_status_stddev_samp_fields": {
+            "demo_free_gpu_nodes": [
+                22
+            ],
+            "demo_total_gpu_nodes": [
+                22
+            ],
             "free_gpu_nodes": [
                 22
             ],
@@ -73635,6 +73761,15 @@ export default {
                 22
             ],
             "registered_gpu_nodes": [
+                22
+            ],
+            "rendering_total_gpu_nodes": [
+                22
+            ],
+            "streaming_free_gpu_nodes": [
+                22
+            ],
+            "streaming_total_gpu_nodes": [
                 22
             ],
             "total_gpu_nodes": [
@@ -73656,8 +73791,14 @@ export default {
             ]
         },
         "v_gpu_pool_status_stream_cursor_value_input": {
+            "demo_free_gpu_nodes": [
+                30
+            ],
             "demo_in_progress": [
                 3
+            ],
+            "demo_total_gpu_nodes": [
+                30
             ],
             "free_gpu_nodes": [
                 30
@@ -73677,8 +73818,17 @@ export default {
             "registered_gpu_nodes": [
                 30
             ],
+            "rendering_total_gpu_nodes": [
+                30
+            ],
             "renders_paused_for_active_match": [
                 3
+            ],
+            "streaming_free_gpu_nodes": [
+                30
+            ],
+            "streaming_total_gpu_nodes": [
+                30
             ],
             "total_gpu_nodes": [
                 30
@@ -73688,6 +73838,12 @@ export default {
             ]
         },
         "v_gpu_pool_status_sum_fields": {
+            "demo_free_gpu_nodes": [
+                30
+            ],
+            "demo_total_gpu_nodes": [
+                30
+            ],
             "free_gpu_nodes": [
                 30
             ],
@@ -73698,6 +73854,15 @@ export default {
                 30
             ],
             "registered_gpu_nodes": [
+                30
+            ],
+            "rendering_total_gpu_nodes": [
+                30
+            ],
+            "streaming_free_gpu_nodes": [
+                30
+            ],
+            "streaming_total_gpu_nodes": [
                 30
             ],
             "total_gpu_nodes": [
@@ -73708,6 +73873,12 @@ export default {
             ]
         },
         "v_gpu_pool_status_var_pop_fields": {
+            "demo_free_gpu_nodes": [
+                22
+            ],
+            "demo_total_gpu_nodes": [
+                22
+            ],
             "free_gpu_nodes": [
                 22
             ],
@@ -73718,6 +73889,15 @@ export default {
                 22
             ],
             "registered_gpu_nodes": [
+                22
+            ],
+            "rendering_total_gpu_nodes": [
+                22
+            ],
+            "streaming_free_gpu_nodes": [
+                22
+            ],
+            "streaming_total_gpu_nodes": [
                 22
             ],
             "total_gpu_nodes": [
@@ -73728,6 +73908,12 @@ export default {
             ]
         },
         "v_gpu_pool_status_var_samp_fields": {
+            "demo_free_gpu_nodes": [
+                22
+            ],
+            "demo_total_gpu_nodes": [
+                22
+            ],
             "free_gpu_nodes": [
                 22
             ],
@@ -73738,6 +73924,15 @@ export default {
                 22
             ],
             "registered_gpu_nodes": [
+                22
+            ],
+            "rendering_total_gpu_nodes": [
+                22
+            ],
+            "streaming_free_gpu_nodes": [
+                22
+            ],
+            "streaming_total_gpu_nodes": [
                 22
             ],
             "total_gpu_nodes": [
@@ -73748,6 +73943,12 @@ export default {
             ]
         },
         "v_gpu_pool_status_variance_fields": {
+            "demo_free_gpu_nodes": [
+                22
+            ],
+            "demo_total_gpu_nodes": [
+                22
+            ],
             "free_gpu_nodes": [
                 22
             ],
@@ -73758,6 +73959,15 @@ export default {
                 22
             ],
             "registered_gpu_nodes": [
+                22
+            ],
+            "rendering_total_gpu_nodes": [
+                22
+            ],
+            "streaming_free_gpu_nodes": [
+                22
+            ],
+            "streaming_total_gpu_nodes": [
                 22
             ],
             "total_gpu_nodes": [

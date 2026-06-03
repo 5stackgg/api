@@ -2255,7 +2255,7 @@ export class GameStreamerService {
       const { rows: gpuRows } = await client.query(
         `SELECT count(*)::int AS n
            FROM game_server_nodes
-          WHERE gpu = true AND enabled = true AND gpu_streaming_enabled = true AND status = 'Online'`,
+          WHERE gpu = true AND enabled = true AND gpu_streaming_enabled = true AND status IN ('Online', 'NotAcceptingNewMatches')`,
       );
       const registeredGpus = (gpuRows[0]?.n as number | undefined) ?? 0;
       if (registeredGpus === 0) {
