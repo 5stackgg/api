@@ -1,15 +1,6 @@
--- One-time backfill: canonicalise existing weapon spellings so native 5Stack
--- matches and imported (Valve/external) demos share one name per gun.
---
--- Root cause: 5Stack stores CS2 engine classnames ("m4a1", "m4a1_silencer",
--- "usp_silencer", "deagle"); imported demos went through demoinfocs display
--- names normalised only by lower()+strip-spaces ("m4a4", "m4a1-s",
--- "deserteagle") — so the same gun split into two rows + missing icons.
---
--- The PERMANENT canonical_weapon() lives in
--- hasura/functions/demos/persist_imported_demo.sql (applied after migrations).
--- Migrations run first, so this backfill uses a session-local (pg_temp) copy
--- and does not define anything permanent.
+-- One-time backfill of existing weapon names to their canonical form. The
+-- permanent canonical_weapon() lives in hasura/functions; migrations run before
+-- functions, so this uses a session-local copy.
 CREATE FUNCTION pg_temp.canonical_weapon(_w text)
 RETURNS text
 LANGUAGE sql
@@ -103,8 +94,6 @@ UPDATE public.player_damages
  WHERE "with" IS NOT NULL
    AND "with" IS DISTINCT FROM pg_temp.canonical_weapon("with");
 
--- Rebuild the per-weapon kill aggregate from the now-canonical kills so
--- previously-split rows (m4a1 / m4a4) collapse into one.
 TRUNCATE public.player_kills_by_weapon;
 INSERT INTO public.player_kills_by_weapon (player_steam_id, "with", kill_count)
 SELECT attacker_steam_id, "with", COUNT(*)

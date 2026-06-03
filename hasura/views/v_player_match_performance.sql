@@ -1,8 +1,5 @@
--- Per-player, per-match performance for BOTH native 5Stack matches and
--- imported external (Valve/FACEIT) matches. v_player_elo only exists for
--- 5Stack matches, so this view is the source-agnostic basis for win-rate and
--- K/D: it carries the match source, type and timestamp alongside summed
--- kills/deaths/assists and a per-match win/loss derived from map winners.
+-- Per-player, per-match performance (source-aware) for win-rate and K/D, with a
+-- per-match win/loss derived from map winners. Covers 5Stack and external.
 CREATE OR REPLACE VIEW public.v_player_match_performance AS
 SELECT
     mlp.steam_id                               AS player_steam_id,

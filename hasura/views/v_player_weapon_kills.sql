@@ -1,8 +1,5 @@
--- Per-player weapon kill counts split by match source AND type so the profile
--- can show 5Stack vs external (Valve/FACEIT) weapon usage per mode. player_kills
--- is a Timescale hypertable indexed on attacker_steam_id, so filtering this view
--- by player_steam_id (+ source/type) only scans that player's kills. `type` is
--- the trailing column so CREATE OR REPLACE can evolve it without a drop.
+-- Per-player weapon kill counts split by match source and type. `type` is the
+-- trailing column so CREATE OR REPLACE can evolve it without a drop.
 CREATE OR REPLACE VIEW public.v_player_weapon_kills AS
 SELECT
     pk.attacker_steam_id AS player_steam_id,

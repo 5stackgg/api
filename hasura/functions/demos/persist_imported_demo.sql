@@ -48,11 +48,8 @@ AS $$
   END;
 $$;
 
--- canonical_weapon maps ANY weapon spelling (demoinfocs display names, the
--- live plugin's CS2 classnames, the engine "weapon_" prefix) to one canonical
--- classname that also matches the equipment icon basename. Created here so
--- deploys keep it in sync; migration 1842000000000 also defines it up front so
--- the one-time backfill can run before this file is applied.
+-- Maps any weapon spelling to its canonical CS2 classname (= equipment icon
+-- basename), keyed on a compact lowercase/alphanumeric form.
 CREATE OR REPLACE FUNCTION public.canonical_weapon(_w text)
 RETURNS text
 LANGUAGE sql
@@ -141,9 +138,6 @@ RETURNS text
 LANGUAGE sql
 IMMUTABLE
 AS $$
-  -- The demo-parser now emits canonical CS2 classnames, but keep routing
-  -- imports through canonical_weapon so any legacy/display spelling still
-  -- collapses to the same name the live plugin and icon set use.
   SELECT public.canonical_weapon(_w);
 $$;
 
