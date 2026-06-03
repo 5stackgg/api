@@ -96204,6 +96204,15 @@ export default {
                     ]
                 }
             ],
+            "refreshLiveHud": [
+                57,
+                {
+                    "match_id": [
+                        3112,
+                        "uuid!"
+                    ]
+                }
+            ],
             "registerName": [
                 57,
                 {

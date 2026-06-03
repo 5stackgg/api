@@ -24757,6 +24757,7 @@ type mutation_root {
   """Refresh all players in Typesense index"""
   refreshAllPlayers: SuccessOutput
   refreshFaceitRank(steam_id: String!): SuccessOutput
+  refreshLiveHud(match_id: uuid!): SuccessOutput
   registerName(name: String!): SuccessOutput
 
   """Remove dev fixture data (dev only)"""
