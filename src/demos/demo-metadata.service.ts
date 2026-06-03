@@ -264,10 +264,7 @@ export class DemoMetadataService {
       throw new Error(`demo parse returned null for ${demo.id}`);
     }
 
-    await this.postgres.query(
-      `SELECT public.persist_parsed_demo($1::uuid, $2::jsonb)`,
-      [demo.id, JSON.stringify(parsed)],
-    );
+    await this.persistDemoStats(demo.id, demo.match_id, parsed);
 
     await this.uploadPlaybackBlob(
       demo.match_id,
@@ -296,12 +293,14 @@ export class DemoMetadataService {
     matchMapDemoId: string,
     parsed: ParsedDemo,
   ): Promise<void> {
-    await this.postgres.query(
-      `SELECT public.persist_parsed_demo($1::uuid, $2::jsonb)`,
-      [matchMapDemoId, JSON.stringify(parsed)],
+    const demo = await this.fetchDemoById(matchMapDemoId);
+
+    await this.persistDemoStats(
+      matchMapDemoId,
+      demo?.match_id ?? null,
+      parsed,
     );
 
-    const demo = await this.fetchDemoById(matchMapDemoId);
     await this.persistRanks(parsed, demo?.match_id ?? null);
 
     if (demo) {
@@ -313,6 +312,65 @@ export class DemoMetadataService {
         demo.playback_file,
       );
     }
+  }
+
+  // Live 5stack matches capture kills/rounds/money/utility from in-game
+  // events during play; a (re)parse only (re)derives the demo-only aim
+  // stats via persist_parsed_demo. External (imported) matches have no
+  // live events, so their entire stat set comes from the demo — a reparse
+  // must re-run the full external import (persist_imported_demo, which
+  // also runs persist_parsed_demo internally) so kills/rounds/money/coords
+  // refresh. Neither touches the match/map/lineup rows — only stat tables.
+  private async persistDemoStats(
+    matchMapDemoId: string,
+    matchId: string | null,
+    parsed: ParsedDemo,
+  ): Promise<void> {
+    const external = matchId ? await this.isExternalMatch(matchId) : false;
+    const fn = external
+      ? "public.persist_imported_demo"
+      : "public.persist_parsed_demo";
+
+    // Diagnostics: confirm the demo-parser emitted the new fields. If these
+    // counts are 0 on an external match, the parser deploy hasn't landed and
+    // there are no coords/money to import regardless of which path runs.
+    const kills = parsed.kills ?? [];
+    const killsWithCoords = kills.filter((k) => k.attacker_x != null).length;
+    const rounds = parsed.round_ticks ?? [];
+    const roundsWithMoney = rounds.filter(
+      (r) => r.ct_money != null || r.t_money != null,
+    ).length;
+
+    this.logger.log(
+      `[persist] ${
+        external
+          ? "FULL import (external — wipes & re-inserts all stats)"
+          : "PARTIAL import (5stack — aim stats only)"
+      } match=${matchId ?? "<none>"} demo=${matchMapDemoId} via ${fn} | ` +
+        `parsed kills=${kills.length} (with coords ${killsWithCoords}), ` +
+        `rounds=${rounds.length} (with money ${roundsWithMoney})`,
+    );
+
+    const startedAt = Date.now();
+    await this.postgres.query(`SELECT ${fn}($1::uuid, $2::jsonb)`, [
+      matchMapDemoId,
+      JSON.stringify(parsed),
+    ]);
+    this.logger.log(
+      `[persist] done ${
+        external ? "FULL" : "PARTIAL"
+      } import match=${matchId ?? "<none>"} demo=${matchMapDemoId} in ${
+        Date.now() - startedAt
+      }ms`,
+    );
+  }
+
+  private async isExternalMatch(matchId: string): Promise<boolean> {
+    const rows = await this.postgres.query<Array<{ source: string }>>(
+      `SELECT source FROM public.matches WHERE id = $1::uuid LIMIT 1`,
+      [matchId],
+    );
+    return (rows?.[0]?.source ?? "5stack") !== "5stack";
   }
 
   // Persists Valve ranks: Wingman (6), Competitive (7), Premier (11). Premier
@@ -398,7 +456,7 @@ export class DemoMetadataService {
     }
     if (!DemoMetadataService.isExternalDemoUrl(demo.file)) {
       try {
-        await this.s3.remove(demo.file);
+        await this.s3.removePrefix(demo.file);
       } catch (error) {
         this.logger.warn(
           `[demo-delete] failed to remove .dem ${demo.file}: ${(error as Error)?.message}`,
@@ -407,7 +465,7 @@ export class DemoMetadataService {
     }
     if (demo.playback_file) {
       try {
-        await this.s3.remove(demo.playback_file);
+        await this.s3.removePrefix(demo.playback_file);
       } catch (error) {
         this.logger.warn(
           `[demo-delete] failed to remove playback blob ${demo.playback_file}: ${(error as Error)?.message}`,
@@ -430,7 +488,25 @@ export class DemoMetadataService {
       },
     });
     for (const demo of match_map_demos) {
-      await this.deleteDemo(demo.id);
+      await this.hasura.mutation({
+        delete_match_map_demos_by_pk: {
+          __args: { id: demo.id },
+          __typename: true,
+        },
+      });
+    }
+
+    try {
+      const removed = await this.s3.removePrefix(`demos/${matchId}/`);
+      if (removed > 0) {
+        this.logger.log(
+          `[demo-delete] swept ${removed} object(s) under demos/${matchId}/`,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `[demo-delete] failed to sweep demos/${matchId}/: ${(error as Error)?.message}`,
+      );
     }
   }
 

@@ -2,6 +2,15 @@ table:
   name: v_player_match_performance
   schema: public
 object_relationships:
+  - name: map
+    using:
+      manual_configuration:
+        column_mapping:
+          map_id: id
+        insertion_order: null
+        remote_table:
+          name: maps
+          schema: public
   - name: match
     using:
       manual_configuration:
@@ -20,6 +29,7 @@ select_permissions:
         - source
         - match_created_at
         - type
+        - map_id
         - kills
         - deaths
         - assists

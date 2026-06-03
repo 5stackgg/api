@@ -1,0 +1,53 @@
+table:
+  name: v_match_lineup_map_stats
+  schema: public
+object_relationships:
+  - name: match
+    using:
+      manual_configuration:
+        remote_table:
+          name: matches
+          schema: public
+        column_mapping:
+          match_id: id
+  - name: match_map
+    using:
+      manual_configuration:
+        remote_table:
+          name: match_maps
+          schema: public
+        column_mapping:
+          match_map_id: id
+  - name: match_lineup
+    using:
+      manual_configuration:
+        remote_table:
+          name: match_lineups
+          schema: public
+        column_mapping:
+          match_lineup_id: id
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - match_id
+        - match_map_id
+        - match_lineup_id
+        - side
+        - rounds
+        - round_wins
+        - pistol_rounds
+        - pistol_wins
+        - opening_attempts
+        - opening_wins
+        - man_adv_rounds
+        - man_adv_wins
+        - man_dis_rounds
+        - man_dis_wins
+        - won_buy_pistol
+        - won_buy_eco
+        - won_buy_force
+        - won_buy_full
+      filter: {}
+      allow_aggregations: true
+    comment: ""

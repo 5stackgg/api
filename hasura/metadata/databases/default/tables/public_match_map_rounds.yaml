@@ -52,5 +52,14 @@ select_permissions:
         - winning_side
       computed_fields:
         - has_backup_file
-      filter: {}
+      # Anti-cheat: round rows carry team economy (lineup_*_money), so they're
+      # hidden until the map is over. The admin restore-round UI reads
+      # restorable rounds from v_match_map_backup_rounds instead (round number +
+      # backup availability only — not sensitive), so it still works live.
+      filter:
+        match_map:
+          status:
+            _in:
+              - Finished
+              - Surrendered
     comment: ""

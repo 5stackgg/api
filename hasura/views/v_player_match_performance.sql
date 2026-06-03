@@ -14,7 +14,8 @@ SELECT
         WHEN w.won > w.lost THEN 'win'
         WHEN w.won < w.lost THEN 'loss'
         ELSE 'tie'
-    END                                        AS match_result
+    END                                        AS match_result,
+    w.map_id                                   AS map_id
 FROM match_lineup_players mlp
     INNER JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
     INNER JOIN matches m        ON m.id = ml.match_id
@@ -34,7 +35,15 @@ FROM match_lineup_players mlp
             COUNT(*) FILTER (
                 WHERE mm.winning_lineup_id IS NOT NULL
                   AND mm.winning_lineup_id <> ml.id
-            ) AS lost
+            ) AS lost,
+            -- Single-map matches (all external Competitive/Wingman) expose their
+            -- map so per-map win-rate is a direct filter; multi-map (Bo3) stays
+            -- NULL. uuid has no min(), so collapse the distinct set and take it.
+            CASE
+                WHEN COUNT(DISTINCT mm.map_id) = 1
+                THEN (array_agg(DISTINCT mm.map_id)
+                      FILTER (WHERE mm.map_id IS NOT NULL))[1]
+            END AS map_id
         FROM match_maps mm
         WHERE mm.match_id = m.id
           AND mm.status = 'Finished'

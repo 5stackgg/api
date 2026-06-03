@@ -6,6 +6,7 @@ import { Queue } from "bullmq";
 import { HasuraModule } from "../hasura/hasura.module";
 import { CacheModule } from "../cache/cache.module";
 import { DemosModule } from "../demos/demos.module";
+import { S3Module } from "../s3/s3.module";
 import { ClipsModule } from "../matches/clips/clips.module";
 import { PostgresModule } from "../postgres/postgres.module";
 import { loggerFactory } from "../utilities/LoggerFactory";
@@ -18,6 +19,7 @@ import { SteamMatchHistoryQueues } from "./enums/SteamMatchHistoryQueues";
 import { PollAllSteamMatchHistory } from "./jobs/PollAllSteamMatchHistory";
 import { ResolveMatchMetadata } from "./jobs/ResolveMatchMetadata";
 import { ParseImportedDemo } from "./jobs/ParseImportedDemo";
+import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
 
 @Module({
   imports: [
@@ -30,6 +32,9 @@ import { ParseImportedDemo } from "./jobs/ParseImportedDemo";
     BullModule.registerQueue({
       name: SteamMatchHistoryQueues.ParseImportedDemo,
     }),
+    BullModule.registerQueue({
+      name: SteamMatchHistoryQueues.ProcessUploadedDemo,
+    }),
     BullBoardModule.forFeature({
       name: SteamMatchHistoryQueues.PollAllSteamMatchHistory,
       adapter: BullMQAdapter,
@@ -42,9 +47,14 @@ import { ParseImportedDemo } from "./jobs/ParseImportedDemo";
       name: SteamMatchHistoryQueues.ParseImportedDemo,
       adapter: BullMQAdapter,
     }),
+    BullBoardModule.forFeature({
+      name: SteamMatchHistoryQueues.ProcessUploadedDemo,
+      adapter: BullMQAdapter,
+    }),
     HasuraModule,
     CacheModule,
     DemosModule,
+    S3Module,
     ClipsModule,
     PostgresModule,
   ],
@@ -55,6 +65,7 @@ import { ParseImportedDemo } from "./jobs/ParseImportedDemo";
     PollAllSteamMatchHistory,
     ResolveMatchMetadata,
     ParseImportedDemo,
+    ProcessUploadedDemo,
     ...getQueuesProcessors("SteamMatchHistory"),
     loggerFactory(),
   ],

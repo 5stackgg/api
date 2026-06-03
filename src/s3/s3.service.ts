@@ -93,6 +93,19 @@ export class S3Service {
     return await this.client.getPartialObject(bucket, filename, offset, length);
   }
 
+  public async readPrefix(
+    filename: string,
+    length: number,
+    bucket: string = this.bucket,
+  ): Promise<Buffer> {
+    const stream = await this.getPartial(filename, 0, length, bucket);
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk as Buffer);
+    }
+    return Buffer.concat(chunks);
+  }
+
   public async put(
     filename: string,
     stream: Readable | Buffer,
@@ -101,8 +114,46 @@ export class S3Service {
     await this.client.putObject(bucket, filename, stream);
   }
 
+  public async copyObject(
+    fromKey: string,
+    toKey: string,
+    bucket: string = this.bucket,
+  ): Promise<void> {
+    await this.client.copyObject(bucket, toKey, `/${bucket}/${fromKey}`);
+  }
+
   public async stat(filename: string, bucket: string = this.bucket) {
     return await this.client.statObject(bucket, filename);
+  }
+
+  public async removePrefix(
+    prefix: string,
+    bucket: string = this.bucket,
+  ): Promise<number> {
+    const entries: Array<{ name: string; versionId?: string }> = [];
+    const stream = this.client.listObjects(bucket, prefix, true, {
+      IncludeVersion: true,
+    });
+
+    for await (const obj of stream) {
+      const info = obj as { name?: string; versionId?: string };
+      if (!info.name) {
+        continue;
+      }
+      entries.push(
+        info.versionId && info.versionId !== "null"
+          ? { name: info.name, versionId: info.versionId }
+          : { name: info.name },
+      );
+    }
+
+    let removed = 0;
+    for (let i = 0; i < entries.length; i += 1000) {
+      const batch = entries.slice(i, i + 1000);
+      await this.client.removeObjects(bucket, batch);
+      removed += batch.length;
+    }
+    return removed;
   }
 
   public async remove(
@@ -157,5 +208,63 @@ export class S3Service {
     }
 
     return presignedUrl;
+  }
+
+  public async createMultipartUpload(
+    key: string,
+    bucket: string = this.bucket,
+  ): Promise<string> {
+    return await this.client.initiateNewMultipartUpload(bucket, key, {});
+  }
+
+  public async getPresignedPartUrl(
+    key: string,
+    uploadId: string,
+    partNumber: number,
+    expires = 60 * 60 * 6,
+    bucket: string = this.bucket,
+  ): Promise<string> {
+    const client =
+      this.config.endpoint === "minio" ? this.externalClient : this.client;
+
+    return await client.presignedUrl("PUT", bucket, key, expires, {
+      uploadId,
+      partNumber: partNumber.toString(),
+    });
+  }
+
+  public async completeMultipartUpload(
+    key: string,
+    uploadId: string,
+    bucket: string = this.bucket,
+  ): Promise<void> {
+    const parts = await (
+      this.client as unknown as {
+        listParts: (
+          bucket: string,
+          key: string,
+          uploadId: string,
+        ) => Promise<Array<{ part: number; etag: string }>>;
+      }
+    ).listParts(bucket, key, uploadId);
+    if (parts.length === 0) {
+      throw new Error("no parts uploaded");
+    }
+    await this.client.completeMultipartUpload(
+      bucket,
+      key,
+      uploadId,
+      parts
+        .sort((a, b) => a.part - b.part)
+        .map((part) => ({ part: part.part, etag: part.etag })),
+    );
+  }
+
+  public async abortMultipartUpload(
+    key: string,
+    uploadId: string,
+    bucket: string = this.bucket,
+  ): Promise<void> {
+    await this.client.abortMultipartUpload(bucket, key, uploadId);
   }
 }

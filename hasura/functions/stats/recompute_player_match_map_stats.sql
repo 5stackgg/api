@@ -78,12 +78,12 @@ BEGIN
       COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND pk.headshot)                AS hs_kills,
       COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND pk."with" LIKE 'knife%')    AS knife_kills,
       COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND pk."with" = 'taser')        AS zeus_kills,
-      COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND pk.attacker_team = 't')     AS kills_t,
-      COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND pk.attacker_team = 'ct')    AS kills_ct,
+      COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND public.normalize_side(pk.attacker_team) = 't')     AS kills_t,
+      COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND public.normalize_side(pk.attacker_team) = 'ct')    AS kills_ct,
       COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND pk.headshot
-                        AND pk.attacker_team = 't')                                                AS hs_kills_t,
+                        AND public.normalize_side(pk.attacker_team) = 't')                          AS hs_kills_t,
       COUNT(*) FILTER (WHERE pk.attacker_team <> pk.attacked_team AND pk.headshot
-                        AND pk.attacker_team = 'ct')                                               AS hs_kills_ct
+                        AND public.normalize_side(pk.attacker_team) = 'ct')                         AS hs_kills_ct
     FROM public.player_kills pk
     WHERE pk.match_map_id = p_match_map_id
       AND pk.attacker_steam_id IS NOT NULL
@@ -94,8 +94,8 @@ BEGIN
     SELECT
       pk.attacked_steam_id AS steam_id,
       COUNT(*)                                              AS deaths,
-      COUNT(*) FILTER (WHERE pk.attacked_team = 't')        AS deaths_t,
-      COUNT(*) FILTER (WHERE pk.attacked_team = 'ct')       AS deaths_ct
+      COUNT(*) FILTER (WHERE public.normalize_side(pk.attacked_team) = 't')  AS deaths_t,
+      COUNT(*) FILTER (WHERE public.normalize_side(pk.attacked_team) = 'ct') AS deaths_ct
     FROM public.player_kills pk
     WHERE pk.match_map_id = p_match_map_id
       AND pk.round IN (SELECT round FROM finalized_rounds)
@@ -106,8 +106,8 @@ BEGIN
       pa.attacker_steam_id AS steam_id,
       COUNT(*) FILTER (WHERE pa.attacker_team <> pa.attacked_team)                                  AS assists,
       COUNT(*) FILTER (WHERE pa.attacker_team <> pa.attacked_team AND pa.flash)                     AS flash_assists,
-      COUNT(*) FILTER (WHERE pa.attacker_team <> pa.attacked_team AND pa.attacker_team = 't')       AS assists_t,
-      COUNT(*) FILTER (WHERE pa.attacker_team <> pa.attacked_team AND pa.attacker_team = 'ct')      AS assists_ct
+      COUNT(*) FILTER (WHERE pa.attacker_team <> pa.attacked_team AND public.normalize_side(pa.attacker_team) = 't')       AS assists_t,
+      COUNT(*) FILTER (WHERE pa.attacker_team <> pa.attacked_team AND public.normalize_side(pa.attacker_team) = 'ct')      AS assists_ct
     FROM public.player_assists pa
     WHERE pa.match_map_id = p_match_map_id
       AND pa.round IN (SELECT round FROM finalized_rounds)
@@ -124,8 +124,8 @@ BEGIN
           AND pd."with" IN ('molotov', 'inferno')
       ), 0)::integer                                                                                                       AS molotov_damage,
       COALESCE(SUM(pd.damage) FILTER (WHERE pd.attacker_team = pd.attacked_team AND pd."with" = 'hegrenade'), 0)::integer  AS he_team_damage,
-      COALESCE(SUM(pd.damage) FILTER (WHERE pd.attacker_team <> pd.attacked_team AND pd.attacker_team = 't'), 0)::integer  AS damage_t,
-      COALESCE(SUM(pd.damage) FILTER (WHERE pd.attacker_team <> pd.attacked_team AND pd.attacker_team = 'ct'), 0)::integer AS damage_ct
+      COALESCE(SUM(pd.damage) FILTER (WHERE pd.attacker_team <> pd.attacked_team AND public.normalize_side(pd.attacker_team) = 't'), 0)::integer  AS damage_t,
+      COALESCE(SUM(pd.damage) FILTER (WHERE pd.attacker_team <> pd.attacked_team AND public.normalize_side(pd.attacker_team) = 'ct'), 0)::integer AS damage_ct
     FROM public.player_damages pd
     WHERE pd.match_map_id = p_match_map_id
       AND pd.attacker_steam_id IS NOT NULL
@@ -202,8 +202,8 @@ BEGIN
   rounds_per_side_agg AS (
     SELECT
       steam_id,
-      COUNT(DISTINCT round) FILTER (WHERE team = 't')  AS rounds_t,
-      COUNT(DISTINCT round) FILTER (WHERE team = 'ct') AS rounds_ct
+      COUNT(DISTINCT round) FILTER (WHERE public.normalize_side(team) = 't')  AS rounds_t,
+      COUNT(DISTINCT round) FILTER (WHERE public.normalize_side(team) = 'ct') AS rounds_ct
     FROM player_round_team
     GROUP BY steam_id
   ),

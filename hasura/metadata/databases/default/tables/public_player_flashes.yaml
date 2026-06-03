@@ -26,6 +26,12 @@ select_permissions:
         - round
         - team_flash
         - time
-      filter: {}
+      # Anti-cheat: per-event rows hidden until the map is over.
+      filter:
+        match_map:
+          status:
+            _in:
+              - Finished
+              - Surrendered
       allow_aggregations: true
     comment: ""

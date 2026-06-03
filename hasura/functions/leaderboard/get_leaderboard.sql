@@ -1,10 +1,16 @@
 DROP FUNCTION IF EXISTS public._leaderboard_trophies(INT);
+-- _role was added to these signatures; drop the older arities so CREATE
+-- replaces rather than overloads them.
+DROP FUNCTION IF EXISTS public.get_leaderboard(TEXT, INT, TEXT, BOOLEAN);
+DROP FUNCTION IF EXISTS public._leaderboard_hltv_metric(TEXT, INT, TEXT, BOOLEAN);
+DROP FUNCTION IF EXISTS public._leaderboard_udr(INT, TEXT, BOOLEAN);
 
 CREATE OR REPLACE FUNCTION public.get_leaderboard(
   _category TEXT,
   _window_days INT,
   _match_type TEXT DEFAULT NULL,
-  _exclude_tournaments BOOLEAN DEFAULT FALSE
+  _exclude_tournaments BOOLEAN DEFAULT FALSE,
+  _role TEXT DEFAULT NULL
 )
 RETURNS SETOF public.leaderboard_entries
 LANGUAGE plpgsql STABLE
@@ -25,8 +31,23 @@ BEGIN
   ELSIF _category = 'trophies' THEN
     RETURN QUERY SELECT * FROM _leaderboard_trophies(_window_days, _match_type);
 
+  ELSIF _category = 'best_rating' THEN
+    RETURN QUERY SELECT * FROM _leaderboard_hltv_metric('rating', _window_days, _match_type, _exclude_tournaments, _role);
+
+  ELSIF _category = 'best_adr' THEN
+    RETURN QUERY SELECT * FROM _leaderboard_hltv_metric('adr', _window_days, _match_type, _exclude_tournaments, _role);
+
+  ELSIF _category = 'best_kpr' THEN
+    RETURN QUERY SELECT * FROM _leaderboard_hltv_metric('kpr', _window_days, _match_type, _exclude_tournaments, _role);
+
+  ELSIF _category = 'best_kast' THEN
+    RETURN QUERY SELECT * FROM _leaderboard_hltv_metric('kast', _window_days, _match_type, _exclude_tournaments, _role);
+
+  ELSIF _category = 'best_udr' THEN
+    RETURN QUERY SELECT * FROM _leaderboard_udr(_window_days, _match_type, _exclude_tournaments, _role);
+
   ELSE
-    RAISE EXCEPTION 'Invalid category: %. Must be one of: elo, best_kdr, best_win_rate, highest_hs_pct, trophies', _category;
+    RAISE EXCEPTION 'Invalid category: %. Must be one of: elo, best_kdr, best_win_rate, highest_hs_pct, trophies, best_rating, best_adr, best_kpr, best_kast, best_udr', _category;
   END IF;
 END;
 $$;
@@ -418,5 +439,130 @@ BEGIN
   FROM ranked r
   WHERE r.player_steam_id = _player_steam_id
   LIMIT 1;
+END;
+$$;
+
+-- ============================================================
+-- HLTV-stat leaderboards (rating / ADR / KPR / KAST)
+-- Aggregates the canonical per-map view, rounds-weighted. _metric selects
+-- which stat is the headline value; secondary carries a complementary stat.
+-- value/secondary semantics:
+--   rating → value=HLTV rating, secondary=ADR
+--   adr    → value=ADR,         secondary=HLTV rating
+--   kpr    → value=KPR,         secondary=DPR
+--   kast   → value=KAST%,       secondary=HLTV rating
+-- tertiary = rounds played (the sample size).
+-- ============================================================
+CREATE OR REPLACE FUNCTION public._leaderboard_hltv_metric(
+  _metric TEXT,
+  _window_days INT,
+  _match_type TEXT,
+  _exclude_tournaments BOOLEAN,
+  _role TEXT DEFAULT NULL
+)
+RETURNS SETOF public.leaderboard_entries
+LANGUAGE plpgsql STABLE
+AS $$
+BEGIN
+  RETURN QUERY
+  WITH agg AS (
+    SELECT
+      h.steam_id,
+      SUM(h.hltv_rating * h.rounds_played) / NULLIF(SUM(h.rounds_played), 0) AS rating,
+      SUM(h.adr * h.rounds_played) / NULLIF(SUM(h.rounds_played), 0)         AS adr,
+      SUM(h.kpr * h.rounds_played) / NULLIF(SUM(h.rounds_played), 0)         AS kpr,
+      SUM(h.dpr * h.rounds_played) / NULLIF(SUM(h.rounds_played), 0)         AS dpr,
+      SUM(h.kast_pct * h.rounds_played) / NULLIF(SUM(h.rounds_played), 0)    AS kast,
+      SUM(h.rounds_played)                                                   AS rounds,
+      COUNT(DISTINCT h.match_id)::int                                        AS match_count
+    FROM v_player_match_map_hltv h
+    JOIN matches m ON m.id = h.match_id
+    JOIN match_options mo ON mo.id = m.match_options_id
+    LEFT JOIN v_player_match_map_roles r
+      ON _role IS NOT NULL
+     AND r.match_map_id = h.match_map_id
+     AND r.steam_id = h.steam_id
+    WHERE m.source = '5stack'
+      AND (_window_days = 0 OR m.created_at >= NOW() - make_interval(days => _window_days))
+      AND (_match_type IS NULL OR mo.type = _match_type)
+      AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = h.match_id))
+      AND (_role IS NULL OR r.role = _role)
+    GROUP BY h.steam_id
+    HAVING SUM(h.rounds_played) >= 50
+  )
+  SELECT
+    a.steam_id::text   AS player_steam_id,
+    p.name             AS player_name,
+    p.avatar_url       AS player_avatar_url,
+    p.country          AS player_country,
+    (CASE _metric
+      WHEN 'rating' THEN ROUND(a.rating::numeric, 2)
+      WHEN 'adr'    THEN ROUND(a.adr::numeric, 1)
+      WHEN 'kpr'    THEN ROUND(a.kpr::numeric, 2)
+      WHEN 'kast'   THEN ROUND(a.kast::numeric, 1)
+    END)::float        AS value,
+    (CASE _metric
+      WHEN 'rating' THEN ROUND(a.adr::numeric, 1)
+      WHEN 'adr'    THEN ROUND(a.rating::numeric, 2)
+      WHEN 'kpr'    THEN ROUND(a.dpr::numeric, 2)
+      WHEN 'kast'   THEN ROUND(a.rating::numeric, 2)
+    END)::float        AS secondary_value,
+    a.rounds::float    AS tertiary_value,
+    a.match_count      AS matches_played
+  FROM agg a
+  JOIN players p ON p.steam_id = a.steam_id
+  ORDER BY value DESC NULLS LAST;
+END;
+$$;
+
+-- ============================================================
+-- Utility-damage-per-round leaderboard
+-- value = UDR, secondary = total utility damage, tertiary = rounds played
+-- ============================================================
+CREATE OR REPLACE FUNCTION public._leaderboard_udr(
+  _window_days INT,
+  _match_type TEXT,
+  _exclude_tournaments BOOLEAN,
+  _role TEXT DEFAULT NULL
+)
+RETURNS SETOF public.leaderboard_entries
+LANGUAGE plpgsql STABLE
+AS $$
+BEGIN
+  RETURN QUERY
+  WITH agg AS (
+    SELECT
+      s.steam_id,
+      SUM(s.he_damage + s.molotov_damage)                                   AS util_damage,
+      SUM(s.he_damage + s.molotov_damage)::numeric / NULLIF(SUM(s.rounds_played), 0) AS udr,
+      SUM(s.rounds_played)                                                  AS rounds,
+      COUNT(DISTINCT s.match_id)::int                                       AS match_count
+    FROM player_match_map_stats s
+    JOIN matches m ON m.id = s.match_id
+    JOIN match_options mo ON mo.id = m.match_options_id
+    LEFT JOIN v_player_match_map_roles r
+      ON _role IS NOT NULL
+     AND r.match_map_id = s.match_map_id
+     AND r.steam_id = s.steam_id
+    WHERE m.source = '5stack'
+      AND (_window_days = 0 OR m.created_at >= NOW() - make_interval(days => _window_days))
+      AND (_match_type IS NULL OR mo.type = _match_type)
+      AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = s.match_id))
+      AND (_role IS NULL OR r.role = _role)
+    GROUP BY s.steam_id
+    HAVING SUM(s.rounds_played) >= 50
+  )
+  SELECT
+    a.steam_id::text          AS player_steam_id,
+    p.name                    AS player_name,
+    p.avatar_url              AS player_avatar_url,
+    p.country                 AS player_country,
+    ROUND(a.udr, 1)::float    AS value,
+    a.util_damage::float      AS secondary_value,
+    a.rounds::float           AS tertiary_value,
+    a.match_count             AS matches_played
+  FROM agg a
+  JOIN players p ON p.steam_id = a.steam_id
+  ORDER BY value DESC NULLS LAST;
 END;
 $$;

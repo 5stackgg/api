@@ -50,6 +50,14 @@ export class SteamMatchHistoryService {
     return rows.at(0)?.value !== "false";
   }
 
+  public async getCloudflareWorkerUrl(): Promise<string | null> {
+    const rows = await this.postgres.query<Array<{ value: string }>>(
+      `SELECT value FROM public.settings WHERE name = 'cloudflare_worker_url' LIMIT 1`,
+    );
+    const value = rows.at(0)?.value?.trim();
+    return value ? value.replace(/\/+$/, "") : null;
+  }
+
   public async linkAccount(
     steamId: string,
     authCode: string,

@@ -10150,6 +10150,7 @@ input get_leaderboard_args {
   _category: String
   _exclude_tournaments: Boolean
   _match_type: String
+  _role: String
   _window_days: Int
 }
 
@@ -22610,6 +22611,14 @@ type mutation_root {
   ): v_match_captains_mutation_response
 
   """
+  delete data from the table: "v_match_map_backup_rounds"
+  """
+  delete_v_match_map_backup_rounds(
+    """filter the rows which have to be deleted"""
+    where: v_match_map_backup_rounds_bool_exp!
+  ): v_match_map_backup_rounds_mutation_response
+
+  """
   delete data from the table: "v_pool_maps"
   """
   delete_v_pool_maps(
@@ -24690,6 +24699,22 @@ type mutation_root {
     """the row to be inserted"""
     object: v_match_captains_insert_input!
   ): v_match_captains
+
+  """
+  insert data into the table: "v_match_map_backup_rounds"
+  """
+  insert_v_match_map_backup_rounds(
+    """the rows to be inserted"""
+    objects: [v_match_map_backup_rounds_insert_input!]!
+  ): v_match_map_backup_rounds_mutation_response
+
+  """
+  insert a single row into the table: "v_match_map_backup_rounds"
+  """
+  insert_v_match_map_backup_rounds_one(
+    """the row to be inserted"""
+    object: v_match_map_backup_rounds_insert_input!
+  ): v_match_map_backup_rounds
 
   """
   insert data into the table: "v_pool_maps"
@@ -28185,6 +28210,28 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [v_match_captains_updates!]!
   ): [v_match_captains_mutation_response]
+
+  """
+  update data of the table: "v_match_map_backup_rounds"
+  """
+  update_v_match_map_backup_rounds(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: v_match_map_backup_rounds_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: v_match_map_backup_rounds_set_input
+
+    """filter the rows which have to be updated"""
+    where: v_match_map_backup_rounds_bool_exp!
+  ): v_match_map_backup_rounds_mutation_response
+
+  """
+  update multiples rows of table: "v_match_map_backup_rounds"
+  """
+  update_v_match_map_backup_rounds_many(
+    """updates to execute, in order"""
+    updates: [v_match_map_backup_rounds_updates!]!
+  ): [v_match_map_backup_rounds_mutation_response]
 
   """
   update data of the table: "v_pool_maps"
@@ -48733,6 +48780,166 @@ type query_root {
   ): v_match_captains_aggregate!
 
   """
+  fetch data from the table: "v_match_lineup_buy_types"
+  """
+  v_match_lineup_buy_types(
+    """distinct select on columns"""
+    distinct_on: [v_match_lineup_buy_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_lineup_buy_types_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_lineup_buy_types_bool_exp
+  ): [v_match_lineup_buy_types!]!
+
+  """
+  fetch aggregated fields from the table: "v_match_lineup_buy_types"
+  """
+  v_match_lineup_buy_types_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_match_lineup_buy_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_lineup_buy_types_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_lineup_buy_types_bool_exp
+  ): v_match_lineup_buy_types_aggregate!
+
+  """
+  fetch data from the table: "v_match_lineup_map_stats"
+  """
+  v_match_lineup_map_stats(
+    """distinct select on columns"""
+    distinct_on: [v_match_lineup_map_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_lineup_map_stats_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_lineup_map_stats_bool_exp
+  ): [v_match_lineup_map_stats!]!
+
+  """
+  fetch aggregated fields from the table: "v_match_lineup_map_stats"
+  """
+  v_match_lineup_map_stats_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_match_lineup_map_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_lineup_map_stats_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_lineup_map_stats_bool_exp
+  ): v_match_lineup_map_stats_aggregate!
+
+  """
+  fetch data from the table: "v_match_map_backup_rounds"
+  """
+  v_match_map_backup_rounds(
+    """distinct select on columns"""
+    distinct_on: [v_match_map_backup_rounds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_map_backup_rounds_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_map_backup_rounds_bool_exp
+  ): [v_match_map_backup_rounds!]!
+
+  """
+  fetch aggregated fields from the table: "v_match_map_backup_rounds"
+  """
+  v_match_map_backup_rounds_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_match_map_backup_rounds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_map_backup_rounds_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_map_backup_rounds_bool_exp
+  ): v_match_map_backup_rounds_aggregate!
+
+  """
+  fetch data from the table: "v_match_player_buy_types"
+  """
+  v_match_player_buy_types(
+    """distinct select on columns"""
+    distinct_on: [v_match_player_buy_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_player_buy_types_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_player_buy_types_bool_exp
+  ): [v_match_player_buy_types!]!
+
+  """
+  fetch aggregated fields from the table: "v_match_player_buy_types"
+  """
+  v_match_player_buy_types_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_match_player_buy_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_player_buy_types_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_player_buy_types_bool_exp
+  ): v_match_player_buy_types_aggregate!
+
+  """
   fetch data from the table: "v_player_arch_nemesis"
   """
   v_player_arch_nemesis(
@@ -49013,6 +49220,46 @@ type query_root {
   ): v_player_match_map_hltv_aggregate!
 
   """
+  fetch data from the table: "v_player_match_map_roles"
+  """
+  v_player_match_map_roles(
+    """distinct select on columns"""
+    distinct_on: [v_player_match_map_roles_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_match_map_roles_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_match_map_roles_bool_exp
+  ): [v_player_match_map_roles!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_match_map_roles"
+  """
+  v_player_match_map_roles_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_match_map_roles_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_match_map_roles_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_match_map_roles_bool_exp
+  ): v_player_match_map_roles_aggregate!
+
+  """
   fetch data from the table: "v_player_match_performance"
   """
   v_player_match_performance(
@@ -49053,6 +49300,46 @@ type query_root {
   ): v_player_match_performance_aggregate!
 
   """
+  fetch data from the table: "v_player_match_rating"
+  """
+  v_player_match_rating(
+    """distinct select on columns"""
+    distinct_on: [v_player_match_rating_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_match_rating_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_match_rating_bool_exp
+  ): [v_player_match_rating!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_match_rating"
+  """
+  v_player_match_rating_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_match_rating_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_match_rating_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_match_rating_bool_exp
+  ): v_player_match_rating_aggregate!
+
+  """
   fetch data from the table: "v_player_multi_kills"
   """
   v_player_multi_kills(
@@ -49091,6 +49378,46 @@ type query_root {
     """filter the rows returned"""
     where: v_player_multi_kills_bool_exp
   ): v_player_multi_kills_aggregate!
+
+  """
+  fetch data from the table: "v_player_weapon_damage"
+  """
+  v_player_weapon_damage(
+    """distinct select on columns"""
+    distinct_on: [v_player_weapon_damage_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_weapon_damage_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_weapon_damage_bool_exp
+  ): [v_player_weapon_damage!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_weapon_damage"
+  """
+  v_player_weapon_damage_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_weapon_damage_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_weapon_damage_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_weapon_damage_bool_exp
+  ): v_player_weapon_damage_aggregate!
 
   """
   fetch data from the table: "v_player_weapon_kills"
@@ -56674,6 +57001,222 @@ type subscription_root {
   ): [v_match_captains!]!
 
   """
+  fetch data from the table: "v_match_lineup_buy_types"
+  """
+  v_match_lineup_buy_types(
+    """distinct select on columns"""
+    distinct_on: [v_match_lineup_buy_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_lineup_buy_types_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_lineup_buy_types_bool_exp
+  ): [v_match_lineup_buy_types!]!
+
+  """
+  fetch aggregated fields from the table: "v_match_lineup_buy_types"
+  """
+  v_match_lineup_buy_types_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_match_lineup_buy_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_lineup_buy_types_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_lineup_buy_types_bool_exp
+  ): v_match_lineup_buy_types_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_match_lineup_buy_types"
+  """
+  v_match_lineup_buy_types_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_match_lineup_buy_types_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_match_lineup_buy_types_bool_exp
+  ): [v_match_lineup_buy_types!]!
+
+  """
+  fetch data from the table: "v_match_lineup_map_stats"
+  """
+  v_match_lineup_map_stats(
+    """distinct select on columns"""
+    distinct_on: [v_match_lineup_map_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_lineup_map_stats_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_lineup_map_stats_bool_exp
+  ): [v_match_lineup_map_stats!]!
+
+  """
+  fetch aggregated fields from the table: "v_match_lineup_map_stats"
+  """
+  v_match_lineup_map_stats_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_match_lineup_map_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_lineup_map_stats_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_lineup_map_stats_bool_exp
+  ): v_match_lineup_map_stats_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_match_lineup_map_stats"
+  """
+  v_match_lineup_map_stats_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_match_lineup_map_stats_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_match_lineup_map_stats_bool_exp
+  ): [v_match_lineup_map_stats!]!
+
+  """
+  fetch data from the table: "v_match_map_backup_rounds"
+  """
+  v_match_map_backup_rounds(
+    """distinct select on columns"""
+    distinct_on: [v_match_map_backup_rounds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_map_backup_rounds_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_map_backup_rounds_bool_exp
+  ): [v_match_map_backup_rounds!]!
+
+  """
+  fetch aggregated fields from the table: "v_match_map_backup_rounds"
+  """
+  v_match_map_backup_rounds_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_match_map_backup_rounds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_map_backup_rounds_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_map_backup_rounds_bool_exp
+  ): v_match_map_backup_rounds_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_match_map_backup_rounds"
+  """
+  v_match_map_backup_rounds_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_match_map_backup_rounds_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_match_map_backup_rounds_bool_exp
+  ): [v_match_map_backup_rounds!]!
+
+  """
+  fetch data from the table: "v_match_player_buy_types"
+  """
+  v_match_player_buy_types(
+    """distinct select on columns"""
+    distinct_on: [v_match_player_buy_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_player_buy_types_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_player_buy_types_bool_exp
+  ): [v_match_player_buy_types!]!
+
+  """
+  fetch aggregated fields from the table: "v_match_player_buy_types"
+  """
+  v_match_player_buy_types_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_match_player_buy_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_match_player_buy_types_order_by!]
+
+    """filter the rows returned"""
+    where: v_match_player_buy_types_bool_exp
+  ): v_match_player_buy_types_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_match_player_buy_types"
+  """
+  v_match_player_buy_types_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_match_player_buy_types_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_match_player_buy_types_bool_exp
+  ): [v_match_player_buy_types!]!
+
+  """
   fetch data from the table: "v_player_arch_nemesis"
   """
   v_player_arch_nemesis(
@@ -57052,6 +57595,60 @@ type subscription_root {
   ): [v_player_match_map_hltv!]!
 
   """
+  fetch data from the table: "v_player_match_map_roles"
+  """
+  v_player_match_map_roles(
+    """distinct select on columns"""
+    distinct_on: [v_player_match_map_roles_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_match_map_roles_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_match_map_roles_bool_exp
+  ): [v_player_match_map_roles!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_match_map_roles"
+  """
+  v_player_match_map_roles_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_match_map_roles_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_match_map_roles_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_match_map_roles_bool_exp
+  ): v_player_match_map_roles_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_player_match_map_roles"
+  """
+  v_player_match_map_roles_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_player_match_map_roles_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_player_match_map_roles_bool_exp
+  ): [v_player_match_map_roles!]!
+
+  """
   fetch data from the table: "v_player_match_performance"
   """
   v_player_match_performance(
@@ -57106,6 +57703,60 @@ type subscription_root {
   ): [v_player_match_performance!]!
 
   """
+  fetch data from the table: "v_player_match_rating"
+  """
+  v_player_match_rating(
+    """distinct select on columns"""
+    distinct_on: [v_player_match_rating_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_match_rating_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_match_rating_bool_exp
+  ): [v_player_match_rating!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_match_rating"
+  """
+  v_player_match_rating_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_match_rating_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_match_rating_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_match_rating_bool_exp
+  ): v_player_match_rating_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_player_match_rating"
+  """
+  v_player_match_rating_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_player_match_rating_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_player_match_rating_bool_exp
+  ): [v_player_match_rating!]!
+
+  """
   fetch data from the table: "v_player_multi_kills"
   """
   v_player_multi_kills(
@@ -57158,6 +57809,60 @@ type subscription_root {
     """filter the rows returned"""
     where: v_player_multi_kills_bool_exp
   ): [v_player_multi_kills!]!
+
+  """
+  fetch data from the table: "v_player_weapon_damage"
+  """
+  v_player_weapon_damage(
+    """distinct select on columns"""
+    distinct_on: [v_player_weapon_damage_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_weapon_damage_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_weapon_damage_bool_exp
+  ): [v_player_weapon_damage!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_weapon_damage"
+  """
+  v_player_weapon_damage_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_weapon_damage_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_weapon_damage_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_weapon_damage_bool_exp
+  ): v_player_weapon_damage_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_player_weapon_damage"
+  """
+  v_player_weapon_damage_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_player_weapon_damage_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_player_weapon_damage_bool_exp
+  ): [v_player_weapon_damage!]!
 
   """
   fetch data from the table: "v_player_weapon_kills"
@@ -65073,6 +65778,949 @@ type v_match_captains_variance_fields {
 }
 
 """
+columns and relationships of "v_match_lineup_buy_types"
+"""
+type v_match_lineup_buy_types {
+  """An object relationship"""
+  match: matches
+  match_id: uuid
+
+  """An object relationship"""
+  match_lineup: match_lineups
+  match_lineup_id: uuid
+
+  """An object relationship"""
+  match_map: match_maps
+  match_map_id: uuid
+  matchup: String
+  rounds: Int
+  side: String
+  wins: Int
+}
+
+"""
+aggregated selection of "v_match_lineup_buy_types"
+"""
+type v_match_lineup_buy_types_aggregate {
+  aggregate: v_match_lineup_buy_types_aggregate_fields
+  nodes: [v_match_lineup_buy_types!]!
+}
+
+"""
+aggregate fields of "v_match_lineup_buy_types"
+"""
+type v_match_lineup_buy_types_aggregate_fields {
+  avg: v_match_lineup_buy_types_avg_fields
+  count(columns: [v_match_lineup_buy_types_select_column!], distinct: Boolean): Int!
+  max: v_match_lineup_buy_types_max_fields
+  min: v_match_lineup_buy_types_min_fields
+  stddev: v_match_lineup_buy_types_stddev_fields
+  stddev_pop: v_match_lineup_buy_types_stddev_pop_fields
+  stddev_samp: v_match_lineup_buy_types_stddev_samp_fields
+  sum: v_match_lineup_buy_types_sum_fields
+  var_pop: v_match_lineup_buy_types_var_pop_fields
+  var_samp: v_match_lineup_buy_types_var_samp_fields
+  variance: v_match_lineup_buy_types_variance_fields
+}
+
+"""aggregate avg on columns"""
+type v_match_lineup_buy_types_avg_fields {
+  rounds: Float
+  wins: Float
+}
+
+"""
+Boolean expression to filter rows from the table "v_match_lineup_buy_types". All fields are combined with a logical 'AND'.
+"""
+input v_match_lineup_buy_types_bool_exp {
+  _and: [v_match_lineup_buy_types_bool_exp!]
+  _not: v_match_lineup_buy_types_bool_exp
+  _or: [v_match_lineup_buy_types_bool_exp!]
+  match: matches_bool_exp
+  match_id: uuid_comparison_exp
+  match_lineup: match_lineups_bool_exp
+  match_lineup_id: uuid_comparison_exp
+  match_map: match_maps_bool_exp
+  match_map_id: uuid_comparison_exp
+  matchup: String_comparison_exp
+  rounds: Int_comparison_exp
+  side: String_comparison_exp
+  wins: Int_comparison_exp
+}
+
+"""aggregate max on columns"""
+type v_match_lineup_buy_types_max_fields {
+  match_id: uuid
+  match_lineup_id: uuid
+  match_map_id: uuid
+  matchup: String
+  rounds: Int
+  side: String
+  wins: Int
+}
+
+"""aggregate min on columns"""
+type v_match_lineup_buy_types_min_fields {
+  match_id: uuid
+  match_lineup_id: uuid
+  match_map_id: uuid
+  matchup: String
+  rounds: Int
+  side: String
+  wins: Int
+}
+
+"""Ordering options when selecting data from "v_match_lineup_buy_types"."""
+input v_match_lineup_buy_types_order_by {
+  match: matches_order_by
+  match_id: order_by
+  match_lineup: match_lineups_order_by
+  match_lineup_id: order_by
+  match_map: match_maps_order_by
+  match_map_id: order_by
+  matchup: order_by
+  rounds: order_by
+  side: order_by
+  wins: order_by
+}
+
+"""
+select columns of table "v_match_lineup_buy_types"
+"""
+enum v_match_lineup_buy_types_select_column {
+  """column name"""
+  match_id
+
+  """column name"""
+  match_lineup_id
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  matchup
+
+  """column name"""
+  rounds
+
+  """column name"""
+  side
+
+  """column name"""
+  wins
+}
+
+"""aggregate stddev on columns"""
+type v_match_lineup_buy_types_stddev_fields {
+  rounds: Float
+  wins: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type v_match_lineup_buy_types_stddev_pop_fields {
+  rounds: Float
+  wins: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type v_match_lineup_buy_types_stddev_samp_fields {
+  rounds: Float
+  wins: Float
+}
+
+"""
+Streaming cursor of the table "v_match_lineup_buy_types"
+"""
+input v_match_lineup_buy_types_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_match_lineup_buy_types_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_match_lineup_buy_types_stream_cursor_value_input {
+  match_id: uuid
+  match_lineup_id: uuid
+  match_map_id: uuid
+  matchup: String
+  rounds: Int
+  side: String
+  wins: Int
+}
+
+"""aggregate sum on columns"""
+type v_match_lineup_buy_types_sum_fields {
+  rounds: Int
+  wins: Int
+}
+
+"""aggregate var_pop on columns"""
+type v_match_lineup_buy_types_var_pop_fields {
+  rounds: Float
+  wins: Float
+}
+
+"""aggregate var_samp on columns"""
+type v_match_lineup_buy_types_var_samp_fields {
+  rounds: Float
+  wins: Float
+}
+
+"""aggregate variance on columns"""
+type v_match_lineup_buy_types_variance_fields {
+  rounds: Float
+  wins: Float
+}
+
+"""
+columns and relationships of "v_match_lineup_map_stats"
+"""
+type v_match_lineup_map_stats {
+  man_adv_rounds: Int
+  man_adv_wins: Int
+  man_dis_rounds: Int
+  man_dis_wins: Int
+
+  """An object relationship"""
+  match: matches
+  match_id: uuid
+
+  """An object relationship"""
+  match_lineup: match_lineups
+  match_lineup_id: uuid
+
+  """An object relationship"""
+  match_map: match_maps
+  match_map_id: uuid
+  opening_attempts: Int
+  opening_wins: Int
+  pistol_rounds: Int
+  pistol_wins: Int
+  round_wins: Int
+  rounds: Int
+  side: String
+}
+
+"""
+aggregated selection of "v_match_lineup_map_stats"
+"""
+type v_match_lineup_map_stats_aggregate {
+  aggregate: v_match_lineup_map_stats_aggregate_fields
+  nodes: [v_match_lineup_map_stats!]!
+}
+
+"""
+aggregate fields of "v_match_lineup_map_stats"
+"""
+type v_match_lineup_map_stats_aggregate_fields {
+  avg: v_match_lineup_map_stats_avg_fields
+  count(columns: [v_match_lineup_map_stats_select_column!], distinct: Boolean): Int!
+  max: v_match_lineup_map_stats_max_fields
+  min: v_match_lineup_map_stats_min_fields
+  stddev: v_match_lineup_map_stats_stddev_fields
+  stddev_pop: v_match_lineup_map_stats_stddev_pop_fields
+  stddev_samp: v_match_lineup_map_stats_stddev_samp_fields
+  sum: v_match_lineup_map_stats_sum_fields
+  var_pop: v_match_lineup_map_stats_var_pop_fields
+  var_samp: v_match_lineup_map_stats_var_samp_fields
+  variance: v_match_lineup_map_stats_variance_fields
+}
+
+"""aggregate avg on columns"""
+type v_match_lineup_map_stats_avg_fields {
+  man_adv_rounds: Float
+  man_adv_wins: Float
+  man_dis_rounds: Float
+  man_dis_wins: Float
+  opening_attempts: Float
+  opening_wins: Float
+  pistol_rounds: Float
+  pistol_wins: Float
+  round_wins: Float
+  rounds: Float
+}
+
+"""
+Boolean expression to filter rows from the table "v_match_lineup_map_stats". All fields are combined with a logical 'AND'.
+"""
+input v_match_lineup_map_stats_bool_exp {
+  _and: [v_match_lineup_map_stats_bool_exp!]
+  _not: v_match_lineup_map_stats_bool_exp
+  _or: [v_match_lineup_map_stats_bool_exp!]
+  man_adv_rounds: Int_comparison_exp
+  man_adv_wins: Int_comparison_exp
+  man_dis_rounds: Int_comparison_exp
+  man_dis_wins: Int_comparison_exp
+  match: matches_bool_exp
+  match_id: uuid_comparison_exp
+  match_lineup: match_lineups_bool_exp
+  match_lineup_id: uuid_comparison_exp
+  match_map: match_maps_bool_exp
+  match_map_id: uuid_comparison_exp
+  opening_attempts: Int_comparison_exp
+  opening_wins: Int_comparison_exp
+  pistol_rounds: Int_comparison_exp
+  pistol_wins: Int_comparison_exp
+  round_wins: Int_comparison_exp
+  rounds: Int_comparison_exp
+  side: String_comparison_exp
+}
+
+"""aggregate max on columns"""
+type v_match_lineup_map_stats_max_fields {
+  man_adv_rounds: Int
+  man_adv_wins: Int
+  man_dis_rounds: Int
+  man_dis_wins: Int
+  match_id: uuid
+  match_lineup_id: uuid
+  match_map_id: uuid
+  opening_attempts: Int
+  opening_wins: Int
+  pistol_rounds: Int
+  pistol_wins: Int
+  round_wins: Int
+  rounds: Int
+  side: String
+}
+
+"""aggregate min on columns"""
+type v_match_lineup_map_stats_min_fields {
+  man_adv_rounds: Int
+  man_adv_wins: Int
+  man_dis_rounds: Int
+  man_dis_wins: Int
+  match_id: uuid
+  match_lineup_id: uuid
+  match_map_id: uuid
+  opening_attempts: Int
+  opening_wins: Int
+  pistol_rounds: Int
+  pistol_wins: Int
+  round_wins: Int
+  rounds: Int
+  side: String
+}
+
+"""Ordering options when selecting data from "v_match_lineup_map_stats"."""
+input v_match_lineup_map_stats_order_by {
+  man_adv_rounds: order_by
+  man_adv_wins: order_by
+  man_dis_rounds: order_by
+  man_dis_wins: order_by
+  match: matches_order_by
+  match_id: order_by
+  match_lineup: match_lineups_order_by
+  match_lineup_id: order_by
+  match_map: match_maps_order_by
+  match_map_id: order_by
+  opening_attempts: order_by
+  opening_wins: order_by
+  pistol_rounds: order_by
+  pistol_wins: order_by
+  round_wins: order_by
+  rounds: order_by
+  side: order_by
+}
+
+"""
+select columns of table "v_match_lineup_map_stats"
+"""
+enum v_match_lineup_map_stats_select_column {
+  """column name"""
+  man_adv_rounds
+
+  """column name"""
+  man_adv_wins
+
+  """column name"""
+  man_dis_rounds
+
+  """column name"""
+  man_dis_wins
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_lineup_id
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  opening_attempts
+
+  """column name"""
+  opening_wins
+
+  """column name"""
+  pistol_rounds
+
+  """column name"""
+  pistol_wins
+
+  """column name"""
+  round_wins
+
+  """column name"""
+  rounds
+
+  """column name"""
+  side
+}
+
+"""aggregate stddev on columns"""
+type v_match_lineup_map_stats_stddev_fields {
+  man_adv_rounds: Float
+  man_adv_wins: Float
+  man_dis_rounds: Float
+  man_dis_wins: Float
+  opening_attempts: Float
+  opening_wins: Float
+  pistol_rounds: Float
+  pistol_wins: Float
+  round_wins: Float
+  rounds: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type v_match_lineup_map_stats_stddev_pop_fields {
+  man_adv_rounds: Float
+  man_adv_wins: Float
+  man_dis_rounds: Float
+  man_dis_wins: Float
+  opening_attempts: Float
+  opening_wins: Float
+  pistol_rounds: Float
+  pistol_wins: Float
+  round_wins: Float
+  rounds: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type v_match_lineup_map_stats_stddev_samp_fields {
+  man_adv_rounds: Float
+  man_adv_wins: Float
+  man_dis_rounds: Float
+  man_dis_wins: Float
+  opening_attempts: Float
+  opening_wins: Float
+  pistol_rounds: Float
+  pistol_wins: Float
+  round_wins: Float
+  rounds: Float
+}
+
+"""
+Streaming cursor of the table "v_match_lineup_map_stats"
+"""
+input v_match_lineup_map_stats_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_match_lineup_map_stats_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_match_lineup_map_stats_stream_cursor_value_input {
+  man_adv_rounds: Int
+  man_adv_wins: Int
+  man_dis_rounds: Int
+  man_dis_wins: Int
+  match_id: uuid
+  match_lineup_id: uuid
+  match_map_id: uuid
+  opening_attempts: Int
+  opening_wins: Int
+  pistol_rounds: Int
+  pistol_wins: Int
+  round_wins: Int
+  rounds: Int
+  side: String
+}
+
+"""aggregate sum on columns"""
+type v_match_lineup_map_stats_sum_fields {
+  man_adv_rounds: Int
+  man_adv_wins: Int
+  man_dis_rounds: Int
+  man_dis_wins: Int
+  opening_attempts: Int
+  opening_wins: Int
+  pistol_rounds: Int
+  pistol_wins: Int
+  round_wins: Int
+  rounds: Int
+}
+
+"""aggregate var_pop on columns"""
+type v_match_lineup_map_stats_var_pop_fields {
+  man_adv_rounds: Float
+  man_adv_wins: Float
+  man_dis_rounds: Float
+  man_dis_wins: Float
+  opening_attempts: Float
+  opening_wins: Float
+  pistol_rounds: Float
+  pistol_wins: Float
+  round_wins: Float
+  rounds: Float
+}
+
+"""aggregate var_samp on columns"""
+type v_match_lineup_map_stats_var_samp_fields {
+  man_adv_rounds: Float
+  man_adv_wins: Float
+  man_dis_rounds: Float
+  man_dis_wins: Float
+  opening_attempts: Float
+  opening_wins: Float
+  pistol_rounds: Float
+  pistol_wins: Float
+  round_wins: Float
+  rounds: Float
+}
+
+"""aggregate variance on columns"""
+type v_match_lineup_map_stats_variance_fields {
+  man_adv_rounds: Float
+  man_adv_wins: Float
+  man_dis_rounds: Float
+  man_dis_wins: Float
+  opening_attempts: Float
+  opening_wins: Float
+  pistol_rounds: Float
+  pistol_wins: Float
+  round_wins: Float
+  rounds: Float
+}
+
+"""
+columns and relationships of "v_match_map_backup_rounds"
+"""
+type v_match_map_backup_rounds {
+  has_backup_file: Boolean
+  match_map_id: uuid
+  round: Int
+}
+
+"""
+aggregated selection of "v_match_map_backup_rounds"
+"""
+type v_match_map_backup_rounds_aggregate {
+  aggregate: v_match_map_backup_rounds_aggregate_fields
+  nodes: [v_match_map_backup_rounds!]!
+}
+
+"""
+aggregate fields of "v_match_map_backup_rounds"
+"""
+type v_match_map_backup_rounds_aggregate_fields {
+  avg: v_match_map_backup_rounds_avg_fields
+  count(columns: [v_match_map_backup_rounds_select_column!], distinct: Boolean): Int!
+  max: v_match_map_backup_rounds_max_fields
+  min: v_match_map_backup_rounds_min_fields
+  stddev: v_match_map_backup_rounds_stddev_fields
+  stddev_pop: v_match_map_backup_rounds_stddev_pop_fields
+  stddev_samp: v_match_map_backup_rounds_stddev_samp_fields
+  sum: v_match_map_backup_rounds_sum_fields
+  var_pop: v_match_map_backup_rounds_var_pop_fields
+  var_samp: v_match_map_backup_rounds_var_samp_fields
+  variance: v_match_map_backup_rounds_variance_fields
+}
+
+"""aggregate avg on columns"""
+type v_match_map_backup_rounds_avg_fields {
+  round: Float
+}
+
+"""
+Boolean expression to filter rows from the table "v_match_map_backup_rounds". All fields are combined with a logical 'AND'.
+"""
+input v_match_map_backup_rounds_bool_exp {
+  _and: [v_match_map_backup_rounds_bool_exp!]
+  _not: v_match_map_backup_rounds_bool_exp
+  _or: [v_match_map_backup_rounds_bool_exp!]
+  has_backup_file: Boolean_comparison_exp
+  match_map_id: uuid_comparison_exp
+  round: Int_comparison_exp
+}
+
+"""
+input type for incrementing numeric columns in table "v_match_map_backup_rounds"
+"""
+input v_match_map_backup_rounds_inc_input {
+  round: Int
+}
+
+"""
+input type for inserting data into table "v_match_map_backup_rounds"
+"""
+input v_match_map_backup_rounds_insert_input {
+  has_backup_file: Boolean
+  match_map_id: uuid
+  round: Int
+}
+
+"""aggregate max on columns"""
+type v_match_map_backup_rounds_max_fields {
+  match_map_id: uuid
+  round: Int
+}
+
+"""aggregate min on columns"""
+type v_match_map_backup_rounds_min_fields {
+  match_map_id: uuid
+  round: Int
+}
+
+"""
+response of any mutation on the table "v_match_map_backup_rounds"
+"""
+type v_match_map_backup_rounds_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [v_match_map_backup_rounds!]!
+}
+
+"""Ordering options when selecting data from "v_match_map_backup_rounds"."""
+input v_match_map_backup_rounds_order_by {
+  has_backup_file: order_by
+  match_map_id: order_by
+  round: order_by
+}
+
+"""
+select columns of table "v_match_map_backup_rounds"
+"""
+enum v_match_map_backup_rounds_select_column {
+  """column name"""
+  has_backup_file
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  round
+}
+
+"""
+input type for updating data in table "v_match_map_backup_rounds"
+"""
+input v_match_map_backup_rounds_set_input {
+  has_backup_file: Boolean
+  match_map_id: uuid
+  round: Int
+}
+
+"""aggregate stddev on columns"""
+type v_match_map_backup_rounds_stddev_fields {
+  round: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type v_match_map_backup_rounds_stddev_pop_fields {
+  round: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type v_match_map_backup_rounds_stddev_samp_fields {
+  round: Float
+}
+
+"""
+Streaming cursor of the table "v_match_map_backup_rounds"
+"""
+input v_match_map_backup_rounds_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_match_map_backup_rounds_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_match_map_backup_rounds_stream_cursor_value_input {
+  has_backup_file: Boolean
+  match_map_id: uuid
+  round: Int
+}
+
+"""aggregate sum on columns"""
+type v_match_map_backup_rounds_sum_fields {
+  round: Int
+}
+
+input v_match_map_backup_rounds_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: v_match_map_backup_rounds_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: v_match_map_backup_rounds_set_input
+
+  """filter the rows which have to be updated"""
+  where: v_match_map_backup_rounds_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type v_match_map_backup_rounds_var_pop_fields {
+  round: Float
+}
+
+"""aggregate var_samp on columns"""
+type v_match_map_backup_rounds_var_samp_fields {
+  round: Float
+}
+
+"""aggregate variance on columns"""
+type v_match_map_backup_rounds_variance_fields {
+  round: Float
+}
+
+"""
+columns and relationships of "v_match_player_buy_types"
+"""
+type v_match_player_buy_types {
+  deaths: Int
+  kills: Int
+
+  """An object relationship"""
+  match: matches
+  match_id: uuid
+
+  """An object relationship"""
+  match_lineup: match_lineups
+  match_lineup_id: uuid
+
+  """An object relationship"""
+  match_map: match_maps
+  match_map_id: uuid
+  matchup: String
+
+  """An object relationship"""
+  player: players
+  rounds: Int
+  side: String
+  steam_id: bigint
+}
+
+"""
+aggregated selection of "v_match_player_buy_types"
+"""
+type v_match_player_buy_types_aggregate {
+  aggregate: v_match_player_buy_types_aggregate_fields
+  nodes: [v_match_player_buy_types!]!
+}
+
+"""
+aggregate fields of "v_match_player_buy_types"
+"""
+type v_match_player_buy_types_aggregate_fields {
+  avg: v_match_player_buy_types_avg_fields
+  count(columns: [v_match_player_buy_types_select_column!], distinct: Boolean): Int!
+  max: v_match_player_buy_types_max_fields
+  min: v_match_player_buy_types_min_fields
+  stddev: v_match_player_buy_types_stddev_fields
+  stddev_pop: v_match_player_buy_types_stddev_pop_fields
+  stddev_samp: v_match_player_buy_types_stddev_samp_fields
+  sum: v_match_player_buy_types_sum_fields
+  var_pop: v_match_player_buy_types_var_pop_fields
+  var_samp: v_match_player_buy_types_var_samp_fields
+  variance: v_match_player_buy_types_variance_fields
+}
+
+"""aggregate avg on columns"""
+type v_match_player_buy_types_avg_fields {
+  deaths: Float
+  kills: Float
+  rounds: Float
+  steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "v_match_player_buy_types". All fields are combined with a logical 'AND'.
+"""
+input v_match_player_buy_types_bool_exp {
+  _and: [v_match_player_buy_types_bool_exp!]
+  _not: v_match_player_buy_types_bool_exp
+  _or: [v_match_player_buy_types_bool_exp!]
+  deaths: Int_comparison_exp
+  kills: Int_comparison_exp
+  match: matches_bool_exp
+  match_id: uuid_comparison_exp
+  match_lineup: match_lineups_bool_exp
+  match_lineup_id: uuid_comparison_exp
+  match_map: match_maps_bool_exp
+  match_map_id: uuid_comparison_exp
+  matchup: String_comparison_exp
+  player: players_bool_exp
+  rounds: Int_comparison_exp
+  side: String_comparison_exp
+  steam_id: bigint_comparison_exp
+}
+
+"""aggregate max on columns"""
+type v_match_player_buy_types_max_fields {
+  deaths: Int
+  kills: Int
+  match_id: uuid
+  match_lineup_id: uuid
+  match_map_id: uuid
+  matchup: String
+  rounds: Int
+  side: String
+  steam_id: bigint
+}
+
+"""aggregate min on columns"""
+type v_match_player_buy_types_min_fields {
+  deaths: Int
+  kills: Int
+  match_id: uuid
+  match_lineup_id: uuid
+  match_map_id: uuid
+  matchup: String
+  rounds: Int
+  side: String
+  steam_id: bigint
+}
+
+"""Ordering options when selecting data from "v_match_player_buy_types"."""
+input v_match_player_buy_types_order_by {
+  deaths: order_by
+  kills: order_by
+  match: matches_order_by
+  match_id: order_by
+  match_lineup: match_lineups_order_by
+  match_lineup_id: order_by
+  match_map: match_maps_order_by
+  match_map_id: order_by
+  matchup: order_by
+  player: players_order_by
+  rounds: order_by
+  side: order_by
+  steam_id: order_by
+}
+
+"""
+select columns of table "v_match_player_buy_types"
+"""
+enum v_match_player_buy_types_select_column {
+  """column name"""
+  deaths
+
+  """column name"""
+  kills
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_lineup_id
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  matchup
+
+  """column name"""
+  rounds
+
+  """column name"""
+  side
+
+  """column name"""
+  steam_id
+}
+
+"""aggregate stddev on columns"""
+type v_match_player_buy_types_stddev_fields {
+  deaths: Float
+  kills: Float
+  rounds: Float
+  steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type v_match_player_buy_types_stddev_pop_fields {
+  deaths: Float
+  kills: Float
+  rounds: Float
+  steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type v_match_player_buy_types_stddev_samp_fields {
+  deaths: Float
+  kills: Float
+  rounds: Float
+  steam_id: Float
+}
+
+"""
+Streaming cursor of the table "v_match_player_buy_types"
+"""
+input v_match_player_buy_types_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_match_player_buy_types_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_match_player_buy_types_stream_cursor_value_input {
+  deaths: Int
+  kills: Int
+  match_id: uuid
+  match_lineup_id: uuid
+  match_map_id: uuid
+  matchup: String
+  rounds: Int
+  side: String
+  steam_id: bigint
+}
+
+"""aggregate sum on columns"""
+type v_match_player_buy_types_sum_fields {
+  deaths: Int
+  kills: Int
+  rounds: Int
+  steam_id: bigint
+}
+
+"""aggregate var_pop on columns"""
+type v_match_player_buy_types_var_pop_fields {
+  deaths: Float
+  kills: Float
+  rounds: Float
+  steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type v_match_player_buy_types_var_samp_fields {
+  deaths: Float
+  kills: Float
+  rounds: Float
+  steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type v_match_player_buy_types_variance_fields {
+  deaths: Float
+  kills: Float
+  rounds: Float
+  steam_id: Float
+}
+
+"""
 columns and relationships of "v_player_arch_nemesis"
 """
 type v_player_arch_nemesis {
@@ -67637,12 +69285,528 @@ input v_player_match_map_hltv_variance_order_by {
 }
 
 """
+columns and relationships of "v_player_match_map_roles"
+"""
+type v_player_match_map_roles {
+  adr: numeric
+  awp_kills: Int
+  awp_share: numeric
+  deaths: Int
+  dpr: numeric
+  entry_rate: numeric
+  flash_assists: Int
+  hltv_rating: numeric
+  kast_pct: numeric
+  kills: Int
+  kpr: numeric
+  lineup_id: uuid
+
+  """An object relationship"""
+  match: matches
+  match_id: uuid
+
+  """An object relationship"""
+  match_map: match_maps
+  match_map_id: uuid
+  open_deaths: Int
+  open_kills: Int
+  opening_attempts: Int
+
+  """An object relationship"""
+  player: players
+  role: String
+  rounds: Int
+  steam_id: bigint
+  support_idx: numeric
+  total_kills: Int
+  trade_kill_successes: Int
+  traded_death_successes: Int
+  util_damage: Int
+}
+
+"""
+aggregated selection of "v_player_match_map_roles"
+"""
+type v_player_match_map_roles_aggregate {
+  aggregate: v_player_match_map_roles_aggregate_fields
+  nodes: [v_player_match_map_roles!]!
+}
+
+"""
+aggregate fields of "v_player_match_map_roles"
+"""
+type v_player_match_map_roles_aggregate_fields {
+  avg: v_player_match_map_roles_avg_fields
+  count(columns: [v_player_match_map_roles_select_column!], distinct: Boolean): Int!
+  max: v_player_match_map_roles_max_fields
+  min: v_player_match_map_roles_min_fields
+  stddev: v_player_match_map_roles_stddev_fields
+  stddev_pop: v_player_match_map_roles_stddev_pop_fields
+  stddev_samp: v_player_match_map_roles_stddev_samp_fields
+  sum: v_player_match_map_roles_sum_fields
+  var_pop: v_player_match_map_roles_var_pop_fields
+  var_samp: v_player_match_map_roles_var_samp_fields
+  variance: v_player_match_map_roles_variance_fields
+}
+
+"""aggregate avg on columns"""
+type v_player_match_map_roles_avg_fields {
+  adr: Float
+  awp_kills: Float
+  awp_share: Float
+  deaths: Float
+  dpr: Float
+  entry_rate: Float
+  flash_assists: Float
+  hltv_rating: Float
+  kast_pct: Float
+  kills: Float
+  kpr: Float
+  open_deaths: Float
+  open_kills: Float
+  opening_attempts: Float
+  rounds: Float
+  steam_id: Float
+  support_idx: Float
+  total_kills: Float
+  trade_kill_successes: Float
+  traded_death_successes: Float
+  util_damage: Float
+}
+
+"""
+Boolean expression to filter rows from the table "v_player_match_map_roles". All fields are combined with a logical 'AND'.
+"""
+input v_player_match_map_roles_bool_exp {
+  _and: [v_player_match_map_roles_bool_exp!]
+  _not: v_player_match_map_roles_bool_exp
+  _or: [v_player_match_map_roles_bool_exp!]
+  adr: numeric_comparison_exp
+  awp_kills: Int_comparison_exp
+  awp_share: numeric_comparison_exp
+  deaths: Int_comparison_exp
+  dpr: numeric_comparison_exp
+  entry_rate: numeric_comparison_exp
+  flash_assists: Int_comparison_exp
+  hltv_rating: numeric_comparison_exp
+  kast_pct: numeric_comparison_exp
+  kills: Int_comparison_exp
+  kpr: numeric_comparison_exp
+  lineup_id: uuid_comparison_exp
+  match: matches_bool_exp
+  match_id: uuid_comparison_exp
+  match_map: match_maps_bool_exp
+  match_map_id: uuid_comparison_exp
+  open_deaths: Int_comparison_exp
+  open_kills: Int_comparison_exp
+  opening_attempts: Int_comparison_exp
+  player: players_bool_exp
+  role: String_comparison_exp
+  rounds: Int_comparison_exp
+  steam_id: bigint_comparison_exp
+  support_idx: numeric_comparison_exp
+  total_kills: Int_comparison_exp
+  trade_kill_successes: Int_comparison_exp
+  traded_death_successes: Int_comparison_exp
+  util_damage: Int_comparison_exp
+}
+
+"""aggregate max on columns"""
+type v_player_match_map_roles_max_fields {
+  adr: numeric
+  awp_kills: Int
+  awp_share: numeric
+  deaths: Int
+  dpr: numeric
+  entry_rate: numeric
+  flash_assists: Int
+  hltv_rating: numeric
+  kast_pct: numeric
+  kills: Int
+  kpr: numeric
+  lineup_id: uuid
+  match_id: uuid
+  match_map_id: uuid
+  open_deaths: Int
+  open_kills: Int
+  opening_attempts: Int
+  role: String
+  rounds: Int
+  steam_id: bigint
+  support_idx: numeric
+  total_kills: Int
+  trade_kill_successes: Int
+  traded_death_successes: Int
+  util_damage: Int
+}
+
+"""aggregate min on columns"""
+type v_player_match_map_roles_min_fields {
+  adr: numeric
+  awp_kills: Int
+  awp_share: numeric
+  deaths: Int
+  dpr: numeric
+  entry_rate: numeric
+  flash_assists: Int
+  hltv_rating: numeric
+  kast_pct: numeric
+  kills: Int
+  kpr: numeric
+  lineup_id: uuid
+  match_id: uuid
+  match_map_id: uuid
+  open_deaths: Int
+  open_kills: Int
+  opening_attempts: Int
+  role: String
+  rounds: Int
+  steam_id: bigint
+  support_idx: numeric
+  total_kills: Int
+  trade_kill_successes: Int
+  traded_death_successes: Int
+  util_damage: Int
+}
+
+"""Ordering options when selecting data from "v_player_match_map_roles"."""
+input v_player_match_map_roles_order_by {
+  adr: order_by
+  awp_kills: order_by
+  awp_share: order_by
+  deaths: order_by
+  dpr: order_by
+  entry_rate: order_by
+  flash_assists: order_by
+  hltv_rating: order_by
+  kast_pct: order_by
+  kills: order_by
+  kpr: order_by
+  lineup_id: order_by
+  match: matches_order_by
+  match_id: order_by
+  match_map: match_maps_order_by
+  match_map_id: order_by
+  open_deaths: order_by
+  open_kills: order_by
+  opening_attempts: order_by
+  player: players_order_by
+  role: order_by
+  rounds: order_by
+  steam_id: order_by
+  support_idx: order_by
+  total_kills: order_by
+  trade_kill_successes: order_by
+  traded_death_successes: order_by
+  util_damage: order_by
+}
+
+"""
+select columns of table "v_player_match_map_roles"
+"""
+enum v_player_match_map_roles_select_column {
+  """column name"""
+  adr
+
+  """column name"""
+  awp_kills
+
+  """column name"""
+  awp_share
+
+  """column name"""
+  deaths
+
+  """column name"""
+  dpr
+
+  """column name"""
+  entry_rate
+
+  """column name"""
+  flash_assists
+
+  """column name"""
+  hltv_rating
+
+  """column name"""
+  kast_pct
+
+  """column name"""
+  kills
+
+  """column name"""
+  kpr
+
+  """column name"""
+  lineup_id
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  open_deaths
+
+  """column name"""
+  open_kills
+
+  """column name"""
+  opening_attempts
+
+  """column name"""
+  role
+
+  """column name"""
+  rounds
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  support_idx
+
+  """column name"""
+  total_kills
+
+  """column name"""
+  trade_kill_successes
+
+  """column name"""
+  traded_death_successes
+
+  """column name"""
+  util_damage
+}
+
+"""aggregate stddev on columns"""
+type v_player_match_map_roles_stddev_fields {
+  adr: Float
+  awp_kills: Float
+  awp_share: Float
+  deaths: Float
+  dpr: Float
+  entry_rate: Float
+  flash_assists: Float
+  hltv_rating: Float
+  kast_pct: Float
+  kills: Float
+  kpr: Float
+  open_deaths: Float
+  open_kills: Float
+  opening_attempts: Float
+  rounds: Float
+  steam_id: Float
+  support_idx: Float
+  total_kills: Float
+  trade_kill_successes: Float
+  traded_death_successes: Float
+  util_damage: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type v_player_match_map_roles_stddev_pop_fields {
+  adr: Float
+  awp_kills: Float
+  awp_share: Float
+  deaths: Float
+  dpr: Float
+  entry_rate: Float
+  flash_assists: Float
+  hltv_rating: Float
+  kast_pct: Float
+  kills: Float
+  kpr: Float
+  open_deaths: Float
+  open_kills: Float
+  opening_attempts: Float
+  rounds: Float
+  steam_id: Float
+  support_idx: Float
+  total_kills: Float
+  trade_kill_successes: Float
+  traded_death_successes: Float
+  util_damage: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type v_player_match_map_roles_stddev_samp_fields {
+  adr: Float
+  awp_kills: Float
+  awp_share: Float
+  deaths: Float
+  dpr: Float
+  entry_rate: Float
+  flash_assists: Float
+  hltv_rating: Float
+  kast_pct: Float
+  kills: Float
+  kpr: Float
+  open_deaths: Float
+  open_kills: Float
+  opening_attempts: Float
+  rounds: Float
+  steam_id: Float
+  support_idx: Float
+  total_kills: Float
+  trade_kill_successes: Float
+  traded_death_successes: Float
+  util_damage: Float
+}
+
+"""
+Streaming cursor of the table "v_player_match_map_roles"
+"""
+input v_player_match_map_roles_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_player_match_map_roles_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_player_match_map_roles_stream_cursor_value_input {
+  adr: numeric
+  awp_kills: Int
+  awp_share: numeric
+  deaths: Int
+  dpr: numeric
+  entry_rate: numeric
+  flash_assists: Int
+  hltv_rating: numeric
+  kast_pct: numeric
+  kills: Int
+  kpr: numeric
+  lineup_id: uuid
+  match_id: uuid
+  match_map_id: uuid
+  open_deaths: Int
+  open_kills: Int
+  opening_attempts: Int
+  role: String
+  rounds: Int
+  steam_id: bigint
+  support_idx: numeric
+  total_kills: Int
+  trade_kill_successes: Int
+  traded_death_successes: Int
+  util_damage: Int
+}
+
+"""aggregate sum on columns"""
+type v_player_match_map_roles_sum_fields {
+  adr: numeric
+  awp_kills: Int
+  awp_share: numeric
+  deaths: Int
+  dpr: numeric
+  entry_rate: numeric
+  flash_assists: Int
+  hltv_rating: numeric
+  kast_pct: numeric
+  kills: Int
+  kpr: numeric
+  open_deaths: Int
+  open_kills: Int
+  opening_attempts: Int
+  rounds: Int
+  steam_id: bigint
+  support_idx: numeric
+  total_kills: Int
+  trade_kill_successes: Int
+  traded_death_successes: Int
+  util_damage: Int
+}
+
+"""aggregate var_pop on columns"""
+type v_player_match_map_roles_var_pop_fields {
+  adr: Float
+  awp_kills: Float
+  awp_share: Float
+  deaths: Float
+  dpr: Float
+  entry_rate: Float
+  flash_assists: Float
+  hltv_rating: Float
+  kast_pct: Float
+  kills: Float
+  kpr: Float
+  open_deaths: Float
+  open_kills: Float
+  opening_attempts: Float
+  rounds: Float
+  steam_id: Float
+  support_idx: Float
+  total_kills: Float
+  trade_kill_successes: Float
+  traded_death_successes: Float
+  util_damage: Float
+}
+
+"""aggregate var_samp on columns"""
+type v_player_match_map_roles_var_samp_fields {
+  adr: Float
+  awp_kills: Float
+  awp_share: Float
+  deaths: Float
+  dpr: Float
+  entry_rate: Float
+  flash_assists: Float
+  hltv_rating: Float
+  kast_pct: Float
+  kills: Float
+  kpr: Float
+  open_deaths: Float
+  open_kills: Float
+  opening_attempts: Float
+  rounds: Float
+  steam_id: Float
+  support_idx: Float
+  total_kills: Float
+  trade_kill_successes: Float
+  traded_death_successes: Float
+  util_damage: Float
+}
+
+"""aggregate variance on columns"""
+type v_player_match_map_roles_variance_fields {
+  adr: Float
+  awp_kills: Float
+  awp_share: Float
+  deaths: Float
+  dpr: Float
+  entry_rate: Float
+  flash_assists: Float
+  hltv_rating: Float
+  kast_pct: Float
+  kills: Float
+  kpr: Float
+  open_deaths: Float
+  open_kills: Float
+  opening_attempts: Float
+  rounds: Float
+  steam_id: Float
+  support_idx: Float
+  total_kills: Float
+  trade_kill_successes: Float
+  traded_death_successes: Float
+  util_damage: Float
+}
+
+"""
 columns and relationships of "v_player_match_performance"
 """
 type v_player_match_performance {
   assists: Int
   deaths: Int
   kills: Int
+
+  """An object relationship"""
+  map: maps
+  map_id: uuid
 
   """An object relationship"""
   match: matches
@@ -67697,6 +69861,8 @@ input v_player_match_performance_bool_exp {
   assists: Int_comparison_exp
   deaths: Int_comparison_exp
   kills: Int_comparison_exp
+  map: maps_bool_exp
+  map_id: uuid_comparison_exp
   match: matches_bool_exp
   match_created_at: timestamptz_comparison_exp
   match_id: uuid_comparison_exp
@@ -67711,6 +69877,7 @@ type v_player_match_performance_max_fields {
   assists: Int
   deaths: Int
   kills: Int
+  map_id: uuid
   match_created_at: timestamptz
   match_id: uuid
   match_result: String
@@ -67724,6 +69891,7 @@ type v_player_match_performance_min_fields {
   assists: Int
   deaths: Int
   kills: Int
+  map_id: uuid
   match_created_at: timestamptz
   match_id: uuid
   match_result: String
@@ -67739,6 +69907,8 @@ input v_player_match_performance_order_by {
   assists: order_by
   deaths: order_by
   kills: order_by
+  map: maps_order_by
+  map_id: order_by
   match: matches_order_by
   match_created_at: order_by
   match_id: order_by
@@ -67760,6 +69930,9 @@ enum v_player_match_performance_select_column {
 
   """column name"""
   kills
+
+  """column name"""
+  map_id
 
   """column name"""
   match_created_at
@@ -67820,6 +69993,7 @@ input v_player_match_performance_stream_cursor_value_input {
   assists: Int
   deaths: Int
   kills: Int
+  map_id: uuid
   match_created_at: timestamptz
   match_id: uuid
   match_result: String
@@ -67858,6 +70032,248 @@ type v_player_match_performance_variance_fields {
   deaths: Float
   kills: Float
   player_steam_id: Float
+}
+
+"""
+columns and relationships of "v_player_match_rating"
+"""
+type v_player_match_rating {
+  adr: numeric
+  dpr: numeric
+  hltv_rating: numeric
+  kast_pct: numeric
+  kpr: numeric
+
+  """An object relationship"""
+  match: matches
+  match_id: uuid
+
+  """An object relationship"""
+  player: players
+  rounds_played: Int
+  steam_id: bigint
+}
+
+"""
+aggregated selection of "v_player_match_rating"
+"""
+type v_player_match_rating_aggregate {
+  aggregate: v_player_match_rating_aggregate_fields
+  nodes: [v_player_match_rating!]!
+}
+
+"""
+aggregate fields of "v_player_match_rating"
+"""
+type v_player_match_rating_aggregate_fields {
+  avg: v_player_match_rating_avg_fields
+  count(columns: [v_player_match_rating_select_column!], distinct: Boolean): Int!
+  max: v_player_match_rating_max_fields
+  min: v_player_match_rating_min_fields
+  stddev: v_player_match_rating_stddev_fields
+  stddev_pop: v_player_match_rating_stddev_pop_fields
+  stddev_samp: v_player_match_rating_stddev_samp_fields
+  sum: v_player_match_rating_sum_fields
+  var_pop: v_player_match_rating_var_pop_fields
+  var_samp: v_player_match_rating_var_samp_fields
+  variance: v_player_match_rating_variance_fields
+}
+
+"""aggregate avg on columns"""
+type v_player_match_rating_avg_fields {
+  adr: Float
+  dpr: Float
+  hltv_rating: Float
+  kast_pct: Float
+  kpr: Float
+  rounds_played: Float
+  steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "v_player_match_rating". All fields are combined with a logical 'AND'.
+"""
+input v_player_match_rating_bool_exp {
+  _and: [v_player_match_rating_bool_exp!]
+  _not: v_player_match_rating_bool_exp
+  _or: [v_player_match_rating_bool_exp!]
+  adr: numeric_comparison_exp
+  dpr: numeric_comparison_exp
+  hltv_rating: numeric_comparison_exp
+  kast_pct: numeric_comparison_exp
+  kpr: numeric_comparison_exp
+  match: matches_bool_exp
+  match_id: uuid_comparison_exp
+  player: players_bool_exp
+  rounds_played: Int_comparison_exp
+  steam_id: bigint_comparison_exp
+}
+
+"""aggregate max on columns"""
+type v_player_match_rating_max_fields {
+  adr: numeric
+  dpr: numeric
+  hltv_rating: numeric
+  kast_pct: numeric
+  kpr: numeric
+  match_id: uuid
+  rounds_played: Int
+  steam_id: bigint
+}
+
+"""aggregate min on columns"""
+type v_player_match_rating_min_fields {
+  adr: numeric
+  dpr: numeric
+  hltv_rating: numeric
+  kast_pct: numeric
+  kpr: numeric
+  match_id: uuid
+  rounds_played: Int
+  steam_id: bigint
+}
+
+"""Ordering options when selecting data from "v_player_match_rating"."""
+input v_player_match_rating_order_by {
+  adr: order_by
+  dpr: order_by
+  hltv_rating: order_by
+  kast_pct: order_by
+  kpr: order_by
+  match: matches_order_by
+  match_id: order_by
+  player: players_order_by
+  rounds_played: order_by
+  steam_id: order_by
+}
+
+"""
+select columns of table "v_player_match_rating"
+"""
+enum v_player_match_rating_select_column {
+  """column name"""
+  adr
+
+  """column name"""
+  dpr
+
+  """column name"""
+  hltv_rating
+
+  """column name"""
+  kast_pct
+
+  """column name"""
+  kpr
+
+  """column name"""
+  match_id
+
+  """column name"""
+  rounds_played
+
+  """column name"""
+  steam_id
+}
+
+"""aggregate stddev on columns"""
+type v_player_match_rating_stddev_fields {
+  adr: Float
+  dpr: Float
+  hltv_rating: Float
+  kast_pct: Float
+  kpr: Float
+  rounds_played: Float
+  steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type v_player_match_rating_stddev_pop_fields {
+  adr: Float
+  dpr: Float
+  hltv_rating: Float
+  kast_pct: Float
+  kpr: Float
+  rounds_played: Float
+  steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type v_player_match_rating_stddev_samp_fields {
+  adr: Float
+  dpr: Float
+  hltv_rating: Float
+  kast_pct: Float
+  kpr: Float
+  rounds_played: Float
+  steam_id: Float
+}
+
+"""
+Streaming cursor of the table "v_player_match_rating"
+"""
+input v_player_match_rating_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_player_match_rating_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_player_match_rating_stream_cursor_value_input {
+  adr: numeric
+  dpr: numeric
+  hltv_rating: numeric
+  kast_pct: numeric
+  kpr: numeric
+  match_id: uuid
+  rounds_played: Int
+  steam_id: bigint
+}
+
+"""aggregate sum on columns"""
+type v_player_match_rating_sum_fields {
+  adr: numeric
+  dpr: numeric
+  hltv_rating: numeric
+  kast_pct: numeric
+  kpr: numeric
+  rounds_played: Int
+  steam_id: bigint
+}
+
+"""aggregate var_pop on columns"""
+type v_player_match_rating_var_pop_fields {
+  adr: Float
+  dpr: Float
+  hltv_rating: Float
+  kast_pct: Float
+  kpr: Float
+  rounds_played: Float
+  steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type v_player_match_rating_var_samp_fields {
+  adr: Float
+  dpr: Float
+  hltv_rating: Float
+  kast_pct: Float
+  kpr: Float
+  rounds_played: Float
+  steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type v_player_match_rating_variance_fields {
+  adr: Float
+  dpr: Float
+  hltv_rating: Float
+  kast_pct: Float
+  kpr: Float
+  rounds_played: Float
+  steam_id: Float
 }
 
 """
@@ -68162,11 +70578,194 @@ input v_player_multi_kills_variance_order_by {
 }
 
 """
+columns and relationships of "v_player_weapon_damage"
+"""
+type v_player_weapon_damage {
+  damage: bigint
+  hits: bigint
+  player_steam_id: bigint
+  source: String
+  type: String
+  with: String
+}
+
+"""
+aggregated selection of "v_player_weapon_damage"
+"""
+type v_player_weapon_damage_aggregate {
+  aggregate: v_player_weapon_damage_aggregate_fields
+  nodes: [v_player_weapon_damage!]!
+}
+
+"""
+aggregate fields of "v_player_weapon_damage"
+"""
+type v_player_weapon_damage_aggregate_fields {
+  avg: v_player_weapon_damage_avg_fields
+  count(columns: [v_player_weapon_damage_select_column!], distinct: Boolean): Int!
+  max: v_player_weapon_damage_max_fields
+  min: v_player_weapon_damage_min_fields
+  stddev: v_player_weapon_damage_stddev_fields
+  stddev_pop: v_player_weapon_damage_stddev_pop_fields
+  stddev_samp: v_player_weapon_damage_stddev_samp_fields
+  sum: v_player_weapon_damage_sum_fields
+  var_pop: v_player_weapon_damage_var_pop_fields
+  var_samp: v_player_weapon_damage_var_samp_fields
+  variance: v_player_weapon_damage_variance_fields
+}
+
+"""aggregate avg on columns"""
+type v_player_weapon_damage_avg_fields {
+  damage: Float
+  hits: Float
+  player_steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "v_player_weapon_damage". All fields are combined with a logical 'AND'.
+"""
+input v_player_weapon_damage_bool_exp {
+  _and: [v_player_weapon_damage_bool_exp!]
+  _not: v_player_weapon_damage_bool_exp
+  _or: [v_player_weapon_damage_bool_exp!]
+  damage: bigint_comparison_exp
+  hits: bigint_comparison_exp
+  player_steam_id: bigint_comparison_exp
+  source: String_comparison_exp
+  type: String_comparison_exp
+  with: String_comparison_exp
+}
+
+"""aggregate max on columns"""
+type v_player_weapon_damage_max_fields {
+  damage: bigint
+  hits: bigint
+  player_steam_id: bigint
+  source: String
+  type: String
+  with: String
+}
+
+"""aggregate min on columns"""
+type v_player_weapon_damage_min_fields {
+  damage: bigint
+  hits: bigint
+  player_steam_id: bigint
+  source: String
+  type: String
+  with: String
+}
+
+"""Ordering options when selecting data from "v_player_weapon_damage"."""
+input v_player_weapon_damage_order_by {
+  damage: order_by
+  hits: order_by
+  player_steam_id: order_by
+  source: order_by
+  type: order_by
+  with: order_by
+}
+
+"""
+select columns of table "v_player_weapon_damage"
+"""
+enum v_player_weapon_damage_select_column {
+  """column name"""
+  damage
+
+  """column name"""
+  hits
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  source
+
+  """column name"""
+  type
+
+  """column name"""
+  with
+}
+
+"""aggregate stddev on columns"""
+type v_player_weapon_damage_stddev_fields {
+  damage: Float
+  hits: Float
+  player_steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type v_player_weapon_damage_stddev_pop_fields {
+  damage: Float
+  hits: Float
+  player_steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type v_player_weapon_damage_stddev_samp_fields {
+  damage: Float
+  hits: Float
+  player_steam_id: Float
+}
+
+"""
+Streaming cursor of the table "v_player_weapon_damage"
+"""
+input v_player_weapon_damage_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_player_weapon_damage_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_player_weapon_damage_stream_cursor_value_input {
+  damage: bigint
+  hits: bigint
+  player_steam_id: bigint
+  source: String
+  type: String
+  with: String
+}
+
+"""aggregate sum on columns"""
+type v_player_weapon_damage_sum_fields {
+  damage: bigint
+  hits: bigint
+  player_steam_id: bigint
+}
+
+"""aggregate var_pop on columns"""
+type v_player_weapon_damage_var_pop_fields {
+  damage: Float
+  hits: Float
+  player_steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type v_player_weapon_damage_var_samp_fields {
+  damage: Float
+  hits: Float
+  player_steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type v_player_weapon_damage_variance_fields {
+  damage: Float
+  hits: Float
+  player_steam_id: Float
+}
+
+"""
 columns and relationships of "v_player_weapon_kills"
 """
 type v_player_weapon_kills {
   kill_count: bigint
   player_steam_id: bigint
+  rounds: bigint
   source: String
   type: String
   with: String
@@ -68201,6 +70800,7 @@ type v_player_weapon_kills_aggregate_fields {
 type v_player_weapon_kills_avg_fields {
   kill_count: Float
   player_steam_id: Float
+  rounds: Float
 }
 
 """
@@ -68212,6 +70812,7 @@ input v_player_weapon_kills_bool_exp {
   _or: [v_player_weapon_kills_bool_exp!]
   kill_count: bigint_comparison_exp
   player_steam_id: bigint_comparison_exp
+  rounds: bigint_comparison_exp
   source: String_comparison_exp
   type: String_comparison_exp
   with: String_comparison_exp
@@ -68221,6 +70822,7 @@ input v_player_weapon_kills_bool_exp {
 type v_player_weapon_kills_max_fields {
   kill_count: bigint
   player_steam_id: bigint
+  rounds: bigint
   source: String
   type: String
   with: String
@@ -68230,6 +70832,7 @@ type v_player_weapon_kills_max_fields {
 type v_player_weapon_kills_min_fields {
   kill_count: bigint
   player_steam_id: bigint
+  rounds: bigint
   source: String
   type: String
   with: String
@@ -68239,6 +70842,7 @@ type v_player_weapon_kills_min_fields {
 input v_player_weapon_kills_order_by {
   kill_count: order_by
   player_steam_id: order_by
+  rounds: order_by
   source: order_by
   type: order_by
   with: order_by
@@ -68255,6 +70859,9 @@ enum v_player_weapon_kills_select_column {
   player_steam_id
 
   """column name"""
+  rounds
+
+  """column name"""
   source
 
   """column name"""
@@ -68268,18 +70875,21 @@ enum v_player_weapon_kills_select_column {
 type v_player_weapon_kills_stddev_fields {
   kill_count: Float
   player_steam_id: Float
+  rounds: Float
 }
 
 """aggregate stddev_pop on columns"""
 type v_player_weapon_kills_stddev_pop_fields {
   kill_count: Float
   player_steam_id: Float
+  rounds: Float
 }
 
 """aggregate stddev_samp on columns"""
 type v_player_weapon_kills_stddev_samp_fields {
   kill_count: Float
   player_steam_id: Float
+  rounds: Float
 }
 
 """
@@ -68297,6 +70907,7 @@ input v_player_weapon_kills_stream_cursor_input {
 input v_player_weapon_kills_stream_cursor_value_input {
   kill_count: bigint
   player_steam_id: bigint
+  rounds: bigint
   source: String
   type: String
   with: String
@@ -68306,24 +70917,28 @@ input v_player_weapon_kills_stream_cursor_value_input {
 type v_player_weapon_kills_sum_fields {
   kill_count: bigint
   player_steam_id: bigint
+  rounds: bigint
 }
 
 """aggregate var_pop on columns"""
 type v_player_weapon_kills_var_pop_fields {
   kill_count: Float
   player_steam_id: Float
+  rounds: Float
 }
 
 """aggregate var_samp on columns"""
 type v_player_weapon_kills_var_samp_fields {
   kill_count: Float
   player_steam_id: Float
+  rounds: Float
 }
 
 """aggregate variance on columns"""
 type v_player_weapon_kills_variance_fields {
   kill_count: Float
   player_steam_id: Float
+  rounds: Float
 }
 
 """

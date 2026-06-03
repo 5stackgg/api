@@ -4,6 +4,7 @@ import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { DemoMetadataService } from "../demos/demo-metadata.service";
 import { ParsedDemo, ParsedPlayer } from "../demos/demo-parser.service";
+import { S3Service } from "../s3/s3.service";
 import { e_match_types_enum } from "../../generated";
 
 type MatchType = e_match_types_enum;
@@ -27,6 +28,7 @@ export class MatchImportService {
     private readonly postgres: PostgresService,
     private readonly demoMetadata: DemoMetadataService,
     private readonly config: ConfigService,
+    private readonly s3: S3Service,
   ) {
     this.steamApiKey = this.config.get<string>("steam.steamApiKey") ?? "";
   }
@@ -38,8 +40,9 @@ export class MatchImportService {
     demoUrl?: string,
     matchStartTime?: string | null,
     externalId?: string | null,
+    sourceObjectKey?: string,
   ): Promise<{ matchId: string | null; skipped?: string }> {
-    const file = demoUrl ?? `external/${source}/${sourceKey}.dem`;
+    let file = demoUrl ?? `external/${source}/${sourceKey}.dem`;
 
     if (externalId) {
       const existing = await this.findExistingExternalMatch(source, externalId);
@@ -128,6 +131,13 @@ export class MatchImportService {
     let demoId: string;
     try {
       matchMapId = await this.insertMatchMap(matchId, mapId, startedAt);
+
+      if (sourceObjectKey) {
+        const demoName = sourceObjectKey.replace(/^.*\//, "");
+        file = `demos/${matchId}/${matchMapId}/${demoName}`;
+        await this.s3.copyObject(sourceObjectKey, file);
+      }
+
       demoId = await this.insertMatchMapDemo(matchId, matchMapId, file);
 
       // persist_imported_demo writes rounds/kills/stats and the premier rank
