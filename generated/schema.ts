@@ -7841,6 +7841,7 @@ export interface mutation_root {
     /** Refresh all players in Typesense index */
     refreshAllPlayers: (SuccessOutput | null)
     refreshFaceitRank: (SuccessOutput | null)
+    refreshLiveHud: (SuccessOutput | null)
     registerName: (SuccessOutput | null)
     /** Remove dev fixture data (dev only) */
     removeFixtures: (SuccessOutput | null)
@@ -35072,6 +35073,7 @@ export interface mutation_rootGenqlSelection{
     /** Refresh all players in Typesense index */
     refreshAllPlayers?: SuccessOutputGenqlSelection
     refreshFaceitRank?: (SuccessOutputGenqlSelection & { __args: {steam_id: Scalars['String']} })
+    refreshLiveHud?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     registerName?: (SuccessOutputGenqlSelection & { __args: {name: Scalars['String']} })
     /** Remove dev fixture data (dev only) */
     removeFixtures?: SuccessOutputGenqlSelection
