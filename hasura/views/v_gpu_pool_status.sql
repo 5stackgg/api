@@ -1,13 +1,15 @@
 create or replace view public.v_gpu_pool_status as
-with pool as (
-  -- GPUs that can actually take work: present, enabled, online.
-  -- This is the "available" denominator basis; registered_gpu_nodes
-  -- (below) is the total regardless of enabled/online state.
-  select id
+with usable as (
+  -- GPUs reachable for workloads: present, enabled, and either accepting
+  -- matches (Online) or paused for new matches but still running
+  -- (NotAcceptingNewMatches). GPU workloads (streaming/demo/render) don't
+  -- require match acceptance, only that the node is enabled + reachable +
+  -- the specific workload toggle is on.
+  select id, gpu_streaming_enabled, gpu_demos_enabled, gpu_rendering_enabled
     from game_server_nodes
    where gpu = true
      and enabled = true
-     and status = 'Online'
+     and status in ('Online', 'NotAcceptingNewMatches')
 ),
 busy as (
   -- taken by a process (live stream / demo / highlight render)
@@ -19,8 +21,8 @@ batch_blocked as (
 )
 select
   1 as id,
-  (select count(*) from pool)::int as total_gpu_nodes,
-  (select count(*) from pool
+  (select count(*) from usable)::int as total_gpu_nodes,
+  (select count(*) from usable
     where id not in (select * from busy))::int as free_gpu_nodes,
   exists (
     select 1 from match_streams
@@ -39,13 +41,28 @@ select
     where gpu = true) as registered_gpu_nodes,
   -- new columns must be appended at the end so `create or replace view`
   -- doesn't try to rename existing positional columns
-  (select count(*) from pool
-    where id not in (select * from busy)
+  (select count(*) from usable
+    where gpu_rendering_enabled
+      and id not in (select * from busy)
       and id not in (select * from batch_blocked))::int as free_gpu_nodes_for_batch,
   -- true when an otherwise-idle GPU is held back from batch renders only
   -- because a live match is running on it
   exists (
-    select 1 from pool
-     where id not in (select * from busy)
+    select 1 from usable
+     where gpu_rendering_enabled
+       and id not in (select * from busy)
        and id in (select * from batch_blocked)
-  ) as renders_paused_for_active_match;
+  ) as renders_paused_for_active_match,
+  -- per-workload availability so the UI can respect each toggle independently
+  (select count(*) from usable
+    where gpu_streaming_enabled)::int as streaming_total_gpu_nodes,
+  (select count(*) from usable
+    where gpu_streaming_enabled
+      and id not in (select * from busy))::int as streaming_free_gpu_nodes,
+  (select count(*) from usable
+    where gpu_demos_enabled)::int as demo_total_gpu_nodes,
+  (select count(*) from usable
+    where gpu_demos_enabled
+      and id not in (select * from busy))::int as demo_free_gpu_nodes,
+  (select count(*) from usable
+    where gpu_rendering_enabled)::int as rendering_total_gpu_nodes;

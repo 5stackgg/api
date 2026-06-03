@@ -18472,14 +18472,19 @@ export interface tournaments_variance_fields {
 
 /** columns and relationships of "v_gpu_pool_status" */
 export interface v_gpu_pool_status {
+    demo_free_gpu_nodes: (Scalars['Int'] | null)
     demo_in_progress: (Scalars['Boolean'] | null)
+    demo_total_gpu_nodes: (Scalars['Int'] | null)
     free_gpu_nodes: (Scalars['Int'] | null)
     free_gpu_nodes_for_batch: (Scalars['Int'] | null)
     highlights_in_progress: (Scalars['Boolean'] | null)
     id: (Scalars['Int'] | null)
     live_in_progress: (Scalars['Boolean'] | null)
     registered_gpu_nodes: (Scalars['Int'] | null)
+    rendering_total_gpu_nodes: (Scalars['Int'] | null)
     renders_paused_for_active_match: (Scalars['Boolean'] | null)
+    streaming_free_gpu_nodes: (Scalars['Int'] | null)
+    streaming_total_gpu_nodes: (Scalars['Int'] | null)
     total_gpu_nodes: (Scalars['Int'] | null)
     __typename: 'v_gpu_pool_status'
 }
@@ -18512,10 +18517,15 @@ export interface v_gpu_pool_status_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface v_gpu_pool_status_avg_fields {
+    demo_free_gpu_nodes: (Scalars['Float'] | null)
+    demo_total_gpu_nodes: (Scalars['Float'] | null)
     free_gpu_nodes: (Scalars['Float'] | null)
     free_gpu_nodes_for_batch: (Scalars['Float'] | null)
     id: (Scalars['Float'] | null)
     registered_gpu_nodes: (Scalars['Float'] | null)
+    rendering_total_gpu_nodes: (Scalars['Float'] | null)
+    streaming_free_gpu_nodes: (Scalars['Float'] | null)
+    streaming_total_gpu_nodes: (Scalars['Float'] | null)
     total_gpu_nodes: (Scalars['Float'] | null)
     __typename: 'v_gpu_pool_status_avg_fields'
 }
@@ -18523,10 +18533,15 @@ export interface v_gpu_pool_status_avg_fields {
 
 /** aggregate max on columns */
 export interface v_gpu_pool_status_max_fields {
+    demo_free_gpu_nodes: (Scalars['Int'] | null)
+    demo_total_gpu_nodes: (Scalars['Int'] | null)
     free_gpu_nodes: (Scalars['Int'] | null)
     free_gpu_nodes_for_batch: (Scalars['Int'] | null)
     id: (Scalars['Int'] | null)
     registered_gpu_nodes: (Scalars['Int'] | null)
+    rendering_total_gpu_nodes: (Scalars['Int'] | null)
+    streaming_free_gpu_nodes: (Scalars['Int'] | null)
+    streaming_total_gpu_nodes: (Scalars['Int'] | null)
     total_gpu_nodes: (Scalars['Int'] | null)
     __typename: 'v_gpu_pool_status_max_fields'
 }
@@ -18534,25 +18549,35 @@ export interface v_gpu_pool_status_max_fields {
 
 /** aggregate min on columns */
 export interface v_gpu_pool_status_min_fields {
+    demo_free_gpu_nodes: (Scalars['Int'] | null)
+    demo_total_gpu_nodes: (Scalars['Int'] | null)
     free_gpu_nodes: (Scalars['Int'] | null)
     free_gpu_nodes_for_batch: (Scalars['Int'] | null)
     id: (Scalars['Int'] | null)
     registered_gpu_nodes: (Scalars['Int'] | null)
+    rendering_total_gpu_nodes: (Scalars['Int'] | null)
+    streaming_free_gpu_nodes: (Scalars['Int'] | null)
+    streaming_total_gpu_nodes: (Scalars['Int'] | null)
     total_gpu_nodes: (Scalars['Int'] | null)
     __typename: 'v_gpu_pool_status_min_fields'
 }
 
 
 /** select columns of table "v_gpu_pool_status" */
-export type v_gpu_pool_status_select_column = 'demo_in_progress' | 'free_gpu_nodes' | 'free_gpu_nodes_for_batch' | 'highlights_in_progress' | 'id' | 'live_in_progress' | 'registered_gpu_nodes' | 'renders_paused_for_active_match' | 'total_gpu_nodes'
+export type v_gpu_pool_status_select_column = 'demo_free_gpu_nodes' | 'demo_in_progress' | 'demo_total_gpu_nodes' | 'free_gpu_nodes' | 'free_gpu_nodes_for_batch' | 'highlights_in_progress' | 'id' | 'live_in_progress' | 'registered_gpu_nodes' | 'rendering_total_gpu_nodes' | 'renders_paused_for_active_match' | 'streaming_free_gpu_nodes' | 'streaming_total_gpu_nodes' | 'total_gpu_nodes'
 
 
 /** aggregate stddev on columns */
 export interface v_gpu_pool_status_stddev_fields {
+    demo_free_gpu_nodes: (Scalars['Float'] | null)
+    demo_total_gpu_nodes: (Scalars['Float'] | null)
     free_gpu_nodes: (Scalars['Float'] | null)
     free_gpu_nodes_for_batch: (Scalars['Float'] | null)
     id: (Scalars['Float'] | null)
     registered_gpu_nodes: (Scalars['Float'] | null)
+    rendering_total_gpu_nodes: (Scalars['Float'] | null)
+    streaming_free_gpu_nodes: (Scalars['Float'] | null)
+    streaming_total_gpu_nodes: (Scalars['Float'] | null)
     total_gpu_nodes: (Scalars['Float'] | null)
     __typename: 'v_gpu_pool_status_stddev_fields'
 }
@@ -18560,10 +18585,15 @@ export interface v_gpu_pool_status_stddev_fields {
 
 /** aggregate stddev_pop on columns */
 export interface v_gpu_pool_status_stddev_pop_fields {
+    demo_free_gpu_nodes: (Scalars['Float'] | null)
+    demo_total_gpu_nodes: (Scalars['Float'] | null)
     free_gpu_nodes: (Scalars['Float'] | null)
     free_gpu_nodes_for_batch: (Scalars['Float'] | null)
     id: (Scalars['Float'] | null)
     registered_gpu_nodes: (Scalars['Float'] | null)
+    rendering_total_gpu_nodes: (Scalars['Float'] | null)
+    streaming_free_gpu_nodes: (Scalars['Float'] | null)
+    streaming_total_gpu_nodes: (Scalars['Float'] | null)
     total_gpu_nodes: (Scalars['Float'] | null)
     __typename: 'v_gpu_pool_status_stddev_pop_fields'
 }
@@ -18571,10 +18601,15 @@ export interface v_gpu_pool_status_stddev_pop_fields {
 
 /** aggregate stddev_samp on columns */
 export interface v_gpu_pool_status_stddev_samp_fields {
+    demo_free_gpu_nodes: (Scalars['Float'] | null)
+    demo_total_gpu_nodes: (Scalars['Float'] | null)
     free_gpu_nodes: (Scalars['Float'] | null)
     free_gpu_nodes_for_batch: (Scalars['Float'] | null)
     id: (Scalars['Float'] | null)
     registered_gpu_nodes: (Scalars['Float'] | null)
+    rendering_total_gpu_nodes: (Scalars['Float'] | null)
+    streaming_free_gpu_nodes: (Scalars['Float'] | null)
+    streaming_total_gpu_nodes: (Scalars['Float'] | null)
     total_gpu_nodes: (Scalars['Float'] | null)
     __typename: 'v_gpu_pool_status_stddev_samp_fields'
 }
@@ -18582,10 +18617,15 @@ export interface v_gpu_pool_status_stddev_samp_fields {
 
 /** aggregate sum on columns */
 export interface v_gpu_pool_status_sum_fields {
+    demo_free_gpu_nodes: (Scalars['Int'] | null)
+    demo_total_gpu_nodes: (Scalars['Int'] | null)
     free_gpu_nodes: (Scalars['Int'] | null)
     free_gpu_nodes_for_batch: (Scalars['Int'] | null)
     id: (Scalars['Int'] | null)
     registered_gpu_nodes: (Scalars['Int'] | null)
+    rendering_total_gpu_nodes: (Scalars['Int'] | null)
+    streaming_free_gpu_nodes: (Scalars['Int'] | null)
+    streaming_total_gpu_nodes: (Scalars['Int'] | null)
     total_gpu_nodes: (Scalars['Int'] | null)
     __typename: 'v_gpu_pool_status_sum_fields'
 }
@@ -18593,10 +18633,15 @@ export interface v_gpu_pool_status_sum_fields {
 
 /** aggregate var_pop on columns */
 export interface v_gpu_pool_status_var_pop_fields {
+    demo_free_gpu_nodes: (Scalars['Float'] | null)
+    demo_total_gpu_nodes: (Scalars['Float'] | null)
     free_gpu_nodes: (Scalars['Float'] | null)
     free_gpu_nodes_for_batch: (Scalars['Float'] | null)
     id: (Scalars['Float'] | null)
     registered_gpu_nodes: (Scalars['Float'] | null)
+    rendering_total_gpu_nodes: (Scalars['Float'] | null)
+    streaming_free_gpu_nodes: (Scalars['Float'] | null)
+    streaming_total_gpu_nodes: (Scalars['Float'] | null)
     total_gpu_nodes: (Scalars['Float'] | null)
     __typename: 'v_gpu_pool_status_var_pop_fields'
 }
@@ -18604,10 +18649,15 @@ export interface v_gpu_pool_status_var_pop_fields {
 
 /** aggregate var_samp on columns */
 export interface v_gpu_pool_status_var_samp_fields {
+    demo_free_gpu_nodes: (Scalars['Float'] | null)
+    demo_total_gpu_nodes: (Scalars['Float'] | null)
     free_gpu_nodes: (Scalars['Float'] | null)
     free_gpu_nodes_for_batch: (Scalars['Float'] | null)
     id: (Scalars['Float'] | null)
     registered_gpu_nodes: (Scalars['Float'] | null)
+    rendering_total_gpu_nodes: (Scalars['Float'] | null)
+    streaming_free_gpu_nodes: (Scalars['Float'] | null)
+    streaming_total_gpu_nodes: (Scalars['Float'] | null)
     total_gpu_nodes: (Scalars['Float'] | null)
     __typename: 'v_gpu_pool_status_var_samp_fields'
 }
@@ -18615,10 +18665,15 @@ export interface v_gpu_pool_status_var_samp_fields {
 
 /** aggregate variance on columns */
 export interface v_gpu_pool_status_variance_fields {
+    demo_free_gpu_nodes: (Scalars['Float'] | null)
+    demo_total_gpu_nodes: (Scalars['Float'] | null)
     free_gpu_nodes: (Scalars['Float'] | null)
     free_gpu_nodes_for_batch: (Scalars['Float'] | null)
     id: (Scalars['Float'] | null)
     registered_gpu_nodes: (Scalars['Float'] | null)
+    rendering_total_gpu_nodes: (Scalars['Float'] | null)
+    streaming_free_gpu_nodes: (Scalars['Float'] | null)
+    streaming_total_gpu_nodes: (Scalars['Float'] | null)
     total_gpu_nodes: (Scalars['Float'] | null)
     __typename: 'v_gpu_pool_status_variance_fields'
 }
@@ -56766,14 +56821,19 @@ export interface uuid_comparison_exp {_eq?: (Scalars['uuid'] | null),_gt?: (Scal
 
 /** columns and relationships of "v_gpu_pool_status" */
 export interface v_gpu_pool_statusGenqlSelection{
+    demo_free_gpu_nodes?: boolean | number
     demo_in_progress?: boolean | number
+    demo_total_gpu_nodes?: boolean | number
     free_gpu_nodes?: boolean | number
     free_gpu_nodes_for_batch?: boolean | number
     highlights_in_progress?: boolean | number
     id?: boolean | number
     live_in_progress?: boolean | number
     registered_gpu_nodes?: boolean | number
+    rendering_total_gpu_nodes?: boolean | number
     renders_paused_for_active_match?: boolean | number
+    streaming_free_gpu_nodes?: boolean | number
+    streaming_total_gpu_nodes?: boolean | number
     total_gpu_nodes?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -56809,10 +56869,15 @@ export interface v_gpu_pool_status_aggregate_fieldsGenqlSelection{
 
 /** aggregate avg on columns */
 export interface v_gpu_pool_status_avg_fieldsGenqlSelection{
+    demo_free_gpu_nodes?: boolean | number
+    demo_total_gpu_nodes?: boolean | number
     free_gpu_nodes?: boolean | number
     free_gpu_nodes_for_batch?: boolean | number
     id?: boolean | number
     registered_gpu_nodes?: boolean | number
+    rendering_total_gpu_nodes?: boolean | number
+    streaming_free_gpu_nodes?: boolean | number
+    streaming_total_gpu_nodes?: boolean | number
     total_gpu_nodes?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -56820,15 +56885,20 @@ export interface v_gpu_pool_status_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "v_gpu_pool_status". All fields are combined with a logical 'AND'. */
-export interface v_gpu_pool_status_bool_exp {_and?: (v_gpu_pool_status_bool_exp[] | null),_not?: (v_gpu_pool_status_bool_exp | null),_or?: (v_gpu_pool_status_bool_exp[] | null),demo_in_progress?: (Boolean_comparison_exp | null),free_gpu_nodes?: (Int_comparison_exp | null),free_gpu_nodes_for_batch?: (Int_comparison_exp | null),highlights_in_progress?: (Boolean_comparison_exp | null),id?: (Int_comparison_exp | null),live_in_progress?: (Boolean_comparison_exp | null),registered_gpu_nodes?: (Int_comparison_exp | null),renders_paused_for_active_match?: (Boolean_comparison_exp | null),total_gpu_nodes?: (Int_comparison_exp | null)}
+export interface v_gpu_pool_status_bool_exp {_and?: (v_gpu_pool_status_bool_exp[] | null),_not?: (v_gpu_pool_status_bool_exp | null),_or?: (v_gpu_pool_status_bool_exp[] | null),demo_free_gpu_nodes?: (Int_comparison_exp | null),demo_in_progress?: (Boolean_comparison_exp | null),demo_total_gpu_nodes?: (Int_comparison_exp | null),free_gpu_nodes?: (Int_comparison_exp | null),free_gpu_nodes_for_batch?: (Int_comparison_exp | null),highlights_in_progress?: (Boolean_comparison_exp | null),id?: (Int_comparison_exp | null),live_in_progress?: (Boolean_comparison_exp | null),registered_gpu_nodes?: (Int_comparison_exp | null),rendering_total_gpu_nodes?: (Int_comparison_exp | null),renders_paused_for_active_match?: (Boolean_comparison_exp | null),streaming_free_gpu_nodes?: (Int_comparison_exp | null),streaming_total_gpu_nodes?: (Int_comparison_exp | null),total_gpu_nodes?: (Int_comparison_exp | null)}
 
 
 /** aggregate max on columns */
 export interface v_gpu_pool_status_max_fieldsGenqlSelection{
+    demo_free_gpu_nodes?: boolean | number
+    demo_total_gpu_nodes?: boolean | number
     free_gpu_nodes?: boolean | number
     free_gpu_nodes_for_batch?: boolean | number
     id?: boolean | number
     registered_gpu_nodes?: boolean | number
+    rendering_total_gpu_nodes?: boolean | number
+    streaming_free_gpu_nodes?: boolean | number
+    streaming_total_gpu_nodes?: boolean | number
     total_gpu_nodes?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -56837,10 +56907,15 @@ export interface v_gpu_pool_status_max_fieldsGenqlSelection{
 
 /** aggregate min on columns */
 export interface v_gpu_pool_status_min_fieldsGenqlSelection{
+    demo_free_gpu_nodes?: boolean | number
+    demo_total_gpu_nodes?: boolean | number
     free_gpu_nodes?: boolean | number
     free_gpu_nodes_for_batch?: boolean | number
     id?: boolean | number
     registered_gpu_nodes?: boolean | number
+    rendering_total_gpu_nodes?: boolean | number
+    streaming_free_gpu_nodes?: boolean | number
+    streaming_total_gpu_nodes?: boolean | number
     total_gpu_nodes?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -56848,15 +56923,20 @@ export interface v_gpu_pool_status_min_fieldsGenqlSelection{
 
 
 /** Ordering options when selecting data from "v_gpu_pool_status". */
-export interface v_gpu_pool_status_order_by {demo_in_progress?: (order_by | null),free_gpu_nodes?: (order_by | null),free_gpu_nodes_for_batch?: (order_by | null),highlights_in_progress?: (order_by | null),id?: (order_by | null),live_in_progress?: (order_by | null),registered_gpu_nodes?: (order_by | null),renders_paused_for_active_match?: (order_by | null),total_gpu_nodes?: (order_by | null)}
+export interface v_gpu_pool_status_order_by {demo_free_gpu_nodes?: (order_by | null),demo_in_progress?: (order_by | null),demo_total_gpu_nodes?: (order_by | null),free_gpu_nodes?: (order_by | null),free_gpu_nodes_for_batch?: (order_by | null),highlights_in_progress?: (order_by | null),id?: (order_by | null),live_in_progress?: (order_by | null),registered_gpu_nodes?: (order_by | null),rendering_total_gpu_nodes?: (order_by | null),renders_paused_for_active_match?: (order_by | null),streaming_free_gpu_nodes?: (order_by | null),streaming_total_gpu_nodes?: (order_by | null),total_gpu_nodes?: (order_by | null)}
 
 
 /** aggregate stddev on columns */
 export interface v_gpu_pool_status_stddev_fieldsGenqlSelection{
+    demo_free_gpu_nodes?: boolean | number
+    demo_total_gpu_nodes?: boolean | number
     free_gpu_nodes?: boolean | number
     free_gpu_nodes_for_batch?: boolean | number
     id?: boolean | number
     registered_gpu_nodes?: boolean | number
+    rendering_total_gpu_nodes?: boolean | number
+    streaming_free_gpu_nodes?: boolean | number
+    streaming_total_gpu_nodes?: boolean | number
     total_gpu_nodes?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -56865,10 +56945,15 @@ export interface v_gpu_pool_status_stddev_fieldsGenqlSelection{
 
 /** aggregate stddev_pop on columns */
 export interface v_gpu_pool_status_stddev_pop_fieldsGenqlSelection{
+    demo_free_gpu_nodes?: boolean | number
+    demo_total_gpu_nodes?: boolean | number
     free_gpu_nodes?: boolean | number
     free_gpu_nodes_for_batch?: boolean | number
     id?: boolean | number
     registered_gpu_nodes?: boolean | number
+    rendering_total_gpu_nodes?: boolean | number
+    streaming_free_gpu_nodes?: boolean | number
+    streaming_total_gpu_nodes?: boolean | number
     total_gpu_nodes?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -56877,10 +56962,15 @@ export interface v_gpu_pool_status_stddev_pop_fieldsGenqlSelection{
 
 /** aggregate stddev_samp on columns */
 export interface v_gpu_pool_status_stddev_samp_fieldsGenqlSelection{
+    demo_free_gpu_nodes?: boolean | number
+    demo_total_gpu_nodes?: boolean | number
     free_gpu_nodes?: boolean | number
     free_gpu_nodes_for_batch?: boolean | number
     id?: boolean | number
     registered_gpu_nodes?: boolean | number
+    rendering_total_gpu_nodes?: boolean | number
+    streaming_free_gpu_nodes?: boolean | number
+    streaming_total_gpu_nodes?: boolean | number
     total_gpu_nodes?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -56896,15 +56986,20 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface v_gpu_pool_status_stream_cursor_value_input {demo_in_progress?: (Scalars['Boolean'] | null),free_gpu_nodes?: (Scalars['Int'] | null),free_gpu_nodes_for_batch?: (Scalars['Int'] | null),highlights_in_progress?: (Scalars['Boolean'] | null),id?: (Scalars['Int'] | null),live_in_progress?: (Scalars['Boolean'] | null),registered_gpu_nodes?: (Scalars['Int'] | null),renders_paused_for_active_match?: (Scalars['Boolean'] | null),total_gpu_nodes?: (Scalars['Int'] | null)}
+export interface v_gpu_pool_status_stream_cursor_value_input {demo_free_gpu_nodes?: (Scalars['Int'] | null),demo_in_progress?: (Scalars['Boolean'] | null),demo_total_gpu_nodes?: (Scalars['Int'] | null),free_gpu_nodes?: (Scalars['Int'] | null),free_gpu_nodes_for_batch?: (Scalars['Int'] | null),highlights_in_progress?: (Scalars['Boolean'] | null),id?: (Scalars['Int'] | null),live_in_progress?: (Scalars['Boolean'] | null),registered_gpu_nodes?: (Scalars['Int'] | null),rendering_total_gpu_nodes?: (Scalars['Int'] | null),renders_paused_for_active_match?: (Scalars['Boolean'] | null),streaming_free_gpu_nodes?: (Scalars['Int'] | null),streaming_total_gpu_nodes?: (Scalars['Int'] | null),total_gpu_nodes?: (Scalars['Int'] | null)}
 
 
 /** aggregate sum on columns */
 export interface v_gpu_pool_status_sum_fieldsGenqlSelection{
+    demo_free_gpu_nodes?: boolean | number
+    demo_total_gpu_nodes?: boolean | number
     free_gpu_nodes?: boolean | number
     free_gpu_nodes_for_batch?: boolean | number
     id?: boolean | number
     registered_gpu_nodes?: boolean | number
+    rendering_total_gpu_nodes?: boolean | number
+    streaming_free_gpu_nodes?: boolean | number
+    streaming_total_gpu_nodes?: boolean | number
     total_gpu_nodes?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -56913,10 +57008,15 @@ export interface v_gpu_pool_status_sum_fieldsGenqlSelection{
 
 /** aggregate var_pop on columns */
 export interface v_gpu_pool_status_var_pop_fieldsGenqlSelection{
+    demo_free_gpu_nodes?: boolean | number
+    demo_total_gpu_nodes?: boolean | number
     free_gpu_nodes?: boolean | number
     free_gpu_nodes_for_batch?: boolean | number
     id?: boolean | number
     registered_gpu_nodes?: boolean | number
+    rendering_total_gpu_nodes?: boolean | number
+    streaming_free_gpu_nodes?: boolean | number
+    streaming_total_gpu_nodes?: boolean | number
     total_gpu_nodes?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -56925,10 +57025,15 @@ export interface v_gpu_pool_status_var_pop_fieldsGenqlSelection{
 
 /** aggregate var_samp on columns */
 export interface v_gpu_pool_status_var_samp_fieldsGenqlSelection{
+    demo_free_gpu_nodes?: boolean | number
+    demo_total_gpu_nodes?: boolean | number
     free_gpu_nodes?: boolean | number
     free_gpu_nodes_for_batch?: boolean | number
     id?: boolean | number
     registered_gpu_nodes?: boolean | number
+    rendering_total_gpu_nodes?: boolean | number
+    streaming_free_gpu_nodes?: boolean | number
+    streaming_total_gpu_nodes?: boolean | number
     total_gpu_nodes?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -56937,10 +57042,15 @@ export interface v_gpu_pool_status_var_samp_fieldsGenqlSelection{
 
 /** aggregate variance on columns */
 export interface v_gpu_pool_status_variance_fieldsGenqlSelection{
+    demo_free_gpu_nodes?: boolean | number
+    demo_total_gpu_nodes?: boolean | number
     free_gpu_nodes?: boolean | number
     free_gpu_nodes_for_batch?: boolean | number
     id?: boolean | number
     registered_gpu_nodes?: boolean | number
+    rendering_total_gpu_nodes?: boolean | number
+    streaming_free_gpu_nodes?: boolean | number
+    streaming_total_gpu_nodes?: boolean | number
     total_gpu_nodes?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -74019,14 +74129,19 @@ export const enumTournamentsUpdateColumn = {
 }
 
 export const enumVGpuPoolStatusSelectColumn = {
+   demo_free_gpu_nodes: 'demo_free_gpu_nodes' as const,
    demo_in_progress: 'demo_in_progress' as const,
+   demo_total_gpu_nodes: 'demo_total_gpu_nodes' as const,
    free_gpu_nodes: 'free_gpu_nodes' as const,
    free_gpu_nodes_for_batch: 'free_gpu_nodes_for_batch' as const,
    highlights_in_progress: 'highlights_in_progress' as const,
    id: 'id' as const,
    live_in_progress: 'live_in_progress' as const,
    registered_gpu_nodes: 'registered_gpu_nodes' as const,
+   rendering_total_gpu_nodes: 'rendering_total_gpu_nodes' as const,
    renders_paused_for_active_match: 'renders_paused_for_active_match' as const,
+   streaming_free_gpu_nodes: 'streaming_free_gpu_nodes' as const,
+   streaming_total_gpu_nodes: 'streaming_total_gpu_nodes' as const,
    total_gpu_nodes: 'total_gpu_nodes' as const
 }
 
