@@ -4317,6 +4317,7 @@ export interface match_clips {
     /** An object relationship */
     user: (players | null)
     user_steam_id: (Scalars['bigint'] | null)
+    views_count: Scalars['Int']
     visibility: e_match_clip_visibility_enum
     __typename: 'match_clips'
 }
@@ -4355,6 +4356,7 @@ export interface match_clips_avg_fields {
     size: (Scalars['Float'] | null)
     target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
+    views_count: (Scalars['Float'] | null)
     __typename: 'match_clips_avg_fields'
 }
 
@@ -4382,6 +4384,7 @@ export interface match_clips_max_fields {
     thumbnail_url: (Scalars['String'] | null)
     title: (Scalars['String'] | null)
     user_steam_id: (Scalars['bigint'] | null)
+    views_count: (Scalars['Int'] | null)
     __typename: 'match_clips_max_fields'
 }
 
@@ -4405,6 +4408,7 @@ export interface match_clips_min_fields {
     thumbnail_url: (Scalars['String'] | null)
     title: (Scalars['String'] | null)
     user_steam_id: (Scalars['bigint'] | null)
+    views_count: (Scalars['Int'] | null)
     __typename: 'match_clips_min_fields'
 }
 
@@ -4420,7 +4424,7 @@ export interface match_clips_mutation_response {
 
 
 /** select columns of table "match_clips" */
-export type match_clips_select_column = 'created_at' | 'duration_ms' | 'file' | 'id' | 'kills_count' | 'match_map_demo_id' | 'match_map_id' | 'round' | 'size' | 'target_steam_id' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
+export type match_clips_select_column = 'created_at' | 'duration_ms' | 'file' | 'id' | 'kills_count' | 'match_map_demo_id' | 'match_map_id' | 'round' | 'size' | 'target_steam_id' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'views_count' | 'visibility'
 
 
 /** aggregate stddev on columns */
@@ -4431,6 +4435,7 @@ export interface match_clips_stddev_fields {
     size: (Scalars['Float'] | null)
     target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
+    views_count: (Scalars['Float'] | null)
     __typename: 'match_clips_stddev_fields'
 }
 
@@ -4443,6 +4448,7 @@ export interface match_clips_stddev_pop_fields {
     size: (Scalars['Float'] | null)
     target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
+    views_count: (Scalars['Float'] | null)
     __typename: 'match_clips_stddev_pop_fields'
 }
 
@@ -4455,6 +4461,7 @@ export interface match_clips_stddev_samp_fields {
     size: (Scalars['Float'] | null)
     target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
+    views_count: (Scalars['Float'] | null)
     __typename: 'match_clips_stddev_samp_fields'
 }
 
@@ -4467,12 +4474,13 @@ export interface match_clips_sum_fields {
     size: (Scalars['bigint'] | null)
     target_steam_id: (Scalars['bigint'] | null)
     user_steam_id: (Scalars['bigint'] | null)
+    views_count: (Scalars['Int'] | null)
     __typename: 'match_clips_sum_fields'
 }
 
 
 /** update columns of table "match_clips" */
-export type match_clips_update_column = 'created_at' | 'duration_ms' | 'file' | 'id' | 'kills_count' | 'match_map_demo_id' | 'match_map_id' | 'round' | 'size' | 'target_steam_id' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'visibility'
+export type match_clips_update_column = 'created_at' | 'duration_ms' | 'file' | 'id' | 'kills_count' | 'match_map_demo_id' | 'match_map_id' | 'round' | 'size' | 'target_steam_id' | 'thumbnail_url' | 'title' | 'user_steam_id' | 'views_count' | 'visibility'
 
 
 /** aggregate var_pop on columns */
@@ -4483,6 +4491,7 @@ export interface match_clips_var_pop_fields {
     size: (Scalars['Float'] | null)
     target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
+    views_count: (Scalars['Float'] | null)
     __typename: 'match_clips_var_pop_fields'
 }
 
@@ -4495,6 +4504,7 @@ export interface match_clips_var_samp_fields {
     size: (Scalars['Float'] | null)
     target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
+    views_count: (Scalars['Float'] | null)
     __typename: 'match_clips_var_samp_fields'
 }
 
@@ -4507,6 +4517,7 @@ export interface match_clips_variance_fields {
     size: (Scalars['Float'] | null)
     target_steam_id: (Scalars['Float'] | null)
     user_steam_id: (Scalars['Float'] | null)
+    views_count: (Scalars['Float'] | null)
     __typename: 'match_clips_variance_fields'
 }
 
@@ -30457,6 +30468,7 @@ export interface match_clipsGenqlSelection{
     /** An object relationship */
     user?: playersGenqlSelection
     user_steam_id?: boolean | number
+    views_count?: boolean | number
     visibility?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -30512,25 +30524,26 @@ export interface match_clips_avg_fieldsGenqlSelection{
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
+    views_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by avg() on columns of table "match_clips" */
-export interface match_clips_avg_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_avg_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null),views_count?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "match_clips". All fields are combined with a logical 'AND'. */
-export interface match_clips_bool_exp {_and?: (match_clips_bool_exp[] | null),_not?: (match_clips_bool_exp | null),_or?: (match_clips_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),download_url?: (String_comparison_exp | null),duration_ms?: (Int_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),kills_count?: (Int_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_demo?: (match_map_demos_bool_exp | null),match_map_demo_id?: (uuid_comparison_exp | null),match_map_id?: (uuid_comparison_exp | null),render_jobs?: (clip_render_jobs_bool_exp | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),round?: (Int_comparison_exp | null),size?: (bigint_comparison_exp | null),target?: (players_bool_exp | null),target_steam_id?: (bigint_comparison_exp | null),thumbnail_download_url?: (String_comparison_exp | null),thumbnail_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null),visibility?: (e_match_clip_visibility_enum_comparison_exp | null)}
+export interface match_clips_bool_exp {_and?: (match_clips_bool_exp[] | null),_not?: (match_clips_bool_exp | null),_or?: (match_clips_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),download_url?: (String_comparison_exp | null),duration_ms?: (Int_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),kills_count?: (Int_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_demo?: (match_map_demos_bool_exp | null),match_map_demo_id?: (uuid_comparison_exp | null),match_map_id?: (uuid_comparison_exp | null),render_jobs?: (clip_render_jobs_bool_exp | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),round?: (Int_comparison_exp | null),size?: (bigint_comparison_exp | null),target?: (players_bool_exp | null),target_steam_id?: (bigint_comparison_exp | null),thumbnail_download_url?: (String_comparison_exp | null),thumbnail_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null),views_count?: (Int_comparison_exp | null),visibility?: (e_match_clip_visibility_enum_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_clips" */
-export interface match_clips_inc_input {duration_ms?: (Scalars['Int'] | null),kills_count?: (Scalars['Int'] | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),user_steam_id?: (Scalars['bigint'] | null)}
+export interface match_clips_inc_input {duration_ms?: (Scalars['Int'] | null),kills_count?: (Scalars['Int'] | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),user_steam_id?: (Scalars['bigint'] | null),views_count?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "match_clips" */
-export interface match_clips_insert_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_demo?: (match_map_demos_obj_rel_insert_input | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target?: (players_obj_rel_insert_input | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (e_match_clip_visibility_enum | null)}
+export interface match_clips_insert_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_demo?: (match_map_demos_obj_rel_insert_input | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target?: (players_obj_rel_insert_input | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null),views_count?: (Scalars['Int'] | null),visibility?: (e_match_clip_visibility_enum | null)}
 
 
 /** aggregate max on columns */
@@ -30552,13 +30565,14 @@ export interface match_clips_max_fieldsGenqlSelection{
     thumbnail_url?: boolean | number
     title?: boolean | number
     user_steam_id?: boolean | number
+    views_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by max() on columns of table "match_clips" */
-export interface match_clips_max_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_max_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user_steam_id?: (order_by | null),views_count?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -30580,13 +30594,14 @@ export interface match_clips_min_fieldsGenqlSelection{
     thumbnail_url?: boolean | number
     title?: boolean | number
     user_steam_id?: boolean | number
+    views_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by min() on columns of table "match_clips" */
-export interface match_clips_min_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_min_order_by {created_at?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user_steam_id?: (order_by | null),views_count?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_clips" */
@@ -30611,7 +30626,7 @@ export interface match_clips_on_conflict {constraint: match_clips_constraint,upd
 
 
 /** Ordering options when selecting data from "match_clips". */
-export interface match_clips_order_by {created_at?: (order_by | null),download_url?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_demo?: (match_map_demos_order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_order_by | null),round?: (order_by | null),size?: (order_by | null),target?: (players_order_by | null),target_steam_id?: (order_by | null),thumbnail_download_url?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null),visibility?: (order_by | null)}
+export interface match_clips_order_by {created_at?: (order_by | null),download_url?: (order_by | null),duration_ms?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills_count?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_demo?: (match_map_demos_order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),render_jobs_aggregate?: (clip_render_jobs_aggregate_order_by | null),round?: (order_by | null),size?: (order_by | null),target?: (players_order_by | null),target_steam_id?: (order_by | null),thumbnail_download_url?: (order_by | null),thumbnail_url?: (order_by | null),title?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null),views_count?: (order_by | null),visibility?: (order_by | null)}
 
 
 /** primary key columns input for table: match_clips */
@@ -30619,7 +30634,7 @@ export interface match_clips_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_clips" */
-export interface match_clips_set_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (e_match_clip_visibility_enum | null)}
+export interface match_clips_set_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),views_count?: (Scalars['Int'] | null),visibility?: (e_match_clip_visibility_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -30630,13 +30645,14 @@ export interface match_clips_stddev_fieldsGenqlSelection{
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
+    views_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by stddev() on columns of table "match_clips" */
-export interface match_clips_stddev_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_stddev_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null),views_count?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
@@ -30647,13 +30663,14 @@ export interface match_clips_stddev_pop_fieldsGenqlSelection{
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
+    views_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by stddev_pop() on columns of table "match_clips" */
-export interface match_clips_stddev_pop_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_stddev_pop_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null),views_count?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
@@ -30664,13 +30681,14 @@ export interface match_clips_stddev_samp_fieldsGenqlSelection{
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
+    views_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by stddev_samp() on columns of table "match_clips" */
-export interface match_clips_stddev_samp_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_stddev_samp_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null),views_count?: (order_by | null)}
 
 
 /** Streaming cursor of the table "match_clips" */
@@ -30682,7 +30700,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_clips_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),visibility?: (e_match_clip_visibility_enum | null)}
+export interface match_clips_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),duration_ms?: (Scalars['Int'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills_count?: (Scalars['Int'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),round?: (Scalars['Int'] | null),size?: (Scalars['bigint'] | null),target_steam_id?: (Scalars['bigint'] | null),thumbnail_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null),user_steam_id?: (Scalars['bigint'] | null),views_count?: (Scalars['Int'] | null),visibility?: (e_match_clip_visibility_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -30693,13 +30711,14 @@ export interface match_clips_sum_fieldsGenqlSelection{
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
+    views_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by sum() on columns of table "match_clips" */
-export interface match_clips_sum_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_sum_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null),views_count?: (order_by | null)}
 
 export interface match_clips_updates {
 /** increments the numeric columns with given value of the filtered values */
@@ -30718,13 +30737,14 @@ export interface match_clips_var_pop_fieldsGenqlSelection{
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
+    views_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by var_pop() on columns of table "match_clips" */
-export interface match_clips_var_pop_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_var_pop_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null),views_count?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
@@ -30735,13 +30755,14 @@ export interface match_clips_var_samp_fieldsGenqlSelection{
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
+    views_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by var_samp() on columns of table "match_clips" */
-export interface match_clips_var_samp_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_var_samp_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null),views_count?: (order_by | null)}
 
 
 /** aggregate variance on columns */
@@ -30752,13 +30773,14 @@ export interface match_clips_variance_fieldsGenqlSelection{
     size?: boolean | number
     target_steam_id?: boolean | number
     user_steam_id?: boolean | number
+    views_count?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** order by variance() on columns of table "match_clips" */
-export interface match_clips_variance_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface match_clips_variance_order_by {duration_ms?: (order_by | null),kills_count?: (order_by | null),round?: (order_by | null),size?: (order_by | null),target_steam_id?: (order_by | null),user_steam_id?: (order_by | null),views_count?: (order_by | null)}
 
 
 /** columns and relationships of "match_demo_sessions" */
@@ -78066,6 +78088,7 @@ export const enumMatchClipsSelectColumn = {
    thumbnail_url: 'thumbnail_url' as const,
    title: 'title' as const,
    user_steam_id: 'user_steam_id' as const,
+   views_count: 'views_count' as const,
    visibility: 'visibility' as const
 }
 
@@ -78083,6 +78106,7 @@ export const enumMatchClipsUpdateColumn = {
    thumbnail_url: 'thumbnail_url' as const,
    title: 'title' as const,
    user_steam_id: 'user_steam_id' as const,
+   views_count: 'views_count' as const,
    visibility: 'visibility' as const
 }
 

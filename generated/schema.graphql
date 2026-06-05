@@ -11881,6 +11881,7 @@ type match_clips {
   """An object relationship"""
   user: players
   user_steam_id: bigint
+  views_count: Int!
   visibility: e_match_clip_visibility_enum!
 }
 
@@ -11955,6 +11956,7 @@ type match_clips_avg_fields {
   size: Float
   target_steam_id: Float
   user_steam_id: Float
+  views_count: Float
 }
 
 """
@@ -11967,6 +11969,7 @@ input match_clips_avg_order_by {
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
+  views_count: order_by
 }
 
 """
@@ -11997,6 +12000,7 @@ input match_clips_bool_exp {
   title: String_comparison_exp
   user: players_bool_exp
   user_steam_id: bigint_comparison_exp
+  views_count: Int_comparison_exp
   visibility: e_match_clip_visibility_enum_comparison_exp
 }
 
@@ -12020,6 +12024,7 @@ input match_clips_inc_input {
   size: bigint
   target_steam_id: bigint
   user_steam_id: bigint
+  views_count: Int
 }
 
 """
@@ -12044,6 +12049,7 @@ input match_clips_insert_input {
   title: String
   user: players_obj_rel_insert_input
   user_steam_id: bigint
+  views_count: Int
   visibility: e_match_clip_visibility_enum
 }
 
@@ -12072,6 +12078,7 @@ type match_clips_max_fields {
   thumbnail_url: String
   title: String
   user_steam_id: bigint
+  views_count: Int
 }
 
 """
@@ -12091,6 +12098,7 @@ input match_clips_max_order_by {
   thumbnail_url: order_by
   title: order_by
   user_steam_id: order_by
+  views_count: order_by
 }
 
 """aggregate min on columns"""
@@ -12118,6 +12126,7 @@ type match_clips_min_fields {
   thumbnail_url: String
   title: String
   user_steam_id: bigint
+  views_count: Int
 }
 
 """
@@ -12137,6 +12146,7 @@ input match_clips_min_order_by {
   thumbnail_url: order_by
   title: order_by
   user_steam_id: order_by
+  views_count: order_by
 }
 
 """
@@ -12191,6 +12201,7 @@ input match_clips_order_by {
   title: order_by
   user: players_order_by
   user_steam_id: order_by
+  views_count: order_by
   visibility: order_by
 }
 
@@ -12243,6 +12254,9 @@ enum match_clips_select_column {
   user_steam_id
 
   """column name"""
+  views_count
+
+  """column name"""
   visibility
 }
 
@@ -12263,6 +12277,7 @@ input match_clips_set_input {
   thumbnail_url: String
   title: String
   user_steam_id: bigint
+  views_count: Int
   visibility: e_match_clip_visibility_enum
 }
 
@@ -12274,6 +12289,7 @@ type match_clips_stddev_fields {
   size: Float
   target_steam_id: Float
   user_steam_id: Float
+  views_count: Float
 }
 
 """
@@ -12286,6 +12302,7 @@ input match_clips_stddev_order_by {
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
+  views_count: order_by
 }
 
 """aggregate stddev_pop on columns"""
@@ -12296,6 +12313,7 @@ type match_clips_stddev_pop_fields {
   size: Float
   target_steam_id: Float
   user_steam_id: Float
+  views_count: Float
 }
 
 """
@@ -12308,6 +12326,7 @@ input match_clips_stddev_pop_order_by {
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
+  views_count: order_by
 }
 
 """aggregate stddev_samp on columns"""
@@ -12318,6 +12337,7 @@ type match_clips_stddev_samp_fields {
   size: Float
   target_steam_id: Float
   user_steam_id: Float
+  views_count: Float
 }
 
 """
@@ -12330,6 +12350,7 @@ input match_clips_stddev_samp_order_by {
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
+  views_count: order_by
 }
 
 """
@@ -12358,6 +12379,7 @@ input match_clips_stream_cursor_value_input {
   thumbnail_url: String
   title: String
   user_steam_id: bigint
+  views_count: Int
   visibility: e_match_clip_visibility_enum
 }
 
@@ -12369,6 +12391,7 @@ type match_clips_sum_fields {
   size: bigint
   target_steam_id: bigint
   user_steam_id: bigint
+  views_count: Int
 }
 
 """
@@ -12381,6 +12404,7 @@ input match_clips_sum_order_by {
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
+  views_count: order_by
 }
 
 """
@@ -12427,6 +12451,9 @@ enum match_clips_update_column {
   user_steam_id
 
   """column name"""
+  views_count
+
+  """column name"""
   visibility
 }
 
@@ -12449,6 +12476,7 @@ type match_clips_var_pop_fields {
   size: Float
   target_steam_id: Float
   user_steam_id: Float
+  views_count: Float
 }
 
 """
@@ -12461,6 +12489,7 @@ input match_clips_var_pop_order_by {
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
+  views_count: order_by
 }
 
 """aggregate var_samp on columns"""
@@ -12471,6 +12500,7 @@ type match_clips_var_samp_fields {
   size: Float
   target_steam_id: Float
   user_steam_id: Float
+  views_count: Float
 }
 
 """
@@ -12483,6 +12513,7 @@ input match_clips_var_samp_order_by {
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
+  views_count: order_by
 }
 
 """aggregate variance on columns"""
@@ -12493,6 +12524,7 @@ type match_clips_variance_fields {
   size: Float
   target_steam_id: Float
   user_steam_id: Float
+  views_count: Float
 }
 
 """
@@ -12505,6 +12537,7 @@ input match_clips_variance_order_by {
   size: order_by
   target_steam_id: order_by
   user_steam_id: order_by
+  views_count: order_by
 }
 
 """

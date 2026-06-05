@@ -1002,6 +1002,27 @@ export class ClipsService {
     });
   }
 
+  public async incrementClipViews(clipId: string): Promise<void> {
+    await this.hasura.mutation({
+      update_match_clips_by_pk: {
+        __args: { pk_columns: { id: clipId }, _inc: { views_count: 1 } },
+        id: true,
+      },
+    });
+  }
+
+  public async incrementClipViewsByFile(file: string): Promise<void> {
+    await this.hasura.mutation({
+      update_match_clips: {
+        __args: {
+          where: { file: { _eq: file } },
+          _inc: { views_count: 1 },
+        },
+        affected_rows: true,
+      },
+    });
+  }
+
   private async targetAppearsInDemo(
     matchMapId: string,
     targetSteamId: string,

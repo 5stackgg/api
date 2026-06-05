@@ -10,12 +10,14 @@ import {
 import { Request, Response } from "express";
 import { S3Service } from "../../s3/s3.service";
 import { HasuraService } from "../../hasura/hasura.service";
+import { ClipsService } from "./clips.service";
 
 @Controller("/clips/:clipId")
 export class ClipDownloadController {
   constructor(
     private readonly s3: S3Service,
     private readonly hasura: HasuraService,
+    private readonly clips: ClipsService,
     private readonly logger: Logger,
   ) {}
 
@@ -31,6 +33,13 @@ export class ClipDownloadController {
     if (!clip?.file) {
       response.status(404).json({ error: "not found" });
       return;
+    }
+    if (dl !== "1" && this.isPlayStart(request)) {
+      this.clips.incrementClipViews(clipId).catch((error) => {
+        this.logger.warn(
+          `failed to count play for clip ${clipId}: ${(error as Error)?.message}`,
+        );
+      });
     }
     await this.stream(
       clip.file,
@@ -147,6 +156,14 @@ export class ClipDownloadController {
         response.destroy();
       }
     }
+  }
+
+  private isPlayStart(request: Request): boolean {
+    const range = request.headers.range;
+    if (!range) {
+      return true;
+    }
+    return /^bytes=0-/.test(range.trim());
   }
 
   private parseRange(
