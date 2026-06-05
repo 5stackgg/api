@@ -73,14 +73,14 @@ export class SteamMatchHistoryController {
     // with shared credentials) we must authorize each part write — otherwise
     // anyone reaching the worker with a valid uploadId could upload. Mint a
     // short-lived HMAC token bound to this key+uploadId; the worker verifies
-    // it before signing. The shared secret must match UPLOAD_TOKEN_SECRET set
-    // on the worker (wrangler secret).
+    // it before signing. We key the HMAC on S3_SECRET — the worker already
+    // shares the same B2 credential, so this needs no extra secret to manage.
     let uploadToken: string | null = null;
     if (workerUrl) {
-      const signingSecret = process.env.UPLOAD_TOKEN_SECRET;
+      const signingSecret = process.env.S3_SECRET;
       if (!signingSecret) {
         throw new InternalServerErrorException(
-          "UPLOAD_TOKEN_SECRET is not configured; cannot authorize worker uploads",
+          "S3_SECRET is not configured; cannot authorize worker uploads",
         );
       }
       uploadToken = signUploadToken(signingSecret, key, uploadId);
