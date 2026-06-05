@@ -7,10 +7,12 @@ WITH round_lineup AS (
     m.lineup_1_id AS match_lineup_id,
     mmr.lineup_1_money AS own_money,
     public.normalize_side(mmr.lineup_1_side) AS side,
-    (public.normalize_side(mmr.winning_side) = public.normalize_side(mmr.lineup_1_side)) AS won
+    (public.normalize_side(mmr.winning_side) = public.normalize_side(mmr.lineup_1_side)) AS won,
+    (mmr.round IN (1, COALESCE(mo.mr, 12) + 1)) AS is_pistol
   FROM public.match_map_rounds mmr
   JOIN public.match_maps mm ON mm.id = mmr.match_map_id
   JOIN public.matches m ON m.id = mm.match_id
+  LEFT JOIN public.match_options mo ON mo.id = m.match_options_id
   WHERE mmr.round > 0 AND mmr.deleted_at IS NULL
   UNION ALL
   SELECT
@@ -20,10 +22,12 @@ WITH round_lineup AS (
     m.lineup_2_id,
     mmr.lineup_2_money,
     public.normalize_side(mmr.lineup_2_side),
-    (public.normalize_side(mmr.winning_side) = public.normalize_side(mmr.lineup_2_side))
+    (public.normalize_side(mmr.winning_side) = public.normalize_side(mmr.lineup_2_side)),
+    (mmr.round IN (1, COALESCE(mo.mr, 12) + 1))
   FROM public.match_map_rounds mmr
   JOIN public.match_maps mm ON mm.id = mmr.match_map_id
   JOIN public.matches m ON m.id = mm.match_id
+  LEFT JOIN public.match_options mo ON mo.id = m.match_options_id
   WHERE mmr.round > 0 AND mmr.deleted_at IS NULL
 ),
 first_kill AS (
@@ -63,12 +67,12 @@ per_round AS (
     rl.side,
     rl.won,
     CASE
-      WHEN rl.round IN (1, 13)                THEN 'pistol'
+      WHEN rl.is_pistol                       THEN 'pistol'
       WHEN COALESCE(rl.own_money, 0) < 5000   THEN 'eco'
       WHEN COALESCE(rl.own_money, 0) <= 20000 THEN 'force'
       ELSE 'full'
     END                                            AS own_buy,
-    (rl.round IN (1, 13))                          AS is_pistol,
+    rl.is_pistol                                   AS is_pistol,
     (fk.match_map_id IS NULL)                      AS no_first_kill,
     (fk.killer_lineup = rl.match_lineup_id)        AS drew_first,
     (fk.victim_lineup = rl.match_lineup_id)        AS lost_first

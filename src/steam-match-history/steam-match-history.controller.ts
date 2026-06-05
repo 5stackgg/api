@@ -128,6 +128,14 @@ export class SteamMatchHistoryController {
       );
     }
 
+    // The size cap on /initiate is derived from the client-claimed fileSize, so
+    // enforce the real assembled size here — presigned part PUTs aren't capped.
+    const { size } = await this.s3.stat(key);
+    if (size > MAX_UPLOAD_SIZE) {
+      await this.s3.remove(key);
+      throw new BadRequestException("demo exceeds 500MB limit");
+    }
+
     const header = await this.s3.readPrefix(key, CS2_DEMO_MAGIC.length);
     if (!header.equals(CS2_DEMO_MAGIC)) {
       await this.s3.remove(key);
