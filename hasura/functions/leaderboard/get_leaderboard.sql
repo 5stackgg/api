@@ -1,5 +1,18 @@
+-- Stale-overload cleanup. CREATE OR REPLACE cannot remove an old overload, so
+-- once a second signature exists EVERY call becomes ambiguous ("function is not
+-- unique", SQLSTATE 42725). Drop every known signature explicitly before
+-- recreating so re-applying this file always lands on exactly one
+-- get_leaderboard. Editing these lines also bumps the file hash, which forces
+-- hasura.service's apply step (it skips files whose hash is unchanged) to
+-- actually re-run this cleanup against an already-broken database.
 DROP FUNCTION IF EXISTS public._leaderboard_trophies(INT);
--- Drop EVERY existing overload so a stale signature can't make calls ambiguous.
+DROP FUNCTION IF EXISTS public.get_leaderboard(TEXT, INT, TEXT, BOOLEAN);            -- pre-_role 4-arg
+DROP FUNCTION IF EXISTS public.get_leaderboard(TEXT, INT, TEXT, BOOLEAN, TEXT);      -- current 5-arg
+DROP FUNCTION IF EXISTS public._leaderboard_hltv_metric(TEXT, INT, TEXT, BOOLEAN, TEXT);
+DROP FUNCTION IF EXISTS public._leaderboard_udr(INT, TEXT, BOOLEAN, TEXT);
+
+-- Belt-and-suspenders: sweep up any other historical get_leaderboard arity we
+-- did not enumerate above (e.g. an even older 3-arg overload).
 DO $$
 DECLARE r record;
 BEGIN
