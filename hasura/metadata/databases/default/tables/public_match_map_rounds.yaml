@@ -52,5 +52,10 @@ select_permissions:
         - winning_side
       computed_fields:
         - has_backup_file
-      filter: {}
+      filter:
+        match_map:
+          status:
+            _in:
+              - Finished
+              - Surrendered
     comment: ""

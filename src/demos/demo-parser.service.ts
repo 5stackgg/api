@@ -9,6 +9,8 @@ export type ParsedRound = {
   end_tick: number;
   winner?: string;
   reason?: number;
+  ct_money?: number;
+  t_money?: number;
 };
 
 export type ParsedKill = {
@@ -16,6 +18,7 @@ export type ParsedKill = {
   killer?: string;
   victim?: string;
   assist?: string;
+  assist_flash?: boolean;
   killer_team?: string;
   victim_team?: string;
   weapon?: string;
@@ -23,6 +26,12 @@ export type ParsedKill = {
   wallbang?: boolean;
   noscope?: boolean;
   smoke?: boolean;
+  attacker_x?: number;
+  attacker_y?: number;
+  attacker_z?: number;
+  victim_x?: number;
+  victim_y?: number;
+  victim_z?: number;
 };
 
 export type ParsedBomb = {

@@ -216,7 +216,9 @@ BEGIN
       COALESCE((elem->>'start_tick')::int, 0) AS start_tick,
       COALESCE((elem->>'end_tick')::int, 0) AS end_tick,
       NULLIF(elem->>'winner', '') AS winner,
-      COALESCE((elem->>'reason')::int, 0) AS reason
+      COALESCE((elem->>'reason')::int, 0) AS reason,
+      (elem->>'ct_money')::int AS ct_money,
+      (elem->>'t_money')::int AS t_money
     FROM jsonb_array_elements(COALESCE(p_parsed->'round_ticks', '[]'::jsonb)) elem
   ),
   with_sides AS (
@@ -252,7 +254,9 @@ BEGIN
     v_match_map_id, round,
     v_start_time + (end_tick::numeric / v_tick_rate::numeric) * interval '1 second',
     lineup_1_score, lineup_2_score,
-    0, 0, 0, 0,
+    CASE WHEN lineup_1_side = 'CT' THEN COALESCE(ct_money, 0) ELSE COALESCE(t_money, 0) END,
+    CASE WHEN lineup_2_side = 'CT' THEN COALESCE(ct_money, 0) ELSE COALESCE(t_money, 0) END,
+    0, 0,
     lineup_1_side, lineup_2_side,
     COALESCE(winning_side_norm, lineup_1_side),
     public._import_round_end_reason(reason)
@@ -274,10 +278,12 @@ BEGIN
     v_start_time + ((elem->>'tick')::int::numeric / v_tick_rate::numeric) * interval '1 second',
     NULLIF(elem->>'killer', '')::bigint,
     NULLIF(elem->>'killer_team', ''),
-    '', '',
+    '',
+    NULLIF(concat_ws(' ', elem->>'attacker_x', elem->>'attacker_y', elem->>'attacker_z'), ''),
     NULLIF(elem->>'victim', '')::bigint,
     COALESCE(NULLIF(elem->>'victim_team', ''), ''),
-    '', '',
+    '',
+    NULLIF(concat_ws(' ', elem->>'victim_x', elem->>'victim_y', elem->>'victim_z'), ''),
     public._import_normalize_weapon(elem->>'weapon'),
     CASE WHEN COALESCE((elem->>'headshot')::boolean, false) THEN 'head' ELSE 'generic' END,
     COALESCE((elem->>'headshot')::boolean, false),
@@ -312,7 +318,7 @@ BEGIN
     COALESCE(NULLIF(elem->>'killer_team', ''), ''),
     NULLIF(elem->>'victim', '')::bigint,
     COALESCE(NULLIF(elem->>'victim_team', ''), ''),
-    false
+    COALESCE((elem->>'assist_flash')::boolean, false)
   FROM jsonb_array_elements(COALESCE(p_parsed->'kills', '[]'::jsonb)) elem
   CROSS JOIN LATERAL (
     SELECT COALESCE((rt->>'round')::int, 0) AS round
@@ -358,7 +364,8 @@ BEGIN
   -- "carried but unused" deduction at round end.
   DELETE FROM public.player_utility WHERE match_map_id = v_match_map_id;
   INSERT INTO public.player_utility (
-    match_id, match_map_id, time, round, type, attacker_steam_id
+    match_id, match_map_id, time, round, type, attacker_steam_id,
+    attacker_location_coordinates
   )
   SELECT
     v_match_id, v_match_map_id,
@@ -366,8 +373,19 @@ BEGIN
     COALESCE((elem->>'round')::int, 0),
     -- demoinfocs emits 'HE'; the FK to e_utility_types expects 'HighExplosive'.
     CASE elem->>'type' WHEN 'HE' THEN 'HighExplosive' ELSE elem->>'type' END,
-    NULLIF(elem->>'thrower', '')::bigint
+    NULLIF(elem->>'thrower', '')::bigint,
+    COALESCE(
+      det.coords,
+      NULLIF(concat_ws(',', elem->>'ox', elem->>'oy', elem->>'oz'), '')
+    )
   FROM jsonb_array_elements(COALESCE(p_parsed->'grenade_throws', '[]'::jsonb)) elem
+  LEFT JOIN LATERAL (
+    SELECT NULLIF(concat_ws(',', d->>'x', d->>'y', d->>'z'), '') AS coords
+    FROM jsonb_array_elements(COALESCE(p_parsed->'grenade_detonations', '[]'::jsonb)) d
+    WHERE NULLIF(elem->>'gid', '') IS NOT NULL
+      AND d->>'gid' = elem->>'gid'
+    LIMIT 1
+  ) det ON TRUE
   WHERE NULLIF(elem->>'thrower', '') IS NOT NULL
     AND NULLIF(elem->>'type', '') IS NOT NULL;
 

@@ -1,5 +1,5 @@
 table:
-  name: v_player_weapon_kills
+  name: v_player_weapon_damage
   schema: public
 select_permissions:
   - role: guest
@@ -8,9 +8,9 @@ select_permissions:
         - player_steam_id
         - source
         - with
-        - kill_count
+        - damage
+        - hits
         - type
-        - rounds
       filter: {}
       allow_aggregations: true
     comment: ""

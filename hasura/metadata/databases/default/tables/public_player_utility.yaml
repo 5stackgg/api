@@ -22,6 +22,11 @@ select_permissions:
         - round
         - time
         - type
-      filter: {}
+      filter:
+        match_map:
+          status:
+            _in:
+              - Finished
+              - Surrendered
       allow_aggregations: true
     comment: ""

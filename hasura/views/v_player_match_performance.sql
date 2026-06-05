@@ -1,6 +1,8 @@
--- Per-player, per-match performance (source-aware) for win-rate and K/D, with a
--- per-match win/loss derived from map winners. Covers 5Stack and external.
-CREATE OR REPLACE VIEW public.v_player_match_performance AS
+-- CREATE OR REPLACE VIEW cannot drop/reorder existing columns, so any change to
+-- the column set fails against an older deployed view. Drop first to allow it.
+DROP VIEW IF EXISTS public.v_player_match_performance;
+
+CREATE VIEW public.v_player_match_performance AS
 SELECT
     mlp.steam_id                               AS player_steam_id,
     m.id                                       AS match_id,
@@ -14,7 +16,8 @@ SELECT
         WHEN w.won > w.lost THEN 'win'
         WHEN w.won < w.lost THEN 'loss'
         ELSE 'tie'
-    END                                        AS match_result
+    END                                        AS match_result,
+    w.map_id                                   AS map_id
 FROM match_lineup_players mlp
     INNER JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
     INNER JOIN matches m        ON m.id = ml.match_id
@@ -34,7 +37,12 @@ FROM match_lineup_players mlp
             COUNT(*) FILTER (
                 WHERE mm.winning_lineup_id IS NOT NULL
                   AND mm.winning_lineup_id <> ml.id
-            ) AS lost
+            ) AS lost,
+            CASE
+                WHEN COUNT(DISTINCT mm.map_id) = 1
+                THEN (array_agg(DISTINCT mm.map_id)
+                      FILTER (WHERE mm.map_id IS NOT NULL))[1]
+            END AS map_id
         FROM match_maps mm
         WHERE mm.match_id = m.id
           AND mm.status = 'Finished'

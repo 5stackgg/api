@@ -35,6 +35,11 @@ select_permissions:
         - time
       computed_fields:
         - is_team_assist
-      filter: {}
+      filter:
+        match_map:
+          status:
+            _in:
+              - Finished
+              - Surrendered
       allow_aggregations: true
     comment: ""

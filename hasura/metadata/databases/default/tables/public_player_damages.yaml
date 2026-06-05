@@ -45,6 +45,11 @@ select_permissions:
         - match_map_id
       computed_fields:
         - team_damage
-      filter: {}
+      filter:
+        match_map:
+          status:
+            _in:
+              - Finished
+              - Surrendered
       allow_aggregations: true
     comment: ""

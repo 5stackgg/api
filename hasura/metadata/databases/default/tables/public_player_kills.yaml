@@ -53,6 +53,11 @@ select_permissions:
       computed_fields:
         - is_suicide
         - team_kill
-      filter: {}
+      filter:
+        match_map:
+          status:
+            _in:
+              - Finished
+              - Surrendered
       allow_aggregations: true
     comment: ""

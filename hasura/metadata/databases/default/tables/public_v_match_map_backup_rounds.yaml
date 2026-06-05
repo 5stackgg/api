@@ -1,0 +1,12 @@
+table:
+  name: v_match_map_backup_rounds
+  schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - match_map_id
+        - round
+        - has_backup_file
+      filter: {}
+    comment: ""

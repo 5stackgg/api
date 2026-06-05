@@ -1,0 +1,56 @@
+table:
+  name: v_match_clutches
+  schema: public
+object_relationships:
+  - name: clutcher
+    using:
+      manual_configuration:
+        column_mapping:
+          clutcher_steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+  - name: match
+    using:
+      manual_configuration:
+        column_mapping:
+          match_id: id
+        insertion_order: null
+        remote_table:
+          name: matches
+          schema: public
+  - name: match_lineup
+    using:
+      manual_configuration:
+        column_mapping:
+          match_lineup_id: id
+        insertion_order: null
+        remote_table:
+          name: match_lineups
+          schema: public
+  - name: match_map
+    using:
+      manual_configuration:
+        column_mapping:
+          match_map_id: id
+        insertion_order: null
+        remote_table:
+          name: match_maps
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - match_id
+        - match_map_id
+        - round
+        - match_lineup_id
+        - clutcher_steam_id
+        - side
+        - against_count
+        - kills_in_clutch
+        - outcome
+      filter: {}
+      allow_aggregations: true
+    comment: ""

@@ -39,6 +39,15 @@ object_relationships:
           name: match_lineups
           schema: public
 array_relationships:
+  - name: clutches
+    using:
+      manual_configuration:
+        column_mapping:
+          id: match_id
+        insertion_order: null
+        remote_table:
+          name: v_match_clutches
+          schema: public
   - name: demos
     using:
       foreign_key_constraint_on:
@@ -75,6 +84,15 @@ array_relationships:
         column: match_id
         table:
           name: match_maps
+          schema: public
+  - name: opening_duels
+    using:
+      manual_configuration:
+        column_mapping:
+          id: match_id
+        insertion_order: null
+        remote_table:
+          name: v_match_player_opening_duels
           schema: public
   - name: player_assists
     using:

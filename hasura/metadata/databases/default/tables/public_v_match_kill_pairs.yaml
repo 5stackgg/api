@@ -1,16 +1,7 @@
 table:
-  name: v_player_match_performance
+  name: v_match_kill_pairs
   schema: public
 object_relationships:
-  - name: map
-    using:
-      manual_configuration:
-        column_mapping:
-          map_id: id
-        insertion_order: null
-        remote_table:
-          name: maps
-          schema: public
   - name: match
     using:
       manual_configuration:
@@ -20,20 +11,27 @@ object_relationships:
         remote_table:
           name: matches
           schema: public
+  - name: match_map
+    using:
+      manual_configuration:
+        column_mapping:
+          match_map_id: id
+        insertion_order: null
+        remote_table:
+          name: match_maps
+          schema: public
 select_permissions:
   - role: guest
     permission:
       columns:
-        - player_steam_id
         - match_id
-        - source
-        - match_created_at
-        - type
-        - map_id
+        - match_map_id
+        - killer_steam_id
+        - victim_steam_id
+        - weapon
+        - killer_side
+        - victim_side
         - kills
-        - deaths
-        - assists
-        - match_result
       filter: {}
       allow_aggregations: true
     comment: ""

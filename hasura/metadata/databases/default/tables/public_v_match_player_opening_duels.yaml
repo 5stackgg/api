@@ -1,0 +1,56 @@
+table:
+  name: v_match_player_opening_duels
+  schema: public
+object_relationships:
+  - name: match
+    using:
+      manual_configuration:
+        column_mapping:
+          match_id: id
+        insertion_order: null
+        remote_table:
+          name: matches
+          schema: public
+  - name: match_lineup
+    using:
+      manual_configuration:
+        column_mapping:
+          match_lineup_id: id
+        insertion_order: null
+        remote_table:
+          name: match_lineups
+          schema: public
+  - name: match_map
+    using:
+      manual_configuration:
+        column_mapping:
+          match_map_id: id
+        insertion_order: null
+        remote_table:
+          name: match_maps
+          schema: public
+  - name: player
+    using:
+      manual_configuration:
+        column_mapping:
+          steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - match_id
+        - match_map_id
+        - match_lineup_id
+        - steam_id
+        - side
+        - attempts
+        - wins
+        - deaths
+        - traded_deaths
+      filter: {}
+      allow_aggregations: true
+    comment: ""

@@ -28,8 +28,24 @@ type Mutation {
 }
 
 type Mutation {
+  attachDemo: WatchDemoOutput
+}
+
+type Mutation {
+  bakeShaders(
+    game_server_node_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   callForOrganizer(
     match_id: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  cancelBakeShaders(
+    game_server_node_id: uuid!
   ): SuccessOutput
 }
 
@@ -58,18 +74,6 @@ type Mutation {
 }
 
 type Mutation {
-  pauseClipRenderBatch(
-    match_map_id: uuid!
-  ): SuccessOutput
-}
-
-type Mutation {
-  resumeClipRenderBatch(
-    match_map_id: uuid!
-  ): SuccessOutput
-}
-
-type Mutation {
   clearClipRenderBatch(
     match_map_id: uuid!
   ): SuccessOutput
@@ -77,6 +81,12 @@ type Mutation {
 
 type Mutation {
   clearFinishedClipRenders: SuccessOutput
+}
+
+type Mutation {
+  clearPendingMatchImport(
+    valve_match_id: String!
+  ): PendingMatchImportActionOutput
 }
 
 type Mutation {
@@ -191,32 +201,6 @@ type Query {
   ): [ServerPlayer!]!
 }
 
-type Mutation {
-  sanctionServerPlayer(
-    serverId: String
-    steam_id: String!
-    type: String!
-    reason: String
-    duration: Float
-  ): SanctionResult!
-}
-
-type Mutation {
-  unsanctionServerPlayer(
-    serverId: String
-    steam_id: String!
-    type: String!
-  ): SanctionResult!
-}
-
-type Mutation {
-  kickServerPlayer(
-    serverId: String!
-    steam_id: String!
-    reason: String
-  ): KickResult!
-}
-
 type Query {
   getIndexIOStats(
     schemas: [String!]
@@ -294,9 +278,24 @@ type Mutation {
 }
 
 type Mutation {
+  kickServerPlayer(
+    serverId: String!
+    steam_id: String!
+    reason: String
+  ): KickResult!
+}
+
+type Mutation {
   leaveLineup(
     match_id: String!
   ): SuccessOutput
+}
+
+type Mutation {
+  linkSteamMatchHistory(
+    auth_code: String!
+    share_code: String!
+  ): SteamMatchHistoryLinkOutput
 }
 
 type Query {
@@ -329,6 +328,16 @@ type Mutation {
 }
 
 type Mutation {
+  pauseClipRenderBatch(
+    match_map_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  pollSteamMatchHistory: SteamMatchHistoryPollOutput
+}
+
+type Mutation {
   randomizeTeams(
     match_id: uuid!
   ): SuccessOutput
@@ -355,13 +364,19 @@ type Mutation {
 }
 
 type Mutation {
-  skipShaders(
-    match_id: uuid!
+  refreshAllPlayers: SuccessOutput
+}
+
+type Mutation {
+  refreshFaceitRank(
+    steam_id: String!
   ): SuccessOutput
 }
 
 type Mutation {
-  refreshAllPlayers: SuccessOutput
+  refreshLiveHud(
+    match_id: uuid!
+  ): SuccessOutput
 }
 
 type Mutation {
@@ -415,10 +430,32 @@ type Mutation {
 }
 
 type Mutation {
+  resumeClipRenderBatch(
+    match_map_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   retryClipRenderBatch(
     match_map_id: uuid!
     only_failed: Boolean
   ): SuccessOutput
+}
+
+type Mutation {
+  retryPendingMatchImport(
+    valve_match_id: String!
+  ): PendingMatchImportActionOutput
+}
+
+type Mutation {
+  sanctionServerPlayer(
+    serverId: String
+    steam_id: String!
+    type: String!
+    reason: String
+    duration: Float
+  ): SanctionResult!
 }
 
 type Mutation {
@@ -462,6 +499,12 @@ type Mutation {
 }
 
 type Mutation {
+  skipShaders(
+    match_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   specAutodirector(
     match_id: uuid!
     enabled: Boolean!
@@ -484,12 +527,6 @@ type Mutation {
 
 type Mutation {
   specHudSides(
-    match_id: uuid!
-  ): SuccessOutput
-}
-
-type Mutation {
-  refreshLiveHud(
     match_id: uuid!
   ): SuccessOutput
 }
@@ -548,7 +585,6 @@ type Mutation {
   ): SuccessOutput
 }
 
-
 type Mutation {
   stopLive(
     match_id: uuid!
@@ -585,49 +621,6 @@ type Mutation {
   syncSteamFriends: SuccessOutput
 }
 
-type Mutation {
-  refreshFaceitRank(steam_id: String!): SuccessOutput
-}
-
-type SteamMatchHistoryLinkOutput {
-  success: Boolean!
-  error: String
-}
-
-type SteamMatchHistoryPollOutput {
-  success: Boolean!
-  collected: Int!
-  error: String
-}
-
-type Mutation {
-  linkSteamMatchHistory(
-    auth_code: String!
-    share_code: String!
-  ): SteamMatchHistoryLinkOutput
-}
-
-type Mutation {
-  unlinkSteamMatchHistory: SuccessOutput
-}
-
-type Mutation {
-  pollSteamMatchHistory: SteamMatchHistoryPollOutput
-}
-
-type PendingMatchImportActionOutput {
-  success: Boolean!
-  error: String
-}
-
-type Mutation {
-  retryPendingMatchImport(valve_match_id: String!): PendingMatchImportActionOutput
-}
-
-type Mutation {
-  clearPendingMatchImport(valve_match_id: String!): PendingMatchImportActionOutput
-}
-
 type Query {
   telemetryStats: TelemetryStats!
 }
@@ -641,23 +634,23 @@ type Mutation {
 }
 
 type Mutation {
+  unlinkSteamMatchHistory: SuccessOutput
+}
+
+type Mutation {
+  unsanctionServerPlayer(
+    serverId: String
+    steam_id: String!
+    type: String!
+  ): SanctionResult!
+}
+
+type Mutation {
   updateClip(
     clip_id: uuid!
     title: String
     visibility: String
     target_steam_id: String
-  ): SuccessOutput
-}
-
-type Mutation {
-  bakeShaders(
-    game_server_node_id: uuid!
-  ): SuccessOutput
-}
-
-type Mutation {
-  cancelBakeShaders(
-    game_server_node_id: uuid!
   ): SuccessOutput
 }
 
@@ -669,11 +662,13 @@ type Mutation {
 }
 
 type Mutation {
-  validateGamedata(game_server_node_id: uuid!): SuccessOutput
+  updateServices: SuccessOutput
 }
 
 type Mutation {
-  updateServices: SuccessOutput
+  validateGamedata(
+    game_server_node_id: uuid!
+  ): SuccessOutput
 }
 
 type Mutation {
@@ -681,10 +676,6 @@ type Mutation {
     match_map_id: uuid!
     match_map_demo_id: uuid
   ): WatchDemoOutput
-}
-
-type Mutation {
-  attachDemo: WatchDemoOutput
 }
 
 type Mutation {
@@ -736,6 +727,22 @@ input ClipSpecInput {
   output: ClipOutputInput!
   destination: String!
   title: String
+}
+
+type SteamMatchHistoryLinkOutput {
+  success: Boolean!
+  error: String
+}
+
+type SteamMatchHistoryPollOutput {
+  success: Boolean!
+  collected: Int!
+  error: String
+}
+
+type PendingMatchImportActionOutput {
+  success: Boolean!
+  error: String
 }
 
 type CreateClipRenderOutput {

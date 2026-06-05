@@ -26,6 +26,11 @@ select_permissions:
         - round
         - team_flash
         - time
-      filter: {}
+      filter:
+        match_map:
+          status:
+            _in:
+              - Finished
+              - Surrendered
       allow_aggregations: true
     comment: ""

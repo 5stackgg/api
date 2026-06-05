@@ -1057,7 +1057,7 @@ export class ClipsService {
       throw new Error("you can only delete your own clips");
     }
 
-    const fileKey = row.file ?? ClipsService.GetClipS3Key(userSteamId, clipId);
+    const ownerSteamId = String(row.user_steam_id ?? userSteamId);
     await this.hasura.mutation({
       delete_match_clips_by_pk: {
         __args: { id: clipId },
@@ -1066,13 +1066,10 @@ export class ClipsService {
     });
 
     try {
-      await this.s3.remove(fileKey);
-      await this.s3.remove(
-        ClipsService.GetClipThumbnailS3Key(userSteamId, clipId),
-      );
+      await this.s3.removePrefix(`clips/${ownerSteamId}/${clipId}`);
     } catch (error) {
       this.logger.warn(
-        `[clip ${clipId}] s3 remove failed (row already deleted, leaving orphaned object ${fileKey}): ${(error as Error)?.message}`,
+        `[clip ${clipId}] s3 remove failed (row already deleted, leaving orphaned objects clips/${ownerSteamId}/${clipId}*): ${(error as Error)?.message}`,
       );
     }
   }
@@ -1084,23 +1081,17 @@ export class ClipsService {
           where: { match_map: { match_id: { _eq: matchId } } },
         },
         id: true,
-        file: true,
-        thumbnail_url: true,
+        user_steam_id: true,
       },
     });
 
     for (const clip of match_clips) {
-      for (const key of [clip.file, clip.thumbnail_url]) {
-        if (!key) {
-          continue;
-        }
-        try {
-          await this.s3.remove(key);
-        } catch (error) {
-          this.logger.warn(
-            `[clip ${clip.id}] failed to remove ${key}: ${(error as Error)?.message}`,
-          );
-        }
+      try {
+        await this.s3.removePrefix(`clips/${clip.user_steam_id}/${clip.id}`);
+      } catch (error) {
+        this.logger.warn(
+          `[clip ${clip.id}] failed to remove objects: ${(error as Error)?.message}`,
+        );
       }
       await this.hasura.mutation({
         delete_match_clips_by_pk: {
