@@ -1,0 +1,35 @@
+table:
+  name: v_match_kill_pairs
+  schema: public
+object_relationships:
+  - name: match
+    using:
+      manual_configuration:
+        remote_table:
+          name: matches
+          schema: public
+        column_mapping:
+          match_id: id
+  - name: match_map
+    using:
+      manual_configuration:
+        remote_table:
+          name: match_maps
+          schema: public
+        column_mapping:
+          match_map_id: id
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - match_id
+        - match_map_id
+        - killer_steam_id
+        - victim_steam_id
+        - weapon
+        - killer_side
+        - victim_side
+        - kills
+      filter: {}
+      allow_aggregations: true
+    comment: ""

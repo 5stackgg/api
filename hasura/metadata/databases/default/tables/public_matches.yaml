@@ -104,6 +104,22 @@ array_relationships:
         table:
           name: player_kills
           schema: public
+  - name: clutches
+    using:
+      manual_configuration:
+        remote_table:
+          name: v_match_clutches
+          schema: public
+        column_mapping:
+          id: match_id
+  - name: opening_duels
+    using:
+      manual_configuration:
+        remote_table:
+          name: v_match_player_opening_duels
+          schema: public
+        column_mapping:
+          id: match_id
   - name: player_objectives
     using:
       foreign_key_constraint_on:
