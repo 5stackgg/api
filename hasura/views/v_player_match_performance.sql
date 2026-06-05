@@ -1,4 +1,8 @@
-CREATE OR REPLACE VIEW public.v_player_match_performance AS
+-- CREATE OR REPLACE VIEW cannot drop/reorder existing columns, so any change to
+-- the column set fails against an older deployed view. Drop first to allow it.
+DROP VIEW IF EXISTS public.v_player_match_performance;
+
+CREATE VIEW public.v_player_match_performance AS
 SELECT
     mlp.steam_id                               AS player_steam_id,
     m.id                                       AS match_id,

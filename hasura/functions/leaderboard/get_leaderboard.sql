@@ -462,7 +462,9 @@ BEGIN
       le.value,
       (RANK() OVER (ORDER BY le.value DESC))::int AS rank,
       (COUNT(*) OVER ())::int AS total
-    FROM public.get_leaderboard(_category, _window_days, _match_type, _exclude_tournaments) le
+    -- Pass all 5 args explicitly. A 4-arg call binds ambiguously if a stale
+    -- pre-_role overload still exists; exact arity always resolves the 5-arg one.
+    FROM public.get_leaderboard(_category, _window_days, _match_type, _exclude_tournaments, NULL::text) le
   )
   SELECT r.player_steam_id, r.value, r.rank, r.total
   FROM ranked r
