@@ -1,9 +1,24 @@
 DROP FUNCTION IF EXISTS public._leaderboard_trophies(INT);
--- _role was added to these signatures; drop the older arities so CREATE
--- replaces rather than overloads them.
-DROP FUNCTION IF EXISTS public.get_leaderboard(TEXT, INT, TEXT, BOOLEAN);
-DROP FUNCTION IF EXISTS public._leaderboard_hltv_metric(TEXT, INT, TEXT, BOOLEAN);
-DROP FUNCTION IF EXISTS public._leaderboard_udr(INT, TEXT, BOOLEAN);
+-- _role was added to these signatures; drop EVERY existing overload (not just a
+-- known arity) so a stale older signature can't linger and make calls ambiguous
+-- ("function ... is not unique"). CREATE below then re-establishes the single
+-- current signature.
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT p.oid::regprocedure AS sig
+    FROM pg_proc p
+    WHERE p.pronamespace = 'public'::regnamespace
+      AND p.proname IN (
+        'get_leaderboard',
+        '_leaderboard_hltv_metric',
+        '_leaderboard_udr'
+      )
+  LOOP
+    EXECUTE 'DROP FUNCTION ' || r.sig;
+  END LOOP;
+END $$;
 
 CREATE OR REPLACE FUNCTION public.get_leaderboard(
   _category TEXT,
