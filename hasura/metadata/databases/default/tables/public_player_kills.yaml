@@ -53,7 +53,6 @@ select_permissions:
       computed_fields:
         - is_suicide
         - team_kill
-      # Anti-cheat: per-kill rows (positions) hidden until the map is over.
       filter:
         match_map:
           status:

@@ -2,15 +2,15 @@ table:
   name: player_premier_rank_history
   schema: public
 object_relationships:
-  - name: player
-    using:
-      foreign_key_constraint_on: steam_id
-  - name: match
-    using:
-      foreign_key_constraint_on: match_id
   - name: map
     using:
       foreign_key_constraint_on: map_id
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+  - name: player
+    using:
+      foreign_key_constraint_on: steam_id
 select_permissions:
   - role: guest
     permission:

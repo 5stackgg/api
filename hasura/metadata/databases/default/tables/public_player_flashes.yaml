@@ -26,7 +26,6 @@ select_permissions:
         - round
         - team_flash
         - time
-      # Anti-cheat: per-event rows hidden until the map is over.
       filter:
         match_map:
           status:

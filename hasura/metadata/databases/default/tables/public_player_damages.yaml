@@ -45,10 +45,6 @@ select_permissions:
         - match_map_id
       computed_fields:
         - team_damage
-      # Anti-cheat: detailed per-event rows (positions, HP/armor) are hidden
-      # until the map is over, so a live match can't be queried for enemy
-      # health/positions. Aggregate scoreboard stays visible via
-      # player_match_map_stats. Fail-closed: unknown statuses stay hidden.
       filter:
         match_map:
           status:

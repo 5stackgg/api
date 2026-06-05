@@ -22,7 +22,6 @@ select_permissions:
         - round
         - time
         - type
-      # Anti-cheat: utility positions hidden until the map is over.
       filter:
         match_map:
           status:

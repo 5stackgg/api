@@ -176,6 +176,13 @@ array_relationships:
         table:
           name: teams
           schema: public
+  - name: pending_match_imports
+    using:
+      foreign_key_constraint_on:
+        column: steam_id
+        table:
+          name: pending_match_import_players
+          schema: public
   - name: player_lineup
     using:
       foreign_key_constraint_on:
@@ -189,13 +196,6 @@ array_relationships:
         column: player_steam_id
         table:
           name: player_unused_utility
-          schema: public
-  - name: pending_match_imports
-    using:
-      foreign_key_constraint_on:
-        column: steam_id
-        table:
-          name: pending_match_import_players
           schema: public
   - name: premier_rank_history
     using:
