@@ -314,13 +314,9 @@ export class DemoMetadataService {
     }
   }
 
-  // Live 5stack matches capture kills/rounds/money/utility from in-game
-  // events during play; a (re)parse only (re)derives the demo-only aim
-  // stats via persist_parsed_demo. External (imported) matches have no
-  // live events, so their entire stat set comes from the demo — a reparse
-  // must re-run the full external import (persist_imported_demo, which
-  // also runs persist_parsed_demo internally) so kills/rounds/money/coords
-  // refresh. Neither touches the match/map/lineup rows — only stat tables.
+  // Live 5stack matches get kills/rounds/money from in-game events, so a reparse
+  // only re-derives demo-only aim stats. External matches have no live events, so
+  // a reparse must re-run the full import to refresh kills/rounds/money/coords.
   private async persistDemoStats(
     matchMapDemoId: string,
     matchId: string | null,
@@ -331,9 +327,6 @@ export class DemoMetadataService {
       ? "public.persist_imported_demo"
       : "public.persist_parsed_demo";
 
-    // Diagnostics: confirm the demo-parser emitted the new fields. If these
-    // counts are 0 on an external match, the parser deploy hasn't landed and
-    // there are no coords/money to import regardless of which path runs.
     const kills = parsed.kills ?? [];
     const killsWithCoords = kills.filter((k) => k.attacker_x != null).length;
     const rounds = parsed.round_ticks ?? [];

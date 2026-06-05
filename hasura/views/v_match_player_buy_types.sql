@@ -1,8 +1,3 @@
--- Per-player kills/deaths/rounds within each buy matchup, backing the Buy Types
--- per-player drilldown. Grain: (match_map, lineup, player, side, matchup).
--- `rounds` is how many rounds the player's lineup played that matchup on that
--- side (same for every teammate); kills/deaths are that player's inter-team
--- kills/deaths in those rounds. Buy classification inlined (no helper fns).
 CREATE OR REPLACE VIEW public.v_match_player_buy_types AS
 WITH round_lineup AS (
   SELECT

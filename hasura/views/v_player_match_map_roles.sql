@@ -1,20 +1,3 @@
--- Per-(match map, player) combat role + the per-map stats the role surfaces
--- need. Roles are assigned by WITHIN-TEAM RANKING (the way roles actually
--- work): on each team, each map, the top AWP user is the AWPer, the most
--- frequent opener is the Entry, the top utility contributor is the Support,
--- and everyone else is a Rifler. This guarantees ~1 entry + 1 support per team
--- per map — unlike absolute thresholds, which collapse most players to Rifler.
---
--- Signals: AWP usage + opening-duel involvement from player_kills; utility
--- from player_match_map_stats. Headline stats (rating/adr/kpr/dpr/kast) are
--- pulled from the canonical v_player_match_map_hltv so consumers (the role
--- radar) don't recompute them. Team identity = the player's match_lineup;
--- if it can't be resolved the partition falls back to the whole map (one role
--- per map instead of per team) rather than dropping the player.
---
--- DROP first: the column set/order changed from the initial version, which
--- CREATE OR REPLACE VIEW can't do. Nothing has a hard dependency on it (the
--- leaderboard functions reference it only inside plpgsql bodies).
 DROP VIEW IF EXISTS public.v_player_match_map_roles;
 CREATE VIEW public.v_player_match_map_roles AS
 WITH kills_agg AS (
@@ -22,8 +5,6 @@ WITH kills_agg AS (
         pk.match_map_id,
         pk.attacker_steam_id AS steam_id,
         COUNT(*)::int AS total_kills,
-        -- "Sniper" = AWP + scout (SSG08). awp_kills/awp_share keep their column
-        -- names but now count both.
         COUNT(*) FILTER (
             WHERE lower(pk."with") LIKE '%awp%' OR lower(pk."with") LIKE '%ssg%'
         )::int AS awp_kills

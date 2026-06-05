@@ -1,12 +1,5 @@
--- Per-(match, player) HLTV rating — the canonical, backend single source for
--- the match-row rating on the player page. Rounds-weighted roll-up of the
--- per-map v_player_match_map_hltv, so it includes KAST and matches what the
--- match page shows (the client-side match-row formula omitted KAST, which read
--- ~0.5 too low). adr/kpr/dpr/kast carried for convenience.
---
--- Named "..._rating" (not "..._hltv") on purpose: views apply in sorted
--- filename order with no dependency resolution, and this must apply AFTER its
--- dependency v_player_match_map_hltv — "rating" > "map" so it sorts later.
+-- Named "..._rating" so it sorts AFTER its dependency v_player_match_map_hltv:
+-- views apply in filename order with no dependency resolution.
 CREATE OR REPLACE VIEW public.v_player_match_rating AS
 SELECT
     h.match_id,

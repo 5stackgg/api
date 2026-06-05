@@ -1,10 +1,3 @@
--- Per-player opening-duel record, so the Opening Duels tab reads aggregates
--- instead of scanning each round's kills. Grain: (match_map, lineup, player,
--- side). `attempts` = first inter-team kill of the round involving the player
--- (as killer or victim); `wins` = player drew first blood; `deaths` = player
--- was the opening victim; `traded_deaths` = that opening death was traded by a
--- teammate within the round. The attempt% denominator (lineup total rounds)
--- comes from v_match_lineup_map_stats on the consumer side.
 CREATE OR REPLACE VIEW public.v_match_player_opening_duels AS
 WITH round_sides AS (
   SELECT
@@ -41,7 +34,6 @@ fk AS (
   FROM first_kill fk
 ),
 duel_rows AS (
-  -- killer perspective (won the opening)
   SELECT rs.match_id, fk.match_map_id, fk.round, klp.match_lineup_id,
     CASE WHEN klp.match_lineup_id = rs.l1 THEN rs.l1_side ELSE rs.l2_side END AS side,
     fk.killer AS steam_id, true AS is_win, false AS is_death, false AS traded
@@ -50,7 +42,6 @@ duel_rows AS (
   JOIN public.match_lineup_players klp
     ON klp.steam_id = fk.killer AND klp.match_lineup_id IN (rs.l1, rs.l2)
   UNION ALL
-  -- victim perspective (lost the opening)
   SELECT rs.match_id, fk.match_map_id, fk.round, vlp.match_lineup_id,
     CASE WHEN vlp.match_lineup_id = rs.l1 THEN rs.l1_side ELSE rs.l2_side END,
     fk.victim, false, true, fk.victim_traded

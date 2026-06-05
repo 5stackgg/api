@@ -1,8 +1,3 @@
--- Per-player weapon damage split by match source and type. Mirrors
--- v_player_weapon_kills but aggregates the damage events (which carry the
--- weapon + raw damage), so the weapons table can show total damage and
--- damage-per-kill alongside kills. `type` is the trailing column so
--- CREATE OR REPLACE can evolve it without a drop.
 CREATE OR REPLACE VIEW public.v_player_weapon_damage AS
 SELECT
     pd.attacker_steam_id AS player_steam_id,

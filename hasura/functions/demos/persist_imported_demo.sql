@@ -374,9 +374,6 @@ BEGIN
     -- demoinfocs emits 'HE'; the FK to e_utility_types expects 'HighExplosive'.
     CASE elem->>'type' WHEN 'HE' THEN 'HighExplosive' ELSE elem->>'type' END,
     NULLIF(elem->>'thrower', '')::bigint,
-    -- Match the live path: store the detonation location (joined by
-    -- grenade id), falling back to the throw origin when a grenade has
-    -- no detonation event (e.g. decoys).
     COALESCE(
       det.coords,
       NULLIF(concat_ws(',', elem->>'ox', elem->>'oy', elem->>'oz'), '')

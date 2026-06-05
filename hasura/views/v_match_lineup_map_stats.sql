@@ -1,14 +1,5 @@
--- Per (match_map, lineup, side) team aggregates derived from round outcomes +
--- first-blood, so the frontend Team Overview no longer walks round events.
--- Grain: one row per side ('t' / 'ct') a lineup played on a map; sum both for
--- an "all sides" view. Side tokens normalized (live plugin vs demo formats).
---
--- Round-level metrics live here; per-player rollups (trades / util damage /
--- flash assists) already exist on player_match_map_stats and are summed by the
--- client from those columns, not from raw rounds.
 CREATE OR REPLACE VIEW public.v_match_lineup_map_stats AS
 WITH round_lineup AS (
-  -- One row per (round, lineup): that lineup's side, whether it won the round.
   SELECT
     mm.match_id,
     mmr.match_map_id,
@@ -36,7 +27,6 @@ WITH round_lineup AS (
   WHERE mmr.round > 0 AND mmr.deleted_at IS NULL
 ),
 first_kill AS (
-  -- Earliest inter-team kill of each round (the opening duel).
   SELECT DISTINCT ON (pk.match_map_id, pk.round)
     pk.match_map_id,
     pk.round,
@@ -50,7 +40,6 @@ first_kill AS (
   ORDER BY pk.match_map_id, pk.round, pk."time" ASC
 ),
 fk_lineups AS (
-  -- Which lineup drew (killer) and which lost (victim) the opening duel.
   SELECT
     fk.match_map_id,
     fk.round,
@@ -98,18 +87,12 @@ SELECT
   COUNT(*) FILTER (WHERE won)::int                                       AS round_wins,
   COUNT(*) FILTER (WHERE is_pistol)::int                                 AS pistol_rounds,
   COUNT(*) FILTER (WHERE is_pistol AND won)::int                         AS pistol_wins,
-  -- Opening duel: an attempt is a first kill involving the lineup; a win is
-  -- when the lineup drew first blood.
   COUNT(*) FILTER (WHERE drew_first OR lost_first)::int                  AS opening_attempts,
   COUNT(*) FILTER (WHERE drew_first)::int                                AS opening_wins,
-  -- Man advantage (5v5): rounds the lineup was not at a first-blood deficit
-  -- (drew first blood, or the round had no opening kill) and how many it won.
   COUNT(*) FILTER (WHERE no_first_kill OR drew_first)::int               AS man_adv_rounds,
   COUNT(*) FILTER (WHERE (no_first_kill OR drew_first) AND won)::int     AS man_adv_wins,
-  -- Man disadvantage (4v5): rounds the lineup conceded first blood.
   COUNT(*) FILTER (WHERE lost_first)::int                                AS man_dis_rounds,
   COUNT(*) FILTER (WHERE lost_first AND won)::int                        AS man_dis_wins,
-  -- Won rounds split by the lineup's own buy that round (sides buy-mix bars).
   COUNT(*) FILTER (WHERE won AND own_buy = 'pistol')::int                AS won_buy_pistol,
   COUNT(*) FILTER (WHERE won AND own_buy = 'eco')::int                   AS won_buy_eco,
   COUNT(*) FILTER (WHERE won AND own_buy = 'force')::int                 AS won_buy_force,

@@ -1,8 +1,3 @@
--- Per (match_map, killer, victim, weapon) inter-team kill counts with each
--- side, so the Opening Duels "most killed / most died to / best weapon"
--- breakdown reads aggregates instead of scanning every kill. killer_side /
--- victim_side let the consumer apply the side filter from whichever end the
--- player sits on.
 CREATE OR REPLACE VIEW public.v_match_kill_pairs AS
 SELECT
   mm.match_id,

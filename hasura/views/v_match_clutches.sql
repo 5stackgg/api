@@ -1,6 +1,3 @@
--- One row per clutch in the match, via detect_round_clutch() applied to every
--- finalized round. Backs the Clutches tab (group by lineup) and player clutch
--- stats.
 CREATE OR REPLACE VIEW public.v_match_clutches AS
 SELECT
   mm.match_id,

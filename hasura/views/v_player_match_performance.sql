@@ -1,5 +1,3 @@
--- Per-player, per-match performance (source-aware) for win-rate and K/D, with a
--- per-match win/loss derived from map winners. Covers 5Stack and external.
 CREATE OR REPLACE VIEW public.v_player_match_performance AS
 SELECT
     mlp.steam_id                               AS player_steam_id,
@@ -36,9 +34,6 @@ FROM match_lineup_players mlp
                 WHERE mm.winning_lineup_id IS NOT NULL
                   AND mm.winning_lineup_id <> ml.id
             ) AS lost,
-            -- Single-map matches (all external Competitive/Wingman) expose their
-            -- map so per-map win-rate is a direct filter; multi-map (Bo3) stays
-            -- NULL. uuid has no min(), so collapse the distinct set and take it.
             CASE
                 WHEN COUNT(DISTINCT mm.map_id) = 1
                 THEN (array_agg(DISTINCT mm.map_id)

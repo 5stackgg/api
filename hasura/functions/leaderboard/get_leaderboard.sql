@@ -1,8 +1,5 @@
 DROP FUNCTION IF EXISTS public._leaderboard_trophies(INT);
--- _role was added to these signatures; drop EVERY existing overload (not just a
--- known arity) so a stale older signature can't linger and make calls ambiguous
--- ("function ... is not unique"). CREATE below then re-establishes the single
--- current signature.
+-- Drop EVERY existing overload so a stale signature can't make calls ambiguous.
 DO $$
 DECLARE r record;
 BEGIN
@@ -430,6 +427,23 @@ CREATE TABLE IF NOT EXISTS public.player_leaderboard_rank (
   total INT NOT NULL DEFAULT 0
 );
 
+-- Drop every stale overload so the get_leaderboard() call below resolves
+-- unambiguously. The current get_leaderboard / get_player_leaderboard_rank both
+-- take 5 args, so anything with a different arg count is a stale signature.
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT p.oid::regprocedure AS sig
+    FROM pg_proc p
+    WHERE p.pronamespace = 'public'::regnamespace
+      AND p.proname IN ('get_leaderboard', 'get_player_leaderboard_rank')
+      AND p.pronargs <> 5
+  LOOP
+    EXECUTE 'DROP FUNCTION ' || r.sig;
+  END LOOP;
+END $$;
+
 CREATE OR REPLACE FUNCTION public.get_player_leaderboard_rank(
   _category TEXT,
   _window_days INT,
@@ -458,15 +472,8 @@ END;
 $$;
 
 -- ============================================================
--- HLTV-stat leaderboards (rating / ADR / KPR / KAST)
--- Aggregates the canonical per-map view, rounds-weighted. _metric selects
--- which stat is the headline value; secondary carries a complementary stat.
--- value/secondary semantics:
---   rating → value=HLTV rating, secondary=ADR
---   adr    → value=ADR,         secondary=HLTV rating
---   kpr    → value=KPR,         secondary=DPR
---   kast   → value=KAST%,       secondary=HLTV rating
--- tertiary = rounds played (the sample size).
+-- HLTV-stat leaderboards (rating / ADR / KPR / KAST), rounds-weighted
+-- value = _metric, secondary = complementary stat, tertiary = rounds played
 -- ============================================================
 CREATE OR REPLACE FUNCTION public._leaderboard_hltv_metric(
   _metric TEXT,

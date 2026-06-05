@@ -1,9 +1,3 @@
--- Detect a clutch (1vX) in a single round, mirroring the client algorithm:
--- walk the round's kills in order, removing victims from each lineup's alive
--- set (seeded from the roster). The first time a lineup drops to exactly one
--- alive while the other still has someone, that lone player is the clutcher.
--- Count their kills from that point; outcome = won (killed all opponents),
--- saved (team won the round anyway), or lost. Returns 0 or 1 row.
 CREATE OR REPLACE FUNCTION public.detect_round_clutch(p_match_map_id uuid, p_round integer)
 RETURNS TABLE (
   match_lineup_id uuid,
@@ -22,7 +16,7 @@ DECLARE
   alive1 bigint[]; alive2 bigint[];
   rec record;
   started boolean := false;
-  clutch_team integer := NULL;  -- 1 or 2
+  clutch_team integer := NULL;
   v_clutcher bigint := NULL;
   v_against integer := 0;
   v_kills integer := 0;

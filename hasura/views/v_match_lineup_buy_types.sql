@@ -1,8 +1,3 @@
--- Per (match_map, lineup, side, buy matchup) round + win counts, so the Buy
--- Types breakdown chart reads aggregates instead of classifying rounds on the
--- client. Sum across sides for an "all sides" view. Buy classification is
--- inlined (pistol rounds 1/13; <5000 eco; <=20000 force; else full) and only
--- the six recognized own-vs-enemy matchups are emitted.
 CREATE OR REPLACE VIEW public.v_match_lineup_buy_types AS
 WITH round_lineup AS (
   SELECT
