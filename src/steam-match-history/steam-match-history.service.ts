@@ -41,13 +41,14 @@ export class SteamMatchHistoryService {
     return !!this.steamApiKey;
   }
 
-  // Operator-facing kill switch (public.external_matches_enabled). Absent or
-  // anything other than "false" means imports are allowed.
+  // Operator-facing switch (public.external_matches_enabled). Off unless an
+  // admin has explicitly enabled it ("true"); mirrors the web default so the
+  // UI and the import enforcement agree.
   public async isImportingAllowed(): Promise<boolean> {
     const rows = await this.postgres.query<Array<{ value: string }>>(
       `SELECT value FROM public.settings WHERE name = 'public.external_matches_enabled' LIMIT 1`,
     );
-    return rows.at(0)?.value !== "false";
+    return rows.at(0)?.value === "true";
   }
 
   public async getCloudflareWorkerUrl(): Promise<string | null> {

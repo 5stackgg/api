@@ -4,6 +4,7 @@ import {
   Body,
   Controller,
   ForbiddenException,
+  InternalServerErrorException,
   Logger,
   Post,
   Req,
@@ -19,6 +20,7 @@ import { S3Service } from "../s3/s3.service";
 import { SteamMatchHistoryQueues } from "./enums/SteamMatchHistoryQueues";
 import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
 import { SteamMatchHistoryService } from "./steam-match-history.service";
+import { signUploadToken } from "./uploadToken";
 
 const MAX_UPLOAD_SIZE = 500 * 1024 * 1024;
 const UPLOAD_CHUNK_SIZE = 64 * 1024 * 1024;
@@ -67,12 +69,29 @@ export class SteamMatchHistoryController {
     const partCount = Math.ceil(fileSize / UPLOAD_CHUNK_SIZE);
     const workerUrl = await this.service.getCloudflareWorkerUrl();
 
+    // When uploads go through the Cloudflare worker (which signs the B2 PUT
+    // with shared credentials) we must authorize each part write — otherwise
+    // anyone reaching the worker with a valid uploadId could upload. Mint a
+    // short-lived HMAC token bound to this key+uploadId; the worker verifies
+    // it before signing. The shared secret must match UPLOAD_TOKEN_SECRET set
+    // on the worker (wrangler secret).
+    let uploadToken: string | null = null;
+    if (workerUrl) {
+      const signingSecret = process.env.UPLOAD_TOKEN_SECRET;
+      if (!signingSecret) {
+        throw new InternalServerErrorException(
+          "UPLOAD_TOKEN_SECRET is not configured; cannot authorize worker uploads",
+        );
+      }
+      uploadToken = signUploadToken(signingSecret, key, uploadId);
+    }
+
     const parts: Array<{ partNumber: number; url: string }> = [];
     for (let partNumber = 1; partNumber <= partCount; partNumber++) {
       parts.push({
         partNumber,
         url: workerUrl
-          ? `${workerUrl}/${key}?partNumber=${partNumber}&uploadId=${encodeURIComponent(uploadId)}`
+          ? `${workerUrl}/${key}?partNumber=${partNumber}&uploadId=${encodeURIComponent(uploadId)}&token=${encodeURIComponent(uploadToken!)}`
           : await this.s3.getPresignedPartUrl(key, uploadId, partNumber),
       });
     }
