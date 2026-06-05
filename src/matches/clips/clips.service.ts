@@ -1240,6 +1240,7 @@ export class ClipsService {
         nextHistory[nextHistory.length - 1] = {
           ...last,
           ...entry,
+          at: last?.at ?? entry.at,
         } as typeof last;
       } else {
         nextHistory.push(entry as typeof last);
@@ -2571,8 +2572,8 @@ export class ClipsService {
       }>) ?? [];
 
     const myKills = kills.filter((k) => k.killer === targetSteamId);
-    const lead = Math.round(tickRate * 5);
-    const tail = Math.round(tickRate * 1);
+    const lead = Math.round(tickRate * 3);
+    const tail = Math.round(tickRate * 2);
     const CLUSTER_GAP_SECS = 10;
     const clusterGapTicks = Math.round(tickRate * CLUSTER_GAP_SECS);
     // Demo's total_ticks is the literal last observed tick — i.e. gameover.

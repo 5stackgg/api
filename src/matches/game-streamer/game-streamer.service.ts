@@ -416,6 +416,8 @@ export class GameStreamerService {
     if (currentStatus !== newStatus || previous.length === 0) {
       return [...previous, entry].slice(-STATUS_HISTORY_CAP);
     }
+    const last = previous[previous.length - 1] as Record<string, unknown>;
+    entry.at = (last?.at as string) ?? entry.at;
     return [...previous.slice(0, -1), entry];
   }
 
