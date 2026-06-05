@@ -6,6 +6,7 @@ import { Queue } from "bullmq";
 import { ClipsService } from "./clips.service";
 import { ClipRendersController } from "./clip-renders.controller";
 import { ClipDownloadController } from "./clip-download.controller";
+import { ClipViewsController } from "./clip-views.controller";
 import { HasuraModule } from "../../hasura/hasura.module";
 import { PostgresModule } from "../../postgres/postgres.module";
 import { S3Module } from "../../s3/s3.module";
@@ -39,7 +40,11 @@ import { ReconcileQueuedHighlights } from "./jobs/ReconcileQueuedHighlights";
       adapter: BullMQAdapter,
     }),
   ],
-  controllers: [ClipRendersController, ClipDownloadController],
+  controllers: [
+    ClipRendersController,
+    ClipDownloadController,
+    ClipViewsController,
+  ],
   providers: [
     ClipsService,
     BatchHighlightsRenderJob,

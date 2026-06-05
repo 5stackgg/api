@@ -17101,6 +17101,9 @@ export default {
             "user_steam_id": [
                 153
             ],
+            "views_count": [
+                30
+            ],
             "visibility": [
                 384
             ],
@@ -17259,6 +17262,9 @@ export default {
             "user_steam_id": [
                 22
             ],
+            "views_count": [
+                22
+            ],
             "__typename": [
                 54
             ]
@@ -17280,6 +17286,9 @@ export default {
                 1723
             ],
             "user_steam_id": [
+                1723
+            ],
+            "views_count": [
                 1723
             ],
             "__typename": [
@@ -17359,6 +17368,9 @@ export default {
             "user_steam_id": [
                 154
             ],
+            "views_count": [
+                31
+            ],
             "visibility": [
                 385
             ],
@@ -17385,6 +17397,9 @@ export default {
             ],
             "user_steam_id": [
                 153
+            ],
+            "views_count": [
+                30
             ],
             "__typename": [
                 54
@@ -17445,6 +17460,9 @@ export default {
             "user_steam_id": [
                 153
             ],
+            "views_count": [
+                30
+            ],
             "visibility": [
                 384
             ],
@@ -17498,6 +17516,9 @@ export default {
             "user_steam_id": [
                 153
             ],
+            "views_count": [
+                30
+            ],
             "__typename": [
                 54
             ]
@@ -17540,6 +17561,9 @@ export default {
                 1723
             ],
             "user_steam_id": [
+                1723
+            ],
+            "views_count": [
                 1723
             ],
             "__typename": [
@@ -17592,6 +17616,9 @@ export default {
             "user_steam_id": [
                 153
             ],
+            "views_count": [
+                30
+            ],
             "__typename": [
                 54
             ]
@@ -17634,6 +17661,9 @@ export default {
                 1723
             ],
             "user_steam_id": [
+                1723
+            ],
+            "views_count": [
                 1723
             ],
             "__typename": [
@@ -17737,6 +17767,9 @@ export default {
             "user_steam_id": [
                 1723
             ],
+            "views_count": [
+                1723
+            ],
             "visibility": [
                 1723
             ],
@@ -17793,6 +17826,9 @@ export default {
             "user_steam_id": [
                 153
             ],
+            "views_count": [
+                30
+            ],
             "visibility": [
                 384
             ],
@@ -17819,6 +17855,9 @@ export default {
             "user_steam_id": [
                 22
             ],
+            "views_count": [
+                22
+            ],
             "__typename": [
                 54
             ]
@@ -17840,6 +17879,9 @@ export default {
                 1723
             ],
             "user_steam_id": [
+                1723
+            ],
+            "views_count": [
                 1723
             ],
             "__typename": [
@@ -17865,6 +17907,9 @@ export default {
             "user_steam_id": [
                 22
             ],
+            "views_count": [
+                22
+            ],
             "__typename": [
                 54
             ]
@@ -17886,6 +17931,9 @@ export default {
                 1723
             ],
             "user_steam_id": [
+                1723
+            ],
+            "views_count": [
                 1723
             ],
             "__typename": [
@@ -17911,6 +17959,9 @@ export default {
             "user_steam_id": [
                 22
             ],
+            "views_count": [
+                22
+            ],
             "__typename": [
                 54
             ]
@@ -17932,6 +17983,9 @@ export default {
                 1723
             ],
             "user_steam_id": [
+                1723
+            ],
+            "views_count": [
                 1723
             ],
             "__typename": [
@@ -17989,6 +18043,9 @@ export default {
             "user_steam_id": [
                 153
             ],
+            "views_count": [
+                30
+            ],
             "visibility": [
                 384
             ],
@@ -18015,6 +18072,9 @@ export default {
             "user_steam_id": [
                 153
             ],
+            "views_count": [
+                30
+            ],
             "__typename": [
                 54
             ]
@@ -18036,6 +18096,9 @@ export default {
                 1723
             ],
             "user_steam_id": [
+                1723
+            ],
+            "views_count": [
                 1723
             ],
             "__typename": [
@@ -18076,6 +18139,9 @@ export default {
             "user_steam_id": [
                 22
             ],
+            "views_count": [
+                22
+            ],
             "__typename": [
                 54
             ]
@@ -18097,6 +18163,9 @@ export default {
                 1723
             ],
             "user_steam_id": [
+                1723
+            ],
+            "views_count": [
                 1723
             ],
             "__typename": [
@@ -18122,6 +18191,9 @@ export default {
             "user_steam_id": [
                 22
             ],
+            "views_count": [
+                22
+            ],
             "__typename": [
                 54
             ]
@@ -18143,6 +18215,9 @@ export default {
                 1723
             ],
             "user_steam_id": [
+                1723
+            ],
+            "views_count": [
                 1723
             ],
             "__typename": [
@@ -18168,6 +18243,9 @@ export default {
             "user_steam_id": [
                 22
             ],
+            "views_count": [
+                22
+            ],
             "__typename": [
                 54
             ]
@@ -18189,6 +18267,9 @@ export default {
                 1723
             ],
             "user_steam_id": [
+                1723
+            ],
+            "views_count": [
                 1723
             ],
             "__typename": [
