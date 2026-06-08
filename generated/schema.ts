@@ -847,7 +847,6 @@ export interface clip_render_jobs {
     spec: Scalars['jsonb']
     status: Scalars['String']
     status_history: Scalars['jsonb']
-    steam_account_id: (Scalars['uuid'] | null)
     /** An object relationship */
     user: (players | null)
     user_steam_id: (Scalars['bigint'] | null)
@@ -908,7 +907,6 @@ export interface clip_render_jobs_max_fields {
     session_token: (Scalars['String'] | null)
     sort_index: (Scalars['Int'] | null)
     status: (Scalars['String'] | null)
-    steam_account_id: (Scalars['uuid'] | null)
     user_steam_id: (Scalars['bigint'] | null)
     __typename: 'clip_render_jobs_max_fields'
 }
@@ -929,7 +927,6 @@ export interface clip_render_jobs_min_fields {
     session_token: (Scalars['String'] | null)
     sort_index: (Scalars['Int'] | null)
     status: (Scalars['String'] | null)
-    steam_account_id: (Scalars['uuid'] | null)
     user_steam_id: (Scalars['bigint'] | null)
     __typename: 'clip_render_jobs_min_fields'
 }
@@ -946,7 +943,7 @@ export interface clip_render_jobs_mutation_response {
 
 
 /** select columns of table "clip_render_jobs" */
-export type clip_render_jobs_select_column = 'clip_id' | 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_status_at' | 'match_map_demo_id' | 'match_map_id' | 'paused' | 'progress' | 'session_token' | 'sort_index' | 'spec' | 'status' | 'status_history' | 'steam_account_id' | 'user_steam_id'
+export type clip_render_jobs_select_column = 'clip_id' | 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_status_at' | 'match_map_demo_id' | 'match_map_id' | 'paused' | 'progress' | 'session_token' | 'sort_index' | 'spec' | 'status' | 'status_history' | 'user_steam_id'
 
 
 /** select "clip_render_jobs_aggregate_bool_exp_bool_and_arguments_columns" columns of table "clip_render_jobs" */
@@ -994,7 +991,7 @@ export interface clip_render_jobs_sum_fields {
 
 
 /** update columns of table "clip_render_jobs" */
-export type clip_render_jobs_update_column = 'clip_id' | 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_status_at' | 'match_map_demo_id' | 'match_map_id' | 'paused' | 'progress' | 'session_token' | 'sort_index' | 'spec' | 'status' | 'status_history' | 'steam_account_id' | 'user_steam_id'
+export type clip_render_jobs_update_column = 'clip_id' | 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_status_at' | 'match_map_demo_id' | 'match_map_id' | 'paused' | 'progress' | 'session_token' | 'sort_index' | 'spec' | 'status' | 'status_history' | 'user_steam_id'
 
 
 /** aggregate var_pop on columns */
@@ -4544,7 +4541,6 @@ export interface match_demo_sessions {
     match_map_id: Scalars['uuid']
     status: Scalars['String']
     status_history: Scalars['jsonb']
-    steam_account_id: (Scalars['uuid'] | null)
     stream_url: (Scalars['String'] | null)
     /** An object relationship */
     watcher: players
@@ -4602,7 +4598,6 @@ export interface match_demo_sessions_max_fields {
     match_map_demo_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
     status: (Scalars['String'] | null)
-    steam_account_id: (Scalars['uuid'] | null)
     stream_url: (Scalars['String'] | null)
     watcher_steam_id: (Scalars['bigint'] | null)
     __typename: 'match_demo_sessions_max_fields'
@@ -4622,7 +4617,6 @@ export interface match_demo_sessions_min_fields {
     match_map_demo_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
     status: (Scalars['String'] | null)
-    steam_account_id: (Scalars['uuid'] | null)
     stream_url: (Scalars['String'] | null)
     watcher_steam_id: (Scalars['bigint'] | null)
     __typename: 'match_demo_sessions_min_fields'
@@ -4640,7 +4634,7 @@ export interface match_demo_sessions_mutation_response {
 
 
 /** select columns of table "match_demo_sessions" */
-export type match_demo_sessions_select_column = 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_activity_at' | 'last_status_at' | 'match_id' | 'match_map_demo_id' | 'match_map_id' | 'status' | 'status_history' | 'steam_account_id' | 'stream_url' | 'watcher_steam_id'
+export type match_demo_sessions_select_column = 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_activity_at' | 'last_status_at' | 'match_id' | 'match_map_demo_id' | 'match_map_id' | 'status' | 'status_history' | 'stream_url' | 'watcher_steam_id'
 
 
 /** aggregate stddev on columns */
@@ -4672,7 +4666,7 @@ export interface match_demo_sessions_sum_fields {
 
 
 /** update columns of table "match_demo_sessions" */
-export type match_demo_sessions_update_column = 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_activity_at' | 'last_status_at' | 'match_id' | 'match_map_demo_id' | 'match_map_id' | 'status' | 'status_history' | 'steam_account_id' | 'stream_url' | 'watcher_steam_id'
+export type match_demo_sessions_update_column = 'created_at' | 'error_message' | 'game_server_node_id' | 'id' | 'k8s_job_name' | 'last_activity_at' | 'last_status_at' | 'match_id' | 'match_map_demo_id' | 'match_map_id' | 'status' | 'status_history' | 'stream_url' | 'watcher_steam_id'
 
 
 /** aggregate var_pop on columns */
@@ -6345,7 +6339,6 @@ export interface match_streams {
     priority: Scalars['Int']
     status: (Scalars['String'] | null)
     status_history: Scalars['jsonb']
-    steam_account_id: (Scalars['uuid'] | null)
     stream_url: (Scalars['String'] | null)
     title: Scalars['String']
     __typename: 'match_streams'
@@ -6400,7 +6393,6 @@ export interface match_streams_max_fields {
     mode: (Scalars['String'] | null)
     priority: (Scalars['Int'] | null)
     status: (Scalars['String'] | null)
-    steam_account_id: (Scalars['uuid'] | null)
     stream_url: (Scalars['String'] | null)
     title: (Scalars['String'] | null)
     __typename: 'match_streams_max_fields'
@@ -6419,7 +6411,6 @@ export interface match_streams_min_fields {
     mode: (Scalars['String'] | null)
     priority: (Scalars['Int'] | null)
     status: (Scalars['String'] | null)
-    steam_account_id: (Scalars['uuid'] | null)
     stream_url: (Scalars['String'] | null)
     title: (Scalars['String'] | null)
     __typename: 'match_streams_min_fields'
@@ -6437,7 +6428,7 @@ export interface match_streams_mutation_response {
 
 
 /** select columns of table "match_streams" */
-export type match_streams_select_column = 'autodirector' | 'error_message' | 'game_server_node_id' | 'id' | 'is_game_streamer' | 'is_live' | 'k8s_service_name' | 'last_status_at' | 'link' | 'match_id' | 'mode' | 'priority' | 'status' | 'status_history' | 'steam_account_id' | 'stream_url' | 'title'
+export type match_streams_select_column = 'autodirector' | 'error_message' | 'game_server_node_id' | 'id' | 'is_game_streamer' | 'is_live' | 'k8s_service_name' | 'last_status_at' | 'link' | 'match_id' | 'mode' | 'priority' | 'status' | 'status_history' | 'stream_url' | 'title'
 
 
 /** select "match_streams_aggregate_bool_exp_bool_and_arguments_columns" columns of table "match_streams" */
@@ -6477,7 +6468,7 @@ export interface match_streams_sum_fields {
 
 
 /** update columns of table "match_streams" */
-export type match_streams_update_column = 'autodirector' | 'error_message' | 'game_server_node_id' | 'id' | 'is_game_streamer' | 'is_live' | 'k8s_service_name' | 'last_status_at' | 'link' | 'match_id' | 'mode' | 'priority' | 'status' | 'status_history' | 'steam_account_id' | 'stream_url' | 'title'
+export type match_streams_update_column = 'autodirector' | 'error_message' | 'game_server_node_id' | 'id' | 'is_game_streamer' | 'is_live' | 'k8s_service_name' | 'last_status_at' | 'link' | 'match_id' | 'mode' | 'priority' | 'status' | 'status_history' | 'stream_url' | 'title'
 
 
 /** aggregate var_pop on columns */
@@ -7394,6 +7385,10 @@ export interface mutation_root {
     delete_settings: (settings_mutation_response | null)
     /** delete single row from the table: "settings" */
     delete_settings_by_pk: (settings | null)
+    /** delete data from the table: "steam_account_claims" */
+    delete_steam_account_claims: (steam_account_claims_mutation_response | null)
+    /** delete single row from the table: "steam_account_claims" */
+    delete_steam_account_claims_by_pk: (steam_account_claims | null)
     /** delete data from the table: "steam_accounts" */
     delete_steam_accounts: (steam_accounts_mutation_response | null)
     /** delete single row from the table: "steam_accounts" */
@@ -7781,6 +7776,10 @@ export interface mutation_root {
     insert_settings: (settings_mutation_response | null)
     /** insert a single row into the table: "settings" */
     insert_settings_one: (settings | null)
+    /** insert data into the table: "steam_account_claims" */
+    insert_steam_account_claims: (steam_account_claims_mutation_response | null)
+    /** insert a single row into the table: "steam_account_claims" */
+    insert_steam_account_claims_one: (steam_account_claims | null)
     /** insert data into the table: "steam_accounts" */
     insert_steam_accounts: (steam_accounts_mutation_response | null)
     /** insert a single row into the table: "steam_accounts" */
@@ -8403,6 +8402,12 @@ export interface mutation_root {
     update_settings_by_pk: (settings | null)
     /** update multiples rows of table: "settings" */
     update_settings_many: ((settings_mutation_response | null)[] | null)
+    /** update data of the table: "steam_account_claims" */
+    update_steam_account_claims: (steam_account_claims_mutation_response | null)
+    /** update single row of the table: "steam_account_claims" */
+    update_steam_account_claims_by_pk: (steam_account_claims | null)
+    /** update multiples rows of table: "steam_account_claims" */
+    update_steam_account_claims_many: ((steam_account_claims_mutation_response | null)[] | null)
     /** update data of the table: "steam_accounts" */
     update_steam_accounts: (steam_accounts_mutation_response | null)
     /** update single row of the table: "steam_accounts" */
@@ -14794,6 +14799,12 @@ export interface query_root {
     settings_aggregate: settings_aggregate
     /** fetch data from the table: "settings" using primary key columns */
     settings_by_pk: (settings | null)
+    /** fetch data from the table: "steam_account_claims" */
+    steam_account_claims: steam_account_claims[]
+    /** fetch aggregated fields from the table: "steam_account_claims" */
+    steam_account_claims_aggregate: steam_account_claims_aggregate
+    /** fetch data from the table: "steam_account_claims" using primary key columns */
+    steam_account_claims_by_pk: (steam_account_claims | null)
     /** fetch data from the table: "steam_accounts" */
     steam_accounts: steam_accounts[]
     /** fetch aggregated fields from the table: "steam_accounts" */
@@ -15452,25 +15463,96 @@ export type settings_select_column = 'name' | 'value'
 export type settings_update_column = 'name' | 'value'
 
 
+/** columns and relationships of "steam_account_claims" */
+export interface steam_account_claims {
+    created_at: Scalars['timestamptz']
+    id: Scalars['uuid']
+    k8s_job_name: Scalars['String']
+    /** An object relationship */
+    node: (game_server_nodes | null)
+    node_id: (Scalars['String'] | null)
+    purpose: Scalars['String']
+    /** An object relationship */
+    steam_account: steam_accounts
+    steam_account_id: Scalars['uuid']
+    __typename: 'steam_account_claims'
+}
+
+
+/** aggregated selection of "steam_account_claims" */
+export interface steam_account_claims_aggregate {
+    aggregate: (steam_account_claims_aggregate_fields | null)
+    nodes: steam_account_claims[]
+    __typename: 'steam_account_claims_aggregate'
+}
+
+
+/** aggregate fields of "steam_account_claims" */
+export interface steam_account_claims_aggregate_fields {
+    count: Scalars['Int']
+    max: (steam_account_claims_max_fields | null)
+    min: (steam_account_claims_min_fields | null)
+    __typename: 'steam_account_claims_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "steam_account_claims" */
+export type steam_account_claims_constraint = 'steam_account_claims_k8s_job_name_key' | 'steam_account_claims_pkey'
+
+
+/** aggregate max on columns */
+export interface steam_account_claims_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    k8s_job_name: (Scalars['String'] | null)
+    node_id: (Scalars['String'] | null)
+    purpose: (Scalars['String'] | null)
+    steam_account_id: (Scalars['uuid'] | null)
+    __typename: 'steam_account_claims_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface steam_account_claims_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    k8s_job_name: (Scalars['String'] | null)
+    node_id: (Scalars['String'] | null)
+    purpose: (Scalars['String'] | null)
+    steam_account_id: (Scalars['uuid'] | null)
+    __typename: 'steam_account_claims_min_fields'
+}
+
+
+/** response of any mutation on the table "steam_account_claims" */
+export interface steam_account_claims_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: steam_account_claims[]
+    __typename: 'steam_account_claims_mutation_response'
+}
+
+
+/** select columns of table "steam_account_claims" */
+export type steam_account_claims_select_column = 'created_at' | 'id' | 'k8s_job_name' | 'node_id' | 'purpose' | 'steam_account_id'
+
+
+/** update columns of table "steam_account_claims" */
+export type steam_account_claims_update_column = 'created_at' | 'id' | 'k8s_job_name' | 'node_id' | 'purpose' | 'steam_account_id'
+
+
 /** columns and relationships of "steam_accounts" */
 export interface steam_accounts {
     /** An array relationship */
-    clip_render_jobs: clip_render_jobs[]
+    claims: steam_account_claims[]
     /** An aggregate relationship */
-    clip_render_jobs_aggregate: clip_render_jobs_aggregate
+    claims_aggregate: steam_account_claims_aggregate
     created_at: Scalars['timestamptz']
     id: Scalars['uuid']
     /** An object relationship */
     last_node: (game_server_nodes | null)
     last_node_id: (Scalars['String'] | null)
-    /** fetch data from the table: "match_demo_sessions" */
-    match_demo_sessions: match_demo_sessions[]
-    /** fetch aggregated fields from the table: "match_demo_sessions" */
-    match_demo_sessions_aggregate: match_demo_sessions_aggregate
-    /** fetch data from the table: "match_streams" */
-    match_streams: match_streams[]
-    /** fetch aggregated fields from the table: "match_streams" */
-    match_streams_aggregate: match_streams_aggregate
     password: Scalars['String']
     updated_at: Scalars['timestamptz']
     username: Scalars['String']
@@ -16197,6 +16279,14 @@ export interface subscription_root {
     settings_by_pk: (settings | null)
     /** fetch data from the table in a streaming manner: "settings" */
     settings_stream: settings[]
+    /** fetch data from the table: "steam_account_claims" */
+    steam_account_claims: steam_account_claims[]
+    /** fetch aggregated fields from the table: "steam_account_claims" */
+    steam_account_claims_aggregate: steam_account_claims_aggregate
+    /** fetch data from the table: "steam_account_claims" using primary key columns */
+    steam_account_claims_by_pk: (steam_account_claims | null)
+    /** fetch data from the table in a streaming manner: "steam_account_claims" */
+    steam_account_claims_stream: steam_account_claims[]
     /** fetch data from the table: "steam_accounts" */
     steam_accounts: steam_accounts[]
     /** fetch aggregated fields from the table: "steam_accounts" */
@@ -24636,7 +24726,6 @@ export interface clip_render_jobsGenqlSelection{
     status_history?: { __args: {
     /** JSON select path */
     path?: (Scalars['String'] | null)} } | boolean | number
-    steam_account_id?: boolean | number
     /** An object relationship */
     user?: playersGenqlSelection
     user_steam_id?: boolean | number
@@ -24709,7 +24798,7 @@ export interface clip_render_jobs_avg_order_by {progress?: (order_by | null),sor
 
 
 /** Boolean expression to filter rows from the table "clip_render_jobs". All fields are combined with a logical 'AND'. */
-export interface clip_render_jobs_bool_exp {_and?: (clip_render_jobs_bool_exp[] | null),_not?: (clip_render_jobs_bool_exp | null),_or?: (clip_render_jobs_bool_exp[] | null),clip?: (match_clips_bool_exp | null),clip_id?: (uuid_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),error_message?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),k8s_job_name?: (String_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_demo?: (match_map_demos_bool_exp | null),match_map_demo_id?: (uuid_comparison_exp | null),match_map_id?: (uuid_comparison_exp | null),paused?: (Boolean_comparison_exp | null),progress?: (numeric_comparison_exp | null),session_token?: (String_comparison_exp | null),sort_index?: (Int_comparison_exp | null),spec?: (jsonb_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),steam_account_id?: (uuid_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null)}
+export interface clip_render_jobs_bool_exp {_and?: (clip_render_jobs_bool_exp[] | null),_not?: (clip_render_jobs_bool_exp | null),_or?: (clip_render_jobs_bool_exp[] | null),clip?: (match_clips_bool_exp | null),clip_id?: (uuid_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),error_message?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),k8s_job_name?: (String_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_demo?: (match_map_demos_bool_exp | null),match_map_demo_id?: (uuid_comparison_exp | null),match_map_id?: (uuid_comparison_exp | null),paused?: (Boolean_comparison_exp | null),progress?: (numeric_comparison_exp | null),session_token?: (String_comparison_exp | null),sort_index?: (Int_comparison_exp | null),spec?: (jsonb_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),user?: (players_bool_exp | null),user_steam_id?: (bigint_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -24729,7 +24818,7 @@ export interface clip_render_jobs_inc_input {progress?: (Scalars['numeric'] | nu
 
 
 /** input type for inserting data into table "clip_render_jobs" */
-export interface clip_render_jobs_insert_input {clip?: (match_clips_obj_rel_insert_input | null),clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_demo?: (match_map_demos_obj_rel_insert_input | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),paused?: (Scalars['Boolean'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),steam_account_id?: (Scalars['uuid'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null)}
+export interface clip_render_jobs_insert_input {clip?: (match_clips_obj_rel_insert_input | null),clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_demo?: (match_map_demos_obj_rel_insert_input | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),paused?: (Scalars['Boolean'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user?: (players_obj_rel_insert_input | null),user_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate max on columns */
@@ -24747,7 +24836,6 @@ export interface clip_render_jobs_max_fieldsGenqlSelection{
     session_token?: boolean | number
     sort_index?: boolean | number
     status?: boolean | number
-    steam_account_id?: boolean | number
     user_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -24755,7 +24843,7 @@ export interface clip_render_jobs_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "clip_render_jobs" */
-export interface clip_render_jobs_max_order_by {clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),sort_index?: (order_by | null),status?: (order_by | null),steam_account_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface clip_render_jobs_max_order_by {clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),sort_index?: (order_by | null),status?: (order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -24773,7 +24861,6 @@ export interface clip_render_jobs_min_fieldsGenqlSelection{
     session_token?: boolean | number
     sort_index?: boolean | number
     status?: boolean | number
-    steam_account_id?: boolean | number
     user_steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -24781,7 +24868,7 @@ export interface clip_render_jobs_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "clip_render_jobs" */
-export interface clip_render_jobs_min_order_by {clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),sort_index?: (order_by | null),status?: (order_by | null),steam_account_id?: (order_by | null),user_steam_id?: (order_by | null)}
+export interface clip_render_jobs_min_order_by {clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),sort_index?: (order_by | null),status?: (order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "clip_render_jobs" */
@@ -24800,7 +24887,7 @@ export interface clip_render_jobs_on_conflict {constraint: clip_render_jobs_cons
 
 
 /** Ordering options when selecting data from "clip_render_jobs". */
-export interface clip_render_jobs_order_by {clip?: (match_clips_order_by | null),clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_demo?: (match_map_demos_order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),paused?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),sort_index?: (order_by | null),spec?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),steam_account_id?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null)}
+export interface clip_render_jobs_order_by {clip?: (match_clips_order_by | null),clip_id?: (order_by | null),created_at?: (order_by | null),error_message?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_status_at?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_demo?: (match_map_demos_order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),paused?: (order_by | null),progress?: (order_by | null),session_token?: (order_by | null),sort_index?: (order_by | null),spec?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),user?: (players_order_by | null),user_steam_id?: (order_by | null)}
 
 
 /** primary key columns input for table: clip_render_jobs */
@@ -24812,7 +24899,7 @@ export interface clip_render_jobs_prepend_input {spec?: (Scalars['jsonb'] | null
 
 
 /** input type for updating data in table "clip_render_jobs" */
-export interface clip_render_jobs_set_input {clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),paused?: (Scalars['Boolean'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),steam_account_id?: (Scalars['uuid'] | null),user_steam_id?: (Scalars['bigint'] | null)}
+export interface clip_render_jobs_set_input {clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),paused?: (Scalars['Boolean'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -24866,7 +24953,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface clip_render_jobs_stream_cursor_value_input {clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),paused?: (Scalars['Boolean'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),steam_account_id?: (Scalars['uuid'] | null),user_steam_id?: (Scalars['bigint'] | null)}
+export interface clip_render_jobs_stream_cursor_value_input {clip_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),paused?: (Scalars['Boolean'] | null),progress?: (Scalars['numeric'] | null),session_token?: (Scalars['String'] | null),sort_index?: (Scalars['Int'] | null),spec?: (Scalars['jsonb'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),user_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate sum on columns */
@@ -30807,7 +30894,6 @@ export interface match_demo_sessionsGenqlSelection{
     status_history?: { __args: {
     /** JSON select path */
     path?: (Scalars['String'] | null)} } | boolean | number
-    steam_account_id?: boolean | number
     stream_url?: boolean | number
     /** An object relationship */
     watcher?: playersGenqlSelection
@@ -30875,7 +30961,7 @@ export interface match_demo_sessions_avg_order_by {watcher_steam_id?: (order_by 
 
 
 /** Boolean expression to filter rows from the table "match_demo_sessions". All fields are combined with a logical 'AND'. */
-export interface match_demo_sessions_bool_exp {_and?: (match_demo_sessions_bool_exp[] | null),_not?: (match_demo_sessions_bool_exp | null),_or?: (match_demo_sessions_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),error_message?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),k8s_job_name?: (String_comparison_exp | null),last_activity_at?: (timestamptz_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_demo?: (match_map_demos_bool_exp | null),match_map_demo_id?: (uuid_comparison_exp | null),match_map_id?: (uuid_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),steam_account_id?: (uuid_comparison_exp | null),stream_url?: (String_comparison_exp | null),watcher?: (players_bool_exp | null),watcher_steam_id?: (bigint_comparison_exp | null)}
+export interface match_demo_sessions_bool_exp {_and?: (match_demo_sessions_bool_exp[] | null),_not?: (match_demo_sessions_bool_exp | null),_or?: (match_demo_sessions_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),error_message?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),k8s_job_name?: (String_comparison_exp | null),last_activity_at?: (timestamptz_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_demo?: (match_map_demos_bool_exp | null),match_map_demo_id?: (uuid_comparison_exp | null),match_map_id?: (uuid_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),stream_url?: (String_comparison_exp | null),watcher?: (players_bool_exp | null),watcher_steam_id?: (bigint_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -30895,7 +30981,7 @@ export interface match_demo_sessions_inc_input {watcher_steam_id?: (Scalars['big
 
 
 /** input type for inserting data into table "match_demo_sessions" */
-export interface match_demo_sessions_insert_input {created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_activity_at?: (Scalars['timestamptz'] | null),last_status_at?: (Scalars['timestamptz'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_demo?: (match_map_demos_obj_rel_insert_input | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),steam_account_id?: (Scalars['uuid'] | null),stream_url?: (Scalars['String'] | null),watcher?: (players_obj_rel_insert_input | null),watcher_steam_id?: (Scalars['bigint'] | null)}
+export interface match_demo_sessions_insert_input {created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_activity_at?: (Scalars['timestamptz'] | null),last_status_at?: (Scalars['timestamptz'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_demo?: (match_map_demos_obj_rel_insert_input | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),watcher?: (players_obj_rel_insert_input | null),watcher_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate max on columns */
@@ -30911,7 +30997,6 @@ export interface match_demo_sessions_max_fieldsGenqlSelection{
     match_map_demo_id?: boolean | number
     match_map_id?: boolean | number
     status?: boolean | number
-    steam_account_id?: boolean | number
     stream_url?: boolean | number
     watcher_steam_id?: boolean | number
     __typename?: boolean | number
@@ -30920,7 +31005,7 @@ export interface match_demo_sessions_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "match_demo_sessions" */
-export interface match_demo_sessions_max_order_by {created_at?: (order_by | null),error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_activity_at?: (order_by | null),last_status_at?: (order_by | null),match_id?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),status?: (order_by | null),steam_account_id?: (order_by | null),stream_url?: (order_by | null),watcher_steam_id?: (order_by | null)}
+export interface match_demo_sessions_max_order_by {created_at?: (order_by | null),error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_activity_at?: (order_by | null),last_status_at?: (order_by | null),match_id?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),status?: (order_by | null),stream_url?: (order_by | null),watcher_steam_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -30936,7 +31021,6 @@ export interface match_demo_sessions_min_fieldsGenqlSelection{
     match_map_demo_id?: boolean | number
     match_map_id?: boolean | number
     status?: boolean | number
-    steam_account_id?: boolean | number
     stream_url?: boolean | number
     watcher_steam_id?: boolean | number
     __typename?: boolean | number
@@ -30945,7 +31029,7 @@ export interface match_demo_sessions_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "match_demo_sessions" */
-export interface match_demo_sessions_min_order_by {created_at?: (order_by | null),error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_activity_at?: (order_by | null),last_status_at?: (order_by | null),match_id?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),status?: (order_by | null),steam_account_id?: (order_by | null),stream_url?: (order_by | null),watcher_steam_id?: (order_by | null)}
+export interface match_demo_sessions_min_order_by {created_at?: (order_by | null),error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_activity_at?: (order_by | null),last_status_at?: (order_by | null),match_id?: (order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),status?: (order_by | null),stream_url?: (order_by | null),watcher_steam_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_demo_sessions" */
@@ -30964,7 +31048,7 @@ export interface match_demo_sessions_on_conflict {constraint: match_demo_session
 
 
 /** Ordering options when selecting data from "match_demo_sessions". */
-export interface match_demo_sessions_order_by {created_at?: (order_by | null),error_message?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_activity_at?: (order_by | null),last_status_at?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_demo?: (match_map_demos_order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),steam_account_id?: (order_by | null),stream_url?: (order_by | null),watcher?: (players_order_by | null),watcher_steam_id?: (order_by | null)}
+export interface match_demo_sessions_order_by {created_at?: (order_by | null),error_message?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),last_activity_at?: (order_by | null),last_status_at?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_demo?: (match_map_demos_order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),stream_url?: (order_by | null),watcher?: (players_order_by | null),watcher_steam_id?: (order_by | null)}
 
 
 /** primary key columns input for table: match_demo_sessions */
@@ -30976,7 +31060,7 @@ export interface match_demo_sessions_prepend_input {status_history?: (Scalars['j
 
 
 /** input type for updating data in table "match_demo_sessions" */
-export interface match_demo_sessions_set_input {created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_activity_at?: (Scalars['timestamptz'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),steam_account_id?: (Scalars['uuid'] | null),stream_url?: (Scalars['String'] | null),watcher_steam_id?: (Scalars['bigint'] | null)}
+export interface match_demo_sessions_set_input {created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_activity_at?: (Scalars['timestamptz'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),watcher_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -31024,7 +31108,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_demo_sessions_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_activity_at?: (Scalars['timestamptz'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),steam_account_id?: (Scalars['uuid'] | null),stream_url?: (Scalars['String'] | null),watcher_steam_id?: (Scalars['bigint'] | null)}
+export interface match_demo_sessions_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),last_activity_at?: (Scalars['timestamptz'] | null),last_status_at?: (Scalars['timestamptz'] | null),match_id?: (Scalars['uuid'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),watcher_steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate sum on columns */
@@ -33972,7 +34056,6 @@ export interface match_streamsGenqlSelection{
     status_history?: { __args: {
     /** JSON select path */
     path?: (Scalars['String'] | null)} } | boolean | number
-    steam_account_id?: boolean | number
     stream_url?: boolean | number
     title?: boolean | number
     __typename?: boolean | number
@@ -34042,7 +34125,7 @@ export interface match_streams_avg_order_by {priority?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "match_streams". All fields are combined with a logical 'AND'. */
-export interface match_streams_bool_exp {_and?: (match_streams_bool_exp[] | null),_not?: (match_streams_bool_exp | null),_or?: (match_streams_bool_exp[] | null),autodirector?: (Boolean_comparison_exp | null),error_message?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_game_streamer?: (Boolean_comparison_exp | null),is_live?: (Boolean_comparison_exp | null),k8s_service_name?: (String_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),link?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),mode?: (String_comparison_exp | null),priority?: (Int_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),steam_account_id?: (uuid_comparison_exp | null),stream_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null)}
+export interface match_streams_bool_exp {_and?: (match_streams_bool_exp[] | null),_not?: (match_streams_bool_exp | null),_or?: (match_streams_bool_exp[] | null),autodirector?: (Boolean_comparison_exp | null),error_message?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_game_streamer?: (Boolean_comparison_exp | null),is_live?: (Boolean_comparison_exp | null),k8s_service_name?: (String_comparison_exp | null),last_status_at?: (timestamptz_comparison_exp | null),link?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),mode?: (String_comparison_exp | null),priority?: (Int_comparison_exp | null),status?: (String_comparison_exp | null),status_history?: (jsonb_comparison_exp | null),stream_url?: (String_comparison_exp | null),title?: (String_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -34062,7 +34145,7 @@ export interface match_streams_inc_input {priority?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "match_streams" */
-export interface match_streams_insert_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),k8s_service_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),mode?: (Scalars['String'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),steam_account_id?: (Scalars['uuid'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
+export interface match_streams_insert_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),k8s_service_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),mode?: (Scalars['String'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -34077,7 +34160,6 @@ export interface match_streams_max_fieldsGenqlSelection{
     mode?: boolean | number
     priority?: boolean | number
     status?: boolean | number
-    steam_account_id?: boolean | number
     stream_url?: boolean | number
     title?: boolean | number
     __typename?: boolean | number
@@ -34086,7 +34168,7 @@ export interface match_streams_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "match_streams" */
-export interface match_streams_max_order_by {error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_service_name?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match_id?: (order_by | null),mode?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),steam_account_id?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
+export interface match_streams_max_order_by {error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_service_name?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match_id?: (order_by | null),mode?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -34101,7 +34183,6 @@ export interface match_streams_min_fieldsGenqlSelection{
     mode?: boolean | number
     priority?: boolean | number
     status?: boolean | number
-    steam_account_id?: boolean | number
     stream_url?: boolean | number
     title?: boolean | number
     __typename?: boolean | number
@@ -34110,7 +34191,7 @@ export interface match_streams_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "match_streams" */
-export interface match_streams_min_order_by {error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_service_name?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match_id?: (order_by | null),mode?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),steam_account_id?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
+export interface match_streams_min_order_by {error_message?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),k8s_service_name?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match_id?: (order_by | null),mode?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_streams" */
@@ -34129,7 +34210,7 @@ export interface match_streams_on_conflict {constraint: match_streams_constraint
 
 
 /** Ordering options when selecting data from "match_streams". */
-export interface match_streams_order_by {autodirector?: (order_by | null),error_message?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),is_game_streamer?: (order_by | null),is_live?: (order_by | null),k8s_service_name?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),mode?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),steam_account_id?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
+export interface match_streams_order_by {autodirector?: (order_by | null),error_message?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),is_game_streamer?: (order_by | null),is_live?: (order_by | null),k8s_service_name?: (order_by | null),last_status_at?: (order_by | null),link?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),mode?: (order_by | null),priority?: (order_by | null),status?: (order_by | null),status_history?: (order_by | null),stream_url?: (order_by | null),title?: (order_by | null)}
 
 
 /** primary key columns input for table: match_streams */
@@ -34141,7 +34222,7 @@ export interface match_streams_prepend_input {status_history?: (Scalars['jsonb']
 
 
 /** input type for updating data in table "match_streams" */
-export interface match_streams_set_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),k8s_service_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),mode?: (Scalars['String'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),steam_account_id?: (Scalars['uuid'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
+export interface match_streams_set_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),k8s_service_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),mode?: (Scalars['String'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -34189,7 +34270,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_streams_stream_cursor_value_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),k8s_service_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),mode?: (Scalars['String'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),steam_account_id?: (Scalars['uuid'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
+export interface match_streams_stream_cursor_value_input {autodirector?: (Scalars['Boolean'] | null),error_message?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_game_streamer?: (Scalars['Boolean'] | null),is_live?: (Scalars['Boolean'] | null),k8s_service_name?: (Scalars['String'] | null),last_status_at?: (Scalars['timestamptz'] | null),link?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),mode?: (Scalars['String'] | null),priority?: (Scalars['Int'] | null),status?: (Scalars['String'] | null),status_history?: (Scalars['jsonb'] | null),stream_url?: (Scalars['String'] | null),title?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -35847,6 +35928,12 @@ export interface mutation_rootGenqlSelection{
     where: settings_bool_exp} })
     /** delete single row from the table: "settings" */
     delete_settings_by_pk?: (settingsGenqlSelection & { __args: {name: Scalars['String']} })
+    /** delete data from the table: "steam_account_claims" */
+    delete_steam_account_claims?: (steam_account_claims_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: steam_account_claims_bool_exp} })
+    /** delete single row from the table: "steam_account_claims" */
+    delete_steam_account_claims_by_pk?: (steam_account_claimsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "steam_accounts" */
     delete_steam_accounts?: (steam_accounts_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -36902,6 +36989,18 @@ export interface mutation_rootGenqlSelection{
     object: settings_insert_input, 
     /** upsert condition */
     on_conflict?: (settings_on_conflict | null)} })
+    /** insert data into the table: "steam_account_claims" */
+    insert_steam_account_claims?: (steam_account_claims_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: steam_account_claims_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (steam_account_claims_on_conflict | null)} })
+    /** insert a single row into the table: "steam_account_claims" */
+    insert_steam_account_claims_one?: (steam_account_claimsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: steam_account_claims_insert_input, 
+    /** upsert condition */
+    on_conflict?: (steam_account_claims_on_conflict | null)} })
     /** insert data into the table: "steam_accounts" */
     insert_steam_accounts?: (steam_accounts_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -38634,6 +38733,20 @@ export interface mutation_rootGenqlSelection{
     update_settings_many?: (settings_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: settings_updates[]} })
+    /** update data of the table: "steam_account_claims" */
+    update_steam_account_claims?: (steam_account_claims_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (steam_account_claims_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: steam_account_claims_bool_exp} })
+    /** update single row of the table: "steam_account_claims" */
+    update_steam_account_claims_by_pk?: (steam_account_claimsGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (steam_account_claims_set_input | null), pk_columns: steam_account_claims_pk_columns_input} })
+    /** update multiples rows of table: "steam_account_claims" */
+    update_steam_account_claims_many?: (steam_account_claims_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: steam_account_claims_updates[]} })
     /** update data of the table: "steam_accounts" */
     update_steam_accounts?: (steam_accounts_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -49633,6 +49746,32 @@ export interface query_rootGenqlSelection{
     where?: (settings_bool_exp | null)} })
     /** fetch data from the table: "settings" using primary key columns */
     settings_by_pk?: (settingsGenqlSelection & { __args: {name: Scalars['String']} })
+    /** fetch data from the table: "steam_account_claims" */
+    steam_account_claims?: (steam_account_claimsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (steam_account_claims_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (steam_account_claims_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (steam_account_claims_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "steam_account_claims" */
+    steam_account_claims_aggregate?: (steam_account_claims_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (steam_account_claims_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (steam_account_claims_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (steam_account_claims_bool_exp | null)} })
+    /** fetch data from the table: "steam_account_claims" using primary key columns */
+    steam_account_claims_by_pk?: (steam_account_claimsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "steam_accounts" */
     steam_accounts?: (steam_accountsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -51326,85 +51465,174 @@ _set?: (settings_set_input | null),
 where: settings_bool_exp}
 
 
+/** columns and relationships of "steam_account_claims" */
+export interface steam_account_claimsGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    k8s_job_name?: boolean | number
+    /** An object relationship */
+    node?: game_server_nodesGenqlSelection
+    node_id?: boolean | number
+    purpose?: boolean | number
+    /** An object relationship */
+    steam_account?: steam_accountsGenqlSelection
+    steam_account_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "steam_account_claims" */
+export interface steam_account_claims_aggregateGenqlSelection{
+    aggregate?: steam_account_claims_aggregate_fieldsGenqlSelection
+    nodes?: steam_account_claimsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface steam_account_claims_aggregate_bool_exp {count?: (steam_account_claims_aggregate_bool_exp_count | null)}
+
+export interface steam_account_claims_aggregate_bool_exp_count {arguments?: (steam_account_claims_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (steam_account_claims_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "steam_account_claims" */
+export interface steam_account_claims_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (steam_account_claims_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: steam_account_claims_max_fieldsGenqlSelection
+    min?: steam_account_claims_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "steam_account_claims" */
+export interface steam_account_claims_aggregate_order_by {count?: (order_by | null),max?: (steam_account_claims_max_order_by | null),min?: (steam_account_claims_min_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "steam_account_claims" */
+export interface steam_account_claims_arr_rel_insert_input {data: steam_account_claims_insert_input[],
+/** upsert condition */
+on_conflict?: (steam_account_claims_on_conflict | null)}
+
+
+/** Boolean expression to filter rows from the table "steam_account_claims". All fields are combined with a logical 'AND'. */
+export interface steam_account_claims_bool_exp {_and?: (steam_account_claims_bool_exp[] | null),_not?: (steam_account_claims_bool_exp | null),_or?: (steam_account_claims_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),k8s_job_name?: (String_comparison_exp | null),node?: (game_server_nodes_bool_exp | null),node_id?: (String_comparison_exp | null),purpose?: (String_comparison_exp | null),steam_account?: (steam_accounts_bool_exp | null),steam_account_id?: (uuid_comparison_exp | null)}
+
+
+/** input type for inserting data into table "steam_account_claims" */
+export interface steam_account_claims_insert_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),node?: (game_server_nodes_obj_rel_insert_input | null),node_id?: (Scalars['String'] | null),purpose?: (Scalars['String'] | null),steam_account?: (steam_accounts_obj_rel_insert_input | null),steam_account_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate max on columns */
+export interface steam_account_claims_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    k8s_job_name?: boolean | number
+    node_id?: boolean | number
+    purpose?: boolean | number
+    steam_account_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "steam_account_claims" */
+export interface steam_account_claims_max_order_by {created_at?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),node_id?: (order_by | null),purpose?: (order_by | null),steam_account_id?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface steam_account_claims_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    k8s_job_name?: boolean | number
+    node_id?: boolean | number
+    purpose?: boolean | number
+    steam_account_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "steam_account_claims" */
+export interface steam_account_claims_min_order_by {created_at?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),node_id?: (order_by | null),purpose?: (order_by | null),steam_account_id?: (order_by | null)}
+
+
+/** response of any mutation on the table "steam_account_claims" */
+export interface steam_account_claims_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: steam_account_claimsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "steam_account_claims" */
+export interface steam_account_claims_on_conflict {constraint: steam_account_claims_constraint,update_columns?: steam_account_claims_update_column[],where?: (steam_account_claims_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "steam_account_claims". */
+export interface steam_account_claims_order_by {created_at?: (order_by | null),id?: (order_by | null),k8s_job_name?: (order_by | null),node?: (game_server_nodes_order_by | null),node_id?: (order_by | null),purpose?: (order_by | null),steam_account?: (steam_accounts_order_by | null),steam_account_id?: (order_by | null)}
+
+
+/** primary key columns input for table: steam_account_claims */
+export interface steam_account_claims_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "steam_account_claims" */
+export interface steam_account_claims_set_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),node_id?: (Scalars['String'] | null),purpose?: (Scalars['String'] | null),steam_account_id?: (Scalars['uuid'] | null)}
+
+
+/** Streaming cursor of the table "steam_account_claims" */
+export interface steam_account_claims_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: steam_account_claims_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface steam_account_claims_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),k8s_job_name?: (Scalars['String'] | null),node_id?: (Scalars['String'] | null),purpose?: (Scalars['String'] | null),steam_account_id?: (Scalars['uuid'] | null)}
+
+export interface steam_account_claims_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (steam_account_claims_set_input | null),
+/** filter the rows which have to be updated */
+where: steam_account_claims_bool_exp}
+
+
 /** columns and relationships of "steam_accounts" */
 export interface steam_accountsGenqlSelection{
     /** An array relationship */
-    clip_render_jobs?: (clip_render_jobsGenqlSelection & { __args?: {
+    claims?: (steam_account_claimsGenqlSelection & { __args?: {
     /** distinct select on columns */
-    distinct_on?: (clip_render_jobs_select_column[] | null), 
+    distinct_on?: (steam_account_claims_select_column[] | null), 
     /** limit the number of rows returned */
     limit?: (Scalars['Int'] | null), 
     /** skip the first n rows. Use only with order_by */
     offset?: (Scalars['Int'] | null), 
     /** sort the rows by one or more columns */
-    order_by?: (clip_render_jobs_order_by[] | null), 
+    order_by?: (steam_account_claims_order_by[] | null), 
     /** filter the rows returned */
-    where?: (clip_render_jobs_bool_exp | null)} })
+    where?: (steam_account_claims_bool_exp | null)} })
     /** An aggregate relationship */
-    clip_render_jobs_aggregate?: (clip_render_jobs_aggregateGenqlSelection & { __args?: {
+    claims_aggregate?: (steam_account_claims_aggregateGenqlSelection & { __args?: {
     /** distinct select on columns */
-    distinct_on?: (clip_render_jobs_select_column[] | null), 
+    distinct_on?: (steam_account_claims_select_column[] | null), 
     /** limit the number of rows returned */
     limit?: (Scalars['Int'] | null), 
     /** skip the first n rows. Use only with order_by */
     offset?: (Scalars['Int'] | null), 
     /** sort the rows by one or more columns */
-    order_by?: (clip_render_jobs_order_by[] | null), 
+    order_by?: (steam_account_claims_order_by[] | null), 
     /** filter the rows returned */
-    where?: (clip_render_jobs_bool_exp | null)} })
+    where?: (steam_account_claims_bool_exp | null)} })
     created_at?: boolean | number
     id?: boolean | number
     /** An object relationship */
     last_node?: game_server_nodesGenqlSelection
     last_node_id?: boolean | number
-    /** fetch data from the table: "match_demo_sessions" */
-    match_demo_sessions?: (match_demo_sessionsGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (match_demo_sessions_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (match_demo_sessions_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (match_demo_sessions_bool_exp | null)} })
-    /** fetch aggregated fields from the table: "match_demo_sessions" */
-    match_demo_sessions_aggregate?: (match_demo_sessions_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (match_demo_sessions_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (match_demo_sessions_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (match_demo_sessions_bool_exp | null)} })
-    /** fetch data from the table: "match_streams" */
-    match_streams?: (match_streamsGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (match_streams_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (match_streams_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (match_streams_bool_exp | null)} })
-    /** fetch aggregated fields from the table: "match_streams" */
-    match_streams_aggregate?: (match_streams_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (match_streams_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (match_streams_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (match_streams_bool_exp | null)} })
     password?: boolean | number
     updated_at?: boolean | number
     username?: boolean | number
@@ -51433,11 +51661,11 @@ export interface steam_accounts_aggregate_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "steam_accounts". All fields are combined with a logical 'AND'. */
-export interface steam_accounts_bool_exp {_and?: (steam_accounts_bool_exp[] | null),_not?: (steam_accounts_bool_exp | null),_or?: (steam_accounts_bool_exp[] | null),clip_render_jobs?: (clip_render_jobs_bool_exp | null),clip_render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),last_node?: (game_server_nodes_bool_exp | null),last_node_id?: (String_comparison_exp | null),match_demo_sessions?: (match_demo_sessions_bool_exp | null),match_demo_sessions_aggregate?: (match_demo_sessions_aggregate_bool_exp | null),match_streams?: (match_streams_bool_exp | null),match_streams_aggregate?: (match_streams_aggregate_bool_exp | null),password?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),username?: (String_comparison_exp | null)}
+export interface steam_accounts_bool_exp {_and?: (steam_accounts_bool_exp[] | null),_not?: (steam_accounts_bool_exp | null),_or?: (steam_accounts_bool_exp[] | null),claims?: (steam_account_claims_bool_exp | null),claims_aggregate?: (steam_account_claims_aggregate_bool_exp | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),last_node?: (game_server_nodes_bool_exp | null),last_node_id?: (String_comparison_exp | null),password?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),username?: (String_comparison_exp | null)}
 
 
 /** input type for inserting data into table "steam_accounts" */
-export interface steam_accounts_insert_input {clip_render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),last_node?: (game_server_nodes_obj_rel_insert_input | null),last_node_id?: (Scalars['String'] | null),match_demo_sessions?: (match_demo_sessions_arr_rel_insert_input | null),match_streams?: (match_streams_arr_rel_insert_input | null),password?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),username?: (Scalars['String'] | null)}
+export interface steam_accounts_insert_input {claims?: (steam_account_claims_arr_rel_insert_input | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),last_node?: (game_server_nodes_obj_rel_insert_input | null),last_node_id?: (Scalars['String'] | null),password?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),username?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -51477,12 +51705,18 @@ export interface steam_accounts_mutation_responseGenqlSelection{
 }
 
 
+/** input type for inserting object relation for remote table "steam_accounts" */
+export interface steam_accounts_obj_rel_insert_input {data: steam_accounts_insert_input,
+/** upsert condition */
+on_conflict?: (steam_accounts_on_conflict | null)}
+
+
 /** on_conflict condition type for table "steam_accounts" */
 export interface steam_accounts_on_conflict {constraint: steam_accounts_constraint,update_columns?: steam_accounts_update_column[],where?: (steam_accounts_bool_exp | null)}
 
 
 /** Ordering options when selecting data from "steam_accounts". */
-export interface steam_accounts_order_by {clip_render_jobs_aggregate?: (clip_render_jobs_aggregate_order_by | null),created_at?: (order_by | null),id?: (order_by | null),last_node?: (game_server_nodes_order_by | null),last_node_id?: (order_by | null),match_demo_sessions_aggregate?: (match_demo_sessions_aggregate_order_by | null),match_streams_aggregate?: (match_streams_aggregate_order_by | null),password?: (order_by | null),updated_at?: (order_by | null),username?: (order_by | null)}
+export interface steam_accounts_order_by {claims_aggregate?: (steam_account_claims_aggregate_order_by | null),created_at?: (order_by | null),id?: (order_by | null),last_node?: (game_server_nodes_order_by | null),last_node_id?: (order_by | null),password?: (order_by | null),updated_at?: (order_by | null),username?: (order_by | null)}
 
 
 /** primary key columns input for table: steam_accounts */
@@ -54347,6 +54581,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (settings_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (settings_bool_exp | null)} })
+    /** fetch data from the table: "steam_account_claims" */
+    steam_account_claims?: (steam_account_claimsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (steam_account_claims_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (steam_account_claims_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (steam_account_claims_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "steam_account_claims" */
+    steam_account_claims_aggregate?: (steam_account_claims_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (steam_account_claims_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (steam_account_claims_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (steam_account_claims_bool_exp | null)} })
+    /** fetch data from the table: "steam_account_claims" using primary key columns */
+    steam_account_claims_by_pk?: (steam_account_claimsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "steam_account_claims" */
+    steam_account_claims_stream?: (steam_account_claimsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (steam_account_claims_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (steam_account_claims_bool_exp | null)} })
     /** fetch data from the table: "steam_accounts" */
     steam_accounts?: (steam_accountsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -72904,6 +73172,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const steam_account_claims_possibleTypes: string[] = ['steam_account_claims']
+    export const issteam_account_claims = (obj?: { __typename?: any } | null): obj is steam_account_claims => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "issteam_account_claims"')
+      return steam_account_claims_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const steam_account_claims_aggregate_possibleTypes: string[] = ['steam_account_claims_aggregate']
+    export const issteam_account_claims_aggregate = (obj?: { __typename?: any } | null): obj is steam_account_claims_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "issteam_account_claims_aggregate"')
+      return steam_account_claims_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const steam_account_claims_aggregate_fields_possibleTypes: string[] = ['steam_account_claims_aggregate_fields']
+    export const issteam_account_claims_aggregate_fields = (obj?: { __typename?: any } | null): obj is steam_account_claims_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "issteam_account_claims_aggregate_fields"')
+      return steam_account_claims_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const steam_account_claims_max_fields_possibleTypes: string[] = ['steam_account_claims_max_fields']
+    export const issteam_account_claims_max_fields = (obj?: { __typename?: any } | null): obj is steam_account_claims_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "issteam_account_claims_max_fields"')
+      return steam_account_claims_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const steam_account_claims_min_fields_possibleTypes: string[] = ['steam_account_claims_min_fields']
+    export const issteam_account_claims_min_fields = (obj?: { __typename?: any } | null): obj is steam_account_claims_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "issteam_account_claims_min_fields"')
+      return steam_account_claims_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const steam_account_claims_mutation_response_possibleTypes: string[] = ['steam_account_claims_mutation_response']
+    export const issteam_account_claims_mutation_response = (obj?: { __typename?: any } | null): obj is steam_account_claims_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "issteam_account_claims_mutation_response"')
+      return steam_account_claims_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const steam_accounts_possibleTypes: string[] = ['steam_accounts']
     export const issteam_accounts = (obj?: { __typename?: any } | null): obj is steam_accounts => {
       if (!obj?.__typename) throw new Error('__typename is missing in "issteam_accounts"')
@@ -77142,7 +77458,6 @@ export const enumClipRenderJobsSelectColumn = {
    spec: 'spec' as const,
    status: 'status' as const,
    status_history: 'status_history' as const,
-   steam_account_id: 'steam_account_id' as const,
    user_steam_id: 'user_steam_id' as const
 }
 
@@ -77171,7 +77486,6 @@ export const enumClipRenderJobsUpdateColumn = {
    spec: 'spec' as const,
    status: 'status' as const,
    status_history: 'status_history' as const,
-   steam_account_id: 'steam_account_id' as const,
    user_steam_id: 'user_steam_id' as const
 }
 
@@ -78128,7 +78442,6 @@ export const enumMatchDemoSessionsSelectColumn = {
    match_map_id: 'match_map_id' as const,
    status: 'status' as const,
    status_history: 'status_history' as const,
-   steam_account_id: 'steam_account_id' as const,
    stream_url: 'stream_url' as const,
    watcher_steam_id: 'watcher_steam_id' as const
 }
@@ -78146,7 +78459,6 @@ export const enumMatchDemoSessionsUpdateColumn = {
    match_map_id: 'match_map_id' as const,
    status: 'status' as const,
    status_history: 'status_history' as const,
-   steam_account_id: 'steam_account_id' as const,
    stream_url: 'stream_url' as const,
    watcher_steam_id: 'watcher_steam_id' as const
 }
@@ -78494,7 +78806,6 @@ export const enumMatchStreamsSelectColumn = {
    priority: 'priority' as const,
    status: 'status' as const,
    status_history: 'status_history' as const,
-   steam_account_id: 'steam_account_id' as const,
    stream_url: 'stream_url' as const,
    title: 'title' as const
 }
@@ -78526,7 +78837,6 @@ export const enumMatchStreamsUpdateColumn = {
    priority: 'priority' as const,
    status: 'status' as const,
    status_history: 'status_history' as const,
-   steam_account_id: 'steam_account_id' as const,
    stream_url: 'stream_url' as const,
    title: 'title' as const
 }
@@ -79603,6 +79913,29 @@ export const enumSettingsSelectColumn = {
 export const enumSettingsUpdateColumn = {
    name: 'name' as const,
    value: 'value' as const
+}
+
+export const enumSteamAccountClaimsConstraint = {
+   steam_account_claims_k8s_job_name_key: 'steam_account_claims_k8s_job_name_key' as const,
+   steam_account_claims_pkey: 'steam_account_claims_pkey' as const
+}
+
+export const enumSteamAccountClaimsSelectColumn = {
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   k8s_job_name: 'k8s_job_name' as const,
+   node_id: 'node_id' as const,
+   purpose: 'purpose' as const,
+   steam_account_id: 'steam_account_id' as const
+}
+
+export const enumSteamAccountClaimsUpdateColumn = {
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   k8s_job_name: 'k8s_job_name' as const,
+   node_id: 'node_id' as const,
+   purpose: 'purpose' as const,
+   steam_account_id: 'steam_account_id' as const
 }
 
 export const enumSteamAccountsConstraint = {

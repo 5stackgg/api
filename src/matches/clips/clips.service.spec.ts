@@ -24,7 +24,9 @@ describe("ClipsService", () => {
       logger as any,
       hasura as any,
       {} as any,
+      {} as any,
       gameStreamer as any,
+      { release: jest.fn() } as any,
       batchQueue as any,
     );
   });

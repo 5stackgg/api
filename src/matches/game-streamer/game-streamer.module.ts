@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { GameStreamerService } from "./game-streamer.service";
+import { SteamAccountService } from "./steam-account.service";
 import { GameStreamerController } from "./game-streamer.controller";
 import { DemoSessionsController } from "./demo-sessions.controller";
 import { GameServerNodeBakeController } from "./game-server-node-bake.controller";
@@ -35,10 +36,15 @@ import { loggerFactory } from "../../utilities/LoggerFactory";
   ],
   providers: [
     GameStreamerService,
+    SteamAccountService,
     DemoSessionWatcherService,
     DemoSessionWatcherGateway,
     loggerFactory(),
   ],
-  exports: [GameStreamerService, DemoSessionWatcherService],
+  exports: [
+    GameStreamerService,
+    SteamAccountService,
+    DemoSessionWatcherService,
+  ],
 })
 export class GameStreamerModule {}
