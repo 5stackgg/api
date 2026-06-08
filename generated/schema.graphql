@@ -1398,7 +1398,6 @@ type clip_render_jobs {
     """JSON select path"""
     path: String
   ): jsonb!
-  steam_account_id: uuid
 
   """An object relationship"""
   user: players
@@ -1533,7 +1532,6 @@ input clip_render_jobs_bool_exp {
   spec: jsonb_comparison_exp
   status: String_comparison_exp
   status_history: jsonb_comparison_exp
-  steam_account_id: uuid_comparison_exp
   user: players_bool_exp
   user_steam_id: bigint_comparison_exp
 }
@@ -1605,7 +1603,6 @@ input clip_render_jobs_insert_input {
   spec: jsonb
   status: String
   status_history: jsonb
-  steam_account_id: uuid
   user: players_obj_rel_insert_input
   user_steam_id: bigint
 }
@@ -1625,7 +1622,6 @@ type clip_render_jobs_max_fields {
   session_token: String
   sort_index: Int
   status: String
-  steam_account_id: uuid
   user_steam_id: bigint
 }
 
@@ -1646,7 +1642,6 @@ input clip_render_jobs_max_order_by {
   session_token: order_by
   sort_index: order_by
   status: order_by
-  steam_account_id: order_by
   user_steam_id: order_by
 }
 
@@ -1665,7 +1660,6 @@ type clip_render_jobs_min_fields {
   session_token: String
   sort_index: Int
   status: String
-  steam_account_id: uuid
   user_steam_id: bigint
 }
 
@@ -1686,7 +1680,6 @@ input clip_render_jobs_min_order_by {
   session_token: order_by
   sort_index: order_by
   status: order_by
-  steam_account_id: order_by
   user_steam_id: order_by
 }
 
@@ -1732,7 +1725,6 @@ input clip_render_jobs_order_by {
   spec: order_by
   status: order_by
   status_history: order_by
-  steam_account_id: order_by
   user: players_order_by
   user_steam_id: order_by
 }
@@ -1801,9 +1793,6 @@ enum clip_render_jobs_select_column {
   status_history
 
   """column name"""
-  steam_account_id
-
-  """column name"""
   user_steam_id
 }
 
@@ -1843,7 +1832,6 @@ input clip_render_jobs_set_input {
   spec: jsonb
   status: String
   status_history: jsonb
-  steam_account_id: uuid
   user_steam_id: bigint
 }
 
@@ -1924,7 +1912,6 @@ input clip_render_jobs_stream_cursor_value_input {
   spec: jsonb
   status: String
   status_history: jsonb
-  steam_account_id: uuid
   user_steam_id: bigint
 }
 
@@ -1995,9 +1982,6 @@ enum clip_render_jobs_update_column {
 
   """column name"""
   status_history
-
-  """column name"""
-  steam_account_id
 
   """column name"""
   user_steam_id
@@ -12571,7 +12555,6 @@ type match_demo_sessions {
     """JSON select path"""
     path: String
   ): jsonb!
-  steam_account_id: uuid
   stream_url: String
 
   """An object relationship"""
@@ -12682,7 +12665,6 @@ input match_demo_sessions_bool_exp {
   match_map_id: uuid_comparison_exp
   status: String_comparison_exp
   status_history: jsonb_comparison_exp
-  steam_account_id: uuid_comparison_exp
   stream_url: String_comparison_exp
   watcher: players_bool_exp
   watcher_steam_id: bigint_comparison_exp
@@ -12751,7 +12733,6 @@ input match_demo_sessions_insert_input {
   match_map_id: uuid
   status: String
   status_history: jsonb
-  steam_account_id: uuid
   stream_url: String
   watcher: players_obj_rel_insert_input
   watcher_steam_id: bigint
@@ -12770,7 +12751,6 @@ type match_demo_sessions_max_fields {
   match_map_demo_id: uuid
   match_map_id: uuid
   status: String
-  steam_account_id: uuid
   stream_url: String
   watcher_steam_id: bigint
 }
@@ -12790,7 +12770,6 @@ input match_demo_sessions_max_order_by {
   match_map_demo_id: order_by
   match_map_id: order_by
   status: order_by
-  steam_account_id: order_by
   stream_url: order_by
   watcher_steam_id: order_by
 }
@@ -12808,7 +12787,6 @@ type match_demo_sessions_min_fields {
   match_map_demo_id: uuid
   match_map_id: uuid
   status: String
-  steam_account_id: uuid
   stream_url: String
   watcher_steam_id: bigint
 }
@@ -12828,7 +12806,6 @@ input match_demo_sessions_min_order_by {
   match_map_demo_id: order_by
   match_map_id: order_by
   status: order_by
-  steam_account_id: order_by
   stream_url: order_by
   watcher_steam_id: order_by
 }
@@ -12871,7 +12848,6 @@ input match_demo_sessions_order_by {
   match_map_id: order_by
   status: order_by
   status_history: order_by
-  steam_account_id: order_by
   stream_url: order_by
   watcher: players_order_by
   watcher_steam_id: order_by
@@ -12928,9 +12904,6 @@ enum match_demo_sessions_select_column {
   status_history
 
   """column name"""
-  steam_account_id
-
-  """column name"""
   stream_url
 
   """column name"""
@@ -12953,7 +12926,6 @@ input match_demo_sessions_set_input {
   match_map_id: uuid
   status: String
   status_history: jsonb
-  steam_account_id: uuid
   stream_url: String
   watcher_steam_id: bigint
 }
@@ -13019,7 +12991,6 @@ input match_demo_sessions_stream_cursor_value_input {
   match_map_id: uuid
   status: String
   status_history: jsonb
-  steam_account_id: uuid
   stream_url: String
   watcher_steam_id: bigint
 }
@@ -13075,9 +13046,6 @@ enum match_demo_sessions_update_column {
 
   """column name"""
   status_history
-
-  """column name"""
-  steam_account_id
 
   """column name"""
   stream_url
@@ -18718,7 +18686,6 @@ type match_streams {
     """JSON select path"""
     path: String
   ): jsonb!
-  steam_account_id: uuid
   stream_url: String
   title: String!
 }
@@ -18842,7 +18809,6 @@ input match_streams_bool_exp {
   priority: Int_comparison_exp
   status: String_comparison_exp
   status_history: jsonb_comparison_exp
-  steam_account_id: uuid_comparison_exp
   stream_url: String_comparison_exp
   title: String_comparison_exp
 }
@@ -18905,7 +18871,6 @@ input match_streams_insert_input {
   priority: Int
   status: String
   status_history: jsonb
-  steam_account_id: uuid
   stream_url: String
   title: String
 }
@@ -18922,7 +18887,6 @@ type match_streams_max_fields {
   mode: String
   priority: Int
   status: String
-  steam_account_id: uuid
   stream_url: String
   title: String
 }
@@ -18941,7 +18905,6 @@ input match_streams_max_order_by {
   mode: order_by
   priority: order_by
   status: order_by
-  steam_account_id: order_by
   stream_url: order_by
   title: order_by
 }
@@ -18958,7 +18921,6 @@ type match_streams_min_fields {
   mode: String
   priority: Int
   status: String
-  steam_account_id: uuid
   stream_url: String
   title: String
 }
@@ -18977,7 +18939,6 @@ input match_streams_min_order_by {
   mode: order_by
   priority: order_by
   status: order_by
-  steam_account_id: order_by
   stream_url: order_by
   title: order_by
 }
@@ -19020,7 +18981,6 @@ input match_streams_order_by {
   priority: order_by
   status: order_by
   status_history: order_by
-  steam_account_id: order_by
   stream_url: order_by
   title: order_by
 }
@@ -19082,9 +19042,6 @@ enum match_streams_select_column {
   status_history
 
   """column name"""
-  steam_account_id
-
-  """column name"""
   stream_url
 
   """column name"""
@@ -19137,7 +19094,6 @@ input match_streams_set_input {
   priority: Int
   status: String
   status_history: jsonb
-  steam_account_id: uuid
   stream_url: String
   title: String
 }
@@ -19205,7 +19161,6 @@ input match_streams_stream_cursor_value_input {
   priority: Int
   status: String
   status_history: jsonb
-  steam_account_id: uuid
   stream_url: String
   title: String
 }
@@ -19267,9 +19222,6 @@ enum match_streams_update_column {
 
   """column name"""
   status_history
-
-  """column name"""
-  steam_account_id
 
   """column name"""
   stream_url
@@ -22547,6 +22499,19 @@ type mutation_root {
   delete_settings_by_pk(name: String!): settings
 
   """
+  delete data from the table: "steam_account_claims"
+  """
+  delete_steam_account_claims(
+    """filter the rows which have to be deleted"""
+    where: steam_account_claims_bool_exp!
+  ): steam_account_claims_mutation_response
+
+  """
+  delete single row from the table: "steam_account_claims"
+  """
+  delete_steam_account_claims_by_pk(id: uuid!): steam_account_claims
+
+  """
   delete data from the table: "steam_accounts"
   """
   delete_steam_accounts(
@@ -24510,6 +24475,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: settings_on_conflict
   ): settings
+
+  """
+  insert data into the table: "steam_account_claims"
+  """
+  insert_steam_account_claims(
+    """the rows to be inserted"""
+    objects: [steam_account_claims_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: steam_account_claims_on_conflict
+  ): steam_account_claims_mutation_response
+
+  """
+  insert a single row into the table: "steam_account_claims"
+  """
+  insert_steam_account_claims_one(
+    """the row to be inserted"""
+    object: steam_account_claims_insert_input!
+
+    """upsert condition"""
+    on_conflict: steam_account_claims_on_conflict
+  ): steam_account_claims
 
   """
   insert data into the table: "steam_accounts"
@@ -27823,6 +27810,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [settings_updates!]!
   ): [settings_mutation_response]
+
+  """
+  update data of the table: "steam_account_claims"
+  """
+  update_steam_account_claims(
+    """sets the columns of the filtered rows to the given values"""
+    _set: steam_account_claims_set_input
+
+    """filter the rows which have to be updated"""
+    where: steam_account_claims_bool_exp!
+  ): steam_account_claims_mutation_response
+
+  """
+  update single row of the table: "steam_account_claims"
+  """
+  update_steam_account_claims_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: steam_account_claims_set_input
+    pk_columns: steam_account_claims_pk_columns_input!
+  ): steam_account_claims
+
+  """
+  update multiples rows of table: "steam_account_claims"
+  """
+  update_steam_account_claims_many(
+    """updates to execute, in order"""
+    updates: [steam_account_claims_updates!]!
+  ): [steam_account_claims_mutation_response]
 
   """
   update data of the table: "steam_accounts"
@@ -48265,6 +48280,51 @@ type query_root {
   settings_by_pk(name: String!): settings
 
   """
+  fetch data from the table: "steam_account_claims"
+  """
+  steam_account_claims(
+    """distinct select on columns"""
+    distinct_on: [steam_account_claims_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [steam_account_claims_order_by!]
+
+    """filter the rows returned"""
+    where: steam_account_claims_bool_exp
+  ): [steam_account_claims!]!
+
+  """
+  fetch aggregated fields from the table: "steam_account_claims"
+  """
+  steam_account_claims_aggregate(
+    """distinct select on columns"""
+    distinct_on: [steam_account_claims_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [steam_account_claims_order_by!]
+
+    """filter the rows returned"""
+    where: steam_account_claims_bool_exp
+  ): steam_account_claims_aggregate!
+
+  """
+  fetch data from the table: "steam_account_claims" using primary key columns
+  """
+  steam_account_claims_by_pk(id: uuid!): steam_account_claims
+
+  """
   fetch data from the table: "steam_accounts"
   """
   steam_accounts(
@@ -51282,13 +51342,292 @@ input settings_updates {
 }
 
 """
+columns and relationships of "steam_account_claims"
+"""
+type steam_account_claims {
+  created_at: timestamptz!
+  id: uuid!
+  k8s_job_name: String!
+
+  """An object relationship"""
+  node: game_server_nodes
+  node_id: String
+  purpose: String!
+
+  """An object relationship"""
+  steam_account: steam_accounts!
+  steam_account_id: uuid!
+}
+
+"""
+aggregated selection of "steam_account_claims"
+"""
+type steam_account_claims_aggregate {
+  aggregate: steam_account_claims_aggregate_fields
+  nodes: [steam_account_claims!]!
+}
+
+input steam_account_claims_aggregate_bool_exp {
+  count: steam_account_claims_aggregate_bool_exp_count
+}
+
+input steam_account_claims_aggregate_bool_exp_count {
+  arguments: [steam_account_claims_select_column!]
+  distinct: Boolean
+  filter: steam_account_claims_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "steam_account_claims"
+"""
+type steam_account_claims_aggregate_fields {
+  count(columns: [steam_account_claims_select_column!], distinct: Boolean): Int!
+  max: steam_account_claims_max_fields
+  min: steam_account_claims_min_fields
+}
+
+"""
+order by aggregate values of table "steam_account_claims"
+"""
+input steam_account_claims_aggregate_order_by {
+  count: order_by
+  max: steam_account_claims_max_order_by
+  min: steam_account_claims_min_order_by
+}
+
+"""
+input type for inserting array relation for remote table "steam_account_claims"
+"""
+input steam_account_claims_arr_rel_insert_input {
+  data: [steam_account_claims_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: steam_account_claims_on_conflict
+}
+
+"""
+Boolean expression to filter rows from the table "steam_account_claims". All fields are combined with a logical 'AND'.
+"""
+input steam_account_claims_bool_exp {
+  _and: [steam_account_claims_bool_exp!]
+  _not: steam_account_claims_bool_exp
+  _or: [steam_account_claims_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  id: uuid_comparison_exp
+  k8s_job_name: String_comparison_exp
+  node: game_server_nodes_bool_exp
+  node_id: String_comparison_exp
+  purpose: String_comparison_exp
+  steam_account: steam_accounts_bool_exp
+  steam_account_id: uuid_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "steam_account_claims"
+"""
+enum steam_account_claims_constraint {
+  """
+  unique or primary key constraint on columns "k8s_job_name"
+  """
+  steam_account_claims_k8s_job_name_key
+
+  """
+  unique or primary key constraint on columns "id"
+  """
+  steam_account_claims_pkey
+}
+
+"""
+input type for inserting data into table "steam_account_claims"
+"""
+input steam_account_claims_insert_input {
+  created_at: timestamptz
+  id: uuid
+  k8s_job_name: String
+  node: game_server_nodes_obj_rel_insert_input
+  node_id: String
+  purpose: String
+  steam_account: steam_accounts_obj_rel_insert_input
+  steam_account_id: uuid
+}
+
+"""aggregate max on columns"""
+type steam_account_claims_max_fields {
+  created_at: timestamptz
+  id: uuid
+  k8s_job_name: String
+  node_id: String
+  purpose: String
+  steam_account_id: uuid
+}
+
+"""
+order by max() on columns of table "steam_account_claims"
+"""
+input steam_account_claims_max_order_by {
+  created_at: order_by
+  id: order_by
+  k8s_job_name: order_by
+  node_id: order_by
+  purpose: order_by
+  steam_account_id: order_by
+}
+
+"""aggregate min on columns"""
+type steam_account_claims_min_fields {
+  created_at: timestamptz
+  id: uuid
+  k8s_job_name: String
+  node_id: String
+  purpose: String
+  steam_account_id: uuid
+}
+
+"""
+order by min() on columns of table "steam_account_claims"
+"""
+input steam_account_claims_min_order_by {
+  created_at: order_by
+  id: order_by
+  k8s_job_name: order_by
+  node_id: order_by
+  purpose: order_by
+  steam_account_id: order_by
+}
+
+"""
+response of any mutation on the table "steam_account_claims"
+"""
+type steam_account_claims_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [steam_account_claims!]!
+}
+
+"""
+on_conflict condition type for table "steam_account_claims"
+"""
+input steam_account_claims_on_conflict {
+  constraint: steam_account_claims_constraint!
+  update_columns: [steam_account_claims_update_column!]! = []
+  where: steam_account_claims_bool_exp
+}
+
+"""Ordering options when selecting data from "steam_account_claims"."""
+input steam_account_claims_order_by {
+  created_at: order_by
+  id: order_by
+  k8s_job_name: order_by
+  node: game_server_nodes_order_by
+  node_id: order_by
+  purpose: order_by
+  steam_account: steam_accounts_order_by
+  steam_account_id: order_by
+}
+
+"""primary key columns input for table: steam_account_claims"""
+input steam_account_claims_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "steam_account_claims"
+"""
+enum steam_account_claims_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  k8s_job_name
+
+  """column name"""
+  node_id
+
+  """column name"""
+  purpose
+
+  """column name"""
+  steam_account_id
+}
+
+"""
+input type for updating data in table "steam_account_claims"
+"""
+input steam_account_claims_set_input {
+  created_at: timestamptz
+  id: uuid
+  k8s_job_name: String
+  node_id: String
+  purpose: String
+  steam_account_id: uuid
+}
+
+"""
+Streaming cursor of the table "steam_account_claims"
+"""
+input steam_account_claims_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: steam_account_claims_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input steam_account_claims_stream_cursor_value_input {
+  created_at: timestamptz
+  id: uuid
+  k8s_job_name: String
+  node_id: String
+  purpose: String
+  steam_account_id: uuid
+}
+
+"""
+update columns of table "steam_account_claims"
+"""
+enum steam_account_claims_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  k8s_job_name
+
+  """column name"""
+  node_id
+
+  """column name"""
+  purpose
+
+  """column name"""
+  steam_account_id
+}
+
+input steam_account_claims_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: steam_account_claims_set_input
+
+  """filter the rows which have to be updated"""
+  where: steam_account_claims_bool_exp!
+}
+
+"""
 columns and relationships of "steam_accounts"
 """
 type steam_accounts {
   """An array relationship"""
-  clip_render_jobs(
+  claims(
     """distinct select on columns"""
-    distinct_on: [clip_render_jobs_select_column!]
+    distinct_on: [steam_account_claims_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -51297,16 +51636,16 @@ type steam_accounts {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [clip_render_jobs_order_by!]
+    order_by: [steam_account_claims_order_by!]
 
     """filter the rows returned"""
-    where: clip_render_jobs_bool_exp
-  ): [clip_render_jobs!]!
+    where: steam_account_claims_bool_exp
+  ): [steam_account_claims!]!
 
   """An aggregate relationship"""
-  clip_render_jobs_aggregate(
+  claims_aggregate(
     """distinct select on columns"""
-    distinct_on: [clip_render_jobs_select_column!]
+    distinct_on: [steam_account_claims_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -51315,97 +51654,17 @@ type steam_accounts {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [clip_render_jobs_order_by!]
+    order_by: [steam_account_claims_order_by!]
 
     """filter the rows returned"""
-    where: clip_render_jobs_bool_exp
-  ): clip_render_jobs_aggregate!
+    where: steam_account_claims_bool_exp
+  ): steam_account_claims_aggregate!
   created_at: timestamptz!
   id: uuid!
 
   """An object relationship"""
   last_node: game_server_nodes
   last_node_id: String
-
-  """
-  fetch data from the table: "match_demo_sessions"
-  """
-  match_demo_sessions(
-    """distinct select on columns"""
-    distinct_on: [match_demo_sessions_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [match_demo_sessions_order_by!]
-
-    """filter the rows returned"""
-    where: match_demo_sessions_bool_exp
-  ): [match_demo_sessions!]!
-
-  """
-  fetch aggregated fields from the table: "match_demo_sessions"
-  """
-  match_demo_sessions_aggregate(
-    """distinct select on columns"""
-    distinct_on: [match_demo_sessions_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [match_demo_sessions_order_by!]
-
-    """filter the rows returned"""
-    where: match_demo_sessions_bool_exp
-  ): match_demo_sessions_aggregate!
-
-  """
-  fetch data from the table: "match_streams"
-  """
-  match_streams(
-    """distinct select on columns"""
-    distinct_on: [match_streams_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [match_streams_order_by!]
-
-    """filter the rows returned"""
-    where: match_streams_bool_exp
-  ): [match_streams!]!
-
-  """
-  fetch aggregated fields from the table: "match_streams"
-  """
-  match_streams_aggregate(
-    """distinct select on columns"""
-    distinct_on: [match_streams_select_column!]
-
-    """limit the number of rows returned"""
-    limit: Int
-
-    """skip the first n rows. Use only with order_by"""
-    offset: Int
-
-    """sort the rows by one or more columns"""
-    order_by: [match_streams_order_by!]
-
-    """filter the rows returned"""
-    where: match_streams_bool_exp
-  ): match_streams_aggregate!
   password: String!
   updated_at: timestamptz!
   username: String!
@@ -51435,16 +51694,12 @@ input steam_accounts_bool_exp {
   _and: [steam_accounts_bool_exp!]
   _not: steam_accounts_bool_exp
   _or: [steam_accounts_bool_exp!]
-  clip_render_jobs: clip_render_jobs_bool_exp
-  clip_render_jobs_aggregate: clip_render_jobs_aggregate_bool_exp
+  claims: steam_account_claims_bool_exp
+  claims_aggregate: steam_account_claims_aggregate_bool_exp
   created_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
   last_node: game_server_nodes_bool_exp
   last_node_id: String_comparison_exp
-  match_demo_sessions: match_demo_sessions_bool_exp
-  match_demo_sessions_aggregate: match_demo_sessions_aggregate_bool_exp
-  match_streams: match_streams_bool_exp
-  match_streams_aggregate: match_streams_aggregate_bool_exp
   password: String_comparison_exp
   updated_at: timestamptz_comparison_exp
   username: String_comparison_exp
@@ -51469,13 +51724,11 @@ enum steam_accounts_constraint {
 input type for inserting data into table "steam_accounts"
 """
 input steam_accounts_insert_input {
-  clip_render_jobs: clip_render_jobs_arr_rel_insert_input
+  claims: steam_account_claims_arr_rel_insert_input
   created_at: timestamptz
   id: uuid
   last_node: game_server_nodes_obj_rel_insert_input
   last_node_id: String
-  match_demo_sessions: match_demo_sessions_arr_rel_insert_input
-  match_streams: match_streams_arr_rel_insert_input
   password: String
   updated_at: timestamptz
   username: String
@@ -51513,6 +51766,16 @@ type steam_accounts_mutation_response {
 }
 
 """
+input type for inserting object relation for remote table "steam_accounts"
+"""
+input steam_accounts_obj_rel_insert_input {
+  data: steam_accounts_insert_input!
+
+  """upsert condition"""
+  on_conflict: steam_accounts_on_conflict
+}
+
+"""
 on_conflict condition type for table "steam_accounts"
 """
 input steam_accounts_on_conflict {
@@ -51523,13 +51786,11 @@ input steam_accounts_on_conflict {
 
 """Ordering options when selecting data from "steam_accounts"."""
 input steam_accounts_order_by {
-  clip_render_jobs_aggregate: clip_render_jobs_aggregate_order_by
+  claims_aggregate: steam_account_claims_aggregate_order_by
   created_at: order_by
   id: order_by
   last_node: game_server_nodes_order_by
   last_node_id: order_by
-  match_demo_sessions_aggregate: match_demo_sessions_aggregate_order_by
-  match_streams_aggregate: match_streams_aggregate_order_by
   password: order_by
   updated_at: order_by
   username: order_by
@@ -56395,6 +56656,65 @@ type subscription_root {
     """filter the rows returned"""
     where: settings_bool_exp
   ): [settings!]!
+
+  """
+  fetch data from the table: "steam_account_claims"
+  """
+  steam_account_claims(
+    """distinct select on columns"""
+    distinct_on: [steam_account_claims_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [steam_account_claims_order_by!]
+
+    """filter the rows returned"""
+    where: steam_account_claims_bool_exp
+  ): [steam_account_claims!]!
+
+  """
+  fetch aggregated fields from the table: "steam_account_claims"
+  """
+  steam_account_claims_aggregate(
+    """distinct select on columns"""
+    distinct_on: [steam_account_claims_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [steam_account_claims_order_by!]
+
+    """filter the rows returned"""
+    where: steam_account_claims_bool_exp
+  ): steam_account_claims_aggregate!
+
+  """
+  fetch data from the table: "steam_account_claims" using primary key columns
+  """
+  steam_account_claims_by_pk(id: uuid!): steam_account_claims
+
+  """
+  fetch data from the table in a streaming manner: "steam_account_claims"
+  """
+  steam_account_claims_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [steam_account_claims_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: steam_account_claims_bool_exp
+  ): [steam_account_claims!]!
 
   """
   fetch data from the table: "steam_accounts"

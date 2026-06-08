@@ -20,6 +20,13 @@ import { AppConfig } from "../../configs/types/AppConfig";
 import { SteamConfig } from "../../configs/types/SteamConfig";
 import { resolveInClusterApiBase } from "../clips/clips.constants";
 import { LoggingService } from "../../k8s/logging/logging.service";
+import {
+  SteamAccountService,
+  ClaimedSteamAccount,
+} from "./steam-account.service";
+
+export type { ClaimedSteamAccount } from "./steam-account.service";
+export { NoSteamAccountAvailableError } from "./steam-account.service";
 
 // Snapshot TTL is a touch over 2x the producer's 30s cadence so a
 // consumer reading mid-cycle always sees a fresh-or-just-stale frame.
@@ -111,21 +118,6 @@ export class NodeBusyError extends Error {
   }
 }
 
-export class NoSteamAccountAvailableError extends Error {
-  constructor(
-    message = "no Steam account available — add more accounts to the pool",
-  ) {
-    super(message);
-    this.name = "NoSteamAccountAvailableError";
-  }
-}
-
-export type ClaimedSteamAccount = {
-  id: string;
-  username: string;
-  password: string;
-};
-
 export type GpuClaim = {
   nodeId: string;
   steamAccount: ClaimedSteamAccount;
@@ -147,6 +139,7 @@ export class GameStreamerService {
     private readonly redisManager: RedisManagerService,
     private readonly demoMetadata: DemoMetadataService,
     private readonly loggingService: LoggingService,
+    private readonly steamAccounts: SteamAccountService,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
     this.appConfig = this.config.get<AppConfig>("app");
@@ -1261,6 +1254,48 @@ export class GameStreamerService {
     }
 
     await this.reapOrphanDemoK8sResources();
+    await this.reconcileSteamClaims();
+  }
+
+  private async reconcileSteamClaims(): Promise<void> {
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const batch = kc.makeApiClient(BatchV1Api);
+
+    let liveJobNames: string[];
+    try {
+      const jobs = await batch.listNamespacedJob({
+        namespace: this.namespace,
+        labelSelector: "app=game-streamer",
+      });
+      // A finished Job can linger before its TTL deletes it — only count
+      // still-running Jobs as live.
+      liveJobNames = jobs.items
+        .filter(
+          (j) =>
+            !((j.status?.succeeded ?? 0) > 0 || (j.status?.failed ?? 0) > 0),
+        )
+        .map((j) => j.metadata?.name)
+        .filter((n): n is string => !!n);
+    } catch (error) {
+      this.logger.error(
+        `[steam-reaper] listJobs failed: ${(error as Error)?.message}`,
+      );
+      return;
+    }
+
+    try {
+      const reclaimed = await this.steamAccounts.reconcile(liveJobNames);
+      if (reclaimed > 0) {
+        this.logger.warn(
+          `[steam-reaper] reclaimed ${reclaimed} orphaned steam account claim(s)`,
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        `[steam-reaper] reconcile failed: ${(error as Error)?.message}`,
+      );
+    }
   }
 
   private async reapOrphanDemoK8sResources() {
@@ -1605,7 +1640,6 @@ export class GameStreamerService {
               error_message: "cancelled by operator (gpu node)",
               last_status_at: "now()",
               game_server_node_id: null,
-              steam_account_id: null,
             },
           },
           affected_rows: true,
@@ -2159,12 +2193,14 @@ export class GameStreamerService {
     } catch (error) {
       await this.postgres.query(
         `UPDATE clip_render_jobs
-            SET game_server_node_id = NULL,
-                steam_account_id = NULL
+            SET game_server_node_id = NULL
           WHERE match_map_id = $1
             AND match_map_demo_id = $2
             AND status IN ('queued','rendering','uploading')`,
         [matchMapId, resolvedDemoId],
+      );
+      await this.steamAccounts.release(
+        GameStreamerService.GetBatchHighlightsJobName(matchMapId, resolvedDemoId),
       );
       throw error;
     }
@@ -2179,40 +2215,6 @@ export class GameStreamerService {
       },
     });
     return settings_by_pk?.value === "true";
-  }
-
-  private async claimSteamAccountForRow(
-    client: { query: (sql: string, params?: unknown[]) => Promise<any> },
-    tableName: "match_streams" | "match_demo_sessions" | "clip_render_jobs",
-    nodeId: string,
-    rowFilterSql: string,
-    rowFilterParams: unknown[],
-  ): Promise<ClaimedSteamAccount> {
-    const nodeParamIndex = rowFilterParams.length + 1;
-    const result = await client.query(
-      `WITH chosen AS (SELECT claim_free_steam_account($${nodeParamIndex}) AS id),
-            applied AS (
-              UPDATE ${tableName}
-                 SET steam_account_id = chosen.id
-                FROM chosen
-               WHERE ${rowFilterSql}
-                 AND chosen.id IS NOT NULL
-              RETURNING ${tableName}.steam_account_id
-            )
-       SELECT sa.id, sa.username, sa.password
-         FROM applied
-         JOIN steam_accounts sa ON sa.id = applied.steam_account_id`,
-      [...rowFilterParams, nodeId],
-    );
-    const row = result.rows[0];
-    if (!row?.id) {
-      throw new NoSteamAccountAvailableError();
-    }
-    return {
-      id: String(row.id),
-      username: String(row.username),
-      password: String(row.password),
-    };
   }
 
   private async claimGpuForLive(
@@ -2246,15 +2248,11 @@ export class GameStreamerService {
         [matchId, GAME_STREAMER_TITLE, link, mode, bootingHistory, serviceName],
       );
 
-      const streamRow = result.rows[0];
-      const nodeId = streamRow?.game_server_node_id as string | undefined;
+      const nodeId = result.rows[0]?.game_server_node_id as string | undefined;
       if (nodeId) {
-        const steamAccount = await this.claimSteamAccountForRow(
+        const steamAccount = await this.steamAccounts.claim(
+          { nodeId, jobName: serviceName, purpose: "live" },
           client,
-          "match_streams",
-          nodeId,
-          "match_streams.id = $1 AND match_streams.steam_account_id IS NULL",
-          [streamRow.id],
         );
         return { nodeId, steamAccount };
       }
@@ -2299,12 +2297,13 @@ export class GameStreamerService {
       if (!nodeId) {
         throw new NoGpuAvailableError();
       }
-      const steamAccount = await this.claimSteamAccountForRow(
+      const steamAccount = await this.steamAccounts.claim(
+        {
+          nodeId,
+          jobName: GameStreamerService.GetDemoJobIdForSession(sessionId),
+          purpose: "demo",
+        },
         client,
-        "match_demo_sessions",
-        nodeId,
-        "match_demo_sessions.id = $1 AND match_demo_sessions.steam_account_id IS NULL",
-        [sessionId],
       );
       return { nodeId, steamAccount };
     });
@@ -2333,12 +2332,16 @@ export class GameStreamerService {
       if (!nodeId) {
         throw new NoGpuAvailableError();
       }
-      const steamAccount = await this.claimSteamAccountForRow(
+      const steamAccount = await this.steamAccounts.claim(
+        {
+          nodeId,
+          jobName: GameStreamerService.GetBatchHighlightsJobName(
+            matchMapId,
+            matchMapDemoId,
+          ),
+          purpose: "highlights",
+        },
         client,
-        "clip_render_jobs",
-        nodeId,
-        "clip_render_jobs.match_map_id = $1 AND clip_render_jobs.match_map_demo_id = $2 AND clip_render_jobs.status IN ('queued','rendering','uploading') AND clip_render_jobs.steam_account_id IS NULL",
-        [matchMapId, matchMapDemoId],
       );
       return { nodeId, steamAccount };
     });
@@ -2483,6 +2486,9 @@ export class GameStreamerService {
   }
 
   private async deleteJob(jobName: string) {
+    // Single teardown chokepoint for every game-streamer job — release here.
+    await this.steamAccounts.release(jobName);
+
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const core = kc.makeApiClient(CoreV1Api);
@@ -2748,6 +2754,12 @@ export class GameStreamerService {
       ...(await this.buildNodeCs2OptionsEnv(gameServerNodeId)),
     ];
 
+    const steamAccount = await this.steamAccounts.claim({
+      nodeId: gameServerNodeId,
+      jobName,
+      purpose: "bake",
+    });
+
     await batch.createNamespacedJob({
       namespace: this.namespace,
       body: this.buildJobSpec(
@@ -2757,6 +2769,7 @@ export class GameStreamerService {
         gameServerNodeId,
         bakeEnv,
         { "node-id": gameServerNodeId },
+        steamAccount,
       ),
     });
 
@@ -2796,6 +2809,12 @@ export class GameStreamerService {
     gameServerNodeId: string,
     status: string | null,
   ): Promise<void> {
+    // A bake finishes on its own (no deleteJob) — release on terminal status.
+    if (status === null || status === "errored") {
+      await this.steamAccounts.release(
+        GameStreamerService.GET_BAKE_JOB_NAME(gameServerNodeId),
+      );
+    }
     await this.hasura.mutation({
       update_game_server_nodes_by_pk: {
         __args: {

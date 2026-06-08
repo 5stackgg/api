@@ -6,26 +6,12 @@ object_relationships:
     using:
       foreign_key_constraint_on: last_node_id
 array_relationships:
-  - name: clip_render_jobs
+  - name: claims
     using:
       foreign_key_constraint_on:
         column: steam_account_id
         table:
-          name: clip_render_jobs
-          schema: public
-  - name: match_demo_sessions
-    using:
-      foreign_key_constraint_on:
-        column: steam_account_id
-        table:
-          name: match_demo_sessions
-          schema: public
-  - name: match_streams
-    using:
-      foreign_key_constraint_on:
-        column: steam_account_id
-        table:
-          name: match_streams
+          name: steam_account_claims
           schema: public
 insert_permissions:
   - role: administrator

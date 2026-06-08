@@ -6,6 +6,7 @@ import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";
 import { S3Service } from "../../s3/s3.service";
 import { GameStreamerService } from "../game-streamer/game-streamer.service";
+import { SteamAccountService } from "../game-streamer/steam-account.service";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
@@ -31,6 +32,7 @@ export class ClipsService {
     private readonly postgres: PostgresService,
     private readonly s3: S3Service,
     private readonly gameStreamer: GameStreamerService,
+    private readonly steamAccounts: SteamAccountService,
     @InjectQueue(MatchQueues.Clips)
     private readonly batchQueue: Queue,
   ) {}
@@ -209,7 +211,6 @@ export class ClipsService {
               error_message: `dispatch failed: ${(error as Error)?.message}`,
               last_status_at: "now()",
               game_server_node_id: null,
-              steam_account_id: null,
             },
           },
           id: true,
@@ -250,7 +251,6 @@ export class ClipsService {
             error_message: "cancelled by operator (batch)",
             last_status_at: "now()",
             game_server_node_id: null,
-            steam_account_id: null,
           },
         },
         affected_rows: true,
@@ -416,7 +416,6 @@ export class ClipsService {
             paused: true,
             status: "queued",
             game_server_node_id: null,
-            steam_account_id: null,
           },
         },
         affected_rows: true,
@@ -1289,8 +1288,8 @@ export class ClipsService {
       set.error_message = body.error;
     }
     if (!isBoot && ["completed", "error", "cancelled"].includes(body.status)) {
+      // The steam account is held by the batch pod, freed on pod teardown.
       set.game_server_node_id = null;
-      set.steam_account_id = null;
     }
     await this.hasura.mutation({
       update_clip_render_jobs_by_pk: {
@@ -2439,7 +2438,7 @@ export class ClipsService {
          FROM public.clip_render_jobs
         WHERE status IN ('queued','rendering','uploading')
           AND match_map_demo_id IS NOT NULL
-          AND (game_server_node_id IS NOT NULL OR steam_account_id IS NOT NULL)`,
+          AND game_server_node_id IS NOT NULL`,
     );
     if (rows.length === 0) {
       return;
@@ -2483,12 +2482,17 @@ export class ClipsService {
     for (const o of orphanIds) {
       await this.postgres.query(
         `UPDATE public.clip_render_jobs
-            SET game_server_node_id = NULL,
-                steam_account_id = NULL
+            SET game_server_node_id = NULL
           WHERE match_map_id = $1::uuid
             AND match_map_demo_id = $2::uuid
             AND status IN ('queued','rendering','uploading')`,
         [o.matchMapId, o.matchMapDemoId],
+      );
+      await this.steamAccounts.release(
+        GameStreamerService.GetBatchHighlightsJobName(
+          o.matchMapId,
+          o.matchMapDemoId,
+        ),
       );
       this.logger.log(
         `[reconcile-highlights] reaped orphan resource claims for ${o.matchMapId}:${o.matchMapDemoId}`,

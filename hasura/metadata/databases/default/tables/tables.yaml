@@ -79,6 +79,7 @@
 - "!include public_server_regions.yaml"
 - "!include public_servers.yaml"
 - "!include public_settings.yaml"
+- "!include public_steam_account_claims.yaml"
 - "!include public_steam_accounts.yaml"
 - "!include public_team_invites.yaml"
 - "!include public_team_roster.yaml"
