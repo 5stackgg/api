@@ -1137,8 +1137,8 @@ export class MatchesController {
   public async createClips(data: { match_id: string; user: User }) {
     const { match_id, user } = data;
 
-    if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
-      throw Error("you are not a match organizer");
+    if (!isRoleAbove(user.role, "administrator")) {
+      throw Error("only administrators can auto-generate match highlights");
     }
 
     const queued = await this.clips.autoGenerateForMatch(match_id, {
@@ -1155,8 +1155,8 @@ export class MatchesController {
   @HasuraAction()
   public async createClipRender(data: { spec: ClipSpec; user: User }) {
     const { spec, user } = data;
-    if (!isRoleAbove(user.role, "verified_user")) {
-      throw Error("clip rendering requires a verified account");
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("clip rendering requires the streamer role or above");
     }
     if (!spec || !spec.match_map_id) {
       throw Error("invalid clip spec");
@@ -1296,8 +1296,8 @@ export class MatchesController {
     user: User;
   }) {
     const { user } = data;
-    if (!isRoleAbove(user.role, "verified_user")) {
-      throw Error("clip rendering requires a verified account");
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("clip rendering requires the streamer role or above");
     }
     const spec = await this.clips.buildPresetSpec(
       data.match_map_id,
