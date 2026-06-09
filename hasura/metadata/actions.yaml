@@ -272,7 +272,7 @@ actions:
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
     permissions:
-      - role: user
+      - role: administrator
     comment: Which highlight presets have content for a player on a map's demo
   - name: getIndexStats
     definition:
@@ -540,7 +540,7 @@ actions:
       handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
       forward_client_headers: true
     permissions:
-      - role: user
+      - role: administrator
     comment: Build a multi-segment ClipSpec from a player+preset and queue it via the batch render path (no live demo session required)
   - name: reparseMatchDemos
     definition:
