@@ -222,6 +222,200 @@ export class ClipsService {
     return { jobId };
   }
 
+  private async resolveLatestParsedDemoId(
+    matchMapId: string,
+  ): Promise<string | null> {
+    const { match_map_demos } = await this.hasura.query({
+      match_map_demos: {
+        __args: {
+          where: {
+            match_map_id: { _eq: matchMapId },
+            metadata_parsed_at: { _is_null: false },
+            total_ticks: { _gt: 0 },
+          },
+          order_by: [{ metadata_parsed_at: "desc_nulls_last" }, { id: "desc" }],
+          limit: 1,
+        },
+        id: true,
+      },
+    });
+    const id = match_map_demos?.[0]?.id;
+    return id ? String(id) : null;
+  }
+
+  public async queueClipFromPreset(
+    userSteamId: string,
+    params: {
+      matchMapId: string;
+      targetSteamId: string;
+      preset: "knife" | "multikills" | "best_round" | "recap";
+      output: { resolution: "720p" | "1080p"; fps: 30 | 60 };
+      title?: string;
+      targetName?: string;
+    },
+  ): Promise<{ jobId: string }> {
+    const matchMapDemoId = await this.resolveLatestParsedDemoId(
+      params.matchMapId,
+    );
+    if (!matchMapDemoId) {
+      throw new Error(
+        "no parsed demo for this map yet — wait for the demo to finish processing and try again",
+      );
+    }
+
+    const spec = await this.buildPresetSpec(
+      params.matchMapId,
+      params.targetSteamId,
+      params.preset,
+      params.output,
+      params.title,
+      params.targetName,
+      matchMapDemoId,
+    );
+    this.validateSpec(spec);
+
+    const sessionToken = randomBytes(24).toString("hex");
+    const { insert_clip_render_jobs_one } = await this.hasura.mutation({
+      insert_clip_render_jobs_one: {
+        __args: {
+          object: {
+            user_steam_id: userSteamId,
+            match_map_id: params.matchMapId,
+            match_map_demo_id: matchMapDemoId,
+            session_token: sessionToken,
+            k8s_job_name: GameStreamerService.GetBatchHighlightsJobName(
+              params.matchMapId,
+              matchMapDemoId,
+            ),
+            spec,
+            status: "queued",
+            status_history: [
+              {
+                status: "queued",
+                at: new Date().toISOString(),
+                source: "queue_clip_from_preset",
+              },
+            ],
+          },
+        },
+        id: true,
+      },
+    });
+    const jobId = insert_clip_render_jobs_one?.id;
+    if (!jobId) {
+      throw new Error("failed to insert clip_render_jobs row");
+    }
+
+    try {
+      const existing = await this.batchQueue.getJobs([
+        "delayed",
+        "waiting",
+        "active",
+        "paused",
+      ]);
+      const alreadyEnqueued = existing.some(
+        (j) =>
+          j.name === BATCH_HIGHLIGHTS_JOB_NAME &&
+          j.data?.matchMapId === params.matchMapId &&
+          j.data?.matchMapDemoId === matchMapDemoId,
+      );
+      if (!alreadyEnqueued) {
+        await this.batchQueue.add(
+          BATCH_HIGHLIGHTS_JOB_NAME,
+          { matchMapId: params.matchMapId, matchMapDemoId },
+          { jobId: `${params.matchMapId}-${matchMapDemoId}-${Date.now()}` },
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `[queue-highlight ${params.matchMapId}/${matchMapDemoId}] enqueue failed: ${(error as Error)?.message}`,
+      );
+    }
+
+    return { jobId: String(jobId) };
+  }
+
+  public async getPresetAvailability(
+    matchMapId: string,
+    targetSteamId: string,
+  ): Promise<{
+    has_demo: boolean;
+    knife: boolean;
+    multikills: boolean;
+    best_round: boolean;
+    recap: boolean;
+  }> {
+    const { match_map_demos } = await this.hasura.query({
+      match_map_demos: {
+        __args: {
+          where: {
+            match_map_id: { _eq: matchMapId },
+            metadata_parsed_at: { _is_null: false },
+            total_ticks: { _gt: 0 },
+          },
+          order_by: [{ metadata_parsed_at: "desc_nulls_last" }, { id: "desc" }],
+          limit: 1,
+        },
+        id: true,
+        kills: true,
+        round_ticks: true,
+      },
+    });
+    const demo = match_map_demos?.[0];
+    if (!demo) {
+      return {
+        has_demo: false,
+        knife: false,
+        multikills: false,
+        best_round: false,
+        recap: false,
+      };
+    }
+
+    const kills = ClipsService.filterValidKills(
+      demo.kills as Array<{
+        tick: number;
+        killer?: string;
+        victim?: string;
+        weapon?: string;
+      }>,
+    );
+    const myKills = kills.filter((k) => k.killer === targetSteamId);
+    const knife = myKills.some((k) =>
+      (k.weapon ?? "").toLowerCase().includes("knife"),
+    );
+
+    const rounds =
+      (demo.round_ticks as Array<{
+        start_tick: number;
+        freeze_end_tick?: number;
+        end_tick: number;
+      }>) ?? [];
+    let multikills = false;
+    for (const r of rounds) {
+      const lo =
+        typeof r.freeze_end_tick === "number" && r.freeze_end_tick > 0
+          ? r.freeze_end_tick
+          : r.start_tick;
+      const inRound = myKills.filter(
+        (k) => k.tick >= lo && k.tick <= r.end_tick,
+      );
+      if (inRound.length >= 2) {
+        multikills = true;
+        break;
+      }
+    }
+
+    const hasAnyKill = myKills.length > 0;
+    return {
+      has_demo: true,
+      knife,
+      multikills,
+      best_round: hasAnyKill,
+      recap: hasAnyKill,
+    };
+  }
+
   public async cancelClipRenderBatch(matchMapId: string): Promise<number> {
     const { clip_render_jobs: inFlightRows } = await this.hasura.query({
       clip_render_jobs: {

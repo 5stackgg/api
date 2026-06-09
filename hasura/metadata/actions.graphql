@@ -108,6 +108,25 @@ type Mutation {
 }
 
 type Mutation {
+  queueClipFromPreset(
+    match_map_id: uuid!
+    target_steam_id: String!
+    preset: String!
+    resolution: String
+    fps: Int
+    title: String
+    target_name: String
+  ): CreateClipRenderOutput
+}
+
+type Query {
+  getHighlightPresetAvailability(
+    match_map_id: uuid!
+    target_steam_id: String!
+  ): HighlightPresetAvailability
+}
+
+type Mutation {
   createClipRender(
     spec: ClipSpecInput!
   ): CreateClipRenderOutput
@@ -748,6 +767,14 @@ type PendingMatchImportActionOutput {
 type CreateClipRenderOutput {
   success: Boolean!
   job_id: uuid!
+}
+
+type HighlightPresetAvailability {
+  has_demo: Boolean!
+  knife: Boolean!
+  multikills: Boolean!
+  best_round: Boolean!
+  recap: Boolean!
 }
 
 type LiveSpecSlot {

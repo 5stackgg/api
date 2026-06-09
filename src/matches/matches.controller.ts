@@ -1313,6 +1313,48 @@ export class MatchesController {
   }
 
   @HasuraAction()
+  public async queueClipFromPreset(data: {
+    match_map_id: string;
+    target_steam_id: string;
+    preset: "knife" | "multikills" | "best_round" | "recap";
+    resolution?: "720p" | "1080p";
+    fps?: 30 | 60;
+    title?: string;
+    target_name?: string;
+    user: User;
+  }) {
+    const { user } = data;
+    if (!isRoleAbove(user.role, "verified_user")) {
+      throw Error("clip rendering requires a verified account");
+    }
+    const { jobId } = await this.clips.queueClipFromPreset(user.steam_id, {
+      matchMapId: data.match_map_id,
+      targetSteamId: data.target_steam_id,
+      preset: data.preset,
+      output: {
+        resolution:
+          data.resolution ?? (await this.gameStreamer.resolveClipResolution()),
+        fps: data.fps ?? (await this.gameStreamer.resolveClipFps()),
+      },
+      title: data.title,
+      targetName: data.target_name,
+    });
+    return { success: true, job_id: jobId };
+  }
+
+  @HasuraAction()
+  public async getHighlightPresetAvailability(data: {
+    match_map_id: string;
+    target_steam_id: string;
+    user: User;
+  }) {
+    return this.clips.getPresetAvailability(
+      data.match_map_id,
+      data.target_steam_id,
+    );
+  }
+
+  @HasuraAction()
   public async deleteClip(data: { clip_id: string; user: User }) {
     const isOperator = isRoleAbove(data.user.role, "streamer");
     await this.clips.deleteClip(data.user.steam_id, data.clip_id, isOperator);
