@@ -186,6 +186,15 @@ export interface GpuStats {
     __typename: 'GpuStats'
 }
 
+export interface HighlightPresetAvailability {
+    best_round: Scalars['Boolean']
+    has_demo: Scalars['Boolean']
+    knife: Scalars['Boolean']
+    multikills: Scalars['Boolean']
+    recap: Scalars['Boolean']
+    __typename: 'HighlightPresetAvailability'
+}
+
 export interface HypertableInfo {
     compression_enabled: Scalars['Boolean']
     hypertable_name: Scalars['String']
@@ -7857,6 +7866,8 @@ export interface mutation_root {
     /** Flag in-flight clip_render_jobs paused; pod halts after current highlight. */
     pauseClipRenderBatch: (SuccessOutput | null)
     pollSteamMatchHistory: (SteamMatchHistoryPollOutput | null)
+    /** Build a multi-segment ClipSpec from a player+preset and queue it via the batch render path (no live demo session required) */
+    queueClipFromPreset: (CreateClipRenderOutput | null)
     randomizeTeams: (SuccessOutput | null)
     rebootMatchServer: (SuccessOutput | null)
     /** execute VOLATILE function "recalculate_tournament_trophies" which returns "tournament_trophies" */
@@ -14497,6 +14508,8 @@ export interface query_root {
     getDatabaseStats: DatabaseStats
     getDedicatedServerInfo: (DedicatedSeverInfo | null)[]
     getDedicatedServerPlayers: ServerPlayer[]
+    /** Which highlight presets have content for a player on a map's demo */
+    getHighlightPresetAvailability: (HighlightPresetAvailability | null)
     /** Get index I/O statistics */
     getIndexIOStats: (IndexIOStat | null)[]
     /** Get index usage statistics */
@@ -23788,6 +23801,16 @@ export interface GpuDeviceStatGenqlSelection{
 export interface GpuStatsGenqlSelection{
     devices?: GpuDeviceStatGenqlSelection
     time?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface HighlightPresetAvailabilityGenqlSelection{
+    best_round?: boolean | number
+    has_demo?: boolean | number
+    knife?: boolean | number
+    multikills?: boolean | number
+    recap?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -37194,6 +37217,8 @@ export interface mutation_rootGenqlSelection{
     /** Flag in-flight clip_render_jobs paused; pod halts after current highlight. */
     pauseClipRenderBatch?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid']} })
     pollSteamMatchHistory?: SteamMatchHistoryPollOutputGenqlSelection
+    /** Build a multi-segment ClipSpec from a player+preset and queue it via the batch render path (no live demo session required) */
+    queueClipFromPreset?: (CreateClipRenderOutputGenqlSelection & { __args: {fps?: (Scalars['Int'] | null), match_map_id: Scalars['uuid'], preset: Scalars['String'], resolution?: (Scalars['String'] | null), target_name?: (Scalars['String'] | null), target_steam_id: Scalars['String'], title?: (Scalars['String'] | null)} })
     randomizeTeams?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     rebootMatchServer?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     /** execute VOLATILE function "recalculate_tournament_trophies" which returns "tournament_trophies" */
@@ -48476,6 +48501,8 @@ export interface query_rootGenqlSelection{
     getDatabaseStats?: DatabaseStatsGenqlSelection
     getDedicatedServerInfo?: DedicatedSeverInfoGenqlSelection
     getDedicatedServerPlayers?: (ServerPlayerGenqlSelection & { __args: {serverId: Scalars['String']} })
+    /** Which highlight presets have content for a player on a map's demo */
+    getHighlightPresetAvailability?: (HighlightPresetAvailabilityGenqlSelection & { __args: {match_map_id: Scalars['uuid'], target_steam_id: Scalars['String']} })
     /** Get index I/O statistics */
     getIndexIOStats?: (IndexIOStatGenqlSelection & { __args?: {schemas?: (Scalars['String'][] | null)} })
     /** Get index usage statistics */
@@ -66000,6 +66027,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isGpuStats = (obj?: { __typename?: any } | null): obj is GpuStats => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isGpuStats"')
       return GpuStats_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const HighlightPresetAvailability_possibleTypes: string[] = ['HighlightPresetAvailability']
+    export const isHighlightPresetAvailability = (obj?: { __typename?: any } | null): obj is HighlightPresetAvailability => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isHighlightPresetAvailability"')
+      return HighlightPresetAvailability_possibleTypes.includes(obj.__typename)
     }
     
 

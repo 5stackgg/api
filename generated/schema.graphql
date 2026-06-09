@@ -228,6 +228,14 @@ type GpuStats {
   time: timestamp
 }
 
+type HighlightPresetAvailability {
+  best_round: Boolean!
+  has_demo: Boolean!
+  knife: Boolean!
+  multikills: Boolean!
+  recap: Boolean!
+}
+
 type HypertableInfo {
   compression_enabled: Boolean!
   hypertable_name: String!
@@ -24850,6 +24858,11 @@ type mutation_root {
   """
   pauseClipRenderBatch(match_map_id: uuid!): SuccessOutput
   pollSteamMatchHistory: SteamMatchHistoryPollOutput
+
+  """
+  Build a multi-segment ClipSpec from a player+preset and queue it via the batch render path (no live demo session required)
+  """
+  queueClipFromPreset(fps: Int, match_map_id: uuid!, preset: String!, resolution: String, target_name: String, target_steam_id: String!, title: String): CreateClipRenderOutput
   randomizeTeams(match_id: uuid!): SuccessOutput
   rebootMatchServer(match_id: uuid!): SuccessOutput
 
@@ -46198,6 +46211,9 @@ type query_root {
   getDatabaseStats: DatabaseStats!
   getDedicatedServerInfo: [DedicatedSeverInfo]!
   getDedicatedServerPlayers(serverId: String!): [ServerPlayer!]!
+
+  """Which highlight presets have content for a player on a map's demo"""
+  getHighlightPresetAvailability(match_map_id: uuid!, target_steam_id: String!): HighlightPresetAvailability
 
   """Get index I/O statistics"""
   getIndexIOStats(schemas: [String!]): [IndexIOStat]!
