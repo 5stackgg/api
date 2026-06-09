@@ -1259,7 +1259,10 @@ export class MatchesController {
 
   @HasuraAction()
   public async getLiveStreamSpecState(data: { match_id: string; user: User }) {
-    const { match_id } = data;
+    const { match_id, user } = data;
+    if (!isRoleAbove(user.role, "streamer")) {
+      throw Error("you must have the streamer role or above");
+    }
     const state = await this.gameStreamer.getLiveSpecState(match_id);
     return state;
   }
@@ -1324,8 +1327,8 @@ export class MatchesController {
     user: User;
   }) {
     const { user } = data;
-    if (!isRoleAbove(user.role, "verified_user")) {
-      throw Error("clip rendering requires a verified account");
+    if (!isRoleAbove(user.role, "administrator")) {
+      throw Error("queueing highlight renders requires an administrator");
     }
     const { jobId } = await this.clips.queueClipFromPreset(user.steam_id, {
       matchMapId: data.match_map_id,
@@ -1348,6 +1351,9 @@ export class MatchesController {
     target_steam_id: string;
     user: User;
   }) {
+    if (!isRoleAbove(data.user.role, "administrator")) {
+      throw Error("highlight preset availability requires an administrator");
+    }
     return this.clips.getPresetAvailability(
       data.match_map_id,
       data.target_steam_id,
