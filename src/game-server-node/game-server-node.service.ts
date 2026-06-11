@@ -18,6 +18,9 @@ import { PassThrough } from "stream";
 import { SteamConfig } from "src/configs/types/SteamConfig";
 import { isJsonEqual } from "@utilities/isJsonEqual";
 import { NodeDisk } from "./interfaces/NodeDisk";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import { GameServerQueues } from "./enums/GameServerQueues";
 
 export type GamedataValidationResult = {
   build_id?: number | null;
@@ -58,6 +61,8 @@ export class GameServerNodeService {
     protected readonly hasura: HasuraService,
     redisManager: RedisManagerService,
     protected readonly loggingService: LoggingService,
+    @InjectQueue(GameServerQueues.ValidateGamedata)
+    private readonly validateGamedataQueue: Queue,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
     this.namespace = this.gameServerConfig.namespace;
@@ -319,6 +324,14 @@ export class GameServerNodeService {
           token: true,
         },
       });
+    }
+
+    if (
+      game_server_nodes_by_pk.update_status === null &&
+      csBulid &&
+      game_server_nodes_by_pk.build_id !== csBulid
+    ) {
+      await this.queueGamedataValidation(node, csBulid);
     }
 
     if (transitionedFromOffline && game_server_nodes_by_pk.build_id) {
@@ -800,6 +813,51 @@ export class GameServerNodeService {
     return `validate-gamedata-${buildId}-${sanitizedBranch}`;
   }
 
+  private async queueGamedataValidation(
+    gameServerNodeId: string,
+    buildId: number,
+  ) {
+    if (process.env.WEB_DOMAIN !== "5stack.gg") {
+      return;
+    }
+
+    const currentBuild = await this.getCurrentBuild();
+    if (buildId !== currentBuild) {
+      return;
+    }
+
+    const { gamedata_signature_validations } = await this.hasura.query({
+      gamedata_signature_validations: {
+        __args: {
+          where: {
+            build_id: { _eq: buildId },
+            branch: { _eq: "public" },
+          },
+          limit: 1,
+        },
+        id: true,
+      },
+    });
+
+    if (gamedata_signature_validations.length > 0) {
+      return;
+    }
+
+    await this.validateGamedataQueue.add(
+      "ValidateGamedata",
+      {
+        gameServerNodeId,
+        buildId,
+      },
+      {
+        jobId: `validate.${buildId}.auto`,
+        attempts: 1,
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
+  }
+
   public async validateGamedata(
     gameServerNodeId: string,
     buildId: number,
@@ -813,122 +871,135 @@ export class GameServerNodeService {
     const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(".", "-");
     const serverfilesVolumeName = `serverfiles-${sanitizedGameServerNodeId}`;
 
-    await this.batchApi
-      .deleteNamespacedJob({
-        name: jobName,
-        namespace: this.namespace,
-        propagationPolicy: "Background",
-        gracePeriodSeconds: 0,
-      })
-      .catch((error) => {
-        if (error.code?.toString() !== "404") {
-          throw error;
-        }
-      });
+    const lockKey = `gamedata:validate:lock:${buildId}:${branch}`;
+    const acquired = await this.redis.set(lockKey, 1, "EX", 60 * 60, "NX");
+    if (acquired === null) {
+      this.logger.warn(
+        `[validate-gamedata] validation already running for build ${buildId} (${branch})`,
+      );
+      return null;
+    }
 
-    await this.batchApi.createNamespacedJob({
-      namespace: this.namespace,
-      body: {
-        apiVersion: "batch/v1",
-        kind: "Job",
-        metadata: {
+    try {
+      await this.batchApi
+        .deleteNamespacedJob({
           name: jobName,
-        },
-        spec: {
-          template: {
-            metadata: {
-              labels: {
-                app: "validate-gamedata",
+          namespace: this.namespace,
+          propagationPolicy: "Background",
+          gracePeriodSeconds: 0,
+        })
+        .catch((error) => {
+          if (error.code?.toString() !== "404") {
+            throw error;
+          }
+        });
+
+      await this.batchApi.createNamespacedJob({
+        namespace: this.namespace,
+        body: {
+          apiVersion: "batch/v1",
+          kind: "Job",
+          metadata: {
+            name: jobName,
+          },
+          spec: {
+            template: {
+              metadata: {
+                labels: {
+                  app: "validate-gamedata",
+                },
               },
-            },
-            spec: {
-              affinity: {
-                nodeAffinity: {
-                  requiredDuringSchedulingIgnoredDuringExecution: {
-                    nodeSelectorTerms: [
+              spec: {
+                affinity: {
+                  nodeAffinity: {
+                    requiredDuringSchedulingIgnoredDuringExecution: {
+                      nodeSelectorTerms: [
+                        {
+                          matchExpressions: [
+                            {
+                              key: "kubernetes.io/hostname",
+                              operator: "In",
+                              values: [gameServerNodeId],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                },
+                restartPolicy: "Never",
+                containers: [
+                  {
+                    name: "validate-gamedata",
+                    image: "ghcr.io/5stackgg/gamedata-validator:latest",
+                    args: ["--build-id", buildId.toString()],
+                    volumeMounts: [
                       {
-                        matchExpressions: [
-                          {
-                            key: "kubernetes.io/hostname",
-                            operator: "In",
-                            values: [gameServerNodeId],
-                          },
-                        ],
+                        name: serverfilesVolumeName,
+                        mountPath: "/serverdata/serverfiles",
+                        readOnly: true,
                       },
                     ],
+                    resources: {
+                      requests: {
+                        cpu: "500m",
+                        memory: "2Gi",
+                      },
+                      limits: {
+                        memory: "6Gi",
+                      },
+                    },
                   },
-                },
-              },
-              restartPolicy: "Never",
-              containers: [
-                {
-                  name: "validate-gamedata",
-                  image: "ghcr.io/5stackgg/gamedata-validator:latest",
-                  args: ["--build-id", buildId.toString()],
-                  volumeMounts: [
-                    {
-                      name: serverfilesVolumeName,
-                      mountPath: "/serverdata/serverfiles",
+                ],
+                volumes: [
+                  {
+                    name: serverfilesVolumeName,
+                    persistentVolumeClaim: {
+                      claimName: `${serverfilesVolumeName}-claim`,
                       readOnly: true,
                     },
-                  ],
-                  resources: {
-                    requests: {
-                      cpu: "500m",
-                      memory: "2Gi",
-                    },
-                    limits: {
-                      memory: "6Gi",
-                    },
                   },
-                },
-              ],
-              volumes: [
-                {
-                  name: serverfilesVolumeName,
-                  persistentVolumeClaim: {
-                    claimName: `${serverfilesVolumeName}-claim`,
-                    readOnly: true,
-                  },
-                },
-              ],
+                ],
+              },
+            },
+            backoffLimit: 0,
+            ttlSecondsAfterFinished: 60 * 60 * 24 * 7,
+          },
+        },
+      });
+
+      const result = await this.waitForGamedataValidation(jobName);
+
+      await this.hasura.mutation({
+        delete_gamedata_signature_validations: {
+          __args: {
+            where: {
+              build_id: { _eq: buildId },
+              branch: { _eq: branch },
             },
           },
-          backoffLimit: 0,
-          ttlSecondsAfterFinished: 60 * 60 * 24 * 7,
+          affected_rows: true,
         },
-      },
-    });
+      });
 
-    const result = await this.waitForGamedataValidation(jobName);
-
-    await this.hasura.mutation({
-      delete_gamedata_signature_validations: {
-        __args: {
-          where: {
-            build_id: { _eq: buildId },
-            branch: { _eq: branch },
+      await this.hasura.mutation({
+        insert_gamedata_signature_validations_one: {
+          __args: {
+            object: {
+              build_id: buildId,
+              branch,
+              status: result?.status ?? "error",
+              results: result ?? null,
+            },
           },
+          id: true,
         },
-        affected_rows: true,
-      },
-    });
+      });
 
-    await this.hasura.mutation({
-      insert_gamedata_signature_validations_one: {
-        __args: {
-          object: {
-            build_id: buildId,
-            branch,
-            status: result?.status ?? "error",
-            results: result ?? null,
-          },
-        },
-        id: true,
-      },
-    });
-
-    return result;
+      return result;
+    } finally {
+      await this.redis.del(lockKey);
+    }
   }
 
   private async waitForGamedataValidation(
