@@ -170,6 +170,8 @@ export type ParsedDemo = {
   max_rounds?: number;
   overtime_enabled?: boolean;
   player_count?: number;
+  game_type?: number;
+  game_mode?: number;
   round_ticks: ParsedRound[];
   kills: ParsedKill[];
   bombs: ParsedBomb[];

@@ -202,6 +202,16 @@ export class MatchImportService {
 
   private static detectMatchType(parsed: ParsedDemo): MatchType {
     const players = parsed.players ?? [];
+    const playerCount = parsed.player_count ?? players.length;
+    const isWingman = playerCount > 0 && playerCount <= 4;
+    // game_mode is Valve's authoritative mode flag (1=Competitive/Premier,
+    // 2=Wingman). Wingman and Competitive both stamp rank_type 7 on the
+    // 1-18 skill-group scale, so rank_type alone can't tell them apart;
+    // mp_maxrounds is 16 for Wingman vs 24 for Competitive/Premier.
+    if (parsed.game_mode === 2 || parsed.max_rounds === 16) {
+      return "Wingman";
+    }
+
     // rank_type: 6=Wingman, 7/12=Competitive, 11=Premier, 10=private lobby.
     const counts = new Map<number, number>();
     for (const p of players) {
@@ -226,9 +236,6 @@ export class MatchImportService {
     if (observed === 6) {
       return "Wingman";
     }
-
-    const playerCount = parsed.player_count ?? players.length;
-    const isWingman = playerCount > 0 && playerCount <= 4;
 
     // 10 = private lobby (FACEIT/practice): never Premier even with overtime;
     // Premier is exclusively rank_type 11.
