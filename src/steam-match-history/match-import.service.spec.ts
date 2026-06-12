@@ -11,7 +11,12 @@ const detectMatchTypeRaw = (
 // The detector now takes the parsed demo (players + game-rule signals).
 const detectMatchType = (
   players: unknown[],
-  rules: { overtime_enabled?: boolean; player_count?: number } = {},
+  rules: {
+    overtime_enabled?: boolean;
+    player_count?: number;
+    max_rounds?: number;
+    game_mode?: number;
+  } = {},
 ) => detectMatchTypeRaw({ players, ...rules });
 
 const computeStartingSides = (
@@ -83,6 +88,20 @@ describe("MatchImportService.detectMatchType", () => {
     expect(
       detectMatchType(four, { player_count: 4, overtime_enabled: true }),
     ).toBe("Wingman");
+  });
+
+  it("classifies Wingman by game_mode/mp_maxrounds even when rank_type reads 7", () => {
+    const four = Array.from({ length: 4 }, (_, i) => ({
+      steam_id: String(i),
+      name: "x",
+      rank_type: 7,
+    }));
+    expect(detectMatchType(four, { player_count: 4, game_mode: 2 })).toBe(
+      "Wingman",
+    );
+    expect(detectMatchType(four, { player_count: 4, max_rounds: 16 })).toBe(
+      "Wingman",
+    );
   });
 });
 
