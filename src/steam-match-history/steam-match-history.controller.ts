@@ -22,7 +22,7 @@ import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
 import { SteamMatchHistoryService } from "./steam-match-history.service";
 import { signUploadToken } from "./uploadToken";
 
-const MAX_UPLOAD_SIZE = 500 * 1024 * 1024;
+const MAX_UPLOAD_SIZE = 2 * 1024 * 1024 * 1024;
 const UPLOAD_CHUNK_SIZE = 64 * 1024 * 1024;
 const UPLOAD_PREFIX = "demo-uploads";
 const CS2_DEMO_MAGIC = Buffer.from([
@@ -61,7 +61,7 @@ export class SteamMatchHistoryController {
       throw new BadRequestException("invalid file size");
     }
     if (fileSize > MAX_UPLOAD_SIZE) {
-      throw new BadRequestException("demo exceeds 500MB limit");
+      throw new BadRequestException("demo exceeds 2GB limit");
     }
 
     const key = `${UPLOAD_PREFIX}/${user.steam_id}/${randomUUID()}.dem`;
@@ -133,7 +133,7 @@ export class SteamMatchHistoryController {
     const { size } = await this.s3.stat(key);
     if (size > MAX_UPLOAD_SIZE) {
       await this.s3.remove(key);
-      throw new BadRequestException("demo exceeds 500MB limit");
+      throw new BadRequestException("demo exceeds 2GB limit");
     }
 
     const header = await this.s3.readPrefix(key, CS2_DEMO_MAGIC.length);

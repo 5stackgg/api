@@ -3,8 +3,8 @@ import { createHmac } from "crypto";
 // Short-lived token the worker verifies before signing a multipart part PUT.
 // Binds the token to the exact object key + multipart uploadId so a leaked
 // token can't be replayed against a different upload, and expires so it can't
-// be reused after the session is done. 6h covers a slow 500MB upload.
-const UPLOAD_TOKEN_TTL_SECONDS = 6 * 60 * 60;
+// be reused after the session is done. 12h covers a slow 2GB upload.
+const UPLOAD_TOKEN_TTL_SECONDS = 12 * 60 * 60;
 
 export function signUploadToken(
   secret: string,
