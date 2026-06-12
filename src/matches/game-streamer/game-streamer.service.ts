@@ -303,16 +303,16 @@ export class GameStreamerService {
     const value =
       (await this.readSetting("live_video_codec")) ||
       process.env.LIVE_VIDEO_CODEC ||
-      "h265";
-    return value === "h264" ? "h264" : "h265";
+      "h264";
+    return value === "h265" ? "h265" : "h264";
   }
 
   private async resolveClipVideoCodec(): Promise<"h265" | "h264"> {
     const value =
       (await this.readSetting("clip_video_codec")) ||
       process.env.CLIP_VIDEO_CODEC ||
-      "h265";
-    return value === "h264" ? "h264" : "h265";
+      "h264";
+    return value === "h265" ? "h265" : "h264";
   }
 
   private async resolveClipBakeBranding(): Promise<"0" | "1"> {
