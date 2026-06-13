@@ -42161,6 +42161,12 @@ export default {
             "updated_at": [
                 2741
             ],
+            "util_on_death_count": [
+                31
+            ],
+            "util_on_death_sum": [
+                31
+            ],
             "wasted_magazine_shots": [
                 31
             ],
@@ -42487,6 +42493,12 @@ export default {
             "unused_utility_value": [
                 22
             ],
+            "util_on_death_count": [
+                22
+            ],
+            "util_on_death_sum": [
+                22
+            ],
             "wasted_magazine_shots": [
                 22
             ],
@@ -42679,6 +42691,12 @@ export default {
                 1724
             ],
             "unused_utility_value": [
+                1724
+            ],
+            "util_on_death_count": [
+                1724
+            ],
+            "util_on_death_sum": [
                 1724
             ],
             "wasted_magazine_shots": [
@@ -42902,6 +42920,12 @@ export default {
             "updated_at": [
                 2742
             ],
+            "util_on_death_count": [
+                32
+            ],
+            "util_on_death_sum": [
+                32
+            ],
             "wasted_magazine_shots": [
                 32
             ],
@@ -43095,6 +43119,12 @@ export default {
                 31
             ],
             "unused_utility_value": [
+                31
+            ],
+            "util_on_death_count": [
+                31
+            ],
+            "util_on_death_sum": [
                 31
             ],
             "wasted_magazine_shots": [
@@ -43309,6 +43339,12 @@ export default {
             "updated_at": [
                 2741
             ],
+            "util_on_death_count": [
+                31
+            ],
+            "util_on_death_sum": [
+                31
+            ],
             "wasted_magazine_shots": [
                 31
             ],
@@ -43512,6 +43548,12 @@ export default {
             "updated_at": [
                 2741
             ],
+            "util_on_death_count": [
+                31
+            ],
+            "util_on_death_sum": [
+                31
+            ],
             "wasted_magazine_shots": [
                 31
             ],
@@ -43713,6 +43755,12 @@ export default {
                 1724
             ],
             "updated_at": [
+                1724
+            ],
+            "util_on_death_count": [
+                1724
+            ],
+            "util_on_death_sum": [
                 1724
             ],
             "wasted_magazine_shots": [
@@ -43918,6 +43966,12 @@ export default {
             "updated_at": [
                 2741
             ],
+            "util_on_death_count": [
+                31
+            ],
+            "util_on_death_sum": [
+                31
+            ],
             "wasted_magazine_shots": [
                 31
             ],
@@ -44119,6 +44173,12 @@ export default {
                 1724
             ],
             "updated_at": [
+                1724
+            ],
+            "util_on_death_count": [
+                1724
+            ],
+            "util_on_death_sum": [
                 1724
             ],
             "wasted_magazine_shots": [
@@ -44358,6 +44418,12 @@ export default {
             "updated_at": [
                 1724
             ],
+            "util_on_death_count": [
+                1724
+            ],
+            "util_on_death_sum": [
+                1724
+            ],
             "wasted_magazine_shots": [
                 1724
             ],
@@ -44573,6 +44639,12 @@ export default {
             "updated_at": [
                 2741
             ],
+            "util_on_death_count": [
+                31
+            ],
+            "util_on_death_sum": [
+                31
+            ],
             "wasted_magazine_shots": [
                 31
             ],
@@ -44765,6 +44837,12 @@ export default {
                 22
             ],
             "unused_utility_value": [
+                22
+            ],
+            "util_on_death_count": [
+                22
+            ],
+            "util_on_death_sum": [
                 22
             ],
             "wasted_magazine_shots": [
@@ -44961,6 +45039,12 @@ export default {
             "unused_utility_value": [
                 1724
             ],
+            "util_on_death_count": [
+                1724
+            ],
+            "util_on_death_sum": [
+                1724
+            ],
             "wasted_magazine_shots": [
                 1724
             ],
@@ -45153,6 +45237,12 @@ export default {
                 22
             ],
             "unused_utility_value": [
+                22
+            ],
+            "util_on_death_count": [
+                22
+            ],
+            "util_on_death_sum": [
                 22
             ],
             "wasted_magazine_shots": [
@@ -45349,6 +45439,12 @@ export default {
             "unused_utility_value": [
                 1724
             ],
+            "util_on_death_count": [
+                1724
+            ],
+            "util_on_death_sum": [
+                1724
+            ],
             "wasted_magazine_shots": [
                 1724
             ],
@@ -45543,6 +45639,12 @@ export default {
             "unused_utility_value": [
                 22
             ],
+            "util_on_death_count": [
+                22
+            ],
+            "util_on_death_sum": [
+                22
+            ],
             "wasted_magazine_shots": [
                 22
             ],
@@ -45735,6 +45837,12 @@ export default {
                 1724
             ],
             "unused_utility_value": [
+                1724
+            ],
+            "util_on_death_count": [
+                1724
+            ],
+            "util_on_death_sum": [
                 1724
             ],
             "wasted_magazine_shots": [
@@ -45951,6 +46059,12 @@ export default {
             "updated_at": [
                 2741
             ],
+            "util_on_death_count": [
+                31
+            ],
+            "util_on_death_sum": [
+                31
+            ],
             "wasted_magazine_shots": [
                 31
             ],
@@ -46145,6 +46259,12 @@ export default {
             "unused_utility_value": [
                 31
             ],
+            "util_on_death_count": [
+                31
+            ],
+            "util_on_death_sum": [
+                31
+            ],
             "wasted_magazine_shots": [
                 31
             ],
@@ -46337,6 +46457,12 @@ export default {
                 1724
             ],
             "unused_utility_value": [
+                1724
+            ],
+            "util_on_death_count": [
+                1724
+            ],
+            "util_on_death_sum": [
                 1724
             ],
             "wasted_magazine_shots": [
@@ -46548,6 +46674,12 @@ export default {
             "unused_utility_value": [
                 22
             ],
+            "util_on_death_count": [
+                22
+            ],
+            "util_on_death_sum": [
+                22
+            ],
             "wasted_magazine_shots": [
                 22
             ],
@@ -46740,6 +46872,12 @@ export default {
                 1724
             ],
             "unused_utility_value": [
+                1724
+            ],
+            "util_on_death_count": [
+                1724
+            ],
+            "util_on_death_sum": [
                 1724
             ],
             "wasted_magazine_shots": [
@@ -46936,6 +47074,12 @@ export default {
             "unused_utility_value": [
                 22
             ],
+            "util_on_death_count": [
+                22
+            ],
+            "util_on_death_sum": [
+                22
+            ],
             "wasted_magazine_shots": [
                 22
             ],
@@ -47128,6 +47272,12 @@ export default {
                 1724
             ],
             "unused_utility_value": [
+                1724
+            ],
+            "util_on_death_count": [
+                1724
+            ],
+            "util_on_death_sum": [
                 1724
             ],
             "wasted_magazine_shots": [
@@ -47324,6 +47474,12 @@ export default {
             "unused_utility_value": [
                 22
             ],
+            "util_on_death_count": [
+                22
+            ],
+            "util_on_death_sum": [
+                22
+            ],
             "wasted_magazine_shots": [
                 22
             ],
@@ -47518,6 +47674,12 @@ export default {
             "unused_utility_value": [
                 1724
             ],
+            "util_on_death_count": [
+                1724
+            ],
+            "util_on_death_sum": [
+                1724
+            ],
             "wasted_magazine_shots": [
                 1724
             ],
@@ -47705,6 +47867,9 @@ export default {
             ],
             "unused_utility_value": [
                 31
+            ],
+            "utility_on_death": [
+                1722
             ],
             "wasted_magazine_shots": [
                 31
@@ -48020,6 +48185,9 @@ export default {
             "unused_utility_value": [
                 22
             ],
+            "utility_on_death": [
+                22
+            ],
             "wasted_magazine_shots": [
                 22
             ],
@@ -48203,6 +48371,9 @@ export default {
                 1724
             ],
             "unused_utility_value": [
+                1724
+            ],
+            "utility_on_death": [
                 1724
             ],
             "wasted_magazine_shots": [
@@ -48402,6 +48573,9 @@ export default {
             "unused_utility_value": [
                 32
             ],
+            "utility_on_death": [
+                1723
+            ],
             "wasted_magazine_shots": [
                 32
             ],
@@ -48589,6 +48763,9 @@ export default {
             ],
             "unused_utility_value": [
                 31
+            ],
+            "utility_on_death": [
+                1722
             ],
             "wasted_magazine_shots": [
                 31
@@ -48778,6 +48955,9 @@ export default {
             "unused_utility_value": [
                 31
             ],
+            "utility_on_death": [
+                1722
+            ],
             "wasted_magazine_shots": [
                 31
             ],
@@ -48964,6 +49144,9 @@ export default {
                 1724
             ],
             "unused_utility_value": [
+                1724
+            ],
+            "utility_on_death": [
                 1724
             ],
             "wasted_magazine_shots": [
@@ -49154,6 +49337,9 @@ export default {
             "unused_utility_value": [
                 31
             ],
+            "utility_on_death": [
+                1722
+            ],
             "wasted_magazine_shots": [
                 31
             ],
@@ -49340,6 +49526,9 @@ export default {
                 1724
             ],
             "unused_utility_value": [
+                1724
+            ],
+            "utility_on_death": [
                 1724
             ],
             "wasted_magazine_shots": [
@@ -49530,6 +49719,9 @@ export default {
             "unused_utility_value": [
                 1724
             ],
+            "utility_on_death": [
+                1724
+            ],
             "wasted_magazine_shots": [
                 1724
             ],
@@ -49714,6 +49906,9 @@ export default {
                 22
             ],
             "unused_utility_value": [
+                22
+            ],
+            "utility_on_death": [
                 22
             ],
             "wasted_magazine_shots": [
@@ -49901,6 +50096,9 @@ export default {
             "unused_utility_value": [
                 1724
             ],
+            "utility_on_death": [
+                1724
+            ],
             "wasted_magazine_shots": [
                 1724
             ],
@@ -50084,6 +50282,9 @@ export default {
                 22
             ],
             "unused_utility_value": [
+                22
+            ],
+            "utility_on_death": [
                 22
             ],
             "wasted_magazine_shots": [
@@ -50271,6 +50472,9 @@ export default {
             "unused_utility_value": [
                 1724
             ],
+            "utility_on_death": [
+                1724
+            ],
             "wasted_magazine_shots": [
                 1724
             ],
@@ -50456,6 +50660,9 @@ export default {
             "unused_utility_value": [
                 22
             ],
+            "utility_on_death": [
+                22
+            ],
             "wasted_magazine_shots": [
                 22
             ],
@@ -50639,6 +50846,9 @@ export default {
                 1724
             ],
             "unused_utility_value": [
+                1724
+            ],
+            "utility_on_death": [
                 1724
             ],
             "wasted_magazine_shots": [
@@ -50840,6 +51050,9 @@ export default {
             "unused_utility_value": [
                 31
             ],
+            "utility_on_death": [
+                1722
+            ],
             "wasted_magazine_shots": [
                 31
             ],
@@ -51025,6 +51238,9 @@ export default {
             "unused_utility_value": [
                 31
             ],
+            "utility_on_death": [
+                1722
+            ],
             "wasted_magazine_shots": [
                 31
             ],
@@ -51208,6 +51424,9 @@ export default {
                 1724
             ],
             "unused_utility_value": [
+                1724
+            ],
+            "utility_on_death": [
                 1724
             ],
             "wasted_magazine_shots": [
@@ -51395,6 +51614,9 @@ export default {
             "unused_utility_value": [
                 22
             ],
+            "utility_on_death": [
+                22
+            ],
             "wasted_magazine_shots": [
                 22
             ],
@@ -51578,6 +51800,9 @@ export default {
                 1724
             ],
             "unused_utility_value": [
+                1724
+            ],
+            "utility_on_death": [
                 1724
             ],
             "wasted_magazine_shots": [
@@ -51765,6 +51990,9 @@ export default {
             "unused_utility_value": [
                 22
             ],
+            "utility_on_death": [
+                22
+            ],
             "wasted_magazine_shots": [
                 22
             ],
@@ -51948,6 +52176,9 @@ export default {
                 1724
             ],
             "unused_utility_value": [
+                1724
+            ],
+            "utility_on_death": [
                 1724
             ],
             "wasted_magazine_shots": [
@@ -52135,6 +52366,9 @@ export default {
             "unused_utility_value": [
                 22
             ],
+            "utility_on_death": [
+                22
+            ],
             "wasted_magazine_shots": [
                 22
             ],
@@ -52318,6 +52552,9 @@ export default {
                 1724
             ],
             "unused_utility_value": [
+                1724
+            ],
+            "utility_on_death": [
                 1724
             ],
             "wasted_magazine_shots": [
