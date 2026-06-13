@@ -34,6 +34,27 @@ BEGIN
   DELETE FROM public.player_aim_stats_demo            WHERE match_map_id = v_match_map_id;
   DELETE FROM public.player_round_inventory           WHERE match_map_id = v_match_map_id;
   DELETE FROM public.player_match_map_event_aggregates WHERE match_map_id = v_match_map_id;
+  DELETE FROM public.player_trades          WHERE match_map_id = v_match_map_id;
+
+  INSERT INTO public.player_trades (
+    match_id, match_map_id, steam_id,
+    trade_kill_opportunities, trade_kill_attempts, trade_kill_successes,
+    traded_death_opportunities, traded_death_attempts, traded_death_successes,
+    util_on_death_sum, util_on_death_count
+  )
+  SELECT
+    v_match_id, v_match_map_id,
+    (elem->>'steam_id')::bigint,
+    COALESCE((elem->>'trade_kill_opportunities')::int, 0),
+    COALESCE((elem->>'trade_kill_attempts')::int, 0),
+    COALESCE((elem->>'trade_kill_successes')::int, 0),
+    COALESCE((elem->>'traded_death_opportunities')::int, 0),
+    COALESCE((elem->>'traded_death_attempts')::int, 0),
+    COALESCE((elem->>'traded_death_successes')::int, 0),
+    COALESCE((elem->>'util_on_death_sum')::int, 0),
+    COALESCE((elem->>'deaths')::int, 0)
+  FROM jsonb_array_elements(COALESCE(p_parsed->'player_trades', '[]'::jsonb)) elem
+  WHERE NULLIF(elem->>'steam_id', '') IS NOT NULL;
 
   INSERT INTO public.player_round_inventory
     (match_id, match_map_id, round, attacker_steam_id, attacker_team,
@@ -60,19 +81,21 @@ BEGIN
         COALESCE((elem->>'is_rifle')::boolean, false)      AS is_rifle,
         COALESCE((elem->>'is_crouched')::boolean, false)   AS is_crouched,
         COALESCE((elem->>'enemy_spotted')::boolean, false) AS enemy_spotted,
+        COALESCE((elem->>'was_moving')::boolean, false)    AS was_moving,
         COALESCE((elem->>'is_spray')::boolean, false)      AS is_spray,
         CASE WHEN jsonb_typeof(elem->'was_stopped') = 'boolean'
              THEN (elem->>'was_stopped')::boolean END      AS was_stopped
       FROM jsonb_array_elements(COALESCE(p_parsed->'shots_fired', '[]'::jsonb)) elem
       WHERE NULLIF(elem->>'attacker', '') IS NOT NULL
+        AND LOWER(COALESCE(elem->>'weapon', '')) NOT IN ('nova', 'xm1014', 'mag7', 'sawedoff')
     ),
     shots_agg AS (
       SELECT
         attacker,
         COUNT(*) FILTER (WHERE enemy_spotted)                                                            AS shots_at_spotted,
-        COUNT(*) FILTER (WHERE is_rifle AND NOT is_crouched AND enemy_spotted)                           AS counter_strafe_eligible,
-        COUNT(*) FILTER (WHERE is_rifle AND NOT is_crouched AND enemy_spotted AND was_stopped IS TRUE)   AS counter_strafed_shots,
-        COUNT(*) FILTER (WHERE is_spray)                                                                 AS spray_shots
+        COUNT(*) FILTER (WHERE is_rifle AND NOT is_crouched AND was_moving)                              AS counter_strafe_eligible,
+        COUNT(*) FILTER (WHERE is_rifle AND NOT is_crouched AND was_moving AND was_stopped IS TRUE)      AS counter_strafed_shots,
+        COUNT(*) FILTER (WHERE is_spray AND enemy_spotted)                                               AS spray_shots
       FROM shots
       GROUP BY attacker
     ),
@@ -93,6 +116,11 @@ BEGIN
       FROM jsonb_array_elements(COALESCE(p_parsed->'damages', '[]'::jsonb)) elem
       WHERE NULLIF(elem->>'attacker', '') IS NOT NULL
         AND NULLIF(elem->>'victim', '')   IS NOT NULL
+        AND LOWER(COALESCE(elem->>'weapon', '')) NOT IN (
+          'nova', 'xm1014', 'mag7', 'sawedoff',
+          'hegrenade', 'molotov', 'inferno', 'incgrenade', 'firebomb',
+          'flashbang', 'smokegrenade', 'decoy'
+        )
         AND (
           NULLIF(elem->>'attacker_team', '') IS NULL
           OR NULLIF(elem->>'victim_team', '') IS NULL
@@ -161,6 +189,7 @@ BEGIN
     shots_per AS (
       SELECT round, steam_id, COUNT(*)::int AS shots_fired
       FROM shots_raw
+      WHERE LOWER(COALESCE(weapon, '')) NOT IN ('nova', 'xm1014', 'mag7', 'sawedoff')
       GROUP BY round, steam_id
     ),
     wasted_per AS (

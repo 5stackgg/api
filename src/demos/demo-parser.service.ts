@@ -194,6 +194,17 @@ export type ParsedDemo = {
     team_flash?: boolean;
   }>;
   kit_drops?: ParsedKitDrop[];
+  player_trades?: Array<{
+    steam_id: string;
+    trade_kill_opportunities: number;
+    trade_kill_attempts: number;
+    trade_kill_successes: number;
+    traded_death_opportunities: number;
+    traded_death_attempts: number;
+    traded_death_successes: number;
+    util_on_death_sum: number;
+    deaths: number;
+  }>;
 };
 
 @Injectable()
