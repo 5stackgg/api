@@ -48,6 +48,8 @@ select_permissions:
         - shots_fired
         - wasted_magazine_shots
         - unused_utility_value
+        - util_on_death_sum
+        - util_on_death_count
         - kills_t
         - kills_ct
         - hs_kills_t
