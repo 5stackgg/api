@@ -35,6 +35,10 @@ SELECT
   SUM(s.shots_fired)::integer                       AS shots_fired,
   SUM(s.wasted_magazine_shots)::integer             AS wasted_magazine_shots,
   SUM(s.unused_utility_value)::integer              AS unused_utility_value,
+  CASE WHEN SUM(s.util_on_death_count) > 0
+       THEN ROUND(SUM(s.util_on_death_sum)::numeric / SUM(s.util_on_death_count), 1)
+       ELSE 0::numeric
+  END                                               AS utility_on_death,
   SUM(s.kills_t)::integer                           AS kills_t,
   SUM(s.kills_ct)::integer                          AS kills_ct,
   SUM(s.hs_kills_t)::integer                        AS hs_kills_t,

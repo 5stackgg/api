@@ -113,6 +113,34 @@ BEGIN
       AND pa.round IN (SELECT round FROM finalized_rounds)
     GROUP BY pa.attacker_steam_id
   ),
+  capped_damages AS (
+    SELECT
+      attacker_steam_id, attacker_team, attacked_team, "with", damage
+    FROM (
+      SELECT
+        pd.attacker_steam_id,
+        pd.attacker_team,
+        pd.attacked_team,
+        pd."with",
+        LEAST(
+          pd.damage,
+          GREATEST(
+            COALESCE(
+              LAG(pd.health) OVER (
+                PARTITION BY pd.match_map_id, pd.round, pd.attacked_steam_id
+                ORDER BY pd.time
+              ),
+              100
+            ),
+            0
+          )
+        )::integer AS damage
+      FROM public.player_damages pd
+      WHERE pd.match_map_id = p_match_map_id
+        AND pd.round::integer IN (SELECT round FROM finalized_rounds)
+    ) chained
+    WHERE attacker_steam_id IS NOT NULL
+  ),
   damage_agg AS (
     SELECT
       pd.attacker_steam_id AS steam_id,
@@ -126,19 +154,16 @@ BEGIN
       COALESCE(SUM(pd.damage) FILTER (WHERE pd.attacker_team = pd.attacked_team AND pd."with" = 'hegrenade'), 0)::integer  AS he_team_damage,
       COALESCE(SUM(pd.damage) FILTER (WHERE pd.attacker_team <> pd.attacked_team AND public.normalize_side(pd.attacker_team) = 't'), 0)::integer  AS damage_t,
       COALESCE(SUM(pd.damage) FILTER (WHERE pd.attacker_team <> pd.attacked_team AND public.normalize_side(pd.attacker_team) = 'ct'), 0)::integer AS damage_ct
-    FROM public.player_damages pd
-    WHERE pd.match_map_id = p_match_map_id
-      AND pd.attacker_steam_id IS NOT NULL
-      AND pd.round::integer IN (SELECT round FROM finalized_rounds)
+    FROM capped_damages pd
     GROUP BY pd.attacker_steam_id
   ),
   flash_agg AS (
     SELECT
       pf.attacker_steam_id AS steam_id,
-      COUNT(*) FILTER (WHERE NOT pf.team_flash)              AS enemies_flashed,
-      COUNT(*) FILTER (WHERE pf.team_flash)                  AS team_flashed,
-      COALESCE(SUM(pf.duration), 0)                          AS flash_duration_sum,
-      COUNT(*)                                               AS flash_duration_count
+      COUNT(*) FILTER (WHERE NOT pf.team_flash AND pf.duration > 1.0)              AS enemies_flashed,
+      COUNT(*) FILTER (WHERE pf.team_flash AND pf.duration > 1.0)                  AS team_flashed,
+      COALESCE(SUM(pf.duration) FILTER (WHERE NOT pf.team_flash AND pf.duration > 1.0), 0) AS flash_duration_sum,
+      COUNT(*) FILTER (WHERE NOT pf.team_flash AND pf.duration > 1.0)              AS flash_duration_count
     FROM public.player_flashes pf
     WHERE pf.match_map_id = p_match_map_id
       AND pf.round IN (SELECT round FROM finalized_rounds)
@@ -278,6 +303,15 @@ BEGIN
       AND round IN (SELECT round FROM finalized_rounds)
     GROUP BY attacked_steam_id
   ),
+  trade_demo AS (
+    SELECT
+      steam_id,
+      trade_kill_opportunities, trade_kill_attempts, trade_kill_successes,
+      traded_death_opportunities, traded_death_attempts, traded_death_successes,
+      util_on_death_sum, util_on_death_count
+    FROM public.player_trades
+    WHERE match_map_id = p_match_map_id
+  ),
   shots_agg AS (
     SELECT steam_id, SUM(shots_fired)::int AS shots_fired
     FROM public.player_match_map_event_aggregates
@@ -359,6 +393,11 @@ BEGIN
       AND pd.attacker_steam_id IS NOT NULL
       AND pd.round::integer IN (SELECT round FROM finalized_rounds)
       AND NOT (SELECT present FROM has_aim_demo)
+      AND LOWER(COALESCE(pd."with", '')) NOT IN (
+        'nova', 'xm1014', 'mag7', 'sawedoff',
+        'hegrenade', 'molotov', 'inferno', 'incgrenade', 'firebomb',
+        'flashbang', 'smokegrenade', 'decoy'
+      )
     GROUP BY pd.attacker_steam_id
   ),
   spotted_agg AS (
@@ -407,6 +446,7 @@ BEGIN
     crosshair_angle_sum_deg, crosshair_angle_count,
     wasted_magazine_shots,
     unused_utility_value,
+    util_on_death_sum, util_on_death_count,
     kills_t, kills_ct, hs_kills_t, hs_kills_ct,
     deaths_t, deaths_ct,
     damage_t, damage_ct,
@@ -428,12 +468,12 @@ BEGIN
     COALESCE(fa.flash_duration_sum, 0), COALESCE(fa.flash_duration_count, 0),
     COALESCE(mka.two_kill_rounds, 0),  COALESCE(mka.three_kill_rounds, 0),
     COALESCE(mka.four_kill_rounds, 0), COALESCE(mka.five_kill_rounds, 0),
-    COALESCE(tko.trade_kill_opportunities, 0),
-    COALESCE(tka.trade_kill_attempts, 0),
-    COALESCE(tka.trade_kill_successes, 0),
-    COALESCE(tdo.traded_death_opportunities, 0),
-    COALESCE(tda.traded_death_attempts, 0),
-    COALESCE(tda.traded_death_successes, 0),
+    COALESCE(td.trade_kill_opportunities, tko.trade_kill_opportunities, 0),
+    COALESCE(td.trade_kill_attempts, tka.trade_kill_attempts, 0),
+    COALESCE(td.trade_kill_successes, tka.trade_kill_successes, 0),
+    COALESCE(td.traded_death_opportunities, tdo.traded_death_opportunities, 0),
+    COALESCE(td.traded_death_attempts, tda.traded_death_attempts, 0),
+    COALESCE(td.traded_death_successes, tda.traded_death_successes, 0),
     COALESCE(sa.shots_fired, 0),
     COALESCE(ad.hits, hf.hits, 0),
     COALESCE(ad.headshot_hits, hf.headshot_hits, 0),
@@ -454,6 +494,8 @@ BEGIN
     COALESCE(ad.crosshair_angle_count, 0),
     COALESCE(wma.wasted_magazine_shots, 0),
     COALESCE(uu.unused_utility_value, 0),
+    COALESCE(td.util_on_death_sum, 0),
+    COALESCE(td.util_on_death_count, 0),
     COALESCE(ka.kills_t, 0),    COALESCE(ka.kills_ct, 0),
     COALESCE(ka.hs_kills_t, 0), COALESCE(ka.hs_kills_ct, 0),
     COALESCE(da.deaths_t, 0),   COALESCE(da.deaths_ct, 0),
@@ -473,6 +515,7 @@ BEGIN
   LEFT JOIN trade_kill_opp_agg tko ON tko.steam_id = ps.steam_id
   LEFT JOIN traded_death_agg   tda ON tda.steam_id = ps.steam_id
   LEFT JOIN traded_death_opp_agg tdo ON tdo.steam_id = ps.steam_id
+  LEFT JOIN trade_demo         td  ON td.steam_id  = ps.steam_id
   LEFT JOIN shots_agg          sa  ON sa.steam_id  = ps.steam_id
   LEFT JOIN aim_demo_agg       ad  ON ad.steam_id  = ps.steam_id
   LEFT JOIN hits_fallback      hf  ON hf.steam_id  = ps.steam_id
