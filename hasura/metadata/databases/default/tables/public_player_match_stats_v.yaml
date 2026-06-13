@@ -36,6 +36,7 @@ select_permissions:
         - shots_fired
         - wasted_magazine_shots
         - unused_utility_value
+        - utility_on_death
         - kills_t
         - kills_ct
         - hs_kills_t
