@@ -81,11 +81,7 @@ export class MatchmakeService {
       },
     });
 
-    const types: e_match_types_enum[] = [
-      e_match_types_enum.Duel,
-      e_match_types_enum.Wingman,
-      e_match_types_enum.Competitive,
-    ];
+    const types: e_match_types_enum[] = ["Duel", "Wingman", "Competitive"];
 
     const regionStats: Partial<
       Record<string, Partial<Record<e_match_types_enum, number[]>>>
