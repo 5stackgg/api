@@ -60,13 +60,6 @@ export class MatchmakeService {
     await this.matchmakingLobbyService.sendQueueDetailsToLobby(lobbyId);
   }
 
-  public async getNumberOfPlayersInQueue(
-    type: e_match_types_enum,
-    region: string,
-  ) {
-    return await this.redis.zcard(getMatchmakingQueueCacheKey(type, region));
-  }
-
   public async sendRegionStats(user?: User) {
     const regions = await this.hasura.query({
       server_regions: {
@@ -88,19 +81,36 @@ export class MatchmakeService {
       },
     });
 
+    const types: e_match_types_enum[] = [
+      e_match_types_enum.Duel,
+      e_match_types_enum.Wingman,
+      e_match_types_enum.Competitive,
+    ];
+
     const regionStats: Partial<
-      Record<string, Partial<Record<e_match_types_enum, number>>>
+      Record<string, Partial<Record<e_match_types_enum, number[]>>>
     > = {};
 
-    for (const region of regions.server_regions) {
-      regionStats[region.value] = {
-        Duel: await this.getNumberOfPlayersInQueue("Duel", region.value),
-        Wingman: await this.getNumberOfPlayersInQueue("Wingman", region.value),
-        Competitive: await this.getNumberOfPlayersInQueue(
-          "Competitive",
-          region.value,
-        ),
-      };
+    for (const type of types) {
+      const lobbyIndexes = new Map<string, number>();
+
+      for (const region of regions.server_regions) {
+        const lobbyIds = await this.redis.zrange(
+          getMatchmakingQueueCacheKey(type, region.value),
+          0,
+          -1,
+        );
+
+        const stats = (regionStats[region.value] ??= {});
+        stats[type] = lobbyIds.map((lobbyId) => {
+          let index = lobbyIndexes.get(lobbyId);
+          if (index === undefined) {
+            index = lobbyIndexes.size;
+            lobbyIndexes.set(lobbyId, index);
+          }
+          return index;
+        });
+      }
     }
 
     if (user) {
