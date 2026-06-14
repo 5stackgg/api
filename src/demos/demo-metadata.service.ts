@@ -5,13 +5,8 @@ import { PostgresService } from "../postgres/postgres.service";
 import { S3Service } from "../s3/s3.service";
 import { DemoParserService, ParsedDemo } from "./demo-parser.service";
 
-// Bump this whenever the playback-blob format or the parser's output
-// changes in a way that should force already-parsed demos to re-parse.
-// It is both the blob's `schema_version` AND the re-parse gate: a demo
-// whose stored metadata_version is below this is treated as stale and
-// re-parsed on next access, regenerating its (timestamp-keyed) S3 blob.
-// v3: added per-tick active_weapon to position samples.
-// v4: added grenade_trajectories (per-grenade bounce flight path) to the blob.
+// Bump to force already-parsed demos to re-parse; embedded in the blob key
+// so older versions are detected as stale.
 export const DEMO_METADATA_VERSION = 4;
 
 export type DemoRow = {
@@ -555,10 +550,7 @@ export class DemoMetadataService {
   }
 }
 
-// A demo is "fresh" only if it's parsed AND its playback blob was written
-// at the current DEMO_METADATA_VERSION (the version is embedded in the blob
-// key). Older versions — or a missing blob — are stale → re-parsed so they
-// pick up new fields (e.g. per-tick active_weapon). No DB column needed.
+// Fresh = parsed and its blob was written at the current version.
 function isDemoFresh(demo: DemoRow): boolean {
   return (
     !!demo.metadata_parsed_at &&
@@ -572,9 +564,8 @@ export function demoKey(matchId: string, mapId: string, demo: string): string {
   return `demos/${matchId}/${mapId}/${demo}`;
 }
 
-// The blob key embeds DEMO_METADATA_VERSION (so a version bump changes the
-// path and is detectable as stale) plus a cache-buster (timestamp) so each
-// re-parse writes a unique object and never serves a stale S3/CDN copy.
+// Key embeds the version plus a cache-buster so each re-parse writes a
+// unique object and never serves a stale S3/CDN copy.
 export function playbackBlobKey(
   matchId: string,
   matchMapId: string,
