@@ -184,7 +184,6 @@ export type ParsedDemo = {
   spotted?: ParsedSpotted[];
   grenade_throws?: ParsedGrenadeEvent[];
   grenade_detonations?: ParsedGrenadeEvent[];
-  // Per-grenade flight path; gid links to throw/detonation events.
   grenade_trajectories?: Array<{
     gid: number;
     pts: Array<{ t: number; x: number; y: number; z: number }>;

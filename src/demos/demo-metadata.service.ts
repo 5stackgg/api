@@ -5,8 +5,6 @@ import { PostgresService } from "../postgres/postgres.service";
 import { S3Service } from "../s3/s3.service";
 import { DemoParserService, ParsedDemo } from "./demo-parser.service";
 
-// Bump to force already-parsed demos to re-parse; embedded in the blob key
-// so older versions are detected as stale.
 export const DEMO_METADATA_VERSION = 4;
 
 export type DemoRow = {
@@ -550,7 +548,6 @@ export class DemoMetadataService {
   }
 }
 
-// Fresh = parsed and its blob was written at the current version.
 function isDemoFresh(demo: DemoRow): boolean {
   return (
     !!demo.metadata_parsed_at &&
@@ -564,8 +561,6 @@ export function demoKey(matchId: string, mapId: string, demo: string): string {
   return `demos/${matchId}/${mapId}/${demo}`;
 }
 
-// Key embeds the version plus a cache-buster so each re-parse writes a
-// unique object and never serves a stale S3/CDN copy.
 export function playbackBlobKey(
   matchId: string,
   matchMapId: string,
