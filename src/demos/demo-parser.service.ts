@@ -99,6 +99,7 @@ export type ParsedPosition = {
   helmet?: boolean;
   has_bomb?: boolean;
   has_defuser?: boolean;
+  active_weapon?: string;
 };
 
 export type ParsedRoundInventory = {
@@ -183,6 +184,10 @@ export type ParsedDemo = {
   spotted?: ParsedSpotted[];
   grenade_throws?: ParsedGrenadeEvent[];
   grenade_detonations?: ParsedGrenadeEvent[];
+  grenade_trajectories?: Array<{
+    gid: number;
+    pts: Array<{ t: number; x: number; y: number; z: number }>;
+  }>;
   flashes?: Array<{
     tick: number;
     round?: number;

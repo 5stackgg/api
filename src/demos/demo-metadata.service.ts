@@ -5,6 +5,8 @@ import { PostgresService } from "../postgres/postgres.service";
 import { S3Service } from "../s3/s3.service";
 import { DemoParserService, ParsedDemo } from "./demo-parser.service";
 
+export const DEMO_METADATA_VERSION = 4;
+
 export type DemoRow = {
   id: string;
   match_id: string;
@@ -51,7 +53,7 @@ export class DemoMetadataService {
       throw new Error(`no uploaded demo for match_map ${matchMapId}`);
     }
 
-    if (demo.metadata_parsed_at && demo.total_ticks) {
+    if (isDemoFresh(demo)) {
       return demo;
     }
 
@@ -94,7 +96,7 @@ export class DemoMetadataService {
 
     const results: DemoRow[] = [];
     for (const demo of demos) {
-      if (demo.metadata_parsed_at && demo.total_ticks) {
+      if (isDemoFresh(demo)) {
         results.push(demo);
         continue;
       }
@@ -126,7 +128,7 @@ export class DemoMetadataService {
       return;
     }
 
-    if (demo.metadata_parsed_at && demo.total_ticks) {
+    if (isDemoFresh(demo)) {
       return;
     }
 
@@ -178,6 +180,7 @@ export class DemoMetadataService {
         match_id: true,
         match_map_id: true,
         file: true,
+        playback_file: true,
         total_ticks: true,
         tick_rate: true,
         round_ticks: true,
@@ -200,6 +203,7 @@ export class DemoMetadataService {
         match_id: true,
         match_map_id: true,
         file: true,
+        playback_file: true,
         total_ticks: true,
         tick_rate: true,
         round_ticks: true,
@@ -222,6 +226,7 @@ export class DemoMetadataService {
         match_id: true,
         match_map_id: true,
         file: true,
+        playback_file: true,
         total_ticks: true,
         tick_rate: true,
         round_ticks: true,
@@ -266,7 +271,7 @@ export class DemoMetadataService {
 
     await this.persistDemoStats(demo.id, demo.match_id, parsed);
 
-    await this.uploadPlaybackBlob(
+    const playbackFile = await this.uploadPlaybackBlob(
       demo.match_id,
       demo.match_map_id,
       demo.id,
@@ -286,6 +291,7 @@ export class DemoMetadataService {
       workshop_id: parsed.workshop_id ?? null,
       cs2_build: parsed.cs2_build ?? null,
       metadata_parsed_at: new Date().toISOString(),
+      playback_file: playbackFile,
     };
   }
 
@@ -509,7 +515,7 @@ export class DemoMetadataService {
     matchMapDemoId: string,
     parsed: ParsedDemo,
     prevPlaybackFile: string | null = null,
-  ): Promise<void> {
+  ): Promise<string> {
     const key = playbackBlobKey(matchId, matchMapId, Date.now());
     const blob = buildPlaybackBlob(matchMapId, parsed);
     const gz = zlib.gzipSync(Buffer.from(JSON.stringify(blob)));
@@ -538,7 +544,17 @@ export class DemoMetadataService {
         `${blob.grenade_throws.length} grenade events, ` +
         `${blob.damages.length} damages)`,
     );
+    return key;
   }
+}
+
+function isDemoFresh(demo: DemoRow): boolean {
+  return (
+    !!demo.metadata_parsed_at &&
+    !!demo.total_ticks &&
+    !!demo.playback_file &&
+    demo.playback_file.includes(`/playback.v${DEMO_METADATA_VERSION}.`)
+  );
 }
 
 export function demoKey(matchId: string, mapId: string, demo: string): string {
@@ -548,9 +564,9 @@ export function demoKey(matchId: string, mapId: string, demo: string): string {
 export function playbackBlobKey(
   matchId: string,
   matchMapId: string,
-  version: number,
+  cacheBuster: number,
 ): string {
-  return `demos/${matchId}/${matchMapId}/playback/playback.${version}.json.gz`;
+  return `demos/${matchId}/${matchMapId}/playback/playback.v${DEMO_METADATA_VERSION}.${cacheBuster}.json.gz`;
 }
 
 function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
@@ -569,6 +585,7 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     helmet: (p as { helmet?: boolean }).helmet ?? false,
     has_bomb: p.has_bomb ?? false,
     has_defuser: p.has_defuser ?? false,
+    active_weapon: (p as { active_weapon?: string }).active_weapon ?? null,
   }));
 
   const shots_fired = (parsed.shots_fired ?? []).map((s) => ({
@@ -630,7 +647,7 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
   }));
 
   return {
-    schema_version: 2,
+    schema_version: DEMO_METADATA_VERSION,
     match_map_id: matchMapId,
     tick_rate: parsed.tick_rate,
     total_ticks: parsed.total_ticks,
@@ -643,6 +660,7 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     positions,
     shots_fired,
     grenade_throws,
+    grenade_trajectories: parsed.grenade_trajectories ?? [],
     damages,
     round_inventory,
   };
