@@ -5,6 +5,15 @@ import { PostgresService } from "../postgres/postgres.service";
 import { S3Service } from "../s3/s3.service";
 import { DemoParserService, ParsedDemo } from "./demo-parser.service";
 
+// Bump this whenever the playback-blob format or the parser's output
+// changes in a way that should force already-parsed demos to re-parse.
+// It is both the blob's `schema_version` AND the re-parse gate: a demo
+// whose stored metadata_version is below this is treated as stale and
+// re-parsed on next access, regenerating its (timestamp-keyed) S3 blob.
+// v3: added per-tick active_weapon to position samples.
+// v4: added grenade_trajectories (per-grenade bounce flight path) to the blob.
+export const DEMO_METADATA_VERSION = 4;
+
 export type DemoRow = {
   id: string;
   match_id: string;
@@ -51,7 +60,7 @@ export class DemoMetadataService {
       throw new Error(`no uploaded demo for match_map ${matchMapId}`);
     }
 
-    if (demo.metadata_parsed_at && demo.total_ticks) {
+    if (isDemoFresh(demo)) {
       return demo;
     }
 
@@ -94,7 +103,7 @@ export class DemoMetadataService {
 
     const results: DemoRow[] = [];
     for (const demo of demos) {
-      if (demo.metadata_parsed_at && demo.total_ticks) {
+      if (isDemoFresh(demo)) {
         results.push(demo);
         continue;
       }
@@ -126,7 +135,7 @@ export class DemoMetadataService {
       return;
     }
 
-    if (demo.metadata_parsed_at && demo.total_ticks) {
+    if (isDemoFresh(demo)) {
       return;
     }
 
@@ -178,6 +187,7 @@ export class DemoMetadataService {
         match_id: true,
         match_map_id: true,
         file: true,
+        playback_file: true,
         total_ticks: true,
         tick_rate: true,
         round_ticks: true,
@@ -200,6 +210,7 @@ export class DemoMetadataService {
         match_id: true,
         match_map_id: true,
         file: true,
+        playback_file: true,
         total_ticks: true,
         tick_rate: true,
         round_ticks: true,
@@ -222,6 +233,7 @@ export class DemoMetadataService {
         match_id: true,
         match_map_id: true,
         file: true,
+        playback_file: true,
         total_ticks: true,
         tick_rate: true,
         round_ticks: true,
@@ -266,7 +278,7 @@ export class DemoMetadataService {
 
     await this.persistDemoStats(demo.id, demo.match_id, parsed);
 
-    await this.uploadPlaybackBlob(
+    const playbackFile = await this.uploadPlaybackBlob(
       demo.match_id,
       demo.match_map_id,
       demo.id,
@@ -286,6 +298,7 @@ export class DemoMetadataService {
       workshop_id: parsed.workshop_id ?? null,
       cs2_build: parsed.cs2_build ?? null,
       metadata_parsed_at: new Date().toISOString(),
+      playback_file: playbackFile,
     };
   }
 
@@ -509,7 +522,7 @@ export class DemoMetadataService {
     matchMapDemoId: string,
     parsed: ParsedDemo,
     prevPlaybackFile: string | null = null,
-  ): Promise<void> {
+  ): Promise<string> {
     const key = playbackBlobKey(matchId, matchMapId, Date.now());
     const blob = buildPlaybackBlob(matchMapId, parsed);
     const gz = zlib.gzipSync(Buffer.from(JSON.stringify(blob)));
@@ -538,19 +551,36 @@ export class DemoMetadataService {
         `${blob.grenade_throws.length} grenade events, ` +
         `${blob.damages.length} damages)`,
     );
+    return key;
   }
+}
+
+// A demo is "fresh" only if it's parsed AND its playback blob was written
+// at the current DEMO_METADATA_VERSION (the version is embedded in the blob
+// key). Older versions — or a missing blob — are stale → re-parsed so they
+// pick up new fields (e.g. per-tick active_weapon). No DB column needed.
+function isDemoFresh(demo: DemoRow): boolean {
+  return (
+    !!demo.metadata_parsed_at &&
+    !!demo.total_ticks &&
+    !!demo.playback_file &&
+    demo.playback_file.includes(`/playback.v${DEMO_METADATA_VERSION}.`)
+  );
 }
 
 export function demoKey(matchId: string, mapId: string, demo: string): string {
   return `demos/${matchId}/${mapId}/${demo}`;
 }
 
+// The blob key embeds DEMO_METADATA_VERSION (so a version bump changes the
+// path and is detectable as stale) plus a cache-buster (timestamp) so each
+// re-parse writes a unique object and never serves a stale S3/CDN copy.
 export function playbackBlobKey(
   matchId: string,
   matchMapId: string,
-  version: number,
+  cacheBuster: number,
 ): string {
-  return `demos/${matchId}/${matchMapId}/playback/playback.${version}.json.gz`;
+  return `demos/${matchId}/${matchMapId}/playback/playback.v${DEMO_METADATA_VERSION}.${cacheBuster}.json.gz`;
 }
 
 function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
@@ -569,6 +599,7 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     helmet: (p as { helmet?: boolean }).helmet ?? false,
     has_bomb: p.has_bomb ?? false,
     has_defuser: p.has_defuser ?? false,
+    active_weapon: (p as { active_weapon?: string }).active_weapon ?? null,
   }));
 
   const shots_fired = (parsed.shots_fired ?? []).map((s) => ({
@@ -630,7 +661,7 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
   }));
 
   return {
-    schema_version: 2,
+    schema_version: DEMO_METADATA_VERSION,
     match_map_id: matchMapId,
     tick_rate: parsed.tick_rate,
     total_ticks: parsed.total_ticks,
@@ -643,6 +674,7 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     positions,
     shots_fired,
     grenade_throws,
+    grenade_trajectories: parsed.grenade_trajectories ?? [],
     damages,
     round_inventory,
   };

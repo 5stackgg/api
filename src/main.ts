@@ -40,6 +40,9 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.disable("x-powered-by");
 
+  app.useBodyParser("json", { limit: "50mb" });
+  app.useBodyParser("urlencoded", { limit: "50mb", extended: true });
+
   if (process.env.RUN_MIGRATIONS || process.env.DEV) {
     const hasura = app.get(HasuraService);
     try {
