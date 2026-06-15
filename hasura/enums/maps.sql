@@ -31,6 +31,7 @@ WITH map_data AS (
         ('de_dust2', null, '/img/maps/screenshots/de_dust2.webp', '/img/maps/icons/de_dust2.svg', null),
         ('de_dust2_night', '3296013569', '/img/maps/screenshots/de_dust2_night.webp', '/img/maps/icons/de_dust2.svg', null),
         ('de_train', null, '/img/maps/screenshots/de_train.webp', '/img/maps/icons/de_train.svg', null),
+        ('cs_office', null, '/img/maps/screenshots/cs_office.webp', '/img/maps/icons/cs_office.svg', null),
         -- Workshop maps
         ('de_cache', null, '/img/maps/screenshots/de_cache.webp', '/img/maps/icons/de_cache.svg', null),
         ('de_thera', '3121217565', '/img/maps/screenshots/de_thera.webp', '/img/maps/icons/de_thera.svg', null),
@@ -73,6 +74,7 @@ map_type_config AS (
         ('de_dust2', 'Competitive', true),
         ('de_dust2_night', 'Competitive', false),
         ('de_train', 'Competitive', false),
+        ('cs_office', 'Competitive', false),
         ('de_cache', 'Competitive', false),
         ('de_thera', 'Competitive', false),
         ('de_mills', 'Competitive', false),
