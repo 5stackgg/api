@@ -25,7 +25,9 @@ type Modules =
   | "Matchmaking"
   | "Telemetry"
   | "DedicatedServers"
-  | "SteamMatchHistory";
+  | "SteamMatchHistory"
+  | "Faceit"
+  | "S3Scan";
 
 export type UseQueueOptions = {
   concurrency?: number;

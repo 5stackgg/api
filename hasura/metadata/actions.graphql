@@ -393,6 +393,10 @@ type Mutation {
 }
 
 type Mutation {
+  testFaceitIntegration: FaceitTestOutput
+}
+
+type Mutation {
   refreshLiveHud(
     match_id: uuid!
   ): SuccessOutput
@@ -427,6 +431,20 @@ type Mutation {
   reparseMatchDemos(
     match_id: uuid!
   ): SuccessOutput
+}
+
+type Mutation {
+  scanOrphanedDemos: ScanStartedOutput
+}
+
+type Mutation {
+  orphanedDemosScanResult: OrphanScanResultOutput
+}
+
+type Mutation {
+  deleteOrphanedDemos(
+    keys: [String!]
+  ): DeleteOrphansOutput
 }
 
 type Mutation {
@@ -764,6 +782,16 @@ type PendingMatchImportActionOutput {
   error: String
 }
 
+type FaceitTestResult {
+  ok: Boolean
+  detail: String!
+}
+
+type FaceitTestOutput {
+  dataApi: FaceitTestResult!
+  downloadApi: FaceitTestResult!
+}
+
 type CreateClipRenderOutput {
   success: Boolean!
   job_id: uuid!
@@ -833,6 +861,43 @@ type MeResponse {
 
 type SuccessOutput {
   success: Boolean!
+}
+
+type ScanStartedOutput {
+  success: Boolean!
+  scanning: Boolean!
+}
+
+type OrphanObject {
+  key: String!
+  size: Float!
+}
+
+type OrphanScanResultOutput {
+  found: Boolean!
+  scanning: Boolean!
+  scanned_at: String
+  bucket: String
+  total_objects: Int!
+  total_bytes: Float!
+  tracked_objects: Int!
+  tracked_bytes: Float!
+  demo_objects: Int!
+  demo_bytes: Float!
+  clip_objects: Int!
+  clip_bytes: Float!
+  orphan_objects: Int!
+  orphan_bytes: Float!
+  other_objects: Int!
+  other_bytes: Float!
+  orphans: [OrphanObject!]!
+}
+
+type DeleteOrphansOutput {
+  success: Boolean!
+  deleted: Int!
+  bytes_freed: Float!
+  remaining_orphans: Int!
 }
 
 type WatchDemoOutput {

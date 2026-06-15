@@ -1,10 +1,11 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger, forwardRef } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { DemoMetadataService } from "../demos/demo-metadata.service";
 import { ParsedDemo, ParsedPlayer } from "../demos/demo-parser.service";
 import { S3Service } from "../s3/s3.service";
+import { FaceitService } from "../faceit/faceit.service";
 import { e_match_types_enum } from "../../generated";
 
 type MatchType = e_match_types_enum;
@@ -29,6 +30,8 @@ export class MatchImportService {
     private readonly demoMetadata: DemoMetadataService,
     private readonly config: ConfigService,
     private readonly s3: S3Service,
+    @Inject(forwardRef(() => FaceitService))
+    private readonly faceit: FaceitService,
   ) {
     this.steamApiKey = this.config.get<string>("steam.steamApiKey") ?? "";
   }
@@ -42,25 +45,47 @@ export class MatchImportService {
     externalId?: string | null,
     sourceObjectKey?: string,
   ): Promise<{ matchId: string | null; skipped?: string }> {
-    let file = demoUrl ?? `external/${source}/${sourceKey}.dem`;
-
-    if (externalId) {
-      const existing = await this.findExistingExternalMatch(source, externalId);
-      if (existing) {
-        return { matchId: existing, skipped: "already imported" };
-      }
-    } else {
-      const existing = await this.findExistingByFile(file);
-      if (existing) {
-        return { matchId: existing, skipped: "already imported" };
-      }
+    if (MatchImportService.isFaceitServer(parsed.server_name)) {
+      source = "faceit";
+    } else if (MatchImportService.isFiveStackServer(parsed.server_name)) {
+      source = "5stack";
     }
+
+    let file = demoUrl ?? `external/${source}/${sourceKey}.dem`;
 
     const players = (parsed.players ?? []).filter(
       (p) => p.steam_id && /^\d+$/.test(p.steam_id),
     );
+    const faceitMatchId =
+      source === "faceit"
+        ? (MatchImportService.extractFaceitMatchId(externalId) ??
+          MatchImportService.extractFaceitMatchId(sourceKey))
+        : null;
+
+    const existing = externalId
+      ? await this.findExistingExternalMatch(source, externalId)
+      : await this.findExistingByFile(file);
+    if (existing) {
+      // Re-import: the match already exists, but still refresh every player's
+      // current faceit elo and re-snapshot this match's rank history.
+      if (source === "faceit" && players.length > 0) {
+        await this.normalizeFaceitMatchType(existing);
+        await this.refreshFaceitForMatch(
+          existing,
+          players,
+          await this.matchStartedAt(existing),
+          faceitMatchId,
+        );
+      }
+      return { matchId: existing, skipped: "already imported" };
+    }
+
     if (players.length === 0) {
       return { matchId: null, skipped: "no players in demo" };
+    }
+
+    if (source === "faceit" && MatchImportService.isWingman(parsed)) {
+      return { matchId: null, skipped: "faceit wingman not supported" };
     }
 
     const matchType = MatchImportService.detectMatchType(parsed);
@@ -106,6 +131,18 @@ export class MatchImportService {
       startedAt = await this.resolveDemoStartTime(demoUrl);
       if (startedAt) {
         startSource = "demo-cdn-last-modified";
+      }
+    }
+    if (!startedAt && source === "faceit") {
+      const faceitMatchId =
+        MatchImportService.extractFaceitMatchId(externalId) ??
+        MatchImportService.extractFaceitMatchId(sourceKey);
+      if (faceitMatchId) {
+        startedAt =
+          await this.demoMetadata.fetchFaceitMatchStartTime(faceitMatchId);
+        if (startedAt) {
+          startSource = "faceit-api";
+        }
       }
     }
     this.logger.log(
@@ -164,8 +201,18 @@ export class MatchImportService {
         parsed,
       );
     } catch (error) {
-      this.logger.warn(
-        `playback blob upload failed for match ${matchId}: ${(error as Error)?.message ?? String(error)}`,
+      this.logger.error(
+        `playback blob upload failed for match ${matchId} (2D/3D replay will be empty until re-parsed): ${(error as Error)?.message ?? String(error)}`,
+        (error as Error)?.stack,
+      );
+    }
+
+    if (source === "faceit") {
+      await this.refreshFaceitForMatch(
+        matchId,
+        players,
+        startedAt,
+        faceitMatchId,
       );
     }
 
@@ -175,6 +222,126 @@ export class MatchImportService {
     );
 
     return { matchId };
+  }
+
+  // On import AND re-import: (1) refresh every participant's CURRENT faceit elo
+  // onto their players row — exactly what the player page does — then (2)
+  // snapshot this match's elo into the rank history.
+  private async refreshFaceitForMatch(
+    matchId: string,
+    players: ParsedPlayer[],
+    observedAt: string | null,
+    faceitMatchId: string | null,
+  ): Promise<void> {
+    this.logger.log(
+      `faceit: refreshing stats for ${players.length} players (match ${matchId})`,
+    );
+    for (const player of players) {
+      try {
+        await this.faceit.refreshPlayer(player.steam_id, true);
+      } catch (error) {
+        this.logger.warn(
+          `faceit rank refresh failed for ${player.steam_id}: ${(error as Error)?.message ?? String(error)}`,
+        );
+      }
+    }
+
+    let matchElos: Record<string, number> = {};
+    if (faceitMatchId) {
+      try {
+        matchElos = await this.faceit.getMatchEloMap(faceitMatchId);
+      } catch (error) {
+        this.logger.warn(
+          `faceit match elo lookup failed for ${faceitMatchId}: ${(error as Error)?.message ?? String(error)}`,
+        );
+      }
+    }
+
+    await this.snapshotFaceitRanks(
+      matchId,
+      players.map((player) => player.steam_id),
+      observedAt,
+      matchElos,
+    );
+  }
+
+  private async normalizeFaceitMatchType(matchId: string): Promise<void> {
+    await this.postgres.query(
+      `UPDATE public.match_options
+         SET type = 'Competitive'
+       WHERE type = 'Faceit'
+         AND id = (SELECT match_options_id FROM public.matches WHERE id = $1::uuid)`,
+      [matchId],
+    );
+  }
+
+  private async matchStartedAt(matchId: string): Promise<string | null> {
+    const rows = await this.postgres.query<
+      Array<{ started_at: string | null }>
+    >(
+      `SELECT started_at::text AS started_at FROM public.matches WHERE id = $1::uuid`,
+      [matchId],
+    );
+    return rows.at(0)?.started_at ?? null;
+  }
+
+  // Snapshots each participant's elo for this match. The per-match elo from the
+  // faceit match page wins; otherwise we fall back to their current elo.
+  // previous_rank holds the prior elo so the chart shows the per-match delta.
+  private async snapshotFaceitRanks(
+    matchId: string,
+    steamIds: string[],
+    observedAt: string | null,
+    matchElos: Record<string, number> = {},
+  ): Promise<void> {
+    const stamp = observedAt ?? new Date().toISOString();
+    let snapshots = 0;
+    try {
+      for (const steamId of steamIds) {
+        const rows = await this.postgres.query<
+          Array<{ elo: number | null; skill_level: number | null }>
+        >(
+          `SELECT faceit_elo AS elo, faceit_skill_level AS skill_level
+             FROM public.players WHERE steam_id = $1::bigint`,
+          [steamId],
+        );
+        const elo = matchElos[steamId] ?? rows.at(0)?.elo ?? null;
+        if (elo == null) {
+          continue;
+        }
+        const skillLevel = rows.at(0)?.skill_level ?? null;
+        await this.postgres.query(
+          `INSERT INTO public.player_faceit_rank_history (steam_id, elo, skill_level, previous_rank, match_id, observed_at)
+           SELECT
+             $1::bigint,
+             $2::int,
+             $3::int,
+             (SELECT h.elo
+                FROM public.player_faceit_rank_history h
+               WHERE h.steam_id = $1::bigint
+                 AND h.observed_at < $5::timestamptz
+               ORDER BY h.observed_at DESC
+               LIMIT 1),
+             $4::uuid,
+             $5::timestamptz
+           WHERE EXISTS (SELECT 1 FROM public.players WHERE steam_id = $1::bigint)
+           ON CONFLICT (steam_id, match_id)
+             DO UPDATE SET elo = EXCLUDED.elo,
+                           skill_level = EXCLUDED.skill_level,
+                           previous_rank = EXCLUDED.previous_rank,
+                           observed_at = EXCLUDED.observed_at`,
+          [steamId, elo, skillLevel, matchId, stamp],
+        );
+        snapshots++;
+      }
+      this.logger.log(
+        `faceit rank snapshot for match ${matchId}: ${snapshots} players`,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `faceit rank snapshot failed for match ${matchId}: ${(error as Error)?.message ?? String(error)}`,
+      );
+    }
   }
 
   // Deleting the match cascades to its match_maps/demos/rounds/stats; the
@@ -201,20 +368,19 @@ export class MatchImportService {
   }
 
   private static detectMatchType(parsed: ParsedDemo): MatchType {
-    const players = parsed.players ?? [];
-    const playerCount = parsed.player_count ?? players.length;
-    const isWingman = playerCount > 0 && playerCount <= 4;
-    // game_mode is Valve's authoritative mode flag (1=Competitive/Premier,
-    // 2=Wingman). Wingman and Competitive both stamp rank_type 7 on the
-    // 1-18 skill-group scale, so rank_type alone can't tell them apart;
-    // mp_maxrounds is 16 for Wingman vs 24 for Competitive/Premier.
-    if (parsed.game_mode === 2 || parsed.max_rounds === 16) {
+    const wingman = MatchImportService.isWingman(parsed);
+
+    if (MatchImportService.isFaceitServer(parsed.server_name)) {
+      return "Competitive";
+    }
+
+    if (wingman) {
       return "Wingman";
     }
 
     // rank_type: 6=Wingman, 7/12=Competitive, 11=Premier, 10=private lobby.
     const counts = new Map<number, number>();
-    for (const p of players) {
+    for (const p of parsed.players ?? []) {
       if (typeof p.rank_type === "number" && p.rank_type > 0) {
         counts.set(p.rank_type, (counts.get(p.rank_type) ?? 0) + 1);
       }
@@ -240,21 +406,40 @@ export class MatchImportService {
     // 10 = private lobby (FACEIT/practice): never Premier even with overtime;
     // Premier is exclusively rank_type 11.
     if (observed === 10) {
-      return isWingman ? "Wingman" : "Competitive";
+      return "Competitive";
     }
 
-    // No rank_type at all — fall back to game rules.
-    if (isWingman) {
-      return "Wingman";
-    }
-    if (parsed.overtime_enabled) {
+    if (
+      parsed.overtime_enabled &&
+      !MatchImportService.isFiveStackServer(parsed.server_name)
+    ) {
       return "Premier";
     }
     return "Competitive";
   }
 
+  private static isWingman(parsed: ParsedDemo): boolean {
+    const playerCount = parsed.player_count ?? parsed.players?.length ?? 0;
+    return (
+      parsed.game_mode === 2 ||
+      parsed.max_rounds === 16 ||
+      (playerCount > 0 && playerCount <= 4)
+    );
+  }
+
   static isFaceitServer(serverName?: string | null): boolean {
     return /faceit/i.test(serverName ?? "");
+  }
+
+  static isFiveStackServer(serverName?: string | null): boolean {
+    return /5stack/i.test(serverName ?? "");
+  }
+
+  static extractFaceitMatchId(input?: string | null): string | null {
+    const match = (input ?? "").match(
+      /1-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
+    );
+    return match ? match[0] : null;
   }
 
   private static computeStartingSides(parsed: ParsedDemo): Map<string, Side> {
@@ -358,8 +543,11 @@ export class MatchImportService {
     if (!mapName) {
       return null;
     }
-    // Premier maps live under the Competitive type row in the maps table.
-    const lookupType = matchType === "Premier" ? "Competitive" : matchType;
+    // Premier/Faceit maps live under the Competitive type row in the maps table.
+    const lookupType =
+      matchType === "Premier" || matchType === "Faceit"
+        ? "Competitive"
+        : matchType;
     const { maps } = await this.hasura.query({
       maps: {
         __args: {
@@ -385,7 +573,10 @@ export class MatchImportService {
   private async resolveSeedMapPoolId(
     matchType: MatchType,
   ): Promise<string | null> {
-    const lookupType = matchType === "Premier" ? "Competitive" : matchType;
+    const lookupType =
+      matchType === "Premier" || matchType === "Faceit"
+        ? "Competitive"
+        : matchType;
     const { map_pools } = await this.hasura.query({
       map_pools: {
         __args: {

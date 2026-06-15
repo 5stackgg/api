@@ -2068,9 +2068,8 @@ export class GameStreamerService {
     const matchId = String(demo.match_id);
     const resolvedDemoId = String(demo.id);
 
-    const demoFile = demo.file as string;
-    const presignedDemoUrl = await this.demoMetadata.resolveDemoFetchUrl(
-      demoFile,
+    const presignedDemoUrl = await this.demoMetadata.resolvePlayableDemoUrl(
+      resolvedDemoId,
       60 * 60,
     );
 
@@ -2200,7 +2199,10 @@ export class GameStreamerService {
         [matchMapId, resolvedDemoId],
       );
       await this.steamAccounts.release(
-        GameStreamerService.GetBatchHighlightsJobName(matchMapId, resolvedDemoId),
+        GameStreamerService.GetBatchHighlightsJobName(
+          matchMapId,
+          resolvedDemoId,
+        ),
       );
       throw error;
     }

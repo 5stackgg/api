@@ -1272,20 +1272,15 @@ export class ClipsService {
     }
 
     const ownerSteamId = String(row.user_steam_id ?? userSteamId);
+
+    await this.s3.removePrefix(`clips/${ownerSteamId}/${clipId}`);
+
     await this.hasura.mutation({
       delete_match_clips_by_pk: {
         __args: { id: clipId },
         id: true,
       },
     });
-
-    try {
-      await this.s3.removePrefix(`clips/${ownerSteamId}/${clipId}`);
-    } catch (error) {
-      this.logger.warn(
-        `[clip ${clipId}] s3 remove failed (row already deleted, leaving orphaned objects clips/${ownerSteamId}/${clipId}*): ${(error as Error)?.message}`,
-      );
-    }
   }
 
   public async deleteClipsForMatch(matchId: string): Promise<void> {
@@ -1300,13 +1295,7 @@ export class ClipsService {
     });
 
     for (const clip of match_clips) {
-      try {
-        await this.s3.removePrefix(`clips/${clip.user_steam_id}/${clip.id}`);
-      } catch (error) {
-        this.logger.warn(
-          `[clip ${clip.id}] failed to remove objects: ${(error as Error)?.message}`,
-        );
-      }
+      await this.s3.removePrefix(`clips/${clip.user_steam_id}/${clip.id}`);
       await this.hasura.mutation({
         delete_match_clips_by_pk: {
           __args: { id: clip.id },

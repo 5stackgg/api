@@ -496,6 +496,14 @@ actions:
     permissions:
       - role: guest
       - role: user
+  - name: testFaceitIntegration
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Test FACEIT Data + Downloads API connectivity for the current admin
   - name: refreshLiveHud
     definition:
       kind: synchronous
@@ -550,6 +558,30 @@ actions:
     permissions:
       - role: administrator
     comment: Re-parse all demos across every map for a match (admin only). Fires in the background and returns immediately.
+  - name: scanOrphanedDemos
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Scan S3 for objects not referenced in the database (admin only). Runs in the background; results land in the logs and orphanedDemosScanResult.
+  - name: orphanedDemosScanResult
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Return the latest S3 orphan-scan report (admin only).
+  - name: deleteOrphanedDemos
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Delete orphaned S3 objects found by the last scan (admin only). Each key is re-verified against the database before removal.
   - name: requestNameChange
     definition:
       kind: synchronous
@@ -893,6 +925,10 @@ custom_types:
           source: default
           type: object
     - name: SuccessOutput
+    - name: ScanStartedOutput
+    - name: OrphanObject
+    - name: OrphanScanResultOutput
+    - name: DeleteOrphansOutput
     - name: WatchDemoOutput
     - name: SetupGameServeOutput
     - name: SampleOutput
