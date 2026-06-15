@@ -32,19 +32,19 @@ export class ProcessUploadedDemo extends WorkerHost {
     const lastAttempt = (job.attemptsMade ?? 0) >= (job.opts.attempts ?? 1) - 1;
 
     try {
-      this.logger.log(
-        `process-uploaded-demo steam_id=${steam_id} key=${key}`,
-      );
+      this.logger.log(`process-uploaded-demo steam_id=${steam_id} key=${key}`);
 
       const parsed = await this.demoParser.parseFromS3Key(key);
       if (!parsed) {
         throw new Error("demo failed to parse");
       }
 
-      const dedupeKey = file_name
-        .replace(/^.*\//, "")
-        .replace(/\.dem$/i, "")
-        .replace(/[^a-zA-Z0-9_-]/g, "_");
+      const dedupeKey =
+        MatchImportService.extractFaceitMatchId(file_name) ??
+        file_name
+          .replace(/^.*\//, "")
+          .replace(/\.dem$/i, "")
+          .replace(/[^a-zA-Z0-9_-]/g, "_");
 
       const result = await this.matchImport.importExternalDemo(
         parsed,

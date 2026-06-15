@@ -820,9 +820,9 @@ export class MatchmakeService {
 
     await this.removeCancelMatchMakingJob(confirmationId);
 
-    // e_map_pool_types_enum doesn't include Premier (imports only).
+    // e_map_pool_types_enum doesn't include Premier/Faceit (imports only).
     const mapPoolType: e_map_pool_types_enum =
-      type === "Premier" ? "Competitive" : type;
+      type === "Premier" || type === "Faceit" ? "Competitive" : type;
     const match = await this.matchAssistant.createMatchBasedOnType(
       type,
       mapPoolType,

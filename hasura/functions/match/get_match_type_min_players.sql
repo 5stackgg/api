@@ -4,7 +4,7 @@ LANGUAGE plpgsql
 STABLE
 AS $$
 BEGIN
-    IF match_type = 'Competitive' OR match_type = 'Premier' THEN
+    IF match_type = 'Competitive' OR match_type = 'Premier' OR match_type = 'Faceit' THEN
         RETURN 5;
     ELSIF match_type = 'Wingman' THEN
         RETURN 2;

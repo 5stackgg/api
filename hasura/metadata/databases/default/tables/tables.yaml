@@ -67,6 +67,7 @@
 - "!include public_player_leaderboard_rank.yaml"
 - "!include public_player_match_map_stats.yaml"
 - "!include public_player_match_stats_v.yaml"
+- "!include public_player_faceit_rank_history.yaml"
 - "!include public_player_objectives.yaml"
 - "!include public_player_premier_rank_history.yaml"
 - "!include public_player_sanctions.yaml"

@@ -307,9 +307,11 @@ export class MatchesController {
 
     match.options.show_elo_ranks = fivestackRanksSetting?.value === "true";
 
-    // e_game_cfg_types_enum doesn't include Premier (imports only).
+    // e_game_cfg_types_enum doesn't include Premier/Faceit (imports only).
     const cfgType =
-      match.options.type === "Premier" ? "Competitive" : match.options.type;
+      match.options.type === "Premier" || match.options.type === "Faceit"
+        ? "Competitive"
+        : match.options.type;
     const { match_type_cfgs } = await this.hasura.query({
       match_type_cfgs: {
         __args: {
@@ -1075,8 +1077,8 @@ export class MatchesController {
       throw Error("demo metadata not ready — try again in a moment");
     }
 
-    const presignedDemoUrl = await this.demoMetadata.resolveDemoFetchUrl(
-      demo.file,
+    const presignedDemoUrl = await this.demoMetadata.resolvePlayableDemoUrl(
+      demo.id,
       60 * 60,
     );
 

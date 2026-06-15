@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { BullModule, InjectQueue } from "@nestjs/bullmq";
 import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
@@ -11,6 +11,7 @@ import { ClipsModule } from "../matches/clips/clips.module";
 import { PostgresModule } from "../postgres/postgres.module";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
+import { FaceitModule } from "../faceit/faceit.module";
 import { SteamMatchHistoryController } from "./steam-match-history.controller";
 import { SteamMatchHistoryService } from "./steam-match-history.service";
 import { SteamGcService } from "./steam-gc.service";
@@ -57,6 +58,7 @@ import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
     S3Module,
     ClipsModule,
     PostgresModule,
+    forwardRef(() => FaceitModule),
   ],
   providers: [
     SteamMatchHistoryService,

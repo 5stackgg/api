@@ -1,5 +1,6 @@
 import zlib from "zlib";
 import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { S3Service } from "../s3/s3.service";
@@ -31,20 +32,203 @@ export class DemoMetadataService {
     private readonly postgres: PostgresService,
     private readonly s3: S3Service,
     private readonly demoParser: DemoParserService,
+    private readonly config: ConfigService,
   ) {}
 
   public static isExternalDemoUrl(file: string | null | undefined): boolean {
     return !!file && /^https?:\/\//i.test(file);
   }
 
+  public async resolvePlayableDemoUrl(
+    matchMapDemoId: string,
+    expiresSeconds = 60 * 60,
+  ): Promise<string> {
+    const rows = await this.postgres.query<
+      Array<{
+        file: string | null;
+        source: string;
+        external_id: string | null;
+      }>
+    >(
+      `SELECT d.file, m.source, m.external_id
+         FROM public.match_map_demos d
+         JOIN public.matches m ON m.id = d.match_id
+        WHERE d.id = $1::uuid
+        LIMIT 1`,
+      [matchMapDemoId],
+    );
+    const row = rows.at(0);
+    if (!row?.file) {
+      throw new Error(`no demo file for demo ${matchMapDemoId}`);
+    }
+    const url = await this.resolveDemoFetchUrl(row.file, expiresSeconds, {
+      source: row.source,
+      externalId: row.external_id,
+    });
+    if (
+      row.source !== "faceit" &&
+      DemoMetadataService.isExternalDemoUrl(row.file) &&
+      url !== row.file
+    ) {
+      await this.postgres.query(
+        `UPDATE public.match_map_demos SET file = $2 WHERE id = $1::uuid`,
+        [matchMapDemoId, url],
+      );
+    }
+    return url;
+  }
+
   public async resolveDemoFetchUrl(
     file: string,
     expiresSeconds = 60 * 60,
+    context?: { source?: string | null; externalId?: string | null },
   ): Promise<string> {
-    if (DemoMetadataService.isExternalDemoUrl(file)) {
+    if (!DemoMetadataService.isExternalDemoUrl(file)) {
+      return this.s3.getPresignedUrl(file, undefined, expiresSeconds, "get");
+    }
+
+    if (context?.source === "faceit") {
+      const signed = await this.signFaceitDownloadUrl(file);
+      if (signed) {
+        return signed;
+      }
+      if (context.externalId) {
+        const fresh = await this.refreshFaceitDemoUrl(context.externalId);
+        const signedFresh = fresh
+          ? await this.signFaceitDownloadUrl(fresh)
+          : null;
+        if (signedFresh) {
+          return signedFresh;
+        }
+      }
+      throw new Error(
+        `faceit demo unavailable (downloads api key missing or match expired): ${context.externalId ?? file}`,
+      );
+    }
+
+    if (await this.urlReachable(file)) {
       return file;
     }
-    return this.s3.getPresignedUrl(file, undefined, expiresSeconds, "get");
+
+    throw new Error(
+      `demo no longer available at ${file}${context?.source ? ` (source=${context.source})` : ""}`,
+    );
+  }
+
+  private async signFaceitDownloadUrl(
+    resourceUrl: string,
+  ): Promise<string | null> {
+    const apiKey = this.config.get<string>("faceit.apiKey");
+    if (!apiKey) {
+      return null;
+    }
+    try {
+      const res = await fetch(
+        "https://open.faceit.com/download/v2/demos/download",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ resource_url: resourceUrl }),
+          signal: AbortSignal.timeout(15_000),
+        },
+      );
+      if (!res.ok) {
+        this.logger.warn(
+          `faceit downloads api ${res.status} for ${resourceUrl}`,
+        );
+        return null;
+      }
+      const data = (await res.json()) as {
+        payload?: { download_url?: string };
+      };
+      return data.payload?.download_url ?? null;
+    } catch (error) {
+      this.logger.warn(
+        `faceit downloads api failed for ${resourceUrl}: ${(error as Error)?.message ?? String(error)}`,
+      );
+      return null;
+    }
+  }
+
+  private async urlReachable(url: string): Promise<boolean> {
+    try {
+      const res = await fetch(url, {
+        method: "HEAD",
+        redirect: "follow",
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (res.status === 403 || res.status === 404 || res.status === 410) {
+        return false;
+      }
+      return true;
+    } catch (error) {
+      this.logger.warn(
+        `demo url HEAD failed for ${url}: ${(error as Error)?.message ?? String(error)}`,
+      );
+      return true;
+    }
+  }
+
+  private async fetchFaceitMatch(matchId: string): Promise<{
+    demo_url?: string[];
+    started_at?: number;
+    finished_at?: number;
+    teams?: Record<
+      string,
+      {
+        roster?: Array<{
+          game_player_id?: string;
+          game_skill_level?: number;
+        }>;
+      }
+    >;
+  } | null> {
+    const apiKey = this.config.get<string>("faceit.apiKey");
+    if (!apiKey) {
+      this.logger.warn(
+        `cannot query faceit match ${matchId}: FACEIT_API_KEY not configured`,
+      );
+      return null;
+    }
+    try {
+      const res = await fetch(
+        `https://open.faceit.com/data/v4/matches/${encodeURIComponent(matchId)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            Accept: "application/json",
+          },
+          signal: AbortSignal.timeout(15_000),
+        },
+      );
+      if (!res.ok) {
+        this.logger.warn(`faceit match details ${res.status} for ${matchId}`);
+        return null;
+      }
+      return await res.json();
+    } catch (error) {
+      this.logger.warn(
+        `faceit match details failed for ${matchId}: ${(error as Error)?.message ?? String(error)}`,
+      );
+      return null;
+    }
+  }
+
+  private async refreshFaceitDemoUrl(matchId: string): Promise<string | null> {
+    const data = await this.fetchFaceitMatch(matchId);
+    return (data?.demo_url ?? []).find((url) => !!url) ?? null;
+  }
+
+  public async fetchFaceitMatchStartTime(
+    matchId: string,
+  ): Promise<string | null> {
+    const data = await this.fetchFaceitMatch(matchId);
+    const ts = data?.finished_at ?? data?.started_at ?? null;
+    return ts ? new Date(ts * 1000).toISOString() : null;
   }
 
   public async ensureParsed(matchMapId: string): Promise<DemoRow> {
@@ -301,11 +485,7 @@ export class DemoMetadataService {
   ): Promise<void> {
     const demo = await this.fetchDemoById(matchMapDemoId);
 
-    await this.persistDemoStats(
-      matchMapDemoId,
-      demo?.match_id ?? null,
-      parsed,
-    );
+    await this.persistDemoStats(matchMapDemoId, demo?.match_id ?? null, parsed);
 
     await this.persistRanks(parsed, demo?.match_id ?? null);
 

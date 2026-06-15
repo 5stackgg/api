@@ -38,6 +38,10 @@ export class S3Service {
     });
   }
 
+  public get bucketName(): string {
+    return this.bucket;
+  }
+
   public multerStorage(
     uploadPath: (request: Request, file: Express.Multer.File) => string,
   ) {
@@ -75,6 +79,14 @@ export class S3Service {
 
   public async list(bucket: string = this.bucket): Promise<ObjectInfo[]> {
     return await this.client.listObjects(bucket).toArray();
+  }
+
+  public listStream(
+    prefix: string = "",
+    recursive: boolean = true,
+    bucket: string = this.bucket,
+  ) {
+    return this.client.listObjects(bucket, prefix, recursive);
   }
 
   public async get(
@@ -150,6 +162,19 @@ export class S3Service {
     let removed = 0;
     for (let i = 0; i < entries.length; i += 1000) {
       const batch = entries.slice(i, i + 1000);
+      await this.client.removeObjects(bucket, batch);
+      removed += batch.length;
+    }
+    return removed;
+  }
+
+  public async removeKeys(
+    keys: string[],
+    bucket: string = this.bucket,
+  ): Promise<number> {
+    let removed = 0;
+    for (let i = 0; i < keys.length; i += 1000) {
+      const batch = keys.slice(i, i + 1000);
       await this.client.removeObjects(bucket, batch);
       removed += batch.length;
     }
