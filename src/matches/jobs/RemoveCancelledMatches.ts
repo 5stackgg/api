@@ -53,24 +53,32 @@ export class RemoveCancelledMatches extends WorkerHost {
       },
     });
 
+    let removed = 0;
     for (const match of matches) {
-      await this.clips.deleteClipsForMatch(match.id);
-      await this.demoMetadata.deleteDemosForMatch(match.id);
+      try {
+        await this.clips.deleteClipsForMatch(match.id);
+        await this.demoMetadata.deleteDemosForMatch(match.id);
 
-      await this.hasura.mutation({
-        delete_matches_by_pk: {
-          __args: {
-            id: match.id,
+        await this.hasura.mutation({
+          delete_matches_by_pk: {
+            __args: {
+              id: match.id,
+            },
+            __typename: true,
           },
-          __typename: true,
-        },
-      });
+        });
+        removed++;
+      } catch (error) {
+        this.logger.warn(
+          `[${match.id}] failed to remove canceled match, will retry next run: ${(error as Error)?.message}`,
+        );
+      }
     }
 
-    if (matches.length > 0) {
-      this.logger.log(`removed ${matches.length} canceled matches`);
+    if (removed > 0) {
+      this.logger.log(`removed ${removed} canceled matches`);
     }
 
-    return matches.length;
+    return removed;
   }
 }

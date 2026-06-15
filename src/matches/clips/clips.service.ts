@@ -1295,13 +1295,7 @@ export class ClipsService {
     });
 
     for (const clip of match_clips) {
-      try {
-        await this.s3.removePrefix(`clips/${clip.user_steam_id}/${clip.id}`);
-      } catch (error) {
-        this.logger.warn(
-          `[clip ${clip.id}] failed to remove objects: ${(error as Error)?.message}`,
-        );
-      }
+      await this.s3.removePrefix(`clips/${clip.user_steam_id}/${clip.id}`);
       await this.hasura.mutation({
         delete_match_clips_by_pk: {
           __args: { id: clip.id },

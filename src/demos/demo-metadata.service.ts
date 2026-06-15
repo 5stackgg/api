@@ -660,6 +660,13 @@ export class DemoMetadataService {
   }
 
   public async deleteDemosForMatch(matchId: string): Promise<void> {
+    const removed = await this.s3.removePrefix(`demos/${matchId}/`);
+    if (removed > 0) {
+      this.logger.log(
+        `[demo-delete] swept ${removed} object(s) under demos/${matchId}/`,
+      );
+    }
+
     const { match_map_demos } = await this.hasura.query({
       match_map_demos: {
         __args: { where: { match_id: { _eq: matchId } } },
@@ -673,19 +680,6 @@ export class DemoMetadataService {
           __typename: true,
         },
       });
-    }
-
-    try {
-      const removed = await this.s3.removePrefix(`demos/${matchId}/`);
-      if (removed > 0) {
-        this.logger.log(
-          `[demo-delete] swept ${removed} object(s) under demos/${matchId}/`,
-        );
-      }
-    } catch (error) {
-      this.logger.warn(
-        `[demo-delete] failed to sweep demos/${matchId}/: ${(error as Error)?.message}`,
-      );
     }
   }
 
