@@ -585,6 +585,3 @@ BEGIN
   LEFT JOIN kast_agg           kst ON kst.steam_id = ps.steam_id;
 END;
 $$;
-
--- Re-run only when this file's digest changes
-SELECT public.recompute_all_player_match_map_stats();

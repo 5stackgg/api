@@ -109,6 +109,10 @@ async function bootstrap() {
   app.useWebSocketAdapter(new WsAdapter(app));
 
   await app.startAllMicroservices();
+
+  // Kick off any owed player-stats recompute without blocking startup.
+  void app.get(HasuraService).recomputePlayerStatsIfPending();
+
   await app.listen(5585);
 }
 
