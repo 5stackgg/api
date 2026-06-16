@@ -1,6 +1,6 @@
 -- Per-match performance: one row per (player, match) with Aim / Positioning /
 -- Utility + overall 0-100 scores plus the raw per-match value of each stat.
-DROP VIEW IF EXISTS public.player_match_performance_v;
+DROP VIEW IF EXISTS public.player_match_performance_v CASCADE;
 CREATE VIEW public.player_match_performance_v AS
 WITH per_match AS (
   SELECT
