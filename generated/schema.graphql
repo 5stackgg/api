@@ -19707,10 +19707,6 @@ type matches {
 
   """An object relationship"""
   e_region: server_regions
-
-  """
-  A computed field, executes function "get_match_effective_at"
-  """
   effective_at: timestamptz
 
   """An array relationship"""
@@ -20699,10 +20695,6 @@ type matches_max_fields {
   A computed field, executes function "get_current_match_map"
   """
   current_match_map_id: uuid
-
-  """
-  A computed field, executes function "get_match_effective_at"
-  """
   effective_at: timestamptz
   ended_at: timestamptz
   external_id: String
@@ -20773,6 +20765,7 @@ order by max() on columns of table "matches"
 input matches_max_order_by {
   cancels_at: order_by
   created_at: order_by
+  effective_at: order_by
   ended_at: order_by
   external_id: order_by
   id: order_by
@@ -20810,10 +20803,6 @@ type matches_min_fields {
   A computed field, executes function "get_current_match_map"
   """
   current_match_map_id: uuid
-
-  """
-  A computed field, executes function "get_match_effective_at"
-  """
   effective_at: timestamptz
   ended_at: timestamptz
   external_id: String
@@ -20884,6 +20873,7 @@ order by min() on columns of table "matches"
 input matches_min_order_by {
   cancels_at: order_by
   created_at: order_by
+  effective_at: order_by
   ended_at: order_by
   external_id: order_by
   id: order_by
@@ -21026,6 +21016,9 @@ enum matches_select_column {
 
   """column name"""
   created_at
+
+  """column name"""
+  effective_at
 
   """column name"""
   ended_at
@@ -21182,6 +21175,7 @@ input matches_stream_cursor_input {
 input matches_stream_cursor_value_input {
   cancels_at: timestamptz
   created_at: timestamptz
+  effective_at: timestamptz
   ended_at: timestamptz
   external_id: String
   id: uuid
@@ -22852,6 +22846,14 @@ type mutation_root {
     """filter the rows which have to be deleted"""
     where: v_match_map_backup_rounds_bool_exp!
   ): v_match_map_backup_rounds_mutation_response
+
+  """
+  delete data from the table: "v_player_match_map_hltv"
+  """
+  delete_v_player_match_map_hltv(
+    """filter the rows which have to be deleted"""
+    where: v_player_match_map_hltv_bool_exp!
+  ): v_player_match_map_hltv_mutation_response
 
   """
   delete data from the table: "v_pool_maps"
@@ -25016,6 +25018,22 @@ type mutation_root {
     """the row to be inserted"""
     object: v_match_map_backup_rounds_insert_input!
   ): v_match_map_backup_rounds
+
+  """
+  insert data into the table: "v_player_match_map_hltv"
+  """
+  insert_v_player_match_map_hltv(
+    """the rows to be inserted"""
+    objects: [v_player_match_map_hltv_insert_input!]!
+  ): v_player_match_map_hltv_mutation_response
+
+  """
+  insert a single row into the table: "v_player_match_map_hltv"
+  """
+  insert_v_player_match_map_hltv_one(
+    """the row to be inserted"""
+    object: v_player_match_map_hltv_insert_input!
+  ): v_player_match_map_hltv
 
   """
   insert data into the table: "v_pool_maps"
@@ -28653,6 +28671,28 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [v_match_map_backup_rounds_updates!]!
   ): [v_match_map_backup_rounds_mutation_response]
+
+  """
+  update data of the table: "v_player_match_map_hltv"
+  """
+  update_v_player_match_map_hltv(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: v_player_match_map_hltv_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: v_player_match_map_hltv_set_input
+
+    """filter the rows which have to be updated"""
+    where: v_player_match_map_hltv_bool_exp!
+  ): v_player_match_map_hltv_mutation_response
+
+  """
+  update multiples rows of table: "v_player_match_map_hltv"
+  """
+  update_v_player_match_map_hltv_many(
+    """updates to execute, in order"""
+    updates: [v_player_match_map_hltv_updates!]!
+  ): [v_player_match_map_hltv_mutation_response]
 
   """
   update data of the table: "v_pool_maps"
@@ -36503,6 +36543,8 @@ type player_match_map_stats {
   hs_kills: Int!
   hs_kills_ct: Int!
   hs_kills_t: Int!
+  kast_rounds: Int!
+  kast_total_rounds: Int!
   kills: Int!
   kills_ct: Int!
   kills_t: Int!
@@ -36651,6 +36693,8 @@ type player_match_map_stats_avg_fields {
   hs_kills: Float
   hs_kills_ct: Float
   hs_kills_t: Float
+  kast_rounds: Float
+  kast_total_rounds: Float
   kills: Float
   kills_ct: Float
   kills_t: Float
@@ -36726,6 +36770,8 @@ input player_match_map_stats_avg_order_by {
   hs_kills: order_by
   hs_kills_ct: order_by
   hs_kills_t: order_by
+  kast_rounds: order_by
+  kast_total_rounds: order_by
   kills: order_by
   kills_ct: order_by
   kills_t: order_by
@@ -36804,6 +36850,8 @@ input player_match_map_stats_bool_exp {
   hs_kills: Int_comparison_exp
   hs_kills_ct: Int_comparison_exp
   hs_kills_t: Int_comparison_exp
+  kast_rounds: Int_comparison_exp
+  kast_total_rounds: Int_comparison_exp
   kills: Int_comparison_exp
   kills_ct: Int_comparison_exp
   kills_t: Int_comparison_exp
@@ -36895,6 +36943,8 @@ input player_match_map_stats_inc_input {
   hs_kills: Int
   hs_kills_ct: Int
   hs_kills_t: Int
+  kast_rounds: Int
+  kast_total_rounds: Int
   kills: Int
   kills_ct: Int
   kills_t: Int
@@ -36970,6 +37020,8 @@ input player_match_map_stats_insert_input {
   hs_kills: Int
   hs_kills_ct: Int
   hs_kills_t: Int
+  kast_rounds: Int
+  kast_total_rounds: Int
   kills: Int
   kills_ct: Int
   kills_t: Int
@@ -37049,6 +37101,8 @@ type player_match_map_stats_max_fields {
   hs_kills: Int
   hs_kills_ct: Int
   hs_kills_t: Int
+  kast_rounds: Int
+  kast_total_rounds: Int
   kills: Int
   kills_ct: Int
   kills_t: Int
@@ -37127,6 +37181,8 @@ input player_match_map_stats_max_order_by {
   hs_kills: order_by
   hs_kills_ct: order_by
   hs_kills_t: order_by
+  kast_rounds: order_by
+  kast_total_rounds: order_by
   kills: order_by
   kills_ct: order_by
   kills_t: order_by
@@ -37203,6 +37259,8 @@ type player_match_map_stats_min_fields {
   hs_kills: Int
   hs_kills_ct: Int
   hs_kills_t: Int
+  kast_rounds: Int
+  kast_total_rounds: Int
   kills: Int
   kills_ct: Int
   kills_t: Int
@@ -37281,6 +37339,8 @@ input player_match_map_stats_min_order_by {
   hs_kills: order_by
   hs_kills_ct: order_by
   hs_kills_t: order_by
+  kast_rounds: order_by
+  kast_total_rounds: order_by
   kills: order_by
   kills_ct: order_by
   kills_t: order_by
@@ -37377,6 +37437,8 @@ input player_match_map_stats_order_by {
   hs_kills: order_by
   hs_kills_ct: order_by
   hs_kills_t: order_by
+  kast_rounds: order_by
+  kast_total_rounds: order_by
   kills: order_by
   kills_ct: order_by
   kills_t: order_by
@@ -37527,6 +37589,12 @@ enum player_match_map_stats_select_column {
 
   """column name"""
   hs_kills_t
+
+  """column name"""
+  kast_rounds
+
+  """column name"""
+  kast_total_rounds
 
   """column name"""
   kills
@@ -37685,6 +37753,8 @@ input player_match_map_stats_set_input {
   hs_kills: Int
   hs_kills_ct: Int
   hs_kills_t: Int
+  kast_rounds: Int
+  kast_total_rounds: Int
   kills: Int
   kills_ct: Int
   kills_t: Int
@@ -37761,6 +37831,8 @@ type player_match_map_stats_stddev_fields {
   hs_kills: Float
   hs_kills_ct: Float
   hs_kills_t: Float
+  kast_rounds: Float
+  kast_total_rounds: Float
   kills: Float
   kills_ct: Float
   kills_t: Float
@@ -37836,6 +37908,8 @@ input player_match_map_stats_stddev_order_by {
   hs_kills: order_by
   hs_kills_ct: order_by
   hs_kills_t: order_by
+  kast_rounds: order_by
+  kast_total_rounds: order_by
   kills: order_by
   kills_ct: order_by
   kills_t: order_by
@@ -37909,6 +37983,8 @@ type player_match_map_stats_stddev_pop_fields {
   hs_kills: Float
   hs_kills_ct: Float
   hs_kills_t: Float
+  kast_rounds: Float
+  kast_total_rounds: Float
   kills: Float
   kills_ct: Float
   kills_t: Float
@@ -37984,6 +38060,8 @@ input player_match_map_stats_stddev_pop_order_by {
   hs_kills: order_by
   hs_kills_ct: order_by
   hs_kills_t: order_by
+  kast_rounds: order_by
+  kast_total_rounds: order_by
   kills: order_by
   kills_ct: order_by
   kills_t: order_by
@@ -38057,6 +38135,8 @@ type player_match_map_stats_stddev_samp_fields {
   hs_kills: Float
   hs_kills_ct: Float
   hs_kills_t: Float
+  kast_rounds: Float
+  kast_total_rounds: Float
   kills: Float
   kills_ct: Float
   kills_t: Float
@@ -38132,6 +38212,8 @@ input player_match_map_stats_stddev_samp_order_by {
   hs_kills: order_by
   hs_kills_ct: order_by
   hs_kills_t: order_by
+  kast_rounds: order_by
+  kast_total_rounds: order_by
   kills: order_by
   kills_ct: order_by
   kills_t: order_by
@@ -38216,6 +38298,8 @@ input player_match_map_stats_stream_cursor_value_input {
   hs_kills: Int
   hs_kills_ct: Int
   hs_kills_t: Int
+  kast_rounds: Int
+  kast_total_rounds: Int
   kills: Int
   kills_ct: Int
   kills_t: Int
@@ -38292,6 +38376,8 @@ type player_match_map_stats_sum_fields {
   hs_kills: Int
   hs_kills_ct: Int
   hs_kills_t: Int
+  kast_rounds: Int
+  kast_total_rounds: Int
   kills: Int
   kills_ct: Int
   kills_t: Int
@@ -38367,6 +38453,8 @@ input player_match_map_stats_sum_order_by {
   hs_kills: order_by
   hs_kills_ct: order_by
   hs_kills_t: order_by
+  kast_rounds: order_by
+  kast_total_rounds: order_by
   kills: order_by
   kills_ct: order_by
   kills_t: order_by
@@ -38505,6 +38593,12 @@ enum player_match_map_stats_update_column {
 
   """column name"""
   hs_kills_t
+
+  """column name"""
+  kast_rounds
+
+  """column name"""
+  kast_total_rounds
 
   """column name"""
   kills
@@ -38672,6 +38766,8 @@ type player_match_map_stats_var_pop_fields {
   hs_kills: Float
   hs_kills_ct: Float
   hs_kills_t: Float
+  kast_rounds: Float
+  kast_total_rounds: Float
   kills: Float
   kills_ct: Float
   kills_t: Float
@@ -38747,6 +38843,8 @@ input player_match_map_stats_var_pop_order_by {
   hs_kills: order_by
   hs_kills_ct: order_by
   hs_kills_t: order_by
+  kast_rounds: order_by
+  kast_total_rounds: order_by
   kills: order_by
   kills_ct: order_by
   kills_t: order_by
@@ -38820,6 +38918,8 @@ type player_match_map_stats_var_samp_fields {
   hs_kills: Float
   hs_kills_ct: Float
   hs_kills_t: Float
+  kast_rounds: Float
+  kast_total_rounds: Float
   kills: Float
   kills_ct: Float
   kills_t: Float
@@ -38895,6 +38995,8 @@ input player_match_map_stats_var_samp_order_by {
   hs_kills: order_by
   hs_kills_ct: order_by
   hs_kills_t: order_by
+  kast_rounds: order_by
+  kast_total_rounds: order_by
   kills: order_by
   kills_ct: order_by
   kills_t: order_by
@@ -38968,6 +39070,8 @@ type player_match_map_stats_variance_fields {
   hs_kills: Float
   hs_kills_ct: Float
   hs_kills_t: Float
+  kast_rounds: Float
+  kast_total_rounds: Float
   kills: Float
   kills_ct: Float
   kills_t: Float
@@ -39043,6 +39147,8 @@ input player_match_map_stats_variance_order_by {
   hs_kills: order_by
   hs_kills_ct: order_by
   hs_kills_t: order_by
+  kast_rounds: order_by
+  kast_total_rounds: order_by
   kills: order_by
   kills_ct: order_by
   kills_t: order_by
@@ -74948,6 +75054,20 @@ input v_player_match_map_hltv_bool_exp {
 }
 
 """
+input type for incrementing numeric columns in table "v_player_match_map_hltv"
+"""
+input v_player_match_map_hltv_inc_input {
+  adr: numeric
+  apr: numeric
+  dpr: numeric
+  hltv_rating: numeric
+  kast_pct: numeric
+  kpr: numeric
+  rounds_played: Int
+  steam_id: bigint
+}
+
+"""
 input type for inserting data into table "v_player_match_map_hltv"
 """
 input v_player_match_map_hltv_insert_input {
@@ -75026,6 +75146,17 @@ input v_player_match_map_hltv_min_order_by {
   steam_id: order_by
 }
 
+"""
+response of any mutation on the table "v_player_match_map_hltv"
+"""
+type v_player_match_map_hltv_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [v_player_match_map_hltv!]!
+}
+
 """Ordering options when selecting data from "v_player_match_map_hltv"."""
 input v_player_match_map_hltv_order_by {
   adr: order_by
@@ -75076,6 +75207,22 @@ enum v_player_match_map_hltv_select_column {
 
   """column name"""
   steam_id
+}
+
+"""
+input type for updating data in table "v_player_match_map_hltv"
+"""
+input v_player_match_map_hltv_set_input {
+  adr: numeric
+  apr: numeric
+  dpr: numeric
+  hltv_rating: numeric
+  kast_pct: numeric
+  kpr: numeric
+  match_id: uuid
+  match_map_id: uuid
+  rounds_played: Int
+  steam_id: bigint
 }
 
 """aggregate stddev on columns"""
@@ -75205,6 +75352,17 @@ input v_player_match_map_hltv_sum_order_by {
   kpr: order_by
   rounds_played: order_by
   steam_id: order_by
+}
+
+input v_player_match_map_hltv_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: v_player_match_map_hltv_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: v_player_match_map_hltv_set_input
+
+  """filter the rows which have to be updated"""
+  where: v_player_match_map_hltv_bool_exp!
 }
 
 """aggregate var_pop on columns"""
