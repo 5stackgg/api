@@ -22,6 +22,19 @@ export class HasuraService {
   private config: HasuraConfig;
   private appConfig: AppConfig;
 
+  // Setting name (relative path) of the player stats recompute function file.
+  private static RECOMPUTE_STATS_SETTING =
+    "hasura/functions/stats/recompute_player_match_map_stats";
+
+  // Marker in migration_hashes.hashes signalling a full recompute is owed
+  // because the recompute function's logic changed. Picked up and run in the
+  // background by recomputePlayerStatsIfPending() so setup never blocks on it.
+  private static RECOMPUTE_PENDING_KEY =
+    "recompute_player_match_map_stats:pending";
+
+  // Settings (relative paths) actually re-applied during the last setup().
+  private appliedSettings = new Set<string>();
+
   constructor(
     protected readonly logger: Logger,
     protected readonly cache: CacheService,
@@ -112,6 +125,8 @@ export class HasuraService {
   }
 
   public async setup() {
+    this.appliedSettings.clear();
+
     await this.postgresService.query("create schema if not exists hdb_catalog");
     await this.postgresService.query(
       "create table if not exists hdb_catalog.schema_migrations (version bigint not null, dirty boolean not null)",
@@ -125,6 +140,14 @@ export class HasuraService {
     await this.apply(path.resolve("./hasura/triggers"));
 
     await this.updateSettings();
+
+    // The recompute over every map can run for minutes — far past the pool's
+    // statement_timeout — so flag it here and let the long-lived process run it
+    // in the background instead of blocking (and timing out) setup.
+    if (this.appliedSettings.has(HasuraService.RECOMPUTE_STATS_SETTING)) {
+      this.logger.log("Stats: recompute logic changed, flagging recompute");
+      await this.setSetting(HasuraService.RECOMPUTE_PENDING_KEY, "1");
+    }
 
     if (process.env.LOAD_FIXTURES === "true") {
       const fixturesPath = path.resolve("./hasura/fixtures");
@@ -257,10 +280,49 @@ export class HasuraService {
       await this.postgresService.query(`begin;${sql};commit;`);
 
       await this.setSetting(setting, digest);
+      this.appliedSettings.add(setting);
     } catch (error) {
       throw new Error(
         `failed to exec sql ${path.basename(filePath)}: ${error.message}`,
       );
+    }
+  }
+
+  // Runs a pending full player-stats recompute in the background. Fire-and-forget:
+  // it disables the statement timeout for its own connection only, never blocks
+  // the caller, and clears the pending flag once it finishes.
+  public async recomputePlayerStatsIfPending() {
+    let pending: string | undefined;
+    try {
+      pending = await this.getSetting(HasuraService.RECOMPUTE_PENDING_KEY);
+    } catch (error) {
+      this.logger.warn(`Stats: unable to check recompute flag: ${error.message}`);
+      return;
+    }
+
+    if (!pending) {
+      return;
+    }
+
+    void this.recomputeAllPlayerStats();
+  }
+
+  private async recomputeAllPlayerStats() {
+    this.logger.log("Stats: recomputing player match map stats in background");
+    try {
+      await this.postgresService.transaction(async (client) => {
+        await client.query("SET LOCAL statement_timeout = 0");
+        await client.query("SELECT public.recompute_all_player_match_map_stats()");
+      });
+
+      await this.postgresService.query(
+        "DELETE FROM migration_hashes.hashes WHERE name = $1",
+        [HasuraService.RECOMPUTE_PENDING_KEY],
+      );
+
+      this.logger.log("Stats: background recompute complete");
+    } catch (error) {
+      this.logger.error(`Stats: background recompute failed: ${error.message}`);
     }
   }
 
