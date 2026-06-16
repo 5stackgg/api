@@ -1,8 +1,6 @@
 -- Per-player Aim / Positioning / Utility ratings on a 0-100 scale (each
 -- sub-metric is its cume_dist percentile within the pool of players with >= 30
 -- career rounds), plus the per-rank-band goal shrunk toward 50 by sample size.
--- The cume_dist ranking is global, but the pool (players with >= 30 rounds) is
--- small and player_career_stats_v is now cheap, so this stays a regular view.
 DROP VIEW IF EXISTS public.player_performance_v CASCADE;
 CREATE VIEW public.player_performance_v AS
 WITH pool AS (

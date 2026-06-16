@@ -1,8 +1,4 @@
--- Per (player, map) HLTV 2.0 rating + KAST. KAST is precomputed per map by
--- recompute_player_match_map_stats and stored on player_match_map_stats
--- (kast_rounds / kast_total_rounds), so this view is now plain arithmetic over
--- one row per (steam_id, match_map_id) instead of correlated EXISTS scans over
--- the player_kills hypertable.
+-- Per (player, map) HLTV 2.0 rating + KAST, read from stored columns.
 CREATE OR REPLACE VIEW public.v_player_match_map_hltv AS
 SELECT
   pmms.steam_id,

@@ -205,6 +205,9 @@ BEGIN
   SELECT created_at INTO v_start_time FROM public.match_maps WHERE id = v_match_map_id;
   v_start_time := COALESCE(v_start_time, now());
 
+  -- Skip the per-round recompute trigger; we recompute once at the end.
+  PERFORM set_config('app.skip_round_recompute', 'on', true);
+
   DELETE FROM public.player_kills   WHERE match_map_id = v_match_map_id;
   DELETE FROM public.player_assists WHERE match_map_id = v_match_map_id;
   DELETE FROM public.player_damages WHERE match_map_id = v_match_map_id;
@@ -408,9 +411,8 @@ BEGIN
   WHERE NULLIF(elem->>'attacker', '') IS NOT NULL
     AND NULLIF(elem->>'victim', '') IS NOT NULL;
 
-  -- The match_map_rounds insert above fired tai_match_map_rounds → recompute,
-  -- but that ran before the per-event tables were populated. Force a final
-  -- recompute now so player_match_map_stats reflects kills/damage/utility.
+  -- Single recompute now that every per-event table is populated (the
+  -- match_map_rounds trigger was skipped above via app.skip_round_recompute).
   PERFORM public.recompute_player_match_map_stats(v_match_map_id);
 
   -- Final scores + winner from the last round's cumulative score.

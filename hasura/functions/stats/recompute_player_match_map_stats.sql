@@ -71,10 +71,7 @@ BEGIN
     ) ids
     WHERE steam_id IS NOT NULL
   ),
-  -- KAST per (player, round): a round counts if the player got a kill, an
-  -- assist, survived, or was traded. Mirrors the old v_player_match_map_hltv
-  -- per_round logic exactly, but scoped to this one map so it runs once at
-  -- import instead of on every read. round > 0 drops warmup/knife rounds.
+  -- KAST per (player, round): kill, assist, survive, or traded. round > 0 drops warmup.
   finalized_rounds_pos AS (
     SELECT round FROM public.match_map_rounds
     WHERE match_map_id = p_match_map_id AND round > 0
