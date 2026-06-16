@@ -1,0 +1,29 @@
+table:
+  name: player_match_performance_v
+  schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - steam_id
+        - match_id
+        - rounds
+        - played_at
+        - source
+        - aim_rating
+        - positioning_rating
+        - utility_rating
+        - overall_rating
+        - accuracy
+        - hs_pct
+        - accuracy_spotted
+        - counter_strafe_pct
+        - survival_pct
+        - traded_death_pct
+        - kast_pct
+        - flash_assists_pr
+        - enemy_blind_pr
+        - util_efficiency
+      filter: {}
+      allow_aggregations: true
+    comment: ""

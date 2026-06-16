@@ -58,6 +58,7 @@ select_permissions:
         - map_name
         - workshop_id
         - cs2_build
+        - geometry_validated
         - kills
         - bombs
         - players

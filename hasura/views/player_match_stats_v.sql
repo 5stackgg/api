@@ -74,6 +74,10 @@ SELECT
        THEN (SUM(s.crosshair_angle_sum_deg) / SUM(s.crosshair_angle_count))::numeric
        ELSE NULL
   END                                               AS avg_crosshair_angle_deg,
+  SUM(s.first_bullet_shots)::integer                AS first_bullet_shots,
+  SUM(s.first_bullet_hits)::integer                 AS first_bullet_hits,
+  SUM(s.on_target_frames)::integer                  AS on_target_frames,
+  SUM(s.total_engagement_frames)::integer           AS total_engagement_frames,
   SUM(s.rounds_played)::integer                     AS rounds_played
 FROM public.player_match_map_stats s
 GROUP BY s.steam_id, s.match_id;

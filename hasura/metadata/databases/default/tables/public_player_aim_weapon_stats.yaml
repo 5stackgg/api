@@ -1,0 +1,36 @@
+table:
+  name: player_aim_weapon_stats
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      manual_configuration:
+        column_mapping:
+          steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+  - name: match_map
+    using:
+      foreign_key_constraint_on: match_map_id
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - match_id
+        - match_map_id
+        - steam_id
+        - weapon_class
+        - shots
+        - hits
+        - shots_spotted
+        - hits_spotted
+        - first_bullet_shots
+        - first_bullet_hits
+      filter: {}
+      allow_aggregations: true
+    comment: ""

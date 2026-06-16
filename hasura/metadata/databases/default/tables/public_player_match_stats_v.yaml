@@ -66,6 +66,10 @@ select_permissions:
         - spray_shots
         - spray_hits
         - avg_crosshair_angle_deg
+        - first_bullet_shots
+        - first_bullet_hits
+        - on_target_frames
+        - total_engagement_frames
         - rounds_played
       filter: {}
       allow_aggregations: true

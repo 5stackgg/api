@@ -81,6 +81,10 @@ select_permissions:
         - shots_at_spotted
         - spray_shots
         - spray_hits
+        - first_bullet_shots
+        - first_bullet_hits
+        - on_target_frames
+        - total_engagement_frames
         - rounds_played
         - updated_at
       filter: {}

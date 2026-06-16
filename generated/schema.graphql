@@ -438,6 +438,22 @@ type QueryStat {
   total_rows: Int!
 }
 
+type ReparseAllStartedOutput {
+  running: Boolean!
+  success: Boolean!
+}
+
+type ReparseAllStatusOutput {
+  canceled: Boolean!
+  completed: Int!
+  current_demo_id: String
+  failed: Int!
+  finished_at: String
+  running: Boolean!
+  started_at: String
+  total: Int!
+}
+
 type SanctionResult {
   enforced: Boolean!
   id: String
@@ -14675,6 +14691,7 @@ type match_map_demos {
   download_url: String
   duration_seconds: Float
   file: String!
+  geometry_validated: Boolean
   id: uuid!
   kills(
     """JSON select path"""
@@ -14756,7 +14773,23 @@ type match_map_demos_aggregate {
 }
 
 input match_map_demos_aggregate_bool_exp {
+  bool_and: match_map_demos_aggregate_bool_exp_bool_and
+  bool_or: match_map_demos_aggregate_bool_exp_bool_or
   count: match_map_demos_aggregate_bool_exp_count
+}
+
+input match_map_demos_aggregate_bool_exp_bool_and {
+  arguments: match_map_demos_select_column_match_map_demos_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: match_map_demos_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input match_map_demos_aggregate_bool_exp_bool_or {
+  arguments: match_map_demos_select_column_match_map_demos_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: match_map_demos_bool_exp
+  predicate: Boolean_comparison_exp!
 }
 
 input match_map_demos_aggregate_bool_exp_count {
@@ -14855,6 +14888,7 @@ input match_map_demos_bool_exp {
   download_url: String_comparison_exp
   duration_seconds: Float_comparison_exp
   file: String_comparison_exp
+  geometry_validated: Boolean_comparison_exp
   id: uuid_comparison_exp
   kills: jsonb_comparison_exp
   map_name: String_comparison_exp
@@ -14941,6 +14975,7 @@ input match_map_demos_insert_input {
   cs2_build: String
   demo_sessions: match_demo_sessions_arr_rel_insert_input
   file: String
+  geometry_validated: Boolean
   id: uuid
   kills: jsonb
   map_name: String
@@ -15100,6 +15135,7 @@ input match_map_demos_order_by {
   download_url: order_by
   duration_seconds: order_by
   file: order_by
+  geometry_validated: order_by
   id: order_by
   kills: order_by
   map_name: order_by
@@ -15153,6 +15189,9 @@ enum match_map_demos_select_column {
   file
 
   """column name"""
+  geometry_validated
+
+  """column name"""
   id
 
   """column name"""
@@ -15196,6 +15235,22 @@ enum match_map_demos_select_column {
 }
 
 """
+select "match_map_demos_aggregate_bool_exp_bool_and_arguments_columns" columns of table "match_map_demos"
+"""
+enum match_map_demos_select_column_match_map_demos_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  geometry_validated
+}
+
+"""
+select "match_map_demos_aggregate_bool_exp_bool_or_arguments_columns" columns of table "match_map_demos"
+"""
+enum match_map_demos_select_column_match_map_demos_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  geometry_validated
+}
+
+"""
 input type for updating data in table "match_map_demos"
 """
 input match_map_demos_set_input {
@@ -15203,6 +15258,7 @@ input match_map_demos_set_input {
   created_at: timestamptz
   cs2_build: String
   file: String
+  geometry_validated: Boolean
   id: uuid
   kills: jsonb
   map_name: String
@@ -15297,6 +15353,7 @@ input match_map_demos_stream_cursor_value_input {
   cs2_build: String
   duration_seconds: Float
   file: String
+  geometry_validated: Boolean
   id: uuid
   kills: jsonb
   map_name: String
@@ -15348,6 +15405,9 @@ enum match_map_demos_update_column {
 
   """column name"""
   file
+
+  """column name"""
+  geometry_validated
 
   """column name"""
   id
@@ -21484,6 +21544,11 @@ type mutation_root {
   """cancelMatch"""
   cancelMatch(match_id: uuid!): SuccessOutput
 
+  """
+  Request cancellation of the in-progress reparse-all-demos run (admin only). Stops after the current demo finishes.
+  """
+  cancelReparseAllDemos: SuccessOutput
+
   """checkIntoMatch"""
   checkIntoMatch(match_id: uuid!): SuccessOutput
 
@@ -22308,6 +22373,19 @@ type mutation_root {
   delete single row from the table: "player_aim_stats_demo"
   """
   delete_player_aim_stats_demo_by_pk(attacker_steam_id: bigint!, match_map_id: uuid!): player_aim_stats_demo
+
+  """
+  delete data from the table: "player_aim_weapon_stats"
+  """
+  delete_player_aim_weapon_stats(
+    """filter the rows which have to be deleted"""
+    where: player_aim_weapon_stats_bool_exp!
+  ): player_aim_weapon_stats_mutation_response
+
+  """
+  delete single row from the table: "player_aim_weapon_stats"
+  """
+  delete_player_aim_weapon_stats_by_pk(match_map_id: uuid!, steam_id: bigint!, weapon_class: String!): player_aim_weapon_stats
 
   """
   delete data from the table: "player_assists"
@@ -24122,6 +24200,28 @@ type mutation_root {
   ): player_aim_stats_demo
 
   """
+  insert data into the table: "player_aim_weapon_stats"
+  """
+  insert_player_aim_weapon_stats(
+    """the rows to be inserted"""
+    objects: [player_aim_weapon_stats_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: player_aim_weapon_stats_on_conflict
+  ): player_aim_weapon_stats_mutation_response
+
+  """
+  insert a single row into the table: "player_aim_weapon_stats"
+  """
+  insert_player_aim_weapon_stats_one(
+    """the row to be inserted"""
+    object: player_aim_weapon_stats_insert_input!
+
+    """upsert condition"""
+    on_conflict: player_aim_weapon_stats_on_conflict
+  ): player_aim_weapon_stats
+
+  """
   insert data into the table: "player_assists"
   """
   insert_player_assists(
@@ -24999,6 +25099,14 @@ type mutation_root {
 
   """Rename file or directory on game server"""
   renameServerItem(new_path: String!, node_id: String!, old_path: String!, server_id: String): SuccessOutput
+
+  """
+  Re-parse every demo in the system (admin only). Runs one demo at a time in the background; this can take a very long time. Track via reparseAllDemosStatus.
+  """
+  reparseAllDemos: ReparseAllStartedOutput
+
+  """Return the progress of the reparse-all-demos run (admin only)."""
+  reparseAllDemosStatus: ReparseAllStatusOutput
 
   """Re-parse demo metadata for a match map (admin only)"""
   reparseDemo(match_map_id: uuid!): SuccessOutput
@@ -27271,6 +27379,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [player_aim_stats_demo_updates!]!
   ): [player_aim_stats_demo_mutation_response]
+
+  """
+  update data of the table: "player_aim_weapon_stats"
+  """
+  update_player_aim_weapon_stats(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_aim_weapon_stats_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_aim_weapon_stats_set_input
+
+    """filter the rows which have to be updated"""
+    where: player_aim_weapon_stats_bool_exp!
+  ): player_aim_weapon_stats_mutation_response
+
+  """
+  update single row of the table: "player_aim_weapon_stats"
+  """
+  update_player_aim_weapon_stats_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: player_aim_weapon_stats_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: player_aim_weapon_stats_set_input
+    pk_columns: player_aim_weapon_stats_pk_columns_input!
+  ): player_aim_weapon_stats
+
+  """
+  update multiples rows of table: "player_aim_weapon_stats"
+  """
+  update_player_aim_weapon_stats_many(
+    """updates to execute, in order"""
+    updates: [player_aim_weapon_stats_updates!]!
+  ): [player_aim_weapon_stats_mutation_response]
 
   """
   update data of the table: "player_assists"
@@ -30449,6 +30591,8 @@ type player_aim_stats_demo {
   counter_strafed_shots: Int!
   crosshair_angle_count: Int!
   crosshair_angle_sum_deg: numeric!
+  first_bullet_hits: Int!
+  first_bullet_shots: Int!
   headshot_hits: Int!
   hits: Int!
   hits_at_spotted: Int!
@@ -30461,11 +30605,13 @@ type player_aim_stats_demo {
   match_map: match_maps!
   match_map_id: uuid!
   non_awp_hits: Int!
+  on_target_frames: Int!
   shots_at_spotted: Int!
   spray_hits: Int!
   spray_shots: Int!
   time_to_damage_count: Int!
   time_to_damage_sum_s: numeric!
+  total_engagement_frames: Int!
 }
 
 """
@@ -30500,15 +30646,19 @@ type player_aim_stats_demo_avg_fields {
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   headshot_hits: Float
   hits: Float
   hits_at_spotted: Float
   non_awp_hits: Float
+  on_target_frames: Float
   shots_at_spotted: Float
   spray_hits: Float
   spray_shots: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
+  total_engagement_frames: Float
 }
 
 """
@@ -30524,6 +30674,8 @@ input player_aim_stats_demo_bool_exp {
   counter_strafed_shots: Int_comparison_exp
   crosshair_angle_count: Int_comparison_exp
   crosshair_angle_sum_deg: numeric_comparison_exp
+  first_bullet_hits: Int_comparison_exp
+  first_bullet_shots: Int_comparison_exp
   headshot_hits: Int_comparison_exp
   hits: Int_comparison_exp
   hits_at_spotted: Int_comparison_exp
@@ -30532,11 +30684,13 @@ input player_aim_stats_demo_bool_exp {
   match_map: match_maps_bool_exp
   match_map_id: uuid_comparison_exp
   non_awp_hits: Int_comparison_exp
+  on_target_frames: Int_comparison_exp
   shots_at_spotted: Int_comparison_exp
   spray_hits: Int_comparison_exp
   spray_shots: Int_comparison_exp
   time_to_damage_count: Int_comparison_exp
   time_to_damage_sum_s: numeric_comparison_exp
+  total_engagement_frames: Int_comparison_exp
 }
 
 """
@@ -30558,15 +30712,19 @@ input player_aim_stats_demo_inc_input {
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   headshot_hits: Int
   hits: Int
   hits_at_spotted: Int
   non_awp_hits: Int
+  on_target_frames: Int
   shots_at_spotted: Int
   spray_hits: Int
   spray_shots: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
+  total_engagement_frames: Int
 }
 
 """
@@ -30579,6 +30737,8 @@ input player_aim_stats_demo_insert_input {
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   headshot_hits: Int
   hits: Int
   hits_at_spotted: Int
@@ -30587,11 +30747,13 @@ input player_aim_stats_demo_insert_input {
   match_map: match_maps_obj_rel_insert_input
   match_map_id: uuid
   non_awp_hits: Int
+  on_target_frames: Int
   shots_at_spotted: Int
   spray_hits: Int
   spray_shots: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
+  total_engagement_frames: Int
 }
 
 """aggregate max on columns"""
@@ -30601,17 +30763,21 @@ type player_aim_stats_demo_max_fields {
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   headshot_hits: Int
   hits: Int
   hits_at_spotted: Int
   match_id: uuid
   match_map_id: uuid
   non_awp_hits: Int
+  on_target_frames: Int
   shots_at_spotted: Int
   spray_hits: Int
   spray_shots: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
+  total_engagement_frames: Int
 }
 
 """aggregate min on columns"""
@@ -30621,17 +30787,21 @@ type player_aim_stats_demo_min_fields {
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   headshot_hits: Int
   hits: Int
   hits_at_spotted: Int
   match_id: uuid
   match_map_id: uuid
   non_awp_hits: Int
+  on_target_frames: Int
   shots_at_spotted: Int
   spray_hits: Int
   spray_shots: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
+  total_engagement_frames: Int
 }
 
 """
@@ -30662,6 +30832,8 @@ input player_aim_stats_demo_order_by {
   counter_strafed_shots: order_by
   crosshair_angle_count: order_by
   crosshair_angle_sum_deg: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   headshot_hits: order_by
   hits: order_by
   hits_at_spotted: order_by
@@ -30670,11 +30842,13 @@ input player_aim_stats_demo_order_by {
   match_map: match_maps_order_by
   match_map_id: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   shots_at_spotted: order_by
   spray_hits: order_by
   spray_shots: order_by
   time_to_damage_count: order_by
   time_to_damage_sum_s: order_by
+  total_engagement_frames: order_by
 }
 
 """primary key columns input for table: player_aim_stats_demo"""
@@ -30703,6 +30877,12 @@ enum player_aim_stats_demo_select_column {
   crosshair_angle_sum_deg
 
   """column name"""
+  first_bullet_hits
+
+  """column name"""
+  first_bullet_shots
+
+  """column name"""
   headshot_hits
 
   """column name"""
@@ -30721,6 +30901,9 @@ enum player_aim_stats_demo_select_column {
   non_awp_hits
 
   """column name"""
+  on_target_frames
+
+  """column name"""
   shots_at_spotted
 
   """column name"""
@@ -30734,6 +30917,9 @@ enum player_aim_stats_demo_select_column {
 
   """column name"""
   time_to_damage_sum_s
+
+  """column name"""
+  total_engagement_frames
 }
 
 """
@@ -30745,17 +30931,21 @@ input player_aim_stats_demo_set_input {
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   headshot_hits: Int
   hits: Int
   hits_at_spotted: Int
   match_id: uuid
   match_map_id: uuid
   non_awp_hits: Int
+  on_target_frames: Int
   shots_at_spotted: Int
   spray_hits: Int
   spray_shots: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
+  total_engagement_frames: Int
 }
 
 """aggregate stddev on columns"""
@@ -30765,15 +30955,19 @@ type player_aim_stats_demo_stddev_fields {
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   headshot_hits: Float
   hits: Float
   hits_at_spotted: Float
   non_awp_hits: Float
+  on_target_frames: Float
   shots_at_spotted: Float
   spray_hits: Float
   spray_shots: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
+  total_engagement_frames: Float
 }
 
 """aggregate stddev_pop on columns"""
@@ -30783,15 +30977,19 @@ type player_aim_stats_demo_stddev_pop_fields {
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   headshot_hits: Float
   hits: Float
   hits_at_spotted: Float
   non_awp_hits: Float
+  on_target_frames: Float
   shots_at_spotted: Float
   spray_hits: Float
   spray_shots: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
+  total_engagement_frames: Float
 }
 
 """aggregate stddev_samp on columns"""
@@ -30801,15 +30999,19 @@ type player_aim_stats_demo_stddev_samp_fields {
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   headshot_hits: Float
   hits: Float
   hits_at_spotted: Float
   non_awp_hits: Float
+  on_target_frames: Float
   shots_at_spotted: Float
   spray_hits: Float
   spray_shots: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
+  total_engagement_frames: Float
 }
 
 """
@@ -30830,17 +31032,21 @@ input player_aim_stats_demo_stream_cursor_value_input {
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   headshot_hits: Int
   hits: Int
   hits_at_spotted: Int
   match_id: uuid
   match_map_id: uuid
   non_awp_hits: Int
+  on_target_frames: Int
   shots_at_spotted: Int
   spray_hits: Int
   spray_shots: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
+  total_engagement_frames: Int
 }
 
 """aggregate sum on columns"""
@@ -30850,15 +31056,19 @@ type player_aim_stats_demo_sum_fields {
   counter_strafed_shots: Int
   crosshair_angle_count: Int
   crosshair_angle_sum_deg: numeric
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   headshot_hits: Int
   hits: Int
   hits_at_spotted: Int
   non_awp_hits: Int
+  on_target_frames: Int
   shots_at_spotted: Int
   spray_hits: Int
   spray_shots: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
+  total_engagement_frames: Int
 }
 
 """
@@ -30881,6 +31091,12 @@ enum player_aim_stats_demo_update_column {
   crosshair_angle_sum_deg
 
   """column name"""
+  first_bullet_hits
+
+  """column name"""
+  first_bullet_shots
+
+  """column name"""
   headshot_hits
 
   """column name"""
@@ -30899,6 +31115,9 @@ enum player_aim_stats_demo_update_column {
   non_awp_hits
 
   """column name"""
+  on_target_frames
+
+  """column name"""
   shots_at_spotted
 
   """column name"""
@@ -30912,6 +31131,9 @@ enum player_aim_stats_demo_update_column {
 
   """column name"""
   time_to_damage_sum_s
+
+  """column name"""
+  total_engagement_frames
 }
 
 input player_aim_stats_demo_updates {
@@ -30932,15 +31154,19 @@ type player_aim_stats_demo_var_pop_fields {
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   headshot_hits: Float
   hits: Float
   hits_at_spotted: Float
   non_awp_hits: Float
+  on_target_frames: Float
   shots_at_spotted: Float
   spray_hits: Float
   spray_shots: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
+  total_engagement_frames: Float
 }
 
 """aggregate var_samp on columns"""
@@ -30950,15 +31176,19 @@ type player_aim_stats_demo_var_samp_fields {
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   headshot_hits: Float
   hits: Float
   hits_at_spotted: Float
   non_awp_hits: Float
+  on_target_frames: Float
   shots_at_spotted: Float
   spray_hits: Float
   spray_shots: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
+  total_engagement_frames: Float
 }
 
 """aggregate variance on columns"""
@@ -30968,15 +31198,589 @@ type player_aim_stats_demo_variance_fields {
   counter_strafed_shots: Float
   crosshair_angle_count: Float
   crosshair_angle_sum_deg: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   headshot_hits: Float
   hits: Float
   hits_at_spotted: Float
   non_awp_hits: Float
+  on_target_frames: Float
   shots_at_spotted: Float
   spray_hits: Float
   spray_shots: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
+  total_engagement_frames: Float
+}
+
+"""
+columns and relationships of "player_aim_weapon_stats"
+"""
+type player_aim_weapon_stats {
+  first_bullet_hits: Int!
+  first_bullet_shots: Int!
+  hits: Int!
+  hits_spotted: Int!
+
+  """An object relationship"""
+  match: matches!
+  match_id: uuid!
+
+  """An object relationship"""
+  match_map: match_maps!
+  match_map_id: uuid!
+
+  """An object relationship"""
+  player: players
+  shots: Int!
+  shots_spotted: Int!
+  steam_id: bigint!
+  weapon_class: String!
+}
+
+"""
+aggregated selection of "player_aim_weapon_stats"
+"""
+type player_aim_weapon_stats_aggregate {
+  aggregate: player_aim_weapon_stats_aggregate_fields
+  nodes: [player_aim_weapon_stats!]!
+}
+
+input player_aim_weapon_stats_aggregate_bool_exp {
+  count: player_aim_weapon_stats_aggregate_bool_exp_count
+}
+
+input player_aim_weapon_stats_aggregate_bool_exp_count {
+  arguments: [player_aim_weapon_stats_select_column!]
+  distinct: Boolean
+  filter: player_aim_weapon_stats_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "player_aim_weapon_stats"
+"""
+type player_aim_weapon_stats_aggregate_fields {
+  avg: player_aim_weapon_stats_avg_fields
+  count(columns: [player_aim_weapon_stats_select_column!], distinct: Boolean): Int!
+  max: player_aim_weapon_stats_max_fields
+  min: player_aim_weapon_stats_min_fields
+  stddev: player_aim_weapon_stats_stddev_fields
+  stddev_pop: player_aim_weapon_stats_stddev_pop_fields
+  stddev_samp: player_aim_weapon_stats_stddev_samp_fields
+  sum: player_aim_weapon_stats_sum_fields
+  var_pop: player_aim_weapon_stats_var_pop_fields
+  var_samp: player_aim_weapon_stats_var_samp_fields
+  variance: player_aim_weapon_stats_variance_fields
+}
+
+"""
+order by aggregate values of table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_aggregate_order_by {
+  avg: player_aim_weapon_stats_avg_order_by
+  count: order_by
+  max: player_aim_weapon_stats_max_order_by
+  min: player_aim_weapon_stats_min_order_by
+  stddev: player_aim_weapon_stats_stddev_order_by
+  stddev_pop: player_aim_weapon_stats_stddev_pop_order_by
+  stddev_samp: player_aim_weapon_stats_stddev_samp_order_by
+  sum: player_aim_weapon_stats_sum_order_by
+  var_pop: player_aim_weapon_stats_var_pop_order_by
+  var_samp: player_aim_weapon_stats_var_samp_order_by
+  variance: player_aim_weapon_stats_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_arr_rel_insert_input {
+  data: [player_aim_weapon_stats_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: player_aim_weapon_stats_on_conflict
+}
+
+"""aggregate avg on columns"""
+type player_aim_weapon_stats_avg_fields {
+  first_bullet_hits: Float
+  first_bullet_shots: Float
+  hits: Float
+  hits_spotted: Float
+  shots: Float
+  shots_spotted: Float
+  steam_id: Float
+}
+
+"""
+order by avg() on columns of table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_avg_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "player_aim_weapon_stats". All fields are combined with a logical 'AND'.
+"""
+input player_aim_weapon_stats_bool_exp {
+  _and: [player_aim_weapon_stats_bool_exp!]
+  _not: player_aim_weapon_stats_bool_exp
+  _or: [player_aim_weapon_stats_bool_exp!]
+  first_bullet_hits: Int_comparison_exp
+  first_bullet_shots: Int_comparison_exp
+  hits: Int_comparison_exp
+  hits_spotted: Int_comparison_exp
+  match: matches_bool_exp
+  match_id: uuid_comparison_exp
+  match_map: match_maps_bool_exp
+  match_map_id: uuid_comparison_exp
+  player: players_bool_exp
+  shots: Int_comparison_exp
+  shots_spotted: Int_comparison_exp
+  steam_id: bigint_comparison_exp
+  weapon_class: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "player_aim_weapon_stats"
+"""
+enum player_aim_weapon_stats_constraint {
+  """
+  unique or primary key constraint on columns "steam_id", "weapon_class", "match_map_id"
+  """
+  player_aim_weapon_stats_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_inc_input {
+  first_bullet_hits: Int
+  first_bullet_shots: Int
+  hits: Int
+  hits_spotted: Int
+  shots: Int
+  shots_spotted: Int
+  steam_id: bigint
+}
+
+"""
+input type for inserting data into table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_insert_input {
+  first_bullet_hits: Int
+  first_bullet_shots: Int
+  hits: Int
+  hits_spotted: Int
+  match: matches_obj_rel_insert_input
+  match_id: uuid
+  match_map: match_maps_obj_rel_insert_input
+  match_map_id: uuid
+  player: players_obj_rel_insert_input
+  shots: Int
+  shots_spotted: Int
+  steam_id: bigint
+  weapon_class: String
+}
+
+"""aggregate max on columns"""
+type player_aim_weapon_stats_max_fields {
+  first_bullet_hits: Int
+  first_bullet_shots: Int
+  hits: Int
+  hits_spotted: Int
+  match_id: uuid
+  match_map_id: uuid
+  shots: Int
+  shots_spotted: Int
+  steam_id: bigint
+  weapon_class: String
+}
+
+"""
+order by max() on columns of table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_max_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  match_id: order_by
+  match_map_id: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+  weapon_class: order_by
+}
+
+"""aggregate min on columns"""
+type player_aim_weapon_stats_min_fields {
+  first_bullet_hits: Int
+  first_bullet_shots: Int
+  hits: Int
+  hits_spotted: Int
+  match_id: uuid
+  match_map_id: uuid
+  shots: Int
+  shots_spotted: Int
+  steam_id: bigint
+  weapon_class: String
+}
+
+"""
+order by min() on columns of table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_min_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  match_id: order_by
+  match_map_id: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+  weapon_class: order_by
+}
+
+"""
+response of any mutation on the table "player_aim_weapon_stats"
+"""
+type player_aim_weapon_stats_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [player_aim_weapon_stats!]!
+}
+
+"""
+on_conflict condition type for table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_on_conflict {
+  constraint: player_aim_weapon_stats_constraint!
+  update_columns: [player_aim_weapon_stats_update_column!]! = []
+  where: player_aim_weapon_stats_bool_exp
+}
+
+"""Ordering options when selecting data from "player_aim_weapon_stats"."""
+input player_aim_weapon_stats_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  match: matches_order_by
+  match_id: order_by
+  match_map: match_maps_order_by
+  match_map_id: order_by
+  player: players_order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+  weapon_class: order_by
+}
+
+"""primary key columns input for table: player_aim_weapon_stats"""
+input player_aim_weapon_stats_pk_columns_input {
+  match_map_id: uuid!
+  steam_id: bigint!
+  weapon_class: String!
+}
+
+"""
+select columns of table "player_aim_weapon_stats"
+"""
+enum player_aim_weapon_stats_select_column {
+  """column name"""
+  first_bullet_hits
+
+  """column name"""
+  first_bullet_shots
+
+  """column name"""
+  hits
+
+  """column name"""
+  hits_spotted
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  shots
+
+  """column name"""
+  shots_spotted
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  weapon_class
+}
+
+"""
+input type for updating data in table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_set_input {
+  first_bullet_hits: Int
+  first_bullet_shots: Int
+  hits: Int
+  hits_spotted: Int
+  match_id: uuid
+  match_map_id: uuid
+  shots: Int
+  shots_spotted: Int
+  steam_id: bigint
+  weapon_class: String
+}
+
+"""aggregate stddev on columns"""
+type player_aim_weapon_stats_stddev_fields {
+  first_bullet_hits: Float
+  first_bullet_shots: Float
+  hits: Float
+  hits_spotted: Float
+  shots: Float
+  shots_spotted: Float
+  steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_stddev_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type player_aim_weapon_stats_stddev_pop_fields {
+  first_bullet_hits: Float
+  first_bullet_shots: Float
+  hits: Float
+  hits_spotted: Float
+  shots: Float
+  shots_spotted: Float
+  steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_stddev_pop_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type player_aim_weapon_stats_stddev_samp_fields {
+  first_bullet_hits: Float
+  first_bullet_shots: Float
+  hits: Float
+  hits_spotted: Float
+  shots: Float
+  shots_spotted: Float
+  steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_stddev_samp_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: player_aim_weapon_stats_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input player_aim_weapon_stats_stream_cursor_value_input {
+  first_bullet_hits: Int
+  first_bullet_shots: Int
+  hits: Int
+  hits_spotted: Int
+  match_id: uuid
+  match_map_id: uuid
+  shots: Int
+  shots_spotted: Int
+  steam_id: bigint
+  weapon_class: String
+}
+
+"""aggregate sum on columns"""
+type player_aim_weapon_stats_sum_fields {
+  first_bullet_hits: Int
+  first_bullet_shots: Int
+  hits: Int
+  hits_spotted: Int
+  shots: Int
+  shots_spotted: Int
+  steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_sum_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+}
+
+"""
+update columns of table "player_aim_weapon_stats"
+"""
+enum player_aim_weapon_stats_update_column {
+  """column name"""
+  first_bullet_hits
+
+  """column name"""
+  first_bullet_shots
+
+  """column name"""
+  hits
+
+  """column name"""
+  hits_spotted
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_map_id
+
+  """column name"""
+  shots
+
+  """column name"""
+  shots_spotted
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  weapon_class
+}
+
+input player_aim_weapon_stats_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: player_aim_weapon_stats_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: player_aim_weapon_stats_set_input
+
+  """filter the rows which have to be updated"""
+  where: player_aim_weapon_stats_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type player_aim_weapon_stats_var_pop_fields {
+  first_bullet_hits: Float
+  first_bullet_shots: Float
+  hits: Float
+  hits_spotted: Float
+  shots: Float
+  shots_spotted: Float
+  steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_var_pop_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type player_aim_weapon_stats_var_samp_fields {
+  first_bullet_hits: Float
+  first_bullet_shots: Float
+  hits: Float
+  hits_spotted: Float
+  shots: Float
+  shots_spotted: Float
+  steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_var_samp_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type player_aim_weapon_stats_variance_fields {
+  first_bullet_hits: Float
+  first_bullet_shots: Float
+  hits: Float
+  hits_spotted: Float
+  shots: Float
+  shots_spotted: Float
+  steam_id: Float
+}
+
+"""
+order by variance() on columns of table "player_aim_weapon_stats"
+"""
+input player_aim_weapon_stats_variance_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
 }
 
 """
@@ -31520,6 +32324,382 @@ input player_assists_variance_order_by {
   attacked_steam_id: order_by
   attacker_steam_id: order_by
   round: order_by
+}
+
+"""
+columns and relationships of "player_career_stats_v"
+"""
+type player_career_stats_v {
+  accuracy: numeric
+  accuracy_spotted: numeric
+  counter_strafe_pct: numeric
+  crosshair_deg: numeric
+  enemy_blind_pr: numeric
+  flash_assists_pr: numeric
+  hs_pct: numeric
+  kast_pct: numeric
+  maps: Int
+  premier_rank: Int
+  rounds: Int
+  steam_id: bigint
+  survival_pct: numeric
+  time_to_damage_s: numeric
+  traded_death_pct: numeric
+  util_efficiency: numeric
+}
+
+"""
+aggregated selection of "player_career_stats_v"
+"""
+type player_career_stats_v_aggregate {
+  aggregate: player_career_stats_v_aggregate_fields
+  nodes: [player_career_stats_v!]!
+}
+
+"""
+aggregate fields of "player_career_stats_v"
+"""
+type player_career_stats_v_aggregate_fields {
+  avg: player_career_stats_v_avg_fields
+  count(columns: [player_career_stats_v_select_column!], distinct: Boolean): Int!
+  max: player_career_stats_v_max_fields
+  min: player_career_stats_v_min_fields
+  stddev: player_career_stats_v_stddev_fields
+  stddev_pop: player_career_stats_v_stddev_pop_fields
+  stddev_samp: player_career_stats_v_stddev_samp_fields
+  sum: player_career_stats_v_sum_fields
+  var_pop: player_career_stats_v_var_pop_fields
+  var_samp: player_career_stats_v_var_samp_fields
+  variance: player_career_stats_v_variance_fields
+}
+
+"""aggregate avg on columns"""
+type player_career_stats_v_avg_fields {
+  accuracy: Float
+  accuracy_spotted: Float
+  counter_strafe_pct: Float
+  crosshair_deg: Float
+  enemy_blind_pr: Float
+  flash_assists_pr: Float
+  hs_pct: Float
+  kast_pct: Float
+  maps: Float
+  premier_rank: Float
+  rounds: Float
+  steam_id: Float
+  survival_pct: Float
+  time_to_damage_s: Float
+  traded_death_pct: Float
+  util_efficiency: Float
+}
+
+"""
+Boolean expression to filter rows from the table "player_career_stats_v". All fields are combined with a logical 'AND'.
+"""
+input player_career_stats_v_bool_exp {
+  _and: [player_career_stats_v_bool_exp!]
+  _not: player_career_stats_v_bool_exp
+  _or: [player_career_stats_v_bool_exp!]
+  accuracy: numeric_comparison_exp
+  accuracy_spotted: numeric_comparison_exp
+  counter_strafe_pct: numeric_comparison_exp
+  crosshair_deg: numeric_comparison_exp
+  enemy_blind_pr: numeric_comparison_exp
+  flash_assists_pr: numeric_comparison_exp
+  hs_pct: numeric_comparison_exp
+  kast_pct: numeric_comparison_exp
+  maps: Int_comparison_exp
+  premier_rank: Int_comparison_exp
+  rounds: Int_comparison_exp
+  steam_id: bigint_comparison_exp
+  survival_pct: numeric_comparison_exp
+  time_to_damage_s: numeric_comparison_exp
+  traded_death_pct: numeric_comparison_exp
+  util_efficiency: numeric_comparison_exp
+}
+
+"""aggregate max on columns"""
+type player_career_stats_v_max_fields {
+  accuracy: numeric
+  accuracy_spotted: numeric
+  counter_strafe_pct: numeric
+  crosshair_deg: numeric
+  enemy_blind_pr: numeric
+  flash_assists_pr: numeric
+  hs_pct: numeric
+  kast_pct: numeric
+  maps: Int
+  premier_rank: Int
+  rounds: Int
+  steam_id: bigint
+  survival_pct: numeric
+  time_to_damage_s: numeric
+  traded_death_pct: numeric
+  util_efficiency: numeric
+}
+
+"""aggregate min on columns"""
+type player_career_stats_v_min_fields {
+  accuracy: numeric
+  accuracy_spotted: numeric
+  counter_strafe_pct: numeric
+  crosshair_deg: numeric
+  enemy_blind_pr: numeric
+  flash_assists_pr: numeric
+  hs_pct: numeric
+  kast_pct: numeric
+  maps: Int
+  premier_rank: Int
+  rounds: Int
+  steam_id: bigint
+  survival_pct: numeric
+  time_to_damage_s: numeric
+  traded_death_pct: numeric
+  util_efficiency: numeric
+}
+
+"""Ordering options when selecting data from "player_career_stats_v"."""
+input player_career_stats_v_order_by {
+  accuracy: order_by
+  accuracy_spotted: order_by
+  counter_strafe_pct: order_by
+  crosshair_deg: order_by
+  enemy_blind_pr: order_by
+  flash_assists_pr: order_by
+  hs_pct: order_by
+  kast_pct: order_by
+  maps: order_by
+  premier_rank: order_by
+  rounds: order_by
+  steam_id: order_by
+  survival_pct: order_by
+  time_to_damage_s: order_by
+  traded_death_pct: order_by
+  util_efficiency: order_by
+}
+
+"""
+select columns of table "player_career_stats_v"
+"""
+enum player_career_stats_v_select_column {
+  """column name"""
+  accuracy
+
+  """column name"""
+  accuracy_spotted
+
+  """column name"""
+  counter_strafe_pct
+
+  """column name"""
+  crosshair_deg
+
+  """column name"""
+  enemy_blind_pr
+
+  """column name"""
+  flash_assists_pr
+
+  """column name"""
+  hs_pct
+
+  """column name"""
+  kast_pct
+
+  """column name"""
+  maps
+
+  """column name"""
+  premier_rank
+
+  """column name"""
+  rounds
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  survival_pct
+
+  """column name"""
+  time_to_damage_s
+
+  """column name"""
+  traded_death_pct
+
+  """column name"""
+  util_efficiency
+}
+
+"""aggregate stddev on columns"""
+type player_career_stats_v_stddev_fields {
+  accuracy: Float
+  accuracy_spotted: Float
+  counter_strafe_pct: Float
+  crosshair_deg: Float
+  enemy_blind_pr: Float
+  flash_assists_pr: Float
+  hs_pct: Float
+  kast_pct: Float
+  maps: Float
+  premier_rank: Float
+  rounds: Float
+  steam_id: Float
+  survival_pct: Float
+  time_to_damage_s: Float
+  traded_death_pct: Float
+  util_efficiency: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type player_career_stats_v_stddev_pop_fields {
+  accuracy: Float
+  accuracy_spotted: Float
+  counter_strafe_pct: Float
+  crosshair_deg: Float
+  enemy_blind_pr: Float
+  flash_assists_pr: Float
+  hs_pct: Float
+  kast_pct: Float
+  maps: Float
+  premier_rank: Float
+  rounds: Float
+  steam_id: Float
+  survival_pct: Float
+  time_to_damage_s: Float
+  traded_death_pct: Float
+  util_efficiency: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type player_career_stats_v_stddev_samp_fields {
+  accuracy: Float
+  accuracy_spotted: Float
+  counter_strafe_pct: Float
+  crosshair_deg: Float
+  enemy_blind_pr: Float
+  flash_assists_pr: Float
+  hs_pct: Float
+  kast_pct: Float
+  maps: Float
+  premier_rank: Float
+  rounds: Float
+  steam_id: Float
+  survival_pct: Float
+  time_to_damage_s: Float
+  traded_death_pct: Float
+  util_efficiency: Float
+}
+
+"""
+Streaming cursor of the table "player_career_stats_v"
+"""
+input player_career_stats_v_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: player_career_stats_v_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input player_career_stats_v_stream_cursor_value_input {
+  accuracy: numeric
+  accuracy_spotted: numeric
+  counter_strafe_pct: numeric
+  crosshair_deg: numeric
+  enemy_blind_pr: numeric
+  flash_assists_pr: numeric
+  hs_pct: numeric
+  kast_pct: numeric
+  maps: Int
+  premier_rank: Int
+  rounds: Int
+  steam_id: bigint
+  survival_pct: numeric
+  time_to_damage_s: numeric
+  traded_death_pct: numeric
+  util_efficiency: numeric
+}
+
+"""aggregate sum on columns"""
+type player_career_stats_v_sum_fields {
+  accuracy: numeric
+  accuracy_spotted: numeric
+  counter_strafe_pct: numeric
+  crosshair_deg: numeric
+  enemy_blind_pr: numeric
+  flash_assists_pr: numeric
+  hs_pct: numeric
+  kast_pct: numeric
+  maps: Int
+  premier_rank: Int
+  rounds: Int
+  steam_id: bigint
+  survival_pct: numeric
+  time_to_damage_s: numeric
+  traded_death_pct: numeric
+  util_efficiency: numeric
+}
+
+"""aggregate var_pop on columns"""
+type player_career_stats_v_var_pop_fields {
+  accuracy: Float
+  accuracy_spotted: Float
+  counter_strafe_pct: Float
+  crosshair_deg: Float
+  enemy_blind_pr: Float
+  flash_assists_pr: Float
+  hs_pct: Float
+  kast_pct: Float
+  maps: Float
+  premier_rank: Float
+  rounds: Float
+  steam_id: Float
+  survival_pct: Float
+  time_to_damage_s: Float
+  traded_death_pct: Float
+  util_efficiency: Float
+}
+
+"""aggregate var_samp on columns"""
+type player_career_stats_v_var_samp_fields {
+  accuracy: Float
+  accuracy_spotted: Float
+  counter_strafe_pct: Float
+  crosshair_deg: Float
+  enemy_blind_pr: Float
+  flash_assists_pr: Float
+  hs_pct: Float
+  kast_pct: Float
+  maps: Float
+  premier_rank: Float
+  rounds: Float
+  steam_id: Float
+  survival_pct: Float
+  time_to_damage_s: Float
+  traded_death_pct: Float
+  util_efficiency: Float
+}
+
+"""aggregate variance on columns"""
+type player_career_stats_v_variance_fields {
+  accuracy: Float
+  accuracy_spotted: Float
+  counter_strafe_pct: Float
+  crosshair_deg: Float
+  enemy_blind_pr: Float
+  flash_assists_pr: Float
+  hs_pct: Float
+  kast_pct: Float
+  maps: Float
+  premier_rank: Float
+  rounds: Float
+  steam_id: Float
+  survival_pct: Float
+  time_to_damage_s: Float
+  traded_death_pct: Float
+  util_efficiency: Float
 }
 
 """
@@ -35306,6 +36486,8 @@ type player_match_map_stats {
   deaths_t: Int!
   decoy_throws: Int!
   enemies_flashed: Int!
+  first_bullet_hits: Int!
+  first_bullet_shots: Int!
   five_kill_rounds: Int!
   flash_assists: Int!
   flash_duration_count: Int!
@@ -35336,6 +36518,7 @@ type player_match_map_stats {
   molotov_damage: Int!
   molotov_throws: Int!
   non_awp_hits: Int!
+  on_target_frames: Int!
 
   """An object relationship"""
   player: players!
@@ -35355,6 +36538,7 @@ type player_match_map_stats {
   three_kill_rounds: Int!
   time_to_damage_count: Int!
   time_to_damage_sum_s: numeric!
+  total_engagement_frames: Int!
   trade_kill_attempts: Int!
   trade_kill_opportunities: Int!
   trade_kill_successes: Int!
@@ -35450,6 +36634,8 @@ type player_match_map_stats_avg_fields {
   deaths_t: Float
   decoy_throws: Float
   enemies_flashed: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   five_kill_rounds: Float
   flash_assists: Float
   flash_duration_count: Float
@@ -35472,6 +36658,7 @@ type player_match_map_stats_avg_fields {
   molotov_damage: Float
   molotov_throws: Float
   non_awp_hits: Float
+  on_target_frames: Float
   rounds_ct: Float
   rounds_played: Float
   rounds_t: Float
@@ -35488,6 +36675,7 @@ type player_match_map_stats_avg_fields {
   three_kill_rounds: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
+  total_engagement_frames: Float
   trade_kill_attempts: Float
   trade_kill_opportunities: Float
   trade_kill_successes: Float
@@ -35521,6 +36709,8 @@ input player_match_map_stats_avg_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flash_duration_count: order_by
@@ -35543,6 +36733,7 @@ input player_match_map_stats_avg_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -35559,6 +36750,7 @@ input player_match_map_stats_avg_order_by {
   three_kill_rounds: order_by
   time_to_damage_count: order_by
   time_to_damage_sum_s: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -35595,6 +36787,8 @@ input player_match_map_stats_bool_exp {
   deaths_t: Int_comparison_exp
   decoy_throws: Int_comparison_exp
   enemies_flashed: Int_comparison_exp
+  first_bullet_hits: Int_comparison_exp
+  first_bullet_shots: Int_comparison_exp
   five_kill_rounds: Int_comparison_exp
   flash_assists: Int_comparison_exp
   flash_duration_count: Int_comparison_exp
@@ -35621,6 +36815,7 @@ input player_match_map_stats_bool_exp {
   molotov_damage: Int_comparison_exp
   molotov_throws: Int_comparison_exp
   non_awp_hits: Int_comparison_exp
+  on_target_frames: Int_comparison_exp
   player: players_bool_exp
   rounds_ct: Int_comparison_exp
   rounds_played: Int_comparison_exp
@@ -35638,6 +36833,7 @@ input player_match_map_stats_bool_exp {
   three_kill_rounds: Int_comparison_exp
   time_to_damage_count: Int_comparison_exp
   time_to_damage_sum_s: numeric_comparison_exp
+  total_engagement_frames: Int_comparison_exp
   trade_kill_attempts: Int_comparison_exp
   trade_kill_opportunities: Int_comparison_exp
   trade_kill_successes: Int_comparison_exp
@@ -35682,6 +36878,8 @@ input player_match_map_stats_inc_input {
   deaths_t: Int
   decoy_throws: Int
   enemies_flashed: Int
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   five_kill_rounds: Int
   flash_assists: Int
   flash_duration_count: Int
@@ -35704,6 +36902,7 @@ input player_match_map_stats_inc_input {
   molotov_damage: Int
   molotov_throws: Int
   non_awp_hits: Int
+  on_target_frames: Int
   rounds_ct: Int
   rounds_played: Int
   rounds_t: Int
@@ -35720,6 +36919,7 @@ input player_match_map_stats_inc_input {
   three_kill_rounds: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
+  total_engagement_frames: Int
   trade_kill_attempts: Int
   trade_kill_opportunities: Int
   trade_kill_successes: Int
@@ -35753,6 +36953,8 @@ input player_match_map_stats_insert_input {
   deaths_t: Int
   decoy_throws: Int
   enemies_flashed: Int
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   five_kill_rounds: Int
   flash_assists: Int
   flash_duration_count: Int
@@ -35779,6 +36981,7 @@ input player_match_map_stats_insert_input {
   molotov_damage: Int
   molotov_throws: Int
   non_awp_hits: Int
+  on_target_frames: Int
   player: players_obj_rel_insert_input
   rounds_ct: Int
   rounds_played: Int
@@ -35796,6 +36999,7 @@ input player_match_map_stats_insert_input {
   three_kill_rounds: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
+  total_engagement_frames: Int
   trade_kill_attempts: Int
   trade_kill_opportunities: Int
   trade_kill_successes: Int
@@ -35828,6 +37032,8 @@ type player_match_map_stats_max_fields {
   deaths_t: Int
   decoy_throws: Int
   enemies_flashed: Int
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   five_kill_rounds: Int
   flash_assists: Int
   flash_duration_count: Int
@@ -35852,6 +37058,7 @@ type player_match_map_stats_max_fields {
   molotov_damage: Int
   molotov_throws: Int
   non_awp_hits: Int
+  on_target_frames: Int
   rounds_ct: Int
   rounds_played: Int
   rounds_t: Int
@@ -35868,6 +37075,7 @@ type player_match_map_stats_max_fields {
   three_kill_rounds: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
+  total_engagement_frames: Int
   trade_kill_attempts: Int
   trade_kill_opportunities: Int
   trade_kill_successes: Int
@@ -35902,6 +37110,8 @@ input player_match_map_stats_max_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flash_duration_count: order_by
@@ -35926,6 +37136,7 @@ input player_match_map_stats_max_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -35942,6 +37153,7 @@ input player_match_map_stats_max_order_by {
   three_kill_rounds: order_by
   time_to_damage_count: order_by
   time_to_damage_sum_s: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -35974,6 +37186,8 @@ type player_match_map_stats_min_fields {
   deaths_t: Int
   decoy_throws: Int
   enemies_flashed: Int
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   five_kill_rounds: Int
   flash_assists: Int
   flash_duration_count: Int
@@ -35998,6 +37212,7 @@ type player_match_map_stats_min_fields {
   molotov_damage: Int
   molotov_throws: Int
   non_awp_hits: Int
+  on_target_frames: Int
   rounds_ct: Int
   rounds_played: Int
   rounds_t: Int
@@ -36014,6 +37229,7 @@ type player_match_map_stats_min_fields {
   three_kill_rounds: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
+  total_engagement_frames: Int
   trade_kill_attempts: Int
   trade_kill_opportunities: Int
   trade_kill_successes: Int
@@ -36048,6 +37264,8 @@ input player_match_map_stats_min_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flash_duration_count: order_by
@@ -36072,6 +37290,7 @@ input player_match_map_stats_min_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -36088,6 +37307,7 @@ input player_match_map_stats_min_order_by {
   three_kill_rounds: order_by
   time_to_damage_count: order_by
   time_to_damage_sum_s: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -36140,6 +37360,8 @@ input player_match_map_stats_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flash_duration_count: order_by
@@ -36166,6 +37388,7 @@ input player_match_map_stats_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   player: players_order_by
   rounds_ct: order_by
   rounds_played: order_by
@@ -36183,6 +37406,7 @@ input player_match_map_stats_order_by {
   three_kill_rounds: order_by
   time_to_damage_count: order_by
   time_to_damage_sum_s: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -36254,6 +37478,12 @@ enum player_match_map_stats_select_column {
   enemies_flashed
 
   """column name"""
+  first_bullet_hits
+
+  """column name"""
+  first_bullet_shots
+
+  """column name"""
   five_kill_rounds
 
   """column name"""
@@ -36326,6 +37556,9 @@ enum player_match_map_stats_select_column {
   non_awp_hits
 
   """column name"""
+  on_target_frames
+
+  """column name"""
   rounds_ct
 
   """column name"""
@@ -36372,6 +37605,9 @@ enum player_match_map_stats_select_column {
 
   """column name"""
   time_to_damage_sum_s
+
+  """column name"""
+  total_engagement_frames
 
   """column name"""
   trade_kill_attempts
@@ -36432,6 +37668,8 @@ input player_match_map_stats_set_input {
   deaths_t: Int
   decoy_throws: Int
   enemies_flashed: Int
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   five_kill_rounds: Int
   flash_assists: Int
   flash_duration_count: Int
@@ -36456,6 +37694,7 @@ input player_match_map_stats_set_input {
   molotov_damage: Int
   molotov_throws: Int
   non_awp_hits: Int
+  on_target_frames: Int
   rounds_ct: Int
   rounds_played: Int
   rounds_t: Int
@@ -36472,6 +37711,7 @@ input player_match_map_stats_set_input {
   three_kill_rounds: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
+  total_engagement_frames: Int
   trade_kill_attempts: Int
   trade_kill_opportunities: Int
   trade_kill_successes: Int
@@ -36504,6 +37744,8 @@ type player_match_map_stats_stddev_fields {
   deaths_t: Float
   decoy_throws: Float
   enemies_flashed: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   five_kill_rounds: Float
   flash_assists: Float
   flash_duration_count: Float
@@ -36526,6 +37768,7 @@ type player_match_map_stats_stddev_fields {
   molotov_damage: Float
   molotov_throws: Float
   non_awp_hits: Float
+  on_target_frames: Float
   rounds_ct: Float
   rounds_played: Float
   rounds_t: Float
@@ -36542,6 +37785,7 @@ type player_match_map_stats_stddev_fields {
   three_kill_rounds: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
+  total_engagement_frames: Float
   trade_kill_attempts: Float
   trade_kill_opportunities: Float
   trade_kill_successes: Float
@@ -36575,6 +37819,8 @@ input player_match_map_stats_stddev_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flash_duration_count: order_by
@@ -36597,6 +37843,7 @@ input player_match_map_stats_stddev_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -36613,6 +37860,7 @@ input player_match_map_stats_stddev_order_by {
   three_kill_rounds: order_by
   time_to_damage_count: order_by
   time_to_damage_sum_s: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -36644,6 +37892,8 @@ type player_match_map_stats_stddev_pop_fields {
   deaths_t: Float
   decoy_throws: Float
   enemies_flashed: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   five_kill_rounds: Float
   flash_assists: Float
   flash_duration_count: Float
@@ -36666,6 +37916,7 @@ type player_match_map_stats_stddev_pop_fields {
   molotov_damage: Float
   molotov_throws: Float
   non_awp_hits: Float
+  on_target_frames: Float
   rounds_ct: Float
   rounds_played: Float
   rounds_t: Float
@@ -36682,6 +37933,7 @@ type player_match_map_stats_stddev_pop_fields {
   three_kill_rounds: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
+  total_engagement_frames: Float
   trade_kill_attempts: Float
   trade_kill_opportunities: Float
   trade_kill_successes: Float
@@ -36715,6 +37967,8 @@ input player_match_map_stats_stddev_pop_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flash_duration_count: order_by
@@ -36737,6 +37991,7 @@ input player_match_map_stats_stddev_pop_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -36753,6 +38008,7 @@ input player_match_map_stats_stddev_pop_order_by {
   three_kill_rounds: order_by
   time_to_damage_count: order_by
   time_to_damage_sum_s: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -36784,6 +38040,8 @@ type player_match_map_stats_stddev_samp_fields {
   deaths_t: Float
   decoy_throws: Float
   enemies_flashed: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   five_kill_rounds: Float
   flash_assists: Float
   flash_duration_count: Float
@@ -36806,6 +38064,7 @@ type player_match_map_stats_stddev_samp_fields {
   molotov_damage: Float
   molotov_throws: Float
   non_awp_hits: Float
+  on_target_frames: Float
   rounds_ct: Float
   rounds_played: Float
   rounds_t: Float
@@ -36822,6 +38081,7 @@ type player_match_map_stats_stddev_samp_fields {
   three_kill_rounds: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
+  total_engagement_frames: Float
   trade_kill_attempts: Float
   trade_kill_opportunities: Float
   trade_kill_successes: Float
@@ -36855,6 +38115,8 @@ input player_match_map_stats_stddev_samp_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flash_duration_count: order_by
@@ -36877,6 +38139,7 @@ input player_match_map_stats_stddev_samp_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -36893,6 +38156,7 @@ input player_match_map_stats_stddev_samp_order_by {
   three_kill_rounds: order_by
   time_to_damage_count: order_by
   time_to_damage_sum_s: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -36935,6 +38199,8 @@ input player_match_map_stats_stream_cursor_value_input {
   deaths_t: Int
   decoy_throws: Int
   enemies_flashed: Int
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   five_kill_rounds: Int
   flash_assists: Int
   flash_duration_count: Int
@@ -36959,6 +38225,7 @@ input player_match_map_stats_stream_cursor_value_input {
   molotov_damage: Int
   molotov_throws: Int
   non_awp_hits: Int
+  on_target_frames: Int
   rounds_ct: Int
   rounds_played: Int
   rounds_t: Int
@@ -36975,6 +38242,7 @@ input player_match_map_stats_stream_cursor_value_input {
   three_kill_rounds: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
+  total_engagement_frames: Int
   trade_kill_attempts: Int
   trade_kill_opportunities: Int
   trade_kill_successes: Int
@@ -37007,6 +38275,8 @@ type player_match_map_stats_sum_fields {
   deaths_t: Int
   decoy_throws: Int
   enemies_flashed: Int
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   five_kill_rounds: Int
   flash_assists: Int
   flash_duration_count: Int
@@ -37029,6 +38299,7 @@ type player_match_map_stats_sum_fields {
   molotov_damage: Int
   molotov_throws: Int
   non_awp_hits: Int
+  on_target_frames: Int
   rounds_ct: Int
   rounds_played: Int
   rounds_t: Int
@@ -37045,6 +38316,7 @@ type player_match_map_stats_sum_fields {
   three_kill_rounds: Int
   time_to_damage_count: Int
   time_to_damage_sum_s: numeric
+  total_engagement_frames: Int
   trade_kill_attempts: Int
   trade_kill_opportunities: Int
   trade_kill_successes: Int
@@ -37078,6 +38350,8 @@ input player_match_map_stats_sum_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flash_duration_count: order_by
@@ -37100,6 +38374,7 @@ input player_match_map_stats_sum_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -37116,6 +38391,7 @@ input player_match_map_stats_sum_order_by {
   three_kill_rounds: order_by
   time_to_damage_count: order_by
   time_to_damage_sum_s: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -37180,6 +38456,12 @@ enum player_match_map_stats_update_column {
   enemies_flashed
 
   """column name"""
+  first_bullet_hits
+
+  """column name"""
+  first_bullet_shots
+
+  """column name"""
   five_kill_rounds
 
   """column name"""
@@ -37252,6 +38534,9 @@ enum player_match_map_stats_update_column {
   non_awp_hits
 
   """column name"""
+  on_target_frames
+
+  """column name"""
   rounds_ct
 
   """column name"""
@@ -37298,6 +38583,9 @@ enum player_match_map_stats_update_column {
 
   """column name"""
   time_to_damage_sum_s
+
+  """column name"""
+  total_engagement_frames
 
   """column name"""
   trade_kill_attempts
@@ -37367,6 +38655,8 @@ type player_match_map_stats_var_pop_fields {
   deaths_t: Float
   decoy_throws: Float
   enemies_flashed: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   five_kill_rounds: Float
   flash_assists: Float
   flash_duration_count: Float
@@ -37389,6 +38679,7 @@ type player_match_map_stats_var_pop_fields {
   molotov_damage: Float
   molotov_throws: Float
   non_awp_hits: Float
+  on_target_frames: Float
   rounds_ct: Float
   rounds_played: Float
   rounds_t: Float
@@ -37405,6 +38696,7 @@ type player_match_map_stats_var_pop_fields {
   three_kill_rounds: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
+  total_engagement_frames: Float
   trade_kill_attempts: Float
   trade_kill_opportunities: Float
   trade_kill_successes: Float
@@ -37438,6 +38730,8 @@ input player_match_map_stats_var_pop_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flash_duration_count: order_by
@@ -37460,6 +38754,7 @@ input player_match_map_stats_var_pop_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -37476,6 +38771,7 @@ input player_match_map_stats_var_pop_order_by {
   three_kill_rounds: order_by
   time_to_damage_count: order_by
   time_to_damage_sum_s: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -37507,6 +38803,8 @@ type player_match_map_stats_var_samp_fields {
   deaths_t: Float
   decoy_throws: Float
   enemies_flashed: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   five_kill_rounds: Float
   flash_assists: Float
   flash_duration_count: Float
@@ -37529,6 +38827,7 @@ type player_match_map_stats_var_samp_fields {
   molotov_damage: Float
   molotov_throws: Float
   non_awp_hits: Float
+  on_target_frames: Float
   rounds_ct: Float
   rounds_played: Float
   rounds_t: Float
@@ -37545,6 +38844,7 @@ type player_match_map_stats_var_samp_fields {
   three_kill_rounds: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
+  total_engagement_frames: Float
   trade_kill_attempts: Float
   trade_kill_opportunities: Float
   trade_kill_successes: Float
@@ -37578,6 +38878,8 @@ input player_match_map_stats_var_samp_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flash_duration_count: order_by
@@ -37600,6 +38902,7 @@ input player_match_map_stats_var_samp_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -37616,6 +38919,7 @@ input player_match_map_stats_var_samp_order_by {
   three_kill_rounds: order_by
   time_to_damage_count: order_by
   time_to_damage_sum_s: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -37647,6 +38951,8 @@ type player_match_map_stats_variance_fields {
   deaths_t: Float
   decoy_throws: Float
   enemies_flashed: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   five_kill_rounds: Float
   flash_assists: Float
   flash_duration_count: Float
@@ -37669,6 +38975,7 @@ type player_match_map_stats_variance_fields {
   molotov_damage: Float
   molotov_throws: Float
   non_awp_hits: Float
+  on_target_frames: Float
   rounds_ct: Float
   rounds_played: Float
   rounds_t: Float
@@ -37685,6 +38992,7 @@ type player_match_map_stats_variance_fields {
   three_kill_rounds: Float
   time_to_damage_count: Float
   time_to_damage_sum_s: Float
+  total_engagement_frames: Float
   trade_kill_attempts: Float
   trade_kill_opportunities: Float
   trade_kill_successes: Float
@@ -37718,6 +39026,8 @@ input player_match_map_stats_variance_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flash_duration_count: order_by
@@ -37740,6 +39050,7 @@ input player_match_map_stats_variance_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -37756,6 +39067,7 @@ input player_match_map_stats_variance_order_by {
   three_kill_rounds: order_by
   time_to_damage_count: order_by
   time_to_damage_sum_s: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -37768,6 +39080,411 @@ input player_match_map_stats_variance_order_by {
   util_on_death_sum: order_by
   wasted_magazine_shots: order_by
   zeus_kills: order_by
+}
+
+"""
+columns and relationships of "player_match_performance_v"
+"""
+type player_match_performance_v {
+  accuracy: numeric
+  accuracy_spotted: numeric
+  aim_rating: float8
+  counter_strafe_pct: numeric
+  enemy_blind_pr: numeric
+  flash_assists_pr: numeric
+  hs_pct: numeric
+  kast_pct: numeric
+  match_id: uuid
+  overall_rating: float8
+  played_at: timestamptz
+  positioning_rating: float8
+  rounds: Int
+  source: String
+  steam_id: bigint
+  survival_pct: numeric
+  traded_death_pct: numeric
+  util_efficiency: numeric
+  utility_rating: float8
+}
+
+"""
+aggregated selection of "player_match_performance_v"
+"""
+type player_match_performance_v_aggregate {
+  aggregate: player_match_performance_v_aggregate_fields
+  nodes: [player_match_performance_v!]!
+}
+
+"""
+aggregate fields of "player_match_performance_v"
+"""
+type player_match_performance_v_aggregate_fields {
+  avg: player_match_performance_v_avg_fields
+  count(columns: [player_match_performance_v_select_column!], distinct: Boolean): Int!
+  max: player_match_performance_v_max_fields
+  min: player_match_performance_v_min_fields
+  stddev: player_match_performance_v_stddev_fields
+  stddev_pop: player_match_performance_v_stddev_pop_fields
+  stddev_samp: player_match_performance_v_stddev_samp_fields
+  sum: player_match_performance_v_sum_fields
+  var_pop: player_match_performance_v_var_pop_fields
+  var_samp: player_match_performance_v_var_samp_fields
+  variance: player_match_performance_v_variance_fields
+}
+
+"""aggregate avg on columns"""
+type player_match_performance_v_avg_fields {
+  accuracy: Float
+  accuracy_spotted: Float
+  aim_rating: Float
+  counter_strafe_pct: Float
+  enemy_blind_pr: Float
+  flash_assists_pr: Float
+  hs_pct: Float
+  kast_pct: Float
+  overall_rating: Float
+  positioning_rating: Float
+  rounds: Float
+  steam_id: Float
+  survival_pct: Float
+  traded_death_pct: Float
+  util_efficiency: Float
+  utility_rating: Float
+}
+
+"""
+Boolean expression to filter rows from the table "player_match_performance_v". All fields are combined with a logical 'AND'.
+"""
+input player_match_performance_v_bool_exp {
+  _and: [player_match_performance_v_bool_exp!]
+  _not: player_match_performance_v_bool_exp
+  _or: [player_match_performance_v_bool_exp!]
+  accuracy: numeric_comparison_exp
+  accuracy_spotted: numeric_comparison_exp
+  aim_rating: float8_comparison_exp
+  counter_strafe_pct: numeric_comparison_exp
+  enemy_blind_pr: numeric_comparison_exp
+  flash_assists_pr: numeric_comparison_exp
+  hs_pct: numeric_comparison_exp
+  kast_pct: numeric_comparison_exp
+  match_id: uuid_comparison_exp
+  overall_rating: float8_comparison_exp
+  played_at: timestamptz_comparison_exp
+  positioning_rating: float8_comparison_exp
+  rounds: Int_comparison_exp
+  source: String_comparison_exp
+  steam_id: bigint_comparison_exp
+  survival_pct: numeric_comparison_exp
+  traded_death_pct: numeric_comparison_exp
+  util_efficiency: numeric_comparison_exp
+  utility_rating: float8_comparison_exp
+}
+
+"""aggregate max on columns"""
+type player_match_performance_v_max_fields {
+  accuracy: numeric
+  accuracy_spotted: numeric
+  aim_rating: float8
+  counter_strafe_pct: numeric
+  enemy_blind_pr: numeric
+  flash_assists_pr: numeric
+  hs_pct: numeric
+  kast_pct: numeric
+  match_id: uuid
+  overall_rating: float8
+  played_at: timestamptz
+  positioning_rating: float8
+  rounds: Int
+  source: String
+  steam_id: bigint
+  survival_pct: numeric
+  traded_death_pct: numeric
+  util_efficiency: numeric
+  utility_rating: float8
+}
+
+"""aggregate min on columns"""
+type player_match_performance_v_min_fields {
+  accuracy: numeric
+  accuracy_spotted: numeric
+  aim_rating: float8
+  counter_strafe_pct: numeric
+  enemy_blind_pr: numeric
+  flash_assists_pr: numeric
+  hs_pct: numeric
+  kast_pct: numeric
+  match_id: uuid
+  overall_rating: float8
+  played_at: timestamptz
+  positioning_rating: float8
+  rounds: Int
+  source: String
+  steam_id: bigint
+  survival_pct: numeric
+  traded_death_pct: numeric
+  util_efficiency: numeric
+  utility_rating: float8
+}
+
+"""
+Ordering options when selecting data from "player_match_performance_v".
+"""
+input player_match_performance_v_order_by {
+  accuracy: order_by
+  accuracy_spotted: order_by
+  aim_rating: order_by
+  counter_strafe_pct: order_by
+  enemy_blind_pr: order_by
+  flash_assists_pr: order_by
+  hs_pct: order_by
+  kast_pct: order_by
+  match_id: order_by
+  overall_rating: order_by
+  played_at: order_by
+  positioning_rating: order_by
+  rounds: order_by
+  source: order_by
+  steam_id: order_by
+  survival_pct: order_by
+  traded_death_pct: order_by
+  util_efficiency: order_by
+  utility_rating: order_by
+}
+
+"""
+select columns of table "player_match_performance_v"
+"""
+enum player_match_performance_v_select_column {
+  """column name"""
+  accuracy
+
+  """column name"""
+  accuracy_spotted
+
+  """column name"""
+  aim_rating
+
+  """column name"""
+  counter_strafe_pct
+
+  """column name"""
+  enemy_blind_pr
+
+  """column name"""
+  flash_assists_pr
+
+  """column name"""
+  hs_pct
+
+  """column name"""
+  kast_pct
+
+  """column name"""
+  match_id
+
+  """column name"""
+  overall_rating
+
+  """column name"""
+  played_at
+
+  """column name"""
+  positioning_rating
+
+  """column name"""
+  rounds
+
+  """column name"""
+  source
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  survival_pct
+
+  """column name"""
+  traded_death_pct
+
+  """column name"""
+  util_efficiency
+
+  """column name"""
+  utility_rating
+}
+
+"""aggregate stddev on columns"""
+type player_match_performance_v_stddev_fields {
+  accuracy: Float
+  accuracy_spotted: Float
+  aim_rating: Float
+  counter_strafe_pct: Float
+  enemy_blind_pr: Float
+  flash_assists_pr: Float
+  hs_pct: Float
+  kast_pct: Float
+  overall_rating: Float
+  positioning_rating: Float
+  rounds: Float
+  steam_id: Float
+  survival_pct: Float
+  traded_death_pct: Float
+  util_efficiency: Float
+  utility_rating: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type player_match_performance_v_stddev_pop_fields {
+  accuracy: Float
+  accuracy_spotted: Float
+  aim_rating: Float
+  counter_strafe_pct: Float
+  enemy_blind_pr: Float
+  flash_assists_pr: Float
+  hs_pct: Float
+  kast_pct: Float
+  overall_rating: Float
+  positioning_rating: Float
+  rounds: Float
+  steam_id: Float
+  survival_pct: Float
+  traded_death_pct: Float
+  util_efficiency: Float
+  utility_rating: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type player_match_performance_v_stddev_samp_fields {
+  accuracy: Float
+  accuracy_spotted: Float
+  aim_rating: Float
+  counter_strafe_pct: Float
+  enemy_blind_pr: Float
+  flash_assists_pr: Float
+  hs_pct: Float
+  kast_pct: Float
+  overall_rating: Float
+  positioning_rating: Float
+  rounds: Float
+  steam_id: Float
+  survival_pct: Float
+  traded_death_pct: Float
+  util_efficiency: Float
+  utility_rating: Float
+}
+
+"""
+Streaming cursor of the table "player_match_performance_v"
+"""
+input player_match_performance_v_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: player_match_performance_v_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input player_match_performance_v_stream_cursor_value_input {
+  accuracy: numeric
+  accuracy_spotted: numeric
+  aim_rating: float8
+  counter_strafe_pct: numeric
+  enemy_blind_pr: numeric
+  flash_assists_pr: numeric
+  hs_pct: numeric
+  kast_pct: numeric
+  match_id: uuid
+  overall_rating: float8
+  played_at: timestamptz
+  positioning_rating: float8
+  rounds: Int
+  source: String
+  steam_id: bigint
+  survival_pct: numeric
+  traded_death_pct: numeric
+  util_efficiency: numeric
+  utility_rating: float8
+}
+
+"""aggregate sum on columns"""
+type player_match_performance_v_sum_fields {
+  accuracy: numeric
+  accuracy_spotted: numeric
+  aim_rating: float8
+  counter_strafe_pct: numeric
+  enemy_blind_pr: numeric
+  flash_assists_pr: numeric
+  hs_pct: numeric
+  kast_pct: numeric
+  overall_rating: float8
+  positioning_rating: float8
+  rounds: Int
+  steam_id: bigint
+  survival_pct: numeric
+  traded_death_pct: numeric
+  util_efficiency: numeric
+  utility_rating: float8
+}
+
+"""aggregate var_pop on columns"""
+type player_match_performance_v_var_pop_fields {
+  accuracy: Float
+  accuracy_spotted: Float
+  aim_rating: Float
+  counter_strafe_pct: Float
+  enemy_blind_pr: Float
+  flash_assists_pr: Float
+  hs_pct: Float
+  kast_pct: Float
+  overall_rating: Float
+  positioning_rating: Float
+  rounds: Float
+  steam_id: Float
+  survival_pct: Float
+  traded_death_pct: Float
+  util_efficiency: Float
+  utility_rating: Float
+}
+
+"""aggregate var_samp on columns"""
+type player_match_performance_v_var_samp_fields {
+  accuracy: Float
+  accuracy_spotted: Float
+  aim_rating: Float
+  counter_strafe_pct: Float
+  enemy_blind_pr: Float
+  flash_assists_pr: Float
+  hs_pct: Float
+  kast_pct: Float
+  overall_rating: Float
+  positioning_rating: Float
+  rounds: Float
+  steam_id: Float
+  survival_pct: Float
+  traded_death_pct: Float
+  util_efficiency: Float
+  utility_rating: Float
+}
+
+"""aggregate variance on columns"""
+type player_match_performance_v_variance_fields {
+  accuracy: Float
+  accuracy_spotted: Float
+  aim_rating: Float
+  counter_strafe_pct: Float
+  enemy_blind_pr: Float
+  flash_assists_pr: Float
+  hs_pct: Float
+  kast_pct: Float
+  overall_rating: Float
+  positioning_rating: Float
+  rounds: Float
+  steam_id: Float
+  survival_pct: Float
+  traded_death_pct: Float
+  util_efficiency: Float
+  utility_rating: Float
 }
 
 """
@@ -37790,6 +39507,8 @@ type player_match_stats_v {
   deaths_t: Int
   decoy_throws: Int
   enemies_flashed: Int
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   five_kill_rounds: Int
   flash_assists: Int
   flashes_thrown: Int
@@ -37811,6 +39530,7 @@ type player_match_stats_v {
   molotov_damage: Int
   molotov_throws: Int
   non_awp_hits: Int
+  on_target_frames: Int
   rounds_ct: Int
   rounds_played: Int
   rounds_t: Int
@@ -37825,6 +39545,7 @@ type player_match_stats_v {
   team_damage: Int
   team_flashed: Int
   three_kill_rounds: Int
+  total_engagement_frames: Int
   trade_kill_attempts: Int
   trade_kill_opportunities: Int
   trade_kill_successes: Int
@@ -37916,6 +39637,8 @@ type player_match_stats_v_avg_fields {
   deaths_t: Float
   decoy_throws: Float
   enemies_flashed: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   five_kill_rounds: Float
   flash_assists: Float
   flashes_thrown: Float
@@ -37936,6 +39659,7 @@ type player_match_stats_v_avg_fields {
   molotov_damage: Float
   molotov_throws: Float
   non_awp_hits: Float
+  on_target_frames: Float
   rounds_ct: Float
   rounds_played: Float
   rounds_t: Float
@@ -37950,6 +39674,7 @@ type player_match_stats_v_avg_fields {
   team_damage: Float
   team_flashed: Float
   three_kill_rounds: Float
+  total_engagement_frames: Float
   trade_kill_attempts: Float
   trade_kill_opportunities: Float
   trade_kill_successes: Float
@@ -37983,6 +39708,8 @@ input player_match_stats_v_avg_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flashes_thrown: order_by
@@ -38003,6 +39730,7 @@ input player_match_stats_v_avg_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -38017,6 +39745,7 @@ input player_match_stats_v_avg_order_by {
   team_damage: order_by
   team_flashed: order_by
   three_kill_rounds: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -38053,6 +39782,8 @@ input player_match_stats_v_bool_exp {
   deaths_t: Int_comparison_exp
   decoy_throws: Int_comparison_exp
   enemies_flashed: Int_comparison_exp
+  first_bullet_hits: Int_comparison_exp
+  first_bullet_shots: Int_comparison_exp
   five_kill_rounds: Int_comparison_exp
   flash_assists: Int_comparison_exp
   flashes_thrown: Int_comparison_exp
@@ -38074,6 +39805,7 @@ input player_match_stats_v_bool_exp {
   molotov_damage: Int_comparison_exp
   molotov_throws: Int_comparison_exp
   non_awp_hits: Int_comparison_exp
+  on_target_frames: Int_comparison_exp
   rounds_ct: Int_comparison_exp
   rounds_played: Int_comparison_exp
   rounds_t: Int_comparison_exp
@@ -38088,6 +39820,7 @@ input player_match_stats_v_bool_exp {
   team_damage: Int_comparison_exp
   team_flashed: Int_comparison_exp
   three_kill_rounds: Int_comparison_exp
+  total_engagement_frames: Int_comparison_exp
   trade_kill_attempts: Int_comparison_exp
   trade_kill_opportunities: Int_comparison_exp
   trade_kill_successes: Int_comparison_exp
@@ -38121,6 +39854,8 @@ input player_match_stats_v_insert_input {
   deaths_t: Int
   decoy_throws: Int
   enemies_flashed: Int
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   five_kill_rounds: Int
   flash_assists: Int
   flashes_thrown: Int
@@ -38142,6 +39877,7 @@ input player_match_stats_v_insert_input {
   molotov_damage: Int
   molotov_throws: Int
   non_awp_hits: Int
+  on_target_frames: Int
   rounds_ct: Int
   rounds_played: Int
   rounds_t: Int
@@ -38156,6 +39892,7 @@ input player_match_stats_v_insert_input {
   team_damage: Int
   team_flashed: Int
   three_kill_rounds: Int
+  total_engagement_frames: Int
   trade_kill_attempts: Int
   trade_kill_opportunities: Int
   trade_kill_successes: Int
@@ -38187,6 +39924,8 @@ type player_match_stats_v_max_fields {
   deaths_t: Int
   decoy_throws: Int
   enemies_flashed: Int
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   five_kill_rounds: Int
   flash_assists: Int
   flashes_thrown: Int
@@ -38208,6 +39947,7 @@ type player_match_stats_v_max_fields {
   molotov_damage: Int
   molotov_throws: Int
   non_awp_hits: Int
+  on_target_frames: Int
   rounds_ct: Int
   rounds_played: Int
   rounds_t: Int
@@ -38222,6 +39962,7 @@ type player_match_stats_v_max_fields {
   team_damage: Int
   team_flashed: Int
   three_kill_rounds: Int
+  total_engagement_frames: Int
   trade_kill_attempts: Int
   trade_kill_opportunities: Int
   trade_kill_successes: Int
@@ -38255,6 +39996,8 @@ input player_match_stats_v_max_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flashes_thrown: order_by
@@ -38276,6 +40019,7 @@ input player_match_stats_v_max_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -38290,6 +40034,7 @@ input player_match_stats_v_max_order_by {
   team_damage: order_by
   team_flashed: order_by
   three_kill_rounds: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -38321,6 +40066,8 @@ type player_match_stats_v_min_fields {
   deaths_t: Int
   decoy_throws: Int
   enemies_flashed: Int
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   five_kill_rounds: Int
   flash_assists: Int
   flashes_thrown: Int
@@ -38342,6 +40089,7 @@ type player_match_stats_v_min_fields {
   molotov_damage: Int
   molotov_throws: Int
   non_awp_hits: Int
+  on_target_frames: Int
   rounds_ct: Int
   rounds_played: Int
   rounds_t: Int
@@ -38356,6 +40104,7 @@ type player_match_stats_v_min_fields {
   team_damage: Int
   team_flashed: Int
   three_kill_rounds: Int
+  total_engagement_frames: Int
   trade_kill_attempts: Int
   trade_kill_opportunities: Int
   trade_kill_successes: Int
@@ -38389,6 +40138,8 @@ input player_match_stats_v_min_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flashes_thrown: order_by
@@ -38410,6 +40161,7 @@ input player_match_stats_v_min_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -38424,6 +40176,7 @@ input player_match_stats_v_min_order_by {
   team_damage: order_by
   team_flashed: order_by
   three_kill_rounds: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -38455,6 +40208,8 @@ input player_match_stats_v_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flashes_thrown: order_by
@@ -38476,6 +40231,7 @@ input player_match_stats_v_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -38490,6 +40246,7 @@ input player_match_stats_v_order_by {
   team_damage: order_by
   team_flashed: order_by
   three_kill_rounds: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -38556,6 +40313,12 @@ enum player_match_stats_v_select_column {
   enemies_flashed
 
   """column name"""
+  first_bullet_hits
+
+  """column name"""
+  first_bullet_shots
+
+  """column name"""
   five_kill_rounds
 
   """column name"""
@@ -38619,6 +40382,9 @@ enum player_match_stats_v_select_column {
   non_awp_hits
 
   """column name"""
+  on_target_frames
+
+  """column name"""
   rounds_ct
 
   """column name"""
@@ -38659,6 +40425,9 @@ enum player_match_stats_v_select_column {
 
   """column name"""
   three_kill_rounds
+
+  """column name"""
+  total_engagement_frames
 
   """column name"""
   trade_kill_attempts
@@ -38712,6 +40481,8 @@ type player_match_stats_v_stddev_fields {
   deaths_t: Float
   decoy_throws: Float
   enemies_flashed: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   five_kill_rounds: Float
   flash_assists: Float
   flashes_thrown: Float
@@ -38732,6 +40503,7 @@ type player_match_stats_v_stddev_fields {
   molotov_damage: Float
   molotov_throws: Float
   non_awp_hits: Float
+  on_target_frames: Float
   rounds_ct: Float
   rounds_played: Float
   rounds_t: Float
@@ -38746,6 +40518,7 @@ type player_match_stats_v_stddev_fields {
   team_damage: Float
   team_flashed: Float
   three_kill_rounds: Float
+  total_engagement_frames: Float
   trade_kill_attempts: Float
   trade_kill_opportunities: Float
   trade_kill_successes: Float
@@ -38779,6 +40552,8 @@ input player_match_stats_v_stddev_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flashes_thrown: order_by
@@ -38799,6 +40574,7 @@ input player_match_stats_v_stddev_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -38813,6 +40589,7 @@ input player_match_stats_v_stddev_order_by {
   team_damage: order_by
   team_flashed: order_by
   three_kill_rounds: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -38844,6 +40621,8 @@ type player_match_stats_v_stddev_pop_fields {
   deaths_t: Float
   decoy_throws: Float
   enemies_flashed: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   five_kill_rounds: Float
   flash_assists: Float
   flashes_thrown: Float
@@ -38864,6 +40643,7 @@ type player_match_stats_v_stddev_pop_fields {
   molotov_damage: Float
   molotov_throws: Float
   non_awp_hits: Float
+  on_target_frames: Float
   rounds_ct: Float
   rounds_played: Float
   rounds_t: Float
@@ -38878,6 +40658,7 @@ type player_match_stats_v_stddev_pop_fields {
   team_damage: Float
   team_flashed: Float
   three_kill_rounds: Float
+  total_engagement_frames: Float
   trade_kill_attempts: Float
   trade_kill_opportunities: Float
   trade_kill_successes: Float
@@ -38911,6 +40692,8 @@ input player_match_stats_v_stddev_pop_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flashes_thrown: order_by
@@ -38931,6 +40714,7 @@ input player_match_stats_v_stddev_pop_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -38945,6 +40729,7 @@ input player_match_stats_v_stddev_pop_order_by {
   team_damage: order_by
   team_flashed: order_by
   three_kill_rounds: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -38976,6 +40761,8 @@ type player_match_stats_v_stddev_samp_fields {
   deaths_t: Float
   decoy_throws: Float
   enemies_flashed: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   five_kill_rounds: Float
   flash_assists: Float
   flashes_thrown: Float
@@ -38996,6 +40783,7 @@ type player_match_stats_v_stddev_samp_fields {
   molotov_damage: Float
   molotov_throws: Float
   non_awp_hits: Float
+  on_target_frames: Float
   rounds_ct: Float
   rounds_played: Float
   rounds_t: Float
@@ -39010,6 +40798,7 @@ type player_match_stats_v_stddev_samp_fields {
   team_damage: Float
   team_flashed: Float
   three_kill_rounds: Float
+  total_engagement_frames: Float
   trade_kill_attempts: Float
   trade_kill_opportunities: Float
   trade_kill_successes: Float
@@ -39043,6 +40832,8 @@ input player_match_stats_v_stddev_samp_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flashes_thrown: order_by
@@ -39063,6 +40854,7 @@ input player_match_stats_v_stddev_samp_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -39077,6 +40869,7 @@ input player_match_stats_v_stddev_samp_order_by {
   team_damage: order_by
   team_flashed: order_by
   three_kill_rounds: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -39119,6 +40912,8 @@ input player_match_stats_v_stream_cursor_value_input {
   deaths_t: Int
   decoy_throws: Int
   enemies_flashed: Int
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   five_kill_rounds: Int
   flash_assists: Int
   flashes_thrown: Int
@@ -39140,6 +40935,7 @@ input player_match_stats_v_stream_cursor_value_input {
   molotov_damage: Int
   molotov_throws: Int
   non_awp_hits: Int
+  on_target_frames: Int
   rounds_ct: Int
   rounds_played: Int
   rounds_t: Int
@@ -39154,6 +40950,7 @@ input player_match_stats_v_stream_cursor_value_input {
   team_damage: Int
   team_flashed: Int
   three_kill_rounds: Int
+  total_engagement_frames: Int
   trade_kill_attempts: Int
   trade_kill_opportunities: Int
   trade_kill_successes: Int
@@ -39185,6 +40982,8 @@ type player_match_stats_v_sum_fields {
   deaths_t: Int
   decoy_throws: Int
   enemies_flashed: Int
+  first_bullet_hits: Int
+  first_bullet_shots: Int
   five_kill_rounds: Int
   flash_assists: Int
   flashes_thrown: Int
@@ -39205,6 +41004,7 @@ type player_match_stats_v_sum_fields {
   molotov_damage: Int
   molotov_throws: Int
   non_awp_hits: Int
+  on_target_frames: Int
   rounds_ct: Int
   rounds_played: Int
   rounds_t: Int
@@ -39219,6 +41019,7 @@ type player_match_stats_v_sum_fields {
   team_damage: Int
   team_flashed: Int
   three_kill_rounds: Int
+  total_engagement_frames: Int
   trade_kill_attempts: Int
   trade_kill_opportunities: Int
   trade_kill_successes: Int
@@ -39252,6 +41053,8 @@ input player_match_stats_v_sum_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flashes_thrown: order_by
@@ -39272,6 +41075,7 @@ input player_match_stats_v_sum_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -39286,6 +41090,7 @@ input player_match_stats_v_sum_order_by {
   team_damage: order_by
   team_flashed: order_by
   three_kill_rounds: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -39317,6 +41122,8 @@ type player_match_stats_v_var_pop_fields {
   deaths_t: Float
   decoy_throws: Float
   enemies_flashed: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   five_kill_rounds: Float
   flash_assists: Float
   flashes_thrown: Float
@@ -39337,6 +41144,7 @@ type player_match_stats_v_var_pop_fields {
   molotov_damage: Float
   molotov_throws: Float
   non_awp_hits: Float
+  on_target_frames: Float
   rounds_ct: Float
   rounds_played: Float
   rounds_t: Float
@@ -39351,6 +41159,7 @@ type player_match_stats_v_var_pop_fields {
   team_damage: Float
   team_flashed: Float
   three_kill_rounds: Float
+  total_engagement_frames: Float
   trade_kill_attempts: Float
   trade_kill_opportunities: Float
   trade_kill_successes: Float
@@ -39384,6 +41193,8 @@ input player_match_stats_v_var_pop_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flashes_thrown: order_by
@@ -39404,6 +41215,7 @@ input player_match_stats_v_var_pop_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -39418,6 +41230,7 @@ input player_match_stats_v_var_pop_order_by {
   team_damage: order_by
   team_flashed: order_by
   three_kill_rounds: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -39449,6 +41262,8 @@ type player_match_stats_v_var_samp_fields {
   deaths_t: Float
   decoy_throws: Float
   enemies_flashed: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   five_kill_rounds: Float
   flash_assists: Float
   flashes_thrown: Float
@@ -39469,6 +41284,7 @@ type player_match_stats_v_var_samp_fields {
   molotov_damage: Float
   molotov_throws: Float
   non_awp_hits: Float
+  on_target_frames: Float
   rounds_ct: Float
   rounds_played: Float
   rounds_t: Float
@@ -39483,6 +41299,7 @@ type player_match_stats_v_var_samp_fields {
   team_damage: Float
   team_flashed: Float
   three_kill_rounds: Float
+  total_engagement_frames: Float
   trade_kill_attempts: Float
   trade_kill_opportunities: Float
   trade_kill_successes: Float
@@ -39516,6 +41333,8 @@ input player_match_stats_v_var_samp_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flashes_thrown: order_by
@@ -39536,6 +41355,7 @@ input player_match_stats_v_var_samp_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -39550,6 +41370,7 @@ input player_match_stats_v_var_samp_order_by {
   team_damage: order_by
   team_flashed: order_by
   three_kill_rounds: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -39581,6 +41402,8 @@ type player_match_stats_v_variance_fields {
   deaths_t: Float
   decoy_throws: Float
   enemies_flashed: Float
+  first_bullet_hits: Float
+  first_bullet_shots: Float
   five_kill_rounds: Float
   flash_assists: Float
   flashes_thrown: Float
@@ -39601,6 +41424,7 @@ type player_match_stats_v_variance_fields {
   molotov_damage: Float
   molotov_throws: Float
   non_awp_hits: Float
+  on_target_frames: Float
   rounds_ct: Float
   rounds_played: Float
   rounds_t: Float
@@ -39615,6 +41439,7 @@ type player_match_stats_v_variance_fields {
   team_damage: Float
   team_flashed: Float
   three_kill_rounds: Float
+  total_engagement_frames: Float
   trade_kill_attempts: Float
   trade_kill_opportunities: Float
   trade_kill_successes: Float
@@ -39648,6 +41473,8 @@ input player_match_stats_v_variance_order_by {
   deaths_t: order_by
   decoy_throws: order_by
   enemies_flashed: order_by
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
   five_kill_rounds: order_by
   flash_assists: order_by
   flashes_thrown: order_by
@@ -39668,6 +41495,7 @@ input player_match_stats_v_variance_order_by {
   molotov_damage: order_by
   molotov_throws: order_by
   non_awp_hits: order_by
+  on_target_frames: order_by
   rounds_ct: order_by
   rounds_played: order_by
   rounds_t: order_by
@@ -39682,6 +41510,7 @@ input player_match_stats_v_variance_order_by {
   team_damage: order_by
   team_flashed: order_by
   three_kill_rounds: order_by
+  total_engagement_frames: order_by
   trade_kill_attempts: order_by
   trade_kill_opportunities: order_by
   trade_kill_successes: order_by
@@ -40126,6 +41955,518 @@ order by variance() on columns of table "player_objectives"
 input player_objectives_variance_order_by {
   player_steam_id: order_by
   round: order_by
+}
+
+"""
+columns and relationships of "player_performance_v"
+"""
+type player_performance_v {
+  accuracy_score: float8
+  aim_goal: float8
+  aim_rating: float8
+  band: Int
+  band_sample: bigint
+  blind_score: float8
+  counter_strafe_score: float8
+  crosshair_score: float8
+  flash_assists_score: float8
+  hs_score: float8
+  kast_score: float8
+  maps: Int
+  positioning_goal: float8
+  positioning_rating: float8
+  premier_rank: Int
+  rounds: Int
+  spotted_score: float8
+  steam_id: bigint
+  survival_score: float8
+  traded_score: float8
+  ttd_score: float8
+  util_eff_score: float8
+  utility_goal: float8
+  utility_rating: float8
+}
+
+"""
+aggregated selection of "player_performance_v"
+"""
+type player_performance_v_aggregate {
+  aggregate: player_performance_v_aggregate_fields
+  nodes: [player_performance_v!]!
+}
+
+"""
+aggregate fields of "player_performance_v"
+"""
+type player_performance_v_aggregate_fields {
+  avg: player_performance_v_avg_fields
+  count(columns: [player_performance_v_select_column!], distinct: Boolean): Int!
+  max: player_performance_v_max_fields
+  min: player_performance_v_min_fields
+  stddev: player_performance_v_stddev_fields
+  stddev_pop: player_performance_v_stddev_pop_fields
+  stddev_samp: player_performance_v_stddev_samp_fields
+  sum: player_performance_v_sum_fields
+  var_pop: player_performance_v_var_pop_fields
+  var_samp: player_performance_v_var_samp_fields
+  variance: player_performance_v_variance_fields
+}
+
+"""aggregate avg on columns"""
+type player_performance_v_avg_fields {
+  accuracy_score: Float
+  aim_goal: Float
+  aim_rating: Float
+  band: Float
+  band_sample: Float
+  blind_score: Float
+  counter_strafe_score: Float
+  crosshair_score: Float
+  flash_assists_score: Float
+  hs_score: Float
+  kast_score: Float
+  maps: Float
+  positioning_goal: Float
+  positioning_rating: Float
+  premier_rank: Float
+  rounds: Float
+  spotted_score: Float
+  steam_id: Float
+  survival_score: Float
+  traded_score: Float
+  ttd_score: Float
+  util_eff_score: Float
+  utility_goal: Float
+  utility_rating: Float
+}
+
+"""
+Boolean expression to filter rows from the table "player_performance_v". All fields are combined with a logical 'AND'.
+"""
+input player_performance_v_bool_exp {
+  _and: [player_performance_v_bool_exp!]
+  _not: player_performance_v_bool_exp
+  _or: [player_performance_v_bool_exp!]
+  accuracy_score: float8_comparison_exp
+  aim_goal: float8_comparison_exp
+  aim_rating: float8_comparison_exp
+  band: Int_comparison_exp
+  band_sample: bigint_comparison_exp
+  blind_score: float8_comparison_exp
+  counter_strafe_score: float8_comparison_exp
+  crosshair_score: float8_comparison_exp
+  flash_assists_score: float8_comparison_exp
+  hs_score: float8_comparison_exp
+  kast_score: float8_comparison_exp
+  maps: Int_comparison_exp
+  positioning_goal: float8_comparison_exp
+  positioning_rating: float8_comparison_exp
+  premier_rank: Int_comparison_exp
+  rounds: Int_comparison_exp
+  spotted_score: float8_comparison_exp
+  steam_id: bigint_comparison_exp
+  survival_score: float8_comparison_exp
+  traded_score: float8_comparison_exp
+  ttd_score: float8_comparison_exp
+  util_eff_score: float8_comparison_exp
+  utility_goal: float8_comparison_exp
+  utility_rating: float8_comparison_exp
+}
+
+"""aggregate max on columns"""
+type player_performance_v_max_fields {
+  accuracy_score: float8
+  aim_goal: float8
+  aim_rating: float8
+  band: Int
+  band_sample: bigint
+  blind_score: float8
+  counter_strafe_score: float8
+  crosshair_score: float8
+  flash_assists_score: float8
+  hs_score: float8
+  kast_score: float8
+  maps: Int
+  positioning_goal: float8
+  positioning_rating: float8
+  premier_rank: Int
+  rounds: Int
+  spotted_score: float8
+  steam_id: bigint
+  survival_score: float8
+  traded_score: float8
+  ttd_score: float8
+  util_eff_score: float8
+  utility_goal: float8
+  utility_rating: float8
+}
+
+"""aggregate min on columns"""
+type player_performance_v_min_fields {
+  accuracy_score: float8
+  aim_goal: float8
+  aim_rating: float8
+  band: Int
+  band_sample: bigint
+  blind_score: float8
+  counter_strafe_score: float8
+  crosshair_score: float8
+  flash_assists_score: float8
+  hs_score: float8
+  kast_score: float8
+  maps: Int
+  positioning_goal: float8
+  positioning_rating: float8
+  premier_rank: Int
+  rounds: Int
+  spotted_score: float8
+  steam_id: bigint
+  survival_score: float8
+  traded_score: float8
+  ttd_score: float8
+  util_eff_score: float8
+  utility_goal: float8
+  utility_rating: float8
+}
+
+"""Ordering options when selecting data from "player_performance_v"."""
+input player_performance_v_order_by {
+  accuracy_score: order_by
+  aim_goal: order_by
+  aim_rating: order_by
+  band: order_by
+  band_sample: order_by
+  blind_score: order_by
+  counter_strafe_score: order_by
+  crosshair_score: order_by
+  flash_assists_score: order_by
+  hs_score: order_by
+  kast_score: order_by
+  maps: order_by
+  positioning_goal: order_by
+  positioning_rating: order_by
+  premier_rank: order_by
+  rounds: order_by
+  spotted_score: order_by
+  steam_id: order_by
+  survival_score: order_by
+  traded_score: order_by
+  ttd_score: order_by
+  util_eff_score: order_by
+  utility_goal: order_by
+  utility_rating: order_by
+}
+
+"""
+select columns of table "player_performance_v"
+"""
+enum player_performance_v_select_column {
+  """column name"""
+  accuracy_score
+
+  """column name"""
+  aim_goal
+
+  """column name"""
+  aim_rating
+
+  """column name"""
+  band
+
+  """column name"""
+  band_sample
+
+  """column name"""
+  blind_score
+
+  """column name"""
+  counter_strafe_score
+
+  """column name"""
+  crosshair_score
+
+  """column name"""
+  flash_assists_score
+
+  """column name"""
+  hs_score
+
+  """column name"""
+  kast_score
+
+  """column name"""
+  maps
+
+  """column name"""
+  positioning_goal
+
+  """column name"""
+  positioning_rating
+
+  """column name"""
+  premier_rank
+
+  """column name"""
+  rounds
+
+  """column name"""
+  spotted_score
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  survival_score
+
+  """column name"""
+  traded_score
+
+  """column name"""
+  ttd_score
+
+  """column name"""
+  util_eff_score
+
+  """column name"""
+  utility_goal
+
+  """column name"""
+  utility_rating
+}
+
+"""aggregate stddev on columns"""
+type player_performance_v_stddev_fields {
+  accuracy_score: Float
+  aim_goal: Float
+  aim_rating: Float
+  band: Float
+  band_sample: Float
+  blind_score: Float
+  counter_strafe_score: Float
+  crosshair_score: Float
+  flash_assists_score: Float
+  hs_score: Float
+  kast_score: Float
+  maps: Float
+  positioning_goal: Float
+  positioning_rating: Float
+  premier_rank: Float
+  rounds: Float
+  spotted_score: Float
+  steam_id: Float
+  survival_score: Float
+  traded_score: Float
+  ttd_score: Float
+  util_eff_score: Float
+  utility_goal: Float
+  utility_rating: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type player_performance_v_stddev_pop_fields {
+  accuracy_score: Float
+  aim_goal: Float
+  aim_rating: Float
+  band: Float
+  band_sample: Float
+  blind_score: Float
+  counter_strafe_score: Float
+  crosshair_score: Float
+  flash_assists_score: Float
+  hs_score: Float
+  kast_score: Float
+  maps: Float
+  positioning_goal: Float
+  positioning_rating: Float
+  premier_rank: Float
+  rounds: Float
+  spotted_score: Float
+  steam_id: Float
+  survival_score: Float
+  traded_score: Float
+  ttd_score: Float
+  util_eff_score: Float
+  utility_goal: Float
+  utility_rating: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type player_performance_v_stddev_samp_fields {
+  accuracy_score: Float
+  aim_goal: Float
+  aim_rating: Float
+  band: Float
+  band_sample: Float
+  blind_score: Float
+  counter_strafe_score: Float
+  crosshair_score: Float
+  flash_assists_score: Float
+  hs_score: Float
+  kast_score: Float
+  maps: Float
+  positioning_goal: Float
+  positioning_rating: Float
+  premier_rank: Float
+  rounds: Float
+  spotted_score: Float
+  steam_id: Float
+  survival_score: Float
+  traded_score: Float
+  ttd_score: Float
+  util_eff_score: Float
+  utility_goal: Float
+  utility_rating: Float
+}
+
+"""
+Streaming cursor of the table "player_performance_v"
+"""
+input player_performance_v_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: player_performance_v_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input player_performance_v_stream_cursor_value_input {
+  accuracy_score: float8
+  aim_goal: float8
+  aim_rating: float8
+  band: Int
+  band_sample: bigint
+  blind_score: float8
+  counter_strafe_score: float8
+  crosshair_score: float8
+  flash_assists_score: float8
+  hs_score: float8
+  kast_score: float8
+  maps: Int
+  positioning_goal: float8
+  positioning_rating: float8
+  premier_rank: Int
+  rounds: Int
+  spotted_score: float8
+  steam_id: bigint
+  survival_score: float8
+  traded_score: float8
+  ttd_score: float8
+  util_eff_score: float8
+  utility_goal: float8
+  utility_rating: float8
+}
+
+"""aggregate sum on columns"""
+type player_performance_v_sum_fields {
+  accuracy_score: float8
+  aim_goal: float8
+  aim_rating: float8
+  band: Int
+  band_sample: bigint
+  blind_score: float8
+  counter_strafe_score: float8
+  crosshair_score: float8
+  flash_assists_score: float8
+  hs_score: float8
+  kast_score: float8
+  maps: Int
+  positioning_goal: float8
+  positioning_rating: float8
+  premier_rank: Int
+  rounds: Int
+  spotted_score: float8
+  steam_id: bigint
+  survival_score: float8
+  traded_score: float8
+  ttd_score: float8
+  util_eff_score: float8
+  utility_goal: float8
+  utility_rating: float8
+}
+
+"""aggregate var_pop on columns"""
+type player_performance_v_var_pop_fields {
+  accuracy_score: Float
+  aim_goal: Float
+  aim_rating: Float
+  band: Float
+  band_sample: Float
+  blind_score: Float
+  counter_strafe_score: Float
+  crosshair_score: Float
+  flash_assists_score: Float
+  hs_score: Float
+  kast_score: Float
+  maps: Float
+  positioning_goal: Float
+  positioning_rating: Float
+  premier_rank: Float
+  rounds: Float
+  spotted_score: Float
+  steam_id: Float
+  survival_score: Float
+  traded_score: Float
+  ttd_score: Float
+  util_eff_score: Float
+  utility_goal: Float
+  utility_rating: Float
+}
+
+"""aggregate var_samp on columns"""
+type player_performance_v_var_samp_fields {
+  accuracy_score: Float
+  aim_goal: Float
+  aim_rating: Float
+  band: Float
+  band_sample: Float
+  blind_score: Float
+  counter_strafe_score: Float
+  crosshair_score: Float
+  flash_assists_score: Float
+  hs_score: Float
+  kast_score: Float
+  maps: Float
+  positioning_goal: Float
+  positioning_rating: Float
+  premier_rank: Float
+  rounds: Float
+  spotted_score: Float
+  steam_id: Float
+  survival_score: Float
+  traded_score: Float
+  ttd_score: Float
+  util_eff_score: Float
+  utility_goal: Float
+  utility_rating: Float
+}
+
+"""aggregate variance on columns"""
+type player_performance_v_variance_fields {
+  accuracy_score: Float
+  aim_goal: Float
+  aim_rating: Float
+  band: Float
+  band_sample: Float
+  blind_score: Float
+  counter_strafe_score: Float
+  crosshair_score: Float
+  flash_assists_score: Float
+  hs_score: Float
+  kast_score: Float
+  maps: Float
+  positioning_goal: Float
+  positioning_rating: Float
+  premier_rank: Float
+  rounds: Float
+  spotted_score: Float
+  steam_id: Float
+  survival_score: Float
+  traded_score: Float
+  ttd_score: Float
+  util_eff_score: Float
+  utility_goal: Float
+  utility_rating: Float
 }
 
 """
@@ -42552,6 +44893,431 @@ input player_utility_variance_order_by {
 }
 
 """
+columns and relationships of "player_weapon_stats_v"
+"""
+type player_weapon_stats_v {
+  first_bullet_hits: Int
+  first_bullet_shots: Int
+  hits: Int
+  hits_spotted: Int
+  match_id: uuid
+  shots: Int
+  shots_spotted: Int
+  steam_id: bigint
+  weapon_class: String
+}
+
+"""
+aggregated selection of "player_weapon_stats_v"
+"""
+type player_weapon_stats_v_aggregate {
+  aggregate: player_weapon_stats_v_aggregate_fields
+  nodes: [player_weapon_stats_v!]!
+}
+
+input player_weapon_stats_v_aggregate_bool_exp {
+  count: player_weapon_stats_v_aggregate_bool_exp_count
+}
+
+input player_weapon_stats_v_aggregate_bool_exp_count {
+  arguments: [player_weapon_stats_v_select_column!]
+  distinct: Boolean
+  filter: player_weapon_stats_v_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "player_weapon_stats_v"
+"""
+type player_weapon_stats_v_aggregate_fields {
+  avg: player_weapon_stats_v_avg_fields
+  count(columns: [player_weapon_stats_v_select_column!], distinct: Boolean): Int!
+  max: player_weapon_stats_v_max_fields
+  min: player_weapon_stats_v_min_fields
+  stddev: player_weapon_stats_v_stddev_fields
+  stddev_pop: player_weapon_stats_v_stddev_pop_fields
+  stddev_samp: player_weapon_stats_v_stddev_samp_fields
+  sum: player_weapon_stats_v_sum_fields
+  var_pop: player_weapon_stats_v_var_pop_fields
+  var_samp: player_weapon_stats_v_var_samp_fields
+  variance: player_weapon_stats_v_variance_fields
+}
+
+"""
+order by aggregate values of table "player_weapon_stats_v"
+"""
+input player_weapon_stats_v_aggregate_order_by {
+  avg: player_weapon_stats_v_avg_order_by
+  count: order_by
+  max: player_weapon_stats_v_max_order_by
+  min: player_weapon_stats_v_min_order_by
+  stddev: player_weapon_stats_v_stddev_order_by
+  stddev_pop: player_weapon_stats_v_stddev_pop_order_by
+  stddev_samp: player_weapon_stats_v_stddev_samp_order_by
+  sum: player_weapon_stats_v_sum_order_by
+  var_pop: player_weapon_stats_v_var_pop_order_by
+  var_samp: player_weapon_stats_v_var_samp_order_by
+  variance: player_weapon_stats_v_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "player_weapon_stats_v"
+"""
+input player_weapon_stats_v_arr_rel_insert_input {
+  data: [player_weapon_stats_v_insert_input!]!
+}
+
+"""aggregate avg on columns"""
+type player_weapon_stats_v_avg_fields {
+  first_bullet_hits: Float
+  first_bullet_shots: Float
+  hits: Float
+  hits_spotted: Float
+  shots: Float
+  shots_spotted: Float
+  steam_id: Float
+}
+
+"""
+order by avg() on columns of table "player_weapon_stats_v"
+"""
+input player_weapon_stats_v_avg_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "player_weapon_stats_v". All fields are combined with a logical 'AND'.
+"""
+input player_weapon_stats_v_bool_exp {
+  _and: [player_weapon_stats_v_bool_exp!]
+  _not: player_weapon_stats_v_bool_exp
+  _or: [player_weapon_stats_v_bool_exp!]
+  first_bullet_hits: Int_comparison_exp
+  first_bullet_shots: Int_comparison_exp
+  hits: Int_comparison_exp
+  hits_spotted: Int_comparison_exp
+  match_id: uuid_comparison_exp
+  shots: Int_comparison_exp
+  shots_spotted: Int_comparison_exp
+  steam_id: bigint_comparison_exp
+  weapon_class: String_comparison_exp
+}
+
+"""
+input type for inserting data into table "player_weapon_stats_v"
+"""
+input player_weapon_stats_v_insert_input {
+  first_bullet_hits: Int
+  first_bullet_shots: Int
+  hits: Int
+  hits_spotted: Int
+  match_id: uuid
+  shots: Int
+  shots_spotted: Int
+  steam_id: bigint
+  weapon_class: String
+}
+
+"""aggregate max on columns"""
+type player_weapon_stats_v_max_fields {
+  first_bullet_hits: Int
+  first_bullet_shots: Int
+  hits: Int
+  hits_spotted: Int
+  match_id: uuid
+  shots: Int
+  shots_spotted: Int
+  steam_id: bigint
+  weapon_class: String
+}
+
+"""
+order by max() on columns of table "player_weapon_stats_v"
+"""
+input player_weapon_stats_v_max_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  match_id: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+  weapon_class: order_by
+}
+
+"""aggregate min on columns"""
+type player_weapon_stats_v_min_fields {
+  first_bullet_hits: Int
+  first_bullet_shots: Int
+  hits: Int
+  hits_spotted: Int
+  match_id: uuid
+  shots: Int
+  shots_spotted: Int
+  steam_id: bigint
+  weapon_class: String
+}
+
+"""
+order by min() on columns of table "player_weapon_stats_v"
+"""
+input player_weapon_stats_v_min_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  match_id: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+  weapon_class: order_by
+}
+
+"""Ordering options when selecting data from "player_weapon_stats_v"."""
+input player_weapon_stats_v_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  match_id: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+  weapon_class: order_by
+}
+
+"""
+select columns of table "player_weapon_stats_v"
+"""
+enum player_weapon_stats_v_select_column {
+  """column name"""
+  first_bullet_hits
+
+  """column name"""
+  first_bullet_shots
+
+  """column name"""
+  hits
+
+  """column name"""
+  hits_spotted
+
+  """column name"""
+  match_id
+
+  """column name"""
+  shots
+
+  """column name"""
+  shots_spotted
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  weapon_class
+}
+
+"""aggregate stddev on columns"""
+type player_weapon_stats_v_stddev_fields {
+  first_bullet_hits: Float
+  first_bullet_shots: Float
+  hits: Float
+  hits_spotted: Float
+  shots: Float
+  shots_spotted: Float
+  steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "player_weapon_stats_v"
+"""
+input player_weapon_stats_v_stddev_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type player_weapon_stats_v_stddev_pop_fields {
+  first_bullet_hits: Float
+  first_bullet_shots: Float
+  hits: Float
+  hits_spotted: Float
+  shots: Float
+  shots_spotted: Float
+  steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "player_weapon_stats_v"
+"""
+input player_weapon_stats_v_stddev_pop_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type player_weapon_stats_v_stddev_samp_fields {
+  first_bullet_hits: Float
+  first_bullet_shots: Float
+  hits: Float
+  hits_spotted: Float
+  shots: Float
+  shots_spotted: Float
+  steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "player_weapon_stats_v"
+"""
+input player_weapon_stats_v_stddev_samp_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "player_weapon_stats_v"
+"""
+input player_weapon_stats_v_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: player_weapon_stats_v_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input player_weapon_stats_v_stream_cursor_value_input {
+  first_bullet_hits: Int
+  first_bullet_shots: Int
+  hits: Int
+  hits_spotted: Int
+  match_id: uuid
+  shots: Int
+  shots_spotted: Int
+  steam_id: bigint
+  weapon_class: String
+}
+
+"""aggregate sum on columns"""
+type player_weapon_stats_v_sum_fields {
+  first_bullet_hits: Int
+  first_bullet_shots: Int
+  hits: Int
+  hits_spotted: Int
+  shots: Int
+  shots_spotted: Int
+  steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "player_weapon_stats_v"
+"""
+input player_weapon_stats_v_sum_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+}
+
+"""aggregate var_pop on columns"""
+type player_weapon_stats_v_var_pop_fields {
+  first_bullet_hits: Float
+  first_bullet_shots: Float
+  hits: Float
+  hits_spotted: Float
+  shots: Float
+  shots_spotted: Float
+  steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "player_weapon_stats_v"
+"""
+input player_weapon_stats_v_var_pop_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type player_weapon_stats_v_var_samp_fields {
+  first_bullet_hits: Float
+  first_bullet_shots: Float
+  hits: Float
+  hits_spotted: Float
+  shots: Float
+  shots_spotted: Float
+  steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "player_weapon_stats_v"
+"""
+input player_weapon_stats_v_var_samp_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type player_weapon_stats_v_variance_fields {
+  first_bullet_hits: Float
+  first_bullet_shots: Float
+  hits: Float
+  hits_spotted: Float
+  shots: Float
+  shots_spotted: Float
+  steam_id: Float
+}
+
+"""
+order by variance() on columns of table "player_weapon_stats_v"
+"""
+input player_weapon_stats_v_variance_order_by {
+  first_bullet_hits: order_by
+  first_bullet_shots: order_by
+  hits: order_by
+  hits_spotted: order_by
+  shots: order_by
+  shots_spotted: order_by
+  steam_id: order_by
+}
+
+"""
 columns and relationships of "players"
 """
 type players {
@@ -42590,6 +45356,42 @@ type players {
     """filter the rows returned"""
     where: abandoned_matches_bool_exp
   ): abandoned_matches_aggregate!
+
+  """An array relationship"""
+  aim_weapon_stats(
+    """distinct select on columns"""
+    distinct_on: [player_aim_weapon_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_aim_weapon_stats_order_by!]
+
+    """filter the rows returned"""
+    where: player_aim_weapon_stats_bool_exp
+  ): [player_aim_weapon_stats!]!
+
+  """An aggregate relationship"""
+  aim_weapon_stats_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_aim_weapon_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_aim_weapon_stats_order_by!]
+
+    """filter the rows returned"""
+    where: player_aim_weapon_stats_bool_exp
+  ): player_aim_weapon_stats_aggregate!
 
   """An array relationship"""
   assists(
@@ -43956,6 +46758,42 @@ type players {
     where: player_utility_bool_exp
   ): player_utility_aggregate!
 
+  """An array relationship"""
+  weapon_stats(
+    """distinct select on columns"""
+    distinct_on: [player_weapon_stats_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_weapon_stats_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_weapon_stats_v_bool_exp
+  ): [player_weapon_stats_v!]!
+
+  """An aggregate relationship"""
+  weapon_stats_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_weapon_stats_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_weapon_stats_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_weapon_stats_v_bool_exp
+  ): player_weapon_stats_v_aggregate!
+
   """
   A computed field, executes function "get_total_player_wins"
   """
@@ -44064,6 +46902,8 @@ input players_bool_exp {
   _or: [players_bool_exp!]
   abandoned_matches: abandoned_matches_bool_exp
   abandoned_matches_aggregate: abandoned_matches_aggregate_bool_exp
+  aim_weapon_stats: player_aim_weapon_stats_bool_exp
+  aim_weapon_stats_aggregate: player_aim_weapon_stats_aggregate_bool_exp
   assists: player_assists_bool_exp
   assists_aggregate: player_assists_aggregate_bool_exp
   assited_by_players: player_assists_bool_exp
@@ -44171,6 +47011,8 @@ input players_bool_exp {
   tournaments_aggregate: tournaments_aggregate_bool_exp
   utility_thrown: player_utility_bool_exp
   utility_thrown_aggregate: player_utility_aggregate_bool_exp
+  weapon_stats: player_weapon_stats_v_bool_exp
+  weapon_stats_aggregate: player_weapon_stats_v_aggregate_bool_exp
   wins: Int_comparison_exp
   wins_competitive: Int_comparison_exp
   wins_duel: Int_comparison_exp
@@ -44212,6 +47054,7 @@ input type for inserting data into table "players"
 """
 input players_insert_input {
   abandoned_matches: abandoned_matches_arr_rel_insert_input
+  aim_weapon_stats: player_aim_weapon_stats_arr_rel_insert_input
   assists: player_assists_arr_rel_insert_input
   assited_by_players: player_assists_arr_rel_insert_input
   avatar_url: String
@@ -44269,6 +47112,7 @@ input players_insert_input {
   tournament_trophies: tournament_trophies_arr_rel_insert_input
   tournaments: tournaments_arr_rel_insert_input
   utility_thrown: player_utility_arr_rel_insert_input
+  weapon_stats: player_weapon_stats_v_arr_rel_insert_input
 }
 
 """aggregate max on columns"""
@@ -44460,6 +47304,7 @@ input players_on_conflict {
 """Ordering options when selecting data from "players"."""
 input players_order_by {
   abandoned_matches_aggregate: abandoned_matches_aggregate_order_by
+  aim_weapon_stats_aggregate: player_aim_weapon_stats_aggregate_order_by
   assists_aggregate: player_assists_aggregate_order_by
   assited_by_players_aggregate: player_assists_aggregate_order_by
   avatar_url: order_by
@@ -44533,6 +47378,7 @@ input players_order_by {
   tournament_trophies_aggregate: tournament_trophies_aggregate_order_by
   tournaments_aggregate: tournaments_aggregate_order_by
   utility_thrown_aggregate: player_utility_aggregate_order_by
+  weapon_stats_aggregate: player_weapon_stats_v_aggregate_order_by
   wins: order_by
   wins_competitive: order_by
   wins_duel: order_by
@@ -48151,6 +50997,51 @@ type query_root {
   """
   player_aim_stats_demo_by_pk(attacker_steam_id: bigint!, match_map_id: uuid!): player_aim_stats_demo
 
+  """
+  fetch data from the table: "player_aim_weapon_stats"
+  """
+  player_aim_weapon_stats(
+    """distinct select on columns"""
+    distinct_on: [player_aim_weapon_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_aim_weapon_stats_order_by!]
+
+    """filter the rows returned"""
+    where: player_aim_weapon_stats_bool_exp
+  ): [player_aim_weapon_stats!]!
+
+  """
+  fetch aggregated fields from the table: "player_aim_weapon_stats"
+  """
+  player_aim_weapon_stats_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_aim_weapon_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_aim_weapon_stats_order_by!]
+
+    """filter the rows returned"""
+    where: player_aim_weapon_stats_bool_exp
+  ): player_aim_weapon_stats_aggregate!
+
+  """
+  fetch data from the table: "player_aim_weapon_stats" using primary key columns
+  """
+  player_aim_weapon_stats_by_pk(match_map_id: uuid!, steam_id: bigint!, weapon_class: String!): player_aim_weapon_stats
+
   """An array relationship"""
   player_assists(
     """distinct select on columns"""
@@ -48189,6 +51080,46 @@ type query_root {
 
   """fetch data from the table: "player_assists" using primary key columns"""
   player_assists_by_pk(attacked_steam_id: bigint!, attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_assists
+
+  """
+  fetch data from the table: "player_career_stats_v"
+  """
+  player_career_stats_v(
+    """distinct select on columns"""
+    distinct_on: [player_career_stats_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_career_stats_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_career_stats_v_bool_exp
+  ): [player_career_stats_v!]!
+
+  """
+  fetch aggregated fields from the table: "player_career_stats_v"
+  """
+  player_career_stats_v_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_career_stats_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_career_stats_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_career_stats_v_bool_exp
+  ): player_career_stats_v_aggregate!
 
   """An array relationship"""
   player_damages(
@@ -48526,6 +51457,46 @@ type query_root {
   player_match_map_stats_by_pk(match_map_id: uuid!, steam_id: bigint!): player_match_map_stats
 
   """
+  fetch data from the table: "player_match_performance_v"
+  """
+  player_match_performance_v(
+    """distinct select on columns"""
+    distinct_on: [player_match_performance_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_match_performance_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_match_performance_v_bool_exp
+  ): [player_match_performance_v!]!
+
+  """
+  fetch aggregated fields from the table: "player_match_performance_v"
+  """
+  player_match_performance_v_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_match_performance_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_match_performance_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_match_performance_v_bool_exp
+  ): player_match_performance_v_aggregate!
+
+  """
   fetch data from the table: "player_match_stats_v"
   """
   player_match_stats_v(
@@ -48605,6 +51576,46 @@ type query_root {
   fetch data from the table: "player_objectives" using primary key columns
   """
   player_objectives_by_pk(match_map_id: uuid!, player_steam_id: bigint!, time: timestamptz!): player_objectives
+
+  """
+  fetch data from the table: "player_performance_v"
+  """
+  player_performance_v(
+    """distinct select on columns"""
+    distinct_on: [player_performance_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_performance_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_performance_v_bool_exp
+  ): [player_performance_v!]!
+
+  """
+  fetch aggregated fields from the table: "player_performance_v"
+  """
+  player_performance_v_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_performance_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_performance_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_performance_v_bool_exp
+  ): player_performance_v_aggregate!
 
   """
   fetch data from the table: "player_premier_rank_history"
@@ -48867,6 +51878,46 @@ type query_root {
 
   """fetch data from the table: "player_utility" using primary key columns"""
   player_utility_by_pk(attacker_steam_id: bigint!, match_map_id: uuid!, time: timestamptz!): player_utility
+
+  """
+  fetch data from the table: "player_weapon_stats_v"
+  """
+  player_weapon_stats_v(
+    """distinct select on columns"""
+    distinct_on: [player_weapon_stats_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_weapon_stats_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_weapon_stats_v_bool_exp
+  ): [player_weapon_stats_v!]!
+
+  """
+  fetch aggregated fields from the table: "player_weapon_stats_v"
+  """
+  player_weapon_stats_v_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_weapon_stats_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_weapon_stats_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_weapon_stats_v_bool_exp
+  ): player_weapon_stats_v_aggregate!
 
   """
   fetch data from the table: "players"
@@ -56283,6 +59334,65 @@ type subscription_root {
     where: player_aim_stats_demo_bool_exp
   ): [player_aim_stats_demo!]!
 
+  """
+  fetch data from the table: "player_aim_weapon_stats"
+  """
+  player_aim_weapon_stats(
+    """distinct select on columns"""
+    distinct_on: [player_aim_weapon_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_aim_weapon_stats_order_by!]
+
+    """filter the rows returned"""
+    where: player_aim_weapon_stats_bool_exp
+  ): [player_aim_weapon_stats!]!
+
+  """
+  fetch aggregated fields from the table: "player_aim_weapon_stats"
+  """
+  player_aim_weapon_stats_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_aim_weapon_stats_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_aim_weapon_stats_order_by!]
+
+    """filter the rows returned"""
+    where: player_aim_weapon_stats_bool_exp
+  ): player_aim_weapon_stats_aggregate!
+
+  """
+  fetch data from the table: "player_aim_weapon_stats" using primary key columns
+  """
+  player_aim_weapon_stats_by_pk(match_map_id: uuid!, steam_id: bigint!, weapon_class: String!): player_aim_weapon_stats
+
+  """
+  fetch data from the table in a streaming manner: "player_aim_weapon_stats"
+  """
+  player_aim_weapon_stats_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [player_aim_weapon_stats_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: player_aim_weapon_stats_bool_exp
+  ): [player_aim_weapon_stats!]!
+
   """An array relationship"""
   player_assists(
     """distinct select on columns"""
@@ -56335,6 +59445,60 @@ type subscription_root {
     """filter the rows returned"""
     where: player_assists_bool_exp
   ): [player_assists!]!
+
+  """
+  fetch data from the table: "player_career_stats_v"
+  """
+  player_career_stats_v(
+    """distinct select on columns"""
+    distinct_on: [player_career_stats_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_career_stats_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_career_stats_v_bool_exp
+  ): [player_career_stats_v!]!
+
+  """
+  fetch aggregated fields from the table: "player_career_stats_v"
+  """
+  player_career_stats_v_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_career_stats_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_career_stats_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_career_stats_v_bool_exp
+  ): player_career_stats_v_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "player_career_stats_v"
+  """
+  player_career_stats_v_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [player_career_stats_v_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: player_career_stats_v_bool_exp
+  ): [player_career_stats_v!]!
 
   """An array relationship"""
   player_damages(
@@ -56784,6 +59948,60 @@ type subscription_root {
   ): [player_match_map_stats!]!
 
   """
+  fetch data from the table: "player_match_performance_v"
+  """
+  player_match_performance_v(
+    """distinct select on columns"""
+    distinct_on: [player_match_performance_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_match_performance_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_match_performance_v_bool_exp
+  ): [player_match_performance_v!]!
+
+  """
+  fetch aggregated fields from the table: "player_match_performance_v"
+  """
+  player_match_performance_v_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_match_performance_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_match_performance_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_match_performance_v_bool_exp
+  ): player_match_performance_v_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "player_match_performance_v"
+  """
+  player_match_performance_v_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [player_match_performance_v_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: player_match_performance_v_bool_exp
+  ): [player_match_performance_v!]!
+
+  """
   fetch data from the table: "player_match_stats_v"
   """
   player_match_stats_v(
@@ -56891,6 +60109,60 @@ type subscription_root {
     """filter the rows returned"""
     where: player_objectives_bool_exp
   ): [player_objectives!]!
+
+  """
+  fetch data from the table: "player_performance_v"
+  """
+  player_performance_v(
+    """distinct select on columns"""
+    distinct_on: [player_performance_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_performance_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_performance_v_bool_exp
+  ): [player_performance_v!]!
+
+  """
+  fetch aggregated fields from the table: "player_performance_v"
+  """
+  player_performance_v_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_performance_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_performance_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_performance_v_bool_exp
+  ): player_performance_v_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "player_performance_v"
+  """
+  player_performance_v_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [player_performance_v_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: player_performance_v_bool_exp
+  ): [player_performance_v!]!
 
   """
   fetch data from the table: "player_premier_rank_history"
@@ -57237,6 +60509,60 @@ type subscription_root {
     """filter the rows returned"""
     where: player_utility_bool_exp
   ): [player_utility!]!
+
+  """
+  fetch data from the table: "player_weapon_stats_v"
+  """
+  player_weapon_stats_v(
+    """distinct select on columns"""
+    distinct_on: [player_weapon_stats_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_weapon_stats_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_weapon_stats_v_bool_exp
+  ): [player_weapon_stats_v!]!
+
+  """
+  fetch aggregated fields from the table: "player_weapon_stats_v"
+  """
+  player_weapon_stats_v_aggregate(
+    """distinct select on columns"""
+    distinct_on: [player_weapon_stats_v_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [player_weapon_stats_v_order_by!]
+
+    """filter the rows returned"""
+    where: player_weapon_stats_v_bool_exp
+  ): player_weapon_stats_v_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "player_weapon_stats_v"
+  """
+  player_weapon_stats_v_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [player_weapon_stats_v_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: player_weapon_stats_v_bool_exp
+  ): [player_weapon_stats_v!]!
 
   """
   fetch data from the table: "players"

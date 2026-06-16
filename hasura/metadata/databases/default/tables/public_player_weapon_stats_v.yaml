@@ -1,0 +1,19 @@
+table:
+  name: player_weapon_stats_v
+  schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - steam_id
+        - match_id
+        - weapon_class
+        - shots
+        - hits
+        - shots_spotted
+        - hits_spotted
+        - first_bullet_shots
+        - first_bullet_hits
+      filter: {}
+      allow_aggregations: true
+    comment: ""

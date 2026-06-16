@@ -28,10 +28,13 @@ BEGIN
     map_name           = NULLIF(p_parsed->>'map_name', ''),
     workshop_id        = NULLIF(p_parsed->>'workshop_id', ''),
     cs2_build          = NULLIF(p_parsed->>'cs2_build', ''),
+    geometry_validated = CASE WHEN jsonb_typeof(p_parsed->'geometry_validated') = 'boolean'
+                              THEN (p_parsed->>'geometry_validated')::boolean END,
     metadata_parsed_at = now()
    WHERE id = p_match_map_demo_id;
 
   DELETE FROM public.player_aim_stats_demo            WHERE match_map_id = v_match_map_id;
+  DELETE FROM public.player_aim_weapon_stats          WHERE match_map_id = v_match_map_id;
   DELETE FROM public.player_round_inventory           WHERE match_map_id = v_match_map_id;
   DELETE FROM public.player_match_map_event_aggregates WHERE match_map_id = v_match_map_id;
   DELETE FROM public.player_trades          WHERE match_map_id = v_match_map_id;
@@ -143,10 +146,34 @@ BEGIN
       WHERE round > 0
       GROUP BY attacker
     ),
+    engagements AS (
+      SELECT
+        (elem->>'attacker')::bigint AS attacker,
+        COALESCE((elem->>'round')::int, 0)               AS round,
+        COALESCE((elem->>'first_shot_fired')::boolean, false) AS first_shot_fired,
+        COALESCE((elem->>'first_shot_hit')::boolean, false)   AS first_shot_hit,
+        COALESCE((elem->>'on_target_frames')::int, 0)    AS on_target_frames,
+        COALESCE((elem->>'total_frames')::int, 0)        AS total_frames
+      FROM jsonb_array_elements(COALESCE(p_parsed->'aim_engagements', '[]'::jsonb)) elem
+      WHERE NULLIF(elem->>'attacker', '') IS NOT NULL
+    ),
+    engagements_agg AS (
+      SELECT
+        attacker,
+        COUNT(*) FILTER (WHERE first_shot_fired)               AS first_bullet_shots,
+        COUNT(*) FILTER (WHERE first_shot_hit)                 AS first_bullet_hits,
+        COALESCE(SUM(on_target_frames), 0)                     AS on_target_frames,
+        COALESCE(SUM(total_frames), 0)                         AS total_engagement_frames
+      FROM engagements
+      WHERE round > 0
+      GROUP BY attacker
+    ),
     attackers AS (
       SELECT attacker FROM shots_agg
       UNION
       SELECT attacker FROM damages_agg
+      UNION
+      SELECT attacker FROM engagements_agg
     )
   INSERT INTO public.player_aim_stats_demo (
     match_id, match_map_id, attacker_steam_id,
@@ -154,7 +181,9 @@ BEGIN
     shots_at_spotted, counter_strafe_eligible_shots, counter_strafed_shots,
     spray_shots, spray_hits,
     crosshair_angle_sum_deg, crosshair_angle_count,
-    time_to_damage_sum_s, time_to_damage_count
+    time_to_damage_sum_s, time_to_damage_count,
+    first_bullet_shots, first_bullet_hits,
+    on_target_frames, total_engagement_frames
   )
   SELECT
     v_match_id, v_match_map_id, a.attacker,
@@ -170,10 +199,110 @@ BEGIN
     COALESCE(da.crosshair_sum, 0),
     COALESCE(da.crosshair_count, 0),
     COALESCE(da.ttd_sum, 0),
-    COALESCE(da.ttd_count, 0)
+    COALESCE(da.ttd_count, 0),
+    COALESCE(ea.first_bullet_shots, 0),
+    COALESCE(ea.first_bullet_hits, 0),
+    COALESCE(ea.on_target_frames, 0),
+    COALESCE(ea.total_engagement_frames, 0)
   FROM attackers a
-  LEFT JOIN shots_agg   sa ON sa.attacker = a.attacker
-  LEFT JOIN damages_agg da ON da.attacker = a.attacker;
+  LEFT JOIN shots_agg       sa ON sa.attacker = a.attacker
+  LEFT JOIN damages_agg     da ON da.attacker = a.attacker
+  LEFT JOIN engagements_agg ea ON ea.attacker = a.attacker;
+
+  -- Per-weapon-class accuracy (rifle / pistol / sniper). Weapon name → class
+  -- is decided here; SMGs/shotguns/LMGs map to NULL and are excluded (they
+  -- only count toward the all-weapon accuracy). first_bullet is bucketed from
+  -- the engagement's parser-provided weapon_class.
+  WITH
+    weapon_class_map AS (
+      SELECT weapon, wc FROM (
+        VALUES
+          ('ak47','rifle'),('m4a1','rifle'),('m4a1_silencer','rifle'),('aug','rifle'),
+          ('sg556','rifle'),('galilar','rifle'),('famas','rifle'),
+          ('awp','sniper'),('ssg08','sniper'),('scar20','sniper'),('g3sg1','sniper'),
+          ('glock','pistol'),('hkp2000','pistol'),('usp_silencer','pistol'),('p250','pistol'),
+          ('deagle','pistol'),('fiveseven','pistol'),('elite','pistol'),('tec9','pistol'),
+          ('cz75a','pistol'),('revolver','pistol')
+      ) AS m(weapon, wc)
+    ),
+    wshots AS (
+      SELECT
+        (elem->>'attacker')::bigint AS steam_id,
+        wcm.wc,
+        COALESCE((elem->>'enemy_spotted')::boolean, false) AS spotted
+      FROM jsonb_array_elements(COALESCE(p_parsed->'shots_fired', '[]'::jsonb)) elem
+      LEFT JOIN weapon_class_map wcm ON wcm.weapon = LOWER(COALESCE(elem->>'weapon',''))
+      WHERE NULLIF(elem->>'attacker', '') IS NOT NULL
+    ),
+    wshots_agg AS (
+      SELECT steam_id, wc,
+        COUNT(*)                          AS shots,
+        COUNT(*) FILTER (WHERE spotted)   AS shots_spotted
+      FROM wshots WHERE wc IS NOT NULL
+      GROUP BY steam_id, wc
+    ),
+    wdamages AS (
+      SELECT
+        (elem->>'attacker')::bigint AS steam_id,
+        wcm.wc,
+        COALESCE((elem->>'hit_on_spotted')::boolean, false) AS hit_spotted
+      FROM jsonb_array_elements(COALESCE(p_parsed->'damages', '[]'::jsonb)) elem
+      LEFT JOIN weapon_class_map wcm ON wcm.weapon = LOWER(COALESCE(elem->>'weapon',''))
+      WHERE NULLIF(elem->>'attacker', '') IS NOT NULL
+        AND NULLIF(elem->>'victim', '')   IS NOT NULL
+        AND (
+          NULLIF(elem->>'attacker_team', '') IS NULL
+          OR NULLIF(elem->>'victim_team', '') IS NULL
+          OR elem->>'attacker_team' <> elem->>'victim_team'
+        )
+    ),
+    wdamages_agg AS (
+      SELECT steam_id, wc,
+        COUNT(*)                              AS hits,
+        COUNT(*) FILTER (WHERE hit_spotted)   AS hits_spotted
+      FROM wdamages WHERE wc IS NOT NULL
+      GROUP BY steam_id, wc
+    ),
+    wfirst AS (
+      SELECT
+        (elem->>'attacker')::bigint AS steam_id,
+        NULLIF(elem->>'weapon_class', '') AS wc,
+        COALESCE((elem->>'first_shot_fired')::boolean, false) AS fbf,
+        COALESCE((elem->>'first_shot_hit')::boolean, false)   AS fbh,
+        COALESCE((elem->>'round')::int, 0) AS round
+      FROM jsonb_array_elements(COALESCE(p_parsed->'aim_engagements', '[]'::jsonb)) elem
+      WHERE NULLIF(elem->>'attacker', '') IS NOT NULL
+    ),
+    wfirst_agg AS (
+      SELECT steam_id, wc,
+        COUNT(*) FILTER (WHERE fbf) AS fb_shots,
+        COUNT(*) FILTER (WHERE fbh) AS fb_hits
+      FROM wfirst
+      WHERE wc IN ('rifle','pistol','sniper') AND round > 0
+      GROUP BY steam_id, wc
+    ),
+    wclasses AS (
+      SELECT steam_id, wc FROM wshots_agg
+      UNION SELECT steam_id, wc FROM wdamages_agg
+      UNION SELECT steam_id, wc FROM wfirst_agg
+    )
+  INSERT INTO public.player_aim_weapon_stats (
+    match_id, match_map_id, steam_id, weapon_class,
+    shots, hits, shots_spotted, hits_spotted,
+    first_bullet_shots, first_bullet_hits
+  )
+  SELECT
+    v_match_id, v_match_map_id, c.steam_id, c.wc,
+    COALESCE(ws.shots, 0),
+    COALESCE(wd.hits, 0),
+    COALESCE(ws.shots_spotted, 0),
+    COALESCE(wd.hits_spotted, 0),
+    COALESCE(wf.fb_shots, 0),
+    COALESCE(wf.fb_hits, 0)
+  FROM wclasses c
+  LEFT JOIN wshots_agg   ws ON ws.steam_id = c.steam_id AND ws.wc = c.wc
+  LEFT JOIN wdamages_agg wd ON wd.steam_id = c.steam_id AND wd.wc = c.wc
+  LEFT JOIN wfirst_agg   wf ON wf.steam_id = c.steam_id AND wf.wc = c.wc;
 
   WITH
     shots_raw AS (
