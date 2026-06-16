@@ -11,6 +11,7 @@ import { HasuraModule } from "../../hasura/hasura.module";
 import { PostgresModule } from "../../postgres/postgres.module";
 import { S3Module } from "../../s3/s3.module";
 import { GameStreamerModule } from "../game-streamer/game-streamer.module";
+import { RedisModule } from "../../redis/redis.module";
 import { MatchQueues } from "../enums/MatchQueues";
 import { loggerFactory } from "../../utilities/LoggerFactory";
 import { getQueuesProcessors } from "../../utilities/QueueProcessors";
@@ -27,6 +28,7 @@ import { ReconcileQueuedHighlights } from "./jobs/ReconcileQueuedHighlights";
     PostgresModule,
     S3Module,
     GameStreamerModule,
+    RedisModule,
     BullModule.registerQueue({
       name: MatchQueues.Clips,
       defaultJobOptions: {

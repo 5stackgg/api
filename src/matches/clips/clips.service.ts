@@ -7,6 +7,7 @@ import { PostgresService } from "../../postgres/postgres.service";
 import { S3Service } from "../../s3/s3.service";
 import { GameStreamerService } from "../game-streamer/game-streamer.service";
 import { SteamAccountService } from "../game-streamer/steam-account.service";
+import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
@@ -26,6 +27,8 @@ type ClipSegmentSpec = ClipSpec["segments"][number];
 
 @Injectable()
 export class ClipsService {
+  private static readonly CLIP_VIEW_TTL_SECONDS = 6 * 60 * 60;
+
   constructor(
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
@@ -33,6 +36,7 @@ export class ClipsService {
     private readonly s3: S3Service,
     private readonly gameStreamer: GameStreamerService,
     private readonly steamAccounts: SteamAccountService,
+    private readonly redisManager: RedisManagerService,
     @InjectQueue(MatchQueues.Clips)
     private readonly batchQueue: Queue,
   ) {}
@@ -1204,7 +1208,7 @@ export class ClipsService {
     });
   }
 
-  public async incrementClipViewsByFile(file: string): Promise<void> {
+  private async incrementClipViewsByFile(file: string): Promise<void> {
     await this.hasura.mutation({
       update_match_clips: {
         __args: {
@@ -1214,6 +1218,21 @@ export class ClipsService {
         affected_rows: true,
       },
     });
+  }
+
+  public async registerStreamedClipView(
+    file: string,
+    clientKey: string,
+  ): Promise<boolean> {
+    const dedupeKey = `clip-view:${file}:${clientKey}`;
+    const claimed = await this.redisManager
+      .getConnection()
+      .set(dedupeKey, "1", "EX", ClipsService.CLIP_VIEW_TTL_SECONDS, "NX");
+    if (claimed !== "OK") {
+      return false;
+    }
+    await this.incrementClipViewsByFile(file);
+    return true;
   }
 
   private async targetAppearsInDemo(
