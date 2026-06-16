@@ -1,0 +1,26 @@
+table:
+  name: player_career_stats_v
+  schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - steam_id
+        - maps
+        - rounds
+        - premier_rank
+        - accuracy
+        - hs_pct
+        - accuracy_spotted
+        - crosshair_deg
+        - time_to_damage_s
+        - counter_strafe_pct
+        - survival_pct
+        - traded_death_pct
+        - kast_pct
+        - flash_assists_pr
+        - enemy_blind_pr
+        - util_efficiency
+      filter: {}
+      allow_aggregations: true
+    comment: ""

@@ -378,7 +378,9 @@ BEGIN
       shots_at_spotted, counter_strafe_eligible_shots, counter_strafed_shots,
       spray_shots, spray_hits,
       crosshair_angle_sum_deg, crosshair_angle_count,
-      time_to_damage_sum_s, time_to_damage_count
+      time_to_damage_sum_s, time_to_damage_count,
+      first_bullet_shots, first_bullet_hits,
+      on_target_frames, total_engagement_frames
     FROM public.player_aim_stats_demo
     WHERE match_map_id = p_match_map_id
   ),
@@ -444,6 +446,8 @@ BEGIN
     counter_strafed_shots, counter_strafe_eligible_shots,
     spray_shots, spray_hits,
     crosshair_angle_sum_deg, crosshair_angle_count,
+    first_bullet_shots, first_bullet_hits,
+    on_target_frames, total_engagement_frames,
     wasted_magazine_shots,
     unused_utility_value,
     util_on_death_sum, util_on_death_count,
@@ -492,6 +496,10 @@ BEGIN
     COALESCE(ad.spray_hits, 0),
     COALESCE(ad.crosshair_angle_sum_deg, 0),
     COALESCE(ad.crosshair_angle_count, 0),
+    COALESCE(ad.first_bullet_shots, 0),
+    COALESCE(ad.first_bullet_hits, 0),
+    COALESCE(ad.on_target_frames, 0),
+    COALESCE(ad.total_engagement_frames, 0),
     COALESCE(wma.wasted_magazine_shots, 0),
     COALESCE(uu.unused_utility_value, 0),
     COALESCE(td.util_on_death_sum, 0),

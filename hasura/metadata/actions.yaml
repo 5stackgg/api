@@ -558,6 +558,30 @@ actions:
     permissions:
       - role: administrator
     comment: Re-parse all demos across every map for a match (admin only). Fires in the background and returns immediately.
+  - name: reparseAllDemos
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Re-parse every demo in the system (admin only). Runs one demo at a time in the background; this can take a very long time. Track via reparseAllDemosStatus.
+  - name: cancelReparseAllDemos
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Request cancellation of the in-progress reparse-all-demos run (admin only). Stops after the current demo finishes.
+  - name: reparseAllDemosStatus
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Return the progress of the reparse-all-demos run (admin only).
   - name: scanOrphanedDemos
     definition:
       kind: synchronous

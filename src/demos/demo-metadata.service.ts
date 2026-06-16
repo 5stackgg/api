@@ -6,7 +6,7 @@ import { PostgresService } from "../postgres/postgres.service";
 import { S3Service } from "../s3/s3.service";
 import { DemoParserService, ParsedDemo } from "./demo-parser.service";
 
-export const DEMO_METADATA_VERSION = 4;
+export const DEMO_METADATA_VERSION = 8;
 
 export type DemoRow = {
   id: string;
@@ -754,6 +754,7 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     y: p.y,
     z: p.z,
     yaw: p.yaw ?? null,
+    pitch: (p as { pitch?: number }).pitch ?? null,
     health: (p as { health?: number }).health ?? null,
     armor: (p as { armor?: number }).armor ?? null,
     helmet: (p as { helmet?: boolean }).helmet ?? false,
@@ -768,6 +769,17 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     attacker_steam_id: s.attacker ?? null,
     attacker_team: s.attacker_team ?? null,
     with: s.weapon ?? null,
+    // Exact firing geometry + outcome so the 3D replay can draw a tracer
+    // along the real shot direction, colored by hit / headshot / miss.
+    yaw: s.yaw ?? null,
+    pitch: s.pitch ?? null,
+    eye_x: s.eye_x ?? null,
+    eye_y: s.eye_y ?? null,
+    eye_z: s.eye_z ?? null,
+    result: s.result ?? null,
+    impact_x: s.impact_x ?? null,
+    impact_y: s.impact_y ?? null,
+    impact_z: s.impact_z ?? null,
   }));
 
   const mapGrenade = (

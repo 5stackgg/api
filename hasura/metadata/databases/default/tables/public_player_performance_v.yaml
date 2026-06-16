@@ -1,0 +1,34 @@
+table:
+  name: player_performance_v
+  schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - steam_id
+        - premier_rank
+        - band
+        - rounds
+        - maps
+        - aim_rating
+        - positioning_rating
+        - utility_rating
+        - aim_goal
+        - positioning_goal
+        - utility_goal
+        - band_sample
+        - accuracy_score
+        - hs_score
+        - spotted_score
+        - crosshair_score
+        - ttd_score
+        - counter_strafe_score
+        - survival_score
+        - traded_score
+        - kast_score
+        - flash_assists_score
+        - blind_score
+        - util_eff_score
+      filter: {}
+      allow_aggregations: true
+    comment: ""

@@ -405,6 +405,24 @@ export interface QueryStat {
     __typename: 'QueryStat'
 }
 
+export interface ReparseAllStartedOutput {
+    running: Scalars['Boolean']
+    success: Scalars['Boolean']
+    __typename: 'ReparseAllStartedOutput'
+}
+
+export interface ReparseAllStatusOutput {
+    canceled: Scalars['Boolean']
+    completed: Scalars['Int']
+    current_demo_id: (Scalars['String'] | null)
+    failed: Scalars['Int']
+    finished_at: (Scalars['String'] | null)
+    running: Scalars['Boolean']
+    started_at: (Scalars['String'] | null)
+    total: Scalars['Int']
+    __typename: 'ReparseAllStatusOutput'
+}
+
 export interface SanctionResult {
     enforced: Scalars['Boolean']
     id: (Scalars['String'] | null)
@@ -5241,6 +5259,7 @@ export interface match_map_demos {
     download_url: (Scalars['String'] | null)
     duration_seconds: (Scalars['Float'] | null)
     file: Scalars['String']
+    geometry_validated: (Scalars['Boolean'] | null)
     id: Scalars['uuid']
     kills: (Scalars['jsonb'] | null)
     map_name: (Scalars['String'] | null)
@@ -5370,7 +5389,15 @@ export interface match_map_demos_mutation_response {
 
 
 /** select columns of table "match_map_demos" */
-export type match_map_demos_select_column = 'bombs' | 'created_at' | 'cs2_build' | 'duration_seconds' | 'file' | 'id' | 'kills' | 'map_name' | 'match_id' | 'match_map_id' | 'metadata_parsed_at' | 'playback_file' | 'playback_size' | 'players' | 'round_ticks' | 'size' | 'tick_rate' | 'total_ticks' | 'workshop_id'
+export type match_map_demos_select_column = 'bombs' | 'created_at' | 'cs2_build' | 'duration_seconds' | 'file' | 'geometry_validated' | 'id' | 'kills' | 'map_name' | 'match_id' | 'match_map_id' | 'metadata_parsed_at' | 'playback_file' | 'playback_size' | 'players' | 'round_ticks' | 'size' | 'tick_rate' | 'total_ticks' | 'workshop_id'
+
+
+/** select "match_map_demos_aggregate_bool_exp_bool_and_arguments_columns" columns of table "match_map_demos" */
+export type match_map_demos_select_column_match_map_demos_aggregate_bool_exp_bool_and_arguments_columns = 'geometry_validated'
+
+
+/** select "match_map_demos_aggregate_bool_exp_bool_or_arguments_columns" columns of table "match_map_demos" */
+export type match_map_demos_select_column_match_map_demos_aggregate_bool_exp_bool_or_arguments_columns = 'geometry_validated'
 
 
 /** aggregate stddev on columns */
@@ -5418,7 +5445,7 @@ export interface match_map_demos_sum_fields {
 
 
 /** update columns of table "match_map_demos" */
-export type match_map_demos_update_column = 'bombs' | 'created_at' | 'cs2_build' | 'file' | 'id' | 'kills' | 'map_name' | 'match_id' | 'match_map_id' | 'metadata_parsed_at' | 'playback_file' | 'playback_size' | 'players' | 'round_ticks' | 'size' | 'tick_rate' | 'total_ticks' | 'workshop_id'
+export type match_map_demos_update_column = 'bombs' | 'created_at' | 'cs2_build' | 'file' | 'geometry_validated' | 'id' | 'kills' | 'map_name' | 'match_id' | 'match_map_id' | 'metadata_parsed_at' | 'playback_file' | 'playback_size' | 'players' | 'round_ticks' | 'size' | 'tick_rate' | 'total_ticks' | 'workshop_id'
 
 
 /** aggregate var_pop on columns */
@@ -7107,6 +7134,8 @@ export interface mutation_root {
     cancelClipRenderBatch: (SuccessOutput | null)
     /** cancelMatch */
     cancelMatch: (SuccessOutput | null)
+    /** Request cancellation of the in-progress reparse-all-demos run (admin only). Stops after the current demo finishes. */
+    cancelReparseAllDemos: (SuccessOutput | null)
     /** checkIntoMatch */
     checkIntoMatch: (SuccessOutput | null)
     /** Delete terminal-state clip_render_jobs rows for a single match_map batch. */
@@ -7371,6 +7400,10 @@ export interface mutation_root {
     delete_player_aim_stats_demo: (player_aim_stats_demo_mutation_response | null)
     /** delete single row from the table: "player_aim_stats_demo" */
     delete_player_aim_stats_demo_by_pk: (player_aim_stats_demo | null)
+    /** delete data from the table: "player_aim_weapon_stats" */
+    delete_player_aim_weapon_stats: (player_aim_weapon_stats_mutation_response | null)
+    /** delete single row from the table: "player_aim_weapon_stats" */
+    delete_player_aim_weapon_stats_by_pk: (player_aim_weapon_stats | null)
     /** delete data from the table: "player_assists" */
     delete_player_assists: (player_assists_mutation_response | null)
     /** delete single row from the table: "player_assists" */
@@ -7764,6 +7797,10 @@ export interface mutation_root {
     insert_player_aim_stats_demo: (player_aim_stats_demo_mutation_response | null)
     /** insert a single row into the table: "player_aim_stats_demo" */
     insert_player_aim_stats_demo_one: (player_aim_stats_demo | null)
+    /** insert data into the table: "player_aim_weapon_stats" */
+    insert_player_aim_weapon_stats: (player_aim_weapon_stats_mutation_response | null)
+    /** insert a single row into the table: "player_aim_weapon_stats" */
+    insert_player_aim_weapon_stats_one: (player_aim_weapon_stats | null)
     /** insert data into the table: "player_assists" */
     insert_player_assists: (player_assists_mutation_response | null)
     /** insert a single row into the table: "player_assists" */
@@ -7947,6 +7984,10 @@ export interface mutation_root {
     removeFixtures: (SuccessOutput | null)
     /** Rename file or directory on game server */
     renameServerItem: (SuccessOutput | null)
+    /** Re-parse every demo in the system (admin only). Runs one demo at a time in the background; this can take a very long time. Track via reparseAllDemosStatus. */
+    reparseAllDemos: (ReparseAllStartedOutput | null)
+    /** Return the progress of the reparse-all-demos run (admin only). */
+    reparseAllDemosStatus: (ReparseAllStatusOutput | null)
     /** Re-parse demo metadata for a match map (admin only) */
     reparseDemo: (SuccessOutput | null)
     /** Re-parse all demos across every map for a match (admin only). Fires in the background and returns immediately. */
@@ -8364,6 +8405,12 @@ export interface mutation_root {
     update_player_aim_stats_demo_by_pk: (player_aim_stats_demo | null)
     /** update multiples rows of table: "player_aim_stats_demo" */
     update_player_aim_stats_demo_many: ((player_aim_stats_demo_mutation_response | null)[] | null)
+    /** update data of the table: "player_aim_weapon_stats" */
+    update_player_aim_weapon_stats: (player_aim_weapon_stats_mutation_response | null)
+    /** update single row of the table: "player_aim_weapon_stats" */
+    update_player_aim_weapon_stats_by_pk: (player_aim_weapon_stats | null)
+    /** update multiples rows of table: "player_aim_weapon_stats" */
+    update_player_aim_weapon_stats_many: ((player_aim_weapon_stats_mutation_response | null)[] | null)
     /** update data of the table: "player_assists" */
     update_player_assists: (player_assists_mutation_response | null)
     /** update single row of the table: "player_assists" */
@@ -9238,6 +9285,8 @@ export interface player_aim_stats_demo {
     counter_strafed_shots: Scalars['Int']
     crosshair_angle_count: Scalars['Int']
     crosshair_angle_sum_deg: Scalars['numeric']
+    first_bullet_hits: Scalars['Int']
+    first_bullet_shots: Scalars['Int']
     headshot_hits: Scalars['Int']
     hits: Scalars['Int']
     hits_at_spotted: Scalars['Int']
@@ -9248,11 +9297,13 @@ export interface player_aim_stats_demo {
     match_map: match_maps
     match_map_id: Scalars['uuid']
     non_awp_hits: Scalars['Int']
+    on_target_frames: Scalars['Int']
     shots_at_spotted: Scalars['Int']
     spray_hits: Scalars['Int']
     spray_shots: Scalars['Int']
     time_to_damage_count: Scalars['Int']
     time_to_damage_sum_s: Scalars['numeric']
+    total_engagement_frames: Scalars['Int']
     __typename: 'player_aim_stats_demo'
 }
 
@@ -9289,15 +9340,19 @@ export interface player_aim_stats_demo_avg_fields {
     counter_strafed_shots: (Scalars['Float'] | null)
     crosshair_angle_count: (Scalars['Float'] | null)
     crosshair_angle_sum_deg: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     headshot_hits: (Scalars['Float'] | null)
     hits: (Scalars['Float'] | null)
     hits_at_spotted: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     shots_at_spotted: (Scalars['Float'] | null)
     spray_hits: (Scalars['Float'] | null)
     spray_shots: (Scalars['Float'] | null)
     time_to_damage_count: (Scalars['Float'] | null)
     time_to_damage_sum_s: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     __typename: 'player_aim_stats_demo_avg_fields'
 }
 
@@ -9313,17 +9368,21 @@ export interface player_aim_stats_demo_max_fields {
     counter_strafed_shots: (Scalars['Int'] | null)
     crosshair_angle_count: (Scalars['Int'] | null)
     crosshair_angle_sum_deg: (Scalars['numeric'] | null)
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
     headshot_hits: (Scalars['Int'] | null)
     hits: (Scalars['Int'] | null)
     hits_at_spotted: (Scalars['Int'] | null)
     match_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
     non_awp_hits: (Scalars['Int'] | null)
+    on_target_frames: (Scalars['Int'] | null)
     shots_at_spotted: (Scalars['Int'] | null)
     spray_hits: (Scalars['Int'] | null)
     spray_shots: (Scalars['Int'] | null)
     time_to_damage_count: (Scalars['Int'] | null)
     time_to_damage_sum_s: (Scalars['numeric'] | null)
+    total_engagement_frames: (Scalars['Int'] | null)
     __typename: 'player_aim_stats_demo_max_fields'
 }
 
@@ -9335,17 +9394,21 @@ export interface player_aim_stats_demo_min_fields {
     counter_strafed_shots: (Scalars['Int'] | null)
     crosshair_angle_count: (Scalars['Int'] | null)
     crosshair_angle_sum_deg: (Scalars['numeric'] | null)
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
     headshot_hits: (Scalars['Int'] | null)
     hits: (Scalars['Int'] | null)
     hits_at_spotted: (Scalars['Int'] | null)
     match_id: (Scalars['uuid'] | null)
     match_map_id: (Scalars['uuid'] | null)
     non_awp_hits: (Scalars['Int'] | null)
+    on_target_frames: (Scalars['Int'] | null)
     shots_at_spotted: (Scalars['Int'] | null)
     spray_hits: (Scalars['Int'] | null)
     spray_shots: (Scalars['Int'] | null)
     time_to_damage_count: (Scalars['Int'] | null)
     time_to_damage_sum_s: (Scalars['numeric'] | null)
+    total_engagement_frames: (Scalars['Int'] | null)
     __typename: 'player_aim_stats_demo_min_fields'
 }
 
@@ -9361,7 +9424,7 @@ export interface player_aim_stats_demo_mutation_response {
 
 
 /** select columns of table "player_aim_stats_demo" */
-export type player_aim_stats_demo_select_column = 'attacker_steam_id' | 'counter_strafe_eligible_shots' | 'counter_strafed_shots' | 'crosshair_angle_count' | 'crosshair_angle_sum_deg' | 'headshot_hits' | 'hits' | 'hits_at_spotted' | 'match_id' | 'match_map_id' | 'non_awp_hits' | 'shots_at_spotted' | 'spray_hits' | 'spray_shots' | 'time_to_damage_count' | 'time_to_damage_sum_s'
+export type player_aim_stats_demo_select_column = 'attacker_steam_id' | 'counter_strafe_eligible_shots' | 'counter_strafed_shots' | 'crosshair_angle_count' | 'crosshair_angle_sum_deg' | 'first_bullet_hits' | 'first_bullet_shots' | 'headshot_hits' | 'hits' | 'hits_at_spotted' | 'match_id' | 'match_map_id' | 'non_awp_hits' | 'on_target_frames' | 'shots_at_spotted' | 'spray_hits' | 'spray_shots' | 'time_to_damage_count' | 'time_to_damage_sum_s' | 'total_engagement_frames'
 
 
 /** aggregate stddev on columns */
@@ -9371,15 +9434,19 @@ export interface player_aim_stats_demo_stddev_fields {
     counter_strafed_shots: (Scalars['Float'] | null)
     crosshair_angle_count: (Scalars['Float'] | null)
     crosshair_angle_sum_deg: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     headshot_hits: (Scalars['Float'] | null)
     hits: (Scalars['Float'] | null)
     hits_at_spotted: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     shots_at_spotted: (Scalars['Float'] | null)
     spray_hits: (Scalars['Float'] | null)
     spray_shots: (Scalars['Float'] | null)
     time_to_damage_count: (Scalars['Float'] | null)
     time_to_damage_sum_s: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     __typename: 'player_aim_stats_demo_stddev_fields'
 }
 
@@ -9391,15 +9458,19 @@ export interface player_aim_stats_demo_stddev_pop_fields {
     counter_strafed_shots: (Scalars['Float'] | null)
     crosshair_angle_count: (Scalars['Float'] | null)
     crosshair_angle_sum_deg: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     headshot_hits: (Scalars['Float'] | null)
     hits: (Scalars['Float'] | null)
     hits_at_spotted: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     shots_at_spotted: (Scalars['Float'] | null)
     spray_hits: (Scalars['Float'] | null)
     spray_shots: (Scalars['Float'] | null)
     time_to_damage_count: (Scalars['Float'] | null)
     time_to_damage_sum_s: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     __typename: 'player_aim_stats_demo_stddev_pop_fields'
 }
 
@@ -9411,15 +9482,19 @@ export interface player_aim_stats_demo_stddev_samp_fields {
     counter_strafed_shots: (Scalars['Float'] | null)
     crosshair_angle_count: (Scalars['Float'] | null)
     crosshair_angle_sum_deg: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     headshot_hits: (Scalars['Float'] | null)
     hits: (Scalars['Float'] | null)
     hits_at_spotted: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     shots_at_spotted: (Scalars['Float'] | null)
     spray_hits: (Scalars['Float'] | null)
     spray_shots: (Scalars['Float'] | null)
     time_to_damage_count: (Scalars['Float'] | null)
     time_to_damage_sum_s: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     __typename: 'player_aim_stats_demo_stddev_samp_fields'
 }
 
@@ -9431,21 +9506,25 @@ export interface player_aim_stats_demo_sum_fields {
     counter_strafed_shots: (Scalars['Int'] | null)
     crosshair_angle_count: (Scalars['Int'] | null)
     crosshair_angle_sum_deg: (Scalars['numeric'] | null)
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
     headshot_hits: (Scalars['Int'] | null)
     hits: (Scalars['Int'] | null)
     hits_at_spotted: (Scalars['Int'] | null)
     non_awp_hits: (Scalars['Int'] | null)
+    on_target_frames: (Scalars['Int'] | null)
     shots_at_spotted: (Scalars['Int'] | null)
     spray_hits: (Scalars['Int'] | null)
     spray_shots: (Scalars['Int'] | null)
     time_to_damage_count: (Scalars['Int'] | null)
     time_to_damage_sum_s: (Scalars['numeric'] | null)
+    total_engagement_frames: (Scalars['Int'] | null)
     __typename: 'player_aim_stats_demo_sum_fields'
 }
 
 
 /** update columns of table "player_aim_stats_demo" */
-export type player_aim_stats_demo_update_column = 'attacker_steam_id' | 'counter_strafe_eligible_shots' | 'counter_strafed_shots' | 'crosshair_angle_count' | 'crosshair_angle_sum_deg' | 'headshot_hits' | 'hits' | 'hits_at_spotted' | 'match_id' | 'match_map_id' | 'non_awp_hits' | 'shots_at_spotted' | 'spray_hits' | 'spray_shots' | 'time_to_damage_count' | 'time_to_damage_sum_s'
+export type player_aim_stats_demo_update_column = 'attacker_steam_id' | 'counter_strafe_eligible_shots' | 'counter_strafed_shots' | 'crosshair_angle_count' | 'crosshair_angle_sum_deg' | 'first_bullet_hits' | 'first_bullet_shots' | 'headshot_hits' | 'hits' | 'hits_at_spotted' | 'match_id' | 'match_map_id' | 'non_awp_hits' | 'on_target_frames' | 'shots_at_spotted' | 'spray_hits' | 'spray_shots' | 'time_to_damage_count' | 'time_to_damage_sum_s' | 'total_engagement_frames'
 
 
 /** aggregate var_pop on columns */
@@ -9455,15 +9534,19 @@ export interface player_aim_stats_demo_var_pop_fields {
     counter_strafed_shots: (Scalars['Float'] | null)
     crosshair_angle_count: (Scalars['Float'] | null)
     crosshair_angle_sum_deg: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     headshot_hits: (Scalars['Float'] | null)
     hits: (Scalars['Float'] | null)
     hits_at_spotted: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     shots_at_spotted: (Scalars['Float'] | null)
     spray_hits: (Scalars['Float'] | null)
     spray_shots: (Scalars['Float'] | null)
     time_to_damage_count: (Scalars['Float'] | null)
     time_to_damage_sum_s: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     __typename: 'player_aim_stats_demo_var_pop_fields'
 }
 
@@ -9475,15 +9558,19 @@ export interface player_aim_stats_demo_var_samp_fields {
     counter_strafed_shots: (Scalars['Float'] | null)
     crosshair_angle_count: (Scalars['Float'] | null)
     crosshair_angle_sum_deg: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     headshot_hits: (Scalars['Float'] | null)
     hits: (Scalars['Float'] | null)
     hits_at_spotted: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     shots_at_spotted: (Scalars['Float'] | null)
     spray_hits: (Scalars['Float'] | null)
     spray_shots: (Scalars['Float'] | null)
     time_to_damage_count: (Scalars['Float'] | null)
     time_to_damage_sum_s: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     __typename: 'player_aim_stats_demo_var_samp_fields'
 }
 
@@ -9495,16 +9582,225 @@ export interface player_aim_stats_demo_variance_fields {
     counter_strafed_shots: (Scalars['Float'] | null)
     crosshair_angle_count: (Scalars['Float'] | null)
     crosshair_angle_sum_deg: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     headshot_hits: (Scalars['Float'] | null)
     hits: (Scalars['Float'] | null)
     hits_at_spotted: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     shots_at_spotted: (Scalars['Float'] | null)
     spray_hits: (Scalars['Float'] | null)
     spray_shots: (Scalars['Float'] | null)
     time_to_damage_count: (Scalars['Float'] | null)
     time_to_damage_sum_s: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     __typename: 'player_aim_stats_demo_variance_fields'
+}
+
+
+/** columns and relationships of "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats {
+    first_bullet_hits: Scalars['Int']
+    first_bullet_shots: Scalars['Int']
+    hits: Scalars['Int']
+    hits_spotted: Scalars['Int']
+    /** An object relationship */
+    match: matches
+    match_id: Scalars['uuid']
+    /** An object relationship */
+    match_map: match_maps
+    match_map_id: Scalars['uuid']
+    /** An object relationship */
+    player: (players | null)
+    shots: Scalars['Int']
+    shots_spotted: Scalars['Int']
+    steam_id: Scalars['bigint']
+    weapon_class: Scalars['String']
+    __typename: 'player_aim_weapon_stats'
+}
+
+
+/** aggregated selection of "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_aggregate {
+    aggregate: (player_aim_weapon_stats_aggregate_fields | null)
+    nodes: player_aim_weapon_stats[]
+    __typename: 'player_aim_weapon_stats_aggregate'
+}
+
+
+/** aggregate fields of "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_aggregate_fields {
+    avg: (player_aim_weapon_stats_avg_fields | null)
+    count: Scalars['Int']
+    max: (player_aim_weapon_stats_max_fields | null)
+    min: (player_aim_weapon_stats_min_fields | null)
+    stddev: (player_aim_weapon_stats_stddev_fields | null)
+    stddev_pop: (player_aim_weapon_stats_stddev_pop_fields | null)
+    stddev_samp: (player_aim_weapon_stats_stddev_samp_fields | null)
+    sum: (player_aim_weapon_stats_sum_fields | null)
+    var_pop: (player_aim_weapon_stats_var_pop_fields | null)
+    var_samp: (player_aim_weapon_stats_var_samp_fields | null)
+    variance: (player_aim_weapon_stats_variance_fields | null)
+    __typename: 'player_aim_weapon_stats_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface player_aim_weapon_stats_avg_fields {
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
+    hits: (Scalars['Float'] | null)
+    hits_spotted: (Scalars['Float'] | null)
+    shots: (Scalars['Float'] | null)
+    shots_spotted: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'player_aim_weapon_stats_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "player_aim_weapon_stats" */
+export type player_aim_weapon_stats_constraint = 'player_aim_weapon_stats_pkey'
+
+
+/** aggregate max on columns */
+export interface player_aim_weapon_stats_max_fields {
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
+    hits: (Scalars['Int'] | null)
+    hits_spotted: (Scalars['Int'] | null)
+    match_id: (Scalars['uuid'] | null)
+    match_map_id: (Scalars['uuid'] | null)
+    shots: (Scalars['Int'] | null)
+    shots_spotted: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    weapon_class: (Scalars['String'] | null)
+    __typename: 'player_aim_weapon_stats_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface player_aim_weapon_stats_min_fields {
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
+    hits: (Scalars['Int'] | null)
+    hits_spotted: (Scalars['Int'] | null)
+    match_id: (Scalars['uuid'] | null)
+    match_map_id: (Scalars['uuid'] | null)
+    shots: (Scalars['Int'] | null)
+    shots_spotted: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    weapon_class: (Scalars['String'] | null)
+    __typename: 'player_aim_weapon_stats_min_fields'
+}
+
+
+/** response of any mutation on the table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: player_aim_weapon_stats[]
+    __typename: 'player_aim_weapon_stats_mutation_response'
+}
+
+
+/** select columns of table "player_aim_weapon_stats" */
+export type player_aim_weapon_stats_select_column = 'first_bullet_hits' | 'first_bullet_shots' | 'hits' | 'hits_spotted' | 'match_id' | 'match_map_id' | 'shots' | 'shots_spotted' | 'steam_id' | 'weapon_class'
+
+
+/** aggregate stddev on columns */
+export interface player_aim_weapon_stats_stddev_fields {
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
+    hits: (Scalars['Float'] | null)
+    hits_spotted: (Scalars['Float'] | null)
+    shots: (Scalars['Float'] | null)
+    shots_spotted: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'player_aim_weapon_stats_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_aim_weapon_stats_stddev_pop_fields {
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
+    hits: (Scalars['Float'] | null)
+    hits_spotted: (Scalars['Float'] | null)
+    shots: (Scalars['Float'] | null)
+    shots_spotted: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'player_aim_weapon_stats_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_aim_weapon_stats_stddev_samp_fields {
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
+    hits: (Scalars['Float'] | null)
+    hits_spotted: (Scalars['Float'] | null)
+    shots: (Scalars['Float'] | null)
+    shots_spotted: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'player_aim_weapon_stats_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface player_aim_weapon_stats_sum_fields {
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
+    hits: (Scalars['Int'] | null)
+    hits_spotted: (Scalars['Int'] | null)
+    shots: (Scalars['Int'] | null)
+    shots_spotted: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'player_aim_weapon_stats_sum_fields'
+}
+
+
+/** update columns of table "player_aim_weapon_stats" */
+export type player_aim_weapon_stats_update_column = 'first_bullet_hits' | 'first_bullet_shots' | 'hits' | 'hits_spotted' | 'match_id' | 'match_map_id' | 'shots' | 'shots_spotted' | 'steam_id' | 'weapon_class'
+
+
+/** aggregate var_pop on columns */
+export interface player_aim_weapon_stats_var_pop_fields {
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
+    hits: (Scalars['Float'] | null)
+    hits_spotted: (Scalars['Float'] | null)
+    shots: (Scalars['Float'] | null)
+    shots_spotted: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'player_aim_weapon_stats_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_aim_weapon_stats_var_samp_fields {
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
+    hits: (Scalars['Float'] | null)
+    hits_spotted: (Scalars['Float'] | null)
+    shots: (Scalars['Float'] | null)
+    shots_spotted: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'player_aim_weapon_stats_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface player_aim_weapon_stats_variance_fields {
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
+    hits: (Scalars['Float'] | null)
+    hits_spotted: (Scalars['Float'] | null)
+    shots: (Scalars['Float'] | null)
+    shots_spotted: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'player_aim_weapon_stats_variance_fields'
 }
 
 
@@ -9688,6 +9984,277 @@ export interface player_assists_variance_fields {
     attacker_steam_id: (Scalars['Float'] | null)
     round: (Scalars['Float'] | null)
     __typename: 'player_assists_variance_fields'
+}
+
+
+/** columns and relationships of "player_career_stats_v" */
+export interface player_career_stats_v {
+    accuracy: (Scalars['numeric'] | null)
+    accuracy_spotted: (Scalars['numeric'] | null)
+    counter_strafe_pct: (Scalars['numeric'] | null)
+    crosshair_deg: (Scalars['numeric'] | null)
+    enemy_blind_pr: (Scalars['numeric'] | null)
+    flash_assists_pr: (Scalars['numeric'] | null)
+    hs_pct: (Scalars['numeric'] | null)
+    kast_pct: (Scalars['numeric'] | null)
+    maps: (Scalars['Int'] | null)
+    premier_rank: (Scalars['Int'] | null)
+    rounds: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    survival_pct: (Scalars['numeric'] | null)
+    time_to_damage_s: (Scalars['numeric'] | null)
+    traded_death_pct: (Scalars['numeric'] | null)
+    util_efficiency: (Scalars['numeric'] | null)
+    __typename: 'player_career_stats_v'
+}
+
+
+/** aggregated selection of "player_career_stats_v" */
+export interface player_career_stats_v_aggregate {
+    aggregate: (player_career_stats_v_aggregate_fields | null)
+    nodes: player_career_stats_v[]
+    __typename: 'player_career_stats_v_aggregate'
+}
+
+
+/** aggregate fields of "player_career_stats_v" */
+export interface player_career_stats_v_aggregate_fields {
+    avg: (player_career_stats_v_avg_fields | null)
+    count: Scalars['Int']
+    max: (player_career_stats_v_max_fields | null)
+    min: (player_career_stats_v_min_fields | null)
+    stddev: (player_career_stats_v_stddev_fields | null)
+    stddev_pop: (player_career_stats_v_stddev_pop_fields | null)
+    stddev_samp: (player_career_stats_v_stddev_samp_fields | null)
+    sum: (player_career_stats_v_sum_fields | null)
+    var_pop: (player_career_stats_v_var_pop_fields | null)
+    var_samp: (player_career_stats_v_var_samp_fields | null)
+    variance: (player_career_stats_v_variance_fields | null)
+    __typename: 'player_career_stats_v_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface player_career_stats_v_avg_fields {
+    accuracy: (Scalars['Float'] | null)
+    accuracy_spotted: (Scalars['Float'] | null)
+    counter_strafe_pct: (Scalars['Float'] | null)
+    crosshair_deg: (Scalars['Float'] | null)
+    enemy_blind_pr: (Scalars['Float'] | null)
+    flash_assists_pr: (Scalars['Float'] | null)
+    hs_pct: (Scalars['Float'] | null)
+    kast_pct: (Scalars['Float'] | null)
+    maps: (Scalars['Float'] | null)
+    premier_rank: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_pct: (Scalars['Float'] | null)
+    time_to_damage_s: (Scalars['Float'] | null)
+    traded_death_pct: (Scalars['Float'] | null)
+    util_efficiency: (Scalars['Float'] | null)
+    __typename: 'player_career_stats_v_avg_fields'
+}
+
+
+/** aggregate max on columns */
+export interface player_career_stats_v_max_fields {
+    accuracy: (Scalars['numeric'] | null)
+    accuracy_spotted: (Scalars['numeric'] | null)
+    counter_strafe_pct: (Scalars['numeric'] | null)
+    crosshair_deg: (Scalars['numeric'] | null)
+    enemy_blind_pr: (Scalars['numeric'] | null)
+    flash_assists_pr: (Scalars['numeric'] | null)
+    hs_pct: (Scalars['numeric'] | null)
+    kast_pct: (Scalars['numeric'] | null)
+    maps: (Scalars['Int'] | null)
+    premier_rank: (Scalars['Int'] | null)
+    rounds: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    survival_pct: (Scalars['numeric'] | null)
+    time_to_damage_s: (Scalars['numeric'] | null)
+    traded_death_pct: (Scalars['numeric'] | null)
+    util_efficiency: (Scalars['numeric'] | null)
+    __typename: 'player_career_stats_v_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface player_career_stats_v_min_fields {
+    accuracy: (Scalars['numeric'] | null)
+    accuracy_spotted: (Scalars['numeric'] | null)
+    counter_strafe_pct: (Scalars['numeric'] | null)
+    crosshair_deg: (Scalars['numeric'] | null)
+    enemy_blind_pr: (Scalars['numeric'] | null)
+    flash_assists_pr: (Scalars['numeric'] | null)
+    hs_pct: (Scalars['numeric'] | null)
+    kast_pct: (Scalars['numeric'] | null)
+    maps: (Scalars['Int'] | null)
+    premier_rank: (Scalars['Int'] | null)
+    rounds: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    survival_pct: (Scalars['numeric'] | null)
+    time_to_damage_s: (Scalars['numeric'] | null)
+    traded_death_pct: (Scalars['numeric'] | null)
+    util_efficiency: (Scalars['numeric'] | null)
+    __typename: 'player_career_stats_v_min_fields'
+}
+
+
+/** select columns of table "player_career_stats_v" */
+export type player_career_stats_v_select_column = 'accuracy' | 'accuracy_spotted' | 'counter_strafe_pct' | 'crosshair_deg' | 'enemy_blind_pr' | 'flash_assists_pr' | 'hs_pct' | 'kast_pct' | 'maps' | 'premier_rank' | 'rounds' | 'steam_id' | 'survival_pct' | 'time_to_damage_s' | 'traded_death_pct' | 'util_efficiency'
+
+
+/** aggregate stddev on columns */
+export interface player_career_stats_v_stddev_fields {
+    accuracy: (Scalars['Float'] | null)
+    accuracy_spotted: (Scalars['Float'] | null)
+    counter_strafe_pct: (Scalars['Float'] | null)
+    crosshair_deg: (Scalars['Float'] | null)
+    enemy_blind_pr: (Scalars['Float'] | null)
+    flash_assists_pr: (Scalars['Float'] | null)
+    hs_pct: (Scalars['Float'] | null)
+    kast_pct: (Scalars['Float'] | null)
+    maps: (Scalars['Float'] | null)
+    premier_rank: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_pct: (Scalars['Float'] | null)
+    time_to_damage_s: (Scalars['Float'] | null)
+    traded_death_pct: (Scalars['Float'] | null)
+    util_efficiency: (Scalars['Float'] | null)
+    __typename: 'player_career_stats_v_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_career_stats_v_stddev_pop_fields {
+    accuracy: (Scalars['Float'] | null)
+    accuracy_spotted: (Scalars['Float'] | null)
+    counter_strafe_pct: (Scalars['Float'] | null)
+    crosshair_deg: (Scalars['Float'] | null)
+    enemy_blind_pr: (Scalars['Float'] | null)
+    flash_assists_pr: (Scalars['Float'] | null)
+    hs_pct: (Scalars['Float'] | null)
+    kast_pct: (Scalars['Float'] | null)
+    maps: (Scalars['Float'] | null)
+    premier_rank: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_pct: (Scalars['Float'] | null)
+    time_to_damage_s: (Scalars['Float'] | null)
+    traded_death_pct: (Scalars['Float'] | null)
+    util_efficiency: (Scalars['Float'] | null)
+    __typename: 'player_career_stats_v_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_career_stats_v_stddev_samp_fields {
+    accuracy: (Scalars['Float'] | null)
+    accuracy_spotted: (Scalars['Float'] | null)
+    counter_strafe_pct: (Scalars['Float'] | null)
+    crosshair_deg: (Scalars['Float'] | null)
+    enemy_blind_pr: (Scalars['Float'] | null)
+    flash_assists_pr: (Scalars['Float'] | null)
+    hs_pct: (Scalars['Float'] | null)
+    kast_pct: (Scalars['Float'] | null)
+    maps: (Scalars['Float'] | null)
+    premier_rank: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_pct: (Scalars['Float'] | null)
+    time_to_damage_s: (Scalars['Float'] | null)
+    traded_death_pct: (Scalars['Float'] | null)
+    util_efficiency: (Scalars['Float'] | null)
+    __typename: 'player_career_stats_v_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface player_career_stats_v_sum_fields {
+    accuracy: (Scalars['numeric'] | null)
+    accuracy_spotted: (Scalars['numeric'] | null)
+    counter_strafe_pct: (Scalars['numeric'] | null)
+    crosshair_deg: (Scalars['numeric'] | null)
+    enemy_blind_pr: (Scalars['numeric'] | null)
+    flash_assists_pr: (Scalars['numeric'] | null)
+    hs_pct: (Scalars['numeric'] | null)
+    kast_pct: (Scalars['numeric'] | null)
+    maps: (Scalars['Int'] | null)
+    premier_rank: (Scalars['Int'] | null)
+    rounds: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    survival_pct: (Scalars['numeric'] | null)
+    time_to_damage_s: (Scalars['numeric'] | null)
+    traded_death_pct: (Scalars['numeric'] | null)
+    util_efficiency: (Scalars['numeric'] | null)
+    __typename: 'player_career_stats_v_sum_fields'
+}
+
+
+/** aggregate var_pop on columns */
+export interface player_career_stats_v_var_pop_fields {
+    accuracy: (Scalars['Float'] | null)
+    accuracy_spotted: (Scalars['Float'] | null)
+    counter_strafe_pct: (Scalars['Float'] | null)
+    crosshair_deg: (Scalars['Float'] | null)
+    enemy_blind_pr: (Scalars['Float'] | null)
+    flash_assists_pr: (Scalars['Float'] | null)
+    hs_pct: (Scalars['Float'] | null)
+    kast_pct: (Scalars['Float'] | null)
+    maps: (Scalars['Float'] | null)
+    premier_rank: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_pct: (Scalars['Float'] | null)
+    time_to_damage_s: (Scalars['Float'] | null)
+    traded_death_pct: (Scalars['Float'] | null)
+    util_efficiency: (Scalars['Float'] | null)
+    __typename: 'player_career_stats_v_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_career_stats_v_var_samp_fields {
+    accuracy: (Scalars['Float'] | null)
+    accuracy_spotted: (Scalars['Float'] | null)
+    counter_strafe_pct: (Scalars['Float'] | null)
+    crosshair_deg: (Scalars['Float'] | null)
+    enemy_blind_pr: (Scalars['Float'] | null)
+    flash_assists_pr: (Scalars['Float'] | null)
+    hs_pct: (Scalars['Float'] | null)
+    kast_pct: (Scalars['Float'] | null)
+    maps: (Scalars['Float'] | null)
+    premier_rank: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_pct: (Scalars['Float'] | null)
+    time_to_damage_s: (Scalars['Float'] | null)
+    traded_death_pct: (Scalars['Float'] | null)
+    util_efficiency: (Scalars['Float'] | null)
+    __typename: 'player_career_stats_v_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface player_career_stats_v_variance_fields {
+    accuracy: (Scalars['Float'] | null)
+    accuracy_spotted: (Scalars['Float'] | null)
+    counter_strafe_pct: (Scalars['Float'] | null)
+    crosshair_deg: (Scalars['Float'] | null)
+    enemy_blind_pr: (Scalars['Float'] | null)
+    flash_assists_pr: (Scalars['Float'] | null)
+    hs_pct: (Scalars['Float'] | null)
+    kast_pct: (Scalars['Float'] | null)
+    maps: (Scalars['Float'] | null)
+    premier_rank: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_pct: (Scalars['Float'] | null)
+    time_to_damage_s: (Scalars['Float'] | null)
+    traded_death_pct: (Scalars['Float'] | null)
+    util_efficiency: (Scalars['Float'] | null)
+    __typename: 'player_career_stats_v_variance_fields'
 }
 
 
@@ -11135,6 +11702,8 @@ export interface player_match_map_stats {
     deaths_t: Scalars['Int']
     decoy_throws: Scalars['Int']
     enemies_flashed: Scalars['Int']
+    first_bullet_hits: Scalars['Int']
+    first_bullet_shots: Scalars['Int']
     five_kill_rounds: Scalars['Int']
     flash_assists: Scalars['Int']
     flash_duration_count: Scalars['Int']
@@ -11163,6 +11732,7 @@ export interface player_match_map_stats {
     molotov_damage: Scalars['Int']
     molotov_throws: Scalars['Int']
     non_awp_hits: Scalars['Int']
+    on_target_frames: Scalars['Int']
     /** An object relationship */
     player: players
     rounds_ct: Scalars['Int']
@@ -11181,6 +11751,7 @@ export interface player_match_map_stats {
     three_kill_rounds: Scalars['Int']
     time_to_damage_count: Scalars['Int']
     time_to_damage_sum_s: Scalars['numeric']
+    total_engagement_frames: Scalars['Int']
     trade_kill_attempts: Scalars['Int']
     trade_kill_opportunities: Scalars['Int']
     trade_kill_successes: Scalars['Int']
@@ -11240,6 +11811,8 @@ export interface player_match_map_stats_avg_fields {
     deaths_t: (Scalars['Float'] | null)
     decoy_throws: (Scalars['Float'] | null)
     enemies_flashed: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     five_kill_rounds: (Scalars['Float'] | null)
     flash_assists: (Scalars['Float'] | null)
     flash_duration_count: (Scalars['Float'] | null)
@@ -11262,6 +11835,7 @@ export interface player_match_map_stats_avg_fields {
     molotov_damage: (Scalars['Float'] | null)
     molotov_throws: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     rounds_ct: (Scalars['Float'] | null)
     rounds_played: (Scalars['Float'] | null)
     rounds_t: (Scalars['Float'] | null)
@@ -11278,6 +11852,7 @@ export interface player_match_map_stats_avg_fields {
     three_kill_rounds: (Scalars['Float'] | null)
     time_to_damage_count: (Scalars['Float'] | null)
     time_to_damage_sum_s: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     trade_kill_attempts: (Scalars['Float'] | null)
     trade_kill_opportunities: (Scalars['Float'] | null)
     trade_kill_successes: (Scalars['Float'] | null)
@@ -11315,6 +11890,8 @@ export interface player_match_map_stats_max_fields {
     deaths_t: (Scalars['Int'] | null)
     decoy_throws: (Scalars['Int'] | null)
     enemies_flashed: (Scalars['Int'] | null)
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
     five_kill_rounds: (Scalars['Int'] | null)
     flash_assists: (Scalars['Int'] | null)
     flash_duration_count: (Scalars['Int'] | null)
@@ -11339,6 +11916,7 @@ export interface player_match_map_stats_max_fields {
     molotov_damage: (Scalars['Int'] | null)
     molotov_throws: (Scalars['Int'] | null)
     non_awp_hits: (Scalars['Int'] | null)
+    on_target_frames: (Scalars['Int'] | null)
     rounds_ct: (Scalars['Int'] | null)
     rounds_played: (Scalars['Int'] | null)
     rounds_t: (Scalars['Int'] | null)
@@ -11355,6 +11933,7 @@ export interface player_match_map_stats_max_fields {
     three_kill_rounds: (Scalars['Int'] | null)
     time_to_damage_count: (Scalars['Int'] | null)
     time_to_damage_sum_s: (Scalars['numeric'] | null)
+    total_engagement_frames: (Scalars['Int'] | null)
     trade_kill_attempts: (Scalars['Int'] | null)
     trade_kill_opportunities: (Scalars['Int'] | null)
     trade_kill_successes: (Scalars['Int'] | null)
@@ -11389,6 +11968,8 @@ export interface player_match_map_stats_min_fields {
     deaths_t: (Scalars['Int'] | null)
     decoy_throws: (Scalars['Int'] | null)
     enemies_flashed: (Scalars['Int'] | null)
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
     five_kill_rounds: (Scalars['Int'] | null)
     flash_assists: (Scalars['Int'] | null)
     flash_duration_count: (Scalars['Int'] | null)
@@ -11413,6 +11994,7 @@ export interface player_match_map_stats_min_fields {
     molotov_damage: (Scalars['Int'] | null)
     molotov_throws: (Scalars['Int'] | null)
     non_awp_hits: (Scalars['Int'] | null)
+    on_target_frames: (Scalars['Int'] | null)
     rounds_ct: (Scalars['Int'] | null)
     rounds_played: (Scalars['Int'] | null)
     rounds_t: (Scalars['Int'] | null)
@@ -11429,6 +12011,7 @@ export interface player_match_map_stats_min_fields {
     three_kill_rounds: (Scalars['Int'] | null)
     time_to_damage_count: (Scalars['Int'] | null)
     time_to_damage_sum_s: (Scalars['numeric'] | null)
+    total_engagement_frames: (Scalars['Int'] | null)
     trade_kill_attempts: (Scalars['Int'] | null)
     trade_kill_opportunities: (Scalars['Int'] | null)
     trade_kill_successes: (Scalars['Int'] | null)
@@ -11457,7 +12040,7 @@ export interface player_match_map_stats_mutation_response {
 
 
 /** select columns of table "player_match_map_stats" */
-export type player_match_map_stats_select_column = 'assists' | 'assists_ct' | 'assists_t' | 'counter_strafe_eligible_shots' | 'counter_strafed_shots' | 'crosshair_angle_count' | 'crosshair_angle_sum_deg' | 'damage' | 'damage_ct' | 'damage_t' | 'deaths' | 'deaths_ct' | 'deaths_t' | 'decoy_throws' | 'enemies_flashed' | 'five_kill_rounds' | 'flash_assists' | 'flash_duration_count' | 'flash_duration_sum' | 'flashes_thrown' | 'four_kill_rounds' | 'he_damage' | 'he_team_damage' | 'he_throws' | 'headshot_hits' | 'hits' | 'hits_at_spotted' | 'hs_kills' | 'hs_kills_ct' | 'hs_kills_t' | 'kills' | 'kills_ct' | 'kills_t' | 'knife_kills' | 'match_id' | 'match_map_id' | 'molotov_damage' | 'molotov_throws' | 'non_awp_hits' | 'rounds_ct' | 'rounds_played' | 'rounds_t' | 'shots_at_spotted' | 'shots_fired' | 'smoke_throws' | 'spotted_count' | 'spotted_with_damage_count' | 'spray_hits' | 'spray_shots' | 'steam_id' | 'team_damage' | 'team_flashed' | 'three_kill_rounds' | 'time_to_damage_count' | 'time_to_damage_sum_s' | 'trade_kill_attempts' | 'trade_kill_opportunities' | 'trade_kill_successes' | 'traded_death_attempts' | 'traded_death_opportunities' | 'traded_death_successes' | 'two_kill_rounds' | 'unused_utility_value' | 'updated_at' | 'util_on_death_count' | 'util_on_death_sum' | 'wasted_magazine_shots' | 'zeus_kills'
+export type player_match_map_stats_select_column = 'assists' | 'assists_ct' | 'assists_t' | 'counter_strafe_eligible_shots' | 'counter_strafed_shots' | 'crosshair_angle_count' | 'crosshair_angle_sum_deg' | 'damage' | 'damage_ct' | 'damage_t' | 'deaths' | 'deaths_ct' | 'deaths_t' | 'decoy_throws' | 'enemies_flashed' | 'first_bullet_hits' | 'first_bullet_shots' | 'five_kill_rounds' | 'flash_assists' | 'flash_duration_count' | 'flash_duration_sum' | 'flashes_thrown' | 'four_kill_rounds' | 'he_damage' | 'he_team_damage' | 'he_throws' | 'headshot_hits' | 'hits' | 'hits_at_spotted' | 'hs_kills' | 'hs_kills_ct' | 'hs_kills_t' | 'kills' | 'kills_ct' | 'kills_t' | 'knife_kills' | 'match_id' | 'match_map_id' | 'molotov_damage' | 'molotov_throws' | 'non_awp_hits' | 'on_target_frames' | 'rounds_ct' | 'rounds_played' | 'rounds_t' | 'shots_at_spotted' | 'shots_fired' | 'smoke_throws' | 'spotted_count' | 'spotted_with_damage_count' | 'spray_hits' | 'spray_shots' | 'steam_id' | 'team_damage' | 'team_flashed' | 'three_kill_rounds' | 'time_to_damage_count' | 'time_to_damage_sum_s' | 'total_engagement_frames' | 'trade_kill_attempts' | 'trade_kill_opportunities' | 'trade_kill_successes' | 'traded_death_attempts' | 'traded_death_opportunities' | 'traded_death_successes' | 'two_kill_rounds' | 'unused_utility_value' | 'updated_at' | 'util_on_death_count' | 'util_on_death_sum' | 'wasted_magazine_shots' | 'zeus_kills'
 
 
 /** aggregate stddev on columns */
@@ -11477,6 +12060,8 @@ export interface player_match_map_stats_stddev_fields {
     deaths_t: (Scalars['Float'] | null)
     decoy_throws: (Scalars['Float'] | null)
     enemies_flashed: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     five_kill_rounds: (Scalars['Float'] | null)
     flash_assists: (Scalars['Float'] | null)
     flash_duration_count: (Scalars['Float'] | null)
@@ -11499,6 +12084,7 @@ export interface player_match_map_stats_stddev_fields {
     molotov_damage: (Scalars['Float'] | null)
     molotov_throws: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     rounds_ct: (Scalars['Float'] | null)
     rounds_played: (Scalars['Float'] | null)
     rounds_t: (Scalars['Float'] | null)
@@ -11515,6 +12101,7 @@ export interface player_match_map_stats_stddev_fields {
     three_kill_rounds: (Scalars['Float'] | null)
     time_to_damage_count: (Scalars['Float'] | null)
     time_to_damage_sum_s: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     trade_kill_attempts: (Scalars['Float'] | null)
     trade_kill_opportunities: (Scalars['Float'] | null)
     trade_kill_successes: (Scalars['Float'] | null)
@@ -11548,6 +12135,8 @@ export interface player_match_map_stats_stddev_pop_fields {
     deaths_t: (Scalars['Float'] | null)
     decoy_throws: (Scalars['Float'] | null)
     enemies_flashed: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     five_kill_rounds: (Scalars['Float'] | null)
     flash_assists: (Scalars['Float'] | null)
     flash_duration_count: (Scalars['Float'] | null)
@@ -11570,6 +12159,7 @@ export interface player_match_map_stats_stddev_pop_fields {
     molotov_damage: (Scalars['Float'] | null)
     molotov_throws: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     rounds_ct: (Scalars['Float'] | null)
     rounds_played: (Scalars['Float'] | null)
     rounds_t: (Scalars['Float'] | null)
@@ -11586,6 +12176,7 @@ export interface player_match_map_stats_stddev_pop_fields {
     three_kill_rounds: (Scalars['Float'] | null)
     time_to_damage_count: (Scalars['Float'] | null)
     time_to_damage_sum_s: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     trade_kill_attempts: (Scalars['Float'] | null)
     trade_kill_opportunities: (Scalars['Float'] | null)
     trade_kill_successes: (Scalars['Float'] | null)
@@ -11619,6 +12210,8 @@ export interface player_match_map_stats_stddev_samp_fields {
     deaths_t: (Scalars['Float'] | null)
     decoy_throws: (Scalars['Float'] | null)
     enemies_flashed: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     five_kill_rounds: (Scalars['Float'] | null)
     flash_assists: (Scalars['Float'] | null)
     flash_duration_count: (Scalars['Float'] | null)
@@ -11641,6 +12234,7 @@ export interface player_match_map_stats_stddev_samp_fields {
     molotov_damage: (Scalars['Float'] | null)
     molotov_throws: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     rounds_ct: (Scalars['Float'] | null)
     rounds_played: (Scalars['Float'] | null)
     rounds_t: (Scalars['Float'] | null)
@@ -11657,6 +12251,7 @@ export interface player_match_map_stats_stddev_samp_fields {
     three_kill_rounds: (Scalars['Float'] | null)
     time_to_damage_count: (Scalars['Float'] | null)
     time_to_damage_sum_s: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     trade_kill_attempts: (Scalars['Float'] | null)
     trade_kill_opportunities: (Scalars['Float'] | null)
     trade_kill_successes: (Scalars['Float'] | null)
@@ -11690,6 +12285,8 @@ export interface player_match_map_stats_sum_fields {
     deaths_t: (Scalars['Int'] | null)
     decoy_throws: (Scalars['Int'] | null)
     enemies_flashed: (Scalars['Int'] | null)
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
     five_kill_rounds: (Scalars['Int'] | null)
     flash_assists: (Scalars['Int'] | null)
     flash_duration_count: (Scalars['Int'] | null)
@@ -11712,6 +12309,7 @@ export interface player_match_map_stats_sum_fields {
     molotov_damage: (Scalars['Int'] | null)
     molotov_throws: (Scalars['Int'] | null)
     non_awp_hits: (Scalars['Int'] | null)
+    on_target_frames: (Scalars['Int'] | null)
     rounds_ct: (Scalars['Int'] | null)
     rounds_played: (Scalars['Int'] | null)
     rounds_t: (Scalars['Int'] | null)
@@ -11728,6 +12326,7 @@ export interface player_match_map_stats_sum_fields {
     three_kill_rounds: (Scalars['Int'] | null)
     time_to_damage_count: (Scalars['Int'] | null)
     time_to_damage_sum_s: (Scalars['numeric'] | null)
+    total_engagement_frames: (Scalars['Int'] | null)
     trade_kill_attempts: (Scalars['Int'] | null)
     trade_kill_opportunities: (Scalars['Int'] | null)
     trade_kill_successes: (Scalars['Int'] | null)
@@ -11745,7 +12344,7 @@ export interface player_match_map_stats_sum_fields {
 
 
 /** update columns of table "player_match_map_stats" */
-export type player_match_map_stats_update_column = 'assists' | 'assists_ct' | 'assists_t' | 'counter_strafe_eligible_shots' | 'counter_strafed_shots' | 'crosshair_angle_count' | 'crosshair_angle_sum_deg' | 'damage' | 'damage_ct' | 'damage_t' | 'deaths' | 'deaths_ct' | 'deaths_t' | 'decoy_throws' | 'enemies_flashed' | 'five_kill_rounds' | 'flash_assists' | 'flash_duration_count' | 'flash_duration_sum' | 'flashes_thrown' | 'four_kill_rounds' | 'he_damage' | 'he_team_damage' | 'he_throws' | 'headshot_hits' | 'hits' | 'hits_at_spotted' | 'hs_kills' | 'hs_kills_ct' | 'hs_kills_t' | 'kills' | 'kills_ct' | 'kills_t' | 'knife_kills' | 'match_id' | 'match_map_id' | 'molotov_damage' | 'molotov_throws' | 'non_awp_hits' | 'rounds_ct' | 'rounds_played' | 'rounds_t' | 'shots_at_spotted' | 'shots_fired' | 'smoke_throws' | 'spotted_count' | 'spotted_with_damage_count' | 'spray_hits' | 'spray_shots' | 'steam_id' | 'team_damage' | 'team_flashed' | 'three_kill_rounds' | 'time_to_damage_count' | 'time_to_damage_sum_s' | 'trade_kill_attempts' | 'trade_kill_opportunities' | 'trade_kill_successes' | 'traded_death_attempts' | 'traded_death_opportunities' | 'traded_death_successes' | 'two_kill_rounds' | 'unused_utility_value' | 'updated_at' | 'util_on_death_count' | 'util_on_death_sum' | 'wasted_magazine_shots' | 'zeus_kills'
+export type player_match_map_stats_update_column = 'assists' | 'assists_ct' | 'assists_t' | 'counter_strafe_eligible_shots' | 'counter_strafed_shots' | 'crosshair_angle_count' | 'crosshair_angle_sum_deg' | 'damage' | 'damage_ct' | 'damage_t' | 'deaths' | 'deaths_ct' | 'deaths_t' | 'decoy_throws' | 'enemies_flashed' | 'first_bullet_hits' | 'first_bullet_shots' | 'five_kill_rounds' | 'flash_assists' | 'flash_duration_count' | 'flash_duration_sum' | 'flashes_thrown' | 'four_kill_rounds' | 'he_damage' | 'he_team_damage' | 'he_throws' | 'headshot_hits' | 'hits' | 'hits_at_spotted' | 'hs_kills' | 'hs_kills_ct' | 'hs_kills_t' | 'kills' | 'kills_ct' | 'kills_t' | 'knife_kills' | 'match_id' | 'match_map_id' | 'molotov_damage' | 'molotov_throws' | 'non_awp_hits' | 'on_target_frames' | 'rounds_ct' | 'rounds_played' | 'rounds_t' | 'shots_at_spotted' | 'shots_fired' | 'smoke_throws' | 'spotted_count' | 'spotted_with_damage_count' | 'spray_hits' | 'spray_shots' | 'steam_id' | 'team_damage' | 'team_flashed' | 'three_kill_rounds' | 'time_to_damage_count' | 'time_to_damage_sum_s' | 'total_engagement_frames' | 'trade_kill_attempts' | 'trade_kill_opportunities' | 'trade_kill_successes' | 'traded_death_attempts' | 'traded_death_opportunities' | 'traded_death_successes' | 'two_kill_rounds' | 'unused_utility_value' | 'updated_at' | 'util_on_death_count' | 'util_on_death_sum' | 'wasted_magazine_shots' | 'zeus_kills'
 
 
 /** aggregate var_pop on columns */
@@ -11765,6 +12364,8 @@ export interface player_match_map_stats_var_pop_fields {
     deaths_t: (Scalars['Float'] | null)
     decoy_throws: (Scalars['Float'] | null)
     enemies_flashed: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     five_kill_rounds: (Scalars['Float'] | null)
     flash_assists: (Scalars['Float'] | null)
     flash_duration_count: (Scalars['Float'] | null)
@@ -11787,6 +12388,7 @@ export interface player_match_map_stats_var_pop_fields {
     molotov_damage: (Scalars['Float'] | null)
     molotov_throws: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     rounds_ct: (Scalars['Float'] | null)
     rounds_played: (Scalars['Float'] | null)
     rounds_t: (Scalars['Float'] | null)
@@ -11803,6 +12405,7 @@ export interface player_match_map_stats_var_pop_fields {
     three_kill_rounds: (Scalars['Float'] | null)
     time_to_damage_count: (Scalars['Float'] | null)
     time_to_damage_sum_s: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     trade_kill_attempts: (Scalars['Float'] | null)
     trade_kill_opportunities: (Scalars['Float'] | null)
     trade_kill_successes: (Scalars['Float'] | null)
@@ -11836,6 +12439,8 @@ export interface player_match_map_stats_var_samp_fields {
     deaths_t: (Scalars['Float'] | null)
     decoy_throws: (Scalars['Float'] | null)
     enemies_flashed: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     five_kill_rounds: (Scalars['Float'] | null)
     flash_assists: (Scalars['Float'] | null)
     flash_duration_count: (Scalars['Float'] | null)
@@ -11858,6 +12463,7 @@ export interface player_match_map_stats_var_samp_fields {
     molotov_damage: (Scalars['Float'] | null)
     molotov_throws: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     rounds_ct: (Scalars['Float'] | null)
     rounds_played: (Scalars['Float'] | null)
     rounds_t: (Scalars['Float'] | null)
@@ -11874,6 +12480,7 @@ export interface player_match_map_stats_var_samp_fields {
     three_kill_rounds: (Scalars['Float'] | null)
     time_to_damage_count: (Scalars['Float'] | null)
     time_to_damage_sum_s: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     trade_kill_attempts: (Scalars['Float'] | null)
     trade_kill_opportunities: (Scalars['Float'] | null)
     trade_kill_successes: (Scalars['Float'] | null)
@@ -11907,6 +12514,8 @@ export interface player_match_map_stats_variance_fields {
     deaths_t: (Scalars['Float'] | null)
     decoy_throws: (Scalars['Float'] | null)
     enemies_flashed: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     five_kill_rounds: (Scalars['Float'] | null)
     flash_assists: (Scalars['Float'] | null)
     flash_duration_count: (Scalars['Float'] | null)
@@ -11929,6 +12538,7 @@ export interface player_match_map_stats_variance_fields {
     molotov_damage: (Scalars['Float'] | null)
     molotov_throws: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     rounds_ct: (Scalars['Float'] | null)
     rounds_played: (Scalars['Float'] | null)
     rounds_t: (Scalars['Float'] | null)
@@ -11945,6 +12555,7 @@ export interface player_match_map_stats_variance_fields {
     three_kill_rounds: (Scalars['Float'] | null)
     time_to_damage_count: (Scalars['Float'] | null)
     time_to_damage_sum_s: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     trade_kill_attempts: (Scalars['Float'] | null)
     trade_kill_opportunities: (Scalars['Float'] | null)
     trade_kill_successes: (Scalars['Float'] | null)
@@ -11958,6 +12569,286 @@ export interface player_match_map_stats_variance_fields {
     wasted_magazine_shots: (Scalars['Float'] | null)
     zeus_kills: (Scalars['Float'] | null)
     __typename: 'player_match_map_stats_variance_fields'
+}
+
+
+/** columns and relationships of "player_match_performance_v" */
+export interface player_match_performance_v {
+    accuracy: (Scalars['numeric'] | null)
+    accuracy_spotted: (Scalars['numeric'] | null)
+    aim_rating: (Scalars['float8'] | null)
+    counter_strafe_pct: (Scalars['numeric'] | null)
+    enemy_blind_pr: (Scalars['numeric'] | null)
+    flash_assists_pr: (Scalars['numeric'] | null)
+    hs_pct: (Scalars['numeric'] | null)
+    kast_pct: (Scalars['numeric'] | null)
+    match_id: (Scalars['uuid'] | null)
+    overall_rating: (Scalars['float8'] | null)
+    played_at: (Scalars['timestamptz'] | null)
+    positioning_rating: (Scalars['float8'] | null)
+    rounds: (Scalars['Int'] | null)
+    source: (Scalars['String'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    survival_pct: (Scalars['numeric'] | null)
+    traded_death_pct: (Scalars['numeric'] | null)
+    util_efficiency: (Scalars['numeric'] | null)
+    utility_rating: (Scalars['float8'] | null)
+    __typename: 'player_match_performance_v'
+}
+
+
+/** aggregated selection of "player_match_performance_v" */
+export interface player_match_performance_v_aggregate {
+    aggregate: (player_match_performance_v_aggregate_fields | null)
+    nodes: player_match_performance_v[]
+    __typename: 'player_match_performance_v_aggregate'
+}
+
+
+/** aggregate fields of "player_match_performance_v" */
+export interface player_match_performance_v_aggregate_fields {
+    avg: (player_match_performance_v_avg_fields | null)
+    count: Scalars['Int']
+    max: (player_match_performance_v_max_fields | null)
+    min: (player_match_performance_v_min_fields | null)
+    stddev: (player_match_performance_v_stddev_fields | null)
+    stddev_pop: (player_match_performance_v_stddev_pop_fields | null)
+    stddev_samp: (player_match_performance_v_stddev_samp_fields | null)
+    sum: (player_match_performance_v_sum_fields | null)
+    var_pop: (player_match_performance_v_var_pop_fields | null)
+    var_samp: (player_match_performance_v_var_samp_fields | null)
+    variance: (player_match_performance_v_variance_fields | null)
+    __typename: 'player_match_performance_v_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface player_match_performance_v_avg_fields {
+    accuracy: (Scalars['Float'] | null)
+    accuracy_spotted: (Scalars['Float'] | null)
+    aim_rating: (Scalars['Float'] | null)
+    counter_strafe_pct: (Scalars['Float'] | null)
+    enemy_blind_pr: (Scalars['Float'] | null)
+    flash_assists_pr: (Scalars['Float'] | null)
+    hs_pct: (Scalars['Float'] | null)
+    kast_pct: (Scalars['Float'] | null)
+    overall_rating: (Scalars['Float'] | null)
+    positioning_rating: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_pct: (Scalars['Float'] | null)
+    traded_death_pct: (Scalars['Float'] | null)
+    util_efficiency: (Scalars['Float'] | null)
+    utility_rating: (Scalars['Float'] | null)
+    __typename: 'player_match_performance_v_avg_fields'
+}
+
+
+/** aggregate max on columns */
+export interface player_match_performance_v_max_fields {
+    accuracy: (Scalars['numeric'] | null)
+    accuracy_spotted: (Scalars['numeric'] | null)
+    aim_rating: (Scalars['float8'] | null)
+    counter_strafe_pct: (Scalars['numeric'] | null)
+    enemy_blind_pr: (Scalars['numeric'] | null)
+    flash_assists_pr: (Scalars['numeric'] | null)
+    hs_pct: (Scalars['numeric'] | null)
+    kast_pct: (Scalars['numeric'] | null)
+    match_id: (Scalars['uuid'] | null)
+    overall_rating: (Scalars['float8'] | null)
+    played_at: (Scalars['timestamptz'] | null)
+    positioning_rating: (Scalars['float8'] | null)
+    rounds: (Scalars['Int'] | null)
+    source: (Scalars['String'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    survival_pct: (Scalars['numeric'] | null)
+    traded_death_pct: (Scalars['numeric'] | null)
+    util_efficiency: (Scalars['numeric'] | null)
+    utility_rating: (Scalars['float8'] | null)
+    __typename: 'player_match_performance_v_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface player_match_performance_v_min_fields {
+    accuracy: (Scalars['numeric'] | null)
+    accuracy_spotted: (Scalars['numeric'] | null)
+    aim_rating: (Scalars['float8'] | null)
+    counter_strafe_pct: (Scalars['numeric'] | null)
+    enemy_blind_pr: (Scalars['numeric'] | null)
+    flash_assists_pr: (Scalars['numeric'] | null)
+    hs_pct: (Scalars['numeric'] | null)
+    kast_pct: (Scalars['numeric'] | null)
+    match_id: (Scalars['uuid'] | null)
+    overall_rating: (Scalars['float8'] | null)
+    played_at: (Scalars['timestamptz'] | null)
+    positioning_rating: (Scalars['float8'] | null)
+    rounds: (Scalars['Int'] | null)
+    source: (Scalars['String'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    survival_pct: (Scalars['numeric'] | null)
+    traded_death_pct: (Scalars['numeric'] | null)
+    util_efficiency: (Scalars['numeric'] | null)
+    utility_rating: (Scalars['float8'] | null)
+    __typename: 'player_match_performance_v_min_fields'
+}
+
+
+/** select columns of table "player_match_performance_v" */
+export type player_match_performance_v_select_column = 'accuracy' | 'accuracy_spotted' | 'aim_rating' | 'counter_strafe_pct' | 'enemy_blind_pr' | 'flash_assists_pr' | 'hs_pct' | 'kast_pct' | 'match_id' | 'overall_rating' | 'played_at' | 'positioning_rating' | 'rounds' | 'source' | 'steam_id' | 'survival_pct' | 'traded_death_pct' | 'util_efficiency' | 'utility_rating'
+
+
+/** aggregate stddev on columns */
+export interface player_match_performance_v_stddev_fields {
+    accuracy: (Scalars['Float'] | null)
+    accuracy_spotted: (Scalars['Float'] | null)
+    aim_rating: (Scalars['Float'] | null)
+    counter_strafe_pct: (Scalars['Float'] | null)
+    enemy_blind_pr: (Scalars['Float'] | null)
+    flash_assists_pr: (Scalars['Float'] | null)
+    hs_pct: (Scalars['Float'] | null)
+    kast_pct: (Scalars['Float'] | null)
+    overall_rating: (Scalars['Float'] | null)
+    positioning_rating: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_pct: (Scalars['Float'] | null)
+    traded_death_pct: (Scalars['Float'] | null)
+    util_efficiency: (Scalars['Float'] | null)
+    utility_rating: (Scalars['Float'] | null)
+    __typename: 'player_match_performance_v_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_match_performance_v_stddev_pop_fields {
+    accuracy: (Scalars['Float'] | null)
+    accuracy_spotted: (Scalars['Float'] | null)
+    aim_rating: (Scalars['Float'] | null)
+    counter_strafe_pct: (Scalars['Float'] | null)
+    enemy_blind_pr: (Scalars['Float'] | null)
+    flash_assists_pr: (Scalars['Float'] | null)
+    hs_pct: (Scalars['Float'] | null)
+    kast_pct: (Scalars['Float'] | null)
+    overall_rating: (Scalars['Float'] | null)
+    positioning_rating: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_pct: (Scalars['Float'] | null)
+    traded_death_pct: (Scalars['Float'] | null)
+    util_efficiency: (Scalars['Float'] | null)
+    utility_rating: (Scalars['Float'] | null)
+    __typename: 'player_match_performance_v_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_match_performance_v_stddev_samp_fields {
+    accuracy: (Scalars['Float'] | null)
+    accuracy_spotted: (Scalars['Float'] | null)
+    aim_rating: (Scalars['Float'] | null)
+    counter_strafe_pct: (Scalars['Float'] | null)
+    enemy_blind_pr: (Scalars['Float'] | null)
+    flash_assists_pr: (Scalars['Float'] | null)
+    hs_pct: (Scalars['Float'] | null)
+    kast_pct: (Scalars['Float'] | null)
+    overall_rating: (Scalars['Float'] | null)
+    positioning_rating: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_pct: (Scalars['Float'] | null)
+    traded_death_pct: (Scalars['Float'] | null)
+    util_efficiency: (Scalars['Float'] | null)
+    utility_rating: (Scalars['Float'] | null)
+    __typename: 'player_match_performance_v_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface player_match_performance_v_sum_fields {
+    accuracy: (Scalars['numeric'] | null)
+    accuracy_spotted: (Scalars['numeric'] | null)
+    aim_rating: (Scalars['float8'] | null)
+    counter_strafe_pct: (Scalars['numeric'] | null)
+    enemy_blind_pr: (Scalars['numeric'] | null)
+    flash_assists_pr: (Scalars['numeric'] | null)
+    hs_pct: (Scalars['numeric'] | null)
+    kast_pct: (Scalars['numeric'] | null)
+    overall_rating: (Scalars['float8'] | null)
+    positioning_rating: (Scalars['float8'] | null)
+    rounds: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    survival_pct: (Scalars['numeric'] | null)
+    traded_death_pct: (Scalars['numeric'] | null)
+    util_efficiency: (Scalars['numeric'] | null)
+    utility_rating: (Scalars['float8'] | null)
+    __typename: 'player_match_performance_v_sum_fields'
+}
+
+
+/** aggregate var_pop on columns */
+export interface player_match_performance_v_var_pop_fields {
+    accuracy: (Scalars['Float'] | null)
+    accuracy_spotted: (Scalars['Float'] | null)
+    aim_rating: (Scalars['Float'] | null)
+    counter_strafe_pct: (Scalars['Float'] | null)
+    enemy_blind_pr: (Scalars['Float'] | null)
+    flash_assists_pr: (Scalars['Float'] | null)
+    hs_pct: (Scalars['Float'] | null)
+    kast_pct: (Scalars['Float'] | null)
+    overall_rating: (Scalars['Float'] | null)
+    positioning_rating: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_pct: (Scalars['Float'] | null)
+    traded_death_pct: (Scalars['Float'] | null)
+    util_efficiency: (Scalars['Float'] | null)
+    utility_rating: (Scalars['Float'] | null)
+    __typename: 'player_match_performance_v_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_match_performance_v_var_samp_fields {
+    accuracy: (Scalars['Float'] | null)
+    accuracy_spotted: (Scalars['Float'] | null)
+    aim_rating: (Scalars['Float'] | null)
+    counter_strafe_pct: (Scalars['Float'] | null)
+    enemy_blind_pr: (Scalars['Float'] | null)
+    flash_assists_pr: (Scalars['Float'] | null)
+    hs_pct: (Scalars['Float'] | null)
+    kast_pct: (Scalars['Float'] | null)
+    overall_rating: (Scalars['Float'] | null)
+    positioning_rating: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_pct: (Scalars['Float'] | null)
+    traded_death_pct: (Scalars['Float'] | null)
+    util_efficiency: (Scalars['Float'] | null)
+    utility_rating: (Scalars['Float'] | null)
+    __typename: 'player_match_performance_v_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface player_match_performance_v_variance_fields {
+    accuracy: (Scalars['Float'] | null)
+    accuracy_spotted: (Scalars['Float'] | null)
+    aim_rating: (Scalars['Float'] | null)
+    counter_strafe_pct: (Scalars['Float'] | null)
+    enemy_blind_pr: (Scalars['Float'] | null)
+    flash_assists_pr: (Scalars['Float'] | null)
+    hs_pct: (Scalars['Float'] | null)
+    kast_pct: (Scalars['Float'] | null)
+    overall_rating: (Scalars['Float'] | null)
+    positioning_rating: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_pct: (Scalars['Float'] | null)
+    traded_death_pct: (Scalars['Float'] | null)
+    util_efficiency: (Scalars['Float'] | null)
+    utility_rating: (Scalars['Float'] | null)
+    __typename: 'player_match_performance_v_variance_fields'
 }
 
 
@@ -11979,6 +12870,8 @@ export interface player_match_stats_v {
     deaths_t: (Scalars['Int'] | null)
     decoy_throws: (Scalars['Int'] | null)
     enemies_flashed: (Scalars['Int'] | null)
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
     five_kill_rounds: (Scalars['Int'] | null)
     flash_assists: (Scalars['Int'] | null)
     flashes_thrown: (Scalars['Int'] | null)
@@ -12000,6 +12893,7 @@ export interface player_match_stats_v {
     molotov_damage: (Scalars['Int'] | null)
     molotov_throws: (Scalars['Int'] | null)
     non_awp_hits: (Scalars['Int'] | null)
+    on_target_frames: (Scalars['Int'] | null)
     rounds_ct: (Scalars['Int'] | null)
     rounds_played: (Scalars['Int'] | null)
     rounds_t: (Scalars['Int'] | null)
@@ -12014,6 +12908,7 @@ export interface player_match_stats_v {
     team_damage: (Scalars['Int'] | null)
     team_flashed: (Scalars['Int'] | null)
     three_kill_rounds: (Scalars['Int'] | null)
+    total_engagement_frames: (Scalars['Int'] | null)
     trade_kill_attempts: (Scalars['Int'] | null)
     trade_kill_opportunities: (Scalars['Int'] | null)
     trade_kill_successes: (Scalars['Int'] | null)
@@ -12072,6 +12967,8 @@ export interface player_match_stats_v_avg_fields {
     deaths_t: (Scalars['Float'] | null)
     decoy_throws: (Scalars['Float'] | null)
     enemies_flashed: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     five_kill_rounds: (Scalars['Float'] | null)
     flash_assists: (Scalars['Float'] | null)
     flashes_thrown: (Scalars['Float'] | null)
@@ -12092,6 +12989,7 @@ export interface player_match_stats_v_avg_fields {
     molotov_damage: (Scalars['Float'] | null)
     molotov_throws: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     rounds_ct: (Scalars['Float'] | null)
     rounds_played: (Scalars['Float'] | null)
     rounds_t: (Scalars['Float'] | null)
@@ -12106,6 +13004,7 @@ export interface player_match_stats_v_avg_fields {
     team_damage: (Scalars['Float'] | null)
     team_flashed: (Scalars['Float'] | null)
     three_kill_rounds: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     trade_kill_attempts: (Scalars['Float'] | null)
     trade_kill_opportunities: (Scalars['Float'] | null)
     trade_kill_successes: (Scalars['Float'] | null)
@@ -12139,6 +13038,8 @@ export interface player_match_stats_v_max_fields {
     deaths_t: (Scalars['Int'] | null)
     decoy_throws: (Scalars['Int'] | null)
     enemies_flashed: (Scalars['Int'] | null)
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
     five_kill_rounds: (Scalars['Int'] | null)
     flash_assists: (Scalars['Int'] | null)
     flashes_thrown: (Scalars['Int'] | null)
@@ -12160,6 +13061,7 @@ export interface player_match_stats_v_max_fields {
     molotov_damage: (Scalars['Int'] | null)
     molotov_throws: (Scalars['Int'] | null)
     non_awp_hits: (Scalars['Int'] | null)
+    on_target_frames: (Scalars['Int'] | null)
     rounds_ct: (Scalars['Int'] | null)
     rounds_played: (Scalars['Int'] | null)
     rounds_t: (Scalars['Int'] | null)
@@ -12174,6 +13076,7 @@ export interface player_match_stats_v_max_fields {
     team_damage: (Scalars['Int'] | null)
     team_flashed: (Scalars['Int'] | null)
     three_kill_rounds: (Scalars['Int'] | null)
+    total_engagement_frames: (Scalars['Int'] | null)
     trade_kill_attempts: (Scalars['Int'] | null)
     trade_kill_opportunities: (Scalars['Int'] | null)
     trade_kill_successes: (Scalars['Int'] | null)
@@ -12207,6 +13110,8 @@ export interface player_match_stats_v_min_fields {
     deaths_t: (Scalars['Int'] | null)
     decoy_throws: (Scalars['Int'] | null)
     enemies_flashed: (Scalars['Int'] | null)
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
     five_kill_rounds: (Scalars['Int'] | null)
     flash_assists: (Scalars['Int'] | null)
     flashes_thrown: (Scalars['Int'] | null)
@@ -12228,6 +13133,7 @@ export interface player_match_stats_v_min_fields {
     molotov_damage: (Scalars['Int'] | null)
     molotov_throws: (Scalars['Int'] | null)
     non_awp_hits: (Scalars['Int'] | null)
+    on_target_frames: (Scalars['Int'] | null)
     rounds_ct: (Scalars['Int'] | null)
     rounds_played: (Scalars['Int'] | null)
     rounds_t: (Scalars['Int'] | null)
@@ -12242,6 +13148,7 @@ export interface player_match_stats_v_min_fields {
     team_damage: (Scalars['Int'] | null)
     team_flashed: (Scalars['Int'] | null)
     three_kill_rounds: (Scalars['Int'] | null)
+    total_engagement_frames: (Scalars['Int'] | null)
     trade_kill_attempts: (Scalars['Int'] | null)
     trade_kill_opportunities: (Scalars['Int'] | null)
     trade_kill_successes: (Scalars['Int'] | null)
@@ -12258,7 +13165,7 @@ export interface player_match_stats_v_min_fields {
 
 
 /** select columns of table "player_match_stats_v" */
-export type player_match_stats_v_select_column = 'assists' | 'assists_ct' | 'assists_t' | 'avg_crosshair_angle_deg' | 'avg_flash_duration' | 'avg_time_to_damage_s' | 'counter_strafe_eligible_shots' | 'counter_strafed_shots' | 'damage' | 'damage_ct' | 'damage_t' | 'deaths' | 'deaths_ct' | 'deaths_t' | 'decoy_throws' | 'enemies_flashed' | 'five_kill_rounds' | 'flash_assists' | 'flashes_thrown' | 'four_kill_rounds' | 'he_damage' | 'he_team_damage' | 'he_throws' | 'headshot_hits' | 'hits' | 'hits_at_spotted' | 'hs_kills' | 'hs_kills_ct' | 'hs_kills_t' | 'kills' | 'kills_ct' | 'kills_t' | 'knife_kills' | 'match_id' | 'molotov_damage' | 'molotov_throws' | 'non_awp_hits' | 'rounds_ct' | 'rounds_played' | 'rounds_t' | 'shots_at_spotted' | 'shots_fired' | 'smoke_throws' | 'spotted_count' | 'spotted_with_damage_count' | 'spray_hits' | 'spray_shots' | 'steam_id' | 'team_damage' | 'team_flashed' | 'three_kill_rounds' | 'trade_kill_attempts' | 'trade_kill_opportunities' | 'trade_kill_successes' | 'traded_death_attempts' | 'traded_death_opportunities' | 'traded_death_successes' | 'two_kill_rounds' | 'unused_utility_value' | 'utility_on_death' | 'wasted_magazine_shots' | 'zeus_kills'
+export type player_match_stats_v_select_column = 'assists' | 'assists_ct' | 'assists_t' | 'avg_crosshair_angle_deg' | 'avg_flash_duration' | 'avg_time_to_damage_s' | 'counter_strafe_eligible_shots' | 'counter_strafed_shots' | 'damage' | 'damage_ct' | 'damage_t' | 'deaths' | 'deaths_ct' | 'deaths_t' | 'decoy_throws' | 'enemies_flashed' | 'first_bullet_hits' | 'first_bullet_shots' | 'five_kill_rounds' | 'flash_assists' | 'flashes_thrown' | 'four_kill_rounds' | 'he_damage' | 'he_team_damage' | 'he_throws' | 'headshot_hits' | 'hits' | 'hits_at_spotted' | 'hs_kills' | 'hs_kills_ct' | 'hs_kills_t' | 'kills' | 'kills_ct' | 'kills_t' | 'knife_kills' | 'match_id' | 'molotov_damage' | 'molotov_throws' | 'non_awp_hits' | 'on_target_frames' | 'rounds_ct' | 'rounds_played' | 'rounds_t' | 'shots_at_spotted' | 'shots_fired' | 'smoke_throws' | 'spotted_count' | 'spotted_with_damage_count' | 'spray_hits' | 'spray_shots' | 'steam_id' | 'team_damage' | 'team_flashed' | 'three_kill_rounds' | 'total_engagement_frames' | 'trade_kill_attempts' | 'trade_kill_opportunities' | 'trade_kill_successes' | 'traded_death_attempts' | 'traded_death_opportunities' | 'traded_death_successes' | 'two_kill_rounds' | 'unused_utility_value' | 'utility_on_death' | 'wasted_magazine_shots' | 'zeus_kills'
 
 
 /** aggregate stddev on columns */
@@ -12279,6 +13186,8 @@ export interface player_match_stats_v_stddev_fields {
     deaths_t: (Scalars['Float'] | null)
     decoy_throws: (Scalars['Float'] | null)
     enemies_flashed: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     five_kill_rounds: (Scalars['Float'] | null)
     flash_assists: (Scalars['Float'] | null)
     flashes_thrown: (Scalars['Float'] | null)
@@ -12299,6 +13208,7 @@ export interface player_match_stats_v_stddev_fields {
     molotov_damage: (Scalars['Float'] | null)
     molotov_throws: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     rounds_ct: (Scalars['Float'] | null)
     rounds_played: (Scalars['Float'] | null)
     rounds_t: (Scalars['Float'] | null)
@@ -12313,6 +13223,7 @@ export interface player_match_stats_v_stddev_fields {
     team_damage: (Scalars['Float'] | null)
     team_flashed: (Scalars['Float'] | null)
     three_kill_rounds: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     trade_kill_attempts: (Scalars['Float'] | null)
     trade_kill_opportunities: (Scalars['Float'] | null)
     trade_kill_successes: (Scalars['Float'] | null)
@@ -12346,6 +13257,8 @@ export interface player_match_stats_v_stddev_pop_fields {
     deaths_t: (Scalars['Float'] | null)
     decoy_throws: (Scalars['Float'] | null)
     enemies_flashed: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     five_kill_rounds: (Scalars['Float'] | null)
     flash_assists: (Scalars['Float'] | null)
     flashes_thrown: (Scalars['Float'] | null)
@@ -12366,6 +13279,7 @@ export interface player_match_stats_v_stddev_pop_fields {
     molotov_damage: (Scalars['Float'] | null)
     molotov_throws: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     rounds_ct: (Scalars['Float'] | null)
     rounds_played: (Scalars['Float'] | null)
     rounds_t: (Scalars['Float'] | null)
@@ -12380,6 +13294,7 @@ export interface player_match_stats_v_stddev_pop_fields {
     team_damage: (Scalars['Float'] | null)
     team_flashed: (Scalars['Float'] | null)
     three_kill_rounds: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     trade_kill_attempts: (Scalars['Float'] | null)
     trade_kill_opportunities: (Scalars['Float'] | null)
     trade_kill_successes: (Scalars['Float'] | null)
@@ -12413,6 +13328,8 @@ export interface player_match_stats_v_stddev_samp_fields {
     deaths_t: (Scalars['Float'] | null)
     decoy_throws: (Scalars['Float'] | null)
     enemies_flashed: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     five_kill_rounds: (Scalars['Float'] | null)
     flash_assists: (Scalars['Float'] | null)
     flashes_thrown: (Scalars['Float'] | null)
@@ -12433,6 +13350,7 @@ export interface player_match_stats_v_stddev_samp_fields {
     molotov_damage: (Scalars['Float'] | null)
     molotov_throws: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     rounds_ct: (Scalars['Float'] | null)
     rounds_played: (Scalars['Float'] | null)
     rounds_t: (Scalars['Float'] | null)
@@ -12447,6 +13365,7 @@ export interface player_match_stats_v_stddev_samp_fields {
     team_damage: (Scalars['Float'] | null)
     team_flashed: (Scalars['Float'] | null)
     three_kill_rounds: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     trade_kill_attempts: (Scalars['Float'] | null)
     trade_kill_opportunities: (Scalars['Float'] | null)
     trade_kill_successes: (Scalars['Float'] | null)
@@ -12480,6 +13399,8 @@ export interface player_match_stats_v_sum_fields {
     deaths_t: (Scalars['Int'] | null)
     decoy_throws: (Scalars['Int'] | null)
     enemies_flashed: (Scalars['Int'] | null)
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
     five_kill_rounds: (Scalars['Int'] | null)
     flash_assists: (Scalars['Int'] | null)
     flashes_thrown: (Scalars['Int'] | null)
@@ -12500,6 +13421,7 @@ export interface player_match_stats_v_sum_fields {
     molotov_damage: (Scalars['Int'] | null)
     molotov_throws: (Scalars['Int'] | null)
     non_awp_hits: (Scalars['Int'] | null)
+    on_target_frames: (Scalars['Int'] | null)
     rounds_ct: (Scalars['Int'] | null)
     rounds_played: (Scalars['Int'] | null)
     rounds_t: (Scalars['Int'] | null)
@@ -12514,6 +13436,7 @@ export interface player_match_stats_v_sum_fields {
     team_damage: (Scalars['Int'] | null)
     team_flashed: (Scalars['Int'] | null)
     three_kill_rounds: (Scalars['Int'] | null)
+    total_engagement_frames: (Scalars['Int'] | null)
     trade_kill_attempts: (Scalars['Int'] | null)
     trade_kill_opportunities: (Scalars['Int'] | null)
     trade_kill_successes: (Scalars['Int'] | null)
@@ -12547,6 +13470,8 @@ export interface player_match_stats_v_var_pop_fields {
     deaths_t: (Scalars['Float'] | null)
     decoy_throws: (Scalars['Float'] | null)
     enemies_flashed: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     five_kill_rounds: (Scalars['Float'] | null)
     flash_assists: (Scalars['Float'] | null)
     flashes_thrown: (Scalars['Float'] | null)
@@ -12567,6 +13492,7 @@ export interface player_match_stats_v_var_pop_fields {
     molotov_damage: (Scalars['Float'] | null)
     molotov_throws: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     rounds_ct: (Scalars['Float'] | null)
     rounds_played: (Scalars['Float'] | null)
     rounds_t: (Scalars['Float'] | null)
@@ -12581,6 +13507,7 @@ export interface player_match_stats_v_var_pop_fields {
     team_damage: (Scalars['Float'] | null)
     team_flashed: (Scalars['Float'] | null)
     three_kill_rounds: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     trade_kill_attempts: (Scalars['Float'] | null)
     trade_kill_opportunities: (Scalars['Float'] | null)
     trade_kill_successes: (Scalars['Float'] | null)
@@ -12614,6 +13541,8 @@ export interface player_match_stats_v_var_samp_fields {
     deaths_t: (Scalars['Float'] | null)
     decoy_throws: (Scalars['Float'] | null)
     enemies_flashed: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     five_kill_rounds: (Scalars['Float'] | null)
     flash_assists: (Scalars['Float'] | null)
     flashes_thrown: (Scalars['Float'] | null)
@@ -12634,6 +13563,7 @@ export interface player_match_stats_v_var_samp_fields {
     molotov_damage: (Scalars['Float'] | null)
     molotov_throws: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     rounds_ct: (Scalars['Float'] | null)
     rounds_played: (Scalars['Float'] | null)
     rounds_t: (Scalars['Float'] | null)
@@ -12648,6 +13578,7 @@ export interface player_match_stats_v_var_samp_fields {
     team_damage: (Scalars['Float'] | null)
     team_flashed: (Scalars['Float'] | null)
     three_kill_rounds: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     trade_kill_attempts: (Scalars['Float'] | null)
     trade_kill_opportunities: (Scalars['Float'] | null)
     trade_kill_successes: (Scalars['Float'] | null)
@@ -12681,6 +13612,8 @@ export interface player_match_stats_v_variance_fields {
     deaths_t: (Scalars['Float'] | null)
     decoy_throws: (Scalars['Float'] | null)
     enemies_flashed: (Scalars['Float'] | null)
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
     five_kill_rounds: (Scalars['Float'] | null)
     flash_assists: (Scalars['Float'] | null)
     flashes_thrown: (Scalars['Float'] | null)
@@ -12701,6 +13634,7 @@ export interface player_match_stats_v_variance_fields {
     molotov_damage: (Scalars['Float'] | null)
     molotov_throws: (Scalars['Float'] | null)
     non_awp_hits: (Scalars['Float'] | null)
+    on_target_frames: (Scalars['Float'] | null)
     rounds_ct: (Scalars['Float'] | null)
     rounds_played: (Scalars['Float'] | null)
     rounds_t: (Scalars['Float'] | null)
@@ -12715,6 +13649,7 @@ export interface player_match_stats_v_variance_fields {
     team_damage: (Scalars['Float'] | null)
     team_flashed: (Scalars['Float'] | null)
     three_kill_rounds: (Scalars['Float'] | null)
+    total_engagement_frames: (Scalars['Float'] | null)
     trade_kill_attempts: (Scalars['Float'] | null)
     trade_kill_opportunities: (Scalars['Float'] | null)
     trade_kill_successes: (Scalars['Float'] | null)
@@ -12881,6 +13816,365 @@ export interface player_objectives_variance_fields {
     player_steam_id: (Scalars['Float'] | null)
     round: (Scalars['Float'] | null)
     __typename: 'player_objectives_variance_fields'
+}
+
+
+/** columns and relationships of "player_performance_v" */
+export interface player_performance_v {
+    accuracy_score: (Scalars['float8'] | null)
+    aim_goal: (Scalars['float8'] | null)
+    aim_rating: (Scalars['float8'] | null)
+    band: (Scalars['Int'] | null)
+    band_sample: (Scalars['bigint'] | null)
+    blind_score: (Scalars['float8'] | null)
+    counter_strafe_score: (Scalars['float8'] | null)
+    crosshair_score: (Scalars['float8'] | null)
+    flash_assists_score: (Scalars['float8'] | null)
+    hs_score: (Scalars['float8'] | null)
+    kast_score: (Scalars['float8'] | null)
+    maps: (Scalars['Int'] | null)
+    positioning_goal: (Scalars['float8'] | null)
+    positioning_rating: (Scalars['float8'] | null)
+    premier_rank: (Scalars['Int'] | null)
+    rounds: (Scalars['Int'] | null)
+    spotted_score: (Scalars['float8'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    survival_score: (Scalars['float8'] | null)
+    traded_score: (Scalars['float8'] | null)
+    ttd_score: (Scalars['float8'] | null)
+    util_eff_score: (Scalars['float8'] | null)
+    utility_goal: (Scalars['float8'] | null)
+    utility_rating: (Scalars['float8'] | null)
+    __typename: 'player_performance_v'
+}
+
+
+/** aggregated selection of "player_performance_v" */
+export interface player_performance_v_aggregate {
+    aggregate: (player_performance_v_aggregate_fields | null)
+    nodes: player_performance_v[]
+    __typename: 'player_performance_v_aggregate'
+}
+
+
+/** aggregate fields of "player_performance_v" */
+export interface player_performance_v_aggregate_fields {
+    avg: (player_performance_v_avg_fields | null)
+    count: Scalars['Int']
+    max: (player_performance_v_max_fields | null)
+    min: (player_performance_v_min_fields | null)
+    stddev: (player_performance_v_stddev_fields | null)
+    stddev_pop: (player_performance_v_stddev_pop_fields | null)
+    stddev_samp: (player_performance_v_stddev_samp_fields | null)
+    sum: (player_performance_v_sum_fields | null)
+    var_pop: (player_performance_v_var_pop_fields | null)
+    var_samp: (player_performance_v_var_samp_fields | null)
+    variance: (player_performance_v_variance_fields | null)
+    __typename: 'player_performance_v_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface player_performance_v_avg_fields {
+    accuracy_score: (Scalars['Float'] | null)
+    aim_goal: (Scalars['Float'] | null)
+    aim_rating: (Scalars['Float'] | null)
+    band: (Scalars['Float'] | null)
+    band_sample: (Scalars['Float'] | null)
+    blind_score: (Scalars['Float'] | null)
+    counter_strafe_score: (Scalars['Float'] | null)
+    crosshair_score: (Scalars['Float'] | null)
+    flash_assists_score: (Scalars['Float'] | null)
+    hs_score: (Scalars['Float'] | null)
+    kast_score: (Scalars['Float'] | null)
+    maps: (Scalars['Float'] | null)
+    positioning_goal: (Scalars['Float'] | null)
+    positioning_rating: (Scalars['Float'] | null)
+    premier_rank: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    spotted_score: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_score: (Scalars['Float'] | null)
+    traded_score: (Scalars['Float'] | null)
+    ttd_score: (Scalars['Float'] | null)
+    util_eff_score: (Scalars['Float'] | null)
+    utility_goal: (Scalars['Float'] | null)
+    utility_rating: (Scalars['Float'] | null)
+    __typename: 'player_performance_v_avg_fields'
+}
+
+
+/** aggregate max on columns */
+export interface player_performance_v_max_fields {
+    accuracy_score: (Scalars['float8'] | null)
+    aim_goal: (Scalars['float8'] | null)
+    aim_rating: (Scalars['float8'] | null)
+    band: (Scalars['Int'] | null)
+    band_sample: (Scalars['bigint'] | null)
+    blind_score: (Scalars['float8'] | null)
+    counter_strafe_score: (Scalars['float8'] | null)
+    crosshair_score: (Scalars['float8'] | null)
+    flash_assists_score: (Scalars['float8'] | null)
+    hs_score: (Scalars['float8'] | null)
+    kast_score: (Scalars['float8'] | null)
+    maps: (Scalars['Int'] | null)
+    positioning_goal: (Scalars['float8'] | null)
+    positioning_rating: (Scalars['float8'] | null)
+    premier_rank: (Scalars['Int'] | null)
+    rounds: (Scalars['Int'] | null)
+    spotted_score: (Scalars['float8'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    survival_score: (Scalars['float8'] | null)
+    traded_score: (Scalars['float8'] | null)
+    ttd_score: (Scalars['float8'] | null)
+    util_eff_score: (Scalars['float8'] | null)
+    utility_goal: (Scalars['float8'] | null)
+    utility_rating: (Scalars['float8'] | null)
+    __typename: 'player_performance_v_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface player_performance_v_min_fields {
+    accuracy_score: (Scalars['float8'] | null)
+    aim_goal: (Scalars['float8'] | null)
+    aim_rating: (Scalars['float8'] | null)
+    band: (Scalars['Int'] | null)
+    band_sample: (Scalars['bigint'] | null)
+    blind_score: (Scalars['float8'] | null)
+    counter_strafe_score: (Scalars['float8'] | null)
+    crosshair_score: (Scalars['float8'] | null)
+    flash_assists_score: (Scalars['float8'] | null)
+    hs_score: (Scalars['float8'] | null)
+    kast_score: (Scalars['float8'] | null)
+    maps: (Scalars['Int'] | null)
+    positioning_goal: (Scalars['float8'] | null)
+    positioning_rating: (Scalars['float8'] | null)
+    premier_rank: (Scalars['Int'] | null)
+    rounds: (Scalars['Int'] | null)
+    spotted_score: (Scalars['float8'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    survival_score: (Scalars['float8'] | null)
+    traded_score: (Scalars['float8'] | null)
+    ttd_score: (Scalars['float8'] | null)
+    util_eff_score: (Scalars['float8'] | null)
+    utility_goal: (Scalars['float8'] | null)
+    utility_rating: (Scalars['float8'] | null)
+    __typename: 'player_performance_v_min_fields'
+}
+
+
+/** select columns of table "player_performance_v" */
+export type player_performance_v_select_column = 'accuracy_score' | 'aim_goal' | 'aim_rating' | 'band' | 'band_sample' | 'blind_score' | 'counter_strafe_score' | 'crosshair_score' | 'flash_assists_score' | 'hs_score' | 'kast_score' | 'maps' | 'positioning_goal' | 'positioning_rating' | 'premier_rank' | 'rounds' | 'spotted_score' | 'steam_id' | 'survival_score' | 'traded_score' | 'ttd_score' | 'util_eff_score' | 'utility_goal' | 'utility_rating'
+
+
+/** aggregate stddev on columns */
+export interface player_performance_v_stddev_fields {
+    accuracy_score: (Scalars['Float'] | null)
+    aim_goal: (Scalars['Float'] | null)
+    aim_rating: (Scalars['Float'] | null)
+    band: (Scalars['Float'] | null)
+    band_sample: (Scalars['Float'] | null)
+    blind_score: (Scalars['Float'] | null)
+    counter_strafe_score: (Scalars['Float'] | null)
+    crosshair_score: (Scalars['Float'] | null)
+    flash_assists_score: (Scalars['Float'] | null)
+    hs_score: (Scalars['Float'] | null)
+    kast_score: (Scalars['Float'] | null)
+    maps: (Scalars['Float'] | null)
+    positioning_goal: (Scalars['Float'] | null)
+    positioning_rating: (Scalars['Float'] | null)
+    premier_rank: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    spotted_score: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_score: (Scalars['Float'] | null)
+    traded_score: (Scalars['Float'] | null)
+    ttd_score: (Scalars['Float'] | null)
+    util_eff_score: (Scalars['Float'] | null)
+    utility_goal: (Scalars['Float'] | null)
+    utility_rating: (Scalars['Float'] | null)
+    __typename: 'player_performance_v_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_performance_v_stddev_pop_fields {
+    accuracy_score: (Scalars['Float'] | null)
+    aim_goal: (Scalars['Float'] | null)
+    aim_rating: (Scalars['Float'] | null)
+    band: (Scalars['Float'] | null)
+    band_sample: (Scalars['Float'] | null)
+    blind_score: (Scalars['Float'] | null)
+    counter_strafe_score: (Scalars['Float'] | null)
+    crosshair_score: (Scalars['Float'] | null)
+    flash_assists_score: (Scalars['Float'] | null)
+    hs_score: (Scalars['Float'] | null)
+    kast_score: (Scalars['Float'] | null)
+    maps: (Scalars['Float'] | null)
+    positioning_goal: (Scalars['Float'] | null)
+    positioning_rating: (Scalars['Float'] | null)
+    premier_rank: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    spotted_score: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_score: (Scalars['Float'] | null)
+    traded_score: (Scalars['Float'] | null)
+    ttd_score: (Scalars['Float'] | null)
+    util_eff_score: (Scalars['Float'] | null)
+    utility_goal: (Scalars['Float'] | null)
+    utility_rating: (Scalars['Float'] | null)
+    __typename: 'player_performance_v_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_performance_v_stddev_samp_fields {
+    accuracy_score: (Scalars['Float'] | null)
+    aim_goal: (Scalars['Float'] | null)
+    aim_rating: (Scalars['Float'] | null)
+    band: (Scalars['Float'] | null)
+    band_sample: (Scalars['Float'] | null)
+    blind_score: (Scalars['Float'] | null)
+    counter_strafe_score: (Scalars['Float'] | null)
+    crosshair_score: (Scalars['Float'] | null)
+    flash_assists_score: (Scalars['Float'] | null)
+    hs_score: (Scalars['Float'] | null)
+    kast_score: (Scalars['Float'] | null)
+    maps: (Scalars['Float'] | null)
+    positioning_goal: (Scalars['Float'] | null)
+    positioning_rating: (Scalars['Float'] | null)
+    premier_rank: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    spotted_score: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_score: (Scalars['Float'] | null)
+    traded_score: (Scalars['Float'] | null)
+    ttd_score: (Scalars['Float'] | null)
+    util_eff_score: (Scalars['Float'] | null)
+    utility_goal: (Scalars['Float'] | null)
+    utility_rating: (Scalars['Float'] | null)
+    __typename: 'player_performance_v_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface player_performance_v_sum_fields {
+    accuracy_score: (Scalars['float8'] | null)
+    aim_goal: (Scalars['float8'] | null)
+    aim_rating: (Scalars['float8'] | null)
+    band: (Scalars['Int'] | null)
+    band_sample: (Scalars['bigint'] | null)
+    blind_score: (Scalars['float8'] | null)
+    counter_strafe_score: (Scalars['float8'] | null)
+    crosshair_score: (Scalars['float8'] | null)
+    flash_assists_score: (Scalars['float8'] | null)
+    hs_score: (Scalars['float8'] | null)
+    kast_score: (Scalars['float8'] | null)
+    maps: (Scalars['Int'] | null)
+    positioning_goal: (Scalars['float8'] | null)
+    positioning_rating: (Scalars['float8'] | null)
+    premier_rank: (Scalars['Int'] | null)
+    rounds: (Scalars['Int'] | null)
+    spotted_score: (Scalars['float8'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    survival_score: (Scalars['float8'] | null)
+    traded_score: (Scalars['float8'] | null)
+    ttd_score: (Scalars['float8'] | null)
+    util_eff_score: (Scalars['float8'] | null)
+    utility_goal: (Scalars['float8'] | null)
+    utility_rating: (Scalars['float8'] | null)
+    __typename: 'player_performance_v_sum_fields'
+}
+
+
+/** aggregate var_pop on columns */
+export interface player_performance_v_var_pop_fields {
+    accuracy_score: (Scalars['Float'] | null)
+    aim_goal: (Scalars['Float'] | null)
+    aim_rating: (Scalars['Float'] | null)
+    band: (Scalars['Float'] | null)
+    band_sample: (Scalars['Float'] | null)
+    blind_score: (Scalars['Float'] | null)
+    counter_strafe_score: (Scalars['Float'] | null)
+    crosshair_score: (Scalars['Float'] | null)
+    flash_assists_score: (Scalars['Float'] | null)
+    hs_score: (Scalars['Float'] | null)
+    kast_score: (Scalars['Float'] | null)
+    maps: (Scalars['Float'] | null)
+    positioning_goal: (Scalars['Float'] | null)
+    positioning_rating: (Scalars['Float'] | null)
+    premier_rank: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    spotted_score: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_score: (Scalars['Float'] | null)
+    traded_score: (Scalars['Float'] | null)
+    ttd_score: (Scalars['Float'] | null)
+    util_eff_score: (Scalars['Float'] | null)
+    utility_goal: (Scalars['Float'] | null)
+    utility_rating: (Scalars['Float'] | null)
+    __typename: 'player_performance_v_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_performance_v_var_samp_fields {
+    accuracy_score: (Scalars['Float'] | null)
+    aim_goal: (Scalars['Float'] | null)
+    aim_rating: (Scalars['Float'] | null)
+    band: (Scalars['Float'] | null)
+    band_sample: (Scalars['Float'] | null)
+    blind_score: (Scalars['Float'] | null)
+    counter_strafe_score: (Scalars['Float'] | null)
+    crosshair_score: (Scalars['Float'] | null)
+    flash_assists_score: (Scalars['Float'] | null)
+    hs_score: (Scalars['Float'] | null)
+    kast_score: (Scalars['Float'] | null)
+    maps: (Scalars['Float'] | null)
+    positioning_goal: (Scalars['Float'] | null)
+    positioning_rating: (Scalars['Float'] | null)
+    premier_rank: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    spotted_score: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_score: (Scalars['Float'] | null)
+    traded_score: (Scalars['Float'] | null)
+    ttd_score: (Scalars['Float'] | null)
+    util_eff_score: (Scalars['Float'] | null)
+    utility_goal: (Scalars['Float'] | null)
+    utility_rating: (Scalars['Float'] | null)
+    __typename: 'player_performance_v_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface player_performance_v_variance_fields {
+    accuracy_score: (Scalars['Float'] | null)
+    aim_goal: (Scalars['Float'] | null)
+    aim_rating: (Scalars['Float'] | null)
+    band: (Scalars['Float'] | null)
+    band_sample: (Scalars['Float'] | null)
+    blind_score: (Scalars['Float'] | null)
+    counter_strafe_score: (Scalars['Float'] | null)
+    crosshair_score: (Scalars['Float'] | null)
+    flash_assists_score: (Scalars['Float'] | null)
+    hs_score: (Scalars['Float'] | null)
+    kast_score: (Scalars['Float'] | null)
+    maps: (Scalars['Float'] | null)
+    positioning_goal: (Scalars['Float'] | null)
+    positioning_rating: (Scalars['Float'] | null)
+    premier_rank: (Scalars['Float'] | null)
+    rounds: (Scalars['Float'] | null)
+    spotted_score: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    survival_score: (Scalars['Float'] | null)
+    traded_score: (Scalars['Float'] | null)
+    ttd_score: (Scalars['Float'] | null)
+    util_eff_score: (Scalars['Float'] | null)
+    utility_goal: (Scalars['Float'] | null)
+    utility_rating: (Scalars['Float'] | null)
+    __typename: 'player_performance_v_variance_fields'
 }
 
 
@@ -13856,12 +15150,194 @@ export interface player_utility_variance_fields {
 }
 
 
+/** columns and relationships of "player_weapon_stats_v" */
+export interface player_weapon_stats_v {
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
+    hits: (Scalars['Int'] | null)
+    hits_spotted: (Scalars['Int'] | null)
+    match_id: (Scalars['uuid'] | null)
+    shots: (Scalars['Int'] | null)
+    shots_spotted: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    weapon_class: (Scalars['String'] | null)
+    __typename: 'player_weapon_stats_v'
+}
+
+
+/** aggregated selection of "player_weapon_stats_v" */
+export interface player_weapon_stats_v_aggregate {
+    aggregate: (player_weapon_stats_v_aggregate_fields | null)
+    nodes: player_weapon_stats_v[]
+    __typename: 'player_weapon_stats_v_aggregate'
+}
+
+
+/** aggregate fields of "player_weapon_stats_v" */
+export interface player_weapon_stats_v_aggregate_fields {
+    avg: (player_weapon_stats_v_avg_fields | null)
+    count: Scalars['Int']
+    max: (player_weapon_stats_v_max_fields | null)
+    min: (player_weapon_stats_v_min_fields | null)
+    stddev: (player_weapon_stats_v_stddev_fields | null)
+    stddev_pop: (player_weapon_stats_v_stddev_pop_fields | null)
+    stddev_samp: (player_weapon_stats_v_stddev_samp_fields | null)
+    sum: (player_weapon_stats_v_sum_fields | null)
+    var_pop: (player_weapon_stats_v_var_pop_fields | null)
+    var_samp: (player_weapon_stats_v_var_samp_fields | null)
+    variance: (player_weapon_stats_v_variance_fields | null)
+    __typename: 'player_weapon_stats_v_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface player_weapon_stats_v_avg_fields {
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
+    hits: (Scalars['Float'] | null)
+    hits_spotted: (Scalars['Float'] | null)
+    shots: (Scalars['Float'] | null)
+    shots_spotted: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'player_weapon_stats_v_avg_fields'
+}
+
+
+/** aggregate max on columns */
+export interface player_weapon_stats_v_max_fields {
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
+    hits: (Scalars['Int'] | null)
+    hits_spotted: (Scalars['Int'] | null)
+    match_id: (Scalars['uuid'] | null)
+    shots: (Scalars['Int'] | null)
+    shots_spotted: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    weapon_class: (Scalars['String'] | null)
+    __typename: 'player_weapon_stats_v_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface player_weapon_stats_v_min_fields {
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
+    hits: (Scalars['Int'] | null)
+    hits_spotted: (Scalars['Int'] | null)
+    match_id: (Scalars['uuid'] | null)
+    shots: (Scalars['Int'] | null)
+    shots_spotted: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    weapon_class: (Scalars['String'] | null)
+    __typename: 'player_weapon_stats_v_min_fields'
+}
+
+
+/** select columns of table "player_weapon_stats_v" */
+export type player_weapon_stats_v_select_column = 'first_bullet_hits' | 'first_bullet_shots' | 'hits' | 'hits_spotted' | 'match_id' | 'shots' | 'shots_spotted' | 'steam_id' | 'weapon_class'
+
+
+/** aggregate stddev on columns */
+export interface player_weapon_stats_v_stddev_fields {
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
+    hits: (Scalars['Float'] | null)
+    hits_spotted: (Scalars['Float'] | null)
+    shots: (Scalars['Float'] | null)
+    shots_spotted: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'player_weapon_stats_v_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_weapon_stats_v_stddev_pop_fields {
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
+    hits: (Scalars['Float'] | null)
+    hits_spotted: (Scalars['Float'] | null)
+    shots: (Scalars['Float'] | null)
+    shots_spotted: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'player_weapon_stats_v_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_weapon_stats_v_stddev_samp_fields {
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
+    hits: (Scalars['Float'] | null)
+    hits_spotted: (Scalars['Float'] | null)
+    shots: (Scalars['Float'] | null)
+    shots_spotted: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'player_weapon_stats_v_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface player_weapon_stats_v_sum_fields {
+    first_bullet_hits: (Scalars['Int'] | null)
+    first_bullet_shots: (Scalars['Int'] | null)
+    hits: (Scalars['Int'] | null)
+    hits_spotted: (Scalars['Int'] | null)
+    shots: (Scalars['Int'] | null)
+    shots_spotted: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'player_weapon_stats_v_sum_fields'
+}
+
+
+/** aggregate var_pop on columns */
+export interface player_weapon_stats_v_var_pop_fields {
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
+    hits: (Scalars['Float'] | null)
+    hits_spotted: (Scalars['Float'] | null)
+    shots: (Scalars['Float'] | null)
+    shots_spotted: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'player_weapon_stats_v_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_weapon_stats_v_var_samp_fields {
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
+    hits: (Scalars['Float'] | null)
+    hits_spotted: (Scalars['Float'] | null)
+    shots: (Scalars['Float'] | null)
+    shots_spotted: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'player_weapon_stats_v_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface player_weapon_stats_v_variance_fields {
+    first_bullet_hits: (Scalars['Float'] | null)
+    first_bullet_shots: (Scalars['Float'] | null)
+    hits: (Scalars['Float'] | null)
+    hits_spotted: (Scalars['Float'] | null)
+    shots: (Scalars['Float'] | null)
+    shots_spotted: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'player_weapon_stats_v_variance_fields'
+}
+
+
 /** columns and relationships of "players" */
 export interface players {
     /** An array relationship */
     abandoned_matches: abandoned_matches[]
     /** An aggregate relationship */
     abandoned_matches_aggregate: abandoned_matches_aggregate
+    /** An array relationship */
+    aim_weapon_stats: player_aim_weapon_stats[]
+    /** An aggregate relationship */
+    aim_weapon_stats_aggregate: player_aim_weapon_stats_aggregate
     /** An array relationship */
     assists: player_assists[]
     /** An aggregate relationship */
@@ -14054,6 +15530,10 @@ export interface players {
     utility_thrown: player_utility[]
     /** An aggregate relationship */
     utility_thrown_aggregate: player_utility_aggregate
+    /** An array relationship */
+    weapon_stats: player_weapon_stats_v[]
+    /** An aggregate relationship */
+    weapon_stats_aggregate: player_weapon_stats_v_aggregate
     /** A computed field, executes function "get_total_player_wins" */
     wins: (Scalars['Int'] | null)
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -14970,12 +16450,22 @@ export interface query_root {
     player_aim_stats_demo_aggregate: player_aim_stats_demo_aggregate
     /** fetch data from the table: "player_aim_stats_demo" using primary key columns */
     player_aim_stats_demo_by_pk: (player_aim_stats_demo | null)
+    /** fetch data from the table: "player_aim_weapon_stats" */
+    player_aim_weapon_stats: player_aim_weapon_stats[]
+    /** fetch aggregated fields from the table: "player_aim_weapon_stats" */
+    player_aim_weapon_stats_aggregate: player_aim_weapon_stats_aggregate
+    /** fetch data from the table: "player_aim_weapon_stats" using primary key columns */
+    player_aim_weapon_stats_by_pk: (player_aim_weapon_stats | null)
     /** An array relationship */
     player_assists: player_assists[]
     /** An aggregate relationship */
     player_assists_aggregate: player_assists_aggregate
     /** fetch data from the table: "player_assists" using primary key columns */
     player_assists_by_pk: (player_assists | null)
+    /** fetch data from the table: "player_career_stats_v" */
+    player_career_stats_v: player_career_stats_v[]
+    /** fetch aggregated fields from the table: "player_career_stats_v" */
+    player_career_stats_v_aggregate: player_career_stats_v_aggregate
     /** An array relationship */
     player_damages: player_damages[]
     /** An aggregate relationship */
@@ -15022,6 +16512,10 @@ export interface query_root {
     player_match_map_stats_aggregate: player_match_map_stats_aggregate
     /** fetch data from the table: "player_match_map_stats" using primary key columns */
     player_match_map_stats_by_pk: (player_match_map_stats | null)
+    /** fetch data from the table: "player_match_performance_v" */
+    player_match_performance_v: player_match_performance_v[]
+    /** fetch aggregated fields from the table: "player_match_performance_v" */
+    player_match_performance_v_aggregate: player_match_performance_v_aggregate
     /** fetch data from the table: "player_match_stats_v" */
     player_match_stats_v: player_match_stats_v[]
     /** fetch aggregated fields from the table: "player_match_stats_v" */
@@ -15032,6 +16526,10 @@ export interface query_root {
     player_objectives_aggregate: player_objectives_aggregate
     /** fetch data from the table: "player_objectives" using primary key columns */
     player_objectives_by_pk: (player_objectives | null)
+    /** fetch data from the table: "player_performance_v" */
+    player_performance_v: player_performance_v[]
+    /** fetch aggregated fields from the table: "player_performance_v" */
+    player_performance_v_aggregate: player_performance_v_aggregate
     /** fetch data from the table: "player_premier_rank_history" */
     player_premier_rank_history: player_premier_rank_history[]
     /** fetch aggregated fields from the table: "player_premier_rank_history" */
@@ -15068,6 +16566,10 @@ export interface query_root {
     player_utility_aggregate: player_utility_aggregate
     /** fetch data from the table: "player_utility" using primary key columns */
     player_utility_by_pk: (player_utility | null)
+    /** fetch data from the table: "player_weapon_stats_v" */
+    player_weapon_stats_v: player_weapon_stats_v[]
+    /** fetch aggregated fields from the table: "player_weapon_stats_v" */
+    player_weapon_stats_v_aggregate: player_weapon_stats_v_aggregate
     /** fetch data from the table: "players" */
     players: players[]
     /** fetch aggregated fields from the table: "players" */
@@ -16416,6 +17918,14 @@ export interface subscription_root {
     player_aim_stats_demo_by_pk: (player_aim_stats_demo | null)
     /** fetch data from the table in a streaming manner: "player_aim_stats_demo" */
     player_aim_stats_demo_stream: player_aim_stats_demo[]
+    /** fetch data from the table: "player_aim_weapon_stats" */
+    player_aim_weapon_stats: player_aim_weapon_stats[]
+    /** fetch aggregated fields from the table: "player_aim_weapon_stats" */
+    player_aim_weapon_stats_aggregate: player_aim_weapon_stats_aggregate
+    /** fetch data from the table: "player_aim_weapon_stats" using primary key columns */
+    player_aim_weapon_stats_by_pk: (player_aim_weapon_stats | null)
+    /** fetch data from the table in a streaming manner: "player_aim_weapon_stats" */
+    player_aim_weapon_stats_stream: player_aim_weapon_stats[]
     /** An array relationship */
     player_assists: player_assists[]
     /** An aggregate relationship */
@@ -16424,6 +17934,12 @@ export interface subscription_root {
     player_assists_by_pk: (player_assists | null)
     /** fetch data from the table in a streaming manner: "player_assists" */
     player_assists_stream: player_assists[]
+    /** fetch data from the table: "player_career_stats_v" */
+    player_career_stats_v: player_career_stats_v[]
+    /** fetch aggregated fields from the table: "player_career_stats_v" */
+    player_career_stats_v_aggregate: player_career_stats_v_aggregate
+    /** fetch data from the table in a streaming manner: "player_career_stats_v" */
+    player_career_stats_v_stream: player_career_stats_v[]
     /** An array relationship */
     player_damages: player_damages[]
     /** An aggregate relationship */
@@ -16486,6 +18002,12 @@ export interface subscription_root {
     player_match_map_stats_by_pk: (player_match_map_stats | null)
     /** fetch data from the table in a streaming manner: "player_match_map_stats" */
     player_match_map_stats_stream: player_match_map_stats[]
+    /** fetch data from the table: "player_match_performance_v" */
+    player_match_performance_v: player_match_performance_v[]
+    /** fetch aggregated fields from the table: "player_match_performance_v" */
+    player_match_performance_v_aggregate: player_match_performance_v_aggregate
+    /** fetch data from the table in a streaming manner: "player_match_performance_v" */
+    player_match_performance_v_stream: player_match_performance_v[]
     /** fetch data from the table: "player_match_stats_v" */
     player_match_stats_v: player_match_stats_v[]
     /** fetch aggregated fields from the table: "player_match_stats_v" */
@@ -16500,6 +18022,12 @@ export interface subscription_root {
     player_objectives_by_pk: (player_objectives | null)
     /** fetch data from the table in a streaming manner: "player_objectives" */
     player_objectives_stream: player_objectives[]
+    /** fetch data from the table: "player_performance_v" */
+    player_performance_v: player_performance_v[]
+    /** fetch aggregated fields from the table: "player_performance_v" */
+    player_performance_v_aggregate: player_performance_v_aggregate
+    /** fetch data from the table in a streaming manner: "player_performance_v" */
+    player_performance_v_stream: player_performance_v[]
     /** fetch data from the table: "player_premier_rank_history" */
     player_premier_rank_history: player_premier_rank_history[]
     /** fetch aggregated fields from the table: "player_premier_rank_history" */
@@ -16548,6 +18076,12 @@ export interface subscription_root {
     player_utility_by_pk: (player_utility | null)
     /** fetch data from the table in a streaming manner: "player_utility" */
     player_utility_stream: player_utility[]
+    /** fetch data from the table: "player_weapon_stats_v" */
+    player_weapon_stats_v: player_weapon_stats_v[]
+    /** fetch aggregated fields from the table: "player_weapon_stats_v" */
+    player_weapon_stats_v_aggregate: player_weapon_stats_v_aggregate
+    /** fetch data from the table in a streaming manner: "player_weapon_stats_v" */
+    player_weapon_stats_v_stream: player_weapon_stats_v[]
     /** fetch data from the table: "players" */
     players: players[]
     /** fetch aggregated fields from the table: "players" */
@@ -24344,6 +25878,26 @@ export interface QueryStatGenqlSelection{
     temp_blks_written?: boolean | number
     total_exec_time?: boolean | number
     total_rows?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface ReparseAllStartedOutputGenqlSelection{
+    running?: boolean | number
+    success?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface ReparseAllStatusOutputGenqlSelection{
+    canceled?: boolean | number
+    completed?: boolean | number
+    current_demo_id?: boolean | number
+    failed?: boolean | number
+    finished_at?: boolean | number
+    running?: boolean | number
+    started_at?: boolean | number
+    total?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -32440,6 +33994,7 @@ export interface match_map_demosGenqlSelection{
     download_url?: boolean | number
     duration_seconds?: boolean | number
     file?: boolean | number
+    geometry_validated?: boolean | number
     id?: boolean | number
     kills?: { __args: {
     /** JSON select path */
@@ -32503,7 +34058,11 @@ export interface match_map_demos_aggregateGenqlSelection{
     __scalar?: boolean | number
 }
 
-export interface match_map_demos_aggregate_bool_exp {count?: (match_map_demos_aggregate_bool_exp_count | null)}
+export interface match_map_demos_aggregate_bool_exp {bool_and?: (match_map_demos_aggregate_bool_exp_bool_and | null),bool_or?: (match_map_demos_aggregate_bool_exp_bool_or | null),count?: (match_map_demos_aggregate_bool_exp_count | null)}
+
+export interface match_map_demos_aggregate_bool_exp_bool_and {arguments: match_map_demos_select_column_match_map_demos_aggregate_bool_exp_bool_and_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (match_map_demos_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface match_map_demos_aggregate_bool_exp_bool_or {arguments: match_map_demos_select_column_match_map_demos_aggregate_bool_exp_bool_or_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (match_map_demos_bool_exp | null),predicate: Boolean_comparison_exp}
 
 export interface match_map_demos_aggregate_bool_exp_count {arguments?: (match_map_demos_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (match_map_demos_bool_exp | null),predicate: Int_comparison_exp}
 
@@ -32557,7 +34116,7 @@ export interface match_map_demos_avg_order_by {duration_seconds?: (order_by | nu
 
 
 /** Boolean expression to filter rows from the table "match_map_demos". All fields are combined with a logical 'AND'. */
-export interface match_map_demos_bool_exp {_and?: (match_map_demos_bool_exp[] | null),_not?: (match_map_demos_bool_exp | null),_or?: (match_map_demos_bool_exp[] | null),bombs?: (jsonb_comparison_exp | null),clip_render_jobs?: (clip_render_jobs_bool_exp | null),clip_render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),created_at?: (timestamptz_comparison_exp | null),cs2_build?: (String_comparison_exp | null),demo_sessions?: (match_demo_sessions_bool_exp | null),demo_sessions_aggregate?: (match_demo_sessions_aggregate_bool_exp | null),download_url?: (String_comparison_exp | null),duration_seconds?: (Float_comparison_exp | null),file?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),kills?: (jsonb_comparison_exp | null),map_name?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_clips?: (match_clips_bool_exp | null),match_clips_aggregate?: (match_clips_aggregate_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),metadata_parsed_at?: (timestamptz_comparison_exp | null),playback_file?: (String_comparison_exp | null),playback_size?: (Int_comparison_exp | null),playback_url?: (String_comparison_exp | null),players?: (jsonb_comparison_exp | null),round_ticks?: (jsonb_comparison_exp | null),size?: (Int_comparison_exp | null),tick_rate?: (Float_comparison_exp | null),total_ticks?: (Int_comparison_exp | null),workshop_id?: (String_comparison_exp | null)}
+export interface match_map_demos_bool_exp {_and?: (match_map_demos_bool_exp[] | null),_not?: (match_map_demos_bool_exp | null),_or?: (match_map_demos_bool_exp[] | null),bombs?: (jsonb_comparison_exp | null),clip_render_jobs?: (clip_render_jobs_bool_exp | null),clip_render_jobs_aggregate?: (clip_render_jobs_aggregate_bool_exp | null),created_at?: (timestamptz_comparison_exp | null),cs2_build?: (String_comparison_exp | null),demo_sessions?: (match_demo_sessions_bool_exp | null),demo_sessions_aggregate?: (match_demo_sessions_aggregate_bool_exp | null),download_url?: (String_comparison_exp | null),duration_seconds?: (Float_comparison_exp | null),file?: (String_comparison_exp | null),geometry_validated?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),kills?: (jsonb_comparison_exp | null),map_name?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_clips?: (match_clips_bool_exp | null),match_clips_aggregate?: (match_clips_aggregate_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),metadata_parsed_at?: (timestamptz_comparison_exp | null),playback_file?: (String_comparison_exp | null),playback_size?: (Int_comparison_exp | null),playback_url?: (String_comparison_exp | null),players?: (jsonb_comparison_exp | null),round_ticks?: (jsonb_comparison_exp | null),size?: (Int_comparison_exp | null),tick_rate?: (Float_comparison_exp | null),total_ticks?: (Int_comparison_exp | null),workshop_id?: (String_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -32577,7 +34136,7 @@ export interface match_map_demos_inc_input {playback_size?: (Scalars['Int'] | nu
 
 
 /** input type for inserting data into table "match_map_demos" */
-export interface match_map_demos_insert_input {bombs?: (Scalars['jsonb'] | null),clip_render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),created_at?: (Scalars['timestamptz'] | null),cs2_build?: (Scalars['String'] | null),demo_sessions?: (match_demo_sessions_arr_rel_insert_input | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_clips?: (match_clips_arr_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),playback_file?: (Scalars['String'] | null),playback_size?: (Scalars['Int'] | null),players?: (Scalars['jsonb'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
+export interface match_map_demos_insert_input {bombs?: (Scalars['jsonb'] | null),clip_render_jobs?: (clip_render_jobs_arr_rel_insert_input | null),created_at?: (Scalars['timestamptz'] | null),cs2_build?: (Scalars['String'] | null),demo_sessions?: (match_demo_sessions_arr_rel_insert_input | null),file?: (Scalars['String'] | null),geometry_validated?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_clips?: (match_clips_arr_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),playback_file?: (Scalars['String'] | null),playback_size?: (Scalars['Int'] | null),players?: (Scalars['jsonb'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -32662,7 +34221,7 @@ export interface match_map_demos_on_conflict {constraint: match_map_demos_constr
 
 
 /** Ordering options when selecting data from "match_map_demos". */
-export interface match_map_demos_order_by {bombs?: (order_by | null),clip_render_jobs_aggregate?: (clip_render_jobs_aggregate_order_by | null),created_at?: (order_by | null),cs2_build?: (order_by | null),demo_sessions_aggregate?: (match_demo_sessions_aggregate_order_by | null),download_url?: (order_by | null),duration_seconds?: (order_by | null),file?: (order_by | null),id?: (order_by | null),kills?: (order_by | null),map_name?: (order_by | null),match?: (matches_order_by | null),match_clips_aggregate?: (match_clips_aggregate_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),metadata_parsed_at?: (order_by | null),playback_file?: (order_by | null),playback_size?: (order_by | null),playback_url?: (order_by | null),players?: (order_by | null),round_ticks?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null),workshop_id?: (order_by | null)}
+export interface match_map_demos_order_by {bombs?: (order_by | null),clip_render_jobs_aggregate?: (clip_render_jobs_aggregate_order_by | null),created_at?: (order_by | null),cs2_build?: (order_by | null),demo_sessions_aggregate?: (match_demo_sessions_aggregate_order_by | null),download_url?: (order_by | null),duration_seconds?: (order_by | null),file?: (order_by | null),geometry_validated?: (order_by | null),id?: (order_by | null),kills?: (order_by | null),map_name?: (order_by | null),match?: (matches_order_by | null),match_clips_aggregate?: (match_clips_aggregate_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),metadata_parsed_at?: (order_by | null),playback_file?: (order_by | null),playback_size?: (order_by | null),playback_url?: (order_by | null),players?: (order_by | null),round_ticks?: (order_by | null),size?: (order_by | null),tick_rate?: (order_by | null),total_ticks?: (order_by | null),workshop_id?: (order_by | null)}
 
 
 /** primary key columns input for table: match_map_demos */
@@ -32674,7 +34233,7 @@ export interface match_map_demos_prepend_input {bombs?: (Scalars['jsonb'] | null
 
 
 /** input type for updating data in table "match_map_demos" */
-export interface match_map_demos_set_input {bombs?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),cs2_build?: (Scalars['String'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),playback_file?: (Scalars['String'] | null),playback_size?: (Scalars['Int'] | null),players?: (Scalars['jsonb'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
+export interface match_map_demos_set_input {bombs?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),cs2_build?: (Scalars['String'] | null),file?: (Scalars['String'] | null),geometry_validated?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),playback_file?: (Scalars['String'] | null),playback_size?: (Scalars['Int'] | null),players?: (Scalars['jsonb'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -32734,7 +34293,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_map_demos_stream_cursor_value_input {bombs?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),cs2_build?: (Scalars['String'] | null),duration_seconds?: (Scalars['Float'] | null),file?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),playback_file?: (Scalars['String'] | null),playback_size?: (Scalars['Int'] | null),players?: (Scalars['jsonb'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
+export interface match_map_demos_stream_cursor_value_input {bombs?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),cs2_build?: (Scalars['String'] | null),duration_seconds?: (Scalars['Float'] | null),file?: (Scalars['String'] | null),geometry_validated?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),kills?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),metadata_parsed_at?: (Scalars['timestamptz'] | null),playback_file?: (Scalars['String'] | null),playback_size?: (Scalars['Int'] | null),players?: (Scalars['jsonb'] | null),round_ticks?: (Scalars['jsonb'] | null),size?: (Scalars['Int'] | null),tick_rate?: (Scalars['Float'] | null),total_ticks?: (Scalars['Int'] | null),workshop_id?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -35804,6 +37363,8 @@ export interface mutation_rootGenqlSelection{
     cancelClipRenderBatch?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid']} })
     /** cancelMatch */
     cancelMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
+    /** Request cancellation of the in-progress reparse-all-demos run (admin only). Stops after the current demo finishes. */
+    cancelReparseAllDemos?: SuccessOutputGenqlSelection
     /** checkIntoMatch */
     checkIntoMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     /** Delete terminal-state clip_render_jobs rows for a single match_map batch. */
@@ -36190,6 +37751,12 @@ export interface mutation_rootGenqlSelection{
     where: player_aim_stats_demo_bool_exp} })
     /** delete single row from the table: "player_aim_stats_demo" */
     delete_player_aim_stats_demo_by_pk?: (player_aim_stats_demoGenqlSelection & { __args: {attacker_steam_id: Scalars['bigint'], match_map_id: Scalars['uuid']} })
+    /** delete data from the table: "player_aim_weapon_stats" */
+    delete_player_aim_weapon_stats?: (player_aim_weapon_stats_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: player_aim_weapon_stats_bool_exp} })
+    /** delete single row from the table: "player_aim_weapon_stats" */
+    delete_player_aim_weapon_stats_by_pk?: (player_aim_weapon_statsGenqlSelection & { __args: {match_map_id: Scalars['uuid'], steam_id: Scalars['bigint'], weapon_class: Scalars['String']} })
     /** delete data from the table: "player_assists" */
     delete_player_assists?: (player_assists_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -37139,6 +38706,18 @@ export interface mutation_rootGenqlSelection{
     object: player_aim_stats_demo_insert_input, 
     /** upsert condition */
     on_conflict?: (player_aim_stats_demo_on_conflict | null)} })
+    /** insert data into the table: "player_aim_weapon_stats" */
+    insert_player_aim_weapon_stats?: (player_aim_weapon_stats_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: player_aim_weapon_stats_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (player_aim_weapon_stats_on_conflict | null)} })
+    /** insert a single row into the table: "player_aim_weapon_stats" */
+    insert_player_aim_weapon_stats_one?: (player_aim_weapon_statsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: player_aim_weapon_stats_insert_input, 
+    /** upsert condition */
+    on_conflict?: (player_aim_weapon_stats_on_conflict | null)} })
     /** insert data into the table: "player_assists" */
     insert_player_assists?: (player_assists_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -37622,6 +39201,10 @@ export interface mutation_rootGenqlSelection{
     removeFixtures?: SuccessOutputGenqlSelection
     /** Rename file or directory on game server */
     renameServerItem?: (SuccessOutputGenqlSelection & { __args: {new_path: Scalars['String'], node_id: Scalars['String'], old_path: Scalars['String'], server_id?: (Scalars['String'] | null)} })
+    /** Re-parse every demo in the system (admin only). Runs one demo at a time in the background; this can take a very long time. Track via reparseAllDemosStatus. */
+    reparseAllDemos?: ReparseAllStartedOutputGenqlSelection
+    /** Return the progress of the reparse-all-demos run (admin only). */
+    reparseAllDemosStatus?: ReparseAllStatusOutputGenqlSelection
     /** Re-parse demo metadata for a match map (admin only) */
     reparseDemo?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid']} })
     /** Re-parse all demos across every map for a match (admin only). Fires in the background and returns immediately. */
@@ -38793,6 +40376,24 @@ export interface mutation_rootGenqlSelection{
     update_player_aim_stats_demo_many?: (player_aim_stats_demo_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: player_aim_stats_demo_updates[]} })
+    /** update data of the table: "player_aim_weapon_stats" */
+    update_player_aim_weapon_stats?: (player_aim_weapon_stats_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (player_aim_weapon_stats_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (player_aim_weapon_stats_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: player_aim_weapon_stats_bool_exp} })
+    /** update single row of the table: "player_aim_weapon_stats" */
+    update_player_aim_weapon_stats_by_pk?: (player_aim_weapon_statsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (player_aim_weapon_stats_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (player_aim_weapon_stats_set_input | null), pk_columns: player_aim_weapon_stats_pk_columns_input} })
+    /** update multiples rows of table: "player_aim_weapon_stats" */
+    update_player_aim_weapon_stats_many?: (player_aim_weapon_stats_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: player_aim_weapon_stats_updates[]} })
     /** update data of the table: "player_assists" */
     update_player_assists?: (player_assists_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -40552,6 +42153,8 @@ export interface player_aim_stats_demoGenqlSelection{
     counter_strafed_shots?: boolean | number
     crosshair_angle_count?: boolean | number
     crosshair_angle_sum_deg?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     headshot_hits?: boolean | number
     hits?: boolean | number
     hits_at_spotted?: boolean | number
@@ -40562,11 +42165,13 @@ export interface player_aim_stats_demoGenqlSelection{
     match_map?: match_mapsGenqlSelection
     match_map_id?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     shots_at_spotted?: boolean | number
     spray_hits?: boolean | number
     spray_shots?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40606,30 +42211,34 @@ export interface player_aim_stats_demo_avg_fieldsGenqlSelection{
     counter_strafed_shots?: boolean | number
     crosshair_angle_count?: boolean | number
     crosshair_angle_sum_deg?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     headshot_hits?: boolean | number
     hits?: boolean | number
     hits_at_spotted?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     shots_at_spotted?: boolean | number
     spray_hits?: boolean | number
     spray_shots?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** Boolean expression to filter rows from the table "player_aim_stats_demo". All fields are combined with a logical 'AND'. */
-export interface player_aim_stats_demo_bool_exp {_and?: (player_aim_stats_demo_bool_exp[] | null),_not?: (player_aim_stats_demo_bool_exp | null),_or?: (player_aim_stats_demo_bool_exp[] | null),attacker?: (players_bool_exp | null),attacker_steam_id?: (bigint_comparison_exp | null),counter_strafe_eligible_shots?: (Int_comparison_exp | null),counter_strafed_shots?: (Int_comparison_exp | null),crosshair_angle_count?: (Int_comparison_exp | null),crosshair_angle_sum_deg?: (numeric_comparison_exp | null),headshot_hits?: (Int_comparison_exp | null),hits?: (Int_comparison_exp | null),hits_at_spotted?: (Int_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),non_awp_hits?: (Int_comparison_exp | null),shots_at_spotted?: (Int_comparison_exp | null),spray_hits?: (Int_comparison_exp | null),spray_shots?: (Int_comparison_exp | null),time_to_damage_count?: (Int_comparison_exp | null),time_to_damage_sum_s?: (numeric_comparison_exp | null)}
+export interface player_aim_stats_demo_bool_exp {_and?: (player_aim_stats_demo_bool_exp[] | null),_not?: (player_aim_stats_demo_bool_exp | null),_or?: (player_aim_stats_demo_bool_exp[] | null),attacker?: (players_bool_exp | null),attacker_steam_id?: (bigint_comparison_exp | null),counter_strafe_eligible_shots?: (Int_comparison_exp | null),counter_strafed_shots?: (Int_comparison_exp | null),crosshair_angle_count?: (Int_comparison_exp | null),crosshair_angle_sum_deg?: (numeric_comparison_exp | null),first_bullet_hits?: (Int_comparison_exp | null),first_bullet_shots?: (Int_comparison_exp | null),headshot_hits?: (Int_comparison_exp | null),hits?: (Int_comparison_exp | null),hits_at_spotted?: (Int_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),non_awp_hits?: (Int_comparison_exp | null),on_target_frames?: (Int_comparison_exp | null),shots_at_spotted?: (Int_comparison_exp | null),spray_hits?: (Int_comparison_exp | null),spray_shots?: (Int_comparison_exp | null),time_to_damage_count?: (Int_comparison_exp | null),time_to_damage_sum_s?: (numeric_comparison_exp | null),total_engagement_frames?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "player_aim_stats_demo" */
-export interface player_aim_stats_demo_inc_input {attacker_steam_id?: (Scalars['bigint'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),non_awp_hits?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null)}
+export interface player_aim_stats_demo_inc_input {attacker_steam_id?: (Scalars['bigint'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),non_awp_hits?: (Scalars['Int'] | null),on_target_frames?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null),total_engagement_frames?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "player_aim_stats_demo" */
-export interface player_aim_stats_demo_insert_input {attacker?: (players_obj_rel_insert_input | null),attacker_steam_id?: (Scalars['bigint'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),non_awp_hits?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null)}
+export interface player_aim_stats_demo_insert_input {attacker?: (players_obj_rel_insert_input | null),attacker_steam_id?: (Scalars['bigint'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),non_awp_hits?: (Scalars['Int'] | null),on_target_frames?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null),total_engagement_frames?: (Scalars['Int'] | null)}
 
 
 /** aggregate max on columns */
@@ -40639,17 +42248,21 @@ export interface player_aim_stats_demo_max_fieldsGenqlSelection{
     counter_strafed_shots?: boolean | number
     crosshair_angle_count?: boolean | number
     crosshair_angle_sum_deg?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     headshot_hits?: boolean | number
     hits?: boolean | number
     hits_at_spotted?: boolean | number
     match_id?: boolean | number
     match_map_id?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     shots_at_spotted?: boolean | number
     spray_hits?: boolean | number
     spray_shots?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40662,17 +42275,21 @@ export interface player_aim_stats_demo_min_fieldsGenqlSelection{
     counter_strafed_shots?: boolean | number
     crosshair_angle_count?: boolean | number
     crosshair_angle_sum_deg?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     headshot_hits?: boolean | number
     hits?: boolean | number
     hits_at_spotted?: boolean | number
     match_id?: boolean | number
     match_map_id?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     shots_at_spotted?: boolean | number
     spray_hits?: boolean | number
     spray_shots?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40694,7 +42311,7 @@ export interface player_aim_stats_demo_on_conflict {constraint: player_aim_stats
 
 
 /** Ordering options when selecting data from "player_aim_stats_demo". */
-export interface player_aim_stats_demo_order_by {attacker?: (players_order_by | null),attacker_steam_id?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),non_awp_hits?: (order_by | null),shots_at_spotted?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null)}
+export interface player_aim_stats_demo_order_by {attacker?: (players_order_by | null),attacker_steam_id?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),shots_at_spotted?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),total_engagement_frames?: (order_by | null)}
 
 
 /** primary key columns input for table: player_aim_stats_demo */
@@ -40702,7 +42319,7 @@ export interface player_aim_stats_demo_pk_columns_input {attacker_steam_id: Scal
 
 
 /** input type for updating data in table "player_aim_stats_demo" */
-export interface player_aim_stats_demo_set_input {attacker_steam_id?: (Scalars['bigint'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),non_awp_hits?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null)}
+export interface player_aim_stats_demo_set_input {attacker_steam_id?: (Scalars['bigint'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),non_awp_hits?: (Scalars['Int'] | null),on_target_frames?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null),total_engagement_frames?: (Scalars['Int'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -40712,15 +42329,19 @@ export interface player_aim_stats_demo_stddev_fieldsGenqlSelection{
     counter_strafed_shots?: boolean | number
     crosshair_angle_count?: boolean | number
     crosshair_angle_sum_deg?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     headshot_hits?: boolean | number
     hits?: boolean | number
     hits_at_spotted?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     shots_at_spotted?: boolean | number
     spray_hits?: boolean | number
     spray_shots?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40733,15 +42354,19 @@ export interface player_aim_stats_demo_stddev_pop_fieldsGenqlSelection{
     counter_strafed_shots?: boolean | number
     crosshair_angle_count?: boolean | number
     crosshair_angle_sum_deg?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     headshot_hits?: boolean | number
     hits?: boolean | number
     hits_at_spotted?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     shots_at_spotted?: boolean | number
     spray_hits?: boolean | number
     spray_shots?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40754,15 +42379,19 @@ export interface player_aim_stats_demo_stddev_samp_fieldsGenqlSelection{
     counter_strafed_shots?: boolean | number
     crosshair_angle_count?: boolean | number
     crosshair_angle_sum_deg?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     headshot_hits?: boolean | number
     hits?: boolean | number
     hits_at_spotted?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     shots_at_spotted?: boolean | number
     spray_hits?: boolean | number
     spray_shots?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40777,7 +42406,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface player_aim_stats_demo_stream_cursor_value_input {attacker_steam_id?: (Scalars['bigint'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),non_awp_hits?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null)}
+export interface player_aim_stats_demo_stream_cursor_value_input {attacker_steam_id?: (Scalars['bigint'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),non_awp_hits?: (Scalars['Int'] | null),on_target_frames?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null),total_engagement_frames?: (Scalars['Int'] | null)}
 
 
 /** aggregate sum on columns */
@@ -40787,15 +42416,19 @@ export interface player_aim_stats_demo_sum_fieldsGenqlSelection{
     counter_strafed_shots?: boolean | number
     crosshair_angle_count?: boolean | number
     crosshair_angle_sum_deg?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     headshot_hits?: boolean | number
     hits?: boolean | number
     hits_at_spotted?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     shots_at_spotted?: boolean | number
     spray_hits?: boolean | number
     spray_shots?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40816,15 +42449,19 @@ export interface player_aim_stats_demo_var_pop_fieldsGenqlSelection{
     counter_strafed_shots?: boolean | number
     crosshair_angle_count?: boolean | number
     crosshair_angle_sum_deg?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     headshot_hits?: boolean | number
     hits?: boolean | number
     hits_at_spotted?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     shots_at_spotted?: boolean | number
     spray_hits?: boolean | number
     spray_shots?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40837,15 +42474,19 @@ export interface player_aim_stats_demo_var_samp_fieldsGenqlSelection{
     counter_strafed_shots?: boolean | number
     crosshair_angle_count?: boolean | number
     crosshair_angle_sum_deg?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     headshot_hits?: boolean | number
     hits?: boolean | number
     hits_at_spotted?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     shots_at_spotted?: boolean | number
     spray_hits?: boolean | number
     spray_shots?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40858,18 +42499,331 @@ export interface player_aim_stats_demo_variance_fieldsGenqlSelection{
     counter_strafed_shots?: boolean | number
     crosshair_angle_count?: boolean | number
     crosshair_angle_sum_deg?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     headshot_hits?: boolean | number
     hits?: boolean | number
     hits_at_spotted?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     shots_at_spotted?: boolean | number
     spray_hits?: boolean | number
     spray_shots?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+
+/** columns and relationships of "player_aim_weapon_stats" */
+export interface player_aim_weapon_statsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    /** An object relationship */
+    match?: matchesGenqlSelection
+    match_id?: boolean | number
+    /** An object relationship */
+    match_map?: match_mapsGenqlSelection
+    match_map_id?: boolean | number
+    /** An object relationship */
+    player?: playersGenqlSelection
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    weapon_class?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_aggregateGenqlSelection{
+    aggregate?: player_aim_weapon_stats_aggregate_fieldsGenqlSelection
+    nodes?: player_aim_weapon_statsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface player_aim_weapon_stats_aggregate_bool_exp {count?: (player_aim_weapon_stats_aggregate_bool_exp_count | null)}
+
+export interface player_aim_weapon_stats_aggregate_bool_exp_count {arguments?: (player_aim_weapon_stats_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (player_aim_weapon_stats_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_aggregate_fieldsGenqlSelection{
+    avg?: player_aim_weapon_stats_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (player_aim_weapon_stats_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: player_aim_weapon_stats_max_fieldsGenqlSelection
+    min?: player_aim_weapon_stats_min_fieldsGenqlSelection
+    stddev?: player_aim_weapon_stats_stddev_fieldsGenqlSelection
+    stddev_pop?: player_aim_weapon_stats_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: player_aim_weapon_stats_stddev_samp_fieldsGenqlSelection
+    sum?: player_aim_weapon_stats_sum_fieldsGenqlSelection
+    var_pop?: player_aim_weapon_stats_var_pop_fieldsGenqlSelection
+    var_samp?: player_aim_weapon_stats_var_samp_fieldsGenqlSelection
+    variance?: player_aim_weapon_stats_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_aggregate_order_by {avg?: (player_aim_weapon_stats_avg_order_by | null),count?: (order_by | null),max?: (player_aim_weapon_stats_max_order_by | null),min?: (player_aim_weapon_stats_min_order_by | null),stddev?: (player_aim_weapon_stats_stddev_order_by | null),stddev_pop?: (player_aim_weapon_stats_stddev_pop_order_by | null),stddev_samp?: (player_aim_weapon_stats_stddev_samp_order_by | null),sum?: (player_aim_weapon_stats_sum_order_by | null),var_pop?: (player_aim_weapon_stats_var_pop_order_by | null),var_samp?: (player_aim_weapon_stats_var_samp_order_by | null),variance?: (player_aim_weapon_stats_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_arr_rel_insert_input {data: player_aim_weapon_stats_insert_input[],
+/** upsert condition */
+on_conflict?: (player_aim_weapon_stats_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface player_aim_weapon_stats_avg_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_avg_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "player_aim_weapon_stats". All fields are combined with a logical 'AND'. */
+export interface player_aim_weapon_stats_bool_exp {_and?: (player_aim_weapon_stats_bool_exp[] | null),_not?: (player_aim_weapon_stats_bool_exp | null),_or?: (player_aim_weapon_stats_bool_exp[] | null),first_bullet_hits?: (Int_comparison_exp | null),first_bullet_shots?: (Int_comparison_exp | null),hits?: (Int_comparison_exp | null),hits_spotted?: (Int_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),shots?: (Int_comparison_exp | null),shots_spotted?: (Int_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),weapon_class?: (String_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_inc_input {first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_spotted?: (Scalars['Int'] | null),shots?: (Scalars['Int'] | null),shots_spotted?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_insert_input {first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_spotted?: (Scalars['Int'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),shots?: (Scalars['Int'] | null),shots_spotted?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),weapon_class?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface player_aim_weapon_stats_max_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    match_id?: boolean | number
+    match_map_id?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    weapon_class?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_max_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null),weapon_class?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface player_aim_weapon_stats_min_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    match_id?: boolean | number
+    match_map_id?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    weapon_class?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_min_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null),weapon_class?: (order_by | null)}
+
+
+/** response of any mutation on the table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: player_aim_weapon_statsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_on_conflict {constraint: player_aim_weapon_stats_constraint,update_columns?: player_aim_weapon_stats_update_column[],where?: (player_aim_weapon_stats_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "player_aim_weapon_stats". */
+export interface player_aim_weapon_stats_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),player?: (players_order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null),weapon_class?: (order_by | null)}
+
+
+/** primary key columns input for table: player_aim_weapon_stats */
+export interface player_aim_weapon_stats_pk_columns_input {match_map_id: Scalars['uuid'],steam_id: Scalars['bigint'],weapon_class: Scalars['String']}
+
+
+/** input type for updating data in table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_set_input {first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_spotted?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),shots?: (Scalars['Int'] | null),shots_spotted?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),weapon_class?: (Scalars['String'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface player_aim_weapon_stats_stddev_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_stddev_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_aim_weapon_stats_stddev_pop_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_stddev_pop_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_aim_weapon_stats_stddev_samp_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_stddev_samp_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** Streaming cursor of the table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: player_aim_weapon_stats_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface player_aim_weapon_stats_stream_cursor_value_input {first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_spotted?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),shots?: (Scalars['Int'] | null),shots_spotted?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),weapon_class?: (Scalars['String'] | null)}
+
+
+/** aggregate sum on columns */
+export interface player_aim_weapon_stats_sum_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_sum_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
+
+export interface player_aim_weapon_stats_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (player_aim_weapon_stats_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (player_aim_weapon_stats_set_input | null),
+/** filter the rows which have to be updated */
+where: player_aim_weapon_stats_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface player_aim_weapon_stats_var_pop_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_var_pop_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface player_aim_weapon_stats_var_samp_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_var_samp_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface player_aim_weapon_stats_variance_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "player_aim_weapon_stats" */
+export interface player_aim_weapon_stats_variance_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** columns and relationships of "player_assists" */
@@ -41153,6 +43107,306 @@ export interface player_assists_variance_fieldsGenqlSelection{
 
 /** order by variance() on columns of table "player_assists" */
 export interface player_assists_variance_order_by {attacked_steam_id?: (order_by | null),attacker_steam_id?: (order_by | null),round?: (order_by | null)}
+
+
+/** columns and relationships of "player_career_stats_v" */
+export interface player_career_stats_vGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    counter_strafe_pct?: boolean | number
+    crosshair_deg?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    maps?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    time_to_damage_s?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "player_career_stats_v" */
+export interface player_career_stats_v_aggregateGenqlSelection{
+    aggregate?: player_career_stats_v_aggregate_fieldsGenqlSelection
+    nodes?: player_career_stats_vGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "player_career_stats_v" */
+export interface player_career_stats_v_aggregate_fieldsGenqlSelection{
+    avg?: player_career_stats_v_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (player_career_stats_v_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: player_career_stats_v_max_fieldsGenqlSelection
+    min?: player_career_stats_v_min_fieldsGenqlSelection
+    stddev?: player_career_stats_v_stddev_fieldsGenqlSelection
+    stddev_pop?: player_career_stats_v_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: player_career_stats_v_stddev_samp_fieldsGenqlSelection
+    sum?: player_career_stats_v_sum_fieldsGenqlSelection
+    var_pop?: player_career_stats_v_var_pop_fieldsGenqlSelection
+    var_samp?: player_career_stats_v_var_samp_fieldsGenqlSelection
+    variance?: player_career_stats_v_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface player_career_stats_v_avg_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    counter_strafe_pct?: boolean | number
+    crosshair_deg?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    maps?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    time_to_damage_s?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "player_career_stats_v". All fields are combined with a logical 'AND'. */
+export interface player_career_stats_v_bool_exp {_and?: (player_career_stats_v_bool_exp[] | null),_not?: (player_career_stats_v_bool_exp | null),_or?: (player_career_stats_v_bool_exp[] | null),accuracy?: (numeric_comparison_exp | null),accuracy_spotted?: (numeric_comparison_exp | null),counter_strafe_pct?: (numeric_comparison_exp | null),crosshair_deg?: (numeric_comparison_exp | null),enemy_blind_pr?: (numeric_comparison_exp | null),flash_assists_pr?: (numeric_comparison_exp | null),hs_pct?: (numeric_comparison_exp | null),kast_pct?: (numeric_comparison_exp | null),maps?: (Int_comparison_exp | null),premier_rank?: (Int_comparison_exp | null),rounds?: (Int_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),survival_pct?: (numeric_comparison_exp | null),time_to_damage_s?: (numeric_comparison_exp | null),traded_death_pct?: (numeric_comparison_exp | null),util_efficiency?: (numeric_comparison_exp | null)}
+
+
+/** aggregate max on columns */
+export interface player_career_stats_v_max_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    counter_strafe_pct?: boolean | number
+    crosshair_deg?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    maps?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    time_to_damage_s?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface player_career_stats_v_min_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    counter_strafe_pct?: boolean | number
+    crosshair_deg?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    maps?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    time_to_damage_s?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Ordering options when selecting data from "player_career_stats_v". */
+export interface player_career_stats_v_order_by {accuracy?: (order_by | null),accuracy_spotted?: (order_by | null),counter_strafe_pct?: (order_by | null),crosshair_deg?: (order_by | null),enemy_blind_pr?: (order_by | null),flash_assists_pr?: (order_by | null),hs_pct?: (order_by | null),kast_pct?: (order_by | null),maps?: (order_by | null),premier_rank?: (order_by | null),rounds?: (order_by | null),steam_id?: (order_by | null),survival_pct?: (order_by | null),time_to_damage_s?: (order_by | null),traded_death_pct?: (order_by | null),util_efficiency?: (order_by | null)}
+
+
+/** aggregate stddev on columns */
+export interface player_career_stats_v_stddev_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    counter_strafe_pct?: boolean | number
+    crosshair_deg?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    maps?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    time_to_damage_s?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_career_stats_v_stddev_pop_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    counter_strafe_pct?: boolean | number
+    crosshair_deg?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    maps?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    time_to_damage_s?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_career_stats_v_stddev_samp_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    counter_strafe_pct?: boolean | number
+    crosshair_deg?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    maps?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    time_to_damage_s?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "player_career_stats_v" */
+export interface player_career_stats_v_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: player_career_stats_v_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface player_career_stats_v_stream_cursor_value_input {accuracy?: (Scalars['numeric'] | null),accuracy_spotted?: (Scalars['numeric'] | null),counter_strafe_pct?: (Scalars['numeric'] | null),crosshair_deg?: (Scalars['numeric'] | null),enemy_blind_pr?: (Scalars['numeric'] | null),flash_assists_pr?: (Scalars['numeric'] | null),hs_pct?: (Scalars['numeric'] | null),kast_pct?: (Scalars['numeric'] | null),maps?: (Scalars['Int'] | null),premier_rank?: (Scalars['Int'] | null),rounds?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),survival_pct?: (Scalars['numeric'] | null),time_to_damage_s?: (Scalars['numeric'] | null),traded_death_pct?: (Scalars['numeric'] | null),util_efficiency?: (Scalars['numeric'] | null)}
+
+
+/** aggregate sum on columns */
+export interface player_career_stats_v_sum_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    counter_strafe_pct?: boolean | number
+    crosshair_deg?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    maps?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    time_to_damage_s?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_pop on columns */
+export interface player_career_stats_v_var_pop_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    counter_strafe_pct?: boolean | number
+    crosshair_deg?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    maps?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    time_to_damage_s?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_career_stats_v_var_samp_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    counter_strafe_pct?: boolean | number
+    crosshair_deg?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    maps?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    time_to_damage_s?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface player_career_stats_v_variance_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    counter_strafe_pct?: boolean | number
+    crosshair_deg?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    maps?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    time_to_damage_s?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
 
 
 /** columns and relationships of "player_damages" */
@@ -43211,6 +45465,8 @@ export interface player_match_map_statsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flash_duration_count?: boolean | number
@@ -43239,6 +45495,7 @@ export interface player_match_map_statsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     /** An object relationship */
     player?: playersGenqlSelection
     rounds_ct?: boolean | number
@@ -43257,6 +45514,7 @@ export interface player_match_map_statsGenqlSelection{
     three_kill_rounds?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -43333,6 +45591,8 @@ export interface player_match_map_stats_avg_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flash_duration_count?: boolean | number
@@ -43355,6 +45615,7 @@ export interface player_match_map_stats_avg_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -43371,6 +45632,7 @@ export interface player_match_map_stats_avg_fieldsGenqlSelection{
     three_kill_rounds?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -43389,19 +45651,19 @@ export interface player_match_map_stats_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "player_match_map_stats" */
-export interface player_match_map_stats_avg_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_map_stats_avg_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "player_match_map_stats". All fields are combined with a logical 'AND'. */
-export interface player_match_map_stats_bool_exp {_and?: (player_match_map_stats_bool_exp[] | null),_not?: (player_match_map_stats_bool_exp | null),_or?: (player_match_map_stats_bool_exp[] | null),assists?: (Int_comparison_exp | null),assists_ct?: (Int_comparison_exp | null),assists_t?: (Int_comparison_exp | null),counter_strafe_eligible_shots?: (Int_comparison_exp | null),counter_strafed_shots?: (Int_comparison_exp | null),crosshair_angle_count?: (Int_comparison_exp | null),crosshair_angle_sum_deg?: (numeric_comparison_exp | null),damage?: (Int_comparison_exp | null),damage_ct?: (Int_comparison_exp | null),damage_t?: (Int_comparison_exp | null),deaths?: (Int_comparison_exp | null),deaths_ct?: (Int_comparison_exp | null),deaths_t?: (Int_comparison_exp | null),decoy_throws?: (Int_comparison_exp | null),enemies_flashed?: (Int_comparison_exp | null),five_kill_rounds?: (Int_comparison_exp | null),flash_assists?: (Int_comparison_exp | null),flash_duration_count?: (Int_comparison_exp | null),flash_duration_sum?: (numeric_comparison_exp | null),flashes_thrown?: (Int_comparison_exp | null),four_kill_rounds?: (Int_comparison_exp | null),he_damage?: (Int_comparison_exp | null),he_team_damage?: (Int_comparison_exp | null),he_throws?: (Int_comparison_exp | null),headshot_hits?: (Int_comparison_exp | null),hits?: (Int_comparison_exp | null),hits_at_spotted?: (Int_comparison_exp | null),hs_kills?: (Int_comparison_exp | null),hs_kills_ct?: (Int_comparison_exp | null),hs_kills_t?: (Int_comparison_exp | null),kills?: (Int_comparison_exp | null),kills_ct?: (Int_comparison_exp | null),kills_t?: (Int_comparison_exp | null),knife_kills?: (Int_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),molotov_damage?: (Int_comparison_exp | null),molotov_throws?: (Int_comparison_exp | null),non_awp_hits?: (Int_comparison_exp | null),player?: (players_bool_exp | null),rounds_ct?: (Int_comparison_exp | null),rounds_played?: (Int_comparison_exp | null),rounds_t?: (Int_comparison_exp | null),shots_at_spotted?: (Int_comparison_exp | null),shots_fired?: (Int_comparison_exp | null),smoke_throws?: (Int_comparison_exp | null),spotted_count?: (Int_comparison_exp | null),spotted_with_damage_count?: (Int_comparison_exp | null),spray_hits?: (Int_comparison_exp | null),spray_shots?: (Int_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_damage?: (Int_comparison_exp | null),team_flashed?: (Int_comparison_exp | null),three_kill_rounds?: (Int_comparison_exp | null),time_to_damage_count?: (Int_comparison_exp | null),time_to_damage_sum_s?: (numeric_comparison_exp | null),trade_kill_attempts?: (Int_comparison_exp | null),trade_kill_opportunities?: (Int_comparison_exp | null),trade_kill_successes?: (Int_comparison_exp | null),traded_death_attempts?: (Int_comparison_exp | null),traded_death_opportunities?: (Int_comparison_exp | null),traded_death_successes?: (Int_comparison_exp | null),two_kill_rounds?: (Int_comparison_exp | null),unused_utility_value?: (Int_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),util_on_death_count?: (Int_comparison_exp | null),util_on_death_sum?: (Int_comparison_exp | null),wasted_magazine_shots?: (Int_comparison_exp | null),zeus_kills?: (Int_comparison_exp | null)}
+export interface player_match_map_stats_bool_exp {_and?: (player_match_map_stats_bool_exp[] | null),_not?: (player_match_map_stats_bool_exp | null),_or?: (player_match_map_stats_bool_exp[] | null),assists?: (Int_comparison_exp | null),assists_ct?: (Int_comparison_exp | null),assists_t?: (Int_comparison_exp | null),counter_strafe_eligible_shots?: (Int_comparison_exp | null),counter_strafed_shots?: (Int_comparison_exp | null),crosshair_angle_count?: (Int_comparison_exp | null),crosshair_angle_sum_deg?: (numeric_comparison_exp | null),damage?: (Int_comparison_exp | null),damage_ct?: (Int_comparison_exp | null),damage_t?: (Int_comparison_exp | null),deaths?: (Int_comparison_exp | null),deaths_ct?: (Int_comparison_exp | null),deaths_t?: (Int_comparison_exp | null),decoy_throws?: (Int_comparison_exp | null),enemies_flashed?: (Int_comparison_exp | null),first_bullet_hits?: (Int_comparison_exp | null),first_bullet_shots?: (Int_comparison_exp | null),five_kill_rounds?: (Int_comparison_exp | null),flash_assists?: (Int_comparison_exp | null),flash_duration_count?: (Int_comparison_exp | null),flash_duration_sum?: (numeric_comparison_exp | null),flashes_thrown?: (Int_comparison_exp | null),four_kill_rounds?: (Int_comparison_exp | null),he_damage?: (Int_comparison_exp | null),he_team_damage?: (Int_comparison_exp | null),he_throws?: (Int_comparison_exp | null),headshot_hits?: (Int_comparison_exp | null),hits?: (Int_comparison_exp | null),hits_at_spotted?: (Int_comparison_exp | null),hs_kills?: (Int_comparison_exp | null),hs_kills_ct?: (Int_comparison_exp | null),hs_kills_t?: (Int_comparison_exp | null),kills?: (Int_comparison_exp | null),kills_ct?: (Int_comparison_exp | null),kills_t?: (Int_comparison_exp | null),knife_kills?: (Int_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_id?: (uuid_comparison_exp | null),molotov_damage?: (Int_comparison_exp | null),molotov_throws?: (Int_comparison_exp | null),non_awp_hits?: (Int_comparison_exp | null),on_target_frames?: (Int_comparison_exp | null),player?: (players_bool_exp | null),rounds_ct?: (Int_comparison_exp | null),rounds_played?: (Int_comparison_exp | null),rounds_t?: (Int_comparison_exp | null),shots_at_spotted?: (Int_comparison_exp | null),shots_fired?: (Int_comparison_exp | null),smoke_throws?: (Int_comparison_exp | null),spotted_count?: (Int_comparison_exp | null),spotted_with_damage_count?: (Int_comparison_exp | null),spray_hits?: (Int_comparison_exp | null),spray_shots?: (Int_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_damage?: (Int_comparison_exp | null),team_flashed?: (Int_comparison_exp | null),three_kill_rounds?: (Int_comparison_exp | null),time_to_damage_count?: (Int_comparison_exp | null),time_to_damage_sum_s?: (numeric_comparison_exp | null),total_engagement_frames?: (Int_comparison_exp | null),trade_kill_attempts?: (Int_comparison_exp | null),trade_kill_opportunities?: (Int_comparison_exp | null),trade_kill_successes?: (Int_comparison_exp | null),traded_death_attempts?: (Int_comparison_exp | null),traded_death_opportunities?: (Int_comparison_exp | null),traded_death_successes?: (Int_comparison_exp | null),two_kill_rounds?: (Int_comparison_exp | null),unused_utility_value?: (Int_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),util_on_death_count?: (Int_comparison_exp | null),util_on_death_sum?: (Int_comparison_exp | null),wasted_magazine_shots?: (Int_comparison_exp | null),zeus_kills?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "player_match_map_stats" */
-export interface player_match_map_stats_inc_input {assists?: (Scalars['Int'] | null),assists_ct?: (Scalars['Int'] | null),assists_t?: (Scalars['Int'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_ct?: (Scalars['Int'] | null),damage_t?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),deaths_ct?: (Scalars['Int'] | null),deaths_t?: (Scalars['Int'] | null),decoy_throws?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flash_duration_count?: (Scalars['Int'] | null),flash_duration_sum?: (Scalars['numeric'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),he_team_damage?: (Scalars['Int'] | null),he_throws?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),hs_kills_ct?: (Scalars['Int'] | null),hs_kills_t?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),kills_ct?: (Scalars['Int'] | null),kills_t?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),molotov_damage?: (Scalars['Int'] | null),molotov_throws?: (Scalars['Int'] | null),non_awp_hits?: (Scalars['Int'] | null),rounds_ct?: (Scalars['Int'] | null),rounds_played?: (Scalars['Int'] | null),rounds_t?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),shots_fired?: (Scalars['Int'] | null),smoke_throws?: (Scalars['Int'] | null),spotted_count?: (Scalars['Int'] | null),spotted_with_damage_count?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null),trade_kill_attempts?: (Scalars['Int'] | null),trade_kill_opportunities?: (Scalars['Int'] | null),trade_kill_successes?: (Scalars['Int'] | null),traded_death_attempts?: (Scalars['Int'] | null),traded_death_opportunities?: (Scalars['Int'] | null),traded_death_successes?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),unused_utility_value?: (Scalars['Int'] | null),util_on_death_count?: (Scalars['Int'] | null),util_on_death_sum?: (Scalars['Int'] | null),wasted_magazine_shots?: (Scalars['Int'] | null),zeus_kills?: (Scalars['Int'] | null)}
+export interface player_match_map_stats_inc_input {assists?: (Scalars['Int'] | null),assists_ct?: (Scalars['Int'] | null),assists_t?: (Scalars['Int'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_ct?: (Scalars['Int'] | null),damage_t?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),deaths_ct?: (Scalars['Int'] | null),deaths_t?: (Scalars['Int'] | null),decoy_throws?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flash_duration_count?: (Scalars['Int'] | null),flash_duration_sum?: (Scalars['numeric'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),he_team_damage?: (Scalars['Int'] | null),he_throws?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),hs_kills_ct?: (Scalars['Int'] | null),hs_kills_t?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),kills_ct?: (Scalars['Int'] | null),kills_t?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),molotov_damage?: (Scalars['Int'] | null),molotov_throws?: (Scalars['Int'] | null),non_awp_hits?: (Scalars['Int'] | null),on_target_frames?: (Scalars['Int'] | null),rounds_ct?: (Scalars['Int'] | null),rounds_played?: (Scalars['Int'] | null),rounds_t?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),shots_fired?: (Scalars['Int'] | null),smoke_throws?: (Scalars['Int'] | null),spotted_count?: (Scalars['Int'] | null),spotted_with_damage_count?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null),total_engagement_frames?: (Scalars['Int'] | null),trade_kill_attempts?: (Scalars['Int'] | null),trade_kill_opportunities?: (Scalars['Int'] | null),trade_kill_successes?: (Scalars['Int'] | null),traded_death_attempts?: (Scalars['Int'] | null),traded_death_opportunities?: (Scalars['Int'] | null),traded_death_successes?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),unused_utility_value?: (Scalars['Int'] | null),util_on_death_count?: (Scalars['Int'] | null),util_on_death_sum?: (Scalars['Int'] | null),wasted_magazine_shots?: (Scalars['Int'] | null),zeus_kills?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "player_match_map_stats" */
-export interface player_match_map_stats_insert_input {assists?: (Scalars['Int'] | null),assists_ct?: (Scalars['Int'] | null),assists_t?: (Scalars['Int'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_ct?: (Scalars['Int'] | null),damage_t?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),deaths_ct?: (Scalars['Int'] | null),deaths_t?: (Scalars['Int'] | null),decoy_throws?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flash_duration_count?: (Scalars['Int'] | null),flash_duration_sum?: (Scalars['numeric'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),he_team_damage?: (Scalars['Int'] | null),he_throws?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),hs_kills_ct?: (Scalars['Int'] | null),hs_kills_t?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),kills_ct?: (Scalars['Int'] | null),kills_t?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),molotov_damage?: (Scalars['Int'] | null),molotov_throws?: (Scalars['Int'] | null),non_awp_hits?: (Scalars['Int'] | null),player?: (players_obj_rel_insert_input | null),rounds_ct?: (Scalars['Int'] | null),rounds_played?: (Scalars['Int'] | null),rounds_t?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),shots_fired?: (Scalars['Int'] | null),smoke_throws?: (Scalars['Int'] | null),spotted_count?: (Scalars['Int'] | null),spotted_with_damage_count?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null),trade_kill_attempts?: (Scalars['Int'] | null),trade_kill_opportunities?: (Scalars['Int'] | null),trade_kill_successes?: (Scalars['Int'] | null),traded_death_attempts?: (Scalars['Int'] | null),traded_death_opportunities?: (Scalars['Int'] | null),traded_death_successes?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),unused_utility_value?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),util_on_death_count?: (Scalars['Int'] | null),util_on_death_sum?: (Scalars['Int'] | null),wasted_magazine_shots?: (Scalars['Int'] | null),zeus_kills?: (Scalars['Int'] | null)}
+export interface player_match_map_stats_insert_input {assists?: (Scalars['Int'] | null),assists_ct?: (Scalars['Int'] | null),assists_t?: (Scalars['Int'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_ct?: (Scalars['Int'] | null),damage_t?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),deaths_ct?: (Scalars['Int'] | null),deaths_t?: (Scalars['Int'] | null),decoy_throws?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flash_duration_count?: (Scalars['Int'] | null),flash_duration_sum?: (Scalars['numeric'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),he_team_damage?: (Scalars['Int'] | null),he_throws?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),hs_kills_ct?: (Scalars['Int'] | null),hs_kills_t?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),kills_ct?: (Scalars['Int'] | null),kills_t?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_id?: (Scalars['uuid'] | null),molotov_damage?: (Scalars['Int'] | null),molotov_throws?: (Scalars['Int'] | null),non_awp_hits?: (Scalars['Int'] | null),on_target_frames?: (Scalars['Int'] | null),player?: (players_obj_rel_insert_input | null),rounds_ct?: (Scalars['Int'] | null),rounds_played?: (Scalars['Int'] | null),rounds_t?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),shots_fired?: (Scalars['Int'] | null),smoke_throws?: (Scalars['Int'] | null),spotted_count?: (Scalars['Int'] | null),spotted_with_damage_count?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null),total_engagement_frames?: (Scalars['Int'] | null),trade_kill_attempts?: (Scalars['Int'] | null),trade_kill_opportunities?: (Scalars['Int'] | null),trade_kill_successes?: (Scalars['Int'] | null),traded_death_attempts?: (Scalars['Int'] | null),traded_death_opportunities?: (Scalars['Int'] | null),traded_death_successes?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),unused_utility_value?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),util_on_death_count?: (Scalars['Int'] | null),util_on_death_sum?: (Scalars['Int'] | null),wasted_magazine_shots?: (Scalars['Int'] | null),zeus_kills?: (Scalars['Int'] | null)}
 
 
 /** aggregate max on columns */
@@ -43421,6 +45683,8 @@ export interface player_match_map_stats_max_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flash_duration_count?: boolean | number
@@ -43445,6 +45709,7 @@ export interface player_match_map_stats_max_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -43461,6 +45726,7 @@ export interface player_match_map_stats_max_fieldsGenqlSelection{
     three_kill_rounds?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -43480,7 +45746,7 @@ export interface player_match_map_stats_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "player_match_map_stats" */
-export interface player_match_map_stats_max_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),updated_at?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_map_stats_max_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),updated_at?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -43500,6 +45766,8 @@ export interface player_match_map_stats_min_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flash_duration_count?: boolean | number
@@ -43524,6 +45792,7 @@ export interface player_match_map_stats_min_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -43540,6 +45809,7 @@ export interface player_match_map_stats_min_fieldsGenqlSelection{
     three_kill_rounds?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -43559,7 +45829,7 @@ export interface player_match_map_stats_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "player_match_map_stats" */
-export interface player_match_map_stats_min_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),updated_at?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_map_stats_min_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),match_id?: (order_by | null),match_map_id?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),updated_at?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** response of any mutation on the table "player_match_map_stats" */
@@ -43578,7 +45848,7 @@ export interface player_match_map_stats_on_conflict {constraint: player_match_ma
 
 
 /** Ordering options when selecting data from "player_match_map_stats". */
-export interface player_match_map_stats_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),player?: (players_order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),updated_at?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_map_stats_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_id?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),player?: (players_order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),updated_at?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** primary key columns input for table: player_match_map_stats */
@@ -43586,7 +45856,7 @@ export interface player_match_map_stats_pk_columns_input {match_map_id: Scalars[
 
 
 /** input type for updating data in table "player_match_map_stats" */
-export interface player_match_map_stats_set_input {assists?: (Scalars['Int'] | null),assists_ct?: (Scalars['Int'] | null),assists_t?: (Scalars['Int'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_ct?: (Scalars['Int'] | null),damage_t?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),deaths_ct?: (Scalars['Int'] | null),deaths_t?: (Scalars['Int'] | null),decoy_throws?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flash_duration_count?: (Scalars['Int'] | null),flash_duration_sum?: (Scalars['numeric'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),he_team_damage?: (Scalars['Int'] | null),he_throws?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),hs_kills_ct?: (Scalars['Int'] | null),hs_kills_t?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),kills_ct?: (Scalars['Int'] | null),kills_t?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),molotov_damage?: (Scalars['Int'] | null),molotov_throws?: (Scalars['Int'] | null),non_awp_hits?: (Scalars['Int'] | null),rounds_ct?: (Scalars['Int'] | null),rounds_played?: (Scalars['Int'] | null),rounds_t?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),shots_fired?: (Scalars['Int'] | null),smoke_throws?: (Scalars['Int'] | null),spotted_count?: (Scalars['Int'] | null),spotted_with_damage_count?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null),trade_kill_attempts?: (Scalars['Int'] | null),trade_kill_opportunities?: (Scalars['Int'] | null),trade_kill_successes?: (Scalars['Int'] | null),traded_death_attempts?: (Scalars['Int'] | null),traded_death_opportunities?: (Scalars['Int'] | null),traded_death_successes?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),unused_utility_value?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),util_on_death_count?: (Scalars['Int'] | null),util_on_death_sum?: (Scalars['Int'] | null),wasted_magazine_shots?: (Scalars['Int'] | null),zeus_kills?: (Scalars['Int'] | null)}
+export interface player_match_map_stats_set_input {assists?: (Scalars['Int'] | null),assists_ct?: (Scalars['Int'] | null),assists_t?: (Scalars['Int'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_ct?: (Scalars['Int'] | null),damage_t?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),deaths_ct?: (Scalars['Int'] | null),deaths_t?: (Scalars['Int'] | null),decoy_throws?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flash_duration_count?: (Scalars['Int'] | null),flash_duration_sum?: (Scalars['numeric'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),he_team_damage?: (Scalars['Int'] | null),he_throws?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),hs_kills_ct?: (Scalars['Int'] | null),hs_kills_t?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),kills_ct?: (Scalars['Int'] | null),kills_t?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),molotov_damage?: (Scalars['Int'] | null),molotov_throws?: (Scalars['Int'] | null),non_awp_hits?: (Scalars['Int'] | null),on_target_frames?: (Scalars['Int'] | null),rounds_ct?: (Scalars['Int'] | null),rounds_played?: (Scalars['Int'] | null),rounds_t?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),shots_fired?: (Scalars['Int'] | null),smoke_throws?: (Scalars['Int'] | null),spotted_count?: (Scalars['Int'] | null),spotted_with_damage_count?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null),total_engagement_frames?: (Scalars['Int'] | null),trade_kill_attempts?: (Scalars['Int'] | null),trade_kill_opportunities?: (Scalars['Int'] | null),trade_kill_successes?: (Scalars['Int'] | null),traded_death_attempts?: (Scalars['Int'] | null),traded_death_opportunities?: (Scalars['Int'] | null),traded_death_successes?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),unused_utility_value?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),util_on_death_count?: (Scalars['Int'] | null),util_on_death_sum?: (Scalars['Int'] | null),wasted_magazine_shots?: (Scalars['Int'] | null),zeus_kills?: (Scalars['Int'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -43606,6 +45876,8 @@ export interface player_match_map_stats_stddev_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flash_duration_count?: boolean | number
@@ -43628,6 +45900,7 @@ export interface player_match_map_stats_stddev_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -43644,6 +45917,7 @@ export interface player_match_map_stats_stddev_fieldsGenqlSelection{
     three_kill_rounds?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -43662,7 +45936,7 @@ export interface player_match_map_stats_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "player_match_map_stats" */
-export interface player_match_map_stats_stddev_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_map_stats_stddev_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
@@ -43682,6 +45956,8 @@ export interface player_match_map_stats_stddev_pop_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flash_duration_count?: boolean | number
@@ -43704,6 +45980,7 @@ export interface player_match_map_stats_stddev_pop_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -43720,6 +45997,7 @@ export interface player_match_map_stats_stddev_pop_fieldsGenqlSelection{
     three_kill_rounds?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -43738,7 +46016,7 @@ export interface player_match_map_stats_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "player_match_map_stats" */
-export interface player_match_map_stats_stddev_pop_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_map_stats_stddev_pop_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
@@ -43758,6 +46036,8 @@ export interface player_match_map_stats_stddev_samp_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flash_duration_count?: boolean | number
@@ -43780,6 +46060,7 @@ export interface player_match_map_stats_stddev_samp_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -43796,6 +46077,7 @@ export interface player_match_map_stats_stddev_samp_fieldsGenqlSelection{
     three_kill_rounds?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -43814,7 +46096,7 @@ export interface player_match_map_stats_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "player_match_map_stats" */
-export interface player_match_map_stats_stddev_samp_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_map_stats_stddev_samp_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** Streaming cursor of the table "player_match_map_stats" */
@@ -43826,7 +46108,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface player_match_map_stats_stream_cursor_value_input {assists?: (Scalars['Int'] | null),assists_ct?: (Scalars['Int'] | null),assists_t?: (Scalars['Int'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_ct?: (Scalars['Int'] | null),damage_t?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),deaths_ct?: (Scalars['Int'] | null),deaths_t?: (Scalars['Int'] | null),decoy_throws?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flash_duration_count?: (Scalars['Int'] | null),flash_duration_sum?: (Scalars['numeric'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),he_team_damage?: (Scalars['Int'] | null),he_throws?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),hs_kills_ct?: (Scalars['Int'] | null),hs_kills_t?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),kills_ct?: (Scalars['Int'] | null),kills_t?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),molotov_damage?: (Scalars['Int'] | null),molotov_throws?: (Scalars['Int'] | null),non_awp_hits?: (Scalars['Int'] | null),rounds_ct?: (Scalars['Int'] | null),rounds_played?: (Scalars['Int'] | null),rounds_t?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),shots_fired?: (Scalars['Int'] | null),smoke_throws?: (Scalars['Int'] | null),spotted_count?: (Scalars['Int'] | null),spotted_with_damage_count?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null),trade_kill_attempts?: (Scalars['Int'] | null),trade_kill_opportunities?: (Scalars['Int'] | null),trade_kill_successes?: (Scalars['Int'] | null),traded_death_attempts?: (Scalars['Int'] | null),traded_death_opportunities?: (Scalars['Int'] | null),traded_death_successes?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),unused_utility_value?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),util_on_death_count?: (Scalars['Int'] | null),util_on_death_sum?: (Scalars['Int'] | null),wasted_magazine_shots?: (Scalars['Int'] | null),zeus_kills?: (Scalars['Int'] | null)}
+export interface player_match_map_stats_stream_cursor_value_input {assists?: (Scalars['Int'] | null),assists_ct?: (Scalars['Int'] | null),assists_t?: (Scalars['Int'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),crosshair_angle_count?: (Scalars['Int'] | null),crosshair_angle_sum_deg?: (Scalars['numeric'] | null),damage?: (Scalars['Int'] | null),damage_ct?: (Scalars['Int'] | null),damage_t?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),deaths_ct?: (Scalars['Int'] | null),deaths_t?: (Scalars['Int'] | null),decoy_throws?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flash_duration_count?: (Scalars['Int'] | null),flash_duration_sum?: (Scalars['numeric'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),he_team_damage?: (Scalars['Int'] | null),he_throws?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),hs_kills_ct?: (Scalars['Int'] | null),hs_kills_t?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),kills_ct?: (Scalars['Int'] | null),kills_t?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),molotov_damage?: (Scalars['Int'] | null),molotov_throws?: (Scalars['Int'] | null),non_awp_hits?: (Scalars['Int'] | null),on_target_frames?: (Scalars['Int'] | null),rounds_ct?: (Scalars['Int'] | null),rounds_played?: (Scalars['Int'] | null),rounds_t?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),shots_fired?: (Scalars['Int'] | null),smoke_throws?: (Scalars['Int'] | null),spotted_count?: (Scalars['Int'] | null),spotted_with_damage_count?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),time_to_damage_count?: (Scalars['Int'] | null),time_to_damage_sum_s?: (Scalars['numeric'] | null),total_engagement_frames?: (Scalars['Int'] | null),trade_kill_attempts?: (Scalars['Int'] | null),trade_kill_opportunities?: (Scalars['Int'] | null),trade_kill_successes?: (Scalars['Int'] | null),traded_death_attempts?: (Scalars['Int'] | null),traded_death_opportunities?: (Scalars['Int'] | null),traded_death_successes?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),unused_utility_value?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),util_on_death_count?: (Scalars['Int'] | null),util_on_death_sum?: (Scalars['Int'] | null),wasted_magazine_shots?: (Scalars['Int'] | null),zeus_kills?: (Scalars['Int'] | null)}
 
 
 /** aggregate sum on columns */
@@ -43846,6 +46128,8 @@ export interface player_match_map_stats_sum_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flash_duration_count?: boolean | number
@@ -43868,6 +46152,7 @@ export interface player_match_map_stats_sum_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -43884,6 +46169,7 @@ export interface player_match_map_stats_sum_fieldsGenqlSelection{
     three_kill_rounds?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -43902,7 +46188,7 @@ export interface player_match_map_stats_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "player_match_map_stats" */
-export interface player_match_map_stats_sum_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_map_stats_sum_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 export interface player_match_map_stats_updates {
 /** increments the numeric columns with given value of the filtered values */
@@ -43930,6 +46216,8 @@ export interface player_match_map_stats_var_pop_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flash_duration_count?: boolean | number
@@ -43952,6 +46240,7 @@ export interface player_match_map_stats_var_pop_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -43968,6 +46257,7 @@ export interface player_match_map_stats_var_pop_fieldsGenqlSelection{
     three_kill_rounds?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -43986,7 +46276,7 @@ export interface player_match_map_stats_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "player_match_map_stats" */
-export interface player_match_map_stats_var_pop_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_map_stats_var_pop_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
@@ -44006,6 +46296,8 @@ export interface player_match_map_stats_var_samp_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flash_duration_count?: boolean | number
@@ -44028,6 +46320,7 @@ export interface player_match_map_stats_var_samp_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -44044,6 +46337,7 @@ export interface player_match_map_stats_var_samp_fieldsGenqlSelection{
     three_kill_rounds?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -44062,7 +46356,7 @@ export interface player_match_map_stats_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "player_match_map_stats" */
-export interface player_match_map_stats_var_samp_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_map_stats_var_samp_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** aggregate variance on columns */
@@ -44082,6 +46376,8 @@ export interface player_match_map_stats_variance_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flash_duration_count?: boolean | number
@@ -44104,6 +46400,7 @@ export interface player_match_map_stats_variance_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -44120,6 +46417,7 @@ export interface player_match_map_stats_variance_fieldsGenqlSelection{
     three_kill_rounds?: boolean | number
     time_to_damage_count?: boolean | number
     time_to_damage_sum_s?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -44138,7 +46436,316 @@ export interface player_match_map_stats_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "player_match_map_stats" */
-export interface player_match_map_stats_variance_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_map_stats_variance_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),crosshair_angle_count?: (order_by | null),crosshair_angle_sum_deg?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flash_duration_count?: (order_by | null),flash_duration_sum?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),time_to_damage_count?: (order_by | null),time_to_damage_sum_s?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),util_on_death_count?: (order_by | null),util_on_death_sum?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+
+
+/** columns and relationships of "player_match_performance_v" */
+export interface player_match_performance_vGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    aim_rating?: boolean | number
+    counter_strafe_pct?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    match_id?: boolean | number
+    overall_rating?: boolean | number
+    played_at?: boolean | number
+    positioning_rating?: boolean | number
+    rounds?: boolean | number
+    source?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "player_match_performance_v" */
+export interface player_match_performance_v_aggregateGenqlSelection{
+    aggregate?: player_match_performance_v_aggregate_fieldsGenqlSelection
+    nodes?: player_match_performance_vGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "player_match_performance_v" */
+export interface player_match_performance_v_aggregate_fieldsGenqlSelection{
+    avg?: player_match_performance_v_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (player_match_performance_v_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: player_match_performance_v_max_fieldsGenqlSelection
+    min?: player_match_performance_v_min_fieldsGenqlSelection
+    stddev?: player_match_performance_v_stddev_fieldsGenqlSelection
+    stddev_pop?: player_match_performance_v_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: player_match_performance_v_stddev_samp_fieldsGenqlSelection
+    sum?: player_match_performance_v_sum_fieldsGenqlSelection
+    var_pop?: player_match_performance_v_var_pop_fieldsGenqlSelection
+    var_samp?: player_match_performance_v_var_samp_fieldsGenqlSelection
+    variance?: player_match_performance_v_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface player_match_performance_v_avg_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    aim_rating?: boolean | number
+    counter_strafe_pct?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    overall_rating?: boolean | number
+    positioning_rating?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "player_match_performance_v". All fields are combined with a logical 'AND'. */
+export interface player_match_performance_v_bool_exp {_and?: (player_match_performance_v_bool_exp[] | null),_not?: (player_match_performance_v_bool_exp | null),_or?: (player_match_performance_v_bool_exp[] | null),accuracy?: (numeric_comparison_exp | null),accuracy_spotted?: (numeric_comparison_exp | null),aim_rating?: (float8_comparison_exp | null),counter_strafe_pct?: (numeric_comparison_exp | null),enemy_blind_pr?: (numeric_comparison_exp | null),flash_assists_pr?: (numeric_comparison_exp | null),hs_pct?: (numeric_comparison_exp | null),kast_pct?: (numeric_comparison_exp | null),match_id?: (uuid_comparison_exp | null),overall_rating?: (float8_comparison_exp | null),played_at?: (timestamptz_comparison_exp | null),positioning_rating?: (float8_comparison_exp | null),rounds?: (Int_comparison_exp | null),source?: (String_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),survival_pct?: (numeric_comparison_exp | null),traded_death_pct?: (numeric_comparison_exp | null),util_efficiency?: (numeric_comparison_exp | null),utility_rating?: (float8_comparison_exp | null)}
+
+
+/** aggregate max on columns */
+export interface player_match_performance_v_max_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    aim_rating?: boolean | number
+    counter_strafe_pct?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    match_id?: boolean | number
+    overall_rating?: boolean | number
+    played_at?: boolean | number
+    positioning_rating?: boolean | number
+    rounds?: boolean | number
+    source?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface player_match_performance_v_min_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    aim_rating?: boolean | number
+    counter_strafe_pct?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    match_id?: boolean | number
+    overall_rating?: boolean | number
+    played_at?: boolean | number
+    positioning_rating?: boolean | number
+    rounds?: boolean | number
+    source?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Ordering options when selecting data from "player_match_performance_v". */
+export interface player_match_performance_v_order_by {accuracy?: (order_by | null),accuracy_spotted?: (order_by | null),aim_rating?: (order_by | null),counter_strafe_pct?: (order_by | null),enemy_blind_pr?: (order_by | null),flash_assists_pr?: (order_by | null),hs_pct?: (order_by | null),kast_pct?: (order_by | null),match_id?: (order_by | null),overall_rating?: (order_by | null),played_at?: (order_by | null),positioning_rating?: (order_by | null),rounds?: (order_by | null),source?: (order_by | null),steam_id?: (order_by | null),survival_pct?: (order_by | null),traded_death_pct?: (order_by | null),util_efficiency?: (order_by | null),utility_rating?: (order_by | null)}
+
+
+/** aggregate stddev on columns */
+export interface player_match_performance_v_stddev_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    aim_rating?: boolean | number
+    counter_strafe_pct?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    overall_rating?: boolean | number
+    positioning_rating?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_match_performance_v_stddev_pop_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    aim_rating?: boolean | number
+    counter_strafe_pct?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    overall_rating?: boolean | number
+    positioning_rating?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_match_performance_v_stddev_samp_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    aim_rating?: boolean | number
+    counter_strafe_pct?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    overall_rating?: boolean | number
+    positioning_rating?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "player_match_performance_v" */
+export interface player_match_performance_v_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: player_match_performance_v_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface player_match_performance_v_stream_cursor_value_input {accuracy?: (Scalars['numeric'] | null),accuracy_spotted?: (Scalars['numeric'] | null),aim_rating?: (Scalars['float8'] | null),counter_strafe_pct?: (Scalars['numeric'] | null),enemy_blind_pr?: (Scalars['numeric'] | null),flash_assists_pr?: (Scalars['numeric'] | null),hs_pct?: (Scalars['numeric'] | null),kast_pct?: (Scalars['numeric'] | null),match_id?: (Scalars['uuid'] | null),overall_rating?: (Scalars['float8'] | null),played_at?: (Scalars['timestamptz'] | null),positioning_rating?: (Scalars['float8'] | null),rounds?: (Scalars['Int'] | null),source?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null),survival_pct?: (Scalars['numeric'] | null),traded_death_pct?: (Scalars['numeric'] | null),util_efficiency?: (Scalars['numeric'] | null),utility_rating?: (Scalars['float8'] | null)}
+
+
+/** aggregate sum on columns */
+export interface player_match_performance_v_sum_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    aim_rating?: boolean | number
+    counter_strafe_pct?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    overall_rating?: boolean | number
+    positioning_rating?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_pop on columns */
+export interface player_match_performance_v_var_pop_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    aim_rating?: boolean | number
+    counter_strafe_pct?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    overall_rating?: boolean | number
+    positioning_rating?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_match_performance_v_var_samp_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    aim_rating?: boolean | number
+    counter_strafe_pct?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    overall_rating?: boolean | number
+    positioning_rating?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface player_match_performance_v_variance_fieldsGenqlSelection{
+    accuracy?: boolean | number
+    accuracy_spotted?: boolean | number
+    aim_rating?: boolean | number
+    counter_strafe_pct?: boolean | number
+    enemy_blind_pr?: boolean | number
+    flash_assists_pr?: boolean | number
+    hs_pct?: boolean | number
+    kast_pct?: boolean | number
+    overall_rating?: boolean | number
+    positioning_rating?: boolean | number
+    rounds?: boolean | number
+    steam_id?: boolean | number
+    survival_pct?: boolean | number
+    traded_death_pct?: boolean | number
+    util_efficiency?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
 
 
 /** columns and relationships of "player_match_stats_v" */
@@ -44159,6 +46766,8 @@ export interface player_match_stats_vGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flashes_thrown?: boolean | number
@@ -44180,6 +46789,7 @@ export interface player_match_stats_vGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -44194,6 +46804,7 @@ export interface player_match_stats_vGenqlSelection{
     team_damage?: boolean | number
     team_flashed?: boolean | number
     three_kill_rounds?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -44267,6 +46878,8 @@ export interface player_match_stats_v_avg_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flashes_thrown?: boolean | number
@@ -44287,6 +46900,7 @@ export interface player_match_stats_v_avg_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -44301,6 +46915,7 @@ export interface player_match_stats_v_avg_fieldsGenqlSelection{
     team_damage?: boolean | number
     team_flashed?: boolean | number
     three_kill_rounds?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -44318,15 +46933,15 @@ export interface player_match_stats_v_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "player_match_stats_v" */
-export interface player_match_stats_v_avg_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_stats_v_avg_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "player_match_stats_v". All fields are combined with a logical 'AND'. */
-export interface player_match_stats_v_bool_exp {_and?: (player_match_stats_v_bool_exp[] | null),_not?: (player_match_stats_v_bool_exp | null),_or?: (player_match_stats_v_bool_exp[] | null),assists?: (Int_comparison_exp | null),assists_ct?: (Int_comparison_exp | null),assists_t?: (Int_comparison_exp | null),avg_crosshair_angle_deg?: (numeric_comparison_exp | null),avg_flash_duration?: (numeric_comparison_exp | null),avg_time_to_damage_s?: (numeric_comparison_exp | null),counter_strafe_eligible_shots?: (Int_comparison_exp | null),counter_strafed_shots?: (Int_comparison_exp | null),damage?: (Int_comparison_exp | null),damage_ct?: (Int_comparison_exp | null),damage_t?: (Int_comparison_exp | null),deaths?: (Int_comparison_exp | null),deaths_ct?: (Int_comparison_exp | null),deaths_t?: (Int_comparison_exp | null),decoy_throws?: (Int_comparison_exp | null),enemies_flashed?: (Int_comparison_exp | null),five_kill_rounds?: (Int_comparison_exp | null),flash_assists?: (Int_comparison_exp | null),flashes_thrown?: (Int_comparison_exp | null),four_kill_rounds?: (Int_comparison_exp | null),he_damage?: (Int_comparison_exp | null),he_team_damage?: (Int_comparison_exp | null),he_throws?: (Int_comparison_exp | null),headshot_hits?: (Int_comparison_exp | null),hits?: (Int_comparison_exp | null),hits_at_spotted?: (Int_comparison_exp | null),hs_kills?: (Int_comparison_exp | null),hs_kills_ct?: (Int_comparison_exp | null),hs_kills_t?: (Int_comparison_exp | null),kills?: (Int_comparison_exp | null),kills_ct?: (Int_comparison_exp | null),kills_t?: (Int_comparison_exp | null),knife_kills?: (Int_comparison_exp | null),match_id?: (uuid_comparison_exp | null),molotov_damage?: (Int_comparison_exp | null),molotov_throws?: (Int_comparison_exp | null),non_awp_hits?: (Int_comparison_exp | null),rounds_ct?: (Int_comparison_exp | null),rounds_played?: (Int_comparison_exp | null),rounds_t?: (Int_comparison_exp | null),shots_at_spotted?: (Int_comparison_exp | null),shots_fired?: (Int_comparison_exp | null),smoke_throws?: (Int_comparison_exp | null),spotted_count?: (Int_comparison_exp | null),spotted_with_damage_count?: (Int_comparison_exp | null),spray_hits?: (Int_comparison_exp | null),spray_shots?: (Int_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_damage?: (Int_comparison_exp | null),team_flashed?: (Int_comparison_exp | null),three_kill_rounds?: (Int_comparison_exp | null),trade_kill_attempts?: (Int_comparison_exp | null),trade_kill_opportunities?: (Int_comparison_exp | null),trade_kill_successes?: (Int_comparison_exp | null),traded_death_attempts?: (Int_comparison_exp | null),traded_death_opportunities?: (Int_comparison_exp | null),traded_death_successes?: (Int_comparison_exp | null),two_kill_rounds?: (Int_comparison_exp | null),unused_utility_value?: (Int_comparison_exp | null),utility_on_death?: (numeric_comparison_exp | null),wasted_magazine_shots?: (Int_comparison_exp | null),zeus_kills?: (Int_comparison_exp | null)}
+export interface player_match_stats_v_bool_exp {_and?: (player_match_stats_v_bool_exp[] | null),_not?: (player_match_stats_v_bool_exp | null),_or?: (player_match_stats_v_bool_exp[] | null),assists?: (Int_comparison_exp | null),assists_ct?: (Int_comparison_exp | null),assists_t?: (Int_comparison_exp | null),avg_crosshair_angle_deg?: (numeric_comparison_exp | null),avg_flash_duration?: (numeric_comparison_exp | null),avg_time_to_damage_s?: (numeric_comparison_exp | null),counter_strafe_eligible_shots?: (Int_comparison_exp | null),counter_strafed_shots?: (Int_comparison_exp | null),damage?: (Int_comparison_exp | null),damage_ct?: (Int_comparison_exp | null),damage_t?: (Int_comparison_exp | null),deaths?: (Int_comparison_exp | null),deaths_ct?: (Int_comparison_exp | null),deaths_t?: (Int_comparison_exp | null),decoy_throws?: (Int_comparison_exp | null),enemies_flashed?: (Int_comparison_exp | null),first_bullet_hits?: (Int_comparison_exp | null),first_bullet_shots?: (Int_comparison_exp | null),five_kill_rounds?: (Int_comparison_exp | null),flash_assists?: (Int_comparison_exp | null),flashes_thrown?: (Int_comparison_exp | null),four_kill_rounds?: (Int_comparison_exp | null),he_damage?: (Int_comparison_exp | null),he_team_damage?: (Int_comparison_exp | null),he_throws?: (Int_comparison_exp | null),headshot_hits?: (Int_comparison_exp | null),hits?: (Int_comparison_exp | null),hits_at_spotted?: (Int_comparison_exp | null),hs_kills?: (Int_comparison_exp | null),hs_kills_ct?: (Int_comparison_exp | null),hs_kills_t?: (Int_comparison_exp | null),kills?: (Int_comparison_exp | null),kills_ct?: (Int_comparison_exp | null),kills_t?: (Int_comparison_exp | null),knife_kills?: (Int_comparison_exp | null),match_id?: (uuid_comparison_exp | null),molotov_damage?: (Int_comparison_exp | null),molotov_throws?: (Int_comparison_exp | null),non_awp_hits?: (Int_comparison_exp | null),on_target_frames?: (Int_comparison_exp | null),rounds_ct?: (Int_comparison_exp | null),rounds_played?: (Int_comparison_exp | null),rounds_t?: (Int_comparison_exp | null),shots_at_spotted?: (Int_comparison_exp | null),shots_fired?: (Int_comparison_exp | null),smoke_throws?: (Int_comparison_exp | null),spotted_count?: (Int_comparison_exp | null),spotted_with_damage_count?: (Int_comparison_exp | null),spray_hits?: (Int_comparison_exp | null),spray_shots?: (Int_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_damage?: (Int_comparison_exp | null),team_flashed?: (Int_comparison_exp | null),three_kill_rounds?: (Int_comparison_exp | null),total_engagement_frames?: (Int_comparison_exp | null),trade_kill_attempts?: (Int_comparison_exp | null),trade_kill_opportunities?: (Int_comparison_exp | null),trade_kill_successes?: (Int_comparison_exp | null),traded_death_attempts?: (Int_comparison_exp | null),traded_death_opportunities?: (Int_comparison_exp | null),traded_death_successes?: (Int_comparison_exp | null),two_kill_rounds?: (Int_comparison_exp | null),unused_utility_value?: (Int_comparison_exp | null),utility_on_death?: (numeric_comparison_exp | null),wasted_magazine_shots?: (Int_comparison_exp | null),zeus_kills?: (Int_comparison_exp | null)}
 
 
 /** input type for inserting data into table "player_match_stats_v" */
-export interface player_match_stats_v_insert_input {assists?: (Scalars['Int'] | null),assists_ct?: (Scalars['Int'] | null),assists_t?: (Scalars['Int'] | null),avg_crosshair_angle_deg?: (Scalars['numeric'] | null),avg_flash_duration?: (Scalars['numeric'] | null),avg_time_to_damage_s?: (Scalars['numeric'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),damage_ct?: (Scalars['Int'] | null),damage_t?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),deaths_ct?: (Scalars['Int'] | null),deaths_t?: (Scalars['Int'] | null),decoy_throws?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),he_team_damage?: (Scalars['Int'] | null),he_throws?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),hs_kills_ct?: (Scalars['Int'] | null),hs_kills_t?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),kills_ct?: (Scalars['Int'] | null),kills_t?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),molotov_damage?: (Scalars['Int'] | null),molotov_throws?: (Scalars['Int'] | null),non_awp_hits?: (Scalars['Int'] | null),rounds_ct?: (Scalars['Int'] | null),rounds_played?: (Scalars['Int'] | null),rounds_t?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),shots_fired?: (Scalars['Int'] | null),smoke_throws?: (Scalars['Int'] | null),spotted_count?: (Scalars['Int'] | null),spotted_with_damage_count?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),trade_kill_attempts?: (Scalars['Int'] | null),trade_kill_opportunities?: (Scalars['Int'] | null),trade_kill_successes?: (Scalars['Int'] | null),traded_death_attempts?: (Scalars['Int'] | null),traded_death_opportunities?: (Scalars['Int'] | null),traded_death_successes?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),unused_utility_value?: (Scalars['Int'] | null),utility_on_death?: (Scalars['numeric'] | null),wasted_magazine_shots?: (Scalars['Int'] | null),zeus_kills?: (Scalars['Int'] | null)}
+export interface player_match_stats_v_insert_input {assists?: (Scalars['Int'] | null),assists_ct?: (Scalars['Int'] | null),assists_t?: (Scalars['Int'] | null),avg_crosshair_angle_deg?: (Scalars['numeric'] | null),avg_flash_duration?: (Scalars['numeric'] | null),avg_time_to_damage_s?: (Scalars['numeric'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),damage_ct?: (Scalars['Int'] | null),damage_t?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),deaths_ct?: (Scalars['Int'] | null),deaths_t?: (Scalars['Int'] | null),decoy_throws?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),he_team_damage?: (Scalars['Int'] | null),he_throws?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),hs_kills_ct?: (Scalars['Int'] | null),hs_kills_t?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),kills_ct?: (Scalars['Int'] | null),kills_t?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),molotov_damage?: (Scalars['Int'] | null),molotov_throws?: (Scalars['Int'] | null),non_awp_hits?: (Scalars['Int'] | null),on_target_frames?: (Scalars['Int'] | null),rounds_ct?: (Scalars['Int'] | null),rounds_played?: (Scalars['Int'] | null),rounds_t?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),shots_fired?: (Scalars['Int'] | null),smoke_throws?: (Scalars['Int'] | null),spotted_count?: (Scalars['Int'] | null),spotted_with_damage_count?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),total_engagement_frames?: (Scalars['Int'] | null),trade_kill_attempts?: (Scalars['Int'] | null),trade_kill_opportunities?: (Scalars['Int'] | null),trade_kill_successes?: (Scalars['Int'] | null),traded_death_attempts?: (Scalars['Int'] | null),traded_death_opportunities?: (Scalars['Int'] | null),traded_death_successes?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),unused_utility_value?: (Scalars['Int'] | null),utility_on_death?: (Scalars['numeric'] | null),wasted_magazine_shots?: (Scalars['Int'] | null),zeus_kills?: (Scalars['Int'] | null)}
 
 
 /** aggregate max on columns */
@@ -44347,6 +46962,8 @@ export interface player_match_stats_v_max_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flashes_thrown?: boolean | number
@@ -44368,6 +46985,7 @@ export interface player_match_stats_v_max_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -44382,6 +47000,7 @@ export interface player_match_stats_v_max_fieldsGenqlSelection{
     team_damage?: boolean | number
     team_flashed?: boolean | number
     three_kill_rounds?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -44399,7 +47018,7 @@ export interface player_match_stats_v_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "player_match_stats_v" */
-export interface player_match_stats_v_max_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),match_id?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_stats_v_max_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),match_id?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -44420,6 +47039,8 @@ export interface player_match_stats_v_min_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flashes_thrown?: boolean | number
@@ -44441,6 +47062,7 @@ export interface player_match_stats_v_min_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -44455,6 +47077,7 @@ export interface player_match_stats_v_min_fieldsGenqlSelection{
     team_damage?: boolean | number
     team_flashed?: boolean | number
     three_kill_rounds?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -44472,11 +47095,11 @@ export interface player_match_stats_v_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "player_match_stats_v" */
-export interface player_match_stats_v_min_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),match_id?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_stats_v_min_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),match_id?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** Ordering options when selecting data from "player_match_stats_v". */
-export interface player_match_stats_v_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),match_id?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_stats_v_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),match_id?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** aggregate stddev on columns */
@@ -44497,6 +47120,8 @@ export interface player_match_stats_v_stddev_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flashes_thrown?: boolean | number
@@ -44517,6 +47142,7 @@ export interface player_match_stats_v_stddev_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -44531,6 +47157,7 @@ export interface player_match_stats_v_stddev_fieldsGenqlSelection{
     team_damage?: boolean | number
     team_flashed?: boolean | number
     three_kill_rounds?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -44548,7 +47175,7 @@ export interface player_match_stats_v_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "player_match_stats_v" */
-export interface player_match_stats_v_stddev_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_stats_v_stddev_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
@@ -44569,6 +47196,8 @@ export interface player_match_stats_v_stddev_pop_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flashes_thrown?: boolean | number
@@ -44589,6 +47218,7 @@ export interface player_match_stats_v_stddev_pop_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -44603,6 +47233,7 @@ export interface player_match_stats_v_stddev_pop_fieldsGenqlSelection{
     team_damage?: boolean | number
     team_flashed?: boolean | number
     three_kill_rounds?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -44620,7 +47251,7 @@ export interface player_match_stats_v_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "player_match_stats_v" */
-export interface player_match_stats_v_stddev_pop_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_stats_v_stddev_pop_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
@@ -44641,6 +47272,8 @@ export interface player_match_stats_v_stddev_samp_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flashes_thrown?: boolean | number
@@ -44661,6 +47294,7 @@ export interface player_match_stats_v_stddev_samp_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -44675,6 +47309,7 @@ export interface player_match_stats_v_stddev_samp_fieldsGenqlSelection{
     team_damage?: boolean | number
     team_flashed?: boolean | number
     three_kill_rounds?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -44692,7 +47327,7 @@ export interface player_match_stats_v_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "player_match_stats_v" */
-export interface player_match_stats_v_stddev_samp_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_stats_v_stddev_samp_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** Streaming cursor of the table "player_match_stats_v" */
@@ -44704,7 +47339,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface player_match_stats_v_stream_cursor_value_input {assists?: (Scalars['Int'] | null),assists_ct?: (Scalars['Int'] | null),assists_t?: (Scalars['Int'] | null),avg_crosshair_angle_deg?: (Scalars['numeric'] | null),avg_flash_duration?: (Scalars['numeric'] | null),avg_time_to_damage_s?: (Scalars['numeric'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),damage_ct?: (Scalars['Int'] | null),damage_t?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),deaths_ct?: (Scalars['Int'] | null),deaths_t?: (Scalars['Int'] | null),decoy_throws?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),he_team_damage?: (Scalars['Int'] | null),he_throws?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),hs_kills_ct?: (Scalars['Int'] | null),hs_kills_t?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),kills_ct?: (Scalars['Int'] | null),kills_t?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),molotov_damage?: (Scalars['Int'] | null),molotov_throws?: (Scalars['Int'] | null),non_awp_hits?: (Scalars['Int'] | null),rounds_ct?: (Scalars['Int'] | null),rounds_played?: (Scalars['Int'] | null),rounds_t?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),shots_fired?: (Scalars['Int'] | null),smoke_throws?: (Scalars['Int'] | null),spotted_count?: (Scalars['Int'] | null),spotted_with_damage_count?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),trade_kill_attempts?: (Scalars['Int'] | null),trade_kill_opportunities?: (Scalars['Int'] | null),trade_kill_successes?: (Scalars['Int'] | null),traded_death_attempts?: (Scalars['Int'] | null),traded_death_opportunities?: (Scalars['Int'] | null),traded_death_successes?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),unused_utility_value?: (Scalars['Int'] | null),utility_on_death?: (Scalars['numeric'] | null),wasted_magazine_shots?: (Scalars['Int'] | null),zeus_kills?: (Scalars['Int'] | null)}
+export interface player_match_stats_v_stream_cursor_value_input {assists?: (Scalars['Int'] | null),assists_ct?: (Scalars['Int'] | null),assists_t?: (Scalars['Int'] | null),avg_crosshair_angle_deg?: (Scalars['numeric'] | null),avg_flash_duration?: (Scalars['numeric'] | null),avg_time_to_damage_s?: (Scalars['numeric'] | null),counter_strafe_eligible_shots?: (Scalars['Int'] | null),counter_strafed_shots?: (Scalars['Int'] | null),damage?: (Scalars['Int'] | null),damage_ct?: (Scalars['Int'] | null),damage_t?: (Scalars['Int'] | null),deaths?: (Scalars['Int'] | null),deaths_ct?: (Scalars['Int'] | null),deaths_t?: (Scalars['Int'] | null),decoy_throws?: (Scalars['Int'] | null),enemies_flashed?: (Scalars['Int'] | null),first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),five_kill_rounds?: (Scalars['Int'] | null),flash_assists?: (Scalars['Int'] | null),flashes_thrown?: (Scalars['Int'] | null),four_kill_rounds?: (Scalars['Int'] | null),he_damage?: (Scalars['Int'] | null),he_team_damage?: (Scalars['Int'] | null),he_throws?: (Scalars['Int'] | null),headshot_hits?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_at_spotted?: (Scalars['Int'] | null),hs_kills?: (Scalars['Int'] | null),hs_kills_ct?: (Scalars['Int'] | null),hs_kills_t?: (Scalars['Int'] | null),kills?: (Scalars['Int'] | null),kills_ct?: (Scalars['Int'] | null),kills_t?: (Scalars['Int'] | null),knife_kills?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),molotov_damage?: (Scalars['Int'] | null),molotov_throws?: (Scalars['Int'] | null),non_awp_hits?: (Scalars['Int'] | null),on_target_frames?: (Scalars['Int'] | null),rounds_ct?: (Scalars['Int'] | null),rounds_played?: (Scalars['Int'] | null),rounds_t?: (Scalars['Int'] | null),shots_at_spotted?: (Scalars['Int'] | null),shots_fired?: (Scalars['Int'] | null),smoke_throws?: (Scalars['Int'] | null),spotted_count?: (Scalars['Int'] | null),spotted_with_damage_count?: (Scalars['Int'] | null),spray_hits?: (Scalars['Int'] | null),spray_shots?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),team_damage?: (Scalars['Int'] | null),team_flashed?: (Scalars['Int'] | null),three_kill_rounds?: (Scalars['Int'] | null),total_engagement_frames?: (Scalars['Int'] | null),trade_kill_attempts?: (Scalars['Int'] | null),trade_kill_opportunities?: (Scalars['Int'] | null),trade_kill_successes?: (Scalars['Int'] | null),traded_death_attempts?: (Scalars['Int'] | null),traded_death_opportunities?: (Scalars['Int'] | null),traded_death_successes?: (Scalars['Int'] | null),two_kill_rounds?: (Scalars['Int'] | null),unused_utility_value?: (Scalars['Int'] | null),utility_on_death?: (Scalars['numeric'] | null),wasted_magazine_shots?: (Scalars['Int'] | null),zeus_kills?: (Scalars['Int'] | null)}
 
 
 /** aggregate sum on columns */
@@ -44725,6 +47360,8 @@ export interface player_match_stats_v_sum_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flashes_thrown?: boolean | number
@@ -44745,6 +47382,7 @@ export interface player_match_stats_v_sum_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -44759,6 +47397,7 @@ export interface player_match_stats_v_sum_fieldsGenqlSelection{
     team_damage?: boolean | number
     team_flashed?: boolean | number
     three_kill_rounds?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -44776,7 +47415,7 @@ export interface player_match_stats_v_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "player_match_stats_v" */
-export interface player_match_stats_v_sum_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_stats_v_sum_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** aggregate var_pop on columns */
@@ -44797,6 +47436,8 @@ export interface player_match_stats_v_var_pop_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flashes_thrown?: boolean | number
@@ -44817,6 +47458,7 @@ export interface player_match_stats_v_var_pop_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -44831,6 +47473,7 @@ export interface player_match_stats_v_var_pop_fieldsGenqlSelection{
     team_damage?: boolean | number
     team_flashed?: boolean | number
     three_kill_rounds?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -44848,7 +47491,7 @@ export interface player_match_stats_v_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "player_match_stats_v" */
-export interface player_match_stats_v_var_pop_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_stats_v_var_pop_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
@@ -44869,6 +47512,8 @@ export interface player_match_stats_v_var_samp_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flashes_thrown?: boolean | number
@@ -44889,6 +47534,7 @@ export interface player_match_stats_v_var_samp_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -44903,6 +47549,7 @@ export interface player_match_stats_v_var_samp_fieldsGenqlSelection{
     team_damage?: boolean | number
     team_flashed?: boolean | number
     three_kill_rounds?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -44920,7 +47567,7 @@ export interface player_match_stats_v_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "player_match_stats_v" */
-export interface player_match_stats_v_var_samp_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_stats_v_var_samp_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** aggregate variance on columns */
@@ -44941,6 +47588,8 @@ export interface player_match_stats_v_variance_fieldsGenqlSelection{
     deaths_t?: boolean | number
     decoy_throws?: boolean | number
     enemies_flashed?: boolean | number
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
     five_kill_rounds?: boolean | number
     flash_assists?: boolean | number
     flashes_thrown?: boolean | number
@@ -44961,6 +47610,7 @@ export interface player_match_stats_v_variance_fieldsGenqlSelection{
     molotov_damage?: boolean | number
     molotov_throws?: boolean | number
     non_awp_hits?: boolean | number
+    on_target_frames?: boolean | number
     rounds_ct?: boolean | number
     rounds_played?: boolean | number
     rounds_t?: boolean | number
@@ -44975,6 +47625,7 @@ export interface player_match_stats_v_variance_fieldsGenqlSelection{
     team_damage?: boolean | number
     team_flashed?: boolean | number
     three_kill_rounds?: boolean | number
+    total_engagement_frames?: boolean | number
     trade_kill_attempts?: boolean | number
     trade_kill_opportunities?: boolean | number
     trade_kill_successes?: boolean | number
@@ -44992,7 +47643,7 @@ export interface player_match_stats_v_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "player_match_stats_v" */
-export interface player_match_stats_v_variance_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
+export interface player_match_stats_v_variance_order_by {assists?: (order_by | null),assists_ct?: (order_by | null),assists_t?: (order_by | null),avg_crosshair_angle_deg?: (order_by | null),avg_flash_duration?: (order_by | null),avg_time_to_damage_s?: (order_by | null),counter_strafe_eligible_shots?: (order_by | null),counter_strafed_shots?: (order_by | null),damage?: (order_by | null),damage_ct?: (order_by | null),damage_t?: (order_by | null),deaths?: (order_by | null),deaths_ct?: (order_by | null),deaths_t?: (order_by | null),decoy_throws?: (order_by | null),enemies_flashed?: (order_by | null),first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),five_kill_rounds?: (order_by | null),flash_assists?: (order_by | null),flashes_thrown?: (order_by | null),four_kill_rounds?: (order_by | null),he_damage?: (order_by | null),he_team_damage?: (order_by | null),he_throws?: (order_by | null),headshot_hits?: (order_by | null),hits?: (order_by | null),hits_at_spotted?: (order_by | null),hs_kills?: (order_by | null),hs_kills_ct?: (order_by | null),hs_kills_t?: (order_by | null),kills?: (order_by | null),kills_ct?: (order_by | null),kills_t?: (order_by | null),knife_kills?: (order_by | null),molotov_damage?: (order_by | null),molotov_throws?: (order_by | null),non_awp_hits?: (order_by | null),on_target_frames?: (order_by | null),rounds_ct?: (order_by | null),rounds_played?: (order_by | null),rounds_t?: (order_by | null),shots_at_spotted?: (order_by | null),shots_fired?: (order_by | null),smoke_throws?: (order_by | null),spotted_count?: (order_by | null),spotted_with_damage_count?: (order_by | null),spray_hits?: (order_by | null),spray_shots?: (order_by | null),steam_id?: (order_by | null),team_damage?: (order_by | null),team_flashed?: (order_by | null),three_kill_rounds?: (order_by | null),total_engagement_frames?: (order_by | null),trade_kill_attempts?: (order_by | null),trade_kill_opportunities?: (order_by | null),trade_kill_successes?: (order_by | null),traded_death_attempts?: (order_by | null),traded_death_opportunities?: (order_by | null),traded_death_successes?: (order_by | null),two_kill_rounds?: (order_by | null),unused_utility_value?: (order_by | null),utility_on_death?: (order_by | null),wasted_magazine_shots?: (order_by | null),zeus_kills?: (order_by | null)}
 
 
 /** columns and relationships of "player_objectives" */
@@ -45251,6 +47902,394 @@ export interface player_objectives_variance_fieldsGenqlSelection{
 
 /** order by variance() on columns of table "player_objectives" */
 export interface player_objectives_variance_order_by {player_steam_id?: (order_by | null),round?: (order_by | null)}
+
+
+/** columns and relationships of "player_performance_v" */
+export interface player_performance_vGenqlSelection{
+    accuracy_score?: boolean | number
+    aim_goal?: boolean | number
+    aim_rating?: boolean | number
+    band?: boolean | number
+    band_sample?: boolean | number
+    blind_score?: boolean | number
+    counter_strafe_score?: boolean | number
+    crosshair_score?: boolean | number
+    flash_assists_score?: boolean | number
+    hs_score?: boolean | number
+    kast_score?: boolean | number
+    maps?: boolean | number
+    positioning_goal?: boolean | number
+    positioning_rating?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    spotted_score?: boolean | number
+    steam_id?: boolean | number
+    survival_score?: boolean | number
+    traded_score?: boolean | number
+    ttd_score?: boolean | number
+    util_eff_score?: boolean | number
+    utility_goal?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "player_performance_v" */
+export interface player_performance_v_aggregateGenqlSelection{
+    aggregate?: player_performance_v_aggregate_fieldsGenqlSelection
+    nodes?: player_performance_vGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "player_performance_v" */
+export interface player_performance_v_aggregate_fieldsGenqlSelection{
+    avg?: player_performance_v_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (player_performance_v_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: player_performance_v_max_fieldsGenqlSelection
+    min?: player_performance_v_min_fieldsGenqlSelection
+    stddev?: player_performance_v_stddev_fieldsGenqlSelection
+    stddev_pop?: player_performance_v_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: player_performance_v_stddev_samp_fieldsGenqlSelection
+    sum?: player_performance_v_sum_fieldsGenqlSelection
+    var_pop?: player_performance_v_var_pop_fieldsGenqlSelection
+    var_samp?: player_performance_v_var_samp_fieldsGenqlSelection
+    variance?: player_performance_v_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface player_performance_v_avg_fieldsGenqlSelection{
+    accuracy_score?: boolean | number
+    aim_goal?: boolean | number
+    aim_rating?: boolean | number
+    band?: boolean | number
+    band_sample?: boolean | number
+    blind_score?: boolean | number
+    counter_strafe_score?: boolean | number
+    crosshair_score?: boolean | number
+    flash_assists_score?: boolean | number
+    hs_score?: boolean | number
+    kast_score?: boolean | number
+    maps?: boolean | number
+    positioning_goal?: boolean | number
+    positioning_rating?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    spotted_score?: boolean | number
+    steam_id?: boolean | number
+    survival_score?: boolean | number
+    traded_score?: boolean | number
+    ttd_score?: boolean | number
+    util_eff_score?: boolean | number
+    utility_goal?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "player_performance_v". All fields are combined with a logical 'AND'. */
+export interface player_performance_v_bool_exp {_and?: (player_performance_v_bool_exp[] | null),_not?: (player_performance_v_bool_exp | null),_or?: (player_performance_v_bool_exp[] | null),accuracy_score?: (float8_comparison_exp | null),aim_goal?: (float8_comparison_exp | null),aim_rating?: (float8_comparison_exp | null),band?: (Int_comparison_exp | null),band_sample?: (bigint_comparison_exp | null),blind_score?: (float8_comparison_exp | null),counter_strafe_score?: (float8_comparison_exp | null),crosshair_score?: (float8_comparison_exp | null),flash_assists_score?: (float8_comparison_exp | null),hs_score?: (float8_comparison_exp | null),kast_score?: (float8_comparison_exp | null),maps?: (Int_comparison_exp | null),positioning_goal?: (float8_comparison_exp | null),positioning_rating?: (float8_comparison_exp | null),premier_rank?: (Int_comparison_exp | null),rounds?: (Int_comparison_exp | null),spotted_score?: (float8_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),survival_score?: (float8_comparison_exp | null),traded_score?: (float8_comparison_exp | null),ttd_score?: (float8_comparison_exp | null),util_eff_score?: (float8_comparison_exp | null),utility_goal?: (float8_comparison_exp | null),utility_rating?: (float8_comparison_exp | null)}
+
+
+/** aggregate max on columns */
+export interface player_performance_v_max_fieldsGenqlSelection{
+    accuracy_score?: boolean | number
+    aim_goal?: boolean | number
+    aim_rating?: boolean | number
+    band?: boolean | number
+    band_sample?: boolean | number
+    blind_score?: boolean | number
+    counter_strafe_score?: boolean | number
+    crosshair_score?: boolean | number
+    flash_assists_score?: boolean | number
+    hs_score?: boolean | number
+    kast_score?: boolean | number
+    maps?: boolean | number
+    positioning_goal?: boolean | number
+    positioning_rating?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    spotted_score?: boolean | number
+    steam_id?: boolean | number
+    survival_score?: boolean | number
+    traded_score?: boolean | number
+    ttd_score?: boolean | number
+    util_eff_score?: boolean | number
+    utility_goal?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface player_performance_v_min_fieldsGenqlSelection{
+    accuracy_score?: boolean | number
+    aim_goal?: boolean | number
+    aim_rating?: boolean | number
+    band?: boolean | number
+    band_sample?: boolean | number
+    blind_score?: boolean | number
+    counter_strafe_score?: boolean | number
+    crosshair_score?: boolean | number
+    flash_assists_score?: boolean | number
+    hs_score?: boolean | number
+    kast_score?: boolean | number
+    maps?: boolean | number
+    positioning_goal?: boolean | number
+    positioning_rating?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    spotted_score?: boolean | number
+    steam_id?: boolean | number
+    survival_score?: boolean | number
+    traded_score?: boolean | number
+    ttd_score?: boolean | number
+    util_eff_score?: boolean | number
+    utility_goal?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Ordering options when selecting data from "player_performance_v". */
+export interface player_performance_v_order_by {accuracy_score?: (order_by | null),aim_goal?: (order_by | null),aim_rating?: (order_by | null),band?: (order_by | null),band_sample?: (order_by | null),blind_score?: (order_by | null),counter_strafe_score?: (order_by | null),crosshair_score?: (order_by | null),flash_assists_score?: (order_by | null),hs_score?: (order_by | null),kast_score?: (order_by | null),maps?: (order_by | null),positioning_goal?: (order_by | null),positioning_rating?: (order_by | null),premier_rank?: (order_by | null),rounds?: (order_by | null),spotted_score?: (order_by | null),steam_id?: (order_by | null),survival_score?: (order_by | null),traded_score?: (order_by | null),ttd_score?: (order_by | null),util_eff_score?: (order_by | null),utility_goal?: (order_by | null),utility_rating?: (order_by | null)}
+
+
+/** aggregate stddev on columns */
+export interface player_performance_v_stddev_fieldsGenqlSelection{
+    accuracy_score?: boolean | number
+    aim_goal?: boolean | number
+    aim_rating?: boolean | number
+    band?: boolean | number
+    band_sample?: boolean | number
+    blind_score?: boolean | number
+    counter_strafe_score?: boolean | number
+    crosshair_score?: boolean | number
+    flash_assists_score?: boolean | number
+    hs_score?: boolean | number
+    kast_score?: boolean | number
+    maps?: boolean | number
+    positioning_goal?: boolean | number
+    positioning_rating?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    spotted_score?: boolean | number
+    steam_id?: boolean | number
+    survival_score?: boolean | number
+    traded_score?: boolean | number
+    ttd_score?: boolean | number
+    util_eff_score?: boolean | number
+    utility_goal?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_performance_v_stddev_pop_fieldsGenqlSelection{
+    accuracy_score?: boolean | number
+    aim_goal?: boolean | number
+    aim_rating?: boolean | number
+    band?: boolean | number
+    band_sample?: boolean | number
+    blind_score?: boolean | number
+    counter_strafe_score?: boolean | number
+    crosshair_score?: boolean | number
+    flash_assists_score?: boolean | number
+    hs_score?: boolean | number
+    kast_score?: boolean | number
+    maps?: boolean | number
+    positioning_goal?: boolean | number
+    positioning_rating?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    spotted_score?: boolean | number
+    steam_id?: boolean | number
+    survival_score?: boolean | number
+    traded_score?: boolean | number
+    ttd_score?: boolean | number
+    util_eff_score?: boolean | number
+    utility_goal?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_performance_v_stddev_samp_fieldsGenqlSelection{
+    accuracy_score?: boolean | number
+    aim_goal?: boolean | number
+    aim_rating?: boolean | number
+    band?: boolean | number
+    band_sample?: boolean | number
+    blind_score?: boolean | number
+    counter_strafe_score?: boolean | number
+    crosshair_score?: boolean | number
+    flash_assists_score?: boolean | number
+    hs_score?: boolean | number
+    kast_score?: boolean | number
+    maps?: boolean | number
+    positioning_goal?: boolean | number
+    positioning_rating?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    spotted_score?: boolean | number
+    steam_id?: boolean | number
+    survival_score?: boolean | number
+    traded_score?: boolean | number
+    ttd_score?: boolean | number
+    util_eff_score?: boolean | number
+    utility_goal?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "player_performance_v" */
+export interface player_performance_v_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: player_performance_v_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface player_performance_v_stream_cursor_value_input {accuracy_score?: (Scalars['float8'] | null),aim_goal?: (Scalars['float8'] | null),aim_rating?: (Scalars['float8'] | null),band?: (Scalars['Int'] | null),band_sample?: (Scalars['bigint'] | null),blind_score?: (Scalars['float8'] | null),counter_strafe_score?: (Scalars['float8'] | null),crosshair_score?: (Scalars['float8'] | null),flash_assists_score?: (Scalars['float8'] | null),hs_score?: (Scalars['float8'] | null),kast_score?: (Scalars['float8'] | null),maps?: (Scalars['Int'] | null),positioning_goal?: (Scalars['float8'] | null),positioning_rating?: (Scalars['float8'] | null),premier_rank?: (Scalars['Int'] | null),rounds?: (Scalars['Int'] | null),spotted_score?: (Scalars['float8'] | null),steam_id?: (Scalars['bigint'] | null),survival_score?: (Scalars['float8'] | null),traded_score?: (Scalars['float8'] | null),ttd_score?: (Scalars['float8'] | null),util_eff_score?: (Scalars['float8'] | null),utility_goal?: (Scalars['float8'] | null),utility_rating?: (Scalars['float8'] | null)}
+
+
+/** aggregate sum on columns */
+export interface player_performance_v_sum_fieldsGenqlSelection{
+    accuracy_score?: boolean | number
+    aim_goal?: boolean | number
+    aim_rating?: boolean | number
+    band?: boolean | number
+    band_sample?: boolean | number
+    blind_score?: boolean | number
+    counter_strafe_score?: boolean | number
+    crosshair_score?: boolean | number
+    flash_assists_score?: boolean | number
+    hs_score?: boolean | number
+    kast_score?: boolean | number
+    maps?: boolean | number
+    positioning_goal?: boolean | number
+    positioning_rating?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    spotted_score?: boolean | number
+    steam_id?: boolean | number
+    survival_score?: boolean | number
+    traded_score?: boolean | number
+    ttd_score?: boolean | number
+    util_eff_score?: boolean | number
+    utility_goal?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_pop on columns */
+export interface player_performance_v_var_pop_fieldsGenqlSelection{
+    accuracy_score?: boolean | number
+    aim_goal?: boolean | number
+    aim_rating?: boolean | number
+    band?: boolean | number
+    band_sample?: boolean | number
+    blind_score?: boolean | number
+    counter_strafe_score?: boolean | number
+    crosshair_score?: boolean | number
+    flash_assists_score?: boolean | number
+    hs_score?: boolean | number
+    kast_score?: boolean | number
+    maps?: boolean | number
+    positioning_goal?: boolean | number
+    positioning_rating?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    spotted_score?: boolean | number
+    steam_id?: boolean | number
+    survival_score?: boolean | number
+    traded_score?: boolean | number
+    ttd_score?: boolean | number
+    util_eff_score?: boolean | number
+    utility_goal?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface player_performance_v_var_samp_fieldsGenqlSelection{
+    accuracy_score?: boolean | number
+    aim_goal?: boolean | number
+    aim_rating?: boolean | number
+    band?: boolean | number
+    band_sample?: boolean | number
+    blind_score?: boolean | number
+    counter_strafe_score?: boolean | number
+    crosshair_score?: boolean | number
+    flash_assists_score?: boolean | number
+    hs_score?: boolean | number
+    kast_score?: boolean | number
+    maps?: boolean | number
+    positioning_goal?: boolean | number
+    positioning_rating?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    spotted_score?: boolean | number
+    steam_id?: boolean | number
+    survival_score?: boolean | number
+    traded_score?: boolean | number
+    ttd_score?: boolean | number
+    util_eff_score?: boolean | number
+    utility_goal?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface player_performance_v_variance_fieldsGenqlSelection{
+    accuracy_score?: boolean | number
+    aim_goal?: boolean | number
+    aim_rating?: boolean | number
+    band?: boolean | number
+    band_sample?: boolean | number
+    blind_score?: boolean | number
+    counter_strafe_score?: boolean | number
+    crosshair_score?: boolean | number
+    flash_assists_score?: boolean | number
+    hs_score?: boolean | number
+    kast_score?: boolean | number
+    maps?: boolean | number
+    positioning_goal?: boolean | number
+    positioning_rating?: boolean | number
+    premier_rank?: boolean | number
+    rounds?: boolean | number
+    spotted_score?: boolean | number
+    steam_id?: boolean | number
+    survival_score?: boolean | number
+    traded_score?: boolean | number
+    ttd_score?: boolean | number
+    util_eff_score?: boolean | number
+    utility_goal?: boolean | number
+    utility_rating?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
 
 
 /** columns and relationships of "player_premier_rank_history" */
@@ -46747,6 +49786,269 @@ export interface player_utility_variance_fieldsGenqlSelection{
 export interface player_utility_variance_order_by {attacker_steam_id?: (order_by | null),round?: (order_by | null)}
 
 
+/** columns and relationships of "player_weapon_stats_v" */
+export interface player_weapon_stats_vGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    match_id?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    weapon_class?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "player_weapon_stats_v" */
+export interface player_weapon_stats_v_aggregateGenqlSelection{
+    aggregate?: player_weapon_stats_v_aggregate_fieldsGenqlSelection
+    nodes?: player_weapon_stats_vGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface player_weapon_stats_v_aggregate_bool_exp {count?: (player_weapon_stats_v_aggregate_bool_exp_count | null)}
+
+export interface player_weapon_stats_v_aggregate_bool_exp_count {arguments?: (player_weapon_stats_v_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (player_weapon_stats_v_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "player_weapon_stats_v" */
+export interface player_weapon_stats_v_aggregate_fieldsGenqlSelection{
+    avg?: player_weapon_stats_v_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (player_weapon_stats_v_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: player_weapon_stats_v_max_fieldsGenqlSelection
+    min?: player_weapon_stats_v_min_fieldsGenqlSelection
+    stddev?: player_weapon_stats_v_stddev_fieldsGenqlSelection
+    stddev_pop?: player_weapon_stats_v_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: player_weapon_stats_v_stddev_samp_fieldsGenqlSelection
+    sum?: player_weapon_stats_v_sum_fieldsGenqlSelection
+    var_pop?: player_weapon_stats_v_var_pop_fieldsGenqlSelection
+    var_samp?: player_weapon_stats_v_var_samp_fieldsGenqlSelection
+    variance?: player_weapon_stats_v_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "player_weapon_stats_v" */
+export interface player_weapon_stats_v_aggregate_order_by {avg?: (player_weapon_stats_v_avg_order_by | null),count?: (order_by | null),max?: (player_weapon_stats_v_max_order_by | null),min?: (player_weapon_stats_v_min_order_by | null),stddev?: (player_weapon_stats_v_stddev_order_by | null),stddev_pop?: (player_weapon_stats_v_stddev_pop_order_by | null),stddev_samp?: (player_weapon_stats_v_stddev_samp_order_by | null),sum?: (player_weapon_stats_v_sum_order_by | null),var_pop?: (player_weapon_stats_v_var_pop_order_by | null),var_samp?: (player_weapon_stats_v_var_samp_order_by | null),variance?: (player_weapon_stats_v_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "player_weapon_stats_v" */
+export interface player_weapon_stats_v_arr_rel_insert_input {data: player_weapon_stats_v_insert_input[]}
+
+
+/** aggregate avg on columns */
+export interface player_weapon_stats_v_avg_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "player_weapon_stats_v" */
+export interface player_weapon_stats_v_avg_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "player_weapon_stats_v". All fields are combined with a logical 'AND'. */
+export interface player_weapon_stats_v_bool_exp {_and?: (player_weapon_stats_v_bool_exp[] | null),_not?: (player_weapon_stats_v_bool_exp | null),_or?: (player_weapon_stats_v_bool_exp[] | null),first_bullet_hits?: (Int_comparison_exp | null),first_bullet_shots?: (Int_comparison_exp | null),hits?: (Int_comparison_exp | null),hits_spotted?: (Int_comparison_exp | null),match_id?: (uuid_comparison_exp | null),shots?: (Int_comparison_exp | null),shots_spotted?: (Int_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),weapon_class?: (String_comparison_exp | null)}
+
+
+/** input type for inserting data into table "player_weapon_stats_v" */
+export interface player_weapon_stats_v_insert_input {first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_spotted?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),shots?: (Scalars['Int'] | null),shots_spotted?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),weapon_class?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface player_weapon_stats_v_max_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    match_id?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    weapon_class?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "player_weapon_stats_v" */
+export interface player_weapon_stats_v_max_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),match_id?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null),weapon_class?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface player_weapon_stats_v_min_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    match_id?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    weapon_class?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "player_weapon_stats_v" */
+export interface player_weapon_stats_v_min_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),match_id?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null),weapon_class?: (order_by | null)}
+
+
+/** Ordering options when selecting data from "player_weapon_stats_v". */
+export interface player_weapon_stats_v_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),match_id?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null),weapon_class?: (order_by | null)}
+
+
+/** aggregate stddev on columns */
+export interface player_weapon_stats_v_stddev_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "player_weapon_stats_v" */
+export interface player_weapon_stats_v_stddev_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface player_weapon_stats_v_stddev_pop_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "player_weapon_stats_v" */
+export interface player_weapon_stats_v_stddev_pop_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface player_weapon_stats_v_stddev_samp_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "player_weapon_stats_v" */
+export interface player_weapon_stats_v_stddev_samp_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** Streaming cursor of the table "player_weapon_stats_v" */
+export interface player_weapon_stats_v_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: player_weapon_stats_v_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface player_weapon_stats_v_stream_cursor_value_input {first_bullet_hits?: (Scalars['Int'] | null),first_bullet_shots?: (Scalars['Int'] | null),hits?: (Scalars['Int'] | null),hits_spotted?: (Scalars['Int'] | null),match_id?: (Scalars['uuid'] | null),shots?: (Scalars['Int'] | null),shots_spotted?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null),weapon_class?: (Scalars['String'] | null)}
+
+
+/** aggregate sum on columns */
+export interface player_weapon_stats_v_sum_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "player_weapon_stats_v" */
+export interface player_weapon_stats_v_sum_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate var_pop on columns */
+export interface player_weapon_stats_v_var_pop_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "player_weapon_stats_v" */
+export interface player_weapon_stats_v_var_pop_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface player_weapon_stats_v_var_samp_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "player_weapon_stats_v" */
+export interface player_weapon_stats_v_var_samp_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface player_weapon_stats_v_variance_fieldsGenqlSelection{
+    first_bullet_hits?: boolean | number
+    first_bullet_shots?: boolean | number
+    hits?: boolean | number
+    hits_spotted?: boolean | number
+    shots?: boolean | number
+    shots_spotted?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "player_weapon_stats_v" */
+export interface player_weapon_stats_v_variance_order_by {first_bullet_hits?: (order_by | null),first_bullet_shots?: (order_by | null),hits?: (order_by | null),hits_spotted?: (order_by | null),shots?: (order_by | null),shots_spotted?: (order_by | null),steam_id?: (order_by | null)}
+
+
 /** columns and relationships of "players" */
 export interface playersGenqlSelection{
     /** An array relationship */
@@ -46773,6 +50075,30 @@ export interface playersGenqlSelection{
     order_by?: (abandoned_matches_order_by[] | null), 
     /** filter the rows returned */
     where?: (abandoned_matches_bool_exp | null)} })
+    /** An array relationship */
+    aim_weapon_stats?: (player_aim_weapon_statsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_aim_weapon_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_aim_weapon_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_aim_weapon_stats_bool_exp | null)} })
+    /** An aggregate relationship */
+    aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_aim_weapon_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_aim_weapon_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_aim_weapon_stats_bool_exp | null)} })
     /** An array relationship */
     assists?: (player_assistsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -47669,6 +50995,30 @@ export interface playersGenqlSelection{
     order_by?: (player_utility_order_by[] | null), 
     /** filter the rows returned */
     where?: (player_utility_bool_exp | null)} })
+    /** An array relationship */
+    weapon_stats?: (player_weapon_stats_vGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_weapon_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_weapon_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_weapon_stats_v_bool_exp | null)} })
+    /** An aggregate relationship */
+    weapon_stats_aggregate?: (player_weapon_stats_v_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_weapon_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_weapon_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_weapon_stats_v_bool_exp | null)} })
     /** A computed field, executes function "get_total_player_wins" */
     wins?: boolean | number
     /** A computed field, executes function "get_total_player_wins_competitive" */
@@ -47739,7 +51089,7 @@ export interface players_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "players". All fields are combined with a logical 'AND'. */
-export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_lobby_id?: (uuid_comparison_exp | null),custom_avatar_url?: (String_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),elo?: (jsonb_comparison_exp | null),elo_history?: (v_player_elo_bool_exp | null),elo_history_aggregate?: (v_player_elo_aggregate_bool_exp | null),faceit_elo?: (Int_comparison_exp | null),faceit_nickname?: (String_comparison_exp | null),faceit_player_id?: (String_comparison_exp | null),faceit_rank_history?: (player_faceit_rank_history_bool_exp | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_bool_exp | null),faceit_skill_level?: (Int_comparison_exp | null),faceit_updated_at?: (timestamptz_comparison_exp | null),faceit_url?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),friends?: (my_friends_bool_exp | null),friends_aggregate?: (my_friends_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_banned?: (Boolean_comparison_exp | null),is_gagged?: (Boolean_comparison_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),is_in_lobby?: (Boolean_comparison_exp | null),is_muted?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),kills_by_weapons?: (player_kills_by_weapon_bool_exp | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_bool_exp | null),language?: (String_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),lobby_players?: (lobby_players_bool_exp | null),lobby_players_aggregate?: (lobby_players_aggregate_bool_exp | null),losses?: (Int_comparison_exp | null),losses_competitive?: (Int_comparison_exp | null),losses_duel?: (Int_comparison_exp | null),losses_wingman?: (Int_comparison_exp | null),match_map_hltv?: (v_player_match_map_hltv_bool_exp | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_bool_exp | null),match_map_stats?: (player_match_map_stats_bool_exp | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_bool_exp | null),match_stats?: (player_match_stats_v_bool_exp | null),match_stats_aggregate?: (player_match_stats_v_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),peak_elo?: (jsonb_comparison_exp | null),pending_match_imports?: (pending_match_import_players_bool_exp | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),premier_rank?: (Int_comparison_exp | null),premier_rank_history?: (player_premier_rank_history_bool_exp | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_bool_exp | null),premier_rank_updated_at?: (timestamptz_comparison_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),roster_image_url?: (String_comparison_exp | null),sanctions?: (player_sanctions_bool_exp | null),sanctions_aggregate?: (player_sanctions_aggregate_bool_exp | null),show_match_ready_modal?: (Boolean_comparison_exp | null),stats?: (player_stats_bool_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournament_trophies?: (tournament_trophies_bool_exp | null),tournament_trophies_aggregate?: (tournament_trophies_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null),wins?: (Int_comparison_exp | null),wins_competitive?: (Int_comparison_exp | null),wins_duel?: (Int_comparison_exp | null),wins_wingman?: (Int_comparison_exp | null)}
+export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),aim_weapon_stats?: (player_aim_weapon_stats_bool_exp | null),aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_lobby_id?: (uuid_comparison_exp | null),custom_avatar_url?: (String_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),elo?: (jsonb_comparison_exp | null),elo_history?: (v_player_elo_bool_exp | null),elo_history_aggregate?: (v_player_elo_aggregate_bool_exp | null),faceit_elo?: (Int_comparison_exp | null),faceit_nickname?: (String_comparison_exp | null),faceit_player_id?: (String_comparison_exp | null),faceit_rank_history?: (player_faceit_rank_history_bool_exp | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_bool_exp | null),faceit_skill_level?: (Int_comparison_exp | null),faceit_updated_at?: (timestamptz_comparison_exp | null),faceit_url?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),friends?: (my_friends_bool_exp | null),friends_aggregate?: (my_friends_aggregate_bool_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_banned?: (Boolean_comparison_exp | null),is_gagged?: (Boolean_comparison_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),is_in_lobby?: (Boolean_comparison_exp | null),is_muted?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),kills_by_weapons?: (player_kills_by_weapon_bool_exp | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_bool_exp | null),language?: (String_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),lobby_players?: (lobby_players_bool_exp | null),lobby_players_aggregate?: (lobby_players_aggregate_bool_exp | null),losses?: (Int_comparison_exp | null),losses_competitive?: (Int_comparison_exp | null),losses_duel?: (Int_comparison_exp | null),losses_wingman?: (Int_comparison_exp | null),match_map_hltv?: (v_player_match_map_hltv_bool_exp | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_bool_exp | null),match_map_stats?: (player_match_map_stats_bool_exp | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_bool_exp | null),match_stats?: (player_match_stats_v_bool_exp | null),match_stats_aggregate?: (player_match_stats_v_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),peak_elo?: (jsonb_comparison_exp | null),pending_match_imports?: (pending_match_import_players_bool_exp | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),premier_rank?: (Int_comparison_exp | null),premier_rank_history?: (player_premier_rank_history_bool_exp | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_bool_exp | null),premier_rank_updated_at?: (timestamptz_comparison_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),roster_image_url?: (String_comparison_exp | null),sanctions?: (player_sanctions_bool_exp | null),sanctions_aggregate?: (player_sanctions_aggregate_bool_exp | null),show_match_ready_modal?: (Boolean_comparison_exp | null),stats?: (player_stats_bool_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournament_trophies?: (tournament_trophies_bool_exp | null),tournament_trophies_aggregate?: (tournament_trophies_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null),weapon_stats?: (player_weapon_stats_v_bool_exp | null),weapon_stats_aggregate?: (player_weapon_stats_v_aggregate_bool_exp | null),wins?: (Int_comparison_exp | null),wins_competitive?: (Int_comparison_exp | null),wins_duel?: (Int_comparison_exp | null),wins_wingman?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "players" */
@@ -47747,7 +51097,7 @@ export interface players_inc_input {faceit_elo?: (Scalars['Int'] | null),faceit_
 
 
 /** input type for inserting data into table "players" */
-export interface players_insert_input {abandoned_matches?: (abandoned_matches_arr_rel_insert_input | null),assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),coach_lineups?: (match_lineups_arr_rel_insert_input | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),elo_history?: (v_player_elo_arr_rel_insert_input | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_rank_history?: (player_faceit_rank_history_arr_rel_insert_input | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),friends?: (my_friends_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),kills_by_weapons?: (player_kills_by_weapon_arr_rel_insert_input | null),language?: (Scalars['String'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),lobby_players?: (lobby_players_arr_rel_insert_input | null),match_map_hltv?: (v_player_match_map_hltv_arr_rel_insert_input | null),match_map_stats?: (player_match_map_stats_arr_rel_insert_input | null),match_stats?: (player_match_stats_v_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notifications?: (notifications_arr_rel_insert_input | null),objectives?: (player_objectives_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),pending_match_imports?: (pending_match_import_players_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),premier_rank?: (Scalars['Int'] | null),premier_rank_history?: (player_premier_rank_history_arr_rel_insert_input | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),roster_image_url?: (Scalars['String'] | null),sanctions?: (player_sanctions_arr_rel_insert_input | null),show_match_ready_modal?: (Scalars['Boolean'] | null),stats?: (player_stats_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournament_trophies?: (tournament_trophies_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null)}
+export interface players_insert_input {abandoned_matches?: (abandoned_matches_arr_rel_insert_input | null),aim_weapon_stats?: (player_aim_weapon_stats_arr_rel_insert_input | null),assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),coach_lineups?: (match_lineups_arr_rel_insert_input | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),elo_history?: (v_player_elo_arr_rel_insert_input | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_rank_history?: (player_faceit_rank_history_arr_rel_insert_input | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),friends?: (my_friends_arr_rel_insert_input | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),kills_by_weapons?: (player_kills_by_weapon_arr_rel_insert_input | null),language?: (Scalars['String'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),lobby_players?: (lobby_players_arr_rel_insert_input | null),match_map_hltv?: (v_player_match_map_hltv_arr_rel_insert_input | null),match_map_stats?: (player_match_map_stats_arr_rel_insert_input | null),match_stats?: (player_match_stats_v_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notifications?: (notifications_arr_rel_insert_input | null),objectives?: (player_objectives_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),pending_match_imports?: (pending_match_import_players_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),premier_rank?: (Scalars['Int'] | null),premier_rank_history?: (player_premier_rank_history_arr_rel_insert_input | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),roster_image_url?: (Scalars['String'] | null),sanctions?: (player_sanctions_arr_rel_insert_input | null),show_match_ready_modal?: (Scalars['Boolean'] | null),stats?: (player_stats_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournament_trophies?: (tournament_trophies_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null),weapon_stats?: (player_weapon_stats_v_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -47868,7 +51218,7 @@ export interface players_on_conflict {constraint: players_constraint,update_colu
 
 
 /** Ordering options when selecting data from "players". */
-export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),current_lobby_id?: (order_by | null),custom_avatar_url?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),elo_history_aggregate?: (v_player_elo_aggregate_order_by | null),faceit_elo?: (order_by | null),faceit_nickname?: (order_by | null),faceit_player_id?: (order_by | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_order_by | null),faceit_skill_level?: (order_by | null),faceit_updated_at?: (order_by | null),faceit_url?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),friends_aggregate?: (my_friends_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_banned?: (order_by | null),is_gagged?: (order_by | null),is_in_another_match?: (order_by | null),is_in_lobby?: (order_by | null),is_muted?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_order_by | null),language?: (order_by | null),last_sign_in_at?: (order_by | null),lobby_players_aggregate?: (lobby_players_aggregate_order_by | null),losses?: (order_by | null),losses_competitive?: (order_by | null),losses_duel?: (order_by | null),losses_wingman?: (order_by | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_order_by | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_order_by | null),match_stats_aggregate?: (player_match_stats_v_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),peak_elo?: (order_by | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),premier_rank?: (order_by | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_order_by | null),premier_rank_updated_at?: (order_by | null),profile_url?: (order_by | null),role?: (order_by | null),roster_image_url?: (order_by | null),sanctions_aggregate?: (player_sanctions_aggregate_order_by | null),show_match_ready_modal?: (order_by | null),stats?: (player_stats_order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournament_trophies_aggregate?: (tournament_trophies_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null),wins?: (order_by | null),wins_competitive?: (order_by | null),wins_duel?: (order_by | null),wins_wingman?: (order_by | null)}
+export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),current_lobby_id?: (order_by | null),custom_avatar_url?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),elo?: (order_by | null),elo_history_aggregate?: (v_player_elo_aggregate_order_by | null),faceit_elo?: (order_by | null),faceit_nickname?: (order_by | null),faceit_player_id?: (order_by | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_order_by | null),faceit_skill_level?: (order_by | null),faceit_updated_at?: (order_by | null),faceit_url?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),friends_aggregate?: (my_friends_aggregate_order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_banned?: (order_by | null),is_gagged?: (order_by | null),is_in_another_match?: (order_by | null),is_in_lobby?: (order_by | null),is_muted?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_order_by | null),language?: (order_by | null),last_sign_in_at?: (order_by | null),lobby_players_aggregate?: (lobby_players_aggregate_order_by | null),losses?: (order_by | null),losses_competitive?: (order_by | null),losses_duel?: (order_by | null),losses_wingman?: (order_by | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_order_by | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_order_by | null),match_stats_aggregate?: (player_match_stats_v_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),peak_elo?: (order_by | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),premier_rank?: (order_by | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_order_by | null),premier_rank_updated_at?: (order_by | null),profile_url?: (order_by | null),role?: (order_by | null),roster_image_url?: (order_by | null),sanctions_aggregate?: (player_sanctions_aggregate_order_by | null),show_match_ready_modal?: (order_by | null),stats?: (player_stats_order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournament_trophies_aggregate?: (tournament_trophies_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null),weapon_stats_aggregate?: (player_weapon_stats_v_aggregate_order_by | null),wins?: (order_by | null),wins_competitive?: (order_by | null),wins_duel?: (order_by | null),wins_wingman?: (order_by | null)}
 
 
 /** primary key columns input for table: players */
@@ -49959,6 +53309,32 @@ export interface query_rootGenqlSelection{
     where?: (player_aim_stats_demo_bool_exp | null)} })
     /** fetch data from the table: "player_aim_stats_demo" using primary key columns */
     player_aim_stats_demo_by_pk?: (player_aim_stats_demoGenqlSelection & { __args: {attacker_steam_id: Scalars['bigint'], match_map_id: Scalars['uuid']} })
+    /** fetch data from the table: "player_aim_weapon_stats" */
+    player_aim_weapon_stats?: (player_aim_weapon_statsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_aim_weapon_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_aim_weapon_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_aim_weapon_stats_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_aim_weapon_stats" */
+    player_aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_aim_weapon_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_aim_weapon_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_aim_weapon_stats_bool_exp | null)} })
+    /** fetch data from the table: "player_aim_weapon_stats" using primary key columns */
+    player_aim_weapon_stats_by_pk?: (player_aim_weapon_statsGenqlSelection & { __args: {match_map_id: Scalars['uuid'], steam_id: Scalars['bigint'], weapon_class: Scalars['String']} })
     /** An array relationship */
     player_assists?: (player_assistsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -49985,6 +53361,30 @@ export interface query_rootGenqlSelection{
     where?: (player_assists_bool_exp | null)} })
     /** fetch data from the table: "player_assists" using primary key columns */
     player_assists_by_pk?: (player_assistsGenqlSelection & { __args: {attacked_steam_id: Scalars['bigint'], attacker_steam_id: Scalars['bigint'], match_map_id: Scalars['uuid'], time: Scalars['timestamptz']} })
+    /** fetch data from the table: "player_career_stats_v" */
+    player_career_stats_v?: (player_career_stats_vGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_career_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_career_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_career_stats_v_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_career_stats_v" */
+    player_career_stats_v_aggregate?: (player_career_stats_v_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_career_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_career_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_career_stats_v_bool_exp | null)} })
     /** An array relationship */
     player_damages?: (player_damagesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -50191,6 +53591,30 @@ export interface query_rootGenqlSelection{
     where?: (player_match_map_stats_bool_exp | null)} })
     /** fetch data from the table: "player_match_map_stats" using primary key columns */
     player_match_map_stats_by_pk?: (player_match_map_statsGenqlSelection & { __args: {match_map_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** fetch data from the table: "player_match_performance_v" */
+    player_match_performance_v?: (player_match_performance_vGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_performance_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_performance_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_performance_v_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_match_performance_v" */
+    player_match_performance_v_aggregate?: (player_match_performance_v_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_performance_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_performance_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_performance_v_bool_exp | null)} })
     /** fetch data from the table: "player_match_stats_v" */
     player_match_stats_v?: (player_match_stats_vGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -50241,6 +53665,30 @@ export interface query_rootGenqlSelection{
     where?: (player_objectives_bool_exp | null)} })
     /** fetch data from the table: "player_objectives" using primary key columns */
     player_objectives_by_pk?: (player_objectivesGenqlSelection & { __args: {match_map_id: Scalars['uuid'], player_steam_id: Scalars['bigint'], time: Scalars['timestamptz']} })
+    /** fetch data from the table: "player_performance_v" */
+    player_performance_v?: (player_performance_vGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_performance_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_performance_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_performance_v_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_performance_v" */
+    player_performance_v_aggregate?: (player_performance_v_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_performance_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_performance_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_performance_v_bool_exp | null)} })
     /** fetch data from the table: "player_premier_rank_history" */
     player_premier_rank_history?: (player_premier_rank_historyGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -50397,6 +53845,30 @@ export interface query_rootGenqlSelection{
     where?: (player_utility_bool_exp | null)} })
     /** fetch data from the table: "player_utility" using primary key columns */
     player_utility_by_pk?: (player_utilityGenqlSelection & { __args: {attacker_steam_id: Scalars['bigint'], match_map_id: Scalars['uuid'], time: Scalars['timestamptz']} })
+    /** fetch data from the table: "player_weapon_stats_v" */
+    player_weapon_stats_v?: (player_weapon_stats_vGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_weapon_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_weapon_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_weapon_stats_v_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_weapon_stats_v" */
+    player_weapon_stats_v_aggregate?: (player_weapon_stats_v_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_weapon_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_weapon_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_weapon_stats_v_bool_exp | null)} })
     /** fetch data from the table: "players" */
     players?: (playersGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -54654,6 +58126,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (player_aim_stats_demo_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (player_aim_stats_demo_bool_exp | null)} })
+    /** fetch data from the table: "player_aim_weapon_stats" */
+    player_aim_weapon_stats?: (player_aim_weapon_statsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_aim_weapon_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_aim_weapon_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_aim_weapon_stats_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_aim_weapon_stats" */
+    player_aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_aim_weapon_stats_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_aim_weapon_stats_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_aim_weapon_stats_bool_exp | null)} })
+    /** fetch data from the table: "player_aim_weapon_stats" using primary key columns */
+    player_aim_weapon_stats_by_pk?: (player_aim_weapon_statsGenqlSelection & { __args: {match_map_id: Scalars['uuid'], steam_id: Scalars['bigint'], weapon_class: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "player_aim_weapon_stats" */
+    player_aim_weapon_stats_stream?: (player_aim_weapon_statsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (player_aim_weapon_stats_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (player_aim_weapon_stats_bool_exp | null)} })
     /** An array relationship */
     player_assists?: (player_assistsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -54688,6 +58194,38 @@ export interface subscription_rootGenqlSelection{
     cursor: (player_assists_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (player_assists_bool_exp | null)} })
+    /** fetch data from the table: "player_career_stats_v" */
+    player_career_stats_v?: (player_career_stats_vGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_career_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_career_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_career_stats_v_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_career_stats_v" */
+    player_career_stats_v_aggregate?: (player_career_stats_v_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_career_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_career_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_career_stats_v_bool_exp | null)} })
+    /** fetch data from the table in a streaming manner: "player_career_stats_v" */
+    player_career_stats_v_stream?: (player_career_stats_vGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (player_career_stats_v_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (player_career_stats_v_bool_exp | null)} })
     /** An array relationship */
     player_damages?: (player_damagesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -54958,6 +58496,38 @@ export interface subscription_rootGenqlSelection{
     cursor: (player_match_map_stats_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (player_match_map_stats_bool_exp | null)} })
+    /** fetch data from the table: "player_match_performance_v" */
+    player_match_performance_v?: (player_match_performance_vGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_performance_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_performance_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_performance_v_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_match_performance_v" */
+    player_match_performance_v_aggregate?: (player_match_performance_v_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_match_performance_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_match_performance_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_match_performance_v_bool_exp | null)} })
+    /** fetch data from the table in a streaming manner: "player_match_performance_v" */
+    player_match_performance_v_stream?: (player_match_performance_vGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (player_match_performance_v_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (player_match_performance_v_bool_exp | null)} })
     /** fetch data from the table: "player_match_stats_v" */
     player_match_stats_v?: (player_match_stats_vGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -55024,6 +58594,38 @@ export interface subscription_rootGenqlSelection{
     cursor: (player_objectives_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (player_objectives_bool_exp | null)} })
+    /** fetch data from the table: "player_performance_v" */
+    player_performance_v?: (player_performance_vGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_performance_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_performance_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_performance_v_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_performance_v" */
+    player_performance_v_aggregate?: (player_performance_v_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_performance_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_performance_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_performance_v_bool_exp | null)} })
+    /** fetch data from the table in a streaming manner: "player_performance_v" */
+    player_performance_v_stream?: (player_performance_vGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (player_performance_v_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (player_performance_v_bool_exp | null)} })
     /** fetch data from the table: "player_premier_rank_history" */
     player_premier_rank_history?: (player_premier_rank_historyGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -55228,6 +58830,38 @@ export interface subscription_rootGenqlSelection{
     cursor: (player_utility_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (player_utility_bool_exp | null)} })
+    /** fetch data from the table: "player_weapon_stats_v" */
+    player_weapon_stats_v?: (player_weapon_stats_vGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_weapon_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_weapon_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_weapon_stats_v_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "player_weapon_stats_v" */
+    player_weapon_stats_v_aggregate?: (player_weapon_stats_v_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (player_weapon_stats_v_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (player_weapon_stats_v_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (player_weapon_stats_v_bool_exp | null)} })
+    /** fetch data from the table in a streaming manner: "player_weapon_stats_v" */
+    player_weapon_stats_v_stream?: (player_weapon_stats_vGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (player_weapon_stats_v_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (player_weapon_stats_v_bool_exp | null)} })
     /** fetch data from the table: "players" */
     players?: (playersGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -67013,6 +70647,22 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const ReparseAllStartedOutput_possibleTypes: string[] = ['ReparseAllStartedOutput']
+    export const isReparseAllStartedOutput = (obj?: { __typename?: any } | null): obj is ReparseAllStartedOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isReparseAllStartedOutput"')
+      return ReparseAllStartedOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const ReparseAllStatusOutput_possibleTypes: string[] = ['ReparseAllStatusOutput']
+    export const isReparseAllStatusOutput = (obj?: { __typename?: any } | null): obj is ReparseAllStatusOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isReparseAllStatusOutput"')
+      return ReparseAllStatusOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const SanctionResult_possibleTypes: string[] = ['SanctionResult']
     export const isSanctionResult = (obj?: { __typename?: any } | null): obj is SanctionResult => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isSanctionResult"')
@@ -71757,6 +75407,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const player_aim_weapon_stats_possibleTypes: string[] = ['player_aim_weapon_stats']
+    export const isplayer_aim_weapon_stats = (obj?: { __typename?: any } | null): obj is player_aim_weapon_stats => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_aim_weapon_stats"')
+      return player_aim_weapon_stats_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_aim_weapon_stats_aggregate_possibleTypes: string[] = ['player_aim_weapon_stats_aggregate']
+    export const isplayer_aim_weapon_stats_aggregate = (obj?: { __typename?: any } | null): obj is player_aim_weapon_stats_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_aim_weapon_stats_aggregate"')
+      return player_aim_weapon_stats_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_aim_weapon_stats_aggregate_fields_possibleTypes: string[] = ['player_aim_weapon_stats_aggregate_fields']
+    export const isplayer_aim_weapon_stats_aggregate_fields = (obj?: { __typename?: any } | null): obj is player_aim_weapon_stats_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_aim_weapon_stats_aggregate_fields"')
+      return player_aim_weapon_stats_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_aim_weapon_stats_avg_fields_possibleTypes: string[] = ['player_aim_weapon_stats_avg_fields']
+    export const isplayer_aim_weapon_stats_avg_fields = (obj?: { __typename?: any } | null): obj is player_aim_weapon_stats_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_aim_weapon_stats_avg_fields"')
+      return player_aim_weapon_stats_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_aim_weapon_stats_max_fields_possibleTypes: string[] = ['player_aim_weapon_stats_max_fields']
+    export const isplayer_aim_weapon_stats_max_fields = (obj?: { __typename?: any } | null): obj is player_aim_weapon_stats_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_aim_weapon_stats_max_fields"')
+      return player_aim_weapon_stats_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_aim_weapon_stats_min_fields_possibleTypes: string[] = ['player_aim_weapon_stats_min_fields']
+    export const isplayer_aim_weapon_stats_min_fields = (obj?: { __typename?: any } | null): obj is player_aim_weapon_stats_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_aim_weapon_stats_min_fields"')
+      return player_aim_weapon_stats_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_aim_weapon_stats_mutation_response_possibleTypes: string[] = ['player_aim_weapon_stats_mutation_response']
+    export const isplayer_aim_weapon_stats_mutation_response = (obj?: { __typename?: any } | null): obj is player_aim_weapon_stats_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_aim_weapon_stats_mutation_response"')
+      return player_aim_weapon_stats_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_aim_weapon_stats_stddev_fields_possibleTypes: string[] = ['player_aim_weapon_stats_stddev_fields']
+    export const isplayer_aim_weapon_stats_stddev_fields = (obj?: { __typename?: any } | null): obj is player_aim_weapon_stats_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_aim_weapon_stats_stddev_fields"')
+      return player_aim_weapon_stats_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_aim_weapon_stats_stddev_pop_fields_possibleTypes: string[] = ['player_aim_weapon_stats_stddev_pop_fields']
+    export const isplayer_aim_weapon_stats_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is player_aim_weapon_stats_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_aim_weapon_stats_stddev_pop_fields"')
+      return player_aim_weapon_stats_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_aim_weapon_stats_stddev_samp_fields_possibleTypes: string[] = ['player_aim_weapon_stats_stddev_samp_fields']
+    export const isplayer_aim_weapon_stats_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is player_aim_weapon_stats_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_aim_weapon_stats_stddev_samp_fields"')
+      return player_aim_weapon_stats_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_aim_weapon_stats_sum_fields_possibleTypes: string[] = ['player_aim_weapon_stats_sum_fields']
+    export const isplayer_aim_weapon_stats_sum_fields = (obj?: { __typename?: any } | null): obj is player_aim_weapon_stats_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_aim_weapon_stats_sum_fields"')
+      return player_aim_weapon_stats_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_aim_weapon_stats_var_pop_fields_possibleTypes: string[] = ['player_aim_weapon_stats_var_pop_fields']
+    export const isplayer_aim_weapon_stats_var_pop_fields = (obj?: { __typename?: any } | null): obj is player_aim_weapon_stats_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_aim_weapon_stats_var_pop_fields"')
+      return player_aim_weapon_stats_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_aim_weapon_stats_var_samp_fields_possibleTypes: string[] = ['player_aim_weapon_stats_var_samp_fields']
+    export const isplayer_aim_weapon_stats_var_samp_fields = (obj?: { __typename?: any } | null): obj is player_aim_weapon_stats_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_aim_weapon_stats_var_samp_fields"')
+      return player_aim_weapon_stats_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_aim_weapon_stats_variance_fields_possibleTypes: string[] = ['player_aim_weapon_stats_variance_fields']
+    export const isplayer_aim_weapon_stats_variance_fields = (obj?: { __typename?: any } | null): obj is player_aim_weapon_stats_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_aim_weapon_stats_variance_fields"')
+      return player_aim_weapon_stats_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const player_assists_possibleTypes: string[] = ['player_assists']
     export const isplayer_assists = (obj?: { __typename?: any } | null): obj is player_assists => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_assists"')
@@ -71865,6 +75627,110 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isplayer_assists_variance_fields = (obj?: { __typename?: any } | null): obj is player_assists_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_assists_variance_fields"')
       return player_assists_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_career_stats_v_possibleTypes: string[] = ['player_career_stats_v']
+    export const isplayer_career_stats_v = (obj?: { __typename?: any } | null): obj is player_career_stats_v => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_career_stats_v"')
+      return player_career_stats_v_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_career_stats_v_aggregate_possibleTypes: string[] = ['player_career_stats_v_aggregate']
+    export const isplayer_career_stats_v_aggregate = (obj?: { __typename?: any } | null): obj is player_career_stats_v_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_career_stats_v_aggregate"')
+      return player_career_stats_v_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_career_stats_v_aggregate_fields_possibleTypes: string[] = ['player_career_stats_v_aggregate_fields']
+    export const isplayer_career_stats_v_aggregate_fields = (obj?: { __typename?: any } | null): obj is player_career_stats_v_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_career_stats_v_aggregate_fields"')
+      return player_career_stats_v_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_career_stats_v_avg_fields_possibleTypes: string[] = ['player_career_stats_v_avg_fields']
+    export const isplayer_career_stats_v_avg_fields = (obj?: { __typename?: any } | null): obj is player_career_stats_v_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_career_stats_v_avg_fields"')
+      return player_career_stats_v_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_career_stats_v_max_fields_possibleTypes: string[] = ['player_career_stats_v_max_fields']
+    export const isplayer_career_stats_v_max_fields = (obj?: { __typename?: any } | null): obj is player_career_stats_v_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_career_stats_v_max_fields"')
+      return player_career_stats_v_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_career_stats_v_min_fields_possibleTypes: string[] = ['player_career_stats_v_min_fields']
+    export const isplayer_career_stats_v_min_fields = (obj?: { __typename?: any } | null): obj is player_career_stats_v_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_career_stats_v_min_fields"')
+      return player_career_stats_v_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_career_stats_v_stddev_fields_possibleTypes: string[] = ['player_career_stats_v_stddev_fields']
+    export const isplayer_career_stats_v_stddev_fields = (obj?: { __typename?: any } | null): obj is player_career_stats_v_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_career_stats_v_stddev_fields"')
+      return player_career_stats_v_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_career_stats_v_stddev_pop_fields_possibleTypes: string[] = ['player_career_stats_v_stddev_pop_fields']
+    export const isplayer_career_stats_v_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is player_career_stats_v_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_career_stats_v_stddev_pop_fields"')
+      return player_career_stats_v_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_career_stats_v_stddev_samp_fields_possibleTypes: string[] = ['player_career_stats_v_stddev_samp_fields']
+    export const isplayer_career_stats_v_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is player_career_stats_v_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_career_stats_v_stddev_samp_fields"')
+      return player_career_stats_v_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_career_stats_v_sum_fields_possibleTypes: string[] = ['player_career_stats_v_sum_fields']
+    export const isplayer_career_stats_v_sum_fields = (obj?: { __typename?: any } | null): obj is player_career_stats_v_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_career_stats_v_sum_fields"')
+      return player_career_stats_v_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_career_stats_v_var_pop_fields_possibleTypes: string[] = ['player_career_stats_v_var_pop_fields']
+    export const isplayer_career_stats_v_var_pop_fields = (obj?: { __typename?: any } | null): obj is player_career_stats_v_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_career_stats_v_var_pop_fields"')
+      return player_career_stats_v_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_career_stats_v_var_samp_fields_possibleTypes: string[] = ['player_career_stats_v_var_samp_fields']
+    export const isplayer_career_stats_v_var_samp_fields = (obj?: { __typename?: any } | null): obj is player_career_stats_v_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_career_stats_v_var_samp_fields"')
+      return player_career_stats_v_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_career_stats_v_variance_fields_possibleTypes: string[] = ['player_career_stats_v_variance_fields']
+    export const isplayer_career_stats_v_variance_fields = (obj?: { __typename?: any } | null): obj is player_career_stats_v_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_career_stats_v_variance_fields"')
+      return player_career_stats_v_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -72765,6 +76631,110 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const player_match_performance_v_possibleTypes: string[] = ['player_match_performance_v']
+    export const isplayer_match_performance_v = (obj?: { __typename?: any } | null): obj is player_match_performance_v => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_performance_v"')
+      return player_match_performance_v_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_performance_v_aggregate_possibleTypes: string[] = ['player_match_performance_v_aggregate']
+    export const isplayer_match_performance_v_aggregate = (obj?: { __typename?: any } | null): obj is player_match_performance_v_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_performance_v_aggregate"')
+      return player_match_performance_v_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_performance_v_aggregate_fields_possibleTypes: string[] = ['player_match_performance_v_aggregate_fields']
+    export const isplayer_match_performance_v_aggregate_fields = (obj?: { __typename?: any } | null): obj is player_match_performance_v_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_performance_v_aggregate_fields"')
+      return player_match_performance_v_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_performance_v_avg_fields_possibleTypes: string[] = ['player_match_performance_v_avg_fields']
+    export const isplayer_match_performance_v_avg_fields = (obj?: { __typename?: any } | null): obj is player_match_performance_v_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_performance_v_avg_fields"')
+      return player_match_performance_v_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_performance_v_max_fields_possibleTypes: string[] = ['player_match_performance_v_max_fields']
+    export const isplayer_match_performance_v_max_fields = (obj?: { __typename?: any } | null): obj is player_match_performance_v_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_performance_v_max_fields"')
+      return player_match_performance_v_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_performance_v_min_fields_possibleTypes: string[] = ['player_match_performance_v_min_fields']
+    export const isplayer_match_performance_v_min_fields = (obj?: { __typename?: any } | null): obj is player_match_performance_v_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_performance_v_min_fields"')
+      return player_match_performance_v_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_performance_v_stddev_fields_possibleTypes: string[] = ['player_match_performance_v_stddev_fields']
+    export const isplayer_match_performance_v_stddev_fields = (obj?: { __typename?: any } | null): obj is player_match_performance_v_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_performance_v_stddev_fields"')
+      return player_match_performance_v_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_performance_v_stddev_pop_fields_possibleTypes: string[] = ['player_match_performance_v_stddev_pop_fields']
+    export const isplayer_match_performance_v_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is player_match_performance_v_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_performance_v_stddev_pop_fields"')
+      return player_match_performance_v_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_performance_v_stddev_samp_fields_possibleTypes: string[] = ['player_match_performance_v_stddev_samp_fields']
+    export const isplayer_match_performance_v_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is player_match_performance_v_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_performance_v_stddev_samp_fields"')
+      return player_match_performance_v_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_performance_v_sum_fields_possibleTypes: string[] = ['player_match_performance_v_sum_fields']
+    export const isplayer_match_performance_v_sum_fields = (obj?: { __typename?: any } | null): obj is player_match_performance_v_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_performance_v_sum_fields"')
+      return player_match_performance_v_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_performance_v_var_pop_fields_possibleTypes: string[] = ['player_match_performance_v_var_pop_fields']
+    export const isplayer_match_performance_v_var_pop_fields = (obj?: { __typename?: any } | null): obj is player_match_performance_v_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_performance_v_var_pop_fields"')
+      return player_match_performance_v_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_performance_v_var_samp_fields_possibleTypes: string[] = ['player_match_performance_v_var_samp_fields']
+    export const isplayer_match_performance_v_var_samp_fields = (obj?: { __typename?: any } | null): obj is player_match_performance_v_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_performance_v_var_samp_fields"')
+      return player_match_performance_v_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_match_performance_v_variance_fields_possibleTypes: string[] = ['player_match_performance_v_variance_fields']
+    export const isplayer_match_performance_v_variance_fields = (obj?: { __typename?: any } | null): obj is player_match_performance_v_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_performance_v_variance_fields"')
+      return player_match_performance_v_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const player_match_stats_v_possibleTypes: string[] = ['player_match_stats_v']
     export const isplayer_match_stats_v = (obj?: { __typename?: any } | null): obj is player_match_stats_v => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_match_stats_v"')
@@ -72977,6 +76947,110 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isplayer_objectives_variance_fields = (obj?: { __typename?: any } | null): obj is player_objectives_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_objectives_variance_fields"')
       return player_objectives_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_performance_v_possibleTypes: string[] = ['player_performance_v']
+    export const isplayer_performance_v = (obj?: { __typename?: any } | null): obj is player_performance_v => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_performance_v"')
+      return player_performance_v_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_performance_v_aggregate_possibleTypes: string[] = ['player_performance_v_aggregate']
+    export const isplayer_performance_v_aggregate = (obj?: { __typename?: any } | null): obj is player_performance_v_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_performance_v_aggregate"')
+      return player_performance_v_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_performance_v_aggregate_fields_possibleTypes: string[] = ['player_performance_v_aggregate_fields']
+    export const isplayer_performance_v_aggregate_fields = (obj?: { __typename?: any } | null): obj is player_performance_v_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_performance_v_aggregate_fields"')
+      return player_performance_v_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_performance_v_avg_fields_possibleTypes: string[] = ['player_performance_v_avg_fields']
+    export const isplayer_performance_v_avg_fields = (obj?: { __typename?: any } | null): obj is player_performance_v_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_performance_v_avg_fields"')
+      return player_performance_v_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_performance_v_max_fields_possibleTypes: string[] = ['player_performance_v_max_fields']
+    export const isplayer_performance_v_max_fields = (obj?: { __typename?: any } | null): obj is player_performance_v_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_performance_v_max_fields"')
+      return player_performance_v_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_performance_v_min_fields_possibleTypes: string[] = ['player_performance_v_min_fields']
+    export const isplayer_performance_v_min_fields = (obj?: { __typename?: any } | null): obj is player_performance_v_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_performance_v_min_fields"')
+      return player_performance_v_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_performance_v_stddev_fields_possibleTypes: string[] = ['player_performance_v_stddev_fields']
+    export const isplayer_performance_v_stddev_fields = (obj?: { __typename?: any } | null): obj is player_performance_v_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_performance_v_stddev_fields"')
+      return player_performance_v_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_performance_v_stddev_pop_fields_possibleTypes: string[] = ['player_performance_v_stddev_pop_fields']
+    export const isplayer_performance_v_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is player_performance_v_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_performance_v_stddev_pop_fields"')
+      return player_performance_v_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_performance_v_stddev_samp_fields_possibleTypes: string[] = ['player_performance_v_stddev_samp_fields']
+    export const isplayer_performance_v_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is player_performance_v_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_performance_v_stddev_samp_fields"')
+      return player_performance_v_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_performance_v_sum_fields_possibleTypes: string[] = ['player_performance_v_sum_fields']
+    export const isplayer_performance_v_sum_fields = (obj?: { __typename?: any } | null): obj is player_performance_v_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_performance_v_sum_fields"')
+      return player_performance_v_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_performance_v_var_pop_fields_possibleTypes: string[] = ['player_performance_v_var_pop_fields']
+    export const isplayer_performance_v_var_pop_fields = (obj?: { __typename?: any } | null): obj is player_performance_v_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_performance_v_var_pop_fields"')
+      return player_performance_v_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_performance_v_var_samp_fields_possibleTypes: string[] = ['player_performance_v_var_samp_fields']
+    export const isplayer_performance_v_var_samp_fields = (obj?: { __typename?: any } | null): obj is player_performance_v_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_performance_v_var_samp_fields"')
+      return player_performance_v_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_performance_v_variance_fields_possibleTypes: string[] = ['player_performance_v_variance_fields']
+    export const isplayer_performance_v_variance_fields = (obj?: { __typename?: any } | null): obj is player_performance_v_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_performance_v_variance_fields"')
+      return player_performance_v_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -73649,6 +77723,110 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isplayer_utility_variance_fields = (obj?: { __typename?: any } | null): obj is player_utility_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_utility_variance_fields"')
       return player_utility_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_weapon_stats_v_possibleTypes: string[] = ['player_weapon_stats_v']
+    export const isplayer_weapon_stats_v = (obj?: { __typename?: any } | null): obj is player_weapon_stats_v => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_weapon_stats_v"')
+      return player_weapon_stats_v_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_weapon_stats_v_aggregate_possibleTypes: string[] = ['player_weapon_stats_v_aggregate']
+    export const isplayer_weapon_stats_v_aggregate = (obj?: { __typename?: any } | null): obj is player_weapon_stats_v_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_weapon_stats_v_aggregate"')
+      return player_weapon_stats_v_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_weapon_stats_v_aggregate_fields_possibleTypes: string[] = ['player_weapon_stats_v_aggregate_fields']
+    export const isplayer_weapon_stats_v_aggregate_fields = (obj?: { __typename?: any } | null): obj is player_weapon_stats_v_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_weapon_stats_v_aggregate_fields"')
+      return player_weapon_stats_v_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_weapon_stats_v_avg_fields_possibleTypes: string[] = ['player_weapon_stats_v_avg_fields']
+    export const isplayer_weapon_stats_v_avg_fields = (obj?: { __typename?: any } | null): obj is player_weapon_stats_v_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_weapon_stats_v_avg_fields"')
+      return player_weapon_stats_v_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_weapon_stats_v_max_fields_possibleTypes: string[] = ['player_weapon_stats_v_max_fields']
+    export const isplayer_weapon_stats_v_max_fields = (obj?: { __typename?: any } | null): obj is player_weapon_stats_v_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_weapon_stats_v_max_fields"')
+      return player_weapon_stats_v_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_weapon_stats_v_min_fields_possibleTypes: string[] = ['player_weapon_stats_v_min_fields']
+    export const isplayer_weapon_stats_v_min_fields = (obj?: { __typename?: any } | null): obj is player_weapon_stats_v_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_weapon_stats_v_min_fields"')
+      return player_weapon_stats_v_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_weapon_stats_v_stddev_fields_possibleTypes: string[] = ['player_weapon_stats_v_stddev_fields']
+    export const isplayer_weapon_stats_v_stddev_fields = (obj?: { __typename?: any } | null): obj is player_weapon_stats_v_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_weapon_stats_v_stddev_fields"')
+      return player_weapon_stats_v_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_weapon_stats_v_stddev_pop_fields_possibleTypes: string[] = ['player_weapon_stats_v_stddev_pop_fields']
+    export const isplayer_weapon_stats_v_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is player_weapon_stats_v_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_weapon_stats_v_stddev_pop_fields"')
+      return player_weapon_stats_v_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_weapon_stats_v_stddev_samp_fields_possibleTypes: string[] = ['player_weapon_stats_v_stddev_samp_fields']
+    export const isplayer_weapon_stats_v_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is player_weapon_stats_v_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_weapon_stats_v_stddev_samp_fields"')
+      return player_weapon_stats_v_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_weapon_stats_v_sum_fields_possibleTypes: string[] = ['player_weapon_stats_v_sum_fields']
+    export const isplayer_weapon_stats_v_sum_fields = (obj?: { __typename?: any } | null): obj is player_weapon_stats_v_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_weapon_stats_v_sum_fields"')
+      return player_weapon_stats_v_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_weapon_stats_v_var_pop_fields_possibleTypes: string[] = ['player_weapon_stats_v_var_pop_fields']
+    export const isplayer_weapon_stats_v_var_pop_fields = (obj?: { __typename?: any } | null): obj is player_weapon_stats_v_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_weapon_stats_v_var_pop_fields"')
+      return player_weapon_stats_v_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_weapon_stats_v_var_samp_fields_possibleTypes: string[] = ['player_weapon_stats_v_var_samp_fields']
+    export const isplayer_weapon_stats_v_var_samp_fields = (obj?: { __typename?: any } | null): obj is player_weapon_stats_v_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_weapon_stats_v_var_samp_fields"')
+      return player_weapon_stats_v_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const player_weapon_stats_v_variance_fields_possibleTypes: string[] = ['player_weapon_stats_v_variance_fields']
+    export const isplayer_weapon_stats_v_variance_fields = (obj?: { __typename?: any } | null): obj is player_weapon_stats_v_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isplayer_weapon_stats_v_variance_fields"')
+      return player_weapon_stats_v_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -79538,6 +83716,7 @@ export const enumMatchMapDemosSelectColumn = {
    cs2_build: 'cs2_build' as const,
    duration_seconds: 'duration_seconds' as const,
    file: 'file' as const,
+   geometry_validated: 'geometry_validated' as const,
    id: 'id' as const,
    kills: 'kills' as const,
    map_name: 'map_name' as const,
@@ -79554,11 +83733,20 @@ export const enumMatchMapDemosSelectColumn = {
    workshop_id: 'workshop_id' as const
 }
 
+export const enumMatchMapDemosSelectColumnMatchMapDemosAggregateBoolExpBoolAndArgumentsColumns = {
+   geometry_validated: 'geometry_validated' as const
+}
+
+export const enumMatchMapDemosSelectColumnMatchMapDemosAggregateBoolExpBoolOrArgumentsColumns = {
+   geometry_validated: 'geometry_validated' as const
+}
+
 export const enumMatchMapDemosUpdateColumn = {
    bombs: 'bombs' as const,
    created_at: 'created_at' as const,
    cs2_build: 'cs2_build' as const,
    file: 'file' as const,
+   geometry_validated: 'geometry_validated' as const,
    id: 'id' as const,
    kills: 'kills' as const,
    map_name: 'map_name' as const,
@@ -80041,17 +84229,21 @@ export const enumPlayerAimStatsDemoSelectColumn = {
    counter_strafed_shots: 'counter_strafed_shots' as const,
    crosshair_angle_count: 'crosshair_angle_count' as const,
    crosshair_angle_sum_deg: 'crosshair_angle_sum_deg' as const,
+   first_bullet_hits: 'first_bullet_hits' as const,
+   first_bullet_shots: 'first_bullet_shots' as const,
    headshot_hits: 'headshot_hits' as const,
    hits: 'hits' as const,
    hits_at_spotted: 'hits_at_spotted' as const,
    match_id: 'match_id' as const,
    match_map_id: 'match_map_id' as const,
    non_awp_hits: 'non_awp_hits' as const,
+   on_target_frames: 'on_target_frames' as const,
    shots_at_spotted: 'shots_at_spotted' as const,
    spray_hits: 'spray_hits' as const,
    spray_shots: 'spray_shots' as const,
    time_to_damage_count: 'time_to_damage_count' as const,
-   time_to_damage_sum_s: 'time_to_damage_sum_s' as const
+   time_to_damage_sum_s: 'time_to_damage_sum_s' as const,
+   total_engagement_frames: 'total_engagement_frames' as const
 }
 
 export const enumPlayerAimStatsDemoUpdateColumn = {
@@ -80060,17 +84252,51 @@ export const enumPlayerAimStatsDemoUpdateColumn = {
    counter_strafed_shots: 'counter_strafed_shots' as const,
    crosshair_angle_count: 'crosshair_angle_count' as const,
    crosshair_angle_sum_deg: 'crosshair_angle_sum_deg' as const,
+   first_bullet_hits: 'first_bullet_hits' as const,
+   first_bullet_shots: 'first_bullet_shots' as const,
    headshot_hits: 'headshot_hits' as const,
    hits: 'hits' as const,
    hits_at_spotted: 'hits_at_spotted' as const,
    match_id: 'match_id' as const,
    match_map_id: 'match_map_id' as const,
    non_awp_hits: 'non_awp_hits' as const,
+   on_target_frames: 'on_target_frames' as const,
    shots_at_spotted: 'shots_at_spotted' as const,
    spray_hits: 'spray_hits' as const,
    spray_shots: 'spray_shots' as const,
    time_to_damage_count: 'time_to_damage_count' as const,
-   time_to_damage_sum_s: 'time_to_damage_sum_s' as const
+   time_to_damage_sum_s: 'time_to_damage_sum_s' as const,
+   total_engagement_frames: 'total_engagement_frames' as const
+}
+
+export const enumPlayerAimWeaponStatsConstraint = {
+   player_aim_weapon_stats_pkey: 'player_aim_weapon_stats_pkey' as const
+}
+
+export const enumPlayerAimWeaponStatsSelectColumn = {
+   first_bullet_hits: 'first_bullet_hits' as const,
+   first_bullet_shots: 'first_bullet_shots' as const,
+   hits: 'hits' as const,
+   hits_spotted: 'hits_spotted' as const,
+   match_id: 'match_id' as const,
+   match_map_id: 'match_map_id' as const,
+   shots: 'shots' as const,
+   shots_spotted: 'shots_spotted' as const,
+   steam_id: 'steam_id' as const,
+   weapon_class: 'weapon_class' as const
+}
+
+export const enumPlayerAimWeaponStatsUpdateColumn = {
+   first_bullet_hits: 'first_bullet_hits' as const,
+   first_bullet_shots: 'first_bullet_shots' as const,
+   hits: 'hits' as const,
+   hits_spotted: 'hits_spotted' as const,
+   match_id: 'match_id' as const,
+   match_map_id: 'match_map_id' as const,
+   shots: 'shots' as const,
+   shots_spotted: 'shots_spotted' as const,
+   steam_id: 'steam_id' as const,
+   weapon_class: 'weapon_class' as const
 }
 
 export const enumPlayerAssistsConstraint = {
@@ -80109,6 +84335,25 @@ export const enumPlayerAssistsUpdateColumn = {
    match_map_id: 'match_map_id' as const,
    round: 'round' as const,
    time: 'time' as const
+}
+
+export const enumPlayerCareerStatsVSelectColumn = {
+   accuracy: 'accuracy' as const,
+   accuracy_spotted: 'accuracy_spotted' as const,
+   counter_strafe_pct: 'counter_strafe_pct' as const,
+   crosshair_deg: 'crosshair_deg' as const,
+   enemy_blind_pr: 'enemy_blind_pr' as const,
+   flash_assists_pr: 'flash_assists_pr' as const,
+   hs_pct: 'hs_pct' as const,
+   kast_pct: 'kast_pct' as const,
+   maps: 'maps' as const,
+   premier_rank: 'premier_rank' as const,
+   rounds: 'rounds' as const,
+   steam_id: 'steam_id' as const,
+   survival_pct: 'survival_pct' as const,
+   time_to_damage_s: 'time_to_damage_s' as const,
+   traded_death_pct: 'traded_death_pct' as const,
+   util_efficiency: 'util_efficiency' as const
 }
 
 export const enumPlayerDamagesConstraint = {
@@ -80395,6 +84640,8 @@ export const enumPlayerMatchMapStatsSelectColumn = {
    deaths_t: 'deaths_t' as const,
    decoy_throws: 'decoy_throws' as const,
    enemies_flashed: 'enemies_flashed' as const,
+   first_bullet_hits: 'first_bullet_hits' as const,
+   first_bullet_shots: 'first_bullet_shots' as const,
    five_kill_rounds: 'five_kill_rounds' as const,
    flash_assists: 'flash_assists' as const,
    flash_duration_count: 'flash_duration_count' as const,
@@ -80419,6 +84666,7 @@ export const enumPlayerMatchMapStatsSelectColumn = {
    molotov_damage: 'molotov_damage' as const,
    molotov_throws: 'molotov_throws' as const,
    non_awp_hits: 'non_awp_hits' as const,
+   on_target_frames: 'on_target_frames' as const,
    rounds_ct: 'rounds_ct' as const,
    rounds_played: 'rounds_played' as const,
    rounds_t: 'rounds_t' as const,
@@ -80435,6 +84683,7 @@ export const enumPlayerMatchMapStatsSelectColumn = {
    three_kill_rounds: 'three_kill_rounds' as const,
    time_to_damage_count: 'time_to_damage_count' as const,
    time_to_damage_sum_s: 'time_to_damage_sum_s' as const,
+   total_engagement_frames: 'total_engagement_frames' as const,
    trade_kill_attempts: 'trade_kill_attempts' as const,
    trade_kill_opportunities: 'trade_kill_opportunities' as const,
    trade_kill_successes: 'trade_kill_successes' as const,
@@ -80466,6 +84715,8 @@ export const enumPlayerMatchMapStatsUpdateColumn = {
    deaths_t: 'deaths_t' as const,
    decoy_throws: 'decoy_throws' as const,
    enemies_flashed: 'enemies_flashed' as const,
+   first_bullet_hits: 'first_bullet_hits' as const,
+   first_bullet_shots: 'first_bullet_shots' as const,
    five_kill_rounds: 'five_kill_rounds' as const,
    flash_assists: 'flash_assists' as const,
    flash_duration_count: 'flash_duration_count' as const,
@@ -80490,6 +84741,7 @@ export const enumPlayerMatchMapStatsUpdateColumn = {
    molotov_damage: 'molotov_damage' as const,
    molotov_throws: 'molotov_throws' as const,
    non_awp_hits: 'non_awp_hits' as const,
+   on_target_frames: 'on_target_frames' as const,
    rounds_ct: 'rounds_ct' as const,
    rounds_played: 'rounds_played' as const,
    rounds_t: 'rounds_t' as const,
@@ -80506,6 +84758,7 @@ export const enumPlayerMatchMapStatsUpdateColumn = {
    three_kill_rounds: 'three_kill_rounds' as const,
    time_to_damage_count: 'time_to_damage_count' as const,
    time_to_damage_sum_s: 'time_to_damage_sum_s' as const,
+   total_engagement_frames: 'total_engagement_frames' as const,
    trade_kill_attempts: 'trade_kill_attempts' as const,
    trade_kill_opportunities: 'trade_kill_opportunities' as const,
    trade_kill_successes: 'trade_kill_successes' as const,
@@ -80519,6 +84772,28 @@ export const enumPlayerMatchMapStatsUpdateColumn = {
    util_on_death_sum: 'util_on_death_sum' as const,
    wasted_magazine_shots: 'wasted_magazine_shots' as const,
    zeus_kills: 'zeus_kills' as const
+}
+
+export const enumPlayerMatchPerformanceVSelectColumn = {
+   accuracy: 'accuracy' as const,
+   accuracy_spotted: 'accuracy_spotted' as const,
+   aim_rating: 'aim_rating' as const,
+   counter_strafe_pct: 'counter_strafe_pct' as const,
+   enemy_blind_pr: 'enemy_blind_pr' as const,
+   flash_assists_pr: 'flash_assists_pr' as const,
+   hs_pct: 'hs_pct' as const,
+   kast_pct: 'kast_pct' as const,
+   match_id: 'match_id' as const,
+   overall_rating: 'overall_rating' as const,
+   played_at: 'played_at' as const,
+   positioning_rating: 'positioning_rating' as const,
+   rounds: 'rounds' as const,
+   source: 'source' as const,
+   steam_id: 'steam_id' as const,
+   survival_pct: 'survival_pct' as const,
+   traded_death_pct: 'traded_death_pct' as const,
+   util_efficiency: 'util_efficiency' as const,
+   utility_rating: 'utility_rating' as const
 }
 
 export const enumPlayerMatchStatsVSelectColumn = {
@@ -80538,6 +84813,8 @@ export const enumPlayerMatchStatsVSelectColumn = {
    deaths_t: 'deaths_t' as const,
    decoy_throws: 'decoy_throws' as const,
    enemies_flashed: 'enemies_flashed' as const,
+   first_bullet_hits: 'first_bullet_hits' as const,
+   first_bullet_shots: 'first_bullet_shots' as const,
    five_kill_rounds: 'five_kill_rounds' as const,
    flash_assists: 'flash_assists' as const,
    flashes_thrown: 'flashes_thrown' as const,
@@ -80559,6 +84836,7 @@ export const enumPlayerMatchStatsVSelectColumn = {
    molotov_damage: 'molotov_damage' as const,
    molotov_throws: 'molotov_throws' as const,
    non_awp_hits: 'non_awp_hits' as const,
+   on_target_frames: 'on_target_frames' as const,
    rounds_ct: 'rounds_ct' as const,
    rounds_played: 'rounds_played' as const,
    rounds_t: 'rounds_t' as const,
@@ -80573,6 +84851,7 @@ export const enumPlayerMatchStatsVSelectColumn = {
    team_damage: 'team_damage' as const,
    team_flashed: 'team_flashed' as const,
    three_kill_rounds: 'three_kill_rounds' as const,
+   total_engagement_frames: 'total_engagement_frames' as const,
    trade_kill_attempts: 'trade_kill_attempts' as const,
    trade_kill_opportunities: 'trade_kill_opportunities' as const,
    trade_kill_successes: 'trade_kill_successes' as const,
@@ -80608,6 +84887,33 @@ export const enumPlayerObjectivesUpdateColumn = {
    round: 'round' as const,
    time: 'time' as const,
    type: 'type' as const
+}
+
+export const enumPlayerPerformanceVSelectColumn = {
+   accuracy_score: 'accuracy_score' as const,
+   aim_goal: 'aim_goal' as const,
+   aim_rating: 'aim_rating' as const,
+   band: 'band' as const,
+   band_sample: 'band_sample' as const,
+   blind_score: 'blind_score' as const,
+   counter_strafe_score: 'counter_strafe_score' as const,
+   crosshair_score: 'crosshair_score' as const,
+   flash_assists_score: 'flash_assists_score' as const,
+   hs_score: 'hs_score' as const,
+   kast_score: 'kast_score' as const,
+   maps: 'maps' as const,
+   positioning_goal: 'positioning_goal' as const,
+   positioning_rating: 'positioning_rating' as const,
+   premier_rank: 'premier_rank' as const,
+   rounds: 'rounds' as const,
+   spotted_score: 'spotted_score' as const,
+   steam_id: 'steam_id' as const,
+   survival_score: 'survival_score' as const,
+   traded_score: 'traded_score' as const,
+   ttd_score: 'ttd_score' as const,
+   util_eff_score: 'util_eff_score' as const,
+   utility_goal: 'utility_goal' as const,
+   utility_rating: 'utility_rating' as const
 }
 
 export const enumPlayerPremierRankHistoryConstraint = {
@@ -80753,6 +85059,18 @@ export const enumPlayerUtilityUpdateColumn = {
    round: 'round' as const,
    time: 'time' as const,
    type: 'type' as const
+}
+
+export const enumPlayerWeaponStatsVSelectColumn = {
+   first_bullet_hits: 'first_bullet_hits' as const,
+   first_bullet_shots: 'first_bullet_shots' as const,
+   hits: 'hits' as const,
+   hits_spotted: 'hits_spotted' as const,
+   match_id: 'match_id' as const,
+   shots: 'shots' as const,
+   shots_spotted: 'shots_spotted' as const,
+   steam_id: 'steam_id' as const,
+   weapon_class: 'weapon_class' as const
 }
 
 export const enumPlayersConstraint = {

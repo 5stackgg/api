@@ -82,6 +82,16 @@ export type ParsedShotFired = {
   counter_strafed?: boolean;
   crosshair_angle_deg?: number;
   ammo_in_magazine?: number;
+  // Exact firing geometry + outcome (for the 3D replay tracer).
+  yaw?: number;
+  pitch?: number;
+  eye_x?: number;
+  eye_y?: number;
+  eye_z?: number;
+  result?: "hit" | "headshot";
+  impact_x?: number;
+  impact_y?: number;
+  impact_z?: number;
 };
 
 export type ParsedPosition = {
@@ -94,12 +104,25 @@ export type ParsedPosition = {
   y: number;
   z: number;
   yaw?: number;
+  pitch?: number;
   health?: number;
   armor?: number;
   helmet?: boolean;
   has_bomb?: boolean;
   has_defuser?: boolean;
   active_weapon?: string;
+};
+
+// Per-engagement aim metrics emitted by the parser; consumed only by
+// persist_parsed_demo (not part of the playback blob).
+export type ParsedAimEngagement = {
+  attacker?: string;
+  round?: number;
+  first_shot_fired?: boolean;
+  first_shot_hit?: boolean;
+  on_target_frames?: number;
+  total_frames?: number;
+  weapon_class?: string;
 };
 
 export type ParsedRoundInventory = {
@@ -181,6 +204,7 @@ export type ParsedDemo = {
   round_inventory?: ParsedRoundInventory[];
   positions?: ParsedPosition[];
   damages?: ParsedDamageEvent[];
+  aim_engagements?: ParsedAimEngagement[];
   spotted?: ParsedSpotted[];
   grenade_throws?: ParsedGrenadeEvent[];
   grenade_detonations?: ParsedGrenadeEvent[];

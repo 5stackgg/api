@@ -434,6 +434,18 @@ type Mutation {
 }
 
 type Mutation {
+  reparseAllDemos: ReparseAllStartedOutput
+}
+
+type Mutation {
+  cancelReparseAllDemos: SuccessOutput
+}
+
+type Mutation {
+  reparseAllDemosStatus: ReparseAllStatusOutput
+}
+
+type Mutation {
   scanOrphanedDemos: ScanStartedOutput
 }
 
@@ -866,6 +878,22 @@ type SuccessOutput {
 type ScanStartedOutput {
   success: Boolean!
   scanning: Boolean!
+}
+
+type ReparseAllStartedOutput {
+  success: Boolean!
+  running: Boolean!
+}
+
+type ReparseAllStatusOutput {
+  running: Boolean!
+  canceled: Boolean!
+  started_at: String
+  finished_at: String
+  total: Int!
+  completed: Int!
+  failed: Int!
+  current_demo_id: String
 }
 
 type OrphanObject {
