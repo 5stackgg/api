@@ -3,7 +3,6 @@ import {
   Controller,
   Headers,
   HttpCode,
-  Logger,
   Post,
   UnauthorizedException,
 } from "@nestjs/common";
@@ -12,16 +11,13 @@ import { timingSafeStringEqual } from "../../utilities/timingSafeStringEqual";
 
 @Controller("clip-views")
 export class ClipViewsController {
-  constructor(
-    private readonly clips: ClipsService,
-    private readonly logger: Logger,
-  ) {}
+  constructor(private readonly clips: ClipsService) {}
 
   @Post("play")
   @HttpCode(200)
   public async play(
     @Headers("authorization") authorization: string | undefined,
-    @Body() body: { file?: string },
+    @Body() body: { file?: string; clientKey?: string },
   ) {
     const secret = process.env.S3_SECRET;
     const provided = authorization?.replace(/^Bearer\s+/i, "");
@@ -30,11 +26,17 @@ export class ClipViewsController {
     }
 
     const file = body?.file;
-    if (!file || !/^clips\/.+\.mp4$/.test(file)) {
+    const clientKey = body?.clientKey;
+    if (
+      !file ||
+      !/^clips\/.+\.mp4$/.test(file) ||
+      !clientKey ||
+      !/^[a-f0-9]{1,64}$/.test(clientKey)
+    ) {
       return { success: false };
     }
 
-    await this.clips.incrementClipViewsByFile(file);
-    return { success: true };
+    const counted = await this.clips.registerStreamedClipView(file, clientKey);
+    return { success: true, counted };
   }
 }
