@@ -1,4 +1,6 @@
--- Career aggregation: one row per player across all maps.
+-- Career aggregation: one row per player across all maps. Cheap to compute now
+-- that KAST is stored on player_match_map_stats (v_player_match_map_hltv is a
+-- plain arithmetic view), so this stays a regular view — always fresh.
 DROP VIEW IF EXISTS public.player_career_stats_v CASCADE;
 CREATE VIEW public.player_career_stats_v AS
 WITH base AS (

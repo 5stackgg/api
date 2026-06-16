@@ -2,6 +2,7 @@ import MatchMapStatusEvent from "./MatchMapStatusEvent";
 import MatchMapResetRoundEvent from "./MatchMapResetRoundEvent";
 import MatchUpdatedLineupsEvent from "./MatchUpdatedLineupsEvent";
 import PlayerConnected from "./PlayerConnected";
+import PlayersConnected from "./PlayersConnected";
 import PlayerDisconnected from "./PlayerDisconnected";
 import CaptainEvent from "./CaptainEvent";
 import KnifeSwitch from "./KnifeSwitch";
@@ -30,6 +31,7 @@ export const MatchEvents = {
    * Player
    */
   ["player-connected"]: PlayerConnected,
+  ["players-connected"]: PlayersConnected,
   ["player-disconnected"]: PlayerDisconnected,
   captain: CaptainEvent,
   abandoned: MatchAbandoned,

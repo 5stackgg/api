@@ -1,6 +1,8 @@
 -- Per-match performance: one row per (player, match) with Aim / Positioning /
 -- Utility + overall 0-100 scores plus the raw per-match value of each stat.
-DROP VIEW IF EXISTS public.player_match_performance_v;
+-- The cume_dist ranking spans every player-match, but that pool is small and
+-- the per-match KAST is now a stored column, so this stays a regular view.
+DROP VIEW IF EXISTS public.player_match_performance_v CASCADE;
 CREATE VIEW public.player_match_performance_v AS
 WITH per_match AS (
   SELECT

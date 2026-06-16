@@ -71,6 +71,57 @@ BEGIN
     ) ids
     WHERE steam_id IS NOT NULL
   ),
+  -- KAST per (player, round): a round counts if the player got a kill, an
+  -- assist, survived, or was traded. Mirrors the old v_player_match_map_hltv
+  -- per_round logic exactly, but scoped to this one map so it runs once at
+  -- import instead of on every read. round > 0 drops warmup/knife rounds.
+  finalized_rounds_pos AS (
+    SELECT round FROM public.match_map_rounds
+    WHERE match_map_id = p_match_map_id AND round > 0
+  ),
+  kast_agg AS (
+    SELECT
+      pr.steam_id,
+      COUNT(*)                          AS kast_total_rounds,
+      COUNT(*) FILTER (WHERE pr.kast)   AS kast_rounds
+    FROM (
+      SELECT
+        ps.steam_id,
+        fr.round,
+        (
+          EXISTS (
+            SELECT 1 FROM public.player_kills k
+            WHERE k.match_map_id = p_match_map_id AND k.round = fr.round
+              AND k.attacker_steam_id = ps.steam_id
+              AND k.attacked_steam_id <> ps.steam_id
+          )
+          OR EXISTS (
+            SELECT 1 FROM public.player_assists a
+            WHERE a.match_map_id = p_match_map_id AND a.round = fr.round
+              AND a.attacker_steam_id = ps.steam_id
+          )
+          OR NOT EXISTS (
+            SELECT 1 FROM public.player_kills k
+            WHERE k.match_map_id = p_match_map_id AND k.round = fr.round
+              AND k.attacked_steam_id = ps.steam_id
+          )
+          OR EXISTS (
+            SELECT 1
+            FROM public.player_kills k1
+            JOIN public.player_kills k2
+              ON k1.match_map_id = k2.match_map_id AND k1.round = k2.round
+            WHERE k1.match_map_id = p_match_map_id AND k1.round = fr.round
+              AND k1.attacked_steam_id = ps.steam_id
+              AND k2.attacked_steam_id = k1.attacker_steam_id
+              AND k2.attacker_steam_id <> ps.steam_id
+              AND k2.time > k1.time
+          )
+        ) AS kast
+      FROM player_set ps
+      CROSS JOIN finalized_rounds_pos fr
+    ) pr
+    GROUP BY pr.steam_id
+  ),
   kills_agg AS (
     SELECT
       pk.attacker_steam_id AS steam_id,
@@ -456,7 +507,8 @@ BEGIN
     damage_t, damage_ct,
     assists_t, assists_ct,
     rounds_t, rounds_ct,
-    rounds_played
+    rounds_played,
+    kast_rounds, kast_total_rounds
   )
   SELECT
     ps.steam_id, p_match_map_id, v_match_id,
@@ -510,7 +562,8 @@ BEGIN
     COALESCE(dmg.damage_t, 0),  COALESCE(dmg.damage_ct, 0),
     COALESCE(aa.assists_t, 0),  COALESCE(aa.assists_ct, 0),
     COALESCE(rps.rounds_t, 0),  COALESCE(rps.rounds_ct, 0),
-    (SELECT rounds_played FROM rounds_played_const)
+    (SELECT rounds_played FROM rounds_played_const),
+    COALESCE(kst.kast_rounds, 0), COALESCE(kst.kast_total_rounds, 0)
   FROM player_set ps
   LEFT JOIN kills_agg          ka  ON ka.steam_id  = ps.steam_id
   LEFT JOIN deaths_agg         da  ON da.steam_id  = ps.steam_id
@@ -531,7 +584,8 @@ BEGIN
   LEFT JOIN throws_agg         ta  ON ta.steam_id  = ps.steam_id
   LEFT JOIN wasted_mag_agg     wma ON wma.steam_id = ps.steam_id
   LEFT JOIN unused_util_agg    uu  ON uu.steam_id  = ps.steam_id
-  LEFT JOIN rounds_per_side_agg rps ON rps.steam_id = ps.steam_id;
+  LEFT JOIN rounds_per_side_agg rps ON rps.steam_id = ps.steam_id
+  LEFT JOIN kast_agg           kst ON kst.steam_id = ps.steam_id;
 END;
 $$;
 
