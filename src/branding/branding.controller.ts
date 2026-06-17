@@ -56,6 +56,15 @@ export class BrandingController {
     return { success: true, path };
   }
 
+  @Get("manifest.webmanifest")
+  async manifest(@Res() res: Response) {
+    const manifest = await this.brandingService.getManifest();
+
+    res.setHeader("Content-Type", "application/manifest+json");
+    res.setHeader("Cache-Control", "public, max-age=60");
+    res.json(manifest);
+  }
+
   @Get(":type")
   async serve(@Param("type") type: string, @Res() res: Response) {
     if (type !== "logo" && type !== "favicon") {

@@ -1,14 +1,21 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { S3Service } from "../s3/s3.service";
 import { HasuraService } from "../hasura/hasura.service";
+import { AppConfig } from "../configs/types/AppConfig";
 
 @Injectable()
 export class BrandingService {
+  private appConfig: AppConfig;
+
   constructor(
     private readonly logger: Logger,
     private readonly s3: S3Service,
     private readonly hasura: HasuraService,
-  ) {}
+    private readonly config: ConfigService,
+  ) {
+    this.appConfig = this.config.get<AppConfig>("app");
+  }
 
   async uploadFile(
     type: "logo" | "favicon",
@@ -62,6 +69,78 @@ export class BrandingService {
     };
   }
 
+  async getManifest() {
+    const names = [
+      "public.brand_name",
+      "public.favicon_url",
+      "public.color_dark_background",
+      "public.color_dark_primary",
+    ];
+
+    const { settings } = await this.hasura.query({
+      settings: {
+        __args: { where: { name: { _in: names } } },
+        name: true,
+        value: true,
+      },
+    });
+
+    const get = (name: string) =>
+      (settings as Array<{ name: string; value: string }>).find(
+        (s) => s.name === name,
+      )?.value || null;
+
+    const brandName = get("public.brand_name") || "5Stack";
+    const faviconUrl = get("public.favicon_url");
+    const backgroundColor = this.toCssColor(get("public.color_dark_background"));
+    const themeColor = this.toCssColor(get("public.color_dark_primary"));
+
+    // Icon URLs are absolute so they survive being re-served same-origin by the
+    // web's Nitro manifest proxy (the manifest itself must be same-origin as the
+    // page for installability, but its icons can be cross-origin).
+    const faviconSrc = `${this.appConfig.apiDomain}/branding/favicon?v=${encodeURIComponent(
+      faviconUrl || "",
+    )}`;
+
+    const icons = faviconUrl
+      ? [
+          {
+            src: faviconSrc,
+            sizes: "192x192 512x512",
+            type: this.guessContentType(faviconUrl),
+          },
+          {
+            src: faviconSrc,
+            sizes: "any",
+            type: this.guessContentType(faviconUrl),
+            purpose: "any",
+          },
+        ]
+      : [
+          {
+            src: `${this.appConfig.webDomain}/favicon/192.png`,
+            sizes: "192x192",
+            type: "image/png",
+          },
+          {
+            src: `${this.appConfig.webDomain}/favicon/512.png`,
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any",
+          },
+        ];
+
+    return {
+      name: brandName,
+      short_name: brandName,
+      icons,
+      theme_color: themeColor,
+      background_color: backgroundColor,
+      display: "standalone",
+      start_url: "/",
+    };
+  }
+
   async deleteFile(type: "logo" | "favicon"): Promise<boolean> {
     const settingName =
       type === "logo" ? "public.logo_url" : "public.favicon_url";
@@ -105,6 +184,19 @@ export class BrandingService {
         __typename: true,
       },
     });
+  }
+
+  // Stored color settings are shadcn space-separated HSL components
+  // (e.g. "240 10% 3.9%"). Wrap into a valid CSS color for the manifest.
+  private toCssColor(value: string | null): string {
+    if (!value) {
+      return "#000000";
+    }
+    const trimmed = value.trim();
+    if (trimmed.startsWith("#") || trimmed.startsWith("hsl")) {
+      return trimmed;
+    }
+    return `hsl(${trimmed})`;
   }
 
   private getExtension(mimetype: string): string {
