@@ -21,7 +21,11 @@
 -- CTEs are `NOT MATERIALIZED` to encourage the planner to inline them so the
 -- outer Hasura filter (tournament_stage_id / tournament_team_id) has a chance
 -- to propagate to base tables instead of running each CTE over the whole DB.
-CREATE OR REPLACE VIEW public.v_team_stage_results AS
+-- Computation source for the v_team_stage_results cache table; read only by
+-- recompute_tournament_stage_results. NOT MATERIALIZED so a tournament_stage_id
+-- filter pushes below the window function (a PARTITION BY column) for per-stage
+-- recompute.
+CREATE OR REPLACE VIEW public.v_team_stage_results_compute AS
 WITH team_brackets AS NOT MATERIALIZED (
     -- Get all brackets for each team in each stage
     SELECT

@@ -42,9 +42,12 @@ BEGIN
     END IF;
 
     SELECT ts.tournament_id, ts.type INTO tournament_id, stage_type
-    FROM tournament_stages ts 
+    FROM tournament_stages ts
     WHERE ts.id = bracket.tournament_stage_id;
-    
+
+    -- Refresh cached standings before advancement/seeding/trophies read them.
+    PERFORM public.recompute_tournament_stage_results(bracket.tournament_stage_id);
+
     IF tournament_id IS NOT NULL THEN
         IF stage_type = 'RoundRobin' THEN
             PERFORM schedule_next_round_robin_matches(bracket.id);

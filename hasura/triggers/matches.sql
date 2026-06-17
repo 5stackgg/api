@@ -256,7 +256,7 @@ BEGIN
         END IF;
     END IF;
 
-    -- No refresh needed - v_team_stage_results is now a regular view that's always up-to-date
+    -- v_team_stage_results cache is refreshed in update_tournament_bracket().
 
 	RETURN NEW;
 END;

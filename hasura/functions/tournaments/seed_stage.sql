@@ -185,7 +185,10 @@ BEGIN
 
     RAISE NOTICE '=== STAGE SEEDING COMPLETE ===';
     RAISE NOTICE 'Total teams assigned: %', teams_assigned_count;
-    
+
+    -- Populate cached standings so the freshly seeded stage renders pre-match.
+    PERFORM public.recompute_tournament_stage_results(stage_id);
+
     RETURN;
 END;
 $$;

@@ -1,5 +1,6 @@
+-- Tournament-level rollup; reads the v_team_stage_results cache table.
 CREATE OR REPLACE VIEW public.v_team_tournament_results AS
-SELECT 
+SELECT
     tsr.tournament_team_id,
     ts.tournament_id,
     SUM(tsr.matches_played)::int as matches_played,
