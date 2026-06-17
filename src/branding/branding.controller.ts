@@ -49,8 +49,6 @@ export class BrandingController {
       );
     }
 
-    // "icon" is the single app-icon upload that generates the logo, favicon and
-    // PWA install icons from one source (sharp can't rasterize .ico).
     if (type === "icon") {
       if (file.mimetype === "image/x-icon") {
         throw new BadRequestException(

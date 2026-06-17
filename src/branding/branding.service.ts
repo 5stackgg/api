@@ -3,11 +3,7 @@ import sharp from "sharp";
 import { S3Service } from "../s3/s3.service";
 import { HasuraService } from "../hasura/hasura.service";
 
-// PWA install icons. A single uploaded image is normalized into these square
-// PNGs so admins never have to supply multiple sizes themselves.
 const PWA_ICON_SIZES = [192, 512] as const;
-// Flatten transparency onto a dark tile so the installed app icon stays dark
-// (matches the app theme) instead of compositing onto white.
 const PWA_ICON_BACKGROUND = { r: 10, g: 10, b: 14, alpha: 1 };
 
 @Injectable()
@@ -37,13 +33,9 @@ export class BrandingService {
     return path;
   }
 
-  // One uploaded image drives every brand asset: the sidebar logo, the browser
-  // favicon and the PWA install icons. Admins upload a single square icon and
-  // the rest are generated, so there's nothing to keep in sync by hand.
   async uploadAppIcon(buffer: Buffer): Promise<void> {
     const transparent = { r: 0, g: 0, b: 0, alpha: 0 };
 
-    // Logo: original artwork (transparent), capped to a sane size.
     const logo = await sharp(buffer)
       .resize(512, 512, {
         fit: "inside",
@@ -55,7 +47,6 @@ export class BrandingService {
     await this.s3.put("branding/logo.png", logo);
     await this.upsertSetting("public.logo_url", "branding/logo.png");
 
-    // Favicon: small square (transparent) for the browser tab.
     const favicon = await sharp(buffer)
       .resize(64, 64, { fit: "contain", background: transparent })
       .png()
@@ -63,12 +54,10 @@ export class BrandingService {
     await this.s3.put("branding/favicon.png", favicon);
     await this.upsertSetting("public.favicon_url", "branding/favicon.png");
 
-    // PWA install icons: dark tile, maskable.
     for (const size of PWA_ICON_SIZES) {
       const png = await this.renderPwaIcon(buffer, size);
       await this.s3.put(`branding/pwa-${size}.png`, png);
     }
-    // Value doubles as a cache-busting version token shared by all the assets.
     await this.upsertSetting("public.pwa_icon", `${Date.now()}`);
 
     this.logger.log("Generated app icon (logo, favicon, PWA icons)");
@@ -90,8 +79,6 @@ export class BrandingService {
     };
   }
 
-  // Resize within an 80% safe area and center on a dark square so the icon
-  // works as both a normal ("any") and Android adaptive ("maskable") icon.
   private async renderPwaIcon(buffer: Buffer, size: number): Promise<Buffer> {
     const inner = Math.round(size * 0.8);
     const logo = await sharp(buffer)
@@ -151,8 +138,6 @@ export class BrandingService {
   async deleteFile(
     type: "logo" | "favicon" | "pwa" | "icon",
   ): Promise<boolean> {
-    // The single app-icon upload generates logo + favicon + PWA icons, so
-    // removing it tears all of them down together.
     if (type === "icon") {
       await this.deleteFile("logo");
       await this.deleteFile("favicon");
