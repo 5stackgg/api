@@ -10,6 +10,8 @@ import { CacheModule } from "../cache/cache.module";
 import { RedisModule } from "../redis/redis.module";
 import { ApiKeys } from "./ApiKeys";
 import { ApiKeyGuard } from "./strategies/ApiKeyGuard";
+import { BullModule } from "@nestjs/bullmq";
+import { SteamMatchHistoryQueues } from "../steam-match-history/enums/SteamMatchHistoryQueues";
 
 @Module({
   imports: [
@@ -19,6 +21,10 @@ import { ApiKeyGuard } from "./strategies/ApiKeyGuard";
     forwardRef(() => HasuraModule),
     CacheModule,
     RedisModule,
+    BullModule.registerQueue(
+      { name: SteamMatchHistoryQueues.CheckSteamBans },
+      { name: SteamMatchHistoryQueues.PollSteamMatchHistoryForUser },
+    ),
   ],
   providers: [
     ApiKeys,

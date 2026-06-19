@@ -221,7 +221,7 @@ export class GameServerNodeController {
         await this.notifications.send(
           "GameNodeStatus",
           {
-            message: `Game Server Node (${result?.label || payload.node}) disk usage critical: ${diskUsedPercent}% used.`,
+            message: `Game Server Node (${NotificationsService.escapeHtml(result?.label || payload.node)}) disk usage critical: ${diskUsedPercent}% used.`,
             title: "Game Server Node Disk Space Critical",
             role: "administrator",
             entity_id: payload.node,
@@ -239,7 +239,7 @@ export class GameServerNodeController {
         await this.notifications.send(
           "GameNodeStatus",
           {
-            message: `Game Server Node (${result?.label || payload.node}) disk usage warning: ${diskUsedPercent}% used.`,
+            message: `Game Server Node (${NotificationsService.escapeHtml(result?.label || payload.node)}) disk usage warning: ${diskUsedPercent}% used.`,
             title: "Game Server Node Low Disk Space",
             role: "administrator",
             entity_id: payload.node,
@@ -256,7 +256,7 @@ export class GameServerNodeController {
         await this.notifications.send(
           "GameNodeStatus",
           {
-            message: `Game Server Node (${result?.label || payload.node}) disk usage back to normal: ${diskUsedPercent}% used.`,
+            message: `Game Server Node (${NotificationsService.escapeHtml(result?.label || payload.node)}) disk usage back to normal: ${diskUsedPercent}% used.`,
             title: "Game Server Node Disk Space OK",
             role: "administrator",
             entity_id: payload.node,

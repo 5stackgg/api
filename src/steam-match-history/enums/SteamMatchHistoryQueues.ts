@@ -3,4 +3,7 @@ export enum SteamMatchHistoryQueues {
   ResolveMatchMetadata = "ResolveMatchMetadata",
   ParseImportedDemo = "ParseImportedDemo",
   ProcessUploadedDemo = "ProcessUploadedDemo",
+  CheckSteamBansForMatch = "CheckSteamBansForMatch",
+  CheckSteamBans = "CheckSteamBans",
+  PollSteamMatchHistoryForUser = "PollSteamMatchHistoryForUser",
 }

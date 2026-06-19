@@ -4,6 +4,7 @@ import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { Queue } from "bullmq";
 import { HasuraModule } from "../hasura/hasura.module";
+import { RedisModule } from "../redis/redis.module";
 import { CacheModule } from "../cache/cache.module";
 import { DemosModule } from "../demos/demos.module";
 import { S3Module } from "../s3/s3.module";
@@ -14,10 +15,14 @@ import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { FaceitModule } from "../faceit/faceit.module";
 import { SteamMatchHistoryController } from "./steam-match-history.controller";
 import { SteamMatchHistoryService } from "./steam-match-history.service";
+import { SteamBansService } from "./steam-bans.service";
 import { SteamGcService } from "./steam-gc.service";
 import { MatchImportService } from "./match-import.service";
 import { SteamMatchHistoryQueues } from "./enums/SteamMatchHistoryQueues";
 import { PollAllSteamMatchHistory } from "./jobs/PollAllSteamMatchHistory";
+import { CheckSteamBansForMatch } from "./jobs/CheckSteamBansForMatch";
+import { DrainSteamBans } from "./jobs/DrainSteamBans";
+import { PollSteamMatchHistoryForUser } from "./jobs/PollSteamMatchHistoryForUser";
 import { ResolveMatchMetadata } from "./jobs/ResolveMatchMetadata";
 import { ParseImportedDemo } from "./jobs/ParseImportedDemo";
 import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
@@ -36,8 +41,29 @@ import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
     BullModule.registerQueue({
       name: SteamMatchHistoryQueues.ProcessUploadedDemo,
     }),
+    BullModule.registerQueue({
+      name: SteamMatchHistoryQueues.CheckSteamBansForMatch,
+    }),
+    BullModule.registerQueue({
+      name: SteamMatchHistoryQueues.CheckSteamBans,
+    }),
+    BullModule.registerQueue({
+      name: SteamMatchHistoryQueues.PollSteamMatchHistoryForUser,
+    }),
     BullBoardModule.forFeature({
       name: SteamMatchHistoryQueues.PollAllSteamMatchHistory,
+      adapter: BullMQAdapter,
+    }),
+    BullBoardModule.forFeature({
+      name: SteamMatchHistoryQueues.CheckSteamBansForMatch,
+      adapter: BullMQAdapter,
+    }),
+    BullBoardModule.forFeature({
+      name: SteamMatchHistoryQueues.CheckSteamBans,
+      adapter: BullMQAdapter,
+    }),
+    BullBoardModule.forFeature({
+      name: SteamMatchHistoryQueues.PollSteamMatchHistoryForUser,
       adapter: BullMQAdapter,
     }),
     BullBoardModule.forFeature({
@@ -53,6 +79,7 @@ import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
       adapter: BullMQAdapter,
     }),
     HasuraModule,
+    RedisModule,
     CacheModule,
     DemosModule,
     S3Module,
@@ -62,9 +89,13 @@ import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
   ],
   providers: [
     SteamMatchHistoryService,
+    SteamBansService,
     SteamGcService,
     MatchImportService,
     PollAllSteamMatchHistory,
+    CheckSteamBansForMatch,
+    DrainSteamBans,
+    PollSteamMatchHistoryForUser,
     ResolveMatchMetadata,
     ParseImportedDemo,
     ProcessUploadedDemo,
@@ -72,7 +103,7 @@ import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
     loggerFactory(),
   ],
   controllers: [SteamMatchHistoryController],
-  exports: [SteamMatchHistoryService, MatchImportService],
+  exports: [SteamMatchHistoryService, SteamBansService, MatchImportService],
 })
 export class SteamMatchHistoryModule {
   constructor(

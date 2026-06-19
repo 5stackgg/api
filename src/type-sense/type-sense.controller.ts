@@ -1,4 +1,4 @@
-import { Controller } from "@nestjs/common";
+import { Controller, Logger } from "@nestjs/common";
 import { TypeSenseService } from "./type-sense.service";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
@@ -12,9 +12,13 @@ import { CacheService } from "../cache/cache.service";
 import { HasuraService } from "../hasura/hasura.service";
 import { RefreshPlayerJob } from "./jobs/RefreshPlayer";
 import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
+import { NotificationsService } from "src/notifications/notifications.service";
 import { Queue } from "bullmq";
 import { TypesenseQueues } from "./enums/TypesenseQueues";
 import { InjectQueue } from "@nestjs/bullmq";
+import { SteamMatchHistoryQueues } from "src/steam-match-history/enums/SteamMatchHistoryQueues";
+import { SteamBansService } from "src/steam-match-history/steam-bans.service";
+import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
 
 @Controller("type-sense")
 export class TypeSenseController {
@@ -22,7 +26,12 @@ export class TypeSenseController {
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
     private readonly typeSense: TypeSenseService,
+    private readonly notifications: NotificationsService,
+    private readonly logger: Logger,
     @InjectQueue(TypesenseQueues.TypeSense) private queue: Queue,
+    @InjectQueue(SteamMatchHistoryQueues.CheckSteamBans)
+    private steamBansQueue: Queue,
+    private readonly redisManager: RedisManagerService,
   ) {}
 
   @HasuraEvent()
@@ -54,6 +63,19 @@ export class TypeSenseController {
       return;
     }
 
+    if (data.op === "INSERT") {
+      void SteamBansService.enqueueChecks(
+        this.redisManager.getConnection(),
+        this.steamBansQueue,
+        [data.new.steam_id as string],
+      ).catch((error) =>
+        this.logger.error(
+          `failed to enqueue steam-ban check for player ${data.new.steam_id}`,
+          error,
+        ),
+      );
+    }
+
     await this.typeSense.updatePlayer(data.new.steam_id as string);
   }
 
@@ -69,6 +91,22 @@ export class TypeSenseController {
         steamId: data.old.player_steam_id,
       });
       return;
+    }
+
+    if (data.op === "INSERT") {
+      try {
+        await this.notifications.queueSanctionNotification({
+          sanctionId: data.new.id as string,
+          steamId: data.new.player_steam_id as string,
+          type: data.new.type as string,
+          reason: data.new.reason as string | null,
+        });
+      } catch (error) {
+        this.logger.error(
+          `failed to queue co-player notifications for sanction on ${data.new.player_steam_id}`,
+          error,
+        );
+      }
     }
 
     const endOfSanction = data.new.remove_sanction_date;
@@ -90,7 +128,7 @@ export class TypeSenseController {
       );
     }
 
-    if (data.new.type === "ban") {
+    if (data.new.type === "ban" && !(data.new as { deleted_at?: string }).deleted_at) {
       const { match_lineup_players } = await this.hasura.query({
         match_lineup_players: {
           __args: {

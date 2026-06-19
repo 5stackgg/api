@@ -411,6 +411,10 @@ select_permissions:
         - roster_image_url
         - show_match_ready_modal
         - steam_id
+        - vac_banned
+        - vac_ban_count
+        - game_ban_count
+        - days_since_last_ban
       computed_fields:
         - current_lobby_id
         - elo
@@ -453,6 +457,10 @@ select_permissions:
         - roster_image_url
         - show_match_ready_modal
         - steam_id
+        - vac_banned
+        - vac_ban_count
+        - game_ban_count
+        - days_since_last_ban
       computed_fields:
         - current_lobby_id
         - elo
@@ -496,6 +504,10 @@ select_permissions:
         - roster_image_url
         - show_match_ready_modal
         - steam_id
+        - vac_banned
+        - vac_ban_count
+        - game_ban_count
+        - days_since_last_ban
       computed_fields:
         - current_lobby_id
         - elo

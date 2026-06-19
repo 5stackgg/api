@@ -160,7 +160,7 @@ export class RconService {
         void this.notifications.send(
           "DedicatedServerRconStatus",
           {
-            message: `Dedicated Server (${server.label || serverId}) is not able to connect to the RCON.`,
+            message: `Dedicated Server (${NotificationsService.escapeHtml(server.label || serverId)}) is not able to connect to the RCON.`,
             title: "Dedicated Server RCON Error",
             role: "administrator",
             entity_id: serverId,

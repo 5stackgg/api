@@ -43,7 +43,7 @@ export class MarkDedicatedServerOffline extends WorkerHost {
     await this.notifications.send(
       "DedicatedServerStatus",
       {
-        message: `Dedicated Server (${update_servers_by_pk.label || job.data.serverId}) is Offline.`,
+        message: `Dedicated Server (${NotificationsService.escapeHtml(update_servers_by_pk.label || job.data.serverId)}) is Offline.`,
         title: "Dedicated Server Offline",
         role: "administrator",
         entity_id: job.data.serverId,

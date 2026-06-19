@@ -4838,6 +4838,9 @@ enum e_notification_types_enum {
   """NameChangeRequest"""
   NameChangeRequest
 
+  """A player you recently played with received a sanction"""
+  PlayerSanctioned
+
   """Storage Scan"""
   StorageScan
 }
@@ -22862,6 +22865,19 @@ type mutation_root {
     """filter the rows which have to be deleted"""
     where: v_pool_maps_bool_exp!
   ): v_pool_maps_mutation_response
+
+  """
+  delete data from the table: "v_team_stage_results"
+  """
+  delete_v_team_stage_results(
+    """filter the rows which have to be deleted"""
+    where: v_team_stage_results_bool_exp!
+  ): v_team_stage_results_mutation_response
+
+  """
+  delete single row from the table: "v_team_stage_results"
+  """
+  delete_v_team_stage_results_by_pk(tournament_stage_id: uuid!, tournament_team_id: uuid!): v_team_stage_results
   denyInvite(invite_id: uuid!, type: String!): SuccessOutput
   forfeitMatch(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
 
@@ -25050,6 +25066,28 @@ type mutation_root {
     """the row to be inserted"""
     object: v_pool_maps_insert_input!
   ): v_pool_maps
+
+  """
+  insert data into the table: "v_team_stage_results"
+  """
+  insert_v_team_stage_results(
+    """the rows to be inserted"""
+    objects: [v_team_stage_results_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: v_team_stage_results_on_conflict
+  ): v_team_stage_results_mutation_response
+
+  """
+  insert a single row into the table: "v_team_stage_results"
+  """
+  insert_v_team_stage_results_one(
+    """the row to be inserted"""
+    object: v_team_stage_results_insert_input!
+
+    """upsert condition"""
+    on_conflict: v_team_stage_results_on_conflict
+  ): v_team_stage_results
   joinLineup(code: String, lineup_id: String!, match_id: String!): SuccessOutput
   kickServerPlayer(reason: String, serverId: String!, steam_id: String!): KickResult!
   leaveLineup(match_id: String!): SuccessOutput
@@ -25155,6 +25193,9 @@ type mutation_root {
   Scan S3 for objects not referenced in the database (admin only). Runs in the background; results land in the logs and orphanedDemosScanResult.
   """
   scanOrphanedDemos: ScanStartedOutput
+
+  """Scan all players who have been on a lineup for Steam VAC/game bans"""
+  scanSteamBans: SuccessOutput
 
   """scheduleMatch"""
   scheduleMatch(match_id: uuid!, time: timestamptz): SuccessOutput
@@ -28712,6 +28753,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [v_pool_maps_updates!]!
   ): [v_pool_maps_mutation_response]
+
+  """
+  update data of the table: "v_team_stage_results"
+  """
+  update_v_team_stage_results(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: v_team_stage_results_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: v_team_stage_results_set_input
+
+    """filter the rows which have to be updated"""
+    where: v_team_stage_results_bool_exp!
+  ): v_team_stage_results_mutation_response
+
+  """
+  update single row of the table: "v_team_stage_results"
+  """
+  update_v_team_stage_results_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: v_team_stage_results_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: v_team_stage_results_set_input
+    pk_columns: v_team_stage_results_pk_columns_input!
+  ): v_team_stage_results
+
+  """
+  update multiples rows of table: "v_team_stage_results"
+  """
+  update_v_team_stage_results_many(
+    """updates to execute, in order"""
+    updates: [v_team_stage_results_updates!]!
+  ): [v_team_stage_results_mutation_response]
 
   """
   Validate CS2 gamedata signatures/offsets on a node (5stack.gg test instance only)
@@ -43072,6 +43147,7 @@ columns and relationships of "player_sanctions"
 """
 type player_sanctions {
   created_at: timestamptz!
+  deleted_at: timestamptz
 
   """An object relationship"""
   e_sanction_type: e_sanction_types!
@@ -43084,8 +43160,8 @@ type player_sanctions {
   remove_sanction_date: timestamptz
 
   """An object relationship"""
-  sanctioned_by: players!
-  sanctioned_by_steam_id: bigint!
+  sanctioned_by: players
+  sanctioned_by_steam_id: bigint
   type: e_sanction_types_enum!
 }
 
@@ -43174,6 +43250,7 @@ input player_sanctions_bool_exp {
   _not: player_sanctions_bool_exp
   _or: [player_sanctions_bool_exp!]
   created_at: timestamptz_comparison_exp
+  deleted_at: timestamptz_comparison_exp
   e_sanction_type: e_sanction_types_bool_exp
   id: uuid_comparison_exp
   player: players_bool_exp
@@ -43208,6 +43285,7 @@ input type for inserting data into table "player_sanctions"
 """
 input player_sanctions_insert_input {
   created_at: timestamptz
+  deleted_at: timestamptz
   e_sanction_type: e_sanction_types_obj_rel_insert_input
   id: uuid
   player: players_obj_rel_insert_input
@@ -43222,6 +43300,7 @@ input player_sanctions_insert_input {
 """aggregate max on columns"""
 type player_sanctions_max_fields {
   created_at: timestamptz
+  deleted_at: timestamptz
   id: uuid
   player_steam_id: bigint
   reason: String
@@ -43234,6 +43313,7 @@ order by max() on columns of table "player_sanctions"
 """
 input player_sanctions_max_order_by {
   created_at: order_by
+  deleted_at: order_by
   id: order_by
   player_steam_id: order_by
   reason: order_by
@@ -43244,6 +43324,7 @@ input player_sanctions_max_order_by {
 """aggregate min on columns"""
 type player_sanctions_min_fields {
   created_at: timestamptz
+  deleted_at: timestamptz
   id: uuid
   player_steam_id: bigint
   reason: String
@@ -43256,6 +43337,7 @@ order by min() on columns of table "player_sanctions"
 """
 input player_sanctions_min_order_by {
   created_at: order_by
+  deleted_at: order_by
   id: order_by
   player_steam_id: order_by
   reason: order_by
@@ -43286,6 +43368,7 @@ input player_sanctions_on_conflict {
 """Ordering options when selecting data from "player_sanctions"."""
 input player_sanctions_order_by {
   created_at: order_by
+  deleted_at: order_by
   e_sanction_type: e_sanction_types_order_by
   id: order_by
   player: players_order_by
@@ -43311,6 +43394,9 @@ enum player_sanctions_select_column {
   created_at
 
   """column name"""
+  deleted_at
+
+  """column name"""
   id
 
   """column name"""
@@ -43334,6 +43420,7 @@ input type for updating data in table "player_sanctions"
 """
 input player_sanctions_set_input {
   created_at: timestamptz
+  deleted_at: timestamptz
   id: uuid
   player_steam_id: bigint
   reason: String
@@ -43398,6 +43485,7 @@ input player_sanctions_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input player_sanctions_stream_cursor_value_input {
   created_at: timestamptz
+  deleted_at: timestamptz
   id: uuid
   player_steam_id: bigint
   reason: String
@@ -43426,6 +43514,9 @@ update columns of table "player_sanctions"
 enum player_sanctions_update_column {
   """column name"""
   created_at
+
+  """column name"""
+  deleted_at
 
   """column name"""
   id
@@ -45687,6 +45778,7 @@ type players {
     """filter the rows returned"""
     where: player_damages_bool_exp
   ): player_damages_aggregate!
+  days_since_last_ban: Int
 
   """An array relationship"""
   deaths(
@@ -45918,6 +46010,7 @@ type players {
     """filter the rows returned"""
     where: my_friends_bool_exp
   ): my_friends_aggregate!
+  game_ban_count: Int!
 
   """An array relationship"""
   invited_players(
@@ -46585,6 +46678,7 @@ type players {
 
   """An object relationship"""
   stats: player_stats
+  steam_bans_checked_at: timestamptz
   steam_id: bigint!
 
   """An array relationship"""
@@ -46863,6 +46957,8 @@ type players {
     """filter the rows returned"""
     where: player_utility_bool_exp
   ): player_utility_aggregate!
+  vac_ban_count: Int!
+  vac_banned: Boolean!
 
   """An array relationship"""
   weapon_stats(
@@ -46948,8 +47044,10 @@ type players_aggregate_fields {
 
 """aggregate avg on columns"""
 type players_avg_fields {
+  days_since_last_ban: Float
   faceit_elo: Float
   faceit_skill_level: Float
+  game_ban_count: Float
 
   """
   A computed field, executes function "get_total_player_losses"
@@ -46977,6 +47075,7 @@ type players_avg_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  vac_ban_count: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -47025,6 +47124,7 @@ input players_bool_exp {
   damage_dealt_aggregate: player_damages_aggregate_bool_exp
   damage_taken: player_damages_bool_exp
   damage_taken_aggregate: player_damages_aggregate_bool_exp
+  days_since_last_ban: Int_comparison_exp
   deaths: player_kills_bool_exp
   deaths_aggregate: player_kills_aggregate_bool_exp
   discord_id: String_comparison_exp
@@ -47045,6 +47145,7 @@ input players_bool_exp {
   flashed_players_aggregate: player_flashes_aggregate_bool_exp
   friends: my_friends_bool_exp
   friends_aggregate: my_friends_aggregate_bool_exp
+  game_ban_count: Int_comparison_exp
   invited_players: team_invites_bool_exp
   invited_players_aggregate: team_invites_aggregate_bool_exp
   is_banned: Boolean_comparison_exp
@@ -47100,6 +47201,7 @@ input players_bool_exp {
   sanctions_aggregate: player_sanctions_aggregate_bool_exp
   show_match_ready_modal: Boolean_comparison_exp
   stats: player_stats_bool_exp
+  steam_bans_checked_at: timestamptz_comparison_exp
   steam_id: bigint_comparison_exp
   team_invites: team_invites_bool_exp
   team_invites_aggregate: team_invites_aggregate_bool_exp
@@ -47117,6 +47219,8 @@ input players_bool_exp {
   tournaments_aggregate: tournaments_aggregate_bool_exp
   utility_thrown: player_utility_bool_exp
   utility_thrown_aggregate: player_utility_aggregate_bool_exp
+  vac_ban_count: Int_comparison_exp
+  vac_banned: Boolean_comparison_exp
   weapon_stats: player_weapon_stats_v_bool_exp
   weapon_stats_aggregate: player_weapon_stats_v_aggregate_bool_exp
   wins: Int_comparison_exp
@@ -47149,10 +47253,13 @@ enum players_constraint {
 input type for incrementing numeric columns in table "players"
 """
 input players_inc_input {
+  days_since_last_ban: Int
   faceit_elo: Int
   faceit_skill_level: Int
+  game_ban_count: Int
   premier_rank: Int
   steam_id: bigint
+  vac_ban_count: Int
 }
 
 """
@@ -47170,6 +47277,7 @@ input players_insert_input {
   custom_avatar_url: String
   damage_dealt: player_damages_arr_rel_insert_input
   damage_taken: player_damages_arr_rel_insert_input
+  days_since_last_ban: Int
   deaths: player_kills_arr_rel_insert_input
   discord_id: String
   elo_history: v_player_elo_arr_rel_insert_input
@@ -47183,6 +47291,7 @@ input players_insert_input {
   flashed_by_players: player_flashes_arr_rel_insert_input
   flashed_players: player_flashes_arr_rel_insert_input
   friends: my_friends_arr_rel_insert_input
+  game_ban_count: Int
   invited_players: team_invites_arr_rel_insert_input
   kills: player_kills_arr_rel_insert_input
   kills_by_weapons: player_kills_by_weapon_arr_rel_insert_input
@@ -47210,6 +47319,7 @@ input players_insert_input {
   sanctions: player_sanctions_arr_rel_insert_input
   show_match_ready_modal: Boolean
   stats: player_stats_obj_rel_insert_input
+  steam_bans_checked_at: timestamptz
   steam_id: bigint
   team_invites: team_invites_arr_rel_insert_input
   team_members: team_roster_arr_rel_insert_input
@@ -47218,6 +47328,8 @@ input players_insert_input {
   tournament_trophies: tournament_trophies_arr_rel_insert_input
   tournaments: tournaments_arr_rel_insert_input
   utility_thrown: player_utility_arr_rel_insert_input
+  vac_ban_count: Int
+  vac_banned: Boolean
   weapon_stats: player_weapon_stats_v_arr_rel_insert_input
 }
 
@@ -47232,6 +47344,7 @@ type players_max_fields {
   """
   current_lobby_id: uuid
   custom_avatar_url: String
+  days_since_last_ban: Int
   discord_id: String
   faceit_elo: Int
   faceit_nickname: String
@@ -47239,6 +47352,7 @@ type players_max_fields {
   faceit_skill_level: Int
   faceit_updated_at: timestamptz
   faceit_url: String
+  game_ban_count: Int
   language: String
   last_sign_in_at: timestamptz
 
@@ -47271,12 +47385,14 @@ type players_max_fields {
   premier_rank_updated_at: timestamptz
   profile_url: String
   roster_image_url: String
+  steam_bans_checked_at: timestamptz
   steam_id: bigint
 
   """
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  vac_ban_count: Int
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -47310,6 +47426,7 @@ type players_min_fields {
   """
   current_lobby_id: uuid
   custom_avatar_url: String
+  days_since_last_ban: Int
   discord_id: String
   faceit_elo: Int
   faceit_nickname: String
@@ -47317,6 +47434,7 @@ type players_min_fields {
   faceit_skill_level: Int
   faceit_updated_at: timestamptz
   faceit_url: String
+  game_ban_count: Int
   language: String
   last_sign_in_at: timestamptz
 
@@ -47349,12 +47467,14 @@ type players_min_fields {
   premier_rank_updated_at: timestamptz
   profile_url: String
   roster_image_url: String
+  steam_bans_checked_at: timestamptz
   steam_id: bigint
 
   """
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  vac_ban_count: Int
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -47421,6 +47541,7 @@ input players_order_by {
   custom_avatar_url: order_by
   damage_dealt_aggregate: player_damages_aggregate_order_by
   damage_taken_aggregate: player_damages_aggregate_order_by
+  days_since_last_ban: order_by
   deaths_aggregate: player_kills_aggregate_order_by
   discord_id: order_by
   elo: order_by
@@ -47435,6 +47556,7 @@ input players_order_by {
   flashed_by_players_aggregate: player_flashes_aggregate_order_by
   flashed_players_aggregate: player_flashes_aggregate_order_by
   friends_aggregate: my_friends_aggregate_order_by
+  game_ban_count: order_by
   invited_players_aggregate: team_invites_aggregate_order_by
   is_banned: order_by
   is_gagged: order_by
@@ -47474,6 +47596,7 @@ input players_order_by {
   sanctions_aggregate: player_sanctions_aggregate_order_by
   show_match_ready_modal: order_by
   stats: player_stats_order_by
+  steam_bans_checked_at: order_by
   steam_id: order_by
   team_invites_aggregate: team_invites_aggregate_order_by
   team_members_aggregate: team_roster_aggregate_order_by
@@ -47484,6 +47607,8 @@ input players_order_by {
   tournament_trophies_aggregate: tournament_trophies_aggregate_order_by
   tournaments_aggregate: tournaments_aggregate_order_by
   utility_thrown_aggregate: player_utility_aggregate_order_by
+  vac_ban_count: order_by
+  vac_banned: order_by
   weapon_stats_aggregate: player_weapon_stats_v_aggregate_order_by
   wins: order_by
   wins_competitive: order_by
@@ -47513,6 +47638,9 @@ enum players_select_column {
   custom_avatar_url
 
   """column name"""
+  days_since_last_ban
+
+  """column name"""
   discord_id
 
   """column name"""
@@ -47532,6 +47660,9 @@ enum players_select_column {
 
   """column name"""
   faceit_url
+
+  """column name"""
+  game_ban_count
 
   """column name"""
   language
@@ -47564,7 +47695,16 @@ enum players_select_column {
   show_match_ready_modal
 
   """column name"""
+  steam_bans_checked_at
+
+  """column name"""
   steam_id
+
+  """column name"""
+  vac_ban_count
+
+  """column name"""
+  vac_banned
 }
 
 """
@@ -47575,6 +47715,7 @@ input players_set_input {
   country: String
   created_at: timestamptz
   custom_avatar_url: String
+  days_since_last_ban: Int
   discord_id: String
   faceit_elo: Int
   faceit_nickname: String
@@ -47582,6 +47723,7 @@ input players_set_input {
   faceit_skill_level: Int
   faceit_updated_at: timestamptz
   faceit_url: String
+  game_ban_count: Int
   language: String
   last_sign_in_at: timestamptz
   name: String
@@ -47592,13 +47734,18 @@ input players_set_input {
   role: e_player_roles_enum
   roster_image_url: String
   show_match_ready_modal: Boolean
+  steam_bans_checked_at: timestamptz
   steam_id: bigint
+  vac_ban_count: Int
+  vac_banned: Boolean
 }
 
 """aggregate stddev on columns"""
 type players_stddev_fields {
+  days_since_last_ban: Float
   faceit_elo: Float
   faceit_skill_level: Float
+  game_ban_count: Float
 
   """
   A computed field, executes function "get_total_player_losses"
@@ -47626,6 +47773,7 @@ type players_stddev_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  vac_ban_count: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -47650,8 +47798,10 @@ type players_stddev_fields {
 
 """aggregate stddev_pop on columns"""
 type players_stddev_pop_fields {
+  days_since_last_ban: Float
   faceit_elo: Float
   faceit_skill_level: Float
+  game_ban_count: Float
 
   """
   A computed field, executes function "get_total_player_losses"
@@ -47679,6 +47829,7 @@ type players_stddev_pop_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  vac_ban_count: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -47703,8 +47854,10 @@ type players_stddev_pop_fields {
 
 """aggregate stddev_samp on columns"""
 type players_stddev_samp_fields {
+  days_since_last_ban: Float
   faceit_elo: Float
   faceit_skill_level: Float
+  game_ban_count: Float
 
   """
   A computed field, executes function "get_total_player_losses"
@@ -47732,6 +47885,7 @@ type players_stddev_samp_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  vac_ban_count: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -47771,6 +47925,7 @@ input players_stream_cursor_value_input {
   country: String
   created_at: timestamptz
   custom_avatar_url: String
+  days_since_last_ban: Int
   discord_id: String
   faceit_elo: Int
   faceit_nickname: String
@@ -47778,6 +47933,7 @@ input players_stream_cursor_value_input {
   faceit_skill_level: Int
   faceit_updated_at: timestamptz
   faceit_url: String
+  game_ban_count: Int
   language: String
   last_sign_in_at: timestamptz
   name: String
@@ -47788,13 +47944,18 @@ input players_stream_cursor_value_input {
   role: e_player_roles_enum
   roster_image_url: String
   show_match_ready_modal: Boolean
+  steam_bans_checked_at: timestamptz
   steam_id: bigint
+  vac_ban_count: Int
+  vac_banned: Boolean
 }
 
 """aggregate sum on columns"""
 type players_sum_fields {
+  days_since_last_ban: Int
   faceit_elo: Int
   faceit_skill_level: Int
+  game_ban_count: Int
 
   """
   A computed field, executes function "get_total_player_losses"
@@ -47822,6 +47983,7 @@ type players_sum_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  vac_ban_count: Int
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -47861,6 +48023,9 @@ enum players_update_column {
   custom_avatar_url
 
   """column name"""
+  days_since_last_ban
+
+  """column name"""
   discord_id
 
   """column name"""
@@ -47880,6 +48045,9 @@ enum players_update_column {
 
   """column name"""
   faceit_url
+
+  """column name"""
+  game_ban_count
 
   """column name"""
   language
@@ -47912,7 +48080,16 @@ enum players_update_column {
   show_match_ready_modal
 
   """column name"""
+  steam_bans_checked_at
+
+  """column name"""
   steam_id
+
+  """column name"""
+  vac_ban_count
+
+  """column name"""
+  vac_banned
 }
 
 input players_updates {
@@ -47928,8 +48105,10 @@ input players_updates {
 
 """aggregate var_pop on columns"""
 type players_var_pop_fields {
+  days_since_last_ban: Float
   faceit_elo: Float
   faceit_skill_level: Float
+  game_ban_count: Float
 
   """
   A computed field, executes function "get_total_player_losses"
@@ -47957,6 +48136,7 @@ type players_var_pop_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  vac_ban_count: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -47981,8 +48161,10 @@ type players_var_pop_fields {
 
 """aggregate var_samp on columns"""
 type players_var_samp_fields {
+  days_since_last_ban: Float
   faceit_elo: Float
   faceit_skill_level: Float
+  game_ban_count: Float
 
   """
   A computed field, executes function "get_total_player_losses"
@@ -48010,6 +48192,7 @@ type players_var_samp_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  vac_ban_count: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -48034,8 +48217,10 @@ type players_var_samp_fields {
 
 """aggregate variance on columns"""
 type players_variance_fields {
+  days_since_last_ban: Float
   faceit_elo: Float
   faceit_skill_level: Float
+  game_ban_count: Float
 
   """
   A computed field, executes function "get_total_player_losses"
@@ -48063,6 +48248,7 @@ type players_variance_fields {
   A computed field, executes function "get_total_player_matches"
   """
   total_matches: Int
+  vac_ban_count: Float
 
   """
   A computed field, executes function "get_total_player_wins"
@@ -53831,6 +54017,11 @@ type query_root {
     """filter the rows returned"""
     where: v_team_stage_results_bool_exp
   ): v_team_stage_results_aggregate!
+
+  """
+  fetch data from the table: "v_team_stage_results" using primary key columns
+  """
+  v_team_stage_results_by_pk(tournament_stage_id: uuid!, tournament_team_id: uuid!): v_team_stage_results
 
   """
   fetch data from the table: "v_team_tournament_results"
@@ -63074,6 +63265,11 @@ type subscription_root {
     """filter the rows returned"""
     where: v_team_stage_results_bool_exp
   ): v_team_stage_results_aggregate!
+
+  """
+  fetch data from the table: "v_team_stage_results" using primary key columns
+  """
+  v_team_stage_results_by_pk(tournament_stage_id: uuid!, tournament_team_id: uuid!): v_team_stage_results
 
   """
   fetch data from the table in a streaming manner: "v_team_stage_results"
@@ -77563,30 +77759,30 @@ type v_steam_account_pool_status_variance_fields {
 columns and relationships of "v_team_stage_results"
 """
 type v_team_stage_results {
-  group_number: Int
-  head_to_head_match_wins: Int
-  head_to_head_rounds_won: Int
-  losses: Int
-  maps_lost: Int
-  maps_won: Int
-  matches_played: Int
-  matches_remaining: Int
-  placement: Int
-  rank: Int
-  rounds_lost: Int
-  rounds_won: Int
+  group_number: Int!
+  head_to_head_match_wins: Int!
+  head_to_head_rounds_won: Int!
+  losses: Int!
+  maps_lost: Int!
+  maps_won: Int!
+  matches_played: Int!
+  matches_remaining: Int!
+  placement: Int!
+  rank: Int!
+  rounds_lost: Int!
+  rounds_won: Int!
 
   """An object relationship"""
   stage: tournament_stages
 
   """An object relationship"""
   team: tournament_teams
-  team_kdr: float8
-  total_deaths: Int
-  total_kills: Int
-  tournament_stage_id: uuid
-  tournament_team_id: uuid
-  wins: Int
+  team_kdr: float8!
+  total_deaths: Int!
+  total_kills: Int!
+  tournament_stage_id: uuid!
+  tournament_team_id: uuid!
+  wins: Int!
 }
 
 """
@@ -77721,6 +77917,9 @@ input type for inserting array relation for remote table "v_team_stage_results"
 """
 input v_team_stage_results_arr_rel_insert_input {
   data: [v_team_stage_results_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: v_team_stage_results_on_conflict
 }
 
 """aggregate avg on columns"""
@@ -77792,6 +77991,38 @@ input v_team_stage_results_bool_exp {
   tournament_stage_id: uuid_comparison_exp
   tournament_team_id: uuid_comparison_exp
   wins: Int_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "v_team_stage_results"
+"""
+enum v_team_stage_results_constraint {
+  """
+  unique or primary key constraint on columns "tournament_team_id", "tournament_stage_id"
+  """
+  v_team_stage_results_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "v_team_stage_results"
+"""
+input v_team_stage_results_inc_input {
+  group_number: Int
+  head_to_head_match_wins: Int
+  head_to_head_rounds_won: Int
+  losses: Int
+  maps_lost: Int
+  maps_won: Int
+  matches_played: Int
+  matches_remaining: Int
+  placement: Int
+  rank: Int
+  rounds_lost: Int
+  rounds_won: Int
+  team_kdr: float8
+  total_deaths: Int
+  total_kills: Int
+  wins: Int
 }
 
 """
@@ -77913,10 +78144,33 @@ input v_team_stage_results_min_order_by {
 }
 
 """
+response of any mutation on the table "v_team_stage_results"
+"""
+type v_team_stage_results_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [v_team_stage_results!]!
+}
+
+"""
 input type for inserting object relation for remote table "v_team_stage_results"
 """
 input v_team_stage_results_obj_rel_insert_input {
   data: v_team_stage_results_insert_input!
+
+  """upsert condition"""
+  on_conflict: v_team_stage_results_on_conflict
+}
+
+"""
+on_conflict condition type for table "v_team_stage_results"
+"""
+input v_team_stage_results_on_conflict {
+  constraint: v_team_stage_results_constraint!
+  update_columns: [v_team_stage_results_update_column!]! = []
+  where: v_team_stage_results_bool_exp
 }
 
 """Ordering options when selecting data from "v_team_stage_results"."""
@@ -77941,6 +78195,12 @@ input v_team_stage_results_order_by {
   tournament_stage_id: order_by
   tournament_team_id: order_by
   wins: order_by
+}
+
+"""primary key columns input for table: v_team_stage_results"""
+input v_team_stage_results_pk_columns_input {
+  tournament_stage_id: uuid!
+  tournament_team_id: uuid!
 }
 
 """
@@ -78064,6 +78324,30 @@ select "v_team_stage_results_aggregate_bool_exp_var_samp_arguments_columns" colu
 enum v_team_stage_results_select_column_v_team_stage_results_aggregate_bool_exp_var_samp_arguments_columns {
   """column name"""
   team_kdr
+}
+
+"""
+input type for updating data in table "v_team_stage_results"
+"""
+input v_team_stage_results_set_input {
+  group_number: Int
+  head_to_head_match_wins: Int
+  head_to_head_rounds_won: Int
+  losses: Int
+  maps_lost: Int
+  maps_won: Int
+  matches_played: Int
+  matches_remaining: Int
+  placement: Int
+  rank: Int
+  rounds_lost: Int
+  rounds_won: Int
+  team_kdr: float8
+  total_deaths: Int
+  total_kills: Int
+  tournament_stage_id: uuid
+  tournament_team_id: uuid
+  wins: Int
 }
 
 """aggregate stddev on columns"""
@@ -78265,6 +78549,76 @@ input v_team_stage_results_sum_order_by {
   total_deaths: order_by
   total_kills: order_by
   wins: order_by
+}
+
+"""
+update columns of table "v_team_stage_results"
+"""
+enum v_team_stage_results_update_column {
+  """column name"""
+  group_number
+
+  """column name"""
+  head_to_head_match_wins
+
+  """column name"""
+  head_to_head_rounds_won
+
+  """column name"""
+  losses
+
+  """column name"""
+  maps_lost
+
+  """column name"""
+  maps_won
+
+  """column name"""
+  matches_played
+
+  """column name"""
+  matches_remaining
+
+  """column name"""
+  placement
+
+  """column name"""
+  rank
+
+  """column name"""
+  rounds_lost
+
+  """column name"""
+  rounds_won
+
+  """column name"""
+  team_kdr
+
+  """column name"""
+  total_deaths
+
+  """column name"""
+  total_kills
+
+  """column name"""
+  tournament_stage_id
+
+  """column name"""
+  tournament_team_id
+
+  """column name"""
+  wins
+}
+
+input v_team_stage_results_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: v_team_stage_results_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: v_team_stage_results_set_input
+
+  """filter the rows which have to be updated"""
+  where: v_team_stage_results_bool_exp!
 }
 
 """aggregate var_pop on columns"""

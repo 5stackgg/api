@@ -27,6 +27,8 @@ import { MatchmakeService } from "src/matchmaking/matchmake.service";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { MatchQueues } from "./enums/MatchQueues";
+import { SteamMatchHistoryQueues } from "../steam-match-history/enums/SteamMatchHistoryQueues";
+import { CheckSteamBansForMatch } from "../steam-match-history/jobs/CheckSteamBansForMatch";
 import { EloCalculation } from "./jobs/EloCalculation";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 import { S3Service } from "src/s3/s3.service";
@@ -52,6 +54,13 @@ export class MatchesController {
     "Surrendered",
   ];
 
+  private static readonly PLAYED_TERMINAL_STATUSES: string[] = [
+    "Finished",
+    "Forfeit",
+    "Tie",
+    "Surrendered",
+  ];
+
   private static readonly BLOCKING_RESET_STATUSES: string[] = ["Live", "Veto"];
 
   constructor(
@@ -67,6 +76,8 @@ export class MatchesController {
     private readonly notifications: NotificationsService,
     private readonly chatService: ChatService,
     @InjectQueue(MatchQueues.EloCalculation) private eloCalculationQueue: Queue,
+    @InjectQueue(SteamMatchHistoryQueues.CheckSteamBansForMatch)
+    private steamBansQueue: Queue,
     @InjectQueue(MatchQueues.ScheduledMatches)
     private scheduledMatchesQueue: Queue,
     private s3: S3Service,
@@ -485,6 +496,23 @@ export class MatchesController {
       data.old.status !== "WaitingForServer"
     ) {
       void this.notifications.sendMatchWaitingForServerNotification(matchId);
+    }
+
+    if (
+      data.op === "UPDATE" &&
+      MatchesController.PLAYED_TERMINAL_STATUSES.includes(status) &&
+      !MatchesController.PLAYED_TERMINAL_STATUSES.includes(
+        data.old.status as string,
+      )
+    ) {
+      void this.steamBansQueue
+        .add(CheckSteamBansForMatch.name, { matchId })
+        .catch((error) =>
+          this.logger.error(
+            `failed to enqueue steam-ban check for match ${matchId}`,
+            error,
+          ),
+        );
     }
 
     if (

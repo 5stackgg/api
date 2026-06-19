@@ -1,5 +1,9 @@
 import { Inject, Injectable, Logger, forwardRef } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
 import { ConfigService } from "@nestjs/config";
+import { SteamMatchHistoryQueues } from "./enums/SteamMatchHistoryQueues";
+import { CheckSteamBansForMatch } from "./jobs/CheckSteamBansForMatch";
 import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { DemoMetadataService } from "../demos/demo-metadata.service";
@@ -32,6 +36,8 @@ export class MatchImportService {
     private readonly s3: S3Service,
     @Inject(forwardRef(() => FaceitService))
     private readonly faceit: FaceitService,
+    @InjectQueue(SteamMatchHistoryQueues.CheckSteamBansForMatch)
+    private readonly steamBansQueue: Queue,
   ) {
     this.steamApiKey = this.config.get<string>("steam.steamApiKey") ?? "";
   }
@@ -220,6 +226,14 @@ export class MatchImportService {
       `imported ${source} match ${matchId}: ${matchType} on ${parsed.map_name} ` +
         `(${lineup1Players.length}v${lineup2Players.length} players)`,
     );
+
+    void this.steamBansQueue
+      .add(CheckSteamBansForMatch.name, { matchId })
+      .catch((error) =>
+        this.logger.warn(
+          `failed to enqueue steam-ban check for match ${matchId}: ${(error as Error)?.message ?? String(error)}`,
+        ),
+      );
 
     return { matchId };
   }

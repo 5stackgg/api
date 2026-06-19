@@ -11,6 +11,9 @@ import { TypesenseQueues } from "./enums/TypesenseQueues";
 import { getQueuesProcessors } from "src/utilities/QueueProcessors";
 import { RefreshPlayerJob } from "./jobs/RefreshPlayer";
 import { MatchesModule } from "src/matches/matches.module";
+import { NotificationsModule } from "src/notifications/notifications.module";
+import { SteamMatchHistoryQueues } from "src/steam-match-history/enums/SteamMatchHistoryQueues";
+import { RedisModule } from "src/redis/redis.module";
 import { PostgresModule } from "../postgres/postgres.module";
 import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
 
@@ -20,8 +23,13 @@ import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
     CacheModule,
     MatchesModule,
     PostgresModule,
+    NotificationsModule,
+    RedisModule,
     BullModule.registerQueue({
       name: TypesenseQueues.TypeSense,
+    }),
+    BullModule.registerQueue({
+      name: SteamMatchHistoryQueues.CheckSteamBans,
     }),
     BullBoardModule.forFeature({
       name: TypesenseQueues.TypeSense,

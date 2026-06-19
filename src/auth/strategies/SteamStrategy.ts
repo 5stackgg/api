@@ -1,5 +1,4 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ModuleRef } from "@nestjs/core";
 import { Strategy as _SteamStrategy } from "passport-steam";
 import { PassportStrategy } from "@nestjs/passport";
 import { HasuraService } from "../../hasura/hasura.service";
@@ -8,7 +7,11 @@ import { AppConfig } from "../../configs/types/AppConfig";
 import { ConfigService } from "@nestjs/config";
 import { SteamConfig } from "../../configs/types/SteamConfig";
 import { CacheService } from "../../cache/cache.service";
-import { SteamMatchHistoryService } from "../../steam-match-history/steam-match-history.service";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
+import { SteamMatchHistoryQueues } from "../../steam-match-history/enums/SteamMatchHistoryQueues";
+import { SteamBansService } from "../../steam-match-history/steam-bans.service";
 import { e_player_roles_enum } from "../../../generated";
 
 interface SteamProfile {
@@ -40,7 +43,11 @@ export class SteamStrategy extends PassportStrategy(_SteamStrategy) {
     readonly config: ConfigService,
     private readonly cache: CacheService,
     private readonly hasura: HasuraService,
-    private readonly moduleRef: ModuleRef,
+    @InjectQueue(SteamMatchHistoryQueues.PollSteamMatchHistoryForUser)
+    private readonly pollQueue: Queue,
+    @InjectQueue(SteamMatchHistoryQueues.CheckSteamBans)
+    private readonly steamBansQueue: Queue,
+    private readonly redisManager: RedisManagerService,
     private readonly logger: Logger,
   ) {
     const webDomain = config.get<AppConfig>("app").webDomain;
@@ -107,17 +114,30 @@ export class SteamStrategy extends PassportStrategy(_SteamStrategy) {
   }
 
   private fireRefreshes(steamId: string): void {
-    void (async () => {
-      try {
-        const service = this.moduleRef.get(SteamMatchHistoryService, {
-          strict: false,
-        });
-        await service.pollForUser(steamId);
-      } catch (err) {
+    void this.pollQueue
+      .add(
+        "PollSteamMatchHistoryForUser",
+        { steamId },
+        {
+          jobId: `poll-steam-match-history.${steamId}`,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      )
+      .catch((err) => {
         this.logger.error(
-          `on-login match-history poll failed for ${steamId}: ${(err as Error)?.message ?? err}`,
+          `on-login match-history poll enqueue failed for ${steamId}: ${(err as Error)?.message ?? err}`,
         );
-      }
-    })();
+      });
+
+    void SteamBansService.enqueueChecks(
+      this.redisManager.getConnection(),
+      this.steamBansQueue,
+      [steamId],
+    ).catch((err) => {
+      this.logger.error(
+        `on-login steam-bans enqueue failed for ${steamId}: ${(err as Error)?.message ?? err}`,
+      );
+    });
   }
 }
