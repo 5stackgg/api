@@ -30,6 +30,10 @@ DELETE FROM public.player_sanctions ps
       ORDER BY player_steam_id, created_at DESC
    );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_player_sanctions_one_auto_ban
+-- NOTE: player_sanctions is a TimescaleDB hypertable partitioned by created_at,
+-- so a UNIQUE index cannot be created without including the partition column.
+-- Uniqueness of auto-bans is enforced in application code (SteamBansService),
+-- the DELETE above dedupes existing rows, and this partial index keeps lookups fast.
+CREATE INDEX IF NOT EXISTS idx_player_sanctions_one_auto_ban
   ON public.player_sanctions (player_steam_id)
   WHERE type = 'ban' AND sanctioned_by_steam_id IS NULL;
