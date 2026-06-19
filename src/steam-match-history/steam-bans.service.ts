@@ -321,7 +321,15 @@ export class SteamBansService {
 
     await this.postgres.query(
       `UPDATE public.players AS p
-          SET vac_banned = v.vac_banned,
+          SET vac_banned = v.vac_banned
+                AND NOT EXISTS (
+                  SELECT 1
+                    FROM public.player_sanctions ps
+                   WHERE ps.player_steam_id = p.steam_id
+                     AND ps.type = 'ban'
+                     AND ps.sanctioned_by_steam_id IS NULL
+                     AND ps.deleted_at IS NOT NULL
+                ),
               vac_ban_count = v.vac_ban_count,
               game_ban_count = v.game_ban_count,
               days_since_last_ban = v.days_since_last_ban,
