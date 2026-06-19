@@ -93,6 +93,21 @@ export class TypeSenseController {
       return;
     }
 
+    const wasSoftDeleted =
+      data.op === "UPDATE" &&
+      !(data.old as { deleted_at?: string }).deleted_at &&
+      !!(data.new as { deleted_at?: string }).deleted_at;
+
+    if (wasSoftDeleted) {
+      const jobId = `player-sanctions.${data.new.type}.${data.new.player_steam_id}`;
+      await this.queue.remove(jobId);
+
+      await this.queue.add(RefreshPlayerJob.name, {
+        steamId: data.new.player_steam_id,
+      });
+      return;
+    }
+
     if (data.op === "INSERT") {
       try {
         await this.notifications.queueSanctionNotification({

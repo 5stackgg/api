@@ -58,6 +58,7 @@ event_triggers:
           - player_steam_id
           - remove_sanction_date
           - type
+          - deleted_at
     retry_conf:
       interval_sec: 10
       num_retries: 6
