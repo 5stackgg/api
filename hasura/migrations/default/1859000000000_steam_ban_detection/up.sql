@@ -19,17 +19,6 @@ CREATE INDEX IF NOT EXISTS idx_match_lineup_players_steam_id
 CREATE INDEX IF NOT EXISTS idx_matches_created_at
   ON public.matches (created_at);
 
-DELETE FROM public.player_sanctions ps
- WHERE ps.type = 'ban'
-   AND ps.sanctioned_by_steam_id IS NULL
-   AND ps.id NOT IN (
-     SELECT DISTINCT ON (player_steam_id) id
-       FROM public.player_sanctions
-      WHERE type = 'ban'
-        AND sanctioned_by_steam_id IS NULL
-      ORDER BY player_steam_id, created_at DESC
-   );
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_player_sanctions_one_auto_ban
+CREATE INDEX IF NOT EXISTS idx_player_sanctions_one_auto_ban
   ON public.player_sanctions (player_steam_id)
   WHERE type = 'ban' AND sanctioned_by_steam_id IS NULL;
