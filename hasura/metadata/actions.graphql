@@ -387,6 +387,10 @@ type Mutation {
 }
 
 type Mutation {
+  scanSteamBans: SuccessOutput
+}
+
+type Mutation {
   refreshFaceitRank(
     steam_id: String!
   ): SuccessOutput

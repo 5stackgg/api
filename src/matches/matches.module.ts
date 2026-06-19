@@ -18,6 +18,7 @@ import { BullModule, InjectQueue } from "@nestjs/bullmq";
 import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { MatchQueues } from "./enums/MatchQueues";
+import { SteamMatchHistoryQueues } from "../steam-match-history/enums/SteamMatchHistoryQueues";
 import {
   CheckOnDemandServerJob,
   CheckOnDemandServerJobEvents,
@@ -88,6 +89,9 @@ import { ClipsModule } from "./clips/clips.module";
           attempts: 3,
           backoff: { type: "exponential", delay: 5000 },
         },
+      },
+      {
+        name: SteamMatchHistoryQueues.CheckSteamBansForMatch,
       },
     ),
     BullBoardModule.forFeature(

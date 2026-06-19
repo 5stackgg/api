@@ -1,7 +1,10 @@
 import TurndownService from "turndown";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
 import { HasuraService } from "../hasura/hasura.service";
+import { PostgresService } from "../postgres/postgres.service";
 import { AppConfig } from "src/configs/types/AppConfig";
 import {
   e_notification_types_enum,
@@ -9,6 +12,7 @@ import {
   tournaments,
 } from "generated/schema";
 import { DISCORD_COLORS } from "./utilities/constants";
+import { NotificationsQueues } from "./enums/NotificationsQueues";
 
 @Injectable()
 export class NotificationsService {
@@ -16,10 +20,203 @@ export class NotificationsService {
 
   constructor(
     private readonly hasura: HasuraService,
+    private readonly postgres: PostgresService,
     private readonly logger: Logger,
     private readonly configService: ConfigService,
+    @InjectQueue(NotificationsQueues.SanctionNotifications)
+    private readonly sanctionNotificationsQueue: Queue,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
+  }
+
+  async queueSanctionNotification(sanction: {
+    sanctionId: string;
+    steamId: string;
+    type: string;
+    reason?: string | null;
+  }): Promise<void> {
+    await this.sanctionNotificationsQueue.add(
+      "SendSanctionNotifications",
+      sanction,
+      {
+        jobId: `sanction-notify.${sanction.sanctionId}`,
+        removeOnComplete: { age: 3600 },
+        removeOnFail: { age: 3600 },
+      },
+    );
+  }
+
+  public static escapeHtml(value: string | null | undefined): string {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  private static readonly SANCTION_VERBS: Record<string, string> = {
+    ban: "banned",
+    mute: "muted",
+    gag: "gagged",
+    silence: "silenced",
+  };
+
+  async notifyMatchPlayersOfSanction(sanction: {
+    sanctionId: string;
+    steamId: string;
+    type: string;
+    reason?: string | null;
+  }): Promise<void> {
+    const recipients = await this.postgres.query<Array<{ steam_id: string }>>(
+      `SELECT DISTINCT other_p.steam_id::text AS steam_id
+         FROM public.matches m
+         JOIN public.match_lineup_players self_p
+           ON self_p.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+          AND self_p.steam_id = $1::bigint
+         JOIN public.match_lineup_players other_p
+           ON other_p.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+          AND other_p.steam_id IS NOT NULL
+          AND other_p.steam_id <> $1::bigint
+        WHERE m.created_at >= now() - interval '6 months'
+          AND m.status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered')`,
+      [sanction.steamId],
+    );
+
+    if (recipients.length === 0) {
+      return;
+    }
+
+    const { players_by_pk } = await this.hasura.query({
+      players_by_pk: {
+        __args: { steam_id: sanction.steamId },
+        name: true,
+      },
+    });
+    const name = players_by_pk?.name ?? `Player ${sanction.steamId}`;
+
+    const verb = NotificationsService.SANCTION_VERBS[sanction.type] ?? "sanctioned";
+    const safeName = NotificationsService.escapeHtml(name);
+    const profileUrl = `${this.appConfig.webDomain}/players/${encodeURIComponent(
+      sanction.steamId,
+    )}`;
+    const reasonSuffix =
+      sanction.type === "ban" && sanction.reason
+        ? ` (${NotificationsService.escapeHtml(sanction.reason)})`
+        : "";
+    const message =
+      `A player you recently played with, ` +
+      `<a href="${profileUrl}">${safeName}</a>, was ${verb}.${reasonSuffix}`;
+
+    await this.hasura.mutation({
+      insert_notifications: {
+        __args: {
+          objects: recipients.map(({ steam_id }) => ({
+            type: "PlayerSanctioned" as e_notification_types_enum,
+            title: "Player Sanctioned",
+            message,
+            role: "user" as e_player_roles_enum,
+            steam_id,
+            entity_id: sanction.steamId,
+          })),
+        },
+        affected_rows: true,
+      },
+    });
+
+    this.logger.log(
+      `notified ${recipients.length} co-player(s) of sanction (${sanction.type}) on ${sanction.steamId}`,
+    );
+  }
+
+  async notifyAdminsOfBan(sanction: {
+    sanctionId: string;
+    steamId: string;
+    type: string;
+    reason?: string | null;
+  }): Promise<void> {
+    if (sanction.type !== "ban") {
+      return;
+    }
+
+    const played = await this.postgres.query<Array<{ exists: boolean }>>(
+      `SELECT EXISTS (
+         SELECT 1 FROM public.match_lineup_players
+          WHERE steam_id = $1::bigint
+       ) AS exists`,
+      [sanction.steamId],
+    );
+    if (!played.at(0)?.exists) {
+      return;
+    }
+
+    const reasonSuffix = sanction.reason
+      ? ` (${NotificationsService.escapeHtml(sanction.reason)})`
+      : "";
+
+    await this.hasura.mutation({
+      insert_notifications: {
+        __args: {
+          objects: [
+            {
+              type: "PlayerSanctioned" as e_notification_types_enum,
+              title: "Player Banned",
+              message: `A player has been banned.${reasonSuffix}`,
+              role: "administrator" as e_player_roles_enum,
+              entity_id: sanction.steamId,
+            },
+          ],
+        },
+        affected_rows: true,
+      },
+    });
+
+    this.logger.log(`notified admins of ban on ${sanction.steamId}`);
+  }
+
+  async notifyBannedPlayer(sanction: {
+    sanctionId: string;
+    steamId: string;
+    type: string;
+    reason?: string | null;
+  }): Promise<void> {
+    if (sanction.type !== "ban") {
+      return;
+    }
+
+    const { players_by_pk } = await this.hasura.query({
+      players_by_pk: {
+        __args: { steam_id: sanction.steamId },
+        last_sign_in_at: true,
+      },
+    });
+    if (!players_by_pk?.last_sign_in_at) {
+      return;
+    }
+
+    const reasonSuffix = sanction.reason
+      ? ` Reason: ${NotificationsService.escapeHtml(sanction.reason)}`
+      : "";
+
+    await this.hasura.mutation({
+      insert_notifications: {
+        __args: {
+          objects: [
+            {
+              type: "PlayerSanctioned" as e_notification_types_enum,
+              title: "You have been banned",
+              message: `You have been banned from this platform.${reasonSuffix}`,
+              role: "user" as e_player_roles_enum,
+              steam_id: sanction.steamId,
+              entity_id: sanction.steamId,
+            },
+          ],
+        },
+        affected_rows: true,
+      },
+    });
+
+    this.logger.log(`notified banned player ${sanction.steamId}`);
   }
 
   async send(
@@ -196,7 +393,7 @@ export class NotificationsService {
         return;
       }
 
-      const tournamentContext = ` in tournament <b>${tournament.name}</b>`;
+      const tournamentContext = ` in tournament <b>${NotificationsService.escapeHtml(tournament.name)}</b>`;
       const message = `Match is waiting for a server${tournamentContext}. <a href="${matchUrl}">View Match</a>`;
 
       const organizerSteamIds = new Set<string>();
@@ -328,7 +525,7 @@ export class NotificationsService {
       }
 
       // Tournament case
-      const tournamentContext = ` in tournament <b>${tournament.name}</b>`;
+      const tournamentContext = ` in tournament <b>${NotificationsService.escapeHtml(tournament.name)}</b>`;
       const message = `A map has been paused${tournamentContext} in match <a href="${matchUrl}">View Match</a>`;
 
       const organizerSteamIds = new Set<string>();

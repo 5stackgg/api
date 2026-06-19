@@ -20,6 +20,7 @@ import { S3Service } from "../s3/s3.service";
 import { SteamMatchHistoryQueues } from "./enums/SteamMatchHistoryQueues";
 import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
 import { SteamMatchHistoryService } from "./steam-match-history.service";
+import { SteamBansService } from "./steam-bans.service";
 import { signUploadToken } from "./uploadToken";
 
 const MAX_UPLOAD_SIZE = 2 * 1024 * 1024 * 1024;
@@ -32,7 +33,8 @@ const CS2_DEMO_MAGIC = Buffer.from([
 @Controller("steam-match-history")
 export class SteamMatchHistoryController {
   constructor(
-    private readonly service: SteamMatchHistoryService,
+    private readonly steamMatchHistory: SteamMatchHistoryService,
+    private readonly steamBans: SteamBansService,
     private readonly logger: Logger,
     private readonly s3: S3Service,
     @InjectQueue(SteamMatchHistoryQueues.ProcessUploadedDemo)
@@ -67,7 +69,7 @@ export class SteamMatchHistoryController {
     const key = `${UPLOAD_PREFIX}/${user.steam_id}/${randomUUID()}.dem`;
     const uploadId = await this.s3.createMultipartUpload(key);
     const partCount = Math.ceil(fileSize / UPLOAD_CHUNK_SIZE);
-    const workerUrl = await this.service.getCloudflareWorkerUrl();
+    const workerUrl = await this.steamMatchHistory.getCloudflareWorkerUrl();
 
     // When uploads go through the Cloudflare worker (which signs the B2 PUT
     // with shared credentials) we must authorize each part write — otherwise
@@ -187,7 +189,7 @@ export class SteamMatchHistoryController {
     if (request.user.role !== "administrator") {
       throw new ForbiddenException("administrator access required");
     }
-    if (!(await this.service.isImportingAllowed())) {
+    if (!(await this.steamMatchHistory.isImportingAllowed())) {
       throw new ForbiddenException("external match imports are disabled");
     }
     return request.user;
@@ -222,14 +224,14 @@ export class SteamMatchHistoryController {
       `action linkSteamMatchHistory steam_id=${data.user.steam_id}`,
     );
 
-    if (!this.service.isEnabled()) {
+    if (!this.steamMatchHistory.isEnabled()) {
       return {
         success: false,
         error: "STEAM_WEB_API_KEY not configured on this 5stack instance",
       };
     }
 
-    const result = await this.service.linkAccount(
+    const result = await this.steamMatchHistory.linkAccount(
       data.user.steam_id,
       data.auth_code,
       data.share_code,
@@ -247,7 +249,7 @@ export class SteamMatchHistoryController {
     this.logger.log(
       `action unlinkSteamMatchHistory steam_id=${data.user.steam_id}`,
     );
-    await this.service.unlinkAccount(data.user.steam_id);
+    await this.steamMatchHistory.unlinkAccount(data.user.steam_id);
     return { success: true };
   }
 
@@ -262,7 +264,7 @@ export class SteamMatchHistoryController {
       `action pollSteamMatchHistory steam_id=${data.user.steam_id}`,
     );
 
-    if (!this.service.isEnabled()) {
+    if (!this.steamMatchHistory.isEnabled()) {
       return {
         success: false,
         collected: 0,
@@ -270,7 +272,7 @@ export class SteamMatchHistoryController {
       };
     }
 
-    const result = await this.service.pollForUser(data.user.steam_id);
+    const result = await this.steamMatchHistory.pollForUser(data.user.steam_id);
     return {
       success: !result.error,
       collected: result.collected,
@@ -289,7 +291,7 @@ export class SteamMatchHistoryController {
     if (!data.valve_match_id || !/^\d+$/.test(data.valve_match_id)) {
       throw new BadRequestException("invalid valve_match_id");
     }
-    const result = await this.service.retryPendingImport(
+    const result = await this.steamMatchHistory.retryPendingImport(
       data.user.steam_id,
       data.valve_match_id,
     );
@@ -307,10 +309,16 @@ export class SteamMatchHistoryController {
     if (!data.valve_match_id || !/^\d+$/.test(data.valve_match_id)) {
       throw new BadRequestException("invalid valve_match_id");
     }
-    const result = await this.service.clearPendingImport(
+    const result = await this.steamMatchHistory.clearPendingImport(
       data.user.steam_id,
       data.valve_match_id,
     );
     return { success: result.ok };
+  }
+
+  @HasuraAction()
+  public async scanSteamBans(): Promise<{ success: boolean }> {
+    await this.steamBans.scanAll();
+    return { success: true };
   }
 }

@@ -21,6 +21,7 @@ type Modules =
   | "DiscordBot"
   | "Postgres"
   | "System"
+  | "Notifications"
   | "TypeSense"
   | "Matchmaking"
   | "Telemetry"

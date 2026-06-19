@@ -22,7 +22,9 @@ export class MarkGameServerNodeOnline extends WorkerHost {
       offlineAt?: string;
     }>,
   ): Promise<void> {
-    const nodeLabel = job.data.label || job.data.node;
+    const nodeLabel = NotificationsService.escapeHtml(
+      job.data.label || job.data.node,
+    );
     let message = `Game Server Node (${nodeLabel}) is back Online.`;
 
     if (job.data.offlineAt) {
@@ -93,7 +95,7 @@ export class MarkGameServerNodeOnline extends WorkerHost {
     await this.notifications.send(
       "GameNodeStatus",
       {
-        message: `Region ${server_regions_by_pk.description || region} is back Online (status: ${server_regions_by_pk.status}).`,
+        message: `Region ${NotificationsService.escapeHtml(server_regions_by_pk.description || region)} is back Online (status: ${server_regions_by_pk.status}).`,
         title: "Region Online",
         role: "administrator",
         entity_id: region,

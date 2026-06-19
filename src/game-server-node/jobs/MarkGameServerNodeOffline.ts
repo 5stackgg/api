@@ -64,7 +64,7 @@ export class MarkGameServerNodeOffline extends WorkerHost {
     await this.notifications.send(
       "GameNodeStatus",
       {
-        message: `Game Server Node (${update_game_server_nodes_by_pk.label || job.data.node}) is Offline.`,
+        message: `Game Server Node (${NotificationsService.escapeHtml(update_game_server_nodes_by_pk.label || job.data.node)}) is Offline.`,
         title: "Game Server Node Offline",
         role: "administrator",
         entity_id: job.data.node,
@@ -94,7 +94,7 @@ export class MarkGameServerNodeOffline extends WorkerHost {
     await this.notifications.send(
       "GameNodeStatus",
       {
-        message: `Region ${server_regions_by_pk.description || region} is Offline. All nodes in this region are unavailable.`,
+        message: `Region ${NotificationsService.escapeHtml(server_regions_by_pk.description || region)} is Offline. All nodes in this region are unavailable.`,
         title: "Region Offline",
         role: "administrator",
         entity_id: region,

@@ -488,6 +488,14 @@ actions:
     permissions:
       - role: administrator
     comment: Refresh all players in Typesense index
+  - name: scanSteamBans
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Scan all players who have been on a lineup for Steam VAC/game bans
   - name: refreshFaceitRank
     definition:
       kind: synchronous

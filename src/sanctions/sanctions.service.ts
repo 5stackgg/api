@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "src/hasura/hasura.service";
+import { PostgresService } from "src/postgres/postgres.service";
 import { RconService } from "src/rcon/rcon.service";
 import { DedicatedServersService } from "src/dedicated-servers/dedicated-servers.service";
 
@@ -10,6 +11,7 @@ export class SanctionsService {
   constructor(
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
+    private readonly postgres: PostgresService,
     private readonly rconService: RconService,
     private readonly dedicatedServersService: DedicatedServersService,
   ) {}
@@ -29,28 +31,14 @@ export class SanctionsService {
       is_gagged: boolean;
     }>
   > {
-    const { player_sanctions } = await this.hasura.query({
-      player_sanctions: {
-        __args: {
-          where: {
-            _or: [
-              {
-                remove_sanction_date: {
-                  _is_null: true,
-                },
-              },
-              {
-                remove_sanction_date: {
-                  _gt: new Date().toISOString(),
-                },
-              },
-            ],
-          },
-        },
-        player_steam_id: true,
-        type: true,
-      },
-    });
+    const player_sanctions = await this.postgres.query<
+      Array<{ player_steam_id: string; type: string }>
+    >(
+      `SELECT player_steam_id::text AS player_steam_id, type
+         FROM public.player_sanctions
+        WHERE deleted_at IS NULL
+          AND (remove_sanction_date IS NULL OR remove_sanction_date > now())`,
+    );
 
     const byPlayer: Record<
       string,
@@ -158,21 +146,14 @@ export class SanctionsService {
       throw Error(`invalid sanction type ${type}`);
     }
 
-    await this.hasura.mutation({
-      delete_player_sanctions: {
-        __args: {
-          where: {
-            player_steam_id: {
-              _eq: steamId,
-            },
-            type: {
-              _eq: type,
-            },
-          },
-        },
-        affected_rows: true,
-      },
-    });
+    await this.postgres.query(
+      `UPDATE public.player_sanctions
+          SET deleted_at = now()
+        WHERE player_steam_id = $1::bigint
+          AND type = $2
+          AND deleted_at IS NULL`,
+      [steamId, type],
+    );
 
     let enforced = false;
     let message = "sanction removed";
