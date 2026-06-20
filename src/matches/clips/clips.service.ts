@@ -214,12 +214,11 @@ export class ClipsService {
         `dest=${spec.destination}`,
     );
 
-    const outroEnv = await this.gameStreamer.resolveOutroBranding(
-      dims,
-      spec.output.fps,
-    );
-
     try {
+      const outroEnv = await this.gameStreamer.resolveOutroBranding(
+        dims,
+        spec.output.fps,
+      );
       await this.gameStreamer.dispatchClipRenderToPod(session.id, {
         job_id: jobId,
         token: sessionToken,
