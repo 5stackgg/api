@@ -1091,6 +1091,7 @@ export class GameStreamerService {
       }>;
       output_dims: string;
       output_fps: number;
+      outro_env?: Record<string, string>;
     },
   ) {
     const url = this.getDemoSpecUrl(sessionId, "render-clip", "demo");
@@ -2202,6 +2203,20 @@ export class GameStreamerService {
       name: "CLIP_BAKE_BRANDING",
       value: await this.resolveClipBakeBranding(),
     });
+    {
+      // Batch jobs share the global clip resolution/fps, so the outro env is
+      // computed once at pod level (resolve_outro_file re-validates dims and
+      // falls back, so a mismatch is non-fatal).
+      const dims =
+        (await this.resolveClipResolution()) === "720p"
+          ? "1280x720"
+          : "1920x1080";
+      const fps = await this.resolveClipFps();
+      const outroEnv = await this.resolveOutroBranding(dims, fps);
+      for (const [name, value] of Object.entries(outroEnv)) {
+        env.push({ name, value });
+      }
+    }
     env.push(...(await this.buildNodeCs2OptionsEnv(nodeId)));
 
     this.logger.log(
