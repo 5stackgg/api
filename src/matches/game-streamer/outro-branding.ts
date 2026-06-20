@@ -21,6 +21,36 @@ export function outroCacheKey(args: {
   return `branding/outro_${args.version}_${args.dims}_${args.fps}.mp4`;
 }
 
+export interface ClipOutput {
+  dims: string;
+  fps: number;
+}
+
+// The dims and fps the render pod gives a clip. Mirrors game-streamer's
+// clip-helpers.mjs job-fields, which sets each batch job's CLIP_OUTPUT_DIMS
+// and CLIP_OUTPUT_FPS from its spec.
+export function clipOutputFromSpec(spec: unknown): ClipOutput {
+  const output = (
+    spec as { output?: { resolution?: unknown; fps?: unknown } } | null
+  )?.output;
+  const fps = Number.parseInt(String(output?.fps), 10);
+  return {
+    dims: output?.resolution === "720p" ? "1280x720" : "1920x1080",
+    fps: Number.isFinite(fps) ? fps : 60,
+  };
+}
+
+// The output every spec shares, or null when they differ (or there are none).
+export function sharedClipOutput(specs: unknown[]): ClipOutput | null {
+  const [first, ...rest] = specs.map((spec) => clipOutputFromSpec(spec));
+  if (!first) {
+    return null;
+  }
+  return rest.every((o) => o.dims === first.dims && o.fps === first.fps)
+    ? first
+    : null;
+}
+
 export interface OutroEnvHit {
   hit: true;
   cacheUrl: string;
