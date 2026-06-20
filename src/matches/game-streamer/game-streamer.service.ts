@@ -30,6 +30,7 @@ import {
   computeOutroVersion,
   outroCacheKey,
   buildOutroEnv,
+  sharedClipOutput,
 } from "./outro-branding";
 import { LoggingService } from "../../k8s/logging/logging.service";
 import {
@@ -1204,6 +1205,7 @@ export class GameStreamerService {
       }>;
       output_dims: string;
       output_fps: number;
+      outro_env?: Record<string, string>;
     },
   ) {
     const url = this.getDemoSpecUrl(sessionId, "render-clip", "demo");
@@ -2452,6 +2454,26 @@ export class GameStreamerService {
       name: "CLIP_BAKE_BRANDING",
       value: await this.resolveClipBakeBranding(),
     });
+    {
+      // The pod gets one outro env, but each job renders at its own spec
+      // output (a re-queued job keeps the output it was created with). Key
+      // the outro on the output all the jobs share so it matches every clip
+      // it is appended to; when they differ, keep the stock outro.
+      const output = sharedClipOutput(jobs.map((j) => j.spec));
+      if (output) {
+        const outroEnv = await this.resolveOutroBranding(
+          output.dims,
+          output.fps,
+        );
+        for (const [name, value] of Object.entries(outroEnv)) {
+          env.push({ name, value });
+        }
+      } else {
+        this.logger.warn(
+          `[batch-highlights ${matchMapId}] jobs mix clip outputs, using the stock outro`,
+        );
+      }
+    }
     env.push(...(await this.buildNodeCs2OptionsEnv(nodeId)));
 
     this.logger.log(
