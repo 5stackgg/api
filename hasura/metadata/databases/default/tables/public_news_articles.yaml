@@ -1,0 +1,24 @@
+table:
+  name: news_articles
+  schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - source
+        - issue_number
+        - slug
+        - url
+        - title
+        - teaser
+        - content_html
+        - cover_image_url
+        - author
+        - published_at
+        - scraped_at
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""

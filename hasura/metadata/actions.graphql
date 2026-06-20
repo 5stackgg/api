@@ -454,6 +454,10 @@ type Mutation {
 }
 
 type Mutation {
+  rescanTldrNews: SuccessOutput
+}
+
+type Mutation {
   orphanedDemosScanResult: OrphanScanResultOutput
 }
 
@@ -1272,5 +1276,36 @@ type TableSizeInfo {
   n_live_tup: Int!
   n_dead_tup: Int!
   estimated_dead_tuple_bytes: Float!
+}
+
+type CreateDraftGameOutput {
+  draftGameId: uuid!
+}
+
+type Mutation {
+  createDraftGame(
+    settings: jsonb!
+  ): CreateDraftGameOutput
+}
+
+type Mutation {
+  updateDraftGame(
+    draftGameId: uuid!
+    settings: jsonb!
+  ): SuccessOutput
+}
+
+type Mutation {
+  joinDraftGame(
+    draftGameId: uuid!
+    inviteCode: String
+  ): SuccessOutput
+}
+
+type Mutation {
+  joinDraftGameAsParty(
+    draftGameId: uuid!
+    inviteCode: String
+  ): SuccessOutput
 }
 

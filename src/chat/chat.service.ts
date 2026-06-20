@@ -128,6 +128,29 @@ export class ChatService {
           return;
         }
         break;
+      case ChatLobbyType.Draft: {
+        const { draft_games } = await this.hasuraService.query({
+          draft_games: {
+            __args: {
+              where: {
+                id: { _eq: id },
+                _or: [
+                  { access: { _eq: "Open" } },
+                  { host_steam_id: { _eq: user.steam_id } },
+                  { players: { steam_id: { _eq: user.steam_id } } },
+                ],
+              },
+            },
+            id: true,
+          },
+        });
+
+        if (draft_games.length === 0) {
+          return;
+        }
+
+        break;
+      }
       case ChatLobbyType.Organizer:
         if (!isRoleAbove(user.role, "match_organizer")) {
           return;

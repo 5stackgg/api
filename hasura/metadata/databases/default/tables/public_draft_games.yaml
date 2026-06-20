@@ -1,0 +1,212 @@
+table:
+  name: draft_games
+  schema: public
+object_relationships:
+  - name: host
+    using:
+      foreign_key_constraint_on: host_steam_id
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+  - name: map_pool
+    using:
+      foreign_key_constraint_on: map_pool_id
+  - name: e_draft_game_status
+    using:
+      foreign_key_constraint_on: status
+  - name: e_draft_game_captain_selection
+    using:
+      foreign_key_constraint_on: captain_selection
+  - name: e_draft_game_draft_order
+    using:
+      foreign_key_constraint_on: draft_order
+  - name: e_draft_game_mode
+    using:
+      foreign_key_constraint_on: mode
+  - name: e_lobby_access
+    using:
+      foreign_key_constraint_on: access
+  - name: options
+    using:
+      foreign_key_constraint_on: match_options_id
+  - name: team_1
+    using:
+      foreign_key_constraint_on: team_1_id
+  - name: team_2
+    using:
+      foreign_key_constraint_on: team_2_id
+array_relationships:
+  - name: players
+    using:
+      foreign_key_constraint_on:
+        column: draft_game_id
+        table:
+          name: draft_game_players
+          schema: public
+  - name: picks
+    using:
+      foreign_key_constraint_on:
+        column: draft_game_id
+        table:
+          name: draft_game_picks
+          schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - host_steam_id
+        - status
+        - type
+        - access
+        - invite_code
+        - regions
+        - map_pool_id
+        - match_options_id
+        - team_1_id
+        - team_2_id
+        - captain_selection
+        - draft_order
+        - mode
+        - require_approval
+        - min_elo
+        - max_elo
+        - capacity
+        - inner_squad
+        - match_id
+        - current_pick_lineup
+        - pick_deadline
+        - expires_at
+        - created_at
+        - updated_at
+      filter:
+        _or:
+          - access:
+              _eq: Open
+          - host_steam_id:
+              _eq: X-Hasura-User-Id
+          - players:
+              steam_id:
+                _eq: X-Hasura-User-Id
+          - _and:
+              - access:
+                  _eq: Friends
+              - players:
+                  player:
+                    friends:
+                      steam_id:
+                        _eq: X-Hasura-User-Id
+      allow_aggregations: true
+    comment: ""
+  - role: guest
+    permission:
+      columns:
+        - id
+        - host_steam_id
+        - status
+        - type
+        - access
+        - regions
+        - map_pool_id
+        - match_options_id
+        - team_1_id
+        - team_2_id
+        - captain_selection
+        - draft_order
+        - mode
+        - require_approval
+        - min_elo
+        - max_elo
+        - capacity
+        - inner_squad
+        - match_id
+        - current_pick_lineup
+        - pick_deadline
+        - created_at
+        - updated_at
+      filter:
+        access:
+          _eq: Open
+      allow_aggregations: true
+    comment: ""
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        type:
+          _in:
+            - Competitive
+            - Wingman
+            - Duel
+            - Premier
+            - Faceit
+      set:
+        host_steam_id: x-hasura-user-id
+      columns:
+        - type
+        - mode
+        - access
+        - regions
+        - captain_selection
+        - draft_order
+        - require_approval
+        - team_1_id
+        - team_2_id
+        - inner_squad
+        - map_pool_id
+        - min_elo
+        - max_elo
+        - match_options_id
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - type
+        - mode
+        - access
+        - regions
+        - captain_selection
+        - draft_order
+        - require_approval
+        - team_1_id
+        - team_2_id
+        - inner_squad
+        - map_pool_id
+        - min_elo
+        - max_elo
+        - match_options_id
+        - status
+        - pick_deadline
+        - expires_at
+      filter:
+        host_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        _and:
+          - host_steam_id:
+              _eq: X-Hasura-User-Id
+          - status:
+              _eq: Open
+          - match_id:
+              _is_null: true
+    comment: ""
+event_triggers:
+  - name: draft_game_events
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+      delete:
+        columns: '*'
+    retry_conf:
+      interval_sec: 10
+      num_retries: 3
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

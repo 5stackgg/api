@@ -6,4 +6,5 @@ export enum SystemSettingName {
   SupportsDiscordBot = "public.supports_discord_bot",
   SupportsGameServerNodes = "supports_game_server_nodes",
   SupportsGameServerVersionPinning = "supports_game_server_version_pinning",
+  TldrNewsEnabled = "public.tldr_news_enabled",
 }

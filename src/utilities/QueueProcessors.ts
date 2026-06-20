@@ -24,10 +24,12 @@ type Modules =
   | "Notifications"
   | "TypeSense"
   | "Matchmaking"
+  | "DraftGames"
   | "Telemetry"
   | "DedicatedServers"
   | "SteamMatchHistory"
   | "Faceit"
+  | "News"
   | "S3Scan";
 
 export type UseQueueOptions = {

@@ -4,4 +4,5 @@ export enum ChatLobbyType {
   MatchMaking = "matchmaking",
   Tournament = "tournament",
   Organizer = "organizers",
+  Draft = "draft",
 }
