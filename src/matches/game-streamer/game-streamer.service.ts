@@ -19,6 +19,13 @@ import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { SteamConfig } from "../../configs/types/SteamConfig";
 import { resolveInClusterApiBase } from "../clips/clips.constants";
+import { S3Service } from "../../s3/s3.service";
+import {
+  DEFAULT_OUTRO_ACCENT,
+  computeOutroVersion,
+  outroCacheKey,
+  buildOutroEnv,
+} from "./outro-branding";
 import { LoggingService } from "../../k8s/logging/logging.service";
 import {
   SteamAccountService,
@@ -140,6 +147,7 @@ export class GameStreamerService {
     private readonly demoMetadata: DemoMetadataService,
     private readonly loggingService: LoggingService,
     private readonly steamAccounts: SteamAccountService,
+    private readonly s3: S3Service,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
     this.appConfig = this.config.get<AppConfig>("app");
@@ -321,6 +329,61 @@ export class GameStreamerService {
       process.env.CLIP_BAKE_BRANDING ??
       "1";
     return value === "false" || value === "0" ? "0" : "1";
+  }
+
+  // Branded outro env for the render pod. Active only when a custom logo is
+  // set. Returns {} (stock outro), a presigned cache URL (hit), or a render
+  // instruction + presigned PUT + branding props (miss). Best-effort: any
+  // failure returns {} so the pod falls back to the baked stock outro.
+  public async resolveOutroBranding(
+    dims: string,
+    fps: number,
+  ): Promise<Record<string, string>> {
+    try {
+      const logoPath = await this.readSetting("public.logo_url");
+      if (!logoPath) {
+        return {};
+      }
+      const brandName = (await this.readSetting("public.brand_name")) ?? "";
+      const accent =
+        (await this.readSetting("public.color_dark_tactical_amber")) ??
+        (await this.readSetting("public.color_tactical_amber")) ??
+        DEFAULT_OUTRO_ACCENT;
+
+      let etag = logoPath;
+      try {
+        etag = (await this.s3.stat(logoPath))?.etag ?? logoPath;
+      } catch {
+        /* keep logoPath as the version seed */
+      }
+
+      const version = computeOutroVersion({ brandName, accent, etag });
+      const key = outroCacheKey({ version, dims, fps });
+
+      if (await this.s3.has(key)) {
+        return buildOutroEnv({
+          hit: true,
+          cacheUrl: await this.s3.getPresignedUrl(key, undefined, 3600, "get"),
+        });
+      }
+      return buildOutroEnv({
+        hit: false,
+        putUrl: await this.s3.getPresignedUrl(key, undefined, 3600, "put"),
+        logoUrl: await this.s3.getPresignedUrl(
+          logoPath,
+          undefined,
+          3600,
+          "get",
+        ),
+        brandName,
+        accent,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `resolveOutroBranding failed: ${(error as Error)?.message ?? error}`,
+      );
+      return {};
+    }
   }
 
   public async resolveClipFps(): Promise<30 | 60> {
