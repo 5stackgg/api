@@ -816,6 +816,9 @@ export class GameStreamerService {
         name: "CLIP_BAKE_BRANDING",
         value: await this.resolveClipBakeBranding(),
       },
+      // Trusted S3 presign origin for render-clip.mjs's outro-env URL allowlist
+      // (independent of the demo source, so faceit/external demos still brand).
+      { name: "S3_PUBLIC_ORIGIN", value: this.appConfig.demosDomain },
     ];
     if (options.roundTicks != null) {
       env.push({
