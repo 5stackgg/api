@@ -392,6 +392,10 @@ export class GameStreamerService {
       if (!logoPath) {
         return {};
       }
+      // An empty brandName (no public.brand_name) keeps the stock 5STACK.gg
+      // wordmark and tagline next to the custom logo, the same fallback the
+      // web uses (brandName || "5Stack"). The empty name is still part of the
+      // version hash, so keep the CLIP_BRAND_NAME key with an empty value.
       const brandName = (await this.readSetting("public.brand_name")) ?? "";
       // The web themes from the dark palette only (the light-mode
       // `public.color_*` rows are deleted at boot), so this is its accent.
