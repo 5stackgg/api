@@ -48,6 +48,7 @@ describe("GameStreamerService", () => {
       {} as any,
       {} as any,
       broadcastHuds as any,
+      {} as any,
     );
   });
 
