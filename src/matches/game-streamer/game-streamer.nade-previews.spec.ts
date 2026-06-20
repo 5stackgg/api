@@ -65,6 +65,7 @@ describe("GameStreamerService — nade previews", () => {
       {} as any,
       steamAccounts as any,
       { resolveDefault: jest.fn().mockResolvedValue(null) } as any,
+      {} as any,
     );
 
   beforeEach(() => {
