@@ -364,6 +364,9 @@ export class GameStreamerService {
       if (!logoPath) {
         return {};
       }
+      // Empty brandName (no public.brand_name) is intentional: the pod renders
+      // a logo-only outro (the Outro composition hides the wordmark). Keep the
+      // CLIP_BRAND_NAME key with an empty value — do not drop it.
       const brandName = (await this.readSetting("public.brand_name")) ?? "";
       const accent =
         (await this.readSetting("public.color_dark_tactical_amber")) ??
