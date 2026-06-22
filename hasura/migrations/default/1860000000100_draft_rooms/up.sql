@@ -65,6 +65,7 @@ CREATE TABLE "public"."draft_games" (
   "inner_squad" boolean NOT NULL DEFAULT false,
   "current_pick_lineup" integer,
   "pick_deadline" timestamptz,
+  "expires_at" timestamptz,
   "created_at" timestamptz NOT NULL DEFAULT now(),
   "updated_at" timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY ("id")
