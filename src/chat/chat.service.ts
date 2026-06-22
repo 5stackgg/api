@@ -128,6 +128,29 @@ export class ChatService {
           return;
         }
         break;
+      case ChatLobbyType.Draft: {
+        const { draft_games } = await this.hasuraService.query({
+          draft_games: {
+            __args: {
+              where: {
+                id: { _eq: id },
+                _or: [
+                  { access: { _eq: "Open" } },
+                  { host_steam_id: { _eq: user.steam_id } },
+                  { players: { steam_id: { _eq: user.steam_id } } },
+                ],
+              },
+            },
+            id: true,
+          },
+        });
+
+        if (draft_games.length === 0) {
+          return;
+        }
+
+        break;
+      }
       case ChatLobbyType.Organizer:
         if (!isRoleAbove(user.role, "match_organizer")) {
           return;
@@ -242,6 +265,46 @@ export class ChatService {
     } as User;
   }
 
+  private async canSendDraftMessage(
+    id: string,
+    steamId: string,
+  ): Promise<boolean> {
+    const { draft_games_by_pk } = await this.hasuraService.query({
+      draft_games_by_pk: {
+        __args: { id },
+        status: true,
+        match_id: true,
+        host_steam_id: true,
+        players: {
+          steam_id: true,
+          status: true,
+        },
+      },
+    });
+
+    if (!draft_games_by_pk) {
+      return false;
+    }
+
+    const lobbyPhase =
+      !draft_games_by_pk.match_id &&
+      ["Open", "Filled"].includes(draft_games_by_pk.status);
+
+    if (lobbyPhase) {
+      return true;
+    }
+
+    if (String(draft_games_by_pk.host_steam_id) === String(steamId)) {
+      return true;
+    }
+
+    return (draft_games_by_pk.players || []).some(
+      (draftPlayer) =>
+        String(draftPlayer.steam_id) === String(steamId) &&
+        draftPlayer.status === "Accepted",
+    );
+  }
+
   public async sendMessageToChat(
     type: ChatLobbyType,
     id: string,
@@ -253,6 +316,13 @@ export class ChatService {
     if (skipCheck === false) {
       const userData = await this.getUserData(type, id, player.steam_id);
       if (!userData) {
+        return;
+      }
+
+      if (
+        type === ChatLobbyType.Draft &&
+        !(await this.canSendDraftMessage(id, player.steam_id))
+      ) {
         return;
       }
     }

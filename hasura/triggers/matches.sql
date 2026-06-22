@@ -131,17 +131,17 @@ BEGIN
                 VALUES (NEW.lineup_2_id, member.player_steam_id);
             END LOOP;
        END IF;
-       
+
         SELECT l.id INTO _lobby_id
             FROM lobbies l
             INNER JOIN lobby_players lp ON lp.lobby_id = l.id
             WHERE
             lp.steam_id = (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-user-id')::bigint
-            AND lp.status = 'Accepted';  
+            AND lp.status = 'Accepted';
 
 
         IF (_lobby_id IS NOT NULL AND (lineup_1_team_id IS NULL OR lineup_2_team_id IS NULL)) THEN
-            SELECT array_agg(lp.steam_id) INTO lobby_players 
+            SELECT array_agg(lp.steam_id) INTO lobby_players
                 FROM lobby_players lp
                 WHERE lp.lobby_id = _lobby_id
                 AND lp.status = 'Accepted';
@@ -153,7 +153,7 @@ BEGIN
             ELSIF array_length(lobby_players, 1) > _max_players_per_lineup * 2 THEN
                 RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Too many players in lobby - maximum ' || (_max_players_per_lineup * 2) || ' players allowed';
             END IF;
-            
+
             FOR i IN
                 SELECT steam_id, row_number() OVER () as rn,
                        count(*) OVER () as total
@@ -468,3 +468,16 @@ $$;
 
 DROP TRIGGER IF EXISTS tad_matches ON public.matches;
 CREATE TRIGGER tad_matches AFTER DELETE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tad_matches();
+
+
+CREATE OR REPLACE FUNCTION public.tbd_matches() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    DELETE FROM public.draft_games WHERE match_id = OLD.id;
+    RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbd_matches ON public.matches;
+CREATE TRIGGER tbd_matches BEFORE DELETE ON public.matches FOR EACH ROW EXECUTE FUNCTION public.tbd_matches();

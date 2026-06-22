@@ -120,6 +120,10 @@ type CreateClipRenderOutput {
   success: Boolean!
 }
 
+type CreateDraftGameOutput {
+  draftGameId: uuid!
+}
+
 type DatabaseStats {
   blks_hit: Int!
   blks_read: Int!
@@ -355,6 +359,20 @@ type MemoryStat {
 type NetworkStats {
   nics: [NicStat]
   time: timestamp
+}
+
+type NewsPost {
+  author_steam_id: String
+  content_markdown: String!
+  cover_image_url: String
+  created_at: String!
+  id: uuid!
+  published_at: String
+  slug: String!
+  status: String!
+  teaser: String
+  title: String!
+  updated_at: String!
 }
 
 type NicStat {
@@ -2386,6 +2404,1913 @@ type db_backups_variance_fields {
 }
 
 """
+columns and relationships of "draft_game_picks"
+"""
+type draft_game_picks {
+  auto_picked: Boolean!
+
+  """An object relationship"""
+  captain: players!
+  captain_steam_id: bigint!
+  created_at: timestamptz!
+
+  """An object relationship"""
+  draft_game: draft_games!
+  draft_game_id: uuid!
+  id: uuid!
+  lineup: Int!
+
+  """An object relationship"""
+  picked: players!
+  picked_steam_id: bigint!
+}
+
+"""
+aggregated selection of "draft_game_picks"
+"""
+type draft_game_picks_aggregate {
+  aggregate: draft_game_picks_aggregate_fields
+  nodes: [draft_game_picks!]!
+}
+
+input draft_game_picks_aggregate_bool_exp {
+  bool_and: draft_game_picks_aggregate_bool_exp_bool_and
+  bool_or: draft_game_picks_aggregate_bool_exp_bool_or
+  count: draft_game_picks_aggregate_bool_exp_count
+}
+
+input draft_game_picks_aggregate_bool_exp_bool_and {
+  arguments: draft_game_picks_select_column_draft_game_picks_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: draft_game_picks_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input draft_game_picks_aggregate_bool_exp_bool_or {
+  arguments: draft_game_picks_select_column_draft_game_picks_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: draft_game_picks_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input draft_game_picks_aggregate_bool_exp_count {
+  arguments: [draft_game_picks_select_column!]
+  distinct: Boolean
+  filter: draft_game_picks_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "draft_game_picks"
+"""
+type draft_game_picks_aggregate_fields {
+  avg: draft_game_picks_avg_fields
+  count(columns: [draft_game_picks_select_column!], distinct: Boolean): Int!
+  max: draft_game_picks_max_fields
+  min: draft_game_picks_min_fields
+  stddev: draft_game_picks_stddev_fields
+  stddev_pop: draft_game_picks_stddev_pop_fields
+  stddev_samp: draft_game_picks_stddev_samp_fields
+  sum: draft_game_picks_sum_fields
+  var_pop: draft_game_picks_var_pop_fields
+  var_samp: draft_game_picks_var_samp_fields
+  variance: draft_game_picks_variance_fields
+}
+
+"""
+order by aggregate values of table "draft_game_picks"
+"""
+input draft_game_picks_aggregate_order_by {
+  avg: draft_game_picks_avg_order_by
+  count: order_by
+  max: draft_game_picks_max_order_by
+  min: draft_game_picks_min_order_by
+  stddev: draft_game_picks_stddev_order_by
+  stddev_pop: draft_game_picks_stddev_pop_order_by
+  stddev_samp: draft_game_picks_stddev_samp_order_by
+  sum: draft_game_picks_sum_order_by
+  var_pop: draft_game_picks_var_pop_order_by
+  var_samp: draft_game_picks_var_samp_order_by
+  variance: draft_game_picks_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "draft_game_picks"
+"""
+input draft_game_picks_arr_rel_insert_input {
+  data: [draft_game_picks_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: draft_game_picks_on_conflict
+}
+
+"""aggregate avg on columns"""
+type draft_game_picks_avg_fields {
+  captain_steam_id: Float
+  lineup: Float
+  picked_steam_id: Float
+}
+
+"""
+order by avg() on columns of table "draft_game_picks"
+"""
+input draft_game_picks_avg_order_by {
+  captain_steam_id: order_by
+  lineup: order_by
+  picked_steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "draft_game_picks". All fields are combined with a logical 'AND'.
+"""
+input draft_game_picks_bool_exp {
+  _and: [draft_game_picks_bool_exp!]
+  _not: draft_game_picks_bool_exp
+  _or: [draft_game_picks_bool_exp!]
+  auto_picked: Boolean_comparison_exp
+  captain: players_bool_exp
+  captain_steam_id: bigint_comparison_exp
+  created_at: timestamptz_comparison_exp
+  draft_game: draft_games_bool_exp
+  draft_game_id: uuid_comparison_exp
+  id: uuid_comparison_exp
+  lineup: Int_comparison_exp
+  picked: players_bool_exp
+  picked_steam_id: bigint_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "draft_game_picks"
+"""
+enum draft_game_picks_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  draft_game_picks_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "draft_game_picks"
+"""
+input draft_game_picks_inc_input {
+  captain_steam_id: bigint
+  lineup: Int
+  picked_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "draft_game_picks"
+"""
+input draft_game_picks_insert_input {
+  auto_picked: Boolean
+  captain: players_obj_rel_insert_input
+  captain_steam_id: bigint
+  created_at: timestamptz
+  draft_game: draft_games_obj_rel_insert_input
+  draft_game_id: uuid
+  id: uuid
+  lineup: Int
+  picked: players_obj_rel_insert_input
+  picked_steam_id: bigint
+}
+
+"""aggregate max on columns"""
+type draft_game_picks_max_fields {
+  captain_steam_id: bigint
+  created_at: timestamptz
+  draft_game_id: uuid
+  id: uuid
+  lineup: Int
+  picked_steam_id: bigint
+}
+
+"""
+order by max() on columns of table "draft_game_picks"
+"""
+input draft_game_picks_max_order_by {
+  captain_steam_id: order_by
+  created_at: order_by
+  draft_game_id: order_by
+  id: order_by
+  lineup: order_by
+  picked_steam_id: order_by
+}
+
+"""aggregate min on columns"""
+type draft_game_picks_min_fields {
+  captain_steam_id: bigint
+  created_at: timestamptz
+  draft_game_id: uuid
+  id: uuid
+  lineup: Int
+  picked_steam_id: bigint
+}
+
+"""
+order by min() on columns of table "draft_game_picks"
+"""
+input draft_game_picks_min_order_by {
+  captain_steam_id: order_by
+  created_at: order_by
+  draft_game_id: order_by
+  id: order_by
+  lineup: order_by
+  picked_steam_id: order_by
+}
+
+"""
+response of any mutation on the table "draft_game_picks"
+"""
+type draft_game_picks_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [draft_game_picks!]!
+}
+
+"""
+on_conflict condition type for table "draft_game_picks"
+"""
+input draft_game_picks_on_conflict {
+  constraint: draft_game_picks_constraint!
+  update_columns: [draft_game_picks_update_column!]! = []
+  where: draft_game_picks_bool_exp
+}
+
+"""Ordering options when selecting data from "draft_game_picks"."""
+input draft_game_picks_order_by {
+  auto_picked: order_by
+  captain: players_order_by
+  captain_steam_id: order_by
+  created_at: order_by
+  draft_game: draft_games_order_by
+  draft_game_id: order_by
+  id: order_by
+  lineup: order_by
+  picked: players_order_by
+  picked_steam_id: order_by
+}
+
+"""primary key columns input for table: draft_game_picks"""
+input draft_game_picks_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "draft_game_picks"
+"""
+enum draft_game_picks_select_column {
+  """column name"""
+  auto_picked
+
+  """column name"""
+  captain_steam_id
+
+  """column name"""
+  created_at
+
+  """column name"""
+  draft_game_id
+
+  """column name"""
+  id
+
+  """column name"""
+  lineup
+
+  """column name"""
+  picked_steam_id
+}
+
+"""
+select "draft_game_picks_aggregate_bool_exp_bool_and_arguments_columns" columns of table "draft_game_picks"
+"""
+enum draft_game_picks_select_column_draft_game_picks_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  auto_picked
+}
+
+"""
+select "draft_game_picks_aggregate_bool_exp_bool_or_arguments_columns" columns of table "draft_game_picks"
+"""
+enum draft_game_picks_select_column_draft_game_picks_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  auto_picked
+}
+
+"""
+input type for updating data in table "draft_game_picks"
+"""
+input draft_game_picks_set_input {
+  auto_picked: Boolean
+  captain_steam_id: bigint
+  created_at: timestamptz
+  draft_game_id: uuid
+  id: uuid
+  lineup: Int
+  picked_steam_id: bigint
+}
+
+"""aggregate stddev on columns"""
+type draft_game_picks_stddev_fields {
+  captain_steam_id: Float
+  lineup: Float
+  picked_steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "draft_game_picks"
+"""
+input draft_game_picks_stddev_order_by {
+  captain_steam_id: order_by
+  lineup: order_by
+  picked_steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type draft_game_picks_stddev_pop_fields {
+  captain_steam_id: Float
+  lineup: Float
+  picked_steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "draft_game_picks"
+"""
+input draft_game_picks_stddev_pop_order_by {
+  captain_steam_id: order_by
+  lineup: order_by
+  picked_steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type draft_game_picks_stddev_samp_fields {
+  captain_steam_id: Float
+  lineup: Float
+  picked_steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "draft_game_picks"
+"""
+input draft_game_picks_stddev_samp_order_by {
+  captain_steam_id: order_by
+  lineup: order_by
+  picked_steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "draft_game_picks"
+"""
+input draft_game_picks_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: draft_game_picks_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input draft_game_picks_stream_cursor_value_input {
+  auto_picked: Boolean
+  captain_steam_id: bigint
+  created_at: timestamptz
+  draft_game_id: uuid
+  id: uuid
+  lineup: Int
+  picked_steam_id: bigint
+}
+
+"""aggregate sum on columns"""
+type draft_game_picks_sum_fields {
+  captain_steam_id: bigint
+  lineup: Int
+  picked_steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "draft_game_picks"
+"""
+input draft_game_picks_sum_order_by {
+  captain_steam_id: order_by
+  lineup: order_by
+  picked_steam_id: order_by
+}
+
+"""
+update columns of table "draft_game_picks"
+"""
+enum draft_game_picks_update_column {
+  """column name"""
+  auto_picked
+
+  """column name"""
+  captain_steam_id
+
+  """column name"""
+  created_at
+
+  """column name"""
+  draft_game_id
+
+  """column name"""
+  id
+
+  """column name"""
+  lineup
+
+  """column name"""
+  picked_steam_id
+}
+
+input draft_game_picks_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: draft_game_picks_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: draft_game_picks_set_input
+
+  """filter the rows which have to be updated"""
+  where: draft_game_picks_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type draft_game_picks_var_pop_fields {
+  captain_steam_id: Float
+  lineup: Float
+  picked_steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "draft_game_picks"
+"""
+input draft_game_picks_var_pop_order_by {
+  captain_steam_id: order_by
+  lineup: order_by
+  picked_steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type draft_game_picks_var_samp_fields {
+  captain_steam_id: Float
+  lineup: Float
+  picked_steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "draft_game_picks"
+"""
+input draft_game_picks_var_samp_order_by {
+  captain_steam_id: order_by
+  lineup: order_by
+  picked_steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type draft_game_picks_variance_fields {
+  captain_steam_id: Float
+  lineup: Float
+  picked_steam_id: Float
+}
+
+"""
+order by variance() on columns of table "draft_game_picks"
+"""
+input draft_game_picks_variance_order_by {
+  captain_steam_id: order_by
+  lineup: order_by
+  picked_steam_id: order_by
+}
+
+"""
+columns and relationships of "draft_game_players"
+"""
+type draft_game_players {
+  """An object relationship"""
+  draft_game: draft_games!
+  draft_game_id: uuid!
+
+  """An object relationship"""
+  e_draft_game_player_status: e_draft_game_player_status!
+  elo_snapshot: Int
+  is_captain: Boolean!
+  joined_at: timestamptz!
+  lineup: Int
+  pick_order: Int
+
+  """An object relationship"""
+  player: players!
+  status: e_draft_game_player_status_enum!
+  steam_id: bigint!
+}
+
+"""
+aggregated selection of "draft_game_players"
+"""
+type draft_game_players_aggregate {
+  aggregate: draft_game_players_aggregate_fields
+  nodes: [draft_game_players!]!
+}
+
+input draft_game_players_aggregate_bool_exp {
+  bool_and: draft_game_players_aggregate_bool_exp_bool_and
+  bool_or: draft_game_players_aggregate_bool_exp_bool_or
+  count: draft_game_players_aggregate_bool_exp_count
+}
+
+input draft_game_players_aggregate_bool_exp_bool_and {
+  arguments: draft_game_players_select_column_draft_game_players_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: draft_game_players_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input draft_game_players_aggregate_bool_exp_bool_or {
+  arguments: draft_game_players_select_column_draft_game_players_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: draft_game_players_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input draft_game_players_aggregate_bool_exp_count {
+  arguments: [draft_game_players_select_column!]
+  distinct: Boolean
+  filter: draft_game_players_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "draft_game_players"
+"""
+type draft_game_players_aggregate_fields {
+  avg: draft_game_players_avg_fields
+  count(columns: [draft_game_players_select_column!], distinct: Boolean): Int!
+  max: draft_game_players_max_fields
+  min: draft_game_players_min_fields
+  stddev: draft_game_players_stddev_fields
+  stddev_pop: draft_game_players_stddev_pop_fields
+  stddev_samp: draft_game_players_stddev_samp_fields
+  sum: draft_game_players_sum_fields
+  var_pop: draft_game_players_var_pop_fields
+  var_samp: draft_game_players_var_samp_fields
+  variance: draft_game_players_variance_fields
+}
+
+"""
+order by aggregate values of table "draft_game_players"
+"""
+input draft_game_players_aggregate_order_by {
+  avg: draft_game_players_avg_order_by
+  count: order_by
+  max: draft_game_players_max_order_by
+  min: draft_game_players_min_order_by
+  stddev: draft_game_players_stddev_order_by
+  stddev_pop: draft_game_players_stddev_pop_order_by
+  stddev_samp: draft_game_players_stddev_samp_order_by
+  sum: draft_game_players_sum_order_by
+  var_pop: draft_game_players_var_pop_order_by
+  var_samp: draft_game_players_var_samp_order_by
+  variance: draft_game_players_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "draft_game_players"
+"""
+input draft_game_players_arr_rel_insert_input {
+  data: [draft_game_players_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: draft_game_players_on_conflict
+}
+
+"""aggregate avg on columns"""
+type draft_game_players_avg_fields {
+  elo_snapshot: Float
+  lineup: Float
+  pick_order: Float
+  steam_id: Float
+}
+
+"""
+order by avg() on columns of table "draft_game_players"
+"""
+input draft_game_players_avg_order_by {
+  elo_snapshot: order_by
+  lineup: order_by
+  pick_order: order_by
+  steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "draft_game_players". All fields are combined with a logical 'AND'.
+"""
+input draft_game_players_bool_exp {
+  _and: [draft_game_players_bool_exp!]
+  _not: draft_game_players_bool_exp
+  _or: [draft_game_players_bool_exp!]
+  draft_game: draft_games_bool_exp
+  draft_game_id: uuid_comparison_exp
+  e_draft_game_player_status: e_draft_game_player_status_bool_exp
+  elo_snapshot: Int_comparison_exp
+  is_captain: Boolean_comparison_exp
+  joined_at: timestamptz_comparison_exp
+  lineup: Int_comparison_exp
+  pick_order: Int_comparison_exp
+  player: players_bool_exp
+  status: e_draft_game_player_status_enum_comparison_exp
+  steam_id: bigint_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "draft_game_players"
+"""
+enum draft_game_players_constraint {
+  """
+  unique or primary key constraint on columns "draft_game_id", "steam_id"
+  """
+  draft_game_players_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "draft_game_players"
+"""
+input draft_game_players_inc_input {
+  elo_snapshot: Int
+  lineup: Int
+  pick_order: Int
+  steam_id: bigint
+}
+
+"""
+input type for inserting data into table "draft_game_players"
+"""
+input draft_game_players_insert_input {
+  draft_game: draft_games_obj_rel_insert_input
+  draft_game_id: uuid
+  e_draft_game_player_status: e_draft_game_player_status_obj_rel_insert_input
+  elo_snapshot: Int
+  is_captain: Boolean
+  joined_at: timestamptz
+  lineup: Int
+  pick_order: Int
+  player: players_obj_rel_insert_input
+  status: e_draft_game_player_status_enum
+  steam_id: bigint
+}
+
+"""aggregate max on columns"""
+type draft_game_players_max_fields {
+  draft_game_id: uuid
+  elo_snapshot: Int
+  joined_at: timestamptz
+  lineup: Int
+  pick_order: Int
+  steam_id: bigint
+}
+
+"""
+order by max() on columns of table "draft_game_players"
+"""
+input draft_game_players_max_order_by {
+  draft_game_id: order_by
+  elo_snapshot: order_by
+  joined_at: order_by
+  lineup: order_by
+  pick_order: order_by
+  steam_id: order_by
+}
+
+"""aggregate min on columns"""
+type draft_game_players_min_fields {
+  draft_game_id: uuid
+  elo_snapshot: Int
+  joined_at: timestamptz
+  lineup: Int
+  pick_order: Int
+  steam_id: bigint
+}
+
+"""
+order by min() on columns of table "draft_game_players"
+"""
+input draft_game_players_min_order_by {
+  draft_game_id: order_by
+  elo_snapshot: order_by
+  joined_at: order_by
+  lineup: order_by
+  pick_order: order_by
+  steam_id: order_by
+}
+
+"""
+response of any mutation on the table "draft_game_players"
+"""
+type draft_game_players_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [draft_game_players!]!
+}
+
+"""
+on_conflict condition type for table "draft_game_players"
+"""
+input draft_game_players_on_conflict {
+  constraint: draft_game_players_constraint!
+  update_columns: [draft_game_players_update_column!]! = []
+  where: draft_game_players_bool_exp
+}
+
+"""Ordering options when selecting data from "draft_game_players"."""
+input draft_game_players_order_by {
+  draft_game: draft_games_order_by
+  draft_game_id: order_by
+  e_draft_game_player_status: e_draft_game_player_status_order_by
+  elo_snapshot: order_by
+  is_captain: order_by
+  joined_at: order_by
+  lineup: order_by
+  pick_order: order_by
+  player: players_order_by
+  status: order_by
+  steam_id: order_by
+}
+
+"""primary key columns input for table: draft_game_players"""
+input draft_game_players_pk_columns_input {
+  draft_game_id: uuid!
+  steam_id: bigint!
+}
+
+"""
+select columns of table "draft_game_players"
+"""
+enum draft_game_players_select_column {
+  """column name"""
+  draft_game_id
+
+  """column name"""
+  elo_snapshot
+
+  """column name"""
+  is_captain
+
+  """column name"""
+  joined_at
+
+  """column name"""
+  lineup
+
+  """column name"""
+  pick_order
+
+  """column name"""
+  status
+
+  """column name"""
+  steam_id
+}
+
+"""
+select "draft_game_players_aggregate_bool_exp_bool_and_arguments_columns" columns of table "draft_game_players"
+"""
+enum draft_game_players_select_column_draft_game_players_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  is_captain
+}
+
+"""
+select "draft_game_players_aggregate_bool_exp_bool_or_arguments_columns" columns of table "draft_game_players"
+"""
+enum draft_game_players_select_column_draft_game_players_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  is_captain
+}
+
+"""
+input type for updating data in table "draft_game_players"
+"""
+input draft_game_players_set_input {
+  draft_game_id: uuid
+  elo_snapshot: Int
+  is_captain: Boolean
+  joined_at: timestamptz
+  lineup: Int
+  pick_order: Int
+  status: e_draft_game_player_status_enum
+  steam_id: bigint
+}
+
+"""aggregate stddev on columns"""
+type draft_game_players_stddev_fields {
+  elo_snapshot: Float
+  lineup: Float
+  pick_order: Float
+  steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "draft_game_players"
+"""
+input draft_game_players_stddev_order_by {
+  elo_snapshot: order_by
+  lineup: order_by
+  pick_order: order_by
+  steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type draft_game_players_stddev_pop_fields {
+  elo_snapshot: Float
+  lineup: Float
+  pick_order: Float
+  steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "draft_game_players"
+"""
+input draft_game_players_stddev_pop_order_by {
+  elo_snapshot: order_by
+  lineup: order_by
+  pick_order: order_by
+  steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type draft_game_players_stddev_samp_fields {
+  elo_snapshot: Float
+  lineup: Float
+  pick_order: Float
+  steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "draft_game_players"
+"""
+input draft_game_players_stddev_samp_order_by {
+  elo_snapshot: order_by
+  lineup: order_by
+  pick_order: order_by
+  steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "draft_game_players"
+"""
+input draft_game_players_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: draft_game_players_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input draft_game_players_stream_cursor_value_input {
+  draft_game_id: uuid
+  elo_snapshot: Int
+  is_captain: Boolean
+  joined_at: timestamptz
+  lineup: Int
+  pick_order: Int
+  status: e_draft_game_player_status_enum
+  steam_id: bigint
+}
+
+"""aggregate sum on columns"""
+type draft_game_players_sum_fields {
+  elo_snapshot: Int
+  lineup: Int
+  pick_order: Int
+  steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "draft_game_players"
+"""
+input draft_game_players_sum_order_by {
+  elo_snapshot: order_by
+  lineup: order_by
+  pick_order: order_by
+  steam_id: order_by
+}
+
+"""
+update columns of table "draft_game_players"
+"""
+enum draft_game_players_update_column {
+  """column name"""
+  draft_game_id
+
+  """column name"""
+  elo_snapshot
+
+  """column name"""
+  is_captain
+
+  """column name"""
+  joined_at
+
+  """column name"""
+  lineup
+
+  """column name"""
+  pick_order
+
+  """column name"""
+  status
+
+  """column name"""
+  steam_id
+}
+
+input draft_game_players_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: draft_game_players_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: draft_game_players_set_input
+
+  """filter the rows which have to be updated"""
+  where: draft_game_players_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type draft_game_players_var_pop_fields {
+  elo_snapshot: Float
+  lineup: Float
+  pick_order: Float
+  steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "draft_game_players"
+"""
+input draft_game_players_var_pop_order_by {
+  elo_snapshot: order_by
+  lineup: order_by
+  pick_order: order_by
+  steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type draft_game_players_var_samp_fields {
+  elo_snapshot: Float
+  lineup: Float
+  pick_order: Float
+  steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "draft_game_players"
+"""
+input draft_game_players_var_samp_order_by {
+  elo_snapshot: order_by
+  lineup: order_by
+  pick_order: order_by
+  steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type draft_game_players_variance_fields {
+  elo_snapshot: Float
+  lineup: Float
+  pick_order: Float
+  steam_id: Float
+}
+
+"""
+order by variance() on columns of table "draft_game_players"
+"""
+input draft_game_players_variance_order_by {
+  elo_snapshot: order_by
+  lineup: order_by
+  pick_order: order_by
+  steam_id: order_by
+}
+
+"""
+columns and relationships of "draft_games"
+"""
+type draft_games {
+  access: e_lobby_access_enum!
+  capacity: Int!
+  captain_selection: e_draft_game_captain_selection_enum!
+  created_at: timestamptz!
+  current_pick_lineup: Int
+  draft_order: e_draft_game_draft_order_enum!
+
+  """An object relationship"""
+  e_draft_game_captain_selection: e_draft_game_captain_selection!
+
+  """An object relationship"""
+  e_draft_game_draft_order: e_draft_game_draft_order!
+
+  """An object relationship"""
+  e_draft_game_mode: e_draft_game_mode!
+
+  """An object relationship"""
+  e_draft_game_status: e_draft_game_status!
+
+  """An object relationship"""
+  e_lobby_access: e_lobby_access!
+  expires_at: timestamptz
+
+  """An object relationship"""
+  host: players!
+  host_steam_id: bigint!
+  id: uuid!
+  inner_squad: Boolean!
+  invite_code: uuid!
+
+  """An object relationship"""
+  map_pool: map_pools
+  map_pool_id: uuid
+
+  """An object relationship"""
+  match: matches
+  match_id: uuid
+  match_options_id: uuid
+  max_elo: Int
+  min_elo: Int
+  mode: e_draft_game_mode_enum!
+
+  """An object relationship"""
+  options: match_options
+  pick_deadline: timestamptz
+
+  """An array relationship"""
+  picks(
+    """distinct select on columns"""
+    distinct_on: [draft_game_picks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_game_picks_order_by!]
+
+    """filter the rows returned"""
+    where: draft_game_picks_bool_exp
+  ): [draft_game_picks!]!
+
+  """An aggregate relationship"""
+  picks_aggregate(
+    """distinct select on columns"""
+    distinct_on: [draft_game_picks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_game_picks_order_by!]
+
+    """filter the rows returned"""
+    where: draft_game_picks_bool_exp
+  ): draft_game_picks_aggregate!
+
+  """An array relationship"""
+  players(
+    """distinct select on columns"""
+    distinct_on: [draft_game_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_game_players_order_by!]
+
+    """filter the rows returned"""
+    where: draft_game_players_bool_exp
+  ): [draft_game_players!]!
+
+  """An aggregate relationship"""
+  players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [draft_game_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_game_players_order_by!]
+
+    """filter the rows returned"""
+    where: draft_game_players_bool_exp
+  ): draft_game_players_aggregate!
+  regions: [String!]!
+  require_approval: Boolean!
+  status: e_draft_game_status_enum!
+
+  """An object relationship"""
+  team_1: teams
+  team_1_id: uuid
+
+  """An object relationship"""
+  team_2: teams
+  team_2_id: uuid
+  type: e_match_types_enum!
+  updated_at: timestamptz!
+}
+
+"""
+aggregated selection of "draft_games"
+"""
+type draft_games_aggregate {
+  aggregate: draft_games_aggregate_fields
+  nodes: [draft_games!]!
+}
+
+input draft_games_aggregate_bool_exp {
+  bool_and: draft_games_aggregate_bool_exp_bool_and
+  bool_or: draft_games_aggregate_bool_exp_bool_or
+  count: draft_games_aggregate_bool_exp_count
+}
+
+input draft_games_aggregate_bool_exp_bool_and {
+  arguments: draft_games_select_column_draft_games_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: draft_games_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input draft_games_aggregate_bool_exp_bool_or {
+  arguments: draft_games_select_column_draft_games_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: draft_games_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input draft_games_aggregate_bool_exp_count {
+  arguments: [draft_games_select_column!]
+  distinct: Boolean
+  filter: draft_games_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "draft_games"
+"""
+type draft_games_aggregate_fields {
+  avg: draft_games_avg_fields
+  count(columns: [draft_games_select_column!], distinct: Boolean): Int!
+  max: draft_games_max_fields
+  min: draft_games_min_fields
+  stddev: draft_games_stddev_fields
+  stddev_pop: draft_games_stddev_pop_fields
+  stddev_samp: draft_games_stddev_samp_fields
+  sum: draft_games_sum_fields
+  var_pop: draft_games_var_pop_fields
+  var_samp: draft_games_var_samp_fields
+  variance: draft_games_variance_fields
+}
+
+"""
+order by aggregate values of table "draft_games"
+"""
+input draft_games_aggregate_order_by {
+  avg: draft_games_avg_order_by
+  count: order_by
+  max: draft_games_max_order_by
+  min: draft_games_min_order_by
+  stddev: draft_games_stddev_order_by
+  stddev_pop: draft_games_stddev_pop_order_by
+  stddev_samp: draft_games_stddev_samp_order_by
+  sum: draft_games_sum_order_by
+  var_pop: draft_games_var_pop_order_by
+  var_samp: draft_games_var_samp_order_by
+  variance: draft_games_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "draft_games"
+"""
+input draft_games_arr_rel_insert_input {
+  data: [draft_games_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: draft_games_on_conflict
+}
+
+"""aggregate avg on columns"""
+type draft_games_avg_fields {
+  capacity: Float
+  current_pick_lineup: Float
+  host_steam_id: Float
+  max_elo: Float
+  min_elo: Float
+}
+
+"""
+order by avg() on columns of table "draft_games"
+"""
+input draft_games_avg_order_by {
+  capacity: order_by
+  current_pick_lineup: order_by
+  host_steam_id: order_by
+  max_elo: order_by
+  min_elo: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "draft_games". All fields are combined with a logical 'AND'.
+"""
+input draft_games_bool_exp {
+  _and: [draft_games_bool_exp!]
+  _not: draft_games_bool_exp
+  _or: [draft_games_bool_exp!]
+  access: e_lobby_access_enum_comparison_exp
+  capacity: Int_comparison_exp
+  captain_selection: e_draft_game_captain_selection_enum_comparison_exp
+  created_at: timestamptz_comparison_exp
+  current_pick_lineup: Int_comparison_exp
+  draft_order: e_draft_game_draft_order_enum_comparison_exp
+  e_draft_game_captain_selection: e_draft_game_captain_selection_bool_exp
+  e_draft_game_draft_order: e_draft_game_draft_order_bool_exp
+  e_draft_game_mode: e_draft_game_mode_bool_exp
+  e_draft_game_status: e_draft_game_status_bool_exp
+  e_lobby_access: e_lobby_access_bool_exp
+  expires_at: timestamptz_comparison_exp
+  host: players_bool_exp
+  host_steam_id: bigint_comparison_exp
+  id: uuid_comparison_exp
+  inner_squad: Boolean_comparison_exp
+  invite_code: uuid_comparison_exp
+  map_pool: map_pools_bool_exp
+  map_pool_id: uuid_comparison_exp
+  match: matches_bool_exp
+  match_id: uuid_comparison_exp
+  match_options_id: uuid_comparison_exp
+  max_elo: Int_comparison_exp
+  min_elo: Int_comparison_exp
+  mode: e_draft_game_mode_enum_comparison_exp
+  options: match_options_bool_exp
+  pick_deadline: timestamptz_comparison_exp
+  picks: draft_game_picks_bool_exp
+  picks_aggregate: draft_game_picks_aggregate_bool_exp
+  players: draft_game_players_bool_exp
+  players_aggregate: draft_game_players_aggregate_bool_exp
+  regions: String_array_comparison_exp
+  require_approval: Boolean_comparison_exp
+  status: e_draft_game_status_enum_comparison_exp
+  team_1: teams_bool_exp
+  team_1_id: uuid_comparison_exp
+  team_2: teams_bool_exp
+  team_2_id: uuid_comparison_exp
+  type: e_match_types_enum_comparison_exp
+  updated_at: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "draft_games"
+"""
+enum draft_games_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  draft_games_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "draft_games"
+"""
+input draft_games_inc_input {
+  capacity: Int
+  current_pick_lineup: Int
+  host_steam_id: bigint
+  max_elo: Int
+  min_elo: Int
+}
+
+"""
+input type for inserting data into table "draft_games"
+"""
+input draft_games_insert_input {
+  access: e_lobby_access_enum
+  capacity: Int
+  captain_selection: e_draft_game_captain_selection_enum
+  created_at: timestamptz
+  current_pick_lineup: Int
+  draft_order: e_draft_game_draft_order_enum
+  e_draft_game_captain_selection: e_draft_game_captain_selection_obj_rel_insert_input
+  e_draft_game_draft_order: e_draft_game_draft_order_obj_rel_insert_input
+  e_draft_game_mode: e_draft_game_mode_obj_rel_insert_input
+  e_draft_game_status: e_draft_game_status_obj_rel_insert_input
+  e_lobby_access: e_lobby_access_obj_rel_insert_input
+  expires_at: timestamptz
+  host: players_obj_rel_insert_input
+  host_steam_id: bigint
+  id: uuid
+  inner_squad: Boolean
+  invite_code: uuid
+  map_pool: map_pools_obj_rel_insert_input
+  map_pool_id: uuid
+  match: matches_obj_rel_insert_input
+  match_id: uuid
+  match_options_id: uuid
+  max_elo: Int
+  min_elo: Int
+  mode: e_draft_game_mode_enum
+  options: match_options_obj_rel_insert_input
+  pick_deadline: timestamptz
+  picks: draft_game_picks_arr_rel_insert_input
+  players: draft_game_players_arr_rel_insert_input
+  regions: [String!]
+  require_approval: Boolean
+  status: e_draft_game_status_enum
+  team_1: teams_obj_rel_insert_input
+  team_1_id: uuid
+  team_2: teams_obj_rel_insert_input
+  team_2_id: uuid
+  type: e_match_types_enum
+  updated_at: timestamptz
+}
+
+"""aggregate max on columns"""
+type draft_games_max_fields {
+  capacity: Int
+  created_at: timestamptz
+  current_pick_lineup: Int
+  expires_at: timestamptz
+  host_steam_id: bigint
+  id: uuid
+  invite_code: uuid
+  map_pool_id: uuid
+  match_id: uuid
+  match_options_id: uuid
+  max_elo: Int
+  min_elo: Int
+  pick_deadline: timestamptz
+  regions: [String!]
+  team_1_id: uuid
+  team_2_id: uuid
+  updated_at: timestamptz
+}
+
+"""
+order by max() on columns of table "draft_games"
+"""
+input draft_games_max_order_by {
+  capacity: order_by
+  created_at: order_by
+  current_pick_lineup: order_by
+  expires_at: order_by
+  host_steam_id: order_by
+  id: order_by
+  invite_code: order_by
+  map_pool_id: order_by
+  match_id: order_by
+  match_options_id: order_by
+  max_elo: order_by
+  min_elo: order_by
+  pick_deadline: order_by
+  regions: order_by
+  team_1_id: order_by
+  team_2_id: order_by
+  updated_at: order_by
+}
+
+"""aggregate min on columns"""
+type draft_games_min_fields {
+  capacity: Int
+  created_at: timestamptz
+  current_pick_lineup: Int
+  expires_at: timestamptz
+  host_steam_id: bigint
+  id: uuid
+  invite_code: uuid
+  map_pool_id: uuid
+  match_id: uuid
+  match_options_id: uuid
+  max_elo: Int
+  min_elo: Int
+  pick_deadline: timestamptz
+  regions: [String!]
+  team_1_id: uuid
+  team_2_id: uuid
+  updated_at: timestamptz
+}
+
+"""
+order by min() on columns of table "draft_games"
+"""
+input draft_games_min_order_by {
+  capacity: order_by
+  created_at: order_by
+  current_pick_lineup: order_by
+  expires_at: order_by
+  host_steam_id: order_by
+  id: order_by
+  invite_code: order_by
+  map_pool_id: order_by
+  match_id: order_by
+  match_options_id: order_by
+  max_elo: order_by
+  min_elo: order_by
+  pick_deadline: order_by
+  regions: order_by
+  team_1_id: order_by
+  team_2_id: order_by
+  updated_at: order_by
+}
+
+"""
+response of any mutation on the table "draft_games"
+"""
+type draft_games_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [draft_games!]!
+}
+
+"""
+input type for inserting object relation for remote table "draft_games"
+"""
+input draft_games_obj_rel_insert_input {
+  data: draft_games_insert_input!
+
+  """upsert condition"""
+  on_conflict: draft_games_on_conflict
+}
+
+"""
+on_conflict condition type for table "draft_games"
+"""
+input draft_games_on_conflict {
+  constraint: draft_games_constraint!
+  update_columns: [draft_games_update_column!]! = []
+  where: draft_games_bool_exp
+}
+
+"""Ordering options when selecting data from "draft_games"."""
+input draft_games_order_by {
+  access: order_by
+  capacity: order_by
+  captain_selection: order_by
+  created_at: order_by
+  current_pick_lineup: order_by
+  draft_order: order_by
+  e_draft_game_captain_selection: e_draft_game_captain_selection_order_by
+  e_draft_game_draft_order: e_draft_game_draft_order_order_by
+  e_draft_game_mode: e_draft_game_mode_order_by
+  e_draft_game_status: e_draft_game_status_order_by
+  e_lobby_access: e_lobby_access_order_by
+  expires_at: order_by
+  host: players_order_by
+  host_steam_id: order_by
+  id: order_by
+  inner_squad: order_by
+  invite_code: order_by
+  map_pool: map_pools_order_by
+  map_pool_id: order_by
+  match: matches_order_by
+  match_id: order_by
+  match_options_id: order_by
+  max_elo: order_by
+  min_elo: order_by
+  mode: order_by
+  options: match_options_order_by
+  pick_deadline: order_by
+  picks_aggregate: draft_game_picks_aggregate_order_by
+  players_aggregate: draft_game_players_aggregate_order_by
+  regions: order_by
+  require_approval: order_by
+  status: order_by
+  team_1: teams_order_by
+  team_1_id: order_by
+  team_2: teams_order_by
+  team_2_id: order_by
+  type: order_by
+  updated_at: order_by
+}
+
+"""primary key columns input for table: draft_games"""
+input draft_games_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "draft_games"
+"""
+enum draft_games_select_column {
+  """column name"""
+  access
+
+  """column name"""
+  capacity
+
+  """column name"""
+  captain_selection
+
+  """column name"""
+  created_at
+
+  """column name"""
+  current_pick_lineup
+
+  """column name"""
+  draft_order
+
+  """column name"""
+  expires_at
+
+  """column name"""
+  host_steam_id
+
+  """column name"""
+  id
+
+  """column name"""
+  inner_squad
+
+  """column name"""
+  invite_code
+
+  """column name"""
+  map_pool_id
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_options_id
+
+  """column name"""
+  max_elo
+
+  """column name"""
+  min_elo
+
+  """column name"""
+  mode
+
+  """column name"""
+  pick_deadline
+
+  """column name"""
+  regions
+
+  """column name"""
+  require_approval
+
+  """column name"""
+  status
+
+  """column name"""
+  team_1_id
+
+  """column name"""
+  team_2_id
+
+  """column name"""
+  type
+
+  """column name"""
+  updated_at
+}
+
+"""
+select "draft_games_aggregate_bool_exp_bool_and_arguments_columns" columns of table "draft_games"
+"""
+enum draft_games_select_column_draft_games_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  inner_squad
+
+  """column name"""
+  require_approval
+}
+
+"""
+select "draft_games_aggregate_bool_exp_bool_or_arguments_columns" columns of table "draft_games"
+"""
+enum draft_games_select_column_draft_games_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  inner_squad
+
+  """column name"""
+  require_approval
+}
+
+"""
+input type for updating data in table "draft_games"
+"""
+input draft_games_set_input {
+  access: e_lobby_access_enum
+  capacity: Int
+  captain_selection: e_draft_game_captain_selection_enum
+  created_at: timestamptz
+  current_pick_lineup: Int
+  draft_order: e_draft_game_draft_order_enum
+  expires_at: timestamptz
+  host_steam_id: bigint
+  id: uuid
+  inner_squad: Boolean
+  invite_code: uuid
+  map_pool_id: uuid
+  match_id: uuid
+  match_options_id: uuid
+  max_elo: Int
+  min_elo: Int
+  mode: e_draft_game_mode_enum
+  pick_deadline: timestamptz
+  regions: [String!]
+  require_approval: Boolean
+  status: e_draft_game_status_enum
+  team_1_id: uuid
+  team_2_id: uuid
+  type: e_match_types_enum
+  updated_at: timestamptz
+}
+
+"""aggregate stddev on columns"""
+type draft_games_stddev_fields {
+  capacity: Float
+  current_pick_lineup: Float
+  host_steam_id: Float
+  max_elo: Float
+  min_elo: Float
+}
+
+"""
+order by stddev() on columns of table "draft_games"
+"""
+input draft_games_stddev_order_by {
+  capacity: order_by
+  current_pick_lineup: order_by
+  host_steam_id: order_by
+  max_elo: order_by
+  min_elo: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type draft_games_stddev_pop_fields {
+  capacity: Float
+  current_pick_lineup: Float
+  host_steam_id: Float
+  max_elo: Float
+  min_elo: Float
+}
+
+"""
+order by stddev_pop() on columns of table "draft_games"
+"""
+input draft_games_stddev_pop_order_by {
+  capacity: order_by
+  current_pick_lineup: order_by
+  host_steam_id: order_by
+  max_elo: order_by
+  min_elo: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type draft_games_stddev_samp_fields {
+  capacity: Float
+  current_pick_lineup: Float
+  host_steam_id: Float
+  max_elo: Float
+  min_elo: Float
+}
+
+"""
+order by stddev_samp() on columns of table "draft_games"
+"""
+input draft_games_stddev_samp_order_by {
+  capacity: order_by
+  current_pick_lineup: order_by
+  host_steam_id: order_by
+  max_elo: order_by
+  min_elo: order_by
+}
+
+"""
+Streaming cursor of the table "draft_games"
+"""
+input draft_games_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: draft_games_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input draft_games_stream_cursor_value_input {
+  access: e_lobby_access_enum
+  capacity: Int
+  captain_selection: e_draft_game_captain_selection_enum
+  created_at: timestamptz
+  current_pick_lineup: Int
+  draft_order: e_draft_game_draft_order_enum
+  expires_at: timestamptz
+  host_steam_id: bigint
+  id: uuid
+  inner_squad: Boolean
+  invite_code: uuid
+  map_pool_id: uuid
+  match_id: uuid
+  match_options_id: uuid
+  max_elo: Int
+  min_elo: Int
+  mode: e_draft_game_mode_enum
+  pick_deadline: timestamptz
+  regions: [String!]
+  require_approval: Boolean
+  status: e_draft_game_status_enum
+  team_1_id: uuid
+  team_2_id: uuid
+  type: e_match_types_enum
+  updated_at: timestamptz
+}
+
+"""aggregate sum on columns"""
+type draft_games_sum_fields {
+  capacity: Int
+  current_pick_lineup: Int
+  host_steam_id: bigint
+  max_elo: Int
+  min_elo: Int
+}
+
+"""
+order by sum() on columns of table "draft_games"
+"""
+input draft_games_sum_order_by {
+  capacity: order_by
+  current_pick_lineup: order_by
+  host_steam_id: order_by
+  max_elo: order_by
+  min_elo: order_by
+}
+
+"""
+update columns of table "draft_games"
+"""
+enum draft_games_update_column {
+  """column name"""
+  access
+
+  """column name"""
+  capacity
+
+  """column name"""
+  captain_selection
+
+  """column name"""
+  created_at
+
+  """column name"""
+  current_pick_lineup
+
+  """column name"""
+  draft_order
+
+  """column name"""
+  expires_at
+
+  """column name"""
+  host_steam_id
+
+  """column name"""
+  id
+
+  """column name"""
+  inner_squad
+
+  """column name"""
+  invite_code
+
+  """column name"""
+  map_pool_id
+
+  """column name"""
+  match_id
+
+  """column name"""
+  match_options_id
+
+  """column name"""
+  max_elo
+
+  """column name"""
+  min_elo
+
+  """column name"""
+  mode
+
+  """column name"""
+  pick_deadline
+
+  """column name"""
+  regions
+
+  """column name"""
+  require_approval
+
+  """column name"""
+  status
+
+  """column name"""
+  team_1_id
+
+  """column name"""
+  team_2_id
+
+  """column name"""
+  type
+
+  """column name"""
+  updated_at
+}
+
+input draft_games_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: draft_games_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: draft_games_set_input
+
+  """filter the rows which have to be updated"""
+  where: draft_games_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type draft_games_var_pop_fields {
+  capacity: Float
+  current_pick_lineup: Float
+  host_steam_id: Float
+  max_elo: Float
+  min_elo: Float
+}
+
+"""
+order by var_pop() on columns of table "draft_games"
+"""
+input draft_games_var_pop_order_by {
+  capacity: order_by
+  current_pick_lineup: order_by
+  host_steam_id: order_by
+  max_elo: order_by
+  min_elo: order_by
+}
+
+"""aggregate var_samp on columns"""
+type draft_games_var_samp_fields {
+  capacity: Float
+  current_pick_lineup: Float
+  host_steam_id: Float
+  max_elo: Float
+  min_elo: Float
+}
+
+"""
+order by var_samp() on columns of table "draft_games"
+"""
+input draft_games_var_samp_order_by {
+  capacity: order_by
+  current_pick_lineup: order_by
+  host_steam_id: order_by
+  max_elo: order_by
+  min_elo: order_by
+}
+
+"""aggregate variance on columns"""
+type draft_games_variance_fields {
+  capacity: Float
+  current_pick_lineup: Float
+  host_steam_id: Float
+  max_elo: Float
+  min_elo: Float
+}
+
+"""
+order by variance() on columns of table "draft_games"
+"""
+input draft_games_variance_order_by {
+  capacity: order_by
+  current_pick_lineup: order_by
+  host_steam_id: order_by
+  max_elo: order_by
+  min_elo: order_by
+}
+
+"""
 columns and relationships of "e_check_in_settings"
 """
 type e_check_in_settings {
@@ -2557,6 +4482,942 @@ input e_check_in_settings_updates {
 
   """filter the rows which have to be updated"""
   where: e_check_in_settings_bool_exp!
+}
+
+"""
+columns and relationships of "e_draft_game_captain_selection"
+"""
+type e_draft_game_captain_selection {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_draft_game_captain_selection"
+"""
+type e_draft_game_captain_selection_aggregate {
+  aggregate: e_draft_game_captain_selection_aggregate_fields
+  nodes: [e_draft_game_captain_selection!]!
+}
+
+"""
+aggregate fields of "e_draft_game_captain_selection"
+"""
+type e_draft_game_captain_selection_aggregate_fields {
+  count(columns: [e_draft_game_captain_selection_select_column!], distinct: Boolean): Int!
+  max: e_draft_game_captain_selection_max_fields
+  min: e_draft_game_captain_selection_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_draft_game_captain_selection". All fields are combined with a logical 'AND'.
+"""
+input e_draft_game_captain_selection_bool_exp {
+  _and: [e_draft_game_captain_selection_bool_exp!]
+  _not: e_draft_game_captain_selection_bool_exp
+  _or: [e_draft_game_captain_selection_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_draft_game_captain_selection"
+"""
+enum e_draft_game_captain_selection_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_draft_game_captain_selection_pkey
+}
+
+enum e_draft_game_captain_selection_enum {
+  """Host and Next Highest"""
+  HostAndNext
+
+  """Random Two"""
+  RandomTwo
+
+  """Top 2 by Rank"""
+  TopEloTwo
+}
+
+"""
+Boolean expression to compare columns of type "e_draft_game_captain_selection_enum". All fields are combined with logical 'AND'.
+"""
+input e_draft_game_captain_selection_enum_comparison_exp {
+  _eq: e_draft_game_captain_selection_enum
+  _in: [e_draft_game_captain_selection_enum!]
+  _is_null: Boolean
+  _neq: e_draft_game_captain_selection_enum
+  _nin: [e_draft_game_captain_selection_enum!]
+}
+
+"""
+input type for inserting data into table "e_draft_game_captain_selection"
+"""
+input e_draft_game_captain_selection_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_draft_game_captain_selection_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_draft_game_captain_selection_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_draft_game_captain_selection"
+"""
+type e_draft_game_captain_selection_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_draft_game_captain_selection!]!
+}
+
+"""
+input type for inserting object relation for remote table "e_draft_game_captain_selection"
+"""
+input e_draft_game_captain_selection_obj_rel_insert_input {
+  data: e_draft_game_captain_selection_insert_input!
+
+  """upsert condition"""
+  on_conflict: e_draft_game_captain_selection_on_conflict
+}
+
+"""
+on_conflict condition type for table "e_draft_game_captain_selection"
+"""
+input e_draft_game_captain_selection_on_conflict {
+  constraint: e_draft_game_captain_selection_constraint!
+  update_columns: [e_draft_game_captain_selection_update_column!]! = []
+  where: e_draft_game_captain_selection_bool_exp
+}
+
+"""
+Ordering options when selecting data from "e_draft_game_captain_selection".
+"""
+input e_draft_game_captain_selection_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_draft_game_captain_selection"""
+input e_draft_game_captain_selection_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_draft_game_captain_selection"
+"""
+enum e_draft_game_captain_selection_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_draft_game_captain_selection"
+"""
+input e_draft_game_captain_selection_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_draft_game_captain_selection"
+"""
+input e_draft_game_captain_selection_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_draft_game_captain_selection_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_draft_game_captain_selection_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_draft_game_captain_selection"
+"""
+enum e_draft_game_captain_selection_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_draft_game_captain_selection_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_draft_game_captain_selection_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_draft_game_captain_selection_bool_exp!
+}
+
+"""
+columns and relationships of "e_draft_game_draft_order"
+"""
+type e_draft_game_draft_order {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_draft_game_draft_order"
+"""
+type e_draft_game_draft_order_aggregate {
+  aggregate: e_draft_game_draft_order_aggregate_fields
+  nodes: [e_draft_game_draft_order!]!
+}
+
+"""
+aggregate fields of "e_draft_game_draft_order"
+"""
+type e_draft_game_draft_order_aggregate_fields {
+  count(columns: [e_draft_game_draft_order_select_column!], distinct: Boolean): Int!
+  max: e_draft_game_draft_order_max_fields
+  min: e_draft_game_draft_order_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_draft_game_draft_order". All fields are combined with a logical 'AND'.
+"""
+input e_draft_game_draft_order_bool_exp {
+  _and: [e_draft_game_draft_order_bool_exp!]
+  _not: e_draft_game_draft_order_bool_exp
+  _or: [e_draft_game_draft_order_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_draft_game_draft_order"
+"""
+enum e_draft_game_draft_order_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_draft_game_draft_order_pkey
+}
+
+enum e_draft_game_draft_order_enum {
+  """Alternating"""
+  Alternating
+
+  """Snake (1-2-2-2-1)"""
+  Snake
+}
+
+"""
+Boolean expression to compare columns of type "e_draft_game_draft_order_enum". All fields are combined with logical 'AND'.
+"""
+input e_draft_game_draft_order_enum_comparison_exp {
+  _eq: e_draft_game_draft_order_enum
+  _in: [e_draft_game_draft_order_enum!]
+  _is_null: Boolean
+  _neq: e_draft_game_draft_order_enum
+  _nin: [e_draft_game_draft_order_enum!]
+}
+
+"""
+input type for inserting data into table "e_draft_game_draft_order"
+"""
+input e_draft_game_draft_order_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_draft_game_draft_order_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_draft_game_draft_order_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_draft_game_draft_order"
+"""
+type e_draft_game_draft_order_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_draft_game_draft_order!]!
+}
+
+"""
+input type for inserting object relation for remote table "e_draft_game_draft_order"
+"""
+input e_draft_game_draft_order_obj_rel_insert_input {
+  data: e_draft_game_draft_order_insert_input!
+
+  """upsert condition"""
+  on_conflict: e_draft_game_draft_order_on_conflict
+}
+
+"""
+on_conflict condition type for table "e_draft_game_draft_order"
+"""
+input e_draft_game_draft_order_on_conflict {
+  constraint: e_draft_game_draft_order_constraint!
+  update_columns: [e_draft_game_draft_order_update_column!]! = []
+  where: e_draft_game_draft_order_bool_exp
+}
+
+"""Ordering options when selecting data from "e_draft_game_draft_order"."""
+input e_draft_game_draft_order_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_draft_game_draft_order"""
+input e_draft_game_draft_order_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_draft_game_draft_order"
+"""
+enum e_draft_game_draft_order_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_draft_game_draft_order"
+"""
+input e_draft_game_draft_order_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_draft_game_draft_order"
+"""
+input e_draft_game_draft_order_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_draft_game_draft_order_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_draft_game_draft_order_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_draft_game_draft_order"
+"""
+enum e_draft_game_draft_order_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_draft_game_draft_order_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_draft_game_draft_order_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_draft_game_draft_order_bool_exp!
+}
+
+"""
+columns and relationships of "e_draft_game_mode"
+"""
+type e_draft_game_mode {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_draft_game_mode"
+"""
+type e_draft_game_mode_aggregate {
+  aggregate: e_draft_game_mode_aggregate_fields
+  nodes: [e_draft_game_mode!]!
+}
+
+"""
+aggregate fields of "e_draft_game_mode"
+"""
+type e_draft_game_mode_aggregate_fields {
+  count(columns: [e_draft_game_mode_select_column!], distinct: Boolean): Int!
+  max: e_draft_game_mode_max_fields
+  min: e_draft_game_mode_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_draft_game_mode". All fields are combined with a logical 'AND'.
+"""
+input e_draft_game_mode_bool_exp {
+  _and: [e_draft_game_mode_bool_exp!]
+  _not: e_draft_game_mode_bool_exp
+  _or: [e_draft_game_mode_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_draft_game_mode"
+"""
+enum e_draft_game_mode_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_draft_game_mode_pkey
+}
+
+enum e_draft_game_mode_enum {
+  """Two Captains Draft"""
+  Captains
+
+  """Host Assigns Teams"""
+  Host
+
+  """Auto-Split Teams"""
+  Pug
+
+  """Pre-Made Teams"""
+  Teams
+}
+
+"""
+Boolean expression to compare columns of type "e_draft_game_mode_enum". All fields are combined with logical 'AND'.
+"""
+input e_draft_game_mode_enum_comparison_exp {
+  _eq: e_draft_game_mode_enum
+  _in: [e_draft_game_mode_enum!]
+  _is_null: Boolean
+  _neq: e_draft_game_mode_enum
+  _nin: [e_draft_game_mode_enum!]
+}
+
+"""
+input type for inserting data into table "e_draft_game_mode"
+"""
+input e_draft_game_mode_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_draft_game_mode_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_draft_game_mode_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_draft_game_mode"
+"""
+type e_draft_game_mode_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_draft_game_mode!]!
+}
+
+"""
+input type for inserting object relation for remote table "e_draft_game_mode"
+"""
+input e_draft_game_mode_obj_rel_insert_input {
+  data: e_draft_game_mode_insert_input!
+
+  """upsert condition"""
+  on_conflict: e_draft_game_mode_on_conflict
+}
+
+"""
+on_conflict condition type for table "e_draft_game_mode"
+"""
+input e_draft_game_mode_on_conflict {
+  constraint: e_draft_game_mode_constraint!
+  update_columns: [e_draft_game_mode_update_column!]! = []
+  where: e_draft_game_mode_bool_exp
+}
+
+"""Ordering options when selecting data from "e_draft_game_mode"."""
+input e_draft_game_mode_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_draft_game_mode"""
+input e_draft_game_mode_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_draft_game_mode"
+"""
+enum e_draft_game_mode_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_draft_game_mode"
+"""
+input e_draft_game_mode_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_draft_game_mode"
+"""
+input e_draft_game_mode_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_draft_game_mode_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_draft_game_mode_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_draft_game_mode"
+"""
+enum e_draft_game_mode_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_draft_game_mode_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_draft_game_mode_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_draft_game_mode_bool_exp!
+}
+
+"""
+columns and relationships of "e_draft_game_player_status"
+"""
+type e_draft_game_player_status {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_draft_game_player_status"
+"""
+type e_draft_game_player_status_aggregate {
+  aggregate: e_draft_game_player_status_aggregate_fields
+  nodes: [e_draft_game_player_status!]!
+}
+
+"""
+aggregate fields of "e_draft_game_player_status"
+"""
+type e_draft_game_player_status_aggregate_fields {
+  count(columns: [e_draft_game_player_status_select_column!], distinct: Boolean): Int!
+  max: e_draft_game_player_status_max_fields
+  min: e_draft_game_player_status_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_draft_game_player_status". All fields are combined with a logical 'AND'.
+"""
+input e_draft_game_player_status_bool_exp {
+  _and: [e_draft_game_player_status_bool_exp!]
+  _not: e_draft_game_player_status_bool_exp
+  _or: [e_draft_game_player_status_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_draft_game_player_status"
+"""
+enum e_draft_game_player_status_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_draft_game_player_status_pkey
+}
+
+enum e_draft_game_player_status_enum {
+  """Player Accepted Into Game"""
+  Accepted
+
+  """Player Requested To Join"""
+  Requested
+
+  """Player On Waitlist"""
+  Waitlist
+}
+
+"""
+Boolean expression to compare columns of type "e_draft_game_player_status_enum". All fields are combined with logical 'AND'.
+"""
+input e_draft_game_player_status_enum_comparison_exp {
+  _eq: e_draft_game_player_status_enum
+  _in: [e_draft_game_player_status_enum!]
+  _is_null: Boolean
+  _neq: e_draft_game_player_status_enum
+  _nin: [e_draft_game_player_status_enum!]
+}
+
+"""
+input type for inserting data into table "e_draft_game_player_status"
+"""
+input e_draft_game_player_status_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_draft_game_player_status_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_draft_game_player_status_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_draft_game_player_status"
+"""
+type e_draft_game_player_status_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_draft_game_player_status!]!
+}
+
+"""
+input type for inserting object relation for remote table "e_draft_game_player_status"
+"""
+input e_draft_game_player_status_obj_rel_insert_input {
+  data: e_draft_game_player_status_insert_input!
+
+  """upsert condition"""
+  on_conflict: e_draft_game_player_status_on_conflict
+}
+
+"""
+on_conflict condition type for table "e_draft_game_player_status"
+"""
+input e_draft_game_player_status_on_conflict {
+  constraint: e_draft_game_player_status_constraint!
+  update_columns: [e_draft_game_player_status_update_column!]! = []
+  where: e_draft_game_player_status_bool_exp
+}
+
+"""
+Ordering options when selecting data from "e_draft_game_player_status".
+"""
+input e_draft_game_player_status_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_draft_game_player_status"""
+input e_draft_game_player_status_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_draft_game_player_status"
+"""
+enum e_draft_game_player_status_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_draft_game_player_status"
+"""
+input e_draft_game_player_status_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_draft_game_player_status"
+"""
+input e_draft_game_player_status_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_draft_game_player_status_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_draft_game_player_status_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_draft_game_player_status"
+"""
+enum e_draft_game_player_status_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_draft_game_player_status_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_draft_game_player_status_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_draft_game_player_status_bool_exp!
+}
+
+"""
+columns and relationships of "e_draft_game_status"
+"""
+type e_draft_game_status {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_draft_game_status"
+"""
+type e_draft_game_status_aggregate {
+  aggregate: e_draft_game_status_aggregate_fields
+  nodes: [e_draft_game_status!]!
+}
+
+"""
+aggregate fields of "e_draft_game_status"
+"""
+type e_draft_game_status_aggregate_fields {
+  count(columns: [e_draft_game_status_select_column!], distinct: Boolean): Int!
+  max: e_draft_game_status_max_fields
+  min: e_draft_game_status_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_draft_game_status". All fields are combined with a logical 'AND'.
+"""
+input e_draft_game_status_bool_exp {
+  _and: [e_draft_game_status_bool_exp!]
+  _not: e_draft_game_status_bool_exp
+  _or: [e_draft_game_status_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_draft_game_status"
+"""
+enum e_draft_game_status_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_draft_game_status_pkey
+}
+
+enum e_draft_game_status_enum {
+  """Canceled"""
+  Canceled
+
+  """Completed"""
+  Completed
+
+  """Creating Match"""
+  CreatingMatch
+
+  """Drafting Players"""
+  Drafting
+
+  """Lobby Full"""
+  Filled
+
+  """Accepting Players"""
+  Open
+
+  """Selecting Captains"""
+  SelectingCaptains
+}
+
+"""
+Boolean expression to compare columns of type "e_draft_game_status_enum". All fields are combined with logical 'AND'.
+"""
+input e_draft_game_status_enum_comparison_exp {
+  _eq: e_draft_game_status_enum
+  _in: [e_draft_game_status_enum!]
+  _is_null: Boolean
+  _neq: e_draft_game_status_enum
+  _nin: [e_draft_game_status_enum!]
+}
+
+"""
+input type for inserting data into table "e_draft_game_status"
+"""
+input e_draft_game_status_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_draft_game_status_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_draft_game_status_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_draft_game_status"
+"""
+type e_draft_game_status_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_draft_game_status!]!
+}
+
+"""
+input type for inserting object relation for remote table "e_draft_game_status"
+"""
+input e_draft_game_status_obj_rel_insert_input {
+  data: e_draft_game_status_insert_input!
+
+  """upsert condition"""
+  on_conflict: e_draft_game_status_on_conflict
+}
+
+"""
+on_conflict condition type for table "e_draft_game_status"
+"""
+input e_draft_game_status_on_conflict {
+  constraint: e_draft_game_status_constraint!
+  update_columns: [e_draft_game_status_update_column!]! = []
+  where: e_draft_game_status_bool_exp
+}
+
+"""Ordering options when selecting data from "e_draft_game_status"."""
+input e_draft_game_status_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_draft_game_status"""
+input e_draft_game_status_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_draft_game_status"
+"""
+enum e_draft_game_status_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_draft_game_status"
+"""
+input e_draft_game_status_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_draft_game_status"
+"""
+input e_draft_game_status_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_draft_game_status_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_draft_game_status_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_draft_game_status"
+"""
+enum e_draft_game_status_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_draft_game_status_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_draft_game_status_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_draft_game_status_bool_exp!
 }
 
 """
@@ -19705,6 +22566,42 @@ type matches {
     where: match_map_demos_bool_exp
   ): match_map_demos_aggregate!
 
+  """An array relationship"""
+  draft_games(
+    """distinct select on columns"""
+    distinct_on: [draft_games_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_games_order_by!]
+
+    """filter the rows returned"""
+    where: draft_games_bool_exp
+  ): [draft_games!]!
+
+  """An aggregate relationship"""
+  draft_games_aggregate(
+    """distinct select on columns"""
+    distinct_on: [draft_games_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_games_order_by!]
+
+    """filter the rows returned"""
+    where: draft_games_bool_exp
+  ): draft_games_aggregate!
+
   """An object relationship"""
   e_match_status: e_match_status!
 
@@ -20514,6 +23411,8 @@ input matches_bool_exp {
   current_match_map_id: uuid_comparison_exp
   demos: match_map_demos_bool_exp
   demos_aggregate: match_map_demos_aggregate_bool_exp
+  draft_games: draft_games_bool_exp
+  draft_games_aggregate: draft_games_aggregate_bool_exp
   e_match_status: e_match_status_bool_exp
   e_region: server_regions_bool_exp
   effective_at: timestamptz_comparison_exp
@@ -20637,6 +23536,7 @@ input matches_insert_input {
   clutches: v_match_clutches_arr_rel_insert_input
   created_at: timestamptz
   demos: match_map_demos_arr_rel_insert_input
+  draft_games: draft_games_arr_rel_insert_input
   e_match_status: e_match_status_obj_rel_insert_input
   e_region: server_regions_obj_rel_insert_input
   elo_changes: v_player_elo_arr_rel_insert_input
@@ -20942,6 +23842,7 @@ input matches_order_by {
   created_at: order_by
   current_match_map_id: order_by
   demos_aggregate: match_map_demos_aggregate_order_by
+  draft_games_aggregate: draft_games_aggregate_order_by
   e_match_status: e_match_status_order_by
   e_region: server_regions_order_by
   effective_at: order_by
@@ -21570,12 +24471,20 @@ type mutation_root {
   createClipRender(spec: ClipSpecInput!): CreateClipRenderOutput
   createClips(match_id: uuid!): SuccessOutput
 
+  """createDraftGame"""
+  createDraftGame(settings: jsonb!): CreateDraftGameOutput
+
   """Create directory on game server"""
   createServerDirectory(dir_path: String!, node_id: String!, server_id: String): SuccessOutput
 
   """Delete a saved clip and its underlying S3 object"""
   deleteClip(clip_id: uuid!): SuccessOutput
   deleteMatch(match_id: String!): SuccessOutput
+
+  """
+  Delete a news post. Caller role is verified against public.post_news_role.
+  """
+  deleteNewsPost(id: uuid!): SuccessOutput
 
   """
   Delete orphaned S3 objects found by the last scan (admin only). Each key is re-verified against the database before removal.
@@ -21654,6 +24563,45 @@ type mutation_root {
   delete_db_backups_by_pk(id: uuid!): db_backups
 
   """
+  delete data from the table: "draft_game_picks"
+  """
+  delete_draft_game_picks(
+    """filter the rows which have to be deleted"""
+    where: draft_game_picks_bool_exp!
+  ): draft_game_picks_mutation_response
+
+  """
+  delete single row from the table: "draft_game_picks"
+  """
+  delete_draft_game_picks_by_pk(id: uuid!): draft_game_picks
+
+  """
+  delete data from the table: "draft_game_players"
+  """
+  delete_draft_game_players(
+    """filter the rows which have to be deleted"""
+    where: draft_game_players_bool_exp!
+  ): draft_game_players_mutation_response
+
+  """
+  delete single row from the table: "draft_game_players"
+  """
+  delete_draft_game_players_by_pk(draft_game_id: uuid!, steam_id: bigint!): draft_game_players
+
+  """
+  delete data from the table: "draft_games"
+  """
+  delete_draft_games(
+    """filter the rows which have to be deleted"""
+    where: draft_games_bool_exp!
+  ): draft_games_mutation_response
+
+  """
+  delete single row from the table: "draft_games"
+  """
+  delete_draft_games_by_pk(id: uuid!): draft_games
+
+  """
   delete data from the table: "e_check_in_settings"
   """
   delete_e_check_in_settings(
@@ -21665,6 +24613,71 @@ type mutation_root {
   delete single row from the table: "e_check_in_settings"
   """
   delete_e_check_in_settings_by_pk(value: String!): e_check_in_settings
+
+  """
+  delete data from the table: "e_draft_game_captain_selection"
+  """
+  delete_e_draft_game_captain_selection(
+    """filter the rows which have to be deleted"""
+    where: e_draft_game_captain_selection_bool_exp!
+  ): e_draft_game_captain_selection_mutation_response
+
+  """
+  delete single row from the table: "e_draft_game_captain_selection"
+  """
+  delete_e_draft_game_captain_selection_by_pk(value: String!): e_draft_game_captain_selection
+
+  """
+  delete data from the table: "e_draft_game_draft_order"
+  """
+  delete_e_draft_game_draft_order(
+    """filter the rows which have to be deleted"""
+    where: e_draft_game_draft_order_bool_exp!
+  ): e_draft_game_draft_order_mutation_response
+
+  """
+  delete single row from the table: "e_draft_game_draft_order"
+  """
+  delete_e_draft_game_draft_order_by_pk(value: String!): e_draft_game_draft_order
+
+  """
+  delete data from the table: "e_draft_game_mode"
+  """
+  delete_e_draft_game_mode(
+    """filter the rows which have to be deleted"""
+    where: e_draft_game_mode_bool_exp!
+  ): e_draft_game_mode_mutation_response
+
+  """
+  delete single row from the table: "e_draft_game_mode"
+  """
+  delete_e_draft_game_mode_by_pk(value: String!): e_draft_game_mode
+
+  """
+  delete data from the table: "e_draft_game_player_status"
+  """
+  delete_e_draft_game_player_status(
+    """filter the rows which have to be deleted"""
+    where: e_draft_game_player_status_bool_exp!
+  ): e_draft_game_player_status_mutation_response
+
+  """
+  delete single row from the table: "e_draft_game_player_status"
+  """
+  delete_e_draft_game_player_status_by_pk(value: String!): e_draft_game_player_status
+
+  """
+  delete data from the table: "e_draft_game_status"
+  """
+  delete_e_draft_game_status(
+    """filter the rows which have to be deleted"""
+    where: e_draft_game_status_bool_exp!
+  ): e_draft_game_status_mutation_response
+
+  """
+  delete single row from the table: "e_draft_game_status"
+  """
+  delete_e_draft_game_status_by_pk(value: String!): e_draft_game_status
 
   """
   delete data from the table: "e_friend_status"
@@ -22318,6 +25331,19 @@ type mutation_root {
     """filter the rows which have to be deleted"""
     where: my_friends_bool_exp!
   ): my_friends_mutation_response
+
+  """
+  delete data from the table: "news_articles"
+  """
+  delete_news_articles(
+    """filter the rows which have to be deleted"""
+    where: news_articles_bool_exp!
+  ): news_articles_mutation_response
+
+  """
+  delete single row from the table: "news_articles"
+  """
+  delete_news_articles_by_pk(id: uuid!): news_articles
 
   """
   delete data from the table: "notifications"
@@ -22998,6 +26024,72 @@ type mutation_root {
   ): db_backups
 
   """
+  insert data into the table: "draft_game_picks"
+  """
+  insert_draft_game_picks(
+    """the rows to be inserted"""
+    objects: [draft_game_picks_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: draft_game_picks_on_conflict
+  ): draft_game_picks_mutation_response
+
+  """
+  insert a single row into the table: "draft_game_picks"
+  """
+  insert_draft_game_picks_one(
+    """the row to be inserted"""
+    object: draft_game_picks_insert_input!
+
+    """upsert condition"""
+    on_conflict: draft_game_picks_on_conflict
+  ): draft_game_picks
+
+  """
+  insert data into the table: "draft_game_players"
+  """
+  insert_draft_game_players(
+    """the rows to be inserted"""
+    objects: [draft_game_players_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: draft_game_players_on_conflict
+  ): draft_game_players_mutation_response
+
+  """
+  insert a single row into the table: "draft_game_players"
+  """
+  insert_draft_game_players_one(
+    """the row to be inserted"""
+    object: draft_game_players_insert_input!
+
+    """upsert condition"""
+    on_conflict: draft_game_players_on_conflict
+  ): draft_game_players
+
+  """
+  insert data into the table: "draft_games"
+  """
+  insert_draft_games(
+    """the rows to be inserted"""
+    objects: [draft_games_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: draft_games_on_conflict
+  ): draft_games_mutation_response
+
+  """
+  insert a single row into the table: "draft_games"
+  """
+  insert_draft_games_one(
+    """the row to be inserted"""
+    object: draft_games_insert_input!
+
+    """upsert condition"""
+    on_conflict: draft_games_on_conflict
+  ): draft_games
+
+  """
   insert data into the table: "e_check_in_settings"
   """
   insert_e_check_in_settings(
@@ -23018,6 +26110,116 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_check_in_settings_on_conflict
   ): e_check_in_settings
+
+  """
+  insert data into the table: "e_draft_game_captain_selection"
+  """
+  insert_e_draft_game_captain_selection(
+    """the rows to be inserted"""
+    objects: [e_draft_game_captain_selection_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_draft_game_captain_selection_on_conflict
+  ): e_draft_game_captain_selection_mutation_response
+
+  """
+  insert a single row into the table: "e_draft_game_captain_selection"
+  """
+  insert_e_draft_game_captain_selection_one(
+    """the row to be inserted"""
+    object: e_draft_game_captain_selection_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_draft_game_captain_selection_on_conflict
+  ): e_draft_game_captain_selection
+
+  """
+  insert data into the table: "e_draft_game_draft_order"
+  """
+  insert_e_draft_game_draft_order(
+    """the rows to be inserted"""
+    objects: [e_draft_game_draft_order_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_draft_game_draft_order_on_conflict
+  ): e_draft_game_draft_order_mutation_response
+
+  """
+  insert a single row into the table: "e_draft_game_draft_order"
+  """
+  insert_e_draft_game_draft_order_one(
+    """the row to be inserted"""
+    object: e_draft_game_draft_order_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_draft_game_draft_order_on_conflict
+  ): e_draft_game_draft_order
+
+  """
+  insert data into the table: "e_draft_game_mode"
+  """
+  insert_e_draft_game_mode(
+    """the rows to be inserted"""
+    objects: [e_draft_game_mode_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_draft_game_mode_on_conflict
+  ): e_draft_game_mode_mutation_response
+
+  """
+  insert a single row into the table: "e_draft_game_mode"
+  """
+  insert_e_draft_game_mode_one(
+    """the row to be inserted"""
+    object: e_draft_game_mode_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_draft_game_mode_on_conflict
+  ): e_draft_game_mode
+
+  """
+  insert data into the table: "e_draft_game_player_status"
+  """
+  insert_e_draft_game_player_status(
+    """the rows to be inserted"""
+    objects: [e_draft_game_player_status_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_draft_game_player_status_on_conflict
+  ): e_draft_game_player_status_mutation_response
+
+  """
+  insert a single row into the table: "e_draft_game_player_status"
+  """
+  insert_e_draft_game_player_status_one(
+    """the row to be inserted"""
+    object: e_draft_game_player_status_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_draft_game_player_status_on_conflict
+  ): e_draft_game_player_status
+
+  """
+  insert data into the table: "e_draft_game_status"
+  """
+  insert_e_draft_game_status(
+    """the rows to be inserted"""
+    objects: [e_draft_game_status_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_draft_game_status_on_conflict
+  ): e_draft_game_status_mutation_response
+
+  """
+  insert a single row into the table: "e_draft_game_status"
+  """
+  insert_e_draft_game_status_one(
+    """the row to be inserted"""
+    object: e_draft_game_status_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_draft_game_status_on_conflict
+  ): e_draft_game_status
 
   """
   insert data into the table: "e_friend_status"
@@ -24130,6 +27332,28 @@ type mutation_root {
   ): my_friends
 
   """
+  insert data into the table: "news_articles"
+  """
+  insert_news_articles(
+    """the rows to be inserted"""
+    objects: [news_articles_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: news_articles_on_conflict
+  ): news_articles_mutation_response
+
+  """
+  insert a single row into the table: "news_articles"
+  """
+  insert_news_articles_one(
+    """the row to be inserted"""
+    object: news_articles_insert_input!
+
+    """upsert condition"""
+    on_conflict: news_articles_on_conflict
+  ): news_articles
+
+  """
   insert data into the table: "notifications"
   """
   insert_notifications(
@@ -25088,6 +28312,12 @@ type mutation_root {
     """upsert condition"""
     on_conflict: v_team_stage_results_on_conflict
   ): v_team_stage_results
+
+  """joinDraftGame"""
+  joinDraftGame(draftGameId: uuid!, inviteCode: String): SuccessOutput
+
+  """joinDraftGameAsParty"""
+  joinDraftGameAsParty(draftGameId: uuid!, inviteCode: String): SuccessOutput
   joinLineup(code: String, lineup_id: String!, match_id: String!): SuccessOutput
   kickServerPlayer(reason: String, serverId: String!, steam_id: String!): KickResult!
   leaveLineup(match_id: String!): SuccessOutput
@@ -25190,6 +28420,11 @@ type mutation_root {
   sanctionServerPlayer(duration: Float, reason: String, serverId: String, steam_id: String!, type: String!): SanctionResult!
 
   """
+  Create or update a first-party news post. Caller role is verified against public.post_news_role.
+  """
+  saveNewsPost(content_markdown: String!, cover_image_url: String, id: uuid, teaser: String, title: String!): NewsPost
+
+  """
   Scan S3 for objects not referenced in the database (admin only). Runs in the background; results land in the logs and orphanedDemosScanResult.
   """
   scanOrphanedDemos: ScanStartedOutput
@@ -25207,6 +28442,11 @@ type mutation_root {
 
   """setMatchWinner"""
   setMatchWinner(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
+
+  """
+  Publish or unpublish a news post. Caller role is verified against public.post_news_role.
+  """
+  setNewsPostStatus(id: uuid!, status: String!): NewsPost
   setupGameServer: SetupGameServeOutput
   skipShaders(match_id: uuid!): SuccessOutput
   specAutodirector(enabled: Boolean!, match_id: uuid!): SuccessOutput
@@ -25240,6 +28480,9 @@ type mutation_root {
   """Owner-only patch for clip title / visibility / target_steam_id."""
   updateClip(clip_id: uuid!, target_steam_id: String, title: String, visibility: String): SuccessOutput
   updateCs(game: String, game_server_node_id: uuid): SuccessOutput
+
+  """updateDraftGame"""
+  updateDraftGame(draftGameId: uuid!, settings: jsonb!): SuccessOutput
   updateServices: SuccessOutput
 
   """
@@ -25449,6 +28692,108 @@ type mutation_root {
   ): [db_backups_mutation_response]
 
   """
+  update data of the table: "draft_game_picks"
+  """
+  update_draft_game_picks(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: draft_game_picks_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: draft_game_picks_set_input
+
+    """filter the rows which have to be updated"""
+    where: draft_game_picks_bool_exp!
+  ): draft_game_picks_mutation_response
+
+  """
+  update single row of the table: "draft_game_picks"
+  """
+  update_draft_game_picks_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: draft_game_picks_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: draft_game_picks_set_input
+    pk_columns: draft_game_picks_pk_columns_input!
+  ): draft_game_picks
+
+  """
+  update multiples rows of table: "draft_game_picks"
+  """
+  update_draft_game_picks_many(
+    """updates to execute, in order"""
+    updates: [draft_game_picks_updates!]!
+  ): [draft_game_picks_mutation_response]
+
+  """
+  update data of the table: "draft_game_players"
+  """
+  update_draft_game_players(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: draft_game_players_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: draft_game_players_set_input
+
+    """filter the rows which have to be updated"""
+    where: draft_game_players_bool_exp!
+  ): draft_game_players_mutation_response
+
+  """
+  update single row of the table: "draft_game_players"
+  """
+  update_draft_game_players_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: draft_game_players_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: draft_game_players_set_input
+    pk_columns: draft_game_players_pk_columns_input!
+  ): draft_game_players
+
+  """
+  update multiples rows of table: "draft_game_players"
+  """
+  update_draft_game_players_many(
+    """updates to execute, in order"""
+    updates: [draft_game_players_updates!]!
+  ): [draft_game_players_mutation_response]
+
+  """
+  update data of the table: "draft_games"
+  """
+  update_draft_games(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: draft_games_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: draft_games_set_input
+
+    """filter the rows which have to be updated"""
+    where: draft_games_bool_exp!
+  ): draft_games_mutation_response
+
+  """
+  update single row of the table: "draft_games"
+  """
+  update_draft_games_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: draft_games_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: draft_games_set_input
+    pk_columns: draft_games_pk_columns_input!
+  ): draft_games
+
+  """
+  update multiples rows of table: "draft_games"
+  """
+  update_draft_games_many(
+    """updates to execute, in order"""
+    updates: [draft_games_updates!]!
+  ): [draft_games_mutation_response]
+
+  """
   update data of the table: "e_check_in_settings"
   """
   update_e_check_in_settings(
@@ -25475,6 +28820,146 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_check_in_settings_updates!]!
   ): [e_check_in_settings_mutation_response]
+
+  """
+  update data of the table: "e_draft_game_captain_selection"
+  """
+  update_e_draft_game_captain_selection(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_draft_game_captain_selection_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_draft_game_captain_selection_bool_exp!
+  ): e_draft_game_captain_selection_mutation_response
+
+  """
+  update single row of the table: "e_draft_game_captain_selection"
+  """
+  update_e_draft_game_captain_selection_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_draft_game_captain_selection_set_input
+    pk_columns: e_draft_game_captain_selection_pk_columns_input!
+  ): e_draft_game_captain_selection
+
+  """
+  update multiples rows of table: "e_draft_game_captain_selection"
+  """
+  update_e_draft_game_captain_selection_many(
+    """updates to execute, in order"""
+    updates: [e_draft_game_captain_selection_updates!]!
+  ): [e_draft_game_captain_selection_mutation_response]
+
+  """
+  update data of the table: "e_draft_game_draft_order"
+  """
+  update_e_draft_game_draft_order(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_draft_game_draft_order_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_draft_game_draft_order_bool_exp!
+  ): e_draft_game_draft_order_mutation_response
+
+  """
+  update single row of the table: "e_draft_game_draft_order"
+  """
+  update_e_draft_game_draft_order_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_draft_game_draft_order_set_input
+    pk_columns: e_draft_game_draft_order_pk_columns_input!
+  ): e_draft_game_draft_order
+
+  """
+  update multiples rows of table: "e_draft_game_draft_order"
+  """
+  update_e_draft_game_draft_order_many(
+    """updates to execute, in order"""
+    updates: [e_draft_game_draft_order_updates!]!
+  ): [e_draft_game_draft_order_mutation_response]
+
+  """
+  update data of the table: "e_draft_game_mode"
+  """
+  update_e_draft_game_mode(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_draft_game_mode_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_draft_game_mode_bool_exp!
+  ): e_draft_game_mode_mutation_response
+
+  """
+  update single row of the table: "e_draft_game_mode"
+  """
+  update_e_draft_game_mode_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_draft_game_mode_set_input
+    pk_columns: e_draft_game_mode_pk_columns_input!
+  ): e_draft_game_mode
+
+  """
+  update multiples rows of table: "e_draft_game_mode"
+  """
+  update_e_draft_game_mode_many(
+    """updates to execute, in order"""
+    updates: [e_draft_game_mode_updates!]!
+  ): [e_draft_game_mode_mutation_response]
+
+  """
+  update data of the table: "e_draft_game_player_status"
+  """
+  update_e_draft_game_player_status(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_draft_game_player_status_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_draft_game_player_status_bool_exp!
+  ): e_draft_game_player_status_mutation_response
+
+  """
+  update single row of the table: "e_draft_game_player_status"
+  """
+  update_e_draft_game_player_status_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_draft_game_player_status_set_input
+    pk_columns: e_draft_game_player_status_pk_columns_input!
+  ): e_draft_game_player_status
+
+  """
+  update multiples rows of table: "e_draft_game_player_status"
+  """
+  update_e_draft_game_player_status_many(
+    """updates to execute, in order"""
+    updates: [e_draft_game_player_status_updates!]!
+  ): [e_draft_game_player_status_mutation_response]
+
+  """
+  update data of the table: "e_draft_game_status"
+  """
+  update_e_draft_game_status(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_draft_game_status_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_draft_game_status_bool_exp!
+  ): e_draft_game_status_mutation_response
+
+  """
+  update single row of the table: "e_draft_game_status"
+  """
+  update_e_draft_game_status_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_draft_game_status_set_input
+    pk_columns: e_draft_game_status_pk_columns_input!
+  ): e_draft_game_status
+
+  """
+  update multiples rows of table: "e_draft_game_status"
+  """
+  update_e_draft_game_status_many(
+    """updates to execute, in order"""
+    updates: [e_draft_game_status_updates!]!
+  ): [e_draft_game_status_mutation_response]
 
   """
   update data of the table: "e_friend_status"
@@ -27260,6 +30745,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [my_friends_updates!]!
   ): [my_friends_mutation_response]
+
+  """
+  update data of the table: "news_articles"
+  """
+  update_news_articles(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: news_articles_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: news_articles_set_input
+
+    """filter the rows which have to be updated"""
+    where: news_articles_bool_exp!
+  ): news_articles_mutation_response
+
+  """
+  update single row of the table: "news_articles"
+  """
+  update_news_articles_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: news_articles_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: news_articles_set_input
+    pk_columns: news_articles_pk_columns_input!
+  ): news_articles
+
+  """
+  update multiples rows of table: "news_articles"
+  """
+  update_news_articles_many(
+    """updates to execute, in order"""
+    updates: [news_articles_updates!]!
+  ): [news_articles_mutation_response]
 
   """
   update data of the table: "notifications"
@@ -29370,6 +32889,347 @@ input my_friends_variance_order_by {
   friend_steam_id: order_by
   invited_by_steam_id: order_by
   steam_id: order_by
+}
+
+"""
+columns and relationships of "news_articles"
+"""
+type news_articles {
+  author_steam_id: bigint
+  content_markdown: String!
+  cover_image_url: String
+  created_at: timestamptz!
+  id: uuid!
+  published_at: timestamptz
+  slug: String!
+  status: String!
+  teaser: String
+  title: String!
+  updated_at: timestamptz!
+}
+
+"""
+aggregated selection of "news_articles"
+"""
+type news_articles_aggregate {
+  aggregate: news_articles_aggregate_fields
+  nodes: [news_articles!]!
+}
+
+"""
+aggregate fields of "news_articles"
+"""
+type news_articles_aggregate_fields {
+  avg: news_articles_avg_fields
+  count(columns: [news_articles_select_column!], distinct: Boolean): Int!
+  max: news_articles_max_fields
+  min: news_articles_min_fields
+  stddev: news_articles_stddev_fields
+  stddev_pop: news_articles_stddev_pop_fields
+  stddev_samp: news_articles_stddev_samp_fields
+  sum: news_articles_sum_fields
+  var_pop: news_articles_var_pop_fields
+  var_samp: news_articles_var_samp_fields
+  variance: news_articles_variance_fields
+}
+
+"""aggregate avg on columns"""
+type news_articles_avg_fields {
+  author_steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "news_articles". All fields are combined with a logical 'AND'.
+"""
+input news_articles_bool_exp {
+  _and: [news_articles_bool_exp!]
+  _not: news_articles_bool_exp
+  _or: [news_articles_bool_exp!]
+  author_steam_id: bigint_comparison_exp
+  content_markdown: String_comparison_exp
+  cover_image_url: String_comparison_exp
+  created_at: timestamptz_comparison_exp
+  id: uuid_comparison_exp
+  published_at: timestamptz_comparison_exp
+  slug: String_comparison_exp
+  status: String_comparison_exp
+  teaser: String_comparison_exp
+  title: String_comparison_exp
+  updated_at: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "news_articles"
+"""
+enum news_articles_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  news_articles_pkey
+
+  """
+  unique or primary key constraint on columns "slug"
+  """
+  news_articles_slug_key
+}
+
+"""
+input type for incrementing numeric columns in table "news_articles"
+"""
+input news_articles_inc_input {
+  author_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "news_articles"
+"""
+input news_articles_insert_input {
+  author_steam_id: bigint
+  content_markdown: String
+  cover_image_url: String
+  created_at: timestamptz
+  id: uuid
+  published_at: timestamptz
+  slug: String
+  status: String
+  teaser: String
+  title: String
+  updated_at: timestamptz
+}
+
+"""aggregate max on columns"""
+type news_articles_max_fields {
+  author_steam_id: bigint
+  content_markdown: String
+  cover_image_url: String
+  created_at: timestamptz
+  id: uuid
+  published_at: timestamptz
+  slug: String
+  status: String
+  teaser: String
+  title: String
+  updated_at: timestamptz
+}
+
+"""aggregate min on columns"""
+type news_articles_min_fields {
+  author_steam_id: bigint
+  content_markdown: String
+  cover_image_url: String
+  created_at: timestamptz
+  id: uuid
+  published_at: timestamptz
+  slug: String
+  status: String
+  teaser: String
+  title: String
+  updated_at: timestamptz
+}
+
+"""
+response of any mutation on the table "news_articles"
+"""
+type news_articles_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [news_articles!]!
+}
+
+"""
+on_conflict condition type for table "news_articles"
+"""
+input news_articles_on_conflict {
+  constraint: news_articles_constraint!
+  update_columns: [news_articles_update_column!]! = []
+  where: news_articles_bool_exp
+}
+
+"""Ordering options when selecting data from "news_articles"."""
+input news_articles_order_by {
+  author_steam_id: order_by
+  content_markdown: order_by
+  cover_image_url: order_by
+  created_at: order_by
+  id: order_by
+  published_at: order_by
+  slug: order_by
+  status: order_by
+  teaser: order_by
+  title: order_by
+  updated_at: order_by
+}
+
+"""primary key columns input for table: news_articles"""
+input news_articles_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "news_articles"
+"""
+enum news_articles_select_column {
+  """column name"""
+  author_steam_id
+
+  """column name"""
+  content_markdown
+
+  """column name"""
+  cover_image_url
+
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  published_at
+
+  """column name"""
+  slug
+
+  """column name"""
+  status
+
+  """column name"""
+  teaser
+
+  """column name"""
+  title
+
+  """column name"""
+  updated_at
+}
+
+"""
+input type for updating data in table "news_articles"
+"""
+input news_articles_set_input {
+  author_steam_id: bigint
+  content_markdown: String
+  cover_image_url: String
+  created_at: timestamptz
+  id: uuid
+  published_at: timestamptz
+  slug: String
+  status: String
+  teaser: String
+  title: String
+  updated_at: timestamptz
+}
+
+"""aggregate stddev on columns"""
+type news_articles_stddev_fields {
+  author_steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type news_articles_stddev_pop_fields {
+  author_steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type news_articles_stddev_samp_fields {
+  author_steam_id: Float
+}
+
+"""
+Streaming cursor of the table "news_articles"
+"""
+input news_articles_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: news_articles_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input news_articles_stream_cursor_value_input {
+  author_steam_id: bigint
+  content_markdown: String
+  cover_image_url: String
+  created_at: timestamptz
+  id: uuid
+  published_at: timestamptz
+  slug: String
+  status: String
+  teaser: String
+  title: String
+  updated_at: timestamptz
+}
+
+"""aggregate sum on columns"""
+type news_articles_sum_fields {
+  author_steam_id: bigint
+}
+
+"""
+update columns of table "news_articles"
+"""
+enum news_articles_update_column {
+  """column name"""
+  author_steam_id
+
+  """column name"""
+  content_markdown
+
+  """column name"""
+  cover_image_url
+
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  published_at
+
+  """column name"""
+  slug
+
+  """column name"""
+  status
+
+  """column name"""
+  teaser
+
+  """column name"""
+  title
+
+  """column name"""
+  updated_at
+}
+
+input news_articles_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: news_articles_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: news_articles_set_input
+
+  """filter the rows which have to be updated"""
+  where: news_articles_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type news_articles_var_pop_fields {
+  author_steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type news_articles_var_samp_fields {
+  author_steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type news_articles_variance_fields {
+  author_steam_id: Float
 }
 
 """
@@ -46145,6 +50005,7 @@ type players {
     where: player_kills_by_weapon_bool_exp
   ): player_kills_by_weapon_aggregate!
   language: String
+  last_read_news_at: timestamptz
   last_sign_in_at: timestamptz
 
   """An array relationship"""
@@ -47158,6 +51019,7 @@ input players_bool_exp {
   kills_by_weapons: player_kills_by_weapon_bool_exp
   kills_by_weapons_aggregate: player_kills_by_weapon_aggregate_bool_exp
   language: String_comparison_exp
+  last_read_news_at: timestamptz_comparison_exp
   last_sign_in_at: timestamptz_comparison_exp
   lobby_players: lobby_players_bool_exp
   lobby_players_aggregate: lobby_players_aggregate_bool_exp
@@ -47296,6 +51158,7 @@ input players_insert_input {
   kills: player_kills_arr_rel_insert_input
   kills_by_weapons: player_kills_by_weapon_arr_rel_insert_input
   language: String
+  last_read_news_at: timestamptz
   last_sign_in_at: timestamptz
   lobby_players: lobby_players_arr_rel_insert_input
   match_map_hltv: v_player_match_map_hltv_arr_rel_insert_input
@@ -47354,6 +51217,7 @@ type players_max_fields {
   faceit_url: String
   game_ban_count: Int
   language: String
+  last_read_news_at: timestamptz
   last_sign_in_at: timestamptz
 
   """
@@ -47436,6 +51300,7 @@ type players_min_fields {
   faceit_url: String
   game_ban_count: Int
   language: String
+  last_read_news_at: timestamptz
   last_sign_in_at: timestamptz
 
   """
@@ -47566,6 +51431,7 @@ input players_order_by {
   kills_aggregate: player_kills_aggregate_order_by
   kills_by_weapons_aggregate: player_kills_by_weapon_aggregate_order_by
   language: order_by
+  last_read_news_at: order_by
   last_sign_in_at: order_by
   lobby_players_aggregate: lobby_players_aggregate_order_by
   losses: order_by
@@ -47668,6 +51534,9 @@ enum players_select_column {
   language
 
   """column name"""
+  last_read_news_at
+
+  """column name"""
   last_sign_in_at
 
   """column name"""
@@ -47725,6 +51594,7 @@ input players_set_input {
   faceit_url: String
   game_ban_count: Int
   language: String
+  last_read_news_at: timestamptz
   last_sign_in_at: timestamptz
   name: String
   name_registered: Boolean
@@ -47935,6 +51805,7 @@ input players_stream_cursor_value_input {
   faceit_url: String
   game_ban_count: Int
   language: String
+  last_read_news_at: timestamptz
   last_sign_in_at: timestamptz
   name: String
   name_registered: Boolean
@@ -48051,6 +51922,9 @@ enum players_update_column {
 
   """column name"""
   language
+
+  """column name"""
+  last_read_news_at
 
   """column name"""
   last_sign_in_at
@@ -48709,6 +52583,135 @@ type query_root {
   db_backups_by_pk(id: uuid!): db_backups
 
   """
+  fetch data from the table: "draft_game_picks"
+  """
+  draft_game_picks(
+    """distinct select on columns"""
+    distinct_on: [draft_game_picks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_game_picks_order_by!]
+
+    """filter the rows returned"""
+    where: draft_game_picks_bool_exp
+  ): [draft_game_picks!]!
+
+  """
+  fetch aggregated fields from the table: "draft_game_picks"
+  """
+  draft_game_picks_aggregate(
+    """distinct select on columns"""
+    distinct_on: [draft_game_picks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_game_picks_order_by!]
+
+    """filter the rows returned"""
+    where: draft_game_picks_bool_exp
+  ): draft_game_picks_aggregate!
+
+  """
+  fetch data from the table: "draft_game_picks" using primary key columns
+  """
+  draft_game_picks_by_pk(id: uuid!): draft_game_picks
+
+  """
+  fetch data from the table: "draft_game_players"
+  """
+  draft_game_players(
+    """distinct select on columns"""
+    distinct_on: [draft_game_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_game_players_order_by!]
+
+    """filter the rows returned"""
+    where: draft_game_players_bool_exp
+  ): [draft_game_players!]!
+
+  """
+  fetch aggregated fields from the table: "draft_game_players"
+  """
+  draft_game_players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [draft_game_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_game_players_order_by!]
+
+    """filter the rows returned"""
+    where: draft_game_players_bool_exp
+  ): draft_game_players_aggregate!
+
+  """
+  fetch data from the table: "draft_game_players" using primary key columns
+  """
+  draft_game_players_by_pk(draft_game_id: uuid!, steam_id: bigint!): draft_game_players
+
+  """An array relationship"""
+  draft_games(
+    """distinct select on columns"""
+    distinct_on: [draft_games_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_games_order_by!]
+
+    """filter the rows returned"""
+    where: draft_games_bool_exp
+  ): [draft_games!]!
+
+  """An aggregate relationship"""
+  draft_games_aggregate(
+    """distinct select on columns"""
+    distinct_on: [draft_games_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_games_order_by!]
+
+    """filter the rows returned"""
+    where: draft_games_bool_exp
+  ): draft_games_aggregate!
+
+  """fetch data from the table: "draft_games" using primary key columns"""
+  draft_games_by_pk(id: uuid!): draft_games
+
+  """
   fetch data from the table: "e_check_in_settings"
   """
   e_check_in_settings(
@@ -48752,6 +52755,231 @@ type query_root {
   fetch data from the table: "e_check_in_settings" using primary key columns
   """
   e_check_in_settings_by_pk(value: String!): e_check_in_settings
+
+  """
+  fetch data from the table: "e_draft_game_captain_selection"
+  """
+  e_draft_game_captain_selection(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_captain_selection_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_captain_selection_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_captain_selection_bool_exp
+  ): [e_draft_game_captain_selection!]!
+
+  """
+  fetch aggregated fields from the table: "e_draft_game_captain_selection"
+  """
+  e_draft_game_captain_selection_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_captain_selection_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_captain_selection_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_captain_selection_bool_exp
+  ): e_draft_game_captain_selection_aggregate!
+
+  """
+  fetch data from the table: "e_draft_game_captain_selection" using primary key columns
+  """
+  e_draft_game_captain_selection_by_pk(value: String!): e_draft_game_captain_selection
+
+  """
+  fetch data from the table: "e_draft_game_draft_order"
+  """
+  e_draft_game_draft_order(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_draft_order_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_draft_order_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_draft_order_bool_exp
+  ): [e_draft_game_draft_order!]!
+
+  """
+  fetch aggregated fields from the table: "e_draft_game_draft_order"
+  """
+  e_draft_game_draft_order_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_draft_order_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_draft_order_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_draft_order_bool_exp
+  ): e_draft_game_draft_order_aggregate!
+
+  """
+  fetch data from the table: "e_draft_game_draft_order" using primary key columns
+  """
+  e_draft_game_draft_order_by_pk(value: String!): e_draft_game_draft_order
+
+  """
+  fetch data from the table: "e_draft_game_mode"
+  """
+  e_draft_game_mode(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_mode_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_mode_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_mode_bool_exp
+  ): [e_draft_game_mode!]!
+
+  """
+  fetch aggregated fields from the table: "e_draft_game_mode"
+  """
+  e_draft_game_mode_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_mode_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_mode_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_mode_bool_exp
+  ): e_draft_game_mode_aggregate!
+
+  """
+  fetch data from the table: "e_draft_game_mode" using primary key columns
+  """
+  e_draft_game_mode_by_pk(value: String!): e_draft_game_mode
+
+  """
+  fetch data from the table: "e_draft_game_player_status"
+  """
+  e_draft_game_player_status(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_player_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_player_status_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_player_status_bool_exp
+  ): [e_draft_game_player_status!]!
+
+  """
+  fetch aggregated fields from the table: "e_draft_game_player_status"
+  """
+  e_draft_game_player_status_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_player_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_player_status_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_player_status_bool_exp
+  ): e_draft_game_player_status_aggregate!
+
+  """
+  fetch data from the table: "e_draft_game_player_status" using primary key columns
+  """
+  e_draft_game_player_status_by_pk(value: String!): e_draft_game_player_status
+
+  """
+  fetch data from the table: "e_draft_game_status"
+  """
+  e_draft_game_status(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_status_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_status_bool_exp
+  ): [e_draft_game_status!]!
+
+  """
+  fetch aggregated fields from the table: "e_draft_game_status"
+  """
+  e_draft_game_status_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_status_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_status_bool_exp
+  ): e_draft_game_status_aggregate!
+
+  """
+  fetch data from the table: "e_draft_game_status" using primary key columns
+  """
+  e_draft_game_status_by_pk(value: String!): e_draft_game_status
 
   """
   fetch data from the table: "e_friend_status"
@@ -51114,6 +55342,59 @@ type query_root {
     """filter the rows returned"""
     where: my_friends_bool_exp
   ): my_friends_aggregate!
+
+  """
+  Fetch a single news post including draft content for editing. Caller role is verified against public.post_news_role.
+  """
+  newsPostAdmin(id: uuid!): NewsPost
+
+  """
+  List all news posts including drafts for the management area. Caller role is verified against public.post_news_role.
+  """
+  newsPostsAdmin: [NewsPost!]
+
+  """
+  fetch data from the table: "news_articles"
+  """
+  news_articles(
+    """distinct select on columns"""
+    distinct_on: [news_articles_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [news_articles_order_by!]
+
+    """filter the rows returned"""
+    where: news_articles_bool_exp
+  ): [news_articles!]!
+
+  """
+  fetch aggregated fields from the table: "news_articles"
+  """
+  news_articles_aggregate(
+    """distinct select on columns"""
+    distinct_on: [news_articles_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [news_articles_order_by!]
+
+    """filter the rows returned"""
+    where: news_articles_bool_exp
+  ): news_articles_aggregate!
+
+  """fetch data from the table: "news_articles" using primary key columns"""
+  news_articles_by_pk(id: uuid!): news_articles
 
   """An array relationship"""
   notifications(
@@ -56322,6 +60603,177 @@ type subscription_root {
   ): [db_backups!]!
 
   """
+  fetch data from the table: "draft_game_picks"
+  """
+  draft_game_picks(
+    """distinct select on columns"""
+    distinct_on: [draft_game_picks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_game_picks_order_by!]
+
+    """filter the rows returned"""
+    where: draft_game_picks_bool_exp
+  ): [draft_game_picks!]!
+
+  """
+  fetch aggregated fields from the table: "draft_game_picks"
+  """
+  draft_game_picks_aggregate(
+    """distinct select on columns"""
+    distinct_on: [draft_game_picks_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_game_picks_order_by!]
+
+    """filter the rows returned"""
+    where: draft_game_picks_bool_exp
+  ): draft_game_picks_aggregate!
+
+  """
+  fetch data from the table: "draft_game_picks" using primary key columns
+  """
+  draft_game_picks_by_pk(id: uuid!): draft_game_picks
+
+  """
+  fetch data from the table in a streaming manner: "draft_game_picks"
+  """
+  draft_game_picks_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [draft_game_picks_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: draft_game_picks_bool_exp
+  ): [draft_game_picks!]!
+
+  """
+  fetch data from the table: "draft_game_players"
+  """
+  draft_game_players(
+    """distinct select on columns"""
+    distinct_on: [draft_game_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_game_players_order_by!]
+
+    """filter the rows returned"""
+    where: draft_game_players_bool_exp
+  ): [draft_game_players!]!
+
+  """
+  fetch aggregated fields from the table: "draft_game_players"
+  """
+  draft_game_players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [draft_game_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_game_players_order_by!]
+
+    """filter the rows returned"""
+    where: draft_game_players_bool_exp
+  ): draft_game_players_aggregate!
+
+  """
+  fetch data from the table: "draft_game_players" using primary key columns
+  """
+  draft_game_players_by_pk(draft_game_id: uuid!, steam_id: bigint!): draft_game_players
+
+  """
+  fetch data from the table in a streaming manner: "draft_game_players"
+  """
+  draft_game_players_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [draft_game_players_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: draft_game_players_bool_exp
+  ): [draft_game_players!]!
+
+  """An array relationship"""
+  draft_games(
+    """distinct select on columns"""
+    distinct_on: [draft_games_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_games_order_by!]
+
+    """filter the rows returned"""
+    where: draft_games_bool_exp
+  ): [draft_games!]!
+
+  """An aggregate relationship"""
+  draft_games_aggregate(
+    """distinct select on columns"""
+    distinct_on: [draft_games_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_games_order_by!]
+
+    """filter the rows returned"""
+    where: draft_games_bool_exp
+  ): draft_games_aggregate!
+
+  """fetch data from the table: "draft_games" using primary key columns"""
+  draft_games_by_pk(id: uuid!): draft_games
+
+  """
+  fetch data from the table in a streaming manner: "draft_games"
+  """
+  draft_games_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [draft_games_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: draft_games_bool_exp
+  ): [draft_games!]!
+
+  """
   fetch data from the table: "e_check_in_settings"
   """
   e_check_in_settings(
@@ -56379,6 +60831,301 @@ type subscription_root {
     """filter the rows returned"""
     where: e_check_in_settings_bool_exp
   ): [e_check_in_settings!]!
+
+  """
+  fetch data from the table: "e_draft_game_captain_selection"
+  """
+  e_draft_game_captain_selection(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_captain_selection_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_captain_selection_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_captain_selection_bool_exp
+  ): [e_draft_game_captain_selection!]!
+
+  """
+  fetch aggregated fields from the table: "e_draft_game_captain_selection"
+  """
+  e_draft_game_captain_selection_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_captain_selection_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_captain_selection_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_captain_selection_bool_exp
+  ): e_draft_game_captain_selection_aggregate!
+
+  """
+  fetch data from the table: "e_draft_game_captain_selection" using primary key columns
+  """
+  e_draft_game_captain_selection_by_pk(value: String!): e_draft_game_captain_selection
+
+  """
+  fetch data from the table in a streaming manner: "e_draft_game_captain_selection"
+  """
+  e_draft_game_captain_selection_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_draft_game_captain_selection_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_draft_game_captain_selection_bool_exp
+  ): [e_draft_game_captain_selection!]!
+
+  """
+  fetch data from the table: "e_draft_game_draft_order"
+  """
+  e_draft_game_draft_order(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_draft_order_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_draft_order_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_draft_order_bool_exp
+  ): [e_draft_game_draft_order!]!
+
+  """
+  fetch aggregated fields from the table: "e_draft_game_draft_order"
+  """
+  e_draft_game_draft_order_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_draft_order_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_draft_order_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_draft_order_bool_exp
+  ): e_draft_game_draft_order_aggregate!
+
+  """
+  fetch data from the table: "e_draft_game_draft_order" using primary key columns
+  """
+  e_draft_game_draft_order_by_pk(value: String!): e_draft_game_draft_order
+
+  """
+  fetch data from the table in a streaming manner: "e_draft_game_draft_order"
+  """
+  e_draft_game_draft_order_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_draft_game_draft_order_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_draft_game_draft_order_bool_exp
+  ): [e_draft_game_draft_order!]!
+
+  """
+  fetch data from the table: "e_draft_game_mode"
+  """
+  e_draft_game_mode(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_mode_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_mode_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_mode_bool_exp
+  ): [e_draft_game_mode!]!
+
+  """
+  fetch aggregated fields from the table: "e_draft_game_mode"
+  """
+  e_draft_game_mode_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_mode_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_mode_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_mode_bool_exp
+  ): e_draft_game_mode_aggregate!
+
+  """
+  fetch data from the table: "e_draft_game_mode" using primary key columns
+  """
+  e_draft_game_mode_by_pk(value: String!): e_draft_game_mode
+
+  """
+  fetch data from the table in a streaming manner: "e_draft_game_mode"
+  """
+  e_draft_game_mode_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_draft_game_mode_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_draft_game_mode_bool_exp
+  ): [e_draft_game_mode!]!
+
+  """
+  fetch data from the table: "e_draft_game_player_status"
+  """
+  e_draft_game_player_status(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_player_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_player_status_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_player_status_bool_exp
+  ): [e_draft_game_player_status!]!
+
+  """
+  fetch aggregated fields from the table: "e_draft_game_player_status"
+  """
+  e_draft_game_player_status_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_player_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_player_status_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_player_status_bool_exp
+  ): e_draft_game_player_status_aggregate!
+
+  """
+  fetch data from the table: "e_draft_game_player_status" using primary key columns
+  """
+  e_draft_game_player_status_by_pk(value: String!): e_draft_game_player_status
+
+  """
+  fetch data from the table in a streaming manner: "e_draft_game_player_status"
+  """
+  e_draft_game_player_status_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_draft_game_player_status_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_draft_game_player_status_bool_exp
+  ): [e_draft_game_player_status!]!
+
+  """
+  fetch data from the table: "e_draft_game_status"
+  """
+  e_draft_game_status(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_status_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_status_bool_exp
+  ): [e_draft_game_status!]!
+
+  """
+  fetch aggregated fields from the table: "e_draft_game_status"
+  """
+  e_draft_game_status_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_draft_game_status_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_draft_game_status_order_by!]
+
+    """filter the rows returned"""
+    where: e_draft_game_status_bool_exp
+  ): e_draft_game_status_aggregate!
+
+  """
+  fetch data from the table: "e_draft_game_status" using primary key columns
+  """
+  e_draft_game_status_by_pk(value: String!): e_draft_game_status
+
+  """
+  fetch data from the table in a streaming manner: "e_draft_game_status"
+  """
+  e_draft_game_status_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_draft_game_status_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_draft_game_status_bool_exp
+  ): [e_draft_game_status!]!
 
   """
   fetch data from the table: "e_friend_status"
@@ -59400,6 +64147,63 @@ type subscription_root {
     """filter the rows returned"""
     where: my_friends_bool_exp
   ): [my_friends!]!
+
+  """
+  fetch data from the table: "news_articles"
+  """
+  news_articles(
+    """distinct select on columns"""
+    distinct_on: [news_articles_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [news_articles_order_by!]
+
+    """filter the rows returned"""
+    where: news_articles_bool_exp
+  ): [news_articles!]!
+
+  """
+  fetch aggregated fields from the table: "news_articles"
+  """
+  news_articles_aggregate(
+    """distinct select on columns"""
+    distinct_on: [news_articles_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [news_articles_order_by!]
+
+    """filter the rows returned"""
+    where: news_articles_bool_exp
+  ): news_articles_aggregate!
+
+  """fetch data from the table: "news_articles" using primary key columns"""
+  news_articles_by_pk(id: uuid!): news_articles
+
+  """
+  fetch data from the table in a streaming manner: "news_articles"
+  """
+  news_articles_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [news_articles_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: news_articles_bool_exp
+  ): [news_articles!]!
 
   """An array relationship"""
   notifications(

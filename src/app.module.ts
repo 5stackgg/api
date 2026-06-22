@@ -26,6 +26,7 @@ import { SocketsModule } from "./sockets/sockets.module";
 import { TailscaleModule } from "./tailscale/tailscale.module";
 import { GameServerNodeModule } from "./game-server-node/game-server-node.module";
 import { MatchMaking } from "./matchmaking/matchmaking.module";
+import { DraftGamesModule } from "./draft-games/draft-games.module";
 import { SystemModule } from "./system/system.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { ChatModule } from "./chat/chat.module";
@@ -50,6 +51,7 @@ import { FixturesModule } from "./fixtures/fixtures.module";
 import { TournamentsModule } from "./tournaments/tournaments.module";
 import { FaceitModule } from "./faceit/faceit.module";
 import { SteamMatchHistoryModule } from "./steam-match-history/steam-match-history.module";
+import { NewsModule } from "./news/news.module";
 
 @Module({
   imports: [
@@ -61,6 +63,7 @@ import { SteamMatchHistoryModule } from "./steam-match-history/steam-match-histo
     TypeSenseModule,
     MatchesModule,
     MatchMaking,
+    DraftGamesModule,
     EncryptionModule,
     CacheModule,
     S3Module,
@@ -140,6 +143,7 @@ import { SteamMatchHistoryModule } from "./steam-match-history/steam-match-histo
     TournamentsModule,
     FaceitModule,
     SteamMatchHistoryModule,
+    NewsModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],

@@ -454,6 +454,39 @@ type Mutation {
 }
 
 type Mutation {
+  saveNewsPost(
+    id: uuid
+    title: String!
+    teaser: String
+    cover_image_url: String
+    content_markdown: String!
+  ): NewsPost
+}
+
+type Mutation {
+  setNewsPostStatus(
+    id: uuid!
+    status: String!
+  ): NewsPost
+}
+
+type Mutation {
+  deleteNewsPost(
+    id: uuid!
+  ): SuccessOutput
+}
+
+type Query {
+  newsPostsAdmin: [NewsPost!]
+}
+
+type Query {
+  newsPostAdmin(
+    id: uuid!
+  ): NewsPost
+}
+
+type Mutation {
   orphanedDemosScanResult: OrphanScanResultOutput
 }
 
@@ -879,6 +912,20 @@ type SuccessOutput {
   success: Boolean!
 }
 
+type NewsPost {
+  id: uuid!
+  slug: String!
+  title: String!
+  teaser: String
+  cover_image_url: String
+  content_markdown: String!
+  status: String!
+  author_steam_id: String
+  published_at: String
+  created_at: String!
+  updated_at: String!
+}
+
 type ScanStartedOutput {
   success: Boolean!
   scanning: Boolean!
@@ -1272,5 +1319,36 @@ type TableSizeInfo {
   n_live_tup: Int!
   n_dead_tup: Int!
   estimated_dead_tuple_bytes: Float!
+}
+
+type CreateDraftGameOutput {
+  draftGameId: uuid!
+}
+
+type Mutation {
+  createDraftGame(
+    settings: jsonb!
+  ): CreateDraftGameOutput
+}
+
+type Mutation {
+  updateDraftGame(
+    draftGameId: uuid!
+    settings: jsonb!
+  ): SuccessOutput
+}
+
+type Mutation {
+  joinDraftGame(
+    draftGameId: uuid!
+    inviteCode: String
+  ): SuccessOutput
+}
+
+type Mutation {
+  joinDraftGameAsParty(
+    draftGameId: uuid!
+    inviteCode: String
+  ): SuccessOutput
 }
 

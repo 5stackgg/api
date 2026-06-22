@@ -1,0 +1,12 @@
+table:
+  name: e_draft_game_captain_selection
+  schema: public
+is_enum: true
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""

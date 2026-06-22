@@ -64,6 +64,13 @@ array_relationships:
         remote_table:
           name: v_player_elo
           schema: public
+  - name: draft_games
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: draft_games
+          schema: public
   - name: invites
     using:
       foreign_key_constraint_on:

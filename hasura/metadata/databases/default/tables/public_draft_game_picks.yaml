@@ -1,0 +1,80 @@
+table:
+  name: draft_game_picks
+  schema: public
+object_relationships:
+  - name: draft_game
+    using:
+      foreign_key_constraint_on: draft_game_id
+  - name: captain
+    using:
+      foreign_key_constraint_on: captain_steam_id
+  - name: picked
+    using:
+      foreign_key_constraint_on: picked_steam_id
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - draft_game_id
+        - captain_steam_id
+        - picked_steam_id
+        - lineup
+        - auto_picked
+        - created_at
+      filter:
+        draft_game:
+          _or:
+            - access:
+                _eq: Open
+            - host_steam_id:
+                _eq: X-Hasura-User-Id
+            - players:
+                steam_id:
+                  _eq: X-Hasura-User-Id
+            - _and:
+                - access:
+                    _eq: Friends
+                - players:
+                    player:
+                      friends:
+                        steam_id:
+                          _eq: X-Hasura-User-Id
+    comment: ""
+  - role: guest
+    permission:
+      columns:
+        - id
+        - draft_game_id
+        - captain_steam_id
+        - picked_steam_id
+        - lineup
+        - auto_picked
+        - created_at
+      filter:
+        draft_game:
+          access:
+            _eq: Open
+    comment: ""
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        draft_game:
+          status:
+            _eq: Drafting
+      columns:
+        - draft_game_id
+        - picked_steam_id
+    comment: ""
+event_triggers:
+  - name: draft_game_pick_events
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+    retry_conf:
+      interval_sec: 10
+      num_retries: 3
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

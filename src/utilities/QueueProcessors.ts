@@ -24,6 +24,7 @@ type Modules =
   | "Notifications"
   | "TypeSense"
   | "Matchmaking"
+  | "DraftGames"
   | "Telemetry"
   | "DedicatedServers"
   | "SteamMatchHistory"

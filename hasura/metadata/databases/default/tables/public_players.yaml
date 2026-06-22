@@ -447,6 +447,7 @@ select_permissions:
         - faceit_updated_at
         - faceit_url
         - language
+        - last_read_news_at
         - last_sign_in_at
         - name
         - name_registered
@@ -487,6 +488,7 @@ select_permissions:
       columns:
         - avatar_url
         - country
+        - last_read_news_at
         - custom_avatar_url
         - faceit_elo
         - faceit_nickname
@@ -538,6 +540,7 @@ update_permissions:
         - country
         - discord_id
         - language
+        - last_read_news_at
         - name
         - profile_url
         - role
@@ -550,6 +553,7 @@ update_permissions:
       columns:
         - country
         - language
+        - last_read_news_at
         - show_match_ready_modal
       filter:
         steam_id:

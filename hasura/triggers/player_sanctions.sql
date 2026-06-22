@@ -3,6 +3,7 @@ CREATE OR REPLACE FUNCTION public.tau_player_sanctions() RETURNS TRIGGER
     AS $$
 BEGIN
     IF NEW.type = 'ban'
+       AND NEW.sanctioned_by_steam_id IS NULL
        AND OLD.deleted_at IS NULL
        AND NEW.deleted_at IS NOT NULL THEN
         UPDATE public.players

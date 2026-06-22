@@ -1,4 +1,36 @@
 actions:
+  - name: createDraftGame
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: user
+    comment: createDraftGame
+  - name: updateDraftGame
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: user
+    comment: updateDraftGame
+  - name: joinDraftGame
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: user
+    comment: joinDraftGame
+  - name: joinDraftGameAsParty
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: user
+    comment: joinDraftGameAsParty
   - name: PreviewTournamentMatchReset
     definition:
       kind: synchronous
@@ -598,6 +630,76 @@ actions:
     permissions:
       - role: administrator
     comment: Scan S3 for objects not referenced in the database (admin only). Runs in the background; results land in the logs and orphanedDemosScanResult.
+  - name: saveNewsPost
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Create or update a first-party news post. Caller role is verified against public.post_news_role.
+  - name: setNewsPostStatus
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Publish or unpublish a news post. Caller role is verified against public.post_news_role.
+  - name: deleteNewsPost
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Delete a news post. Caller role is verified against public.post_news_role.
+  - name: newsPostsAdmin
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: List all news posts including drafts for the management area. Caller role is verified against public.post_news_role.
+  - name: newsPostAdmin
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Fetch a single news post including draft content for editing. Caller role is verified against public.post_news_role.
   - name: orphanedDemosScanResult
     definition:
       kind: synchronous
@@ -1004,4 +1106,5 @@ custom_types:
     - name: StorageStats
     - name: StorageSummary
     - name: TableSizeInfo
+    - name: NewsPost
   scalars: []

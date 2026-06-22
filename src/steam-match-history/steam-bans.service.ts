@@ -129,9 +129,7 @@ export class SteamBansService {
     await this.storeBans(bans);
 
     await this.expireLiftedAutoBans(
-      bans
-        .filter((ban) => ban.NumberOfVACBans === 0)
-        .map((ban) => ban.SteamId),
+      bans.filter((ban) => ban.NumberOfVACBans === 0).map((ban) => ban.SteamId),
     );
 
     const flagged = bans.filter((ban) => ban.NumberOfVACBans > 0);
@@ -321,15 +319,18 @@ export class SteamBansService {
 
     await this.postgres.query(
       `UPDATE public.players AS p
-          SET vac_banned = v.vac_banned
-                AND NOT EXISTS (
+          SET vac_banned = CASE
+                WHEN EXISTS (
                   SELECT 1
                     FROM public.player_sanctions ps
                    WHERE ps.player_steam_id = p.steam_id
                      AND ps.type = 'ban'
                      AND ps.sanctioned_by_steam_id IS NULL
                      AND ps.deleted_at IS NOT NULL
-                ),
+                     AND ps.deleted_at::date >= (now() - (v.days_since_last_ban || ' days')::interval)::date
+                ) THEN p.vac_banned
+                ELSE v.vac_banned
+              END,
               vac_ban_count = v.vac_ban_count,
               game_ban_count = v.game_ban_count,
               days_since_last_ban = v.days_since_last_ban,
@@ -348,12 +349,14 @@ export class SteamBansService {
 
   private async applyAutoBans(bans: SteamBan[]): Promise<void> {
     const flaggedIds = bans.map((ban) => ban.SteamId);
+    const flaggedDays = bans.map((ban) => ban.DaysSinceLastBan ?? 0);
 
     const needsBan = await this.postgres.query<Array<{ steam_id: string }>>(
       `SELECT p.steam_id::text AS steam_id
          FROM public.players p
-        WHERE p.steam_id = ANY($1::bigint[])
-          AND p.role <> 'administrator'
+         JOIN UNNEST($1::bigint[], $2::int[]) AS f(steam_id, days_since_last_ban)
+           ON p.steam_id = f.steam_id
+        WHERE p.role <> 'administrator'
           AND NOT EXISTS (
             SELECT 1
               FROM public.player_sanctions ps
@@ -369,8 +372,9 @@ export class SteamBansService {
                AND ps.type = 'ban'
                AND ps.sanctioned_by_steam_id IS NULL
                AND ps.deleted_at IS NOT NULL
+               AND ps.deleted_at::date >= (now() - (f.days_since_last_ban || ' days')::interval)::date
           )`,
-      [flaggedIds],
+      [flaggedIds, flaggedDays],
     );
 
     if (needsBan.length === 0) {
@@ -381,9 +385,7 @@ export class SteamBansService {
     const ids = needsBan.map((row) => row.steam_id);
     const reasons = ids.map((id) => SteamBansService.banReason(byId.get(id)));
 
-    const reactivated = await this.postgres.query<
-      Array<{ steam_id: string }>
-    >(
+    const reactivated = await this.postgres.query<Array<{ steam_id: string }>>(
       `UPDATE public.player_sanctions ps
           SET remove_sanction_date = NULL, reason = v.reason
          FROM UNNEST($1::bigint[], $2::text[]) AS v(steam_id, reason)

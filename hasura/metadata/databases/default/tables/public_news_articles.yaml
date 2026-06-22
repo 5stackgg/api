@@ -1,0 +1,160 @@
+table:
+  name: news_articles
+  schema: public
+object_relationships:
+  - name: author
+    using:
+      foreign_key_constraint_on: author_steam_id
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - teaser
+        - cover_image_url
+        - content_markdown
+        - status
+        - author_steam_id
+        - published_at
+        - created_at
+        - updated_at
+      filter:
+        status:
+          _eq: published
+      allow_aggregations: true
+    comment: ""
+  - role: guest
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - teaser
+        - cover_image_url
+        - content_markdown
+        - status
+        - author_steam_id
+        - published_at
+        - created_at
+        - updated_at
+      filter:
+        status:
+          _eq: published
+      allow_aggregations: true
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - teaser
+        - cover_image_url
+        - content_markdown
+        - status
+        - author_steam_id
+        - published_at
+        - created_at
+        - updated_at
+      filter:
+        status:
+          _eq: published
+      allow_aggregations: true
+    comment: ""
+  - role: moderator
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - teaser
+        - cover_image_url
+        - content_markdown
+        - status
+        - author_steam_id
+        - published_at
+        - created_at
+        - updated_at
+      filter:
+        status:
+          _eq: published
+      allow_aggregations: true
+    comment: ""
+  - role: streamer
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - teaser
+        - cover_image_url
+        - content_markdown
+        - status
+        - author_steam_id
+        - published_at
+        - created_at
+        - updated_at
+      filter:
+        status:
+          _eq: published
+      allow_aggregations: true
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - teaser
+        - cover_image_url
+        - content_markdown
+        - status
+        - author_steam_id
+        - published_at
+        - created_at
+        - updated_at
+      filter:
+        status:
+          _eq: published
+      allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - teaser
+        - cover_image_url
+        - content_markdown
+        - status
+        - author_steam_id
+        - published_at
+        - created_at
+        - updated_at
+      filter:
+        status:
+          _eq: published
+      allow_aggregations: true
+    comment: ""
+  - role: verified_user
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - teaser
+        - cover_image_url
+        - content_markdown
+        - status
+        - author_steam_id
+        - published_at
+        - created_at
+        - updated_at
+      filter:
+        status:
+          _eq: published
+      allow_aggregations: true
+    comment: ""
