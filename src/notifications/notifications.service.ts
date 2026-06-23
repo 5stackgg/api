@@ -18,6 +18,20 @@ import { NotificationsQueues } from "./enums/NotificationsQueues";
 export class NotificationsService {
   private readonly appConfig: AppConfig;
 
+  // Notification types that should only ever appear in-app (never Discord).
+  static readonly IN_APP_ONLY_TYPES = new Set<string>([
+    "ScrimRequestReceived",
+    "ScrimRequestCountered",
+    "ScrimRequestAccepted",
+    "ScrimRequestDeclined",
+    "ScrimRequestExpired",
+    "ScrimMatchScheduled",
+    "ScrimMatchCanceled",
+    "ScrimTimeChanged",
+    "ScrimAlertMatch",
+    "FormTeamSuggestion",
+  ]);
+
   constructor(
     private readonly hasura: HasuraService,
     private readonly postgres: PostgresService,
@@ -322,6 +336,7 @@ export class NotificationsService {
       role: e_player_roles_enum;
       entity_id?: string;
       steamIds: Array<string>;
+      deletable?: boolean;
     },
     actions?: Array<{
       label: string;
@@ -348,6 +363,9 @@ export class NotificationsService {
               steam_id,
               entity_id: notification.entity_id,
               actions,
+              ...(notification.deletable === false
+                ? { deletable: false }
+                : {}),
             })),
           },
           affected_rows: true,
@@ -355,8 +373,9 @@ export class NotificationsService {
       });
     }
 
+    // Scrim finder notifications stay in-app only — no Discord pings.
     const webhook = await this.getSettingValue("discord_support_webhook");
-    if (webhook) {
+    if (webhook && !NotificationsService.IN_APP_ONLY_TYPES.has(type)) {
       await this.postDiscord(webhook, undefined, {
         title: notification.title,
         message: notification.message,

@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS public.team_scrim_settings (
     map_ids uuid[] NOT NULL DEFAULT '{}',
     elo_min integer,
     elo_max integer,
+    allow_outside_availability boolean NOT NULL DEFAULT false,
     notes text,
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now()
@@ -59,6 +60,8 @@ CREATE TABLE IF NOT EXISTS public.team_scrim_requests (
     match_id uuid REFERENCES public.matches (id) ON UPDATE cascade ON DELETE SET NULL,
     expires_at timestamptz NOT NULL,
     auto_generated boolean NOT NULL DEFAULT false,
+    canceled_late boolean NOT NULL DEFAULT false,
+    canceled_by_team_id uuid REFERENCES public.teams (id) ON DELETE SET NULL,
     created_at timestamptz NOT NULL DEFAULT now(),
     responded_at timestamptz
 );
@@ -70,7 +73,10 @@ CREATE INDEX IF NOT EXISTS idx_team_scrim_requests_from_status
 CREATE INDEX IF NOT EXISTS idx_team_scrim_requests_awaiting_status
   ON public.team_scrim_requests (awaiting_team_id, status);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_scrim_req_open
-  ON public.team_scrim_requests (from_team_id, to_team_id)
+  ON public.team_scrim_requests (
+    LEAST(from_team_id, to_team_id),
+    GREATEST(from_team_id, to_team_id)
+  )
   WHERE status IN ('Pending', 'Countered');
 
 CREATE TABLE IF NOT EXISTS public.team_scrim_request_proposals (

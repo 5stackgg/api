@@ -30,7 +30,7 @@ export class MatchScrims extends WorkerHost {
   }
 
   async process(_job: Job): Promise<void> {
-    await this.expireStaleRequests();
+    await this.scrims.expireStaleRequests();
 
     if (!(await this.scrims.isFinderEnabled())) {
       return;
@@ -38,15 +38,6 @@ export class MatchScrims extends WorkerHost {
 
     await this.scrims.runScrimAlerts();
     await this.matchOpenPostings();
-  }
-
-  private async expireStaleRequests(): Promise<void> {
-    await this.postgres.query(
-      `UPDATE team_scrim_requests
-          SET status = 'Expired', responded_at = now()
-        WHERE status IN ('Pending', 'Countered')
-          AND expires_at < now()`,
-    );
   }
 
   private async matchOpenPostings(): Promise<void> {

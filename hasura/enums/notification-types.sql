@@ -12,7 +12,10 @@ INSERT INTO e_notification_types ("value", "description") VALUES
     ('ScrimRequestCountered', 'A team proposed a different scrim time'),
     ('ScrimRequestAccepted', 'Your scrim request was accepted'),
     ('ScrimRequestDeclined', 'Your scrim request was declined'),
+    ('ScrimRequestExpired', 'A scrim request expired without a response'),
     ('ScrimMatchScheduled', 'A scrim match has been scheduled'),
+    ('ScrimMatchCanceled', 'A scheduled scrim match was canceled'),
+    ('ScrimTimeChanged', 'A scheduled scrim time changed'),
     ('ScrimAlertMatch', 'A team matching your scrim alert is available'),
     ('FormTeamSuggestion', 'You frequently play with these players')
 ON CONFLICT("value") DO UPDATE

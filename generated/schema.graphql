@@ -7733,6 +7733,9 @@ enum e_notification_types_enum {
   """A team matching your scrim alert is available"""
   ScrimAlertMatch
 
+  """A scheduled scrim match was canceled"""
+  ScrimMatchCanceled
+
   """A scrim match has been scheduled"""
   ScrimMatchScheduled
 
@@ -7745,8 +7748,14 @@ enum e_notification_types_enum {
   """Your scrim request was declined"""
   ScrimRequestDeclined
 
+  """A scrim request expired without a response"""
+  ScrimRequestExpired
+
   """A team requested to scrim yours"""
   ScrimRequestReceived
+
+  """A scheduled scrim time changed"""
+  ScrimTimeChanged
 
   """Storage Scan"""
   StorageScan
@@ -71753,6 +71762,8 @@ type team_scrim_requests {
   """An object relationship"""
   awaiting_team: teams!
   awaiting_team_id: uuid!
+  canceled_by_team_id: uuid
+  canceled_late: Boolean!
   created_at: timestamptz!
   expires_at: timestamptz!
 
@@ -71919,6 +71930,8 @@ input team_scrim_requests_bool_exp {
   auto_generated: Boolean_comparison_exp
   awaiting_team: teams_bool_exp
   awaiting_team_id: uuid_comparison_exp
+  canceled_by_team_id: uuid_comparison_exp
+  canceled_late: Boolean_comparison_exp
   created_at: timestamptz_comparison_exp
   expires_at: timestamptz_comparison_exp
   from_team: teams_bool_exp
@@ -71949,9 +71962,7 @@ enum team_scrim_requests_constraint {
   """
   team_scrim_requests_pkey
 
-  """
-  unique or primary key constraint on columns "to_team_id", "from_team_id"
-  """
+  """unique or primary key constraint on columns """
   uq_scrim_req_open
 }
 
@@ -71969,6 +71980,8 @@ input team_scrim_requests_insert_input {
   auto_generated: Boolean
   awaiting_team: teams_obj_rel_insert_input
   awaiting_team_id: uuid
+  canceled_by_team_id: uuid
+  canceled_late: Boolean
   created_at: timestamptz
   expires_at: timestamptz
   from_team: teams_obj_rel_insert_input
@@ -71992,6 +72005,7 @@ input team_scrim_requests_insert_input {
 """aggregate max on columns"""
 type team_scrim_requests_max_fields {
   awaiting_team_id: uuid
+  canceled_by_team_id: uuid
   created_at: timestamptz
   expires_at: timestamptz
   from_team_id: uuid
@@ -72010,6 +72024,7 @@ order by max() on columns of table "team_scrim_requests"
 """
 input team_scrim_requests_max_order_by {
   awaiting_team_id: order_by
+  canceled_by_team_id: order_by
   created_at: order_by
   expires_at: order_by
   from_team_id: order_by
@@ -72026,6 +72041,7 @@ input team_scrim_requests_max_order_by {
 """aggregate min on columns"""
 type team_scrim_requests_min_fields {
   awaiting_team_id: uuid
+  canceled_by_team_id: uuid
   created_at: timestamptz
   expires_at: timestamptz
   from_team_id: uuid
@@ -72044,6 +72060,7 @@ order by min() on columns of table "team_scrim_requests"
 """
 input team_scrim_requests_min_order_by {
   awaiting_team_id: order_by
+  canceled_by_team_id: order_by
   created_at: order_by
   expires_at: order_by
   from_team_id: order_by
@@ -72092,6 +72109,8 @@ input team_scrim_requests_order_by {
   auto_generated: order_by
   awaiting_team: teams_order_by
   awaiting_team_id: order_by
+  canceled_by_team_id: order_by
+  canceled_late: order_by
   created_at: order_by
   expires_at: order_by
   from_team: teams_order_by
@@ -72126,6 +72145,12 @@ enum team_scrim_requests_select_column {
 
   """column name"""
   awaiting_team_id
+
+  """column name"""
+  canceled_by_team_id
+
+  """column name"""
+  canceled_late
 
   """column name"""
   created_at
@@ -72170,6 +72195,9 @@ select "team_scrim_requests_aggregate_bool_exp_bool_and_arguments_columns" colum
 enum team_scrim_requests_select_column_team_scrim_requests_aggregate_bool_exp_bool_and_arguments_columns {
   """column name"""
   auto_generated
+
+  """column name"""
+  canceled_late
 }
 
 """
@@ -72178,6 +72206,9 @@ select "team_scrim_requests_aggregate_bool_exp_bool_or_arguments_columns" column
 enum team_scrim_requests_select_column_team_scrim_requests_aggregate_bool_exp_bool_or_arguments_columns {
   """column name"""
   auto_generated
+
+  """column name"""
+  canceled_late
 }
 
 """
@@ -72186,6 +72217,8 @@ input type for updating data in table "team_scrim_requests"
 input team_scrim_requests_set_input {
   auto_generated: Boolean
   awaiting_team_id: uuid
+  canceled_by_team_id: uuid
+  canceled_late: Boolean
   created_at: timestamptz
   expires_at: timestamptz
   from_team_id: uuid
@@ -72251,6 +72284,8 @@ input team_scrim_requests_stream_cursor_input {
 input team_scrim_requests_stream_cursor_value_input {
   auto_generated: Boolean
   awaiting_team_id: uuid
+  canceled_by_team_id: uuid
+  canceled_late: Boolean
   created_at: timestamptz
   expires_at: timestamptz
   from_team_id: uuid
@@ -72286,6 +72321,12 @@ enum team_scrim_requests_update_column {
 
   """column name"""
   awaiting_team_id
+
+  """column name"""
+  canceled_by_team_id
+
+  """column name"""
+  canceled_late
 
   """column name"""
   created_at
@@ -72375,6 +72416,7 @@ input team_scrim_requests_variance_order_by {
 columns and relationships of "team_scrim_settings"
 """
 type team_scrim_settings {
+  allow_outside_availability: Boolean!
   created_at: timestamptz!
   elo_max: Int
   elo_min: Int
@@ -72428,6 +72470,7 @@ input team_scrim_settings_bool_exp {
   _and: [team_scrim_settings_bool_exp!]
   _not: team_scrim_settings_bool_exp
   _or: [team_scrim_settings_bool_exp!]
+  allow_outside_availability: Boolean_comparison_exp
   created_at: timestamptz_comparison_exp
   elo_max: Int_comparison_exp
   elo_min: Int_comparison_exp
@@ -72468,6 +72511,7 @@ input team_scrim_settings_inc_input {
 input type for inserting data into table "team_scrim_settings"
 """
 input team_scrim_settings_insert_input {
+  allow_outside_availability: Boolean
   created_at: timestamptz
   elo_max: Int
   elo_min: Int
@@ -72539,6 +72583,7 @@ input team_scrim_settings_on_conflict {
 
 """Ordering options when selecting data from "team_scrim_settings"."""
 input team_scrim_settings_order_by {
+  allow_outside_availability: order_by
   created_at: order_by
   elo_max: order_by
   elo_min: order_by
@@ -72561,6 +72606,9 @@ input team_scrim_settings_pk_columns_input {
 select columns of table "team_scrim_settings"
 """
 enum team_scrim_settings_select_column {
+  """column name"""
+  allow_outside_availability
+
   """column name"""
   created_at
 
@@ -72596,6 +72644,7 @@ enum team_scrim_settings_select_column {
 input type for updating data in table "team_scrim_settings"
 """
 input team_scrim_settings_set_input {
+  allow_outside_availability: Boolean
   created_at: timestamptz
   elo_max: Int
   elo_min: Int
@@ -72639,6 +72688,7 @@ input team_scrim_settings_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input team_scrim_settings_stream_cursor_value_input {
+  allow_outside_availability: Boolean
   created_at: timestamptz
   elo_max: Int
   elo_min: Int
@@ -72661,6 +72711,9 @@ type team_scrim_settings_sum_fields {
 update columns of table "team_scrim_settings"
 """
 enum team_scrim_settings_update_column {
+  """column name"""
+  allow_outside_availability
+
   """column name"""
   created_at
 
@@ -86890,7 +86943,7 @@ type v_team_ranks_variance_fields {
 columns and relationships of "v_team_reputation"
 """
 type v_team_reputation {
-  late_cancels: Int
+  late_cancels: bigint
   no_shows: bigint
   reliability_pct: numeric
   scrims_completed: bigint
@@ -86940,7 +86993,7 @@ input v_team_reputation_bool_exp {
   _and: [v_team_reputation_bool_exp!]
   _not: v_team_reputation_bool_exp
   _or: [v_team_reputation_bool_exp!]
-  late_cancels: Int_comparison_exp
+  late_cancels: bigint_comparison_exp
   no_shows: bigint_comparison_exp
   reliability_pct: numeric_comparison_exp
   scrims_completed: bigint_comparison_exp
@@ -86952,7 +87005,7 @@ input v_team_reputation_bool_exp {
 input type for inserting data into table "v_team_reputation"
 """
 input v_team_reputation_insert_input {
-  late_cancels: Int
+  late_cancels: bigint
   no_shows: bigint
   reliability_pct: numeric
   scrims_completed: bigint
@@ -86962,7 +87015,7 @@ input v_team_reputation_insert_input {
 
 """aggregate max on columns"""
 type v_team_reputation_max_fields {
-  late_cancels: Int
+  late_cancels: bigint
   no_shows: bigint
   reliability_pct: numeric
   scrims_completed: bigint
@@ -86971,7 +87024,7 @@ type v_team_reputation_max_fields {
 
 """aggregate min on columns"""
 type v_team_reputation_min_fields {
-  late_cancels: Int
+  late_cancels: bigint
   no_shows: bigint
   reliability_pct: numeric
   scrims_completed: bigint
@@ -87052,7 +87105,7 @@ input v_team_reputation_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input v_team_reputation_stream_cursor_value_input {
-  late_cancels: Int
+  late_cancels: bigint
   no_shows: bigint
   reliability_pct: numeric
   scrims_completed: bigint
@@ -87061,7 +87114,7 @@ input v_team_reputation_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type v_team_reputation_sum_fields {
-  late_cancels: Int
+  late_cancels: bigint
   no_shows: bigint
   reliability_pct: numeric
   scrims_completed: bigint

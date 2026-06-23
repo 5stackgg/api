@@ -8,22 +8,30 @@ WITH scrim_matches AS (
         m.lineup_1_id,
         m.lineup_2_id,
         r.from_team_id,
-        r.to_team_id
+        r.to_team_id,
+        r.canceled_late,
+        r.canceled_by_team_id
     FROM team_scrim_requests r
-    JOIN matches m ON m.id = r.match_id
-    WHERE r.status = 'Matched'
+    LEFT JOIN matches m ON m.id = r.match_id
+    WHERE r.status = 'Matched' OR r.canceled_late = true
 ),
 per_team AS (
-    SELECT from_team_id AS team_id, match_id, status, lineup_1_id, lineup_2_id
+    SELECT
+        from_team_id AS team_id, match_id, status, lineup_1_id, lineup_2_id,
+        canceled_late, canceled_by_team_id
       FROM scrim_matches
     UNION ALL
-    SELECT to_team_id AS team_id, match_id, status, lineup_1_id, lineup_2_id
+    SELECT
+        to_team_id AS team_id, match_id, status, lineup_1_id, lineup_2_id,
+        canceled_late, canceled_by_team_id
       FROM scrim_matches
 ),
 classified AS (
     SELECT
         pt.team_id,
         pt.status,
+        pt.canceled_late,
+        (pt.canceled_late AND pt.canceled_by_team_id = pt.team_id) AS bailed,
         (
             SELECT count(*)
               FROM match_lineup_players mlp
@@ -39,14 +47,18 @@ SELECT
     count(*) FILTER (
         WHERE status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered')
     ) AS scrims_completed,
+    -- A no-show is a canceled scrim the team never checked into, that wasn't a
+    -- deliberate late cancel (those are tracked separately, only against the
+    -- team that bailed).
     count(*) FILTER (
-        WHERE status = 'Canceled' AND checked_in_count = 0
+        WHERE status = 'Canceled' AND checked_in_count = 0 AND NOT canceled_late
     ) AS no_shows,
-    0 AS late_cancels,
+    count(*) FILTER (WHERE bailed) AS late_cancels,
     CASE
         WHEN count(*) FILTER (
             WHERE status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered')
-               OR (status = 'Canceled' AND checked_in_count = 0)
+               OR (status = 'Canceled' AND checked_in_count = 0 AND NOT canceled_late)
+               OR bailed
         ) = 0 THEN NULL
         ELSE round(
             100.0 * count(*) FILTER (
@@ -54,7 +66,8 @@ SELECT
             )
             / count(*) FILTER (
                 WHERE status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered')
-                   OR (status = 'Canceled' AND checked_in_count = 0)
+                   OR (status = 'Canceled' AND checked_in_count = 0 AND NOT canceled_late)
+                   OR bailed
             ),
             0
         )

@@ -26,6 +26,7 @@ insert_permissions:
         - map_ids
         - elo_min
         - elo_max
+        - allow_outside_availability
         - notes
     comment: ""
 select_permissions:
@@ -39,6 +40,7 @@ select_permissions:
         - map_ids
         - elo_min
         - elo_max
+        - allow_outside_availability
         - notes
         - created_at
         - updated_at
@@ -57,6 +59,7 @@ select_permissions:
         - map_ids
         - elo_min
         - elo_max
+        - allow_outside_availability
         - notes
         - created_at
         - updated_at
@@ -85,6 +88,7 @@ update_permissions:
         - map_ids
         - elo_min
         - elo_max
+        - allow_outside_availability
         - notes
       filter:
         team:

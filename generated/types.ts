@@ -78649,6 +78649,12 @@ export default {
             "awaiting_team_id": [
                 3808
             ],
+            "canceled_by_team_id": [
+                3808
+            ],
+            "canceled_late": [
+                3
+            ],
             "created_at": [
                 3411
             ],
@@ -78955,6 +78961,12 @@ export default {
             "awaiting_team_id": [
                 3810
             ],
+            "canceled_by_team_id": [
+                3810
+            ],
+            "canceled_late": [
+                4
+            ],
             "created_at": [
                 3412
             ],
@@ -79035,6 +79047,12 @@ export default {
             "awaiting_team_id": [
                 3808
             ],
+            "canceled_by_team_id": [
+                3808
+            ],
+            "canceled_late": [
+                3
+            ],
             "created_at": [
                 3411
             ],
@@ -79097,6 +79115,9 @@ export default {
             "awaiting_team_id": [
                 3808
             ],
+            "canceled_by_team_id": [
+                3808
+            ],
             "created_at": [
                 3411
             ],
@@ -79136,6 +79157,9 @@ export default {
         },
         "team_scrim_requests_max_order_by": {
             "awaiting_team_id": [
+                2028
+            ],
+            "canceled_by_team_id": [
                 2028
             ],
             "created_at": [
@@ -79179,6 +79203,9 @@ export default {
             "awaiting_team_id": [
                 3808
             ],
+            "canceled_by_team_id": [
+                3808
+            ],
             "created_at": [
                 3411
             ],
@@ -79218,6 +79245,9 @@ export default {
         },
         "team_scrim_requests_min_order_by": {
             "awaiting_team_id": [
+                2028
+            ],
+            "canceled_by_team_id": [
                 2028
             ],
             "created_at": [
@@ -79303,6 +79333,12 @@ export default {
             "awaiting_team_id": [
                 2028
             ],
+            "canceled_by_team_id": [
+                2028
+            ],
+            "canceled_late": [
+                2028
+            ],
             "created_at": [
                 2028
             ],
@@ -79378,6 +79414,12 @@ export default {
             ],
             "awaiting_team_id": [
                 3808
+            ],
+            "canceled_by_team_id": [
+                3808
+            ],
+            "canceled_late": [
+                3
             ],
             "created_at": [
                 3411
@@ -79484,6 +79526,12 @@ export default {
             ],
             "awaiting_team_id": [
                 3808
+            ],
+            "canceled_by_team_id": [
+                3808
+            ],
+            "canceled_late": [
+                3
             ],
             "created_at": [
                 3411
@@ -79605,6 +79653,9 @@ export default {
             ]
         },
         "team_scrim_settings": {
+            "allow_outside_availability": [
+                3
+            ],
             "created_at": [
                 3411
             ],
@@ -79721,6 +79772,9 @@ export default {
             "_or": [
                 3317
             ],
+            "allow_outside_availability": [
+                4
+            ],
             "created_at": [
                 3412
             ],
@@ -79771,6 +79825,9 @@ export default {
             ]
         },
         "team_scrim_settings_insert_input": {
+            "allow_outside_availability": [
+                3
+            ],
             "created_at": [
                 3411
             ],
@@ -79909,6 +79966,9 @@ export default {
             ]
         },
         "team_scrim_settings_order_by": {
+            "allow_outside_availability": [
+                2028
+            ],
             "created_at": [
                 2028
             ],
@@ -79956,6 +80016,9 @@ export default {
         },
         "team_scrim_settings_select_column": {},
         "team_scrim_settings_set_input": {
+            "allow_outside_availability": [
+                3
+            ],
             "created_at": [
                 3411
             ],
@@ -80035,6 +80098,9 @@ export default {
             ]
         },
         "team_scrim_settings_stream_cursor_value_input": {
+            "allow_outside_availability": [
+                3
+            ],
             "created_at": [
                 3411
             ],
@@ -104340,7 +104406,7 @@ export default {
         },
         "v_team_reputation": {
             "late_cancels": [
-                35
+                165
             ],
             "no_shows": [
                 165
@@ -104447,7 +104513,7 @@ export default {
                 4381
             ],
             "late_cancels": [
-                36
+                167
             ],
             "no_shows": [
                 167
@@ -104470,7 +104536,7 @@ export default {
         },
         "v_team_reputation_insert_input": {
             "late_cancels": [
-                35
+                165
             ],
             "no_shows": [
                 165
@@ -104493,7 +104559,7 @@ export default {
         },
         "v_team_reputation_max_fields": {
             "late_cancels": [
-                35
+                165
             ],
             "no_shows": [
                 165
@@ -104513,7 +104579,7 @@ export default {
         },
         "v_team_reputation_min_fields": {
             "late_cancels": [
-                35
+                165
             ],
             "no_shows": [
                 165
@@ -104627,7 +104693,7 @@ export default {
         },
         "v_team_reputation_stream_cursor_value_input": {
             "late_cancels": [
-                35
+                165
             ],
             "no_shows": [
                 165
@@ -104647,7 +104713,7 @@ export default {
         },
         "v_team_reputation_sum_fields": {
             "late_cancels": [
-                35
+                165
             ],
             "no_shows": [
                 165

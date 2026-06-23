@@ -10,12 +10,10 @@ DECLARE
     _lineup_1_id uuid;
     _lineup_2_id uuid;
 BEGIN
-    -- Prefer the assigned team's real name over a manually-entered team_name:
-    -- if a real team is on the lineup, its name wins over a player rename.
     SELECT
         m.lineup_1_id,
         m.lineup_2_id,
-        COALESCE(t.name, ml.team_name)
+        COALESCE(ml.team_name, t.name)
     INTO
         _lineup_1_id,
         _lineup_2_id,

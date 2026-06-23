@@ -123,7 +123,11 @@ export class ScrimsService {
   }
 
   private static minuteOfWeek(date: Date): number {
-    return date.getDay() * 24 * 60 + date.getHours() * 60 + date.getMinutes();
+    return (
+      date.getUTCDay() * 24 * 60 +
+      date.getUTCHours() * 60 +
+      date.getUTCMinutes()
+    );
   }
 
   private static freeIntervals(
@@ -466,6 +470,17 @@ export class ScrimsService {
       throw Error("you are not allowed to respond to this request");
     }
 
+    if (
+      accept &&
+      new Date(request.proposed_scheduled_at).getTime() <= Date.now()
+    ) {
+      throw Error(
+        "the proposed time has already passed — counter with a new time",
+      );
+    }
+
+    await this.clearScrimRequestNotifications(requestId);
+
     if (!accept) {
       await this.setRequestStatus(requestId, "Declined");
       await this.notifyScrim({
@@ -504,6 +519,8 @@ export class ScrimsService {
     if (proposedScheduledAt.getTime() < Date.now()) {
       throw Error("proposed time must be in the future");
     }
+
+    await this.clearScrimRequestNotifications(requestId);
 
     const [fromAvailability, toAvailability] = await Promise.all([
       this.getAvailability(request.from_team_id),
@@ -578,15 +595,129 @@ export class ScrimsService {
 
     const request = await this.loadRequest(requestId);
 
-    if (!["Pending", "Countered"].includes(request.status)) {
-      throw Error("this request can no longer be cancelled");
+    if (["Pending", "Countered"].includes(request.status)) {
+      if (!(await this.isManager(request.from_team_id, steamId))) {
+        throw Error("you are not allowed to cancel this request");
+      }
+      await this.clearScrimRequestNotifications(requestId);
+      await this.setRequestStatus(requestId, "Cancelled");
+      return;
     }
 
-    if (!(await this.isManager(request.from_team_id, steamId))) {
-      throw Error("you are not allowed to cancel this request");
+    if (request.status === "Matched") {
+      await this.lateCancelScrim(request, steamId);
+      return;
     }
 
-    await this.setRequestStatus(requestId, "Cancelled");
+    throw Error("this request can no longer be cancelled");
+  }
+
+  // A manager of either team calls off a scheduled scrim. The hosted match is
+  // canceled (kept, not deleted, so it counts toward reliability), the request
+  // is flagged as a late cancel against the team that bailed, and both teams
+  // are notified.
+  private async lateCancelScrim(
+    request: {
+      id: string;
+      from_team_id: string;
+      to_team_id: string;
+      match_id?: string | null;
+    },
+    steamId: string,
+  ): Promise<void> {
+    let cancelingTeamId: string | null = null;
+    if (await this.isManager(request.from_team_id, steamId)) {
+      cancelingTeamId = request.from_team_id;
+    } else if (await this.isManager(request.to_team_id, steamId)) {
+      cancelingTeamId = request.to_team_id;
+    }
+    if (!cancelingTeamId) {
+      throw Error("you are not allowed to cancel this scrim");
+    }
+
+    if (request.match_id) {
+      await (this.hasura as any).mutation({
+        update_matches_by_pk: {
+          __args: {
+            pk_columns: { id: request.match_id },
+            _set: { status: "Canceled" },
+          },
+          id: true,
+        },
+      });
+    }
+
+    await (this.hasura as any).mutation({
+      update_team_scrim_requests_by_pk: {
+        __args: {
+          pk_columns: { id: request.id },
+          _set: {
+            status: "Cancelled",
+            canceled_late: true,
+            canceled_by_team_id: cancelingTeamId,
+            responded_at: new Date().toISOString(),
+          },
+        },
+        id: true,
+      },
+    });
+
+    const [fromManagers, toManagers] = await Promise.all([
+      this.getTeamManagerSteamIds(request.from_team_id),
+      this.getTeamManagerSteamIds(request.to_team_id),
+    ]);
+    const steamIds = Array.from(new Set([...fromManagers, ...toManagers]));
+    if (steamIds.length === 0) {
+      return;
+    }
+
+    await this.notifications.notifyPlayers(
+      "ScrimMatchCanceled" as unknown as e_notification_types_enum,
+      {
+        title: "Scrim Canceled",
+        message: "A scheduled scrim was canceled by one of the teams.",
+        role: "user" as e_player_roles_enum,
+        entity_id: request.id,
+        steamIds,
+      },
+    );
+  }
+
+  // Flip Pending/Countered requests past their TTL to Expired and tell both
+  // teams (in-app only). Returns how many expired.
+  public async expireStaleRequests(): Promise<number> {
+    const expired = await this.postgres.query<
+      Array<{ id: string; from_team_id: string; to_team_id: string }>
+    >(
+      `UPDATE team_scrim_requests
+          SET status = 'Expired', responded_at = now()
+        WHERE status IN ('Pending', 'Countered')
+          AND expires_at < now()
+      RETURNING id::text, from_team_id::text, to_team_id::text`,
+    );
+
+    for (const request of expired) {
+      const [fromManagers, toManagers] = await Promise.all([
+        this.getTeamManagerSteamIds(request.from_team_id),
+        this.getTeamManagerSteamIds(request.to_team_id),
+      ]);
+      const steamIds = Array.from(new Set([...fromManagers, ...toManagers]));
+      if (steamIds.length === 0) {
+        continue;
+      }
+      await this.notifications.notifyPlayers(
+        "ScrimRequestExpired" as unknown as e_notification_types_enum,
+        {
+          title: "Scrim Request Expired",
+          message: "A scrim request expired without a response.",
+          role: "user" as e_player_roles_enum,
+          entity_id: request.id,
+          steamIds,
+        },
+      );
+    }
+
+    return expired.length;
   }
 
   public async acceptScrimRequest(request: {
@@ -598,6 +729,10 @@ export class ScrimsService {
     match_options_id?: string | null;
     requested_by_steam_id: string;
   }): Promise<void> {
+    if (new Date(request.proposed_scheduled_at).getTime() <= Date.now()) {
+      throw Error("cannot schedule a scrim in the past");
+    }
+
     if (
       await this.hasActiveScrimMatch([request.from_team_id, request.to_team_id])
     ) {
@@ -652,7 +787,9 @@ export class ScrimsService {
           scheduledAt,
         ),
         requestId: request.id,
-        entityId: match.id,
+        withCancelAction: true,
+        // Can't be dismissed until the scrim has actually been played.
+        deletable: false,
         link: `${this.appConfig.webDomain}/matches/${match.id}`,
       });
     }
@@ -671,6 +808,7 @@ export class ScrimsService {
     proposed_scheduled_at: string;
     region?: string | null;
     match_options_id?: string | null;
+    match_id?: string | null;
     best_of?: number | null;
     requested_by_steam_id: string;
   }> {
@@ -684,6 +822,7 @@ export class ScrimsService {
         proposed_scheduled_at: string;
         region?: string | null;
         match_options_id?: string | null;
+        match_id?: string | null;
         best_of?: number | null;
         requested_by_steam_id: string;
       }>
@@ -691,6 +830,7 @@ export class ScrimsService {
       `SELECT r.id, r.from_team_id::text, r.to_team_id::text,
               r.awaiting_team_id::text, r.status, r.proposed_scheduled_at,
               r.region, r.match_options_id::text AS match_options_id,
+              r.match_id::text AS match_id,
               mo.best_of,
               r.requested_by_steam_id::text
          FROM team_scrim_requests r
@@ -724,6 +864,25 @@ export class ScrimsService {
     });
   }
 
+  // Once a request is answered/countered/cancelled, its pending-stage
+  // notifications (with stale Accept/Decline buttons) are no longer valid —
+  // soft-delete them so only the outcome notification remains.
+  private async clearScrimRequestNotifications(requestId: string): Promise<void> {
+    await (this.hasura as any).mutation({
+      update_notifications: {
+        __args: {
+          where: {
+            entity_id: { _eq: requestId },
+            type: { _in: ["ScrimRequestReceived", "ScrimRequestCountered"] },
+            deleted_at: { _is_null: true },
+          },
+          _set: { is_read: true, deleted_at: new Date().toISOString() },
+        },
+        affected_rows: true,
+      },
+    });
+  }
+
   private async scrimMessage(
     teamId: string,
     action: string,
@@ -740,10 +899,10 @@ export class ScrimsService {
       teams_by_pk?.name ?? "A team",
     );
     const teamUrl = `${this.appConfig.webDomain}/teams/${teamId}`;
-    const when = proposedAt
-      ? ` for ${proposedAt.toUTCString()}`
-      : "";
-    return `<a href="${teamUrl}">${safeName}</a> ${action}${when}.`;
+    // The notification card shows the proposed time in the viewer's local zone,
+    // so the message stays short instead of repeating a raw UTC string.
+    void proposedAt;
+    return `<a href="${teamUrl}">${safeName}</a> ${action}.`;
   }
 
   private async notifyScrim(params: {
@@ -759,6 +918,8 @@ export class ScrimsService {
     requestId: string;
     entityId?: string;
     withResponseActions?: boolean;
+    withCancelAction?: boolean;
+    deletable?: boolean;
     link?: string;
   }): Promise<void> {
     const steamIds = await this.getTeamManagerSteamIds(params.teamId);
@@ -766,28 +927,51 @@ export class ScrimsService {
       return;
     }
 
-    const actions = params.withResponseActions
-      ? [
-          {
-            label: "Accept",
-            graphql: {
-              type: "mutation",
-              action: "respondToScrimRequest",
-              selection: { success: true },
-              variables: { request_id: params.requestId, accept: true },
-            },
+    let actions:
+      | Array<{
+          label: string;
+          graphql: {
+            type: string;
+            action: string;
+            selection: Record<string, any>;
+            variables?: Record<string, any>;
+          };
+        }>
+      | undefined;
+    if (params.withResponseActions) {
+      actions = [
+        {
+          label: "Accept",
+          graphql: {
+            type: "mutation",
+            action: "respondToScrimRequest",
+            selection: { success: true },
+            variables: { request_id: params.requestId, accept: true },
           },
-          {
-            label: "Decline",
-            graphql: {
-              type: "mutation",
-              action: "respondToScrimRequest",
-              selection: { success: true },
-              variables: { request_id: params.requestId, accept: false },
-            },
+        },
+        {
+          label: "Decline",
+          graphql: {
+            type: "mutation",
+            action: "respondToScrimRequest",
+            selection: { success: true },
+            variables: { request_id: params.requestId, accept: false },
           },
-        ]
-      : undefined;
+        },
+      ];
+    } else if (params.withCancelAction) {
+      actions = [
+        {
+          label: "Cancel Scrim",
+          graphql: {
+            type: "mutation",
+            action: "cancelScrimRequest",
+            selection: { success: true },
+            variables: { request_id: params.requestId },
+          },
+        },
+      ];
+    }
 
     await this.notifications.notifyPlayers(
       params.type as e_notification_types_enum,
@@ -797,6 +981,7 @@ export class ScrimsService {
         role: "user" as e_player_roles_enum,
         entity_id: params.entityId ?? params.requestId,
         steamIds,
+        deletable: params.deletable,
       },
       actions,
     );

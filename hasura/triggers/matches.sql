@@ -9,14 +9,21 @@ DECLARE
     user_match_count int;
 BEGIN
     IF (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text = 'user' OR (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text = 'verified_user' OR (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text = 'streamer' THEN
-        SELECT COUNT(*) FROM matches 
-        WHERE organizer_steam_id = (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-user-id')::bigint 
+        SELECT COUNT(*) FROM matches
+        WHERE organizer_steam_id = (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-user-id')::bigint
         AND status NOT IN (
             'Finished',
             'Tie',
             'Canceled',
             'Forfeit',
-            'Surrendered'   
+            'Surrendered'
+        )
+        -- A match scheduled more than an hour out is "upcoming", not pending,
+        -- so it doesn't block creating/joining another match until it's close.
+        AND NOT (
+            status = 'Scheduled'
+            AND scheduled_at IS NOT NULL
+            AND scheduled_at > NOW() + INTERVAL '1 hour'
         ) INTO user_match_count;
 
         IF user_match_count > 0 THEN

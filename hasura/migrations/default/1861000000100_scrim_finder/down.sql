@@ -1,5 +1,7 @@
 DELETE FROM public.settings WHERE name = 'scrim_team_autodetect_min_overlap';
 
+DROP VIEW IF EXISTS public.v_team_reputation;
+
 DROP TABLE IF EXISTS public.team_suggestions;
 DROP TABLE IF EXISTS public.team_scrim_alerts;
 DROP TABLE IF EXISTS public.team_scrim_request_proposals;
