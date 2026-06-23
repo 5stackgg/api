@@ -125,8 +125,6 @@ export class MatchImportService {
     }
 
     const matchOptionsId = await this.insertMatchOptions(matchType, mapPoolId);
-    // No team_name: get_team_name falls back to "Team 1"/"Team 2" on its own,
-    // and leaving it null lets an auto-detected team's real name surface.
     const lineup1Id = await this.insertLineup();
     const lineup2Id = await this.insertLineup();
 
@@ -771,10 +769,6 @@ export class MatchImportService {
       return null;
     }
 
-    // A lineup belongs to a team when enough of its members are on that team's
-    // roster (minOverlap, default 4). Roster size is irrelevant. Highest overlap
-    // wins; ties break to the lowest team_id (deterministic — teams have no
-    // created_at to order by age).
     const rows = await this.postgres.query<
       Array<{ team_id: string; overlap: string }>
     >(
@@ -823,7 +817,6 @@ export class MatchImportService {
       return;
     }
 
-    // Only auto-detect teams for Competitive 5v5 matches.
     if (match.options.type !== "Competitive") {
       return;
     }

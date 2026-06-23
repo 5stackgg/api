@@ -1,7 +1,8 @@
 CREATE OR REPLACE FUNCTION public.suggest_player_groups(
     window_days int DEFAULT 30,
     pair_threshold int DEFAULT 8,
-    max_group_size int DEFAULT 5
+    max_group_size int DEFAULT 5,
+    group_threshold int DEFAULT 3
 )
 RETURNS TABLE(member_steam_ids bigint[], together_count int)
 LANGUAGE sql STABLE
@@ -56,7 +57,7 @@ counted AS (
 )
 SELECT c.members AS member_steam_ids, c.together_count
 FROM counted c
-WHERE c.together_count >= pair_threshold
+WHERE c.together_count >= group_threshold
   AND NOT EXISTS (
     SELECT 1
     FROM team_roster tr

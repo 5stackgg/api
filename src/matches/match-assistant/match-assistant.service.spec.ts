@@ -55,7 +55,6 @@ describe("MatchAssistantService", () => {
         }),
       } as any,
       hasura as any,
-      { query: jest.fn() } as any,
       {} as any,
       loggingService as any,
       queue as any,
