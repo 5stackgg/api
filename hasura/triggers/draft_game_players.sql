@@ -10,7 +10,7 @@ BEGIN
     SELECT * INTO game FROM public.draft_games WHERE id = NEW.draft_game_id;
 
     IF NEW.elo_snapshot IS NULL THEN
-        SELECT elo INTO player_elo FROM public.players WHERE steam_id = NEW.steam_id;
+        SELECT public.get_player_elo(p) INTO player_elo FROM public.players p WHERE p.steam_id = NEW.steam_id;
         NEW.elo_snapshot := COALESCE(NULLIF(player_elo ->> lower(game.type), '')::numeric::integer, 5000);
     END IF;
 
