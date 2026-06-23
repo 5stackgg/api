@@ -1,0 +1,72 @@
+table:
+  name: team_scrim_requests
+  schema: public
+object_relationships:
+  - name: from_team
+    using:
+      foreign_key_constraint_on: from_team_id
+  - name: to_team
+    using:
+      foreign_key_constraint_on: to_team_id
+  - name: awaiting_team
+    using:
+      foreign_key_constraint_on: awaiting_team_id
+  - name: requested_by
+    using:
+      foreign_key_constraint_on: requested_by_steam_id
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+  - name: match_options
+    using:
+      foreign_key_constraint_on: match_options_id
+array_relationships:
+  - name: proposals
+    using:
+      foreign_key_constraint_on:
+        column: request_id
+        table:
+          name: team_scrim_request_proposals
+          schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - from_team_id
+        - to_team_id
+        - status
+        - requested_by_steam_id
+        - awaiting_team_id
+        - proposed_scheduled_at
+        - region
+        - match_options_id
+        - match_id
+        - expires_at
+        - auto_generated
+        - created_at
+        - responded_at
+      filter:
+        _or:
+          - from_team:
+              _or:
+                - owner_steam_id:
+                    _eq: X-Hasura-User-Id
+                - roster:
+                    _and:
+                      - role:
+                          _eq: Admin
+                      - player_steam_id:
+                          _eq: X-Hasura-User-Id
+          - to_team:
+              _or:
+                - owner_steam_id:
+                    _eq: X-Hasura-User-Id
+                - roster:
+                    _and:
+                      - role:
+                          _eq: Admin
+                      - player_steam_id:
+                          _eq: X-Hasura-User-Id
+      allow_aggregations: true
+    comment: ""

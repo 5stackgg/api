@@ -271,32 +271,97 @@ export class NotificationsService {
     });
 
     if (webhook) {
-      try {
-        const description = new TurndownService().turndown(
-          notification.message,
-        );
-        const content = roleId ? `<@&${roleId}>` : undefined;
+      await this.postDiscord(webhook, roleId, {
+        title: notification.title,
+        message: notification.message,
+        color,
+      });
+    }
+  }
 
-        await fetch(webhook, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+  private async postDiscord(
+    webhook: string,
+    roleId: string | undefined,
+    notification: {
+      title: string;
+      message: string;
+      color?: number;
+    },
+  ) {
+    try {
+      const description = new TurndownService().turndown(notification.message);
+      const content = roleId ? `<@&${roleId}>` : undefined;
+
+      await fetch(webhook, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...(content && { content }),
+          embeds: [
+            {
+              title: notification.title,
+              description,
+              color: notification.color ?? DISCORD_COLORS.GRAY,
+            },
+          ],
+          username: "5stack",
+        }),
+      });
+    } catch (error) {
+      this.logger.error("Error sending discord notification", error);
+    }
+  }
+
+  async notifyPlayers(
+    type: e_notification_types_enum,
+    notification: {
+      title: string;
+      message: string;
+      role: e_player_roles_enum;
+      entity_id?: string;
+      steamIds: Array<string>;
+    },
+    actions?: Array<{
+      label: string;
+      graphql: {
+        type: string;
+        action: string;
+        selection: Record<string, any>;
+        variables?: Record<string, any>;
+      };
+    }>,
+    color?: number,
+  ) {
+    const steamIds = Array.from(new Set(notification.steamIds));
+
+    if (steamIds.length > 0) {
+      await this.hasura.mutation({
+        insert_notifications: {
+          __args: {
+            objects: steamIds.map((steam_id) => ({
+              type,
+              title: notification.title,
+              message: notification.message,
+              role: notification.role,
+              steam_id,
+              entity_id: notification.entity_id,
+              actions,
+            })),
           },
-          body: JSON.stringify({
-            ...(content && { content }),
-            embeds: [
-              {
-                title: notification.title,
-                description,
-                color: color ?? DISCORD_COLORS.GRAY,
-              },
-            ],
-            username: "5stack",
-          }),
-        });
-      } catch (error) {
-        this.logger.error("Error sending discord notification", error);
-      }
+          affected_rows: true,
+        },
+      });
+    }
+
+    const webhook = await this.getSettingValue("discord_support_webhook");
+    if (webhook) {
+      await this.postDiscord(webhook, undefined, {
+        title: notification.title,
+        message: notification.message,
+        color,
+      });
     }
   }
 

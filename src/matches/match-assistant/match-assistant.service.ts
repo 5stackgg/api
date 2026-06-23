@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../../hasura/hasura.service";
+import { PostgresService } from "../../postgres/postgres.service";
 import {
   BatchV1Api,
   CoreV1Api,
@@ -54,6 +55,7 @@ export class MatchAssistantService {
     private readonly cache: CacheService,
     private readonly config: ConfigService,
     private readonly hasura: HasuraService,
+    private readonly postgres: PostgresService,
     private readonly encryption: EncryptionService,
     private readonly loggingService: LoggingService,
     @InjectQueue(MatchQueues.MatchServers) private queue: Queue,
@@ -1501,5 +1503,127 @@ export class MatchAssistantService {
     });
 
     return insert_matches_one;
+  }
+
+  public async createTeamVsTeamMatch(
+    team1Id: string,
+    team2Id: string,
+    options: {
+      matchOptionsId?: string | null;
+      region?: string;
+      organizer_steam_id: string;
+      scheduled_at: string;
+    },
+  ) {
+    const { teams } = await this.hasura.query({
+      teams: {
+        __args: {
+          where: {
+            id: {
+              _in: [team1Id, team2Id],
+            },
+          },
+        },
+        id: true,
+        name: true,
+      },
+    });
+
+    const teamName = (teamId: string) => {
+      return teams.find((team) => team.id === teamId)?.name;
+    };
+
+    const lineup1Id = await this.insertTeamLineup(team1Id, teamName(team1Id));
+    const lineup2Id = await this.insertTeamLineup(team2Id, teamName(team2Id));
+
+    const matchOptionsId = await this.cloneScrimMatchOptions(
+      options.matchOptionsId,
+    );
+
+    const { insert_matches_one } = await (this.hasura as any).mutation({
+      insert_matches_one: {
+        __args: {
+          object: {
+            region: options.region,
+            organizer_steam_id: options.organizer_steam_id,
+            lineup_1_id: lineup1Id,
+            lineup_2_id: lineup2Id,
+            match_options_id: matchOptionsId,
+          },
+        },
+        id: true,
+        lineup_1_id: true,
+        lineup_2_id: true,
+      },
+    });
+
+    await this.hasura.mutation({
+      update_matches_by_pk: {
+        __args: {
+          pk_columns: {
+            id: insert_matches_one.id,
+          },
+          _set: {
+            scheduled_at: options.scheduled_at,
+            status: "Scheduled",
+          },
+        },
+        id: true,
+      },
+    });
+
+    return insert_matches_one;
+  }
+
+  private async cloneScrimMatchOptions(
+    sourceId?: string | null,
+  ): Promise<string> {
+    if (sourceId) {
+      const cloned = await this.postgres.query<Array<{ id: string }>>(
+        `INSERT INTO match_options
+            (overtime, knife_round, mr, best_of, coaches, number_of_substitutes,
+             map_veto, timeout_setting, tech_timeout_setting, map_pool_id, type, ranked)
+          SELECT overtime, knife_round, mr, best_of, coaches, number_of_substitutes,
+             map_veto, timeout_setting, tech_timeout_setting, map_pool_id, type, ranked
+            FROM match_options WHERE id = $1
+          RETURNING id`,
+        [sourceId],
+      );
+      const id = cloned.at(0)?.id;
+      if (id) {
+        return id;
+      }
+    }
+
+    const created = await this.postgres.query<Array<{ id: string }>>(
+      `INSERT INTO match_options
+          (overtime, knife_round, mr, best_of, coaches, map_veto, map_pool_id, type, ranked)
+        SELECT true, true, 12, 1, false, true, mp.id, 'competitive', true
+          FROM map_pools mp WHERE mp.type = 'Competitive' LIMIT 1
+        RETURNING id`,
+    );
+    const id = created.at(0)?.id;
+    if (!id) {
+      throw Error("could not resolve match options for scrim");
+    }
+    return id;
+  }
+
+  private async insertTeamLineup(
+    teamId: string,
+    teamName?: string,
+  ): Promise<string> {
+    const { insert_match_lineups_one } = await this.hasura.mutation({
+      insert_match_lineups_one: {
+        __args: {
+          object: {
+            team_id: teamId,
+            team_name: teamName,
+          },
+        },
+        id: true,
+      },
+    });
+    return insert_match_lineups_one.id;
   }
 }

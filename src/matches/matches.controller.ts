@@ -29,6 +29,7 @@ import { Queue } from "bullmq";
 import { MatchQueues } from "./enums/MatchQueues";
 import { SteamMatchHistoryQueues } from "../steam-match-history/enums/SteamMatchHistoryQueues";
 import { CheckSteamBansForMatch } from "../steam-match-history/jobs/CheckSteamBansForMatch";
+import { MatchImportService } from "../steam-match-history/match-import.service";
 import { EloCalculation } from "./jobs/EloCalculation";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 import { S3Service } from "src/s3/s3.service";
@@ -86,6 +87,7 @@ export class MatchesController {
     private readonly gameStreamer: GameStreamerService,
     private readonly demoMetadata: DemoMetadataService,
     private readonly clips: ClipsService,
+    private readonly matchImport: MatchImportService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -2315,6 +2317,14 @@ export class MatchesController {
 
     if (!match) {
       return;
+    }
+
+    try {
+      await this.matchImport.detectAndAssignTeamsForMatch(match.id);
+    } catch (error) {
+      this.logger.warn(
+        `team auto-detect failed for match ${match.id}: ${(error as Error)?.message ?? String(error)}`,
+      );
     }
 
     if (!["Live"].includes(match.status)) {

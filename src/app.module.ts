@@ -52,6 +52,7 @@ import { TournamentsModule } from "./tournaments/tournaments.module";
 import { FaceitModule } from "./faceit/faceit.module";
 import { SteamMatchHistoryModule } from "./steam-match-history/steam-match-history.module";
 import { NewsModule } from "./news/news.module";
+import { ScrimsModule } from "./scrims/scrims.module";
 
 @Module({
   imports: [
@@ -144,6 +145,7 @@ import { NewsModule } from "./news/news.module";
     FaceitModule,
     SteamMatchHistoryModule,
     NewsModule,
+    ScrimsModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],

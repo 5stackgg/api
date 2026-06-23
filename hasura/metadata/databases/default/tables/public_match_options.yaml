@@ -88,6 +88,7 @@ insert_permissions:
         - number_of_substitutes
         - overtime
         - prefer_dedicated_server
+        - ranked
         - ready_setting
         - region_veto
         - regions
@@ -124,6 +125,7 @@ select_permissions:
         - auto_cancellation
         - tv_delay
         - type
+        - ranked
       filter: {}
     comment: ""
 update_permissions:

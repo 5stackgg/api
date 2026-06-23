@@ -5,6 +5,42 @@ type Mutation {
 }
 
 type Mutation {
+  sendScrimRequest(
+    from_team_id: uuid!
+    to_team_id: uuid!
+    proposed_scheduled_at: timestamptz!
+    region: String
+    best_of: Int
+  ): SuccessOutput
+}
+
+type Mutation {
+  respondToScrimRequest(
+    request_id: uuid!
+    accept: Boolean!
+  ): SuccessOutput
+}
+
+type Mutation {
+  counterScrimRequest(
+    request_id: uuid!
+    proposed_scheduled_at: timestamptz!
+  ): SuccessOutput
+}
+
+type Mutation {
+  cancelScrimRequest(
+    request_id: uuid!
+  ): SuccessOutput
+}
+
+type Query {
+  scrimCalendarUrl(
+    team_id: uuid!
+  ): ScrimCalendarOutput
+}
+
+type Mutation {
   ResetTournamentMatch(
     match_id: uuid!
     winning_lineup_id: uuid
@@ -912,6 +948,10 @@ type SuccessOutput {
   success: Boolean!
 }
 
+type ScrimCalendarOutput {
+  url: String!
+}
+
 type NewsPost {
   id: uuid!
   slug: String!
@@ -924,6 +964,7 @@ type NewsPost {
   published_at: String
   created_at: String!
   updated_at: String!
+  view_count: bigint!
 }
 
 type ScanStartedOutput {

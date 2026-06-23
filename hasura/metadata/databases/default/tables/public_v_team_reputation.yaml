@@ -1,0 +1,25 @@
+table:
+  name: v_team_reputation
+  schema: public
+object_relationships:
+  - name: team
+    using:
+      manual_configuration:
+        column_mapping:
+          team_id: id
+        insertion_order: null
+        remote_table:
+          name: teams
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - team_id
+        - scrims_completed
+        - no_shows
+        - late_cancels
+        - reliability_pct
+      filter: {}
+      allow_aggregations: true
+    comment: ""

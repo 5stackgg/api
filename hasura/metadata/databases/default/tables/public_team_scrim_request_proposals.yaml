@@ -1,0 +1,48 @@
+table:
+  name: team_scrim_request_proposals
+  schema: public
+object_relationships:
+  - name: request
+    using:
+      foreign_key_constraint_on: request_id
+  - name: proposed_by_team
+    using:
+      foreign_key_constraint_on: proposed_by_team_id
+  - name: proposed_by
+    using:
+      foreign_key_constraint_on: proposed_by_steam_id
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - request_id
+        - proposed_by_team_id
+        - proposed_by_steam_id
+        - proposed_scheduled_at
+        - created_at
+      filter:
+        request:
+          _or:
+            - from_team:
+                _or:
+                  - owner_steam_id:
+                      _eq: X-Hasura-User-Id
+                  - roster:
+                      _and:
+                        - role:
+                            _eq: Admin
+                        - player_steam_id:
+                            _eq: X-Hasura-User-Id
+            - to_team:
+                _or:
+                  - owner_steam_id:
+                      _eq: X-Hasura-User-Id
+                  - roster:
+                      _and:
+                        - role:
+                            _eq: Admin
+                        - player_steam_id:
+                            _eq: X-Hasura-User-Id
+      allow_aggregations: true
+    comment: ""

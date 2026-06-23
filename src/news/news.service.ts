@@ -16,6 +16,7 @@ export interface NewsPostRow {
   published_at: string | null;
   created_at: string;
   updated_at: string;
+  view_count: string;
 }
 
 export interface SaveNewsPostInput {
@@ -206,6 +207,15 @@ export class NewsService {
     }
 
     throw new BadRequestException("Could not generate a unique slug");
+  }
+
+  public async trackView(slug: string): Promise<void> {
+    await this.postgres.query(
+      `UPDATE public.news_articles
+         SET view_count = view_count + 1
+       WHERE slug = $1 AND status = 'published'`,
+      [slug],
+    );
   }
 
   public async deletePost(id: string): Promise<void> {

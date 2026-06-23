@@ -125,8 +125,10 @@ export class MatchImportService {
     }
 
     const matchOptionsId = await this.insertMatchOptions(matchType, mapPoolId);
-    const lineup1Id = await this.insertLineup("Team 1");
-    const lineup2Id = await this.insertLineup("Team 2");
+    // No team_name: get_team_name falls back to "Team 1"/"Team 2" on its own,
+    // and leaving it null lets an auto-detected team's real name surface.
+    const lineup1Id = await this.insertLineup();
+    const lineup2Id = await this.insertLineup();
 
     await this.insertLineupPlayers(lineup1Id, lineup1Players);
     await this.insertLineupPlayers(lineup2Id, lineup2Players);
@@ -168,6 +170,19 @@ export class MatchImportService {
         `UPDATE public.matches SET external_id = $2 WHERE id = $1::uuid`,
         [matchId, externalId],
       );
+    }
+
+    if (matchType === "Competitive") {
+      try {
+        await this.assignDetectedTeams(
+          [lineup1Id, lineup1Players.map((player) => player.steam_id)],
+          [lineup2Id, lineup2Players.map((player) => player.steam_id)],
+        );
+      } catch (error) {
+        this.logger.warn(
+          `team auto-detection failed for match ${matchId}: ${(error as Error)?.message ?? String(error)}`,
+        );
+      }
     }
 
     let matchMapId: string;
@@ -740,11 +755,140 @@ export class MatchImportService {
     return insert_match_options_one.id;
   }
 
-  private async insertLineup(teamName: string): Promise<string> {
+  private async getAutodetectMinOverlap(): Promise<number> {
+    const rows = await this.postgres.query<Array<{ value: string }>>(
+      `SELECT value FROM settings WHERE name = 'scrim_team_autodetect_min_overlap'`,
+    );
+    const value = Number(rows.at(0)?.value);
+    return Number.isFinite(value) && value > 0 ? value : 4;
+  }
+
+  private async detectTeamForLineup(
+    steamIds: Array<string>,
+    minOverlap: number,
+  ): Promise<{ team_id: string; overlap: number } | null> {
+    if (steamIds.length === 0) {
+      return null;
+    }
+
+    // A lineup belongs to a team when enough of its members are on that team's
+    // roster (minOverlap, default 4). Roster size is irrelevant. Highest overlap
+    // wins; ties break to the lowest team_id (deterministic — teams have no
+    // created_at to order by age).
+    const rows = await this.postgres.query<
+      Array<{ team_id: string; overlap: string }>
+    >(
+      `SELECT tr.team_id::text AS team_id, count(*) AS overlap
+         FROM team_roster tr
+        WHERE tr.player_steam_id = ANY($1::bigint[])
+        GROUP BY tr.team_id
+       HAVING count(*) >= $2
+        ORDER BY count(*) DESC, tr.team_id ASC
+        LIMIT 1`,
+      [steamIds, minOverlap],
+    );
+
+    const top = rows.at(0);
+    if (!top) {
+      return null;
+    }
+
+    return { team_id: top.team_id, overlap: Number(top.overlap) };
+  }
+
+  public async detectAndAssignTeamsForMatch(matchId: string): Promise<void> {
+    const { matches_by_pk: match } = await this.hasura.query({
+      matches_by_pk: {
+        __args: { id: matchId },
+        lineup_1_id: true,
+        lineup_2_id: true,
+        status: true,
+        options: {
+          type: true,
+        },
+        lineup_1: {
+          lineup_players: {
+            steam_id: true,
+          },
+        },
+        lineup_2: {
+          lineup_players: {
+            steam_id: true,
+          },
+        },
+      },
+    });
+
+    if (!match?.lineup_1_id || !match?.lineup_2_id || !match.options?.type) {
+      return;
+    }
+
+    // Only auto-detect teams for Competitive 5v5 matches.
+    if (match.options.type !== "Competitive") {
+      return;
+    }
+
+    // Skip PickingPlayers: setting team_id fires the tau_match_lineups trigger,
+    // which wipes the lineup and repopulates it from the team roster. That is
+    // intended for manual team selection, not auto-detection.
+    if (match.status === "PickingPlayers") {
+      return;
+    }
+
+    const lineup1SteamIds = (match.lineup_1?.lineup_players ?? [])
+      .map((player) => player.steam_id)
+      .filter((steamId): steamId is string => !!steamId);
+    const lineup2SteamIds = (match.lineup_2?.lineup_players ?? [])
+      .map((player) => player.steam_id)
+      .filter((steamId): steamId is string => !!steamId);
+
+    await this.assignDetectedTeams(
+      [match.lineup_1_id, lineup1SteamIds],
+      [match.lineup_2_id, lineup2SteamIds],
+    );
+  }
+
+  private async assignDetectedTeams(
+    lineup1: [string, string[]],
+    lineup2: [string, string[]],
+  ): Promise<void> {
+    const minOverlap = await this.getAutodetectMinOverlap();
+    const [lineup1Id, lineup1SteamIds] = lineup1;
+    const [lineup2Id, lineup2SteamIds] = lineup2;
+
+    const detected1 = await this.detectTeamForLineup(lineup1SteamIds, minOverlap);
+    const detected2 = await this.detectTeamForLineup(lineup2SteamIds, minOverlap);
+
+    let team1 = detected1?.team_id ?? null;
+    let team2 = detected2?.team_id ?? null;
+
+    if (team1 && team2 && team1 === team2) {
+      if ((detected1?.overlap ?? 0) >= (detected2?.overlap ?? 0)) {
+        team2 = null;
+      } else {
+        team1 = null;
+      }
+    }
+
+    if (team1) {
+      await this.postgres.query(
+        `UPDATE match_lineups SET team_id = $2 WHERE id = $1::uuid AND team_id IS NULL`,
+        [lineup1Id, team1],
+      );
+    }
+    if (team2) {
+      await this.postgres.query(
+        `UPDATE match_lineups SET team_id = $2 WHERE id = $1::uuid AND team_id IS NULL`,
+        [lineup2Id, team2],
+      );
+    }
+  }
+
+  private async insertLineup(): Promise<string> {
     const { insert_match_lineups_one } = await this.hasura.mutation({
       insert_match_lineups_one: {
         __args: {
-          object: { team_name: teamName },
+          object: {},
         },
         id: true,
       },

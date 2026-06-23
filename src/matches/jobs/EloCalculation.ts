@@ -17,6 +17,19 @@ export class EloCalculation extends WorkerHost {
   async process(job: Job): Promise<void> {
     const { matchId } = job.data;
 
+    const ranked = await this.postgres.query<Array<{ ranked: boolean }>>(
+      `SELECT mo.ranked
+         FROM matches m
+         JOIN match_options mo ON mo.id = m.match_options_id
+        WHERE m.id = $1`,
+      [matchId],
+    );
+
+    if (ranked.at(0)?.ranked === false) {
+      this.logger.log(`skipping ELO for unranked match ${matchId}`);
+      return;
+    }
+
     try {
       await this.postgres.query(
         `

@@ -56,6 +56,7 @@ import { DiscordTournamentVoiceModule } from "../discord-bot/discord-tournament-
 import { GameStreamerModule } from "./game-streamer/game-streamer.module";
 import { DemosModule } from "../demos/demos.module";
 import { ClipsModule } from "./clips/clips.module";
+import { SteamMatchHistoryModule } from "../steam-match-history/steam-match-history.module";
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { ClipsModule } from "./clips/clips.module";
     GameStreamerModule,
     DemosModule,
     ClipsModule,
+    forwardRef(() => SteamMatchHistoryModule),
     forwardRef(() => DiscordBotModule),
     DiscordTournamentVoiceModule,
     MatchMaking,
