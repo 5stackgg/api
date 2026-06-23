@@ -33,8 +33,8 @@ WITH map_data AS (
         ('de_dust2_night', '3296013569', '/img/maps/screenshots/de_dust2_night.webp', '/img/maps/icons/de_dust2.svg', null),
         ('de_train', null, '/img/maps/screenshots/de_train.webp', '/img/maps/icons/de_train.svg', null),
         ('cs_office', null, '/img/maps/screenshots/cs_office.webp', '/img/maps/icons/cs_office.svg', null),
-        -- Workshop maps
         ('de_cache', null, '/img/maps/screenshots/de_cache.webp', '/img/maps/icons/de_cache.svg', null),
+        -- Workshop maps
         ('de_thera', '3121217565', '/img/maps/screenshots/de_thera.webp', '/img/maps/icons/de_thera.svg', null),
         ('de_mills', '3152430710', '/img/maps/screenshots/de_mills.webp', '/img/maps/icons/de_mills.svg', null),    
         ('de_edin', '3328169568', '/img/maps/screenshots/de_edin.webp', '/img/maps/icons/de_edin.svg', null),
@@ -69,14 +69,14 @@ map_type_config AS (
         ('de_mirage', 'Competitive', true),
         ('de_nuke', 'Competitive', true),
         ('de_nuke_night', 'Competitive', false),
-        ('de_overpass', 'Competitive', true),
+        ('de_overpass', 'Competitive', false),
         ('de_overpass_night', 'Competitive', false),
         ('de_vertigo', 'Competitive', false),
         ('de_dust2', 'Competitive', true),
         ('de_dust2_night', 'Competitive', false),
         ('de_train', 'Competitive', false),
         ('cs_office', 'Competitive', false),
-        ('de_cache', 'Competitive', false),
+        ('de_cache', 'Competitive', true),
         ('de_thera', 'Competitive', false),
         ('de_mills', 'Competitive', false),
         ('de_edin', 'Competitive', false),
@@ -87,8 +87,6 @@ map_type_config AS (
         ('de_palacio', 'Competitive', false),
         ('de_stronghold', 'Competitive', false),
         ('de_warden', 'Competitive', false),
-
-
 
         -- Wingman maps
         ('de_inferno', 'Wingman', true),
