@@ -59,9 +59,15 @@ CREATE TABLE IF NOT EXISTS public.team_scrim_requests (
     auto_generated boolean NOT NULL DEFAULT false,
     canceled_late boolean NOT NULL DEFAULT false,
     canceled_by_team_id uuid REFERENCES public.teams (id) ON DELETE SET NULL,
+    match_outcome text,
+    from_team_checked_in boolean,
+    to_team_checked_in boolean,
     created_at timestamptz NOT NULL DEFAULT now(),
     responded_at timestamptz
 );
+
+COMMENT ON COLUMN public.team_scrim_requests.match_outcome IS
+  'Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.';
 
 CREATE INDEX IF NOT EXISTS idx_team_scrim_requests_to_status
   ON public.team_scrim_requests (to_team_id, status);
