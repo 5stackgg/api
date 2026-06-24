@@ -189,6 +189,10 @@ export class ClipsService {
     );
 
     try {
+      const outroEnv = await this.gameStreamer.resolveOutroBranding(
+        dims,
+        spec.output.fps,
+      );
       await this.gameStreamer.dispatchClipRenderToPod(session.id, {
         job_id: jobId,
         token: sessionToken,
@@ -201,6 +205,7 @@ export class ClipsService {
         })),
         output_dims: dims,
         output_fps: spec.output.fps,
+        outro_env: outroEnv,
       });
     } catch (error) {
       this.logger.error(
