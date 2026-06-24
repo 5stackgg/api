@@ -33,14 +33,6 @@ export type AvailabilityWindow = {
   recurring_weekly: boolean;
 };
 
-const TERMINAL_MATCH_STATUSES = [
-  "Finished",
-  "Tie",
-  "Canceled",
-  "Forfeit",
-  "Surrendered",
-];
-
 const REQUEST_TTL_MS = 24 * 60 * 60 * 1000;
 const PLAYTIME_MINUTES = 60;
 const WEEK_MINUTES = 7 * 24 * 60;
@@ -612,10 +604,8 @@ export class ScrimsService {
     throw Error("this request can no longer be cancelled");
   }
 
-  // A manager of either team calls off a scheduled scrim. The hosted match is
-  // canceled (kept, not deleted, so it counts toward reliability), the request
-  // is flagged as a late cancel against the team that bailed, and both teams
-  // are notified.
+  // The hosted match is canceled but kept, not deleted, so it still counts
+  // toward the bailing team's reliability.
   private async lateCancelScrim(
     request: {
       id: string;
@@ -683,8 +673,6 @@ export class ScrimsService {
     );
   }
 
-  // Flip Pending/Countered requests past their TTL to Expired and tell both
-  // teams (in-app only). Returns how many expired.
   public async expireStaleRequests(): Promise<number> {
     const expired = await this.postgres.query<
       Array<{ id: string; from_team_id: string; to_team_id: string }>

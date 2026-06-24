@@ -1,3 +1,0 @@
--- No-op: auto-filled team_id values are indistinguishable from manually-selected
--- ones, so we cannot safely revert this backfill (same precedent as
--- 1816000000000_match_lineups_backfill_tournament_team_id).

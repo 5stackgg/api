@@ -551,8 +551,6 @@ export class MatchesController {
       this.matchRelayService.removeBroadcast(matchId);
       await this.removeDiscordIntegration(matchId);
       await this.matchmaking.cancelMatchMakingByMatchId(matchId);
-      // The "Scrim Scheduled" notification is locked until the scrim resolves;
-      // once the match is terminal it can be dismissed.
       await this.releaseScrimScheduledNotifications(matchId);
 
       await this.eloCalculationQueue.add(EloCalculation.name, {
@@ -787,8 +785,6 @@ export class MatchesController {
     };
   }
 
-  // When a scrim's hosted match is rescheduled, keep the request in sync and
-  // tell both teams' managers (in-app, grouped on the request).
   private async notifyScrimTimeChanged(matchId: string, time: Date) {
     const requests = await this.postgres.query<
       Array<{ id: string; from_team_id: string; to_team_id: string }>

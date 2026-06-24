@@ -66,8 +66,5 @@ create index if not exists "clip_render_jobs_user_steam_id_idx"
 create index if not exists "clip_render_jobs_match_map_id_idx"
   on "public"."clip_render_jobs" ("match_map_id");
 
--- clip_download_url() lives in hasura/functions/clips/clip_download_url.sql
--- (re-applied on every boot, after migrations).
-
 alter table "public"."match_map_demos"
   add column if not exists "players" jsonb null;

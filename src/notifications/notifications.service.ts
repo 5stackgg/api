@@ -18,7 +18,6 @@ import { NotificationsQueues } from "./enums/NotificationsQueues";
 export class NotificationsService {
   private readonly appConfig: AppConfig;
 
-  // Notification types that should only ever appear in-app (never Discord).
   static readonly IN_APP_ONLY_TYPES = new Set<string>([
     "ScrimRequestReceived",
     "ScrimRequestCountered",
@@ -373,7 +372,6 @@ export class NotificationsService {
       });
     }
 
-    // Scrim finder notifications stay in-app only — no Discord pings.
     const webhook = await this.getSettingValue("discord_support_webhook");
     if (webhook && !NotificationsService.IN_APP_ONLY_TYPES.has(type)) {
       await this.postDiscord(webhook, undefined, {

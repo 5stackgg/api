@@ -23,9 +23,4 @@ WHERE id IN (
   WHERE row_num > 1
 );
 
--- tbd_match_map_veto_picks() + its trigger live in
--- hasura/triggers/match_map_veto_picks.sql (re-applied on every boot, after
--- migrations). The DROP above keeps the BEFORE DELETE trigger from cascading
--- into match_maps during the dedup.
-
 alter table "public"."match_map_veto_picks" add constraint "match_map_veto_picks_match_id_map_id_key" unique ("match_id", "map_id");
