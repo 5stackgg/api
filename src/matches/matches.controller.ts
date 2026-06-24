@@ -17,6 +17,8 @@ import {
   servers_set_input,
   game_server_nodes_set_input,
   match_lineup_players_set_input,
+  e_notification_types_enum,
+  e_player_roles_enum,
 } from "../../generated";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "src/configs/types/AppConfig";
@@ -29,6 +31,7 @@ import { Queue } from "bullmq";
 import { MatchQueues } from "./enums/MatchQueues";
 import { SteamMatchHistoryQueues } from "../steam-match-history/enums/SteamMatchHistoryQueues";
 import { CheckSteamBansForMatch } from "../steam-match-history/jobs/CheckSteamBansForMatch";
+import { MatchImportService } from "../steam-match-history/match-import.service";
 import { EloCalculation } from "./jobs/EloCalculation";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 import { S3Service } from "src/s3/s3.service";
@@ -86,6 +89,7 @@ export class MatchesController {
     private readonly gameStreamer: GameStreamerService,
     private readonly demoMetadata: DemoMetadataService,
     private readonly clips: ClipsService,
+    private readonly matchImport: MatchImportService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -547,6 +551,7 @@ export class MatchesController {
       this.matchRelayService.removeBroadcast(matchId);
       await this.removeDiscordIntegration(matchId);
       await this.matchmaking.cancelMatchMakingByMatchId(matchId);
+      await this.releaseScrimScheduledNotifications(matchId);
 
       await this.eloCalculationQueue.add(EloCalculation.name, {
         matchId,
@@ -771,9 +776,92 @@ export class MatchesController {
       throw Error(`Unable to schedule match`);
     }
 
+    if (time) {
+      await this.notifyScrimTimeChanged(match_id, new Date(time));
+    }
+
     return {
       success: true,
     };
+  }
+
+  private async notifyScrimTimeChanged(matchId: string, time: Date) {
+    const requests = await this.postgres.query<
+      Array<{ id: string; from_team_id: string; to_team_id: string }>
+    >(
+      `SELECT id::text, from_team_id::text, to_team_id::text
+         FROM team_scrim_requests
+        WHERE match_id = $1 AND status = 'Matched'`,
+      [matchId],
+    );
+    const request = requests.at(0);
+    if (!request) {
+      return;
+    }
+
+    await this.hasura.mutation({
+      update_team_scrim_requests_by_pk: {
+        __args: {
+          pk_columns: { id: request.id },
+          _set: { proposed_scheduled_at: time.toISOString() },
+        },
+        id: true,
+      },
+    });
+
+    const steamIds = await this.scrimManagerSteamIds([
+      request.from_team_id,
+      request.to_team_id,
+    ]);
+    if (steamIds.length === 0) {
+      return;
+    }
+
+    await this.notifications.notifyPlayers(
+      "ScrimTimeChanged" as unknown as e_notification_types_enum,
+      {
+        title: "Scrim Time Changed",
+        message: `The scrim is now scheduled for ${time.toLocaleString()}.`,
+        role: "user" as e_player_roles_enum,
+        entity_id: request.id,
+        steamIds,
+      },
+    );
+  }
+
+  private async scrimManagerSteamIds(
+    teamIds: Array<string>,
+  ): Promise<Array<string>> {
+    const managers = await this.postgres.query<Array<{ steam_id: string }>>(
+      `SELECT owner_steam_id::text AS steam_id
+         FROM teams
+        WHERE id = ANY($1::uuid[]) AND owner_steam_id IS NOT NULL
+        UNION
+       SELECT player_steam_id::text AS steam_id
+         FROM team_roster
+        WHERE team_id = ANY($1::uuid[]) AND role = 'Admin'`,
+      [teamIds],
+    );
+    return managers.map(({ steam_id }) => steam_id);
+  }
+
+  private async scrimTeamManagedBy(
+    teamIds: Array<string>,
+    steamId: string,
+  ): Promise<string | null> {
+    const rows = await this.postgres.query<Array<{ team_id: string }>>(
+      `SELECT id::text AS team_id
+         FROM teams
+        WHERE id = ANY($1::uuid[]) AND owner_steam_id = $2
+        UNION
+       SELECT team_id::text AS team_id
+         FROM team_roster
+        WHERE team_id = ANY($1::uuid[])
+          AND player_steam_id = $2
+          AND role = 'Admin'`,
+      [teamIds, steamId],
+    );
+    return rows.at(0)?.team_id ?? null;
   }
 
   /**
@@ -2244,8 +2332,8 @@ export class MatchesController {
   }
 
   @HasuraAction()
-  public async deleteMatch(data: { match_id: string }) {
-    const { match_id } = data;
+  public async deleteMatch(data: { match_id: string; user?: User }) {
+    const { match_id, user } = data;
     this.logger.log(`[${match_id}] deleting match`);
 
     const { matches_by_pk } = await this.hasura.query({
@@ -2269,6 +2357,8 @@ export class MatchesController {
     await this.clips.deleteClipsForMatch(match_id);
     await this.demoMetadata.deleteDemosForMatch(match_id);
 
+    await this.cancelScrimForDeletedMatch(match_id, user?.steam_id);
+
     await this.hasura.mutation({
       delete_matches_by_pk: {
         __args: {
@@ -2281,6 +2371,110 @@ export class MatchesController {
     return {
       success: true,
     };
+  }
+
+  private async cancelScrimForDeletedMatch(matchId: string, steamId?: string) {
+    const requests = await this.postgres.query<
+      Array<{
+        id: string;
+        from_team_id: string;
+        to_team_id: string;
+        proposed_scheduled_at: string;
+      }>
+    >(
+      `SELECT id::text, from_team_id::text, to_team_id::text, proposed_scheduled_at
+         FROM team_scrim_requests
+        WHERE match_id = $1 AND status = 'Matched'`,
+      [matchId],
+    );
+    const request = requests.at(0);
+    this.logger.log(
+      `[scrim] deleteMatch ${matchId}: ${
+        request
+          ? `found scrim request ${request.id}, cancelling`
+          : "no matched scrim request linked"
+      }`,
+    );
+    if (!request) {
+      return;
+    }
+
+    const bailingTeamId = steamId
+      ? await this.scrimTeamManagedBy(
+          [request.from_team_id, request.to_team_id],
+          steamId,
+        )
+      : null;
+    const lateCancel = bailingTeamId !== null;
+
+    await this.hasura.mutation({
+      update_team_scrim_requests_by_pk: {
+        __args: {
+          pk_columns: { id: request.id },
+          _set: {
+            status: "Cancelled",
+            responded_at: new Date().toISOString(),
+            canceled_late: lateCancel,
+            canceled_by_team_id: bailingTeamId,
+          },
+        },
+        id: true,
+      },
+    });
+    this.logger.log(
+      `[scrim] request ${request.id} marked Cancelled — cleanup trigger removes its notifications`,
+    );
+
+    const steamIds = await this.scrimManagerSteamIds([
+      request.from_team_id,
+      request.to_team_id,
+    ]);
+    if (steamIds.length === 0) {
+      return;
+    }
+
+    await this.notifications.notifyPlayers(
+      "ScrimMatchCanceled" as unknown as e_notification_types_enum,
+      {
+        title: "Scrim Canceled",
+        message:
+          "The scheduled scrim match was deleted, so the scrim has been canceled.",
+        role: "user" as e_player_roles_enum,
+        entity_id: request.id,
+        steamIds,
+      },
+    );
+  }
+
+  private async releaseScrimScheduledNotifications(
+    matchId: string,
+    requestId?: string,
+  ) {
+    let scrimRequestId = requestId;
+    if (!scrimRequestId) {
+      const rows = await this.postgres.query<Array<{ id: string }>>(
+        `SELECT id::text FROM team_scrim_requests WHERE match_id = $1`,
+        [matchId],
+      );
+      scrimRequestId = rows.at(0)?.id;
+    }
+    if (!scrimRequestId) {
+      return;
+    }
+
+    await this.hasura.mutation({
+      update_notifications: {
+        __args: {
+          where: {
+            type: { _eq: "ScrimMatchScheduled" },
+            entity_id: { _eq: scrimRequestId },
+            deletable: { _eq: false },
+          },
+          _set: { deletable: true },
+        },
+        affected_rows: true,
+      },
+    });
   }
 
   @HasuraEvent()
@@ -2315,6 +2509,14 @@ export class MatchesController {
 
     if (!match) {
       return;
+    }
+
+    try {
+      await this.matchImport.detectAndAssignTeamsForMatch(match.id);
+    } catch (error) {
+      this.logger.warn(
+        `team auto-detect failed for match ${match.id}: ${(error as Error)?.message ?? String(error)}`,
+      );
     }
 
     if (!["Live"].includes(match.status)) {

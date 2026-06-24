@@ -100,6 +100,12 @@ export class NewsController {
     return { success: true, filename };
   }
 
+  @Post(":slug/view")
+  public async trackView(@Param("slug") slug: string) {
+    await this.news.trackView(slug);
+    return { success: true };
+  }
+
   @Get("image/:filename")
   public async serveImage(
     @Param("filename") filename: string,

@@ -66,46 +66,5 @@ create index if not exists "clip_render_jobs_user_steam_id_idx"
 create index if not exists "clip_render_jobs_match_map_id_idx"
   on "public"."clip_render_jobs" ("match_map_id");
 
-CREATE OR REPLACE FUNCTION public.clip_download_url(match_clips public.match_clips)
-    RETURNS text
-    LANGUAGE plpgsql STABLE
-    AS $$
-    DECLARE
-        worker_url text;
-        slug text;
-        basename text;
-        download_name text;
-    BEGIN
-        SELECT value INTO worker_url
-        FROM settings
-        WHERE name = 'cloudflare_worker_url';
-
-        IF worker_url IS NULL OR match_clips.file IS NULL THEN
-            RETURN NULL;
-        END IF;
-
-        slug := NULL;
-        IF match_clips.title IS NOT NULL AND length(trim(match_clips.title)) > 0 THEN
-            slug := regexp_replace(trim(match_clips.title), '[^a-zA-Z0-9_-]+', '-', 'g');
-            slug := regexp_replace(slug, '^-+|-+$', '', 'g');
-            IF length(slug) > 80 THEN
-                slug := substring(slug from 1 for 80);
-            END IF;
-            IF length(slug) = 0 THEN
-                slug := NULL;
-            END IF;
-        END IF;
-
-        basename := regexp_replace(match_clips.file, '^.*/', '');
-        IF slug IS NOT NULL THEN
-            download_name := slug || '.mp4';
-        ELSE
-            download_name := basename;
-        END IF;
-
-        RETURN CONCAT(worker_url, '/', match_clips.file, '?name=', download_name);
-    END;
-$$;
-
 alter table "public"."match_map_demos"
   add column if not exists "players" jsonb null;

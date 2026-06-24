@@ -1,0 +1,75 @@
+table:
+  name: team_scrim_availability
+  schema: public
+object_relationships:
+  - name: team
+    using:
+      foreign_key_constraint_on: team_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        team:
+          _or:
+            - owner_steam_id:
+                _eq: X-Hasura-User-Id
+            - roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+      columns:
+        - team_id
+        - starts_at
+        - ends_at
+        - recurring_weekly
+    comment: ""
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - team_id
+        - starts_at
+        - ends_at
+        - recurring_weekly
+        - created_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - starts_at
+        - ends_at
+        - recurring_weekly
+      filter:
+        team:
+          _or:
+            - owner_steam_id:
+                _eq: X-Hasura-User-Id
+            - roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+      check: null
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        team:
+          _or:
+            - owner_steam_id:
+                _eq: X-Hasura-User-Id
+            - roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+    comment: ""

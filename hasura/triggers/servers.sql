@@ -120,3 +120,9 @@ DROP TRIGGER IF EXISTS tbiu_servers ON public.servers;
 
 DROP TRIGGER IF EXISTS tbiud_servers ON public.servers;
 CREATE TRIGGER tbiud_servers BEFORE INSERT OR UPDATE OR DELETE ON public.servers FOR EACH ROW EXECUTE FUNCTION public.tbiud_servers();
+
+DROP TRIGGER IF EXISTS "set_public_servers_updated_at" ON "public"."servers";
+CREATE TRIGGER "set_public_servers_updated_at"
+BEFORE UPDATE ON "public"."servers"
+FOR EACH ROW
+EXECUTE PROCEDURE "public"."set_current_timestamp_updated_at"();

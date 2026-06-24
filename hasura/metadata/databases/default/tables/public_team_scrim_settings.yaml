@@ -1,0 +1,120 @@
+table:
+  name: team_scrim_settings
+  schema: public
+object_relationships:
+  - name: team
+    using:
+      foreign_key_constraint_on: team_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        team:
+          _or:
+            - owner_steam_id:
+                _eq: X-Hasura-User-Id
+            - roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+      columns:
+        - team_id
+        - enabled
+        - regions
+        - map_ids
+        - elo_min
+        - elo_max
+        - allow_outside_availability
+        - notes
+    comment: ""
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - team_id
+        - enabled
+        - regions
+        - map_ids
+        - elo_min
+        - elo_max
+        - allow_outside_availability
+        - notes
+        - created_at
+        - updated_at
+      filter:
+        enabled:
+          _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - id
+        - team_id
+        - enabled
+        - regions
+        - map_ids
+        - elo_min
+        - elo_max
+        - allow_outside_availability
+        - notes
+        - created_at
+        - updated_at
+      filter:
+        _or:
+          - enabled:
+              _eq: true
+          - team:
+              _or:
+                - owner_steam_id:
+                    _eq: X-Hasura-User-Id
+                - roster:
+                    _and:
+                      - role:
+                          _eq: Admin
+                      - player_steam_id:
+                          _eq: X-Hasura-User-Id
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - enabled
+        - regions
+        - map_ids
+        - elo_min
+        - elo_max
+        - allow_outside_availability
+        - notes
+      filter:
+        team:
+          _or:
+            - owner_steam_id:
+                _eq: X-Hasura-User-Id
+            - roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+      check: null
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        team:
+          _or:
+            - owner_steam_id:
+                _eq: X-Hasura-User-Id
+            - roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+    comment: ""

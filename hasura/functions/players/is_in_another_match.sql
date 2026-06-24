@@ -6,7 +6,16 @@ AS $$
     SELECT EXISTS (
         SELECT 1
         FROM get_player_matches(player) AS pm
-        WHERE pm.status IN ('Live', 'Veto', 'WaitingForCheckIn', 'WaitingForServer')
+        WHERE (
+            pm.status IN ('Live', 'Veto', 'WaitingForCheckIn', 'WaitingForServer')
+            -- A scheduled match only ties the player up once it's within an hour
+            -- of kickoff; before that they're free to play other matches.
+            OR (
+                pm.status = 'Scheduled'
+                AND pm.scheduled_at IS NOT NULL
+                AND pm.scheduled_at <= NOW() + INTERVAL '1 hour'
+            )
+        )
         AND NOT EXISTS (
             SELECT 1
             FROM tournament_brackets tb

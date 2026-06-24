@@ -1,0 +1,88 @@
+table:
+  name: team_scrim_alerts
+  schema: public
+object_relationships:
+  - name: team
+    using:
+      foreign_key_constraint_on: team_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        team:
+          _or:
+            - owner_steam_id:
+                _eq: X-Hasura-User-Id
+            - roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+      columns:
+        - team_id
+        - enabled
+        - regions
+        - elo_min
+        - elo_max
+    comment: ""
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - team_id
+        - enabled
+        - regions
+        - elo_min
+        - elo_max
+        - last_notified_at
+        - created_at
+      filter:
+        team:
+          _or:
+            - owner_steam_id:
+                _eq: X-Hasura-User-Id
+            - roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - enabled
+        - regions
+        - elo_min
+        - elo_max
+      filter:
+        team:
+          _or:
+            - owner_steam_id:
+                _eq: X-Hasura-User-Id
+            - roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+      check: null
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        team:
+          _or:
+            - owner_steam_id:
+                _eq: X-Hasura-User-Id
+            - roster:
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+    comment: ""

@@ -8,7 +8,39 @@ object_relationships:
   - name: owner
     using:
       foreign_key_constraint_on: owner_steam_id
+  - name: scrim_settings
+    using:
+      foreign_key_constraint_on:
+        column: team_id
+        table:
+          name: team_scrim_settings
+          schema: public
+  - name: ranks
+    using:
+      manual_configuration:
+        column_mapping:
+          id: team_id
+        insertion_order: null
+        remote_table:
+          name: v_team_ranks
+          schema: public
+  - name: reputation
+    using:
+      manual_configuration:
+        column_mapping:
+          id: team_id
+        insertion_order: null
+        remote_table:
+          name: v_team_reputation
+          schema: public
 array_relationships:
+  - name: scrim_availability
+    using:
+      foreign_key_constraint_on:
+        column: team_id
+        table:
+          name: team_scrim_availability
+          schema: public
   - name: invites
     using:
       foreign_key_constraint_on:
@@ -42,6 +74,12 @@ computed_fields:
     definition:
       function:
         name: can_change_team_role
+        schema: public
+      session_argument: hasura_session
+  - name: can_manage_scrims
+    definition:
+      function:
+        name: can_manage_team_scrims
         schema: public
       session_argument: hasura_session
   - name: can_invite
@@ -90,6 +128,7 @@ select_permissions:
       computed_fields:
         - can_change_role
         - can_invite
+        - can_manage_scrims
         - can_remove
         - role
       filter: {}

@@ -1,0 +1,28 @@
+table:
+  name: v_team_ranks
+  schema: public
+object_relationships:
+  - name: team
+    using:
+      manual_configuration:
+        column_mapping:
+          team_id: id
+        insertion_order: null
+        remote_table:
+          name: teams
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - team_id
+        - roster_size
+        - avg_elo
+        - min_elo
+        - max_elo
+        - avg_faceit_level
+        - avg_faceit_elo
+        - avg_premier
+      filter: {}
+      allow_aggregations: true
+    comment: ""
