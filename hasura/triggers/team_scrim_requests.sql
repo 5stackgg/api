@@ -32,16 +32,40 @@ CREATE TRIGGER tau_scrim_request_cleanup_notifications
 -- delete, so we cancel here in a BEFORE DELETE while it still points). Marking
 -- the request Cancelled fires the cleanup trigger above, removing the stuck
 -- "Scrim Scheduled" notification regardless of how the match was deleted.
+--
+-- We also snapshot the reputation-relevant outcome here, because canceled
+-- scrim matches are GC'd ~1 day later (RemoveCancelledMatches). Once the match
+-- (and its lineups / check-in records) are gone, v_team_reputation can no
+-- longer tell a no-show from a clean cancel, so freeze the terminal status and
+-- each team's check-in state onto the request now. Bails are already recorded
+-- on the request (canceled_late / canceled_by_team_id) and don't need this.
 CREATE OR REPLACE FUNCTION public.tbd_match_cancel_scrim()
     RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    UPDATE team_scrim_requests
+    UPDATE team_scrim_requests r
        SET status = 'Cancelled',
-           responded_at = now()
-     WHERE match_id = OLD.id
-       AND status = 'Matched';
+           responded_at = now(),
+           match_outcome = OLD.status,
+           from_team_checked_in = EXISTS (
+               SELECT 1
+                 FROM match_lineup_players mlp
+                 JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
+                WHERE ml.id IN (OLD.lineup_1_id, OLD.lineup_2_id)
+                  AND ml.team_id = r.from_team_id
+                  AND mlp.checked_in = true
+           ),
+           to_team_checked_in = EXISTS (
+               SELECT 1
+                 FROM match_lineup_players mlp
+                 JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
+                WHERE ml.id IN (OLD.lineup_1_id, OLD.lineup_2_id)
+                  AND ml.team_id = r.to_team_id
+                  AND mlp.checked_in = true
+           )
+     WHERE r.match_id = OLD.id
+       AND r.status = 'Matched';
     RETURN OLD;
 END;
 $$;

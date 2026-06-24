@@ -78664,6 +78664,9 @@ export default {
             "from_team": [
                 3368
             ],
+            "from_team_checked_in": [
+                3
+            ],
             "from_team_id": [
                 3808
             ],
@@ -78681,6 +78684,9 @@ export default {
             ],
             "match_options_id": [
                 3808
+            ],
+            "match_outcome": [
+                66
             ],
             "proposals": [
                 3226,
@@ -78746,6 +78752,9 @@ export default {
             ],
             "to_team": [
                 3368
+            ],
+            "to_team_checked_in": [
+                3
             ],
             "to_team_id": [
                 3808
@@ -78976,6 +78985,9 @@ export default {
             "from_team": [
                 3377
             ],
+            "from_team_checked_in": [
+                4
+            ],
             "from_team_id": [
                 3810
             ],
@@ -78993,6 +79005,9 @@ export default {
             ],
             "match_options_id": [
                 3810
+            ],
+            "match_outcome": [
+                68
             ],
             "proposals": [
                 3235
@@ -79020,6 +79035,9 @@ export default {
             ],
             "to_team": [
                 3377
+            ],
+            "to_team_checked_in": [
+                4
             ],
             "to_team_id": [
                 3810
@@ -79062,6 +79080,9 @@ export default {
             "from_team": [
                 3386
             ],
+            "from_team_checked_in": [
+                3
+            ],
             "from_team_id": [
                 3808
             ],
@@ -79079,6 +79100,9 @@ export default {
             ],
             "match_options_id": [
                 3808
+            ],
+            "match_outcome": [
+                66
             ],
             "proposals": [
                 3232
@@ -79103,6 +79127,9 @@ export default {
             ],
             "to_team": [
                 3386
+            ],
+            "to_team_checked_in": [
+                3
             ],
             "to_team_id": [
                 3808
@@ -79135,6 +79162,9 @@ export default {
             ],
             "match_options_id": [
                 3808
+            ],
+            "match_outcome": [
+                66
             ],
             "proposed_scheduled_at": [
                 3411
@@ -79178,6 +79208,9 @@ export default {
                 2028
             ],
             "match_options_id": [
+                2028
+            ],
+            "match_outcome": [
                 2028
             ],
             "proposed_scheduled_at": [
@@ -79224,6 +79257,9 @@ export default {
             "match_options_id": [
                 3808
             ],
+            "match_outcome": [
+                66
+            ],
             "proposed_scheduled_at": [
                 3411
             ],
@@ -79266,6 +79302,9 @@ export default {
                 2028
             ],
             "match_options_id": [
+                2028
+            ],
+            "match_outcome": [
                 2028
             ],
             "proposed_scheduled_at": [
@@ -79348,6 +79387,9 @@ export default {
             "from_team": [
                 3388
             ],
+            "from_team_checked_in": [
+                2028
+            ],
             "from_team_id": [
                 2028
             ],
@@ -79364,6 +79406,9 @@ export default {
                 1736
             ],
             "match_options_id": [
+                2028
+            ],
+            "match_outcome": [
                 2028
             ],
             "proposals_aggregate": [
@@ -79389,6 +79434,9 @@ export default {
             ],
             "to_team": [
                 3388
+            ],
+            "to_team_checked_in": [
+                2028
             ],
             "to_team_id": [
                 2028
@@ -79427,6 +79475,9 @@ export default {
             "expires_at": [
                 3411
             ],
+            "from_team_checked_in": [
+                3
+            ],
             "from_team_id": [
                 3808
             ],
@@ -79438,6 +79489,9 @@ export default {
             ],
             "match_options_id": [
                 3808
+            ],
+            "match_outcome": [
+                66
             ],
             "proposed_scheduled_at": [
                 3411
@@ -79453,6 +79507,9 @@ export default {
             ],
             "status": [
                 842
+            ],
+            "to_team_checked_in": [
+                3
             ],
             "to_team_id": [
                 3808
@@ -79539,6 +79596,9 @@ export default {
             "expires_at": [
                 3411
             ],
+            "from_team_checked_in": [
+                3
+            ],
             "from_team_id": [
                 3808
             ],
@@ -79550,6 +79610,9 @@ export default {
             ],
             "match_options_id": [
                 3808
+            ],
+            "match_outcome": [
+                66
             ],
             "proposed_scheduled_at": [
                 3411
@@ -79565,6 +79628,9 @@ export default {
             ],
             "status": [
                 842
+            ],
+            "to_team_checked_in": [
+                3
             ],
             "to_team_id": [
                 3808

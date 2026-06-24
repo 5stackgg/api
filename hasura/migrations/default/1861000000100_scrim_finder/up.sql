@@ -13,9 +13,6 @@ INSERT INTO public.e_scrim_request_statuses ("value", "description") VALUES
     ('Matched', 'A hosted match was scheduled for this request')
 ON CONFLICT (value) DO UPDATE SET "description" = EXCLUDED."description";
 
-ALTER TABLE "public"."match_options"
-  ADD COLUMN IF NOT EXISTS "ranked" boolean NOT NULL DEFAULT true;
-
 CREATE TABLE IF NOT EXISTS public.team_scrim_settings (
     id uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
     team_id uuid NOT NULL UNIQUE REFERENCES public.teams (id) ON UPDATE cascade ON DELETE cascade,

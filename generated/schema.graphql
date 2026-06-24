@@ -71769,6 +71769,7 @@ type team_scrim_requests {
 
   """An object relationship"""
   from_team: teams!
+  from_team_checked_in: Boolean
   from_team_id: uuid!
   id: uuid!
 
@@ -71779,6 +71780,11 @@ type team_scrim_requests {
   """An object relationship"""
   match_options: match_options
   match_options_id: uuid
+
+  """
+  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
+  """
+  match_outcome: String
 
   """An array relationship"""
   proposals(
@@ -71826,6 +71832,7 @@ type team_scrim_requests {
 
   """An object relationship"""
   to_team: teams!
+  to_team_checked_in: Boolean
   to_team_id: uuid!
 }
 
@@ -71935,12 +71942,14 @@ input team_scrim_requests_bool_exp {
   created_at: timestamptz_comparison_exp
   expires_at: timestamptz_comparison_exp
   from_team: teams_bool_exp
+  from_team_checked_in: Boolean_comparison_exp
   from_team_id: uuid_comparison_exp
   id: uuid_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
   match_options: match_options_bool_exp
   match_options_id: uuid_comparison_exp
+  match_outcome: String_comparison_exp
   proposals: team_scrim_request_proposals_bool_exp
   proposals_aggregate: team_scrim_request_proposals_aggregate_bool_exp
   proposed_scheduled_at: timestamptz_comparison_exp
@@ -71950,6 +71959,7 @@ input team_scrim_requests_bool_exp {
   responded_at: timestamptz_comparison_exp
   status: e_scrim_request_statuses_enum_comparison_exp
   to_team: teams_bool_exp
+  to_team_checked_in: Boolean_comparison_exp
   to_team_id: uuid_comparison_exp
 }
 
@@ -71985,12 +71995,18 @@ input team_scrim_requests_insert_input {
   created_at: timestamptz
   expires_at: timestamptz
   from_team: teams_obj_rel_insert_input
+  from_team_checked_in: Boolean
   from_team_id: uuid
   id: uuid
   match: matches_obj_rel_insert_input
   match_id: uuid
   match_options: match_options_obj_rel_insert_input
   match_options_id: uuid
+
+  """
+  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
+  """
+  match_outcome: String
   proposals: team_scrim_request_proposals_arr_rel_insert_input
   proposed_scheduled_at: timestamptz
   region: String
@@ -71999,6 +72015,7 @@ input team_scrim_requests_insert_input {
   responded_at: timestamptz
   status: e_scrim_request_statuses_enum
   to_team: teams_obj_rel_insert_input
+  to_team_checked_in: Boolean
   to_team_id: uuid
 }
 
@@ -72012,6 +72029,11 @@ type team_scrim_requests_max_fields {
   id: uuid
   match_id: uuid
   match_options_id: uuid
+
+  """
+  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
+  """
+  match_outcome: String
   proposed_scheduled_at: timestamptz
   region: String
   requested_by_steam_id: bigint
@@ -72031,6 +72053,11 @@ input team_scrim_requests_max_order_by {
   id: order_by
   match_id: order_by
   match_options_id: order_by
+
+  """
+  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
+  """
+  match_outcome: order_by
   proposed_scheduled_at: order_by
   region: order_by
   requested_by_steam_id: order_by
@@ -72048,6 +72075,11 @@ type team_scrim_requests_min_fields {
   id: uuid
   match_id: uuid
   match_options_id: uuid
+
+  """
+  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
+  """
+  match_outcome: String
   proposed_scheduled_at: timestamptz
   region: String
   requested_by_steam_id: bigint
@@ -72067,6 +72099,11 @@ input team_scrim_requests_min_order_by {
   id: order_by
   match_id: order_by
   match_options_id: order_by
+
+  """
+  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
+  """
+  match_outcome: order_by
   proposed_scheduled_at: order_by
   region: order_by
   requested_by_steam_id: order_by
@@ -72114,12 +72151,14 @@ input team_scrim_requests_order_by {
   created_at: order_by
   expires_at: order_by
   from_team: teams_order_by
+  from_team_checked_in: order_by
   from_team_id: order_by
   id: order_by
   match: matches_order_by
   match_id: order_by
   match_options: match_options_order_by
   match_options_id: order_by
+  match_outcome: order_by
   proposals_aggregate: team_scrim_request_proposals_aggregate_order_by
   proposed_scheduled_at: order_by
   region: order_by
@@ -72128,6 +72167,7 @@ input team_scrim_requests_order_by {
   responded_at: order_by
   status: order_by
   to_team: teams_order_by
+  to_team_checked_in: order_by
   to_team_id: order_by
 }
 
@@ -72159,6 +72199,9 @@ enum team_scrim_requests_select_column {
   expires_at
 
   """column name"""
+  from_team_checked_in
+
+  """column name"""
   from_team_id
 
   """column name"""
@@ -72169,6 +72212,9 @@ enum team_scrim_requests_select_column {
 
   """column name"""
   match_options_id
+
+  """column name"""
+  match_outcome
 
   """column name"""
   proposed_scheduled_at
@@ -72186,6 +72232,9 @@ enum team_scrim_requests_select_column {
   status
 
   """column name"""
+  to_team_checked_in
+
+  """column name"""
   to_team_id
 }
 
@@ -72198,6 +72247,12 @@ enum team_scrim_requests_select_column_team_scrim_requests_aggregate_bool_exp_bo
 
   """column name"""
   canceled_late
+
+  """column name"""
+  from_team_checked_in
+
+  """column name"""
+  to_team_checked_in
 }
 
 """
@@ -72209,6 +72264,12 @@ enum team_scrim_requests_select_column_team_scrim_requests_aggregate_bool_exp_bo
 
   """column name"""
   canceled_late
+
+  """column name"""
+  from_team_checked_in
+
+  """column name"""
+  to_team_checked_in
 }
 
 """
@@ -72221,15 +72282,22 @@ input team_scrim_requests_set_input {
   canceled_late: Boolean
   created_at: timestamptz
   expires_at: timestamptz
+  from_team_checked_in: Boolean
   from_team_id: uuid
   id: uuid
   match_id: uuid
   match_options_id: uuid
+
+  """
+  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
+  """
+  match_outcome: String
   proposed_scheduled_at: timestamptz
   region: String
   requested_by_steam_id: bigint
   responded_at: timestamptz
   status: e_scrim_request_statuses_enum
+  to_team_checked_in: Boolean
   to_team_id: uuid
 }
 
@@ -72288,15 +72356,22 @@ input team_scrim_requests_stream_cursor_value_input {
   canceled_late: Boolean
   created_at: timestamptz
   expires_at: timestamptz
+  from_team_checked_in: Boolean
   from_team_id: uuid
   id: uuid
   match_id: uuid
   match_options_id: uuid
+
+  """
+  Terminal match status captured by tbd_match_cancel_scrim before the match row is deleted, so v_team_reputation survives canceled-match GC.
+  """
+  match_outcome: String
   proposed_scheduled_at: timestamptz
   region: String
   requested_by_steam_id: bigint
   responded_at: timestamptz
   status: e_scrim_request_statuses_enum
+  to_team_checked_in: Boolean
   to_team_id: uuid
 }
 
@@ -72335,6 +72410,9 @@ enum team_scrim_requests_update_column {
   expires_at
 
   """column name"""
+  from_team_checked_in
+
+  """column name"""
   from_team_id
 
   """column name"""
@@ -72345,6 +72423,9 @@ enum team_scrim_requests_update_column {
 
   """column name"""
   match_options_id
+
+  """column name"""
+  match_outcome
 
   """column name"""
   proposed_scheduled_at
@@ -72360,6 +72441,9 @@ enum team_scrim_requests_update_column {
 
   """column name"""
   status
+
+  """column name"""
+  to_team_checked_in
 
   """column name"""
   to_team_id

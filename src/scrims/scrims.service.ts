@@ -264,7 +264,6 @@ export class ScrimsService {
       map_veto: true,
       map_pool_id,
       type: "Competitive",
-      ranked: true,
     };
   }
 
@@ -604,8 +603,10 @@ export class ScrimsService {
     throw Error("this request can no longer be cancelled");
   }
 
-  // The hosted match is canceled but kept, not deleted, so it still counts
-  // toward the bailing team's reliability.
+  // The bail is recorded on the request itself (canceled_late /
+  // canceled_by_team_id), so it survives the canceled match being GC'd — the
+  // match is set Canceled here for UX and removed ~1 day later by
+  // RemoveCancelledMatches.
   private async lateCancelScrim(
     request: {
       id: string;
