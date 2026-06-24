@@ -122,6 +122,7 @@ select_permissions:
         - match_id
         - current_pick_lineup
         - pick_deadline
+        - expires_at
         - created_at
         - updated_at
       filter:
