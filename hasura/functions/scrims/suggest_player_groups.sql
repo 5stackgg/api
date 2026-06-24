@@ -7,7 +7,18 @@ CREATE OR REPLACE FUNCTION public.suggest_player_groups(
 RETURNS TABLE(member_steam_ids bigint[], together_count int)
 LANGUAGE sql STABLE
 AS $$
-WITH pairs AS (
+WITH eligible AS (
+    -- Only suggest teams to real users who have actually signed in and are not
+    -- already on a team. Players auto-created by match imports/events (never
+    -- logged in) have a null last_sign_in_at and must be ignored.
+    SELECT pl.steam_id
+    FROM players pl
+    WHERE pl.last_sign_in_at IS NOT NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM team_roster tr WHERE tr.player_steam_id = pl.steam_id
+      )
+),
+pairs AS (
     SELECT
         p1.steam_id AS anchor,
         p2.steam_id AS partner,
@@ -20,6 +31,8 @@ WITH pairs AS (
     JOIN matches m ON m.id = l.match_id
     WHERE m.created_at >= now() - (window_days || ' days')::interval
       AND m.status IN ('Finished', 'Tie', 'Forfeit', 'Surrendered')
+      AND p1.steam_id IN (SELECT steam_id FROM eligible)
+      AND p2.steam_id IN (SELECT steam_id FROM eligible)
     GROUP BY p1.steam_id, p2.steam_id
     HAVING count(DISTINCT p1.match_lineup_id) >= pair_threshold
 ),
@@ -57,12 +70,5 @@ counted AS (
 )
 SELECT c.members AS member_steam_ids, c.together_count
 FROM counted c
-WHERE c.together_count >= group_threshold
-  AND NOT EXISTS (
-    SELECT 1
-    FROM team_roster tr
-    WHERE tr.player_steam_id = ANY (c.members)
-    GROUP BY tr.team_id
-    HAVING count(*) >= ceil(0.6 * array_length(c.members, 1))
-  );
+WHERE c.together_count >= group_threshold;
 $$;
