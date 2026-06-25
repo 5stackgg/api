@@ -29,6 +29,32 @@ insert_permissions:
         - allow_outside_availability
         - notes
     comment: ""
+  - role: match_organizer
+    permission:
+      check: {}
+      columns:
+        - team_id
+        - enabled
+        - regions
+        - map_ids
+        - elo_min
+        - elo_max
+        - allow_outside_availability
+        - notes
+    comment: ""
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - team_id
+        - enabled
+        - regions
+        - map_ids
+        - elo_min
+        - elo_max
+        - allow_outside_availability
+        - notes
+    comment: ""
 select_permissions:
   - role: guest
     permission:
@@ -103,6 +129,32 @@ update_permissions:
                       _eq: X-Hasura-User-Id
       check: null
     comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - enabled
+        - regions
+        - map_ids
+        - elo_min
+        - elo_max
+        - allow_outside_availability
+        - notes
+      filter: {}
+      check: null
+    comment: ""
+  - role: administrator
+    permission:
+      columns:
+        - enabled
+        - regions
+        - map_ids
+        - elo_min
+        - elo_max
+        - allow_outside_availability
+        - notes
+      filter: {}
+      check: null
+    comment: ""
 delete_permissions:
   - role: user
     permission:
@@ -117,4 +169,12 @@ delete_permissions:
                       _eq: Admin
                   - player_steam_id:
                       _eq: X-Hasura-User-Id
+    comment: ""
+  - role: match_organizer
+    permission:
+      filter: {}
+    comment: ""
+  - role: administrator
+    permission:
+      filter: {}
     comment: ""
