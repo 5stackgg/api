@@ -1,0 +1,67 @@
+table:
+  name: system_alerts
+  schema: public
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - type
+        - title
+        - message
+        - is_active
+        - dismissible
+        - expires_at
+        - created_by
+    comment: ""
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - type
+        - title
+        - message
+        - is_active
+        - dismissible
+        - expires_at
+        - created_by
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: guest
+    permission:
+      columns:
+        - id
+        - type
+        - title
+        - message
+        - is_active
+        - dismissible
+        - expires_at
+        - created_by
+        - created_at
+        - updated_at
+      filter: {}
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - type
+        - title
+        - message
+        - is_active
+        - dismissible
+        - expires_at
+        - updated_at
+      filter: {}
+      check: {}
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""

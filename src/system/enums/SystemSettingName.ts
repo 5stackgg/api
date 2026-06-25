@@ -7,5 +7,6 @@ export enum SystemSettingName {
   SupportsGameServerNodes = "supports_game_server_nodes",
   SupportsGameServerVersionPinning = "supports_game_server_version_pinning",
   NewsEnabled = "public.news_enabled",
+  NewsLabel = "public.news_label",
   PostNewsRole = "public.post_news_role",
 }
