@@ -25,6 +25,24 @@ insert_permissions:
         - ends_at
         - recurring_weekly
     comment: ""
+  - role: match_organizer
+    permission:
+      check: {}
+      columns:
+        - team_id
+        - starts_at
+        - ends_at
+        - recurring_weekly
+    comment: ""
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - team_id
+        - starts_at
+        - ends_at
+        - recurring_weekly
+    comment: ""
 select_permissions:
   - role: guest
     permission:
@@ -58,6 +76,24 @@ update_permissions:
                       _eq: X-Hasura-User-Id
       check: null
     comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - starts_at
+        - ends_at
+        - recurring_weekly
+      filter: {}
+      check: null
+    comment: ""
+  - role: administrator
+    permission:
+      columns:
+        - starts_at
+        - ends_at
+        - recurring_weekly
+      filter: {}
+      check: null
+    comment: ""
 delete_permissions:
   - role: user
     permission:
@@ -72,4 +108,12 @@ delete_permissions:
                       _eq: Admin
                   - player_steam_id:
                       _eq: X-Hasura-User-Id
+    comment: ""
+  - role: match_organizer
+    permission:
+      filter: {}
+    comment: ""
+  - role: administrator
+    permission:
+      filter: {}
     comment: ""

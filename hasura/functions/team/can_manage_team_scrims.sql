@@ -7,7 +7,7 @@ BEGIN
         RETURN true;
     END IF;
 
-    if hasura_session ->> 'x-hasura-role' = 'administrator' then
+    if hasura_session ->> 'x-hasura-role' IN ('administrator', 'match_organizer') then
         RETURN true;
     END IF;
 
