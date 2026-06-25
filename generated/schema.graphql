@@ -9355,6 +9355,180 @@ input e_sides_updates {
 }
 
 """
+columns and relationships of "e_system_alert_types"
+"""
+type e_system_alert_types {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_system_alert_types"
+"""
+type e_system_alert_types_aggregate {
+  aggregate: e_system_alert_types_aggregate_fields
+  nodes: [e_system_alert_types!]!
+}
+
+"""
+aggregate fields of "e_system_alert_types"
+"""
+type e_system_alert_types_aggregate_fields {
+  count(columns: [e_system_alert_types_select_column!], distinct: Boolean): Int!
+  max: e_system_alert_types_max_fields
+  min: e_system_alert_types_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_system_alert_types". All fields are combined with a logical 'AND'.
+"""
+input e_system_alert_types_bool_exp {
+  _and: [e_system_alert_types_bool_exp!]
+  _not: e_system_alert_types_bool_exp
+  _or: [e_system_alert_types_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_system_alert_types"
+"""
+enum e_system_alert_types_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_system_alert_types_pkey
+}
+
+enum e_system_alert_types_enum {
+  """Critical"""
+  critical
+
+  """Informational"""
+  info
+
+  """Warning"""
+  warning
+}
+
+"""
+Boolean expression to compare columns of type "e_system_alert_types_enum". All fields are combined with logical 'AND'.
+"""
+input e_system_alert_types_enum_comparison_exp {
+  _eq: e_system_alert_types_enum
+  _in: [e_system_alert_types_enum!]
+  _is_null: Boolean
+  _neq: e_system_alert_types_enum
+  _nin: [e_system_alert_types_enum!]
+}
+
+"""
+input type for inserting data into table "e_system_alert_types"
+"""
+input e_system_alert_types_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_system_alert_types_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_system_alert_types_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_system_alert_types"
+"""
+type e_system_alert_types_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_system_alert_types!]!
+}
+
+"""
+on_conflict condition type for table "e_system_alert_types"
+"""
+input e_system_alert_types_on_conflict {
+  constraint: e_system_alert_types_constraint!
+  update_columns: [e_system_alert_types_update_column!]! = []
+  where: e_system_alert_types_bool_exp
+}
+
+"""Ordering options when selecting data from "e_system_alert_types"."""
+input e_system_alert_types_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_system_alert_types"""
+input e_system_alert_types_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_system_alert_types"
+"""
+enum e_system_alert_types_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_system_alert_types"
+"""
+input e_system_alert_types_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_system_alert_types"
+"""
+input e_system_alert_types_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_system_alert_types_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_system_alert_types_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_system_alert_types"
+"""
+enum e_system_alert_types_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_system_alert_types_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_system_alert_types_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_system_alert_types_bool_exp!
+}
+
+"""
 columns and relationships of "e_team_roles"
 """
 type e_team_roles {
@@ -21088,7 +21262,6 @@ type match_options {
   number_of_substitutes: Int!
   overtime: Boolean!
   prefer_dedicated_server: Boolean!
-  ranked: Boolean!
   ready_setting: e_ready_settings_enum!
   region_veto: Boolean!
   regions: [String!]
@@ -21171,7 +21344,6 @@ input match_options_bool_exp {
   number_of_substitutes: Int_comparison_exp
   overtime: Boolean_comparison_exp
   prefer_dedicated_server: Boolean_comparison_exp
-  ranked: Boolean_comparison_exp
   ready_setting: e_ready_settings_enum_comparison_exp
   region_veto: Boolean_comparison_exp
   regions: String_array_comparison_exp
@@ -21230,7 +21402,6 @@ input match_options_insert_input {
   number_of_substitutes: Int
   overtime: Boolean
   prefer_dedicated_server: Boolean
-  ranked: Boolean
   ready_setting: e_ready_settings_enum
   region_veto: Boolean
   regions: [String!]
@@ -21324,7 +21495,6 @@ input match_options_order_by {
   number_of_substitutes: order_by
   overtime: order_by
   prefer_dedicated_server: order_by
-  ranked: order_by
   ready_setting: order_by
   region_veto: order_by
   regions: order_by
@@ -21401,9 +21571,6 @@ enum match_options_select_column {
   prefer_dedicated_server
 
   """column name"""
-  ranked
-
-  """column name"""
   ready_setting
 
   """column name"""
@@ -21447,7 +21614,6 @@ input match_options_set_input {
   number_of_substitutes: Int
   overtime: Boolean
   prefer_dedicated_server: Boolean
-  ranked: Boolean
   ready_setting: e_ready_settings_enum
   region_veto: Boolean
   regions: [String!]
@@ -21518,7 +21684,6 @@ input match_options_stream_cursor_value_input {
   number_of_substitutes: Int
   overtime: Boolean
   prefer_dedicated_server: Boolean
-  ranked: Boolean
   ready_setting: e_ready_settings_enum
   region_veto: Boolean
   regions: [String!]
@@ -21595,9 +21760,6 @@ enum match_options_update_column {
 
   """column name"""
   prefer_dedicated_server
-
-  """column name"""
-  ranked
 
   """column name"""
   ready_setting
@@ -25226,6 +25388,19 @@ type mutation_root {
   delete_e_sides_by_pk(value: String!): e_sides
 
   """
+  delete data from the table: "e_system_alert_types"
+  """
+  delete_e_system_alert_types(
+    """filter the rows which have to be deleted"""
+    where: e_system_alert_types_bool_exp!
+  ): e_system_alert_types_mutation_response
+
+  """
+  delete single row from the table: "e_system_alert_types"
+  """
+  delete_e_system_alert_types_by_pk(value: String!): e_system_alert_types
+
+  """
   delete data from the table: "e_team_roles"
   """
   delete_e_team_roles(
@@ -26015,6 +26190,19 @@ type mutation_root {
   delete single row from the table: "steam_accounts"
   """
   delete_steam_accounts_by_pk(id: uuid!): steam_accounts
+
+  """
+  delete data from the table: "system_alerts"
+  """
+  delete_system_alerts(
+    """filter the rows which have to be deleted"""
+    where: system_alerts_bool_exp!
+  ): system_alerts_mutation_response
+
+  """
+  delete single row from the table: "system_alerts"
+  """
+  delete_system_alerts_by_pk(id: uuid!): system_alerts
 
   """
   delete data from the table: "team_invites"
@@ -27028,6 +27216,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_sides_on_conflict
   ): e_sides
+
+  """
+  insert data into the table: "e_system_alert_types"
+  """
+  insert_e_system_alert_types(
+    """the rows to be inserted"""
+    objects: [e_system_alert_types_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_system_alert_types_on_conflict
+  ): e_system_alert_types_mutation_response
+
+  """
+  insert a single row into the table: "e_system_alert_types"
+  """
+  insert_e_system_alert_types_one(
+    """the row to be inserted"""
+    object: e_system_alert_types_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_system_alert_types_on_conflict
+  ): e_system_alert_types
 
   """
   insert data into the table: "e_team_roles"
@@ -28374,6 +28584,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: steam_accounts_on_conflict
   ): steam_accounts
+
+  """
+  insert data into the table: "system_alerts"
+  """
+  insert_system_alerts(
+    """the rows to be inserted"""
+    objects: [system_alerts_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: system_alerts_on_conflict
+  ): system_alerts_mutation_response
+
+  """
+  insert a single row into the table: "system_alerts"
+  """
+  insert_system_alerts_one(
+    """the row to be inserted"""
+    object: system_alerts_insert_input!
+
+    """upsert condition"""
+    on_conflict: system_alerts_on_conflict
+  ): system_alerts
 
   """
   insert data into the table: "team_invites"
@@ -30042,6 +30274,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_sides_updates!]!
   ): [e_sides_mutation_response]
+
+  """
+  update data of the table: "e_system_alert_types"
+  """
+  update_e_system_alert_types(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_system_alert_types_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_system_alert_types_bool_exp!
+  ): e_system_alert_types_mutation_response
+
+  """
+  update single row of the table: "e_system_alert_types"
+  """
+  update_e_system_alert_types_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_system_alert_types_set_input
+    pk_columns: e_system_alert_types_pk_columns_input!
+  ): e_system_alert_types
+
+  """
+  update multiples rows of table: "e_system_alert_types"
+  """
+  update_e_system_alert_types_many(
+    """updates to execute, in order"""
+    updates: [e_system_alert_types_updates!]!
+  ): [e_system_alert_types_mutation_response]
 
   """
   update data of the table: "e_team_roles"
@@ -32315,6 +32575,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [steam_accounts_updates!]!
   ): [steam_accounts_mutation_response]
+
+  """
+  update data of the table: "system_alerts"
+  """
+  update_system_alerts(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: system_alerts_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: system_alerts_set_input
+
+    """filter the rows which have to be updated"""
+    where: system_alerts_bool_exp!
+  ): system_alerts_mutation_response
+
+  """
+  update single row of the table: "system_alerts"
+  """
+  update_system_alerts_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: system_alerts_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: system_alerts_set_input
+    pk_columns: system_alerts_pk_columns_input!
+  ): system_alerts
+
+  """
+  update multiples rows of table: "system_alerts"
+  """
+  update_system_alerts_many(
+    """updates to execute, in order"""
+    updates: [system_alerts_updates!]!
+  ): [system_alerts_mutation_response]
 
   """
   update data of the table: "team_invites"
@@ -54625,6 +54919,51 @@ type query_root {
   e_sides_by_pk(value: String!): e_sides
 
   """
+  fetch data from the table: "e_system_alert_types"
+  """
+  e_system_alert_types(
+    """distinct select on columns"""
+    distinct_on: [e_system_alert_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_system_alert_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_system_alert_types_bool_exp
+  ): [e_system_alert_types!]!
+
+  """
+  fetch aggregated fields from the table: "e_system_alert_types"
+  """
+  e_system_alert_types_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_system_alert_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_system_alert_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_system_alert_types_bool_exp
+  ): e_system_alert_types_aggregate!
+
+  """
+  fetch data from the table: "e_system_alert_types" using primary key columns
+  """
+  e_system_alert_types_by_pk(value: String!): e_system_alert_types
+
+  """
   fetch data from the table: "e_team_roles"
   """
   e_team_roles(
@@ -57645,6 +57984,49 @@ type query_root {
 
   """fetch data from the table: "steam_accounts" using primary key columns"""
   steam_accounts_by_pk(id: uuid!): steam_accounts
+
+  """
+  fetch data from the table: "system_alerts"
+  """
+  system_alerts(
+    """distinct select on columns"""
+    distinct_on: [system_alerts_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [system_alerts_order_by!]
+
+    """filter the rows returned"""
+    where: system_alerts_bool_exp
+  ): [system_alerts!]!
+
+  """
+  fetch aggregated fields from the table: "system_alerts"
+  """
+  system_alerts_aggregate(
+    """distinct select on columns"""
+    distinct_on: [system_alerts_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [system_alerts_order_by!]
+
+    """filter the rows returned"""
+    where: system_alerts_bool_exp
+  ): system_alerts_aggregate!
+
+  """fetch data from the table: "system_alerts" using primary key columns"""
+  system_alerts_by_pk(id: uuid!): system_alerts
 
   """An array relationship"""
   team_invites(
@@ -63435,6 +63817,65 @@ type subscription_root {
   ): [e_sides!]!
 
   """
+  fetch data from the table: "e_system_alert_types"
+  """
+  e_system_alert_types(
+    """distinct select on columns"""
+    distinct_on: [e_system_alert_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_system_alert_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_system_alert_types_bool_exp
+  ): [e_system_alert_types!]!
+
+  """
+  fetch aggregated fields from the table: "e_system_alert_types"
+  """
+  e_system_alert_types_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_system_alert_types_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_system_alert_types_order_by!]
+
+    """filter the rows returned"""
+    where: e_system_alert_types_bool_exp
+  ): e_system_alert_types_aggregate!
+
+  """
+  fetch data from the table: "e_system_alert_types" using primary key columns
+  """
+  e_system_alert_types_by_pk(value: String!): e_system_alert_types
+
+  """
+  fetch data from the table in a streaming manner: "e_system_alert_types"
+  """
+  e_system_alert_types_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_system_alert_types_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_system_alert_types_bool_exp
+  ): [e_system_alert_types!]!
+
+  """
   fetch data from the table: "e_team_roles"
   """
   e_team_roles(
@@ -67323,6 +67764,63 @@ type subscription_root {
     where: steam_accounts_bool_exp
   ): [steam_accounts!]!
 
+  """
+  fetch data from the table: "system_alerts"
+  """
+  system_alerts(
+    """distinct select on columns"""
+    distinct_on: [system_alerts_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [system_alerts_order_by!]
+
+    """filter the rows returned"""
+    where: system_alerts_bool_exp
+  ): [system_alerts!]!
+
+  """
+  fetch aggregated fields from the table: "system_alerts"
+  """
+  system_alerts_aggregate(
+    """distinct select on columns"""
+    distinct_on: [system_alerts_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [system_alerts_order_by!]
+
+    """filter the rows returned"""
+    where: system_alerts_bool_exp
+  ): system_alerts_aggregate!
+
+  """fetch data from the table: "system_alerts" using primary key columns"""
+  system_alerts_by_pk(id: uuid!): system_alerts
+
+  """
+  fetch data from the table in a streaming manner: "system_alerts"
+  """
+  system_alerts_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [system_alerts_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: system_alerts_bool_exp
+  ): [system_alerts!]!
+
   """An array relationship"""
   team_invites(
     """distinct select on columns"""
@@ -69919,6 +70417,322 @@ type subscription_root {
     """filter the rows returned"""
     where: v_tournament_player_stats_bool_exp
   ): [v_tournament_player_stats!]!
+}
+
+"""
+columns and relationships of "system_alerts"
+"""
+type system_alerts {
+  created_at: timestamptz!
+  created_by: bigint
+  dismissible: Boolean!
+  expires_at: timestamptz
+  id: uuid!
+  is_active: Boolean!
+  message: String!
+  title: String
+  type: e_system_alert_types_enum!
+  updated_at: timestamptz!
+}
+
+"""
+aggregated selection of "system_alerts"
+"""
+type system_alerts_aggregate {
+  aggregate: system_alerts_aggregate_fields
+  nodes: [system_alerts!]!
+}
+
+"""
+aggregate fields of "system_alerts"
+"""
+type system_alerts_aggregate_fields {
+  avg: system_alerts_avg_fields
+  count(columns: [system_alerts_select_column!], distinct: Boolean): Int!
+  max: system_alerts_max_fields
+  min: system_alerts_min_fields
+  stddev: system_alerts_stddev_fields
+  stddev_pop: system_alerts_stddev_pop_fields
+  stddev_samp: system_alerts_stddev_samp_fields
+  sum: system_alerts_sum_fields
+  var_pop: system_alerts_var_pop_fields
+  var_samp: system_alerts_var_samp_fields
+  variance: system_alerts_variance_fields
+}
+
+"""aggregate avg on columns"""
+type system_alerts_avg_fields {
+  created_by: Float
+}
+
+"""
+Boolean expression to filter rows from the table "system_alerts". All fields are combined with a logical 'AND'.
+"""
+input system_alerts_bool_exp {
+  _and: [system_alerts_bool_exp!]
+  _not: system_alerts_bool_exp
+  _or: [system_alerts_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  created_by: bigint_comparison_exp
+  dismissible: Boolean_comparison_exp
+  expires_at: timestamptz_comparison_exp
+  id: uuid_comparison_exp
+  is_active: Boolean_comparison_exp
+  message: String_comparison_exp
+  title: String_comparison_exp
+  type: e_system_alert_types_enum_comparison_exp
+  updated_at: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "system_alerts"
+"""
+enum system_alerts_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  system_alerts_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "system_alerts"
+"""
+input system_alerts_inc_input {
+  created_by: bigint
+}
+
+"""
+input type for inserting data into table "system_alerts"
+"""
+input system_alerts_insert_input {
+  created_at: timestamptz
+  created_by: bigint
+  dismissible: Boolean
+  expires_at: timestamptz
+  id: uuid
+  is_active: Boolean
+  message: String
+  title: String
+  type: e_system_alert_types_enum
+  updated_at: timestamptz
+}
+
+"""aggregate max on columns"""
+type system_alerts_max_fields {
+  created_at: timestamptz
+  created_by: bigint
+  expires_at: timestamptz
+  id: uuid
+  message: String
+  title: String
+  updated_at: timestamptz
+}
+
+"""aggregate min on columns"""
+type system_alerts_min_fields {
+  created_at: timestamptz
+  created_by: bigint
+  expires_at: timestamptz
+  id: uuid
+  message: String
+  title: String
+  updated_at: timestamptz
+}
+
+"""
+response of any mutation on the table "system_alerts"
+"""
+type system_alerts_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [system_alerts!]!
+}
+
+"""
+on_conflict condition type for table "system_alerts"
+"""
+input system_alerts_on_conflict {
+  constraint: system_alerts_constraint!
+  update_columns: [system_alerts_update_column!]! = []
+  where: system_alerts_bool_exp
+}
+
+"""Ordering options when selecting data from "system_alerts"."""
+input system_alerts_order_by {
+  created_at: order_by
+  created_by: order_by
+  dismissible: order_by
+  expires_at: order_by
+  id: order_by
+  is_active: order_by
+  message: order_by
+  title: order_by
+  type: order_by
+  updated_at: order_by
+}
+
+"""primary key columns input for table: system_alerts"""
+input system_alerts_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "system_alerts"
+"""
+enum system_alerts_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  created_by
+
+  """column name"""
+  dismissible
+
+  """column name"""
+  expires_at
+
+  """column name"""
+  id
+
+  """column name"""
+  is_active
+
+  """column name"""
+  message
+
+  """column name"""
+  title
+
+  """column name"""
+  type
+
+  """column name"""
+  updated_at
+}
+
+"""
+input type for updating data in table "system_alerts"
+"""
+input system_alerts_set_input {
+  created_at: timestamptz
+  created_by: bigint
+  dismissible: Boolean
+  expires_at: timestamptz
+  id: uuid
+  is_active: Boolean
+  message: String
+  title: String
+  type: e_system_alert_types_enum
+  updated_at: timestamptz
+}
+
+"""aggregate stddev on columns"""
+type system_alerts_stddev_fields {
+  created_by: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type system_alerts_stddev_pop_fields {
+  created_by: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type system_alerts_stddev_samp_fields {
+  created_by: Float
+}
+
+"""
+Streaming cursor of the table "system_alerts"
+"""
+input system_alerts_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: system_alerts_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input system_alerts_stream_cursor_value_input {
+  created_at: timestamptz
+  created_by: bigint
+  dismissible: Boolean
+  expires_at: timestamptz
+  id: uuid
+  is_active: Boolean
+  message: String
+  title: String
+  type: e_system_alert_types_enum
+  updated_at: timestamptz
+}
+
+"""aggregate sum on columns"""
+type system_alerts_sum_fields {
+  created_by: bigint
+}
+
+"""
+update columns of table "system_alerts"
+"""
+enum system_alerts_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  created_by
+
+  """column name"""
+  dismissible
+
+  """column name"""
+  expires_at
+
+  """column name"""
+  id
+
+  """column name"""
+  is_active
+
+  """column name"""
+  message
+
+  """column name"""
+  title
+
+  """column name"""
+  type
+
+  """column name"""
+  updated_at
+}
+
+input system_alerts_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: system_alerts_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: system_alerts_set_input
+
+  """filter the rows which have to be updated"""
+  where: system_alerts_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type system_alerts_var_pop_fields {
+  created_by: Float
+}
+
+"""aggregate var_samp on columns"""
+type system_alerts_var_samp_fields {
+  created_by: Float
+}
+
+"""aggregate variance on columns"""
+type system_alerts_variance_fields {
+  created_by: Float
 }
 
 """
