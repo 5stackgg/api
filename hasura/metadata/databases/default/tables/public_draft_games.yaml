@@ -50,9 +50,19 @@ array_relationships:
         table:
           name: draft_game_picks
           schema: public
+computed_fields:
+  - name: is_organizer
+    definition:
+      function:
+        name: is_draft_game_organizer
+        schema: public
+      session_argument: hasura_session
+    comment: ""
 select_permissions:
   - role: user
     permission:
+      computed_fields:
+        - is_organizer
       columns:
         - id
         - host_steam_id
@@ -85,6 +95,8 @@ select_permissions:
               _eq: Open
           - host_steam_id:
               _eq: X-Hasura-User-Id
+          - is_organizer:
+              _eq: true
           - players:
               steam_id:
                 _eq: X-Hasura-User-Id
@@ -100,6 +112,8 @@ select_permissions:
     comment: ""
   - role: guest
     permission:
+      computed_fields:
+        - is_organizer
       columns:
         - id
         - host_steam_id
@@ -181,16 +195,121 @@ update_permissions:
         - pick_deadline
         - expires_at
       filter:
-        host_steam_id:
-          _eq: X-Hasura-User-Id
+        is_organizer:
+          _eq: true
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - type
+        - mode
+        - access
+        - regions
+        - captain_selection
+        - draft_order
+        - require_approval
+        - team_1_id
+        - team_2_id
+        - inner_squad
+        - map_pool_id
+        - min_elo
+        - max_elo
+        - match_options_id
+        - status
+        - pick_deadline
+        - expires_at
+      filter:
+        is_organizer:
+          _eq: true
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - type
+        - mode
+        - access
+        - regions
+        - captain_selection
+        - draft_order
+        - require_approval
+        - team_1_id
+        - team_2_id
+        - inner_squad
+        - map_pool_id
+        - min_elo
+        - max_elo
+        - match_options_id
+        - status
+        - pick_deadline
+        - expires_at
+      filter:
+        is_organizer:
+          _eq: true
+    comment: ""
+  - role: administrator
+    permission:
+      columns:
+        - type
+        - mode
+        - access
+        - regions
+        - captain_selection
+        - draft_order
+        - require_approval
+        - team_1_id
+        - team_2_id
+        - inner_squad
+        - map_pool_id
+        - min_elo
+        - max_elo
+        - match_options_id
+        - status
+        - pick_deadline
+        - expires_at
+      filter:
+        is_organizer:
+          _eq: true
     comment: ""
 delete_permissions:
   - role: user
     permission:
       filter:
         _and:
-          - host_steam_id:
-              _eq: X-Hasura-User-Id
+          - is_organizer:
+              _eq: true
+          - status:
+              _eq: Open
+          - match_id:
+              _is_null: true
+    comment: ""
+  - role: match_organizer
+    permission:
+      filter:
+        _and:
+          - is_organizer:
+              _eq: true
+          - status:
+              _eq: Open
+          - match_id:
+              _is_null: true
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      filter:
+        _and:
+          - is_organizer:
+              _eq: true
+          - status:
+              _eq: Open
+          - match_id:
+              _is_null: true
+    comment: ""
+  - role: administrator
+    permission:
+      filter:
+        _and:
+          - is_organizer:
+              _eq: true
           - status:
               _eq: Open
           - match_id:

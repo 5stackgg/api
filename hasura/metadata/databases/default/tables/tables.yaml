@@ -52,7 +52,6 @@
 - "!include public_maps.yaml"
 - "!include public_match_clips.yaml"
 - "!include public_match_demo_sessions.yaml"
-- "!include public_match_invites.yaml"
 - "!include public_match_lineup_players.yaml"
 - "!include public_match_lineups.yaml"
 - "!include public_match_map_demos.yaml"

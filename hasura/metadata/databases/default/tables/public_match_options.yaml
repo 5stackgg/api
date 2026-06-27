@@ -54,7 +54,6 @@ insert_permissions:
         - coaches
         - default_models
         - knife_round
-        - lobby_access
         - map_pool_id
         - map_veto
         - match_mode
@@ -81,7 +80,6 @@ insert_permissions:
         - coaches
         - default_models
         - knife_round
-        - lobby_access
         - map_pool_id
         - map_veto
         - mr
@@ -106,7 +104,6 @@ select_permissions:
         - default_models
         - id
         - knife_round
-        - lobby_access
         - map_pool_id
         - map_veto
         - match_mode
@@ -135,7 +132,6 @@ update_permissions:
         - coaches
         - default_models
         - knife_round
-        - lobby_access
         - map_pool_id
         - map_veto
         - match_mode
@@ -195,7 +191,6 @@ update_permissions:
         - coaches
         - default_models
         - knife_round
-        - lobby_access
         - map_pool_id
         - map_veto
         - mr

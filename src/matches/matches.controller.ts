@@ -4,7 +4,6 @@ import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import { safeJsonStringify } from "../utilities/safeJsonStringify";
-import { timingSafeStringEqual } from "../utilities/timingSafeStringEqual";
 import { HasuraService } from "../hasura/hasura.service";
 import { MatchAssistantService } from "./match-assistant/match-assistant.service";
 import { DiscordBotOverviewService } from "../discord-bot/discord-bot-overview/discord-bot-overview.service";
@@ -2098,54 +2097,6 @@ export class MatchesController {
   }
 
   @HasuraAction()
-  public async joinLineup(data: {
-    user: User;
-    match_id: string;
-    lineup_id: string;
-    code: string;
-  }) {
-    const { matches_by_pk } = await this.hasura.query({
-      matches_by_pk: {
-        __args: {
-          id: data.match_id,
-        },
-        options: {
-          lobby_access: true,
-          invite_code: true,
-        },
-      },
-    });
-
-    if (matches_by_pk.options.lobby_access === "Private") {
-      throw Error("Cannot Join a Private Lobby");
-    }
-
-    if (matches_by_pk.options.lobby_access === "Invite") {
-      if (
-        !timingSafeStringEqual(data.code, matches_by_pk.options.invite_code)
-      ) {
-        throw Error("Invalid Code for Match");
-      }
-    }
-
-    const { insert_match_lineup_players_one } = await this.hasura.mutation({
-      insert_match_lineup_players_one: {
-        __args: {
-          object: {
-            steam_id: data.user.steam_id,
-            match_lineup_id: data.lineup_id,
-          },
-        },
-        id: true,
-      },
-    });
-
-    return {
-      success: !!insert_match_lineup_players_one.id,
-    };
-  }
-
-  @HasuraAction()
   public async leaveLineup(data: { user: User; match_id: string }) {
     const { delete_match_lineup_players } = await this.hasura.mutation({
       delete_match_lineup_players: {
@@ -2175,6 +2126,31 @@ export class MatchesController {
   }
 
   @HasuraAction()
+  public async createScheduledMatch(data: {
+    user: User;
+    options: Record<string, unknown>;
+    scheduled_at: string;
+    lineup_1: { team_id?: string; steam_ids?: string[] };
+    lineup_2: { team_id?: string; steam_ids?: string[] };
+  }) {
+    if (!isRoleAbove(data.user.role, "match_organizer")) {
+      throw Error("You are not allowed to schedule matches");
+    }
+
+    const match = await this.matchAssistant.createScheduledMatch(
+      data.user.steam_id,
+      {
+        options: data.options ?? {},
+        scheduled_at: data.scheduled_at,
+        lineup_1: data.lineup_1 ?? {},
+        lineup_2: data.lineup_2 ?? {},
+      },
+    );
+
+    return { matchId: match.id };
+  }
+
+  @HasuraAction()
   public async switchLineup(data: { user: User; match_id: string }) {
     const { matches_by_pk } = await this.hasura.query(
       {
@@ -2183,9 +2159,6 @@ export class MatchesController {
             id: data.match_id,
           },
           id: true,
-          options: {
-            lobby_access: true,
-          },
           max_players_per_lineup: true,
           lineup_1: {
             id: true,
@@ -2205,10 +2178,6 @@ export class MatchesController {
       },
       data.user.steam_id,
     );
-
-    if (matches_by_pk.options.lobby_access === "Private") {
-      throw Error("cannot switch when match is set to private");
-    }
 
     if (
       !matches_by_pk.lineup_1.is_on_lineup &&

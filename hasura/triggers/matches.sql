@@ -228,10 +228,6 @@ BEGIN
         PERFORM update_tournament_bracket(NEW);
     END IF;
 
-    if(NEW.status != 'PickingPlayers') THEN
-        DELETE FROM match_invites WHERE match_id = NEW.id;
-    END IF;
-
     IF (OLD.status = 'WaitingForCheckIn' AND NEW.status != 'WaitingForCheckIn') THEN
         UPDATE match_lineup_players
             SET checked_in = false

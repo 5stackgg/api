@@ -71,13 +71,6 @@ array_relationships:
         table:
           name: draft_games
           schema: public
-  - name: invites
-    using:
-      foreign_key_constraint_on:
-        column: match_id
-        table:
-          name: match_invites
-          schema: public
   - name: map_veto_picks
     using:
       foreign_key_constraint_on:
@@ -641,11 +634,6 @@ select_permissions:
                 - Canceled
           - is_organizer:
               _eq: true
-          - options:
-              lobby_access:
-                _in:
-                  - Open
-                  - Invite
           - is_in_lineup:
               _eq: true
           - is_friend_in_match_lineup:

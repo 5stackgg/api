@@ -102,4 +102,32 @@ export class DraftGamesController {
     );
     return { success: true };
   }
+
+  @HasuraAction()
+  public async addDraftPlayer(data: {
+    user: User;
+    draftGameId: string;
+    steamId: string;
+  }) {
+    await this.draftGameService.addDraftPlayer(
+      data.user,
+      data.draftGameId,
+      data.steamId,
+    );
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async respondDraftInvite(data: {
+    user: User;
+    draftGameId: string;
+    accept: boolean;
+  }) {
+    await this.draftGameService.respondDraftInvite(
+      data.user,
+      data.draftGameId,
+      data.accept,
+    );
+    return { success: true };
+  }
 }

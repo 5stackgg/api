@@ -1590,4 +1590,86 @@ export class MatchAssistantService {
     });
     return insert_match_lineups_one.id;
   }
+
+  // Creates a match in `Scheduled` status with both lineups pre-filled. Each
+  // side is either an existing team (roster auto-filled) or a manual list of
+  // players. The CheckForScheduledMatches cron takes it live near kickoff.
+  public async createScheduledMatch(
+    organizerSteamId: string,
+    input: {
+      options: Record<string, unknown>;
+      scheduled_at: string;
+      lineup_1: { team_id?: string | null; steam_ids?: Array<string> };
+      lineup_2: { team_id?: string | null; steam_ids?: Array<string> };
+    },
+  ) {
+    const teamName = async (teamId?: string | null) => {
+      if (!teamId) {
+        return undefined;
+      }
+      const { teams_by_pk } = await this.hasura.query({
+        teams_by_pk: { __args: { id: teamId }, name: true },
+      });
+      return teams_by_pk?.name;
+    };
+
+    const lineupData = async (side: {
+      team_id?: string | null;
+    }): Promise<Record<string, unknown>> =>
+      side.team_id
+        ? { team_id: side.team_id, team_name: await teamName(side.team_id) }
+        : {};
+
+    // Inserted via the admin client, so the tai_match auto-add-creator branch
+    // (which is gated on a non-admin role) is skipped — no stray organizer.
+    const { insert_matches_one } = await this.hasura.mutation({
+      insert_matches_one: {
+        __args: {
+          object: {
+            organizer_steam_id: organizerSteamId,
+            scheduled_at: input.scheduled_at,
+            status: "Scheduled",
+            options: { data: input.options as any },
+            lineup_1: { data: await lineupData(input.lineup_1) },
+            lineup_2: { data: await lineupData(input.lineup_2) },
+          },
+        },
+        id: true,
+        lineup_1_id: true,
+        lineup_2_id: true,
+      },
+    });
+
+    await this.insertScheduledLineupPlayers(
+      insert_matches_one.lineup_1_id,
+      input.lineup_1.steam_ids,
+    );
+    await this.insertScheduledLineupPlayers(
+      insert_matches_one.lineup_2_id,
+      input.lineup_2.steam_ids,
+    );
+
+    return insert_matches_one;
+  }
+
+  private async insertScheduledLineupPlayers(
+    lineupId: string | null | undefined,
+    steamIds?: Array<string>,
+  ) {
+    if (!lineupId || !steamIds || steamIds.length === 0) {
+      return;
+    }
+
+    await this.hasura.mutation({
+      insert_match_lineup_players: {
+        __args: {
+          objects: Array.from(new Set(steamIds)).map((steam_id) => ({
+            match_lineup_id: lineupId,
+            steam_id,
+          })),
+        },
+        __typename: true,
+      },
+    });
+  }
 }
