@@ -133,6 +133,73 @@ export class DraftService {
       return;
     }
 
+    // Manual: the host has already designated the two captains (is_captain +
+    // lineup). Keep them, return everyone else to the pool, and start drafting.
+    if ((draftGame.captain_selection as string) === "Manual") {
+      const captain1 = draftGame.players.find(
+        (player) => player.is_captain && player.lineup === 1,
+      );
+      const captain2 = draftGame.players.find(
+        (player) => player.is_captain && player.lineup === 2,
+      );
+
+      if (!captain1 || !captain2) {
+        return;
+      }
+
+      await this.hasura.mutation({
+        update_draft_games_by_pk: {
+          __args: {
+            pk_columns: { id: draftGameId },
+            _set: { status: "SelectingCaptains" },
+          },
+          __typename: true,
+        },
+      });
+
+      await this.hasura.mutation({
+        update_draft_game_players: {
+          __args: {
+            where: {
+              draft_game_id: { _eq: draftGameId },
+              is_captain: { _eq: false },
+            },
+            _set: { lineup: null, pick_order: null },
+          },
+          __typename: true,
+        },
+      });
+
+      await this.hasura.mutation({
+        update_draft_game_players_by_pk: {
+          __args: {
+            pk_columns: {
+              draft_game_id: draftGameId,
+              steam_id: captain1.steam_id,
+            },
+            _set: { is_captain: true, lineup: 1, pick_order: 0 },
+          },
+          __typename: true,
+        },
+      });
+
+      await this.hasura.mutation({
+        update_draft_game_players_by_pk: {
+          __args: {
+            pk_columns: {
+              draft_game_id: draftGameId,
+              steam_id: captain2.steam_id,
+            },
+            _set: { is_captain: true, lineup: 2, pick_order: 0 },
+          },
+          __typename: true,
+        },
+      });
+
+      await this.beginDrafting(draftGameId);
+      return;
+    }
+
     await this.hasura.mutation({
       update_draft_games_by_pk: {
         __args: {
@@ -517,6 +584,12 @@ export class DraftService {
       return Array.from({ length: picks }, (_, index) =>
         index % 2 === 0 ? 1 : 2,
       );
+    }
+
+    // Front-Loaded: one reciprocal pick, then lineup 1 drafts the rest until
+    // full (nextLineup caps each side at perTeam, then forces the other side).
+    if ((draftOrder as string) === "FrontLoaded") {
+      return Array.from({ length: picks }, (_, index) => (index === 1 ? 2 : 1));
     }
 
     const order: Array<number> = [1];

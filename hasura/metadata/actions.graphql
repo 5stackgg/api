@@ -325,14 +325,6 @@ type Query {
 }
 
 type Mutation {
-  joinLineup(
-    match_id: String!
-    lineup_id: String!
-    code: String
-  ): SuccessOutput
-}
-
-type Mutation {
   kickServerPlayer(
     serverId: String!
     steam_id: String!
@@ -1366,6 +1358,24 @@ type CreateDraftGameOutput {
   draftGameId: uuid!
 }
 
+input ScheduledLineupInput {
+  team_id: String
+  steam_ids: [String!]
+}
+
+type CreateScheduledMatchOutput {
+  matchId: uuid!
+}
+
+type Mutation {
+  createScheduledMatch(
+    options: jsonb!
+    scheduled_at: String!
+    lineup_1: ScheduledLineupInput!
+    lineup_2: ScheduledLineupInput!
+  ): CreateScheduledMatchOutput
+}
+
 type Mutation {
   createDraftGame(
     settings: jsonb!
@@ -1390,6 +1400,20 @@ type Mutation {
   joinDraftGameAsParty(
     draftGameId: uuid!
     inviteCode: String
+  ): SuccessOutput
+}
+
+type Mutation {
+  addDraftPlayer(
+    draftGameId: uuid!
+    steamId: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  respondDraftInvite(
+    draftGameId: uuid!
+    accept: Boolean!
   ): SuccessOutput
 }
 

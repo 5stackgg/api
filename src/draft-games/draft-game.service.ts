@@ -6,8 +6,10 @@ import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import {
   e_match_types_enum,
   e_lobby_access_enum,
+  e_player_roles_enum,
   e_draft_game_mode_enum,
   e_draft_game_draft_order_enum,
+  e_draft_game_player_status_enum,
   e_draft_game_captain_selection_enum,
 } from "generated";
 import { HasuraService } from "src/hasura/hasura.service";
@@ -35,6 +37,7 @@ export interface CreateDraftGameSettings {
   inner_squad?: boolean;
   roster?: Array<DraftRosterEntry>;
   keep_lobby_together?: boolean;
+  host_joins?: boolean;
   options?: Record<string, unknown>;
 }
 
@@ -80,6 +83,16 @@ export class DraftGameService {
     ) as Promise<T>;
   }
 
+  private isOrganizerOrHost(
+    user: User,
+    draftGame: Pick<DraftGame, "host_steam_id">,
+  ): boolean {
+    return (
+      user.steam_id === draftGame.host_steam_id ||
+      isRoleAbove(user.role, "match_organizer")
+    );
+  }
+
   public async createDraftGame(user: User, settings: CreateDraftGameSettings) {
     if (!DraftGameService.DRAFTABLE_TYPES.includes(settings.type)) {
       throw new DraftGameError("Invalid draft game type");
@@ -92,16 +105,33 @@ export class DraftGameService {
       ]);
     }
 
-    const draftGameId = await this.playerLock(user.steam_id, async () => {
-      await this.verifyPlayerEligible(user.steam_id);
+    // Organizers can open a lobby they manage but do not play in; everyone else
+    // is always seeded as the first accepted player.
+    const hostJoins =
+      settings.host_joins === false &&
+      isRoleAbove(user.role, "match_organizer")
+        ? false
+        : true;
 
-      const existing = await this.getPlayerActiveDraftGame(user.steam_id);
-      if (existing) {
-        throw new DraftGameError("You are already in a draft game");
+    const captainSelection =
+      !hostJoins && settings.captain_selection === "HostAndNext"
+        ? "TopEloTwo"
+        : settings.captain_selection;
+
+    const draftGameId = await this.playerLock(user.steam_id, async () => {
+      if (hostJoins) {
+        await this.verifyPlayerEligible(user.steam_id);
+
+        const existing = await this.getPlayerActiveDraftGame(user.steam_id);
+        if (existing) {
+          throw new DraftGameError("You are already in a draft game");
+        }
       }
 
       const capacity = ExpectedPlayers[settings.type];
-      const elo = await this.getPlayerElo(user.steam_id, settings.type);
+      const elo = hostJoins
+        ? await this.getPlayerElo(user.steam_id, settings.type)
+        : null;
 
       const matchOptionsId = await this.createMatchOptions(user, settings);
 
@@ -130,20 +160,24 @@ export class DraftGameService {
                 require_approval: settings.require_approval || false,
                 regions: settings.regions || [],
                 map_pool_id: settings.map_pool_id,
-                captain_selection: settings.captain_selection,
+                captain_selection: captainSelection,
                 draft_order: settings.draft_order,
                 min_elo: settings.min_elo,
                 max_elo: settings.max_elo,
                 capacity,
-                players: {
-                  data: [
-                    {
-                      steam_id: user.steam_id,
-                      elo_snapshot: elo,
-                      status: "Accepted",
-                    },
-                  ],
-                },
+                ...(hostJoins
+                  ? {
+                      players: {
+                        data: [
+                          {
+                            steam_id: user.steam_id,
+                            elo_snapshot: elo,
+                            status: "Accepted",
+                          },
+                        ],
+                      },
+                    }
+                  : {}),
               },
             },
             id: true,
@@ -162,7 +196,9 @@ export class DraftGameService {
         throw error;
       }
 
-      await this.clearOtherRequests(user.steam_id, inserted.id);
+      if (hostJoins) {
+        await this.clearOtherRequests(user.steam_id, inserted.id);
+      }
 
       if (settings.mode === "Teams") {
         await this.seedDraftPlayers(
@@ -171,7 +207,7 @@ export class DraftGameService {
           settings.roster || [],
           settings.type,
         );
-      } else {
+      } else if (hostJoins) {
         await this.addLobbyMembersToDraft(
           user.steam_id,
           inserted.id,
@@ -279,7 +315,7 @@ export class DraftGameService {
     draftGame: DraftGame,
     inviteCode?: string,
   ) {
-    if (user.steam_id === draftGame.host_steam_id) {
+    if (this.isOrganizerOrHost(user, draftGame)) {
       return;
     }
     if (draftGame.players.find((player) => player.steam_id === user.steam_id)) {
@@ -683,6 +719,175 @@ export class DraftGameService {
     });
   }
 
+  // Whether `role` may add players straight to the lineup. Below the configured
+  // threshold (public.draft_add_without_invite) an add becomes an invite the
+  // target must accept. No setting => anyone who can add, adds directly.
+  private async canAddWithoutInvite(
+    role: e_player_roles_enum,
+  ): Promise<boolean> {
+    const { settings_by_pk } = await this.hasura.query({
+      settings_by_pk: {
+        __args: { name: "public.draft_add_without_invite" },
+        value: true,
+      },
+    });
+
+    const threshold = settings_by_pk?.value;
+    if (!threshold) {
+      return true;
+    }
+
+    return isRoleAbove(role, threshold as e_player_roles_enum);
+  }
+
+  public async addDraftPlayer(
+    user: User,
+    draftGameId: string,
+    steamId: string,
+  ) {
+    return this.draftLock(draftGameId, async () => {
+      const draftGame = await this.getDraftGame(draftGameId);
+
+      if (!draftGame) {
+        throw new DraftGameError("Draft game not found");
+      }
+
+      if (!this.isOrganizerOrHost(user, draftGame)) {
+        throw new DraftGameError(
+          "Only the host or an organizer can add players",
+        );
+      }
+
+      const terminal =
+        !!draftGame.match_id ||
+        ["CreatingMatch", "Completed", "Canceled"].includes(draftGame.status);
+      if (terminal) {
+        throw new DraftGameError(
+          "This draft game is no longer accepting players",
+        );
+      }
+
+      if (draftGame.players.find((player) => player.steam_id === steamId)) {
+        return;
+      }
+
+      const addWithoutInvite = await this.canAddWithoutInvite(user.role);
+
+      await this.playerLock(steamId, async () => {
+        await this.verifyPlayerEligible(steamId);
+
+        const elo = await this.getPlayerElo(steamId, draftGame.type);
+
+        if (draftGame.min_elo && elo < draftGame.min_elo) {
+          throw new DraftGameError("Player's rank is too low for this lobby");
+        }
+        if (draftGame.max_elo && elo > draftGame.max_elo) {
+          throw new DraftGameError("Player's rank is too high for this lobby");
+        }
+
+        let status: string;
+        if (!addWithoutInvite) {
+          status = "Invited";
+        } else {
+          const elsewhere = await this.getPlayerActiveDraftGame(steamId);
+          if (elsewhere && elsewhere !== draftGameId) {
+            throw new DraftGameError("Player is already in a draft game");
+          }
+          const started = draftGame.status !== "Open";
+          const isFull =
+            this.acceptedPlayers(draftGame).length >= draftGame.capacity;
+          status = started || isFull ? "Waitlist" : "Accepted";
+        }
+
+        await this.hasura.mutation({
+          insert_draft_game_players_one: {
+            __args: {
+              object: {
+                draft_game_id: draftGameId,
+                steam_id: steamId,
+                elo_snapshot: elo,
+                status: status as e_draft_game_player_status_enum,
+              },
+            },
+            __typename: true,
+          },
+        });
+
+        if (status === "Accepted") {
+          await this.clearOtherRequests(steamId, draftGameId);
+        }
+      });
+    });
+  }
+
+  public async respondDraftInvite(
+    user: User,
+    draftGameId: string,
+    accept: boolean,
+  ) {
+    return this.draftLock(draftGameId, async () => {
+      const draftGame = await this.getDraftGame(draftGameId);
+
+      if (!draftGame) {
+        throw new DraftGameError("Draft game not found");
+      }
+
+      const membership = draftGame.players.find(
+        (player) => player.steam_id === user.steam_id,
+      );
+      if (!membership || membership.status !== "Invited") {
+        throw new DraftGameError("You do not have a pending invite");
+      }
+
+      if (!accept) {
+        await this.hasura.mutation({
+          delete_draft_game_players_by_pk: {
+            __args: { draft_game_id: draftGameId, steam_id: user.steam_id },
+            __typename: true,
+          },
+        });
+        return;
+      }
+
+      const terminal =
+        !!draftGame.match_id ||
+        ["CreatingMatch", "Completed", "Canceled"].includes(draftGame.status);
+      if (terminal) {
+        throw new DraftGameError(
+          "This draft game is no longer accepting players",
+        );
+      }
+
+      await this.playerLock(user.steam_id, async () => {
+        await this.verifyPlayerEligible(user.steam_id);
+
+        const elsewhere = await this.getPlayerActiveDraftGame(user.steam_id);
+        if (elsewhere && elsewhere !== draftGameId) {
+          throw new DraftGameError("You are already in a draft game");
+        }
+
+        const started = draftGame.status !== "Open";
+        const isFull =
+          this.acceptedPlayers(draftGame).length >= draftGame.capacity;
+        const status = started || isFull ? "Waitlist" : "Accepted";
+
+        await this.hasura.mutation({
+          update_draft_game_players_by_pk: {
+            __args: {
+              pk_columns: { draft_game_id: draftGameId, steam_id: user.steam_id },
+              _set: { status },
+            },
+            __typename: true,
+          },
+        });
+
+        if (status === "Accepted") {
+          await this.clearOtherRequests(user.steam_id, draftGameId);
+        }
+      });
+    });
+  }
+
   public acceptedPlayers(draftGame: DraftGame) {
     return draftGame.players.filter((player) => player.status === "Accepted");
   }
@@ -762,7 +967,6 @@ export class DraftGameService {
     const source = options as Record<string, any>;
 
     const object: Record<string, unknown> = {
-      lobby_access: "Private",
       mr: source.mr,
       best_of: source.best_of,
       knife_round: source.knife_round,
@@ -884,8 +1088,10 @@ export class DraftGameService {
         throw new DraftGameError("Draft game not found");
       }
 
-      if (user.steam_id !== draftGame.host_steam_id) {
-        throw new DraftGameError("Only the host can edit settings");
+      if (!this.isOrganizerOrHost(user, draftGame)) {
+        throw new DraftGameError(
+          "Only the host or an organizer can edit settings",
+        );
       }
 
       if (draftGame.status !== "Open") {

@@ -11,9 +11,19 @@ object_relationships:
   - name: picked
     using:
       foreign_key_constraint_on: picked_steam_id
+computed_fields:
+  - name: is_organizer
+    definition:
+      function:
+        name: is_draft_game_pick_organizer
+        schema: public
+      session_argument: hasura_session
+    comment: ""
 select_permissions:
   - role: user
     permission:
+      computed_fields:
+        - is_organizer
       columns:
         - id
         - draft_game_id
@@ -23,23 +33,26 @@ select_permissions:
         - auto_picked
         - created_at
       filter:
-        draft_game:
-          _or:
-            - access:
-                _eq: Open
-            - host_steam_id:
-                _eq: X-Hasura-User-Id
-            - players:
-                steam_id:
-                  _eq: X-Hasura-User-Id
-            - _and:
+        _or:
+          - is_organizer:
+              _eq: true
+          - draft_game:
+              _or:
                 - access:
-                    _eq: Friends
+                    _eq: Open
+                - host_steam_id:
+                    _eq: X-Hasura-User-Id
                 - players:
-                    player:
-                      friends:
-                        steam_id:
-                          _eq: X-Hasura-User-Id
+                    steam_id:
+                      _eq: X-Hasura-User-Id
+                - _and:
+                    - access:
+                        _eq: Friends
+                    - players:
+                        player:
+                          friends:
+                            steam_id:
+                              _eq: X-Hasura-User-Id
     comment: ""
   - role: guest
     permission:
@@ -58,6 +71,36 @@ select_permissions:
     comment: ""
 insert_permissions:
   - role: user
+    permission:
+      check:
+        draft_game:
+          status:
+            _eq: Drafting
+      columns:
+        - draft_game_id
+        - picked_steam_id
+    comment: ""
+  - role: match_organizer
+    permission:
+      check:
+        draft_game:
+          status:
+            _eq: Drafting
+      columns:
+        - draft_game_id
+        - picked_steam_id
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      check:
+        draft_game:
+          status:
+            _eq: Drafting
+      columns:
+        - draft_game_id
+        - picked_steam_id
+    comment: ""
+  - role: administrator
     permission:
       check:
         draft_game:

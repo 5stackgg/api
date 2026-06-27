@@ -11,9 +11,19 @@ object_relationships:
   - name: player
     using:
       foreign_key_constraint_on: steam_id
+computed_fields:
+  - name: is_organizer
+    definition:
+      function:
+        name: is_draft_game_player_organizer
+        schema: public
+      session_argument: hasura_session
+    comment: ""
 select_permissions:
   - role: user
     permission:
+      computed_fields:
+        - is_organizer
       columns:
         - draft_game_id
         - steam_id
@@ -27,6 +37,8 @@ select_permissions:
         _or:
           - steam_id:
               _eq: X-Hasura-User-Id
+          - is_organizer:
+              _eq: true
           - draft_game:
               _or:
                 - access:
@@ -88,6 +100,66 @@ insert_permissions:
         - draft_game_id
         - steam_id
     comment: ""
+  - role: match_organizer
+    permission:
+      check:
+        _and:
+          - draft_game:
+              status:
+                _eq: Open
+          - draft_game:
+              match_id:
+                _is_null: true
+          - player:
+              is_banned:
+                _eq: false
+          - player:
+              is_in_another_match:
+                _eq: false
+      columns:
+        - draft_game_id
+        - steam_id
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      check:
+        _and:
+          - draft_game:
+              status:
+                _eq: Open
+          - draft_game:
+              match_id:
+                _is_null: true
+          - player:
+              is_banned:
+                _eq: false
+          - player:
+              is_in_another_match:
+                _eq: false
+      columns:
+        - draft_game_id
+        - steam_id
+    comment: ""
+  - role: administrator
+    permission:
+      check:
+        _and:
+          - draft_game:
+              status:
+                _eq: Open
+          - draft_game:
+              match_id:
+                _is_null: true
+          - player:
+              is_banned:
+                _eq: false
+          - player:
+              is_in_another_match:
+                _eq: false
+      columns:
+        - draft_game_id
+        - steam_id
+    comment: ""
 update_permissions:
   - role: user
     permission:
@@ -100,9 +172,41 @@ update_permissions:
         _or:
           - steam_id:
               _eq: X-Hasura-User-Id
-          - draft_game:
-              host_steam_id:
-                _eq: X-Hasura-User-Id
+          - is_organizer:
+              _eq: true
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - status
+        - lineup
+        - pick_order
+        - is_captain
+      filter:
+        is_organizer:
+          _eq: true
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - status
+        - lineup
+        - pick_order
+        - is_captain
+      filter:
+        is_organizer:
+          _eq: true
+    comment: ""
+  - role: administrator
+    permission:
+      columns:
+        - status
+        - lineup
+        - pick_order
+        - is_captain
+      filter:
+        is_organizer:
+          _eq: true
     comment: ""
 delete_permissions:
   - role: user
@@ -111,7 +215,24 @@ delete_permissions:
         _or:
           - steam_id:
               _eq: X-Hasura-User-Id
-          - draft_game:
-              host_steam_id:
-                _eq: X-Hasura-User-Id
+          - is_organizer:
+              _eq: true
+    comment: ""
+  - role: match_organizer
+    permission:
+      filter:
+        is_organizer:
+          _eq: true
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      filter:
+        is_organizer:
+          _eq: true
+    comment: ""
+  - role: administrator
+    permission:
+      filter:
+        is_organizer:
+          _eq: true
     comment: ""

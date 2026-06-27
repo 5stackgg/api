@@ -20,34 +20,10 @@ insert_permissions:
   - role: streamer
     permission:
       check:
-        _and:
-          - lineup:
-              match:
-                is_organizer:
-                  _eq: true
-          - _or:
-              - _not:
-                  _exists:
-                    _table:
-                      name: settings
-                      schema: public
-                    _where:
-                      _and:
-                        - name:
-                            _eq: public.lineup_add_without_invite
-              - _exists:
-                  _table:
-                    name: settings
-                    schema: public
-                  _where:
-                    _and:
-                      - name:
-                          _eq: public.lineup_add_without_invite
-                      - value:
-                          _in:
-                            - user
-                            - verified_user
-                            - streamer
+        lineup:
+          match:
+            is_organizer:
+              _eq: true
       columns:
         - captain
         - match_lineup_id
@@ -56,33 +32,10 @@ insert_permissions:
   - role: user
     permission:
       check:
-        _and:
-          - lineup:
-              match:
-                is_organizer:
-                  _eq: true
-          - _or:
-              - _not:
-                  _exists:
-                    _table:
-                      name: settings
-                      schema: public
-                    _where:
-                      _and:
-                        - name:
-                            _eq: public.lineup_add_without_invite
-              - _exists:
-                  _table:
-                    name: settings
-                    schema: public
-                  _where:
-                    _and:
-                      - name:
-                          _eq: public.lineup_add_without_invite
-                      - value:
-                          _eq: user
-              - steam_id:
-                  _eq: X-Hasura-User-Id
+        lineup:
+          match:
+            is_organizer:
+              _eq: true
       columns:
         - captain
         - match_lineup_id
@@ -91,33 +44,10 @@ insert_permissions:
   - role: verified_user
     permission:
       check:
-        _and:
-          - lineup:
-              match:
-                is_organizer:
-                  _eq: true
-          - _or:
-              - _not:
-                  _exists:
-                    _table:
-                      name: settings
-                      schema: public
-                    _where:
-                      _and:
-                        - name:
-                            _eq: public.lineup_add_without_invite
-              - _exists:
-                  _table:
-                    name: settings
-                    schema: public
-                  _where:
-                    _and:
-                      - name:
-                          _eq: public.lineup_add_without_invite
-                      - value:
-                          _in:
-                            - user
-                            - verified_user
+        lineup:
+          match:
+            is_organizer:
+              _eq: true
       columns:
         - captain
         - match_lineup_id

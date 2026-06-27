@@ -37,16 +37,6 @@ BEGIN
         NEW.regions = (SELECT array_agg(region) FROM servers where enabled = true);
     END IF;
 
-    IF EXISTS (SELECT 1 FROM tournaments WHERE match_options_id = NEW.id) AND NEW.lobby_access != 'Private' THEN 
-        RAISE EXCEPTION 'Tournament matches can only have Private lobby access' USING ERRCODE = '22000';
-    END IF;
-
-    IF NEW.lobby_access = 'Invite' AND NEW.invite_code IS NULL THEN
-        NEW.invite_code := generate_invite_code();
-    ELSIF NEW.lobby_access != 'Invite' THEN 
-        NEW.invite_code := NULL;
-    END IF;
-
 	RETURN NEW;
 END;
 $$;
@@ -54,20 +44,6 @@ $$;
 DROP TRIGGER IF EXISTS tbi_match_options ON public.match_options;
 CREATE TRIGGER tbi_match_options BEFORE INSERT ON public.match_options FOR EACH ROW EXECUTE FUNCTION public.tbi_match_options();
 
-
-CREATE OR REPLACE FUNCTION public.tau_match_options() RETURNS TRIGGER
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM tournaments WHERE match_options_id = NEW.id) AND NEW.lobby_access != 'Private' THEN 
-        RAISE EXCEPTION 'Tournament matches can only have Private lobby access' USING ERRCODE = '22000';
-    END IF;
-    RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS tau_match_options ON public.match_options;
-CREATE TRIGGER tau_match_options AFTER UPDATE ON public.match_options FOR EACH ROW EXECUTE FUNCTION public.tau_match_options();
 
 CREATE OR REPLACE FUNCTION public.tbu_match_options() RETURNS TRIGGER
     LANGUAGE plpgsql
@@ -109,25 +85,12 @@ BEGIN
         IF (NEW.region_veto IS DISTINCT FROM OLD.region_veto) THEN
             RAISE EXCEPTION 'Cannot modify region veto during Live/Veto' USING ERRCODE = '22000';
         END IF;
-        IF (NEW.lobby_access IS DISTINCT FROM OLD.lobby_access) THEN
-            RAISE EXCEPTION 'Cannot modify lobby access during Live/Veto' USING ERRCODE = '22000';
-        END IF;
         IF (NEW.prefer_dedicated_server IS DISTINCT FROM OLD.prefer_dedicated_server) THEN
             RAISE EXCEPTION 'Cannot modify prefer dedicated server during Live/Veto' USING ERRCODE = '22000';
         END IF;
         IF (NEW.mr IS DISTINCT FROM OLD.mr AND _match_status = 'Live') THEN
             RAISE EXCEPTION 'Cannot modify mr during Live' USING ERRCODE = '22000';
         END IF;
-    END IF;
-
-    IF EXISTS (SELECT 1 FROM tournaments WHERE match_options_id = NEW.id) AND NEW.lobby_access != 'Private' THEN 
-        RAISE EXCEPTION 'Tournament matches can only have Private lobby access' USING ERRCODE = '22000';
-    END IF;
-
-    IF NEW.lobby_access = 'Invite' AND NEW.invite_code IS NULL THEN
-        NEW.invite_code := generate_invite_code();
-    ELSIF NEW.lobby_access != 'Invite' THEN 
-        NEW.invite_code := NULL;
     END IF;
 
     RETURN NEW;

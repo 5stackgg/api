@@ -230,8 +230,8 @@ BEGIN
 
     -- Create match options
     match_options_id := gen_random_uuid();
-    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access, tv_delay)
-    VALUES (match_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private', 115);
+    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, tv_delay)
+    VALUES (match_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 115);
 
     -- Create lineups
     lineup_1_id := gen_random_uuid();
@@ -507,8 +507,8 @@ BEGIN
 
     -- Create match options
     match_options_id := gen_random_uuid();
-    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access, tv_delay)
-    VALUES (match_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private', 115);
+    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, tv_delay)
+    VALUES (match_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 115);
 
     -- Create lineups
     lineup_1_id := gen_random_uuid();
@@ -722,8 +722,8 @@ BEGIN
     t1_bracket_sf2 uuid := gen_random_uuid();
     t1_bracket_final uuid := gen_random_uuid();
   BEGIN
-    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access)
-    VALUES (t1_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private');
+    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id)
+    VALUES (t1_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id);
 
     INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, auto_start, created_at)
     VALUES (
@@ -789,8 +789,8 @@ BEGIN
         t1_l1id := gen_random_uuid(); t1_l2id := gen_random_uuid();
         t1_mmid := gen_random_uuid();
 
-        INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access, tv_delay)
-        VALUES (t1_moid, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private', 115);
+        INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, tv_delay)
+        VALUES (t1_moid, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 115);
 
         INSERT INTO match_lineups (id, team_id, team_name) VALUES
           (t1_l1id, team_ids[t1_ti1[i]], team_names[t1_ti1[i]]),
@@ -939,8 +939,8 @@ BEGIN
     t2_bracket_r2m2 uuid := gen_random_uuid();
     t2_bracket_final uuid := gen_random_uuid();
   BEGIN
-    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access)
-    VALUES (t2_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private');
+    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id)
+    VALUES (t2_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id);
 
     INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, auto_start, created_at)
     VALUES (
@@ -1009,8 +1009,8 @@ BEGIN
       t2_mdate timestamptz := now() - interval '3 hours';
       t2_l1s int := 13; t2_l2s int := 8;
     BEGIN
-      INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access, tv_delay)
-      VALUES (t2_moid, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private', 115);
+      INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, tv_delay)
+      VALUES (t2_moid, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 115);
 
       INSERT INTO match_lineups (id, team_id, team_name) VALUES
         (t2_l1id, team_ids[3], team_names[3]),
@@ -1155,8 +1155,8 @@ BEGIN
       t2_m2_date timestamptz := now() - interval '45 minutes';
       t2_m2_l1s int := 8; t2_m2_l2s int := 7;
     BEGIN
-      INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access, tv_delay)
-      VALUES (t2_m2_oid, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private', 115);
+      INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, tv_delay)
+      VALUES (t2_m2_oid, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 115);
 
       INSERT INTO match_lineups (id, team_id, team_name) VALUES
         (t2_m2_l1id, team_ids[4], team_names[4]),
@@ -1241,8 +1241,8 @@ BEGIN
     t3_options_id uuid := gen_random_uuid();
     t3_stage_id uuid := gen_random_uuid();
   BEGIN
-    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access, match_mode)
-    VALUES (t3_options_id, true, true, 12, 3, true, 'Competitive', comp_map_pool_id, 'Open', 'admin');
+    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, match_mode)
+    VALUES (t3_options_id, true, true, 12, 3, true, 'Competitive', comp_map_pool_id, 'admin');
 
     INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, auto_start, created_at)
     VALUES (
@@ -1317,12 +1317,12 @@ BEGIN
     t4_gf uuid := gen_random_uuid();
   BEGIN
     -- Match options for round robin stage (BO1)
-    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access)
-    VALUES (t4_rr_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id, 'Private');
+    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id)
+    VALUES (t4_rr_options_id, true, true, 12, 1, true, 'Competitive', comp_map_pool_id);
 
     -- Match options for double elimination stage (BO3)
-    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access)
-    VALUES (t4_de_options_id, true, true, 12, 3, true, 'Competitive', comp_map_pool_id, 'Private');
+    INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id)
+    VALUES (t4_de_options_id, true, true, 12, 3, true, 'Competitive', comp_map_pool_id);
 
 
     INSERT INTO tournaments (id, name, description, start, organizer_steam_id, status, match_options_id, auto_start, created_at)
@@ -1478,8 +1478,8 @@ BEGIN
         t4_moid := gen_random_uuid(); t4_mid := gen_random_uuid();
         t4_l1id := gen_random_uuid(); t4_l2id := gen_random_uuid();
 
-        INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, lobby_access, tv_delay)
-        VALUES (t4_moid, true, true, 12, t4_m_bo[i], true, 'Competitive', comp_map_pool_id, 'Private', 115);
+        INSERT INTO match_options (id, overtime, knife_round, mr, best_of, map_veto, type, map_pool_id, tv_delay)
+        VALUES (t4_moid, true, true, 12, t4_m_bo[i], true, 'Competitive', comp_map_pool_id, 115);
 
         INSERT INTO match_lineups (id, team_id, team_name) VALUES
           (t4_l1id, team_ids[t4_m_t1[i]], team_names[t4_m_t1[i]]),
