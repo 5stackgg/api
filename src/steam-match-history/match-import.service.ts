@@ -395,13 +395,11 @@ export class MatchImportService {
   }
 
   private static detectMatchType(parsed: ParsedDemo): MatchType {
-    const wingman = MatchImportService.isWingman(parsed);
-
     if (MatchImportService.isFaceitServer(parsed.server_name)) {
       return "Competitive";
     }
 
-    if (wingman) {
+    if (MatchImportService.hasWingmanGameRules(parsed)) {
       return "Wingman";
     }
 
@@ -436,6 +434,10 @@ export class MatchImportService {
       return "Competitive";
     }
 
+    if (MatchImportService.hasWingmanRoster(parsed)) {
+      return "Wingman";
+    }
+
     if (
       parsed.overtime_enabled &&
       !MatchImportService.isFiveStackServer(parsed.server_name)
@@ -445,12 +447,19 @@ export class MatchImportService {
     return "Competitive";
   }
 
-  private static isWingman(parsed: ParsedDemo): boolean {
+  private static hasWingmanGameRules(parsed: ParsedDemo): boolean {
+    return parsed.game_mode === 2 || parsed.max_rounds === 16;
+  }
+
+  private static hasWingmanRoster(parsed: ParsedDemo): boolean {
     const playerCount = parsed.player_count ?? parsed.players?.length ?? 0;
+    return playerCount > 0 && playerCount <= 4;
+  }
+
+  private static isWingman(parsed: ParsedDemo): boolean {
     return (
-      parsed.game_mode === 2 ||
-      parsed.max_rounds === 16 ||
-      (playerCount > 0 && playerCount <= 4)
+      MatchImportService.hasWingmanGameRules(parsed) ||
+      MatchImportService.hasWingmanRoster(parsed)
     );
   }
 
@@ -849,8 +858,14 @@ export class MatchImportService {
     const [lineup1Id, lineup1SteamIds] = lineup1;
     const [lineup2Id, lineup2SteamIds] = lineup2;
 
-    const detected1 = await this.detectTeamForLineup(lineup1SteamIds, minOverlap);
-    const detected2 = await this.detectTeamForLineup(lineup2SteamIds, minOverlap);
+    const detected1 = await this.detectTeamForLineup(
+      lineup1SteamIds,
+      minOverlap,
+    );
+    const detected2 = await this.detectTeamForLineup(
+      lineup2SteamIds,
+      minOverlap,
+    );
 
     let team1 = detected1?.team_id ?? null;
     let team2 = detected2?.team_id ?? null;
