@@ -11592,6 +11592,7 @@ type game_server_nodes {
   """An object relationship"""
   e_status: e_game_server_node_statuses
   enabled: Boolean!
+  enabled_for_match_making: Boolean!
   end_port_range: Int
   gpu: Boolean!
   gpu_demos_enabled: Boolean!
@@ -11832,6 +11833,7 @@ input game_server_nodes_bool_exp {
   e_region: server_regions_bool_exp
   e_status: e_game_server_node_statuses_bool_exp
   enabled: Boolean_comparison_exp
+  enabled_for_match_making: Boolean_comparison_exp
   end_port_range: Int_comparison_exp
   gpu: Boolean_comparison_exp
   gpu_demos_enabled: Boolean_comparison_exp
@@ -11948,6 +11950,7 @@ input game_server_nodes_insert_input {
   e_region: server_regions_obj_rel_insert_input
   e_status: e_game_server_node_statuses_obj_rel_insert_input
   enabled: Boolean
+  enabled_for_match_making: Boolean
   end_port_range: Int
   gpu: Boolean
   gpu_demos_enabled: Boolean
@@ -12148,6 +12151,7 @@ input game_server_nodes_order_by {
   e_region: server_regions_order_by
   e_status: e_game_server_node_statuses_order_by
   enabled: order_by
+  enabled_for_match_making: order_by
   end_port_range: order_by
   gpu: order_by
   gpu_demos_enabled: order_by
@@ -12239,6 +12243,9 @@ enum game_server_nodes_select_column {
   enabled
 
   """column name"""
+  enabled_for_match_making
+
+  """column name"""
   end_port_range
 
   """column name"""
@@ -12322,6 +12329,9 @@ enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_a
   enabled
 
   """column name"""
+  enabled_for_match_making
+
+  """column name"""
   gpu
 
   """column name"""
@@ -12346,6 +12356,9 @@ select "game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns" columns 
 enum game_server_nodes_select_column_game_server_nodes_aggregate_bool_exp_bool_or_arguments_columns {
   """column name"""
   enabled
+
+  """column name"""
+  enabled_for_match_making
 
   """column name"""
   gpu
@@ -12383,6 +12396,7 @@ input game_server_nodes_set_input {
   disk_available_gb: Int
   disk_used_percent: Int
   enabled: Boolean
+  enabled_for_match_making: Boolean
   end_port_range: Int
   gpu: Boolean
   gpu_demos_enabled: Boolean
@@ -12565,6 +12579,7 @@ input game_server_nodes_stream_cursor_value_input {
   disk_available_gb: Int
   disk_used_percent: Int
   enabled: Boolean
+  enabled_for_match_making: Boolean
   end_port_range: Int
   gpu: Boolean
   gpu_demos_enabled: Boolean
@@ -12677,6 +12692,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   enabled
+
+  """column name"""
+  enabled_for_match_making
 
   """column name"""
   end_port_range

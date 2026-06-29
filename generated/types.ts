@@ -16575,6 +16575,9 @@ export default {
             "enabled": [
                 3
             ],
+            "enabled_for_match_making": [
+                3
+            ],
             "end_port_range": [
                 38
             ],
@@ -17061,6 +17064,9 @@ export default {
             "enabled": [
                 4
             ],
+            "enabled_for_match_making": [
+                4
+            ],
             "end_port_range": [
                 39
             ],
@@ -17313,6 +17319,9 @@ export default {
                 565
             ],
             "enabled": [
+                3
+            ],
+            "enabled_for_match_making": [
                 3
             ],
             "end_port_range": [
@@ -17772,6 +17781,9 @@ export default {
             "enabled": [
                 2011
             ],
+            "enabled_for_match_making": [
+                2011
+            ],
             "end_port_range": [
                 2011
             ],
@@ -17938,6 +17950,9 @@ export default {
                 38
             ],
             "enabled": [
+                3
+            ],
+            "enabled_for_match_making": [
                 3
             ],
             "end_port_range": [
@@ -18332,6 +18347,9 @@ export default {
                 38
             ],
             "enabled": [
+                3
+            ],
+            "enabled_for_match_making": [
                 3
             ],
             "end_port_range": [

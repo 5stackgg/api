@@ -66,6 +66,7 @@ select_permissions:
         - disk_available_gb
         - disk_used_percent
         - enabled
+        - enabled_for_match_making
         - end_port_range
         - gpu
         - gpu_demos_enabled
@@ -104,6 +105,7 @@ update_permissions:
         - cs2_video_settings
         - demo_network_limiter
         - enabled
+        - enabled_for_match_making
         - end_port_range
         - gpu_demos_enabled
         - gpu_rendering_enabled
@@ -153,6 +155,7 @@ event_triggers:
         columns:
           - status
           - region
+          - enabled_for_match_making
     retry_conf:
       interval_sec: 10
       num_retries: 6

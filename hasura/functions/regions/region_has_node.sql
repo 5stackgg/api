@@ -6,6 +6,10 @@ STABLE
 AS $$
     SELECT EXISTS (
         SELECT 1 FROM game_server_nodes
-        WHERE region = server_region.value AND enabled = true
+        WHERE region = server_region.value
+          AND enabled = true
+          AND enabled_for_match_making = true
+          AND start_port_range IS NOT NULL
+          AND end_port_range IS NOT NULL
     );
 $$;
