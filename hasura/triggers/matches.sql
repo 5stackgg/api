@@ -350,6 +350,10 @@ BEGIN
         IF _match_options.map_veto = true AND _match_map_count < _match_options.best_of THEN
             NEW.status = 'Veto';
         END IF;
+
+        IF NEW.status = 'Live' AND _match_map_count = 0 THEN
+            RAISE EXCEPTION 'Match has no maps to play' USING ERRCODE = '22000';
+        END IF;
     END IF;
 
     IF(OLD.status = 'Finished' AND NEW.status = 'Canceled') THEN

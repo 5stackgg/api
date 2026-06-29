@@ -126,6 +126,32 @@ export class ClipsService {
     });
   }
 
+  // Most kills any single round held for this player. Mirrors the round-window
+  // logic in buildPresetSpec so the auto-clip min-kills gate agrees with the
+  // best_round preset it ends up rendering.
+  private static playerBestRoundKillCount(
+    myKills: ReadonlyArray<{ tick: number }>,
+    rounds: ReadonlyArray<{
+      start_tick: number;
+      freeze_end_tick?: number;
+      end_tick: number;
+    }>,
+  ): number {
+    let best = 0;
+    for (const r of rounds) {
+      const lo =
+        typeof r.freeze_end_tick === "number" && r.freeze_end_tick > 0
+          ? r.freeze_end_tick
+          : r.start_tick;
+      let count = 0;
+      for (const k of myKills) {
+        if (k.tick >= lo && k.tick <= r.end_tick) count++;
+      }
+      if (count > best) best = count;
+    }
+    return best;
+  }
+
   public async createClipRender(
     userSteamId: string,
     spec: ClipSpec,
@@ -1957,7 +1983,12 @@ export class ClipsService {
 
     const kills = ClipsService.filterValidKills(
       demo.kills as
-        | Array<{ tick?: number; killer?: string; victim?: string }>
+        | Array<{
+            tick: number;
+            killer?: string;
+            victim?: string;
+            weapon?: string;
+          }>
         | undefined,
     );
     if (kills.length === 0) return 0;
@@ -2028,27 +2059,38 @@ export class ClipsService {
       }
     }
 
+    const autoClipFilter = await this.resolveAutoClipFilter();
+    const rounds =
+      (demo.round_ticks as Array<{
+        round: number;
+        start_tick: number;
+        freeze_end_tick?: number;
+        end_tick: number;
+      }>) ?? [];
+
     const pendingObjects: Array<{
       targetSteamId: string;
       sessionToken: string;
       spec: ClipSpec;
     }> = [];
     for (const targetSteamId of killers) {
+      const myKills = kills.filter((k) => k.killer === targetSteamId);
       try {
-        const baseSpec = await this.buildPresetSpec(
+        const spec = await this.buildAutoClipSpecForTarget(
           matchMapId,
           targetSteamId,
-          "best_round",
-          { resolution: "1080p", fps: 60 },
-          undefined,
-          nameByStId.get(targetSteamId),
           matchMapDemoId,
+          myKills,
+          rounds,
+          autoClipFilter,
+          { name: nameByStId.get(targetSteamId), defaultVisibility },
         );
-        const spec: ClipSpec = {
-          ...baseSpec,
-          destination: "library",
-          visibility: defaultVisibility as ClipSpec["visibility"],
-        };
+        if (!spec) {
+          this.logger.log(
+            `[auto-clips] demo ${matchMapDemoId} target ${targetSteamId} skipped: no kills met the auto-clip filter (min ${autoClipFilter.minKills}K${autoClipFilter.alwaysKnife ? " / knife on" : ""})`,
+          );
+          continue;
+        }
         pendingObjects.push({
           targetSteamId,
           sessionToken: randomBytes(24).toString("hex"),
@@ -2158,6 +2200,7 @@ export class ClipsService {
       "auto_clip_default_visibility",
       "public",
     );
+    const autoClipFilter = await this.resolveAutoClipFilter();
 
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
@@ -2333,12 +2376,25 @@ export class ClipsService {
       for (const demo of demos) {
         const kills = ClipsService.filterValidKills(
           demo?.kills as
-            | Array<{ tick?: number; killer?: string; victim?: string }>
+            | Array<{
+                tick: number;
+                killer?: string;
+                victim?: string;
+                weapon?: string;
+              }>
             | undefined,
         );
         if (kills.length === 0) {
           continue;
         }
+
+        const rounds =
+          (demo?.round_ticks as Array<{
+            round: number;
+            start_tick: number;
+            freeze_end_tick?: number;
+            end_tick: number;
+          }>) ?? [];
 
         const killers = new Set<string>();
         for (const k of kills) {
@@ -2348,21 +2404,23 @@ export class ClipsService {
         }
 
         for (const targetSteamId of killers) {
+          const myKills = kills.filter((k) => k.killer === targetSteamId);
           try {
-            const baseSpec = await this.buildPresetSpec(
+            const spec = await this.buildAutoClipSpecForTarget(
               mapRowId,
               targetSteamId,
-              "best_round",
-              { resolution: "1080p", fps: 60 },
-              undefined,
-              nameByStId.get(targetSteamId),
               String(demo.id),
+              myKills,
+              rounds,
+              autoClipFilter,
+              { name: nameByStId.get(targetSteamId), defaultVisibility },
             );
-            const spec: ClipSpec = {
-              ...baseSpec,
-              destination: "library",
-              visibility: defaultVisibility as ClipSpec["visibility"],
-            };
+            if (!spec) {
+              this.logger.log(
+                `[auto-clips] match ${matchId} map ${mapRowId} demo ${demo.id} target ${targetSteamId} skipped: no kills met the auto-clip filter (min ${autoClipFilter.minKills}K${autoClipFilter.alwaysKnife ? " / knife on" : ""})`,
+              );
+              continue;
+            }
             pendingObjects.push({
               mapRowId,
               matchMapDemoId: String(demo.id),
@@ -2734,6 +2792,30 @@ export class ClipsService {
     return raw === "true" || raw === "1";
   }
 
+  private async readIntSetting(name: string, fallback: number): Promise<number> {
+    const raw = await this.readSetting(name, String(fallback));
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  // Operator-configured gate on which moments auto-generate clips, so a match
+  // doesn't always spawn a clip for every player. minKills is clamped to the
+  // 1..5 the UI offers (1 = any kill, today's default behaviour).
+  private async resolveAutoClipFilter(): Promise<{
+    minKills: number;
+    alwaysKnife: boolean;
+  }> {
+    const minKills = await this.readIntSetting("auto_clip_min_kills", 1);
+    const alwaysKnife = await this.readBoolSetting(
+      "auto_clip_always_include_knife",
+      false,
+    );
+    return {
+      minKills: Math.max(1, Math.min(5, minKills)),
+      alwaysKnife,
+    };
+  }
+
   // Imported (non-5stack) matches only get auto highlights when the operator
   // has explicitly opted in, separately from the main auto-highlights toggle.
   private async importedAutoClipsAllowed(
@@ -3039,6 +3121,113 @@ export class ClipsService {
       ...(chipKillsCount > 0 ? { kills_count: chipKillsCount } : {}),
     };
     return result;
+  }
+
+  // One auto-clip reel per player: their best round first, then — when the
+  // operator opted in — their knife kills appended after it. Returns null when
+  // the player clears neither the min-kills gate nor has knife kills, so the
+  // caller skips them entirely.
+  private async buildAutoClipSpecForTarget(
+    matchMapId: string,
+    targetSteamId: string,
+    matchMapDemoId: string,
+    myKills: ReadonlyArray<{ tick: number; weapon?: string }>,
+    rounds: ReadonlyArray<{
+      start_tick: number;
+      freeze_end_tick?: number;
+      end_tick: number;
+    }>,
+    filter: { minKills: number; alwaysKnife: boolean },
+    opts: { name?: string; defaultVisibility: string },
+  ): Promise<ClipSpec | null> {
+    const bestRoundKills =
+      filter.minKills <= 1
+        ? myKills.length
+        : ClipsService.playerBestRoundKillCount(myKills, rounds);
+    const qualifiesBestRound = bestRoundKills >= filter.minKills;
+    const hasKnife =
+      filter.alwaysKnife &&
+      myKills.some((k) => (k.weapon ?? "").toLowerCase().includes("knife"));
+
+    if (!qualifiesBestRound && !hasKnife) return null;
+
+    const output = { resolution: "1080p", fps: 60 } as const;
+
+    const base = qualifiesBestRound
+      ? await this.buildPresetSpec(
+          matchMapId,
+          targetSteamId,
+          "best_round",
+          output,
+          undefined,
+          opts.name,
+          matchMapDemoId,
+        )
+      : null;
+
+    let knifeSpec: ClipSpec | null = null;
+    if (hasKnife) {
+      try {
+        knifeSpec = await this.buildPresetSpec(
+          matchMapId,
+          targetSteamId,
+          "knife",
+          output,
+          undefined,
+          opts.name,
+          matchMapDemoId,
+        );
+      } catch {
+        knifeSpec = null;
+      }
+    }
+
+    let spec: ClipSpec | null = null;
+    if (base && knifeSpec) {
+      // Drop knife segments already covered by the best-round block so a knife
+      // kill inside that round doesn't play twice, then append what's left
+      // after it (best round first, knife kills last).
+      const KNIFE_MAX = 3;
+      // Skip knife kills already shown in the best-round block — if the kill
+      // tick lands inside a best-round segment the viewer already sees it, so
+      // there's no point appending it again.
+      const shownInBestRound = (tick: number) =>
+        base.segments.some(
+          (bs) => tick >= bs.start_tick && tick <= bs.end_tick,
+        );
+      const extraKnifeSegs = knifeSpec.segments
+        .filter((ks) => ks.kill_tick == null || !shownInBestRound(ks.kill_tick))
+        .slice(0, KNIFE_MAX);
+      if (extraKnifeSegs.length === 0) {
+        spec = base;
+      } else {
+        const knifeCount =
+          myKills.filter(
+            (k) =>
+              (k.weapon ?? "").toLowerCase().includes("knife") &&
+              extraKnifeSegs.some(
+                (s) => k.tick >= s.start_tick && k.tick <= s.end_tick,
+              ),
+          ).length || extraKnifeSegs.length;
+        const { round: _round, ...baseRest } = base;
+        spec = {
+          ...baseRest,
+          segments: [...base.segments, ...extraKnifeSegs].slice(0, 20),
+          title: `${base.title} + ${knifeCount} Knife ${knifeCount === 1 ? "Kill" : "Kills"}`,
+          kills_count: (base.kills_count ?? 0) + knifeCount,
+        };
+      }
+    } else {
+      spec = base ?? knifeSpec;
+    }
+
+    if (!spec) return null;
+
+    return {
+      ...spec,
+      destination: "library",
+      visibility: opts.defaultVisibility as ClipSpec["visibility"],
+    };
   }
 
   private validateSpec(spec: ClipSpec) {
