@@ -85,6 +85,7 @@
     "@nestjs/cli": "^11.0.7",
     "@nestjs/schematics": "^11.0.5",
     "@nestjs/testing": "^11.1.3",
+    "@testcontainers/postgresql": "^12.0.4",
     "@types/archiver": "^6.0.2",
     "@types/express": "^5.0.0",
     "@types/express-session": "^1.18.0",
@@ -124,6 +125,10 @@
       "ts"
     ],
     "rootDir": "src",
+    "roots": [
+      "<rootDir>",
+      "<rootDir>/../test"
+    ],
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
@@ -134,7 +139,9 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "moduleNameMapper": {
-      "^src/(.*)$": "<rootDir>/$1"
+      "^src/(.*)$": "<rootDir>/$1",
+      "^@utilities/(.*)$": "<rootDir>/utilities/$1",
+      "^@kubernetes/client-node$": "<rootDir>/../test/mocks/kubernetes-client-node.ts"
     },
     "transformIgnorePatterns": [
       "node_modules/(?!(@kubernetes|uuid))"
