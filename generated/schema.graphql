@@ -188,6 +188,28 @@ type DiskStats {
   time: timestamp
 }
 
+type DraftGamePreviewOutput {
+  accepted_count: Int
+  access: String
+  capacity: Int
+  host_avatar_url: String
+  host_name: String
+  host_steam_id: String
+  id: uuid!
+  mode: String
+  players: [DraftGamePreviewPlayer!]!
+  require_approval: Boolean
+  status: String
+  type: String
+}
+
+type DraftGamePreviewPlayer {
+  avatar_url: String
+  name: String
+  status: String
+  steam_id: String!
+}
+
 type FaceitTestOutput {
   dataApi: FaceitTestResult!
   downloadApi: FaceitTestResult!
@@ -28670,6 +28692,9 @@ type mutation_root {
   pauseClipRenderBatch(match_map_id: uuid!): SuccessOutput
   pollSteamMatchHistory: SteamMatchHistoryPollOutput
 
+  """previewDraftGame"""
+  previewDraftGame(draftGameId: uuid!, inviteCode: String): DraftGamePreviewOutput
+
   """
   Build a multi-segment ClipSpec from a player+preset and queue it via the batch render path (no live demo session required)
   """
@@ -50297,6 +50322,42 @@ type players {
   ): player_kills_aggregate!
   discord_id: String
 
+  """An array relationship"""
+  draft_game_players(
+    """distinct select on columns"""
+    distinct_on: [draft_game_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_game_players_order_by!]
+
+    """filter the rows returned"""
+    where: draft_game_players_bool_exp
+  ): [draft_game_players!]!
+
+  """An aggregate relationship"""
+  draft_game_players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [draft_game_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [draft_game_players_order_by!]
+
+    """filter the rows returned"""
+    where: draft_game_players_bool_exp
+  ): draft_game_players_aggregate!
+
   """
   A computed field, executes function "get_player_elo"
   """
@@ -50542,6 +50603,11 @@ type players {
   A computed field, executes function "is_in_another_match"
   """
   is_in_another_match: Boolean
+
+  """
+  A computed field, executes function "is_in_draft"
+  """
+  is_in_draft: Boolean
 
   """
   A computed field, executes function "is_in_lobby"
@@ -51609,6 +51675,8 @@ input players_bool_exp {
   deaths: player_kills_bool_exp
   deaths_aggregate: player_kills_aggregate_bool_exp
   discord_id: String_comparison_exp
+  draft_game_players: draft_game_players_bool_exp
+  draft_game_players_aggregate: draft_game_players_aggregate_bool_exp
   elo: jsonb_comparison_exp
   elo_history: v_player_elo_bool_exp
   elo_history_aggregate: v_player_elo_aggregate_bool_exp
@@ -51632,6 +51700,7 @@ input players_bool_exp {
   is_banned: Boolean_comparison_exp
   is_gagged: Boolean_comparison_exp
   is_in_another_match: Boolean_comparison_exp
+  is_in_draft: Boolean_comparison_exp
   is_in_lobby: Boolean_comparison_exp
   is_muted: Boolean_comparison_exp
   kills: player_kills_bool_exp
@@ -51762,6 +51831,7 @@ input players_insert_input {
   days_since_last_ban: Int
   deaths: player_kills_arr_rel_insert_input
   discord_id: String
+  draft_game_players: draft_game_players_arr_rel_insert_input
   elo_history: v_player_elo_arr_rel_insert_input
   faceit_elo: Int
   faceit_nickname: String
@@ -52029,6 +52099,7 @@ input players_order_by {
   days_since_last_ban: order_by
   deaths_aggregate: player_kills_aggregate_order_by
   discord_id: order_by
+  draft_game_players_aggregate: draft_game_players_aggregate_order_by
   elo: order_by
   elo_history_aggregate: v_player_elo_aggregate_order_by
   faceit_elo: order_by
@@ -52046,6 +52117,7 @@ input players_order_by {
   is_banned: order_by
   is_gagged: order_by
   is_in_another_match: order_by
+  is_in_draft: order_by
   is_in_lobby: order_by
   is_muted: order_by
   kills_aggregate: player_kills_aggregate_order_by
@@ -53247,9 +53319,7 @@ type query_root {
   """
   draft_game_picks_by_pk(id: uuid!): draft_game_picks
 
-  """
-  fetch data from the table: "draft_game_players"
-  """
+  """An array relationship"""
   draft_game_players(
     """distinct select on columns"""
     distinct_on: [draft_game_players_select_column!]
@@ -53267,9 +53337,7 @@ type query_root {
     where: draft_game_players_bool_exp
   ): [draft_game_players!]!
 
-  """
-  fetch aggregated fields from the table: "draft_game_players"
-  """
+  """An aggregate relationship"""
   draft_game_players_aggregate(
     """distinct select on columns"""
     distinct_on: [draft_game_players_select_column!]
@@ -61724,9 +61792,7 @@ type subscription_root {
     where: draft_game_picks_bool_exp
   ): [draft_game_picks!]!
 
-  """
-  fetch data from the table: "draft_game_players"
-  """
+  """An array relationship"""
   draft_game_players(
     """distinct select on columns"""
     distinct_on: [draft_game_players_select_column!]
@@ -61744,9 +61810,7 @@ type subscription_root {
     where: draft_game_players_bool_exp
   ): [draft_game_players!]!
 
-  """
-  fetch aggregated fields from the table: "draft_game_players"
-  """
+  """An aggregate relationship"""
   draft_game_players_aggregate(
     """distinct select on columns"""
     distinct_on: [draft_game_players_select_column!]

@@ -940,6 +940,28 @@ type SuccessOutput {
   success: Boolean!
 }
 
+type DraftGamePreviewPlayer {
+  steam_id: String!
+  name: String
+  avatar_url: String
+  status: String
+}
+
+type DraftGamePreviewOutput {
+  id: uuid!
+  type: String
+  mode: String
+  access: String
+  status: String
+  capacity: Int
+  require_approval: Boolean
+  host_steam_id: String
+  host_name: String
+  host_avatar_url: String
+  accepted_count: Int
+  players: [DraftGamePreviewPlayer!]!
+}
+
 type ScrimCalendarOutput {
   url: String!
 }
@@ -1401,6 +1423,13 @@ type Mutation {
     draftGameId: uuid!
     inviteCode: String
   ): SuccessOutput
+}
+
+type Mutation {
+  previewDraftGame(
+    draftGameId: uuid!
+    inviteCode: String
+  ): DraftGamePreviewOutput
 }
 
 type Mutation {
