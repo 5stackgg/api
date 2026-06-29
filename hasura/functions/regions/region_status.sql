@@ -8,13 +8,6 @@ DECLARE
     node_total_count INT;
     node_online_count INT;
 BEGIN
-    -- only nodes that are part of the match-making pool factor into region
-    -- health: enabled, opted in via enabled_for_match_making, and physically
-    -- able to host servers (a port range is set). GPU-only / opted-out nodes
-    -- never host matches, so they must not drag a region into a degraded state.
-    -- a node that IS in the pool but isn't accepting new matches
-    -- (NotAcceptingNewMatches) counts as not-online here, so a drained match
-    -- node correctly surfaces as a degraded region.
     SELECT COUNT(*), COUNT(*) FILTER (WHERE status = 'Online')
     INTO node_total_count, node_online_count
     FROM game_server_nodes
