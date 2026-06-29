@@ -47,6 +47,13 @@ array_relationships:
         table:
           name: player_damages
           schema: public
+  - name: draft_game_players
+    using:
+      foreign_key_constraint_on:
+        column: steam_id
+        table:
+          name: draft_game_players
+          schema: public
   - name: damage_taken
     using:
       foreign_key_constraint_on:
@@ -312,6 +319,11 @@ computed_fields:
       function:
         name: is_in_another_match
         schema: public
+  - name: is_in_draft
+    definition:
+      function:
+        name: is_in_draft
+        schema: public
   - name: is_in_lobby
     definition:
       function:
@@ -468,6 +480,7 @@ select_permissions:
         - is_banned
         - is_gagged
         - is_in_another_match
+        - is_in_draft
         - is_in_lobby
         - is_muted
         - losses
@@ -516,6 +529,7 @@ select_permissions:
         - is_banned
         - is_gagged
         - is_in_another_match
+        - is_in_draft
         - is_in_lobby
         - is_muted
         - losses

@@ -310,6 +310,44 @@ export class DraftGameService {
     });
   }
 
+  public async previewDraftGame(
+    user: User,
+    draftGameId: string,
+    inviteCode?: string,
+  ) {
+    const draftGame = await this.getDraftGame(draftGameId);
+
+    if (!draftGame) {
+      throw new DraftGameError("Draft game not found");
+    }
+
+    await this.verifyJoinAccess(user, draftGame, inviteCode);
+
+    const host = draftGame.players.find(
+      (player) => player.steam_id === draftGame.host_steam_id,
+    );
+
+    return {
+      id: draftGame.id,
+      type: draftGame.type,
+      mode: draftGame.mode,
+      access: draftGame.access,
+      status: draftGame.status,
+      capacity: draftGame.capacity,
+      require_approval: draftGame.require_approval,
+      host_steam_id: draftGame.host_steam_id,
+      host_name: host?.name ?? null,
+      host_avatar_url: host?.avatar_url ?? null,
+      accepted_count: this.acceptedPlayers(draftGame).length,
+      players: draftGame.players.map((player) => ({
+        steam_id: player.steam_id,
+        name: player.name,
+        avatar_url: player.avatar_url ?? null,
+        status: player.status ?? null,
+      })),
+    };
+  }
+
   private async verifyJoinAccess(
     user: User,
     draftGame: DraftGame,

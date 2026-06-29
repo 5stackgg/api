@@ -104,6 +104,19 @@ export class DraftGamesController {
   }
 
   @HasuraAction()
+  public async previewDraftGame(data: {
+    user: User;
+    draftGameId: string;
+    inviteCode?: string;
+  }) {
+    return this.draftGameService.previewDraftGame(
+      data.user,
+      data.draftGameId,
+      data.inviteCode,
+    );
+  }
+
+  @HasuraAction()
   public async addDraftPlayer(data: {
     user: User;
     draftGameId: string;

@@ -81,6 +81,14 @@ actions:
     permissions:
       - role: user
     comment: joinDraftGameAsParty
+  - name: previewDraftGame
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: user
+    comment: previewDraftGame
   - name: addDraftPlayer
     definition:
       kind: synchronous
