@@ -15,10 +15,10 @@ BEGIN
 
     SELECT array_agg(map_id) INTO _map_pool FROM _map_pool WHERE map_pool_id = _map_pool_id;
 
-    _map_pool_count = array_length(_map_pool, 1);
+    _map_pool_count = COALESCE(array_length(_map_pool, 1), 0);
 
     IF _map_pool_count = 0 THEN
-        RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Match requires at least one map selected';
+        RETURN;
     END IF;
 
     IF _best_of > _map_pool_count THEN
