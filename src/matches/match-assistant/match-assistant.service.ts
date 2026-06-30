@@ -1626,6 +1626,15 @@ export class MatchAssistantService {
         ? { team_id: side.team_id, team_name: await teamName(side.team_id) }
         : {};
 
+    // When the requested kickoff is now/in the past (the "ASAP" case), skip the
+    // Scheduled status so the match doesn't sit waiting for the CheckForScheduledMatches
+    // cron sweep — go straight to WaitingForCheckIn like scheduleMatch does.
+    const scheduledMs = input.scheduled_at
+      ? new Date(input.scheduled_at).getTime()
+      : 0;
+    // 1 min grace absorbs client/server clock skew so "now" isn't pushed onto the cron.
+    const startNow = !scheduledMs || scheduledMs <= Date.now() + 60_000;
+
     // Inserted via the admin client, so the tai_match auto-add-creator branch
     // (which is gated on a non-admin role) is skipped — no stray organizer.
     const { insert_matches_one } = await this.hasura.mutation({
@@ -1634,7 +1643,7 @@ export class MatchAssistantService {
           object: {
             organizer_steam_id: organizerSteamId,
             scheduled_at: input.scheduled_at,
-            status: "Scheduled",
+            status: startNow ? "WaitingForCheckIn" : "Scheduled",
             options: { data: input.options as any },
             lineup_1: { data: await lineupData(input.lineup_1) },
             lineup_2: { data: await lineupData(input.lineup_2) },
