@@ -7,11 +7,14 @@ declare
 begin
   -- Prefer the account this node last logged in with so the
   -- per-account Steam cache stays warm.
+  -- role = 'gpu' only: 'friends' accounts are reserved for the presence bot and
+  -- must never be claimed for GPU work (a Steam account can't log in twice).
   if p_node_id is not null then
     select id
       into v_id
       from steam_accounts
      where last_node_id = p_node_id
+       and role = 'gpu'
        and id not in (select * from busy_steam_account_ids())
      order by id
      for update skip locked
@@ -22,7 +25,8 @@ begin
     select id
       into v_id
       from steam_accounts
-     where id not in (select * from busy_steam_account_ids())
+     where role = 'gpu'
+       and id not in (select * from busy_steam_account_ids())
      order by id
      for update skip locked
      limit 1;

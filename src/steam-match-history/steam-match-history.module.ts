@@ -13,6 +13,7 @@ import { PostgresModule } from "../postgres/postgres.module";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { FaceitModule } from "../faceit/faceit.module";
+import { SteamPresenceModule } from "../steam-presence/steam-presence.module";
 import { SteamMatchHistoryController } from "./steam-match-history.controller";
 import { SteamMatchHistoryService } from "./steam-match-history.service";
 import { SteamBansService } from "./steam-bans.service";
@@ -86,6 +87,7 @@ import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
     ClipsModule,
     PostgresModule,
     forwardRef(() => FaceitModule),
+    SteamPresenceModule,
   ],
   providers: [
     SteamMatchHistoryService,

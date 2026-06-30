@@ -10,6 +10,7 @@ import { DemoMetadataService } from "../demos/demo-metadata.service";
 import { ParsedDemo, ParsedPlayer } from "../demos/demo-parser.service";
 import { S3Service } from "../s3/s3.service";
 import { FaceitService } from "../faceit/faceit.service";
+import { SteamPresenceService } from "../steam-presence/steam-presence.service";
 import { e_match_types_enum } from "../../generated";
 
 type MatchType = e_match_types_enum;
@@ -36,6 +37,7 @@ export class MatchImportService {
     private readonly s3: S3Service,
     @Inject(forwardRef(() => FaceitService))
     private readonly faceit: FaceitService,
+    private readonly steamPresence: SteamPresenceService,
     @InjectQueue(SteamMatchHistoryQueues.CheckSteamBansForMatch)
     private readonly steamBansQueue: Queue,
   ) {
@@ -248,7 +250,41 @@ export class MatchImportService {
         ),
       );
 
+    void this.steamPresence
+      .notifyMatchImported({
+        matchId,
+        matchType,
+        mapName: parsed.map_name ?? null,
+        players: MatchImportService.computeImportedPlayers(parsed, players),
+      })
+      .catch((error) =>
+        this.logger.warn(
+          `match-imported notify failed for match ${matchId}: ${(error as Error)?.message ?? String(error)}`,
+        ),
+      );
+
     return { matchId };
+  }
+
+  private static computeImportedPlayers(
+    parsed: ParsedDemo,
+    players: ParsedPlayer[],
+  ): Array<{ steamId: string; kills: number; deaths: number }> {
+    const kills = new Map<string, number>();
+    const deaths = new Map<string, number>();
+    for (const kill of parsed.kills ?? []) {
+      if (kill.killer) {
+        kills.set(kill.killer, (kills.get(kill.killer) ?? 0) + 1);
+      }
+      if (kill.victim) {
+        deaths.set(kill.victim, (deaths.get(kill.victim) ?? 0) + 1);
+      }
+    }
+    return players.map((player) => ({
+      steamId: player.steam_id,
+      kills: kills.get(player.steam_id) ?? 0,
+      deaths: deaths.get(player.steam_id) ?? 0,
+    }));
   }
 
   // On import AND re-import: (1) refresh every participant's CURRENT faceit elo

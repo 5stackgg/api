@@ -1,0 +1,14 @@
+table:
+  name: steam_presence_events
+  schema: public
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - type
+        - message
+        - created_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
