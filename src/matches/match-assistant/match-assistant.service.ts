@@ -538,6 +538,9 @@ export class MatchAssistantService {
             enabled: {
               _eq: true,
             },
+            enabled_for_match_making: {
+              _eq: true,
+            },
             ...(match.region
               ? {
                   region: {
@@ -603,6 +606,9 @@ export class MatchAssistantService {
                   _and: [
                     {
                       enabled: {
+                        _eq: true,
+                      },
+                      enabled_for_match_making: {
                         _eq: true,
                       },
                       status: {
