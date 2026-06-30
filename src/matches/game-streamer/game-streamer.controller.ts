@@ -16,6 +16,7 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { Request, Response } from "express";
 import { GameStreamerService } from "./game-streamer.service";
+import { StreamAccessService } from "./stream-access.service";
 import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 
 const SNAPSHOT_MAX_BYTES = 2 * 1024 * 1024;
@@ -25,6 +26,7 @@ export class GameStreamerController {
   constructor(
     private readonly logger: Logger,
     private readonly gameStreamer: GameStreamerService,
+    private readonly streamAccess: StreamAccessService,
   ) {}
 
   @Post("status")
@@ -105,14 +107,23 @@ export class GameStreamerController {
   @Get("snapshot")
   public async getSnapshot(
     @Param("matchId") matchId: string,
+    @Req() request: Request,
     @Res() response: Response,
   ) {
+    const requireLogin = await this.streamAccess.requireLoginForLiveStreams();
+    if (requireLogin && !(await this.streamAccess.authorize(request, matchId))) {
+      return response.status(403).end();
+    }
+
     const image = await this.gameStreamer.getSnapshot("live", matchId);
     if (!image) {
       throw new NotFoundException("no snapshot available");
     }
     response.setHeader("Content-Type", "image/jpeg");
-    response.setHeader("Cache-Control", "public, max-age=15");
+    response.setHeader(
+      "Cache-Control",
+      requireLogin ? "private, max-age=15" : "public, max-age=15",
+    );
     response.setHeader("Content-Length", String(image.length));
     return response.status(200).end(image);
   }

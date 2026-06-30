@@ -1697,6 +1697,27 @@ export class GameStreamerService {
     }
   }
 
+  public async stopLiveIfRunning(matchId: string) {
+    const { match_streams } = await this.hasura.query({
+      match_streams: {
+        __args: {
+          where: {
+            match_id: { _eq: matchId },
+            is_game_streamer: { _eq: true },
+          },
+          limit: 1,
+        },
+        id: true,
+      },
+    });
+
+    if (!match_streams?.length) {
+      return;
+    }
+
+    await this.stopLive(matchId);
+  }
+
   public async switchLive(
     fromMatchId: string,
     toMatchId: string,

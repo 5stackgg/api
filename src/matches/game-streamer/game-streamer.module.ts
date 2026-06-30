@@ -6,6 +6,8 @@ import { DemoSessionsController } from "./demo-sessions.controller";
 import { GameServerNodeBakeController } from "./game-server-node-bake.controller";
 import { HudDataController } from "./hud-data.controller";
 import { SnapshotController } from "./snapshot.controller";
+import { StreamAccessController } from "./stream-access.controller";
+import { StreamAccessService } from "./stream-access.service";
 import { DemoSessionWatcherService } from "./demo-session-watcher.service";
 import { DemoSessionWatcherGateway } from "./demo-session-watcher.gateway";
 import { HasuraModule } from "../../hasura/hasura.module";
@@ -33,9 +35,11 @@ import { loggerFactory } from "../../utilities/LoggerFactory";
     GameServerNodeBakeController,
     HudDataController,
     SnapshotController,
+    StreamAccessController,
   ],
   providers: [
     GameStreamerService,
+    StreamAccessService,
     SteamAccountService,
     DemoSessionWatcherService,
     DemoSessionWatcherGateway,

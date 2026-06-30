@@ -547,6 +547,20 @@ export class MatchesController {
       data.op === "DELETE" ||
       MatchesController.TERMINAL_STATUSES.includes(status)
     ) {
+      try {
+        if (data.op === "DELETE") {
+          await this.gameStreamer.stopLive(matchId);
+        } else {
+          await this.gameStreamer.stopLiveIfRunning(matchId);
+        }
+      } catch (error) {
+        this.logger.error(
+          `[${matchId}] failed to stop live stream on match end: ${
+            (error as Error)?.message
+          }`,
+        );
+      }
+
       this.matchRelayService.removeBroadcast(matchId);
       await this.removeDiscordIntegration(matchId);
       await this.matchmaking.cancelMatchMakingByMatchId(matchId);

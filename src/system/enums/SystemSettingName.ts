@@ -9,4 +9,5 @@ export enum SystemSettingName {
   NewsEnabled = "public.news_enabled",
   NewsLabel = "public.news_label",
   PostNewsRole = "public.post_news_role",
+  RequireLoginForLiveStreams = "public.require_login_for_live_streams",
 }
