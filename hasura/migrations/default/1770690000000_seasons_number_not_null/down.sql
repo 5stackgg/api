@@ -1,0 +1,1 @@
+ALTER TABLE public.seasons ALTER COLUMN number DROP NOT NULL;

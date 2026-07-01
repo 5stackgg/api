@@ -169,8 +169,13 @@ export class TypeSenseService {
         continue;
       }
 
-      const sortChanged = Boolean(existing.sort) !== Boolean(field.sort);
-      const indexChanged = Boolean(existing.index) !== Boolean(field.index);
+      // Typesense returns fields fully populated with its defaults, so compare
+      // against those defaults (not the raw literal) to avoid a perpetual diff
+      // that would drop/re-add fields and trigger a full reindex on every boot.
+      const sortChanged =
+        Boolean(existing.sort) !== this.expectedSort(field);
+      const indexChanged =
+        Boolean(existing.index) !== this.expectedIndex(field);
       const typeChanged = existing.type !== field.type;
 
       if (sortChanged || indexChanged || typeChanged) {
@@ -197,6 +202,29 @@ export class TypeSenseService {
         );
       }
     }
+  }
+
+  // Typesense: `index` defaults to true; `sort` defaults to true for numeric
+  // and bool fields (only when indexed) and false for everything else.
+  private static readonly SORTABLE_BY_DEFAULT = new Set([
+    "int32",
+    "int64",
+    "float",
+    "bool",
+  ]);
+
+  private expectedIndex(field: CollectionFieldSchema): boolean {
+    return field.index ?? true;
+  }
+
+  private expectedSort(field: CollectionFieldSchema): boolean {
+    if (field.sort !== undefined) {
+      return field.sort;
+    }
+    return (
+      this.expectedIndex(field) &&
+      TypeSenseService.SORTABLE_BY_DEFAULT.has(field.type)
+    );
   }
 
   public async createCvarsCollection() {

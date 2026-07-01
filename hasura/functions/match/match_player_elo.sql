@@ -52,6 +52,7 @@ DECLARE
     _team_avg_kda FLOAT;
     _player_damage_percent FLOAT;
     match_type text;
+    _seasons_enabled BOOLEAN;
 
     -- Series (best-of) scaling
     _player_map_wins INT := 0;
@@ -60,9 +61,21 @@ DECLARE
 BEGIN
     SELECT "type" INTO match_type FROM match_options WHERE id = match_record.match_options_id;
 
+    _seasons_enabled := seasons_enabled();
+
     -- Get the player's current ELO value from the most recent record
-    -- Scoped by tournament vs season context
-    IF _is_tournament THEN
+    -- Scoped by legacy (seasons off) vs tournament vs season context
+    IF NOT _seasons_enabled THEN
+        -- Legacy: latest ELO by type, ignoring season entirely
+        SELECT pe.current INTO _current_player_elo
+        FROM player_elo pe
+        WHERE pe.steam_id = player_record.steam_id
+        AND pe.created_at < match_record.ended_at
+        AND pe.match_id != match_record.id
+        AND pe."type" = match_type
+        ORDER BY pe.created_at DESC
+        LIMIT 1;
+    ELSIF _is_tournament THEN
         -- Tournament track: find latest ELO where season_id IS NULL and match is a tournament match
         SELECT pe.current INTO _current_player_elo
         FROM player_elo pe
@@ -129,6 +142,16 @@ BEGIN
             mlp.steam_id,
             COALESCE(
                 CASE
+                    WHEN NOT _seasons_enabled THEN (
+                        SELECT pe.current
+                        FROM player_elo pe
+                        WHERE pe.steam_id = mlp.steam_id
+                        AND pe.created_at < match_record.ended_at
+                        AND pe.match_id != match_record.id
+                        AND pe."type" = match_type
+                        ORDER BY pe.created_at DESC
+                        LIMIT 1
+                    )
                     WHEN _is_tournament THEN (
                         SELECT pe.current
                         FROM player_elo pe
@@ -173,6 +196,16 @@ BEGIN
             mlp.steam_id,
             COALESCE(
                 CASE
+                    WHEN NOT _seasons_enabled THEN (
+                        SELECT pe.current
+                        FROM player_elo pe
+                        WHERE pe.steam_id = mlp.steam_id
+                        AND pe.created_at < match_record.ended_at
+                        AND pe.match_id != match_record.id
+                        AND pe."type" = match_type
+                        ORDER BY pe.created_at DESC
+                        LIMIT 1
+                    )
                     WHEN _is_tournament THEN (
                         SELECT pe.current
                         FROM player_elo pe
@@ -361,6 +394,7 @@ DECLARE
     match_type text;
     _is_tournament BOOLEAN;
     _season_id UUID;
+    _seasons_enabled BOOLEAN;
 BEGIN
     -- Get the match record
     SELECT * INTO match_record FROM matches WHERE id = _match_id;
@@ -383,11 +417,18 @@ BEGIN
     -- Determine if this is a tournament match
     _is_tournament := is_tournament_match(match_record);
 
-    -- Determine season context
-    IF _is_tournament THEN
-        _season_id := NULL;  -- Tournament matches are always season-independent
+    _seasons_enabled := seasons_enabled();
+
+    -- Determine season context. Season is derived from the match's own end time
+    -- (NOT the currently-active season) so recompute/backfill of historical matches
+    -- attribute ELO to the season the match actually happened in.
+    IF NOT _seasons_enabled THEN
+        _season_id := NULL;   -- Legacy: single global ELO ladder, no season/tournament split
+        _is_tournament := FALSE;
+    ELSIF _is_tournament THEN
+        _season_id := NULL;   -- Tournament matches are always season-independent
     ELSE
-        _season_id := get_active_season();  -- May be NULL if no active season (off-season)
+        _season_id := season_for_timestamp(COALESCE(match_record.ended_at, match_record.created_at));
     END IF;
 
     -- Delete any existing ratings for this match to avoid duplicates

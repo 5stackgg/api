@@ -14,14 +14,19 @@ BEGIN
     DO UPDATE SET
         assists = player_stats.assists + 1;
 
-    -- Season stats: assists
-    _season_id := get_active_season();
-    IF _season_id IS NOT NULL THEN
-        INSERT INTO player_season_stats (player_steam_id, season_id, assists)
-        VALUES (NEW.attacker_steam_id, _season_id, 1)
-        ON CONFLICT (player_steam_id, season_id)
-        DO UPDATE SET
-            assists = player_season_stats.assists + 1;
+    -- Season stats: assists, attributed to the match's season (see player_kills.sql)
+    IF seasons_enabled() THEN
+        SELECT season_for_timestamp(COALESCE(m.ended_at, now()))
+        INTO _season_id
+        FROM matches m WHERE m.id = NEW.match_id;
+
+        IF _season_id IS NOT NULL THEN
+            INSERT INTO player_season_stats (player_steam_id, season_id, assists)
+            VALUES (NEW.attacker_steam_id, _season_id, 1)
+            ON CONFLICT (player_steam_id, season_id)
+            DO UPDATE SET
+                assists = player_season_stats.assists + 1;
+        END IF;
     END IF;
 
     RETURN NEW;
@@ -34,10 +39,24 @@ CREATE OR REPLACE FUNCTION public.tad_player_assists()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    _season_id UUID;
 BEGIN
     UPDATE player_stats
        SET assists = GREATEST(assists - 1, 0)
      WHERE player_steam_id = OLD.attacker_steam_id;
+
+    IF seasons_enabled() THEN
+        SELECT season_for_timestamp(COALESCE(m.ended_at, now()))
+        INTO _season_id
+        FROM matches m WHERE m.id = OLD.match_id;
+
+        IF _season_id IS NOT NULL THEN
+            UPDATE player_season_stats
+               SET assists = GREATEST(assists - 1, 0)
+             WHERE player_steam_id = OLD.attacker_steam_id AND season_id = _season_id;
+        END IF;
+    END IF;
 
     RETURN OLD;
 END;

@@ -72,6 +72,16 @@ export class PlayerEloRecomputeService {
     return (await this.cache.get(SUPPRESS_KEY)) === true;
   }
 
+  // Shared suppression toggle so other bulk player_elo rebuilders (e.g. the
+  // season backfill job) reuse the same event-suppression window.
+  public async setSuppressEvents(on: boolean): Promise<void> {
+    if (on) {
+      await this.cache.put(SUPPRESS_KEY, true, RUNNING_TTL_SECONDS);
+    } else {
+      await this.cache.forget(SUPPRESS_KEY);
+    }
+  }
+
   private idleStatus(): EloRecomputeStatus {
     return {
       running: false,

@@ -49,6 +49,8 @@ import { HasuraService } from "src/hasura/hasura.service";
 import { EloCalculation } from "./jobs/EloCalculation";
 import { RecomputeAllElo } from "./jobs/RecomputeAllElo";
 import { PlayerEloRecomputeService } from "./player-elo-recompute.service";
+import { BackfillSeasonElo } from "./jobs/BackfillSeasonElo";
+import { SeasonEloBackfillService } from "./season-elo-backfill.service";
 import { PostgresService } from "src/postgres/postgres.service";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 import { MatchRelayController } from "./match-relay/match-relay.controller";
@@ -103,6 +105,13 @@ import { SteamMatchHistoryModule } from "../steam-match-history/steam-match-hist
         },
       },
       {
+        name: MatchQueues.SeasonEloBackfill,
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: { type: "exponential", delay: 5000 },
+        },
+      },
+      {
         name: SteamMatchHistoryQueues.CheckSteamBansForMatch,
       },
       {
@@ -124,6 +133,10 @@ import { SteamMatchHistoryModule } from "../steam-match-history/steam-match-hist
       },
       {
         name: MatchQueues.EloRecompute,
+        adapter: BullMQAdapter,
+      },
+      {
+        name: MatchQueues.SeasonEloBackfill,
         adapter: BullMQAdapter,
       },
     ),
@@ -149,6 +162,8 @@ import { SteamMatchHistoryModule } from "../steam-match-history/steam-match-hist
     EloCalculation,
     RecomputeAllElo,
     PlayerEloRecomputeService,
+    BackfillSeasonElo,
+    SeasonEloBackfillService,
     ...getQueuesProcessors("Matches"),
     ...Object.values(MatchEvents),
     loggerFactory(),

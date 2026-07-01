@@ -4,6 +4,15 @@ CREATE OR REPLACE FUNCTION public.get_player_elo(player public.players) RETURNS 
 DECLARE
     _active_season_id UUID;
 BEGIN
+    -- Seasons off: single global ELO ladder per type (pre-seasons behavior)
+    IF NOT seasons_enabled() THEN
+        return jsonb_build_object(
+            'competitive', get_player_elo_by_type(player, 'Competitive'),
+            'wingman', get_player_elo_by_type(player, 'Wingman'),
+            'duel', get_player_elo_by_type(player, 'Duel')
+        );
+    END IF;
+
     _active_season_id := get_active_season();
 
     return jsonb_build_object(
@@ -36,7 +45,8 @@ BEGIN
 END;
 $$;
 
--- Season ELO: latest ELO within a specific season
+-- Season ELO: latest ELO tagged to this season (season_id-indexed lookup; rows are
+-- populated by the season backfill).
 CREATE OR REPLACE FUNCTION public.get_player_season_elo_by_type(player public.players, _type text, _season_id UUID) RETURNS numeric
     LANGUAGE plpgsql STABLE
     AS $$

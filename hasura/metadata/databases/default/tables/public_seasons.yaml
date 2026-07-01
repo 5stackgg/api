@@ -14,62 +14,73 @@ select_permissions:
     permission:
       columns:
         - id
-        - name
+        - number
+        - description
         - starts_at
         - ends_at
         - created_at
+        - needs_rebuild
       filter: {}
     comment: ""
   - role: guest
     permission:
       columns:
         - id
-        - name
+        - number
+        - description
         - starts_at
         - ends_at
         - created_at
+        - needs_rebuild
       filter: {}
     comment: ""
   - role: user
     permission:
       columns:
         - id
-        - name
+        - number
+        - description
         - starts_at
         - ends_at
         - created_at
+        - needs_rebuild
       filter: {}
     comment: ""
   - role: match_organizer
     permission:
       columns:
         - id
-        - name
+        - number
+        - description
         - starts_at
         - ends_at
         - created_at
+        - needs_rebuild
       filter: {}
     comment: ""
 insert_permissions:
   - role: administrator
     permission:
       columns:
-        - name
+        - description
         - starts_at
+        - ends_at
       check: {}
     comment: ""
   - role: match_organizer
     permission:
       columns:
-        - name
+        - description
         - starts_at
+        - ends_at
       check: {}
     comment: ""
 update_permissions:
   - role: administrator
     permission:
       columns:
-        - name
+        - description
+        - starts_at
         - ends_at
       filter: {}
       check: {}
@@ -77,7 +88,8 @@ update_permissions:
   - role: match_organizer
     permission:
       columns:
-        - name
+        - description
+        - starts_at
         - ends_at
       filter: {}
       check: {}
@@ -88,15 +100,17 @@ delete_permissions:
       filter: {}
     comment: ""
 event_triggers:
-  - name: season_events
+  - name: season_backfill_events
     definition:
       enable_manual: false
       insert:
         columns: '*'
       update:
-        columns: '*'
+        columns:
+          - starts_at
+          - ends_at
     retry_conf:
-      interval_sec: 10
+      interval_sec: 30
       num_retries: 0
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

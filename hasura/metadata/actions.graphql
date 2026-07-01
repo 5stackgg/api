@@ -435,6 +435,18 @@ type Mutation {
 }
 
 type Mutation {
+  backfillSeasonElo(season_id: String!): RecomputeEloStartedOutput
+}
+
+type Mutation {
+  cancelBackfillSeasonElo: SuccessOutput
+}
+
+type Mutation {
+  backfillSeasonEloStatus: SeasonBackfillStatusOutput
+}
+
+type Mutation {
   scanSteamBans: SuccessOutput
 }
 
@@ -1048,6 +1060,18 @@ type RecomputeEloStatusOutput {
   canceled: Boolean!
   started_at: String
   finished_at: String
+  total: Int!
+  completed: Int!
+  failed: Int!
+  current_match_id: String
+}
+
+type SeasonBackfillStatusOutput {
+  running: Boolean!
+  canceled: Boolean!
+  started_at: String
+  finished_at: String
+  season_id: String
   total: Int!
   completed: Int!
   failed: Int!

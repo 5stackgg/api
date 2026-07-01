@@ -186,11 +186,17 @@ BEGIN
   -- ==========================================
   -- 2.5 INSERT SEASONS
   -- ==========================================
-  INSERT INTO seasons (id, name, starts_at, ends_at, created_at) VALUES
-    (season_ids[1], 'Season Alpha', now() - interval '90 days', now() - interval '60 days', now() - interval '95 days'),
-    (season_ids[2], 'Season Beta', now() - interval '55 days', now() - interval '25 days', now() - interval '60 days'),
-    (season_ids[3], 'Season Gamma', now() - interval '20 days', NULL, now() - interval '25 days')
+  -- Numbers set explicitly here because fixtures load with triggers disabled
+  -- (the recompute_season_numbers trigger won't fire).
+  INSERT INTO seasons (id, number, description, starts_at, ends_at, created_at) VALUES
+    (season_ids[1], 1, 'Alpha', now() - interval '90 days', now() - interval '60 days', now() - interval '95 days'),
+    (season_ids[2], 2, 'Beta', now() - interval '55 days', now() - interval '25 days', now() - interval '60 days'),
+    (season_ids[3], 3, 'Gamma', now() - interval '20 days', NULL, now() - interval '25 days')
   ON CONFLICT (id) DO NOTHING;
+
+  -- Enable seasons so dev exercises the season-scoped ELO/stats path
+  INSERT INTO settings (name, value) VALUES ('public.seasons_enabled', 'true')
+  ON CONFLICT (name) DO UPDATE SET value = 'true';
 
   -- ==========================================
   -- 3. FIND COMPETITIVE MAP POOL
@@ -769,7 +775,7 @@ BEGIN
       death_counts[i],
       0,
       headshot_counts[i],
-      CASE WHEN kill_counts[i] > 0 THEN (headshot_counts[i]::float / kill_counts[i]) * 100 ELSE 0 END
+      CASE WHEN kill_counts[i] > 0 THEN headshot_counts[i]::float / kill_counts[i] ELSE 0 END
     )
     ON CONFLICT (player_steam_id) DO UPDATE SET
       kills = EXCLUDED.kills,
@@ -810,7 +816,7 @@ BEGIN
           s_death_counts[s][i],
           0,
           s_headshot_counts[s][i],
-          CASE WHEN s_kill_counts[s][i] > 0 THEN (s_headshot_counts[s][i]::float / s_kill_counts[s][i]) * 100 ELSE 0 END
+          CASE WHEN s_kill_counts[s][i] > 0 THEN s_headshot_counts[s][i]::float / s_kill_counts[s][i] ELSE 0 END
         )
         ON CONFLICT (player_steam_id, season_id) DO UPDATE SET
           kills = EXCLUDED.kills,
