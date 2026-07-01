@@ -1,4 +1,3 @@
-drop function if exists public.get_player_elo;
 CREATE OR REPLACE FUNCTION public.get_player_elo(player public.players) RETURNS jsonb
     LANGUAGE plpgsql STABLE
     AS $$
