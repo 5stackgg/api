@@ -11,7 +11,7 @@ import { TypesenseQueues } from "../type-sense/enums/TypesenseQueues";
     PostgresModule,
     TypeSenseModule,
     BullModule.registerQueue({
-      name: TypesenseQueues.TypeSense,
+      name: TypesenseQueues.PlayerReindex,
     }),
   ],
   controllers: [FixturesController],

@@ -411,7 +411,27 @@ type Mutation {
 }
 
 type Mutation {
-  refreshAllPlayers: SuccessOutput
+  refreshAllPlayers: ReindexStartedOutput
+}
+
+type Mutation {
+  cancelRefreshAllPlayers: SuccessOutput
+}
+
+type Mutation {
+  refreshAllPlayersStatus: ReindexStatusOutput
+}
+
+type Mutation {
+  recomputePlayerElo: RecomputeEloStartedOutput
+}
+
+type Mutation {
+  cancelRecomputePlayerElo: SuccessOutput
+}
+
+type Mutation {
+  recomputePlayerEloStatus: RecomputeEloStatusOutput
 }
 
 type Mutation {
@@ -1000,6 +1020,38 @@ type ReparseAllStatusOutput {
   completed: Int!
   failed: Int!
   current_demo_id: String
+}
+
+type ReindexStartedOutput {
+  success: Boolean!
+  running: Boolean!
+}
+
+type ReindexStatusOutput {
+  running: Boolean!
+  canceled: Boolean!
+  started_at: String
+  finished_at: String
+  total: Int!
+  completed: Int!
+  failed: Int!
+  current_steam_id: String
+}
+
+type RecomputeEloStartedOutput {
+  success: Boolean!
+  running: Boolean!
+}
+
+type RecomputeEloStatusOutput {
+  running: Boolean!
+  canceled: Boolean!
+  started_at: String
+  finished_at: String
+  total: Int!
+  completed: Int!
+  failed: Int!
+  current_match_id: String
 }
 
 type OrphanObject {

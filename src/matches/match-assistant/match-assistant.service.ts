@@ -409,13 +409,9 @@ export class MatchAssistantService {
     await this.startMatch(matchId);
   }
 
-  // A server that just finished a match may still be uploading demos for it (a
-  // map lingering in UploadingDemo/WaitingForTV). Its reservation is already
-  // cleared, but handing it a new match now re-runs match setup on the game
-  // server and interrupts that upload, orphaning the demo. Exclude such servers
-  // from selection until the demo window passes. Bounded to recently-ended
-  // matches so a permanently stuck upload can't take the server out of rotation
-  // forever (the game server also recovers orphaned demos on startup).
+  // Exclude servers still uploading demos for a recently-ended match, so a new
+  // match doesn't reset the server mid-upload. Bounded so a stuck upload can't
+  // take a server out of rotation forever.
   private static pendingDemoUploadExclusion() {
     const recentlyEnded = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     return {

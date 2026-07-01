@@ -32,6 +32,8 @@ import { SteamMatchHistoryQueues } from "../steam-match-history/enums/SteamMatch
 import { CheckSteamBansForMatch } from "../steam-match-history/jobs/CheckSteamBansForMatch";
 import { MatchImportService } from "../steam-match-history/match-import.service";
 import { EloCalculation } from "./jobs/EloCalculation";
+import { RecomputeAllElo } from "./jobs/RecomputeAllElo";
+import { PlayerEloRecomputeService } from "./player-elo-recompute.service";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 import { S3Service } from "src/s3/s3.service";
 import { ChatService } from "src/chat/chat.service";
@@ -78,6 +80,8 @@ export class MatchesController {
     private readonly notifications: NotificationsService,
     private readonly chatService: ChatService,
     @InjectQueue(MatchQueues.EloCalculation) private eloCalculationQueue: Queue,
+    @InjectQueue(MatchQueues.EloRecompute) private eloRecomputeQueue: Queue,
+    private readonly playerEloRecompute: PlayerEloRecomputeService,
     @InjectQueue(SteamMatchHistoryQueues.CheckSteamBansForMatch)
     private steamBansQueue: Queue,
     @InjectQueue(MatchQueues.ScheduledMatches)
@@ -1015,6 +1019,48 @@ export class MatchesController {
   }
 
   @HasuraAction()
+  public async recomputePlayerElo() {
+    if (await this.playerEloRecompute.isRunning()) {
+      return { success: true, running: true };
+    }
+
+    await this.playerEloRecompute.markQueued();
+
+    await this.eloRecomputeQueue.add(
+      RecomputeAllElo.name,
+      {},
+      {
+        jobId: RecomputeAllElo.name,
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
+
+    return { success: true, running: true };
+  }
+
+  @HasuraAction()
+  public async cancelRecomputePlayerElo() {
+    await this.playerEloRecompute.requestCancel();
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async recomputePlayerEloStatus() {
+    const status = await this.playerEloRecompute.getStatus();
+    return {
+      running: status.running,
+      canceled: status.canceled,
+      started_at: status.started_at,
+      finished_at: status.finished_at,
+      total: status.total,
+      completed: status.completed,
+      failed: status.failed,
+      current_match_id: status.current_match_id,
+    };
+  }
+
+  @HasuraAction()
   public async switchLiveMatch(data: {
     from_match_id: string;
     to_match_id: string;
@@ -1559,7 +1605,10 @@ export class MatchesController {
   }) {
     const { match_id, user, winning_lineup_id } = data;
 
-    if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
+    if (
+      !isRoleAbove(user.role, "match_organizer") ||
+      !(await this.matchAssistant.isOrganizer(match_id, user))
+    ) {
       throw Error("you are not a match organizer");
     }
 
@@ -1616,7 +1665,10 @@ export class MatchesController {
   }) {
     const { match_id, match_map_id, user, winning_lineup_id } = data;
 
-    if (!(await this.matchAssistant.isOrganizer(match_id, user))) {
+    if (
+      !isRoleAbove(user.role, "match_organizer") ||
+      !(await this.matchAssistant.isOrganizer(match_id, user))
+    ) {
       throw Error("you are not a match organizer");
     }
 

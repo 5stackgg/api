@@ -17,6 +17,8 @@ INSERT INTO e_notification_types ("value", "description") VALUES
     ('ScrimMatchCanceled', 'A scheduled scrim match was canceled'),
     ('ScrimTimeChanged', 'A scheduled scrim time changed'),
     ('ScrimAlertMatch', 'A team matching your scrim alert is available'),
-    ('FormTeamSuggestion', 'You frequently play with these players')
+    ('FormTeamSuggestion', 'You frequently play with these players'),
+    ('EloRecompute', 'Player ELO recompute finished'),
+    ('PlayerReindex', 'Player search reindex finished')
 ON CONFLICT("value") DO UPDATE
     SET "description" = EXCLUDED."description";
