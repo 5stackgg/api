@@ -3538,6 +3538,12 @@ type draft_games {
 
   """An object relationship"""
   options: match_options
+
+  """Turn order (lineup 1/2) for each remaining non-captain pick."""
+  pattern(
+    """JSON select path"""
+    path: String
+  ): jsonb
   pick_deadline: timestamptz
 
   """An array relationship"""
@@ -3760,6 +3766,7 @@ input draft_games_bool_exp {
   min_elo: Int_comparison_exp
   mode: e_draft_game_mode_enum_comparison_exp
   options: match_options_bool_exp
+  pattern: jsonb_comparison_exp
   pick_deadline: timestamptz_comparison_exp
   picks: draft_game_picks_bool_exp
   picks_aggregate: draft_game_picks_aggregate_bool_exp
@@ -3994,6 +4001,7 @@ input draft_games_order_by {
   min_elo: order_by
   mode: order_by
   options: match_options_order_by
+  pattern: order_by
   pick_deadline: order_by
   picks_aggregate: draft_game_picks_aggregate_order_by
   players_aggregate: draft_game_players_aggregate_order_by
@@ -7817,6 +7825,9 @@ enum e_notification_types_enum {
 
   """GameUpdate"""
   GameUpdate
+
+  """A Valve match you played was imported to 5stack"""
+  MatchImported
 
   """Match Status Change Notification"""
   MatchStatusChange
