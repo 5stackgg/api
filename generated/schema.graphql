@@ -61494,7 +61494,8 @@ type seasons {
   description: String
   ends_at: timestamptz
   id: uuid!
-  number: Int
+  needs_rebuild: Boolean!
+  number: Int!
 
   """An array relationship"""
   player_season_stats(
@@ -61575,6 +61576,7 @@ input seasons_bool_exp {
   description: String_comparison_exp
   ends_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
+  needs_rebuild: Boolean_comparison_exp
   number: Int_comparison_exp
   player_season_stats: player_season_stats_bool_exp
   player_season_stats_aggregate: player_season_stats_aggregate_bool_exp
@@ -61606,6 +61608,7 @@ input seasons_insert_input {
   description: String
   ends_at: timestamptz
   id: uuid
+  needs_rebuild: Boolean
   number: Int
   player_season_stats: player_season_stats_arr_rel_insert_input
   starts_at: timestamptz
@@ -61667,6 +61670,7 @@ input seasons_order_by {
   description: order_by
   ends_at: order_by
   id: order_by
+  needs_rebuild: order_by
   number: order_by
   player_season_stats_aggregate: player_season_stats_aggregate_order_by
   starts_at: order_by
@@ -61694,6 +61698,9 @@ enum seasons_select_column {
   id
 
   """column name"""
+  needs_rebuild
+
+  """column name"""
   number
 
   """column name"""
@@ -61708,6 +61715,7 @@ input seasons_set_input {
   description: String
   ends_at: timestamptz
   id: uuid
+  needs_rebuild: Boolean
   number: Int
   starts_at: timestamptz
 }
@@ -61744,6 +61752,7 @@ input seasons_stream_cursor_value_input {
   description: String
   ends_at: timestamptz
   id: uuid
+  needs_rebuild: Boolean
   number: Int
   starts_at: timestamptz
 }
@@ -61768,6 +61777,9 @@ enum seasons_update_column {
 
   """column name"""
   id
+
+  """column name"""
+  needs_rebuild
 
   """column name"""
   number
