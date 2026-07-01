@@ -79,6 +79,27 @@ export class TypeSenseService {
         sort: true,
         index: true,
       },
+      {
+        name: "tournament_elo_competitive",
+        type: "int32",
+        optional: true,
+        sort: true,
+        index: true,
+      },
+      {
+        name: "tournament_elo_wingman",
+        type: "int32",
+        optional: true,
+        sort: true,
+        index: true,
+      },
+      {
+        name: "tournament_elo_duel",
+        type: "int32",
+        optional: true,
+        sort: true,
+        index: true,
+      },
       { name: "role", type: "string", optional: true, index: true },
       { name: "kills", type: "int32", optional: true },
       { name: "deaths", type: "int32", optional: true },
@@ -148,8 +169,13 @@ export class TypeSenseService {
         continue;
       }
 
-      const sortChanged = Boolean(existing.sort) !== Boolean(field.sort);
-      const indexChanged = Boolean(existing.index) !== Boolean(field.index);
+      // Typesense returns fields fully populated with its defaults, so compare
+      // against those defaults (not the raw literal) to avoid a perpetual diff
+      // that would drop/re-add fields and trigger a full reindex on every boot.
+      const sortChanged =
+        Boolean(existing.sort) !== this.expectedSort(field);
+      const indexChanged =
+        Boolean(existing.index) !== this.expectedIndex(field);
       const typeChanged = existing.type !== field.type;
 
       if (sortChanged || indexChanged || typeChanged) {
@@ -176,6 +202,29 @@ export class TypeSenseService {
         );
       }
     }
+  }
+
+  // Typesense: `index` defaults to true; `sort` defaults to true for numeric
+  // and bool fields (only when indexed) and false for everything else.
+  private static readonly SORTABLE_BY_DEFAULT = new Set([
+    "int32",
+    "int64",
+    "float",
+    "bool",
+  ]);
+
+  private expectedIndex(field: CollectionFieldSchema): boolean {
+    return field.index ?? true;
+  }
+
+  private expectedSort(field: CollectionFieldSchema): boolean {
+    if (field.sort !== undefined) {
+      return field.sort;
+    }
+    return (
+      this.expectedIndex(field) &&
+      TypeSenseService.SORTABLE_BY_DEFAULT.has(field.type)
+    );
   }
 
   public async createCvarsCollection() {
@@ -319,6 +368,15 @@ export class TypeSenseService {
         : null,
       elo_duel: player.elo["duel"]
         ? parseInt(String(player.elo["duel"]), 10)
+        : null,
+      tournament_elo_competitive: player.elo["tournament_competitive"]
+        ? parseInt(String(player.elo["tournament_competitive"]), 10)
+        : null,
+      tournament_elo_wingman: player.elo["tournament_wingman"]
+        ? parseInt(String(player.elo["tournament_wingman"]), 10)
+        : null,
+      tournament_elo_duel: player.elo["tournament_duel"]
+        ? parseInt(String(player.elo["tournament_duel"]), 10)
         : null,
     };
 

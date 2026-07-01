@@ -34,6 +34,8 @@ import { MatchImportService } from "../steam-match-history/match-import.service"
 import { EloCalculation } from "./jobs/EloCalculation";
 import { RecomputeAllElo } from "./jobs/RecomputeAllElo";
 import { PlayerEloRecomputeService } from "./player-elo-recompute.service";
+import { BackfillSeasonElo } from "./jobs/BackfillSeasonElo";
+import { SeasonEloBackfillService } from "./season-elo-backfill.service";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 import { S3Service } from "src/s3/s3.service";
 import { ChatService } from "src/chat/chat.service";
@@ -82,6 +84,9 @@ export class MatchesController {
     @InjectQueue(MatchQueues.EloCalculation) private eloCalculationQueue: Queue,
     @InjectQueue(MatchQueues.EloRecompute) private eloRecomputeQueue: Queue,
     private readonly playerEloRecompute: PlayerEloRecomputeService,
+    @InjectQueue(MatchQueues.SeasonEloBackfill)
+    private seasonEloBackfillQueue: Queue,
+    private readonly seasonEloBackfill: SeasonEloBackfillService,
     @InjectQueue(SteamMatchHistoryQueues.CheckSteamBansForMatch)
     private steamBansQueue: Queue,
     @InjectQueue(MatchQueues.ScheduledMatches)
@@ -1058,6 +1063,100 @@ export class MatchesController {
       failed: status.failed,
       current_match_id: status.current_match_id,
     };
+  }
+
+  // A season whose boundaries changed is flagged needs_rebuild by a DB trigger.
+  // We do NOT rebuild automatically — we notify admins once so they can run the
+  // rebuild manually (the backfill is single-execution / locked). This avoids a
+  // constant background poll and keeps the operator in control.
+  @HasuraEvent()
+  public async season_backfill_events(
+    data: HasuraEventData<{
+      id: string;
+      number: number | null;
+      needs_rebuild: boolean | null;
+    }>,
+  ) {
+    const season = data.new;
+    if (!season?.id || !season.needs_rebuild) {
+      return;
+    }
+
+    if (!(await this.seasonsEnabled())) {
+      return;
+    }
+
+    try {
+      await this.notifications.send(
+        "EloRecompute" as e_notification_types_enum,
+        {
+          title: "Season rebuild needed",
+          message:
+            `<b>Season ${season.number ?? "?"}</b> needs an ELO rebuild after a ` +
+            `change. Run it from the Seasons page.`,
+          role: "administrator" as e_player_roles_enum,
+        },
+      );
+    } catch (error) {
+      this.logger.warn(
+        `[season] failed to send rebuild notification: ${(error as Error)?.message}`,
+      );
+    }
+  }
+
+  @HasuraAction()
+  public async backfillSeasonElo(data: { season_id: string }) {
+    if (!data?.season_id) {
+      throw Error("season_id is required");
+    }
+    if (await this.seasonEloBackfill.isRunning()) {
+      return { success: true, running: true };
+    }
+    await this.enqueueSeasonBackfill(data.season_id);
+    return { success: true, running: true };
+  }
+
+  @HasuraAction()
+  public async cancelBackfillSeasonElo() {
+    await this.seasonEloBackfill.requestCancel();
+    return { success: true };
+  }
+
+  @HasuraAction()
+  public async backfillSeasonEloStatus() {
+    const status = await this.seasonEloBackfill.getStatus();
+    return {
+      running: status.running,
+      canceled: status.canceled,
+      started_at: status.started_at,
+      finished_at: status.finished_at,
+      season_id: status.season_id,
+      total: status.total,
+      completed: status.completed,
+      failed: status.failed,
+      current_match_id: status.current_match_id,
+    };
+  }
+
+  private async seasonsEnabled(): Promise<boolean> {
+    const rows = await this.postgres.query<Array<{ enabled: boolean }>>(
+      `SELECT seasons_enabled() AS enabled`,
+    );
+    return rows?.[0]?.enabled === true;
+  }
+
+  private async enqueueSeasonBackfill(seasonId: string): Promise<void> {
+    await this.seasonEloBackfill.markQueued(seasonId);
+    await this.seasonEloBackfillQueue.add(
+      BackfillSeasonElo.name,
+      { season_id: seasonId },
+      {
+        // BullMQ forbids ":" in a custom jobId.
+        jobId: `${BackfillSeasonElo.name}-${seasonId}`,
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
   }
 
   @HasuraAction()

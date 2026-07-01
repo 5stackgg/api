@@ -37,6 +37,7 @@ select_permissions:
         - player_name
         - player_steam_id
         - player_team_elo_avg
+        - season_id
         - series_multiplier
         - team_avg_kda
         - type

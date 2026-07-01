@@ -3,5 +3,6 @@ export enum MatchQueues {
   ScheduledMatches = "scheduled-matches",
   EloCalculation = "elo-calculation",
   EloRecompute = "elo-recompute",
+  SeasonEloBackfill = "season-elo-backfill",
   Clips = "clips",
 }

@@ -294,4 +294,5 @@ export class TypeSenseController {
       current_steam_id: status.current_steam_id,
     };
   }
+
 }

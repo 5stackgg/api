@@ -7,6 +7,7 @@ SELECT
     m.created_at AS match_created_at,
     pe.steam_id AS player_steam_id,
     p.name AS player_name,
+    pe.season_id AS season_id,
     CASE WHEN pe.actual_score = 1.0 THEN 'win' ELSE 'loss' END AS match_result,
     pe.current::INTEGER AS updated_elo,
     (pe.current - pe.change)::INTEGER AS current_elo,
