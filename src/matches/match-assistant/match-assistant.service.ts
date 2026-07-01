@@ -16,6 +16,7 @@ import { ConfigService } from "@nestjs/config";
 import { GameServersConfig } from "../../configs/types/GameServersConfig";
 import {
   e_map_pool_types_enum,
+  e_match_map_status_enum,
   e_match_status_enum,
   e_match_types_enum,
   e_timeout_settings_enum,
@@ -408,6 +409,32 @@ export class MatchAssistantService {
     await this.startMatch(matchId);
   }
 
+  // A server that just finished a match may still be uploading demos for it (a
+  // map lingering in UploadingDemo/WaitingForTV). Its reservation is already
+  // cleared, but handing it a new match now re-runs match setup on the game
+  // server and interrupts that upload, orphaning the demo. Exclude such servers
+  // from selection until the demo window passes. Bounded to recently-ended
+  // matches so a permanently stuck upload can't take the server out of rotation
+  // forever (the game server also recovers orphaned demos on startup).
+  private static pendingDemoUploadExclusion() {
+    const recentlyEnded = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    return {
+      _not: {
+        matches: {
+          ended_at: { _gte: recentlyEnded },
+          match_maps: {
+            status: {
+              _in: [
+                "UploadingDemo",
+                "WaitingForTV",
+              ] as e_match_map_status_enum[],
+            },
+          },
+        },
+      },
+    };
+  }
+
   private async assignDedicatedServer(
     matchId: string,
     region: string,
@@ -436,6 +463,7 @@ export class MatchAssistantService {
                 reserved_by_match_id: {
                   _is_null: true,
                 },
+                ...MatchAssistantService.pendingDemoUploadExclusion(),
                 ...(region
                   ? {
                       region: {
@@ -602,6 +630,7 @@ export class MatchAssistantService {
                 reserved_by_match_id: {
                   _is_null: true,
                 },
+                ...MatchAssistantService.pendingDemoUploadExclusion(),
                 game_server_node: {
                   _and: [
                     {
