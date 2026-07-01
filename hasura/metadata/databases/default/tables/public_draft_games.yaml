@@ -58,11 +58,18 @@ computed_fields:
         schema: public
       session_argument: hasura_session
     comment: ""
+  - name: pattern
+    definition:
+      function:
+        name: get_draft_game_pattern_json
+        schema: public
+    comment: "Turn order (lineup 1/2) for each remaining non-captain pick."
 select_permissions:
   - role: user
     permission:
       computed_fields:
         - is_organizer
+        - pattern
       columns:
         - id
         - host_steam_id
@@ -114,6 +121,7 @@ select_permissions:
     permission:
       computed_fields:
         - is_organizer
+        - pattern
       columns:
         - id
         - host_steam_id

@@ -6,7 +6,9 @@ DECLARE
     _match matches;
     available_count int;
 BEGIN
-    select * into _match from matches where id = match_region_veto_pick.match_id;
+    -- FOR UPDATE serializes concurrent veto picks for the same match so the
+    -- turn count can't race between two simultaneous inserts.
+    select * into _match from matches where id = match_region_veto_pick.match_id FOR UPDATE;
 
     -- Get the lineup_id for the match
     SELECT * INTO lineup_id FROM get_region_veto_picking_lineup_id(_match);

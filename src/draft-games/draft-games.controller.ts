@@ -46,10 +46,7 @@ export class DraftGamesController {
     if (data.op !== "INSERT") {
       return;
     }
-    await this.draftService.applyPick(
-      data.new.draft_game_id as string,
-      data.new.picked_steam_id as string,
-    );
+    await this.draftService.applyPick(data.new.draft_game_id as string);
   }
 
   @HasuraAction()

@@ -6561,6 +6561,14 @@ export default {
             "options": [
                 1710
             ],
+            "pattern": [
+                1239,
+                {
+                    "path": [
+                        74
+                    ]
+                }
+            ],
             "pick_deadline": [
                 3466
             ],
@@ -6988,6 +6996,9 @@ export default {
             ],
             "options": [
                 1714
+            ],
+            "pattern": [
+                1241
             ],
             "pick_deadline": [
                 3467
@@ -7534,6 +7545,9 @@ export default {
             ],
             "options": [
                 1723
+            ],
+            "pattern": [
+                2015
             ],
             "pick_deadline": [
                 2015
