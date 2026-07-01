@@ -9,8 +9,9 @@ DECLARE
     use_active_pool BOOLEAN;
 BEGIN
     -- TOOD - https://github.com/ValveSoftware/counter-strike_rules_and_regs/blob/main/major-supplemental-rulebook.md#map-pick-ban
-    -- Get match_id and match_lineup_id from match_map_veto_pick depending on their availability
-    select * into _match from matches where id = match_map_veto_pick.match_id;
+    -- FOR UPDATE serializes concurrent veto picks for the same match so the
+    -- turn/type count can't race between two simultaneous inserts.
+    select * into _match from matches where id = match_map_veto_pick.match_id FOR UPDATE;
 
     -- Get map pool for the match
     pickType := get_map_veto_type(_match);

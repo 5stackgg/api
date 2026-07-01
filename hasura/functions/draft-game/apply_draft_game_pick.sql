@@ -16,7 +16,15 @@ BEGIN
 
     UPDATE draft_game_players
     SET lineup = pick.lineup, pick_order = v_order
-    WHERE draft_game_id = pick.draft_game_id AND steam_id = pick.picked_steam_id;
+    WHERE draft_game_id = pick.draft_game_id
+      AND steam_id = pick.picked_steam_id
+      AND status = 'Accepted'
+      AND NOT is_captain
+      AND lineup IS NULL;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'player is not available to draft' USING ERRCODE = '22000';
+    END IF;
 
     SELECT * INTO game FROM draft_games WHERE id = pick.draft_game_id;
     per_team := game.capacity / 2;

@@ -260,6 +260,20 @@ describe("draft game pick order (SQL-driven)", () => {
       );
     });
 
+    it("rejects a pick for a player not in the draft", async () => {
+      const d = await createDraft("Competitive", "Alternating");
+      const outsider = await seedPlayer("outsider");
+      await expect(pickAs(d.id, d.cap1, outsider)).rejects.toThrow(
+        /not available/i,
+      );
+    });
+
+    it("rejects re-picking an already-drafted player", async () => {
+      const d = await createDraft("Competitive", "Alternating");
+      await pickAs(d.id, d.cap1, d.pool[0]);
+      await expect(pickAs(d.id, d.cap2, d.pool[0])).rejects.toThrow();
+    });
+
     it("auto-assigns the last player instead of forcing a final pick", async () => {
       // Wingman: captain 1 makes the only real pick, the rest is auto-assigned
       const d = await createDraft("Wingman", "FrontLoaded");

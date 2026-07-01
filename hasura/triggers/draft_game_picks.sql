@@ -7,7 +7,8 @@ DECLARE
     expected_lineup int;
     captain public.draft_game_players%ROWTYPE;
 BEGIN
-    SELECT * INTO game FROM public.draft_games WHERE id = NEW.draft_game_id;
+    -- serialize concurrent picks for the same draft so the turn count can't race
+    SELECT * INTO game FROM public.draft_games WHERE id = NEW.draft_game_id FOR UPDATE;
 
     expected_lineup := public.get_draft_game_picking_lineup_id(game);
 
