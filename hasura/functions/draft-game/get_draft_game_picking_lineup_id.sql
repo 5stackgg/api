@@ -15,7 +15,6 @@ BEGIN
     FROM draft_game_picks
     WHERE draft_game_id = dg.id;
 
-    -- Arrays are 1-based; the (picks_made + 1)th entry is the current turn.
     IF picks_made + 1 > coalesce(array_length(pattern, 1), 0) THEN
         RETURN NULL;
     END IF;

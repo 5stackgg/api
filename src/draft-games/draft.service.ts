@@ -376,8 +376,7 @@ export class DraftService {
       return;
     }
 
-    // Team 1 always makes the first pick; every turn after this is driven by
-    // the SQL pattern via the draft_game_picks trigger.
+    // team 1 always picks first; the draft_game_picks trigger drives the rest
     await this.setCurrentPick(draftGameId, 1);
     await this.startPickTimer(draftGameId, 0);
   }
@@ -438,9 +437,8 @@ export class DraftService {
         return;
       }
 
-      // The draft_game_picks trigger already assigned the player, advanced the
-      // turn, and (on the final pick) auto-assigned the last player and moved the
-      // draft to CreatingMatch. React to whatever state that left us in.
+      // the draft_game_picks trigger already assigned the player and advanced
+      // the turn; react to the resulting state
       if (draftGame.status === "CreatingMatch") {
         await this.removeAllPickTimers(draftGameId);
         await this.draftMatchService.finalize(draftGameId);

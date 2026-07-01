@@ -10,8 +10,6 @@ DECLARE
     per_team int;
     next_lineup int;
 BEGIN
-    -- Place the picked player onto the captain's side; pick_order is the
-    -- player's slot within that lineup (the captain already occupies slot 1).
     SELECT count(*) INTO v_order
     FROM draft_game_players
     WHERE draft_game_id = pick.draft_game_id AND lineup = pick.lineup;
@@ -27,8 +25,7 @@ BEGIN
     FROM draft_game_players
     WHERE draft_game_id = pick.draft_game_id AND lineup IS NULL;
 
-    -- Auto-assign the final player: there is only one side with room left, so
-    -- there is nothing to choose. Never make a captain pick the last option.
+    -- last player is auto-assigned; only one side has room, nothing to pick
     IF undrafted_count = 1 THEN
         SELECT steam_id INTO last_steam
         FROM draft_game_players
@@ -64,7 +61,6 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Advance the turn to the next captain per the SQL-driven pattern.
     SELECT * INTO game FROM draft_games WHERE id = pick.draft_game_id;
     next_lineup := get_draft_game_picking_lineup_id(game);
 

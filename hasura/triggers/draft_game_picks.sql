@@ -9,14 +9,11 @@ DECLARE
 BEGIN
     SELECT * INTO game FROM public.draft_games WHERE id = NEW.draft_game_id;
 
-    -- Whose turn it is comes from the SQL pattern, not a stored column, so the
-    -- picks are driven the same way as map/region vetos.
     expected_lineup := public.get_draft_game_picking_lineup_id(game);
 
-    -- Server-side auto picks run without a hasura session; trust the caller to
-    -- have stamped captain_steam_id / lineup on the row it inserts.
     actor := NULLIF(current_setting('hasura.user', true), '')::json ->> 'x-hasura-user-id';
 
+    -- server-side auto picks run without a session and stamp their own row
     IF actor IS NULL THEN
         RETURN NEW;
     END IF;

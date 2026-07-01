@@ -7,12 +7,6 @@ import {
 import { HasuraService } from "./../src/hasura/hasura.service";
 import { PostgresService } from "./../src/postgres/postgres.service";
 
-// Captain draft picks are SQL-driven, the same way map/region vetos are:
-// get_draft_game_pattern() defines the turn order, get_draft_game_picking_lineup_id()
-// says whose turn it is, and the tai_draft_game_picks AFTER-INSERT trigger applies the
-// pick, advances the turn, and auto-assigns the final player. These tests boot the real
-// migration pipeline against a throwaway Postgres and drive a full draft through the
-// triggers to prove each order (Snake / Alternating / FrontLoaded) resolves correctly.
 describe("draft game pick order (SQL-driven)", () => {
   const IMAGE = "timescale/timescaledb:latest-pg17";
 
@@ -84,8 +78,6 @@ describe("draft game pick order (SQL-driven)", () => {
     return steam;
   };
 
-  // Build a draft in the Drafting state: two captains (lineup 1 & 2) plus
-  // capacity-2 undrafted players, with the initial turn seeded from SQL.
   const createDraft = async (type: string, draftOrder: string) => {
     const host = await seedPlayer("host");
     const [{ id, capacity }] = await postgres.query<
@@ -158,8 +150,7 @@ describe("draft game pick order (SQL-driven)", () => {
     return row;
   };
 
-  // Insert a pick as a given captain, exercising the real turn-validation trigger
-  // (tbi reads the hasura session to confirm it is that captain's turn).
+  // set_config is transaction-local, so the pick must share tbi's connection
   const pickAs = (id: string, captainSteam: string, pickedSteam: string) =>
     postgres.transaction(async (client) => {
       await client.query("SELECT set_config('hasura.user', $1, true)", [
@@ -171,8 +162,6 @@ describe("draft game pick order (SQL-driven)", () => {
       );
     });
 
-  // Drive every real pick (all but the auto-assigned last one), asserting the turn
-  // advances per the pattern. Returns which player landed at each pick position.
   const runDraft = async (draft: {
     id: string;
     capacity: number;
@@ -234,14 +223,12 @@ describe("draft game pick order (SQL-driven)", () => {
 
         expect(pattern).toEqual(expectedPattern);
 
-        // Every manually picked player is on the lineup the pattern dictates.
         for (let p = 0; p < pickedByPosition.length; p++) {
           expect((await playerSlot(d.id, pickedByPosition[p])).lineup).toBe(
             pattern[p],
           );
         }
 
-        // The final player is auto-assigned to the last pattern slot — no manual pick.
         expect((await playerSlot(d.id, autoPlayer)).lineup).toBe(
           pattern[pattern.length - 1],
         );
@@ -268,16 +255,14 @@ describe("draft game pick order (SQL-driven)", () => {
   describe("turn enforcement", () => {
     it("rejects a pick from the captain whose turn it is not", async () => {
       const d = await createDraft("Competitive", "Snake");
-      // Turn is lineup 1; the lineup-2 captain must not be able to pick.
       await expect(pickAs(d.id, d.cap2, d.pool[0])).rejects.toThrow(
         /not your turn/i,
       );
     });
 
     it("auto-assigns the last player instead of forcing a final pick", async () => {
+      // Wingman: captain 1 makes the only real pick, the rest is auto-assigned
       const d = await createDraft("Wingman", "FrontLoaded");
-      // Wingman = 2 captains + 2 players. Captain 1 makes the only real pick;
-      // the remaining player is auto-assigned to team 2.
       const [first, second] = d.pool;
       await pickAs(d.id, d.cap1, first);
 
