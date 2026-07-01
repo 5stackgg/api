@@ -36,40 +36,6 @@ declare module "steam-user" {
       steamIds: string[],
       callback: (err: Error | null, levels: Record<string, number>) => void,
     ): void;
-    requestRichPresence(
-      appId: number,
-      steamIds: string[],
-      callback: (
-        err: Error | null,
-        response: {
-          users: Record<
-            string,
-            {
-              rich_presence?:
-                | Record<string, string>
-                | Array<{ key?: string; value?: string }>;
-              localized_string?: string;
-              rich_presence_string?: string;
-            }
-          >;
-        },
-      ) => void,
-    ): void;
-    getPersonas(
-      steamIds: string[],
-      callback: (
-        err: Error | null,
-        personas: Record<
-          string,
-          {
-            gameid?: string | number | null;
-            rich_presence?:
-              | Record<string, string>
-              | Array<{ key?: string; value?: string }>;
-          }
-        >,
-      ) => void,
-    ): void;
     sendToGC(
       appId: number,
       msgType: number,

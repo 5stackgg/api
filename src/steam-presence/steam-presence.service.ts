@@ -60,6 +60,11 @@ const ONLINE_PREFIX = "steam-presence:online:";
 // Delay before polling match history after a match ends, so Valve has time to
 // publish the demo + share code.
 const IMPORT_DELAY_MS = 60_000;
+// Exponential backoff between reconnect attempts after a login error, so a bot
+// with bad credentials (or that Steam has rate-limited) isn't retried every tick
+// — which would make Steam lock it harder.
+const LOGIN_BACKOFF_BASE_MS = 30_000;
+const LOGIN_BACKOFF_MAX_MS = 30 * 60_000;
 // Admin kill-switch. Absent/anything-but-'false' => enabled (always-on default).
 // 'public.' prefix matches the settings convention (guest-readable, like
 // public.external_matches_enabled).
@@ -114,6 +119,11 @@ export class SteamPresenceService
   // Pending Steam Guard callbacks, keyed by accountId. Only the owning pod has
   // these (they're in-memory closures from steam-user's `steamGuard` event).
   private readonly pendingGuards = new Map<string, (code: string) => void>();
+  // accountId -> reconnect backoff after a login error (per-pod, in-memory).
+  private readonly loginBackoff = new Map<
+    string,
+    { until: number; attempts: number }
+  >();
 
   constructor(
     private readonly logger: Logger,
@@ -222,6 +232,12 @@ export class SteamPresenceService
 
       this.owned.add(account.id);
       if (!this.clients.has(account.id)) {
+        // Respect the reconnect backoff so a failing login isn't retried every
+        // tick. We keep the lock while waiting so no other pod grabs it.
+        const backoff = this.loginBackoff.get(account.id);
+        if (backoff && backoff.until > Date.now()) {
+          continue;
+        }
         this.connectAccount(account);
       }
     }
@@ -301,7 +317,8 @@ export class SteamPresenceService
       );
       client.setPersona(SteamUser.EPersonaState.Online);
       this.connected.add(account.id);
-      // Login succeeded — clear any pending Steam Guard prompt.
+      // Login succeeded — clear the reconnect backoff and any pending prompt.
+      this.loginBackoff.delete(account.id);
       this.pendingGuards.delete(account.id);
       void this.redis.del(GUARD_PREFIX + account.id).catch(() => {});
       void this.redis
@@ -326,7 +343,18 @@ export class SteamPresenceService
       if (err.message.toLowerCase().includes("invalidpassword")) {
         void this.cache.put(REFRESH_TOKEN_PREFIX + account.id, "");
       }
-      // Drop the client but keep the lock; the next tick reconnects.
+      // Back off before the next reconnect (exponential, capped) so a persistent
+      // auth failure or Steam rate-limit isn't hammered every tick.
+      const attempts = (this.loginBackoff.get(account.id)?.attempts ?? 0) + 1;
+      const delay = Math.min(
+        LOGIN_BACKOFF_MAX_MS,
+        LOGIN_BACKOFF_BASE_MS * 2 ** (attempts - 1),
+      );
+      this.loginBackoff.set(account.id, { until: Date.now() + delay, attempts });
+      this.logger.warn(
+        `steam-presence ${account.username} reconnect backoff ${Math.round(delay / 1000)}s (attempt ${attempts})`,
+      );
+      // Drop the client but keep the lock; a later tick reconnects after backoff.
       if (this.clients.get(account.id) === client) {
         this.clients.delete(account.id);
         this.connected.delete(account.id);
@@ -414,6 +442,7 @@ export class SteamPresenceService
     this.clients.delete(accountId);
     this.connected.delete(accountId);
     this.pendingGuards.delete(accountId);
+    this.loginBackoff.delete(accountId);
     await this.redis?.del(ONLINE_PREFIX + accountId).catch(() => {});
     await this.redis?.del(GUARD_PREFIX + accountId).catch(() => {});
     if (client) {
@@ -645,10 +674,11 @@ export class SteamPresenceService
 
   // ---- Phase 3: match-imported messaging ---------------------------------
 
-  // Called (fire-and-forget) after a Valve match is imported. Sends an in-app
-  // notification to every registered player in the match, and a Steam chat
-  // message to those who added a bot — routed via Redis to the pod that owns
-  // that bot's connection.
+  // Called (fire-and-forget) after a Valve match is imported. Only messages
+  // players who opted in by adding a bot as a friend (status = 'friends'), and
+  // only about their own performance — never other participants. Each gets an
+  // in-app notification plus a Steam chat message routed via Redis to the pod
+  // that owns their bot's connection.
   public async notifyMatchImported(notice: MatchImportedNotice): Promise<void> {
     if (notice.players.length === 0 || !(await this.isEnabled())) {
       return;
@@ -662,54 +692,49 @@ export class SteamPresenceService
     const safeType = NotificationsService.escapeHtml(notice.matchType);
     const safeUrl = NotificationsService.escapeHtml(url);
 
-    // In-app: only for registered 5stack players.
-    const registered = await this.postgres.query<Array<{ steam_id: string }>>(
-      `SELECT steam_id::text FROM public.players WHERE steam_id = ANY($1::bigint[])`,
-      [steamIds],
-    );
-    const registeredSet = new Set(registered.map((r) => r.steam_id));
-    for (const player of notice.players) {
-      if (!registeredSet.has(player.steamId)) {
-        continue;
-      }
-      const message =
-        `Your ${safeType} match on ${safeMap} was imported — ` +
-        `you went ${player.kills}/${player.deaths}. ` +
-        `<a href="${safeUrl}">View it on 5stack</a>.`;
-      await this.postgres
-        .query(
-          `INSERT INTO public.notifications (title, message, steam_id, role, type, entity_id)
-           VALUES ('Match Imported', $1, $2::bigint, 'user', 'MatchImported', $3)`,
-          [message, player.steamId, notice.matchId],
-        )
-        .catch((err) =>
-          this.logger.warn(
-            `steam-presence in-app notify failed for ${player.steamId}: ${(err as Error).message}`,
-          ),
-        );
-    }
-
-    // Steam chat: only for players who added a bot.
+    // Only players who added a bot as a friend and were verified.
     const friends = await this.postgres.query<
-      Array<{ steam_id: string; bot_steam_account_id: string }>
+      Array<{ steam_id: string; bot_steam_account_id: string | null }>
     >(
       `SELECT steam_id::text, bot_steam_account_id::text
          FROM public.player_steam_bot_friend
         WHERE steam_id = ANY($1::bigint[])
-          AND status = 'friends'
-          AND bot_steam_account_id IS NOT NULL`,
+          AND status = 'friends'`,
       [steamIds],
     );
     if (friends.length === 0) {
       return;
     }
     const byPlayer = new Map(notice.players.map((p) => [p.steamId, p]));
+
     for (const friend of friends) {
       const stats = byPlayer.get(friend.steam_id);
+      if (!stats) {
+        continue;
+      }
+
+      const message =
+        `Your ${safeType} match on ${safeMap} was imported — ` +
+        `you went ${stats.kills}/${stats.deaths}. ` +
+        `<a href="${safeUrl}">View it on 5stack</a>.`;
+      await this.postgres
+        .query(
+          `INSERT INTO public.notifications (title, message, steam_id, role, type, entity_id)
+           VALUES ('Match Imported', $1, $2::bigint, 'user', 'MatchImported', $3)`,
+          [message, friend.steam_id, notice.matchId],
+        )
+        .catch((err) =>
+          this.logger.warn(
+            `steam-presence in-app notify failed for ${friend.steam_id}: ${(err as Error).message}`,
+          ),
+        );
+
+      if (!friend.bot_steam_account_id) {
+        continue;
+      }
       const text =
         `Your ${notice.matchType} match on ${mapLabel} was imported to 5stack` +
-        (stats ? ` — you went ${stats.kills}/${stats.deaths}.` : ".") +
-        ` ${url}`;
+        ` — you went ${stats.kills}/${stats.deaths}. ${url}`;
       await this.redis
         .publish(
           CHAT_CHANNEL,
@@ -781,8 +806,8 @@ export class SteamPresenceService
 
   // ---- admin -------------------------------------------------------------
 
-  // Snapshot for the admin dashboard: pool totals, per-bot rows (with live
-  // cross-pod online state from Redis), and the recent-events feed.
+  // Snapshot for the admin dashboard: pool totals + per-bot rows, with live
+  // cross-pod online / Steam Guard state read from Redis.
   public async getAdminStatus(): Promise<PresenceAdminStatus> {
     const enabled = await this.isEnabled();
 

@@ -83,10 +83,9 @@ function looksInGame(state: string | undefined, display: string | undefined): bo
 export function parseCs2Presence(input: PresenceInput): Cs2PresenceState {
   const rp = normalizeRichPresence(input.richPresence);
 
-  // CS2 always publishes rich presence while running (at least steam_display
-  // = #display_Menu in the menu). requestRichPresence(730, …) returns these keys
-  // only for users actually in CS2, so their presence means in-CS2 — even when
-  // the persona gameid isn't available (requestRichPresence carries no gameid).
+  // CS2 publishes rich presence while running (at least steam_display
+  // = #display_Menu in the menu), so any CS2 key means in-CS2 — a useful
+  // fallback when the persona gameid isn't set on the push event.
   const hasCs2Keys = Object.keys(rp).some(
     (k) => k === "steam_display" || k === "status" || k.startsWith("game:"),
   );
