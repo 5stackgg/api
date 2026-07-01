@@ -23,6 +23,11 @@ export type Cs2PresenceState = {
   // survival, "" for custom servers). null when unknown.
   mode: string | null;
   map: string | null;
+  // Current map score, e.g. "5:3" (from `game:score`). null when not in a game.
+  score: string | null;
+  // Steam's own localized friends-list string, e.g. "Deathmatch - Dust II".
+  // The most reliable label — mirrors exactly what Steam shows. null if absent.
+  display: string | null;
 };
 
 type RawRichPresence =
@@ -36,6 +41,8 @@ export type PresenceInput = {
   gameid?: string | number | null;
   // Rich presence as either the steam-user array form ([{key,value}]) or a map.
   richPresence?: RawRichPresence;
+  // Steam's localized display string, if available.
+  display?: string | null;
 };
 
 function normalizeRichPresence(rp: RawRichPresence): Record<string, string> {
@@ -74,9 +81,19 @@ function looksInGame(state: string | undefined, display: string | undefined): bo
 }
 
 export function parseCs2Presence(input: PresenceInput): Cs2PresenceState {
-  const inCs2 = input.gameid != null && String(input.gameid) === String(CS2_APP_ID);
-
   const rp = normalizeRichPresence(input.richPresence);
+
+  // CS2 always publishes rich presence while running (at least steam_display
+  // = #display_Menu in the menu). requestRichPresence(730, …) returns these keys
+  // only for users actually in CS2, so their presence means in-CS2 — even when
+  // the persona gameid isn't available (requestRichPresence carries no gameid).
+  const hasCs2Keys = Object.keys(rp).some(
+    (k) => k === "steam_display" || k === "status" || k.startsWith("game:"),
+  );
+  const inCs2 =
+    hasCs2Keys ||
+    (input.gameid != null && String(input.gameid) === String(CS2_APP_ID));
+
   const mode = rp["game:mode"]?.toLowerCase() ?? null;
   const rawMap = rp["game:map"] ?? null;
   const map = rawMap ? rawMap.replace(/^mg_/, "") : null;
@@ -89,7 +106,13 @@ export function parseCs2Presence(input: PresenceInput): Cs2PresenceState {
   // Narrow: only the matchmaking modes whose demos we import via share codes.
   const inMatch = inGame && mode != null && MATCHMAKING_MODES.has(mode);
 
-  return { inCs2, inGame, inMatch, mode, map };
+  // "5 : 3" / "5:3" -> "5:3". Only meaningful while in a game.
+  const rawScore = rp["game:score"] ?? null;
+  const score = inGame && rawScore ? rawScore.replace(/\s+/g, "") : null;
+
+  const display = input.display?.trim() || null;
+
+  return { inCs2, inGame, inMatch, mode, map, score, display };
 }
 
 // Whether a state change should trigger an immediate match-history poll for the

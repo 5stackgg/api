@@ -22,13 +22,6 @@ import {
   parseCs2Presence,
 } from "./presence";
 
-// Subset of the persona object delivered by the steam-user `user` event. CS2
-// reports the running app via `gameid` and live match state via `rich_presence`.
-type SteamPersona = {
-  gameid?: string | number | null;
-  rich_presence?: Array<{ key?: string; value?: string }>;
-};
-
 type FriendsAccount = {
   id: string;
   username: string;
@@ -64,8 +57,9 @@ const STATE_PREFIX = "steam-presence:state:";
 // Per-account "this account is logged in right now" marker (TTL-refreshed by the
 // owning pod), so the admin view can show live online status across pods.
 const ONLINE_PREFIX = "steam-presence:online:";
-// Cap on rows kept in the steam_presence_events feed table.
-const EVENTS_MAX = 500;
+// Delay before polling match history after a match ends, so Valve has time to
+// publish the demo + share code.
+const IMPORT_DELAY_MS = 60_000;
 // Admin kill-switch. Absent/anything-but-'false' => enabled (always-on default).
 // 'public.' prefix matches the settings convention (guest-readable, like
 // public.external_matches_enabled).
@@ -232,7 +226,8 @@ export class SteamPresenceService
       }
     }
 
-    // Refresh the online heartbeat for accounts that are logged on here.
+    // Refresh the online heartbeat for accounts we run. Presence itself is
+    // push-based via the steam-user `user` event — no polling.
     for (const accountId of this.connected) {
       await this.redis
         .set(ONLINE_PREFIX + accountId, this.instanceId, "EX", LOCK_TTL_SECONDS)
@@ -293,9 +288,8 @@ export class SteamPresenceService
           "EX",
           GUARD_TTL_SECONDS,
         );
-        void this.recordEvent(
-          "bot_steamguard",
-          `${account.username} needs a Steam Guard ${type} code${lastCodeWrong ? " (previous code was wrong)" : ""}`,
+        this.logger.log(
+          `steam-presence ${account.username} needs a Steam Guard ${type} code${lastCodeWrong ? " (previous code was wrong)" : ""}`,
         );
       },
     );
@@ -313,7 +307,6 @@ export class SteamPresenceService
       void this.redis
         .set(ONLINE_PREFIX + account.id, this.instanceId, "EX", LOCK_TTL_SECONDS)
         .catch(() => {});
-      void this.recordEvent("bot_online", `${account.username} online as ${steamId}`);
       if (steamId) {
         void this.postgres
           .query(
@@ -330,7 +323,6 @@ export class SteamPresenceService
       this.logger.error(
         `steam-presence ${account.username} error: ${err.message}`,
       );
-      void this.recordEvent("bot_error", `${account.username}: ${err.message}`);
       if (err.message.toLowerCase().includes("invalidpassword")) {
         void this.cache.put(REFRESH_TOKEN_PREFIX + account.id, "");
       }
@@ -370,9 +362,31 @@ export class SteamPresenceService
       },
     );
 
-    client.on("user", (sid: { getSteamID64(): string }, persona: SteamPersona) => {
-      void this.handlePresence(sid.getSteamID64(), persona);
-    });
+    // Push-based presence: Steam sends a `user` event whenever a friend's
+    // persona/rich-presence changes (login, launch CS2, join a match, score
+    // update, quit) — no polling. The friend persona carries gameid + rich
+    // presence, which is what Steam's own friends list renders from.
+    client.on(
+      "user",
+      (
+        sid: { getSteamID64?: () => string },
+        persona: {
+          gameid?: string | number | null;
+          rich_presence?:
+            | Record<string, string>
+            | Array<{ key?: string; value?: string }>;
+          rich_presence_string?: string;
+        },
+      ) => {
+        const id = sid?.getSteamID64?.() ?? String(sid);
+        void this.handlePresenceState(id, {
+          gameid: persona?.gameid ?? null,
+          richPresence: persona?.rich_presence ?? {},
+          // Steam's own friends-list string, e.g. "In Lobby - Deathmatch".
+          display: persona?.rich_presence_string ?? null,
+        });
+      },
+    );
 
     void this.logOn(client, account);
   }
@@ -485,66 +499,61 @@ export class SteamPresenceService
              updated_at = now()`,
       [steamId, accountId, botSteamId ?? null],
     );
-    await this.recordEvent("friend_added", `friend established ${steamId}`);
     // Backfill matches played before they added the bot.
     await this.enqueuePoll(steamId);
   }
 
   // ---- presence -> poll trigger ------------------------------------------
 
-  private async handlePresence(
+  private async handlePresenceState(
     steamId: string,
-    persona: SteamPersona,
+    input: {
+      gameid?: string | number | null;
+      richPresence: Record<string, string> | Array<{ key?: string; value?: string }>;
+      display?: string | null;
+    },
   ): Promise<void> {
     const current = parseCs2Presence({
-      gameid: persona?.gameid,
-      richPresence: persona?.rich_presence,
+      gameid: input.gameid,
+      richPresence: input.richPresence,
+      display: input.display,
     });
 
     const stateKey = STATE_PREFIX + steamId;
     const previous = (await this.cache.get(stateKey)) as Cs2PresenceState | null;
+
+    // Only write when something actually changed. The push `user` event fires
+    // often; writing every time would churn Postgres dead tuples for no reason
+    // (we only ever keep the latest state, never history).
+    if (previous && JSON.stringify(previous) === JSON.stringify(current)) {
+      return;
+    }
     await this.cache.put(stateKey, current, PRESENCE_STATE_TTL_SECONDS);
 
-    // Mirror onto the friend row (if any) so the user can see their own live
-    // status — "as the bot sees you" — on their settings page. No-op for
-    // non-friended steamids. RETURNING tells us whether this is a watched user.
-    const updated = await this.postgres
-      .query<Array<{ steam_id: string }>>(
+    // Mirror the latest onto the friend row (single-row UPDATE, un-indexed jsonb
+    // → HOT update). No-op for non-friended steamids.
+    await this.postgres
+      .query(
         `UPDATE public.player_steam_bot_friend
             SET last_presence_state = $1::jsonb, updated_at = now()
-          WHERE steam_id = $2::bigint
-        RETURNING steam_id`,
+          WHERE steam_id = $2::bigint`,
         [JSON.stringify(current), steamId],
       )
-      .catch(() => [] as Array<{ steam_id: string }>);
+      .catch(() => {});
 
-    // Surface presence changes for watched users in the live activity feed —
-    // useful for verifying detection across every game state (DM, casual,
-    // custom/5stack, MM). Only on a real change to avoid heartbeat spam.
-    if (
-      updated.length > 0 &&
-      SteamPresenceService.summarize(previous) !==
-        SteamPresenceService.summarize(current)
-    ) {
-      void this.recordEvent(
-        "presence",
-        `${steamId} ${SteamPresenceService.summarize(current)}`,
-      );
-    }
-
+    // Import trigger: they just finished a Competitive/Premier/Wingman match
+    // (deathmatch / arms race never set inMatch, so they never trigger imports).
+    // Delay the poll so Valve has time to publish the demo + share code.
     if (isMatchEndTransition(previous, current)) {
       this.logger.log(
-        `steam-presence match-end for ${steamId} (mode=${previous?.mode}) -> polling`,
+        `steam-presence import trigger: ${steamId} finished ${previous?.mode ?? "match"} ` +
+          `— scheduling match-history poll in ${IMPORT_DELAY_MS / 1000}s`,
       );
-      await this.recordEvent(
-        "match_end",
-        `${steamId} finished a ${previous?.mode ?? "match"} -> poll`,
-      );
-      await this.enqueuePoll(steamId);
+      await this.enqueuePoll(steamId, IMPORT_DELAY_MS);
     }
   }
 
-  private async enqueuePoll(steamId: string): Promise<void> {
+  private async enqueuePoll(steamId: string, delayMs = 0): Promise<void> {
     // Same jobId as the on-login poll so a pending poll isn't duplicated; the
     // per-user 10-minute cooldown in pollForUser absorbs extra triggers.
     await this.pollQueue
@@ -553,6 +562,7 @@ export class SteamPresenceService
         { steamId },
         {
           jobId: `poll-steam-match-history.${steamId}`,
+          delay: delayMs,
           removeOnComplete: true,
           removeOnFail: true,
         },
@@ -564,20 +574,8 @@ export class SteamPresenceService
       });
   }
 
-  // Short human description of a presence state for the activity feed.
-  private static summarize(state: Cs2PresenceState | null): string {
-    if (!state || !state.inCs2) {
-      return "offline";
-    }
-    if (state.inGame) {
-      const where = state.map ? ` on ${state.map}` : "";
-      return state.mode
-        ? `playing ${state.mode}${where}`
-        : `in a custom match${where}`;
-    }
-    return "in menu";
-  }
-
+  // Short human description of a presence state (unused since the activity feed
+  // was removed; kept minimal for potential debug reuse).
   // ---- onboarding / assignment -------------------------------------------
 
   // Assign (or return the already-assigned) friends-role bot for a user, so the
@@ -751,9 +749,7 @@ export class SteamPresenceService
         this.logger.warn(
           `steam-presence chat send failed to ${payload.steamId}: ${err.message}`,
         );
-        return;
       }
-      void this.recordEvent("chat_sent", `messaged ${payload.steamId}`);
     });
   }
 
@@ -786,32 +782,10 @@ export class SteamPresenceService
     }
     this.pendingGuards.delete(payload.accountId);
     callback(payload.code.trim());
-    void this.recordEvent("steamguard_submitted", "Steam Guard code submitted");
+    this.logger.log("steam-presence Steam Guard code submitted");
   }
 
-  // ---- admin / debug -----------------------------------------------------
-
-  private async recordEvent(type: string, message: string): Promise<void> {
-    try {
-      // Inserted into a table so the admin dashboard can subscribe over
-      // websockets (Hasura subscription) rather than poll.
-      await this.postgres.query(
-        `INSERT INTO public.steam_presence_events (type, message) VALUES ($1, $2)`,
-        [type, message],
-      );
-      // Keep the feed bounded.
-      await this.postgres.query(
-        `DELETE FROM public.steam_presence_events
-          WHERE id IN (
-            SELECT id FROM public.steam_presence_events
-             ORDER BY created_at DESC OFFSET $1
-          )`,
-        [EVENTS_MAX],
-      );
-    } catch {
-      // best effort — the debug feed is not critical
-    }
-  }
+  // ---- admin -------------------------------------------------------------
 
   // Snapshot for the admin dashboard: pool totals, per-bot rows (with live
   // cross-pod online state from Redis), and the recent-events feed.
@@ -909,7 +883,6 @@ export class SteamPresenceService
     if (!id) {
       throw new Error("a steam account with that username already exists");
     }
-    await this.recordEvent("bot_added", `added bot account ${username}`);
     return { id };
   }
 

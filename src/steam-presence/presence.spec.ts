@@ -12,6 +12,8 @@ describe("parseCs2Presence", () => {
       inMatch: false,
       mode: null,
       map: null,
+      score: null,
+      display: null,
     });
   });
 
@@ -47,7 +49,31 @@ describe("parseCs2Presence", () => {
       inMatch: true,
       mode: "premier",
       map: "de_mirage",
+      score: "5:3",
+      display: null,
     });
+  });
+
+  it("captures Steam's localized display string (e.g. deathmatch)", () => {
+    const state = parseCs2Presence({
+      gameid: "730",
+      display: "Deathmatch - Dust II",
+    });
+    expect(state.inCs2).toBe(true);
+    expect(state.display).toBe("Deathmatch - Dust II");
+  });
+
+  it("normalizes a spaced score", () => {
+    const state = parseCs2Presence({
+      gameid: 730,
+      richPresence: {
+        "game:state": "game",
+        "game:mode": "competitive",
+        "game:map": "de_dust2",
+        "game:score": "12 : 9",
+      },
+    });
+    expect(state.score).toBe("12:9");
   });
 
   it("detects an active competitive match", () => {
@@ -136,6 +162,8 @@ describe("isMatchEndTransition", () => {
     inMatch: true,
     mode: "premier",
     map: "de_mirage",
+    score: "5:3",
+    display: null,
   };
   const menu: Cs2PresenceState = {
     inCs2: true,
@@ -143,6 +171,8 @@ describe("isMatchEndTransition", () => {
     inMatch: false,
     mode: null,
     map: null,
+    score: null,
+    display: null,
   };
   const offline: Cs2PresenceState = {
     inCs2: false,
@@ -150,6 +180,8 @@ describe("isMatchEndTransition", () => {
     inMatch: false,
     mode: null,
     map: null,
+    score: null,
+    display: null,
   };
 
   it("fires when a match ends back to menu", () => {
