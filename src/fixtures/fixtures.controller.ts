@@ -18,7 +18,7 @@ export class FixturesController {
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
     private readonly typeSense: TypeSenseService,
-    @InjectQueue(TypesenseQueues.TypeSense) private typesenseQueue: Queue,
+    @InjectQueue(TypesenseQueues.PlayerReindex) private reindexQueue: Queue,
   ) {}
 
   @HasuraAction()
@@ -69,10 +69,18 @@ export class FixturesController {
       `);
 
       this.logger.log("Fixtures: Refreshing Typesense player index...");
-      await this.typesenseQueue.add(RefreshAllPlayersJob.name, {});
+      await this.reindexQueue.add(
+        RefreshAllPlayersJob.name,
+        {},
+        {
+          jobId: RefreshAllPlayersJob.name,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      );
 
       // Delayed refresh to catch ELO calculations that complete after the first refresh
-      await this.typesenseQueue.add(
+      await this.reindexQueue.add(
         RefreshAllPlayersJob.name,
         {},
         { delay: 30000, jobId: "fixtures-delayed-refresh" },

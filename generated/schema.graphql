@@ -483,6 +483,38 @@ type QueryStat {
   total_rows: Int!
 }
 
+type RecomputeEloStartedOutput {
+  running: Boolean!
+  success: Boolean!
+}
+
+type RecomputeEloStatusOutput {
+  canceled: Boolean!
+  completed: Int!
+  current_match_id: String
+  failed: Int!
+  finished_at: String
+  running: Boolean!
+  started_at: String
+  total: Int!
+}
+
+type ReindexStartedOutput {
+  running: Boolean!
+  success: Boolean!
+}
+
+type ReindexStatusOutput {
+  canceled: Boolean!
+  completed: Int!
+  current_steam_id: String
+  failed: Int!
+  finished_at: String
+  running: Boolean!
+  started_at: String
+  total: Int!
+}
+
 type ReparseAllStartedOutput {
   running: Boolean!
   success: Boolean!
@@ -4844,13 +4876,13 @@ enum e_draft_game_draft_order_constraint {
 }
 
 enum e_draft_game_draft_order_enum {
-  """Alternating"""
+  """Alternating (1-2-1-2)"""
   Alternating
 
-  """Front-Loaded (1-2-1-1)"""
+  """Front-Loaded (1-2-2-1-2-1)"""
   FrontLoaded
 
-  """Snake (1-2-2-2-1)"""
+  """Snake (1-2-2-1)"""
   Snake
 }
 
@@ -7817,6 +7849,9 @@ enum e_notification_types_enum {
   """DedicatedServerStatus"""
   DedicatedServerStatus
 
+  """Player ELO recompute finished"""
+  EloRecompute
+
   """You frequently play with these players"""
   FormTeamSuggestion
 
@@ -7837,6 +7872,9 @@ enum e_notification_types_enum {
 
   """NameChangeRequest"""
   NameChangeRequest
+
+  """Player search reindex finished"""
+  PlayerReindex
 
   """A player you recently played with received a sanction"""
   PlayerSanctioned
@@ -24576,6 +24614,16 @@ type mutation_root {
   cancelMatch(match_id: uuid!): SuccessOutput
 
   """
+  Request cancellation of the in-progress ELO recompute (admin only). Stops after the current match.
+  """
+  cancelRecomputePlayerElo: SuccessOutput
+
+  """
+  Request cancellation of the in-progress player reindex (admin only). Stops after the current player.
+  """
+  cancelRefreshAllPlayers: SuccessOutput
+
+  """
   Request cancellation of the in-progress reparse-all-demos run (admin only). Stops after the current demo finishes.
   """
   cancelReparseAllDemos: SuccessOutput
@@ -28831,10 +28879,23 @@ type mutation_root {
     """filter the rows returned"""
     where: tournament_trophies_bool_exp
   ): [tournament_trophies!]!
+
+  """
+  Wipe and rebuild all player ELO from finished matches in chronological order (admin only). Runs in the background; track via recomputePlayerEloStatus.
+  """
+  recomputePlayerElo: RecomputeEloStartedOutput
+
+  """Return the progress of the ELO recompute run (admin only)."""
+  recomputePlayerEloStatus: RecomputeEloStatusOutput
   reconnectLive(match_id: uuid!): SuccessOutput
 
-  """Refresh all players in Typesense index"""
-  refreshAllPlayers: SuccessOutput
+  """
+  Reindex every player into the Typesense search index (admin only). Runs in the background; track via refreshAllPlayersStatus.
+  """
+  refreshAllPlayers: ReindexStartedOutput
+
+  """Return the progress of the player reindex run (admin only)."""
+  refreshAllPlayersStatus: ReindexStatusOutput
   refreshFaceitRank(steam_id: String!): SuccessOutput
   refreshLiveHud(match_id: uuid!): SuccessOutput
   registerName(name: String!): SuccessOutput

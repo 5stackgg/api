@@ -20,7 +20,7 @@ export class TypeSenseService {
     private readonly hasura: HasuraService,
     @Inject(forwardRef(() => MatchAssistantService))
     private readonly matchAssistant: MatchAssistantService,
-    @InjectQueue(TypesenseQueues.TypeSense) private queue: Queue,
+    @InjectQueue(TypesenseQueues.PlayerReindex) private reindexQueue: Queue,
   ) {}
 
   public async setup() {
@@ -121,7 +121,15 @@ export class TypeSenseService {
         fields,
         default_sorting_field: "name",
       } as any);
-      await this.queue.add(RefreshAllPlayersJob.name, {});
+      await this.reindexQueue.add(
+        RefreshAllPlayersJob.name,
+        {},
+        {
+          jobId: RefreshAllPlayersJob.name,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      );
 
       return;
     }
@@ -157,7 +165,15 @@ export class TypeSenseService {
       });
 
       if (needsRefresh) {
-        await this.queue.add(RefreshAllPlayersJob.name, {});
+        await this.reindexQueue.add(
+          RefreshAllPlayersJob.name,
+          {},
+          {
+            jobId: RefreshAllPlayersJob.name,
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+        );
       }
     }
   }

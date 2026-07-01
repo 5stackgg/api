@@ -55,6 +55,28 @@ export class CacheService {
     }
   }
 
+  // Atomically acquire a lock (SET NX EX). Returns true only for the caller
+  // that took it; everyone else gets false until it expires or is released.
+  // Refresh the TTL by calling again while held is NOT possible (NX) — use
+  // refreshLock for that. Release with forget(key).
+  public async acquireLock(key: string, seconds: number): Promise<boolean> {
+    try {
+      const result = await this.connection.set(key, "1", "EX", seconds, "NX");
+      return result === "OK";
+    } catch (error) {
+      this.logger.error("unable to acquire lock in redis", error);
+      return false;
+    }
+  }
+
+  public async refreshLock(key: string, seconds: number): Promise<void> {
+    try {
+      await this.connection.expire(key, seconds);
+    } catch (error) {
+      this.logger.error("unable to refresh lock in redis", error);
+    }
+  }
+
   public async remember<T>(
     key: string,
     callback: () => T | Promise<T>,

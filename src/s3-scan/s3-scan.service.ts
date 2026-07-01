@@ -346,22 +346,26 @@ export class S3ScanService {
 
   private async notifyScanComplete(result: OrphanScanResult): Promise<void> {
     const found = result.orphan_objects > 0;
+    // The "Review orphaned uploads" button on the notification opens the dialog
+    // in place (see NotificationItem.vue), so no link is embedded here.
     const message = found
-      ? `Found **${result.orphan_objects}** orphaned object(s) using **${this.formatSize(result.orphan_bytes)}** ` +
-        `(demos ${this.formatSize(result.demo_bytes)}, highlights ${this.formatSize(result.clip_bytes)}). ` +
-        `Open Demo Settings → Scan Orphaned Uploads to review and delete them.`
-      : `No orphaned uploads found. Tracked ${this.formatSize(result.tracked_bytes)} ` +
+      ? `Found <b>${result.orphan_objects}</b> orphaned object(s) using <b>${this.formatSize(result.orphan_bytes)}</b> ` +
+        `(demos ${this.formatSize(result.demo_bytes)}, highlights ${this.formatSize(result.clip_bytes)}).`
+      : `No orphaned uploads found. Tracked <b>${this.formatSize(result.tracked_bytes)}</b> ` +
         `(demos ${this.formatSize(result.demo_bytes)}, highlights ${this.formatSize(result.clip_bytes)}).`;
     await this.safeNotify("Orphaned uploads scan complete", message);
   }
 
   private async safeNotify(title: string, message: string): Promise<void> {
     try {
-      await this.notifications.send("StorageScan" as e_notification_types_enum, {
-        title,
-        message,
-        role: "administrator" as e_player_roles_enum,
-      });
+      await this.notifications.send(
+        "StorageScan" as e_notification_types_enum,
+        {
+          title,
+          message,
+          role: "administrator" as e_player_roles_enum,
+        },
+      );
     } catch (error) {
       this.logger.warn(
         `[s3-scan] failed to send notification: ${(error as Error)?.message}`,

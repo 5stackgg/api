@@ -18,6 +18,7 @@ import { BullModule, InjectQueue } from "@nestjs/bullmq";
 import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { MatchQueues } from "./enums/MatchQueues";
+import { TypesenseQueues } from "../type-sense/enums/TypesenseQueues";
 import { SteamMatchHistoryQueues } from "../steam-match-history/enums/SteamMatchHistoryQueues";
 import {
   CheckOnDemandServerJob,
@@ -46,6 +47,8 @@ import { NotificationsModule } from "../notifications/notifications.module";
 import { ChatModule } from "src/chat/chat.module";
 import { HasuraService } from "src/hasura/hasura.service";
 import { EloCalculation } from "./jobs/EloCalculation";
+import { RecomputeAllElo } from "./jobs/RecomputeAllElo";
+import { PlayerEloRecomputeService } from "./player-elo-recompute.service";
 import { PostgresService } from "src/postgres/postgres.service";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
 import { MatchRelayController } from "./match-relay/match-relay.controller";
@@ -93,7 +96,17 @@ import { SteamMatchHistoryModule } from "../steam-match-history/steam-match-hist
         },
       },
       {
+        name: MatchQueues.EloRecompute,
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: { type: "exponential", delay: 5000 },
+        },
+      },
+      {
         name: SteamMatchHistoryQueues.CheckSteamBansForMatch,
+      },
+      {
+        name: TypesenseQueues.PlayerReindex,
       },
     ),
     BullBoardModule.forFeature(
@@ -109,10 +122,14 @@ import { SteamMatchHistoryModule } from "../steam-match-history/steam-match-hist
         name: MatchQueues.EloCalculation,
         adapter: BullMQAdapter,
       },
+      {
+        name: MatchQueues.EloRecompute,
+        adapter: BullMQAdapter,
+      },
     ),
   ],
   controllers: [MatchesController, MatchRelayController],
-  exports: [MatchAssistantService],
+  exports: [MatchAssistantService, PlayerEloRecomputeService],
   providers: [
     MatchEventsGateway,
     MatchAssistantService,
@@ -130,6 +147,8 @@ import { SteamMatchHistoryModule } from "../steam-match-history/steam-match-hist
     ReapIdleDemoSessions,
     PollMediaMtxViewers,
     EloCalculation,
+    RecomputeAllElo,
+    PlayerEloRecomputeService,
     ...getQueuesProcessors("Matches"),
     ...Object.values(MatchEvents),
     loggerFactory(),

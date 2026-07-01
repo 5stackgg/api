@@ -19,6 +19,8 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { SteamMatchHistoryQueues } from "src/steam-match-history/enums/SteamMatchHistoryQueues";
 import { SteamBansService } from "src/steam-match-history/steam-bans.service";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
+import { PlayerReindexService } from "./player-reindex.service";
+import { PlayerEloRecomputeService } from "../matches/player-elo-recompute.service";
 
 @Controller("type-sense")
 export class TypeSenseController {
@@ -29,13 +31,23 @@ export class TypeSenseController {
     private readonly notifications: NotificationsService,
     private readonly logger: Logger,
     @InjectQueue(TypesenseQueues.TypeSense) private queue: Queue,
+    @InjectQueue(TypesenseQueues.PlayerReindex) private reindexQueue: Queue,
     @InjectQueue(SteamMatchHistoryQueues.CheckSteamBans)
     private steamBansQueue: Queue,
     private readonly redisManager: RedisManagerService,
+    private readonly playerReindex: PlayerReindexService,
+    private readonly playerEloRecompute: PlayerEloRecomputeService,
   ) {}
 
   @HasuraEvent()
   public async player_elo_events(data: HasuraEventData<player_elo_set_input>) {
+    // During a full ELO recompute the per-row events would fan out to one
+    // updatePlayer per (player, match). They are suppressed here and the
+    // recompute reindexes every player once on completion instead.
+    if (await this.playerEloRecompute.isSuppressingEvents()) {
+      return;
+    }
+
     await this.typeSense.updatePlayer(
       (data.new.steam_id as string) || data.old.steam_id,
     );
@@ -244,7 +256,42 @@ export class TypeSenseController {
 
   @HasuraAction()
   public async refreshAllPlayers() {
-    await this.queue.add(RefreshAllPlayersJob.name, {});
+    if (await this.playerReindex.isRunning()) {
+      return { success: true, running: true };
+    }
+
+    await this.playerReindex.markQueued();
+
+    await this.reindexQueue.add(
+      RefreshAllPlayersJob.name,
+      {},
+      {
+        jobId: RefreshAllPlayersJob.name,
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
+    return { success: true, running: true };
+  }
+
+  @HasuraAction()
+  public async cancelRefreshAllPlayers() {
+    await this.playerReindex.requestCancel();
     return { success: true };
+  }
+
+  @HasuraAction()
+  public async refreshAllPlayersStatus() {
+    const status = await this.playerReindex.getStatus();
+    return {
+      running: status.running,
+      canceled: status.canceled,
+      started_at: status.started_at,
+      finished_at: status.finished_at,
+      total: status.total,
+      completed: status.completed,
+      failed: status.failed,
+      current_steam_id: status.current_steam_id,
+    };
   }
 }
