@@ -1446,3 +1446,67 @@ type Mutation {
   ): SuccessOutput
 }
 
+
+type Mutation {
+  assignSteamPresenceBot: SteamPresenceBotAssignment
+}
+
+type Query {
+  steamPresenceAdminStatus: SteamPresenceAdminStatusOutput!
+}
+
+type Mutation {
+  addSteamPresenceBotAccount(
+    username: String!
+    bot_secret: String!
+    friend_capacity: Int
+  ): SuccessOutput
+}
+
+type Mutation {
+  submitSteamPresenceSteamGuard(
+    account_id: String!
+    code: String!
+  ): SuccessOutput
+}
+
+type Mutation {
+  removeSteamPresenceBotAccount(
+    account_id: String!
+  ): SuccessOutput
+}
+
+type SteamPresenceBotAssignment {
+  enabled: Boolean!
+  steamId: String
+  addUrl: String
+  status: String
+}
+
+type SteamPresencePool {
+  bots: Int!
+  online: Int!
+  watching: Int!
+  pending: Int!
+  capacity: Int!
+}
+
+type SteamPresenceBot {
+  id: String!
+  username: String!
+  steamId: String
+  steamLevel: Int
+  online: Boolean!
+  needs2fa: Boolean!
+  guardType: String
+  guardLastWrong: Boolean!
+  watching: Int!
+  assigned: Int!
+  capacity: Int!
+}
+
+type SteamPresenceAdminStatusOutput {
+  enabled: Boolean!
+  pool: SteamPresencePool!
+  bots: [SteamPresenceBot!]!
+}

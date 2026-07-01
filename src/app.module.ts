@@ -51,6 +51,7 @@ import { FixturesModule } from "./fixtures/fixtures.module";
 import { TournamentsModule } from "./tournaments/tournaments.module";
 import { FaceitModule } from "./faceit/faceit.module";
 import { SteamMatchHistoryModule } from "./steam-match-history/steam-match-history.module";
+import { SteamPresenceModule } from "./steam-presence/steam-presence.module";
 import { NewsModule } from "./news/news.module";
 import { ScrimsModule } from "./scrims/scrims.module";
 
@@ -144,6 +145,7 @@ import { ScrimsModule } from "./scrims/scrims.module";
     TournamentsModule,
     FaceitModule,
     SteamMatchHistoryModule,
+    SteamPresenceModule,
     NewsModule,
     ScrimsModule,
   ],

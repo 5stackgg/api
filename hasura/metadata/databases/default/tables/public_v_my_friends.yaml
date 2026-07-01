@@ -39,6 +39,8 @@ select_permissions:
         - role
         - status
         - steam_id
+        - last_presence_state
+        - presence_updated_at
       filter:
         friend_steam_id:
           _eq: X-Hasura-User-Id

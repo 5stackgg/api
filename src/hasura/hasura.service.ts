@@ -146,6 +146,12 @@ export class HasuraService {
       "insert into settings (name, value) values ('relay_domain', $1) on conflict (name) do update set value = $1",
       [this.appConfig.relayDomain],
     );
+
+    // Steam presence bot is on by default; seed the row so the admin toggle
+    // reflects it. `do nothing` preserves an admin's explicit off.
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.steam_presence_enabled', 'true') on conflict (name) do nothing",
+    );
   }
 
   private async applyMigrations(path: string): Promise<number> {

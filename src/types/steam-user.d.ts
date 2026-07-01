@@ -15,10 +15,27 @@ declare module "steam-user" {
   class SteamUser extends EventEmitter {
     constructor(options?: { enablePicsCache?: boolean; autoRelogin?: boolean });
     steamID?: SteamID | null;
+    // Map of friend steamid64 -> EFriendRelationship.
+    myFriends: Record<string, number>;
     logOn(details: LogOnDetails): void;
     logOff(): void;
     setPersona(state: number): void;
     gamesPlayed(apps: number[] | number): void;
+    addFriend(
+      steamId: string,
+      callback?: (err: Error | null, personaName?: string) => void,
+    ): void;
+    chat: {
+      sendFriendMessage(
+        steamId: string,
+        message: string,
+        callback?: (err: Error | null) => void,
+      ): void;
+    };
+    getSteamLevels(
+      steamIds: string[],
+      callback: (err: Error | null, levels: Record<string, number>) => void,
+    ): void;
     sendToGC(
       appId: number,
       msgType: number,
@@ -37,6 +54,16 @@ declare module "steam-user" {
       LookingToTrade: 5;
       LookingToPlay: 6;
       Invisible: 7;
+    };
+    const EFriendRelationship: {
+      None: 0;
+      Blocked: 1;
+      RequestRecipient: 2;
+      Friend: 3;
+      RequestInitiator: 4;
+      Ignored: 5;
+      IgnoredFriend: 6;
+      SuggestedFriend: 7;
     };
     function generateAuthCode(sharedSecret: string): string;
   }

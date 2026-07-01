@@ -26,9 +26,13 @@ SELECT DISTINCT ON (p.steam_id, fr.friend_steam_id)
   fr.status,
   fr.friend_steam_id,
   fr.invited_by_steam_id,
-  get_player_elo(p) AS elo
+  get_player_elo(p) AS elo,
+  pbf.last_presence_state,
+  pbf.updated_at AS presence_updated_at
 FROM friend_relationships fr
-JOIN players p ON p.steam_id = fr.player_steam_id;
+JOIN players p ON p.steam_id = fr.player_steam_id
+LEFT JOIN player_steam_bot_friend pbf
+  ON pbf.steam_id = p.steam_id AND pbf.status = 'friends';
 
 CREATE OR REPLACE FUNCTION public.ti_v_my_friends() RETURNS trigger
     LANGUAGE plpgsql

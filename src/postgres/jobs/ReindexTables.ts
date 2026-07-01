@@ -26,8 +26,12 @@ export class ReindexTables extends WorkerHost {
       const start = Date.now();
 
       await this.postgres.query(`REINDEX TABLE CONCURRENTLY ${job.data.table}`);
+      await this.postgres.query(`VACUUM (ANALYZE) ${job.data.table}`);
 
-      this.logger.log(`Reindexed ${job.data.table}`, `${Date.now() - start}ms`);
+      this.logger.log(
+        `Reindexed + vacuumed ${job.data.table}`,
+        `${Date.now() - start}ms`,
+      );
       return;
     }
 

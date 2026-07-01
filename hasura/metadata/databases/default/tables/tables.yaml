@@ -87,6 +87,7 @@
 - "!include public_player_premier_rank_history.yaml"
 - "!include public_player_sanctions.yaml"
 - "!include public_player_stats.yaml"
+- "!include public_player_steam_bot_friend.yaml"
 - "!include public_player_steam_match_auth.yaml"
 - "!include public_player_unused_utility.yaml"
 - "!include public_player_utility.yaml"
