@@ -3,11 +3,10 @@ import { Queue } from "bullmq";
 import { Logger } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
 import { forwardRef, Inject, Injectable } from "@nestjs/common";
-import { e_draft_game_draft_order_enum } from "generated";
 import { HasuraService } from "src/hasura/hasura.service";
 import { CacheService } from "src/cache/cache.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
-import { DraftGame, DraftGamePlayer } from "./types/DraftGame";
+import { DraftGame } from "./types/DraftGame";
 import { DraftGameError } from "./types/DraftGameError";
 import { DraftGameQueues } from "./enums/DraftGameQueues";
 import { DraftGameService } from "./draft-game.service";
@@ -377,8 +376,9 @@ export class DraftService {
       return;
     }
 
-    const lineup = this.nextLineup(draftGame, 0);
-    await this.setCurrentPick(draftGameId, lineup);
+    // Team 1 always makes the first pick; every turn after this is driven by
+    // the SQL pattern via the draft_game_picks trigger.
+    await this.setCurrentPick(draftGameId, 1);
     await this.startPickTimer(draftGameId, 0);
   }
 
@@ -430,108 +430,29 @@ export class DraftService {
     });
   }
 
-  public async applyPick(draftGameId: string, pickedSteamId: string) {
+  public async applyPick(draftGameId: string) {
     return this.cache.lock(DraftGameService.lockKey(draftGameId), async () => {
       const draftGame = await this.draftGameService.getDraftGame(draftGameId);
 
-      if (!draftGame || draftGame.status !== "Drafting" || draftGame.match_id) {
+      if (!draftGame || draftGame.match_id) {
         return;
       }
 
-      const target = draftGame.players.find(
-        (player) => player.steam_id === pickedSteamId,
-      );
-
-      if (!target || target.lineup != null) {
+      // The draft_game_picks trigger already assigned the player, advanced the
+      // turn, and (on the final pick) auto-assigned the last player and moved the
+      // draft to CreatingMatch. React to whatever state that left us in.
+      if (draftGame.status === "CreatingMatch") {
+        await this.removeAllPickTimers(draftGameId);
+        await this.draftMatchService.finalize(draftGameId);
         return;
       }
 
-      await this.performPick(draftGame, target);
+      if (draftGame.status !== "Drafting") {
+        return;
+      }
+
+      await this.startPickTimer(draftGameId, this.draftedCount(draftGame));
     });
-  }
-
-  private async performPick(draftGame: DraftGame, target: DraftGamePlayer) {
-    const currentLineup = draftGame.current_pick_lineup;
-    const captain = draftGame.players.find(
-      (player) => player.is_captain && player.lineup === currentLineup,
-    );
-
-    if (!captain) {
-      return;
-    }
-
-    const pickCount = this.draftedCount(draftGame);
-    const currentLineupCount = draftGame.players.filter(
-      (player) => player.lineup === currentLineup,
-    ).length;
-
-    await this.hasura.mutation({
-      update_draft_game_players_by_pk: {
-        __args: {
-          pk_columns: {
-            draft_game_id: draftGame.id,
-            steam_id: target.steam_id,
-          },
-          _set: { lineup: currentLineup, pick_order: currentLineupCount },
-        },
-        __typename: true,
-      },
-    });
-
-    await this.removePickTimer(draftGame.id);
-
-    const undrafted = draftGame.players.filter(
-      (player) =>
-        player.steam_id !== target.steam_id &&
-        (player.lineup === null || player.lineup === undefined),
-    );
-
-    if (undrafted.length === 1) {
-      const updated = await this.draftGameService.getDraftGame(draftGame.id);
-
-      if (!updated) {
-        await this.removeAllPickTimers(draftGame.id);
-        return;
-      }
-
-      const lineup = this.nextLineup(updated, pickCount + 1);
-      const lineupCount = updated.players.filter(
-        (player) => player.lineup === lineup,
-      ).length;
-      await this.hasura.mutation({
-        update_draft_game_players_by_pk: {
-          __args: {
-            pk_columns: {
-              draft_game_id: draftGame.id,
-              steam_id: undrafted[0].steam_id,
-            },
-            _set: { lineup, pick_order: lineupCount },
-          },
-          __typename: true,
-        },
-      });
-
-      await this.removeAllPickTimers(draftGame.id);
-      await this.draftMatchService.finalize(draftGame.id);
-      return;
-    }
-
-    if (undrafted.length === 0) {
-      await this.removeAllPickTimers(draftGame.id);
-      await this.draftMatchService.finalize(draftGame.id);
-      return;
-    }
-
-    const updated = await this.draftGameService.getDraftGame(draftGame.id);
-
-    if (!updated) {
-      await this.removeAllPickTimers(draftGame.id);
-      return;
-    }
-
-    const nextLineup = this.nextLineup(updated, pickCount + 1);
-    await this.setCurrentPick(draftGame.id, nextLineup);
-    await this.startPickTimer(draftGame.id, pickCount + 1);
   }
 
   private draftedCount(draftGame: DraftGame): number {
@@ -541,67 +462,6 @@ export class DraftService {
         player.lineup !== null &&
         player.lineup !== undefined,
     ).length;
-  }
-
-  private nextLineup(draftGame: DraftGame, pickCount: number): number {
-    const perTeam = draftGame.capacity / 2;
-
-    const counts = { 1: 0, 2: 0 };
-    for (const player of draftGame.players) {
-      if (player.lineup === 1) {
-        counts[1]++;
-      }
-      if (player.lineup === 2) {
-        counts[2]++;
-      }
-    }
-
-    if (counts[1] >= perTeam) {
-      return 2;
-    }
-
-    if (counts[2] >= perTeam) {
-      return 1;
-    }
-
-    const order = this.getDraftOrder(
-      draftGame.draft_order,
-      draftGame.capacity - 2,
-    );
-
-    return order[pickCount] || 1;
-  }
-
-  private getDraftOrder(
-    draftOrder: e_draft_game_draft_order_enum,
-    picks: number,
-  ): Array<number> {
-    if (picks <= 0) {
-      return [];
-    }
-
-    if (draftOrder === "Alternating") {
-      return Array.from({ length: picks }, (_, index) =>
-        index % 2 === 0 ? 1 : 2,
-      );
-    }
-
-    // Front-Loaded: one reciprocal pick, then lineup 1 drafts the rest until
-    // full (nextLineup caps each side at perTeam, then forces the other side).
-    if ((draftOrder as string) === "FrontLoaded") {
-      return Array.from({ length: picks }, (_, index) => (index === 1 ? 2 : 1));
-    }
-
-    const order: Array<number> = [1];
-    let next = 2;
-    while (order.length < picks) {
-      order.push(next);
-      if (order.length < picks) {
-        order.push(next);
-      }
-      next = next === 1 ? 2 : 1;
-    }
-    return order;
   }
 
   private async setCurrentPick(draftGameId: string, lineup: number) {
