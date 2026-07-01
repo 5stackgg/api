@@ -522,16 +522,13 @@ export class SteamPresenceService
     const stateKey = STATE_PREFIX + steamId;
     const previous = (await this.cache.get(stateKey)) as Cs2PresenceState | null;
 
-    // Only write when something actually changed. The push `user` event fires
-    // often; writing every time would churn Postgres dead tuples for no reason
-    // (we only ever keep the latest state, never history).
+    // Skip no-op writes: the push `user` event fires often, but we only keep the
+    // latest state, so writing unchanged state just churns Postgres dead tuples.
     if (previous && JSON.stringify(previous) === JSON.stringify(current)) {
       return;
     }
     await this.cache.put(stateKey, current, PRESENCE_STATE_TTL_SECONDS);
 
-    // Mirror the latest onto the friend row (single-row UPDATE, un-indexed jsonb
-    // → HOT update). No-op for non-friended steamids.
     await this.postgres
       .query(
         `UPDATE public.player_steam_bot_friend
@@ -541,9 +538,8 @@ export class SteamPresenceService
       )
       .catch(() => {});
 
-    // Import trigger: they just finished a Competitive/Premier/Wingman match
-    // (deathmatch / arms race never set inMatch, so they never trigger imports).
-    // Delay the poll so Valve has time to publish the demo + share code.
+    // Only matchmaking matches (comp/premier/wingman) set inMatch, so deathmatch
+    // and arms race never reach here. Delay so Valve can publish the demo first.
     if (isMatchEndTransition(previous, current)) {
       this.logger.log(
         `steam-presence import trigger: ${steamId} finished ${previous?.mode ?? "match"} ` +
@@ -574,8 +570,6 @@ export class SteamPresenceService
       });
   }
 
-  // Short human description of a presence state (unused since the activity feed
-  // was removed; kept minimal for potential debug reuse).
   // ---- onboarding / assignment -------------------------------------------
 
   // Assign (or return the already-assigned) friends-role bot for a user, so the
