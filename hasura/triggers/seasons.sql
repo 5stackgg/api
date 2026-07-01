@@ -57,12 +57,11 @@ BEGIN
         -- Moving the start almost always changes membership.
         NEW.needs_rebuild := true;
     ELSIF NEW.ends_at IS DISTINCT FROM OLD.ends_at THEN
-        -- An end change only needs a rebuild if it actually moves matches in/out of
-        -- the window. Ending "now" (or in the future) excludes nothing, so it stays
-        -- rebuild-free; ending in the past (excluding already-tagged matches) or
-        -- extending a bounded end over existing matches does need one.
-        NEW.needs_rebuild :=
-            EXISTS (
+        -- OR with the existing flag so a pending rebuild is never cleared by an end
+        -- change (only the backfill clears it). Ending "now"/future excludes nothing
+        -- and adds no flag; ending in the past or extending over existing matches does.
+        NEW.needs_rebuild := OLD.needs_rebuild
+            OR EXISTS (
                 SELECT 1 FROM player_elo pe
                 WHERE pe.season_id = NEW.id
                   AND pe.created_at >= NEW.ends_at
