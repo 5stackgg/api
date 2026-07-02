@@ -105,23 +105,6 @@ export class SeasonEloBackfillService {
     await this.eloRecompute.setSuppressEvents(true);
 
     try {
-      // Fast path: the very first season that covers all history. The existing
-      // global ELO ladder already IS this season's ladder (same matches, same
-      // 5000 baseline, same chronological order), so adopt it by re-tagging the
-      // rows instead of recomputing every match. Values are unchanged, so there's
-      // nothing to reindex either.
-      const adopted = await this.tryAdoptGlobalLadder(seasonId);
-      if (adopted !== null) {
-        status.total = adopted;
-        status.completed = adopted;
-        await this.postgres.query(
-          `UPDATE seasons SET needs_rebuild = false WHERE id = $1`,
-          [seasonId],
-        );
-        await this.saveStatus(status, RUNNING_TTL_SECONDS);
-        return;
-      }
-
       // Clean slate for this season only — other seasons' ELO is independent and
       // stays untouched. Per-match recompute below re-inserts with season_id set.
       await this.postgres.query(
@@ -298,67 +281,6 @@ export class SeasonEloBackfillService {
     await this.cache.put(STATUS_KEY, status, ttl);
   }
 
-  // When this is the first season ever AND it covers all history, the current
-  // global ELO ladder is exactly this season's ladder — re-tag the global rows to
-  // it (fast, and values are identical so the search index needs no reindex).
-  // Returns the number of rows adopted, or null if the fast path doesn't apply.
-  private async tryAdoptGlobalLadder(
-    seasonId: string,
-  ): Promise<number | null> {
-    const eligibility = await this.postgres.query<
-      Array<{ eligible: boolean }>
-    >(
-      `SELECT (
-         -- no season has scoped ELO yet (this is the first season)
-         NOT EXISTS (SELECT 1 FROM player_elo WHERE season_id IS NOT NULL)
-         -- and there is no global (non-tournament) ELO before this season's start,
-         -- i.e. the season covers all history so its ladder == the global ladder
-         AND NOT EXISTS (
-           SELECT 1
-           FROM player_elo pe
-           JOIN matches m ON m.id = pe.match_id
-           WHERE pe.season_id IS NULL
-             AND m.ended_at < (SELECT starts_at FROM seasons WHERE id = $1)
-             AND NOT EXISTS (
-               SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id
-             )
-         )
-       ) AS eligible`,
-      [seasonId],
-    );
-
-    if (!eligibility?.[0]?.eligible) {
-      return null;
-    }
-
-    const tagged = await this.postgres.query<Array<{ count: string }>>(
-      `WITH retagged AS (
-         UPDATE player_elo pe
-         SET season_id = $1
-         FROM matches m
-         WHERE pe.match_id = m.id
-           AND m.source = '5stack'
-           AND pe.season_id IS NULL
-           AND season_for_timestamp(m.ended_at) = $1
-           AND NOT EXISTS (
-             SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id
-           )
-         RETURNING 1
-       )
-       SELECT count(*)::text AS count FROM retagged`,
-      [seasonId],
-    );
-
-    await this.postgres.query(`SELECT rebuild_player_season_stats($1)`, [
-      seasonId,
-    ]);
-
-    const count = parseInt(tagged?.[0]?.count ?? "0", 10);
-    this.logger.log(
-      `[season-backfill] adopted the global ELO ladder for first season ${seasonId} (${count} rows re-tagged, no recompute/reindex needed)`,
-    );
-    return count;
-  }
 
   private async fetchSeasonMatchIds(seasonId: string): Promise<string[]> {
     const rows = await this.postgres.query<Array<{ id: string }>>(
