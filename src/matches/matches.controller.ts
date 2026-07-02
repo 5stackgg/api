@@ -1065,10 +1065,22 @@ export class MatchesController {
     };
   }
 
-  // A season whose boundaries change is flagged needs_rebuild by a DB trigger.
-  // We do NOT rebuild automatically and we do NOT create notifications — the
-  // admin UI reads seasons.needs_rebuild directly and surfaces the manual
-  // rebuild action (single-execution / locked). Purely a derived UI concern.
+  @HasuraEvent()
+  public async season_backfill_events(
+    data: HasuraEventData<{ id: string; needs_rebuild: boolean | null }>,
+  ) {
+    const season = data.new;
+    if (!season?.id || !season.needs_rebuild) {
+      return;
+    }
+    if (!(await this.seasonsEnabled())) {
+      return;
+    }
+    if (await this.seasonEloBackfill.isRunning()) {
+      return;
+    }
+    await this.enqueueSeasonBackfill(season.id);
+  }
 
   @HasuraAction()
   public async backfillSeasonElo(data: { season_id: string }) {
