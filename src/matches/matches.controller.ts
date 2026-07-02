@@ -1065,43 +1065,21 @@ export class MatchesController {
     };
   }
 
-  // A season whose boundaries changed is flagged needs_rebuild by a DB trigger.
-  // We do NOT rebuild automatically — we notify admins once so they can run the
-  // rebuild manually (the backfill is single-execution / locked). This avoids a
-  // constant background poll and keeps the operator in control.
   @HasuraEvent()
   public async season_backfill_events(
-    data: HasuraEventData<{
-      id: string;
-      number: number | null;
-      needs_rebuild: boolean | null;
-    }>,
+    data: HasuraEventData<{ id: string; needs_rebuild: boolean | null }>,
   ) {
     const season = data.new;
     if (!season?.id || !season.needs_rebuild) {
       return;
     }
-
     if (!(await this.seasonsEnabled())) {
       return;
     }
-
-    try {
-      await this.notifications.send(
-        "EloRecompute" as e_notification_types_enum,
-        {
-          title: "Season rebuild needed",
-          message:
-            `<b>Season ${season.number ?? "?"}</b> needs an ELO rebuild after a ` +
-            `change. Run it from the Seasons page.`,
-          role: "administrator" as e_player_roles_enum,
-        },
-      );
-    } catch (error) {
-      this.logger.warn(
-        `[season] failed to send rebuild notification: ${(error as Error)?.message}`,
-      );
+    if (await this.seasonEloBackfill.isRunning()) {
+      return;
     }
+    await this.enqueueSeasonBackfill(season.id);
   }
 
   @HasuraAction()

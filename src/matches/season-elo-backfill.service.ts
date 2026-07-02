@@ -180,6 +180,10 @@ export class SeasonEloBackfillService {
   }
 
   private async notifyComplete(status: SeasonEloBackfillStatus): Promise<void> {
+    if (!status.canceled && status.failed === 0) {
+      return;
+    }
+
     const duration = this.formatDuration(status.started_at, status.finished_at);
     const failedSuffix =
       status.failed > 0 ? ` <b>${status.failed}</b> failed.` : "";
