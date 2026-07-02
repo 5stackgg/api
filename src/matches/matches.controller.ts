@@ -1087,15 +1087,33 @@ export class MatchesController {
     }
 
     try {
+      // Non-dismissible (deletable:false) + a Rebuild action: the only way to
+      // clear it is to run the rebuild, which starts the backfill and removes
+      // the notification. Admins can then watch progress on the Seasons page.
       await this.notifications.send(
         "EloRecompute" as e_notification_types_enum,
         {
-          title: "Season rebuild needed",
+          title: `Season ${season.number ?? "?"} ELO rebuild required`,
           message:
             `<b>Season ${season.number ?? "?"}</b> needs an ELO rebuild after a ` +
-            `change. Run it from the Seasons page.`,
+            `change. Rebuild it to correct standings — you can watch progress on ` +
+            `the Seasons page.`,
           role: "administrator" as e_player_roles_enum,
+          entity_id: season.id,
         },
+        [
+          {
+            label: "Rebuild Season ELO",
+            graphql: {
+              type: "mutation",
+              action: "backfillSeasonElo",
+              selection: { success: true, running: true },
+              variables: { season_id: season.id },
+            },
+          },
+        ],
+        undefined,
+        false,
       );
     } catch (error) {
       this.logger.warn(
