@@ -1065,62 +1065,10 @@ export class MatchesController {
     };
   }
 
-  // A season whose boundaries changed is flagged needs_rebuild by a DB trigger.
-  // We do NOT rebuild automatically — we notify admins once so they can run the
-  // rebuild manually (the backfill is single-execution / locked). This avoids a
-  // constant background poll and keeps the operator in control.
-  @HasuraEvent()
-  public async season_backfill_events(
-    data: HasuraEventData<{
-      id: string;
-      number: number | null;
-      needs_rebuild: boolean | null;
-    }>,
-  ) {
-    const season = data.new;
-    if (!season?.id || !season.needs_rebuild) {
-      return;
-    }
-
-    if (!(await this.seasonsEnabled())) {
-      return;
-    }
-
-    try {
-      // Non-dismissible (deletable:false) + a Rebuild action: the only way to
-      // clear it is to run the rebuild, which starts the backfill and removes
-      // the notification. Admins can then watch progress on the Seasons page.
-      await this.notifications.send(
-        "EloRecompute" as e_notification_types_enum,
-        {
-          title: `Season ${season.number ?? "?"} ELO rebuild required`,
-          message:
-            `<b>Season ${season.number ?? "?"}</b> needs an ELO rebuild after a ` +
-            `change. Rebuild it to correct standings — you can watch progress on ` +
-            `the Seasons page.`,
-          role: "administrator" as e_player_roles_enum,
-          entity_id: season.id,
-        },
-        [
-          {
-            label: "Rebuild Season ELO",
-            graphql: {
-              type: "mutation",
-              action: "backfillSeasonElo",
-              selection: { success: true, running: true },
-              variables: { season_id: season.id },
-            },
-          },
-        ],
-        undefined,
-        false,
-      );
-    } catch (error) {
-      this.logger.warn(
-        `[season] failed to send rebuild notification: ${(error as Error)?.message}`,
-      );
-    }
-  }
+  // A season whose boundaries change is flagged needs_rebuild by a DB trigger.
+  // We do NOT rebuild automatically and we do NOT create notifications — the
+  // admin UI reads seasons.needs_rebuild directly and surfaces the manual
+  // rebuild action (single-execution / locked). Purely a derived UI concern.
 
   @HasuraAction()
   public async backfillSeasonElo(data: { season_id: string }) {

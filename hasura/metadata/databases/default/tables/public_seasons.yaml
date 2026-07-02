@@ -99,18 +99,3 @@ delete_permissions:
     permission:
       filter: {}
     comment: ""
-event_triggers:
-  - name: season_backfill_events
-    definition:
-      enable_manual: false
-      insert:
-        columns: '*'
-      update:
-        columns:
-          - starts_at
-          - ends_at
-    retry_conf:
-      interval_sec: 30
-      num_retries: 0
-      timeout_sec: 60
-    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
