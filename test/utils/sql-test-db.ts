@@ -16,6 +16,7 @@ const IMAGE = "timescale/timescaledb:latest-pg17";
 export interface SqlTestDb {
   container: StartedPostgreSqlContainer;
   postgres: PostgresService;
+  hasura: HasuraService;
   stop(): Promise<void>;
 }
 
@@ -75,6 +76,7 @@ export async function bootMigratedDb(loggerName: string): Promise<SqlTestDb> {
   return {
     container,
     postgres,
+    hasura: hasuraService,
     stop: async () => {
       // Drain the pool before the container goes away, otherwise pg emits an
       // idle-client error when the socket is torn out from under it.

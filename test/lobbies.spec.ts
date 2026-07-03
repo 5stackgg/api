@@ -1,4 +1,5 @@
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, runAsUser, SqlTestDb } from "./utils/sql-test-db";
 
 // Exercises the lobby triggers: creator bootstrap (tai_lobbies), single-lobby
@@ -7,11 +8,12 @@ import { bootMigratedDb, runAsUser, SqlTestDb } from "./utils/sql-test-db";
 describe("lobbies (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
-  let seq = 0;
+  let fx: Fixtures;
 
   beforeAll(async () => {
     db = await bootMigratedDb("LobbiesTest");
     postgres = db.postgres;
+    fx = new Fixtures(postgres, 76561199100000000n);
   }, 600_000);
 
   afterAll(async () => {
@@ -23,16 +25,7 @@ describe("lobbies (SQL-driven)", () => {
     await postgres.query("DELETE FROM players");
   });
 
-  const nextSteam = () => (76561199100000000n + BigInt(++seq)).toString();
-
-  const seedPlayer = async () => {
-    const steam = nextSteam();
-    await postgres.query(
-      "INSERT INTO players (steam_id, name) VALUES ($1, $2)",
-      [steam, `p${seq}`],
-    );
-    return steam;
-  };
+  const seedPlayer = () => fx.player();
 
   // Lobby creation reads the creator from the Hasura session.
   const createLobby = async (creator: string) =>

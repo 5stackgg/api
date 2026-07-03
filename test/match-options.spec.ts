@@ -1,4 +1,5 @@
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { Fixtures } from "./utils/fixtures";
 import {
   bootMigratedDb,
   seedRegionWithServer,
@@ -11,10 +12,12 @@ import {
 describe("match options locks (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
+  let fx: Fixtures;
 
   beforeAll(async () => {
     db = await bootMigratedDb("MatchOptionsTest");
     postgres = db.postgres;
+    fx = new Fixtures(postgres);
     // Two regions: with a single one, tbi_match_options force-disables
     // region_veto and the freeze assertions would test a no-op.
     await seedRegionWithServer(postgres, "TestA", 27015);
@@ -32,32 +35,14 @@ describe("match options locks (SQL-driven)", () => {
   });
 
   const createPool = async (offset = 0) => {
-    const [pool] = await postgres.query<Array<{ id: string }>>(
-      "INSERT INTO map_pools (type) VALUES ('Custom') RETURNING id",
-    );
-    const [map] = await postgres.query<Array<{ map_id: string }>>(
-      `INSERT INTO _map_pool (map_pool_id, map_id)
-       SELECT $1, id FROM maps WHERE type = 'Competitive' ORDER BY name OFFSET $2 LIMIT 1
-       RETURNING map_id`,
-      [pool.id, offset],
-    );
-    return { poolId: pool.id, mapId: map.map_id };
+    const { poolId, mapIds } = await fx.mapPool(1, { offset });
+    return { poolId, mapId: mapIds[0] };
   };
 
   const createMatch = async () => {
     const { poolId, mapId } = await createPool(0);
-    const [options] = await postgres.query<Array<{ id: string }>>(
-      `INSERT INTO match_options (mr, best_of, type, map_pool_id, map_veto, region_veto, regions)
-       VALUES (12, 1, 'Competitive', $1, false, true, '{TestA}') RETURNING id`,
-      [poolId],
-    );
-    const [match] = await postgres.query<
-      Array<{ id: string; lineup_1_id: string }>
-    >(
-      "INSERT INTO matches (match_options_id) VALUES ($1) RETURNING id, lineup_1_id",
-      [options.id],
-    );
-    return { matchId: match.id, optionsId: options.id, poolId, mapId };
+    const match = await fx.match({ mapPoolId: poolId });
+    return { matchId: match.id, optionsId: match.options_id, poolId, mapId };
   };
 
   const setMatchStatus = (matchId: string, status: string) =>

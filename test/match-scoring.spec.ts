@@ -1,4 +1,5 @@
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { Fixtures } from "./utils/fixtures";
 import {
   bootMigratedDb,
   seedRegionWithServer,
@@ -11,10 +12,12 @@ import {
 describe("match scoring from rounds (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
+  let fx: Fixtures;
 
   beforeAll(async () => {
     db = await bootMigratedDb("MatchScoringTest");
     postgres = db.postgres;
+    fx = new Fixtures(postgres);
     await seedRegionWithServer(postgres, "TestA");
   }, 600_000);
 
@@ -30,25 +33,8 @@ describe("match scoring from rounds (SQL-driven)", () => {
   // A Live best-of-N match whose maps are materialized from an exactly-sized
   // custom pool (pool == best_of skips both vetoes).
   const createLiveMatch = async (bestOf: number) => {
-    const [pool] = await postgres.query<Array<{ id: string }>>(
-      "INSERT INTO map_pools (type) VALUES ('Custom') RETURNING id",
-    );
-    await postgres.query(
-      `INSERT INTO _map_pool (map_pool_id, map_id)
-       SELECT $1, id FROM maps WHERE type = 'Competitive' ORDER BY name LIMIT $2`,
-      [pool.id, bestOf],
-    );
-    const [options] = await postgres.query<Array<{ id: string }>>(
-      `INSERT INTO match_options (mr, best_of, type, map_pool_id, map_veto, region_veto, regions)
-       VALUES (12, $1, 'Competitive', $2, false, true, '{TestA}') RETURNING id`,
-      [bestOf, pool.id],
-    );
-    const [match] = await postgres.query<
-      Array<{ id: string; lineup_1_id: string; lineup_2_id: string }>
-    >(
-      "INSERT INTO matches (match_options_id) VALUES ($1) RETURNING id, lineup_1_id, lineup_2_id",
-      [options.id],
-    );
+    const { poolId } = await fx.mapPool(bestOf);
+    const match = await fx.match({ bestOf, mapPoolId: poolId });
     await postgres.query("UPDATE matches SET status = 'Live' WHERE id = $1", [
       match.id,
     ]);
@@ -59,28 +45,10 @@ describe("match scoring from rounds (SQL-driven)", () => {
     return { ...match, mapIds: maps.map((m) => m.id) };
   };
 
-  // Two snapshots so the "latest round wins" ordering is actually exercised.
-  const recordScore = async (
-    mapId: string,
-    lineup1Score: number,
-    lineup2Score: number,
-  ) => {
-    await postgres.query(
-      `INSERT INTO match_map_rounds
-         (match_map_id, round, lineup_1_score, lineup_2_score, lineup_1_money, lineup_2_money,
-          "time", lineup_1_timeouts_available, lineup_2_timeouts_available,
-          lineup_1_side, lineup_2_side, winning_side)
-       VALUES
-         ($1, 1, 1, 0, 800, 800, now() - interval '40 minutes', 3, 3, 'CT', 'TERRORIST', 'CT'),
-         ($1, 2, $2, $3, 16000, 9000, now(), 3, 3, 'TERRORIST', 'CT', 'TERRORIST')`,
-      [mapId, lineup1Score, lineup2Score],
-    );
-  };
+  const recordScore = (mapId: string, s1: number, s2: number) =>
+    fx.roundScore(mapId, s1, s2);
 
-  const finishMap = (mapId: string) =>
-    postgres.query("UPDATE match_maps SET status = 'Finished' WHERE id = $1", [
-      mapId,
-    ]);
+  const finishMap = (mapId: string) => fx.finishMap(mapId);
 
   const matchRow = async (id: string) => {
     const [row] = await postgres.query<

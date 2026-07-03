@@ -1,5 +1,10 @@
 import { PostgresService } from "./../src/postgres/postgres.service";
 import {
+  Fixtures,
+  MatchOptionsOverrides,
+  MatchRow,
+} from "./utils/fixtures";
+import {
   bootMigratedDb,
   runAsUser,
   seedRegionWithServer,
@@ -13,11 +18,12 @@ import {
 describe("match lifecycle (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
-  let seq = 0;
+  let fx: Fixtures;
 
   beforeAll(async () => {
     db = await bootMigratedDb("MatchLifecycleTest");
     postgres = db.postgres;
+    fx = new Fixtures(postgres);
 
     // Two regions so tbi_match_options doesn't collapse region_veto, and so
     // multi-region veto scenarios are reachable.
@@ -37,84 +43,16 @@ describe("match lifecycle (SQL-driven)", () => {
     await postgres.query("DELETE FROM players");
   });
 
-  const nextSteam = () => (76561190000000000n + BigInt(++seq)).toString();
-
-  const seedPlayer = async () => {
-    const steam = nextSteam();
-    await postgres.query(
-      "INSERT INTO players (steam_id, name) VALUES ($1, $2)",
-      [steam, `p${seq}`],
-    );
-    return steam;
-  };
+  const seedPlayer = () => fx.player();
 
   // A Custom pool with exactly `size` maps: setup_match_maps only materializes
   // match_maps when the pool size equals best_of.
-  const createPool = async (size: number) => {
-    const [pool] = await postgres.query<Array<{ id: string }>>(
-      "INSERT INTO map_pools (type) VALUES ('Custom') RETURNING id",
-    );
-    await postgres.query(
-      `INSERT INTO _map_pool (map_pool_id, map_id)
-       SELECT $1, id FROM maps WHERE type = 'Competitive' ORDER BY name LIMIT $2`,
-      [pool.id, size],
-    );
-    return pool.id;
-  };
+  const createPool = async (size: number) => (await fx.mapPool(size)).poolId;
 
-  type OptionsOverrides = {
-    type?: string;
-    bestOf?: number;
-    mapVeto?: boolean;
-    regionVeto?: boolean;
-    regions?: Array<string>;
-    mapPoolId?: string;
-  };
+  const createOptions = (over: MatchOptionsOverrides = {}) =>
+    fx.matchOptions(over);
 
-  const createOptions = async (over: OptionsOverrides = {}) => {
-    const type = over.type ?? "Competitive";
-    let mapPoolId = over.mapPoolId;
-    if (!mapPoolId) {
-      const [pool] = await postgres.query<Array<{ id: string }>>(
-        "SELECT id FROM map_pools WHERE type = $1 AND seed = true",
-        [type === "Duel" ? "Duel" : type === "Wingman" ? "Wingman" : "Competitive"],
-      );
-      mapPoolId = pool.id;
-    }
-    const [row] = await postgres.query<Array<{ id: string }>>(
-      `INSERT INTO match_options (mr, best_of, type, map_pool_id, map_veto, region_veto, regions)
-       VALUES (12, $1, $2, $3, $4, $5, $6) RETURNING id`,
-      [
-        over.bestOf ?? 1,
-        type,
-        mapPoolId,
-        over.mapVeto ?? false,
-        over.regionVeto ?? true,
-        over.regions ?? ["TestA"],
-      ],
-    );
-    return row.id;
-  };
-
-  type MatchRow = {
-    id: string;
-    lineup_1_id: string;
-    lineup_2_id: string;
-    status: string;
-    region: string | null;
-    started_at: Date | null;
-    ended_at: Date | null;
-    cancels_at: Date | null;
-    scheduled_at: Date | null;
-  };
-
-  const createMatch = async (optionsId: string) => {
-    const [match] = await postgres.query<Array<MatchRow>>(
-      "INSERT INTO matches (match_options_id) VALUES ($1) RETURNING *",
-      [optionsId],
-    );
-    return match;
-  };
+  const createMatch = (optionsId: string) => fx.match(optionsId);
 
   const getMatch = async (id: string) => {
     const [match] = await postgres.query<Array<MatchRow>>(
@@ -130,14 +68,8 @@ describe("match lifecycle (SQL-driven)", () => {
       id,
     ]);
 
-  const addPlayer = async (lineupId: string, steamId?: string) => {
-    const steam = steamId ?? (await seedPlayer());
-    await postgres.query(
-      "INSERT INTO match_lineup_players (match_lineup_id, steam_id) VALUES ($1, $2)",
-      [lineupId, steam],
-    );
-    return steam;
-  };
+  const addPlayer = (lineupId: string, steamId?: string) =>
+    fx.lineupPlayer(lineupId, steamId);
 
   const asUser = <T>(
     steamId: string,

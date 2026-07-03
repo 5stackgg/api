@@ -1,4 +1,5 @@
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { Fixtures, KillOptions } from "./utils/fixtures";
 import {
   bootMigratedDb,
   seedRegionWithServer,
@@ -12,11 +13,12 @@ import {
 describe("player stats triggers (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
-  let seq = 0;
+  let fx: Fixtures;
 
   beforeAll(async () => {
     db = await bootMigratedDb("PlayerStatsTest");
     postgres = db.postgres;
+    fx = new Fixtures(postgres);
     await seedRegionWithServer(postgres, "TestA");
   }, 600_000);
 
@@ -33,59 +35,17 @@ describe("player stats triggers (SQL-driven)", () => {
     );
   });
 
-  const nextSteam = () => (76561190000000000n + BigInt(++seq)).toString();
-
-  const seedPlayer = async () => {
-    const steam = nextSteam();
-    await postgres.query(
-      "INSERT INTO players (steam_id, name) VALUES ($1, $2)",
-      [steam, `p${seq}`],
-    );
-    return steam;
-  };
+  const seedPlayer = () => fx.player();
 
   // A minimal finished match plus one map, enough to attach kill/assist rows.
-  const seedMatch = async (endedAt: string | null = null) => {
-    const [l1] = await postgres.query<Array<{ id: string }>>(
-      "INSERT INTO match_lineups DEFAULT VALUES RETURNING id",
-    );
-    const [l2] = await postgres.query<Array<{ id: string }>>(
-      "INSERT INTO match_lineups DEFAULT VALUES RETURNING id",
-    );
-    const [match] = await postgres.query<Array<{ id: string }>>(
-      `INSERT INTO matches (lineup_1_id, lineup_2_id, source, ended_at)
-       VALUES ($1, $2, '5stack', $3) RETURNING id`,
-      [l1.id, l2.id, endedAt],
-    );
-    const [map] = await postgres.query<Array<{ id: string }>>(
-      `INSERT INTO match_maps (match_id, map_id, "order")
-       SELECT $1, id, 1 FROM maps ORDER BY name LIMIT 1 RETURNING id`,
-      [match.id],
-    );
-    return { matchId: match.id, mapId: map.id };
-  };
+  const seedMatch = (endedAt: string | null = null) => fx.bareMatch(endedAt);
 
   const insertKill = (
     ctx: { matchId: string; mapId: string },
     attacker: string,
     victim: string,
-    opts: { weapon?: string; headshot?: boolean; time?: string } = {},
-  ) =>
-    postgres.query(
-      `INSERT INTO player_kills
-         (match_id, match_map_id, round, attacker_steam_id, attacked_steam_id,
-          attacked_team, attacked_location, "with", hitgroup, "time", headshot)
-       VALUES ($1, $2, 1, $3, $4, 'CT', 'site', $5, 'head', $6, $7)`,
-      [
-        ctx.matchId,
-        ctx.mapId,
-        attacker,
-        victim,
-        opts.weapon ?? "ak47",
-        opts.time ?? new Date().toISOString(),
-        opts.headshot ?? false,
-      ],
-    );
+    opts: KillOptions = {},
+  ) => fx.kill(ctx, attacker, victim, opts);
 
   const stats = async (steam: string) => {
     const [row] = await postgres.query<
@@ -197,12 +157,7 @@ describe("player stats triggers (SQL-driven)", () => {
       const assister = await seedPlayer();
       const victim = await seedPlayer();
 
-      await postgres.query(
-        `INSERT INTO player_assists
-           (match_id, match_map_id, "time", round, attacker_steam_id, attacker_team, attacked_steam_id, attacked_team)
-         VALUES ($1, $2, now(), 1, $3, 'TERRORIST', $4, 'CT')`,
-        [ctx.matchId, ctx.mapId, assister, victim],
-      );
+      await fx.assist(ctx, assister, victim);
       expect(await stats(assister)).toMatchObject({ assists: 1 });
 
       await postgres.query("DELETE FROM player_assists WHERE match_id = $1", [
@@ -220,19 +175,10 @@ describe("player stats triggers (SQL-driven)", () => {
   describe("season attribution", () => {
     const D = (ymd: string) => new Date(`${ymd}T00:00:00Z`).toISOString();
 
-    const enableSeasons = () =>
-      postgres.query(
-        `INSERT INTO settings (name, value) VALUES ('public.seasons_enabled', 'true')
-         ON CONFLICT (name) DO UPDATE SET value = 'true'`,
-      );
+    const enableSeasons = () => fx.enableSeasons();
 
-    const createSeason = async (start: string, end: string | null) => {
-      const [row] = await postgres.query<Array<{ id: string }>>(
-        "INSERT INTO seasons (starts_at, ends_at) VALUES ($1, $2) RETURNING id",
-        [start, end],
-      );
-      return row.id;
-    };
+    const createSeason = (start: string, end: string | null) =>
+      fx.season(start, end);
 
     const seasonStats = async (steam: string, seasonId: string) => {
       const [row] = await postgres.query<
@@ -323,12 +269,7 @@ describe("player stats triggers (SQL-driven)", () => {
       const assister = await seedPlayer();
       const victim = await seedPlayer();
 
-      await postgres.query(
-        `INSERT INTO player_assists
-           (match_id, match_map_id, "time", round, attacker_steam_id, attacker_team, attacked_steam_id, attacked_team)
-         VALUES ($1, $2, $3, 1, $4, 'TERRORIST', $5, 'CT')`,
-        [ctx.matchId, ctx.mapId, D("2025-02-15"), assister, victim],
-      );
+      await fx.assist(ctx, assister, victim, D("2025-02-15"));
 
       expect(await seasonStats(assister, seasonId)).toMatchObject({
         assists: 1,

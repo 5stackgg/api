@@ -1,4 +1,5 @@
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { Fixtures } from "./utils/fixtures";
 import {
   bootMigratedDb,
   seedRegionWithServer,
@@ -11,10 +12,12 @@ import {
 describe("region veto (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
+  let fx: Fixtures;
 
   beforeAll(async () => {
     db = await bootMigratedDb("RegionVetoTest");
     postgres = db.postgres;
+    fx = new Fixtures(postgres);
     await seedRegionWithServer(postgres, "TestA", 27015);
     await seedRegionWithServer(postgres, "TestB", 27016);
     await seedRegionWithServer(postgres, "TestC", 27017);
@@ -41,25 +44,8 @@ describe("region veto (SQL-driven)", () => {
     regions: Array<string>,
     { mapVeto = false } = {},
   ) => {
-    const [pool] = await postgres.query<Array<{ id: string }>>(
-      "INSERT INTO map_pools (type) VALUES ('Custom') RETURNING id",
-    );
-    await postgres.query(
-      `INSERT INTO _map_pool (map_pool_id, map_id)
-       SELECT $1, id FROM maps WHERE type = 'Competitive' ORDER BY name LIMIT 1`,
-      [pool.id],
-    );
-    const [options] = await postgres.query<Array<{ id: string }>>(
-      `INSERT INTO match_options (mr, best_of, type, map_pool_id, map_veto, region_veto, regions)
-       VALUES (12, 1, 'Competitive', $1, $2, true, $3) RETURNING id`,
-      [pool.id, mapVeto, regions],
-    );
-    const [match] = await postgres.query<
-      Array<{ id: string; lineup_1_id: string; lineup_2_id: string }>
-    >(
-      "INSERT INTO matches (match_options_id) VALUES ($1) RETURNING id, lineup_1_id, lineup_2_id",
-      [options.id],
-    );
+    const { poolId } = await fx.mapPool(1);
+    const match = await fx.match({ regions, mapVeto, mapPoolId: poolId });
     await postgres.query("UPDATE matches SET status = 'Veto' WHERE id = $1", [
       match.id,
     ]);

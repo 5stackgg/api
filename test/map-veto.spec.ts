@@ -1,4 +1,5 @@
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { Fixtures } from "./utils/fixtures";
 import {
   bootMigratedDb,
   seedRegionWithServer,
@@ -12,10 +13,12 @@ import {
 describe("map veto (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
+  let fx: Fixtures;
 
   beforeAll(async () => {
     db = await bootMigratedDb("MapVetoTest");
     postgres = db.postgres;
+    fx = new Fixtures(postgres);
     await seedRegionWithServer(postgres, "TestA");
   }, 600_000);
 
@@ -28,34 +31,11 @@ describe("map veto (SQL-driven)", () => {
     await postgres.query("DELETE FROM match_options");
   });
 
-  const createPool = async (size: number) => {
-    const [pool] = await postgres.query<Array<{ id: string }>>(
-      "INSERT INTO map_pools (type) VALUES ('Custom') RETURNING id",
-    );
-    const maps = await postgres.query<Array<{ id: string }>>(
-      `INSERT INTO _map_pool (map_pool_id, map_id)
-       SELECT $1, id FROM maps WHERE type = 'Competitive' ORDER BY name LIMIT $2
-       RETURNING map_id AS id`,
-      [pool.id, size],
-    );
-    return { poolId: pool.id, mapIds: maps.map((m) => m.id) };
-  };
-
   // A match sitting in Veto: single viable region (pre-selected on insert) so
   // only the map veto is outstanding when we push it towards Live.
   const createVetoMatch = async (bestOf: number, poolSize: number) => {
-    const { poolId, mapIds } = await createPool(poolSize);
-    const [options] = await postgres.query<Array<{ id: string }>>(
-      `INSERT INTO match_options (mr, best_of, type, map_pool_id, map_veto, region_veto, regions)
-       VALUES (12, $1, 'Competitive', $2, true, true, '{TestA}') RETURNING id`,
-      [bestOf, poolId],
-    );
-    const [match] = await postgres.query<
-      Array<{ id: string; lineup_1_id: string; lineup_2_id: string }>
-    >(
-      "INSERT INTO matches (match_options_id) VALUES ($1) RETURNING id, lineup_1_id, lineup_2_id",
-      [options.id],
-    );
+    const { poolId, mapIds } = await fx.mapPool(poolSize);
+    const match = await fx.match({ bestOf, mapVeto: true, mapPoolId: poolId });
     // tbu_matches redirects Live to Veto while maps are missing.
     await postgres.query("UPDATE matches SET status = 'Live' WHERE id = $1", [
       match.id,
@@ -139,18 +119,8 @@ describe("map veto (SQL-driven)", () => {
   });
 
   it("reports no active veto step outside the Veto status", async () => {
-    const { poolId } = await createPool(3);
-    const [options] = await postgres.query<Array<{ id: string }>>(
-      `INSERT INTO match_options (mr, best_of, type, map_pool_id, map_veto, region_veto, regions)
-       VALUES (12, 1, 'Competitive', $1, true, true, '{TestA}') RETURNING id`,
-      [poolId],
-    );
-    const [match] = await postgres.query<
-      Array<{ id: string; lineup_1_id: string }>
-    >(
-      "INSERT INTO matches (match_options_id) VALUES ($1) RETURNING id, lineup_1_id",
-      [options.id],
-    );
+    const { poolId } = await fx.mapPool(3);
+    const match = await fx.match({ mapVeto: true, mapPoolId: poolId });
 
     // Still PickingPlayers: no veto type, no picking lineup, and the Hasura
     // permission function (the actual gate for inserts) denies the pick.

@@ -1,4 +1,5 @@
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { Fixtures } from "./utils/fixtures";
 import {
   bootMigratedDb,
   runAsUser,
@@ -13,11 +14,12 @@ import {
 describe("teams, rosters and lineup membership (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
-  let seq = 0;
+  let fx: Fixtures;
 
   beforeAll(async () => {
     db = await bootMigratedDb("TeamRostersTest");
     postgres = db.postgres;
+    fx = new Fixtures(postgres);
     await seedRegionWithServer(postgres, "TestA");
   }, 600_000);
 
@@ -32,16 +34,7 @@ describe("teams, rosters and lineup membership (SQL-driven)", () => {
     await postgres.query("DELETE FROM players");
   });
 
-  const nextSteam = () => (76561190000000000n + BigInt(++seq)).toString();
-
-  const seedPlayer = async () => {
-    const steam = nextSteam();
-    await postgres.query(
-      "INSERT INTO players (steam_id, name) VALUES ($1, $2)",
-      [steam, `p${seq}`],
-    );
-    return steam;
-  };
+  const seedPlayer = () => fx.player();
 
   // tbi_team_roster reads current_setting('hasura.user') without a fallback, so
   // roster writes must carry a user context.
@@ -56,7 +49,7 @@ describe("teams, rosters and lineup membership (SQL-driven)", () => {
   const createTeam = async (owner: string) => {
     const [team] = await postgres.query<Array<{ id: string }>>(
       "INSERT INTO teams (name, short_name, owner_steam_id) VALUES ($1, $1, $2) RETURNING id",
-      [`team${++seq}`, owner],
+      [fx.nextName("team"), owner],
     );
     return team.id;
   };
@@ -175,32 +168,10 @@ describe("teams, rosters and lineup membership (SQL-driven)", () => {
 
   describe("match lineup membership", () => {
     // Wingman keeps lineups at two slots, enough for captain-handover tests.
-    const createMatch = async () => {
-      const [pool] = await postgres.query<Array<{ id: string }>>(
-        "SELECT id FROM map_pools WHERE type = 'Wingman' AND seed = true",
-      );
-      const [options] = await postgres.query<Array<{ id: string }>>(
-        `INSERT INTO match_options (mr, best_of, type, map_pool_id, map_veto, region_veto, regions)
-         VALUES (8, 1, 'Wingman', $1, true, true, '{TestA}') RETURNING id`,
-        [pool.id],
-      );
-      const [match] = await postgres.query<
-        Array<{ id: string; lineup_1_id: string; lineup_2_id: string }>
-      >(
-        "INSERT INTO matches (match_options_id) VALUES ($1) RETURNING id, lineup_1_id, lineup_2_id",
-        [options.id],
-      );
-      return match;
-    };
+    const createMatch = () => fx.match({ type: "Wingman", mr: 8, mapVeto: true });
 
-    const addPlayer = async (lineupId: string, steam?: string) => {
-      const s = steam ?? (await seedPlayer());
-      await postgres.query(
-        "INSERT INTO match_lineup_players (match_lineup_id, steam_id) VALUES ($1, $2)",
-        [lineupId, s],
-      );
-      return s;
-    };
+    const addPlayer = (lineupId: string, steam?: string) =>
+      fx.lineupPlayer(lineupId, steam);
 
     const lineupPlayers = (lineupId: string) =>
       postgres.query<Array<{ steam_id: string; captain: boolean }>>(

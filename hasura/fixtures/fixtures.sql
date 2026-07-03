@@ -1951,7 +1951,9 @@ BEGIN
     ('Asia',          'Asia',            false),
     ('Australia',     'Australia',       false),
     ('Middle East',   'Middle East',     false),
-    ('Africa',        'Africa',          false)
+    ('Africa',        'Africa',          false),
+    -- Same spelling as seeds/game-server-node-regions.sql; triggers match on 'Lan'.
+    ('Lan',           'Lan',             true)
   ON CONFLICT (value) DO NOTHING;
 
   INSERT INTO game_server_nodes (id, public_ip, lan_ip, start_port_range, end_port_range, region, status, enabled, label)
@@ -1965,7 +1967,7 @@ BEGIN
     ('fixture-node-australia',    '198.51.100.7'::inet,  NULL, 27015, 27025, 'Australia',     'Online', true, 'Fixture Australia'),
     ('fixture-node-middle-east',  '198.51.100.8'::inet,  NULL, 27015, 27025, 'Middle East',   'Online', true, 'Fixture Middle East'),
     ('fixture-node-africa',       '198.51.100.9'::inet,  NULL, 27015, 27025, 'Africa',        'Online', true, 'Fixture Africa'),
-    ('fixture-node-lan',          '198.51.100.10'::inet, '192.168.1.100'::inet, 27015, 27025, 'LAN', 'Online', true, 'Fixture LAN')
+    ('fixture-node-lan',          '198.51.100.10'::inet, '192.168.1.100'::inet, 27015, 27025, 'Lan', 'Online', true, 'Fixture LAN')
   ON CONFLICT (id) DO UPDATE SET
     public_ip        = EXCLUDED.public_ip,
     lan_ip           = EXCLUDED.lan_ip,

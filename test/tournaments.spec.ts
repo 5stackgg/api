@@ -1,4 +1,5 @@
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { Fixtures } from "./utils/fixtures";
 import {
   bootMigratedDb,
   runAsUser,
@@ -14,11 +15,12 @@ import {
 describe("tournaments (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
-  let seq = 0;
+  let fx: Fixtures;
 
   beforeAll(async () => {
     db = await bootMigratedDb("TournamentsTest");
     postgres = db.postgres;
+    fx = new Fixtures(postgres, 76561199000000000n);
     await seedRegionWithServer(postgres, "TestA");
   }, 600_000);
 
@@ -37,36 +39,11 @@ describe("tournaments (SQL-driven)", () => {
     await postgres.query("DELETE FROM players");
   });
 
-  const nextSteam = () => (76561199000000000n + BigInt(++seq)).toString();
-
-  const seedPlayer = async () => {
-    const steam = nextSteam();
-    await postgres.query(
-      "INSERT INTO players (steam_id, name) VALUES ($1, $2)",
-      [steam, `p${seq}`],
-    );
-    return steam;
-  };
+  const seedPlayer = () => fx.player();
 
   // A team whose roster is the owner plus `mates` extra players. Wingman
   // tournaments need two per lineup, so one mate makes a team eligible.
-  const createTeam = async (mates = 1) => {
-    const owner = await seedPlayer();
-    const [team] = await postgres.query<Array<{ id: string }>>(
-      "INSERT INTO teams (name, short_name, owner_steam_id) VALUES ($1, $1, $2) RETURNING id",
-      [`team${seq}`, owner],
-    );
-    for (let i = 0; i < mates; i++) {
-      const mate = await seedPlayer();
-      await runAsUser(postgres, owner, "admin", (query) =>
-        query(
-          "INSERT INTO team_roster (team_id, player_steam_id, status) VALUES ($1, $2, 'Starter')",
-          [team.id, mate],
-        ),
-      );
-    }
-    return { id: team.id, owner };
-  };
+  const createTeam = (mates = 1) => fx.team(mates);
 
   const createTournament = async ({
     withStage = true,
@@ -81,7 +58,7 @@ describe("tournaments (SQL-driven)", () => {
     const [tournament] = await postgres.query<Array<{ id: string }>>(
       `INSERT INTO tournaments (name, start, organizer_steam_id, match_options_id, status)
        VALUES ($1, now() + $2::interval, $3, $4, 'Setup') RETURNING id`,
-      [`cup${seq}`, start, organizer, options.id],
+      [fx.nextName("cup"), start, organizer, options.id],
     );
     if (withStage) {
       await postgres.query(
