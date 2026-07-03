@@ -1,0 +1,69 @@
+table:
+  name: event_organizers
+  schema: public
+object_relationships:
+  - name: event
+    using:
+      foreign_key_constraint_on: event_id
+  - name: organizer
+    using:
+      foreign_key_constraint_on: steam_id
+insert_permissions:
+  - role: tournament_organizer
+    permission:
+      check: {}
+      columns:
+        - event_id
+        - steam_id
+    comment: ""
+  - role: user
+    permission:
+      check:
+        event:
+          organizer_steam_id:
+            _eq: X-Hasura-User-Id
+      columns:
+        - event_id
+        - steam_id
+    comment: ""
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - created_at
+        - event_id
+        - steam_id
+      filter:
+        event:
+          status:
+            _neq: Setup
+      allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - created_at
+        - event_id
+        - steam_id
+      filter:
+        _or:
+          - event:
+              is_organizer:
+                _eq: true
+          - event:
+              status:
+                _neq: Setup
+      allow_aggregations: true
+    comment: ""
+delete_permissions:
+  - role: tournament_organizer
+    permission:
+      filter: {}
+    comment: ""
+  - role: user
+    permission:
+      filter:
+        event:
+          organizer_steam_id:
+            _eq: X-Hasura-User-Id
+    comment: ""
