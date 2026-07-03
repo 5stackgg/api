@@ -31,6 +31,7 @@ import { K8sModule } from "src/k8s/k8s.module";
 import { GameStreamerModule } from "../matches/game-streamer/game-streamer.module";
 import { BakeShaders } from "./jobs/BakeShaders";
 import { ValidateGamedata } from "./jobs/ValidateGamedata";
+import { ReleaseChannelModule } from "src/release-channel/release-channel.module";
 
 @Module({
   providers: [
@@ -55,6 +56,7 @@ import { ValidateGamedata } from "./jobs/ValidateGamedata";
     RconModule,
     K8sModule,
     GameStreamerModule,
+    ReleaseChannelModule,
     BullModule.registerQueue(
       {
         name: GameServerQueues.GameUpdate,

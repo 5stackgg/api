@@ -20,6 +20,7 @@ import { AppConfig } from "../../configs/types/AppConfig";
 import { SteamConfig } from "../../configs/types/SteamConfig";
 import { resolveInClusterApiBase } from "../clips/clips.constants";
 import { LoggingService } from "../../k8s/logging/logging.service";
+import { ReleaseChannelService } from "../../release-channel/release-channel.service";
 import {
   SteamAccountService,
   ClaimedSteamAccount,
@@ -140,6 +141,7 @@ export class GameStreamerService {
     private readonly demoMetadata: DemoMetadataService,
     private readonly loggingService: LoggingService,
     private readonly steamAccounts: SteamAccountService,
+    private readonly releaseChannel: ReleaseChannelService,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
     this.appConfig = this.config.get<AppConfig>("app");
@@ -782,7 +784,7 @@ export class GameStreamerService {
 
     await batch.createNamespacedJob({
       namespace: this.namespace,
-      body: this.buildJobSpec(
+      body: await this.buildJobSpec(
         jobName,
         matchId,
         "demo",
@@ -1477,7 +1479,7 @@ export class GameStreamerService {
     try {
       await batch.createNamespacedJob({
         namespace: this.namespace,
-        body: this.buildJobSpec(
+        body: await this.buildJobSpec(
           jobName,
           matchId,
           "live",
@@ -2197,7 +2199,7 @@ export class GameStreamerService {
     try {
       await batch.createNamespacedJob({
         namespace: this.namespace,
-        body: this.buildJobSpec(
+        body: await this.buildJobSpec(
           jobName,
           matchId,
           "batch-highlights",
@@ -2785,7 +2787,7 @@ export class GameStreamerService {
 
     await batch.createNamespacedJob({
       namespace: this.namespace,
-      body: this.buildJobSpec(
+      body: await this.buildJobSpec(
         jobName,
         gameServerNodeId,
         "warm-shaders",
@@ -3003,7 +3005,7 @@ export class GameStreamerService {
     });
   }
 
-  private buildJobSpec(
+  private async buildJobSpec(
     jobName: string,
     matchId: string,
     mode: StreamerMode,
@@ -3011,7 +3013,10 @@ export class GameStreamerService {
     extraEnv: V1EnvVar[],
     extraLabels: Record<string, string> = {},
     steamAccount: ClaimedSteamAccount | null = null,
-  ): V1Job {
+  ): Promise<V1Job> {
+    const gameStreamerImage = await this.releaseChannel.resolveChannelImage(
+      this.gameServerConfig.gameStreamerImage,
+    );
     const steamUser = steamAccount?.username ?? this.steamConfig.steamUser;
     const steamPassword =
       steamAccount?.password ?? this.steamConfig.steamPassword;
@@ -3099,7 +3104,7 @@ export class GameStreamerService {
               {
                 name: containerName,
                 // Override via GAME_STREAMER_IMAGE (see configs/game-servers.ts).
-                image: this.gameServerConfig.gameStreamerImage,
+                image: gameStreamerImage,
                 // Mutable tag; force each pod start to resolve the latest digest.
                 imagePullPolicy: "Always",
                 securityContext: { privileged: true },

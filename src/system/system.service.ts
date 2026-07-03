@@ -15,6 +15,7 @@ import { DiscordConfig } from "src/configs/types/DiscordConfig";
 import { SteamConfig } from "src/configs/types/SteamConfig";
 import { PostgresService } from "src/postgres/postgres.service";
 import { SystemSettingName } from "./enums/SystemSettingName";
+import { ReleaseChannelService } from "src/release-channel/release-channel.service";
 
 @Injectable()
 export class SystemService {
@@ -36,6 +37,18 @@ export class SystemService {
     "hasura",
   ];
 
+  private static CHANNEL_WORKLOADS: Record<
+    string,
+    { kind: "Deployment" | "DaemonSet"; initContainer?: string }
+  > = {
+    api: { kind: "Deployment" },
+    web: { kind: "Deployment" },
+    "demo-parser": { kind: "Deployment" },
+    hasura: { kind: "Deployment", initContainer: "migrations" },
+    "game-server-node-connector": { kind: "DaemonSet" },
+    "game-server-node-connector-nvidia": { kind: "DaemonSet" },
+  };
+
   private serviceRegistry(service: string) {
     return SystemService.SERVICE_TO_REGISTRY[service] ?? service;
   }
@@ -46,6 +59,7 @@ export class SystemService {
     private readonly config: ConfigService,
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
+    private readonly releaseChannel: ReleaseChannelService,
   ) {
     const kc = new KubeConfig();
     kc.loadFromDefault();
@@ -166,16 +180,129 @@ export class SystemService {
   }
 
   public async updateServices() {
+    const patchedServices = await this.reconcileChannelImages();
     const services = await this.getServices();
     const latestVersions = await this.getLatestVersions();
 
     for (const { pod, service, version } of Object.values(services)) {
-      if (version === latestVersions[this.serviceRegistry(service)]) {
+      if (patchedServices.has(service)) {
+        continue;
+      }
+
+      const target = latestVersions[this.serviceRegistry(service)];
+
+      if (!target || version === target.digest) {
         continue;
       }
 
       void this.restartService(service, pod);
     }
+  }
+
+  public async reconcileChannelImages(): Promise<Set<string>> {
+    const latestVersions = await this.getLatestVersions();
+    const patched = new Set<string>();
+
+    for (const [service, workload] of Object.entries(
+      SystemService.CHANNEL_WORKLOADS,
+    )) {
+      const target = latestVersions[this.serviceRegistry(service)];
+      if (!target) {
+        continue;
+      }
+
+      try {
+        const container = await this.getWorkloadContainer(service, workload);
+        if (!container?.image) {
+          continue;
+        }
+
+        const currentTag = container.image.match(/:([^:/]+)$/)?.[1] ?? "latest";
+        if (currentTag === target.tag) {
+          continue;
+        }
+
+        const image = container.image.replace(/:[^:/]+$/, `:${target.tag}`);
+        await this.setWorkloadImage(service, workload, container.name, image);
+        patched.add(service);
+      } catch (error) {
+        this.logger.warn(
+          `Unable to reconcile channel image for ${service}`,
+          error,
+        );
+      }
+    }
+
+    return patched;
+  }
+
+  private async getWorkloadContainer(
+    service: string,
+    workload: { kind: "Deployment" | "DaemonSet"; initContainer?: string },
+    namespace = "5stack",
+  ) {
+    try {
+      const resource =
+        workload.kind === "DaemonSet"
+          ? await this.appsClient.readNamespacedDaemonSet({
+              name: service,
+              namespace,
+            })
+          : await this.appsClient.readNamespacedDeployment({
+              name: service,
+              namespace,
+            });
+
+      const spec = resource.spec?.template?.spec;
+
+      if (workload.initContainer) {
+        return spec?.initContainers?.find(
+          (container) => container.name === workload.initContainer,
+        );
+      }
+
+      return spec?.containers?.[0];
+    } catch {
+      return undefined;
+    }
+  }
+
+  private async setWorkloadImage(
+    service: string,
+    workload: { kind: "Deployment" | "DaemonSet"; initContainer?: string },
+    containerName: string,
+    image: string,
+    namespace = "5stack",
+  ) {
+    const podSpec = workload.initContainer
+      ? { initContainers: [{ name: containerName, image }] }
+      : { containers: [{ name: containerName, image }] };
+
+    const patch = {
+      name: service,
+      namespace,
+      body: {
+        spec: {
+          template: {
+            spec: podSpec,
+          },
+        },
+      },
+    };
+
+    if (workload.kind === "DaemonSet") {
+      await this.appsClient.patchNamespacedDaemonSet(
+        patch,
+        setHeaderOptions("Content-Type", PatchStrategy.StrategicMergePatch),
+      );
+    } else {
+      await this.appsClient.patchNamespacedDeployment(
+        patch,
+        setHeaderOptions("Content-Type", PatchStrategy.StrategicMergePatch),
+      );
+    }
+
+    this.logger.log(`Set ${workload.kind} ${service} image to ${image}`);
   }
 
   public async restartService(service: string, pod?: string) {
@@ -193,8 +320,9 @@ export class SystemService {
         await this.restartPod(pod);
       }
     } finally {
+      const channel = await this.releaseChannel.getReleaseChannel();
       await this.cache.forget(
-        this.getServiceCacheKey(this.serviceRegistry(service)),
+        this.getServiceCacheKey(channel, this.serviceRegistry(service)),
       );
     }
   }
@@ -213,17 +341,18 @@ export class SystemService {
       });
     }
 
+    const channel = await this.releaseChannel.getReleaseChannel();
     const services = await this.getServices();
     const latestVersions = await this.getLatestVersions();
 
     for (const { service, version, pod } of Object.values(services)) {
-      const latestVersion = latestVersions[this.serviceRegistry(service)];
-      if (version !== latestVersion) {
+      const target = latestVersions[this.serviceRegistry(service)];
+      if (target && version !== target.digest) {
         hasUpdates.push({
           service,
           pod,
           currentVersion: version,
-          newVersion: latestVersion,
+          newVersion: target.digest,
         });
       }
     }
@@ -243,57 +372,97 @@ export class SystemService {
         __typename: true,
       },
     });
+
+    const channelStatus = Object.entries(latestVersions)
+      .filter(([service]) => service !== "hasura")
+      .map(([service, target]) => ({
+        service,
+        tag: target.tag,
+        fellBack: channel === "beta" && target.tag !== "beta",
+      }));
+
+    await this.hasura.mutation({
+      insert_settings_one: {
+        __args: {
+          object: {
+            name: SystemSettingName.ReleaseChannelStatus,
+            value: JSON.stringify({ channel, services: channelStatus }),
+          },
+          on_conflict: {
+            constraint: "settings_pkey",
+            update_columns: ["value"],
+          },
+        },
+        __typename: true,
+      },
+    });
   }
 
-  public async getLatestVersions(): Promise<Record<string, string>> {
+  public async getLatestVersions(): Promise<
+    Record<string, { digest: string; tag: string }>
+  > {
+    const channel = await this.releaseChannel.getReleaseChannel();
     const registries = [
       "api",
       "web",
       "game-server-node-connector",
       "demo-parser",
     ];
-    const latestVersions: Record<string, string> = {};
+    const latestVersions: Record<string, { digest: string; tag: string }> = {};
 
     for (const registry of registries) {
       const data = await this.cache.remember<{
         service: string;
-        latestVersion: string;
+        digest: string;
+        tag: string;
       }>(
-        this.getServiceCacheKey(registry),
+        this.getServiceCacheKey(channel, registry),
         async () => {
-          const token = await this.getToken(registry);
-          const latestManifestResponse = await fetch(
-            `https://ghcr.io/v2/5stackgg/${registry}/manifests/latest`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/vnd.oci.image.index.v1+json",
-              },
-            },
+          const { digest, tag } = await this.fetchChannelManifest(
+            registry,
+            channel,
           );
-
-          if (!latestManifestResponse.ok) {
-            throw new Error(
-              `Failed to fetch manifest [${registry}]: ${latestManifestResponse.statusText}`,
-            );
-          }
-
-          return {
-            service: registry,
-            latestVersion: latestManifestResponse.headers.get(
-              "docker-content-digest",
-            ),
-          };
+          return { service: registry, digest, tag };
         },
         300,
       );
 
-      latestVersions[data.service] = data.latestVersion;
+      latestVersions[data.service] = { digest: data.digest, tag: data.tag };
     }
 
     latestVersions.hasura = latestVersions.api;
 
     return latestVersions;
+  }
+
+  private async fetchChannelManifest(registry: string, channel: string) {
+    const tags = channel === "latest" ? ["latest"] : ["beta", "latest"];
+
+    const token = await this.getToken(registry);
+
+    let lastError: string;
+    for (const tag of tags) {
+      const response = await fetch(
+        `https://ghcr.io/v2/5stackgg/${registry}/manifests/${tag}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.oci.image.index.v1+json",
+          },
+        },
+      );
+
+      if (response.ok) {
+        return {
+          digest: response.headers.get("docker-content-digest"),
+          tag,
+        };
+      }
+
+      lastError = response.statusText;
+    }
+
+    throw new Error(`Failed to fetch manifest [${registry}]: ${lastError}`);
   }
 
   public async restartPod(pod: string) {
@@ -409,8 +578,8 @@ export class SystemService {
     return token;
   }
 
-  private getServiceCacheKey(service: string) {
-    return `version:v2:${service}`;
+  private getServiceCacheKey(channel: string, service: string) {
+    return `version:v3:${channel}:${service}`;
   }
 
   private async getPanelVersion() {
@@ -428,7 +597,7 @@ export class SystemService {
 
   private async getLatestPanelVersion() {
     return await this.cache.remember<string>(
-      this.getServiceCacheKey("panel"),
+      this.getServiceCacheKey("na", "panel"),
       async () => {
         try {
           const response = await fetch(

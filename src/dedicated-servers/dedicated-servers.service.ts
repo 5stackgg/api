@@ -10,6 +10,7 @@ import { RconService } from "src/rcon/rcon.service";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
 import { Redis } from "ioredis";
 import { SystemService } from "src/system/system.service";
+import { ReleaseChannelService } from "src/release-channel/release-channel.service";
 
 @Injectable()
 export class DedicatedServersService {
@@ -30,6 +31,7 @@ export class DedicatedServersService {
     private readonly RconService: RconService,
     private readonly redisManager: RedisManagerService,
     private readonly systemService: SystemService,
+    private readonly releaseChannel: ReleaseChannelService,
   ) {
     this.redis = this.redisManager.getConnection();
 
@@ -135,6 +137,8 @@ export class DedicatedServersService {
           /:.+$/,
           `:v${pinPluginVersion.toString()}`,
         );
+      } else {
+        pluginImage = await this.releaseChannel.resolveChannelImage(pluginImage);
       }
 
       const dedicatedServerDeploymentName =

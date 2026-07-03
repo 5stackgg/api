@@ -57,6 +57,9 @@ describe("MatchAssistantService", () => {
       hasura as any,
       {} as any,
       loggingService as any,
+      {
+        resolveChannelImage: jest.fn(async (image: string) => image),
+      } as any,
       queue as any,
     );
   });

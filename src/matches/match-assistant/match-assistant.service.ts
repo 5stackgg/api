@@ -27,6 +27,7 @@ import { AppConfig } from "src/configs/types/AppConfig";
 import { FailedToCreateOnDemandServer } from "../errors/FailedToCreateOnDemandServer";
 import { LoggingService } from "src/k8s/logging/logging.service";
 import type { MatchServerBootDiagnostic } from "src/k8s/logging/bootDiagnostics";
+import { ReleaseChannelService } from "src/release-channel/release-channel.service";
 
 @Injectable()
 export class MatchAssistantService {
@@ -57,6 +58,7 @@ export class MatchAssistantService {
     private readonly hasura: HasuraService,
     private readonly encryption: EncryptionService,
     private readonly loggingService: LoggingService,
+    private readonly releaseChannel: ReleaseChannelService,
     @InjectQueue(MatchQueues.MatchServers) private queue: Queue,
   ) {
     this.appConfig = this.config.get<AppConfig>("app");
@@ -759,6 +761,9 @@ export class MatchAssistantService {
               /:.+$/,
               `:v${pinPluginVersion.toString()}`,
             );
+          } else {
+            pluginImage =
+              await this.releaseChannel.resolveChannelImage(pluginImage);
           }
 
           const fivestackRanksSettingName = match.is_tournament_match

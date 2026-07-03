@@ -576,6 +576,12 @@ type Mutation {
 }
 
 type Mutation {
+  setReleaseChannel(
+    channel: String!
+  ): SuccessOutput
+}
+
+type Mutation {
   resumeClipRenderBatch(
     match_map_id: uuid!
   ): SuccessOutput

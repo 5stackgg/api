@@ -20,6 +20,7 @@ import { K8sModule } from "src/k8s/k8s.module";
 import { ChatModule } from "src/chat/chat.module";
 import { SystemSettingName } from "./enums/SystemSettingName";
 import { ChatService } from "src/chat/chat.service";
+import { ReleaseChannelModule } from "src/release-channel/release-channel.module";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ChatService } from "src/chat/chat.service";
     S3Module,
     PostgresModule,
     ChatModule,
+    ReleaseChannelModule,
     BullModule.registerQueue({
       name: SystemQueues.Version,
     }),
