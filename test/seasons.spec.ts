@@ -194,7 +194,7 @@ describe("seasons (SQL-driven)", () => {
 
     await postgres.query("DELETE FROM seasons WHERE id = $1", [s1.id]);
 
-    const rows = await postgres.query(
+    const rows = await postgres.query<Array<unknown>>(
       `SELECT 1 FROM player_season_stats WHERE season_id = $1`,
       [s1.id],
     );

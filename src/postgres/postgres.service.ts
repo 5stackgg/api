@@ -27,9 +27,11 @@ export class PostgresService {
     bindings?: Array<
       | string
       | number
+      | boolean
       | Date
       | bigint
       | Buffer
+      | null
       | Array<string>
       | Array<number>
       | Array<Date>

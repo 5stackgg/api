@@ -85,7 +85,7 @@ describe("map veto (SQL-driven)", () => {
     postgres.query(
       `INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, side)
        VALUES ($1, $2, $3, $4, $5)`,
-      [matchId, type, lineupId, mapId, side as never],
+      [matchId, type, lineupId, mapId, side],
     );
 
   it("computes the CS rulebook patterns", async () => {
