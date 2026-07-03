@@ -11,5 +11,6 @@ export class CheckSystemUpdateJob extends WorkerHost {
 
   async process(): Promise<void> {
     await this.system.setVersions();
+    await this.system.reconcileChannelImages();
   }
 }

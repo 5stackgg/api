@@ -17,6 +17,7 @@ import { S3Module } from "../../s3/s3.module";
 import { RedisModule } from "../../redis/redis.module";
 import { DemosModule } from "../../demos/demos.module";
 import { K8sModule } from "../../k8s/k8s.module";
+import { ReleaseChannelModule } from "../../release-channel/release-channel.module";
 import { loggerFactory } from "../../utilities/LoggerFactory";
 
 @Module({
@@ -28,6 +29,7 @@ import { loggerFactory } from "../../utilities/LoggerFactory";
     RedisModule,
     DemosModule,
     K8sModule,
+    ReleaseChannelModule,
   ],
   controllers: [
     GameStreamerController,

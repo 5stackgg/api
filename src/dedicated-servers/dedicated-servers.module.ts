@@ -14,6 +14,7 @@ import { getQueuesProcessors } from "src/utilities/QueueProcessors";
 import { RconModule } from "src/rcon/rcon.module";
 import { RedisModule } from "src/redis/redis.module";
 import { SystemModule } from "src/system/system.module";
+import { ReleaseChannelModule } from "src/release-channel/release-channel.module";
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { SystemModule } from "src/system/system.module";
     RconModule,
     RedisModule,
     SystemModule,
+    ReleaseChannelModule,
   ],
   providers: [
     DedicatedServersService,

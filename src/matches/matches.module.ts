@@ -62,10 +62,12 @@ import { GameStreamerModule } from "./game-streamer/game-streamer.module";
 import { DemosModule } from "../demos/demos.module";
 import { ClipsModule } from "./clips/clips.module";
 import { SteamMatchHistoryModule } from "../steam-match-history/steam-match-history.module";
+import { ReleaseChannelModule } from "src/release-channel/release-channel.module";
 
 @Module({
   imports: [
     HasuraModule,
+    ReleaseChannelModule,
     forwardRef(() => RconModule),
     CacheModule,
     RedisModule,

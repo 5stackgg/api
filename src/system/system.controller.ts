@@ -160,6 +160,31 @@ export class SystemController {
   }
 
   @HasuraAction()
+  public async setReleaseChannel(data: { channel: string }) {
+    const channel = data.channel === "beta" ? "beta" : "latest";
+
+    await this.hasura.mutation({
+      insert_settings_one: {
+        __args: {
+          object: {
+            name: SystemSettingName.ReleaseChannel,
+            value: channel,
+          },
+          on_conflict: {
+            constraint: "settings_pkey",
+            update_columns: ["value"],
+          },
+        },
+        __typename: true,
+      },
+    });
+
+    return {
+      success: true,
+    };
+  }
+
+  @HasuraAction()
   public async registerName(data: { user: User; name: string }) {
     await this.hasura.mutation({
       update_players_by_pk: {
@@ -293,6 +318,16 @@ export class SystemController {
     ) {
       const ttl = parseInt(data.new.value, 10);
       await this.chatService.updateChatMessageTTL(isNaN(ttl) ? 60 * 60 : ttl);
+    }
+
+    if (
+      (data.new.name === SystemSettingName.ReleaseChannel ||
+        data.old.name === SystemSettingName.ReleaseChannel) &&
+      (data.op === "INSERT" ||
+        data.op === "DELETE" ||
+        data.new.value !== data.old.value)
+    ) {
+      void this.system.updateServices();
     }
 
     await this.system.updateDefaultOptions();

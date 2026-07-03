@@ -21,6 +21,7 @@ import { NodeDisk } from "./interfaces/NodeDisk";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { GameServerQueues } from "./enums/GameServerQueues";
+import { ReleaseChannelService } from "src/release-channel/release-channel.service";
 
 export type GamedataValidationResult = {
   build_id?: number | null;
@@ -61,6 +62,7 @@ export class GameServerNodeService {
     protected readonly hasura: HasuraService,
     redisManager: RedisManagerService,
     protected readonly loggingService: LoggingService,
+    protected readonly releaseChannel: ReleaseChannelService,
     @InjectQueue(GameServerQueues.ValidateGamedata)
     private readonly validateGamedataQueue: Queue,
   ) {
@@ -477,6 +479,10 @@ export class GameServerNodeService {
         ? `serverfiles-csgo-${sanitizedGameServerNodeId}`
         : `serverfiles-${sanitizedGameServerNodeId}`;
 
+    const updateImage = await this.releaseChannel.resolveChannelImage(
+      "ghcr.io/5stackgg/game-server:latest",
+    );
+
     try {
       await this.batchApi.createNamespacedJob({
         namespace: this.namespace,
@@ -524,7 +530,7 @@ export class GameServerNodeService {
                 containers: [
                   {
                     name: "update-cs-server",
-                    image: "ghcr.io/5stackgg/game-server:latest",
+                    image: updateImage,
                     command: ["/opt/scripts/update.sh"],
                     env: [
                       {
@@ -880,6 +886,10 @@ export class GameServerNodeService {
       return null;
     }
 
+    const validatorImage = await this.releaseChannel.resolveChannelImage(
+      "ghcr.io/5stackgg/gamedata-validator:latest",
+    );
+
     try {
       await this.batchApi
         .deleteNamespacedJob({
@@ -931,7 +941,7 @@ export class GameServerNodeService {
                 containers: [
                   {
                     name: "validate-gamedata",
-                    image: "ghcr.io/5stackgg/gamedata-validator:latest",
+                    image: validatorImage,
                     args: ["--build-id", buildId.toString()],
                     volumeMounts: [
                       {
