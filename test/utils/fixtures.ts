@@ -38,6 +38,11 @@ export type KillOptions = {
   weapon?: string;
   headshot?: boolean;
   time?: string;
+  round?: number;
+  // The demo parser always records both team sides; the map-stat recompute
+  // filters team kills via attacker_team <> attacked_team.
+  attackerTeam?: string;
+  victimTeam?: string;
 };
 
 export class Fixtures {
@@ -223,17 +228,47 @@ export class Fixtures {
   ): Promise<void> {
     await this.postgres.query(
       `INSERT INTO player_kills
-         (match_id, match_map_id, round, attacker_steam_id, attacked_steam_id,
-          attacked_team, attacked_location, "with", hitgroup, "time", headshot)
-       VALUES ($1, $2, 1, $3, $4, 'CT', 'site', $5, 'head', $6, $7)`,
+         (match_id, match_map_id, round, attacker_steam_id, attacker_team,
+          attacked_steam_id, attacked_team, attacked_location, "with",
+          hitgroup, "time", headshot)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'site', $8, 'head', $9, $10)`,
       [
         ctx.matchId,
         ctx.mapId,
+        opts.round ?? 1,
         attacker,
+        opts.attackerTeam ?? "TERRORIST",
         victim,
+        opts.victimTeam ?? "CT",
         opts.weapon ?? "ak47",
         opts.time ?? new Date().toISOString(),
         opts.headshot ?? false,
+      ],
+    );
+  }
+
+  async damage(
+    ctx: { matchId: string; mapId: string },
+    attacker: string,
+    victim: string,
+    amount: number,
+    opts: { round?: number; attackerTeam?: string; victimTeam?: string } = {},
+  ): Promise<void> {
+    await this.postgres.query(
+      `INSERT INTO player_damages
+         (match_id, match_map_id, round, attacker_steam_id, attacker_team,
+          attacked_steam_id, attacked_team, attacked_location, "with",
+          damage, damage_armor, health, armor, hitgroup, "time")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'site', 'ak47', $8, 0, 100, 100, 'chest', now())`,
+      [
+        ctx.matchId,
+        ctx.mapId,
+        opts.round ?? 1,
+        attacker,
+        opts.attackerTeam ?? "TERRORIST",
+        victim,
+        opts.victimTeam ?? "CT",
+        amount,
       ],
     );
   }
@@ -268,6 +303,39 @@ export class Fixtures {
          ($1, 1, 1, 0, 800, 800, now() - interval '40 minutes', 3, 3, 'CT', 'TERRORIST', 'CT'),
          ($1, 2, $2, $3, 16000, 9000, now(), 3, 3, 'TERRORIST', 'CT', 'TERRORIST')`,
       [mapId, lineup1Score, lineup2Score],
+    );
+  }
+
+  // A single finalized round snapshot with full control over sides and the
+  // winner — the recompute/clutch SQL keys off these fields.
+  async round(
+    mapId: string,
+    roundNumber: number,
+    opts: {
+      l1Score?: number;
+      l2Score?: number;
+      l1Side?: string;
+      l2Side?: string;
+      winningSide?: string;
+      time?: string;
+    } = {},
+  ): Promise<void> {
+    await this.postgres.query(
+      `INSERT INTO match_map_rounds
+         (match_map_id, round, lineup_1_score, lineup_2_score, lineup_1_money, lineup_2_money,
+          "time", lineup_1_timeouts_available, lineup_2_timeouts_available,
+          lineup_1_side, lineup_2_side, winning_side)
+       VALUES ($1, $2, $3, $4, 800, 800, $5, 3, 3, $6, $7, $8)`,
+      [
+        mapId,
+        roundNumber,
+        opts.l1Score ?? 1,
+        opts.l2Score ?? 0,
+        opts.time ?? new Date().toISOString(),
+        opts.l1Side ?? "CT",
+        opts.l2Side ?? "TERRORIST",
+        opts.winningSide ?? "CT",
+      ],
     );
   }
 

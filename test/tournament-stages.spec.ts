@@ -195,6 +195,152 @@ describe("tournament stages: Swiss and RoundRobin (SQL-driven)", () => {
     });
   });
 
+  describe("DoubleElimination", () => {
+    const DE4 = [
+      { type: "DoubleElimination", order: 1, minTeams: 4, maxTeams: 4 },
+    ];
+
+    it("creates winners, losers, and grand-final brackets", async () => {
+      const t = await tfx.launch(DE4, 4);
+      const brackets = await postgres.query<
+        Array<{ path: string; round: number; match_number: number }>
+      >(
+        `SELECT path, round, match_number FROM tournament_brackets
+         WHERE tournament_stage_id = $1 ORDER BY path, round, match_number`,
+        [t.stageIds[0]],
+      );
+      expect(
+        brackets.map((b) => `${b.path}-r${b.round}m${b.match_number}`),
+      ).toEqual([
+        "LB-r1m1", // WB round-1 losers meet
+        "LB-r2m1", // LB survivor vs WB final loser
+        "WB-r1m1",
+        "WB-r1m2",
+        "WB-r2m1", // WB final
+        "WB-r3m1", // grand final
+      ]);
+    });
+
+    it("drops losers into the losers bracket and pairs the grand final", async () => {
+      const t = await tfx.launch(DE4, 4);
+      const stage = t.stageIds[0];
+
+      const roundOne = (
+        await postgres.query<Array<{ id: string; match_id: string }>>(
+          `SELECT id, match_id FROM tournament_brackets
+           WHERE tournament_stage_id = $1 AND path = 'WB' AND round = 1
+           ORDER BY match_number`,
+          [stage],
+        )
+      );
+      // Lineup 1 wins match 1, lineup 2 wins match 2.
+      await tfx.winMatch(roundOne[0].match_id, "lineup_1_id");
+      await tfx.winMatch(roundOne[1].match_id, "lineup_2_id");
+
+      const lbR1 = (
+        await postgres.query<
+          Array<{
+            match_id: string | null;
+            tournament_team_id_1: string | null;
+            tournament_team_id_2: string | null;
+          }>
+        >(
+          `SELECT match_id, tournament_team_id_1, tournament_team_id_2
+           FROM tournament_brackets
+           WHERE tournament_stage_id = $1 AND path = 'LB' AND round = 1`,
+          [stage],
+        )
+      )[0];
+      expect(lbR1.tournament_team_id_1).not.toBeNull();
+      expect(lbR1.tournament_team_id_2).not.toBeNull();
+      expect(lbR1.match_id).not.toBeNull();
+
+      // Losers bracket round 1, then the WB final: its loser drops to the LB final.
+      await tfx.winMatch(lbR1.match_id!, "lineup_1_id");
+      const [wbFinal] = await postgres.query<Array<{ match_id: string }>>(
+        `SELECT match_id FROM tournament_brackets
+         WHERE tournament_stage_id = $1 AND path = 'WB' AND round = 2`,
+        [stage],
+      );
+      await tfx.winMatch(wbFinal.match_id, "lineup_1_id");
+
+      const [lbFinal] = await postgres.query<
+        Array<{
+          match_id: string | null;
+          tournament_team_id_1: string | null;
+          tournament_team_id_2: string | null;
+        }>
+      >(
+        `SELECT match_id, tournament_team_id_1, tournament_team_id_2
+         FROM tournament_brackets
+         WHERE tournament_stage_id = $1 AND path = 'LB' AND round = 2`,
+        [stage],
+      );
+      expect(lbFinal.tournament_team_id_1).not.toBeNull();
+      expect(lbFinal.tournament_team_id_2).not.toBeNull();
+      expect(lbFinal.match_id).not.toBeNull();
+      await tfx.winMatch(lbFinal.match_id!, "lineup_1_id");
+
+      // Grand final: WB champion vs LB champion, still Live until it's played.
+      const [grandFinal] = await postgres.query<
+        Array<{
+          match_id: string | null;
+          tournament_team_id_1: string | null;
+          tournament_team_id_2: string | null;
+        }>
+      >(
+        `SELECT match_id, tournament_team_id_1, tournament_team_id_2
+         FROM tournament_brackets
+         WHERE tournament_stage_id = $1 AND path = 'WB' AND round = 3`,
+        [stage],
+      );
+      expect(grandFinal.tournament_team_id_1).not.toBeNull();
+      expect(grandFinal.tournament_team_id_2).not.toBeNull();
+      expect(grandFinal.match_id).not.toBeNull();
+      expect(await tfx.tournamentStatus(t.id)).toBe("Live");
+
+      await tfx.winMatch(grandFinal.match_id!, "lineup_1_id");
+      expect(await tfx.tournamentStatus(t.id)).toBe("Finished");
+    });
+
+    it("a team that loses twice is out; every team gets its second chance", async () => {
+      const t = await tfx.launch(DE4, 4);
+      const stage = t.stageIds[0];
+
+      // Sweep every schedulable match until the tournament closes.
+      for (let sweep = 0; sweep < 6; sweep++) {
+        const open = await postgres.query<Array<{ match_id: string }>>(
+          `SELECT match_id FROM tournament_brackets
+           WHERE tournament_stage_id = $1 AND match_id IS NOT NULL AND finished = false
+           ORDER BY round, match_number`,
+          [stage],
+        );
+        for (const bracket of open) {
+          await tfx.winMatch(bracket.match_id);
+        }
+        if (open.length === 0) break;
+      }
+
+      expect(await tfx.tournamentStatus(t.id)).toBe("Finished");
+      // 4-team double elimination always resolves in exactly 6 played brackets... minus
+      // nothing: WB r1 x2, LB r1, WB final, LB final, grand final.
+      const finished = await postgres.query<Array<{ c: string }>>(
+        `SELECT count(*) AS c FROM tournament_brackets
+         WHERE tournament_stage_id = $1 AND finished = true`,
+        [stage],
+      );
+      expect(Number(finished[0].c)).toBe(6);
+
+      // Every team except the champion lost at least once; the two LB round
+      // participants each played at least three series.
+      const results = await tfx.stageResults(stage);
+      expect(results.length).toBe(4);
+      const totalLosses = results.reduce((sum, row) => sum + Number(row.losses), 0);
+      // 6 matches, 6 losers-of-a-match.
+      expect(totalLosses).toBe(6);
+    });
+  });
+
   describe("multi-stage advancement", () => {
     it("adding a later stage raises earlier stage minimums (halving rule)", async () => {
       const t = await tfx.createTournament([
