@@ -80,4 +80,25 @@ describe("dev fixtures (hasura/fixtures)", () => {
     await applyFile("fixtures.sql");
     expect(await count("teams")).toBe(8);
   }, 180_000);
+
+  it("warm re-apply: setup() re-runs every SQL file over a data-full database", async () => {
+    // Production upgrades run setup() against a live database. Deleting the
+    // stored file digests forces every enum/function/view/trigger file to
+    // re-apply (migrations stay applied via schema_migrations) — catching
+    // files that only work on an empty schema, the regression class the
+    // cold-start suite can't see.
+    const before = await count("teams");
+    expect(before).toBe(8);
+
+    await postgres.query("DELETE FROM settings WHERE name LIKE 'hasura/%'");
+    await db.hasura.setup();
+
+    expect(await count("teams")).toBe(before);
+    expect(await count("matches")).toBeGreaterThan(0);
+
+    const disabled = await postgres.query<Array<{ tgname: string }>>(
+      `SELECT tgname FROM pg_trigger WHERE tgenabled = 'D'`,
+    );
+    expect(disabled).toEqual([]);
+  }, 300_000);
 });
