@@ -67,6 +67,35 @@ describe("map pools, player guards, and clip counters (SQL-driven)", () => {
       ).rejects.toThrow(/Not enough maps in the pool/i);
     });
 
+    it("the update_map_pools settings hook restores seeded pools from the active roster", async () => {
+      const seededPool = await fx.seededPool("Competitive");
+      const [{ c: before }] = await postgres.query<Array<{ c: string }>>(
+        "SELECT count(*) AS c FROM _map_pool WHERE map_pool_id = $1",
+        [seededPool],
+      );
+
+      await postgres.query(
+        `DELETE FROM _map_pool WHERE map_pool_id = $1 AND map_id =
+           (SELECT map_id FROM _map_pool WHERE map_pool_id = $1 LIMIT 1)`,
+        [seededPool],
+      );
+
+      // The trigger fires on settings UPDATE.
+      await postgres.query(
+        `INSERT INTO settings (name, value) VALUES ('update_map_pools', 'false')
+         ON CONFLICT (name) DO NOTHING`,
+      );
+      await postgres.query(
+        "UPDATE settings SET value = 'true' WHERE name = 'update_map_pools'",
+      );
+
+      const [{ c: after }] = await postgres.query<Array<{ c: string }>>(
+        "SELECT count(*) AS c FROM _map_pool WHERE map_pool_id = $1",
+        [seededPool],
+      );
+      expect(Number(after)).toBe(Number(before));
+    });
+
     it("does not disturb a Live match's maps", async () => {
       const { poolId, mapIds } = await fx.mapPool(1);
       const match = await fx.match({ mapPoolId: poolId });
