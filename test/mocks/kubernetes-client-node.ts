@@ -5,7 +5,7 @@
 // class whose instances answer any method call (returning further stubs), so
 // runtime usage like `new KubeConfig().makeApiClient(CoreV1Api)` keeps working
 // without dragging the ESM dependency graph into jest.
-const instanceHandler: ProxyHandler<Record<string, unknown>> = {
+const instanceHandler: ProxyHandler<object> = {
   get: () => () => new Proxy({}, instanceHandler),
 };
 
