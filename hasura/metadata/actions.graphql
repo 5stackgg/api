@@ -35,9 +35,9 @@ type Mutation {
 }
 
 type Query {
-  scrimCalendarUrl(
+  teamCalendarUrl(
     team_id: uuid!
-  ): ScrimCalendarOutput
+  ): TeamCalendarOutput
 }
 
 type Mutation {
@@ -994,7 +994,7 @@ type DraftGamePreviewOutput {
   players: [DraftGamePreviewPlayer!]!
 }
 
-type ScrimCalendarOutput {
+type TeamCalendarOutput {
   url: String!
 }
 

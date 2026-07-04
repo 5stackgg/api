@@ -41,6 +41,14 @@ object_relationships:
   - name: team_2
     using:
       foreign_key_constraint_on: tournament_team_id_2
+array_relationships:
+  - name: scheduling_proposals
+    using:
+      foreign_key_constraint_on:
+        column: tournament_bracket_id
+        table:
+          name: league_scheduling_proposals
+          schema: public
 computed_fields:
   - name: feeding_brackets
     definition:

@@ -7,17 +7,23 @@ RETURNS TABLE(
 )
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    _no_elim boolean;
 BEGIN
+    SELECT COALESCE(swiss_no_elimination, false) INTO _no_elim
+    FROM tournament_stages WHERE id = _stage_id;
+
     RETURN QUERY
-    SELECT 
+    SELECT
         vtsr.wins,
         vtsr.losses,
         array_agg(vtsr.tournament_team_id ORDER BY vtsr.tournament_team_id) as team_ids,
         COUNT(*)::int as team_count
     FROM v_team_stage_results vtsr
     WHERE vtsr.tournament_stage_id = _stage_id
-      AND vtsr.wins < 3  -- Not yet advanced (3 wins = advance)
-      AND vtsr.losses < 3  -- Not yet eliminated (3 losses = eliminate)
+      -- Valve Swiss removes advanced (3 wins) / eliminated (3 losses) teams from
+      -- future pools; a no-elim group keeps everyone in their current W-L pool.
+      AND (_no_elim OR (vtsr.wins < 3 AND vtsr.losses < 3))
       AND (_exclude_team_ids IS NULL OR NOT (vtsr.tournament_team_id = ANY(_exclude_team_ids)))
     GROUP BY vtsr.wins, vtsr.losses
     HAVING COUNT(*) > 0

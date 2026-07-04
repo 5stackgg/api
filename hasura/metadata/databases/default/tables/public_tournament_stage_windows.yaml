@@ -1,0 +1,63 @@
+table:
+  name: tournament_stage_windows
+  schema: public
+object_relationships:
+  - name: stage
+    using:
+      foreign_key_constraint_on: tournament_stage_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        stage:
+          tournament:
+            is_organizer:
+              _eq: true
+      columns:
+        - tournament_stage_id
+        - round
+        - opens_at
+        - closes_at
+        - default_match_at
+    comment: ""
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - tournament_stage_id
+        - round
+        - opens_at
+        - closes_at
+        - default_match_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - round
+        - opens_at
+        - closes_at
+        - default_match_at
+      filter:
+        stage:
+          tournament:
+            is_organizer:
+              _eq: true
+      check:
+        stage:
+          tournament:
+            is_organizer:
+              _eq: true
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        stage:
+          tournament:
+            is_organizer:
+              _eq: true
+    comment: ""

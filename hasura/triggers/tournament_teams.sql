@@ -81,7 +81,15 @@ DECLARE
     max_players_per_lineup INT;
     player_steam_id BIGINT;
 BEGIN
-    IF NEW.team_id IS NOT NULL THEN
+    -- When the client already provided a roster selection (e.g. picking a
+    -- subset so an A team and B team can share members), leave it as-is.
+    -- Otherwise auto-fill the lineup from the team roster.
+    IF NEW.team_id IS NOT NULL
+       AND NOT EXISTS (
+           SELECT 1
+           FROM tournament_team_roster ttr
+           WHERE ttr.tournament_team_id = NEW.id
+       ) THEN
 
         SELECT tournament_max_players_per_lineup(t)
         INTO max_players_per_lineup
@@ -122,11 +130,20 @@ BEGIN
             );
         END LOOP;
 
+        -- Keep the captain on the roster, but tolerate a captain already
+        -- rostered on another team in this tournament (shared A/B members):
+        -- add them only when they are free, never raise.
         IF NEW.captain_steam_id IS NOT NULL
             AND NOT EXISTS (
                 SELECT 1
                 FROM tournament_team_roster ttr
                 WHERE ttr.tournament_team_id = NEW.id
+                  AND ttr.player_steam_id = NEW.captain_steam_id
+            )
+            AND NOT EXISTS (
+                SELECT 1
+                FROM tournament_team_roster ttr
+                WHERE ttr.tournament_id = NEW.tournament_id
                   AND ttr.player_steam_id = NEW.captain_steam_id
             ) THEN
             INSERT INTO tournament_team_roster (
@@ -134,25 +151,11 @@ BEGIN
                 player_steam_id,
                 tournament_id
             )
-            SELECT
+            VALUES (
                 NEW.id,
                 NEW.captain_steam_id,
                 NEW.tournament_id
-            WHERE NOT EXISTS (
-                SELECT 1
-                FROM tournament_team_roster ttr
-                WHERE ttr.tournament_id = NEW.tournament_id
-                  AND ttr.player_steam_id = NEW.captain_steam_id
             );
-
-            IF NOT EXISTS (
-                SELECT 1
-                FROM tournament_team_roster ttr
-                WHERE ttr.tournament_team_id = NEW.id
-                  AND ttr.player_steam_id = NEW.captain_steam_id
-            ) THEN
-                RAISE EXCEPTION 'Tournament captain must be part of the tournament team roster' USING ERRCODE = '22000';
-            END IF;
         END IF;
 
     END IF;

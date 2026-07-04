@@ -17,10 +17,41 @@ DECLARE
     adjacent_team_id uuid;
     used_teams uuid[];
     teams_to_pair uuid[];
+    _total int;
+    _bye_team uuid;
+    _bye_group numeric;
 BEGIN
     RAISE NOTICE '=== Assigning Teams to Swiss Pools for Round % ===', _round;
-    
+
     used_teams := ARRAY[]::uuid[];
+
+    -- Odd field: pull one team out for a bye (a free win) before pairing so the
+    -- remaining pools resolve evenly. Prefer a team that has not had a bye yet;
+    -- among those, the lowest-ranked (fewest wins, most losses).
+    SELECT COALESCE(SUM(team_count), 0) INTO _total
+    FROM get_swiss_team_pools(_stage_id, used_teams);
+
+    IF _total % 2 = 1 THEN
+        SELECT vtsr.tournament_team_id,
+               (vtsr.wins * 100 + vtsr.losses)
+        INTO _bye_team, _bye_group
+        FROM v_team_stage_results vtsr
+        WHERE vtsr.tournament_stage_id = _stage_id
+        ORDER BY
+            EXISTS (
+                SELECT 1 FROM tournament_brackets b
+                WHERE b.tournament_stage_id = _stage_id
+                  AND b.bye = true
+                  AND b.tournament_team_id_1 = vtsr.tournament_team_id
+            ) ASC,
+            vtsr.wins ASC, vtsr.losses DESC, vtsr.tournament_team_id ASC
+        LIMIT 1;
+
+        IF _bye_team IS NOT NULL THEN
+            PERFORM public.create_swiss_bye_bracket(_stage_id, _round, _bye_team, _bye_group);
+            used_teams := used_teams || _bye_team;
+        END IF;
+    END IF;
     
     FOR pool_record IN 
         SELECT * FROM get_swiss_team_pools(_stage_id, used_teams)
@@ -118,17 +149,27 @@ BEGIN
                     AND "group" = pool_group
                     AND match_number = match_counter
                     LIMIT 1;
-                
-                IF bracket_record IS NULL THEN
-                    RAISE EXCEPTION 'Bracket record not found for match % in pool %-% (group %)', 
-                        match_counter, pool_record.wins, pool_record.losses, pool_group USING ERRCODE = '22000';
-                END IF;
 
-                UPDATE tournament_brackets
-                    SET tournament_team_id_1 = team_1_id,
-                        tournament_team_id_2 = team_2_id,
-                        bye = false
-                    WHERE id = bracket_record.id;
+                -- The pre-generated placeholder count (binomial estimate) can be
+                -- short for non-power-of-2 fields; create the bracket on demand
+                -- so pairing is authoritative. Surplus empty placeholders are
+                -- pruned after the round is fully paired (below).
+                IF bracket_record.id IS NULL THEN
+                    INSERT INTO tournament_brackets (
+                        round, tournament_stage_id, match_number, "group", path,
+                        tournament_team_id_1, tournament_team_id_2, bye
+                    )
+                    VALUES (
+                        _round, _stage_id, match_counter, pool_group, 'WB',
+                        team_1_id, team_2_id, false
+                    );
+                ELSE
+                    UPDATE tournament_brackets
+                        SET tournament_team_id_1 = team_1_id,
+                            tournament_team_id_2 = team_2_id,
+                            bye = false
+                        WHERE id = bracket_record.id;
+                END IF;
                 
                 -- Mark both teams as used to prevent double-assignment
                 used_teams := used_teams || team_1_id || team_2_id;
@@ -138,7 +179,17 @@ BEGIN
             END LOOP;
         END;
     END LOOP;
-    
+
+    -- Prune surplus empty placeholders so check_swiss_round_complete does not
+    -- wait forever on a teamless bracket (the binomial estimate over-allocates
+    -- for non-power-of-2 fields).
+    DELETE FROM tournament_brackets
+    WHERE tournament_stage_id = _stage_id
+      AND round = _round
+      AND tournament_team_id_1 IS NULL
+      AND tournament_team_id_2 IS NULL
+      AND COALESCE(bye, false) = false;
+
     RAISE NOTICE '=== Team Assignment Complete ===';
 END;
 $$;

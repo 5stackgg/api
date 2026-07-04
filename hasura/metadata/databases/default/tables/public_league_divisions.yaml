@@ -1,0 +1,47 @@
+table:
+  name: league_divisions
+  schema: public
+array_relationships:
+  - name: season_divisions
+    using:
+      foreign_key_constraint_on:
+        column: league_division_id
+        table:
+          name: league_season_divisions
+          schema: public
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - name
+        - tier
+        - active
+    comment: ""
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - name
+        - tier
+        - active
+        - created_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - name
+        - tier
+        - active
+      filter: {}
+      check: {}
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""

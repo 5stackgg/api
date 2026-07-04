@@ -54,6 +54,7 @@ import { SteamMatchHistoryModule } from "./steam-match-history/steam-match-histo
 import { SteamPresenceModule } from "./steam-presence/steam-presence.module";
 import { NewsModule } from "./news/news.module";
 import { ScrimsModule } from "./scrims/scrims.module";
+import { LeaguesModule } from "./leagues/leagues.module";
 
 @Module({
   imports: [
@@ -148,6 +149,7 @@ import { ScrimsModule } from "./scrims/scrims.module";
     SteamPresenceModule,
     NewsModule,
     ScrimsModule,
+    LeaguesModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],

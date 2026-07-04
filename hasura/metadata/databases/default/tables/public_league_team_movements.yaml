@@ -1,0 +1,89 @@
+table:
+  name: league_team_movements
+  schema: public
+object_relationships:
+  - name: season
+    using:
+      foreign_key_constraint_on: league_season_id
+  - name: league_team
+    using:
+      foreign_key_constraint_on: league_team_id
+  - name: from_division
+    using:
+      foreign_key_constraint_on: from_division_id
+  - name: computed_to_division
+    using:
+      foreign_key_constraint_on: computed_to_division_id
+  - name: final_to_division
+    using:
+      foreign_key_constraint_on: final_to_division_id
+  - name: approved_by
+    using:
+      foreign_key_constraint_on: approved_by_steam_id
+  - name: e_movement_type
+    using:
+      foreign_key_constraint_on: type
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - league_season_id
+        - league_team_id
+        - from_division_id
+        - computed_to_division_id
+        - final_to_division_id
+        - type
+        - final_rank
+        - approved_at
+        - approved_by_steam_id
+        - created_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: guest
+    permission:
+      columns:
+        - id
+        - league_season_id
+        - league_team_id
+        - from_division_id
+        - computed_to_division_id
+        - final_to_division_id
+        - type
+        - final_rank
+        - approved_at
+        - created_at
+      filter:
+        approved_at:
+          _is_null: false
+    comment: Movements become public once approved.
+  - role: user
+    permission:
+      columns:
+        - id
+        - league_season_id
+        - league_team_id
+        - from_division_id
+        - computed_to_division_id
+        - final_to_division_id
+        - type
+        - final_rank
+        - approved_at
+        - approved_by_steam_id
+        - created_at
+      filter:
+        approved_at:
+          _is_null: false
+      allow_aggregations: true
+    comment: Movements become public once approved.
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - final_to_division_id
+        - approved_at
+        - approved_by_steam_id
+      filter: {}
+      check: {}
+    comment: ""

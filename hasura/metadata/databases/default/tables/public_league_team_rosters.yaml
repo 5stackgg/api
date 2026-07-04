@@ -1,0 +1,126 @@
+table:
+  name: league_team_rosters
+  schema: public
+object_relationships:
+  - name: team_season
+    using:
+      foreign_key_constraint_on: league_team_season_id
+  - name: player
+    using:
+      foreign_key_constraint_on: player_steam_id
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - league_team_season_id
+        - player_steam_id
+        - status
+    comment: ""
+  - role: user
+    permission:
+      check:
+        team_season:
+          league_team:
+            team:
+              _or:
+                - owner_steam_id:
+                    _eq: X-Hasura-User-Id
+                - captain_steam_id:
+                    _eq: X-Hasura-User-Id
+                - roster:
+                    _and:
+                      - player_steam_id:
+                          _eq: X-Hasura-User-Id
+                      - role:
+                          _eq: Admin
+      columns:
+        - league_team_season_id
+        - player_steam_id
+        - status
+    comment: ""
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - league_team_season_id
+        - player_steam_id
+        - added_at
+        - removed_at
+        - removed_reason
+        - status
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - removed_at
+        - removed_reason
+        - added_at
+        - status
+      filter: {}
+      check: {}
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - removed_at
+        - removed_reason
+        - added_at
+        - status
+      filter:
+        team_season:
+          league_team:
+            team:
+              _or:
+                - owner_steam_id:
+                    _eq: X-Hasura-User-Id
+                - captain_steam_id:
+                    _eq: X-Hasura-User-Id
+                - roster:
+                    _and:
+                      - player_steam_id:
+                          _eq: X-Hasura-User-Id
+                      - role:
+                          _eq: Admin
+      check: {}
+    comment: ""
+event_triggers:
+  - name: league_roster_events
+    definition:
+      enable_manual: false
+      insert:
+        columns: "*"
+      update:
+        columns:
+          - removed_at
+    retry_conf:
+      interval_sec: 10
+      num_retries: 3
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""
+  - role: user
+    permission:
+      filter:
+        team_season:
+          league_team:
+            team:
+              _or:
+                - owner_steam_id:
+                    _eq: X-Hasura-User-Id
+                - captain_steam_id:
+                    _eq: X-Hasura-User-Id
+                - roster:
+                    _and:
+                      - player_steam_id:
+                          _eq: X-Hasura-User-Id
+                      - role:
+                          _eq: Admin
+    comment: ""

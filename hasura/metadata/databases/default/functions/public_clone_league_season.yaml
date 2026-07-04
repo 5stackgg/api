@@ -1,0 +1,10 @@
+function:
+  name: clone_league_season
+  schema: public
+configuration:
+  custom_root_fields: {}
+  exposed_as: mutation
+  session_argument: hasura_session
+permissions:
+  - role: administrator
+  - role: user

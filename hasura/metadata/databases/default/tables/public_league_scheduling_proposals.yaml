@@ -1,0 +1,74 @@
+table:
+  name: league_scheduling_proposals
+  schema: public
+object_relationships:
+  - name: bracket
+    using:
+      foreign_key_constraint_on: tournament_bracket_id
+  - name: proposed_by
+    using:
+      foreign_key_constraint_on: proposed_by_steam_id
+  - name: responded_by
+    using:
+      foreign_key_constraint_on: responded_by_steam_id
+  - name: team_season
+    using:
+      foreign_key_constraint_on: proposed_by_league_team_season_id
+  - name: e_proposal_status
+    using:
+      foreign_key_constraint_on: status
+insert_permissions:
+  - role: user
+    permission:
+      check: {}
+      set:
+        proposed_by_steam_id: x-hasura-user-id
+      columns:
+        - tournament_bracket_id
+        - proposed_time
+        - message
+    comment: Guarded by tbi_league_scheduling_proposals (captain of either team, week window).
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - tournament_bracket_id
+        - proposed_by_steam_id
+        - proposed_by_league_team_season_id
+        - proposed_time
+        - status
+        - responded_by_steam_id
+        - message
+        - created_at
+      filter: {}
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - status
+      filter:
+        status:
+          _eq: Pending
+      check: {}
+    comment: Guarded by tbu_league_scheduling_proposals (only the opposing captain may accept).
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""
+event_triggers:
+  - name: league_proposal_events
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+      update:
+        columns:
+          - status
+    retry_conf:
+      interval_sec: 10
+      num_retries: 3
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

@@ -33,6 +33,19 @@ insert_permissions:
                               _eq: Admin
                     - owner_steam_id:
                         _eq: X-Hasura-User-Id
+                    - team:
+                        owner_steam_id:
+                          _eq: X-Hasura-User-Id
+                    - team:
+                        captain_steam_id:
+                          _eq: X-Hasura-User-Id
+                    - team:
+                        roster:
+                          _and:
+                            - player_steam_id:
+                                _eq: X-Hasura-User-Id
+                            - role:
+                                _eq: Admin
           - tournament:
               status:
                 _nin:
@@ -62,6 +75,19 @@ insert_permissions:
                               _eq: Admin
                     - owner_steam_id:
                         _eq: X-Hasura-User-Id
+                    - team:
+                        owner_steam_id:
+                          _eq: X-Hasura-User-Id
+                    - team:
+                        captain_steam_id:
+                          _eq: X-Hasura-User-Id
+                    - team:
+                        roster:
+                          _and:
+                            - player_steam_id:
+                                _eq: X-Hasura-User-Id
+                            - role:
+                                _eq: Admin
           - tournament:
               status:
                 _in:

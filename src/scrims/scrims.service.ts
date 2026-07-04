@@ -1016,12 +1016,15 @@ export class ScrimsService {
 
   public calendarToken(teamId: string): string {
     return createHmac("sha256", this.appConfig.encSecret)
-      .update(`scrim-calendar:${teamId}`)
+      .update(`team-calendar:${teamId}`)
       .digest("hex");
   }
 
+  // Must match the `/calendar` path whitelisted for the api on WEB_DOMAIN in
+  // 5stack-panel/base/api/ingress.yaml — everything else on that host falls
+  // through to Nuxt.
   public calendarUrl(teamId: string): string {
-    return `${this.appConfig.webDomain}/scrims/calendar/${teamId}.ics?token=${this.calendarToken(teamId)}`;
+    return `${this.appConfig.webDomain}/calendar/team/${teamId}.ics?token=${this.calendarToken(teamId)}`;
   }
 
   public validateCalendarToken(teamId: string, token?: string): boolean {
@@ -1036,45 +1039,151 @@ export class ScrimsService {
     return timingSafeEqual(expected, provided);
   }
 
-  public async getScrimCalendar(teamId: string): Promise<string> {
-    const events = await this.postgres.query<
+  /**
+   * Everything the team plays, in one subscribable feed: scrims, tournament and
+   * league matches, plus league fixtures whose time is agreed but whose match
+   * row doesn't exist yet.
+   *
+   * A match is the authoritative record of a bracket once it exists, so brackets
+   * carrying a `match_id` are excluded here and picked up by the match query —
+   * otherwise a rescheduled fixture would appear twice under two UIDs.
+   */
+  public async getTeamCalendar(teamId: string): Promise<string> {
+    const [team] = await this.postgres.query<Array<{ name: string }>>(
+      `SELECT name FROM teams WHERE id = $1`,
+      [teamId],
+    );
+
+    const matches = await this.postgres.query<
       Array<{
         match_id: string;
         scheduled_at: string;
-        from_name: string;
-        to_name: string;
+        status: string;
+        team_1: string | null;
+        team_2: string | null;
+        scrim_id: string | null;
+        tournament_name: string | null;
       }>
     >(
-      `SELECT m.id AS match_id, m.scheduled_at, tf.name AS from_name, tt.name AS to_name
-         FROM team_scrim_requests r
-         JOIN matches m ON m.id = r.match_id
-         JOIN teams tf ON tf.id = r.from_team_id
-         JOIN teams tt ON tt.id = r.to_team_id
-        WHERE r.status = 'Matched'
-          AND m.scheduled_at IS NOT NULL
-          AND (r.from_team_id = $1 OR r.to_team_id = $1)`,
+      `SELECT m.id            AS match_id,
+              m.scheduled_at,
+              m.status,
+              t1.name         AS team_1,
+              t2.name         AS team_2,
+              r.id            AS scrim_id,
+              tour.name       AS tournament_name
+         FROM matches m
+         JOIN match_lineups l1 ON l1.id = m.lineup_1_id
+         JOIN match_lineups l2 ON l2.id = m.lineup_2_id
+         LEFT JOIN teams t1 ON t1.id = l1.team_id
+         LEFT JOIN teams t2 ON t2.id = l2.team_id
+         LEFT JOIN team_scrim_requests r
+                ON r.match_id = m.id AND r.status = 'Matched'
+         LEFT JOIN tournament_brackets b ON b.match_id = m.id
+         LEFT JOIN tournament_stages st ON st.id = b.tournament_stage_id
+         LEFT JOIN tournaments tour ON tour.id = st.tournament_id
+        WHERE m.scheduled_at IS NOT NULL
+          AND (l1.team_id = $1 OR l2.team_id = $1)`,
       [teamId],
     );
+
+    const fixtures = await this.postgres.query<
+      Array<{
+        bracket_id: string;
+        scheduled_at: string;
+        team_1: string;
+        team_2: string;
+        tournament_name: string;
+      }>
+    >(
+      `SELECT b.id      AS bracket_id,
+              b.scheduled_at,
+              tt1.name  AS team_1,
+              tt2.name  AS team_2,
+              tour.name AS tournament_name
+         FROM tournament_brackets b
+         JOIN tournament_teams tt1 ON tt1.id = b.tournament_team_id_1
+         JOIN tournament_teams tt2 ON tt2.id = b.tournament_team_id_2
+         JOIN tournament_stages st ON st.id = b.tournament_stage_id
+         JOIN tournaments tour ON tour.id = st.tournament_id
+        WHERE b.match_id IS NULL
+          AND b.scheduled_at IS NOT NULL
+          AND (tt1.team_id = $1 OR tt2.team_id = $1)`,
+      [teamId],
+    );
+
+    const calendarName = team?.name
+      ? `${team.name} — 5Stack`
+      : "5Stack Matches";
 
     const lines = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//5stack//Scrim Finder//EN",
+      "PRODID:-//5stack//Team Calendar//EN",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+      `X-WR-CALNAME:${ScrimsService.escapeICSText(calendarName)}`,
+      // Nudges Google/Apple to re-poll rather than caching for a day; a league
+      // fixture can move hours before it's played.
+      "REFRESH-INTERVAL;VALUE=DURATION:PT1H",
+      "X-PUBLISHED-TTL:PT1H",
     ];
 
-    for (const event of events) {
-      const start = ScrimsService.toICSDate(new Date(event.scheduled_at));
-      const summary = ScrimsService.escapeICSText(
-        `Scrim ${event.from_name} vs ${event.to_name}`,
-      );
+    const pushEvent = (event: {
+      uid: string;
+      scheduledAt: string;
+      summary: string;
+      description?: string;
+      url?: string;
+      /** TENTATIVE until a time is agreed; subscribers see it greyed, not gone. */
+      status: "CONFIRMED" | "TENTATIVE" | "CANCELLED";
+    }) => {
+      const start = new Date(event.scheduledAt);
+      // No duration is stored; a match is scheduled, not booked. Two hours is a
+      // realistic BO1 with veto and keeps the block from swallowing the evening.
+      const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
       lines.push(
         "BEGIN:VEVENT",
-        `UID:scrim-${event.match_id}@5stack`,
-        `DTSTART:${start}`,
-        `SUMMARY:${summary}`,
-        `URL:${this.appConfig.webDomain}/matches/${event.match_id}`,
-        "END:VEVENT",
+        `UID:${event.uid}@5stack`,
+        `DTSTAMP:${ScrimsService.toICSDate(new Date())}`,
+        `DTSTART:${ScrimsService.toICSDate(start)}`,
+        `DTEND:${ScrimsService.toICSDate(end)}`,
+        `SUMMARY:${ScrimsService.escapeICSText(event.summary)}`,
+        `STATUS:${event.status}`,
       );
+      if (event.description) {
+        lines.push(
+          `DESCRIPTION:${ScrimsService.escapeICSText(event.description)}`,
+        );
+      }
+      if (event.url) {
+        lines.push(`URL:${event.url}`);
+      }
+      lines.push("END:VEVENT");
+    };
+
+    for (const match of matches) {
+      const teams = `${match.team_1 ?? "TBD"} vs ${match.team_2 ?? "TBD"}`;
+      const prefix = match.scrim_id
+        ? "Scrim"
+        : (match.tournament_name ?? "Match");
+      pushEvent({
+        uid: `match-${match.match_id}`,
+        scheduledAt: match.scheduled_at,
+        summary: `${prefix}: ${teams}`,
+        url: `${this.appConfig.webDomain}/matches/${match.match_id}`,
+        status: match.status === "Canceled" ? "CANCELLED" : "CONFIRMED",
+      });
+    }
+
+    for (const fixture of fixtures) {
+      pushEvent({
+        uid: `bracket-${fixture.bracket_id}`,
+        scheduledAt: fixture.scheduled_at,
+        summary: `${fixture.tournament_name}: ${fixture.team_1} vs ${fixture.team_2}`,
+        description: "Server not assigned yet.",
+        status: "TENTATIVE",
+      });
     }
 
     lines.push("END:VCALENDAR");

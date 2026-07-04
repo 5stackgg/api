@@ -86,10 +86,15 @@ match_stats AS NOT MATERIALIZED (
         tmr.match_id,
         tmr.bye,
         CASE WHEN tmr.match_id IS NOT NULL AND tmr.winning_lineup_id IS NOT NULL THEN 1 ELSE 0 END as game_played,
-        CASE WHEN tmr.winning_lineup_id = tmr.team_lineup_id THEN 1 ELSE 0 END as win,
+        -- A Swiss bye is a free win (no match). Scoped to Swiss so elimination
+        -- byes (which advance a team but shouldn't add a standings win) are
+        -- unaffected.
+        CASE WHEN tmr.bye = true AND ts_bye.type = 'Swiss' THEN 1
+             WHEN tmr.winning_lineup_id = tmr.team_lineup_id THEN 1 ELSE 0 END as win,
         CASE WHEN tmr.winning_lineup_id IS NOT NULL
              AND tmr.winning_lineup_id != tmr.team_lineup_id THEN 1 ELSE 0 END as loss
     FROM team_match_results tmr
+    LEFT JOIN tournament_stages ts_bye ON ts_bye.id = tmr.tournament_stage_id
 ),
 round_stats AS NOT MATERIALIZED (
     -- Calculate rounds won and lost per team per match

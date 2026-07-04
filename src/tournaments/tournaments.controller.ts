@@ -74,6 +74,29 @@ export class TournamentsController {
       throw Error("cannot delete a live tournament");
     }
 
+    const {
+      league_season_divisions_aggregate,
+      league_relegation_playoffs_aggregate,
+    } = await this.hasura.query({
+      league_season_divisions_aggregate: {
+        __args: { where: { tournament_id: { _eq: tournament_id } } },
+        aggregate: { count: true },
+      },
+      league_relegation_playoffs_aggregate: {
+        __args: { where: { tournament_id: { _eq: tournament_id } } },
+        aggregate: { count: true },
+      },
+    });
+
+    if (
+      league_season_divisions_aggregate.aggregate.count > 0 ||
+      league_relegation_playoffs_aggregate.aggregate.count > 0
+    ) {
+      throw Error(
+        "cannot delete a tournament that belongs to a league; manage it from the league instead",
+      );
+    }
+
     const { matchCount } = await this.deleteTournamentMatches(tournament_id);
 
     await this.hasura.mutation({

@@ -51,10 +51,14 @@ WITH map_data AS (
         ('de_palacio', '3249860053', '/img/maps/screenshots/de_palacio.webp', '/img/maps/icons/de_palacio.svg', null),
         ('de_rooftop', '3536622725', '/img/maps/screenshots/de_rooftop.webp', '/img/maps/icons/de_rooftop.svg', null),
         ('de_transit', '3542662073', '/img/maps/screenshots/de_transit.webp', '/img/maps/icons/de_transit.svg', null),
-        ('de_poseidon', null, '/img/maps/screenshots/de_poseidon.webp', '/img/maps/icons/de_poseidon.svg', null),
-        ('de_sanctum', null, '/img/maps/screenshots/de_sanctum.webp', '/img/maps/icons/de_sanctum.svg', null),
-        ('de_stronghold', null, '/img/maps/screenshots/de_stronghold.webp', '/img/maps/icons/de_stronghold.svg', null),
-        ('de_warden', null, '/img/maps/screenshots/de_warden.webp', '/img/maps/icons/de_warden.svg', null)
+        ('de_poseidon', '3522144043', '/img/maps/screenshots/de_poseidon.webp', '/img/maps/icons/de_poseidon.svg', null),
+        ('de_sanctum', '3643331442', '/img/maps/screenshots/de_sanctum.webp', '/img/maps/icons/de_sanctum.svg', null),
+        ('de_stronghold', '3076973469', '/img/maps/screenshots/de_stronghold.webp', '/img/maps/icons/de_stronghold.svg', null),
+        ('de_warden', '3256988376', '/img/maps/screenshots/de_warden.webp', '/img/maps/icons/de_warden.svg', null),
+        ('de_boulder', null, '/img/maps/screenshots/de_boulder.webp', '/img/maps/icons/de_boulder.svg', null), 
+        ('de_debris', null, '/img/maps/screenshots/de_debris.webp', '/img/maps/icons/de_debris.svg', null),
+        ('de_eldorado', null, '/img/maps/screenshots/de_eldorado.webp', '/img/maps/icons/de_eldorado.svg', null),
+        ('de_fachwerk', null, '/img/maps/screenshots/de_fachwerk.webp', '/img/maps/icons/de_fachwerk.svg', null)
 
     ) AS data(name, workshop_map_id, poster, patch, label)
 ),
@@ -87,6 +91,8 @@ map_type_config AS (
         ('de_palacio', 'Competitive', false),
         ('de_stronghold', 'Competitive', false),
         ('de_warden', 'Competitive', false),
+        ('de_boulder', 'Competitive', false),
+        ('de_fachwerk', 'Competitive', false),
 
         -- Wingman maps
         ('de_inferno', 'Wingman', true),
@@ -103,6 +109,8 @@ map_type_config AS (
         ('de_transit', 'Wingman', false),
         ('de_poseidon', 'Wingman', true),
         ('de_sanctum', 'Wingman', true),
+        ('de_debris', 'Competitive', false),
+        ('de_eldorado', 'Competitive', false),
 
         -- Duel maps
         ('de_inferno', 'Duel', true),
@@ -118,7 +126,9 @@ map_type_config AS (
         ('de_rooftop', 'Duel', false),
         ('de_transit', 'Duel', false),
         ('de_poseidon', 'Duel', true),
-        ('de_sanctum', 'Duel', true)
+        ('de_sanctum', 'Duel', true),
+        ('de_debris', 'Duel', false),
+        ('de_eldorado', 'Duel', false)
 
     ) AS data(name, type, active_pool)
 ),

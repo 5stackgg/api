@@ -1,0 +1,31 @@
+table:
+  name: league_relegation_playoffs
+  schema: public
+object_relationships:
+  - name: higher_division
+    using:
+      foreign_key_constraint_on: higher_division_id
+  - name: lower_division
+    using:
+      foreign_key_constraint_on: lower_division_id
+  - name: season
+    using:
+      foreign_key_constraint_on: league_season_id
+  - name: tournament
+    using:
+      foreign_key_constraint_on: tournament_id
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - league_season_id
+        - higher_division_id
+        - lower_division_id
+        - tournament_id
+        - higher_slots
+        - resolved_at
+        - created_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""

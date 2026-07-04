@@ -1,0 +1,93 @@
+table:
+  name: league_teams
+  schema: public
+object_relationships:
+  - name: team
+    using:
+      foreign_key_constraint_on: team_id
+array_relationships:
+  - name: team_seasons
+    using:
+      foreign_key_constraint_on:
+        column: league_team_id
+        table:
+          name: league_team_seasons
+          schema: public
+  - name: movements
+    using:
+      foreign_key_constraint_on:
+        column: league_team_id
+        table:
+          name: league_team_movements
+          schema: public
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - team_id
+    comment: ""
+  - role: user
+    permission:
+      check:
+        team:
+          _or:
+            - owner_steam_id:
+                _eq: X-Hasura-User-Id
+            - captain_steam_id:
+                _eq: X-Hasura-User-Id
+            - roster:
+                _and:
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+                  - role:
+                      _eq: Admin
+      columns:
+        - team_id
+    comment: ""
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - team_id
+        - created_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  # A no-op team_id update is the on_conflict target for the registration
+  # upsert (insert ... on_conflict); Hasura only exposes on_conflict to roles
+  # with update permission, and the returned row is needed for the nested
+  # team_seasons insert.
+  - role: administrator
+    permission:
+      columns:
+        - team_id
+      filter: {}
+      check: {}
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - team_id
+      filter:
+        team:
+          _or:
+            - owner_steam_id:
+                _eq: X-Hasura-User-Id
+            - captain_steam_id:
+                _eq: X-Hasura-User-Id
+            - roster:
+                _and:
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
+                  - role:
+                      _eq: Admin
+      check: {}
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""

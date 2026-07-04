@@ -90,7 +90,10 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
              BEGIN
                  _wins := (bracket."group" / 100)::int;
                  _losses := (bracket."group" % 100)::int;
-                 IF _wins = _wins_needed - 1 THEN
+                 -- A no-elim group has no advancement/elimination games — all regular.
+                 IF COALESCE(stage.swiss_no_elimination, false) THEN
+                     _swiss_match_type := 'regular';
+                 ELSIF _wins = _wins_needed - 1 THEN
                      _swiss_match_type := 'advancement';
                  ELSIF _losses = _wins_needed - 1 THEN
                      _swiss_match_type := 'elimination';
@@ -215,8 +218,17 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
         AND tt.id = bracket.tournament_team_id_2
         AND tt.team_id IS NOT NULL;
 
+     -- Normally check-in opens immediately (the cron only materializes ~15m
+     -- before kickoff). When materialized early for a negotiated match (GUC set
+     -- by the accept path), park it as 'Scheduled' instead so it shows on team
+     -- calendars without opening check-in / voice / the cancel timer yet;
+     -- CheckForScheduledMatches flips it to WaitingForCheckIn near kickoff.
      UPDATE matches
-     SET status = 'WaitingForCheckIn'
+     SET status = CASE
+             WHEN current_setting('fivestack.schedule_as_pending', true) = 'true'
+                 THEN 'Scheduled'
+             ELSE 'WaitingForCheckIn'
+         END
      WHERE id = _match_id;
 
      PERFORM calculate_tournament_bracket_start_times(tournament.id);

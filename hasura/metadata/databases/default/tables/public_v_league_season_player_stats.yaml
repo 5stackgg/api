@@ -1,0 +1,42 @@
+table:
+  name: v_league_season_player_stats
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      manual_configuration:
+        column_mapping:
+          player_steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+  - name: league_team
+    using:
+      manual_configuration:
+        column_mapping:
+          league_team_id: id
+        insertion_order: null
+        remote_table:
+          name: league_teams
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - league_season_id
+        - league_division_id
+        - league_season_division_id
+        - league_team_season_id
+        - league_team_id
+        - player_steam_id
+        - kills
+        - deaths
+        - assists
+        - headshots
+        - matches_played
+        - kdr
+        - headshot_percentage
+      filter: {}
+      allow_aggregations: true
+    comment: ""

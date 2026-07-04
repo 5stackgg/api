@@ -98,6 +98,16 @@ CREATE OR REPLACE FUNCTION public.tbu_tournaments() RETURNS TRIGGER
     AS $$
 BEGIN
     IF NEW.status IS DISTINCT FROM OLD.status THEN
+        -- A league owns the lifecycle of its division/playoff tournaments;
+        -- resetting or cancelling one directly corrupts the season. Only allow
+        -- it when the league season cascade sets the bypass (season cancel).
+        IF NEW.status IN ('Setup', 'Cancelled')
+           AND current_setting('fivestack.league_cascade', true) IS DISTINCT FROM 'true'
+           AND public.is_league_tournament(OLD.id) THEN
+            RAISE EXCEPTION USING ERRCODE = '22000',
+                MESSAGE = 'This tournament belongs to a league; cancel or delete the league season instead';
+        END IF;
+
         CASE NEW.status
             WHEN 'Setup' THEN
                 IF NOT can_setup_tournament(OLD, current_setting('hasura.user', true)::json) THEN
@@ -154,6 +164,15 @@ CREATE OR REPLACE FUNCTION public.tbd_tournaments() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
+    -- Backstop the API-action guard: a league's division/playoff tournament may
+    -- only be removed via the league season (which sets the bypass). Deleting
+    -- one directly orphans the league season's schedule and standings.
+    IF current_setting('fivestack.league_cascade', true) IS DISTINCT FROM 'true'
+       AND public.is_league_tournament(OLD.id) THEN
+        RAISE EXCEPTION USING ERRCODE = '22000',
+            MESSAGE = 'This tournament belongs to a league; cancel or delete the league season instead';
+    END IF;
+
     DELETE FROM tournament_stages
         WHERE tournament_id = OLD.id;
 
