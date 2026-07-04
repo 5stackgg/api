@@ -16,6 +16,13 @@ BEGIN
     -- Get map pool for the match
     pickType := get_map_veto_type(_match);
 
+    -- No active step (match not in Veto, or map veto disabled): reject rather
+    -- than let the NULL propagate through the comparisons below, where every
+    -- guard would silently pass.
+    IF pickType IS NULL THEN
+        RAISE EXCEPTION 'No map veto in progress' USING ERRCODE = '22000';
+    END IF;
+
     -- Check if the pickType matches the type of the match_map_veto_pick veto
     IF match_map_veto_pick.type != pickType THEN
         RAISE EXCEPTION 'Expected pick type of %', pickType USING ERRCODE = '22000';

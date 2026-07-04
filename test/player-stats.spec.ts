@@ -88,6 +88,8 @@ describe("player stats triggers (SQL-driven)", () => {
         kills: 1,
         deaths: 0,
         headshots: 1,
+        // Set on the very first kill too, not just from the second one on.
+        headshotPercentage: 1,
       });
       expect(await stats(victim)).toMatchObject({ kills: 0, deaths: 1 });
       expect(await weaponKills(attacker, "ak47")).toBe(1);

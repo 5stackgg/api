@@ -118,18 +118,21 @@ describe("map veto (SQL-driven)", () => {
     ).rejects.toThrow(/Map not available/i);
   });
 
-  it("reports no active veto step outside the Veto status", async () => {
-    const { poolId } = await fx.mapPool(3);
+  it("rejects picks while no veto is in progress", async () => {
+    const { poolId, mapIds } = await fx.mapPool(3);
     const match = await fx.match({ mapVeto: true, mapPoolId: poolId });
 
-    // Still PickingPlayers: no veto type, no picking lineup, and the Hasura
-    // permission function (the actual gate for inserts) denies the pick.
-    // Note verify_map_veto_pick itself does NOT raise here — its comparisons
-    // against a NULL step are silently true — so the permission layer is the
-    // only thing standing between a client and an out-of-phase pick.
+    // Still PickingPlayers: no veto type, no picking lineup, and the DB
+    // itself rejects the pick (previously the NULL step slipped through
+    // every comparison and only the Hasura permission function stood in
+    // the way).
     const state = await vetoState(match.id);
     expect(state.veto_type).toBeNull();
     expect(state.picking).toBeNull();
+
+    await expect(
+      insertPick(match.id, "Ban", match.lineup_1_id, mapIds[0]),
+    ).rejects.toThrow(/No map veto in progress/i);
 
     const [{ allowed }] = await postgres.query<
       Array<{ allowed: boolean | null }>
