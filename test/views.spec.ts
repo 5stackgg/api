@@ -369,19 +369,131 @@ describe("read-side views and aggregations (SQL-driven)", () => {
   });
 
   describe("get_leaderboard", () => {
+    type LeaderboardRow = {
+      player_steam_id: string;
+      value: number;
+      secondary_value: number | null;
+      tertiary_value: number | null;
+      matches_played: number;
+    };
+
+    const leaderboard = (category: string, windowDays: number, type?: string) =>
+      postgres.query<Array<LeaderboardRow>>(
+        "SELECT * FROM get_leaderboard($1, $2, $3)",
+        [category, windowDays, type ?? null],
+      );
+
+    // A finished '5stack' match with a materialized map to hang kills on. The
+    // stat categories inner-join match_options, so bareMatch (optionless, the
+    // demo-import shape) would be invisible to them.
+    const statMatch = async () => {
+      const { poolId } = await fx.mapPool(1);
+      const match = await fx.match({ mapPoolId: poolId });
+      const [map] = await postgres.query<Array<{ id: string }>>(
+        "SELECT id FROM match_maps WHERE match_id = $1",
+        [match.id],
+      );
+      return { match, ctx: { matchId: match.id, mapId: map.id } };
+    };
+
     it("ranks the elo ladder and per-player stats categories", async () => {
       const [a, b] = await fx.players(2);
       await ratedDuel(a, b, 2);
       await ratedDuel(a, b, 1); // a wins twice: clearly ahead
 
-      const elo = await postgres.query<
-        Array<{ player_steam_id: string; value: number }>
-      >(
-        "SELECT player_steam_id, value FROM get_leaderboard('elo', 30, 'Duel')",
-      );
+      const elo = await leaderboard("elo", 30, "Duel");
       expect(elo.length).toBe(2);
       expect(elo[0].player_steam_id).toBe(a);
       expect(Number(elo[0].value)).toBeGreaterThan(Number(elo[1].value));
+    });
+
+    it("best_kdr divides kills by deaths, falling back to kill count for the deathless", async () => {
+      const { ctx } = await statMatch();
+      const [ace, feeder, cleaner, target] = await fx.players(4);
+      for (const round of [1, 2, 3]) {
+        await fx.kill(ctx, ace, feeder, { round });
+      }
+      await fx.kill(ctx, feeder, ace);
+      await fx.kill(ctx, cleaner, target);
+      await fx.kill(ctx, cleaner, target, { round: 2 });
+
+      const rows = await leaderboard("best_kdr", 30, "Competitive");
+      // ace 3/1, cleaner deathless (value = raw kill count 2), feeder 1/3.
+      expect(rows.map((r) => r.player_steam_id)).toEqual([
+        ace,
+        cleaner,
+        feeder,
+      ]);
+      const byId = new Map(rows.map((r) => [r.player_steam_id, r]));
+      expect(Number(byId.get(ace)!.value)).toBe(3);
+      expect(Number(byId.get(ace)!.secondary_value)).toBe(3); // kills
+      expect(Number(byId.get(ace)!.tertiary_value)).toBe(1); // deaths
+      expect(Number(byId.get(cleaner)!.value)).toBe(2);
+      expect(Number(byId.get(cleaner)!.tertiary_value)).toBe(0);
+      expect(Number(byId.get(feeder)!.value)).toBeCloseTo(0.33, 2);
+      // Never got a kill: not on the board, despite the deaths.
+      expect(byId.has(target)).toBe(false);
+    });
+
+    it("best_win_rate is the finished-match win percentage with win/loss detail", async () => {
+      const [champ, rival] = await fx.players(2);
+      await ratedDuel(champ, rival); // ratedDuel: first player wins
+      await ratedDuel(champ, rival);
+      await ratedDuel(rival, champ);
+
+      const rows = await leaderboard("best_win_rate", 30, "Duel");
+      expect(rows.map((r) => r.player_steam_id)).toEqual([champ, rival]);
+      const [top, bottom] = rows;
+      expect(Number(top.value)).toBeCloseTo(66.67, 2);
+      expect(Number(top.secondary_value)).toBe(2); // wins
+      expect(Number(top.tertiary_value)).toBe(1); // losses
+      expect(Number(top.matches_played)).toBe(3);
+      expect(Number(bottom.value)).toBeCloseTo(33.33, 2);
+    });
+
+    it("highest_hs_pct ranks headshot ratios from the kill feed", async () => {
+      const { ctx } = await statMatch();
+      const [surgeon, sprayer, victim] = await fx.players(3);
+      await fx.kill(ctx, surgeon, victim, { headshot: true });
+      await fx.kill(ctx, sprayer, victim, { headshot: true });
+      await fx.kill(ctx, sprayer, victim, { headshot: false, round: 2 });
+      await fx.kill(ctx, sprayer, victim, { headshot: false, round: 3 });
+
+      const rows = await leaderboard("highest_hs_pct", 30, "Competitive");
+      expect(rows.map((r) => r.player_steam_id)).toEqual([surgeon, sprayer]);
+      expect(Number(rows[0].value)).toBe(100);
+      expect(Number(rows[0].secondary_value)).toBe(1); // total kills
+      expect(Number(rows[1].value)).toBeCloseTo(33.33, 2);
+      expect(Number(rows[1].secondary_value)).toBe(3);
+    });
+
+    it("stat categories respect the day window, with 0 meaning all time", async () => {
+      const { ctx } = await statMatch();
+      const [a, b] = await fx.players(2);
+      await fx.kill(ctx, a, b, { time: T(60 * 24 * 40) }); // 40 days back
+
+      expect((await leaderboard("best_kdr", 30, "Competitive")).length).toBe(0);
+      expect((await leaderboard("best_kdr", 0, "Competitive")).length).toBe(1);
+    });
+
+    it("get_player_leaderboard_rank locates a player inside the ladder", async () => {
+      const [champ, rival] = await fx.players(2);
+      await ratedDuel(champ, rival);
+
+      const [rank] = await postgres.query<
+        Array<{ rank: number; total: number; value: number }>
+      >(
+        "SELECT * FROM get_player_leaderboard_rank('elo', 30, $1, 'Duel')",
+        [rival],
+      );
+      expect(Number(rank.rank)).toBe(2);
+      expect(Number(rank.total)).toBe(2);
+    });
+
+    it("rejects unknown categories loudly instead of returning an empty ladder", async () => {
+      await expect(
+        postgres.query("SELECT * FROM get_leaderboard('bogus', 30, NULL)"),
+      ).rejects.toThrow(/Invalid category/);
     });
   });
 });
