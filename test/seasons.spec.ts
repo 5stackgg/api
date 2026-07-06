@@ -1,70 +1,29 @@
-import { Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import {
-  PostgreSqlContainer,
-  StartedPostgreSqlContainer,
-} from "@testcontainers/postgresql";
-import { HasuraService } from "./../src/hasura/hasura.service";
 import { PostgresService } from "./../src/postgres/postgres.service";
+import {
+  bootMigratedDb,
+  seedRegionWithServer,
+  SqlTestDb,
+} from "./utils/sql-test-db";
 
 // Exercises the season-management DB triggers/constraints: numbering, ending
 // (auto-create next), start/end edits, overlap prevention, deletion (SET NULL vs
 // cascade), and the needs_rebuild flag.
 describe("seasons (SQL-driven)", () => {
-  const IMAGE = "timescale/timescaledb:latest-pg17";
-
-  let container: StartedPostgreSqlContainer;
+  let db: SqlTestDb;
   let postgres: PostgresService;
   let seq = 0;
 
   beforeAll(async () => {
-    container = await new PostgreSqlContainer(IMAGE)
-      .withDatabase("hasura")
-      .withUsername("hasura")
-      .withPassword("hasura")
-      .withCommand([
-        "postgres",
-        "-c",
-        "shared_preload_libraries=timescaledb,pg_stat_statements",
-      ])
-      .start();
+    db = await bootMigratedDb("SeasonsTest");
+    postgres = db.postgres;
 
-    const configService = new ConfigService({
-      postgres: {
-        connections: {
-          default: {
-            host: container.getHost(),
-            port: container.getPort(),
-            user: container.getUsername(),
-            password: container.getPassword(),
-            database: container.getDatabase(),
-            max: 5,
-          },
-        },
-      },
-      app: { demosDomain: "demos.test", relayDomain: "relay.test" },
-    });
-
-    const logger = new Logger("SeasonsTest");
-    postgres = new PostgresService(configService, logger);
-
-    await postgres.query("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE");
-
-    const hasuraService = new HasuraService(
-      logger,
-      null as never,
-      configService,
-      postgres,
-    );
-
-    await hasuraService.setup();
+    // tbi_match resolves regions on every insert; a fresh install has none, so
+    // seedMatch would otherwise fail with 'No regions with attached servers'.
+    await seedRegionWithServer(postgres, "TestA");
   }, 600_000);
 
   afterAll(async () => {
-    await (
-      postgres as unknown as { pool: { end(): Promise<void> } }
-    )?.pool?.end();
-    await container?.stop();
+    await db?.stop();
   });
 
   beforeEach(async () => {
@@ -94,11 +53,24 @@ describe("seasons (SQL-driven)", () => {
     return row;
   };
 
-  const listSeasons = () =>
-    postgres.query<Array<SeasonRow>>(
+  // pg returns timestamptz columns as Date objects; normalize to ISO strings so
+  // they compare cleanly against the D() literals used in assertions.
+  const listSeasons = async () => {
+    const rows = await postgres.query<
+      Array<Omit<SeasonRow, "starts_at" | "ends_at"> & {
+        starts_at: Date;
+        ends_at: Date | null;
+      }>
+    >(
       `SELECT id, number, starts_at, ends_at, needs_rebuild
        FROM seasons ORDER BY starts_at ASC`,
     );
+    return rows.map((row) => ({
+      ...row,
+      starts_at: row.starts_at.toISOString(),
+      ends_at: row.ends_at?.toISOString() ?? null,
+    }));
+  };
 
   const seedPlayer = async () => {
     const steam = nextSteam();
@@ -127,9 +99,6 @@ describe("seasons (SQL-driven)", () => {
   const tagElo = async (seasonId: string | null, endedAt: string) => {
     const steam = await seedPlayer();
     const matchId = await seedMatch(endedAt);
-    await postgres.query(
-      `INSERT INTO e_match_types (value) VALUES ('Competitive') ON CONFLICT DO NOTHING`,
-    );
     await postgres.query(
       `INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at, season_id)
        VALUES ($1, $2, 'Competitive', 5000, 0, $3, $4)`,
@@ -225,7 +194,7 @@ describe("seasons (SQL-driven)", () => {
 
     await postgres.query("DELETE FROM seasons WHERE id = $1", [s1.id]);
 
-    const rows = await postgres.query(
+    const rows = await postgres.query<Array<unknown>>(
       `SELECT 1 FROM player_season_stats WHERE season_id = $1`,
       [s1.id],
     );
@@ -286,9 +255,9 @@ describe("seasons (SQL-driven)", () => {
     ]);
 
     const [row] = await postgres.query<
-      Array<{ starts_at: string; needs_rebuild: boolean }>
+      Array<{ starts_at: Date; needs_rebuild: boolean }>
     >("SELECT starts_at, needs_rebuild FROM seasons WHERE id = $1", [s1.id]);
-    expect(row.starts_at).toBe(D("2025-02-01"));
+    expect(row.starts_at.toISOString()).toBe(D("2025-02-01"));
     expect(row.needs_rebuild).toBe(true);
   });
 

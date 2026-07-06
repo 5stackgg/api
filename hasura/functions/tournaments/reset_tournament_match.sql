@@ -7,12 +7,15 @@ AS $$
 DECLARE
     slot_position int;
 BEGIN
+    -- Same feeder ordering as assign_team_to_bracket_slot, including the
+    -- WB-before-LB key that disambiguates the grand final's two feeders.
     SELECT ranked.pos INTO slot_position
     FROM (
         SELECT f.id,
                row_number() OVER (
                    ORDER BY
                        CASE WHEN f.loser_parent_bracket_id = _target_bracket_id THEN 0 ELSE 1 END,
+                       CASE WHEN f.path = 'LB' THEN 1 ELSE 0 END,
                        f.round,
                        f.match_number
                ) AS pos

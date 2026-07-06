@@ -21,6 +21,15 @@ BEGIN
         RETURN;
     END IF;
 
+    -- Serialize result processing per stage. Two matches reported at the same
+    -- moment otherwise interleave row locks in opposite orders (own bracket ->
+    -- shared parent -> standings cache -> start-time sweep) and deadlock;
+    -- Postgres then aborts one transaction and that match result is lost.
+    -- Locking the stage row first gives every reporter the same lock order.
+    PERFORM 1 FROM tournament_stages
+    WHERE id = bracket.tournament_stage_id
+    FOR UPDATE;
+
     IF match.winning_lineup_id = match.lineup_1_id THEN
         winning_team_id = bracket.tournament_team_id_1;
         losing_team_id = bracket.tournament_team_id_2;

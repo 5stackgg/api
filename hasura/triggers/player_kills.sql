@@ -12,12 +12,15 @@ BEGIN
       SET kill_count = player_kills_by_weapon.kill_count + 1;
 
 
-    -- attacker: kills + headshots
-    INSERT INTO player_stats (player_steam_id, kills, headshots)
+    -- attacker: kills + headshots. The percentage must also be set on the
+    -- very first kill (the insert path), not just on conflict, or a player's
+    -- opening headshot reads as 0% until their second kill.
+    INSERT INTO player_stats (player_steam_id, kills, headshots, headshot_percentage)
     VALUES (
         NEW.attacker_steam_id,
         1,
-        CASE WHEN NEW.headshot THEN 1 ELSE 0 END
+        CASE WHEN NEW.headshot THEN 1 ELSE 0 END,
+        CASE WHEN NEW.headshot THEN 1 ELSE 0 END::float
     )
     ON CONFLICT (player_steam_id)
     DO UPDATE SET
@@ -43,12 +46,13 @@ BEGIN
         FROM matches m WHERE m.id = NEW.match_id;
 
         IF _season_id IS NOT NULL THEN
-            INSERT INTO player_season_stats (player_steam_id, season_id, kills, headshots)
+            INSERT INTO player_season_stats (player_steam_id, season_id, kills, headshots, headshot_percentage)
             VALUES (
                 NEW.attacker_steam_id,
                 _season_id,
                 1,
-                CASE WHEN NEW.headshot THEN 1 ELSE 0 END
+                CASE WHEN NEW.headshot THEN 1 ELSE 0 END,
+                CASE WHEN NEW.headshot THEN 1 ELSE 0 END::float
             )
             ON CONFLICT (player_steam_id, season_id)
             DO UPDATE SET

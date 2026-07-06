@@ -1,0 +1,50 @@
+name: tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "main"
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Typecheck test suites
+        run: yarn typecheck:tests
+      - name: Run unit tests
+        run: yarn test:unit
+
+  sql:
+    # Boots a throwaway TimescaleDB per suite via testcontainers and drives the
+    # real HasuraService.setup() migration pipeline, then exercises the
+    # triggers/functions. Docker is available on GitHub-hosted runners.
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      - name: Pre-pull the database image
+        run: docker pull timescale/timescaledb:latest-pg17
+      - name: Run SQL tests
+        run: yarn test:sql

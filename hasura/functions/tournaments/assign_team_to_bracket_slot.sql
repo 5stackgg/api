@@ -23,7 +23,13 @@ BEGIN
 
     -- Determine the correct slot from feeder ordering:
     -- 1. Loser drops (loser_parent_bracket_id) come before winner feeds (parent_bracket_id)
-    -- 2. Within same type, order by round then match_number
+    -- 2. Winner-bracket feeders before loser-bracket feeders: the grand final
+    --    is fed by the WB final and the LB final, which tie on round AND
+    --    match_number — without this key the ordering is non-deterministic,
+    --    both feeders resolve to the same slot, and the second finisher
+    --    overwrites the first (leaving the GF one team short, which then
+    --    resolves as a bye and crowns the wrong champion).
+    -- 3. Within same type, order by round then match_number
     -- This matches the bracket generation layout.
     IF _source_bracket_id IS NOT NULL THEN
         SELECT pos INTO slot_position
@@ -32,6 +38,7 @@ BEGIN
                    row_number() OVER (
                        ORDER BY
                            CASE WHEN f.loser_parent_bracket_id = _target_bracket_id THEN 0 ELSE 1 END,
+                           CASE WHEN f.path = 'LB' THEN 1 ELSE 0 END,
                            f.round,
                            f.match_number
                    ) AS pos

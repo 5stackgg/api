@@ -37,35 +37,73 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Placement comes from v_team_stage_results, which is the single source of
-    -- truth for tournament ordering (DE uses elimination round, RR/Swiss/SE
+    -- When the last stage played a third-place decider, the brackets order the
+    -- medals directly: final winner/loser take gold/silver, the decider's
+    -- winner takes bronze. The standings view cannot do this — the runner-up
+    -- and the third-place winner both finish 1-1, so its wins-based
+    -- tiebreakers (round ratio, team KDR, finally team id) pick silver and
+    -- bronze arbitrarily.
+    SELECT
+        CASE WHEN fm.winning_lineup_id = fm.lineup_1_id
+             THEN fb.tournament_team_id_1 ELSE fb.tournament_team_id_2 END,
+        CASE WHEN fm.winning_lineup_id = fm.lineup_1_id
+             THEN fb.tournament_team_id_2 ELSE fb.tournament_team_id_1 END,
+        CASE WHEN tm.winning_lineup_id = tm.lineup_1_id
+             THEN tb3.tournament_team_id_1 ELSE tb3.tournament_team_id_2 END
+      INTO _winning_team_id, _runner_up_team_id, _third_team_id
+    FROM public.tournament_stages ts
+    JOIN public.tournament_brackets fb
+      ON fb.tournament_stage_id = ts.id
+    JOIN public.matches fm ON fm.id = fb.match_id
+    JOIN public.tournament_brackets tb3
+      ON tb3.tournament_stage_id = ts.id
+     AND tb3.round = fb.round
+     AND tb3.match_number = 2
+     AND tb3.path = 'WB'
+    JOIN public.matches tm ON tm.id = tb3.match_id
+    WHERE ts.id = _final_stage_id
+      AND ts.type = 'SingleElimination'
+      AND ts.third_place_match = true
+      AND fb.path = 'WB'
+      AND fb.match_number = 1
+      AND fb.round = (
+          SELECT MAX(round) FROM public.tournament_brackets
+          WHERE tournament_stage_id = _final_stage_id AND path = 'WB'
+      )
+      AND fm.winning_lineup_id IS NOT NULL
+      AND tm.winning_lineup_id IS NOT NULL;
+
+    -- Otherwise placement comes from v_team_stage_results, the single source
+    -- of truth for tournament ordering (DE uses elimination round, RR/Swiss/SE
     -- use wins-based tiebreakers). The view's `placement` column shares ranks
     -- on ties, which lets us suppress the bronze when 3rd is contested
     -- (e.g. SingleElim with no third_place_match → both SF losers tied).
     -- Separate scalar selects keep this off `min(uuid)`, which Postgres lacks.
-    SELECT tournament_team_id INTO _winning_team_id
-    FROM public.v_team_stage_results
-    WHERE tournament_stage_id = _final_stage_id
-      AND placement = 1
-    ORDER BY tournament_team_id::text
-    LIMIT 1;
+    IF _winning_team_id IS NULL THEN
+        SELECT tournament_team_id INTO _winning_team_id
+        FROM public.v_team_stage_results
+        WHERE tournament_stage_id = _final_stage_id
+          AND placement = 1
+        ORDER BY tournament_team_id::text
+        LIMIT 1;
 
-    SELECT tournament_team_id INTO _runner_up_team_id
-    FROM public.v_team_stage_results
-    WHERE tournament_stage_id = _final_stage_id
-      AND placement = 2
-    ORDER BY tournament_team_id::text
-    LIMIT 1;
+        SELECT tournament_team_id INTO _runner_up_team_id
+        FROM public.v_team_stage_results
+        WHERE tournament_stage_id = _final_stage_id
+          AND placement = 2
+        ORDER BY tournament_team_id::text
+        LIMIT 1;
 
-    SELECT tournament_team_id INTO _third_team_id
-    FROM public.v_team_stage_results
-    WHERE tournament_stage_id = _final_stage_id
-      AND placement = 3
-      AND (
-        SELECT COUNT(*) FROM public.v_team_stage_results
-        WHERE tournament_stage_id = _final_stage_id AND placement = 3
-      ) = 1
-    LIMIT 1;
+        SELECT tournament_team_id INTO _third_team_id
+        FROM public.v_team_stage_results
+        WHERE tournament_stage_id = _final_stage_id
+          AND placement = 3
+          AND (
+            SELECT COUNT(*) FROM public.v_team_stage_results
+            WHERE tournament_stage_id = _final_stage_id AND placement = 3
+          ) = 1
+        LIMIT 1;
+    END IF;
 
     _award_third := _third_team_id IS NOT NULL;
 
