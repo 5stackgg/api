@@ -22,9 +22,9 @@ BEGIN
     -- ESEA-style "Swiss group": pair by record but never advance/eliminate — every
     -- team plays exactly max_rounds rounds and is ranked in one table. Otherwise the
     -- Valve-style system: 3 wins to advance / 3 losses to be eliminated over 5 rounds.
-    SELECT COALESCE(swiss_no_elimination, false), max_rounds
+    SELECT COALESCE(ts.swiss_no_elimination, false), ts.max_rounds
     INTO _no_elim, _max_rounds_setting
-    FROM tournament_stages WHERE id = _stage_id;
+    FROM tournament_stages ts WHERE ts.id = _stage_id;
 
     wins_needed := 3;
     IF _no_elim THEN
