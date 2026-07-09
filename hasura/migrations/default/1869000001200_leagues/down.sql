@@ -75,10 +75,10 @@ ALTER TABLE public.tournament_stages DROP COLUMN IF EXISTS max_rounds;
 
 DELETE FROM public.notifications WHERE type IN (
     'LeagueProposalReceived', 'LeagueProposalAccepted', 'LeagueProposalDeclined',
-    'LeagueMatchUnscheduled', 'LeagueRegistrationDecision'
+    'LeagueMatchUnscheduled', 'LeagueRegistrationDecision', 'LeagueRosterUndersized'
 );
 DELETE FROM public.e_notification_types WHERE value IN (
     'LeagueProposalReceived', 'LeagueProposalAccepted', 'LeagueProposalDeclined',
-    'LeagueMatchUnscheduled', 'LeagueRegistrationDecision'
+    'LeagueMatchUnscheduled', 'LeagueRegistrationDecision', 'LeagueRosterUndersized'
 );
 DELETE FROM public.settings WHERE name = 'public.leagues_enabled';

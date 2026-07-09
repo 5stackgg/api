@@ -55,8 +55,8 @@ WHERE name IN (
 );
 
 -- ===== Enums =====
--- Seeded here as well as in hasura/enums so the FKs below always apply cleanly
--- on a fresh database (enums load after migrations).
+-- Tables only. Their values live in hasura/enums/league-*.sql, which load right
+-- after the migrations; a foreign key needs the table, not its rows.
 
 CREATE TABLE IF NOT EXISTS public.e_league_season_statuses (
     value TEXT PRIMARY KEY,
@@ -77,45 +77,6 @@ CREATE TABLE IF NOT EXISTS public.e_league_movement_types (
     value TEXT PRIMARY KEY,
     description TEXT NOT NULL
 );
-
-INSERT INTO public.e_league_season_statuses (value, description) VALUES
-    ('Setup', 'Setup'),
-    ('RegistrationOpen', 'Registration Open'),
-    ('RegistrationClosed', 'Registration Closed'),
-    ('Live', 'Live'),
-    ('Playoffs', 'Playoffs'),
-    ('Finished', 'Finished'),
-    ('Canceled', 'Canceled')
-ON CONFLICT (value) DO UPDATE SET description = EXCLUDED.description;
-
-INSERT INTO public.e_league_registration_statuses (value, description) VALUES
-    ('Pending', 'Pending review'),
-    ('Approved', 'Approved'),
-    ('Waitlisted', 'Waitlisted'),
-    ('Declined', 'Declined'),
-    ('Withdrawn', 'Withdrawn')
-ON CONFLICT (value) DO UPDATE SET description = EXCLUDED.description;
-
-INSERT INTO public.e_league_proposal_statuses (value, description) VALUES
-    ('Pending', 'Pending response'),
-    ('Accepted', 'Accepted'),
-    ('Declined', 'Declined'),
-    ('Countered', 'Countered with a new time'),
-    ('Superseded', 'Superseded by another proposal'),
-    ('Expired', 'Expired')
-ON CONFLICT (value) DO UPDATE SET description = EXCLUDED.description;
-
-INSERT INTO public.e_league_movement_types (value, description) VALUES
-    ('Promote', 'Promoted to a higher division'),
-    ('Relegate', 'Relegated to a lower division'),
-    ('Stay', 'Stays in the same division'),
-    ('Remove', 'Removed from the league'),
-    ('DirectPromote', 'Promoted directly to a higher division'),
-    ('RelegationUp', 'Plays a relegation playoff for a higher-division spot'),
-    ('Hold', 'Holds its division'),
-    ('RelegationDown', 'Plays a relegation playoff to keep its division'),
-    ('DirectRelegate', 'Relegated directly to a lower division')
-ON CONFLICT (value) DO UPDATE SET description = EXCLUDED.description;
 
 -- ===== Structure =====
 
@@ -400,15 +361,8 @@ CREATE TABLE IF NOT EXISTS public.tournament_stage_windows (
     UNIQUE (tournament_stage_id, round)
 );
 
--- ===== Notifications + settings =====
-
-INSERT INTO public.e_notification_types ("value", "description") VALUES
-    ('LeagueProposalReceived', 'A league opponent proposed a match time'),
-    ('LeagueProposalAccepted', 'Your league match time proposal was accepted'),
-    ('LeagueProposalDeclined', 'Your league match time proposal was declined'),
-    ('LeagueMatchUnscheduled', 'A league matchup is unscheduled and will default soon'),
-    ('LeagueRegistrationDecision', 'Your league registration was reviewed')
-ON CONFLICT (value) DO UPDATE SET "description" = EXCLUDED."description";
+-- ===== Settings =====
+-- The league notification types are seeded from hasura/enums/notification-types.sql.
 
 INSERT INTO public.settings (name, value)
 VALUES ('public.leagues_enabled', 'false')

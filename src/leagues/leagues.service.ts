@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../hasura/hasura.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { AppConfig } from "../configs/types/AppConfig";
 import { ConfigService } from "@nestjs/config";
@@ -64,7 +65,7 @@ export class LeaguesService {
     return rows.at(0) ?? null;
   }
 
-  public async getLeagueTeamManagers(
+  private async getLeagueTeamManagers(
     leagueTeamSeasonId: string,
   ): Promise<Array<string>> {
     const rows = await this.postgres.query<Array<{ steam_id: string }>>(
@@ -90,7 +91,7 @@ export class LeaguesService {
     return rows.map(({ steam_id }) => steam_id);
   }
 
-  public seasonUrl(context: { league_season_id: string }): string {
+  private seasonUrl(context: { league_season_id: string }): string {
     return `${this.appConfig.webDomain}/leagues/seasons/${context.league_season_id}?tab=schedule`;
   }
 
@@ -139,19 +140,11 @@ export class LeaguesService {
     return recipients.size;
   }
 
-  private static escapeHtml(value: string): string {
-    return value
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
   public matchupLabel(context: BracketContext): string {
-    const team1 = LeaguesService.escapeHtml(context.team_1_name ?? "TBD");
-    const team2 = LeaguesService.escapeHtml(context.team_2_name ?? "TBD");
+    const team1 = NotificationsService.escapeHtml(context.team_1_name ?? "TBD");
+    const team2 = NotificationsService.escapeHtml(context.team_2_name ?? "TBD");
     const url = this.seasonUrl(context);
-    return `<a href="${url}">${team1} vs ${team2}</a> (${LeaguesService.escapeHtml(
+    return `<a href="${url}">${team1} vs ${team2}</a> (${NotificationsService.escapeHtml(
       context.season_name,
     )}, week ${context.week_number})`;
   }
@@ -271,11 +264,11 @@ export class LeaguesService {
     }
 
     const url = `${this.appConfig.webDomain}/leagues/seasons/${context.league_season_id}`;
-    const team = LeaguesService.escapeHtml(context.team_name);
-    const season = LeaguesService.escapeHtml(context.season_name);
+    const team = NotificationsService.escapeHtml(context.team_name);
+    const season = NotificationsService.escapeHtml(context.season_name);
 
     const division = context.division_name
-      ? LeaguesService.escapeHtml(context.division_name)
+      ? NotificationsService.escapeHtml(context.division_name)
       : "";
 
     const message = isReassignment
@@ -283,7 +276,7 @@ export class LeaguesService {
       : isRevocation
         ? `${team} was removed from <a href="${url}">${season}</a>.${
             context.decline_reason
-              ? ` Reason: ${LeaguesService.escapeHtml(context.decline_reason)}`
+              ? ` Reason: ${NotificationsService.escapeHtml(context.decline_reason)}`
               : ""
           }`
         : params.newStatus === "Approved"
@@ -294,7 +287,7 @@ export class LeaguesService {
             ? `${team} was waitlisted for <a href="${url}">${season}</a>.`
             : `${team} was declined for <a href="${url}">${season}</a>.${
                 context.decline_reason
-                  ? ` Reason: ${LeaguesService.escapeHtml(context.decline_reason)}`
+                  ? ` Reason: ${NotificationsService.escapeHtml(context.decline_reason)}`
                   : ""
               }`;
 
@@ -356,8 +349,8 @@ export class LeaguesService {
     }
 
     const url = `${this.appConfig.webDomain}/leagues/seasons/${context.league_season_id}`;
-    const team = LeaguesService.escapeHtml(context.team_name);
-    const season = LeaguesService.escapeHtml(context.season_name);
+    const team = NotificationsService.escapeHtml(context.team_name);
+    const season = NotificationsService.escapeHtml(context.season_name);
     const message = `${team} now has ${context.active_count} of the required ${context.min_roster} players for <a href="${url}">${season}</a>. Add players before the league starts or the team will be revoked at kickoff.`;
 
     const count = await this.notifyManagers({
