@@ -1,18 +1,6 @@
--- CAL/ESEA-style leagues: a single site-wide league with tiered divisions,
--- seasonal play, team-negotiated weekly scheduling, roster locks, playoffs and
--- promotion/relegation. Division play is materialized as regular tournaments
--- (RoundRobin/Swiss + elimination stages) per (season, division); these tables
--- own structure, registration, scheduling negotiation and cross-season identity.
---
--- Squash of the 1868000000100..1869000001100 league migrations, bumped +100 so
--- it re-runs cleanly on databases that already applied them. Fully idempotent.
--- Functions, views and triggers live in hasura/{functions,views,triggers} and
--- reapply on setup; migrations hold only schema DDL + guarded drops.
-
--- ===== Converge databases that ran the pre-squash migrations =====
--- The schema originally had a `leagues` entity owning per-league divisions,
--- seasons and teams, plus roster settings/functions under a league_* prefix
--- that now govern all team rosters under team_*.
+-- The league was once a row in `leagues`, owning its own divisions, seasons and
+-- teams, with roster settings under a league_* prefix. It is now a single global
+-- league, and those roster settings govern all teams under team_*.
 
 -- The is_league_admin computed field takes the (now-removed) leagues composite
 -- type as an argument; only drop it while that type still exists.
@@ -30,9 +18,7 @@ DROP FUNCTION IF EXISTS public.league_min_roster_size();
 DROP FUNCTION IF EXISTS public.league_max_roster_size();
 DROP FUNCTION IF EXISTS public.league_max_subs();
 
--- Superseded roster triggers: the min-roster-floor BEFORE DELETE guard and the
--- insert-only mirror are replaced by soft-delete-aware versions in
--- hasura/triggers/league_team_rosters.sql.
+-- Soft-delete-aware versions live in hasura/triggers/league_team_rosters.sql.
 DROP FUNCTION IF EXISTS public.tbd_league_team_rosters() CASCADE;
 DROP FUNCTION IF EXISTS public.tai_league_team_rosters() CASCADE;
 
@@ -55,8 +41,6 @@ WHERE name IN (
 );
 
 -- ===== Enums =====
--- Tables only. Their values live in hasura/enums/league-*.sql, which load right
--- after the migrations; a foreign key needs the table, not its rows.
 
 CREATE TABLE IF NOT EXISTS public.e_league_season_statuses (
     value TEXT PRIMARY KEY,
@@ -88,12 +72,10 @@ CREATE TABLE IF NOT EXISTS public.league_divisions (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Divisions are never disabled: every tier is a promotion/relegation target and
--- simply may have no teams in a given season.
 ALTER TABLE public.league_divisions DROP COLUMN IF EXISTS active;
 
--- Drop-then-add keeps these idempotent; the tier constraint is deferrable so
--- reorder/renumber can permute tiers in a single statement.
+-- The tier constraint is deferrable so reorder/renumber can permute tiers in a
+-- single statement.
 ALTER TABLE public.league_divisions DROP CONSTRAINT IF EXISTS league_divisions_tier_key;
 ALTER TABLE public.league_divisions
     ADD CONSTRAINT league_divisions_tier_key UNIQUE (tier) DEFERRABLE INITIALLY IMMEDIATE;
@@ -101,7 +83,6 @@ ALTER TABLE public.league_divisions DROP CONSTRAINT IF EXISTS league_divisions_n
 ALTER TABLE public.league_divisions
     ADD CONSTRAINT league_divisions_name_key UNIQUE (name);
 
--- Seed the default division ladder only on a fresh ladder.
 INSERT INTO public.league_divisions (name, tier)
 SELECT v.name, v.tier
 FROM (VALUES ('Invite', 1), ('Main', 2), ('Intermediate', 3), ('Open', 4))
@@ -119,9 +100,6 @@ CREATE TABLE IF NOT EXISTS public.league_seasons (
     roster_lock_at TIMESTAMPTZ,
     match_weeks_count INT NOT NULL DEFAULT 8 CHECK (match_weeks_count > 0),
     playoff_seats INT NOT NULL DEFAULT 4 CHECK (playoff_seats >= 0),
-    -- Superseded by the band counts below; kept for back-compat.
-    promote_count INT NOT NULL DEFAULT 2 CHECK (promote_count >= 0),
-    relegate_count INT NOT NULL DEFAULT 2 CHECK (relegate_count >= 0),
     match_options_id UUID
         REFERENCES public.match_options(id) ON UPDATE CASCADE ON DELETE SET NULL,
     default_best_of INT NOT NULL DEFAULT 1,
@@ -158,6 +136,9 @@ CREATE TABLE IF NOT EXISTS public.league_seasons (
     auto_regular_season_format BOOLEAN NOT NULL DEFAULT true,
     CHECK (signup_opens_at IS NULL OR signup_closes_at IS NULL OR signup_opens_at < signup_closes_at)
 );
+
+ALTER TABLE public.league_seasons DROP COLUMN IF EXISTS promote_count;
+ALTER TABLE public.league_seasons DROP COLUMN IF EXISTS relegate_count;
 
 ALTER TABLE public.league_seasons DROP CONSTRAINT IF EXISTS league_seasons_name_key;
 ALTER TABLE public.league_seasons
@@ -362,7 +343,6 @@ CREATE TABLE IF NOT EXISTS public.tournament_stage_windows (
 );
 
 -- ===== Settings =====
--- The league notification types are seeded from hasura/enums/notification-types.sql.
 
 INSERT INTO public.settings (name, value)
 VALUES ('public.leagues_enabled', 'false')

@@ -1,5 +1,3 @@
--- Session helpers for leagues, exposed as Hasura computed fields.
-
 -- Roster sizing is a team-wide setting (public.settings); seasons may still
 -- carry an explicit override in their own column.
 CREATE OR REPLACE FUNCTION public.team_max_roster_size() RETURNS int
@@ -36,9 +34,8 @@ AS $$
     );
 $$;
 
--- There is a single global league; managing it is a platform-administrator
--- capability. Both the computed field on league_seasons and the internal
--- variant for triggers/tracked functions reduce to a role check.
+-- There is a single global league, so managing it is a platform-administrator
+-- capability rather than a per-league grant.
 CREATE OR REPLACE FUNCTION public.is_league_season_admin(
     league_season public.league_seasons,
     hasura_session json
@@ -72,7 +69,6 @@ AS $$
     END;
 $$;
 
--- True when the caller manages (owns, captains, or team-admins) the given team.
 CREATE OR REPLACE FUNCTION public.manages_team(
     _team_id uuid,
     _steam_id bigint
@@ -142,7 +138,6 @@ BEGIN
 END;
 $$;
 
--- The caller's registration(s) in this season (teams they manage or play on).
 CREATE OR REPLACE FUNCTION public.league_season_my_registration(
     league_season public.league_seasons,
     hasura_session json

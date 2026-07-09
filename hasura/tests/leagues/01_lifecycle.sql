@@ -83,10 +83,10 @@ BEGIN
     INSERT INTO league_divisions (name, tier) VALUES ('Invite', 1) RETURNING id INTO _div_invite;
     INSERT INTO league_divisions (name, tier) VALUES ('Open', 2) RETURNING id INTO _div_open;
 
-    INSERT INTO league_seasons (created_by_steam_id, name, match_weeks_count, playoff_seats, promote_count, relegate_count,
+    INSERT INTO league_seasons (created_by_steam_id, name, match_weeks_count, playoff_seats,
                                 match_options_id, default_best_of, playoff_best_of, min_roster_size,
                                 signup_opens_at, signup_closes_at, starts_at, roster_lock_at)
-    VALUES (86500000000000001, 'LC Test League S1', 3, 2, 1, 1, _options_id, 1, 3, 5,
+    VALUES (86500000000000001, 'LC Test League S1', 3, 2, _options_id, 1, 3, 5,
             NOW() - INTERVAL '7 days', NOW() + INTERVAL '1 hour', NOW(), NOW() + INTERVAL '2 days')
     RETURNING id INTO _season_id;
 
@@ -361,9 +361,9 @@ BEGIN
 
     PERFORM approve_league_season_movements(_season_id, json_build_object('x-hasura-user-id', '86500000000000001', 'x-hasura-role', 'administrator'));
 
-    INSERT INTO league_seasons (created_by_steam_id, name, match_weeks_count, playoff_seats, promote_count, relegate_count,
+    INSERT INTO league_seasons (created_by_steam_id, name, match_weeks_count, playoff_seats,
                                 match_options_id, min_roster_size, status)
-    VALUES (86500000000000001, 'LC Test League S2', 3, 2, 1, 1, clone_match_options(_options_id), 5, 'RegistrationOpen')
+    VALUES (86500000000000001, 'LC Test League S2', 3, 2, clone_match_options(_options_id), 5, 'RegistrationOpen')
     RETURNING id INTO _season2_id;
 
     -- Re-register the promoted team; it must auto-slot into Invite.

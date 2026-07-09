@@ -118,9 +118,9 @@ BEGIN
 
     -- No playoff stage (playoff_seats = 0): the RR stage is the whole season,
     -- so finishing it finishes the tournament.
-    INSERT INTO league_seasons (created_by_steam_id, name, match_weeks_count, playoff_seats, promote_count, relegate_count,
+    INSERT INTO league_seasons (created_by_steam_id, name, match_weeks_count, playoff_seats,
                                 match_options_id, default_best_of, min_roster_size, starts_at)
-    VALUES (90500000000000001, 'Ladder Test Season', 3, 0, 1, 1, _options_id, 1, 5, NOW())
+    VALUES (90500000000000001, 'Ladder Test Season', 3, 0, _options_id, 1, 5, NOW())
     RETURNING id INTO _season_id;
 
     FOR i IN 1..3 LOOP

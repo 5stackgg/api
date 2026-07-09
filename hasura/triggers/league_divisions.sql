@@ -1,10 +1,8 @@
--- Replaces the earlier per-row deactivation guard.
+-- Divisions cannot be disabled: every tier is a promotion and relegation target
+-- and simply may have no teams in a given season. Nothing recreates these two
+-- guards; the drops exist to remove them from databases that installed them.
 DROP TRIGGER IF EXISTS tbu_league_divisions ON public.league_divisions;
 DROP FUNCTION IF EXISTS public.tbu_league_divisions();
-
--- Divisions have no active flag: every tier in the ladder is a valid promotion
--- and relegation target, it simply may have no teams in a given season. These
--- drops clear the guard that enforced the old "keep two active" rule.
 DROP TRIGGER IF EXISTS enforce_min_active_league_divisions ON public.league_divisions;
 DROP FUNCTION IF EXISTS public.enforce_min_active_league_divisions();
 

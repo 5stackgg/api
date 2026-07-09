@@ -1,7 +1,3 @@
--- Promotion/relegation: computed from regular-season (RoundRobin stage)
--- standings at season finish; admins review, optionally override the
--- destination, and approve. Approved movements drive next-season auto-slotting.
-
 CREATE OR REPLACE FUNCTION public.compute_league_season_movements(_league_season_id uuid)
 RETURNS void
 LANGUAGE plpgsql
@@ -118,9 +114,6 @@ BEGIN
 END;
 $$;
 
--- Approve every movement of a season in one call (admin convenience; exposed
--- as a Hasura mutation for administrators). Individual overrides happen via
--- normal updates of final_to_division_id before approval.
 CREATE OR REPLACE FUNCTION public.approve_league_season_movements(
     _league_season_id uuid,
     hasura_session json

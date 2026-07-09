@@ -1,8 +1,4 @@
--- League scheduling: week resolution for a bracket, the weekly default-time
--- fallback, and admin forfeit adjudication.
-
--- The match week a league regular-season bracket belongs to (bracket.round =
--- week_number). Returns NULL for non-league or playoff brackets.
+-- A regular-season bracket.round maps directly onto league_match_weeks.week_number.
 CREATE OR REPLACE FUNCTION public.league_bracket_match_week(_tournament_bracket_id uuid)
 RETURNS public.league_match_weeks
 LANGUAGE sql
@@ -18,10 +14,6 @@ AS $$
     WHERE tb.id = _tournament_bracket_id;
 $$;
 
--- Stamp the week's default time on every league regular-season matchup the two
--- teams never agreed on, once the default is near (2h lead). The existing
--- CheckForScheduledTournamentBrackets cron then materializes the matches.
--- Also expires stale pending proposals. Returns the number of brackets stamped.
 CREATE OR REPLACE FUNCTION public.apply_league_default_schedules()
 RETURNS int
 LANGUAGE plpgsql
@@ -87,9 +79,6 @@ BEGIN
 END;
 $$;
 
--- Admin adjudication of a no-show/unplayed league matchup: materializes the
--- match if needed and awards a forfeit win. Exposed as a Hasura mutation
--- (platform admins and league admins).
 DROP FUNCTION IF EXISTS public.league_award_forfeit(uuid, uuid);
 CREATE OR REPLACE FUNCTION public.league_award_forfeit(
     _tournament_bracket_id uuid,

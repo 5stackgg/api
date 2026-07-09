@@ -36,10 +36,6 @@ AS $$
     END;
 $$;
 
--- Materialize division tournaments for a season. Called from tau_league_seasons
--- on RegistrationClosed -> Live. Each division with at least two approved teams
--- becomes a tournament with a RoundRobin stage (regular season; one round per
--- match week) and, when playoff_seats >= 2, a SingleElimination playoff stage.
 -- Match options are forced to admin mode so brackets stay dormant until the two
 -- teams agree on a time (or the weekly default kicks in).
 CREATE OR REPLACE FUNCTION public.start_league_season(_league_season_id uuid)

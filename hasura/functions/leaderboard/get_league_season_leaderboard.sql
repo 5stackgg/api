@@ -3,9 +3,7 @@
 -- scopes strictly to the matches played inside a league season's division
 -- tournaments, so nothing here can affect the sitewide leaderboard.
 --
--- Editing this file bumps its hash so hasura.service re-applies it. Adding an
--- argument changes the signature, so drop the old one first (CREATE OR REPLACE
--- cannot remove an overload).
+-- Dropped first because CREATE OR REPLACE cannot remove an overload.
 DROP FUNCTION IF EXISTS public.get_league_season_leaderboard(UUID, TEXT, TEXT);
 
 CREATE OR REPLACE FUNCTION public.get_league_season_leaderboard(

@@ -1,9 +1,3 @@
--- Match-time negotiation between the two captains of a league matchup.
--- Either side proposes a time inside the match week's window; when the other
--- side accepts, the agreed time is stamped on the tournament bracket, which
--- the existing scheduling cron then materializes into a real match.
-
--- The two teams of a bracket the given player manages, if any.
 CREATE OR REPLACE FUNCTION public.league_bracket_managed_team(
     _bracket public.tournament_brackets,
     _steam_id bigint

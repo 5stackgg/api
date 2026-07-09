@@ -1,6 +1,5 @@
--- Reorder the division ladder from a drag-and-drop: tiers are reassigned by the
--- position of each id in _division_ids (1 = top). A single UPDATE permutes the
--- tiers, relying on the deferrable unique constraint to allow the swap.
+-- Tier 1 is the top of the ladder. A single UPDATE permutes the tiers, relying
+-- on the deferrable unique constraint to allow the swap.
 CREATE OR REPLACE FUNCTION public.reorder_league_divisions(
     _division_ids uuid[],
     hasura_session json

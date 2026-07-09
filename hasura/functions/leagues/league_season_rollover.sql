@@ -36,7 +36,7 @@ BEGIN
     INSERT INTO public.league_seasons (
         created_by_steam_id, status,
         signup_opens_at, signup_closes_at, starts_at, roster_lock_at,
-        match_weeks_count, games_per_week, playoff_seats, promote_count, relegate_count,
+        match_weeks_count, games_per_week, playoff_seats,
         direct_promote_count, relegation_up_count, relegation_down_count, direct_relegate_count,
         match_options_id, default_best_of, playoff_best_of,
         week_best_of, playoff_round_best_of,
@@ -47,7 +47,7 @@ BEGIN
         (hasura_session ->> 'x-hasura-user-id')::bigint, 'Setup',
         season.signup_opens_at + _shift, season.signup_closes_at + _shift,
         season.starts_at + _shift, season.roster_lock_at + _shift,
-        season.match_weeks_count, season.games_per_week, season.playoff_seats, season.promote_count, season.relegate_count,
+        season.match_weeks_count, season.games_per_week, season.playoff_seats,
         season.direct_promote_count, season.relegation_up_count, season.relegation_down_count, season.direct_relegate_count,
         _options_id, season.default_best_of, season.playoff_best_of,
         season.week_best_of, season.playoff_round_best_of,

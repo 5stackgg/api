@@ -77,10 +77,10 @@ BEGIN
     RETURNING id INTO _div_open;
 
     -- Week 2 is a BO3; the single playoff round (2 seats = one final) is a BO5.
-    INSERT INTO league_seasons (created_by_steam_id, name, match_weeks_count, playoff_seats, promote_count, relegate_count,
+    INSERT INTO league_seasons (created_by_steam_id, name, match_weeks_count, playoff_seats,
                                 match_options_id, default_best_of, playoff_best_of, min_roster_size,
                                 starts_at, week_best_of, playoff_round_best_of)
-    VALUES (87500000000000001, 'BO Test League Season', 3, 2, 0, 0, _options_id, 1, 3, 5,
+    VALUES (87500000000000001, 'BO Test League Season', 3, 2, _options_id, 1, 3, 5,
             NOW(), '{"2": 3}'::jsonb, '{"WB:1": 5}'::jsonb)
     RETURNING id INTO _season_id;
 

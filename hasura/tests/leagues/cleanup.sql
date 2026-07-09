@@ -25,8 +25,8 @@ DELETE FROM tournaments
     OR name LIKE 'PF Test League%' OR name LIKE 'ENH Test League%'
     OR name LIKE 'Ladder Test Season%';
 
--- Seasons no longer cascade from a league row; remove them by the synthetic
--- test steam-id range (also catches auto-numbered rollover clones).
+-- Nothing cascades to seasons, so remove them by the synthetic test steam-id
+-- range (which also catches auto-numbered rollover clones).
 DELETE FROM league_seasons WHERE created_by_steam_id >= 86500000000000001;
 
 DELETE FROM league_divisions

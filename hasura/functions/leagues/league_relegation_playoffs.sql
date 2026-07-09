@@ -1,10 +1,3 @@
--- Cross-division relegation playoffs. After a season finishes and movements are
--- computed, each adjacent-division boundary with RelegationDown (higher) and
--- RelegationUp (lower) teams becomes a small tournament; its final ranking
--- decides who takes the higher-division spots, written back onto each team's
--- league_team_movements row.
-
--- Materialize the relegation playoff tournaments for a finished season.
 CREATE OR REPLACE FUNCTION public.create_league_relegation_playoffs(_league_season_id uuid)
 RETURNS void
 LANGUAGE plpgsql
@@ -45,7 +38,6 @@ BEGIN
               WHERE mv.league_season_id = _league_season_id
                 AND mv.from_division_id = lo.id AND mv.type = 'RelegationUp')
     LOOP
-        -- Already created?
         IF EXISTS (
             SELECT 1 FROM public.league_relegation_playoffs
             WHERE league_season_id = _league_season_id
@@ -103,7 +95,6 @@ BEGIN
                     COALESCE(m.captain_steam_id, m.owner_steam_id), NOW(), _seed)
             RETURNING id INTO _tt_id;
 
-            -- Copy the team's season roster into the playoff tournament roster.
             INSERT INTO public.tournament_team_roster (tournament_team_id, player_steam_id, tournament_id, role)
             SELECT _tt_id, ltr.player_steam_id, _tournament_id, 'Member'
             FROM public.league_team_seasons lts
@@ -152,9 +143,6 @@ BEGIN
 END;
 $$;
 
--- Resolve a finished relegation playoff: top `higher_slots` teams take the
--- higher division, the rest the lower division; write final_to_division_id +
--- final type onto each team's movement.
 CREATE OR REPLACE FUNCTION public.resolve_league_relegation_playoff(_tournament_id uuid)
 RETURNS void
 LANGUAGE plpgsql

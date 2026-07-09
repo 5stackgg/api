@@ -58,7 +58,7 @@ BEGIN
 
     -- Otherwise they can still register another team they manage that is not
     -- already in this tournament (e.g. an A team and a B team that share
-    -- members) — being on another team's roster no longer blocks this.
+    -- members): being on another team's roster does not block registration.
     RETURN EXISTS (
         SELECT 1
         FROM public.teams t

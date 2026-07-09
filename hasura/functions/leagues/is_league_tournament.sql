@@ -1,6 +1,5 @@
--- A tournament belongs to a league when it backs a division (regular season /
--- playoffs) or a cross-division relegation playoff. League tournaments must not
--- be cancelled/reset/deleted directly — the league season owns their lifecycle.
+-- League tournaments must not be cancelled/reset/deleted directly; the league
+-- season owns their lifecycle.
 CREATE OR REPLACE FUNCTION public.is_league_tournament(_tournament_id uuid)
 RETURNS boolean
 LANGUAGE sql

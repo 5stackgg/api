@@ -67,10 +67,10 @@ BEGIN
 
     RAISE NOTICE '=== DOUBLE-ELIM SEASON, GF IS BO5, LB R1 IS BO3 ===';
 
-    INSERT INTO league_seasons (created_by_steam_id, name, match_weeks_count, playoff_seats, promote_count, relegate_count,
+    INSERT INTO league_seasons (created_by_steam_id, name, match_weeks_count, playoff_seats,
                                 match_options_id, default_best_of, playoff_best_of, min_roster_size,
                                 starts_at, playoff_stage_type, playoff_round_best_of)
-    VALUES (88500000000000001, 'PF Test League DE', 3, 4, 0, 0, _options_id, 1, 1, 5,
+    VALUES (88500000000000001, 'PF Test League DE', 3, 4, _options_id, 1, 1, 5,
             NOW(), 'DoubleElimination', '{"GF": 5, "LB:1": 3}'::jsonb)
     RETURNING id INTO _season_id;
 
@@ -232,10 +232,10 @@ BEGIN
 
     UPDATE league_seasons SET status = 'Finished' WHERE id = _season_id;
 
-    INSERT INTO league_seasons (created_by_steam_id, name, match_weeks_count, playoff_seats, promote_count, relegate_count,
+    INSERT INTO league_seasons (created_by_steam_id, name, match_weeks_count, playoff_seats,
                                 match_options_id, default_best_of, playoff_best_of, min_roster_size,
                                 starts_at, playoff_stage_type, playoff_third_place_match, status)
-    VALUES (88500000000000001, 'PF Test League SE', 3, 4, 0, 0, clone_match_options(_options_id), 1, 3, 5,
+    VALUES (88500000000000001, 'PF Test League SE', 3, 4, clone_match_options(_options_id), 1, 3, 5,
             NOW(), 'SingleElimination', true, 'RegistrationOpen')
     RETURNING id INTO _season_id;
 

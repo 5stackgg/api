@@ -1,4 +1,3 @@
--- Resolve the relegation playoff automatically when its tournament finishes.
 CREATE OR REPLACE FUNCTION public.tau_league_relegation_playoff() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
