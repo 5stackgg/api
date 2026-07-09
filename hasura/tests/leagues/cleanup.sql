@@ -9,7 +9,7 @@ SELECT set_config('fivestack.app_key', 'league-smoke-test-app-key', false);
 SELECT set_config('fivestack.league_cascade', 'true', false);
 
 UPDATE tournaments SET status='Cancelled'
- WHERE (name LIKE 'CAL Test League%' OR name LIKE 'BO Test League%' OR name LIKE 'PF Test League%' OR name LIKE 'ENH Test League%' OR name LIKE 'Ladder Test Season%')
+ WHERE (name LIKE 'LC Test League%' OR name LIKE 'BO Test League%' OR name LIKE 'PF Test League%' OR name LIKE 'ENH Test League%' OR name LIKE 'Ladder Test Season%')
    AND status NOT IN ('Finished','Cancelled','CancelledMinTeams');
 
 DELETE FROM match_maps WHERE map_id IN (
@@ -21,7 +21,7 @@ DELETE FROM match_maps WHERE map_id IN (
 DELETE FROM matches WHERE organizer_steam_id >= 86500000000000001;
 
 DELETE FROM tournaments
- WHERE name LIKE 'CAL Test League%' OR name LIKE 'BO Test League%'
+ WHERE name LIKE 'LC Test League%' OR name LIKE 'BO Test League%'
     OR name LIKE 'PF Test League%' OR name LIKE 'ENH Test League%'
     OR name LIKE 'Ladder Test Season%';
 
@@ -30,7 +30,7 @@ DELETE FROM tournaments
 DELETE FROM league_seasons WHERE created_by_steam_id >= 86500000000000001;
 
 DELETE FROM league_divisions
- WHERE name IN ('CAL Invite', 'CAL Open', 'BO Open', 'PF Open', 'ENH Open',
+ WHERE name IN ('Invite', 'Open', 'BO Open', 'PF Open', 'ENH Open',
                 'Guard 1', 'Guard 2', 'Guard 3', 'Ladder Top', 'Ladder Low');
 
 DELETE FROM teams

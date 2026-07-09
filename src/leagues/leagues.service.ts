@@ -64,10 +64,6 @@ export class LeaguesService {
     return rows.at(0) ?? null;
   }
 
-  /**
-   * Everyone who manages a team for league purposes: the persistent team's
-   * owner, team-admins on its roster, and the season captain.
-   */
   public async getLeagueTeamManagers(
     leagueTeamSeasonId: string,
   ): Promise<Array<string>> {
@@ -178,7 +174,6 @@ export class LeaguesService {
     const matchup = this.matchupLabel(context);
 
     if (params.op === "INSERT") {
-      // Notify the opposing team's managers.
       const opposing = [
         context.team_1_league_team_season_id,
         context.team_2_league_team_season_id,
@@ -235,13 +230,11 @@ export class LeaguesService {
     const isDecision =
       ["Approved", "Declined", "Waitlisted"].includes(params.newStatus) &&
       params.oldStatus !== params.newStatus;
-    // Pure re-assignment: an already-approved team is moved to a new division.
     const isReassignment =
       params.newStatus === "Approved" &&
       params.oldStatus === params.newStatus &&
       !!params.newAssignedDivisionId &&
       params.newAssignedDivisionId !== params.oldAssignedDivisionId;
-    // Revoked at league start for an undersized roster (carries a reason).
     const isRevocation =
       params.newStatus === "Withdrawn" &&
       params.oldStatus === "Approved";
@@ -317,12 +310,6 @@ export class LeaguesService {
     );
   }
 
-  /**
-   * A roster change (usually a player leaving the team) that drops an approved
-   * team below the minimum roster size warns the managers: fix it before the
-   * league starts or the team is revoked at kickoff. Only fires while the
-   * season has not yet started.
-   */
   public async handleRosterChange(leagueTeamSeasonId: string): Promise<void> {
     const rows = await this.postgres.query<
       Array<{

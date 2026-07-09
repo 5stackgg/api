@@ -547,10 +547,6 @@ input ScheduledLineupInput {
   team_id: String
 }
 
-type ScrimCalendarOutput {
-  url: String!
-}
-
 type SeasonBackfillStatusOutput {
   canceled: Boolean!
   completed: Int!
@@ -746,6 +742,10 @@ type TableStat {
   schemaname: String!
   seq_scan: Int!
   seq_tup_read: Int!
+}
+
+type TeamCalendarOutput {
+  url: String!
 }
 
 type TelemetryStats {
@@ -66823,9 +66823,6 @@ type query_root {
   """Read file content from game server"""
   readServerFile(file_path: String!, node_id: String!, server_id: String): FileContentResponse!
 
-  """scrimCalendarUrl"""
-  scrimCalendarUrl(team_id: uuid!): ScrimCalendarOutput
-
   """
   fetch data from the table: "seasons"
   """
@@ -67127,6 +67124,9 @@ type query_root {
 
   """fetch data from the table: "system_alerts" using primary key columns"""
   system_alerts_by_pk(id: uuid!): system_alerts
+
+  """teamCalendarUrl"""
+  teamCalendarUrl(team_id: uuid!): TeamCalendarOutput
 
   """An array relationship"""
   team_invites(

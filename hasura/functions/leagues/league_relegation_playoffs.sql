@@ -29,14 +29,14 @@ BEGIN
         (SELECT steam_id FROM public.players WHERE role = 'administrator' ORDER BY steam_id LIMIT 1)
     );
 
-    -- Boundaries: a higher division (tier T) that has RelegationDown teams and an
-    -- active lower division (tier T+1) that has RelegationUp teams, this season.
+    -- Boundaries: a higher division (tier T) that has RelegationDown teams and a
+    -- lower division (tier T+1) that has RelegationUp teams, this season. Both
+    -- sides must have produced movements, which already implies they ran.
     FOR boundary IN
         SELECT hi.id AS higher_division_id, lo.id AS lower_division_id
         FROM public.league_divisions hi
-        JOIN public.league_divisions lo ON lo.tier = hi.tier + 1 AND lo.active
-        WHERE hi.active
-          AND EXISTS (
+        JOIN public.league_divisions lo ON lo.tier = hi.tier + 1
+        WHERE EXISTS (
               SELECT 1 FROM public.league_team_movements mv
               WHERE mv.league_season_id = _league_season_id
                 AND mv.from_division_id = hi.id AND mv.type = 'RelegationDown')

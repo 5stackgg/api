@@ -1,65 +1,50 @@
--- Division ladder rules: at least two divisions must stay active (so promotion
--- and relegation have somewhere to go), and teams in the top/bottom division
--- never promote above / relegate below the ladder.
+-- Division ladder rules: every tier is a promotion/relegation target whether or
+-- not it has teams that season; tiers renumber on delete; and teams in the
+-- top/bottom division never promote above / relegate below the ladder.
 \set ON_ERROR_STOP on
 
 SELECT set_config('hasura.user', '{"x-hasura-role": "admin", "x-hasura-user-id": "90500000000000001"}', false);
 SELECT set_config('fivestack.app_key', 'league-smoke-test-app-key', false);
 
 -- ===========================================================================
--- Part A: at least two active divisions at all times; tiers renumber on delete
+-- Part A: the ladder can shrink to one division or none; tiers renumber
 -- ===========================================================================
 DO $guard$
 DECLARE
     _d1 uuid;
     _d2 uuid;
     _d3 uuid;
-    _blocked boolean;
     _tier int;
 BEGIN
     RAISE NOTICE '=== DIVISION LADDER GUARDS ===';
 
-    -- Free tiers 1-3 from the seeded CAL default ladder for this scratch run.
+    -- Free tiers 1-3 from the seeded default ladder for this scratch run.
     DELETE FROM league_divisions WHERE name IN ('Invite', 'Main', 'Intermediate', 'Open');
 
     INSERT INTO league_divisions (name, tier) VALUES ('Guard 1', 1) RETURNING id INTO _d1;
     INSERT INTO league_divisions (name, tier) VALUES ('Guard 2', 2) RETURNING id INTO _d2;
     INSERT INTO league_divisions (name, tier) VALUES ('Guard 3', 3) RETURNING id INTO _d3;
 
-    -- Delete the middle division (3 active -> 2): allowed, and tiers renumber
-    -- so the bottom division moves from tier 3 to tier 2.
+    -- Delete the middle division: allowed, and tiers renumber so the bottom
+    -- division moves from tier 3 to tier 2.
     DELETE FROM league_divisions WHERE id = _d2;
     SELECT tier INTO _tier FROM league_divisions WHERE id = _d3;
     IF _tier != 2 THEN
         RAISE EXCEPTION 'ASSERT FAILED: tiers should renumber to 1..N on delete, Guard 3 tier = %', _tier;
     END IF;
 
-    -- 2 active -> 1 via deactivate: blocked.
-    _blocked := false;
-    BEGIN
-        UPDATE league_divisions SET active = false WHERE id = _d3;
-    EXCEPTION WHEN SQLSTATE '22000' THEN
-        _blocked := true;
-    END;
-    IF NOT _blocked THEN
-        RAISE EXCEPTION 'ASSERT FAILED: deactivating to a single active division should have raised';
+    -- Down to a single division: allowed. Nothing promotes out of a one-tier
+    -- ladder, but the ladder itself is valid.
+    DELETE FROM league_divisions WHERE id = _d3;
+    SELECT tier INTO _tier FROM league_divisions WHERE id = _d1;
+    IF _tier != 1 THEN
+        RAISE EXCEPTION 'ASSERT FAILED: lone division should be tier 1, got %', _tier;
     END IF;
 
-    -- 2 active -> 1 via delete: blocked.
-    _blocked := false;
-    BEGIN
-        DELETE FROM league_divisions WHERE id = _d3;
-    EXCEPTION WHEN SQLSTATE '22000' THEN
-        _blocked := true;
-    END;
-    IF NOT _blocked THEN
-        RAISE EXCEPTION 'ASSERT FAILED: deleting to a single active division should have raised';
-    END IF;
-
-    -- Bulk delete straight to zero active: allowed (turns the ladder off).
-    DELETE FROM league_divisions WHERE id IN (_d1, _d3);
-    IF (SELECT COUNT(*) FROM league_divisions WHERE id IN (_d1, _d3)) != 0 THEN
-        RAISE EXCEPTION 'ASSERT FAILED: bulk delete to zero active should be allowed';
+    -- And down to none: allowed (turns the ladder off).
+    DELETE FROM league_divisions WHERE id = _d1;
+    IF (SELECT COUNT(*) FROM league_divisions WHERE id IN (_d1, _d2, _d3)) != 0 THEN
+        RAISE EXCEPTION 'ASSERT FAILED: deleting every division should be allowed';
     END IF;
 
     RAISE NOTICE 'Part A OK';
@@ -127,6 +112,8 @@ BEGIN
     -- Top division (tier 1) is where teams play; the lower division (tier 2) is
     -- an empty relegation target.
     INSERT INTO league_divisions (name, tier) VALUES ('Ladder Top', 1) RETURNING id INTO _div_top;
+    -- No teams register into it this season; it must still be the relegation
+    -- target for the division above.
     INSERT INTO league_divisions (name, tier) VALUES ('Ladder Low', 2) RETURNING id INTO _div_low;
 
     -- No playoff stage (playoff_seats = 0): the RR stage is the whole season,
@@ -205,11 +192,12 @@ BEGIN
         RAISE EXCEPTION 'ASSERT FAILED: top-division teams should never promote, got % Promote rows', _cnt;
     END IF;
 
-    -- Relegation still works into the empty lower division.
+    -- Relegation still works into the lower division even though it is inactive
+    -- (did not run this season) and therefore empty.
     SELECT COUNT(*) INTO _cnt FROM league_team_movements
     WHERE league_season_id = _season_id AND type = 'DirectRelegate' AND computed_to_division_id = _div_low;
     IF _cnt < 1 THEN
-        RAISE EXCEPTION 'ASSERT FAILED: bottom of the top division should relegate into the lower division';
+        RAISE EXCEPTION 'ASSERT FAILED: bottom of the top division should relegate into the inactive lower division';
     END IF;
 
     RAISE NOTICE 'Part B OK';

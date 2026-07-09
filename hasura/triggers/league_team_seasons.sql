@@ -74,14 +74,10 @@ BEGIN
         NEW.assigned_division_id := _prior_division_id;
     END IF;
 
-    -- No prior placement: pre-select the team's requested tier (if it's active)
-    -- so the admin starts from the team's preference and can change it.
+    -- No prior placement: pre-select the team's requested tier so the admin
+    -- starts from the team's preference and can change it.
     IF NEW.assigned_division_id IS NULL
-       AND NEW.requested_division_id IS NOT NULL
-       AND EXISTS (
-           SELECT 1 FROM public.league_divisions
-           WHERE id = NEW.requested_division_id AND active
-       ) THEN
+       AND NEW.requested_division_id IS NOT NULL THEN
         NEW.assigned_division_id := NEW.requested_division_id;
     END IF;
 
@@ -130,13 +126,6 @@ BEGIN
         IF NEW.status = 'Approved' THEN
             IF NEW.assigned_division_id IS NULL THEN
                 RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Assign a division before approving a team';
-            END IF;
-
-            IF NOT EXISTS (
-                SELECT 1 FROM public.league_divisions
-                WHERE id = NEW.assigned_division_id AND active
-            ) THEN
-                RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot approve a team into an inactive division';
             END IF;
 
             SELECT COUNT(*) INTO _roster_count

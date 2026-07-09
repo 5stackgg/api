@@ -16,7 +16,6 @@ insert_permissions:
       columns:
         - name
         - tier
-        - active
     comment: ""
 select_permissions:
   - role: guest
@@ -25,7 +24,6 @@ select_permissions:
         - id
         - name
         - tier
-        - active
         - created_at
       filter: {}
       allow_aggregations: true
@@ -36,7 +34,6 @@ update_permissions:
       columns:
         - name
         - tier
-        - active
       filter: {}
       check: {}
     comment: ""

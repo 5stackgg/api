@@ -65,6 +65,7 @@ BEGIN
 
     -- Proposals expire when their time passes or the matchup is settled
     -- (finished, or its match progressed beyond the reschedulable states).
+    PERFORM set_config('fivestack.proposal_system_write', 'true', true);
     UPDATE public.league_scheduling_proposals lsp
     SET status = 'Expired'
     WHERE lsp.status = 'Pending'
@@ -80,6 +81,7 @@ BEGIN
               )
         )
       );
+    PERFORM set_config('fivestack.proposal_system_write', 'false', true);
 
     RETURN _stamped;
 END;

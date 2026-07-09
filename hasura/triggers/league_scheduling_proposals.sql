@@ -148,8 +148,18 @@ DECLARE
     _proposer_team_id uuid;
 BEGIN
     IF NEW.status IS DISTINCT FROM OLD.status THEN
+        -- Superseded/Expired are reached only from tau_league_scheduling_proposals
+        -- and the schedule cron, which stand this up around their own writes.
+        IF current_setting('fivestack.proposal_system_write', true) = 'true' THEN
+            RETURN NEW;
+        END IF;
+
         IF OLD.status != 'Pending' THEN
             RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Only pending proposals can be answered';
+        END IF;
+
+        IF NEW.status NOT IN ('Accepted', 'Declined', 'Countered') THEN
+            RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'A proposal can only be accepted, declined or countered';
         END IF;
 
         SELECT * INTO bracket FROM public.tournament_brackets WHERE id = NEW.tournament_bracket_id;
@@ -158,35 +168,33 @@ BEGIN
         _role := _session ->> 'x-hasura-role';
         _steam_id := (_session ->> 'x-hasura-user-id')::bigint;
 
-        IF NEW.status IN ('Accepted', 'Declined', 'Countered') THEN
-            IF bracket.finished = true THEN
-                RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'This matchup can no longer be rescheduled';
+        IF bracket.finished = true THEN
+            RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'This matchup can no longer be rescheduled';
+        END IF;
+
+        IF bracket.match_id IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM public.matches m
+            WHERE m.id = bracket.match_id
+              AND m.status IN ('Scheduled', 'WaitingForCheckIn')
+        ) THEN
+            RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'This matchup can no longer be rescheduled';
+        END IF;
+
+        IF _role IS NOT NULL AND NOT public.is_league_admin_for_session(_session) THEN
+            _responder_team_id := public.league_bracket_managed_team(bracket, _steam_id);
+            IF _responder_team_id IS NULL THEN
+                RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Only the captains of this matchup can respond';
             END IF;
 
-            IF bracket.match_id IS NOT NULL AND NOT EXISTS (
-                SELECT 1 FROM public.matches m
-                WHERE m.id = bracket.match_id
-                  AND m.status IN ('Scheduled', 'WaitingForCheckIn')
-            ) THEN
-                RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'This matchup can no longer be rescheduled';
+            -- The proposing side cannot accept its own proposal.
+            _proposer_team_id := public.league_bracket_managed_team(bracket, OLD.proposed_by_steam_id);
+            IF NEW.status = 'Accepted' AND _responder_team_id = _proposer_team_id THEN
+                RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'The opposing team must accept the proposal';
             END IF;
+        END IF;
 
-            IF _role IS NOT NULL AND NOT public.is_league_admin_for_session(_session) THEN
-                _responder_team_id := public.league_bracket_managed_team(bracket, _steam_id);
-                IF _responder_team_id IS NULL THEN
-                    RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Only the captains of this matchup can respond';
-                END IF;
-
-                -- The proposing side cannot accept its own proposal.
-                _proposer_team_id := public.league_bracket_managed_team(bracket, OLD.proposed_by_steam_id);
-                IF NEW.status = 'Accepted' AND _responder_team_id = _proposer_team_id THEN
-                    RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'The opposing team must accept the proposal';
-                END IF;
-            END IF;
-
-            IF NEW.responded_by_steam_id IS NULL THEN
-                NEW.responded_by_steam_id := _steam_id;
-            END IF;
+        IF NEW.responded_by_steam_id IS NULL THEN
+            NEW.responded_by_steam_id := _steam_id;
         END IF;
     END IF;
 
@@ -234,11 +242,13 @@ BEGIN
           AND m.id = tb.match_id
           AND m.status = 'Scheduled';
 
+        PERFORM set_config('fivestack.proposal_system_write', 'true', true);
         UPDATE public.league_scheduling_proposals
         SET status = 'Superseded'
         WHERE tournament_bracket_id = NEW.tournament_bracket_id
           AND id != NEW.id
           AND status = 'Pending';
+        PERFORM set_config('fivestack.proposal_system_write', 'false', true);
     END IF;
 
     RETURN NEW;

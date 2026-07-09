@@ -77,16 +77,16 @@ BEGIN
 
     RAISE NOTICE '=== LEAGUE + SEASON ===';
 
-    -- Free tiers 1-4 from the seeded CAL default ladder for this scratch run.
+    -- Free tiers 1-4 from the seeded default ladder for this scratch run.
     DELETE FROM league_divisions WHERE name IN ('Invite', 'Main', 'Intermediate', 'Open');
 
-    INSERT INTO league_divisions (name, tier) VALUES ('CAL Invite', 1) RETURNING id INTO _div_invite;
-    INSERT INTO league_divisions (name, tier) VALUES ('CAL Open', 2) RETURNING id INTO _div_open;
+    INSERT INTO league_divisions (name, tier) VALUES ('Invite', 1) RETURNING id INTO _div_invite;
+    INSERT INTO league_divisions (name, tier) VALUES ('Open', 2) RETURNING id INTO _div_open;
 
     INSERT INTO league_seasons (created_by_steam_id, name, match_weeks_count, playoff_seats, promote_count, relegate_count,
                                 match_options_id, default_best_of, playoff_best_of, min_roster_size,
                                 signup_opens_at, signup_closes_at, starts_at, roster_lock_at)
-    VALUES (86500000000000001, 'CAL Test League S1', 3, 2, 1, 1, _options_id, 1, 3, 5,
+    VALUES (86500000000000001, 'LC Test League S1', 3, 2, 1, 1, _options_id, 1, 3, 5,
             NOW() - INTERVAL '7 days', NOW() + INTERVAL '1 hour', NOW(), NOW() + INTERVAL '2 days')
     RETURNING id INTO _season_id;
 
@@ -204,6 +204,21 @@ BEGIN
     VALUES (_bracket.id, 86500000000000001, NOW() + INTERVAL '5 minutes')
     RETURNING id INTO _proposal_id;
 
+    -- Superseded/Expired are system-only; a direct write must be rejected.
+    BEGIN
+        UPDATE league_scheduling_proposals SET status = 'Superseded' WHERE id = _proposal_id;
+        RAISE EXCEPTION 'ASSERT FAILED: direct Superseded write should have raised';
+    EXCEPTION WHEN SQLSTATE '22000' THEN
+        NULL;
+    END;
+
+    BEGIN
+        UPDATE league_scheduling_proposals SET status = 'Expired' WHERE id = _proposal_id;
+        RAISE EXCEPTION 'ASSERT FAILED: direct Expired write should have raised';
+    EXCEPTION WHEN SQLSTATE '22000' THEN
+        NULL;
+    END;
+
     UPDATE league_scheduling_proposals SET status = 'Accepted' WHERE id = _proposal_id;
 
     SELECT scheduled_at INTO _ts FROM tournament_brackets WHERE id = _bracket.id;
@@ -232,8 +247,10 @@ BEGIN
         RAISE EXCEPTION 'ASSERT FAILED: expected 10 lineup players, got %', _cnt;
     END IF;
 
-    IF (SELECT status FROM matches WHERE id = _match_id) != 'WaitingForCheckIn' THEN
-        RAISE EXCEPTION 'ASSERT FAILED: match should be WaitingForCheckIn, got %',
+    -- Accepting a proposal materializes the match as Scheduled so it lands on
+    -- team calendars immediately; CheckForScheduledMatches opens check-in later.
+    IF (SELECT status FROM matches WHERE id = _match_id) != 'Scheduled' THEN
+        RAISE EXCEPTION 'ASSERT FAILED: match should be Scheduled, got %',
             (SELECT status FROM matches WHERE id = _match_id);
     END IF;
 
@@ -242,7 +259,9 @@ BEGIN
     UPDATE league_match_weeks SET default_match_at = NOW() + INTERVAL '1 hour'
     WHERE league_season_id = _season_id AND week_number = 1;
 
-    PERFORM apply_league_default_schedules();
+    -- Mirrors the ApplyLeagueDefaultSchedules cron, which runs both: the league
+    -- function skips window-backed stages, the generic one handles them.
+    PERFORM apply_league_default_schedules() + apply_tournament_default_schedules();
 
     SELECT COUNT(*) INTO _cnt FROM tournament_brackets
     WHERE tournament_stage_id = _rr_stage AND round = 1 AND scheduled_at IS NOT NULL;
@@ -324,10 +343,11 @@ BEGIN
         RAISE EXCEPTION 'ASSERT FAILED: expected 4 movement rows, got %', _cnt;
     END IF;
 
+    -- Invite fielded no teams this season, but it is still the division above Open.
     SELECT COUNT(*) INTO _cnt FROM league_team_movements
     WHERE league_season_id = _season_id AND type = 'DirectPromote' AND computed_to_division_id = _div_invite;
     IF _cnt != 1 THEN
-        RAISE EXCEPTION 'ASSERT FAILED: expected exactly 1 promotion to Invite, got %', _cnt;
+        RAISE EXCEPTION 'ASSERT FAILED: expected exactly 1 promotion into the empty Invite division, got %', _cnt;
     END IF;
 
     -- Bottom of the bottom tier has nowhere to go.
@@ -343,7 +363,7 @@ BEGIN
 
     INSERT INTO league_seasons (created_by_steam_id, name, match_weeks_count, playoff_seats, promote_count, relegate_count,
                                 match_options_id, min_roster_size, status)
-    VALUES (86500000000000001, 'CAL Test League S2', 3, 2, 1, 1, clone_match_options(_options_id), 5, 'RegistrationOpen')
+    VALUES (86500000000000001, 'LC Test League S2', 3, 2, 1, 1, clone_match_options(_options_id), 5, 'RegistrationOpen')
     RETURNING id INTO _season2_id;
 
     -- Re-register the promoted team; it must auto-slot into Invite.

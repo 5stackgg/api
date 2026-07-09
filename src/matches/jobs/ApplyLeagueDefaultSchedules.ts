@@ -4,12 +4,6 @@ import { MatchQueues } from "../enums/MatchQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { PostgresService } from "../../postgres/postgres.service";
 
-/**
- * Weekly default-time fallback for league matchups: any regular-season
- * matchup the two captains never agreed on gets the match week's default
- * time stamped on its bracket shortly before that time arrives. The existing
- * CheckForScheduledTournamentBrackets cron then materializes the match.
- */
 @UseQueue("Matches", MatchQueues.ScheduledMatches)
 export class ApplyLeagueDefaultSchedules extends WorkerHost {
   constructor(

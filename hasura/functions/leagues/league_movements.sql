@@ -25,7 +25,8 @@ BEGIN
     -- Top division suppresses promote/relegation-up (no division above); the
     -- bottom division suppresses relegate/relegation-down (no division below).
     -- RelegationUp/RelegationDown leave computed_to_division_id NULL — resolved
-    -- by the relegation playoff.
+    -- by the relegation playoff. With no opponent (the adjacent division did not
+    -- run this season) they collapse to DirectPromote / Hold instead.
     INSERT INTO public.league_team_movements (
         league_season_id, league_team_id, from_division_id,
         computed_to_division_id, type, final_rank
@@ -45,9 +46,11 @@ BEGIN
             WHEN down.id IS NOT NULL AND s.effective_rank > s.division_team_count - season.direct_relegate_count THEN down.id
             WHEN up.id IS NOT NULL
                  AND s.effective_rank <= season.direct_promote_count + season.relegation_up_count
-                 AND s.effective_rank <= s.division_team_count - season.direct_relegate_count - season.relegation_down_count THEN NULL
+                 AND s.effective_rank <= s.division_team_count - season.direct_relegate_count - season.relegation_down_count
+                 THEN CASE WHEN up_ran.ran THEN NULL ELSE up.id END
             WHEN down.id IS NOT NULL
-                 AND s.effective_rank > s.division_team_count - season.direct_relegate_count - season.relegation_down_count THEN NULL
+                 AND s.effective_rank > s.division_team_count - season.direct_relegate_count - season.relegation_down_count
+                 THEN CASE WHEN down_ran.ran THEN NULL ELSE s.league_division_id END
             ELSE s.league_division_id
         END,
         CASE
@@ -58,9 +61,11 @@ BEGIN
             WHEN down.id IS NOT NULL AND s.effective_rank > s.division_team_count - season.direct_relegate_count THEN 'DirectRelegate'
             WHEN up.id IS NOT NULL
                  AND s.effective_rank <= season.direct_promote_count + season.relegation_up_count
-                 AND s.effective_rank <= s.division_team_count - season.direct_relegate_count - season.relegation_down_count THEN 'RelegationUp'
+                 AND s.effective_rank <= s.division_team_count - season.direct_relegate_count - season.relegation_down_count
+                 THEN CASE WHEN up_ran.ran THEN 'RelegationUp' ELSE 'DirectPromote' END
             WHEN down.id IS NOT NULL
-                 AND s.effective_rank > s.division_team_count - season.direct_relegate_count - season.relegation_down_count THEN 'RelegationDown'
+                 AND s.effective_rank > s.division_team_count - season.direct_relegate_count - season.relegation_down_count
+                 THEN CASE WHEN down_ran.ran THEN 'RelegationDown' ELSE 'Hold' END
             ELSE 'Hold'
         END,
         s.effective_rank
@@ -85,10 +90,30 @@ BEGIN
         WHERE vs.league_season_id = _league_season_id
     ) s
     JOIN public.league_divisions ld ON ld.id = s.league_division_id
+    -- Adjacency is by tier alone: a team promotes into the division above even
+    -- when that division had no teams this season.
     LEFT JOIN public.league_divisions up
-      ON up.tier = ld.tier - 1 AND up.active = true
+      ON up.tier = ld.tier - 1
     LEFT JOIN public.league_divisions down
-      ON down.tier = ld.tier + 1 AND down.active = true
+      ON down.tier = ld.tier + 1
+    -- A relegation playoff needs an opponent, so the playoff bands only apply
+    -- when the adjacent division actually fielded a tournament this season.
+    LEFT JOIN LATERAL (
+        SELECT EXISTS (
+            SELECT 1 FROM public.league_season_divisions lsd
+            WHERE lsd.league_season_id = _league_season_id
+              AND lsd.league_division_id = up.id
+              AND lsd.tournament_id IS NOT NULL
+        ) AS ran
+    ) up_ran ON true
+    LEFT JOIN LATERAL (
+        SELECT EXISTS (
+            SELECT 1 FROM public.league_season_divisions lsd
+            WHERE lsd.league_season_id = _league_season_id
+              AND lsd.league_division_id = down.id
+              AND lsd.tournament_id IS NOT NULL
+        ) AS ran
+    ) down_ran ON true
     ON CONFLICT (league_season_id, league_team_id) DO NOTHING;
 END;
 $$;

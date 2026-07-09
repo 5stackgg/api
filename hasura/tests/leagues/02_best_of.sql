@@ -70,7 +70,7 @@ BEGIN
         END LOOP;
     END LOOP;
 
-    -- Free tier 1 from the seeded CAL default ladder for this scratch run.
+    -- Free tier 1 from the seeded default ladder for this scratch run.
     DELETE FROM league_divisions WHERE name IN ('Invite', 'Main', 'Intermediate', 'Open');
 
     INSERT INTO league_divisions (name, tier) VALUES ('BO Open', 1)

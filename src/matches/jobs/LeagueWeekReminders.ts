@@ -5,11 +5,6 @@ import { UseQueue } from "../../utilities/QueueProcessors";
 import { PostgresService } from "../../postgres/postgres.service";
 import { LeaguesService } from "../../leagues/leagues.service";
 
-/**
- * Reminds both captains of league matchups that still have no agreed time
- * once the week's default tip-off is within 48 hours. Sent at most once per
- * matchup (deduped on the notification's entity_id).
- */
 @UseQueue("Matches", MatchQueues.ScheduledMatches)
 export class LeagueWeekReminders extends WorkerHost {
   constructor(

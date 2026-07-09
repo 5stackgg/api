@@ -66,7 +66,7 @@ BEGIN
         END LOOP;
     END LOOP;
 
-    -- Free tier 1 from the seeded CAL default ladder for this scratch run.
+    -- Free tier 1 from the seeded default ladder for this scratch run.
     DELETE FROM league_divisions WHERE name IN ('Invite', 'Main', 'Intermediate', 'Open');
 
     INSERT INTO league_divisions (name, tier) VALUES ('ENH Open', 1)
@@ -212,8 +212,9 @@ BEGIN
     IF _match_id IS NULL THEN
         RAISE EXCEPTION 'ASSERT FAILED: bracket did not materialize';
     END IF;
-    IF (SELECT status FROM matches WHERE id = _match_id) != 'WaitingForCheckIn' THEN
-        RAISE EXCEPTION 'ASSERT FAILED: match should be WaitingForCheckIn';
+    IF (SELECT status FROM matches WHERE id = _match_id) != 'Scheduled' THEN
+        RAISE EXCEPTION 'ASSERT FAILED: match should be Scheduled, got %',
+            (SELECT status FROM matches WHERE id = _match_id);
     END IF;
 
     -- Renegotiate: propose a later time and accept it.
@@ -366,16 +367,29 @@ BEGIN
              WHERE league_season_id = _season_id AND type != 'Remove');
     END IF;
 
-    RAISE NOTICE '=== LEAGUE-ADMIN DELEGATION (movement approval, clone guard) ===';
+    RAISE NOTICE '=== ADMIN-ONLY GUARDS (movement approval, clone) ===';
+
+    _guarded := false;
+    BEGIN
+        PERFORM approve_league_season_movements(
+            _season_id,
+            json_build_object('x-hasura-user-id', '89500000000000030', 'x-hasura-role', 'user')
+        );
+    EXCEPTION WHEN SQLSTATE '22000' THEN
+        _guarded := true;
+    END;
+    IF NOT _guarded THEN
+        RAISE EXCEPTION 'ASSERT FAILED: non-admin movement approval should have raised';
+    END IF;
 
     PERFORM approve_league_season_movements(
         _season_id,
-        json_build_object('x-hasura-user-id', '89500000000000030', 'x-hasura-role', 'user')
+        json_build_object('x-hasura-user-id', '89500000000000001', 'x-hasura-role', 'administrator')
     );
     SELECT COUNT(*) INTO _cnt FROM league_team_movements
     WHERE league_season_id = _season_id AND approved_at IS NULL;
     IF _cnt != 0 THEN
-        RAISE EXCEPTION 'ASSERT FAILED: delegate approval should approve all movements, % left', _cnt;
+        RAISE EXCEPTION 'ASSERT FAILED: admin approval should approve all movements, % left', _cnt;
     END IF;
 
     _guarded := false;

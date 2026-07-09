@@ -4,15 +4,6 @@ import { MatchQueues } from "../enums/MatchQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { PostgresService } from "../../postgres/postgres.service";
 
-/**
- * Drives time-based league season status transitions:
- *  - Setup -> RegistrationOpen when the signup window opens
- *  - RegistrationOpen -> RegistrationClosed when it closes
- *  - Live -> Playoffs once every division's regular season (RoundRobin stage)
- *    has finished
- *  - Live/Playoffs -> Finished once every division tournament has finished
- *    (finish_league_season computes promotion/relegation movements)
- */
 @UseQueue("Matches", MatchQueues.ScheduledMatches)
 export class CheckLeagueSeasonTransitions extends WorkerHost {
   constructor(
@@ -49,8 +40,6 @@ export class CheckLeagueSeasonTransitions extends WorkerHost {
     );
     transitions += closed.length;
 
-    // Seasons start when their start time arrives. start_league_season (via
-    // trigger) materializes the division tournaments.
     const started = await this.postgres.query<{ id: string }[]>(
       `
       UPDATE league_seasons ls
@@ -71,7 +60,6 @@ export class CheckLeagueSeasonTransitions extends WorkerHost {
     );
     transitions += started.length;
 
-    // Every division's regular season stage is complete -> Playoffs.
     const playoffs = await this.postgres.query<{ id: string }[]>(
       `
       UPDATE league_seasons ls
@@ -97,7 +85,6 @@ export class CheckLeagueSeasonTransitions extends WorkerHost {
     );
     transitions += playoffs.length;
 
-    // All division tournaments have concluded -> Finished (computes movements).
     const finished = await this.postgres.query<{ id: string }[]>(
       `
       UPDATE league_seasons ls

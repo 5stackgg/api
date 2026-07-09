@@ -51,8 +51,13 @@ update_permissions:
       filter:
         status:
           _eq: Pending
-      check: {}
-    comment: Guarded by tbu_league_scheduling_proposals (only the opposing captain may accept).
+      check:
+        status:
+          _in:
+            - Accepted
+            - Declined
+            - Countered
+    comment: Guarded by tbu_league_scheduling_proposals (only the opposing captain may accept). Superseded/Expired are system-only.
 delete_permissions:
   - role: administrator
     permission:
