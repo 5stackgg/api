@@ -22,6 +22,7 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { GameServerQueues } from "./enums/GameServerQueues";
 import { NotificationsService } from "src/notifications/notifications.service";
+import { PluginRuntimeService } from "src/plugin-runtime/plugin-runtime.service";
 import { PluginRuntime } from "src/configs/types/GameServersConfig";
 
 export type GamedataValidationRuntime = PluginRuntime;
@@ -71,6 +72,7 @@ export class GameServerNodeService {
     redisManager: RedisManagerService,
     protected readonly loggingService: LoggingService,
     protected readonly notifications: NotificationsService,
+    protected readonly pluginRuntimeService: PluginRuntimeService,
     @InjectQueue(GameServerQueues.ValidateGamedata)
     private readonly validateGamedataQueue: Queue,
   ) {
@@ -982,6 +984,17 @@ export class GameServerNodeService {
     const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(".", "-");
     const serverfilesVolumeName = `serverfiles-${sanitizedGameServerNodeId}`;
 
+    // without --runtime the validator defaults to "all" and fetches SwiftlyS2 gamedata,
+    // so a GitHub blip fails validation on installs that never load SwiftlyS2
+    const { game_server_nodes_by_pk: node } = await this.hasura.query({
+      game_server_nodes_by_pk: {
+        __args: { id: gameServerNodeId },
+        pin_plugin_runtime: true,
+      },
+    });
+
+    const runtime = await this.pluginRuntimeService.resolvePluginRuntime(node);
+
     const lockKey = `gamedata:validate:lock:${buildId}:${branch}`;
     const acquired = await this.redis.set(lockKey, 1, "EX", 60 * 60, "NX");
     if (acquired === null) {
@@ -1043,7 +1056,12 @@ export class GameServerNodeService {
                   {
                     name: "validate-gamedata",
                     image: "ghcr.io/5stackgg/gamedata-validator:latest",
-                    args: ["--build-id", buildId.toString()],
+                    args: [
+                      "--build-id",
+                      buildId.toString(),
+                      "--runtime",
+                      runtime,
+                    ],
                     volumeMounts: [
                       {
                         name: serverfilesVolumeName,

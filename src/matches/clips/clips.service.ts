@@ -1699,7 +1699,7 @@ export class ClipsService {
       jobId,
     );
 
-    await this.s3.put(key, fileStream);
+    await this.s3.put(key, fileStream, "image/jpeg");
 
     return { key };
   }
@@ -1733,7 +1733,7 @@ export class ClipsService {
       row.user_steam_id != null ? String(row.user_steam_id) : null;
     const key = ClipsService.GetClipS3Key(userSteamId ?? "system", jobId);
 
-    await this.s3.put(key, fileStream);
+    await this.s3.put(key, fileStream, "video/mp4");
 
     let videoSize = 0;
     try {

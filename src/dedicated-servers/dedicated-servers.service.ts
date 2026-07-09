@@ -129,9 +129,15 @@ export class DedicatedServersService {
           ? `serverfiles-csgo-${sanitizedGameServerNodeId}`
           : `serverfiles-${sanitizedGameServerNodeId}`;
 
+      const pluginRuntime =
+        await this.pluginRuntimeService.resolvePluginRuntime(
+          server.game_server_node,
+        );
+
       const pluginImage =
         await this.pluginRuntimeService.resolveGameServerPluginImage(
           server.game_server_node,
+          pluginRuntime,
         );
 
       // Seeded here so out-of-date checks know the framework even before the
@@ -143,10 +149,7 @@ export class DedicatedServersService {
               id: serverId,
             },
             _set: {
-              plugin_runtime:
-                await this.pluginRuntimeService.resolvePluginRuntime(
-                  server.game_server_node,
-                ),
+              plugin_runtime: pluginRuntime,
             },
           },
           __typename: true,

@@ -9,10 +9,8 @@ import {
   PluginRuntime,
 } from "src/configs/types/GameServersConfig";
 
-// Deliberately depends on postgres + config only. Everything that resolves a
-// game server image (matches, dedicated servers, the plugin-version job) would
-// otherwise reach for SystemService and close a module cycle back through
-// GameServerNodeModule.
+// Depends on postgres + config only. Reaching for SystemService here instead would
+// close a module cycle back through GameServerNodeModule.
 @Injectable()
 export class PluginRuntimeService {
   constructor(
@@ -43,10 +41,13 @@ export class PluginRuntimeService {
     return await this.getPluginRuntime();
   }
 
-  public async resolveGameServerPluginImage(pin?: {
-    pin_plugin_version?: string | null;
-    pin_plugin_runtime?: string | null;
-  }): Promise<string> {
+  public async resolveGameServerPluginImage(
+    pin?: {
+      pin_plugin_version?: string | null;
+      pin_plugin_runtime?: string | null;
+    },
+    runtime?: PluginRuntime,
+  ): Promise<string> {
     const { serverImageOverride, pluginRuntimeImages } =
       this.config.get<GameServersConfig>("gameServers");
 
@@ -60,7 +61,7 @@ export class PluginRuntimeService {
     }
 
     const repository =
-      pluginRuntimeImages[await this.resolvePluginRuntime(pin)];
+      pluginRuntimeImages[runtime ?? (await this.resolvePluginRuntime(pin))];
 
     return `${repository}:${pinnedVersion ? `v${pinnedVersion}` : "latest"}`;
   }

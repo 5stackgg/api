@@ -13,6 +13,13 @@ ALTER TABLE public.game_server_nodes
 ALTER TABLE public.game_server_nodes
   DROP CONSTRAINT IF EXISTS "game_server_nodes_pin_plugin_version_check";
 
+-- these pins survive the DELETE below and then fail the single-column foreign key
+-- when it is re-added
+UPDATE public.game_server_nodes
+  SET "pin_plugin_version" = NULL
+  WHERE "pin_plugin_version" IS NOT NULL
+    AND "pin_plugin_runtime" IS DISTINCT FROM 'counterstrikesharp';
+
 ALTER TABLE public.game_server_nodes
   DROP COLUMN IF EXISTS "pin_plugin_runtime";
 
