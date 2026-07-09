@@ -59,7 +59,7 @@ describe("MatchAssistantService", () => {
       loggingService as any,
       {
         resolveGameServerPluginImage: jest.fn(
-          async () => "ghcr.io/5stackgg/swiftly-game-server:latest",
+          async () => "ghcr.io/5stackgg/game-server-sw:latest",
         ),
         resolvePluginRuntime: jest.fn(async () => "swiftlys2"),
       } as any,
