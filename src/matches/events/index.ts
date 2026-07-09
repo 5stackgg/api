@@ -1,3 +1,4 @@
+import AntiWallhackStatusEvent from "./AntiWallhackStatusEvent";
 import MatchMapStatusEvent from "./MatchMapStatusEvent";
 import MatchMapResetRoundEvent from "./MatchMapResetRoundEvent";
 import MatchUpdatedLineupsEvent from "./MatchUpdatedLineupsEvent";
@@ -20,6 +21,7 @@ import MatchSurrendered from "./MatchSurrendered";
 import MatchAbandoned from "./MatchAbandoned";
 
 export const MatchEvents = {
+  antiWallhackStatus: AntiWallhackStatusEvent,
   mapStatus: MatchMapStatusEvent,
   restoreRound: MatchMapResetRoundEvent,
 
