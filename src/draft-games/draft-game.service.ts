@@ -1008,6 +1008,7 @@ export class DraftGameService {
       mr: source.mr,
       best_of: source.best_of,
       knife_round: source.knife_round,
+      anti_wallhack: source.anti_wallhack,
       default_models: source.default_models,
       overtime: source.overtime,
       map_veto: source.map_veto,

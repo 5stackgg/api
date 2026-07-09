@@ -152,6 +152,7 @@ select_permissions:
         - lineup_1_side
         - lineup_2_side
         - status
+        - anti_wallhack_active
         - created_at
         - ended_at
         - started_at
