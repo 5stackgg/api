@@ -341,7 +341,8 @@ export class MatchesController {
     });
 
     match.options.anti_wallhack =
-      match.options.anti_wallhack && antiWallhackSetting?.value !== "false";
+      match.options.anti_wallhack &&
+      antiWallhackSetting?.value?.trim().toLowerCase() !== "false";
 
     // e_game_cfg_types_enum doesn't include Premier/Faceit (imports only).
     const cfgType =

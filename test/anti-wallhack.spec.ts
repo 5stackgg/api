@@ -53,6 +53,7 @@ describe("anti-wallhack columns (SQL-driven)", () => {
       `SELECT data_type, is_nullable, column_default
          FROM information_schema.columns
         WHERE table_name = 'match_maps'
+          AND table_schema = 'public'
           AND column_name = 'anti_wallhack_active'`,
     );
 
