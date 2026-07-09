@@ -28,8 +28,8 @@ BEGIN
     -- Odd field: pull one team out for a bye (a free win) before pairing so the
     -- remaining pools resolve evenly. Prefer a team that has not had a bye yet;
     -- among those, the lowest-ranked (fewest wins, most losses).
-    SELECT COALESCE(SUM(team_count), 0) INTO _total
-    FROM get_swiss_team_pools(_stage_id, used_teams);
+    SELECT COALESCE(SUM(p.team_count), 0) INTO _total
+    FROM get_swiss_team_pools(_stage_id, used_teams) p;
 
     IF _total % 2 = 1 THEN
         SELECT vtsr.tournament_team_id,
