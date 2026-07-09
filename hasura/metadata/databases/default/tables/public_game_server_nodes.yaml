@@ -79,6 +79,7 @@ select_permissions:
         - node_ip
         - offline_at
         - pin_build_id
+        - pin_plugin_runtime
         - pin_plugin_version
         - public_ip
         - region
@@ -112,6 +113,7 @@ update_permissions:
         - gpu_streaming_enabled
         - label
         - pin_build_id
+        - pin_plugin_runtime
         - pin_plugin_version
         - region
         - start_port_range

@@ -10,6 +10,7 @@ import { RconService } from "src/rcon/rcon.service";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
 import { Redis } from "ioredis";
 import { SystemService } from "src/system/system.service";
+import { PluginRuntimeService } from "src/plugin-runtime/plugin-runtime.service";
 
 @Injectable()
 export class DedicatedServersService {
@@ -30,6 +31,7 @@ export class DedicatedServersService {
     private readonly RconService: RconService,
     private readonly redisManager: RedisManagerService,
     private readonly systemService: SystemService,
+    private readonly pluginRuntimeService: PluginRuntimeService,
   ) {
     this.redis = this.redisManager.getConnection();
 
@@ -66,6 +68,7 @@ export class DedicatedServersService {
         game_server_node: {
           id: true,
           pin_plugin_version: true,
+          pin_plugin_runtime: true,
           supports_cpu_pinning: true,
         },
         server_region: {
@@ -126,16 +129,32 @@ export class DedicatedServersService {
           ? `serverfiles-csgo-${sanitizedGameServerNodeId}`
           : `serverfiles-${sanitizedGameServerNodeId}`;
 
-      let pluginImage = this.gameServerConfig.serverImage;
-
-      const pinPluginVersion = server.game_server_node?.pin_plugin_version;
-
-      if (pinPluginVersion) {
-        pluginImage = this.gameServerConfig.serverImage.replace(
-          /:.+$/,
-          `:v${pinPluginVersion.toString()}`,
+      const pluginRuntime =
+        await this.pluginRuntimeService.resolvePluginRuntime(
+          server.game_server_node,
         );
-      }
+
+      const pluginImage =
+        await this.pluginRuntimeService.resolveGameServerPluginImage(
+          server.game_server_node,
+          pluginRuntime,
+        );
+
+      // Seeded here so out-of-date checks know the framework even before the
+      // plugin's first ping; the ping overwrites it with what actually loaded.
+      await this.hasura.mutation({
+        update_servers_by_pk: {
+          __args: {
+            pk_columns: {
+              id: serverId,
+            },
+            _set: {
+              plugin_runtime: pluginRuntime,
+            },
+          },
+          __typename: true,
+        },
+      });
 
       const dedicatedServerDeploymentName =
         this.getDedicatedServerDeploymentName(serverId);

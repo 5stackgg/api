@@ -21,21 +21,28 @@ import { NodeDisk } from "./interfaces/NodeDisk";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { GameServerQueues } from "./enums/GameServerQueues";
+import { NotificationsService } from "src/notifications/notifications.service";
+import { PluginRuntimeService } from "src/plugin-runtime/plugin-runtime.service";
+import { PluginRuntime } from "src/configs/types/GameServersConfig";
+
+export type GamedataValidationRuntime = PluginRuntime;
+
+export type GamedataValidationEntry = {
+  set: string;
+  runtimes?: Array<GamedataValidationRuntime>;
+  signature: string;
+  kind?: "signature" | "vtable" | "patch";
+  count: number | null;
+  skipped?: boolean;
+  reason?: string;
+};
 
 export type GamedataValidationResult = {
   build_id?: number | null;
   status: "pass" | "fail" | "error";
-  broken: Array<{
-    set: string;
-    signature: string;
-    kind?: "signature" | "vtable";
-    count: number | null;
-  }>;
-  warnings?: Array<{
-    set: string;
-    signature: string;
-    count: number;
-  }>;
+  broken: Array<GamedataValidationEntry>;
+  warnings?: Array<GamedataValidationEntry>;
+  skipped?: Array<GamedataValidationEntry>;
   results?: Array<Record<string, unknown>>;
   error?: string;
 };
@@ -51,6 +58,9 @@ export class GameServerNodeService {
   private coreApi: CoreV1Api;
   private batchApi: BatchV1Api;
 
+  // nodes (`${nodeId}:${game}`) with an active update-status monitor loop
+  private activeUpdateMonitors = new Set<string>();
+
   // keep 1.5 hours of stats; with a ping every 30 seconds, that's 3,600 / 30 = 120 per hour, so 1.5 * 120 = 180 entries.
   private maxOfflineStatsHistory = 60 * 90;
   private maxStatsHistory: number = 180 - 1;
@@ -61,6 +71,8 @@ export class GameServerNodeService {
     protected readonly hasura: HasuraService,
     redisManager: RedisManagerService,
     protected readonly loggingService: LoggingService,
+    protected readonly notifications: NotificationsService,
+    protected readonly pluginRuntimeService: PluginRuntimeService,
     @InjectQueue(GameServerQueues.ValidateGamedata)
     private readonly validateGamedataQueue: Queue,
   ) {
@@ -448,23 +460,8 @@ export class GameServerNodeService {
     const pod = await this.loggingService.getJobPod(jobName);
 
     if (pod) {
-      if (game_server_nodes_by_pk.update_status === null) {
-        await this.hasura.mutation({
-          update_game_server_nodes_by_pk: {
-            __args: {
-              pk_columns: {
-                id: gameServerNodeId,
-              },
-              _set: {
-                update_status: "Initializing",
-              },
-            },
-            update_status: true,
-          },
-        });
-      }
-
-      await this.moitorUpdateStatus(gameServerNodeId, 0, game);
+      // an update job is already running: just make sure it's monitored
+      void this.monitorUpdateStatus(gameServerNodeId, game);
       return;
     }
 
@@ -606,23 +603,9 @@ export class GameServerNodeService {
         },
       });
 
-      await this.hasura.mutation({
-        update_game_server_nodes_by_pk: {
-          __args: {
-            pk_columns: {
-              id: gameServerNodeId,
-            },
-            _set: {
-              update_status: "Initializing",
-            },
-          },
-          update_status: true,
-        },
-      });
+      await this.setUpdateStatus(gameServerNodeId, "Initializing");
 
-      setTimeout(() => {
-        void this.moitorUpdateStatus(gameServerNodeId, 3, game);
-      }, 5000);
+      void this.monitorUpdateStatus(gameServerNodeId, game);
     } catch (error) {
       this.logger.error(
         `Error creating job for ${gameServerNodeId}`,
@@ -665,144 +648,274 @@ export class GameServerNodeService {
     );
   }
 
-  public async moitorUpdateStatus(
+  /**
+   * Supervises the update job for a node: waits for the pod, streams its logs
+   * to derive a human-readable update_status, and re-attaches whenever the log
+   * stream drops. The terminal decision (clear status / mark failed) is based
+   * on the Job state, never on the log stream ending.
+   */
+  public async monitorUpdateStatus(
     gameServerNodeId: string,
-    attempts = 0,
     game = "cs2",
   ): Promise<void> {
+    const monitorKey = `${gameServerNodeId}:${game}`;
+    if (this.activeUpdateMonitors.has(monitorKey)) {
+      return;
+    }
+    this.activeUpdateMonitors.add(monitorKey);
+
+    const jobName = GameServerNodeService.GET_UPDATE_JOB_NAME(
+      gameServerNodeId,
+      game,
+    );
+
+    let lastWrittenStatus: string | null | undefined;
+    const writeStatus = async (status: string | null) => {
+      if (status === lastWrittenStatus) {
+        return;
+      }
+      lastWrittenStatus = status;
+      await this.setUpdateStatus(gameServerNodeId, status);
+    };
+
     try {
-      const pod = await this.loggingService.getJobPod(
-        GameServerNodeService.GET_UPDATE_JOB_NAME(gameServerNodeId, game),
+      while (true) {
+        const job = await this.loggingService.getJob(jobName);
+        const pod = await this.loggingService.getJobPod(jobName);
+
+        if (!job && !pod) {
+          await writeStatus(null);
+          return;
+        }
+
+        if (job?.status?.succeeded) {
+          await writeStatus(null);
+          return;
+        }
+
+        if (job?.status?.failed && !job?.status?.active) {
+          this.logger.warn(`[${gameServerNodeId}] ${game} update job failed`);
+          await writeStatus(null);
+          void this.notifications.send("GameUpdate", {
+            message: `The ${game === "csgo" ? "CSGO" : "CS2"} update failed on node ${gameServerNodeId}. Check the update logs for details.`,
+            title: "Game Update Failed",
+            role: "administrator",
+          });
+          return;
+        }
+
+        if (pod?.status?.phase !== "Running") {
+          await writeStatus("Initializing");
+          await GameServerNodeService.sleep(5000);
+          continue;
+        }
+
+        await this.streamUpdateProgress(pod, writeStatus);
+
+        // the log stream dropped; loop to re-check the job and re-attach
+        await GameServerNodeService.sleep(2500);
+      }
+    } catch (error) {
+      // transient k8s error: leave update_status as-is, the periodic
+      // reconciler will re-attach or clean up
+      this.logger.warn(
+        `[${gameServerNodeId}] unable to monitor update status`,
+        error,
       );
+    } finally {
+      this.activeUpdateMonitors.delete(monitorKey);
+    }
+  }
 
-      if (!pod) {
-        this.logger.warn(`[${gameServerNodeId}] unable to find update job pod`);
-        await this.hasura.mutation({
-          update_game_server_nodes_by_pk: {
-            __args: {
-              pk_columns: {
-                id: gameServerNodeId,
-              },
-              _set: {
-                update_status: null,
-              },
-            },
-            update_status: true,
-          },
-        });
+  private async streamUpdateProgress(
+    pod: V1Pod,
+    writeStatus: (status: string | null) => Promise<void>,
+  ): Promise<void> {
+    let currentStep = "Updating";
 
+    const handleLogLine = (log: string) => {
+      const line = log.trim();
+      if (!line) {
         return;
       }
 
-      const kc = new KubeConfig();
-      kc.loadFromDefault();
+      // unpinned: steamcmd app_update "Update state (0x61) downloading, progress: 12.34 (...)"
+      const steamcmd = line.match(
+        /Update state \(0x[0-9a-f]+\) ([^,]+), progress: ([0-9.]+)/,
+      );
+      if (steamcmd) {
+        const type = steamcmd[1].trim();
+        const percentage = Math.round(parseFloat(steamcmd[2]));
+        void writeStatus(`${type} ${percentage}%`);
+        return;
+      }
 
-      let currentType: string;
-      let currentPercentage = 0;
+      // pinned: "---Downloading Depot 2347770 (2/4) manifest ...---"
+      const downloadHeader = line.match(
+        /^---Downloading Depot \d+ \((\d+)\/(\d+)\)/,
+      );
+      if (downloadHeader) {
+        currentStep = `Downloading depot ${downloadHeader[1]}/${downloadHeader[2]}`;
+        void writeStatus(currentStep);
+        return;
+      }
 
-      const { game_server_nodes_by_pk } = await this.hasura.query({
-        game_server_nodes_by_pk: {
-          __args: {
+      // pinned: "---Syncing Depot 2347770 (3/4, 5.2G) to ServerFiles---"
+      const syncHeader = line.match(/^---Syncing Depot \d+ \((\d+)\/(\d+)/);
+      if (syncHeader) {
+        currentStep = `Installing depot ${syncHeader[1]}/${syncHeader[2]}`;
+        void writeStatus(currentStep);
+        return;
+      }
+
+      // pinned: "[depot 2347770] 1200 MB / 5230 MB (24%) downloaded (137 files)..."
+      const depotProgress = line.match(
+        /^\[depot \d+\] .*?\((\d+)%\) downloaded/,
+      );
+      if (depotProgress) {
+        void writeStatus(`${currentStep} ${depotProgress[1]}%`);
+        return;
+      }
+
+      // pinned, total not known yet: "[depot 2347770] 1200 MB downloaded so far (137 files)..."
+      const depotProgressNoTotal = line.match(
+        /^\[depot \d+\] (\d+) MB downloaded so far/,
+      );
+      if (depotProgressNoTotal) {
+        void writeStatus(`${currentStep} (${depotProgressNoTotal[1]} MB)`);
+        return;
+      }
+
+      // pinned: "[depot 2347770 sync] 45% (262,144,000, 118.2MB/s)"
+      const syncProgress = line.match(/^\[depot \d+ sync\] (\d+)%/);
+      if (syncProgress) {
+        void writeStatus(`${currentStep} ${syncProgress[1]}%`);
+        return;
+      }
+
+      if (line.startsWith("---Done Updating Server To Version")) {
+        void writeStatus("Finishing");
+      }
+    };
+
+    const stream = new PassThrough();
+
+    await new Promise<void>((resolve) => {
+      let settled = false;
+      const settle = () => {
+        if (!settled) {
+          settled = true;
+          resolve();
+        }
+      };
+
+      stream.on("data", (data: Buffer) => {
+        // a chunk may contain several concatenated JSON objects
+        for (const piece of data.toString().split(/(?<=})\s*(?={")/)) {
+          let log: string | undefined;
+          try {
+            ({ log } = JSON.parse(piece));
+          } catch {
+            continue;
+          }
+          if (log) {
+            handleLogLine(log);
+          }
+        }
+      });
+
+      stream.on("end", settle);
+      stream.on("close", settle);
+      stream.on("error", settle);
+
+      void this.loggingService.getLogsForPod(pod, stream).catch(() => {
+        if (!stream.destroyed) {
+          stream.destroy();
+        }
+        settle();
+      });
+    });
+  }
+
+  /**
+   * Periodic safety net: attaches a monitor to any update job that is running
+   * without one (e.g. after an API restart), and clears stale update_status
+   * values whose job no longer exists.
+   */
+  public async reconcileUpdateStatuses(): Promise<void> {
+    const { game_server_nodes } = await this.hasura.query({
+      game_server_nodes: {
+        __args: {
+          where: {
+            enabled: {
+              _eq: true,
+            },
+          },
+        },
+        id: true,
+        update_status: true,
+      },
+    });
+
+    for (const node of game_server_nodes) {
+      try {
+        let hasUpdateJob = false;
+
+        for (const game of ["cs2", "csgo"]) {
+          const jobName = GameServerNodeService.GET_UPDATE_JOB_NAME(
+            node.id,
+            game,
+          );
+          const job = await this.loggingService.getJob(jobName);
+          const pod = await this.loggingService.getJobPod(jobName);
+
+          if (job || pod) {
+            hasUpdateJob = true;
+            void this.monitorUpdateStatus(node.id, game);
+          }
+        }
+
+        if (
+          !hasUpdateJob &&
+          node.update_status !== null &&
+          !this.activeUpdateMonitors.has(`${node.id}:cs2`) &&
+          !this.activeUpdateMonitors.has(`${node.id}:csgo`)
+        ) {
+          this.logger.warn(
+            `[${node.id}] clearing stale update status (${node.update_status})`,
+          );
+          await this.setUpdateStatus(node.id, null);
+        }
+      } catch (error) {
+        this.logger.warn(
+          `[${node.id}] unable to reconcile update status`,
+          error,
+        );
+      }
+    }
+  }
+
+  private async setUpdateStatus(
+    gameServerNodeId: string,
+    status: string | null,
+  ): Promise<void> {
+    await this.hasura.mutation({
+      update_game_server_nodes_by_pk: {
+        __args: {
+          pk_columns: {
             id: gameServerNodeId,
           },
-          update_status: true,
+          _set: {
+            update_status: status,
+          },
         },
-      });
+        update_status: true,
+      },
+    });
+  }
 
-      let _currentStatus = game_server_nodes_by_pk?.update_status;
-
-      if (_currentStatus) {
-        const match = _currentStatus.match(/([^0-9]+) ([0-9.]+)/);
-        if (match) {
-          currentType = match[1].trim();
-          currentPercentage = parseFloat(match[2]);
-        }
-      }
-
-      const stream = new PassThrough();
-      void this.loggingService.getLogsForPod(pod, stream).catch(() => {
-        stream.destroy();
-      });
-
-      stream.on("data", async (data) => {
-        const { log } = JSON.parse(data.toString());
-
-        if (!log) {
-          return;
-        }
-
-        const typeMatch = log.match(/Update state \(0x[0-9a-f]+\) ([^,]+)/);
-        const type = typeMatch ? typeMatch[1] : null;
-        let percentage = log.match(/progress: (\d+\.\d+)/)?.[1];
-
-        if (!percentage) {
-          return;
-        }
-
-        percentage = Math.round(parseFloat(percentage) * 100) / 100;
-
-        if (type === currentType && percentage < currentPercentage + 5) {
-          return;
-        }
-
-        currentType = type;
-        currentPercentage = percentage;
-
-        await this.hasura.mutation({
-          update_game_server_nodes_by_pk: {
-            __args: {
-              pk_columns: {
-                id: gameServerNodeId,
-              },
-              _set: {
-                update_status: `${type} ${percentage}%`,
-              },
-            },
-            update_status: true,
-          },
-        });
-      });
-
-      stream.on("end", async () => {
-        await this.hasura.mutation({
-          update_game_server_nodes_by_pk: {
-            __args: {
-              pk_columns: {
-                id: gameServerNodeId,
-              },
-              _set: {
-                update_status: null,
-              },
-            },
-            update_status: true,
-          },
-        });
-      });
-    } catch (error) {
-      if (process.env.DEV) {
-        this.logger.warn("unable to monitor update status", error);
-      }
-      if (attempts > 0) {
-        setTimeout(() => {
-          void this.moitorUpdateStatus(gameServerNodeId, attempts - 1, game);
-        }, 5000);
-        return;
-      }
-
-      await this.hasura.mutation({
-        update_game_server_nodes_by_pk: {
-          __args: {
-            pk_columns: {
-              id: gameServerNodeId,
-            },
-            _set: {
-              update_status: null,
-            },
-          },
-          update_status: true,
-        },
-      });
-    }
+  private static sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   public static GET_VALIDATE_GAMEDATA_JOB_NAME(
@@ -871,6 +984,17 @@ export class GameServerNodeService {
     const sanitizedGameServerNodeId = gameServerNodeId.replaceAll(".", "-");
     const serverfilesVolumeName = `serverfiles-${sanitizedGameServerNodeId}`;
 
+    // without --runtime the validator defaults to "all" and fetches SwiftlyS2 gamedata,
+    // so a GitHub blip fails validation on installs that never load SwiftlyS2
+    const { game_server_nodes_by_pk: node } = await this.hasura.query({
+      game_server_nodes_by_pk: {
+        __args: { id: gameServerNodeId },
+        pin_plugin_runtime: true,
+      },
+    });
+
+    const runtime = await this.pluginRuntimeService.resolvePluginRuntime(node);
+
     const lockKey = `gamedata:validate:lock:${buildId}:${branch}`;
     const acquired = await this.redis.set(lockKey, 1, "EX", 60 * 60, "NX");
     if (acquired === null) {
@@ -932,7 +1056,12 @@ export class GameServerNodeService {
                   {
                     name: "validate-gamedata",
                     image: "ghcr.io/5stackgg/gamedata-validator:latest",
-                    args: ["--build-id", buildId.toString()],
+                    args: [
+                      "--build-id",
+                      buildId.toString(),
+                      "--runtime",
+                      runtime,
+                    ],
                     volumeMounts: [
                       {
                         name: serverfilesVolumeName,

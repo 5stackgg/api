@@ -11,6 +11,10 @@ import { BakeShaders } from "./jobs/BakeShaders";
 import { ValidateGamedata } from "./jobs/ValidateGamedata";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "../configs/types/AppConfig";
+import {
+  isPluginRuntime,
+  PluginRuntime,
+} from "../configs/types/GameServersConfig";
 import { Request, Response } from "express";
 import { LoggingService } from "src/k8s/logging/logging.service";
 import { RconService } from "src/rcon/rcon.service";
@@ -801,6 +805,10 @@ UNIT
       pluginVersion: string;
     };
 
+    const { pluginRuntime: reportedRuntime } = request.query as {
+      pluginRuntime: string;
+    };
+
     if (steamRelay && !steamID) {
       return;
     }
@@ -809,12 +817,19 @@ UNIT
       pluginVersion = "dev";
     }
 
+    // Plugins older than the runtime setting don't send this; the value seeded
+    // when the deployment was created stands in until they're recycled.
+    const pluginRuntime: PluginRuntime | null = isPluginRuntime(reportedRuntime)
+      ? reportedRuntime
+      : null;
+
     const { servers_by_pk: server } = await this.hasura.query({
       servers_by_pk: {
         __args: {
           id: serverId,
         },
         plugin_version: true,
+        plugin_runtime: true,
         connected: true,
         enabled: true,
         steam_relay: true,
@@ -859,7 +874,11 @@ UNIT
       return;
     }
 
-    if (pluginVersion && server.plugin_version !== pluginVersion) {
+    if (
+      pluginVersion &&
+      (server.plugin_version !== pluginVersion ||
+        (pluginRuntime && server.plugin_runtime !== pluginRuntime))
+    ) {
       await this.hasura.mutation({
         update_servers_by_pk: {
           __args: {
@@ -868,6 +887,7 @@ UNIT
             },
             _set: {
               plugin_version: pluginVersion,
+              ...(pluginRuntime ? { plugin_runtime: pluginRuntime } : {}),
             },
           },
           __typename: true,
@@ -892,6 +912,7 @@ UNIT
     if (
       !server.connected ||
       server.plugin_version !== pluginVersion ||
+      (pluginRuntime && server.plugin_runtime !== pluginRuntime) ||
       (server.steam_relay && !steamRelay) ||
       server.steam_relay !== steamID
     ) {
@@ -905,6 +926,7 @@ UNIT
               connected: true,
               steam_relay: steamRelay ? steamID : null,
               plugin_version: pluginVersion,
+              ...(pluginRuntime ? { plugin_runtime: pluginRuntime } : {}),
               offline_at: null,
             },
           },

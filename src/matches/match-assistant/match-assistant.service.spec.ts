@@ -57,6 +57,12 @@ describe("MatchAssistantService", () => {
       hasura as any,
       {} as any,
       loggingService as any,
+      {
+        resolveGameServerPluginImage: jest.fn(
+          async () => "ghcr.io/5stackgg/swiftly-game-server:latest",
+        ),
+        resolvePluginRuntime: jest.fn(async () => "swiftlys2"),
+      } as any,
       queue as any,
     );
   });

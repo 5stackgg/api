@@ -5,7 +5,10 @@ import { UseQueue } from "../../utilities/QueueProcessors";
 import { GameServerQueues } from "../enums/GameServerQueues";
 import { NotificationsService } from "src/notifications/notifications.service";
 import { DISCORD_COLORS } from "src/notifications/utilities/constants";
-import { GameServerNodeService } from "../game-server-node.service";
+import {
+  GameServerNodeService,
+  GamedataValidationEntry,
+} from "../game-server-node.service";
 
 type ValidateGamedataData = {
   gameServerNodeId: string;
@@ -16,6 +19,15 @@ type ValidateGamedataData = {
 const GAMEDATA_ROUTING = {
   webhook: "discord_gamedata_notifications_webhook",
   role: "discord_gamedata_notifications_role_id",
+};
+
+const UNKNOWN_RUNTIME = "unknown";
+
+// Swiftly first: it is the default game server runtime.
+const RUNTIME_LABELS: Record<string, string> = {
+  swiftlys2: "Swiftly",
+  counterstrikesharp: "CounterStrikeSharp",
+  [UNKNOWN_RUNTIME]: "Unknown Runtime",
 };
 
 @UseQueue("GameServerNode", GameServerQueues.ValidateGamedata)
@@ -54,20 +66,24 @@ export class ValidateGamedata extends WorkerHost {
       return;
     }
 
+    const skipped = ValidateGamedata.skippedNote(result.skipped);
+
     if (result.status === "fail") {
-      const items = result.broken
-        .map((entry) => {
-          const name =
-            entry.kind === "vtable"
-              ? `${entry.signature} (vtable)`
-              : entry.signature;
-          return `<li><code>${name}</code> — ${entry.set}</li>`;
+      const sections = ValidateGamedata.groupByRuntime(result.broken)
+        .map(([runtime, entries]) => {
+          const items = entries
+            .map(
+              (entry) =>
+                `<li><code>${ValidateGamedata.entryLabel(entry)}</code> — ${entry.set}</li>`,
+            )
+            .join("");
+          return `<b>${RUNTIME_LABELS[runtime]}</b><ul>${items}</ul>`;
         })
         .join("");
 
       this.notify(
         "Gamedata Validation Failed",
-        `CS2 build <b>${buildId}</b> broke <b>${result.broken.length}</b> signature(s):<ul>${items}</ul>`,
+        `CS2 build <b>${buildId}</b> broke <b>${result.broken.length}</b> gamedata entr${result.broken.length === 1 ? "y" : "ies"}:${sections}${skipped}`,
         DISCORD_COLORS.RED,
       );
       return;
@@ -83,7 +99,7 @@ export class ValidateGamedata extends WorkerHost {
 
       this.notify(
         "Gamedata Validation Warning",
-        `CS2 build <b>${buildId}</b> — <b>${result.warnings.length}</b> signature(s) are no longer unique (still resolve, but matched more than once):<ul>${items}</ul>`,
+        `CS2 build <b>${buildId}</b> — <b>${result.warnings.length}</b> signature(s) are no longer unique (still resolve, but matched more than once):<ul>${items}</ul>${skipped}`,
         DISCORD_COLORS.ORANGE,
       );
       return;
@@ -91,9 +107,48 @@ export class ValidateGamedata extends WorkerHost {
 
     this.notify(
       "Gamedata Validation Passed",
-      `CS2 build <b>${buildId}</b> — all gamedata signatures verified.`,
+      `CS2 build <b>${buildId}</b> — all Swiftly and CounterStrikeSharp gamedata verified.${skipped}`,
       DISCORD_COLORS.GREEN,
     );
+  }
+
+  private static entryLabel(entry: GamedataValidationEntry): string {
+    if (entry.kind === "vtable" || entry.kind === "patch") {
+      return `${entry.signature} (${entry.kind})`;
+    }
+    return entry.signature;
+  }
+
+  private static skippedNote(skipped?: Array<GamedataValidationEntry>): string {
+    if (!skipped?.length) {
+      return "";
+    }
+    return `<br><i>${skipped.length} entr${skipped.length === 1 ? "y" : "ies"} could not be checked.</i>`;
+  }
+
+  private static groupByRuntime(
+    entries: Array<GamedataValidationEntry>,
+  ): Array<[string, Array<GamedataValidationEntry>]> {
+    const groups = new Map<string, Array<GamedataValidationEntry>>(
+      Object.keys(RUNTIME_LABELS).map(
+        (runtime): [string, Array<GamedataValidationEntry>] => [runtime, []],
+      ),
+    );
+
+    for (const entry of entries) {
+      const runtimes = entry.runtimes?.length
+        ? entry.runtimes
+        : [UNKNOWN_RUNTIME];
+
+      for (const runtime of runtimes) {
+        if (!groups.has(runtime)) {
+          groups.set(runtime, []);
+        }
+        groups.get(runtime).push(entry);
+      }
+    }
+
+    return [...groups].filter(([, grouped]) => grouped.length > 0);
   }
 
   private notify(title: string, message: string, color: number): void {

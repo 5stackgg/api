@@ -672,6 +672,20 @@ export class LoggingService {
     };
   }
 
+  public async getJob(jobName: string): Promise<V1Job | null> {
+    try {
+      return await this.batchApi.readNamespacedJob({
+        name: jobName,
+        namespace: this.namespace,
+      });
+    } catch (error) {
+      if (error.code?.toString() !== "404") {
+        throw error;
+      }
+      return null;
+    }
+  }
+
   public async getJobStatus(jobName: string) {
     try {
       const job = await this.batchApi.readNamespacedJob({

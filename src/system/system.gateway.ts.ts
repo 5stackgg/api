@@ -111,7 +111,11 @@ export class SystemGateway {
       if (isJob) {
         const jobStatus =
           await this.loggingService.getJobStatus(resolvedService);
-        if (
+        if (jobStatus?.active) {
+          // job is still running — never report finished, even if stale k8s
+          // events from a previous same-named job look terminal
+          jobFinshed = false;
+        } else if (
           jobStatus?.succeeded ||
           (await this.loggingService.isJobTerminal(resolvedService))
         ) {

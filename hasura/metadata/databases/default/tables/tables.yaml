@@ -31,6 +31,7 @@
 - "!include public_e_notification_types.yaml"
 - "!include public_e_objective_types.yaml"
 - "!include public_e_player_roles.yaml"
+- "!include public_e_plugin_runtimes.yaml"
 - "!include public_e_ready_settings.yaml"
 - "!include public_e_sanction_types.yaml"
 - "!include public_e_scrim_request_statuses.yaml"

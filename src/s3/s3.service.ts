@@ -121,9 +121,16 @@ export class S3Service {
   public async put(
     filename: string,
     stream: Readable | Buffer,
+    contentType?: string,
     bucket: string = this.bucket,
   ): Promise<void> {
-    await this.client.putObject(bucket, filename, stream);
+    await this.client.putObject(
+      bucket,
+      filename,
+      stream,
+      undefined,
+      contentType ? { "Content-Type": contentType } : undefined,
+    );
   }
 
   public async copyObject(

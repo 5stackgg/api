@@ -82,6 +82,7 @@ select_permissions:
         - label
         - max_players
         - offline_at
+        - plugin_runtime
         - plugin_version
         - port
         - rcon_status
@@ -107,6 +108,7 @@ select_permissions:
         - id
         - label
         - max_players
+        - plugin_runtime
         - plugin_version
         - port
         - rcon_status
@@ -137,6 +139,7 @@ select_permissions:
         - is_dedicated
         - label
         - max_players
+        - plugin_runtime
         - plugin_version
         - port
         - rcon_status
@@ -165,6 +168,7 @@ select_permissions:
         - is_dedicated
         - label
         - max_players
+        - plugin_runtime
         - plugin_version
         - port
         - rcon_status
