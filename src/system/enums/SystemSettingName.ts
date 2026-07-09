@@ -11,4 +11,6 @@ export enum SystemSettingName {
   PostNewsRole = "public.post_news_role",
   RequireLoginForLiveStreams = "public.require_login_for_live_streams",
   LeaguesEnabled = "public.leagues_enabled",
+  GameServerPluginRuntime = "public.game_server_plugin_runtime",
+  GameServerPluginRuntimeLocked = "game_server_plugin_runtime_locked",
 }

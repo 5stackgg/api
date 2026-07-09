@@ -4,6 +4,10 @@ begin
     return true;
   end if;
 
-  return game_version_supports_plugin(game_server_node.build_id, game_server_node.pin_plugin_version);
+  return game_version_supports_plugin(
+    game_server_node.build_id,
+    game_server_node.pin_plugin_version,
+    coalesce(game_server_node.pin_plugin_runtime, active_plugin_runtime())
+  );
 end;
 $$ language plpgsql stable;

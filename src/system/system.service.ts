@@ -15,6 +15,7 @@ import { DiscordConfig } from "src/configs/types/DiscordConfig";
 import { SteamConfig } from "src/configs/types/SteamConfig";
 import { PostgresService } from "src/postgres/postgres.service";
 import { SystemSettingName } from "./enums/SystemSettingName";
+import { GameServersConfig } from "src/configs/types/GameServersConfig";
 
 @Injectable()
 export class SystemService {
@@ -146,6 +147,25 @@ export class SystemService {
             object: {
               name: SystemSettingName.SupportsGameServerVersionPinning,
               value: supportsGameServerNodeVersionPinning.toString(),
+            },
+            on_conflict: {
+              constraint: "settings_pkey",
+              update_columns: ["value"],
+            },
+          },
+          __typename: true,
+        },
+      });
+
+      const { serverImageOverride } =
+        this.config.get<GameServersConfig>("gameServers");
+
+      await this.hasura.mutation({
+        insert_settings_one: {
+          __args: {
+            object: {
+              name: SystemSettingName.GameServerPluginRuntimeLocked,
+              value: (!!serverImageOverride).toString(),
             },
             on_conflict: {
               constraint: "settings_pkey",

@@ -10,6 +10,7 @@ import { MatchesController } from "./matches.controller";
 import { MatchAssistantService } from "./match-assistant/match-assistant.service";
 import { HasuraModule } from "../hasura/hasura.module";
 import { RconModule } from "../rcon/rcon.module";
+import { PluginRuntimeModule } from "../plugin-runtime/plugin-runtime.module";
 import { CacheModule } from "../cache/cache.module";
 import { RedisModule } from "../redis/redis.module";
 import { S3Module } from "../s3/s3.module";
@@ -88,6 +89,7 @@ import { LeaguesModule } from "../leagues/leagues.module";
     MatchMaking,
     ChatModule,
     LeaguesModule,
+    PluginRuntimeModule,
     BullModule.registerQueue(
       {
         name: MatchQueues.MatchServers,

@@ -7,6 +7,7 @@ select_permissions:
       columns:
         - min_game_build_id
         - published_at
+        - runtime
         - version
       filter: {}
     comment: ""

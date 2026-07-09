@@ -3,9 +3,22 @@ import { UseQueue } from "../../utilities/QueueProcessors";
 import { GameServerQueues } from "../enums/GameServerQueues";
 import { Logger } from "@nestjs/common";
 import { HasuraService } from "src/hasura/hasura.service";
+import { PluginRuntime } from "src/configs/types/GameServersConfig";
+
+type PluginRelease = {
+  version: string;
+  min_game_build_id: number | null;
+  published_at: string;
+};
 
 @UseQueue("GameServerNode", GameServerQueues.GameUpdate)
 export class GetPluginVersions extends WorkerHost {
+  private static readonly RUNTIME_REPOSITORIES: Record<PluginRuntime, string> =
+    {
+      swiftlys2: "5stackgg/swiftly-game-server",
+      counterstrikesharp: "5stackgg/game-server",
+    };
+
   constructor(
     protected readonly logger: Logger,
     protected readonly hasuraService: HasuraService,
@@ -14,23 +27,29 @@ export class GetPluginVersions extends WorkerHost {
   }
 
   async process(): Promise<void> {
-    const response = await fetch(
-      "https://api.github.com/repos/5stackgg/game-server/releases",
-    );
+    for (const [runtime, repository] of Object.entries(
+      GetPluginVersions.RUNTIME_REPOSITORIES,
+    )) {
+      try {
+        await this.syncRuntime(runtime as PluginRuntime, repository);
+      } catch (error) {
+        this.logger.warn(
+          `unable to sync plugin versions for ${runtime}`,
+          error.message,
+        );
+      }
+    }
+  }
 
-    const releases = (await response.json())
-      .map(
-        (release: { tag_name: string; body: string; published_at: string }) => {
-          const gameVersion = release.body?.trim();
+  private async syncRuntime(runtime: PluginRuntime, repository: string) {
+    const releases = await this.fetchReleases(repository);
 
-          return {
-            version: release.tag_name.replace("v", ""),
-            min_game_build_id: gameVersion?.length > 0 ? gameVersion : null,
-            published_at: release.published_at,
-          };
-        },
-      )
-      .filter((release: any) => release !== undefined);
+    if (releases.length === 0) {
+      // Never prune on an empty read; a rate-limited GitHub response would wipe
+      // every version for this runtime and null out the nodes pinned to them.
+      this.logger.warn(`no plugin releases returned for ${repository}`);
+      return;
+    }
 
     for (const { version, min_game_build_id, published_at } of releases) {
       const { plugin_versions } = await this.hasuraService.query({
@@ -39,6 +58,9 @@ export class GetPluginVersions extends WorkerHost {
             where: {
               version: {
                 _eq: version,
+              },
+              runtime: {
+                _eq: runtime,
               },
             },
           },
@@ -59,6 +81,7 @@ export class GetPluginVersions extends WorkerHost {
           __args: {
             object: {
               version,
+              runtime,
               min_game_build_id,
               published_at,
             },
@@ -76,15 +99,47 @@ export class GetPluginVersions extends WorkerHost {
       delete_plugin_versions: {
         __args: {
           where: {
+            runtime: {
+              _eq: runtime,
+            },
             version: {
-              _nin: releases.map(
-                (release: { version: string }) => release.version,
-              ),
+              _nin: releases.map((release) => release.version),
             },
           },
         },
         __typename: true,
       },
     });
+  }
+
+  private async fetchReleases(
+    repository: string,
+  ): Promise<Array<PluginRelease>> {
+    const response = await fetch(
+      `https://api.github.com/repos/${repository}/releases`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`${response.status} from ${repository} releases`);
+    }
+
+    const releases = await response.json();
+
+    if (!Array.isArray(releases)) {
+      throw new Error(`unexpected releases payload from ${repository}`);
+    }
+
+    return releases.map(
+      (release: { tag_name: string; body: string; published_at: string }) => {
+        // The minimum game build is hand-written into the release notes.
+        const buildId = Number.parseInt(release.body?.trim(), 10);
+
+        return {
+          version: release.tag_name.replace("v", ""),
+          min_game_build_id: Number.isNaN(buildId) ? null : buildId,
+          published_at: release.published_at,
+        };
+      },
+    );
   }
 }

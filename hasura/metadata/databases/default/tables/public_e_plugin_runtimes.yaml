@@ -1,0 +1,19 @@
+table:
+  name: e_plugin_runtimes
+  schema: public
+is_enum: true
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""

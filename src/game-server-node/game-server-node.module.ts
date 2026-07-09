@@ -29,6 +29,7 @@ import { HasuraService } from "src/hasura/hasura.service";
 import { GetPluginVersions } from "./jobs/GetPluginVersions";
 import { K8sModule } from "src/k8s/k8s.module";
 import { GameStreamerModule } from "../matches/game-streamer/game-streamer.module";
+import { PluginRuntimeModule } from "src/plugin-runtime/plugin-runtime.module";
 import { BakeShaders } from "./jobs/BakeShaders";
 import { ValidateGamedata } from "./jobs/ValidateGamedata";
 
@@ -55,6 +56,7 @@ import { ValidateGamedata } from "./jobs/ValidateGamedata";
     RconModule,
     K8sModule,
     GameStreamerModule,
+    PluginRuntimeModule,
     BullModule.registerQueue(
       {
         name: GameServerQueues.GameUpdate,
@@ -162,22 +164,12 @@ export class GameServerNodeModule implements OnApplicationBootstrap {
       },
     });
 
-    const { game_server_nodes } = await this.hasura.query({
-      game_server_nodes: {
-        __args: {
-          where: {
-            status: {
-              _eq: "Online",
-            },
-          },
-        },
-        id: true,
-      },
-    });
-
-    for (const node of game_server_nodes) {
-      void this.gameServerNodeService.moitorUpdateStatus(node.id);
-    }
+    // re-attach monitors to running update jobs (e.g. after an API restart)
+    // and clear stale statuses; the interval keeps doing so as a safety net
+    void this.gameServerNodeService.reconcileUpdateStatuses();
+    setInterval(() => {
+      void this.gameServerNodeService.reconcileUpdateStatuses();
+    }, 60 * 1000);
   }
 
   configure(consumer: MiddlewareConsumer) {

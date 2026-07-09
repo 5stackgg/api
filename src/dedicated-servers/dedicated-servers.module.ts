@@ -14,6 +14,7 @@ import { getQueuesProcessors } from "src/utilities/QueueProcessors";
 import { RconModule } from "src/rcon/rcon.module";
 import { RedisModule } from "src/redis/redis.module";
 import { SystemModule } from "src/system/system.module";
+import { PluginRuntimeModule } from "src/plugin-runtime/plugin-runtime.module";
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { SystemModule } from "src/system/system.module";
     RconModule,
     RedisModule,
     SystemModule,
+    PluginRuntimeModule,
   ],
   providers: [
     DedicatedServersService,

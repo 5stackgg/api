@@ -9253,6 +9253,177 @@ input e_player_roles_updates {
 }
 
 """
+columns and relationships of "e_plugin_runtimes"
+"""
+type e_plugin_runtimes {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_plugin_runtimes"
+"""
+type e_plugin_runtimes_aggregate {
+  aggregate: e_plugin_runtimes_aggregate_fields
+  nodes: [e_plugin_runtimes!]!
+}
+
+"""
+aggregate fields of "e_plugin_runtimes"
+"""
+type e_plugin_runtimes_aggregate_fields {
+  count(columns: [e_plugin_runtimes_select_column!], distinct: Boolean): Int!
+  max: e_plugin_runtimes_max_fields
+  min: e_plugin_runtimes_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_plugin_runtimes". All fields are combined with a logical 'AND'.
+"""
+input e_plugin_runtimes_bool_exp {
+  _and: [e_plugin_runtimes_bool_exp!]
+  _not: e_plugin_runtimes_bool_exp
+  _or: [e_plugin_runtimes_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_plugin_runtimes"
+"""
+enum e_plugin_runtimes_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_plugin_runtimes_pkey
+}
+
+enum e_plugin_runtimes_enum {
+  """Plugin loads under Metamod and CounterStrikeSharp"""
+  counterstrikesharp
+
+  """Plugin loads under the SwiftlyS2 framework"""
+  swiftlys2
+}
+
+"""
+Boolean expression to compare columns of type "e_plugin_runtimes_enum". All fields are combined with logical 'AND'.
+"""
+input e_plugin_runtimes_enum_comparison_exp {
+  _eq: e_plugin_runtimes_enum
+  _in: [e_plugin_runtimes_enum!]
+  _is_null: Boolean
+  _neq: e_plugin_runtimes_enum
+  _nin: [e_plugin_runtimes_enum!]
+}
+
+"""
+input type for inserting data into table "e_plugin_runtimes"
+"""
+input e_plugin_runtimes_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_plugin_runtimes_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_plugin_runtimes_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_plugin_runtimes"
+"""
+type e_plugin_runtimes_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_plugin_runtimes!]!
+}
+
+"""
+on_conflict condition type for table "e_plugin_runtimes"
+"""
+input e_plugin_runtimes_on_conflict {
+  constraint: e_plugin_runtimes_constraint!
+  update_columns: [e_plugin_runtimes_update_column!]! = []
+  where: e_plugin_runtimes_bool_exp
+}
+
+"""Ordering options when selecting data from "e_plugin_runtimes"."""
+input e_plugin_runtimes_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_plugin_runtimes"""
+input e_plugin_runtimes_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_plugin_runtimes"
+"""
+enum e_plugin_runtimes_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_plugin_runtimes"
+"""
+input e_plugin_runtimes_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_plugin_runtimes"
+"""
+input e_plugin_runtimes_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_plugin_runtimes_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_plugin_runtimes_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_plugin_runtimes"
+"""
+enum e_plugin_runtimes_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_plugin_runtimes_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_plugin_runtimes_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_plugin_runtimes_bool_exp!
+}
+
+"""
 columns and relationships of "e_ready_settings"
 """
 type e_ready_settings {
@@ -12517,6 +12688,7 @@ type game_server_nodes {
   node_ip: inet
   offline_at: timestamptz
   pin_build_id: Int
+  pin_plugin_runtime: String
   pin_plugin_version: String
 
   """An object relationship"""
@@ -12755,6 +12927,7 @@ input game_server_nodes_bool_exp {
   node_ip: inet_comparison_exp
   offline_at: timestamptz_comparison_exp
   pin_build_id: Int_comparison_exp
+  pin_plugin_runtime: String_comparison_exp
   pin_plugin_version: String_comparison_exp
   pinned_version: game_versions_bool_exp
   plugin_supported: Boolean_comparison_exp
@@ -12872,6 +13045,7 @@ input game_server_nodes_insert_input {
   node_ip: inet
   offline_at: timestamptz
   pin_build_id: Int
+  pin_plugin_runtime: String
   pin_plugin_version: String
   pinned_version: game_versions_obj_rel_insert_input
   public_ip: inet
@@ -12909,6 +13083,7 @@ type game_server_nodes_max_fields {
   label: String
   offline_at: timestamptz
   pin_build_id: Int
+  pin_plugin_runtime: String
   pin_plugin_version: String
   region: String
   shader_bake_progress: numeric
@@ -12941,6 +13116,7 @@ input game_server_nodes_max_order_by {
   label: order_by
   offline_at: order_by
   pin_build_id: order_by
+  pin_plugin_runtime: order_by
   pin_plugin_version: order_by
   region: order_by
   shader_bake_progress: order_by
@@ -12970,6 +13146,7 @@ type game_server_nodes_min_fields {
   label: String
   offline_at: timestamptz
   pin_build_id: Int
+  pin_plugin_runtime: String
   pin_plugin_version: String
   region: String
   shader_bake_progress: numeric
@@ -13002,6 +13179,7 @@ input game_server_nodes_min_order_by {
   label: order_by
   offline_at: order_by
   pin_build_id: order_by
+  pin_plugin_runtime: order_by
   pin_plugin_version: order_by
   region: order_by
   shader_bake_progress: order_by
@@ -13073,6 +13251,7 @@ input game_server_nodes_order_by {
   node_ip: order_by
   offline_at: order_by
   pin_build_id: order_by
+  pin_plugin_runtime: order_by
   pin_plugin_version: order_by
   pinned_version: game_versions_order_by
   plugin_supported: order_by
@@ -13189,6 +13368,9 @@ enum game_server_nodes_select_column {
 
   """column name"""
   pin_build_id
+
+  """column name"""
+  pin_plugin_runtime
 
   """column name"""
   pin_plugin_version
@@ -13318,6 +13500,7 @@ input game_server_nodes_set_input {
   node_ip: inet
   offline_at: timestamptz
   pin_build_id: Int
+  pin_plugin_runtime: String
   pin_plugin_version: String
   public_ip: inet
   region: String
@@ -13501,6 +13684,7 @@ input game_server_nodes_stream_cursor_value_input {
   node_ip: inet
   offline_at: timestamptz
   pin_build_id: Int
+  pin_plugin_runtime: String
   pin_plugin_version: String
   public_ip: inet
   region: String
@@ -13640,6 +13824,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   pin_build_id
+
+  """column name"""
+  pin_plugin_runtime
 
   """column name"""
   pin_plugin_version
@@ -14887,7 +15074,6 @@ input league_award_forfeit_args {
 columns and relationships of "league_divisions"
 """
 type league_divisions {
-  active: Boolean!
   created_at: timestamptz!
   id: uuid!
   name: String!
@@ -14967,7 +15153,6 @@ input league_divisions_bool_exp {
   _and: [league_divisions_bool_exp!]
   _not: league_divisions_bool_exp
   _or: [league_divisions_bool_exp!]
-  active: Boolean_comparison_exp
   created_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
   name: String_comparison_exp
@@ -15007,7 +15192,6 @@ input league_divisions_inc_input {
 input type for inserting data into table "league_divisions"
 """
 input league_divisions_insert_input {
-  active: Boolean
   created_at: timestamptz
   id: uuid
   name: String
@@ -15063,7 +15247,6 @@ input league_divisions_on_conflict {
 
 """Ordering options when selecting data from "league_divisions"."""
 input league_divisions_order_by {
-  active: order_by
   created_at: order_by
   id: order_by
   name: order_by
@@ -15081,9 +15264,6 @@ select columns of table "league_divisions"
 """
 enum league_divisions_select_column {
   """column name"""
-  active
-
-  """column name"""
   created_at
 
   """column name"""
@@ -15100,7 +15280,6 @@ enum league_divisions_select_column {
 input type for updating data in table "league_divisions"
 """
 input league_divisions_set_input {
-  active: Boolean
   created_at: timestamptz
   id: uuid
   name: String
@@ -15135,7 +15314,6 @@ input league_divisions_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input league_divisions_stream_cursor_value_input {
-  active: Boolean
   created_at: timestamptz
   id: uuid
   name: String
@@ -15151,9 +15329,6 @@ type league_divisions_sum_fields {
 update columns of table "league_divisions"
 """
 enum league_divisions_update_column {
-  """column name"""
-  active
-
   """column name"""
   created_at
 
@@ -30901,6 +31076,19 @@ type mutation_root {
   delete_e_player_roles_by_pk(value: String!): e_player_roles
 
   """
+  delete data from the table: "e_plugin_runtimes"
+  """
+  delete_e_plugin_runtimes(
+    """filter the rows which have to be deleted"""
+    where: e_plugin_runtimes_bool_exp!
+  ): e_plugin_runtimes_mutation_response
+
+  """
+  delete single row from the table: "e_plugin_runtimes"
+  """
+  delete_e_plugin_runtimes_by_pk(value: String!): e_plugin_runtimes
+
+  """
   delete data from the table: "e_ready_settings"
   """
   delete_e_ready_settings(
@@ -31845,7 +32033,7 @@ type mutation_root {
   """
   delete single row from the table: "plugin_versions"
   """
-  delete_plugin_versions_by_pk(version: String!): plugin_versions
+  delete_plugin_versions_by_pk(runtime: e_plugin_runtimes_enum!, version: String!): plugin_versions
 
   """
   delete data from the table: "seasons"
@@ -32941,6 +33129,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_player_roles_on_conflict
   ): e_player_roles
+
+  """
+  insert data into the table: "e_plugin_runtimes"
+  """
+  insert_e_plugin_runtimes(
+    """the rows to be inserted"""
+    objects: [e_plugin_runtimes_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_plugin_runtimes_on_conflict
+  ): e_plugin_runtimes_mutation_response
+
+  """
+  insert a single row into the table: "e_plugin_runtimes"
+  """
+  insert_e_plugin_runtimes_one(
+    """the row to be inserted"""
+    object: e_plugin_runtimes_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_plugin_runtimes_on_conflict
+  ): e_plugin_runtimes
 
   """
   insert data into the table: "e_ready_settings"
@@ -36491,6 +36701,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_player_roles_updates!]!
   ): [e_player_roles_mutation_response]
+
+  """
+  update data of the table: "e_plugin_runtimes"
+  """
+  update_e_plugin_runtimes(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_plugin_runtimes_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_plugin_runtimes_bool_exp!
+  ): e_plugin_runtimes_mutation_response
+
+  """
+  update single row of the table: "e_plugin_runtimes"
+  """
+  update_e_plugin_runtimes_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_plugin_runtimes_set_input
+    pk_columns: e_plugin_runtimes_pk_columns_input!
+  ): e_plugin_runtimes
+
+  """
+  update multiples rows of table: "e_plugin_runtimes"
+  """
+  update_e_plugin_runtimes_many(
+    """updates to execute, in order"""
+    updates: [e_plugin_runtimes_updates!]!
+  ): [e_plugin_runtimes_mutation_response]
 
   """
   update data of the table: "e_ready_settings"
@@ -61588,6 +61826,7 @@ columns and relationships of "plugin_versions"
 type plugin_versions {
   min_game_build_id: Int
   published_at: timestamptz!
+  runtime: e_plugin_runtimes_enum!
   version: String!
 }
 
@@ -61630,6 +61869,7 @@ input plugin_versions_bool_exp {
   _or: [plugin_versions_bool_exp!]
   min_game_build_id: Int_comparison_exp
   published_at: timestamptz_comparison_exp
+  runtime: e_plugin_runtimes_enum_comparison_exp
   version: String_comparison_exp
 }
 
@@ -61638,7 +61878,7 @@ unique or primary key constraints on table "plugin_versions"
 """
 enum plugin_versions_constraint {
   """
-  unique or primary key constraint on columns "version"
+  unique or primary key constraint on columns "version", "runtime"
   """
   plugin_versions_pkey
 }
@@ -61656,6 +61896,7 @@ input type for inserting data into table "plugin_versions"
 input plugin_versions_insert_input {
   min_game_build_id: Int
   published_at: timestamptz
+  runtime: e_plugin_runtimes_enum
   version: String
 }
 
@@ -61697,11 +61938,13 @@ input plugin_versions_on_conflict {
 input plugin_versions_order_by {
   min_game_build_id: order_by
   published_at: order_by
+  runtime: order_by
   version: order_by
 }
 
 """primary key columns input for table: plugin_versions"""
 input plugin_versions_pk_columns_input {
+  runtime: e_plugin_runtimes_enum!
   version: String!
 }
 
@@ -61716,6 +61959,9 @@ enum plugin_versions_select_column {
   published_at
 
   """column name"""
+  runtime
+
+  """column name"""
   version
 }
 
@@ -61725,6 +61971,7 @@ input type for updating data in table "plugin_versions"
 input plugin_versions_set_input {
   min_game_build_id: Int
   published_at: timestamptz
+  runtime: e_plugin_runtimes_enum
   version: String
 }
 
@@ -61758,6 +62005,7 @@ input plugin_versions_stream_cursor_input {
 input plugin_versions_stream_cursor_value_input {
   min_game_build_id: Int
   published_at: timestamptz
+  runtime: e_plugin_runtimes_enum
   version: String
 }
 
@@ -61775,6 +62023,9 @@ enum plugin_versions_update_column {
 
   """column name"""
   published_at
+
+  """column name"""
+  runtime
 
   """column name"""
   version
@@ -63211,6 +63462,51 @@ type query_root {
 
   """fetch data from the table: "e_player_roles" using primary key columns"""
   e_player_roles_by_pk(value: String!): e_player_roles
+
+  """
+  fetch data from the table: "e_plugin_runtimes"
+  """
+  e_plugin_runtimes(
+    """distinct select on columns"""
+    distinct_on: [e_plugin_runtimes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_plugin_runtimes_order_by!]
+
+    """filter the rows returned"""
+    where: e_plugin_runtimes_bool_exp
+  ): [e_plugin_runtimes!]!
+
+  """
+  fetch aggregated fields from the table: "e_plugin_runtimes"
+  """
+  e_plugin_runtimes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_plugin_runtimes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_plugin_runtimes_order_by!]
+
+    """filter the rows returned"""
+    where: e_plugin_runtimes_bool_exp
+  ): e_plugin_runtimes_aggregate!
+
+  """
+  fetch data from the table: "e_plugin_runtimes" using primary key columns
+  """
+  e_plugin_runtimes_by_pk(value: String!): e_plugin_runtimes
 
   """
   fetch data from the table: "e_ready_settings"
@@ -66818,7 +67114,7 @@ type query_root {
   ): plugin_versions_aggregate!
 
   """fetch data from the table: "plugin_versions" using primary key columns"""
-  plugin_versions_by_pk(version: String!): plugin_versions
+  plugin_versions_by_pk(runtime: e_plugin_runtimes_enum!, version: String!): plugin_versions
 
   """Read file content from game server"""
   readServerFile(file_path: String!, node_id: String!, server_id: String): FileContentResponse!
@@ -70001,6 +70297,7 @@ type servers {
   ): matches_aggregate!
   max_players: Int
   offline_at: timestamptz
+  plugin_runtime: e_plugin_runtimes_enum
   plugin_version: String
   port: Int!
   rcon_password: bytea!
@@ -70138,6 +70435,7 @@ input servers_bool_exp {
   matches_aggregate: matches_aggregate_bool_exp
   max_players: Int_comparison_exp
   offline_at: timestamptz_comparison_exp
+  plugin_runtime: e_plugin_runtimes_enum_comparison_exp
   plugin_version: String_comparison_exp
   port: Int_comparison_exp
   rcon_password: bytea_comparison_exp
@@ -70196,6 +70494,7 @@ input servers_insert_input {
   matches: matches_arr_rel_insert_input
   max_players: Int
   offline_at: timestamptz
+  plugin_runtime: e_plugin_runtimes_enum
   plugin_version: String
   port: Int
   rcon_password: bytea
@@ -70372,6 +70671,7 @@ input servers_order_by {
   matches_aggregate: matches_aggregate_order_by
   max_players: order_by
   offline_at: order_by
+  plugin_runtime: order_by
   plugin_version: order_by
   port: order_by
   rcon_password: order_by
@@ -70435,6 +70735,9 @@ enum servers_select_column {
 
   """column name"""
   offline_at
+
+  """column name"""
+  plugin_runtime
 
   """column name"""
   plugin_version
@@ -70519,6 +70822,7 @@ input servers_set_input {
   label: String
   max_players: Int
   offline_at: timestamptz
+  plugin_runtime: e_plugin_runtimes_enum
   plugin_version: String
   port: Int
   rcon_password: bytea
@@ -70606,6 +70910,7 @@ input servers_stream_cursor_value_input {
   label: String
   max_players: Int
   offline_at: timestamptz
+  plugin_runtime: e_plugin_runtimes_enum
   plugin_version: String
   port: Int
   rcon_password: bytea
@@ -70679,6 +70984,9 @@ enum servers_update_column {
 
   """column name"""
   offline_at
+
+  """column name"""
+  plugin_runtime
 
   """column name"""
   plugin_version
@@ -73470,6 +73778,65 @@ type subscription_root {
     """filter the rows returned"""
     where: e_player_roles_bool_exp
   ): [e_player_roles!]!
+
+  """
+  fetch data from the table: "e_plugin_runtimes"
+  """
+  e_plugin_runtimes(
+    """distinct select on columns"""
+    distinct_on: [e_plugin_runtimes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_plugin_runtimes_order_by!]
+
+    """filter the rows returned"""
+    where: e_plugin_runtimes_bool_exp
+  ): [e_plugin_runtimes!]!
+
+  """
+  fetch aggregated fields from the table: "e_plugin_runtimes"
+  """
+  e_plugin_runtimes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_plugin_runtimes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_plugin_runtimes_order_by!]
+
+    """filter the rows returned"""
+    where: e_plugin_runtimes_bool_exp
+  ): e_plugin_runtimes_aggregate!
+
+  """
+  fetch data from the table: "e_plugin_runtimes" using primary key columns
+  """
+  e_plugin_runtimes_by_pk(value: String!): e_plugin_runtimes
+
+  """
+  fetch data from the table in a streaming manner: "e_plugin_runtimes"
+  """
+  e_plugin_runtimes_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_plugin_runtimes_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_plugin_runtimes_bool_exp
+  ): [e_plugin_runtimes!]!
 
   """
   fetch data from the table: "e_ready_settings"
@@ -78104,7 +78471,7 @@ type subscription_root {
   ): plugin_versions_aggregate!
 
   """fetch data from the table: "plugin_versions" using primary key columns"""
-  plugin_versions_by_pk(version: String!): plugin_versions
+  plugin_versions_by_pk(runtime: e_plugin_runtimes_enum!, version: String!): plugin_versions
 
   """
   fetch data from the table in a streaming manner: "plugin_versions"

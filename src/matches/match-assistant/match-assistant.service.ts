@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../../hasura/hasura.service";
+import { PluginRuntimeService } from "src/plugin-runtime/plugin-runtime.service";
 import {
   BatchV1Api,
   CoreV1Api,
@@ -57,6 +58,7 @@ export class MatchAssistantService {
     private readonly hasura: HasuraService,
     private readonly encryption: EncryptionService,
     private readonly loggingService: LoggingService,
+    private readonly pluginRuntimeService: PluginRuntimeService,
     @InjectQueue(MatchQueues.MatchServers) private queue: Queue,
   ) {
     this.appConfig = this.config.get<AppConfig>("app");
@@ -663,6 +665,7 @@ export class MatchAssistantService {
             game_server_node: {
               id: true,
               pin_plugin_version: true,
+              pin_plugin_runtime: true,
               supports_cpu_pinning: true,
             },
             server_region: {
@@ -750,16 +753,10 @@ export class MatchAssistantService {
             "-",
           );
 
-          let pluginImage = this.gameServerConfig.serverImage;
-
-          const pinPluginVersion = server.game_server_node?.pin_plugin_version;
-
-          if (pinPluginVersion) {
-            pluginImage = this.gameServerConfig.serverImage.replace(
-              /:.+$/,
-              `:v${pinPluginVersion.toString()}`,
+          const pluginImage =
+            await this.pluginRuntimeService.resolveGameServerPluginImage(
+              server.game_server_node,
             );
-          }
 
           const fivestackRanksSettingName = match.is_tournament_match
             ? "fivestack_ranks_tournaments"
