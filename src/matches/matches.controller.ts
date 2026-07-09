@@ -172,6 +172,7 @@ export class MatchesController {
           overtime: true,
           tv_delay: true,
           knife_round: true,
+          anti_wallhack: true,
           default_models: true,
           ready_setting: true,
           timeout_setting: true,
@@ -329,6 +330,18 @@ export class MatchesController {
     });
 
     match.options.show_elo_ranks = fivestackRanksSetting?.value === "true";
+
+    const { settings_by_pk: antiWallhackSetting } = await this.hasura.query({
+      settings_by_pk: {
+        __args: {
+          name: "anti_wallhack_enabled",
+        },
+        value: true,
+      },
+    });
+
+    match.options.anti_wallhack =
+      match.options.anti_wallhack && antiWallhackSetting?.value !== "false";
 
     // e_game_cfg_types_enum doesn't include Premier/Faceit (imports only).
     const cfgType =
