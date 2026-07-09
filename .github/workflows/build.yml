@@ -11,7 +11,11 @@ concurrency:
   cancel-in-progress: true
   
 jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
   build-amd64:
+    needs: tests
     runs-on: ubuntu-24.04
     steps:
       - name: Check out the repo
@@ -37,6 +41,7 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/api:latest-amd64
             ghcr.io/${{ github.repository_owner }}/api:${{ github.sha }}-amd64
   build-arm64:
+    needs: tests
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Check out the repo
