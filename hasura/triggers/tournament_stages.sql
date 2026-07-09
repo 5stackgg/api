@@ -83,6 +83,15 @@ DECLARE
     current_order INTEGER;
     next_stage_record RECORD;
 BEGIN
+    -- Format-only tweaks (per-round best-of settings, default best-of) don't
+    -- affect bracket structure — they are read at match materialization — so
+    -- they must not trigger a bracket regeneration.
+    IF TG_OP = 'UPDATE'
+       AND to_jsonb(NEW) - 'settings' - 'default_best_of'
+         = to_jsonb(OLD) - 'settings' - 'default_best_of' THEN
+        RETURN NEW;
+    END IF;
+
     BEGIN
         PERFORM 1 FROM pg_temp.taiu_running_flag LIMIT 1;
         RETURN NEW;
@@ -194,6 +203,14 @@ DECLARE
     tournament_status text;
     stage_has_matches boolean;
 BEGIN
+    -- Format-only tweaks (per-round best-of settings, default best-of) are
+    -- allowed at any point: they only apply to matches that have not been
+    -- created yet, so a live tournament/league can adjust its series format.
+    IF to_jsonb(NEW) - 'settings' - 'default_best_of'
+     = to_jsonb(OLD) - 'settings' - 'default_best_of' THEN
+        RETURN NEW;
+    END IF;
+
     SELECT status
     INTO tournament_status
     FROM tournaments t

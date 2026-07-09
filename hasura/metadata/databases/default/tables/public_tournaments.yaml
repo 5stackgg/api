@@ -5,6 +5,15 @@ object_relationships:
   - name: admin
     using:
       foreign_key_constraint_on: organizer_steam_id
+  - name: league_season_division
+    using:
+      manual_configuration:
+        column_mapping:
+          id: tournament_id
+        insertion_order: null
+        remote_table:
+          name: league_season_divisions
+          schema: public
   - name: e_tournament_status
     using:
       foreign_key_constraint_on: status
@@ -176,6 +185,7 @@ insert_permissions:
         - discord_webhook
         - match_options_id
         - name
+        - scheduling_mode
         - start
     comment: ""
   - role: match_organizer
@@ -211,6 +221,7 @@ insert_permissions:
         - description
         - match_options_id
         - name
+        - scheduling_mode
         - start
     comment: ""
   - role: streamer
@@ -245,6 +256,7 @@ insert_permissions:
         - description
         - match_options_id
         - name
+        - scheduling_mode
         - start
     comment: ""
   - role: tournament_organizer
@@ -298,6 +310,7 @@ insert_permissions:
         - discord_webhook
         - match_options_id
         - name
+        - scheduling_mode
         - start
     comment: ""
   - role: user
@@ -330,6 +343,7 @@ insert_permissions:
         - description
         - match_options_id
         - name
+        - scheduling_mode
         - start
     comment: ""
   - role: verified_user
@@ -363,6 +377,7 @@ insert_permissions:
         - description
         - match_options_id
         - name
+        - scheduling_mode
         - start
     comment: ""
 select_permissions:
@@ -375,6 +390,7 @@ select_permissions:
         - id
         - match_options_id
         - name
+        - scheduling_mode
         - organizer_steam_id
         - start
         - status
@@ -424,6 +440,7 @@ select_permissions:
         - id
         - match_options_id
         - name
+        - scheduling_mode
         - organizer_steam_id
         - start
         - status
@@ -459,6 +476,7 @@ select_permissions:
         - id
         - match_options_id
         - name
+        - scheduling_mode
         - organizer_steam_id
         - start
         - status

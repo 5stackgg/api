@@ -8,6 +8,7 @@ DECLARE
     round_num int;
     wins int;
     losses int;
+    wins_cap int;
     pool_group numeric;
     matches_needed int;
     match_num int;
@@ -15,12 +16,22 @@ DECLARE
     seed_1 int;
     seed_2 int;
     bracket_idx int;
+    _no_elim boolean;
+    _max_rounds_setting int;
 BEGIN
-    -- Valve-style Swiss system: teams need 3 wins to advance or 3 losses to be eliminated
-    -- Max rounds formula: 2 × wins_needed - 1
-    -- This ensures all teams will either advance or be eliminated
+    -- ESEA-style "Swiss group": pair by record but never advance/eliminate — every
+    -- team plays exactly max_rounds rounds and is ranked in one table. Otherwise the
+    -- Valve-style system: 3 wins to advance / 3 losses to be eliminated over 5 rounds.
+    SELECT COALESCE(swiss_no_elimination, false), max_rounds
+    INTO _no_elim, _max_rounds_setting
+    FROM tournament_stages WHERE id = _stage_id;
+
     wins_needed := 3;
-    max_rounds := 2 * wins_needed - 1;  -- For 3 wins: 2 × 3 - 1 = 5 rounds
+    IF _no_elim THEN
+        max_rounds := COALESCE(_max_rounds_setting, 2 * wins_needed - 1);
+    ELSE
+        max_rounds := 2 * wins_needed - 1;  -- For 3 wins: 2 × 3 - 1 = 5 rounds
+    END IF;
     
     RAISE NOTICE '=== Generating Swiss Bracket for % teams ===', _team_count;
     RAISE NOTICE 'Will generate rounds 1 through %', max_rounds;
@@ -111,27 +122,30 @@ BEGIN
             pools_created int := 0;
             matches_created int := 0;
         BEGIN
-            FOR wins IN 0..LEAST(wins_needed, round_num - 1) LOOP
+            -- No-elim pools span every record 0..round-1; Valve caps at wins_needed.
+            wins_cap := CASE WHEN _no_elim THEN round_num - 1
+                             ELSE LEAST(wins_needed, round_num - 1) END;
+            FOR wins IN 0..wins_cap LOOP
                 losses := (round_num - 1) - wins;
-                
-                -- Skip if losses > wins_needed (team would be eliminated)
-                IF losses > wins_needed THEN
-                    RAISE NOTICE '  Skipping pool %-% (losses > %)', wins, losses, wins_needed;
-                    CONTINUE;
-                END IF;
-                
-                -- Skip pools where teams would have advanced (wins_needed wins, < wins_needed losses)
-                -- These teams won't play more matches
-                IF wins = wins_needed AND losses < wins_needed THEN
-                    RAISE NOTICE '  Skipping pool %-% (advanced)', wins, losses;
-                    CONTINUE;
-                END IF;
-                
-                -- Skip pools where teams would be eliminated (wins_needed losses)
-                -- These teams won't play more matches
-                IF losses = wins_needed THEN
-                    RAISE NOTICE '  Skipping pool %-% (eliminated)', wins, losses;
-                    CONTINUE;
+
+                IF NOT _no_elim THEN
+                    -- Skip if losses > wins_needed (team would be eliminated)
+                    IF losses > wins_needed THEN
+                        RAISE NOTICE '  Skipping pool %-% (losses > %)', wins, losses, wins_needed;
+                        CONTINUE;
+                    END IF;
+
+                    -- Skip pools where teams would have advanced (won't play more)
+                    IF wins = wins_needed AND losses < wins_needed THEN
+                        RAISE NOTICE '  Skipping pool %-% (advanced)', wins, losses;
+                        CONTINUE;
+                    END IF;
+
+                    -- Skip pools where teams would be eliminated (won't play more)
+                    IF losses = wins_needed THEN
+                        RAISE NOTICE '  Skipping pool %-% (eliminated)', wins, losses;
+                        CONTINUE;
+                    END IF;
                 END IF;
                 
                 -- Calculate pool group: wins * 100 + losses
@@ -145,8 +159,9 @@ BEGIN
                 DECLARE
                     matches_calc numeric;
                 BEGIN
-                    IF round_num <= 3 THEN
-                        -- Use binomial distribution for early rounds
+                    IF _no_elim OR round_num <= 3 THEN
+                        -- Binomial distribution — exact for every no-elim pool, and
+                        -- for the early rounds of a Valve Swiss.
                         DECLARE
                             n int;
                             k int;

@@ -1,0 +1,232 @@
+table:
+  name: league_seasons
+  schema: public
+object_relationships:
+  - name: e_league_season_status
+    using:
+      foreign_key_constraint_on: status
+  - name: options
+    using:
+      foreign_key_constraint_on: match_options_id
+array_relationships:
+  - name: match_weeks
+    using:
+      foreign_key_constraint_on:
+        column: league_season_id
+        table:
+          name: league_match_weeks
+          schema: public
+  - name: relegation_playoffs
+    using:
+      foreign_key_constraint_on:
+        column: league_season_id
+        table:
+          name: league_relegation_playoffs
+          schema: public
+  - name: team_seasons
+    using:
+      foreign_key_constraint_on:
+        column: league_season_id
+        table:
+          name: league_team_seasons
+          schema: public
+  - name: season_divisions
+    using:
+      foreign_key_constraint_on:
+        column: league_season_id
+        table:
+          name: league_season_divisions
+          schema: public
+  - name: movements
+    using:
+      foreign_key_constraint_on:
+        column: league_season_id
+        table:
+          name: league_team_movements
+          schema: public
+  - name: standings
+    using:
+      manual_configuration:
+        column_mapping:
+          id: league_season_id
+        insertion_order: null
+        remote_table:
+          name: v_league_division_standings
+          schema: public
+  - name: player_stats
+    using:
+      manual_configuration:
+        column_mapping:
+          id: league_season_id
+        insertion_order: null
+        remote_table:
+          name: v_league_season_player_stats
+          schema: public
+computed_fields:
+  - name: is_league_admin
+    definition:
+      function:
+        name: is_league_season_admin
+        schema: public
+      session_argument: hasura_session
+  - name: can_register
+    definition:
+      function:
+        name: can_register_for_league_season
+        schema: public
+      session_argument: hasura_session
+  - name: is_roster_locked
+    definition:
+      function:
+        name: league_season_is_roster_locked
+        schema: public
+  - name: my_registration
+    definition:
+      function:
+        name: league_season_my_registration
+        schema: public
+      session_argument: hasura_session
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      set:
+        created_by_steam_id: x-hasura-user-id
+      columns:
+        - signup_opens_at
+        - signup_closes_at
+        - starts_at
+        - roster_lock_at
+        - match_weeks_count
+        - games_per_week
+        - playoff_seats
+        - direct_promote_count
+        - relegation_up_count
+        - relegation_down_count
+        - direct_relegate_count
+        - match_options_id
+        - default_best_of
+        - playoff_best_of
+        - week_best_of
+        - playoff_round_best_of
+        - playoff_stage_type
+        - regular_season_stage_type
+        - auto_regular_season_format
+        - playoff_third_place_match
+        - min_roster_size
+        - max_roster_size
+    comment: ""
+select_permissions:
+  # Admins see every season, including ones still in Setup.
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - name
+        - season_number
+        - status
+        - signup_opens_at
+        - signup_closes_at
+        - starts_at
+        - roster_lock_at
+        - match_weeks_count
+        - games_per_week
+        - playoff_seats
+        - direct_promote_count
+        - relegation_up_count
+        - relegation_down_count
+        - direct_relegate_count
+        - match_options_id
+        - default_best_of
+        - playoff_best_of
+        - week_best_of
+        - playoff_round_best_of
+        - playoff_stage_type
+        - regular_season_stage_type
+        - auto_regular_season_format
+        - playoff_third_place_match
+        - min_roster_size
+        - max_roster_size
+        - created_at
+      computed_fields:
+        - is_league_admin
+        - can_register
+        - is_roster_locked
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  # Everyone else only sees seasons once they leave Setup.
+  - role: guest
+    permission:
+      columns:
+        - id
+        - name
+        - season_number
+        - status
+        - signup_opens_at
+        - signup_closes_at
+        - starts_at
+        - roster_lock_at
+        - match_weeks_count
+        - games_per_week
+        - playoff_seats
+        - direct_promote_count
+        - relegation_up_count
+        - relegation_down_count
+        - direct_relegate_count
+        - match_options_id
+        - default_best_of
+        - playoff_best_of
+        - week_best_of
+        - playoff_round_best_of
+        - playoff_stage_type
+        - regular_season_stage_type
+        - auto_regular_season_format
+        - playoff_third_place_match
+        - min_roster_size
+        - max_roster_size
+        - created_at
+      computed_fields:
+        - is_league_admin
+        - can_register
+        - is_roster_locked
+      filter:
+        status:
+          _neq: Setup
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - status
+        - signup_opens_at
+        - signup_closes_at
+        - starts_at
+        - roster_lock_at
+        - match_weeks_count
+        - games_per_week
+        - playoff_seats
+        - direct_promote_count
+        - relegation_up_count
+        - relegation_down_count
+        - direct_relegate_count
+        - match_options_id
+        - default_best_of
+        - playoff_best_of
+        - week_best_of
+        - playoff_round_best_of
+        - playoff_stage_type
+        - regular_season_stage_type
+        - auto_regular_season_format
+        - playoff_third_place_match
+        - min_roster_size
+        - max_roster_size
+      filter: {}
+      check: {}
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""

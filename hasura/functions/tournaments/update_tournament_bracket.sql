@@ -67,10 +67,19 @@ BEGIN
         ELSIF stage_type = 'Swiss' THEN
             IF check_swiss_round_complete(bracket.tournament_stage_id, bracket.round) THEN
                 RAISE NOTICE 'Swiss round % complete, assigning teams to next round pools', bracket.round;
-                
+
                 PERFORM advance_swiss_teams(bracket.tournament_stage_id);
-                
-                PERFORM assign_teams_to_swiss_pools(bracket.tournament_stage_id, bracket.round + 1);
+
+                -- Only pair the next round when it actually exists. A no-elim
+                -- group keeps every team active, so without this guard the final
+                -- round would try to pair a non-existent round+1 and raise.
+                IF EXISTS (
+                    SELECT 1 FROM tournament_brackets
+                    WHERE tournament_stage_id = bracket.tournament_stage_id
+                      AND round = bracket.round + 1
+                ) THEN
+                    PERFORM assign_teams_to_swiss_pools(bracket.tournament_stage_id, bracket.round + 1);
+                END IF;
             END IF;
         END IF;
         

@@ -19,6 +19,12 @@ INSERT INTO e_notification_types ("value", "description") VALUES
     ('ScrimAlertMatch', 'A team matching your scrim alert is available'),
     ('FormTeamSuggestion', 'You frequently play with these players'),
     ('EloRecompute', 'Player ELO recompute finished'),
-    ('PlayerReindex', 'Player search reindex finished')
+    ('PlayerReindex', 'Player search reindex finished'),
+    ('LeagueProposalReceived', 'A league opponent proposed a match time'),
+    ('LeagueProposalAccepted', 'Your league match time proposal was accepted'),
+    ('LeagueProposalDeclined', 'Your league match time proposal was declined'),
+    ('LeagueMatchUnscheduled', 'A league matchup is unscheduled and will default soon'),
+    ('LeagueRegistrationDecision', 'Your league registration was reviewed'),
+    ('LeagueRosterUndersized', 'Your league team no longer meets the minimum roster size')
 ON CONFLICT("value") DO UPDATE
     SET "description" = EXCLUDED."description";

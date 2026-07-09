@@ -1,12 +1,4 @@
-import {
-  Controller,
-  ForbiddenException,
-  Get,
-  Param,
-  Query,
-  Res,
-} from "@nestjs/common";
-import { Response } from "express";
+import { Controller } from "@nestjs/common";
 import { HasuraAction } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
 import { ScrimsService } from "./scrims.service";
@@ -14,37 +6,6 @@ import { ScrimsService } from "./scrims.service";
 @Controller("scrims")
 export class ScrimsController {
   constructor(private readonly scrims: ScrimsService) {}
-
-  // Public calendar-subscription feed. Calendar apps can't send auth headers,
-  // so access is gated by a per-team unguessable token (HMAC of the team id)
-  // rather than left open to teamId enumeration.
-  @Get("calendar/:teamId.ics")
-  async calendar(
-    @Param("teamId") teamId: string,
-    @Query("token") token: string,
-    @Res() res: Response,
-  ) {
-    if (!this.scrims.validateCalendarToken(teamId, token)) {
-      throw new ForbiddenException();
-    }
-    const ics = await this.scrims.getScrimCalendar(teamId);
-    res.set("Content-Type", "text/calendar; charset=utf-8");
-    res.set("Content-Disposition", `inline; filename="scrims-${teamId}.ics"`);
-    res.send(ics);
-  }
-
-  @HasuraAction()
-  public async scrimCalendarUrl(data: { user: User; team_id: string }) {
-    const { user, team_id } = data;
-
-    if (!(await this.scrims.isManager(team_id, user.steam_id))) {
-      throw Error("you are not a manager of this team");
-    }
-
-    return {
-      url: this.scrims.calendarUrl(team_id),
-    };
-  }
 
   @HasuraAction()
   public async sendScrimRequest(data: {

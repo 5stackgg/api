@@ -31,6 +31,7 @@ DECLARE
     team_2_seed int;
     bracket_record tournament_brackets%ROWTYPE;
     use_team_ids boolean;
+    _max_rounds int;
 BEGIN
     -- Determine if we're using team IDs or seeds
     IF _team_ids IS NOT NULL AND array_length(_team_ids, 1) > 0 THEN
@@ -62,6 +63,17 @@ BEGIN
         matches_per_round := (team_count - 1) / 2;
     END IF;
     round_count := effective_count - 1;
+
+    -- Optional partial round robin: cap the full schedule at the stage's
+    -- max_rounds so each team plays that many distinct opponents (circle
+    -- method guarantees distinctness per round). Only the seed-based full-stage
+    -- generation is capped; decider mini-round-robins (team_ids) run in full.
+    IF NOT use_team_ids THEN
+        SELECT max_rounds INTO _max_rounds FROM tournament_stages WHERE id = _stage_id;
+        IF _max_rounds IS NOT NULL AND _max_rounds > 0 THEN
+            round_count := LEAST(round_count, _max_rounds);
+        END IF;
+    END IF;
 
     RAISE NOTICE 'Creating round robin matches for % teams: % rounds, % matches per round, starting at round %',
         team_count, round_count, matches_per_round, _start_round;

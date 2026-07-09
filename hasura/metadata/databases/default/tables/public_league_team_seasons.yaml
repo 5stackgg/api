@@ -1,0 +1,152 @@
+table:
+  name: league_team_seasons
+  schema: public
+object_relationships:
+  - name: season
+    using:
+      foreign_key_constraint_on: league_season_id
+  - name: league_team
+    using:
+      foreign_key_constraint_on: league_team_id
+  - name: e_registration_status
+    using:
+      foreign_key_constraint_on: status
+  - name: requested_division
+    using:
+      foreign_key_constraint_on: requested_division_id
+  - name: assigned_division
+    using:
+      foreign_key_constraint_on: assigned_division_id
+  - name: captain
+    using:
+      foreign_key_constraint_on: captain_steam_id
+  - name: tournament_team
+    using:
+      foreign_key_constraint_on: tournament_team_id
+  - name: registered_by
+    using:
+      foreign_key_constraint_on: registered_by_steam_id
+array_relationships:
+  - name: roster
+    using:
+      foreign_key_constraint_on:
+        column: league_team_season_id
+        table:
+          name: league_team_rosters
+          schema: public
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - league_season_id
+        - league_team_id
+        - status
+        - requested_division_id
+        - assigned_division_id
+        - seed
+        - captain_steam_id
+    comment: ""
+  - role: user
+    permission:
+      check:
+        league_team:
+          team:
+            _or:
+              - owner_steam_id:
+                  _eq: X-Hasura-User-Id
+              - captain_steam_id:
+                  _eq: X-Hasura-User-Id
+              - roster:
+                  _and:
+                    - player_steam_id:
+                        _eq: X-Hasura-User-Id
+                    - role:
+                        _eq: Admin
+      columns:
+        - league_season_id
+        - league_team_id
+        - requested_division_id
+        - captain_steam_id
+    comment: ""
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - league_season_id
+        - league_team_id
+        - status
+        - requested_division_id
+        - assigned_division_id
+        - seed
+        - captain_steam_id
+        - tournament_team_id
+        - registered_by_steam_id
+        - decline_reason
+        - created_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - status
+        - requested_division_id
+        - assigned_division_id
+        - seed
+        - captain_steam_id
+        - decline_reason
+      filter: {}
+      check: {}
+    comment: ""
+  # Team managers may withdraw or resubmit (Declined/Waitlisted -> Pending
+  # while registration is open); placement, approval and the resubmit window
+  # are guarded in tbu_league_team_seasons.
+  - role: user
+    permission:
+      columns:
+        - status
+        - requested_division_id
+        - assigned_division_id
+        - seed
+        - captain_steam_id
+      filter:
+        league_team:
+          team:
+            _or:
+              - owner_steam_id:
+                  _eq: X-Hasura-User-Id
+              - captain_steam_id:
+                  _eq: X-Hasura-User-Id
+              - roster:
+                  _and:
+                    - player_steam_id:
+                        _eq: X-Hasura-User-Id
+                    - role:
+                        _eq: Admin
+      check:
+        status:
+          _in:
+            - Withdrawn
+            - Pending
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""
+event_triggers:
+  - name: league_registration_events
+    definition:
+      enable_manual: false
+      update:
+        columns:
+          - status
+          - assigned_division_id
+    retry_conf:
+      interval_sec: 10
+      num_retries: 3
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

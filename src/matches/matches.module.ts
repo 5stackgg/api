@@ -33,6 +33,9 @@ import { CancelExpiredMatches } from "./jobs/CancelExpiredMatches";
 import { RemoveCancelledMatches } from "./jobs/RemoveCancelledMatches";
 import { CheckForTournamentStart } from "./jobs/CheckForTournamentStart";
 import { CheckForScheduledTournamentBrackets } from "./jobs/CheckForScheduledTournamentBrackets";
+import { CheckLeagueSeasonTransitions } from "./jobs/CheckLeagueSeasonTransitions";
+import { ApplyLeagueDefaultSchedules } from "./jobs/ApplyLeagueDefaultSchedules";
+import { LeagueWeekReminders } from "./jobs/LeagueWeekReminders";
 import { EncryptionModule } from "../encryption/encryption.module";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
@@ -62,6 +65,7 @@ import { GameStreamerModule } from "./game-streamer/game-streamer.module";
 import { DemosModule } from "../demos/demos.module";
 import { ClipsModule } from "./clips/clips.module";
 import { SteamMatchHistoryModule } from "../steam-match-history/steam-match-history.module";
+import { LeaguesModule } from "../leagues/leagues.module";
 
 @Module({
   imports: [
@@ -83,6 +87,7 @@ import { SteamMatchHistoryModule } from "../steam-match-history/steam-match-hist
     DiscordTournamentVoiceModule,
     MatchMaking,
     ChatModule,
+    LeaguesModule,
     BullModule.registerQueue(
       {
         name: MatchQueues.MatchServers,
@@ -152,6 +157,9 @@ import { SteamMatchHistoryModule } from "../steam-match-history/steam-match-hist
     CancelExpiredMatches,
     CheckForTournamentStart,
     CheckForScheduledTournamentBrackets,
+    CheckLeagueSeasonTransitions,
+    ApplyLeagueDefaultSchedules,
+    LeagueWeekReminders,
     CheckForScheduledMatches,
     RemoveCancelledMatches,
     StopOnDemandServer,
@@ -187,6 +195,36 @@ export class MatchesModule implements NestModule {
       {
         repeat: {
           pattern: "* * * * *",
+        },
+      },
+    );
+
+    void scheduleMatchQueue.add(
+      CheckLeagueSeasonTransitions.name,
+      {},
+      {
+        repeat: {
+          pattern: "*/5 * * * *",
+        },
+      },
+    );
+
+    void scheduleMatchQueue.add(
+      ApplyLeagueDefaultSchedules.name,
+      {},
+      {
+        repeat: {
+          pattern: "0 * * * *",
+        },
+      },
+    );
+
+    void scheduleMatchQueue.add(
+      LeagueWeekReminders.name,
+      {},
+      {
+        repeat: {
+          pattern: "30 * * * *",
         },
       },
     );

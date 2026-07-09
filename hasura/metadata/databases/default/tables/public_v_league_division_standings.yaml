@@ -1,0 +1,56 @@
+table:
+  name: v_league_division_standings
+  schema: public
+object_relationships:
+  - name: season_division
+    using:
+      manual_configuration:
+        column_mapping:
+          league_season_division_id: id
+        insertion_order: null
+        remote_table:
+          name: league_season_divisions
+          schema: public
+  - name: team_season
+    using:
+      manual_configuration:
+        column_mapping:
+          league_team_season_id: id
+        insertion_order: null
+        remote_table:
+          name: league_team_seasons
+          schema: public
+  - name: league_team
+    using:
+      manual_configuration:
+        column_mapping:
+          league_team_id: id
+        insertion_order: null
+        remote_table:
+          name: league_teams
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - league_season_division_id
+        - league_season_id
+        - league_division_id
+        - league_team_season_id
+        - league_team_id
+        - tournament_team_id
+        - matches_played
+        - matches_remaining
+        - wins
+        - losses
+        - maps_won
+        - maps_lost
+        - rounds_won
+        - rounds_lost
+        - round_diff
+        - head_to_head_match_wins
+        - head_to_head_rounds_won
+        - rank
+      filter: {}
+      allow_aggregations: true
+    comment: ""

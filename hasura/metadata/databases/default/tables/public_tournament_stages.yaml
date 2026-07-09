@@ -25,6 +25,13 @@ array_relationships:
         table:
           name: tournament_brackets
           schema: public
+  - name: windows
+    using:
+      foreign_key_constraint_on:
+        column: tournament_stage_id
+        table:
+          name: tournament_stage_windows
+          schema: public
   - name: results
     using:
       manual_configuration:
@@ -46,10 +53,12 @@ insert_permissions:
         - default_best_of
         - groups
         - match_options_id
+        - max_rounds
         - max_teams
         - min_teams
         - order
         - settings
+        - swiss_no_elimination
         - third_place_match
         - tournament_id
         - type
@@ -63,10 +72,12 @@ select_permissions:
         - groups
         - id
         - match_options_id
+        - max_rounds
         - max_teams
         - min_teams
         - order
         - settings
+        - swiss_no_elimination
         - third_place_match
         - tournament_id
         - type
@@ -81,10 +92,12 @@ update_permissions:
         - default_best_of
         - groups
         - match_options_id
+        - max_rounds
         - max_teams
         - min_teams
         - order
         - settings
+        - swiss_no_elimination
         - third_place_match
         - type
       filter:

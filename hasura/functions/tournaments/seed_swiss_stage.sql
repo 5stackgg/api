@@ -9,6 +9,7 @@ DECLARE
     team_1_seed_val int;
     team_2_seed_val int;
     teams_assigned_count int;
+    bye_team record;
 BEGIN
     RAISE NOTICE '=== STARTING SWISS STAGE SEEDING ===';
     RAISE NOTICE 'Stage ID: %', stage_id;
@@ -86,9 +87,26 @@ BEGIN
             team_2_seed_val, team_2_id;
     END LOOP;
 
+    -- Odd field: any eligible team not placed into a round-1 match gets a bye
+    -- (a free win) so it still starts at 1-0 for round 2's pairing.
+    FOR bye_team IN
+        SELECT tt.id
+        FROM tournament_teams tt
+        WHERE tt.tournament_id = stage.tournament_id
+          AND tt.eligible_at IS NOT NULL
+          AND NOT EXISTS (
+              SELECT 1 FROM tournament_brackets tb
+              WHERE tb.tournament_stage_id = stage.id
+                AND tb.round = 1
+                AND (tb.tournament_team_id_1 = tt.id OR tb.tournament_team_id_2 = tt.id)
+          )
+    LOOP
+        PERFORM public.create_swiss_bye_bracket(stage.id, 1, bye_team.id, 0);
+    END LOOP;
+
     RAISE NOTICE '=== SWISS STAGE SEEDING COMPLETE ===';
     RAISE NOTICE 'Total teams assigned: %', teams_assigned_count;
-    
+
     RETURN;
 END;
 $$;
