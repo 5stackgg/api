@@ -1,5 +1,7 @@
+import { randomBytes } from "crypto";
 import { Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { Client } from "pg";
 import {
   PostgreSqlContainer,
   StartedPostgreSqlContainer,
@@ -12,20 +14,60 @@ import { PostgresService } from "../../src/postgres/postgres.service";
 // TimescaleDB, and setup() calls pg_stat_statements_reset() after migrating,
 // which requires pg_stat_statements in shared_preload_libraries.
 const IMAGE = "timescale/timescaledb:latest-pg17";
+const TEMPLATE_DB = "hasura";
+
+// Serializes CREATE DATABASE ... TEMPLATE across parallel jest workers; the
+// template must have no concurrent access while it's being copied.
+const CLONE_LOCK_ID = 421337;
 
 export interface SqlTestDb {
-  container: StartedPostgreSqlContainer;
+  container?: StartedPostgreSqlContainer;
   postgres: PostgresService;
   hasura: HasuraService;
   stop(): Promise<void>;
 }
 
+function makeServices(connection: {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  database: string;
+}, loggerName: string): { postgres: PostgresService; hasura: HasuraService } {
+  const configService = new ConfigService({
+    postgres: { connections: { default: { ...connection, max: 5 } } },
+    app: { demosDomain: "demos.test", relayDomain: "relay.test" },
+  });
+
+  const logger = new Logger(loggerName);
+  const postgres = new PostgresService(configService, logger);
+  const hasura = new HasuraService(
+    logger,
+    // CacheService is unused by setup(); the GraphQL/cache paths are not exercised.
+    null as never,
+    configService,
+    postgres,
+  );
+
+  return { postgres, hasura };
+}
+
+export async function endPool(postgres: PostgresService): Promise<void> {
+  // Drain the pool before its database goes away, otherwise pg emits an
+  // idle-client error when the socket is torn out from under it.
+  await (
+    postgres as unknown as { pool: { end(): Promise<void> } }
+  )?.pool?.end();
+}
+
 // Boots a throwaway Postgres and drives the real HasuraService.setup() through
 // the full migration -> enums -> functions -> views -> triggers pipeline, so
 // trigger/function behavior under test matches a fresh install exactly.
-export async function bootMigratedDb(loggerName: string): Promise<SqlTestDb> {
+export async function bootContainerAndMigrate(
+  loggerName: string,
+): Promise<SqlTestDb> {
   const container = await new PostgreSqlContainer(IMAGE)
-    .withDatabase("hasura")
+    .withDatabase(TEMPLATE_DB)
     .withUsername("hasura")
     .withPassword("hasura")
     .withCommand([
@@ -37,55 +79,103 @@ export async function bootMigratedDb(loggerName: string): Promise<SqlTestDb> {
       // server start so seeding servers works.
       "-c",
       "fivestack.app_key=test-app-key",
+      // Parallel suites each hold a small pool against this one server.
+      "-c",
+      "max_connections=200",
+      // Scheduler/telemetry workers open their own connections to every
+      // database with the extension installed; a connection to the template
+      // database would make CREATE DATABASE ... TEMPLATE fail. Tests exercise
+      // no timescale jobs, so turn them off.
+      "-c",
+      "timescaledb.max_background_workers=0",
+      "-c",
+      "timescaledb.telemetry_level=off",
     ])
     .start();
 
-  const configService = new ConfigService({
-    postgres: {
-      connections: {
-        default: {
-          host: container.getHost(),
-          port: container.getPort(),
-          user: container.getUsername(),
-          password: container.getPassword(),
-          database: container.getDatabase(),
-          max: 5,
-        },
-      },
-    },
-    app: { demosDomain: "demos.test", relayDomain: "relay.test" },
-  });
-
-  const logger = new Logger(loggerName);
-  const postgres = new PostgresService(configService, logger);
-
   // The prod image provisions the timescaledb extension outside the migrations;
   // do the same so create_hypertable migrations resolve.
+  const { postgres, hasura } = makeServices(
+    {
+      host: container.getHost(),
+      port: container.getPort(),
+      user: container.getUsername(),
+      password: container.getPassword(),
+      database: container.getDatabase(),
+    },
+    loggerName,
+  );
   await postgres.query("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE");
 
-  const hasuraService = new HasuraService(
-    logger,
-    // CacheService is unused by setup(); the GraphQL/cache paths are not exercised.
-    null as never,
-    configService,
-    postgres,
-  );
-
-  await hasuraService.setup();
+  await hasura.setup();
 
   return {
     container,
     postgres,
-    hasura: hasuraService,
+    hasura,
     stop: async () => {
-      // Drain the pool before the container goes away, otherwise pg emits an
-      // idle-client error when the socket is torn out from under it.
-      await (
-        postgres as unknown as { pool: { end(): Promise<void> } }
-      )?.pool?.end();
+      await endPool(postgres);
       await container?.stop();
     },
   };
+}
+
+// Fast path used under test/jest-sql.config.js: the global setup already
+// booted one container and migrated the template database, so a suite only
+// needs its own copy — CREATE DATABASE ... TEMPLATE is a file-level clone
+// that takes a fraction of a second instead of a container boot plus the
+// full migration pipeline.
+async function cloneFromTemplate(loggerName: string): Promise<SqlTestDb> {
+  const connection = {
+    host: process.env.SQL_TEST_HOST!,
+    port: Number(process.env.SQL_TEST_PORT),
+    user: process.env.SQL_TEST_USER!,
+    password: process.env.SQL_TEST_PASSWORD!,
+  };
+
+  const database = `test_${loggerName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")}_${randomBytes(4).toString("hex")}`;
+
+  // CREATE DATABASE cannot run inside a pool/transaction; use a raw client
+  // against the maintenance database.
+  const admin = new Client({ ...connection, database: "postgres" });
+  await admin.connect();
+  try {
+    await admin.query("SELECT pg_advisory_lock($1)", [CLONE_LOCK_ID]);
+    try {
+      await admin.query(
+        `CREATE DATABASE "${database}" TEMPLATE ${TEMPLATE_DB}`,
+      );
+    } finally {
+      await admin.query("SELECT pg_advisory_unlock($1)", [CLONE_LOCK_ID]);
+    }
+  } finally {
+    await admin.end();
+  }
+
+  const { postgres, hasura } = makeServices(
+    { ...connection, database },
+    loggerName,
+  );
+
+  return {
+    postgres,
+    hasura,
+    stop: async () => {
+      // The shared container outlives the suite (global teardown stops it);
+      // clones are cheap and die with it, so dropping them isn't worth a
+      // maintenance connection here.
+      await endPool(postgres);
+    },
+  };
+}
+
+export async function bootMigratedDb(loggerName: string): Promise<SqlTestDb> {
+  if (process.env.SQL_TEST_HOST) {
+    return cloneFromTemplate(loggerName);
+  }
+  return bootContainerAndMigrate(loggerName);
 }
 
 // Runs fn inside a transaction that carries Hasura session variables, the way
