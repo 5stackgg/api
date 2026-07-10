@@ -82,6 +82,14 @@ export async function bootContainerAndMigrate(
       // Parallel suites each hold a small pool against this one server.
       "-c",
       "max_connections=200",
+      // Throwaway database: durability off. The write-heavy fixture loads
+      // are fsync-bound on CI disks.
+      "-c",
+      "fsync=off",
+      "-c",
+      "synchronous_commit=off",
+      "-c",
+      "full_page_writes=off",
       // Scheduler/telemetry workers open their own connections to every
       // database with the extension installed; a connection to the template
       // database would make CREATE DATABASE ... TEMPLATE fail. Tests exercise
