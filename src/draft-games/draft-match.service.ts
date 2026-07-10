@@ -54,7 +54,29 @@ export class DraftMatchService {
       match = await this.findExistingMatch(beforeCreate);
 
       if (!match) {
-        match = await this.createMatch(beforeCreate);
+        try {
+          match = await this.createMatch(beforeCreate);
+        } catch (error) {
+          // A draft left in CreatingMatch is stuck forever: the expiry job
+          // only cleans Open rows and its players stay locked out of every
+          // other lobby. Cancel it so everyone is released.
+          this.logger.error(
+            `unable to create match for draft game ${draftGameId}, canceling the draft`,
+            error,
+          );
+
+          await this.hasura.mutation({
+            update_draft_games_by_pk: {
+              __args: {
+                pk_columns: { id: draftGameId },
+                _set: { status: "Canceled" },
+              },
+              __typename: true,
+            },
+          });
+
+          return;
+        }
 
         await this.hasura.mutation({
           update_draft_games_by_pk: {

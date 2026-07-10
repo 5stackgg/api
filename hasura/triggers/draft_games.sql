@@ -2,6 +2,10 @@ CREATE OR REPLACE FUNCTION public.tbi_draft_games() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
+    IF NOT has_available_server_region() THEN
+        RAISE EXCEPTION 'No game server regions are currently available' USING ERRCODE = '22000';
+    END IF;
+
     NEW.capacity := CASE NEW.type
         WHEN 'Duel' THEN 2
         WHEN 'Wingman' THEN 4
@@ -36,6 +40,12 @@ BEGIN
 
     -- Reject an unready "start" so the row can never get stuck in Filled.
     IF OLD.status = 'Open' AND NEW.status = 'Filled' THEN
+        -- Match creation would fail on the region sanitizer and strand the
+        -- draft in CreatingMatch, so refuse the start outright.
+        IF NOT has_available_server_region() THEN
+            RAISE EXCEPTION 'No game server regions are currently available' USING ERRCODE = '22000';
+        END IF;
+
         SELECT
             count(*) FILTER (WHERE status = 'Accepted'),
             count(*) FILTER (WHERE status = 'Accepted' AND lineup = 1),
