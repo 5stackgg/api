@@ -28,9 +28,10 @@ jobs:
         run: yarn test:unit
 
   sql:
-    # Boots a throwaway TimescaleDB per suite via testcontainers and drives the
-    # real HasuraService.setup() migration pipeline, then exercises the
-    # triggers/functions. Docker is available on GitHub-hosted runners.
+    # Boots one shared TimescaleDB via testcontainers, drives the real
+    # HasuraService.setup() migration pipeline once, then suites clone the
+    # template database and exercise the triggers/functions in parallel.
+    # Docker is available on GitHub-hosted runners.
     runs-on: ubuntu-24.04
     steps:
       - name: Check out the repo
@@ -40,9 +41,10 @@ jobs:
         with:
           node-version: 22
           cache: yarn
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-      - name: Pre-pull the database image
-        run: docker pull timescale/timescaledb:latest-pg17
+      - name: Install dependencies (pre-pulling the database image)
+        run: |
+          docker pull -q timescale/timescaledb:latest-pg17 &
+          yarn install --frozen-lockfile
+          wait
       - name: Run SQL tests
         run: yarn test:sql

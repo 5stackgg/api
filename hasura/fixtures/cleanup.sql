@@ -63,7 +63,10 @@ BEGIN
     ALTER TABLE match_options DISABLE TRIGGER ALL;
     ALTER TABLE match_map_veto_picks DISABLE TRIGGER ALL;
 
-    -- Delete player event data
+    -- Delete player event data. Hypertable triggers can't be disabled;
+    -- replica mode skips the per-row tad_* stat decrements, which are wasted
+    -- work here — the aggregate tables are deleted for fixture players below.
+    PERFORM set_config('session_replication_role', 'replica', true);
     DELETE FROM player_kills WHERE match_id = ANY(match_ids);
     DELETE FROM player_damages WHERE match_id = ANY(match_ids);
     DELETE FROM player_assists WHERE match_id = ANY(match_ids);
@@ -71,6 +74,7 @@ BEGIN
     DELETE FROM player_objectives WHERE match_id = ANY(match_ids);
     DELETE FROM player_unused_utility WHERE match_id = ANY(match_ids);
     DELETE FROM player_utility WHERE match_id = ANY(match_ids);
+    PERFORM set_config('session_replication_role', 'origin', true);
 
     -- Delete map veto picks
     DELETE FROM match_map_veto_picks WHERE match_id = ANY(match_ids);

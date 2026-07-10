@@ -1,70 +1,18 @@
-import { Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import {
-  PostgreSqlContainer,
-  StartedPostgreSqlContainer,
-} from "@testcontainers/postgresql";
-import { HasuraService } from "./../src/hasura/hasura.service";
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
 describe("draft game pick order (SQL-driven)", () => {
-  const IMAGE = "timescale/timescaledb:latest-pg17";
-
-  let container: StartedPostgreSqlContainer;
+  let db: SqlTestDb;
   let postgres: PostgresService;
   let seq = 0;
 
   beforeAll(async () => {
-    container = await new PostgreSqlContainer(IMAGE)
-      .withDatabase("hasura")
-      .withUsername("hasura")
-      .withPassword("hasura")
-      .withCommand([
-        "postgres",
-        "-c",
-        "shared_preload_libraries=timescaledb,pg_stat_statements",
-      ])
-      .start();
-
-    const configService = new ConfigService({
-      postgres: {
-        connections: {
-          default: {
-            host: container.getHost(),
-            port: container.getPort(),
-            user: container.getUsername(),
-            password: container.getPassword(),
-            database: container.getDatabase(),
-            max: 5,
-          },
-        },
-      },
-      app: {
-        demosDomain: "demos.test",
-        relayDomain: "relay.test",
-      },
-    });
-
-    const logger = new Logger("DraftOrderTest");
-    postgres = new PostgresService(configService, logger);
-
-    await postgres.query("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE");
-
-    const hasuraService = new HasuraService(
-      logger,
-      null as never,
-      configService,
-      postgres,
-    );
-
-    await hasuraService.setup();
+    db = await bootMigratedDb("DraftOrderTest");
+    postgres = db.postgres;
   }, 600_000);
 
   afterAll(async () => {
-    await (
-      postgres as unknown as { pool: { end(): Promise<void> } }
-    )?.pool?.end();
-    await container?.stop();
+    await db?.stop();
   });
 
   const nextSteam = () => (76561190000000000n + BigInt(++seq)).toString();
