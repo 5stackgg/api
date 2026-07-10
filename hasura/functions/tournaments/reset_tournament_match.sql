@@ -6,7 +6,12 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     slot_position int;
+    target_bracket tournament_brackets%ROWTYPE;
 BEGIN
+    SELECT * INTO target_bracket
+    FROM tournament_brackets
+    WHERE id = _target_bracket_id;
+
     -- Same feeder ordering as assign_team_to_bracket_slot, including the
     -- WB-before-LB key that disambiguates the grand final's two feeders.
     SELECT ranked.pos INTO slot_position
@@ -24,6 +29,19 @@ BEGIN
            OR f.loser_parent_bracket_id = _target_bracket_id
     ) ranked
     WHERE ranked.id = _source_bracket_id;
+
+    -- Mirror assign_team_to_bracket_slot's bye promotion: when a pruned
+    -- round-1 bye pushed its seed into the target, the surviving feeder owns
+    -- the opposite slot — never clear the seed-placed bye team.
+    IF slot_position IS NOT NULL THEN
+        IF target_bracket.team_1_seed IS NOT NULL
+           AND target_bracket.team_2_seed IS NULL THEN
+            slot_position := 2;
+        ELSIF target_bracket.team_2_seed IS NOT NULL
+              AND target_bracket.team_1_seed IS NULL THEN
+            slot_position := 1;
+        END IF;
+    END IF;
 
     IF slot_position = 1 THEN
         UPDATE tournament_brackets
@@ -52,6 +70,7 @@ DECLARE
     source_match matches%ROWTYPE;
     affected_match_id uuid;
     source_tournament_id uuid;
+    source_stage_type text;
     feeder record;
 BEGIN
     IF _reset_status NOT IN ('Scheduled', 'WaitingForCheckIn') THEN
@@ -68,11 +87,17 @@ BEGIN
         RAISE EXCEPTION 'match is not linked to a tournament bracket' USING ERRCODE = '22000';
     END IF;
 
-    SELECT ts.tournament_id
-    INTO source_tournament_id
+    SELECT ts.tournament_id, ts.type
+    INTO source_tournament_id, source_stage_type
     FROM tournament_stages ts
     WHERE ts.id = source_bracket.tournament_stage_id
     LIMIT 1;
+
+    -- Swiss/RoundRobin results drive pool assignment and standings-based
+    -- advancement that a parent-chain unwind cannot restore.
+    IF source_stage_type NOT IN ('SingleElimination', 'DoubleElimination') THEN
+        RAISE EXCEPTION 'only elimination stage matches can be reset' USING ERRCODE = '22000';
+    END IF;
 
     SELECT *
     INTO source_match

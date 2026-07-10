@@ -4,6 +4,8 @@ import { e_map_pool_types_enum } from "generated";
 import { HasuraService } from "src/hasura/hasura.service";
 import { CacheService } from "src/cache/cache.service";
 import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
+import { ChatService } from "src/chat/chat.service";
+import { ChatLobbyType } from "src/chat/enums/ChatLobbyTypes";
 import { DraftGameService } from "./draft-game.service";
 import { DraftGame } from "./types/DraftGame";
 
@@ -14,6 +16,7 @@ export class DraftMatchService {
     public readonly hasura: HasuraService,
     public readonly cache: CacheService,
     public readonly matchAssistant: MatchAssistantService,
+    private readonly chat: ChatService,
     @Inject(forwardRef(() => DraftGameService))
     private readonly draftGameService: DraftGameService,
   ) {}
@@ -66,6 +69,15 @@ export class DraftMatchService {
     }
 
     await this.ensureLineups(draftGame, match);
+
+    // The room's conversation continues in the match chat: carry the history
+    // over and tear down the draft lobby so non-participants drop out.
+    await this.chat.migrateLobbyMessages(
+      ChatLobbyType.Draft,
+      draftGameId,
+      ChatLobbyType.Match,
+      match.id,
+    );
 
     const beforeComplete =
       await this.draftGameService.getDraftGame(draftGameId);

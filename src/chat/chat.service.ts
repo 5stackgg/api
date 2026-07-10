@@ -129,6 +129,10 @@ export class ChatService {
         }
         break;
       case ChatLobbyType.Draft: {
+        if (isRoleAbove(user.role, "match_organizer")) {
+          break;
+        }
+
         const { draft_games } = await this.hasuraService.query({
           draft_games: {
             __args: {
@@ -267,8 +271,14 @@ export class ChatService {
 
   private async canSendDraftMessage(
     id: string,
-    steamId: string,
+    player: User,
   ): Promise<boolean> {
+    if (isRoleAbove(player.role, "match_organizer")) {
+      return true;
+    }
+
+    const steamId = player.steam_id;
+
     const { draft_games_by_pk } = await this.hasuraService.query({
       draft_games_by_pk: {
         __args: { id },
@@ -278,6 +288,7 @@ export class ChatService {
         players: {
           steam_id: true,
           status: true,
+          lineup: true,
         },
       },
     });
@@ -298,10 +309,12 @@ export class ChatService {
       return true;
     }
 
+    // A waitlisted backup moved into a lineup plays in the match but keeps
+    // their Waitlist status, so lineup membership counts too.
     return (draft_games_by_pk.players || []).some(
       (draftPlayer) =>
         String(draftPlayer.steam_id) === String(steamId) &&
-        draftPlayer.status === "Accepted",
+        (draftPlayer.status === "Accepted" || draftPlayer.lineup != null),
     );
   }
 
@@ -321,7 +334,7 @@ export class ChatService {
 
       if (
         type === ChatLobbyType.Draft &&
-        !(await this.canSendDraftMessage(id, player.steam_id))
+        !(await this.canSendDraftMessage(id, player))
       ) {
         return;
       }
@@ -634,5 +647,47 @@ export class ChatService {
     const lobbyKey = this.getLobbyKey(type, id);
     const sessionKeys = await this.redis.keys(`${lobbyKey}:sessions:*`);
     await this.redis.del(lobbyKey, ...sessionKeys);
+  }
+
+  public async migrateLobbyMessages(
+    fromType: ChatLobbyType,
+    fromId: string,
+    toType: ChatLobbyType,
+    toId: string,
+  ) {
+    const fromKey = `chat_${fromType}_${fromId}`;
+    const toKey = `chat_${toType}_${toId}`;
+
+    const messagesObject = await this.redis.hgetall(fromKey);
+
+    for (const [field, message] of Object.entries(messagesObject)) {
+      await this.redis.hset(toKey, field, message);
+      await this.redis.sendCommand(
+        new Redis.Command("HEXPIRE", [
+          toKey,
+          this.expiresIn,
+          "FIELDS",
+          1,
+          field,
+        ]),
+      );
+    }
+
+    await this.redis.del(fromKey);
+    await this.removeLobby(fromType, fromId);
+
+    if (Object.keys(messagesObject).length === 0) {
+      return;
+    }
+
+    const merged = await this.redis.hgetall(toKey);
+    const messages = Object.values(merged)
+      .map((value) => JSON.parse(value))
+      .sort(
+        (a, b) =>
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+      );
+
+    void this.to(toType, toId, "messages", { id: toId, messages });
   }
 }
