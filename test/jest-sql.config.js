@@ -11,4 +11,5 @@ module.exports = {
   roots: ["<rootDir>/../test"],
   globalSetup: "<rootDir>/../test/utils/jest-global-setup.ts",
   globalTeardown: "<rootDir>/../test/utils/jest-global-teardown.ts",
+  testSequencer: "<rootDir>/../test/utils/slow-first-sequencer.js",
 };
