@@ -131,10 +131,8 @@ export class GameStreamerService {
   private readonly steamConfig: SteamConfig;
   private readonly redis: Redis;
 
-  // demoControl runs per keypress and per 1Hz state poll — a Hasura
-  // round-trip to re-resolve the same session row on every call is the
-  // bulk of the perceived control latency. Cache the resolution;
-  // invalidated on stop and on any pod fetch failure.
+  // Re-resolving the session row via Hasura per control was the bulk of
+  // control latency. Invalidated on stop and on pod fetch failure.
   private readonly demoSessionCache = new Map<
     string,
     {
@@ -143,6 +141,15 @@ export class GameStreamerService {
     }
   >();
   private readonly demoActivityBumpedAt = new Map<string, number>();
+  // Routing for the pod's 1Hz state pushes; a null route caches a miss
+  // (straggler pushes from a reaped session) with the same expiry.
+  private readonly demoStateRouteCache = new Map<
+    string,
+    {
+      route: { matchMapId: string; watcherSteamId: string } | null;
+      expiresAt: number;
+    }
+  >();
 
   constructor(
     private readonly logger: Logger,
@@ -1118,12 +1125,12 @@ export class GameStreamerService {
       }
     }
     this.demoActivityBumpedAt.delete(sessionId);
+    this.demoStateRouteCache.delete(sessionId);
   }
 
-  // last_activity_at feeds the 60s idle reaper and is already bumped
-  // every 10s by the page's watch ping — per-control bumps only need
-  // to cover non-page consumers, so 20s granularity is plenty. Fire-
-  // and-forget: a control must not wait on a Hasura write.
+  // The page's 10s watch ping already feeds the 60s idle reaper; this
+  // covers non-page consumers. Fire-and-forget — a control must not
+  // wait on a Hasura write.
   private bumpDemoSessionActivityThrottled(sessionId: string) {
     const last = this.demoActivityBumpedAt.get(sessionId) ?? 0;
     if (Date.now() - last < 20_000) {
@@ -1180,6 +1187,51 @@ export class GameStreamerService {
         id: true,
       },
     });
+  }
+
+  // Rides the send-message-to-steam-id Redis channel so it reaches the
+  // watcher's sockets on any api instance. false = session row gone.
+  public async pushDemoSessionState(
+    sessionId: string,
+    state: Record<string, unknown>,
+  ): Promise<boolean> {
+    let cached = this.demoStateRouteCache.get(sessionId);
+    if (!cached || cached.expiresAt <= Date.now()) {
+      const { match_demo_sessions_by_pk } = await this.hasura.query({
+        match_demo_sessions_by_pk: {
+          __args: { id: sessionId },
+          match_map_id: true,
+          watcher_steam_id: true,
+        },
+      });
+      cached = {
+        route: match_demo_sessions_by_pk
+          ? {
+              matchMapId: match_demo_sessions_by_pk.match_map_id,
+              watcherSteamId: match_demo_sessions_by_pk.watcher_steam_id,
+            }
+          : null,
+        expiresAt: Date.now() + 60_000,
+      };
+      this.demoStateRouteCache.set(sessionId, cached);
+    }
+    if (!cached.route) {
+      return false;
+    }
+    await this.redis.publish(
+      "send-message-to-steam-id",
+      JSON.stringify({
+        steamId: cached.route.watcherSteamId,
+        event: "demo-session:state",
+        data: {
+          match_map_id: cached.route.matchMapId,
+          // Lets the web quiet its fallback poll.
+          pushed: true,
+          state,
+        },
+      }),
+    );
+    return true;
   }
 
   public async reportDemoStatus(

@@ -53,6 +53,36 @@ export class DemoSessionsController {
     response.status(204).end();
   }
 
+  // 1Hz state pushes from the pod's spec-server, fanned out to the
+  // watcher; the per-viewer poll via demoControl("state") is the fallback.
+  @Post("state")
+  public async pushState(
+    @Param("sessionId") sessionId: string,
+    @Body() body: Record<string, unknown>,
+    @Res() response: Response,
+  ) {
+    if (!body || typeof body !== "object") {
+      return response.status(400).json({ error: "state body required" });
+    }
+    try {
+      const known = await this.gameStreamer.pushDemoSessionState(
+        sessionId,
+        body,
+      );
+      if (!known) {
+        // 404 tells the pod's pusher to stop warning.
+        return response.status(404).json({ error: "unknown session" });
+      }
+    } catch (error) {
+      this.logger.error(
+        `[demo ${sessionId}] pushDemoSessionState failed: ${(error as Error)?.message}`,
+        (error as Error)?.stack,
+      );
+      return response.status(500).json({ error: "internal" });
+    }
+    response.status(204).end();
+  }
+
   @Post("snapshot")
   @UseInterceptors(FileInterceptor("file"))
   public async putSnapshot(
