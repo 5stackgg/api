@@ -2,13 +2,11 @@ name: tests
 
 on:
   pull_request:
-  push:
-    branches:
-      - "main"
+  workflow_call:
   workflow_dispatch:
 
 concurrency:
-  group: tests-${{ github.ref }}
+  group: tests-${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
