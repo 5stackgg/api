@@ -131,6 +131,19 @@ export class GameStreamerService {
   private readonly steamConfig: SteamConfig;
   private readonly redis: Redis;
 
+  // demoControl runs per keypress and per 1Hz state poll — a Hasura
+  // round-trip to re-resolve the same session row on every call is the
+  // bulk of the perceived control latency. Cache the resolution;
+  // invalidated on stop and on any pod fetch failure.
+  private readonly demoSessionCache = new Map<
+    string,
+    {
+      session: { id: string; k8s_job_name: string; status: string };
+      expiresAt: number;
+    }
+  >();
+  private readonly demoActivityBumpedAt = new Map<string, number>();
+
   constructor(
     private readonly logger: Logger,
     private readonly config: ConfigService,
@@ -690,6 +703,9 @@ export class GameStreamerService {
       );
       await this.stopDemoSessionById(existing.id, existing.k8s_job_name);
     }
+    this.demoSessionCache.delete(
+      this.demoSessionCacheKey(matchMapId, userSteamId),
+    );
 
     const streamUrl = `${this.appConfig.gameStreamDomain}/${matchId}/`;
 
@@ -928,6 +944,7 @@ export class GameStreamerService {
 
   public async stopDemoSessionById(sessionId: string, k8sJobName: string) {
     this.logger.log(`[demo ${sessionId}] stopping (job=${k8sJobName})`);
+    this.invalidateDemoSessionCacheById(sessionId);
 
     try {
       await this.deleteJob(k8sJobName);
@@ -963,14 +980,14 @@ export class GameStreamerService {
       throw new Error(`unsupported demo control action: ${action}`);
     }
 
-    const session = await this.findDemoSession(matchMapId, userSteamId);
+    const session = await this.findDemoSessionCached(matchMapId, userSteamId);
     if (!session) {
       throw new Error(
         "no demo playback session is running — call watchDemo first",
       );
     }
 
-    await this.bumpDemoSessionActivity(session.id);
+    this.bumpDemoSessionActivityThrottled(session.id);
 
     const prefix = SPEC_PROXIED_DEMO_ACTIONS.has(action) ? "spec" : "demo";
     const url = this.getDemoSpecUrl(session.id, action, prefix);
@@ -994,6 +1011,9 @@ export class GameStreamerService {
       this.logger.error(
         `[demo ${session.id}] ${action} transport: ${code ?? "<none>"} ${message}`,
       );
+      this.demoSessionCache.delete(
+        this.demoSessionCacheKey(matchMapId, userSteamId),
+      );
       if (code === "ENOTFOUND" || code === "EAI_AGAIN") {
         throw new Error(
           "demo session pod has not registered DNS yet — try again in a few seconds",
@@ -1009,6 +1029,9 @@ export class GameStreamerService {
 
     if (!res.ok) {
       const text = await res.text().catch(() => "");
+      this.demoSessionCache.delete(
+        this.demoSessionCacheKey(matchMapId, userSteamId),
+      );
       throw new Error(`demo ${action} -> ${res.status}: ${text.slice(0, 200)}`);
     }
     return res.json().catch(() => ({ ok: true }));
@@ -1064,6 +1087,54 @@ export class GameStreamerService {
         `spec-server render-clip -> ${res.status}: ${text.slice(0, 200)}`,
       );
     }
+  }
+
+  private demoSessionCacheKey(matchMapId: string, userSteamId: string) {
+    return `${matchMapId}:${userSteamId}`;
+  }
+
+  private async findDemoSessionCached(matchMapId: string, userSteamId: string) {
+    const key = this.demoSessionCacheKey(matchMapId, userSteamId);
+    const cached = this.demoSessionCache.get(key);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.session;
+    }
+    const session = await this.findDemoSession(matchMapId, userSteamId);
+    if (session) {
+      this.demoSessionCache.set(key, {
+        session,
+        expiresAt: Date.now() + 30_000,
+      });
+    } else {
+      this.demoSessionCache.delete(key);
+    }
+    return session;
+  }
+
+  private invalidateDemoSessionCacheById(sessionId: string) {
+    for (const [key, entry] of this.demoSessionCache) {
+      if (entry.session.id === sessionId) {
+        this.demoSessionCache.delete(key);
+      }
+    }
+    this.demoActivityBumpedAt.delete(sessionId);
+  }
+
+  // last_activity_at feeds the 60s idle reaper and is already bumped
+  // every 10s by the page's watch ping — per-control bumps only need
+  // to cover non-page consumers, so 20s granularity is plenty. Fire-
+  // and-forget: a control must not wait on a Hasura write.
+  private bumpDemoSessionActivityThrottled(sessionId: string) {
+    const last = this.demoActivityBumpedAt.get(sessionId) ?? 0;
+    if (Date.now() - last < 20_000) {
+      return;
+    }
+    this.demoActivityBumpedAt.set(sessionId, Date.now());
+    void this.bumpDemoSessionActivity(sessionId).catch((error) => {
+      this.logger.warn(
+        `[demo ${sessionId}] activity bump failed: ${(error as Error)?.message}`,
+      );
+    });
   }
 
   private async findDemoSession(matchMapId: string, userSteamId: string) {
