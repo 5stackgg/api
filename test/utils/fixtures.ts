@@ -47,6 +47,7 @@ export type KillOptions = {
 
 export class Fixtures {
   private seq = 0;
+  private killSeq = 0;
 
   constructor(
     private readonly postgres: PostgresService,
@@ -241,7 +242,11 @@ export class Fixtures {
         victim,
         opts.victimTeam ?? "CT",
         opts.weapon ?? "ak47",
-        opts.time ?? new Date().toISOString(),
+        // The pkey is (match_map_id, time, attacker, attacked); two default-time
+        // kills for the same pair can land in the same millisecond, so mint a
+        // unique recent timestamp that still increases in insertion order.
+        opts.time ??
+          new Date(Date.now() - 60_000 + ++this.killSeq).toISOString(),
         opts.headshot ?? false,
       ],
     );
