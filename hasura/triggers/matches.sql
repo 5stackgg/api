@@ -329,6 +329,16 @@ BEGIN
     END IF;
 
     IF(NEW.status = 'Live') THEN
+        -- Going live with a region that has no attached servers can never be
+        -- fulfilled (the match would silently bounce back to Veto or park in
+        -- WaitingForServer forever), so refuse the transition outright.
+        IF OLD.status != 'Live' AND NEW.region IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM server_regions sr
+            WHERE sr.value = NEW.region AND total_region_server_count(sr) > 0
+        ) THEN
+            RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'No game servers are available in region ' || NEW.region;
+        END IF;
+
         SELECT COUNT(*) INTO _match_map_count FROM match_maps WHERE match_id = NEW.id;
         SELECT * INTO _match_options FROM match_options WHERE id = NEW.match_options_id;
 
