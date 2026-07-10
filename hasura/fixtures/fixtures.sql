@@ -2,29 +2,11 @@
 -- Inserts ~40 players, 8 teams, ~143 matches with scores, map veto picks, utility/flash data, and 4 tournaments
 -- This file is idempotent: running cleanup.sql first removes prior fixture data
 
--- Disable triggers on affected tables (excluding hypertables which don't support this)
--- Hypertables: player_kills, player_damages, player_assists, player_flashes,
---              player_objectives, player_utility, player_sanctions
-ALTER TABLE players DISABLE TRIGGER ALL;
-ALTER TABLE teams DISABLE TRIGGER ALL;
-ALTER TABLE team_roster DISABLE TRIGGER ALL;
-ALTER TABLE match_options DISABLE TRIGGER ALL;
-ALTER TABLE match_lineups DISABLE TRIGGER ALL;
-ALTER TABLE matches DISABLE TRIGGER ALL;
-ALTER TABLE match_lineup_players DISABLE TRIGGER ALL;
-ALTER TABLE match_maps DISABLE TRIGGER ALL;
-ALTER TABLE match_map_rounds DISABLE TRIGGER ALL;
-ALTER TABLE player_stats DISABLE TRIGGER ALL;
-ALTER TABLE player_kills_by_weapon DISABLE TRIGGER ALL;
-ALTER TABLE tournaments DISABLE TRIGGER ALL;
-ALTER TABLE tournament_stages DISABLE TRIGGER ALL;
-ALTER TABLE tournament_teams DISABLE TRIGGER ALL;
-ALTER TABLE tournament_team_roster DISABLE TRIGGER ALL;
-ALTER TABLE tournament_brackets DISABLE TRIGGER ALL;
-ALTER TABLE match_map_veto_picks DISABLE TRIGGER ALL;
-ALTER TABLE player_elo DISABLE TRIGGER ALL;
-ALTER TABLE player_season_stats DISABLE TRIGGER ALL;
-ALTER TABLE seasons DISABLE TRIGGER ALL;
+-- Replica mode skips every user trigger — including on hypertables
+-- (player_kills etc.), which DISABLE TRIGGER can't cover and whose per-row
+-- stat triggers would otherwise dominate the load time. Section 6 seeds the
+-- aggregate tables those triggers maintain.
+SET session_replication_role = replica;
 
 DO $$
 DECLARE
@@ -115,23 +97,12 @@ DECLARE
   v_t1_wins int;
   v_t2_wins int;
 
-  -- Stats tracking
-  kill_counts int[];
-  death_counts int[];
-  headshot_counts int[];
-  weapon_kill_map jsonb;
-
   -- ELO tracking
   season_elos int[];
   tournament_elos int[];
   cur_season_id uuid;
   cur_season_idx int;
   elo_change int;
-
-  -- Per-season stats tracking
-  s_kill_counts int[];
-  s_death_counts int[];
-  s_headshot_counts int[];
 
   -- Tournament working variables
   tourn_stage_id uuid;
@@ -233,21 +204,10 @@ BEGIN
   END IF;
 
   -- ==========================================
-  -- 4. INITIALIZE STATS ARRAYS
+  -- 4. INITIALIZE ELO: everyone starts at 5000 per season
   -- ==========================================
-  kill_counts := array_fill(0, ARRAY[40]);
-  death_counts := array_fill(0, ARRAY[40]);
-  headshot_counts := array_fill(0, ARRAY[40]);
-  weapon_kill_map := '{}'::jsonb;
-
-  -- Initialize ELO: everyone starts at 5000 per season
   season_elos := array_fill(5000, ARRAY[3, 40]);
   tournament_elos := array_fill(5000, ARRAY[40]);
-
-  -- Per-season stats
-  s_kill_counts := array_fill(0, ARRAY[3, 40]);
-  s_death_counts := array_fill(0, ARRAY[3, 40]);
-  s_headshot_counts := array_fill(0, ARRAY[3, 40]);
 
   -- ==========================================
   -- 5. INSERT MATCHES (~100 matches)
@@ -463,32 +423,6 @@ BEGIN
           )
           ON CONFLICT DO NOTHING;
 
-          -- Track stats
-          kill_counts[attacker_idx] := kill_counts[attacker_idx] + 1;
-          death_counts[attacked_idx] := death_counts[attacked_idx] + 1;
-          IF is_headshot THEN
-            headshot_counts[attacker_idx] := headshot_counts[attacker_idx] + 1;
-          END IF;
-
-          -- Track per-season stats
-          IF cur_season_idx > 0 THEN
-            s_kill_counts[cur_season_idx][attacker_idx] := s_kill_counts[cur_season_idx][attacker_idx] + 1;
-            s_death_counts[cur_season_idx][attacked_idx] := s_death_counts[cur_season_idx][attacked_idx] + 1;
-            IF is_headshot THEN
-              s_headshot_counts[cur_season_idx][attacker_idx] := s_headshot_counts[cur_season_idx][attacker_idx] + 1;
-            END IF;
-          END IF;
-
-          -- Track weapon kills
-          DECLARE
-            wkey text := p_steam_ids[attacker_idx]::text || ':' || weapons[weapon_idx];
-          BEGIN
-            IF weapon_kill_map ? wkey THEN
-              weapon_kill_map := jsonb_set(weapon_kill_map, ARRAY[wkey], to_jsonb((weapon_kill_map->>wkey)::int + 1));
-            ELSE
-              weapon_kill_map := weapon_kill_map || jsonb_build_object(wkey, 1);
-            END IF;
-          END;
         END LOOP; -- kills per round
 
         -- Generate utility events (flashes, smokes, HE, molotov)
@@ -715,22 +649,6 @@ BEGIN
           is_headshot, kill_time)
         ON CONFLICT DO NOTHING;
 
-        -- Track stats
-        kill_counts[attacker_idx] := kill_counts[attacker_idx] + 1;
-        death_counts[attacked_idx] := death_counts[attacked_idx] + 1;
-        IF is_headshot THEN
-          headshot_counts[attacker_idx] := headshot_counts[attacker_idx] + 1;
-        END IF;
-
-        DECLARE
-          wkey text := p_steam_ids[attacker_idx]::text || ':' || weapons[weapon_idx];
-        BEGIN
-          IF weapon_kill_map ? wkey THEN
-            weapon_kill_map := jsonb_set(weapon_kill_map, ARRAY[wkey], to_jsonb((weapon_kill_map->>wkey)::int + 1));
-          ELSE
-            weapon_kill_map := weapon_kill_map || jsonb_build_object(wkey, 1);
-          END IF;
-        END;
       END LOOP; -- kills per round
 
       -- Utility events (flash + smoke per round)
@@ -763,69 +681,9 @@ BEGIN
   END LOOP; -- additional matches
 
   -- ==========================================
-  -- 6. POPULATE AGGREGATE TABLES
+  -- 6. AGGREGATE TABLES are populated at the end of this block (section 8),
+  --    once every section that inserts player_kills has run.
   -- ==========================================
-
-  -- Player stats
-  FOR i IN 1..40 LOOP
-    INSERT INTO player_stats (player_steam_id, kills, deaths, assists, headshots, headshot_percentage)
-    VALUES (
-      p_steam_ids[i],
-      kill_counts[i],
-      death_counts[i],
-      0,
-      headshot_counts[i],
-      CASE WHEN kill_counts[i] > 0 THEN headshot_counts[i]::float / kill_counts[i] ELSE 0 END
-    )
-    ON CONFLICT (player_steam_id) DO UPDATE SET
-      kills = EXCLUDED.kills,
-      deaths = EXCLUDED.deaths,
-      headshots = EXCLUDED.headshots,
-      headshot_percentage = EXCLUDED.headshot_percentage;
-  END LOOP;
-
-  -- Player kills by weapon
-  DECLARE
-    wkey text;
-    wparts text[];
-    w_steam_id bigint;
-    w_weapon text;
-    w_count int;
-  BEGIN
-    FOR wkey IN SELECT jsonb_object_keys(weapon_kill_map) LOOP
-      wparts := string_to_array(wkey, ':');
-      w_steam_id := wparts[1]::bigint;
-      w_weapon := wparts[2];
-      w_count := (weapon_kill_map->>wkey)::int;
-
-      INSERT INTO player_kills_by_weapon (player_steam_id, "with", kill_count)
-      VALUES (w_steam_id, w_weapon, w_count)
-      ON CONFLICT (player_steam_id, "with") DO UPDATE SET kill_count = EXCLUDED.kill_count;
-    END LOOP;
-  END;
-
-  -- Player season stats
-  FOR s IN 1..3 LOOP
-    FOR i IN 1..40 LOOP
-      IF s_kill_counts[s][i] > 0 OR s_death_counts[s][i] > 0 THEN
-        INSERT INTO player_season_stats (player_steam_id, season_id, kills, deaths, assists, headshots, headshot_percentage)
-        VALUES (
-          p_steam_ids[i],
-          season_ids[s],
-          s_kill_counts[s][i],
-          s_death_counts[s][i],
-          0,
-          s_headshot_counts[s][i],
-          CASE WHEN s_kill_counts[s][i] > 0 THEN s_headshot_counts[s][i]::float / s_kill_counts[s][i] ELSE 0 END
-        )
-        ON CONFLICT (player_steam_id, season_id) DO UPDATE SET
-          kills = EXCLUDED.kills,
-          deaths = EXCLUDED.deaths,
-          headshots = EXCLUDED.headshots,
-          headshot_percentage = EXCLUDED.headshot_percentage;
-      END IF;
-    END LOOP;
-  END LOOP;
 
   -- ==========================================
   -- 7. INSERT TOURNAMENTS
@@ -1902,7 +1760,76 @@ BEGIN
   END;
 
   -- ==========================================
-  -- 8. SET FIXTURES LOADED FLAG
+  -- 8. POPULATE AGGREGATE TABLES
+  -- ==========================================
+  -- Recomputed set-based from the inserted player_kills rows — the same
+  -- accumulation tai_player_kills performs per row, which replica mode
+  -- skips. Runs last so the tournament sections' kills are counted too.
+
+  INSERT INTO player_stats (player_steam_id, kills, deaths, assists, headshots, headshot_percentage)
+  SELECT
+    p.steam_id,
+    COALESCE(k.kills, 0),
+    COALESCE(d.deaths, 0),
+    0,
+    COALESCE(k.headshots, 0),
+    CASE WHEN COALESCE(k.kills, 0) > 0 THEN COALESCE(k.headshots, 0)::float / k.kills ELSE 0 END
+  FROM unnest(p_steam_ids) AS p(steam_id)
+  LEFT JOIN (
+    SELECT attacker_steam_id, count(*) AS kills, count(*) FILTER (WHERE headshot) AS headshots
+    FROM player_kills WHERE attacker_steam_id = ANY(p_steam_ids) GROUP BY 1
+  ) k ON k.attacker_steam_id = p.steam_id
+  LEFT JOIN (
+    SELECT attacked_steam_id, count(*) AS deaths
+    FROM player_kills WHERE attacked_steam_id = ANY(p_steam_ids) GROUP BY 1
+  ) d ON d.attacked_steam_id = p.steam_id
+  ON CONFLICT (player_steam_id) DO UPDATE SET
+    kills = EXCLUDED.kills,
+    deaths = EXCLUDED.deaths,
+    headshots = EXCLUDED.headshots,
+    headshot_percentage = EXCLUDED.headshot_percentage;
+
+  INSERT INTO player_kills_by_weapon (player_steam_id, "with", kill_count)
+  SELECT attacker_steam_id, "with", count(*)
+  FROM player_kills
+  WHERE attacker_steam_id = ANY(p_steam_ids)
+  GROUP BY 1, 2
+  ON CONFLICT (player_steam_id, "with") DO UPDATE SET kill_count = EXCLUDED.kill_count;
+
+  -- Season attribution mirrors the trigger: season_for_timestamp(m.ended_at).
+  INSERT INTO player_season_stats (player_steam_id, season_id, kills, deaths, assists, headshots, headshot_percentage)
+  SELECT steam_id, season_id, kills, deaths, 0, headshots,
+         CASE WHEN kills > 0 THEN headshots::float / kills ELSE 0 END
+  FROM (
+    SELECT steam_id, season_id, sum(kills) AS kills, sum(deaths) AS deaths, sum(headshots) AS headshots
+    FROM (
+      SELECT pk.attacker_steam_id AS steam_id,
+             season_for_timestamp(COALESCE(m.ended_at, now())) AS season_id,
+             count(*) AS kills,
+             count(*) FILTER (WHERE pk.headshot) AS headshots,
+             0 AS deaths
+      FROM player_kills pk JOIN matches m ON m.id = pk.match_id
+      WHERE pk.attacker_steam_id = ANY(p_steam_ids)
+      GROUP BY 1, 2
+      UNION ALL
+      SELECT pk.attacked_steam_id,
+             season_for_timestamp(COALESCE(m.ended_at, now())),
+             0, 0, count(*)
+      FROM player_kills pk JOIN matches m ON m.id = pk.match_id
+      WHERE pk.attacked_steam_id = ANY(p_steam_ids)
+      GROUP BY 1, 2
+    ) events
+    GROUP BY 1, 2
+  ) agg
+  WHERE season_id IS NOT NULL
+  ON CONFLICT (player_steam_id, season_id) DO UPDATE SET
+    kills = EXCLUDED.kills,
+    deaths = EXCLUDED.deaths,
+    headshots = EXCLUDED.headshots,
+    headshot_percentage = EXCLUDED.headshot_percentage;
+
+  -- ==========================================
+  -- 9. SET FIXTURES LOADED FLAG
   -- ==========================================
   INSERT INTO settings (name, value)
   VALUES ('dev.fixtures_loaded', 'true')
@@ -1910,27 +1837,7 @@ BEGIN
 
 END $$;
 
--- Re-enable triggers (excluding hypertables)
-ALTER TABLE players ENABLE TRIGGER ALL;
-ALTER TABLE teams ENABLE TRIGGER ALL;
-ALTER TABLE team_roster ENABLE TRIGGER ALL;
-ALTER TABLE match_options ENABLE TRIGGER ALL;
-ALTER TABLE match_lineups ENABLE TRIGGER ALL;
-ALTER TABLE matches ENABLE TRIGGER ALL;
-ALTER TABLE match_lineup_players ENABLE TRIGGER ALL;
-ALTER TABLE match_maps ENABLE TRIGGER ALL;
-ALTER TABLE match_map_rounds ENABLE TRIGGER ALL;
-ALTER TABLE player_stats ENABLE TRIGGER ALL;
-ALTER TABLE player_kills_by_weapon ENABLE TRIGGER ALL;
-ALTER TABLE tournaments ENABLE TRIGGER ALL;
-ALTER TABLE tournament_stages ENABLE TRIGGER ALL;
-ALTER TABLE tournament_teams ENABLE TRIGGER ALL;
-ALTER TABLE tournament_team_roster ENABLE TRIGGER ALL;
-ALTER TABLE tournament_brackets ENABLE TRIGGER ALL;
-ALTER TABLE match_map_veto_picks ENABLE TRIGGER ALL;
-ALTER TABLE player_elo ENABLE TRIGGER ALL;
-ALTER TABLE player_season_stats ENABLE TRIGGER ALL;
-ALTER TABLE seasons ENABLE TRIGGER ALL;
+SET session_replication_role = DEFAULT;
 
 -- ============================================================
 -- Game Server Nodes (one per seeded region)
