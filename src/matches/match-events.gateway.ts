@@ -115,8 +115,6 @@ export class MatchEventsGateway {
       return messageId;
     }
 
-    await this.cache.put(cacheKey, true, 10);
-
     const { data, event } = message.data;
 
     this.logger.debug(
@@ -127,7 +125,7 @@ export class MatchEventsGateway {
 
     if (!Processor) {
       this.logger.warn("unable to find event handler", event);
-      return;
+      return messageId;
     }
 
     const processor =
@@ -138,15 +136,20 @@ export class MatchEventsGateway {
     try {
       await processor.process();
     } catch (error) {
+      // Do NOT write the dedup entry on failure: leave the key absent so the
+      // game server's redelivery of this messageId is reprocessed instead of
+      // being silently swallowed by the dedup short-circuit for its TTL.
       this.logger.error(
-        `[${matchId}] error processing game event ${event} (messageId=${messageId}): ${error.message}`,
-        error.stack,
+        `[${matchId}] error processing game event ${event} (messageId=${messageId}): ${
+          (error as Error)?.message
+        }`,
+        (error as Error)?.stack,
       );
-      // withhold the ack and clear the dedup key so the game server's retry
-      // re-processes instead of being swallowed by the cache
-      await this.cache.forget(cacheKey);
-      return;
+      throw error;
     }
+
+    // Mark processed only after success.
+    await this.cache.put(cacheKey, true, 10);
 
     return messageId;
   }

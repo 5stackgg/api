@@ -12,6 +12,7 @@ import {
   FileTypeValidator,
   ForbiddenException,
   NotFoundException,
+  Logger,
 } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { Request, Response } from "express";
@@ -25,6 +26,8 @@ import { NewsService } from "./news.service";
 
 @Controller("news")
 export class NewsController {
+  private readonly logger = new Logger(NewsController.name);
+
   constructor(
     private readonly news: NewsService,
     private readonly system: SystemService,
@@ -125,6 +128,25 @@ export class NewsController {
     if (result.etag) {
       res.setHeader("ETag", result.etag);
     }
+
+    // Without these handlers an S3 stream error would throw an unhandled
+    // 'error' event (crashing the process), and a client that disconnects
+    // mid-download would leave the upstream stream open (fd leak).
+    result.stream.on("error", (error: Error) => {
+      this.logger.error(
+        `error streaming news image ${filename}: ${error?.message}`,
+        error?.stack,
+      );
+      result.stream.destroy();
+      if (!res.headersSent) {
+        res.status(500).end();
+      } else {
+        res.destroy();
+      }
+    });
+    res.on("close", () => {
+      result.stream.destroy();
+    });
 
     result.stream.pipe(res);
   }

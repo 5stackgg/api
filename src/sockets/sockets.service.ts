@@ -41,11 +41,22 @@ export class SocketsService {
     void sub.subscribe("broadcast-message");
     void sub.subscribe("send-message-to-steam-id");
     sub.on("message", (channel, message) => {
-      const { steamId, event, data } = JSON.parse(message) as {
-        steamId: string;
-        event: string;
-        data: unknown;
-      };
+      let parsed: { steamId: string; event: string; data: unknown };
+      try {
+        parsed = JSON.parse(message);
+      } catch (error) {
+        // A malformed payload on the pub/sub channel must not take the pod
+        // down: this handler runs outside any request lifecycle, so a throw
+        // here is an uncaught exception.
+        this.logger.error(
+          `failed to parse pub/sub message on ${channel}: ${
+            (error as Error)?.message
+          }`,
+        );
+        return;
+      }
+
+      const { steamId, event, data } = parsed;
 
       switch (channel) {
         case "broadcast-message":
