@@ -41,7 +41,7 @@ export class SocketsService {
     void sub.subscribe("broadcast-message");
     void sub.subscribe("send-message-to-steam-id");
     sub.on("message", (channel, message) => {
-      let parsed: { steamId: string; event: string; data: unknown };
+      let parsed: unknown;
       try {
         parsed = JSON.parse(message);
       } catch (error) {
@@ -56,7 +56,21 @@ export class SocketsService {
         return;
       }
 
-      const { steamId, event, data } = parsed;
+      // JSON.parse succeeds for non-objects too (e.g. the literal `null`, which
+      // typeof-reports as "object"); guard before destructuring so a valid but
+      // non-object payload can't throw a TypeError here.
+      if (parsed === null || typeof parsed !== "object") {
+        this.logger.error(
+          `ignoring non-object pub/sub message on ${channel}`,
+        );
+        return;
+      }
+
+      const { steamId, event, data } = parsed as {
+        steamId: string;
+        event: string;
+        data: unknown;
+      };
 
       switch (channel) {
         case "broadcast-message":
