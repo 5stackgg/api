@@ -75,15 +75,20 @@ CREATE TABLE IF NOT EXISTS public.event_media (
     id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     event_id uuid NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
     uploader_steam_id bigint NOT NULL REFERENCES public.players(steam_id),
-    filename text NOT NULL,
-    mime_type text NOT NULL,
+    -- Uploaded-file media has filename + mime_type; external-link media
+    -- (YouTube/Twitch/etc.) has external_url instead. The CHECK enforces
+    -- exactly one source.
+    filename text,
+    mime_type text,
+    external_url text,
     size bigint NOT NULL DEFAULT 0,
     title text,
     -- Poster frame for video media, captured client-side at upload time so
     -- gallery tiles never fetch the mp4 itself.
     thumbnail_filename text,
     created_at timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (event_id, filename)
+    UNIQUE (event_id, filename),
+    CONSTRAINT event_media_source_chk CHECK (num_nonnulls(filename, external_url) = 1)
 );
 CREATE INDEX IF NOT EXISTS idx_event_media_event ON public.event_media(event_id);
 
