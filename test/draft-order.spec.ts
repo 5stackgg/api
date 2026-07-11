@@ -9,6 +9,15 @@ describe("draft game pick order (SQL-driven)", () => {
   beforeAll(async () => {
     db = await bootMigratedDb("DraftOrderTest");
     postgres = db.postgres;
+    // The draft_games insert trigger refuses to create a lobby when no server
+    // region is available.
+    await postgres.query(
+      "INSERT INTO server_regions (value, is_lan) VALUES ('TestA', false) ON CONFLICT (value) DO NOTHING",
+    );
+    await postgres.query(
+      `INSERT INTO servers (host, label, rcon_password, port, enabled, region, type, is_dedicated)
+       VALUES ('127.0.0.1', 'TestA-server', '\\x00'::bytea, 27915, true, 'TestA', 'Ranked', true)`,
+    );
   }, 600_000);
 
   afterAll(async () => {

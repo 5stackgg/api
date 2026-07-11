@@ -64,6 +64,21 @@ export class Fixtures {
     return `${prefix}${this.seq}`;
   }
 
+  // A server region with one enabled server, so has_available_server_region()
+  // is true — the draft_games / matches triggers refuse to create otherwise.
+  async region(value = "TestA"): Promise<string> {
+    await this.postgres.query(
+      "INSERT INTO server_regions (value, is_lan) VALUES ($1, false) ON CONFLICT (value) DO NOTHING",
+      [value],
+    );
+    await this.postgres.query(
+      `INSERT INTO servers (host, label, rcon_password, port, enabled, region, type, is_dedicated)
+       VALUES ('127.0.0.1', $1, '\\x00'::bytea, 27915, true, $2, 'Ranked', true)`,
+      [`${value}-server`, value],
+    );
+    return value;
+  }
+
   async player(name?: string): Promise<string> {
     const steam = this.nextSteam();
     await this.postgres.query(
