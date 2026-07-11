@@ -22,6 +22,7 @@ select_permissions:
       columns:
         - created_at
         - event_id
+        - external_url
         - filename
         - id
         - mime_type
@@ -40,6 +41,7 @@ select_permissions:
       columns:
         - created_at
         - event_id
+        - external_url
         - filename
         - id
         - mime_type

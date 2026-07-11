@@ -12907,9 +12907,10 @@ type event_media {
   """An object relationship"""
   event: events!
   event_id: uuid!
-  filename: String!
+  external_url: String
+  filename: String
   id: uuid!
-  mime_type: String!
+  mime_type: String
 
   """An array relationship"""
   players(
@@ -13042,6 +13043,7 @@ input event_media_bool_exp {
   created_at: timestamptz_comparison_exp
   event: events_bool_exp
   event_id: uuid_comparison_exp
+  external_url: String_comparison_exp
   filename: String_comparison_exp
   id: uuid_comparison_exp
   mime_type: String_comparison_exp
@@ -13084,6 +13086,7 @@ input event_media_insert_input {
   created_at: timestamptz
   event: events_obj_rel_insert_input
   event_id: uuid
+  external_url: String
   filename: String
   id: uuid
   mime_type: String
@@ -13099,6 +13102,7 @@ input event_media_insert_input {
 type event_media_max_fields {
   created_at: timestamptz
   event_id: uuid
+  external_url: String
   filename: String
   id: uuid
   mime_type: String
@@ -13114,6 +13118,7 @@ order by max() on columns of table "event_media"
 input event_media_max_order_by {
   created_at: order_by
   event_id: order_by
+  external_url: order_by
   filename: order_by
   id: order_by
   mime_type: order_by
@@ -13127,6 +13132,7 @@ input event_media_max_order_by {
 type event_media_min_fields {
   created_at: timestamptz
   event_id: uuid
+  external_url: String
   filename: String
   id: uuid
   mime_type: String
@@ -13142,6 +13148,7 @@ order by min() on columns of table "event_media"
 input event_media_min_order_by {
   created_at: order_by
   event_id: order_by
+  external_url: order_by
   filename: order_by
   id: order_by
   mime_type: order_by
@@ -13186,6 +13193,7 @@ input event_media_order_by {
   created_at: order_by
   event: events_order_by
   event_id: order_by
+  external_url: order_by
   filename: order_by
   id: order_by
   mime_type: order_by
@@ -13562,6 +13570,9 @@ enum event_media_select_column {
   event_id
 
   """column name"""
+  external_url
+
+  """column name"""
   filename
 
   """column name"""
@@ -13589,6 +13600,7 @@ input type for updating data in table "event_media"
 input event_media_set_input {
   created_at: timestamptz
   event_id: uuid
+  external_url: String
   filename: String
   id: uuid
   mime_type: String
@@ -13655,6 +13667,7 @@ input event_media_stream_cursor_input {
 input event_media_stream_cursor_value_input {
   created_at: timestamptz
   event_id: uuid
+  external_url: String
   filename: String
   id: uuid
   mime_type: String
@@ -13687,6 +13700,9 @@ enum event_media_update_column {
 
   """column name"""
   event_id
+
+  """column name"""
+  external_url
 
   """column name"""
   filename

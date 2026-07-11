@@ -9,10 +9,11 @@ export type EventMediaRow = {
   id: string;
   event_id: string;
   uploader_steam_id: string;
-  filename: string;
-  mime_type: string;
+  filename: string | null;
+  mime_type: string | null;
   size: string;
   thumbnail_filename: string | null;
+  external_url: string | null;
 };
 
 @Injectable()
@@ -107,6 +108,33 @@ export class EventsService {
     return row.id;
   }
 
+  // External-link media (YouTube/Twitch/etc.) has no stored file: only the URL
+  // and an optional title. The CHECK constraint enforces exactly one of
+  // filename / external_url, so filename/mime_type stay null here.
+  public async saveExternalMedia(media: {
+    eventId: string;
+    uploaderSteamId: string;
+    externalUrl: string;
+    title?: string | null;
+  }): Promise<string> {
+    const [row] = await this.postgres.query<Array<{ id: string }>>(
+      `INSERT INTO public.event_media
+              (event_id, uploader_steam_id, external_url, title)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id`,
+      [
+        media.eventId,
+        media.uploaderSteamId,
+        media.externalUrl,
+        media.title ?? null,
+      ],
+    );
+    this.logger.log(
+      `event media link saved event=${media.eventId} url=${media.externalUrl}`,
+    );
+    return row.id;
+  }
+
   // Matches either the media file itself or its poster frame, so both are
   // served (with the right mime) from the same GET route.
   public async getMedia(
@@ -117,7 +145,7 @@ export class EventsService {
       Array<EventMediaRow & { is_thumbnail: boolean }>
     >(
       `SELECT id, event_id, uploader_steam_id::text, filename, mime_type, size::text,
-              thumbnail_filename, (thumbnail_filename = $2) AS is_thumbnail
+              thumbnail_filename, external_url, (thumbnail_filename = $2) AS is_thumbnail
          FROM public.event_media
         WHERE event_id = $1 AND (filename = $2 OR thumbnail_filename = $2)`,
       [eventId, filename],
@@ -131,7 +159,7 @@ export class EventsService {
   ): Promise<EventMediaRow | undefined> {
     const [row] = await this.postgres.query<Array<EventMediaRow>>(
       `SELECT id, event_id, uploader_steam_id::text, filename, mime_type, size::text,
-              thumbnail_filename
+              thumbnail_filename, external_url
          FROM public.event_media
         WHERE event_id = $1 AND id = $2`,
       [eventId, mediaId],
@@ -160,7 +188,10 @@ export class EventsService {
         this.mediaKey(media.event_id, media.thumbnail_filename),
       );
     }
-    await this.s3.remove(this.mediaKey(media.event_id, media.filename));
+    // External-link rows have no stored object to remove.
+    if (media.filename) {
+      await this.s3.remove(this.mediaKey(media.event_id, media.filename));
+    }
     await this.postgres.query(`DELETE FROM public.event_media WHERE id = $1`, [
       media.id,
     ]);

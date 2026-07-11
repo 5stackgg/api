@@ -131,6 +131,32 @@ export class EventsController {
     return { success: true, id, filename };
   }
 
+  @Post(":eventId/link")
+  public async addLink(
+    @Param("eventId") eventId: string,
+    @Req() request: Request,
+    @Body() body: { url?: string; title?: string },
+  ): Promise<{ success: boolean; id: string }> {
+    const user = await this.assertCanUpload(
+      eventId,
+      request.user as User | undefined,
+    );
+
+    const externalUrl = this.normalizeExternalUrl(body.url);
+    const title =
+      body.title?.trim().slice(0, 120) ||
+      this.eventsService.titleFromFilename(new URL(externalUrl).hostname);
+
+    const id = await this.eventsService.saveExternalMedia({
+      eventId,
+      uploaderSteamId: user.steam_id,
+      externalUrl,
+      title,
+    });
+
+    return { success: true, id };
+  }
+
   // Poster frame for a video item, captured client-side by the uploader at
   // upload time so viewers never download the mp4 for a gallery tile.
   @Post(":eventId/:mediaId/thumbnail")
@@ -365,7 +391,9 @@ export class EventsController {
 
     await this.stream(
       this.eventsService.mediaKey(eventId, filename),
-      media.is_thumbnail ? "image/webp" : media.mime_type,
+      media.is_thumbnail
+        ? "image/webp"
+        : (media.mime_type ?? "application/octet-stream"),
       request,
       response,
     );
@@ -431,6 +459,25 @@ export class EventsController {
       );
     }
     return user;
+  }
+
+  // Provider detection/embedding is done client-side, so only enforce that the
+  // link is a plausible http(s) URL of sane length before storing it.
+  private normalizeExternalUrl(raw?: string): string {
+    const value = raw?.trim();
+    if (!value || value.length > 2048) {
+      throw new BadRequestException("invalid url");
+    }
+    let parsed: URL;
+    try {
+      parsed = new URL(value);
+    } catch {
+      throw new BadRequestException("invalid url");
+    }
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      throw new BadRequestException("url must be http or https");
+    }
+    return parsed.toString();
   }
 
   private assertEventKey(

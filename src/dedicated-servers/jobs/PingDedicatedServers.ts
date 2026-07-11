@@ -17,15 +17,20 @@ export class PingDedicatedServers extends WorkerHost {
       servers: {
         __args: {
           where: {
-            enabled: {
-              _eq: true,
-            },
             type: {
               _neq: "Ranked",
             },
             is_dedicated: {
               _eq: true,
             },
+            // Node-managed servers have their deployment torn down when
+            // disabled, so a disabled one is genuinely offline. External
+            // servers keep running on their own host, so still ping disabled
+            // ones to reflect their real online state.
+            _or: [
+              { enabled: { _eq: true } },
+              { game_server_node_id: { _is_null: true } },
+            ],
           },
         },
         id: true,
