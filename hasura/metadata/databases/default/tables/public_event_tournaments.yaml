@@ -1,0 +1,54 @@
+table:
+  name: event_tournaments
+  schema: public
+object_relationships:
+  - name: event
+    using:
+      foreign_key_constraint_on: event_id
+  - name: tournament
+    using:
+      foreign_key_constraint_on: tournament_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        event:
+          is_organizer:
+            _eq: true
+      columns:
+        - event_id
+        - tournament_id
+    comment: ""
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - created_at
+        - event_id
+        - tournament_id
+      filter:
+        event:
+          visibility:
+            _eq: Public
+      allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - created_at
+        - event_id
+        - tournament_id
+      filter:
+        event:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        event:
+          is_organizer:
+            _eq: true
+    comment: ""

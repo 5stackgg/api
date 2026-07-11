@@ -1,0 +1,59 @@
+table:
+  name: v_event_player_stats
+  schema: public
+object_relationships:
+  - name: event
+    using:
+      manual_configuration:
+        column_mapping:
+          event_id: id
+        insertion_order: null
+        remote_table:
+          name: events
+          schema: public
+  - name: player
+    using:
+      manual_configuration:
+        column_mapping:
+          player_steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - event_id
+        - player_steam_id
+        - kills
+        - headshots
+        - deaths
+        - assists
+        - matches_played
+        - kdr
+        - headshot_percentage
+      filter:
+        event:
+          visibility:
+            _eq: Public
+      allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - event_id
+        - player_steam_id
+        - kills
+        - headshots
+        - deaths
+        - assists
+        - matches_played
+        - kdr
+        - headshot_percentage
+      filter:
+        event:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ""

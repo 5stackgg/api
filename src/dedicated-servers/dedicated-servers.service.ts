@@ -703,14 +703,17 @@ export class DedicatedServersService {
         enabled: true,
         connected: true,
         steam_relay: true,
+        game_server_node_id: true,
         server_region: {
           steam_relay: true,
         },
       },
     });
 
-    // disabled servers may still be shutting down; never bring them online
-    if (!server.enabled) {
+    // A disabled node-managed server has its deployment torn down and may still
+    // be shutting down; never bring it back online. External servers keep
+    // running independently, so a disabled one can still be online.
+    if (!server.enabled && server.game_server_node_id) {
       if (server.connected) {
         await this.hasura.mutation({
           update_servers_by_pk: {

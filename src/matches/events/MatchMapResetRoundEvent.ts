@@ -317,6 +317,10 @@ export default class MatchMapResetRoundEvent extends MatchEventProcessor<{
       });
     }
 
+    this.logger.log(
+      `[${this.matchId}] stats reset for round ${statsRound} complete, requesting server round restore`,
+    );
+
     await this.matchAssistant.restoreMatchRound(this.matchId, statsRound);
   }
 }

@@ -53,6 +53,7 @@ import { FaceitModule } from "./faceit/faceit.module";
 import { SteamMatchHistoryModule } from "./steam-match-history/steam-match-history.module";
 import { SteamPresenceModule } from "./steam-presence/steam-presence.module";
 import { NewsModule } from "./news/news.module";
+import { EventsModule } from "./events/events.module";
 import { ScrimsModule } from "./scrims/scrims.module";
 import { LeaguesModule } from "./leagues/leagues.module";
 
@@ -148,6 +149,7 @@ import { LeaguesModule } from "./leagues/leagues.module";
     SteamMatchHistoryModule,
     SteamPresenceModule,
     NewsModule,
+    EventsModule,
     ScrimsModule,
     LeaguesModule,
   ],

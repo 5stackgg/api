@@ -83,7 +83,16 @@ export class MatchAssistantService {
 
   public async restoreMatchRound(matchId: string, round: number) {
     try {
-      await this.command(matchId, `api_restore_round ${round}`);
+      this.logger.log(
+        `[${matchId}] sending api_restore_round ${round} to server`,
+      );
+      const response = await this.command(
+        matchId,
+        `api_restore_round ${round}`,
+      );
+      this.logger.log(
+        `[${matchId}] api_restore_round ${round} response: ${response ?? "<no response>"}`,
+      );
     } catch (error) {
       this.logger.warn(
         `[${matchId}] unable to send restore round to server`,
@@ -1353,6 +1362,9 @@ export class MatchAssistantService {
     const rcon = await this.rcon.connect(server.id);
 
     if (!rcon) {
+      this.logger.warn(
+        `[${matchId}] unable to connect to rcon for server ${server.id}`,
+      );
       return;
     }
 

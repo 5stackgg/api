@@ -1,0 +1,9 @@
+function:
+  name: get_event_leaderboard
+  schema: public
+configuration:
+  custom_root_fields: {}
+  exposed_as: query
+  session_argument: hasura_session
+permissions:
+  - role: guest

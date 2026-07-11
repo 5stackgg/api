@@ -834,6 +834,7 @@ UNIT
         enabled: true,
         steam_relay: true,
         is_dedicated: true,
+        game_server_node_id: true,
         current_match: {
           current_match_map_id: true,
           match_maps: {
@@ -851,9 +852,10 @@ UNIT
       throw Error("server not found");
     }
 
-    // disabled servers may still be shutting down and pinging; refuse to
-    // bring them back online and force them offline immediately
-    if (server.enabled === false) {
+    // A disabled node-managed server is being torn down; refuse to bring it
+    // back online. External servers keep running independently, so a disabled
+    // one that's still heartbeating is genuinely online.
+    if (server.enabled === false && server.game_server_node_id) {
       if (server.connected) {
         await this.hasura.mutation({
           update_servers_by_pk: {

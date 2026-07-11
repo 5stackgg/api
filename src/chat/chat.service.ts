@@ -447,6 +447,7 @@ export class ChatService {
           status: true,
           server: {
             id: true,
+            plugin_runtime: true,
           },
         },
       });
@@ -466,7 +467,12 @@ export class ChatService {
         return;
       }
 
-      return await rcon.send(`css_web_chat "${message}"`);
+      const command =
+        server.plugin_runtime === "counterstrikesharp"
+          ? "css_web_chat"
+          : "sw_web_chat";
+
+      return await rcon.send(`${command} "${message}"`);
     } catch (error) {
       this.logger.warn(
         `[${matchId}] unable to send match to server`,

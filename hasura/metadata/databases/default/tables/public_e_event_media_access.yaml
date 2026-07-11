@@ -1,0 +1,12 @@
+table:
+  name: e_event_media_access
+  schema: public
+is_enum: true
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""
