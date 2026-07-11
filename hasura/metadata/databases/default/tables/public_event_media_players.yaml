@@ -1,0 +1,64 @@
+table:
+  name: event_media_players
+  schema: public
+object_relationships:
+  - name: media
+    using:
+      foreign_key_constraint_on: media_id
+  - name: player
+    using:
+      foreign_key_constraint_on: steam_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        media:
+          _or:
+            - uploader_steam_id:
+                _eq: X-Hasura-User-Id
+            - event:
+                is_organizer:
+                  _eq: true
+      columns:
+        - media_id
+        - steam_id
+    comment: ""
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - created_at
+        - media_id
+        - steam_id
+      filter:
+        media:
+          event:
+            visibility:
+              _eq: Public
+      allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - created_at
+        - media_id
+        - steam_id
+      filter:
+        media:
+          event:
+            can_view:
+              _eq: true
+      allow_aggregations: true
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        media:
+          _or:
+            - uploader_steam_id:
+                _eq: X-Hasura-User-Id
+            - event:
+                is_organizer:
+                  _eq: true
+    comment: ""

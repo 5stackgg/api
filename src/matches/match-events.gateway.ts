@@ -119,6 +119,10 @@ export class MatchEventsGateway {
 
     const { data, event } = message.data;
 
+    this.logger.debug(
+      `[${matchId}] received game event ${event} (messageId=${messageId})`,
+    );
+
     const Processor = MatchEvents[event as keyof typeof MatchEvents];
 
     if (!Processor) {
@@ -131,7 +135,18 @@ export class MatchEventsGateway {
 
     processor.setData(matchId, data);
 
-    await processor.process();
+    try {
+      await processor.process();
+    } catch (error) {
+      this.logger.error(
+        `[${matchId}] error processing game event ${event} (messageId=${messageId}): ${error.message}`,
+        error.stack,
+      );
+      // withhold the ack and clear the dedup key so the game server's retry
+      // re-processes instead of being swallowed by the cache
+      await this.cache.forget(cacheKey);
+      return;
+    }
 
     return messageId;
   }

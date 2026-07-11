@@ -317,6 +317,11 @@ computed_fields:
         name: match_requested_organizer
         schema: public
       session_argument: hasura_session
+  - name: server_plugin_runtime
+    definition:
+      function:
+        name: get_match_server_plugin_runtime
+        schema: public
   - name: server_region
     definition:
       function:
@@ -564,6 +569,7 @@ select_permissions:
         - min_players_per_lineup
         - region_veto_picking_lineup_id
         - requested_organizer
+        - server_plugin_runtime
         - server_region
         - server_type
         - tv_connection_string
@@ -623,6 +629,7 @@ select_permissions:
         - min_players_per_lineup
         - region_veto_picking_lineup_id
         - requested_organizer
+        - server_plugin_runtime
         - server_region
         - server_type
         - tv_connection_string

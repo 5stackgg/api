@@ -3,6 +3,7 @@
 -- a second signature exists (SQLSTATE 42725). Drop known signatures first so
 -- re-applying this file always lands on exactly one get_event_leaderboard.
 DROP FUNCTION IF EXISTS public.get_event_leaderboard(UUID, TEXT, TEXT, INT);
+DROP FUNCTION IF EXISTS public.get_event_leaderboard(UUID, TEXT, TEXT, INT, JSON);
 
 -- LANGUAGE plpgsql (not sql): a "sql"-language body is parsed for relation
 -- references at CREATE time, so this function would fail to create on a
@@ -13,7 +14,8 @@ CREATE OR REPLACE FUNCTION public.get_event_leaderboard(
   _event_id UUID,
   _category TEXT,
   _match_type TEXT DEFAULT NULL,
-  _min_rounds INT DEFAULT 10
+  _min_rounds INT DEFAULT 10,
+  hasura_session JSON DEFAULT NULL
 )
 RETURNS SETOF public.leaderboard_entries
 LANGUAGE plpgsql STABLE
@@ -29,25 +31,26 @@ BEGIN
     _min_rounds := 0;
   END IF;
 
-  -- Setup events are hidden from the public (see the events table select
-  -- permissions and the e_event_status enum). This function is exposed to the
-  -- guest role and takes an arbitrary event id, so guard it here: return an
-  -- empty leaderboard for a Setup or unknown event rather than computing and
-  -- leaking standings for an event that has not been made public yet.
+  -- This function is exposed to the guest role and takes an arbitrary event
+  -- id, so it must apply the same guard as the events table select
+  -- permissions: Private/Friends events are only visible per can_view_event.
+  -- Otherwise a caller could compute standings for an event they cannot see.
   IF NOT EXISTS (
-    SELECT 1 FROM public.events WHERE id = _event_id AND status <> 'Setup'
+    SELECT 1 FROM public.events e
+    WHERE e.id = _event_id
+      AND public.can_view_event(e, hasura_session)
   ) THEN
     RETURN;
   END IF;
 
   RETURN QUERY
+  -- event_match_links is the trigger-maintained materialization of
+  -- v_event_matches (tournaments + windowed teams/players), so stats
+  -- aggregate over an indexed table instead of re-deriving the joins.
   WITH e_matches AS (
-    SELECT DISTINCT tb.match_id
-    FROM event_tournaments et
-    JOIN tournament_stages ts ON ts.tournament_id = et.tournament_id
-    JOIN tournament_brackets tb ON tb.tournament_stage_id = ts.id
-    WHERE et.event_id = _event_id
-      AND tb.match_id IS NOT NULL
+    SELECT eml.match_id
+    FROM public.event_match_links eml
+    WHERE eml.event_id = _event_id
 ),
 f_matches AS (
     SELECT em.match_id

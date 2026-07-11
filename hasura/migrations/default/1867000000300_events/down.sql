@@ -5,6 +5,7 @@
 -- first argument (a hard dependency on the table's row type).
 DROP FUNCTION IF EXISTS public.get_event_leaderboard(UUID, TEXT, TEXT, INT);
 DROP VIEW IF EXISTS public.v_event_player_stats;
+DROP VIEW IF EXISTS public.v_event_matches;
 DROP FUNCTION IF EXISTS public.is_event_organizer(public.events, json);
 
 -- The boot loader (HasuraService.apply) skips re-creating a boot-phase object
@@ -21,6 +22,7 @@ BEGIN
     WHERE name IN (
       'hasura/functions/events/get_event_leaderboard',
       'hasura/functions/events/is_event_organizer',
+      'hasura/views/v_event_matches',
       'hasura/views/v_event_player_stats'
     );
   END IF;

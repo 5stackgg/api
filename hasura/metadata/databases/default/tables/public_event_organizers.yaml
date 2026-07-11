@@ -20,8 +20,8 @@ insert_permissions:
     permission:
       check:
         event:
-          organizer_steam_id:
-            _eq: X-Hasura-User-Id
+          is_organizer:
+            _eq: true
       columns:
         - event_id
         - steam_id
@@ -35,8 +35,8 @@ select_permissions:
         - steam_id
       filter:
         event:
-          status:
-            _neq: Setup
+          visibility:
+            _eq: Public
       allow_aggregations: true
     comment: ""
   - role: user
@@ -46,13 +46,9 @@ select_permissions:
         - event_id
         - steam_id
       filter:
-        _or:
-          - event:
-              is_organizer:
-                _eq: true
-          - event:
-              status:
-                _neq: Setup
+        event:
+          can_view:
+            _eq: true
       allow_aggregations: true
     comment: ""
 delete_permissions:
@@ -64,6 +60,6 @@ delete_permissions:
     permission:
       filter:
         event:
-          organizer_steam_id:
-            _eq: X-Hasura-User-Id
+          is_organizer:
+            _eq: true
     comment: ""

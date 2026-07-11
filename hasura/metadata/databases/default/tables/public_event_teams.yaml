@@ -28,8 +28,8 @@ select_permissions:
         - team_id
       filter:
         event:
-          status:
-            _neq: Setup
+          visibility:
+            _eq: Public
       allow_aggregations: true
     comment: ""
   - role: user
@@ -39,13 +39,9 @@ select_permissions:
         - event_id
         - team_id
       filter:
-        _or:
-          - event:
-              is_organizer:
-                _eq: true
-          - event:
-              status:
-                _neq: Setup
+        event:
+          can_view:
+            _eq: true
       allow_aggregations: true
     comment: ""
 delete_permissions:

@@ -1,0 +1,35 @@
+table:
+  name: event_match_links
+  schema: public
+object_relationships:
+  - name: event
+    using:
+      foreign_key_constraint_on: event_id
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - created_at
+        - event_id
+        - match_id
+      filter:
+        event:
+          visibility:
+            _eq: Public
+      allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - created_at
+        - event_id
+        - match_id
+      filter:
+        event:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ""

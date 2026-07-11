@@ -5608,128 +5608,125 @@ input e_draft_game_status_updates {
 }
 
 """
-columns and relationships of "e_event_status"
+columns and relationships of "e_event_media_access"
 """
-type e_event_status {
+type e_event_media_access {
   description: String!
   value: String!
 }
 
 """
-aggregated selection of "e_event_status"
+aggregated selection of "e_event_media_access"
 """
-type e_event_status_aggregate {
-  aggregate: e_event_status_aggregate_fields
-  nodes: [e_event_status!]!
+type e_event_media_access_aggregate {
+  aggregate: e_event_media_access_aggregate_fields
+  nodes: [e_event_media_access!]!
 }
 
 """
-aggregate fields of "e_event_status"
+aggregate fields of "e_event_media_access"
 """
-type e_event_status_aggregate_fields {
-  count(columns: [e_event_status_select_column!], distinct: Boolean): Int!
-  max: e_event_status_max_fields
-  min: e_event_status_min_fields
+type e_event_media_access_aggregate_fields {
+  count(columns: [e_event_media_access_select_column!], distinct: Boolean): Int!
+  max: e_event_media_access_max_fields
+  min: e_event_media_access_min_fields
 }
 
 """
-Boolean expression to filter rows from the table "e_event_status". All fields are combined with a logical 'AND'.
+Boolean expression to filter rows from the table "e_event_media_access". All fields are combined with a logical 'AND'.
 """
-input e_event_status_bool_exp {
-  _and: [e_event_status_bool_exp!]
-  _not: e_event_status_bool_exp
-  _or: [e_event_status_bool_exp!]
+input e_event_media_access_bool_exp {
+  _and: [e_event_media_access_bool_exp!]
+  _not: e_event_media_access_bool_exp
+  _or: [e_event_media_access_bool_exp!]
   description: String_comparison_exp
   value: String_comparison_exp
 }
 
 """
-unique or primary key constraints on table "e_event_status"
+unique or primary key constraints on table "e_event_media_access"
 """
-enum e_event_status_constraint {
+enum e_event_media_access_constraint {
   """
   unique or primary key constraint on columns "value"
   """
-  e_event_status_pkey
+  e_event_media_access_pkey
 }
 
-enum e_event_status_enum {
-  """Event has finished"""
-  Finished
+enum e_event_media_access_enum {
+  """Anyone involved in the event"""
+  Involved
 
-  """Event is in progress"""
-  Live
-
-  """Event is being set up; hidden from the public"""
-  Setup
+  """Organizers only"""
+  Organizers
 }
 
 """
-Boolean expression to compare columns of type "e_event_status_enum". All fields are combined with logical 'AND'.
+Boolean expression to compare columns of type "e_event_media_access_enum". All fields are combined with logical 'AND'.
 """
-input e_event_status_enum_comparison_exp {
-  _eq: e_event_status_enum
-  _in: [e_event_status_enum!]
+input e_event_media_access_enum_comparison_exp {
+  _eq: e_event_media_access_enum
+  _in: [e_event_media_access_enum!]
   _is_null: Boolean
-  _neq: e_event_status_enum
-  _nin: [e_event_status_enum!]
+  _neq: e_event_media_access_enum
+  _nin: [e_event_media_access_enum!]
 }
 
 """
-input type for inserting data into table "e_event_status"
+input type for inserting data into table "e_event_media_access"
 """
-input e_event_status_insert_input {
+input e_event_media_access_insert_input {
   description: String
   value: String
 }
 
 """aggregate max on columns"""
-type e_event_status_max_fields {
+type e_event_media_access_max_fields {
   description: String
   value: String
 }
 
 """aggregate min on columns"""
-type e_event_status_min_fields {
+type e_event_media_access_min_fields {
   description: String
   value: String
 }
 
 """
-response of any mutation on the table "e_event_status"
+response of any mutation on the table "e_event_media_access"
 """
-type e_event_status_mutation_response {
+type e_event_media_access_mutation_response {
   """number of rows affected by the mutation"""
   affected_rows: Int!
 
   """data from the rows affected by the mutation"""
-  returning: [e_event_status!]!
+  returning: [e_event_media_access!]!
 }
 
 """
-on_conflict condition type for table "e_event_status"
+on_conflict condition type for table "e_event_media_access"
 """
-input e_event_status_on_conflict {
-  constraint: e_event_status_constraint!
-  update_columns: [e_event_status_update_column!]! = []
-  where: e_event_status_bool_exp
+input e_event_media_access_on_conflict {
+  constraint: e_event_media_access_constraint!
+  update_columns: [e_event_media_access_update_column!]! = []
+  where: e_event_media_access_bool_exp
 }
 
-"""Ordering options when selecting data from "e_event_status"."""
-input e_event_status_order_by {
+"""Ordering options when selecting data from "e_event_media_access"."""
+input e_event_media_access_order_by {
   description: order_by
   value: order_by
 }
 
-"""primary key columns input for table: e_event_status"""
-input e_event_status_pk_columns_input {
+"""primary key columns input for table: e_event_media_access"""
+input e_event_media_access_pk_columns_input {
   value: String!
 }
 
 """
-select columns of table "e_event_status"
+select columns of table "e_event_media_access"
 """
-enum e_event_status_select_column {
+enum e_event_media_access_select_column {
   """column name"""
   description
 
@@ -5738,34 +5735,34 @@ enum e_event_status_select_column {
 }
 
 """
-input type for updating data in table "e_event_status"
+input type for updating data in table "e_event_media_access"
 """
-input e_event_status_set_input {
+input e_event_media_access_set_input {
   description: String
   value: String
 }
 
 """
-Streaming cursor of the table "e_event_status"
+Streaming cursor of the table "e_event_media_access"
 """
-input e_event_status_stream_cursor_input {
+input e_event_media_access_stream_cursor_input {
   """Stream column input with initial value"""
-  initial_value: e_event_status_stream_cursor_value_input!
+  initial_value: e_event_media_access_stream_cursor_value_input!
 
   """cursor ordering"""
   ordering: cursor_ordering
 }
 
 """Initial value of the column from where the streaming should start"""
-input e_event_status_stream_cursor_value_input {
+input e_event_media_access_stream_cursor_value_input {
   description: String
   value: String
 }
 
 """
-update columns of table "e_event_status"
+update columns of table "e_event_media_access"
 """
-enum e_event_status_update_column {
+enum e_event_media_access_update_column {
   """column name"""
   description
 
@@ -5773,12 +5770,186 @@ enum e_event_status_update_column {
   value
 }
 
-input e_event_status_updates {
+input e_event_media_access_updates {
   """sets the columns of the filtered rows to the given values"""
-  _set: e_event_status_set_input
+  _set: e_event_media_access_set_input
 
   """filter the rows which have to be updated"""
-  where: e_event_status_bool_exp!
+  where: e_event_media_access_bool_exp!
+}
+
+"""
+columns and relationships of "e_event_visibility"
+"""
+type e_event_visibility {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_event_visibility"
+"""
+type e_event_visibility_aggregate {
+  aggregate: e_event_visibility_aggregate_fields
+  nodes: [e_event_visibility!]!
+}
+
+"""
+aggregate fields of "e_event_visibility"
+"""
+type e_event_visibility_aggregate_fields {
+  count(columns: [e_event_visibility_select_column!], distinct: Boolean): Int!
+  max: e_event_visibility_max_fields
+  min: e_event_visibility_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_event_visibility". All fields are combined with a logical 'AND'.
+"""
+input e_event_visibility_bool_exp {
+  _and: [e_event_visibility_bool_exp!]
+  _not: e_event_visibility_bool_exp
+  _or: [e_event_visibility_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_event_visibility"
+"""
+enum e_event_visibility_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_event_visibility_pkey
+}
+
+enum e_event_visibility_enum {
+  """Involved people and their friends"""
+  Friends
+
+  """Only people involved in the event"""
+  Private
+
+  """Anyone"""
+  Public
+}
+
+"""
+Boolean expression to compare columns of type "e_event_visibility_enum". All fields are combined with logical 'AND'.
+"""
+input e_event_visibility_enum_comparison_exp {
+  _eq: e_event_visibility_enum
+  _in: [e_event_visibility_enum!]
+  _is_null: Boolean
+  _neq: e_event_visibility_enum
+  _nin: [e_event_visibility_enum!]
+}
+
+"""
+input type for inserting data into table "e_event_visibility"
+"""
+input e_event_visibility_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_event_visibility_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_event_visibility_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_event_visibility"
+"""
+type e_event_visibility_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_event_visibility!]!
+}
+
+"""
+on_conflict condition type for table "e_event_visibility"
+"""
+input e_event_visibility_on_conflict {
+  constraint: e_event_visibility_constraint!
+  update_columns: [e_event_visibility_update_column!]! = []
+  where: e_event_visibility_bool_exp
+}
+
+"""Ordering options when selecting data from "e_event_visibility"."""
+input e_event_visibility_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_event_visibility"""
+input e_event_visibility_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_event_visibility"
+"""
+enum e_event_visibility_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_event_visibility"
+"""
+input e_event_visibility_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_event_visibility"
+"""
+input e_event_visibility_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_event_visibility_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_event_visibility_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_event_visibility"
+"""
+enum e_event_visibility_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_event_visibility_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_event_visibility_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_event_visibility_bool_exp!
 }
 
 """
@@ -12549,6 +12720,855 @@ input e_winning_reasons_updates {
 }
 
 """
+columns and relationships of "event_media"
+"""
+type event_media {
+  created_at: timestamptz!
+
+  """An object relationship"""
+  event: events!
+  event_id: uuid!
+  filename: String!
+  id: uuid!
+  mime_type: String!
+
+  """An array relationship"""
+  players(
+    """distinct select on columns"""
+    distinct_on: [event_media_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [event_media_players_order_by!]
+
+    """filter the rows returned"""
+    where: event_media_players_bool_exp
+  ): [event_media_players!]!
+
+  """An aggregate relationship"""
+  players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [event_media_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [event_media_players_order_by!]
+
+    """filter the rows returned"""
+    where: event_media_players_bool_exp
+  ): event_media_players_aggregate!
+  size: bigint!
+  title: String
+
+  """An object relationship"""
+  uploader: players!
+  uploader_steam_id: bigint!
+}
+
+"""
+aggregated selection of "event_media"
+"""
+type event_media_aggregate {
+  aggregate: event_media_aggregate_fields
+  nodes: [event_media!]!
+}
+
+input event_media_aggregate_bool_exp {
+  count: event_media_aggregate_bool_exp_count
+}
+
+input event_media_aggregate_bool_exp_count {
+  arguments: [event_media_select_column!]
+  distinct: Boolean
+  filter: event_media_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "event_media"
+"""
+type event_media_aggregate_fields {
+  avg: event_media_avg_fields
+  count(columns: [event_media_select_column!], distinct: Boolean): Int!
+  max: event_media_max_fields
+  min: event_media_min_fields
+  stddev: event_media_stddev_fields
+  stddev_pop: event_media_stddev_pop_fields
+  stddev_samp: event_media_stddev_samp_fields
+  sum: event_media_sum_fields
+  var_pop: event_media_var_pop_fields
+  var_samp: event_media_var_samp_fields
+  variance: event_media_variance_fields
+}
+
+"""
+order by aggregate values of table "event_media"
+"""
+input event_media_aggregate_order_by {
+  avg: event_media_avg_order_by
+  count: order_by
+  max: event_media_max_order_by
+  min: event_media_min_order_by
+  stddev: event_media_stddev_order_by
+  stddev_pop: event_media_stddev_pop_order_by
+  stddev_samp: event_media_stddev_samp_order_by
+  sum: event_media_sum_order_by
+  var_pop: event_media_var_pop_order_by
+  var_samp: event_media_var_samp_order_by
+  variance: event_media_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "event_media"
+"""
+input event_media_arr_rel_insert_input {
+  data: [event_media_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: event_media_on_conflict
+}
+
+"""aggregate avg on columns"""
+type event_media_avg_fields {
+  size: Float
+  uploader_steam_id: Float
+}
+
+"""
+order by avg() on columns of table "event_media"
+"""
+input event_media_avg_order_by {
+  size: order_by
+  uploader_steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "event_media". All fields are combined with a logical 'AND'.
+"""
+input event_media_bool_exp {
+  _and: [event_media_bool_exp!]
+  _not: event_media_bool_exp
+  _or: [event_media_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  event: events_bool_exp
+  event_id: uuid_comparison_exp
+  filename: String_comparison_exp
+  id: uuid_comparison_exp
+  mime_type: String_comparison_exp
+  players: event_media_players_bool_exp
+  players_aggregate: event_media_players_aggregate_bool_exp
+  size: bigint_comparison_exp
+  title: String_comparison_exp
+  uploader: players_bool_exp
+  uploader_steam_id: bigint_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "event_media"
+"""
+enum event_media_constraint {
+  """
+  unique or primary key constraint on columns "filename", "event_id"
+  """
+  event_media_event_id_filename_key
+
+  """
+  unique or primary key constraint on columns "id"
+  """
+  event_media_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "event_media"
+"""
+input event_media_inc_input {
+  size: bigint
+  uploader_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "event_media"
+"""
+input event_media_insert_input {
+  created_at: timestamptz
+  event: events_obj_rel_insert_input
+  event_id: uuid
+  filename: String
+  id: uuid
+  mime_type: String
+  players: event_media_players_arr_rel_insert_input
+  size: bigint
+  title: String
+  uploader: players_obj_rel_insert_input
+  uploader_steam_id: bigint
+}
+
+"""aggregate max on columns"""
+type event_media_max_fields {
+  created_at: timestamptz
+  event_id: uuid
+  filename: String
+  id: uuid
+  mime_type: String
+  size: bigint
+  title: String
+  uploader_steam_id: bigint
+}
+
+"""
+order by max() on columns of table "event_media"
+"""
+input event_media_max_order_by {
+  created_at: order_by
+  event_id: order_by
+  filename: order_by
+  id: order_by
+  mime_type: order_by
+  size: order_by
+  title: order_by
+  uploader_steam_id: order_by
+}
+
+"""aggregate min on columns"""
+type event_media_min_fields {
+  created_at: timestamptz
+  event_id: uuid
+  filename: String
+  id: uuid
+  mime_type: String
+  size: bigint
+  title: String
+  uploader_steam_id: bigint
+}
+
+"""
+order by min() on columns of table "event_media"
+"""
+input event_media_min_order_by {
+  created_at: order_by
+  event_id: order_by
+  filename: order_by
+  id: order_by
+  mime_type: order_by
+  size: order_by
+  title: order_by
+  uploader_steam_id: order_by
+}
+
+"""
+response of any mutation on the table "event_media"
+"""
+type event_media_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [event_media!]!
+}
+
+"""
+input type for inserting object relation for remote table "event_media"
+"""
+input event_media_obj_rel_insert_input {
+  data: event_media_insert_input!
+
+  """upsert condition"""
+  on_conflict: event_media_on_conflict
+}
+
+"""
+on_conflict condition type for table "event_media"
+"""
+input event_media_on_conflict {
+  constraint: event_media_constraint!
+  update_columns: [event_media_update_column!]! = []
+  where: event_media_bool_exp
+}
+
+"""Ordering options when selecting data from "event_media"."""
+input event_media_order_by {
+  created_at: order_by
+  event: events_order_by
+  event_id: order_by
+  filename: order_by
+  id: order_by
+  mime_type: order_by
+  players_aggregate: event_media_players_aggregate_order_by
+  size: order_by
+  title: order_by
+  uploader: players_order_by
+  uploader_steam_id: order_by
+}
+
+"""primary key columns input for table: event_media"""
+input event_media_pk_columns_input {
+  id: uuid!
+}
+
+"""
+columns and relationships of "event_media_players"
+"""
+type event_media_players {
+  created_at: timestamptz!
+
+  """An object relationship"""
+  media: event_media!
+  media_id: uuid!
+
+  """An object relationship"""
+  player: players!
+  steam_id: bigint!
+}
+
+"""
+aggregated selection of "event_media_players"
+"""
+type event_media_players_aggregate {
+  aggregate: event_media_players_aggregate_fields
+  nodes: [event_media_players!]!
+}
+
+input event_media_players_aggregate_bool_exp {
+  count: event_media_players_aggregate_bool_exp_count
+}
+
+input event_media_players_aggregate_bool_exp_count {
+  arguments: [event_media_players_select_column!]
+  distinct: Boolean
+  filter: event_media_players_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "event_media_players"
+"""
+type event_media_players_aggregate_fields {
+  avg: event_media_players_avg_fields
+  count(columns: [event_media_players_select_column!], distinct: Boolean): Int!
+  max: event_media_players_max_fields
+  min: event_media_players_min_fields
+  stddev: event_media_players_stddev_fields
+  stddev_pop: event_media_players_stddev_pop_fields
+  stddev_samp: event_media_players_stddev_samp_fields
+  sum: event_media_players_sum_fields
+  var_pop: event_media_players_var_pop_fields
+  var_samp: event_media_players_var_samp_fields
+  variance: event_media_players_variance_fields
+}
+
+"""
+order by aggregate values of table "event_media_players"
+"""
+input event_media_players_aggregate_order_by {
+  avg: event_media_players_avg_order_by
+  count: order_by
+  max: event_media_players_max_order_by
+  min: event_media_players_min_order_by
+  stddev: event_media_players_stddev_order_by
+  stddev_pop: event_media_players_stddev_pop_order_by
+  stddev_samp: event_media_players_stddev_samp_order_by
+  sum: event_media_players_sum_order_by
+  var_pop: event_media_players_var_pop_order_by
+  var_samp: event_media_players_var_samp_order_by
+  variance: event_media_players_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "event_media_players"
+"""
+input event_media_players_arr_rel_insert_input {
+  data: [event_media_players_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: event_media_players_on_conflict
+}
+
+"""aggregate avg on columns"""
+type event_media_players_avg_fields {
+  steam_id: Float
+}
+
+"""
+order by avg() on columns of table "event_media_players"
+"""
+input event_media_players_avg_order_by {
+  steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "event_media_players". All fields are combined with a logical 'AND'.
+"""
+input event_media_players_bool_exp {
+  _and: [event_media_players_bool_exp!]
+  _not: event_media_players_bool_exp
+  _or: [event_media_players_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  media: event_media_bool_exp
+  media_id: uuid_comparison_exp
+  player: players_bool_exp
+  steam_id: bigint_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "event_media_players"
+"""
+enum event_media_players_constraint {
+  """
+  unique or primary key constraint on columns "steam_id", "media_id"
+  """
+  event_media_players_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "event_media_players"
+"""
+input event_media_players_inc_input {
+  steam_id: bigint
+}
+
+"""
+input type for inserting data into table "event_media_players"
+"""
+input event_media_players_insert_input {
+  created_at: timestamptz
+  media: event_media_obj_rel_insert_input
+  media_id: uuid
+  player: players_obj_rel_insert_input
+  steam_id: bigint
+}
+
+"""aggregate max on columns"""
+type event_media_players_max_fields {
+  created_at: timestamptz
+  media_id: uuid
+  steam_id: bigint
+}
+
+"""
+order by max() on columns of table "event_media_players"
+"""
+input event_media_players_max_order_by {
+  created_at: order_by
+  media_id: order_by
+  steam_id: order_by
+}
+
+"""aggregate min on columns"""
+type event_media_players_min_fields {
+  created_at: timestamptz
+  media_id: uuid
+  steam_id: bigint
+}
+
+"""
+order by min() on columns of table "event_media_players"
+"""
+input event_media_players_min_order_by {
+  created_at: order_by
+  media_id: order_by
+  steam_id: order_by
+}
+
+"""
+response of any mutation on the table "event_media_players"
+"""
+type event_media_players_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [event_media_players!]!
+}
+
+"""
+on_conflict condition type for table "event_media_players"
+"""
+input event_media_players_on_conflict {
+  constraint: event_media_players_constraint!
+  update_columns: [event_media_players_update_column!]! = []
+  where: event_media_players_bool_exp
+}
+
+"""Ordering options when selecting data from "event_media_players"."""
+input event_media_players_order_by {
+  created_at: order_by
+  media: event_media_order_by
+  media_id: order_by
+  player: players_order_by
+  steam_id: order_by
+}
+
+"""primary key columns input for table: event_media_players"""
+input event_media_players_pk_columns_input {
+  media_id: uuid!
+  steam_id: bigint!
+}
+
+"""
+select columns of table "event_media_players"
+"""
+enum event_media_players_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  media_id
+
+  """column name"""
+  steam_id
+}
+
+"""
+input type for updating data in table "event_media_players"
+"""
+input event_media_players_set_input {
+  created_at: timestamptz
+  media_id: uuid
+  steam_id: bigint
+}
+
+"""aggregate stddev on columns"""
+type event_media_players_stddev_fields {
+  steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "event_media_players"
+"""
+input event_media_players_stddev_order_by {
+  steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type event_media_players_stddev_pop_fields {
+  steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "event_media_players"
+"""
+input event_media_players_stddev_pop_order_by {
+  steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type event_media_players_stddev_samp_fields {
+  steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "event_media_players"
+"""
+input event_media_players_stddev_samp_order_by {
+  steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "event_media_players"
+"""
+input event_media_players_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: event_media_players_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input event_media_players_stream_cursor_value_input {
+  created_at: timestamptz
+  media_id: uuid
+  steam_id: bigint
+}
+
+"""aggregate sum on columns"""
+type event_media_players_sum_fields {
+  steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "event_media_players"
+"""
+input event_media_players_sum_order_by {
+  steam_id: order_by
+}
+
+"""
+update columns of table "event_media_players"
+"""
+enum event_media_players_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  media_id
+
+  """column name"""
+  steam_id
+}
+
+input event_media_players_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: event_media_players_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: event_media_players_set_input
+
+  """filter the rows which have to be updated"""
+  where: event_media_players_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type event_media_players_var_pop_fields {
+  steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "event_media_players"
+"""
+input event_media_players_var_pop_order_by {
+  steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type event_media_players_var_samp_fields {
+  steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "event_media_players"
+"""
+input event_media_players_var_samp_order_by {
+  steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type event_media_players_variance_fields {
+  steam_id: Float
+}
+
+"""
+order by variance() on columns of table "event_media_players"
+"""
+input event_media_players_variance_order_by {
+  steam_id: order_by
+}
+
+"""
+select columns of table "event_media"
+"""
+enum event_media_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  event_id
+
+  """column name"""
+  filename
+
+  """column name"""
+  id
+
+  """column name"""
+  mime_type
+
+  """column name"""
+  size
+
+  """column name"""
+  title
+
+  """column name"""
+  uploader_steam_id
+}
+
+"""
+input type for updating data in table "event_media"
+"""
+input event_media_set_input {
+  created_at: timestamptz
+  event_id: uuid
+  filename: String
+  id: uuid
+  mime_type: String
+  size: bigint
+  title: String
+  uploader_steam_id: bigint
+}
+
+"""aggregate stddev on columns"""
+type event_media_stddev_fields {
+  size: Float
+  uploader_steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "event_media"
+"""
+input event_media_stddev_order_by {
+  size: order_by
+  uploader_steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type event_media_stddev_pop_fields {
+  size: Float
+  uploader_steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "event_media"
+"""
+input event_media_stddev_pop_order_by {
+  size: order_by
+  uploader_steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type event_media_stddev_samp_fields {
+  size: Float
+  uploader_steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "event_media"
+"""
+input event_media_stddev_samp_order_by {
+  size: order_by
+  uploader_steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "event_media"
+"""
+input event_media_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: event_media_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input event_media_stream_cursor_value_input {
+  created_at: timestamptz
+  event_id: uuid
+  filename: String
+  id: uuid
+  mime_type: String
+  size: bigint
+  title: String
+  uploader_steam_id: bigint
+}
+
+"""aggregate sum on columns"""
+type event_media_sum_fields {
+  size: bigint
+  uploader_steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "event_media"
+"""
+input event_media_sum_order_by {
+  size: order_by
+  uploader_steam_id: order_by
+}
+
+"""
+update columns of table "event_media"
+"""
+enum event_media_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  event_id
+
+  """column name"""
+  filename
+
+  """column name"""
+  id
+
+  """column name"""
+  mime_type
+
+  """column name"""
+  size
+
+  """column name"""
+  title
+
+  """column name"""
+  uploader_steam_id
+}
+
+input event_media_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: event_media_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: event_media_set_input
+
+  """filter the rows which have to be updated"""
+  where: event_media_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type event_media_var_pop_fields {
+  size: Float
+  uploader_steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "event_media"
+"""
+input event_media_var_pop_order_by {
+  size: order_by
+  uploader_steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type event_media_var_samp_fields {
+  size: Float
+  uploader_steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "event_media"
+"""
+input event_media_var_samp_order_by {
+  size: order_by
+  uploader_steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type event_media_variance_fields {
+  size: Float
+  uploader_steam_id: Float
+}
+
+"""
+order by variance() on columns of table "event_media"
+"""
+input event_media_variance_order_by {
+  size: order_by
+  uploader_steam_id: order_by
+}
+
+"""
 columns and relationships of "event_organizers"
 """
 type event_organizers {
@@ -13704,6 +14724,19 @@ input event_tournaments_updates {
 columns and relationships of "events"
 """
 type events {
+  """An object relationship"""
+  banner: event_media
+  banner_media_id: uuid
+
+  """
+  A computed field, executes function "can_upload_event_media"
+  """
+  can_upload_media: Boolean
+
+  """
+  A computed field, executes function "can_view_event"
+  """
+  can_view: Boolean
   created_at: timestamptz!
   description: String
   ends_at: timestamptz
@@ -13713,6 +14746,43 @@ type events {
   A computed field, executes function "is_event_organizer"
   """
   is_organizer: Boolean
+
+  """An array relationship"""
+  media(
+    """distinct select on columns"""
+    distinct_on: [event_media_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [event_media_order_by!]
+
+    """filter the rows returned"""
+    where: event_media_bool_exp
+  ): [event_media!]!
+  media_access: e_event_media_access_enum!
+
+  """An aggregate relationship"""
+  media_aggregate(
+    """distinct select on columns"""
+    distinct_on: [event_media_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [event_media_order_by!]
+
+    """filter the rows returned"""
+    where: event_media_bool_exp
+  ): event_media_aggregate!
   name: String!
 
   """An object relationship"""
@@ -13827,7 +14897,6 @@ type events {
     where: event_players_bool_exp
   ): event_players_aggregate!
   starts_at: timestamptz
-  status: e_event_status_enum!
 
   """An array relationship"""
   teams(
@@ -13900,6 +14969,7 @@ type events {
     """filter the rows returned"""
     where: event_tournaments_bool_exp
   ): event_tournaments_aggregate!
+  visibility: e_event_visibility_enum!
 }
 
 """
@@ -13939,11 +15009,18 @@ input events_bool_exp {
   _and: [events_bool_exp!]
   _not: events_bool_exp
   _or: [events_bool_exp!]
+  banner: event_media_bool_exp
+  banner_media_id: uuid_comparison_exp
+  can_upload_media: Boolean_comparison_exp
+  can_view: Boolean_comparison_exp
   created_at: timestamptz_comparison_exp
   description: String_comparison_exp
   ends_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
   is_organizer: Boolean_comparison_exp
+  media: event_media_bool_exp
+  media_access: e_event_media_access_enum_comparison_exp
+  media_aggregate: event_media_aggregate_bool_exp
   name: String_comparison_exp
   organizer: players_bool_exp
   organizer_steam_id: bigint_comparison_exp
@@ -13954,11 +15031,11 @@ input events_bool_exp {
   players: event_players_bool_exp
   players_aggregate: event_players_aggregate_bool_exp
   starts_at: timestamptz_comparison_exp
-  status: e_event_status_enum_comparison_exp
   teams: event_teams_bool_exp
   teams_aggregate: event_teams_aggregate_bool_exp
   tournaments: event_tournaments_bool_exp
   tournaments_aggregate: event_tournaments_aggregate_bool_exp
+  visibility: e_event_visibility_enum_comparison_exp
 }
 
 """
@@ -13982,10 +15059,14 @@ input events_inc_input {
 input type for inserting data into table "events"
 """
 input events_insert_input {
+  banner: event_media_obj_rel_insert_input
+  banner_media_id: uuid
   created_at: timestamptz
   description: String
   ends_at: timestamptz
   id: uuid
+  media: event_media_arr_rel_insert_input
+  media_access: e_event_media_access_enum
   name: String
   organizer: players_obj_rel_insert_input
   organizer_steam_id: bigint
@@ -13993,13 +15074,14 @@ input events_insert_input {
   player_stats: v_event_player_stats_arr_rel_insert_input
   players: event_players_arr_rel_insert_input
   starts_at: timestamptz
-  status: e_event_status_enum
   teams: event_teams_arr_rel_insert_input
   tournaments: event_tournaments_arr_rel_insert_input
+  visibility: e_event_visibility_enum
 }
 
 """aggregate max on columns"""
 type events_max_fields {
+  banner_media_id: uuid
   created_at: timestamptz
   description: String
   ends_at: timestamptz
@@ -14011,6 +15093,7 @@ type events_max_fields {
 
 """aggregate min on columns"""
 type events_min_fields {
+  banner_media_id: uuid
   created_at: timestamptz
   description: String
   ends_at: timestamptz
@@ -14052,11 +15135,17 @@ input events_on_conflict {
 
 """Ordering options when selecting data from "events"."""
 input events_order_by {
+  banner: event_media_order_by
+  banner_media_id: order_by
+  can_upload_media: order_by
+  can_view: order_by
   created_at: order_by
   description: order_by
   ends_at: order_by
   id: order_by
   is_organizer: order_by
+  media_access: order_by
+  media_aggregate: event_media_aggregate_order_by
   name: order_by
   organizer: players_order_by
   organizer_steam_id: order_by
@@ -14064,9 +15153,9 @@ input events_order_by {
   player_stats_aggregate: v_event_player_stats_aggregate_order_by
   players_aggregate: event_players_aggregate_order_by
   starts_at: order_by
-  status: order_by
   teams_aggregate: event_teams_aggregate_order_by
   tournaments_aggregate: event_tournaments_aggregate_order_by
+  visibility: order_by
 }
 
 """primary key columns input for table: events"""
@@ -14078,6 +15167,9 @@ input events_pk_columns_input {
 select columns of table "events"
 """
 enum events_select_column {
+  """column name"""
+  banner_media_id
+
   """column name"""
   created_at
 
@@ -14091,6 +15183,9 @@ enum events_select_column {
   id
 
   """column name"""
+  media_access
+
+  """column name"""
   name
 
   """column name"""
@@ -14100,21 +15195,23 @@ enum events_select_column {
   starts_at
 
   """column name"""
-  status
+  visibility
 }
 
 """
 input type for updating data in table "events"
 """
 input events_set_input {
+  banner_media_id: uuid
   created_at: timestamptz
   description: String
   ends_at: timestamptz
   id: uuid
+  media_access: e_event_media_access_enum
   name: String
   organizer_steam_id: bigint
   starts_at: timestamptz
-  status: e_event_status_enum
+  visibility: e_event_visibility_enum
 }
 
 """aggregate stddev on columns"""
@@ -14145,14 +15242,16 @@ input events_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input events_stream_cursor_value_input {
+  banner_media_id: uuid
   created_at: timestamptz
   description: String
   ends_at: timestamptz
   id: uuid
+  media_access: e_event_media_access_enum
   name: String
   organizer_steam_id: bigint
   starts_at: timestamptz
-  status: e_event_status_enum
+  visibility: e_event_visibility_enum
 }
 
 """aggregate sum on columns"""
@@ -14164,6 +15263,9 @@ type events_sum_fields {
 update columns of table "events"
 """
 enum events_update_column {
+  """column name"""
+  banner_media_id
+
   """column name"""
   created_at
 
@@ -14177,6 +15279,9 @@ enum events_update_column {
   id
 
   """column name"""
+  media_access
+
+  """column name"""
   name
 
   """column name"""
@@ -14186,7 +15291,7 @@ enum events_update_column {
   starts_at
 
   """column name"""
-  status
+  visibility
 }
 
 input events_updates {
@@ -32690,17 +33795,30 @@ type mutation_root {
   delete_e_draft_game_status_by_pk(value: String!): e_draft_game_status
 
   """
-  delete data from the table: "e_event_status"
+  delete data from the table: "e_event_media_access"
   """
-  delete_e_event_status(
+  delete_e_event_media_access(
     """filter the rows which have to be deleted"""
-    where: e_event_status_bool_exp!
-  ): e_event_status_mutation_response
+    where: e_event_media_access_bool_exp!
+  ): e_event_media_access_mutation_response
 
   """
-  delete single row from the table: "e_event_status"
+  delete single row from the table: "e_event_media_access"
   """
-  delete_e_event_status_by_pk(value: String!): e_event_status
+  delete_e_event_media_access_by_pk(value: String!): e_event_media_access
+
+  """
+  delete data from the table: "e_event_visibility"
+  """
+  delete_e_event_visibility(
+    """filter the rows which have to be deleted"""
+    where: e_event_visibility_bool_exp!
+  ): e_event_visibility_mutation_response
+
+  """
+  delete single row from the table: "e_event_visibility"
+  """
+  delete_e_event_visibility_by_pk(value: String!): e_event_visibility
 
   """
   delete data from the table: "e_friend_status"
@@ -33130,6 +34248,32 @@ type mutation_root {
   delete single row from the table: "e_winning_reasons"
   """
   delete_e_winning_reasons_by_pk(value: String!): e_winning_reasons
+
+  """
+  delete data from the table: "event_media"
+  """
+  delete_event_media(
+    """filter the rows which have to be deleted"""
+    where: event_media_bool_exp!
+  ): event_media_mutation_response
+
+  """
+  delete single row from the table: "event_media"
+  """
+  delete_event_media_by_pk(id: uuid!): event_media
+
+  """
+  delete data from the table: "event_media_players"
+  """
+  delete_event_media_players(
+    """filter the rows which have to be deleted"""
+    where: event_media_players_bool_exp!
+  ): event_media_players_mutation_response
+
+  """
+  delete single row from the table: "event_media_players"
+  """
+  delete_event_media_players_by_pk(media_id: uuid!, steam_id: bigint!): event_media_players
 
   """
   delete data from the table: "event_organizers"
@@ -34661,26 +35805,48 @@ type mutation_root {
   ): e_draft_game_status
 
   """
-  insert data into the table: "e_event_status"
+  insert data into the table: "e_event_media_access"
   """
-  insert_e_event_status(
+  insert_e_event_media_access(
     """the rows to be inserted"""
-    objects: [e_event_status_insert_input!]!
+    objects: [e_event_media_access_insert_input!]!
 
     """upsert condition"""
-    on_conflict: e_event_status_on_conflict
-  ): e_event_status_mutation_response
+    on_conflict: e_event_media_access_on_conflict
+  ): e_event_media_access_mutation_response
 
   """
-  insert a single row into the table: "e_event_status"
+  insert a single row into the table: "e_event_media_access"
   """
-  insert_e_event_status_one(
+  insert_e_event_media_access_one(
     """the row to be inserted"""
-    object: e_event_status_insert_input!
+    object: e_event_media_access_insert_input!
 
     """upsert condition"""
-    on_conflict: e_event_status_on_conflict
-  ): e_event_status
+    on_conflict: e_event_media_access_on_conflict
+  ): e_event_media_access
+
+  """
+  insert data into the table: "e_event_visibility"
+  """
+  insert_e_event_visibility(
+    """the rows to be inserted"""
+    objects: [e_event_visibility_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_event_visibility_on_conflict
+  ): e_event_visibility_mutation_response
+
+  """
+  insert a single row into the table: "e_event_visibility"
+  """
+  insert_e_event_visibility_one(
+    """the row to be inserted"""
+    object: e_event_visibility_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_event_visibility_on_conflict
+  ): e_event_visibility
 
   """
   insert data into the table: "e_friend_status"
@@ -35407,6 +36573,50 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_winning_reasons_on_conflict
   ): e_winning_reasons
+
+  """
+  insert data into the table: "event_media"
+  """
+  insert_event_media(
+    """the rows to be inserted"""
+    objects: [event_media_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: event_media_on_conflict
+  ): event_media_mutation_response
+
+  """
+  insert a single row into the table: "event_media"
+  """
+  insert_event_media_one(
+    """the row to be inserted"""
+    object: event_media_insert_input!
+
+    """upsert condition"""
+    on_conflict: event_media_on_conflict
+  ): event_media
+
+  """
+  insert data into the table: "event_media_players"
+  """
+  insert_event_media_players(
+    """the rows to be inserted"""
+    objects: [event_media_players_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: event_media_players_on_conflict
+  ): event_media_players_mutation_response
+
+  """
+  insert a single row into the table: "event_media_players"
+  """
+  insert_event_media_players_one(
+    """the row to be inserted"""
+    object: event_media_players_insert_input!
+
+    """upsert condition"""
+    on_conflict: event_media_players_on_conflict
+  ): event_media_players
 
   """
   insert data into the table: "event_organizers"
@@ -38257,32 +39467,60 @@ type mutation_root {
   ): [e_draft_game_status_mutation_response]
 
   """
-  update data of the table: "e_event_status"
+  update data of the table: "e_event_media_access"
   """
-  update_e_event_status(
+  update_e_event_media_access(
     """sets the columns of the filtered rows to the given values"""
-    _set: e_event_status_set_input
+    _set: e_event_media_access_set_input
 
     """filter the rows which have to be updated"""
-    where: e_event_status_bool_exp!
-  ): e_event_status_mutation_response
+    where: e_event_media_access_bool_exp!
+  ): e_event_media_access_mutation_response
 
   """
-  update single row of the table: "e_event_status"
+  update single row of the table: "e_event_media_access"
   """
-  update_e_event_status_by_pk(
+  update_e_event_media_access_by_pk(
     """sets the columns of the filtered rows to the given values"""
-    _set: e_event_status_set_input
-    pk_columns: e_event_status_pk_columns_input!
-  ): e_event_status
+    _set: e_event_media_access_set_input
+    pk_columns: e_event_media_access_pk_columns_input!
+  ): e_event_media_access
 
   """
-  update multiples rows of table: "e_event_status"
+  update multiples rows of table: "e_event_media_access"
   """
-  update_e_event_status_many(
+  update_e_event_media_access_many(
     """updates to execute, in order"""
-    updates: [e_event_status_updates!]!
-  ): [e_event_status_mutation_response]
+    updates: [e_event_media_access_updates!]!
+  ): [e_event_media_access_mutation_response]
+
+  """
+  update data of the table: "e_event_visibility"
+  """
+  update_e_event_visibility(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_event_visibility_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_event_visibility_bool_exp!
+  ): e_event_visibility_mutation_response
+
+  """
+  update single row of the table: "e_event_visibility"
+  """
+  update_e_event_visibility_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_event_visibility_set_input
+    pk_columns: e_event_visibility_pk_columns_input!
+  ): e_event_visibility
+
+  """
+  update multiples rows of table: "e_event_visibility"
+  """
+  update_e_event_visibility_many(
+    """updates to execute, in order"""
+    updates: [e_event_visibility_updates!]!
+  ): [e_event_visibility_mutation_response]
 
   """
   update data of the table: "e_friend_status"
@@ -39207,6 +40445,74 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_winning_reasons_updates!]!
   ): [e_winning_reasons_mutation_response]
+
+  """
+  update data of the table: "event_media"
+  """
+  update_event_media(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: event_media_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: event_media_set_input
+
+    """filter the rows which have to be updated"""
+    where: event_media_bool_exp!
+  ): event_media_mutation_response
+
+  """
+  update single row of the table: "event_media"
+  """
+  update_event_media_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: event_media_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: event_media_set_input
+    pk_columns: event_media_pk_columns_input!
+  ): event_media
+
+  """
+  update multiples rows of table: "event_media"
+  """
+  update_event_media_many(
+    """updates to execute, in order"""
+    updates: [event_media_updates!]!
+  ): [event_media_mutation_response]
+
+  """
+  update data of the table: "event_media_players"
+  """
+  update_event_media_players(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: event_media_players_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: event_media_players_set_input
+
+    """filter the rows which have to be updated"""
+    where: event_media_players_bool_exp!
+  ): event_media_players_mutation_response
+
+  """
+  update single row of the table: "event_media_players"
+  """
+  update_event_media_players_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: event_media_players_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: event_media_players_set_input
+    pk_columns: event_media_players_pk_columns_input!
+  ): event_media_players
+
+  """
+  update multiples rows of table: "event_media_players"
+  """
+  update_event_media_players_many(
+    """updates to execute, in order"""
+    updates: [event_media_players_updates!]!
+  ): [event_media_players_mutation_response]
 
   """
   update data of the table: "event_organizers"
@@ -64910,11 +66216,11 @@ type query_root {
   e_draft_game_status_by_pk(value: String!): e_draft_game_status
 
   """
-  fetch data from the table: "e_event_status"
+  fetch data from the table: "e_event_media_access"
   """
-  e_event_status(
+  e_event_media_access(
     """distinct select on columns"""
-    distinct_on: [e_event_status_select_column!]
+    distinct_on: [e_event_media_access_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -64923,18 +66229,18 @@ type query_root {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [e_event_status_order_by!]
+    order_by: [e_event_media_access_order_by!]
 
     """filter the rows returned"""
-    where: e_event_status_bool_exp
-  ): [e_event_status!]!
+    where: e_event_media_access_bool_exp
+  ): [e_event_media_access!]!
 
   """
-  fetch aggregated fields from the table: "e_event_status"
+  fetch aggregated fields from the table: "e_event_media_access"
   """
-  e_event_status_aggregate(
+  e_event_media_access_aggregate(
     """distinct select on columns"""
-    distinct_on: [e_event_status_select_column!]
+    distinct_on: [e_event_media_access_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -64943,14 +66249,61 @@ type query_root {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [e_event_status_order_by!]
+    order_by: [e_event_media_access_order_by!]
 
     """filter the rows returned"""
-    where: e_event_status_bool_exp
-  ): e_event_status_aggregate!
+    where: e_event_media_access_bool_exp
+  ): e_event_media_access_aggregate!
 
-  """fetch data from the table: "e_event_status" using primary key columns"""
-  e_event_status_by_pk(value: String!): e_event_status
+  """
+  fetch data from the table: "e_event_media_access" using primary key columns
+  """
+  e_event_media_access_by_pk(value: String!): e_event_media_access
+
+  """
+  fetch data from the table: "e_event_visibility"
+  """
+  e_event_visibility(
+    """distinct select on columns"""
+    distinct_on: [e_event_visibility_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_event_visibility_order_by!]
+
+    """filter the rows returned"""
+    where: e_event_visibility_bool_exp
+  ): [e_event_visibility!]!
+
+  """
+  fetch aggregated fields from the table: "e_event_visibility"
+  """
+  e_event_visibility_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_event_visibility_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_event_visibility_order_by!]
+
+    """filter the rows returned"""
+    where: e_event_visibility_bool_exp
+  ): e_event_visibility_aggregate!
+
+  """
+  fetch data from the table: "e_event_visibility" using primary key columns
+  """
+  e_event_visibility_by_pk(value: String!): e_event_visibility
 
   """
   fetch data from the table: "e_friend_status"
@@ -66416,6 +67769,94 @@ type query_root {
   fetch data from the table: "e_winning_reasons" using primary key columns
   """
   e_winning_reasons_by_pk(value: String!): e_winning_reasons
+
+  """
+  fetch data from the table: "event_media"
+  """
+  event_media(
+    """distinct select on columns"""
+    distinct_on: [event_media_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [event_media_order_by!]
+
+    """filter the rows returned"""
+    where: event_media_bool_exp
+  ): [event_media!]!
+
+  """
+  fetch aggregated fields from the table: "event_media"
+  """
+  event_media_aggregate(
+    """distinct select on columns"""
+    distinct_on: [event_media_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [event_media_order_by!]
+
+    """filter the rows returned"""
+    where: event_media_bool_exp
+  ): event_media_aggregate!
+
+  """fetch data from the table: "event_media" using primary key columns"""
+  event_media_by_pk(id: uuid!): event_media
+
+  """
+  fetch data from the table: "event_media_players"
+  """
+  event_media_players(
+    """distinct select on columns"""
+    distinct_on: [event_media_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [event_media_players_order_by!]
+
+    """filter the rows returned"""
+    where: event_media_players_bool_exp
+  ): [event_media_players!]!
+
+  """
+  fetch aggregated fields from the table: "event_media_players"
+  """
+  event_media_players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [event_media_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [event_media_players_order_by!]
+
+    """filter the rows returned"""
+    where: event_media_players_bool_exp
+  ): event_media_players_aggregate!
+
+  """
+  fetch data from the table: "event_media_players" using primary key columns
+  """
+  event_media_players_by_pk(media_id: uuid!, steam_id: bigint!): event_media_players
 
   """
   fetch data from the table: "event_organizers"
@@ -70799,6 +72240,46 @@ type query_root {
 
   """fetch data from the table: "tournaments" using primary key columns"""
   tournaments_by_pk(id: uuid!): tournaments
+
+  """
+  fetch data from the table: "v_event_matches"
+  """
+  v_event_matches(
+    """distinct select on columns"""
+    distinct_on: [v_event_matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_event_matches_order_by!]
+
+    """filter the rows returned"""
+    where: v_event_matches_bool_exp
+  ): [v_event_matches!]!
+
+  """
+  fetch aggregated fields from the table: "v_event_matches"
+  """
+  v_event_matches_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_event_matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_event_matches_order_by!]
+
+    """filter the rows returned"""
+    where: v_event_matches_bool_exp
+  ): v_event_matches_aggregate!
 
   """
   fetch data from the table: "v_event_player_stats"
@@ -75326,11 +76807,11 @@ type subscription_root {
   ): [e_draft_game_status!]!
 
   """
-  fetch data from the table: "e_event_status"
+  fetch data from the table: "e_event_media_access"
   """
-  e_event_status(
+  e_event_media_access(
     """distinct select on columns"""
-    distinct_on: [e_event_status_select_column!]
+    distinct_on: [e_event_media_access_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -75339,18 +76820,18 @@ type subscription_root {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [e_event_status_order_by!]
+    order_by: [e_event_media_access_order_by!]
 
     """filter the rows returned"""
-    where: e_event_status_bool_exp
-  ): [e_event_status!]!
+    where: e_event_media_access_bool_exp
+  ): [e_event_media_access!]!
 
   """
-  fetch aggregated fields from the table: "e_event_status"
+  fetch aggregated fields from the table: "e_event_media_access"
   """
-  e_event_status_aggregate(
+  e_event_media_access_aggregate(
     """distinct select on columns"""
-    distinct_on: [e_event_status_select_column!]
+    distinct_on: [e_event_media_access_select_column!]
 
     """limit the number of rows returned"""
     limit: Int
@@ -75359,28 +76840,89 @@ type subscription_root {
     offset: Int
 
     """sort the rows by one or more columns"""
-    order_by: [e_event_status_order_by!]
+    order_by: [e_event_media_access_order_by!]
 
     """filter the rows returned"""
-    where: e_event_status_bool_exp
-  ): e_event_status_aggregate!
-
-  """fetch data from the table: "e_event_status" using primary key columns"""
-  e_event_status_by_pk(value: String!): e_event_status
+    where: e_event_media_access_bool_exp
+  ): e_event_media_access_aggregate!
 
   """
-  fetch data from the table in a streaming manner: "e_event_status"
+  fetch data from the table: "e_event_media_access" using primary key columns
   """
-  e_event_status_stream(
+  e_event_media_access_by_pk(value: String!): e_event_media_access
+
+  """
+  fetch data from the table in a streaming manner: "e_event_media_access"
+  """
+  e_event_media_access_stream(
     """maximum number of rows returned in a single batch"""
     batch_size: Int!
 
     """cursor to stream the results returned by the query"""
-    cursor: [e_event_status_stream_cursor_input]!
+    cursor: [e_event_media_access_stream_cursor_input]!
 
     """filter the rows returned"""
-    where: e_event_status_bool_exp
-  ): [e_event_status!]!
+    where: e_event_media_access_bool_exp
+  ): [e_event_media_access!]!
+
+  """
+  fetch data from the table: "e_event_visibility"
+  """
+  e_event_visibility(
+    """distinct select on columns"""
+    distinct_on: [e_event_visibility_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_event_visibility_order_by!]
+
+    """filter the rows returned"""
+    where: e_event_visibility_bool_exp
+  ): [e_event_visibility!]!
+
+  """
+  fetch aggregated fields from the table: "e_event_visibility"
+  """
+  e_event_visibility_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_event_visibility_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_event_visibility_order_by!]
+
+    """filter the rows returned"""
+    where: e_event_visibility_bool_exp
+  ): e_event_visibility_aggregate!
+
+  """
+  fetch data from the table: "e_event_visibility" using primary key columns
+  """
+  e_event_visibility_by_pk(value: String!): e_event_visibility
+
+  """
+  fetch data from the table in a streaming manner: "e_event_visibility"
+  """
+  e_event_visibility_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_event_visibility_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_event_visibility_bool_exp
+  ): [e_event_visibility!]!
 
   """
   fetch data from the table: "e_friend_status"
@@ -77308,6 +78850,122 @@ type subscription_root {
     """filter the rows returned"""
     where: e_winning_reasons_bool_exp
   ): [e_winning_reasons!]!
+
+  """
+  fetch data from the table: "event_media"
+  """
+  event_media(
+    """distinct select on columns"""
+    distinct_on: [event_media_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [event_media_order_by!]
+
+    """filter the rows returned"""
+    where: event_media_bool_exp
+  ): [event_media!]!
+
+  """
+  fetch aggregated fields from the table: "event_media"
+  """
+  event_media_aggregate(
+    """distinct select on columns"""
+    distinct_on: [event_media_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [event_media_order_by!]
+
+    """filter the rows returned"""
+    where: event_media_bool_exp
+  ): event_media_aggregate!
+
+  """fetch data from the table: "event_media" using primary key columns"""
+  event_media_by_pk(id: uuid!): event_media
+
+  """
+  fetch data from the table: "event_media_players"
+  """
+  event_media_players(
+    """distinct select on columns"""
+    distinct_on: [event_media_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [event_media_players_order_by!]
+
+    """filter the rows returned"""
+    where: event_media_players_bool_exp
+  ): [event_media_players!]!
+
+  """
+  fetch aggregated fields from the table: "event_media_players"
+  """
+  event_media_players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [event_media_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [event_media_players_order_by!]
+
+    """filter the rows returned"""
+    where: event_media_players_bool_exp
+  ): event_media_players_aggregate!
+
+  """
+  fetch data from the table: "event_media_players" using primary key columns
+  """
+  event_media_players_by_pk(media_id: uuid!, steam_id: bigint!): event_media_players
+
+  """
+  fetch data from the table in a streaming manner: "event_media_players"
+  """
+  event_media_players_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [event_media_players_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: event_media_players_bool_exp
+  ): [event_media_players!]!
+
+  """
+  fetch data from the table in a streaming manner: "event_media"
+  """
+  event_media_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [event_media_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: event_media_bool_exp
+  ): [event_media!]!
 
   """
   fetch data from the table: "event_organizers"
@@ -82960,6 +84618,60 @@ type subscription_root {
     """filter the rows returned"""
     where: tournaments_bool_exp
   ): [tournaments!]!
+
+  """
+  fetch data from the table: "v_event_matches"
+  """
+  v_event_matches(
+    """distinct select on columns"""
+    distinct_on: [v_event_matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_event_matches_order_by!]
+
+    """filter the rows returned"""
+    where: v_event_matches_bool_exp
+  ): [v_event_matches!]!
+
+  """
+  fetch aggregated fields from the table: "v_event_matches"
+  """
+  v_event_matches_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_event_matches_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_event_matches_order_by!]
+
+    """filter the rows returned"""
+    where: v_event_matches_bool_exp
+  ): v_event_matches_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_event_matches"
+  """
+  v_event_matches_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_event_matches_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_event_matches_bool_exp
+  ): [v_event_matches!]!
 
   """
   fetch data from the table: "v_event_player_stats"
@@ -95123,6 +96835,97 @@ input uuid_comparison_exp {
   _lte: uuid
   _neq: uuid
   _nin: [uuid!]
+}
+
+"""
+columns and relationships of "v_event_matches"
+"""
+type v_event_matches {
+  """An object relationship"""
+  event: events
+  event_id: uuid
+
+  """An object relationship"""
+  match: matches
+  match_id: uuid
+}
+
+"""
+aggregated selection of "v_event_matches"
+"""
+type v_event_matches_aggregate {
+  aggregate: v_event_matches_aggregate_fields
+  nodes: [v_event_matches!]!
+}
+
+"""
+aggregate fields of "v_event_matches"
+"""
+type v_event_matches_aggregate_fields {
+  count(columns: [v_event_matches_select_column!], distinct: Boolean): Int!
+  max: v_event_matches_max_fields
+  min: v_event_matches_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "v_event_matches". All fields are combined with a logical 'AND'.
+"""
+input v_event_matches_bool_exp {
+  _and: [v_event_matches_bool_exp!]
+  _not: v_event_matches_bool_exp
+  _or: [v_event_matches_bool_exp!]
+  event: events_bool_exp
+  event_id: uuid_comparison_exp
+  match: matches_bool_exp
+  match_id: uuid_comparison_exp
+}
+
+"""aggregate max on columns"""
+type v_event_matches_max_fields {
+  event_id: uuid
+  match_id: uuid
+}
+
+"""aggregate min on columns"""
+type v_event_matches_min_fields {
+  event_id: uuid
+  match_id: uuid
+}
+
+"""Ordering options when selecting data from "v_event_matches"."""
+input v_event_matches_order_by {
+  event: events_order_by
+  event_id: order_by
+  match: matches_order_by
+  match_id: order_by
+}
+
+"""
+select columns of table "v_event_matches"
+"""
+enum v_event_matches_select_column {
+  """column name"""
+  event_id
+
+  """column name"""
+  match_id
+}
+
+"""
+Streaming cursor of the table "v_event_matches"
+"""
+input v_event_matches_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_event_matches_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_event_matches_stream_cursor_value_input {
+  event_id: uuid
+  match_id: uuid
 }
 
 """

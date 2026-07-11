@@ -1,0 +1,75 @@
+table:
+  name: event_media
+  schema: public
+object_relationships:
+  - name: event
+    using:
+      foreign_key_constraint_on: event_id
+  - name: uploader
+    using:
+      foreign_key_constraint_on: uploader_steam_id
+array_relationships:
+  - name: players
+    using:
+      foreign_key_constraint_on:
+        column: media_id
+        table:
+          name: event_media_players
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - created_at
+        - event_id
+        - filename
+        - id
+        - mime_type
+        - size
+        - thumbnail_filename
+        - title
+        - uploader_steam_id
+      filter:
+        event:
+          visibility:
+            _eq: Public
+      allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - created_at
+        - event_id
+        - filename
+        - id
+        - mime_type
+        - size
+        - thumbnail_filename
+        - title
+        - uploader_steam_id
+      filter:
+        event:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - title
+      filter:
+        _or:
+          - uploader_steam_id:
+              _eq: X-Hasura-User-Id
+          - event:
+              is_organizer:
+                _eq: true
+      check:
+        _or:
+          - uploader_steam_id:
+              _eq: X-Hasura-User-Id
+          - event:
+              is_organizer:
+                _eq: true
+    comment: ""

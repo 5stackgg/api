@@ -2,10 +2,20 @@ table:
   name: events
   schema: public
 object_relationships:
+  - name: banner
+    using:
+      foreign_key_constraint_on: banner_media_id
   - name: organizer
     using:
       foreign_key_constraint_on: organizer_steam_id
 array_relationships:
+  - name: media
+    using:
+      foreign_key_constraint_on:
+        column: event_id
+        table:
+          name: event_media
+          schema: public
   - name: organizers
     using:
       foreign_key_constraint_on:
@@ -44,6 +54,18 @@ array_relationships:
           name: event_tournaments
           schema: public
 computed_fields:
+  - name: can_upload_media
+    definition:
+      function:
+        name: can_upload_event_media
+        schema: public
+      session_argument: hasura_session
+  - name: can_view
+    definition:
+      function:
+        name: can_view_event
+        schema: public
+      session_argument: hasura_session
   - name: is_organizer
     definition:
       function:
@@ -53,27 +75,31 @@ computed_fields:
 insert_permissions:
   - role: administrator
     permission:
-      check: {}
+      check:
+        _exists:
+          _table:
+            name: settings
+            schema: public
+          _where:
+            _and:
+              - name:
+                  _eq: public.events_enabled
+              - value:
+                  _eq: "true"
       set:
         organizer_steam_id: x-hasura-user-id
       columns:
         - description
         - ends_at
+        - media_access
         - name
         - starts_at
+        - visibility
     comment: ""
   - role: match_organizer
     permission:
       check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_events_role
+        _and:
           - _exists:
               _table:
                 name: settings
@@ -81,101 +107,47 @@ insert_permissions:
               _where:
                 _and:
                   - name:
-                      _eq: public.create_events_role
+                      _eq: public.events_enabled
                   - value:
-                      _in:
-                        - user
-                        - verified_user
-                        - streamer
-                        - moderator
-                        - match_organizer
+                      _eq: "true"
+          - _or:
+              - _not:
+                  _exists:
+                    _table:
+                      name: settings
+                      schema: public
+                    _where:
+                      name:
+                        _eq: public.create_events_role
+              - _exists:
+                  _table:
+                    name: settings
+                    schema: public
+                  _where:
+                    _and:
+                      - name:
+                          _eq: public.create_events_role
+                      - value:
+                          _in:
+                            - user
+                            - verified_user
+                            - streamer
+                            - moderator
+                            - match_organizer
       set:
         organizer_steam_id: x-hasura-user-id
       columns:
         - description
         - ends_at
+        - media_access
         - name
         - starts_at
-    comment: ""
-  - role: moderator
-    permission:
-      check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_events_role
-          - _exists:
-              _table:
-                name: settings
-                schema: public
-              _where:
-                _and:
-                  - name:
-                      _eq: public.create_events_role
-                  - value:
-                      _in:
-                        - user
-                        - verified_user
-                        - streamer
-                        - moderator
-      set:
-        organizer_steam_id: x-hasura-user-id
-      columns:
-        - description
-        - ends_at
-        - name
-        - starts_at
-    comment: ""
-  - role: streamer
-    permission:
-      check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_events_role
-          - _exists:
-              _table:
-                name: settings
-                schema: public
-              _where:
-                _and:
-                  - name:
-                      _eq: public.create_events_role
-                  - value:
-                      _in:
-                        - user
-                        - verified_user
-                        - streamer
-      set:
-        organizer_steam_id: x-hasura-user-id
-      columns:
-        - description
-        - ends_at
-        - name
-        - starts_at
+        - visibility
     comment: ""
   - role: tournament_organizer
     permission:
       check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_events_role
+        _and:
           - _exists:
               _table:
                 name: settings
@@ -183,156 +155,126 @@ insert_permissions:
               _where:
                 _and:
                   - name:
-                      _eq: public.create_events_role
+                      _eq: public.events_enabled
                   - value:
-                      _in:
-                        - user
-                        - verified_user
-                        - streamer
-                        - moderator
-                        - match_organizer
-                        - tournament_organizer
+                      _eq: "true"
+          - _or:
+              - _not:
+                  _exists:
+                    _table:
+                      name: settings
+                      schema: public
+                    _where:
+                      name:
+                        _eq: public.create_events_role
+              - _exists:
+                  _table:
+                    name: settings
+                    schema: public
+                  _where:
+                    _and:
+                      - name:
+                          _eq: public.create_events_role
+                      - value:
+                          _in:
+                            - user
+                            - verified_user
+                            - streamer
+                            - moderator
+                            - match_organizer
+                            - tournament_organizer
       set:
         organizer_steam_id: x-hasura-user-id
       columns:
         - description
         - ends_at
+        - media_access
         - name
         - starts_at
-    comment: ""
-  - role: user
-    permission:
-      check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_events_role
-          - _exists:
-              _table:
-                name: settings
-                schema: public
-              _where:
-                _and:
-                  - name:
-                      _eq: public.create_events_role
-                  - value:
-                      _in:
-                        - user
-      set:
-        organizer_steam_id: x-hasura-user-id
-      columns:
-        - description
-        - ends_at
-        - name
-        - starts_at
-    comment: ""
-  - role: verified_user
-    permission:
-      check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_events_role
-          - _exists:
-              _table:
-                name: settings
-                schema: public
-              _where:
-                _and:
-                  - name:
-                      _eq: public.create_events_role
-                  - value:
-                      _in:
-                        - user
-                        - verified_user
-      set:
-        organizer_steam_id: x-hasura-user-id
-      columns:
-        - description
-        - ends_at
-        - name
-        - starts_at
+        - visibility
     comment: ""
 select_permissions:
   - role: guest
     permission:
       columns:
+        - banner_media_id
         - created_at
         - description
         - ends_at
+        - hide_creator_organizer
         - id
+        - media_access
         - name
         - organizer_steam_id
         - starts_at
-        - status
+        - visibility
       computed_fields:
+        - can_upload_media
+        - can_view
         - is_organizer
       filter:
-        status:
-          _neq: Setup
+        visibility:
+          _eq: Public
       allow_aggregations: true
     comment: ""
   - role: tournament_organizer
     permission:
       columns:
+        - banner_media_id
         - created_at
         - description
         - ends_at
+        - hide_creator_organizer
         - id
+        - media_access
         - name
         - organizer_steam_id
         - starts_at
-        - status
+        - visibility
       computed_fields:
+        - can_upload_media
+        - can_view
         - is_organizer
       filter:
-        _or:
-          - is_organizer:
-              _eq: true
-          - status:
-              _neq: Setup
+        can_view:
+          _eq: true
       allow_aggregations: true
     comment: ""
   - role: user
     permission:
       columns:
+        - banner_media_id
         - created_at
         - description
         - ends_at
+        - hide_creator_organizer
         - id
+        - media_access
         - name
         - organizer_steam_id
         - starts_at
-        - status
+        - visibility
       computed_fields:
+        - can_upload_media
+        - can_view
         - is_organizer
       filter:
-        _or:
-          - is_organizer:
-              _eq: true
-          - status:
-              _neq: Setup
+        can_view:
+          _eq: true
       allow_aggregations: true
     comment: ""
 update_permissions:
   - role: tournament_organizer
     permission:
       columns:
+        - banner_media_id
         - description
         - ends_at
+        - hide_creator_organizer
+        - media_access
         - name
         - starts_at
-        - status
+        - visibility
       filter:
         is_organizer:
           _eq: true
@@ -343,11 +285,14 @@ update_permissions:
   - role: user
     permission:
       columns:
+        - banner_media_id
         - description
         - ends_at
+        - hide_creator_organizer
+        - media_access
         - name
         - starts_at
-        - status
+        - visibility
       filter:
         is_organizer:
           _eq: true
@@ -366,3 +311,14 @@ delete_permissions:
         organizer_steam_id:
           _eq: X-Hasura-User-Id
     comment: ""
+event_triggers:
+  - name: events
+    definition:
+      delete:
+        columns: '*'
+      enable_manual: false
+    retry_conf:
+      interval_sec: 10
+      num_retries: 6
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

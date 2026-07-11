@@ -4,13 +4,10 @@ CREATE OR REPLACE VIEW public.v_event_player_stats AS
 -- scan instead of being applied after a materialized CTE builds the match set for every
 -- event on the instance.
 WITH e_matches AS NOT MATERIALIZED (
-    SELECT DISTINCT
-        et.event_id,
-        tb.match_id
-    FROM event_tournaments et
-    JOIN tournament_stages ts ON ts.tournament_id = et.tournament_id
-    JOIN tournament_brackets tb ON tb.tournament_stage_id = ts.id
-    WHERE tb.match_id IS NOT NULL
+    -- Trigger-maintained materialization of v_event_matches (see
+    -- hasura/triggers/event_match_links); indexed on both columns.
+    SELECT eml.event_id, eml.match_id
+    FROM event_match_links eml
 ),
 -- Kills, deaths and headshots come from the same player_kills rows. Unpivot
 -- each kill into one row per side via LATERAL VALUES so player_kills is
