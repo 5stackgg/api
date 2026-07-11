@@ -11,9 +11,9 @@ BEGIN
     END IF;
 
     SELECT plugin_runtime
-	    INTO runtime
-	    FROM servers
-	    WHERE id = match.server_id;
+        INTO runtime
+        FROM servers
+        WHERE id = match.server_id;
 
     RETURN runtime;
 END

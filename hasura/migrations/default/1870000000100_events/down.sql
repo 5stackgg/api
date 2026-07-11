@@ -10,6 +10,9 @@ DROP FUNCTION IF EXISTS public.can_view_event(public.events, json);
 DROP FUNCTION IF EXISTS public.is_event_member(public.events, bigint);
 DROP FUNCTION IF EXISTS public.is_event_organizer(public.events, json);
 
+DROP TRIGGER IF EXISTS tg_event_media_players_member ON public.event_media_players;
+DROP FUNCTION IF EXISTS public.tg_event_media_players_member();
+
 DROP TRIGGER IF EXISTS tg_events_sync_match_links ON public.events;
 DROP TRIGGER IF EXISTS tg_event_teams_sync_match_links ON public.event_teams;
 DROP TRIGGER IF EXISTS tg_event_players_sync_match_links ON public.event_players;
@@ -43,7 +46,8 @@ BEGIN
       'hasura/functions/events/is_event_organizer',
       'hasura/views/v_event_matches',
       'hasura/views/v_event_player_stats',
-      'hasura/triggers/event_match_links'
+      'hasura/triggers/event_match_links',
+      'hasura/triggers/event_media_players'
     );
   END IF;
 END $$;

@@ -2,7 +2,7 @@ import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { bootContainerAndMigrate, endPool } from "./sql-test-db";
 
 declare global {
-  // eslint-disable-next-line no-var
+   
   var __SQL_TEST_CONTAINER__: StartedPostgreSqlContainer | undefined;
 }
 
