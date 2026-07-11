@@ -348,17 +348,14 @@ export class EventsController {
       throw new NotFoundException("media not found");
     }
 
+    // 404 (not 403) when the viewer lacks access, so probing a URL never
+    // confirms that a Private event exists at that id.
     const canView = await this.eventsService.canView(
       eventId,
       request.user as User | undefined,
     );
-    if (canView === null) {
-      throw new NotFoundException("media not found");
-    }
     if (!canView) {
-      throw new ForbiddenException(
-        "you do not have permission to view this event",
-      );
+      throw new NotFoundException("media not found");
     }
 
     const media = await this.eventsService.getMedia(eventId, filename);
@@ -493,6 +490,9 @@ export class EventsController {
     const size = stat.size;
     response.setHeader("Content-Type", contentType);
     response.setHeader("Accept-Ranges", "bytes");
+    // Image mimetypes are client-claimed at upload (only audio/video get
+    // magic-byte checks), so forbid content sniffing on the way back out.
+    response.setHeader("X-Content-Type-Options", "nosniff");
     // Filenames are immutable but event visibility is not: never allow
     // shared caches to hold media for an event that may go Private later.
     response.setHeader("Cache-Control", "private, max-age=3600");

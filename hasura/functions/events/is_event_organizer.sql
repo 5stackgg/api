@@ -7,11 +7,13 @@ STABLE
 AS $$
     SELECT
         hasura_session ->> 'x-hasura-role' IN ('admin', 'administrator', 'tournament_organizer')
-        OR event.organizer_steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint
+        -- nullif guard matches event_access.sql: an empty x-hasura-user-id
+        -- must read as anonymous rather than fail the ::bigint cast.
+        OR event.organizer_steam_id = nullif(hasura_session ->> 'x-hasura-user-id', '')::bigint
         OR EXISTS (
             SELECT 1
             FROM public.event_organizers
             WHERE event_id = event.id
-              AND steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint
+              AND steam_id = nullif(hasura_session ->> 'x-hasura-user-id', '')::bigint
         );
 $$;
