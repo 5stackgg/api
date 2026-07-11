@@ -15,6 +15,9 @@ describe("draft room membership (SQL-driven)", () => {
     db = await bootMigratedDb("DraftMembershipTest");
     postgres = db.postgres;
     fx = new Fixtures(postgres, 76561199800000000n);
+    // The draft_games insert trigger refuses to create a lobby when no server
+    // region is available.
+    await fx.region();
   }, 600_000);
 
   afterAll(async () => {
