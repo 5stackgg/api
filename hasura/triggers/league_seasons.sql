@@ -87,7 +87,7 @@ BEGIN
     END IF;
 
     IF NEW.status IS DISTINCT FROM OLD.status THEN
-        -- restart_league_season revives a Canceled season back to Live; it sets
+        -- restart_league_season resets a Canceled season back to Setup; it sets
         -- this bypass so the terminal-status and source-status guards stand aside.
         IF OLD.status IN ('Finished', 'Canceled')
            AND current_setting('fivestack.league_restart', true) IS DISTINCT FROM 'true' THEN
@@ -163,7 +163,10 @@ BEGIN
                     RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Season can only finish from Live or Playoffs';
                 END IF;
             WHEN 'Setup' THEN
-                IF OLD.status != 'RegistrationOpen' THEN
+                -- Normally only a re-opened registration reverts to Setup; a
+                -- restart also resets a Canceled season back to Setup.
+                IF OLD.status != 'RegistrationOpen'
+                   AND current_setting('fivestack.league_restart', true) IS DISTINCT FROM 'true' THEN
                     RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Season can only return to Setup from RegistrationOpen';
                 END IF;
             WHEN 'Canceled' THEN
@@ -174,7 +177,10 @@ BEGIN
     END IF;
 
     -- Re-validate scheduling when the window moves (or a season is revived).
+    -- A restart to Setup skips this: the whole point is to reconfigure, and the
+    -- old (possibly stale/overlapping) dates get fixed before it runs again.
     IF NEW.status NOT IN ('Canceled', 'Finished')
+       AND current_setting('fivestack.league_restart', true) IS DISTINCT FROM 'true'
        AND (NEW.signup_opens_at IS DISTINCT FROM OLD.signup_opens_at
             OR NEW.starts_at IS DISTINCT FROM OLD.starts_at
             OR NEW.match_weeks_count IS DISTINCT FROM OLD.match_weeks_count

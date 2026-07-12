@@ -46,24 +46,29 @@ END;
 $$;
 
 -- Season ELO: latest ELO tagged to this season (season_id-indexed lookup; rows are
--- populated by the season backfill).
+-- populated by the season backfill). Falls back to the player's lifetime ELO when
+-- they have no rating in this season yet (e.g. the start of a new season) so the UI
+-- shows their last known ELO instead of a blank.
 CREATE OR REPLACE FUNCTION public.get_player_season_elo_by_type(player public.players, _type text, _season_id UUID) RETURNS numeric
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE
     elo_value numeric;
 BEGIN
-    IF _season_id IS NULL THEN
-        RETURN NULL;
+    IF _season_id IS NOT NULL THEN
+        SELECT current INTO elo_value
+        FROM player_elo
+        WHERE steam_id = player.steam_id
+        AND "type" = _type
+        AND season_id = _season_id
+        ORDER BY created_at DESC
+        LIMIT 1;
     END IF;
 
-    SELECT current INTO elo_value
-    FROM player_elo
-    WHERE steam_id = player.steam_id
-    AND "type" = _type
-    AND season_id = _season_id
-    ORDER BY created_at DESC
-    LIMIT 1;
+    -- No season rating yet: fall back to lifetime (global) ELO for this type.
+    IF elo_value IS NULL THEN
+        elo_value := get_player_elo_by_type(player, _type);
+    END IF;
 
     RETURN elo_value;
 END;

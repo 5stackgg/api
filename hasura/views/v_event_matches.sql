@@ -10,16 +10,28 @@
 --   - one of its lineup players is an attached player and the match falls
 --     inside the event window.
 --
--- The window end gets a day of grace so matches that start on the final
--- evening still count when ends_at is set to midday; missing dates leave
--- that side of the window open.
+-- The window is [starts_at, end + 1 day):
+--   - window_start is the event's starts_at. An event with NO start date is
+--     excluded from the windowed (team/player) branches entirely — otherwise
+--     a missing start defaulted to -infinity and pulled in an attached team's
+--     or player's ENTIRE match history (lifetime stats/highlights instead of
+--     just this event's). Dateless events still get their attached
+--     tournaments' bracket matches (that branch needs no window).
+--   - window_end is ends_at + 1 day, or, for an ongoing event with no end
+--     date, now() + 1 day so every match played up to today is captured. The
+--     day of grace lets matches that start on the final evening still count
+--     when ends_at is set to midday.
+-- event_match_links materializes this view via triggers; a match completed
+-- while an event is ongoing is re-derived on its started_at update (see
+-- hasura/triggers/event_match_links.sql), so now() here stays accurate.
 CREATE OR REPLACE VIEW public.v_event_matches AS
 WITH windowed AS (
     SELECT
         e.id AS event_id,
-        COALESCE(e.starts_at, '-infinity'::timestamptz) AS window_start,
-        COALESCE(e.ends_at + interval '1 day', 'infinity'::timestamptz) AS window_end
+        e.starts_at AS window_start,
+        COALESCE(e.ends_at, now()) + interval '1 day' AS window_end
     FROM events e
+    WHERE e.starts_at IS NOT NULL
 )
 SELECT DISTINCT s.event_id, s.match_id
 FROM (
