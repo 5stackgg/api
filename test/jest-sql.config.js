@@ -12,4 +12,10 @@ module.exports = {
   globalSetup: "<rootDir>/../test/utils/jest-global-setup.ts",
   globalTeardown: "<rootDir>/../test/utils/jest-global-teardown.ts",
   testSequencer: "<rootDir>/../test/utils/slow-first-sequencer.js",
+  // Every suite shares one container, so under CI's parallel workers a heavy
+  // test (full tournament playouts, deep bracket resets) can run well past
+  // jest's 5s default. Timing out mid-query is doubly bad here: jest abandons
+  // the in-flight statement while it still holds row locks, so the next test's
+  // beforeEach cleanup deadlocks against it. Give DB-bound tests real headroom.
+  testTimeout: 60000,
 };

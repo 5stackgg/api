@@ -381,7 +381,16 @@ export class EventsController {
       request.user as User | undefined,
     );
     if (!canView) {
-      throw new NotFoundException("media not found");
+      // Exception: a Public/Friends event's banner is publicly viewable so
+      // link-unfurl crawlers (which carry no session) can render it. Every
+      // other gallery item — and any Private event — stays gated.
+      const isBanner = await this.eventsService.isShareableBanner(
+        eventId,
+        filename,
+      );
+      if (!isBanner) {
+        throw new NotFoundException("media not found");
+      }
     }
 
     const media = await this.eventsService.getMedia(eventId, filename);

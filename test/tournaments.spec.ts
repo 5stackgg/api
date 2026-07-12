@@ -48,12 +48,14 @@ describe("tournaments (SQL-driven)", () => {
   const createTournament = async ({
     withStage = true,
     start = "1 day",
+    substitutes = 0,
   } = {}) => {
     const organizer = await seedPlayer();
     const [options] = await postgres.query<Array<{ id: string }>>(
-      `INSERT INTO match_options (mr, best_of, type, map_pool_id, map_veto, region_veto, regions)
-       SELECT 8, 1, 'Wingman', id, false, true, '{TestA}'
+      `INSERT INTO match_options (mr, best_of, type, map_pool_id, map_veto, region_veto, regions, number_of_substitutes)
+       SELECT 8, 1, 'Wingman', id, false, true, '{TestA}', $1
        FROM map_pools WHERE type = 'Wingman' AND seed = true RETURNING id`,
+      [substitutes],
     );
     const [tournament] = await postgres.query<Array<{ id: string }>>(
       `INSERT INTO tournaments (name, start, organizer_steam_id, match_options_id, status)
@@ -127,12 +129,12 @@ describe("tournaments (SQL-driven)", () => {
     );
 
   // Registration through bracket seeding with four eligible teams.
-  const seedFourTeamCup = async () => {
-    const tournament = await createTournament();
+  const seedFourTeamCup = async ({ substitutes = 0, mates = 1 } = {}) => {
+    const tournament = await createTournament({ substitutes });
     await setStatus(tournament.id, tournament.organizer, "RegistrationOpen");
     const teams = [] as Array<{ id: string; owner: string }>;
     for (let i = 0; i < 4; i++) {
-      teams.push(await createTeam());
+      teams.push(await createTeam(mates));
     }
     for (const team of teams) {
       await registerTeam(tournament.id, team);
@@ -140,6 +142,36 @@ describe("tournaments (SQL-driven)", () => {
     await setStatus(tournament.id, tournament.organizer, "RegistrationClosed");
     return { tournament, teams };
   };
+
+  // The tournament_teams id for a registered team.
+  const getTournamentTeamId = async (tournamentId: string, teamId: string) => {
+    const [row] = await postgres.query<Array<{ id: string }>>(
+      "SELECT id FROM tournament_teams WHERE tournament_id = $1 AND team_id = $2",
+      [tournamentId, teamId],
+    );
+    return row.id;
+  };
+
+  // Removes exactly one non-owner roster member as the team owner.
+  const removeRosterMate = (
+    tournamentId: string,
+    team: { id: string; owner: string },
+  ) =>
+    runAsUser(postgres, team.owner, "admin", (query) =>
+      query(
+        `DELETE FROM tournament_team_roster
+         WHERE ctid = (
+           SELECT ttr.ctid FROM tournament_team_roster ttr
+           WHERE ttr.tournament_team_id = (
+             SELECT id FROM tournament_teams
+             WHERE tournament_id = $1 AND team_id = $2
+           )
+           AND ttr.player_steam_id != $3
+           LIMIT 1
+         )`,
+        [tournamentId, team.id, team.owner],
+      ),
+    );
 
   describe("status transition guards", () => {
     it("cannot open registration without stages", async () => {
@@ -161,9 +193,10 @@ describe("tournaments (SQL-driven)", () => {
       const stranger = await seedPlayer();
       await expect(
         runAsUser(postgres, stranger, "user", (query) =>
-          query("UPDATE tournaments SET status = 'RegistrationOpen' WHERE id = $1", [
-            t.id,
-          ]),
+          query(
+            "UPDATE tournaments SET status = 'RegistrationOpen' WHERE id = $1",
+            [t.id],
+          ),
         ),
       ).rejects.toThrow(/Cannot open tournament registration/i);
     });
@@ -275,6 +308,74 @@ describe("tournaments (SQL-driven)", () => {
     });
   });
 
+  describe("roster lock once the bracket is seeded", () => {
+    it("cannot drop a roster below the minimum after registration closes", async () => {
+      const { tournament, teams } = await seedFourTeamCup();
+
+      await expect(removeRosterMate(tournament.id, teams[0])).rejects.toThrow(
+        /minimum lineup/i,
+      );
+
+      // Eligibility and seed are untouched — the removal never happened.
+      const teamId = await getTournamentTeamId(tournament.id, teams[0].id);
+      const [row] = await postgres.query<
+        Array<{ eligible_at: Date | null; seed: number | null }>
+      >("SELECT eligible_at, seed FROM tournament_teams WHERE id = $1", [
+        teamId,
+      ]);
+      expect(row.eligible_at).not.toBeNull();
+      expect(row.seed).not.toBeNull();
+    });
+
+    it("cannot drop a roster below the minimum while the tournament is live", async () => {
+      const { tournament, teams } = await seedFourTeamCup();
+      await setStatus(tournament.id, tournament.organizer, "Live");
+
+      await expect(removeRosterMate(tournament.id, teams[0])).rejects.toThrow(
+        /minimum lineup/i,
+      );
+    });
+
+    it("allows swapping a player out when a substitute keeps the lineup at the minimum", async () => {
+      // Wingman needs two per lineup; one substitute slot lets a three-player
+      // team drop back to two.
+      const { tournament, teams } = await seedFourTeamCup({
+        substitutes: 1,
+        mates: 2,
+      });
+      const teamId = await getTournamentTeamId(tournament.id, teams[0].id);
+
+      await removeRosterMate(tournament.id, teams[0]);
+
+      const [countRow] = await postgres.query<Array<{ count: string }>>(
+        "SELECT COUNT(*) FROM tournament_team_roster WHERE tournament_team_id = $1",
+        [teamId],
+      );
+      expect(Number(countRow.count)).toBe(2);
+
+      const [row] = await postgres.query<Array<{ eligible_at: Date | null }>>(
+        "SELECT eligible_at FROM tournament_teams WHERE id = $1",
+        [teamId],
+      );
+      expect(row.eligible_at).not.toBeNull();
+    });
+
+    it("still lets an entire team be removed, cascading its roster", async () => {
+      const { tournament, teams } = await seedFourTeamCup();
+      const teamId = await getTournamentTeamId(tournament.id, teams[0].id);
+
+      await runAsUser(postgres, teams[0].owner, "admin", (query) =>
+        query("DELETE FROM tournament_teams WHERE id = $1", [teamId]),
+      );
+
+      const rows = await postgres.query<Array<{ id: string }>>(
+        "SELECT id FROM tournament_teams WHERE id = $1",
+        [teamId],
+      );
+      expect(rows.length).toBe(0);
+    });
+  });
+
   describe("bracket seeding and progression", () => {
     it("closing registration seeds the single-elimination bracket and schedules round 1", async () => {
       const { tournament } = await seedFourTeamCup();
@@ -326,7 +427,11 @@ describe("tournaments (SQL-driven)", () => {
       expect((await getTournament(tournament.id)).status).toBe("Finished");
 
       const trophies = await postgres.query<
-        Array<{ placement: number; tournament_team_id: string; manual: boolean }>
+        Array<{
+          placement: number;
+          tournament_team_id: string;
+          manual: boolean;
+        }>
       >(
         `SELECT placement, tournament_team_id, manual FROM tournament_trophies
          WHERE tournament_id = $1 ORDER BY placement`,
@@ -376,7 +481,10 @@ describe("tournaments (SQL-driven)", () => {
         await winMatch(bracket.match_id!, "lineup_1_id");
       }
       brackets = await getBrackets(tournament.id);
-      await winMatch(brackets.find((b) => b.round === 2)!.match_id!, "lineup_1_id");
+      await winMatch(
+        brackets.find((b) => b.round === 2)!.match_id!,
+        "lineup_1_id",
+      );
       expect((await getTournament(tournament.id)).status).toBe("Finished");
 
       await expect(
@@ -396,7 +504,10 @@ describe("tournaments (SQL-driven)", () => {
         await winMatch(bracket.match_id!, "lineup_1_id");
       }
       brackets = await getBrackets(tournament.id);
-      await winMatch(brackets.find((b) => b.round === 2)!.match_id!, "lineup_1_id");
+      await winMatch(
+        brackets.find((b) => b.round === 2)!.match_id!,
+        "lineup_1_id",
+      );
 
       const count = async () =>
         Number(

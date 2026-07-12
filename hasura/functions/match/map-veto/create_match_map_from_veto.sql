@@ -52,9 +52,12 @@ BEGIN
     -- Determine the lineup ID for veto picking
     SELECT * INTO lineup_id FROM get_map_veto_picking_lineup_id(_match);
 
-    -- Insert the leftover map into match_map_veto_picks table
-    INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id)
-        VALUES (match_map_veto_pick.match_id, 'Decider', lineup_id, available_maps[1]);
+    -- Insert the leftover map into match_map_veto_picks table.
+    -- created_at uses clock_timestamp() (not the column default now(), which is
+    -- frozen at transaction start) so the Decider always sorts AFTER the pick
+    -- that triggered it; display ordering is by created_at with no tiebreaker.
+    INSERT INTO match_map_veto_picks (match_id, type, match_lineup_id, map_id, created_at)
+        VALUES (match_map_veto_pick.match_id, 'Decider', lineup_id, available_maps[1], clock_timestamp());
 
     -- Update the total number of maps for the match and insert the leftover map into match_maps
     SELECT count(*) INTO total_maps FROM match_maps WHERE match_id = match_map_veto_pick.match_id;

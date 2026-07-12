@@ -153,6 +153,28 @@ export class EventsService {
     return row;
   }
 
+  // The event's banner (and its poster frame) is the one media item that must
+  // be fetchable by an anonymous request — link-unfurl crawlers (Discord,
+  // Steam, etc.) carry no session and would otherwise get a 404, leaving a
+  // bannerless card. Only Public/Friends banners qualify; Private events and
+  // every other gallery item stay behind canView().
+  public async isShareableBanner(
+    eventId: string,
+    filename: string,
+  ): Promise<boolean> {
+    const [row] = await this.postgres.query<Array<{ ok: boolean }>>(
+      `SELECT true AS ok
+         FROM public.events e
+         JOIN public.event_media m ON m.id = e.banner_media_id
+        WHERE e.id = $1
+          AND e.visibility IN ('Public', 'Friends')
+          AND (m.filename = $2 OR m.thumbnail_filename = $2)
+        LIMIT 1`,
+      [eventId, filename],
+    );
+    return row?.ok === true;
+  }
+
   public async getMediaById(
     eventId: string,
     mediaId: string,
