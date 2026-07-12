@@ -118,6 +118,9 @@ CREATE TRIGGER tg_mlp_sync_event_match_links
 
 -- Full backfill/prune. Runs only when this file's digest changes; keeps the
 -- table exact after upgrades that alter the derivation.
+-- Re-run trigger: v_event_matches now bounds team/player-derived matches to
+-- the event window (missing start date -> no windowed matches), so this prune
+-- must drop the stale lifetime links a previous unbounded window inserted.
 DELETE FROM public.event_match_links l
  WHERE NOT EXISTS (
      SELECT 1 FROM public.v_event_matches v

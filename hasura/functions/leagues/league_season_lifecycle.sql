@@ -342,10 +342,12 @@ BEGIN
     DELETE FROM public.league_relegation_playoffs WHERE league_season_id = _league_season_id;
     DELETE FROM public.league_team_movements WHERE league_season_id = _league_season_id;
 
-    -- Revive to Live; tau_league_seasons re-runs start_league_season, which
-    -- rebuilds the division tournaments from the same Approved team seasons.
+    -- Reset to Setup so the admin can reconfigure (dates, divisions, teams) and
+    -- run the season again from scratch; the torn-down tournaments are rebuilt
+    -- when it next reaches Live. The bypass lets the Canceled -> Setup transition
+    -- past the terminal-status and source-status guards.
     PERFORM set_config('fivestack.league_restart', 'true', true);
-    UPDATE public.league_seasons SET status = 'Live' WHERE id = _league_season_id;
+    UPDATE public.league_seasons SET status = 'Setup' WHERE id = _league_season_id;
     PERFORM set_config('fivestack.league_restart', 'false', true);
 
     PERFORM set_config('fivestack.league_cascade', 'false', true);
