@@ -169,6 +169,32 @@ describe("map veto (SQL-driven)", () => {
     expect((await vetoState(match.id)).status).toBe("Live");
   });
 
+  it("orders the auto-Decider strictly after the ban that triggered it", async () => {
+    // The Decider is inserted by create_match_map_from_veto inside the SAME
+    // transaction as the final ban. Taking the created_at default (now(), frozen
+    // at transaction start) tied it with that ban, and since the veto display
+    // sorts on created_at with no tiebreaker the Decider could render before the
+    // ban ("ban, ..., decider, ban"). It now uses clock_timestamp() so it always
+    // sorts last. Assert strict ordering (a tie would fail this).
+    const match = await createVetoMatch(1, 3);
+
+    await insertPick(match.id, "Ban", match.lineup_1_id, match.mapIds[0]);
+    await insertPick(match.id, "Ban", match.lineup_2_id, match.mapIds[1]);
+
+    const [row] = await postgres.query<
+      Array<{ last_ban: string; decider: string }>
+    >(
+      `SELECT max(created_at) FILTER (WHERE type = 'Ban')     AS last_ban,
+              max(created_at) FILTER (WHERE type = 'Decider') AS decider
+       FROM match_map_veto_picks WHERE match_id = $1`,
+      [match.id],
+    );
+
+    expect(new Date(row.decider).getTime()).toBeGreaterThan(
+      new Date(row.last_ban).getTime(),
+    );
+  });
+
   it("runs the BO3 Pick/Side steps and assigns the chosen side to the picking lineup", async () => {
     const match = await createVetoMatch(3, 4);
 
