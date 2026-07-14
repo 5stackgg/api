@@ -22512,6 +22512,14 @@ export default {
             "cpu_threads_per_core": [
                 38
             ],
+            "cpu_warnings": [
+                1652,
+                {
+                    "path": [
+                        78
+                    ]
+                }
+            ],
             "cs2_launch_options": [
                 1652,
                 {
@@ -22868,6 +22876,9 @@ export default {
             "cpu_governor_info": [
                 1652
             ],
+            "cpu_warnings": [
+                1652
+            ],
             "cs2_launch_options": [
                 1652
             ],
@@ -23014,6 +23025,9 @@ export default {
             "cpu_threads_per_core": [
                 39
             ],
+            "cpu_warnings": [
+                1654
+            ],
             "cs2_launch_options": [
                 1654
             ],
@@ -23152,6 +23166,9 @@ export default {
             "cpu_governor_info": [
                 78
             ],
+            "cpu_warnings": [
+                78
+            ],
             "cs2_launch_options": [
                 78
             ],
@@ -23175,6 +23192,9 @@ export default {
             "cpu_governor_info": [
                 38
             ],
+            "cpu_warnings": [
+                38
+            ],
             "cs2_launch_options": [
                 38
             ],
@@ -23196,6 +23216,9 @@ export default {
                 78
             ],
             "cpu_governor_info": [
+                78
+            ],
+            "cpu_warnings": [
                 78
             ],
             "cs2_launch_options": [
@@ -23273,6 +23296,9 @@ export default {
             ],
             "cpu_threads_per_core": [
                 38
+            ],
+            "cpu_warnings": [
+                1652
             ],
             "cs2_launch_options": [
                 1652
@@ -23749,6 +23775,9 @@ export default {
             "cpu_threads_per_core": [
                 2781
             ],
+            "cpu_warnings": [
+                2781
+            ],
             "cs2_launch_options": [
                 2781
             ],
@@ -23891,6 +23920,9 @@ export default {
             "cpu_governor_info": [
                 1652
             ],
+            "cpu_warnings": [
+                1652
+            ],
             "cs2_launch_options": [
                 1652
             ],
@@ -23928,6 +23960,9 @@ export default {
             ],
             "cpu_threads_per_core": [
                 38
+            ],
+            "cpu_warnings": [
+                1652
             ],
             "cs2_launch_options": [
                 1652
@@ -24328,6 +24363,9 @@ export default {
             ],
             "cpu_threads_per_core": [
                 38
+            ],
+            "cpu_warnings": [
+                1652
             ],
             "cs2_launch_options": [
                 1652
