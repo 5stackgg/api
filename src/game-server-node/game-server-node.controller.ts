@@ -77,6 +77,7 @@ export class GameServerNodeController {
       cpus: Record<number, number>;
       frequency: number;
     };
+    cpuWarnings?: Array<string>;
     podStats: Array<PodStats>;
     labels: Record<string, string>;
   }): Promise<void> {
@@ -145,6 +146,7 @@ export class GameServerNodeController {
       gpu,
       "Online",
       rootDisk,
+      payload.cpuWarnings ?? [],
     );
 
     if (result?.transitionedFromOffline) {

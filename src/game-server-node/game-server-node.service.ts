@@ -193,6 +193,7 @@ export class GameServerNodeService {
       | undefined,
     status: e_game_server_node_statuses_enum,
     rootDisk?: NodeDisk,
+    cpuWarnings: Array<string> = [],
   ) {
     const gpuDevicesAll = gpu?.devices ?? null;
     const hasGpu = (gpu?.count ?? 0) > 0 || (gpuDevicesAll?.length ?? 0) > 0;
@@ -228,6 +229,7 @@ export class GameServerNodeService {
         supports_cpu_pinning: true,
         cpu_governor_info: true,
         cpu_frequency_info: true,
+        cpu_warnings: true,
         update_status: true,
       },
     });
@@ -293,7 +295,8 @@ export class GameServerNodeService {
         cpuGovernorInfo,
       ) ||
       game_server_nodes_by_pk.token ||
-      !isJsonEqual(game_server_nodes_by_pk.cpu_frequency_info, cpuFrequencyInfo)
+      !isJsonEqual(game_server_nodes_by_pk.cpu_frequency_info, cpuFrequencyInfo) ||
+      !isJsonEqual(game_server_nodes_by_pk.cpu_warnings, cpuWarnings)
     ) {
       await this.hasura.mutation({
         update_game_server_nodes_by_pk: {
@@ -320,6 +323,7 @@ export class GameServerNodeService {
               cpu_threads_per_core: cpuInfo.threadsPerCore,
               cpu_governor_info: cpuGovernorInfo,
               cpu_frequency_info: cpuFrequencyInfo,
+              cpu_warnings: cpuWarnings,
               disk_available_gb: rootDisk
                 ? Number.isNaN(parseInt(rootDisk.available))
                   ? null
