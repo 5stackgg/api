@@ -1,13 +1,7 @@
 table:
-  name: tournament_organizers
+  name: tournament_prizes
   schema: public
 object_relationships:
-  - name: organization_team
-    using:
-      foreign_key_constraint_on: organization_team_id
-  - name: organizer
-    using:
-      foreign_key_constraint_on: steam_id
   - name: tournament
     using:
       foreign_key_constraint_on: tournament_id
@@ -19,17 +13,38 @@ insert_permissions:
           is_organizer:
             _eq: true
       columns:
-        - steam_id
+        - order
+        - place
+        - prize
         - tournament_id
     comment: ""
 select_permissions:
   - role: guest
     permission:
       columns:
-        - organization_team_id
-        - steam_id
+        - created_at
+        - id
+        - order
+        - place
+        - prize
         - tournament_id
       filter: {}
+    comment: ""
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - order
+        - place
+        - prize
+      filter:
+        tournament:
+          is_organizer:
+            _eq: true
+      check:
+        tournament:
+          is_organizer:
+            _eq: true
     comment: ""
 delete_permissions:
   - role: user

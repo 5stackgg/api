@@ -51,6 +51,7 @@ insert_permissions:
       columns:
         - decider_best_of
         - default_best_of
+        - final_map_advantage
         - groups
         - match_options_id
         - max_rounds
@@ -69,6 +70,7 @@ select_permissions:
       columns:
         - decider_best_of
         - default_best_of
+        - final_map_advantage
         - groups
         - id
         - match_options_id
@@ -90,6 +92,7 @@ update_permissions:
       columns:
         - decider_best_of
         - default_best_of
+        - final_map_advantage
         - groups
         - match_options_id
         - max_rounds

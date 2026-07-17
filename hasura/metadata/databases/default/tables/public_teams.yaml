@@ -122,6 +122,7 @@ select_permissions:
         - avatar_url
         - captain_steam_id
         - id
+        - is_organization
         - name
         - owner_steam_id
         - short_name
@@ -139,6 +140,7 @@ update_permissions:
     permission:
       columns:
         - captain_steam_id
+        - is_organization
         - name
         - owner_steam_id
         - short_name

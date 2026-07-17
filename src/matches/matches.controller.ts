@@ -177,6 +177,8 @@ export class MatchesController {
           timeout_setting: true,
           tech_timeout_setting: true,
           number_of_substitutes: true,
+          round_restart_delay: true,
+          halftime_pausematch: true,
         },
         match_maps: {
           id: true,

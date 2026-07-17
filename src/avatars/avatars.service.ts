@@ -9,7 +9,8 @@ export type AvatarKind =
   | "teams"
   | "players"
   | "roster-players"
-  | "roster-teams";
+  | "roster-teams"
+  | "tournaments";
 
 const EXTENSION_BY_MIMETYPE: Record<string, string> = {
   "image/png": "png",
@@ -364,6 +365,92 @@ export class AvatarsService {
     this.logger.log(
       `Removed team ${teamId} roster image for player ${steamId}`,
     );
+  }
+
+  async uploadTournamentLogo(
+    tournamentId: string,
+    user: User,
+    buffer: Buffer,
+    mimetype: string,
+  ): Promise<string> {
+    const logo = await this.assertTournamentOrganizer(tournamentId, user);
+
+    const path = this.buildPath("tournaments", tournamentId, mimetype);
+
+    await this.s3.put(path, buffer);
+
+    if (logo && logo !== path) {
+      await this.s3.remove(logo);
+    }
+
+    await this.hasura.mutation({
+      update_tournaments_by_pk: {
+        __args: {
+          pk_columns: { id: tournamentId },
+          _set: { logo: path },
+        },
+        __typename: true,
+      },
+    });
+
+    this.logger.log(`Uploaded tournament ${tournamentId} logo to ${path}`);
+    return path;
+  }
+
+  async removeTournamentLogo(tournamentId: string, user: User): Promise<void> {
+    const logo = await this.assertTournamentOrganizer(tournamentId, user);
+
+    if (logo) {
+      await this.s3.remove(logo);
+    }
+
+    await this.hasura.mutation({
+      update_tournaments_by_pk: {
+        __args: {
+          pk_columns: { id: tournamentId },
+          _set: { logo: null },
+        },
+        __typename: true,
+      },
+    });
+
+    this.logger.log(`Removed tournament ${tournamentId} logo`);
+  }
+
+  // Returns the existing logo path when the caller may manage the tournament.
+  private async assertTournamentOrganizer(
+    tournamentId: string,
+    user: User,
+  ): Promise<string | null | undefined> {
+    const { tournaments_by_pk } = await this.hasura.query({
+      tournaments_by_pk: {
+        __args: { id: tournamentId },
+        logo: true,
+        organizer_steam_id: true,
+        organizers: {
+          __args: {
+            where: { steam_id: { _eq: user.steam_id } },
+            limit: 1,
+          },
+          steam_id: true,
+        },
+      },
+    });
+
+    if (!tournaments_by_pk) {
+      throw new ForbiddenException("Tournament not found");
+    }
+
+    const isOrganizer =
+      user.role === "administrator" ||
+      tournaments_by_pk.organizer_steam_id === user.steam_id ||
+      (tournaments_by_pk.organizers?.length ?? 0) > 0;
+
+    if (!isOrganizer) {
+      throw new ForbiddenException("You do not organize this tournament");
+    }
+
+    return tournaments_by_pk.logo;
   }
 
   async getStream(
