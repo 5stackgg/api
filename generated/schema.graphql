@@ -11634,6 +11634,233 @@ input e_timeout_settings_updates {
 }
 
 """
+columns and relationships of "e_tournament_categories"
+"""
+type e_tournament_categories {
+  description: String!
+
+  """An array relationship"""
+  tournament_categories(
+    """distinct select on columns"""
+    distinct_on: [tournament_categories_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_categories_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_categories_bool_exp
+  ): [tournament_categories!]!
+
+  """An aggregate relationship"""
+  tournament_categories_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_categories_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_categories_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_categories_bool_exp
+  ): tournament_categories_aggregate!
+  value: String!
+}
+
+"""
+aggregated selection of "e_tournament_categories"
+"""
+type e_tournament_categories_aggregate {
+  aggregate: e_tournament_categories_aggregate_fields
+  nodes: [e_tournament_categories!]!
+}
+
+"""
+aggregate fields of "e_tournament_categories"
+"""
+type e_tournament_categories_aggregate_fields {
+  count(columns: [e_tournament_categories_select_column!], distinct: Boolean): Int!
+  max: e_tournament_categories_max_fields
+  min: e_tournament_categories_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_tournament_categories". All fields are combined with a logical 'AND'.
+"""
+input e_tournament_categories_bool_exp {
+  _and: [e_tournament_categories_bool_exp!]
+  _not: e_tournament_categories_bool_exp
+  _or: [e_tournament_categories_bool_exp!]
+  description: String_comparison_exp
+  tournament_categories: tournament_categories_bool_exp
+  tournament_categories_aggregate: tournament_categories_aggregate_bool_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_tournament_categories"
+"""
+enum e_tournament_categories_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_tournament_categories_pkey
+}
+
+enum e_tournament_categories_enum {
+  """LAN"""
+  LAN
+
+  """League"""
+  League
+
+  """Location Event"""
+  LocationEvent
+
+  """Online Event"""
+  OnlineEvent
+}
+
+"""
+Boolean expression to compare columns of type "e_tournament_categories_enum". All fields are combined with logical 'AND'.
+"""
+input e_tournament_categories_enum_comparison_exp {
+  _eq: e_tournament_categories_enum
+  _in: [e_tournament_categories_enum!]
+  _is_null: Boolean
+  _neq: e_tournament_categories_enum
+  _nin: [e_tournament_categories_enum!]
+}
+
+"""
+input type for inserting data into table "e_tournament_categories"
+"""
+input e_tournament_categories_insert_input {
+  description: String
+  tournament_categories: tournament_categories_arr_rel_insert_input
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_tournament_categories_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_tournament_categories_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_tournament_categories"
+"""
+type e_tournament_categories_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_tournament_categories!]!
+}
+
+"""
+input type for inserting object relation for remote table "e_tournament_categories"
+"""
+input e_tournament_categories_obj_rel_insert_input {
+  data: e_tournament_categories_insert_input!
+
+  """upsert condition"""
+  on_conflict: e_tournament_categories_on_conflict
+}
+
+"""
+on_conflict condition type for table "e_tournament_categories"
+"""
+input e_tournament_categories_on_conflict {
+  constraint: e_tournament_categories_constraint!
+  update_columns: [e_tournament_categories_update_column!]! = []
+  where: e_tournament_categories_bool_exp
+}
+
+"""Ordering options when selecting data from "e_tournament_categories"."""
+input e_tournament_categories_order_by {
+  description: order_by
+  tournament_categories_aggregate: tournament_categories_aggregate_order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_tournament_categories"""
+input e_tournament_categories_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_tournament_categories"
+"""
+enum e_tournament_categories_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_tournament_categories"
+"""
+input e_tournament_categories_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_tournament_categories"
+"""
+input e_tournament_categories_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_tournament_categories_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_tournament_categories_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_tournament_categories"
+"""
+enum e_tournament_categories_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_tournament_categories_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_tournament_categories_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_tournament_categories_bool_exp!
+}
+
+"""
 columns and relationships of "e_tournament_stage_types"
 """
 type e_tournament_stage_types {
@@ -30070,6 +30297,7 @@ type match_options {
   check_in_setting: e_check_in_settings_enum!
   coaches: Boolean!
   default_models: Boolean
+  halftime_pausematch: Boolean!
 
   """
   A computed field, executes function "has_active_matches"
@@ -30128,6 +30356,7 @@ type match_options {
   ready_setting: e_ready_settings_enum!
   region_veto: Boolean!
   regions: [String!]
+  round_restart_delay: Int
   tech_timeout_setting: e_timeout_settings_enum!
   timeout_setting: e_timeout_settings_enum!
 
@@ -30175,6 +30404,7 @@ type match_options_avg_fields {
   live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
+  round_restart_delay: Float
   tv_delay: Float
 }
 
@@ -30191,6 +30421,7 @@ input match_options_bool_exp {
   check_in_setting: e_check_in_settings_enum_comparison_exp
   coaches: Boolean_comparison_exp
   default_models: Boolean_comparison_exp
+  halftime_pausematch: Boolean_comparison_exp
   has_active_matches: Boolean_comparison_exp
   id: uuid_comparison_exp
   invite_code: String_comparison_exp
@@ -30209,6 +30440,7 @@ input match_options_bool_exp {
   ready_setting: e_ready_settings_enum_comparison_exp
   region_veto: Boolean_comparison_exp
   regions: String_array_comparison_exp
+  round_restart_delay: Int_comparison_exp
   tech_timeout_setting: e_timeout_settings_enum_comparison_exp
   timeout_setting: e_timeout_settings_enum_comparison_exp
   tournament: tournaments_bool_exp
@@ -30237,6 +30469,7 @@ input match_options_inc_input {
   live_match_timeout: Int
   mr: Int
   number_of_substitutes: Int
+  round_restart_delay: Int
   tv_delay: Int
 }
 
@@ -30250,6 +30483,7 @@ input match_options_insert_input {
   check_in_setting: e_check_in_settings_enum
   coaches: Boolean
   default_models: Boolean
+  halftime_pausematch: Boolean
   id: uuid
   invite_code: String
   knife_round: Boolean
@@ -30266,6 +30500,7 @@ input match_options_insert_input {
   ready_setting: e_ready_settings_enum
   region_veto: Boolean
   regions: [String!]
+  round_restart_delay: Int
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tournament: tournaments_obj_rel_insert_input
@@ -30286,6 +30521,7 @@ type match_options_max_fields {
   mr: Int
   number_of_substitutes: Int
   regions: [String!]
+  round_restart_delay: Int
   tv_delay: Int
 }
 
@@ -30300,6 +30536,7 @@ type match_options_min_fields {
   mr: Int
   number_of_substitutes: Int
   regions: [String!]
+  round_restart_delay: Int
   tv_delay: Int
 }
 
@@ -30341,6 +30578,7 @@ input match_options_order_by {
   check_in_setting: order_by
   coaches: order_by
   default_models: order_by
+  halftime_pausematch: order_by
   has_active_matches: order_by
   id: order_by
   invite_code: order_by
@@ -30358,6 +30596,7 @@ input match_options_order_by {
   ready_setting: order_by
   region_veto: order_by
   regions: order_by
+  round_restart_delay: order_by
   tech_timeout_setting: order_by
   timeout_setting: order_by
   tournament: tournaments_order_by
@@ -30395,6 +30634,9 @@ enum match_options_select_column {
   default_models
 
   """column name"""
+  halftime_pausematch
+
+  """column name"""
   id
 
   """column name"""
@@ -30437,6 +30679,9 @@ enum match_options_select_column {
   regions
 
   """column name"""
+  round_restart_delay
+
+  """column name"""
   tech_timeout_setting
 
   """column name"""
@@ -30459,6 +30704,7 @@ input match_options_set_input {
   check_in_setting: e_check_in_settings_enum
   coaches: Boolean
   default_models: Boolean
+  halftime_pausematch: Boolean
   id: uuid
   invite_code: String
   knife_round: Boolean
@@ -30473,6 +30719,7 @@ input match_options_set_input {
   ready_setting: e_ready_settings_enum
   region_veto: Boolean
   regions: [String!]
+  round_restart_delay: Int
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tv_delay: Int
@@ -30486,6 +30733,7 @@ type match_options_stddev_fields {
   live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
+  round_restart_delay: Float
   tv_delay: Float
 }
 
@@ -30496,6 +30744,7 @@ type match_options_stddev_pop_fields {
   live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
+  round_restart_delay: Float
   tv_delay: Float
 }
 
@@ -30506,6 +30755,7 @@ type match_options_stddev_samp_fields {
   live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
+  round_restart_delay: Float
   tv_delay: Float
 }
 
@@ -30528,6 +30778,7 @@ input match_options_stream_cursor_value_input {
   check_in_setting: e_check_in_settings_enum
   coaches: Boolean
   default_models: Boolean
+  halftime_pausematch: Boolean
   id: uuid
   invite_code: String
   knife_round: Boolean
@@ -30542,6 +30793,7 @@ input match_options_stream_cursor_value_input {
   ready_setting: e_ready_settings_enum
   region_veto: Boolean
   regions: [String!]
+  round_restart_delay: Int
   tech_timeout_setting: e_timeout_settings_enum
   timeout_setting: e_timeout_settings_enum
   tv_delay: Int
@@ -30555,6 +30807,7 @@ type match_options_sum_fields {
   live_match_timeout: Int
   mr: Int
   number_of_substitutes: Int
+  round_restart_delay: Int
   tv_delay: Int
 }
 
@@ -30581,6 +30834,9 @@ enum match_options_update_column {
   default_models
 
   """column name"""
+  halftime_pausematch
+
+  """column name"""
   id
 
   """column name"""
@@ -30621,6 +30877,9 @@ enum match_options_update_column {
 
   """column name"""
   regions
+
+  """column name"""
+  round_restart_delay
 
   """column name"""
   tech_timeout_setting
@@ -30653,6 +30912,7 @@ type match_options_var_pop_fields {
   live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
+  round_restart_delay: Float
   tv_delay: Float
 }
 
@@ -30663,6 +30923,7 @@ type match_options_var_samp_fields {
   live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
+  round_restart_delay: Float
   tv_delay: Float
 }
 
@@ -30673,6 +30934,7 @@ type match_options_variance_fields {
   live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
+  round_restart_delay: Float
   tv_delay: Float
 }
 
@@ -34445,6 +34707,19 @@ type mutation_root {
   delete_e_timeout_settings_by_pk(value: String!): e_timeout_settings
 
   """
+  delete data from the table: "e_tournament_categories"
+  """
+  delete_e_tournament_categories(
+    """filter the rows which have to be deleted"""
+    where: e_tournament_categories_bool_exp!
+  ): e_tournament_categories_mutation_response
+
+  """
+  delete single row from the table: "e_tournament_categories"
+  """
+  delete_e_tournament_categories_by_pk(value: String!): e_tournament_categories
+
+  """
   delete data from the table: "e_tournament_stage_types"
   """
   delete_e_tournament_stage_types(
@@ -35600,6 +35875,32 @@ type mutation_root {
   delete_tournament_brackets_by_pk(id: uuid!): tournament_brackets
 
   """
+  delete data from the table: "tournament_categories"
+  """
+  delete_tournament_categories(
+    """filter the rows which have to be deleted"""
+    where: tournament_categories_bool_exp!
+  ): tournament_categories_mutation_response
+
+  """
+  delete single row from the table: "tournament_categories"
+  """
+  delete_tournament_categories_by_pk(category: e_tournament_categories_enum!, tournament_id: uuid!): tournament_categories
+
+  """
+  delete data from the table: "tournament_organizer_teams"
+  """
+  delete_tournament_organizer_teams(
+    """filter the rows which have to be deleted"""
+    where: tournament_organizer_teams_bool_exp!
+  ): tournament_organizer_teams_mutation_response
+
+  """
+  delete single row from the table: "tournament_organizer_teams"
+  """
+  delete_tournament_organizer_teams_by_pk(team_id: uuid!, tournament_id: uuid!): tournament_organizer_teams
+
+  """
   delete data from the table: "tournament_organizers"
   """
   delete_tournament_organizers(
@@ -35611,6 +35912,19 @@ type mutation_root {
   delete single row from the table: "tournament_organizers"
   """
   delete_tournament_organizers_by_pk(steam_id: bigint!, tournament_id: uuid!): tournament_organizers
+
+  """
+  delete data from the table: "tournament_prizes"
+  """
+  delete_tournament_prizes(
+    """filter the rows which have to be deleted"""
+    where: tournament_prizes_bool_exp!
+  ): tournament_prizes_mutation_response
+
+  """
+  delete single row from the table: "tournament_prizes"
+  """
+  delete_tournament_prizes_by_pk(id: uuid!): tournament_prizes
 
   """
   delete data from the table: "tournament_stage_windows"
@@ -36736,6 +37050,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_timeout_settings_on_conflict
   ): e_timeout_settings
+
+  """
+  insert data into the table: "e_tournament_categories"
+  """
+  insert_e_tournament_categories(
+    """the rows to be inserted"""
+    objects: [e_tournament_categories_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_tournament_categories_on_conflict
+  ): e_tournament_categories_mutation_response
+
+  """
+  insert a single row into the table: "e_tournament_categories"
+  """
+  insert_e_tournament_categories_one(
+    """the row to be inserted"""
+    object: e_tournament_categories_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_tournament_categories_on_conflict
+  ): e_tournament_categories
 
   """
   insert data into the table: "e_tournament_stage_types"
@@ -38700,6 +39036,50 @@ type mutation_root {
   ): tournament_brackets
 
   """
+  insert data into the table: "tournament_categories"
+  """
+  insert_tournament_categories(
+    """the rows to be inserted"""
+    objects: [tournament_categories_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: tournament_categories_on_conflict
+  ): tournament_categories_mutation_response
+
+  """
+  insert a single row into the table: "tournament_categories"
+  """
+  insert_tournament_categories_one(
+    """the row to be inserted"""
+    object: tournament_categories_insert_input!
+
+    """upsert condition"""
+    on_conflict: tournament_categories_on_conflict
+  ): tournament_categories
+
+  """
+  insert data into the table: "tournament_organizer_teams"
+  """
+  insert_tournament_organizer_teams(
+    """the rows to be inserted"""
+    objects: [tournament_organizer_teams_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: tournament_organizer_teams_on_conflict
+  ): tournament_organizer_teams_mutation_response
+
+  """
+  insert a single row into the table: "tournament_organizer_teams"
+  """
+  insert_tournament_organizer_teams_one(
+    """the row to be inserted"""
+    object: tournament_organizer_teams_insert_input!
+
+    """upsert condition"""
+    on_conflict: tournament_organizer_teams_on_conflict
+  ): tournament_organizer_teams
+
+  """
   insert data into the table: "tournament_organizers"
   """
   insert_tournament_organizers(
@@ -38720,6 +39100,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: tournament_organizers_on_conflict
   ): tournament_organizers
+
+  """
+  insert data into the table: "tournament_prizes"
+  """
+  insert_tournament_prizes(
+    """the rows to be inserted"""
+    objects: [tournament_prizes_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: tournament_prizes_on_conflict
+  ): tournament_prizes_mutation_response
+
+  """
+  insert a single row into the table: "tournament_prizes"
+  """
+  insert_tournament_prizes_one(
+    """the row to be inserted"""
+    object: tournament_prizes_insert_input!
+
+    """upsert condition"""
+    on_conflict: tournament_prizes_on_conflict
+  ): tournament_prizes
 
   """
   insert data into the table: "tournament_stage_windows"
@@ -40600,6 +41002,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_timeout_settings_updates!]!
   ): [e_timeout_settings_mutation_response]
+
+  """
+  update data of the table: "e_tournament_categories"
+  """
+  update_e_tournament_categories(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_tournament_categories_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_tournament_categories_bool_exp!
+  ): e_tournament_categories_mutation_response
+
+  """
+  update single row of the table: "e_tournament_categories"
+  """
+  update_e_tournament_categories_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_tournament_categories_set_input
+    pk_columns: e_tournament_categories_pk_columns_input!
+  ): e_tournament_categories
+
+  """
+  update multiples rows of table: "e_tournament_categories"
+  """
+  update_e_tournament_categories_many(
+    """updates to execute, in order"""
+    updates: [e_tournament_categories_updates!]!
+  ): [e_tournament_categories_mutation_response]
 
   """
   update data of the table: "e_tournament_stage_types"
@@ -43899,6 +44329,62 @@ type mutation_root {
   ): [tournament_brackets_mutation_response]
 
   """
+  update data of the table: "tournament_categories"
+  """
+  update_tournament_categories(
+    """sets the columns of the filtered rows to the given values"""
+    _set: tournament_categories_set_input
+
+    """filter the rows which have to be updated"""
+    where: tournament_categories_bool_exp!
+  ): tournament_categories_mutation_response
+
+  """
+  update single row of the table: "tournament_categories"
+  """
+  update_tournament_categories_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: tournament_categories_set_input
+    pk_columns: tournament_categories_pk_columns_input!
+  ): tournament_categories
+
+  """
+  update multiples rows of table: "tournament_categories"
+  """
+  update_tournament_categories_many(
+    """updates to execute, in order"""
+    updates: [tournament_categories_updates!]!
+  ): [tournament_categories_mutation_response]
+
+  """
+  update data of the table: "tournament_organizer_teams"
+  """
+  update_tournament_organizer_teams(
+    """sets the columns of the filtered rows to the given values"""
+    _set: tournament_organizer_teams_set_input
+
+    """filter the rows which have to be updated"""
+    where: tournament_organizer_teams_bool_exp!
+  ): tournament_organizer_teams_mutation_response
+
+  """
+  update single row of the table: "tournament_organizer_teams"
+  """
+  update_tournament_organizer_teams_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: tournament_organizer_teams_set_input
+    pk_columns: tournament_organizer_teams_pk_columns_input!
+  ): tournament_organizer_teams
+
+  """
+  update multiples rows of table: "tournament_organizer_teams"
+  """
+  update_tournament_organizer_teams_many(
+    """updates to execute, in order"""
+    updates: [tournament_organizer_teams_updates!]!
+  ): [tournament_organizer_teams_mutation_response]
+
+  """
   update data of the table: "tournament_organizers"
   """
   update_tournament_organizers(
@@ -43931,6 +44417,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [tournament_organizers_updates!]!
   ): [tournament_organizers_mutation_response]
+
+  """
+  update data of the table: "tournament_prizes"
+  """
+  update_tournament_prizes(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: tournament_prizes_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: tournament_prizes_set_input
+
+    """filter the rows which have to be updated"""
+    where: tournament_prizes_bool_exp!
+  ): tournament_prizes_mutation_response
+
+  """
+  update single row of the table: "tournament_prizes"
+  """
+  update_tournament_prizes_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: tournament_prizes_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: tournament_prizes_set_input
+    pk_columns: tournament_prizes_pk_columns_input!
+  ): tournament_prizes
+
+  """
+  update multiples rows of table: "tournament_prizes"
+  """
+  update_tournament_prizes_many(
+    """updates to execute, in order"""
+    updates: [tournament_prizes_updates!]!
+  ): [tournament_prizes_mutation_response]
 
   """
   update data of the table: "tournament_stage_windows"
@@ -67871,6 +68391,51 @@ type query_root {
   e_timeout_settings_by_pk(value: String!): e_timeout_settings
 
   """
+  fetch data from the table: "e_tournament_categories"
+  """
+  e_tournament_categories(
+    """distinct select on columns"""
+    distinct_on: [e_tournament_categories_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_tournament_categories_order_by!]
+
+    """filter the rows returned"""
+    where: e_tournament_categories_bool_exp
+  ): [e_tournament_categories!]!
+
+  """
+  fetch aggregated fields from the table: "e_tournament_categories"
+  """
+  e_tournament_categories_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_tournament_categories_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_tournament_categories_order_by!]
+
+    """filter the rows returned"""
+    where: e_tournament_categories_bool_exp
+  ): e_tournament_categories_aggregate!
+
+  """
+  fetch data from the table: "e_tournament_categories" using primary key columns
+  """
+  e_tournament_categories_by_pk(value: String!): e_tournament_categories
+
+  """
   fetch data from the table: "e_tournament_stage_types"
   """
   e_tournament_stage_types(
@@ -72227,6 +72792,92 @@ type query_root {
   tournament_brackets_by_pk(id: uuid!): tournament_brackets
 
   """An array relationship"""
+  tournament_categories(
+    """distinct select on columns"""
+    distinct_on: [tournament_categories_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_categories_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_categories_bool_exp
+  ): [tournament_categories!]!
+
+  """An aggregate relationship"""
+  tournament_categories_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_categories_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_categories_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_categories_bool_exp
+  ): tournament_categories_aggregate!
+
+  """
+  fetch data from the table: "tournament_categories" using primary key columns
+  """
+  tournament_categories_by_pk(category: e_tournament_categories_enum!, tournament_id: uuid!): tournament_categories
+
+  """
+  fetch data from the table: "tournament_organizer_teams"
+  """
+  tournament_organizer_teams(
+    """distinct select on columns"""
+    distinct_on: [tournament_organizer_teams_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_organizer_teams_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_organizer_teams_bool_exp
+  ): [tournament_organizer_teams!]!
+
+  """
+  fetch aggregated fields from the table: "tournament_organizer_teams"
+  """
+  tournament_organizer_teams_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_organizer_teams_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_organizer_teams_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_organizer_teams_bool_exp
+  ): tournament_organizer_teams_aggregate!
+
+  """
+  fetch data from the table: "tournament_organizer_teams" using primary key columns
+  """
+  tournament_organizer_teams_by_pk(team_id: uuid!, tournament_id: uuid!): tournament_organizer_teams
+
+  """An array relationship"""
   tournament_organizers(
     """distinct select on columns"""
     distinct_on: [tournament_organizers_select_column!]
@@ -72266,6 +72917,51 @@ type query_root {
   fetch data from the table: "tournament_organizers" using primary key columns
   """
   tournament_organizers_by_pk(steam_id: bigint!, tournament_id: uuid!): tournament_organizers
+
+  """
+  fetch data from the table: "tournament_prizes"
+  """
+  tournament_prizes(
+    """distinct select on columns"""
+    distinct_on: [tournament_prizes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_prizes_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_prizes_bool_exp
+  ): [tournament_prizes!]!
+
+  """
+  fetch aggregated fields from the table: "tournament_prizes"
+  """
+  tournament_prizes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_prizes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_prizes_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_prizes_bool_exp
+  ): tournament_prizes_aggregate!
+
+  """
+  fetch data from the table: "tournament_prizes" using primary key columns
+  """
+  tournament_prizes_by_pk(id: uuid!): tournament_prizes
 
   """
   fetch data from the table: "tournament_stage_windows"
@@ -78887,6 +79583,65 @@ type subscription_root {
   ): [e_timeout_settings!]!
 
   """
+  fetch data from the table: "e_tournament_categories"
+  """
+  e_tournament_categories(
+    """distinct select on columns"""
+    distinct_on: [e_tournament_categories_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_tournament_categories_order_by!]
+
+    """filter the rows returned"""
+    where: e_tournament_categories_bool_exp
+  ): [e_tournament_categories!]!
+
+  """
+  fetch aggregated fields from the table: "e_tournament_categories"
+  """
+  e_tournament_categories_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_tournament_categories_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_tournament_categories_order_by!]
+
+    """filter the rows returned"""
+    where: e_tournament_categories_bool_exp
+  ): e_tournament_categories_aggregate!
+
+  """
+  fetch data from the table: "e_tournament_categories" using primary key columns
+  """
+  e_tournament_categories_by_pk(value: String!): e_tournament_categories
+
+  """
+  fetch data from the table in a streaming manner: "e_tournament_categories"
+  """
+  e_tournament_categories_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_tournament_categories_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_tournament_categories_bool_exp
+  ): [e_tournament_categories!]!
+
+  """
   fetch data from the table: "e_tournament_stage_types"
   """
   e_tournament_stage_types(
@@ -84498,6 +85253,120 @@ type subscription_root {
   ): [tournament_brackets!]!
 
   """An array relationship"""
+  tournament_categories(
+    """distinct select on columns"""
+    distinct_on: [tournament_categories_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_categories_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_categories_bool_exp
+  ): [tournament_categories!]!
+
+  """An aggregate relationship"""
+  tournament_categories_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_categories_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_categories_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_categories_bool_exp
+  ): tournament_categories_aggregate!
+
+  """
+  fetch data from the table: "tournament_categories" using primary key columns
+  """
+  tournament_categories_by_pk(category: e_tournament_categories_enum!, tournament_id: uuid!): tournament_categories
+
+  """
+  fetch data from the table in a streaming manner: "tournament_categories"
+  """
+  tournament_categories_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [tournament_categories_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: tournament_categories_bool_exp
+  ): [tournament_categories!]!
+
+  """
+  fetch data from the table: "tournament_organizer_teams"
+  """
+  tournament_organizer_teams(
+    """distinct select on columns"""
+    distinct_on: [tournament_organizer_teams_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_organizer_teams_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_organizer_teams_bool_exp
+  ): [tournament_organizer_teams!]!
+
+  """
+  fetch aggregated fields from the table: "tournament_organizer_teams"
+  """
+  tournament_organizer_teams_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_organizer_teams_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_organizer_teams_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_organizer_teams_bool_exp
+  ): tournament_organizer_teams_aggregate!
+
+  """
+  fetch data from the table: "tournament_organizer_teams" using primary key columns
+  """
+  tournament_organizer_teams_by_pk(team_id: uuid!, tournament_id: uuid!): tournament_organizer_teams
+
+  """
+  fetch data from the table in a streaming manner: "tournament_organizer_teams"
+  """
+  tournament_organizer_teams_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [tournament_organizer_teams_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: tournament_organizer_teams_bool_exp
+  ): [tournament_organizer_teams!]!
+
+  """An array relationship"""
   tournament_organizers(
     """distinct select on columns"""
     distinct_on: [tournament_organizers_select_column!]
@@ -84551,6 +85420,65 @@ type subscription_root {
     """filter the rows returned"""
     where: tournament_organizers_bool_exp
   ): [tournament_organizers!]!
+
+  """
+  fetch data from the table: "tournament_prizes"
+  """
+  tournament_prizes(
+    """distinct select on columns"""
+    distinct_on: [tournament_prizes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_prizes_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_prizes_bool_exp
+  ): [tournament_prizes!]!
+
+  """
+  fetch aggregated fields from the table: "tournament_prizes"
+  """
+  tournament_prizes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_prizes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_prizes_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_prizes_bool_exp
+  ): tournament_prizes_aggregate!
+
+  """
+  fetch data from the table: "tournament_prizes" using primary key columns
+  """
+  tournament_prizes_by_pk(id: uuid!): tournament_prizes
+
+  """
+  fetch data from the table in a streaming manner: "tournament_prizes"
+  """
+  tournament_prizes_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [tournament_prizes_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: tournament_prizes_bool_exp
+  ): [tournament_prizes!]!
 
   """
   fetch data from the table: "tournament_stage_windows"
@@ -90344,6 +91272,7 @@ type teams {
     """filter the rows returned"""
     where: team_invites_bool_exp
   ): team_invites_aggregate!
+  is_organization: Boolean!
 
   """An array relationship"""
   match_lineups(
@@ -90539,7 +91468,23 @@ type teams_aggregate {
 }
 
 input teams_aggregate_bool_exp {
+  bool_and: teams_aggregate_bool_exp_bool_and
+  bool_or: teams_aggregate_bool_exp_bool_or
   count: teams_aggregate_bool_exp_count
+}
+
+input teams_aggregate_bool_exp_bool_and {
+  arguments: teams_select_column_teams_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: teams_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input teams_aggregate_bool_exp_bool_or {
+  arguments: teams_select_column_teams_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: teams_bool_exp
+  predicate: Boolean_comparison_exp!
 }
 
 input teams_aggregate_bool_exp_count {
@@ -90624,6 +91569,7 @@ input teams_bool_exp {
   id: uuid_comparison_exp
   invites: team_invites_bool_exp
   invites_aggregate: team_invites_aggregate_bool_exp
+  is_organization: Boolean_comparison_exp
   match_lineups: match_lineups_bool_exp
   match_lineups_aggregate: match_lineups_aggregate_bool_exp
   matches: matches_bool_exp
@@ -90675,6 +91621,7 @@ input teams_insert_input {
   captain_steam_id: bigint
   id: uuid
   invites: team_invites_arr_rel_insert_input
+  is_organization: Boolean
   match_lineups: match_lineups_arr_rel_insert_input
   name: String
   owner: players_obj_rel_insert_input
@@ -90783,6 +91730,7 @@ input teams_order_by {
   captain_steam_id: order_by
   id: order_by
   invites_aggregate: team_invites_aggregate_order_by
+  is_organization: order_by
   match_lineups_aggregate: match_lineups_aggregate_order_by
   matches_aggregate: matches_aggregate_order_by
   name: order_by
@@ -90817,6 +91765,9 @@ enum teams_select_column {
   id
 
   """column name"""
+  is_organization
+
+  """column name"""
   name
 
   """column name"""
@@ -90827,12 +91778,29 @@ enum teams_select_column {
 }
 
 """
+select "teams_aggregate_bool_exp_bool_and_arguments_columns" columns of table "teams"
+"""
+enum teams_select_column_teams_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  is_organization
+}
+
+"""
+select "teams_aggregate_bool_exp_bool_or_arguments_columns" columns of table "teams"
+"""
+enum teams_select_column_teams_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  is_organization
+}
+
+"""
 input type for updating data in table "teams"
 """
 input teams_set_input {
   avatar_url: String
   captain_steam_id: bigint
   id: uuid
+  is_organization: Boolean
   name: String
   owner_steam_id: bigint
   short_name: String
@@ -90896,6 +91864,7 @@ input teams_stream_cursor_value_input {
   avatar_url: String
   captain_steam_id: bigint
   id: uuid
+  is_organization: Boolean
   name: String
   owner_steam_id: bigint
   short_name: String
@@ -90927,6 +91896,9 @@ enum teams_update_column {
 
   """column name"""
   id
+
+  """column name"""
+  is_organization
 
   """column name"""
   name
@@ -91820,9 +92792,449 @@ input tournament_brackets_variance_order_by {
 }
 
 """
+columns and relationships of "tournament_categories"
+"""
+type tournament_categories {
+  category: e_tournament_categories_enum!
+
+  """An object relationship"""
+  e_tournament_category: e_tournament_categories!
+
+  """An object relationship"""
+  tournament: tournaments!
+  tournament_id: uuid!
+}
+
+"""
+aggregated selection of "tournament_categories"
+"""
+type tournament_categories_aggregate {
+  aggregate: tournament_categories_aggregate_fields
+  nodes: [tournament_categories!]!
+}
+
+input tournament_categories_aggregate_bool_exp {
+  count: tournament_categories_aggregate_bool_exp_count
+}
+
+input tournament_categories_aggregate_bool_exp_count {
+  arguments: [tournament_categories_select_column!]
+  distinct: Boolean
+  filter: tournament_categories_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "tournament_categories"
+"""
+type tournament_categories_aggregate_fields {
+  count(columns: [tournament_categories_select_column!], distinct: Boolean): Int!
+  max: tournament_categories_max_fields
+  min: tournament_categories_min_fields
+}
+
+"""
+order by aggregate values of table "tournament_categories"
+"""
+input tournament_categories_aggregate_order_by {
+  count: order_by
+  max: tournament_categories_max_order_by
+  min: tournament_categories_min_order_by
+}
+
+"""
+input type for inserting array relation for remote table "tournament_categories"
+"""
+input tournament_categories_arr_rel_insert_input {
+  data: [tournament_categories_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: tournament_categories_on_conflict
+}
+
+"""
+Boolean expression to filter rows from the table "tournament_categories". All fields are combined with a logical 'AND'.
+"""
+input tournament_categories_bool_exp {
+  _and: [tournament_categories_bool_exp!]
+  _not: tournament_categories_bool_exp
+  _or: [tournament_categories_bool_exp!]
+  category: e_tournament_categories_enum_comparison_exp
+  e_tournament_category: e_tournament_categories_bool_exp
+  tournament: tournaments_bool_exp
+  tournament_id: uuid_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "tournament_categories"
+"""
+enum tournament_categories_constraint {
+  """
+  unique or primary key constraint on columns "tournament_id", "category"
+  """
+  tournament_categories_pkey
+}
+
+"""
+input type for inserting data into table "tournament_categories"
+"""
+input tournament_categories_insert_input {
+  category: e_tournament_categories_enum
+  e_tournament_category: e_tournament_categories_obj_rel_insert_input
+  tournament: tournaments_obj_rel_insert_input
+  tournament_id: uuid
+}
+
+"""aggregate max on columns"""
+type tournament_categories_max_fields {
+  tournament_id: uuid
+}
+
+"""
+order by max() on columns of table "tournament_categories"
+"""
+input tournament_categories_max_order_by {
+  tournament_id: order_by
+}
+
+"""aggregate min on columns"""
+type tournament_categories_min_fields {
+  tournament_id: uuid
+}
+
+"""
+order by min() on columns of table "tournament_categories"
+"""
+input tournament_categories_min_order_by {
+  tournament_id: order_by
+}
+
+"""
+response of any mutation on the table "tournament_categories"
+"""
+type tournament_categories_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [tournament_categories!]!
+}
+
+"""
+on_conflict condition type for table "tournament_categories"
+"""
+input tournament_categories_on_conflict {
+  constraint: tournament_categories_constraint!
+  update_columns: [tournament_categories_update_column!]! = []
+  where: tournament_categories_bool_exp
+}
+
+"""Ordering options when selecting data from "tournament_categories"."""
+input tournament_categories_order_by {
+  category: order_by
+  e_tournament_category: e_tournament_categories_order_by
+  tournament: tournaments_order_by
+  tournament_id: order_by
+}
+
+"""primary key columns input for table: tournament_categories"""
+input tournament_categories_pk_columns_input {
+  category: e_tournament_categories_enum!
+  tournament_id: uuid!
+}
+
+"""
+select columns of table "tournament_categories"
+"""
+enum tournament_categories_select_column {
+  """column name"""
+  category
+
+  """column name"""
+  tournament_id
+}
+
+"""
+input type for updating data in table "tournament_categories"
+"""
+input tournament_categories_set_input {
+  category: e_tournament_categories_enum
+  tournament_id: uuid
+}
+
+"""
+Streaming cursor of the table "tournament_categories"
+"""
+input tournament_categories_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: tournament_categories_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input tournament_categories_stream_cursor_value_input {
+  category: e_tournament_categories_enum
+  tournament_id: uuid
+}
+
+"""
+update columns of table "tournament_categories"
+"""
+enum tournament_categories_update_column {
+  """column name"""
+  category
+
+  """column name"""
+  tournament_id
+}
+
+input tournament_categories_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: tournament_categories_set_input
+
+  """filter the rows which have to be updated"""
+  where: tournament_categories_bool_exp!
+}
+
+"""
+columns and relationships of "tournament_organizer_teams"
+"""
+type tournament_organizer_teams {
+  created_at: timestamptz!
+
+  """An object relationship"""
+  team: teams!
+  team_id: uuid!
+
+  """An object relationship"""
+  tournament: tournaments!
+  tournament_id: uuid!
+}
+
+"""
+aggregated selection of "tournament_organizer_teams"
+"""
+type tournament_organizer_teams_aggregate {
+  aggregate: tournament_organizer_teams_aggregate_fields
+  nodes: [tournament_organizer_teams!]!
+}
+
+input tournament_organizer_teams_aggregate_bool_exp {
+  count: tournament_organizer_teams_aggregate_bool_exp_count
+}
+
+input tournament_organizer_teams_aggregate_bool_exp_count {
+  arguments: [tournament_organizer_teams_select_column!]
+  distinct: Boolean
+  filter: tournament_organizer_teams_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "tournament_organizer_teams"
+"""
+type tournament_organizer_teams_aggregate_fields {
+  count(columns: [tournament_organizer_teams_select_column!], distinct: Boolean): Int!
+  max: tournament_organizer_teams_max_fields
+  min: tournament_organizer_teams_min_fields
+}
+
+"""
+order by aggregate values of table "tournament_organizer_teams"
+"""
+input tournament_organizer_teams_aggregate_order_by {
+  count: order_by
+  max: tournament_organizer_teams_max_order_by
+  min: tournament_organizer_teams_min_order_by
+}
+
+"""
+input type for inserting array relation for remote table "tournament_organizer_teams"
+"""
+input tournament_organizer_teams_arr_rel_insert_input {
+  data: [tournament_organizer_teams_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: tournament_organizer_teams_on_conflict
+}
+
+"""
+Boolean expression to filter rows from the table "tournament_organizer_teams". All fields are combined with a logical 'AND'.
+"""
+input tournament_organizer_teams_bool_exp {
+  _and: [tournament_organizer_teams_bool_exp!]
+  _not: tournament_organizer_teams_bool_exp
+  _or: [tournament_organizer_teams_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  team: teams_bool_exp
+  team_id: uuid_comparison_exp
+  tournament: tournaments_bool_exp
+  tournament_id: uuid_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "tournament_organizer_teams"
+"""
+enum tournament_organizer_teams_constraint {
+  """
+  unique or primary key constraint on columns "tournament_id", "team_id"
+  """
+  tournament_organizer_teams_pkey
+}
+
+"""
+input type for inserting data into table "tournament_organizer_teams"
+"""
+input tournament_organizer_teams_insert_input {
+  created_at: timestamptz
+  team: teams_obj_rel_insert_input
+  team_id: uuid
+  tournament: tournaments_obj_rel_insert_input
+  tournament_id: uuid
+}
+
+"""aggregate max on columns"""
+type tournament_organizer_teams_max_fields {
+  created_at: timestamptz
+  team_id: uuid
+  tournament_id: uuid
+}
+
+"""
+order by max() on columns of table "tournament_organizer_teams"
+"""
+input tournament_organizer_teams_max_order_by {
+  created_at: order_by
+  team_id: order_by
+  tournament_id: order_by
+}
+
+"""aggregate min on columns"""
+type tournament_organizer_teams_min_fields {
+  created_at: timestamptz
+  team_id: uuid
+  tournament_id: uuid
+}
+
+"""
+order by min() on columns of table "tournament_organizer_teams"
+"""
+input tournament_organizer_teams_min_order_by {
+  created_at: order_by
+  team_id: order_by
+  tournament_id: order_by
+}
+
+"""
+response of any mutation on the table "tournament_organizer_teams"
+"""
+type tournament_organizer_teams_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [tournament_organizer_teams!]!
+}
+
+"""
+on_conflict condition type for table "tournament_organizer_teams"
+"""
+input tournament_organizer_teams_on_conflict {
+  constraint: tournament_organizer_teams_constraint!
+  update_columns: [tournament_organizer_teams_update_column!]! = []
+  where: tournament_organizer_teams_bool_exp
+}
+
+"""
+Ordering options when selecting data from "tournament_organizer_teams".
+"""
+input tournament_organizer_teams_order_by {
+  created_at: order_by
+  team: teams_order_by
+  team_id: order_by
+  tournament: tournaments_order_by
+  tournament_id: order_by
+}
+
+"""primary key columns input for table: tournament_organizer_teams"""
+input tournament_organizer_teams_pk_columns_input {
+  team_id: uuid!
+  tournament_id: uuid!
+}
+
+"""
+select columns of table "tournament_organizer_teams"
+"""
+enum tournament_organizer_teams_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  team_id
+
+  """column name"""
+  tournament_id
+}
+
+"""
+input type for updating data in table "tournament_organizer_teams"
+"""
+input tournament_organizer_teams_set_input {
+  created_at: timestamptz
+  team_id: uuid
+  tournament_id: uuid
+}
+
+"""
+Streaming cursor of the table "tournament_organizer_teams"
+"""
+input tournament_organizer_teams_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: tournament_organizer_teams_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input tournament_organizer_teams_stream_cursor_value_input {
+  created_at: timestamptz
+  team_id: uuid
+  tournament_id: uuid
+}
+
+"""
+update columns of table "tournament_organizer_teams"
+"""
+enum tournament_organizer_teams_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  team_id
+
+  """column name"""
+  tournament_id
+}
+
+input tournament_organizer_teams_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: tournament_organizer_teams_set_input
+
+  """filter the rows which have to be updated"""
+  where: tournament_organizer_teams_bool_exp!
+}
+
+"""
 columns and relationships of "tournament_organizers"
 """
 type tournament_organizers {
+  """An object relationship"""
+  organization_team: teams
+  organization_team_id: uuid
+
   """An object relationship"""
   organizer: players!
   steam_id: bigint!
@@ -91914,6 +93326,8 @@ input tournament_organizers_bool_exp {
   _and: [tournament_organizers_bool_exp!]
   _not: tournament_organizers_bool_exp
   _or: [tournament_organizers_bool_exp!]
+  organization_team: teams_bool_exp
+  organization_team_id: uuid_comparison_exp
   organizer: players_bool_exp
   steam_id: bigint_comparison_exp
   tournament: tournaments_bool_exp
@@ -91941,6 +93355,8 @@ input tournament_organizers_inc_input {
 input type for inserting data into table "tournament_organizers"
 """
 input tournament_organizers_insert_input {
+  organization_team: teams_obj_rel_insert_input
+  organization_team_id: uuid
   organizer: players_obj_rel_insert_input
   steam_id: bigint
   tournament: tournaments_obj_rel_insert_input
@@ -91949,6 +93365,7 @@ input tournament_organizers_insert_input {
 
 """aggregate max on columns"""
 type tournament_organizers_max_fields {
+  organization_team_id: uuid
   steam_id: bigint
   tournament_id: uuid
 }
@@ -91957,12 +93374,14 @@ type tournament_organizers_max_fields {
 order by max() on columns of table "tournament_organizers"
 """
 input tournament_organizers_max_order_by {
+  organization_team_id: order_by
   steam_id: order_by
   tournament_id: order_by
 }
 
 """aggregate min on columns"""
 type tournament_organizers_min_fields {
+  organization_team_id: uuid
   steam_id: bigint
   tournament_id: uuid
 }
@@ -91971,6 +93390,7 @@ type tournament_organizers_min_fields {
 order by min() on columns of table "tournament_organizers"
 """
 input tournament_organizers_min_order_by {
+  organization_team_id: order_by
   steam_id: order_by
   tournament_id: order_by
 }
@@ -91997,6 +93417,8 @@ input tournament_organizers_on_conflict {
 
 """Ordering options when selecting data from "tournament_organizers"."""
 input tournament_organizers_order_by {
+  organization_team: teams_order_by
+  organization_team_id: order_by
   organizer: players_order_by
   steam_id: order_by
   tournament: tournaments_order_by
@@ -92014,6 +93436,9 @@ select columns of table "tournament_organizers"
 """
 enum tournament_organizers_select_column {
   """column name"""
+  organization_team_id
+
+  """column name"""
   steam_id
 
   """column name"""
@@ -92024,6 +93449,7 @@ enum tournament_organizers_select_column {
 input type for updating data in table "tournament_organizers"
 """
 input tournament_organizers_set_input {
+  organization_team_id: uuid
   steam_id: bigint
   tournament_id: uuid
 }
@@ -92077,6 +93503,7 @@ input tournament_organizers_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input tournament_organizers_stream_cursor_value_input {
+  organization_team_id: uuid
   steam_id: bigint
   tournament_id: uuid
 }
@@ -92097,6 +93524,9 @@ input tournament_organizers_sum_order_by {
 update columns of table "tournament_organizers"
 """
 enum tournament_organizers_update_column {
+  """column name"""
+  organization_team_id
+
   """column name"""
   steam_id
 
@@ -92149,6 +93579,396 @@ order by variance() on columns of table "tournament_organizers"
 """
 input tournament_organizers_variance_order_by {
   steam_id: order_by
+}
+
+"""
+columns and relationships of "tournament_prizes"
+"""
+type tournament_prizes {
+  created_at: timestamptz!
+  id: uuid!
+  order: Int!
+  place: String!
+  prize: String!
+
+  """An object relationship"""
+  tournament: tournaments!
+  tournament_id: uuid!
+}
+
+"""
+aggregated selection of "tournament_prizes"
+"""
+type tournament_prizes_aggregate {
+  aggregate: tournament_prizes_aggregate_fields
+  nodes: [tournament_prizes!]!
+}
+
+input tournament_prizes_aggregate_bool_exp {
+  count: tournament_prizes_aggregate_bool_exp_count
+}
+
+input tournament_prizes_aggregate_bool_exp_count {
+  arguments: [tournament_prizes_select_column!]
+  distinct: Boolean
+  filter: tournament_prizes_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "tournament_prizes"
+"""
+type tournament_prizes_aggregate_fields {
+  avg: tournament_prizes_avg_fields
+  count(columns: [tournament_prizes_select_column!], distinct: Boolean): Int!
+  max: tournament_prizes_max_fields
+  min: tournament_prizes_min_fields
+  stddev: tournament_prizes_stddev_fields
+  stddev_pop: tournament_prizes_stddev_pop_fields
+  stddev_samp: tournament_prizes_stddev_samp_fields
+  sum: tournament_prizes_sum_fields
+  var_pop: tournament_prizes_var_pop_fields
+  var_samp: tournament_prizes_var_samp_fields
+  variance: tournament_prizes_variance_fields
+}
+
+"""
+order by aggregate values of table "tournament_prizes"
+"""
+input tournament_prizes_aggregate_order_by {
+  avg: tournament_prizes_avg_order_by
+  count: order_by
+  max: tournament_prizes_max_order_by
+  min: tournament_prizes_min_order_by
+  stddev: tournament_prizes_stddev_order_by
+  stddev_pop: tournament_prizes_stddev_pop_order_by
+  stddev_samp: tournament_prizes_stddev_samp_order_by
+  sum: tournament_prizes_sum_order_by
+  var_pop: tournament_prizes_var_pop_order_by
+  var_samp: tournament_prizes_var_samp_order_by
+  variance: tournament_prizes_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "tournament_prizes"
+"""
+input tournament_prizes_arr_rel_insert_input {
+  data: [tournament_prizes_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: tournament_prizes_on_conflict
+}
+
+"""aggregate avg on columns"""
+type tournament_prizes_avg_fields {
+  order: Float
+}
+
+"""
+order by avg() on columns of table "tournament_prizes"
+"""
+input tournament_prizes_avg_order_by {
+  order: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "tournament_prizes". All fields are combined with a logical 'AND'.
+"""
+input tournament_prizes_bool_exp {
+  _and: [tournament_prizes_bool_exp!]
+  _not: tournament_prizes_bool_exp
+  _or: [tournament_prizes_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  id: uuid_comparison_exp
+  order: Int_comparison_exp
+  place: String_comparison_exp
+  prize: String_comparison_exp
+  tournament: tournaments_bool_exp
+  tournament_id: uuid_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "tournament_prizes"
+"""
+enum tournament_prizes_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  tournament_prizes_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "tournament_prizes"
+"""
+input tournament_prizes_inc_input {
+  order: Int
+}
+
+"""
+input type for inserting data into table "tournament_prizes"
+"""
+input tournament_prizes_insert_input {
+  created_at: timestamptz
+  id: uuid
+  order: Int
+  place: String
+  prize: String
+  tournament: tournaments_obj_rel_insert_input
+  tournament_id: uuid
+}
+
+"""aggregate max on columns"""
+type tournament_prizes_max_fields {
+  created_at: timestamptz
+  id: uuid
+  order: Int
+  place: String
+  prize: String
+  tournament_id: uuid
+}
+
+"""
+order by max() on columns of table "tournament_prizes"
+"""
+input tournament_prizes_max_order_by {
+  created_at: order_by
+  id: order_by
+  order: order_by
+  place: order_by
+  prize: order_by
+  tournament_id: order_by
+}
+
+"""aggregate min on columns"""
+type tournament_prizes_min_fields {
+  created_at: timestamptz
+  id: uuid
+  order: Int
+  place: String
+  prize: String
+  tournament_id: uuid
+}
+
+"""
+order by min() on columns of table "tournament_prizes"
+"""
+input tournament_prizes_min_order_by {
+  created_at: order_by
+  id: order_by
+  order: order_by
+  place: order_by
+  prize: order_by
+  tournament_id: order_by
+}
+
+"""
+response of any mutation on the table "tournament_prizes"
+"""
+type tournament_prizes_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [tournament_prizes!]!
+}
+
+"""
+on_conflict condition type for table "tournament_prizes"
+"""
+input tournament_prizes_on_conflict {
+  constraint: tournament_prizes_constraint!
+  update_columns: [tournament_prizes_update_column!]! = []
+  where: tournament_prizes_bool_exp
+}
+
+"""Ordering options when selecting data from "tournament_prizes"."""
+input tournament_prizes_order_by {
+  created_at: order_by
+  id: order_by
+  order: order_by
+  place: order_by
+  prize: order_by
+  tournament: tournaments_order_by
+  tournament_id: order_by
+}
+
+"""primary key columns input for table: tournament_prizes"""
+input tournament_prizes_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "tournament_prizes"
+"""
+enum tournament_prizes_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  order
+
+  """column name"""
+  place
+
+  """column name"""
+  prize
+
+  """column name"""
+  tournament_id
+}
+
+"""
+input type for updating data in table "tournament_prizes"
+"""
+input tournament_prizes_set_input {
+  created_at: timestamptz
+  id: uuid
+  order: Int
+  place: String
+  prize: String
+  tournament_id: uuid
+}
+
+"""aggregate stddev on columns"""
+type tournament_prizes_stddev_fields {
+  order: Float
+}
+
+"""
+order by stddev() on columns of table "tournament_prizes"
+"""
+input tournament_prizes_stddev_order_by {
+  order: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type tournament_prizes_stddev_pop_fields {
+  order: Float
+}
+
+"""
+order by stddev_pop() on columns of table "tournament_prizes"
+"""
+input tournament_prizes_stddev_pop_order_by {
+  order: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type tournament_prizes_stddev_samp_fields {
+  order: Float
+}
+
+"""
+order by stddev_samp() on columns of table "tournament_prizes"
+"""
+input tournament_prizes_stddev_samp_order_by {
+  order: order_by
+}
+
+"""
+Streaming cursor of the table "tournament_prizes"
+"""
+input tournament_prizes_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: tournament_prizes_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input tournament_prizes_stream_cursor_value_input {
+  created_at: timestamptz
+  id: uuid
+  order: Int
+  place: String
+  prize: String
+  tournament_id: uuid
+}
+
+"""aggregate sum on columns"""
+type tournament_prizes_sum_fields {
+  order: Int
+}
+
+"""
+order by sum() on columns of table "tournament_prizes"
+"""
+input tournament_prizes_sum_order_by {
+  order: order_by
+}
+
+"""
+update columns of table "tournament_prizes"
+"""
+enum tournament_prizes_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  id
+
+  """column name"""
+  order
+
+  """column name"""
+  place
+
+  """column name"""
+  prize
+
+  """column name"""
+  tournament_id
+}
+
+input tournament_prizes_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: tournament_prizes_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: tournament_prizes_set_input
+
+  """filter the rows which have to be updated"""
+  where: tournament_prizes_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type tournament_prizes_var_pop_fields {
+  order: Float
+}
+
+"""
+order by var_pop() on columns of table "tournament_prizes"
+"""
+input tournament_prizes_var_pop_order_by {
+  order: order_by
+}
+
+"""aggregate var_samp on columns"""
+type tournament_prizes_var_samp_fields {
+  order: Float
+}
+
+"""
+order by var_samp() on columns of table "tournament_prizes"
+"""
+input tournament_prizes_var_samp_order_by {
+  order: order_by
+}
+
+"""aggregate variance on columns"""
+type tournament_prizes_variance_fields {
+  order: Float
+}
+
+"""
+order by variance() on columns of table "tournament_prizes"
+"""
+input tournament_prizes_variance_order_by {
+  order: order_by
 }
 
 """
@@ -92606,6 +94426,7 @@ type tournament_stages {
 
   """An object relationship"""
   e_tournament_stage_type: e_tournament_stage_types!
+  final_map_advantage: Int!
   groups: Int
   id: uuid!
   match_options_id: uuid
@@ -92789,6 +94610,7 @@ input tournament_stages_arr_rel_insert_input {
 type tournament_stages_avg_fields {
   decider_best_of: Float
   default_best_of: Float
+  final_map_advantage: Float
   groups: Float
   max_rounds: Float
   max_teams: Float
@@ -92802,6 +94624,7 @@ order by avg() on columns of table "tournament_stages"
 input tournament_stages_avg_order_by {
   decider_best_of: order_by
   default_best_of: order_by
+  final_map_advantage: order_by
   groups: order_by
   max_rounds: order_by
   max_teams: order_by
@@ -92821,6 +94644,7 @@ input tournament_stages_bool_exp {
   decider_best_of: Int_comparison_exp
   default_best_of: Int_comparison_exp
   e_tournament_stage_type: e_tournament_stage_types_bool_exp
+  final_map_advantage: Int_comparison_exp
   groups: Int_comparison_exp
   id: uuid_comparison_exp
   match_options_id: uuid_comparison_exp
@@ -92878,6 +94702,7 @@ input type for incrementing numeric columns in table "tournament_stages"
 input tournament_stages_inc_input {
   decider_best_of: Int
   default_best_of: Int
+  final_map_advantage: Int
   groups: Int
   max_rounds: Int
   max_teams: Int
@@ -92893,6 +94718,7 @@ input tournament_stages_insert_input {
   decider_best_of: Int
   default_best_of: Int
   e_tournament_stage_type: e_tournament_stage_types_obj_rel_insert_input
+  final_map_advantage: Int
   groups: Int
   id: uuid
   match_options_id: uuid
@@ -92915,6 +94741,7 @@ input tournament_stages_insert_input {
 type tournament_stages_max_fields {
   decider_best_of: Int
   default_best_of: Int
+  final_map_advantage: Int
   groups: Int
   id: uuid
   match_options_id: uuid
@@ -92931,6 +94758,7 @@ order by max() on columns of table "tournament_stages"
 input tournament_stages_max_order_by {
   decider_best_of: order_by
   default_best_of: order_by
+  final_map_advantage: order_by
   groups: order_by
   id: order_by
   match_options_id: order_by
@@ -92945,6 +94773,7 @@ input tournament_stages_max_order_by {
 type tournament_stages_min_fields {
   decider_best_of: Int
   default_best_of: Int
+  final_map_advantage: Int
   groups: Int
   id: uuid
   match_options_id: uuid
@@ -92961,6 +94790,7 @@ order by min() on columns of table "tournament_stages"
 input tournament_stages_min_order_by {
   decider_best_of: order_by
   default_best_of: order_by
+  final_map_advantage: order_by
   groups: order_by
   id: order_by
   match_options_id: order_by
@@ -93007,6 +94837,7 @@ input tournament_stages_order_by {
   decider_best_of: order_by
   default_best_of: order_by
   e_tournament_stage_type: e_tournament_stage_types_order_by
+  final_map_advantage: order_by
   groups: order_by
   id: order_by
   match_options_id: order_by
@@ -93044,6 +94875,9 @@ enum tournament_stages_select_column {
 
   """column name"""
   default_best_of
+
+  """column name"""
+  final_map_advantage
 
   """column name"""
   groups
@@ -93110,6 +94944,7 @@ input type for updating data in table "tournament_stages"
 input tournament_stages_set_input {
   decider_best_of: Int
   default_best_of: Int
+  final_map_advantage: Int
   groups: Int
   id: uuid
   match_options_id: uuid
@@ -93128,6 +94963,7 @@ input tournament_stages_set_input {
 type tournament_stages_stddev_fields {
   decider_best_of: Float
   default_best_of: Float
+  final_map_advantage: Float
   groups: Float
   max_rounds: Float
   max_teams: Float
@@ -93141,6 +94977,7 @@ order by stddev() on columns of table "tournament_stages"
 input tournament_stages_stddev_order_by {
   decider_best_of: order_by
   default_best_of: order_by
+  final_map_advantage: order_by
   groups: order_by
   max_rounds: order_by
   max_teams: order_by
@@ -93152,6 +94989,7 @@ input tournament_stages_stddev_order_by {
 type tournament_stages_stddev_pop_fields {
   decider_best_of: Float
   default_best_of: Float
+  final_map_advantage: Float
   groups: Float
   max_rounds: Float
   max_teams: Float
@@ -93165,6 +95003,7 @@ order by stddev_pop() on columns of table "tournament_stages"
 input tournament_stages_stddev_pop_order_by {
   decider_best_of: order_by
   default_best_of: order_by
+  final_map_advantage: order_by
   groups: order_by
   max_rounds: order_by
   max_teams: order_by
@@ -93176,6 +95015,7 @@ input tournament_stages_stddev_pop_order_by {
 type tournament_stages_stddev_samp_fields {
   decider_best_of: Float
   default_best_of: Float
+  final_map_advantage: Float
   groups: Float
   max_rounds: Float
   max_teams: Float
@@ -93189,6 +95029,7 @@ order by stddev_samp() on columns of table "tournament_stages"
 input tournament_stages_stddev_samp_order_by {
   decider_best_of: order_by
   default_best_of: order_by
+  final_map_advantage: order_by
   groups: order_by
   max_rounds: order_by
   max_teams: order_by
@@ -93211,6 +95052,7 @@ input tournament_stages_stream_cursor_input {
 input tournament_stages_stream_cursor_value_input {
   decider_best_of: Int
   default_best_of: Int
+  final_map_advantage: Int
   groups: Int
   id: uuid
   match_options_id: uuid
@@ -93229,6 +95071,7 @@ input tournament_stages_stream_cursor_value_input {
 type tournament_stages_sum_fields {
   decider_best_of: Int
   default_best_of: Int
+  final_map_advantage: Int
   groups: Int
   max_rounds: Int
   max_teams: Int
@@ -93242,6 +95085,7 @@ order by sum() on columns of table "tournament_stages"
 input tournament_stages_sum_order_by {
   decider_best_of: order_by
   default_best_of: order_by
+  final_map_advantage: order_by
   groups: order_by
   max_rounds: order_by
   max_teams: order_by
@@ -93258,6 +95102,9 @@ enum tournament_stages_update_column {
 
   """column name"""
   default_best_of
+
+  """column name"""
+  final_map_advantage
 
   """column name"""
   groups
@@ -93332,6 +95179,7 @@ input tournament_stages_updates {
 type tournament_stages_var_pop_fields {
   decider_best_of: Float
   default_best_of: Float
+  final_map_advantage: Float
   groups: Float
   max_rounds: Float
   max_teams: Float
@@ -93345,6 +95193,7 @@ order by var_pop() on columns of table "tournament_stages"
 input tournament_stages_var_pop_order_by {
   decider_best_of: order_by
   default_best_of: order_by
+  final_map_advantage: order_by
   groups: order_by
   max_rounds: order_by
   max_teams: order_by
@@ -93356,6 +95205,7 @@ input tournament_stages_var_pop_order_by {
 type tournament_stages_var_samp_fields {
   decider_best_of: Float
   default_best_of: Float
+  final_map_advantage: Float
   groups: Float
   max_rounds: Float
   max_teams: Float
@@ -93369,6 +95219,7 @@ order by var_samp() on columns of table "tournament_stages"
 input tournament_stages_var_samp_order_by {
   decider_best_of: order_by
   default_best_of: order_by
+  final_map_advantage: order_by
   groups: order_by
   max_rounds: order_by
   max_teams: order_by
@@ -93380,6 +95231,7 @@ input tournament_stages_var_samp_order_by {
 type tournament_stages_variance_fields {
   decider_best_of: Float
   default_best_of: Float
+  final_map_advantage: Float
   groups: Float
   max_rounds: Float
   max_teams: Float
@@ -93393,6 +95245,7 @@ order by variance() on columns of table "tournament_stages"
 input tournament_stages_variance_order_by {
   decider_best_of: order_by
   default_best_of: order_by
+  final_map_advantage: order_by
   groups: order_by
   max_rounds: order_by
   max_teams: order_by
@@ -95831,6 +97684,42 @@ type tournaments {
   A computed field, executes function "can_start_tournament"
   """
   can_start: Boolean
+
+  """An array relationship"""
+  categories(
+    """distinct select on columns"""
+    distinct_on: [tournament_categories_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_categories_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_categories_bool_exp
+  ): [tournament_categories!]!
+
+  """An aggregate relationship"""
+  categories_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_categories_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_categories_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_categories_bool_exp
+  ): tournament_categories_aggregate!
   created_at: timestamptz
   description: String
   discord_guild_id: String
@@ -95858,6 +97747,7 @@ type tournaments {
   A computed field, executes function "tournament_has_min_teams"
   """
   has_min_teams: Boolean
+  homepage: String
   id: uuid!
   is_league: Boolean!
 
@@ -95870,9 +97760,13 @@ type tournaments {
   A computed field, executes function "joined_tournament"
   """
   joined_tournament: Boolean
+  latitude: float8
 
   """An object relationship"""
   league_season_division: league_season_divisions
+  location: String
+  logo: String
+  longitude: float8
   match_options_id: uuid!
 
   """
@@ -95889,6 +97783,42 @@ type tournaments {
   """An object relationship"""
   options: match_options!
   organizer_steam_id: bigint!
+
+  """An array relationship"""
+  organizer_teams(
+    """distinct select on columns"""
+    distinct_on: [tournament_organizer_teams_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_organizer_teams_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_organizer_teams_bool_exp
+  ): [tournament_organizer_teams!]!
+
+  """An aggregate relationship"""
+  organizer_teams_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_organizer_teams_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_organizer_teams_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_organizer_teams_bool_exp
+  ): tournament_organizer_teams_aggregate!
 
   """An array relationship"""
   organizers(
@@ -95961,6 +97891,42 @@ type tournaments {
     """filter the rows returned"""
     where: v_tournament_player_stats_bool_exp
   ): v_tournament_player_stats_aggregate!
+
+  """An array relationship"""
+  prizes(
+    """distinct select on columns"""
+    distinct_on: [tournament_prizes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_prizes_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_prizes_bool_exp
+  ): [tournament_prizes!]!
+
+  """An aggregate relationship"""
+  prizes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_prizes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_prizes_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_prizes_bool_exp
+  ): tournament_prizes_aggregate!
 
   """An array relationship"""
   results(
@@ -96192,9 +98158,24 @@ type tournaments_aggregate {
 }
 
 input tournaments_aggregate_bool_exp {
+  avg: tournaments_aggregate_bool_exp_avg
   bool_and: tournaments_aggregate_bool_exp_bool_and
   bool_or: tournaments_aggregate_bool_exp_bool_or
+  corr: tournaments_aggregate_bool_exp_corr
   count: tournaments_aggregate_bool_exp_count
+  covar_samp: tournaments_aggregate_bool_exp_covar_samp
+  max: tournaments_aggregate_bool_exp_max
+  min: tournaments_aggregate_bool_exp_min
+  stddev_samp: tournaments_aggregate_bool_exp_stddev_samp
+  sum: tournaments_aggregate_bool_exp_sum
+  var_samp: tournaments_aggregate_bool_exp_var_samp
+}
+
+input tournaments_aggregate_bool_exp_avg {
+  arguments: tournaments_select_column_tournaments_aggregate_bool_exp_avg_arguments_columns!
+  distinct: Boolean
+  filter: tournaments_bool_exp
+  predicate: float8_comparison_exp!
 }
 
 input tournaments_aggregate_bool_exp_bool_and {
@@ -96211,11 +98192,70 @@ input tournaments_aggregate_bool_exp_bool_or {
   predicate: Boolean_comparison_exp!
 }
 
+input tournaments_aggregate_bool_exp_corr {
+  arguments: tournaments_aggregate_bool_exp_corr_arguments!
+  distinct: Boolean
+  filter: tournaments_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input tournaments_aggregate_bool_exp_corr_arguments {
+  X: tournaments_select_column_tournaments_aggregate_bool_exp_corr_arguments_columns!
+  Y: tournaments_select_column_tournaments_aggregate_bool_exp_corr_arguments_columns!
+}
+
 input tournaments_aggregate_bool_exp_count {
   arguments: [tournaments_select_column!]
   distinct: Boolean
   filter: tournaments_bool_exp
   predicate: Int_comparison_exp!
+}
+
+input tournaments_aggregate_bool_exp_covar_samp {
+  arguments: tournaments_aggregate_bool_exp_covar_samp_arguments!
+  distinct: Boolean
+  filter: tournaments_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input tournaments_aggregate_bool_exp_covar_samp_arguments {
+  X: tournaments_select_column_tournaments_aggregate_bool_exp_covar_samp_arguments_columns!
+  Y: tournaments_select_column_tournaments_aggregate_bool_exp_covar_samp_arguments_columns!
+}
+
+input tournaments_aggregate_bool_exp_max {
+  arguments: tournaments_select_column_tournaments_aggregate_bool_exp_max_arguments_columns!
+  distinct: Boolean
+  filter: tournaments_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input tournaments_aggregate_bool_exp_min {
+  arguments: tournaments_select_column_tournaments_aggregate_bool_exp_min_arguments_columns!
+  distinct: Boolean
+  filter: tournaments_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input tournaments_aggregate_bool_exp_stddev_samp {
+  arguments: tournaments_select_column_tournaments_aggregate_bool_exp_stddev_samp_arguments_columns!
+  distinct: Boolean
+  filter: tournaments_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input tournaments_aggregate_bool_exp_sum {
+  arguments: tournaments_select_column_tournaments_aggregate_bool_exp_sum_arguments_columns!
+  distinct: Boolean
+  filter: tournaments_bool_exp
+  predicate: float8_comparison_exp!
+}
+
+input tournaments_aggregate_bool_exp_var_samp {
+  arguments: tournaments_select_column_tournaments_aggregate_bool_exp_var_samp_arguments_columns!
+  distinct: Boolean
+  filter: tournaments_bool_exp
+  predicate: float8_comparison_exp!
 }
 
 """
@@ -96264,6 +98304,9 @@ input tournaments_arr_rel_insert_input {
 
 """aggregate avg on columns"""
 type tournaments_avg_fields {
+  latitude: Float
+  longitude: Float
+
   """
   A computed field, executes function "tournament_max_players_per_lineup"
   """
@@ -96280,6 +98323,8 @@ type tournaments_avg_fields {
 order by avg() on columns of table "tournaments"
 """
 input tournaments_avg_order_by {
+  latitude: order_by
+  longitude: order_by
   organizer_steam_id: order_by
 }
 
@@ -96300,6 +98345,8 @@ input tournaments_bool_exp {
   can_resume: Boolean_comparison_exp
   can_setup: Boolean_comparison_exp
   can_start: Boolean_comparison_exp
+  categories: tournament_categories_bool_exp
+  categories_aggregate: tournament_categories_aggregate_bool_exp
   created_at: timestamptz_comparison_exp
   description: String_comparison_exp
   discord_guild_id: String_comparison_exp
@@ -96321,21 +98368,30 @@ input tournaments_bool_exp {
   discord_webhook: String_comparison_exp
   e_tournament_status: e_tournament_status_bool_exp
   has_min_teams: Boolean_comparison_exp
+  homepage: String_comparison_exp
   id: uuid_comparison_exp
   is_league: Boolean_comparison_exp
   is_organizer: Boolean_comparison_exp
   joined_tournament: Boolean_comparison_exp
+  latitude: float8_comparison_exp
   league_season_division: league_season_divisions_bool_exp
+  location: String_comparison_exp
+  logo: String_comparison_exp
+  longitude: float8_comparison_exp
   match_options_id: uuid_comparison_exp
   max_players_per_lineup: Int_comparison_exp
   min_players_per_lineup: Int_comparison_exp
   name: String_comparison_exp
   options: match_options_bool_exp
   organizer_steam_id: bigint_comparison_exp
+  organizer_teams: tournament_organizer_teams_bool_exp
+  organizer_teams_aggregate: tournament_organizer_teams_aggregate_bool_exp
   organizers: tournament_organizers_bool_exp
   organizers_aggregate: tournament_organizers_aggregate_bool_exp
   player_stats: v_tournament_player_stats_bool_exp
   player_stats_aggregate: v_tournament_player_stats_aggregate_bool_exp
+  prizes: tournament_prizes_bool_exp
+  prizes_aggregate: tournament_prizes_aggregate_bool_exp
   results: v_team_tournament_results_bool_exp
   results_aggregate: v_team_tournament_results_aggregate_bool_exp
   rosters: tournament_team_roster_bool_exp
@@ -96373,6 +98429,8 @@ enum tournaments_constraint {
 input type for incrementing numeric columns in table "tournaments"
 """
 input tournaments_inc_input {
+  latitude: float8
+  longitude: float8
   organizer_steam_id: bigint
 }
 
@@ -96382,6 +98440,7 @@ input type for inserting data into table "tournaments"
 input tournaments_insert_input {
   admin: players_obj_rel_insert_input
   auto_start: Boolean
+  categories: tournament_categories_arr_rel_insert_input
   created_at: timestamptz
   description: String
   discord_guild_id: String
@@ -96402,15 +98461,22 @@ input tournaments_insert_input {
   discord_voice_enabled: Boolean
   discord_webhook: String
   e_tournament_status: e_tournament_status_obj_rel_insert_input
+  homepage: String
   id: uuid
   is_league: Boolean
+  latitude: float8
   league_season_division: league_season_divisions_obj_rel_insert_input
+  location: String
+  logo: String
+  longitude: float8
   match_options_id: uuid
   name: String
   options: match_options_obj_rel_insert_input
   organizer_steam_id: bigint
+  organizer_teams: tournament_organizer_teams_arr_rel_insert_input
   organizers: tournament_organizers_arr_rel_insert_input
   player_stats: v_tournament_player_stats_arr_rel_insert_input
+  prizes: tournament_prizes_arr_rel_insert_input
   results: v_team_tournament_results_arr_rel_insert_input
   rosters: tournament_team_roster_arr_rel_insert_input
   scheduling_mode: String
@@ -96430,7 +98496,12 @@ type tournaments_max_fields {
   discord_guild_id: String
   discord_role_id: String
   discord_webhook: String
+  homepage: String
   id: uuid
+  latitude: float8
+  location: String
+  logo: String
+  longitude: float8
   match_options_id: uuid
 
   """
@@ -96457,7 +98528,12 @@ input tournaments_max_order_by {
   discord_guild_id: order_by
   discord_role_id: order_by
   discord_webhook: order_by
+  homepage: order_by
   id: order_by
+  latitude: order_by
+  location: order_by
+  logo: order_by
+  longitude: order_by
   match_options_id: order_by
   name: order_by
   organizer_steam_id: order_by
@@ -96472,7 +98548,12 @@ type tournaments_min_fields {
   discord_guild_id: String
   discord_role_id: String
   discord_webhook: String
+  homepage: String
   id: uuid
+  latitude: float8
+  location: String
+  logo: String
+  longitude: float8
   match_options_id: uuid
 
   """
@@ -96499,7 +98580,12 @@ input tournaments_min_order_by {
   discord_guild_id: order_by
   discord_role_id: order_by
   discord_webhook: order_by
+  homepage: order_by
   id: order_by
+  latitude: order_by
+  location: order_by
+  logo: order_by
+  longitude: order_by
   match_options_id: order_by
   name: order_by
   organizer_steam_id: order_by
@@ -96549,6 +98635,7 @@ input tournaments_order_by {
   can_resume: order_by
   can_setup: order_by
   can_start: order_by
+  categories_aggregate: tournament_categories_aggregate_order_by
   created_at: order_by
   description: order_by
   discord_guild_id: order_by
@@ -96570,19 +98657,26 @@ input tournaments_order_by {
   discord_webhook: order_by
   e_tournament_status: e_tournament_status_order_by
   has_min_teams: order_by
+  homepage: order_by
   id: order_by
   is_league: order_by
   is_organizer: order_by
   joined_tournament: order_by
+  latitude: order_by
   league_season_division: league_season_divisions_order_by
+  location: order_by
+  logo: order_by
+  longitude: order_by
   match_options_id: order_by
   max_players_per_lineup: order_by
   min_players_per_lineup: order_by
   name: order_by
   options: match_options_order_by
   organizer_steam_id: order_by
+  organizer_teams_aggregate: tournament_organizer_teams_aggregate_order_by
   organizers_aggregate: tournament_organizers_aggregate_order_by
   player_stats_aggregate: v_tournament_player_stats_aggregate_order_by
+  prizes_aggregate: tournament_prizes_aggregate_order_by
   results_aggregate: v_team_tournament_results_aggregate_order_by
   rosters_aggregate: tournament_team_roster_aggregate_order_by
   scheduling_mode: order_by
@@ -96665,10 +98759,25 @@ enum tournaments_select_column {
   discord_webhook
 
   """column name"""
+  homepage
+
+  """column name"""
   id
 
   """column name"""
   is_league
+
+  """column name"""
+  latitude
+
+  """column name"""
+  location
+
+  """column name"""
+  logo
+
+  """column name"""
+  longitude
 
   """column name"""
   match_options_id
@@ -96690,6 +98799,17 @@ enum tournaments_select_column {
 
   """column name"""
   trophies_enabled
+}
+
+"""
+select "tournaments_aggregate_bool_exp_avg_arguments_columns" columns of table "tournaments"
+"""
+enum tournaments_select_column_tournaments_aggregate_bool_exp_avg_arguments_columns {
+  """column name"""
+  latitude
+
+  """column name"""
+  longitude
 }
 
 """
@@ -96805,6 +98925,83 @@ enum tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_
 }
 
 """
+select "tournaments_aggregate_bool_exp_corr_arguments_columns" columns of table "tournaments"
+"""
+enum tournaments_select_column_tournaments_aggregate_bool_exp_corr_arguments_columns {
+  """column name"""
+  latitude
+
+  """column name"""
+  longitude
+}
+
+"""
+select "tournaments_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "tournaments"
+"""
+enum tournaments_select_column_tournaments_aggregate_bool_exp_covar_samp_arguments_columns {
+  """column name"""
+  latitude
+
+  """column name"""
+  longitude
+}
+
+"""
+select "tournaments_aggregate_bool_exp_max_arguments_columns" columns of table "tournaments"
+"""
+enum tournaments_select_column_tournaments_aggregate_bool_exp_max_arguments_columns {
+  """column name"""
+  latitude
+
+  """column name"""
+  longitude
+}
+
+"""
+select "tournaments_aggregate_bool_exp_min_arguments_columns" columns of table "tournaments"
+"""
+enum tournaments_select_column_tournaments_aggregate_bool_exp_min_arguments_columns {
+  """column name"""
+  latitude
+
+  """column name"""
+  longitude
+}
+
+"""
+select "tournaments_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "tournaments"
+"""
+enum tournaments_select_column_tournaments_aggregate_bool_exp_stddev_samp_arguments_columns {
+  """column name"""
+  latitude
+
+  """column name"""
+  longitude
+}
+
+"""
+select "tournaments_aggregate_bool_exp_sum_arguments_columns" columns of table "tournaments"
+"""
+enum tournaments_select_column_tournaments_aggregate_bool_exp_sum_arguments_columns {
+  """column name"""
+  latitude
+
+  """column name"""
+  longitude
+}
+
+"""
+select "tournaments_aggregate_bool_exp_var_samp_arguments_columns" columns of table "tournaments"
+"""
+enum tournaments_select_column_tournaments_aggregate_bool_exp_var_samp_arguments_columns {
+  """column name"""
+  latitude
+
+  """column name"""
+  longitude
+}
+
+"""
 input type for updating data in table "tournaments"
 """
 input tournaments_set_input {
@@ -96828,8 +99025,13 @@ input tournaments_set_input {
   discord_role_id: String
   discord_voice_enabled: Boolean
   discord_webhook: String
+  homepage: String
   id: uuid
   is_league: Boolean
+  latitude: float8
+  location: String
+  logo: String
+  longitude: float8
   match_options_id: uuid
   name: String
   organizer_steam_id: bigint
@@ -96841,6 +99043,9 @@ input tournaments_set_input {
 
 """aggregate stddev on columns"""
 type tournaments_stddev_fields {
+  latitude: Float
+  longitude: Float
+
   """
   A computed field, executes function "tournament_max_players_per_lineup"
   """
@@ -96857,11 +99062,16 @@ type tournaments_stddev_fields {
 order by stddev() on columns of table "tournaments"
 """
 input tournaments_stddev_order_by {
+  latitude: order_by
+  longitude: order_by
   organizer_steam_id: order_by
 }
 
 """aggregate stddev_pop on columns"""
 type tournaments_stddev_pop_fields {
+  latitude: Float
+  longitude: Float
+
   """
   A computed field, executes function "tournament_max_players_per_lineup"
   """
@@ -96878,11 +99088,16 @@ type tournaments_stddev_pop_fields {
 order by stddev_pop() on columns of table "tournaments"
 """
 input tournaments_stddev_pop_order_by {
+  latitude: order_by
+  longitude: order_by
   organizer_steam_id: order_by
 }
 
 """aggregate stddev_samp on columns"""
 type tournaments_stddev_samp_fields {
+  latitude: Float
+  longitude: Float
+
   """
   A computed field, executes function "tournament_max_players_per_lineup"
   """
@@ -96899,6 +99114,8 @@ type tournaments_stddev_samp_fields {
 order by stddev_samp() on columns of table "tournaments"
 """
 input tournaments_stddev_samp_order_by {
+  latitude: order_by
+  longitude: order_by
   organizer_steam_id: order_by
 }
 
@@ -96935,8 +99152,13 @@ input tournaments_stream_cursor_value_input {
   discord_role_id: String
   discord_voice_enabled: Boolean
   discord_webhook: String
+  homepage: String
   id: uuid
   is_league: Boolean
+  latitude: float8
+  location: String
+  logo: String
+  longitude: float8
   match_options_id: uuid
   name: String
   organizer_steam_id: bigint
@@ -96948,6 +99170,9 @@ input tournaments_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type tournaments_sum_fields {
+  latitude: float8
+  longitude: float8
+
   """
   A computed field, executes function "tournament_max_players_per_lineup"
   """
@@ -96964,6 +99189,8 @@ type tournaments_sum_fields {
 order by sum() on columns of table "tournaments"
 """
 input tournaments_sum_order_by {
+  latitude: order_by
+  longitude: order_by
   organizer_steam_id: order_by
 }
 
@@ -97032,10 +99259,25 @@ enum tournaments_update_column {
   discord_webhook
 
   """column name"""
+  homepage
+
+  """column name"""
   id
 
   """column name"""
   is_league
+
+  """column name"""
+  latitude
+
+  """column name"""
+  location
+
+  """column name"""
+  logo
+
+  """column name"""
+  longitude
 
   """column name"""
   match_options_id
@@ -97072,6 +99314,9 @@ input tournaments_updates {
 
 """aggregate var_pop on columns"""
 type tournaments_var_pop_fields {
+  latitude: Float
+  longitude: Float
+
   """
   A computed field, executes function "tournament_max_players_per_lineup"
   """
@@ -97088,11 +99333,16 @@ type tournaments_var_pop_fields {
 order by var_pop() on columns of table "tournaments"
 """
 input tournaments_var_pop_order_by {
+  latitude: order_by
+  longitude: order_by
   organizer_steam_id: order_by
 }
 
 """aggregate var_samp on columns"""
 type tournaments_var_samp_fields {
+  latitude: Float
+  longitude: Float
+
   """
   A computed field, executes function "tournament_max_players_per_lineup"
   """
@@ -97109,11 +99359,16 @@ type tournaments_var_samp_fields {
 order by var_samp() on columns of table "tournaments"
 """
 input tournaments_var_samp_order_by {
+  latitude: order_by
+  longitude: order_by
   organizer_steam_id: order_by
 }
 
 """aggregate variance on columns"""
 type tournaments_variance_fields {
+  latitude: Float
+  longitude: Float
+
   """
   A computed field, executes function "tournament_max_players_per_lineup"
   """
@@ -97130,6 +99385,8 @@ type tournaments_variance_fields {
 order by variance() on columns of table "tournaments"
 """
 input tournaments_variance_order_by {
+  latitude: order_by
+  longitude: order_by
   organizer_steam_id: order_by
 }
 

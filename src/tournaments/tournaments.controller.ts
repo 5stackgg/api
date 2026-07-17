@@ -72,10 +72,30 @@ export class TournamentsController {
 
     if (data.op === "DELETE") {
       await this.removeOrganizationTeamOrganizers(tournamentId, teamId);
+      await this.syncRemainingOrganizationTeams(tournamentId);
       return;
     }
 
     await this.syncOrganizationTeamOrganizers(tournamentId, teamId);
+  }
+
+  // A tournament_organizers row carries a single organization_team_id, so someone
+  // on two linked org teams is only ever tagged with the first. Unlinking that team
+  // drops them even though the other team still entitles them, so re-sync whatever
+  // links remain to put them back.
+  private async syncRemainingOrganizationTeams(tournamentId: string) {
+    const { tournament_organizer_teams } = await this.hasura.query({
+      tournament_organizer_teams: {
+        __args: {
+          where: { tournament_id: { _eq: tournamentId } },
+        },
+        team_id: true,
+      },
+    });
+
+    for (const link of tournament_organizer_teams) {
+      await this.syncOrganizationTeamOrganizers(tournamentId, link.team_id);
+    }
   }
 
   // Fired when a team's roster changes. Re-syncs organizers for every tournament
@@ -104,15 +124,16 @@ export class TournamentsController {
     }
   }
 
-  // Accepted roster members of an organisation team (invites/pending are excluded
-  // so a mere invitee never gains organizer powers).
+  // Every roster member of an organisation team. A team_roster row is already an
+  // accepted member -- pending invites live in team_invites, and e_team_roles
+  // ("Member" / "Invite" / "Admin") describes roster powers, not invite state, so
+  // filtering on role here would silently drop real members.
   private async getOrganizationTeamSteamIds(teamId: string): Promise<string[]> {
     const { team_roster } = await this.hasura.query({
       team_roster: {
         __args: {
           where: {
             team_id: { _eq: teamId },
-            role: { _in: ["Admin", "Member"] },
           },
         },
         player_steam_id: true,

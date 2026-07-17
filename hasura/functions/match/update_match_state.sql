@@ -23,22 +23,6 @@ BEGIN
     ON mo.id = m.match_options_id
     WHERE m.id = _match_map.match_id;
 
-    -- Winner-bracket advantage: when this match is the grand final of a
-    -- double-elimination stage, the winner-bracket team (tournament_team_id_1,
-    -- which schedule_tournament_match maps to lineup_1) starts with a map-point
-    -- head start. Stays 0 (inert) for every other match.
-    SELECT COALESCE(ts.final_map_advantage, 0)
-    INTO final_advantage
-    FROM tournament_brackets tb
-    INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
-    WHERE tb.match_id = _match_map.match_id
-      AND ts.type = 'DoubleElimination'
-      AND tb.parent_bracket_id IS NULL
-      AND COALESCE(tb.path, 'WB') = 'WB';
-
-    final_advantage := COALESCE(final_advantage, 0);
-    lineup_1_wins := final_advantage;
-
     IF (_match_map.status = 'Finished') THEN
         -- Get current match status and lineups
         SELECT status
@@ -49,6 +33,25 @@ BEGIN
         IF current_match_status = 'Forfeit' OR current_match_status = 'Surrendered' THEN
             RETURN;
         END IF;
+
+        -- Winner-bracket advantage: when this match is the grand final of a
+        -- double-elimination stage, the winner-bracket team starts with a map-point
+        -- head start. Stays 0 (inert) for every other match.
+        -- The grand final is stored as path 'WB' at round wb_rounds+1 with no parent
+        -- (generate_double_elimination_bracket); 'GF' is only a round_best_of settings
+        -- key, never a stored path. assign_team_to_bracket_slot orders the WB feeder
+        -- ahead of the LB feeder, so the winner-bracket team is always slot 1 /
+        -- tournament_team_id_1, which schedule_tournament_match maps to lineup_1.
+        SELECT COALESCE(ts.final_map_advantage, 0)
+        INTO final_advantage
+        FROM tournament_brackets tb
+        INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+        WHERE tb.match_id = _match_map.match_id
+          AND ts.type = 'DoubleElimination'
+          AND tb.parent_bracket_id IS NULL
+          AND COALESCE(tb.path, 'WB') = 'WB';
+
+        lineup_1_wins := COALESCE(final_advantage, 0);
 
         -- Loop through match maps and calculate wins
         FOR match_map IN
