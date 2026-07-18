@@ -1,0 +1,197 @@
+table:
+  name: custom_pages
+  schema: public
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - slug
+        - title
+        - icon
+        - remote_entry_url
+        - remote_scope
+        - exposed_module
+        - required_role
+        - enabled
+        - is_default
+        - nav_group
+        - nav_order
+    comment: ""
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - icon
+        - remote_entry_url
+        - remote_scope
+        - exposed_module
+        - required_role
+        - enabled
+        - is_default
+        - nav_group
+        - nav_order
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: guest
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - icon
+        - remote_entry_url
+        - remote_scope
+        - exposed_module
+        - required_role
+        - enabled
+        - is_default
+        - nav_group
+        - nav_order
+      filter:
+        enabled:
+          _eq: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - icon
+        - remote_entry_url
+        - remote_scope
+        - exposed_module
+        - required_role
+        - enabled
+        - is_default
+        - nav_group
+        - nav_order
+      filter:
+        enabled:
+          _eq: true
+    comment: ""
+  - role: verified_user
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - icon
+        - remote_entry_url
+        - remote_scope
+        - exposed_module
+        - required_role
+        - enabled
+        - is_default
+        - nav_group
+        - nav_order
+      filter:
+        enabled:
+          _eq: true
+    comment: ""
+  - role: streamer
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - icon
+        - remote_entry_url
+        - remote_scope
+        - exposed_module
+        - required_role
+        - enabled
+        - is_default
+        - nav_group
+        - nav_order
+      filter:
+        enabled:
+          _eq: true
+    comment: ""
+  - role: moderator
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - icon
+        - remote_entry_url
+        - remote_scope
+        - exposed_module
+        - required_role
+        - enabled
+        - is_default
+        - nav_group
+        - nav_order
+      filter:
+        enabled:
+          _eq: true
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - icon
+        - remote_entry_url
+        - remote_scope
+        - exposed_module
+        - required_role
+        - enabled
+        - is_default
+        - nav_group
+        - nav_order
+      filter:
+        enabled:
+          _eq: true
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - id
+        - slug
+        - title
+        - icon
+        - remote_entry_url
+        - remote_scope
+        - exposed_module
+        - required_role
+        - enabled
+        - is_default
+        - nav_group
+        - nav_order
+      filter:
+        enabled:
+          _eq: true
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - slug
+        - title
+        - icon
+        - remote_entry_url
+        - remote_scope
+        - exposed_module
+        - required_role
+        - enabled
+        - is_default
+        - nav_group
+        - nav_order
+      filter: {}
+      check: {}
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""

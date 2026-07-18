@@ -373,7 +373,7 @@ export class AvatarsService {
     buffer: Buffer,
     mimetype: string,
   ): Promise<string> {
-    const logo = await this.assertTournamentOrganizer(tournamentId, user);
+    const { logo } = await this.assertTournamentOrganizer(tournamentId, user);
 
     const path = this.buildPath("tournaments", tournamentId, mimetype);
 
@@ -398,7 +398,7 @@ export class AvatarsService {
   }
 
   async removeTournamentLogo(tournamentId: string, user: User): Promise<void> {
-    const logo = await this.assertTournamentOrganizer(tournamentId, user);
+    const { logo } = await this.assertTournamentOrganizer(tournamentId, user);
 
     if (logo) {
       await this.s3.remove(logo);
@@ -417,15 +417,72 @@ export class AvatarsService {
     this.logger.log(`Removed tournament ${tournamentId} logo`);
   }
 
-  // Returns the existing logo path when the caller may manage the tournament.
+  async uploadTournamentBanner(
+    tournamentId: string,
+    user: User,
+    buffer: Buffer,
+    mimetype: string,
+  ): Promise<string> {
+    const { banner } = await this.assertTournamentOrganizer(tournamentId, user);
+
+    const path = this.buildPath("tournaments", tournamentId, mimetype);
+
+    await this.s3.put(path, buffer);
+
+    if (banner && banner !== path) {
+      await this.s3.remove(banner);
+    }
+
+    await this.hasura.mutation({
+      update_tournaments_by_pk: {
+        __args: {
+          pk_columns: { id: tournamentId },
+          _set: { banner: path },
+        },
+        __typename: true,
+      },
+    });
+
+    this.logger.log(`Uploaded tournament ${tournamentId} banner to ${path}`);
+    return path;
+  }
+
+  async removeTournamentBanner(
+    tournamentId: string,
+    user: User,
+  ): Promise<void> {
+    const { banner } = await this.assertTournamentOrganizer(tournamentId, user);
+
+    if (banner) {
+      await this.s3.remove(banner);
+    }
+
+    await this.hasura.mutation({
+      update_tournaments_by_pk: {
+        __args: {
+          pk_columns: { id: tournamentId },
+          _set: { banner: null },
+        },
+        __typename: true,
+      },
+    });
+
+    this.logger.log(`Removed tournament ${tournamentId} banner`);
+  }
+
+  // Returns the existing logo/banner paths when the caller may manage the tournament.
   private async assertTournamentOrganizer(
     tournamentId: string,
     user: User,
-  ): Promise<string | null | undefined> {
+  ): Promise<{
+    logo: string | null | undefined;
+    banner: string | null | undefined;
+  }> {
     const { tournaments_by_pk } = await this.hasura.query({
       tournaments_by_pk: {
         __args: { id: tournamentId },
         logo: true,
+        banner: true,
         organizer_steam_id: true,
         organizers: {
           __args: {
@@ -450,7 +507,7 @@ export class AvatarsService {
       throw new ForbiddenException("You do not organize this tournament");
     }
 
-    return tournaments_by_pk.logo;
+    return { logo: tournaments_by_pk.logo, banner: tournaments_by_pk.banner };
   }
 
   async getStream(

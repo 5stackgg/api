@@ -202,6 +202,41 @@ export class AvatarsController {
     return { success: true };
   }
 
+  @Post("tournaments/:tournamentId/banner")
+  @UseInterceptors(FileInterceptor("file"))
+  async uploadTournamentBanner(
+    @Req() request: Request,
+    @Param("tournamentId") tournamentId: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /image\/(png|jpeg|webp)/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    const user = this.requireUser(request);
+    const path = await this.avatarsService.uploadTournamentBanner(
+      tournamentId,
+      user,
+      file.buffer,
+      file.mimetype,
+    );
+    return { success: true, path };
+  }
+
+  @Delete("tournaments/:tournamentId/banner")
+  async removeTournamentBanner(
+    @Req() request: Request,
+    @Param("tournamentId") tournamentId: string,
+  ) {
+    const user = this.requireUser(request);
+    await this.avatarsService.removeTournamentBanner(tournamentId, user);
+    return { success: true };
+  }
+
   @Get("teams/:filename")
   async serveTeam(@Param("filename") filename: string, @Res() res: Response) {
     return this.serve("teams", filename, res);

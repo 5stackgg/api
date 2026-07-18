@@ -3,6 +3,7 @@
 - "!include public_abandoned_matches.yaml"
 - "!include public_api_keys.yaml"
 - "!include public_clip_render_jobs.yaml"
+- "!include public_custom_pages.yaml"
 - "!include public_db_backups.yaml"
 - "!include public_draft_game_picks.yaml"
 - "!include public_draft_game_players.yaml"

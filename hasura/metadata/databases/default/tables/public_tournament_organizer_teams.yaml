@@ -12,13 +12,9 @@ insert_permissions:
   - role: user
     permission:
       check:
-        _and:
-          - tournament:
-              is_organizer:
-                _eq: true
-          - team:
-              is_organization:
-                _eq: true
+        tournament:
+          is_organizer:
+            _eq: true
       columns:
         - team_id
         - tournament_id

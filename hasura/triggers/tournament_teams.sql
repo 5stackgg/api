@@ -164,8 +164,14 @@ BEGIN
 END;
 $$;
 
+-- Deferred to COMMIT so it fires after Hasura's nested insert has written the
+-- client-supplied roster in its own statement; otherwise the auto-fill above
+-- runs first, and the client roster then collides on tournament_roster_pkey.
 DROP TRIGGER IF EXISTS tai_tournament_team ON public.tournament_teams;
-CREATE TRIGGER tai_tournament_team AFTER INSERT ON public.tournament_teams FOR EACH ROW EXECUTE FUNCTION public.tai_tournament_team();
+CREATE CONSTRAINT TRIGGER tai_tournament_team
+    AFTER INSERT ON public.tournament_teams
+    DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW EXECUTE FUNCTION public.tai_tournament_team();
 
 CREATE OR REPLACE FUNCTION public.tbu_tournament_team()
 RETURNS TRIGGER

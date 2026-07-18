@@ -207,6 +207,7 @@ insert_permissions:
         - homepage
         - latitude
         - location
+        - banner
         - logo
         - longitude
         - match_options_id
@@ -248,6 +249,7 @@ insert_permissions:
         - homepage
         - latitude
         - location
+        - banner
         - logo
         - longitude
         - match_options_id
@@ -288,6 +290,7 @@ insert_permissions:
         - homepage
         - latitude
         - location
+        - banner
         - logo
         - longitude
         - match_options_id
@@ -347,6 +350,7 @@ insert_permissions:
         - homepage
         - latitude
         - location
+        - banner
         - logo
         - longitude
         - match_options_id
@@ -385,6 +389,7 @@ insert_permissions:
         - homepage
         - latitude
         - location
+        - banner
         - logo
         - longitude
         - match_options_id
@@ -424,6 +429,7 @@ insert_permissions:
         - homepage
         - latitude
         - location
+        - banner
         - logo
         - longitude
         - match_options_id
@@ -442,6 +448,7 @@ select_permissions:
         - id
         - latitude
         - location
+        - banner
         - logo
         - longitude
         - match_options_id
@@ -497,6 +504,7 @@ select_permissions:
         - id
         - latitude
         - location
+        - banner
         - logo
         - longitude
         - match_options_id
@@ -538,6 +546,7 @@ select_permissions:
         - id
         - latitude
         - location
+        - banner
         - logo
         - longitude
         - match_options_id
@@ -595,6 +604,7 @@ update_permissions:
         - homepage
         - latitude
         - location
+        - banner
         - logo
         - longitude
         - name
@@ -616,6 +626,7 @@ update_permissions:
         - homepage
         - latitude
         - location
+        - banner
         - logo
         - longitude
         - name

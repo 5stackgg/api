@@ -125,6 +125,89 @@ describe("match scoring from rounds (SQL-driven)", () => {
     expect(after.winning_lineup_id).toBe(match.lineup_1_id);
   });
 
+  // Regression: auto-generated clips for map 1's demo land while map 2 is in
+  // play. The match_clips insert bumps clips_count on the Finished map-1 row,
+  // which used to re-run update_match_state against map 2's live round
+  // snapshot and finish the whole series for whoever was momentarily ahead.
+  it("a clip landing on a finished map mid-series does not end the match early", async () => {
+    const match = await createLiveMatch(3);
+
+    await recordScore(match.mapIds[0], 5, 13);
+    await finishMap(match.mapIds[0]);
+    expect((await matchRow(match.id)).status).toBe("Live");
+
+    const [{ ended_at: map1EndedAt }] = await postgres.query<
+      Array<{ ended_at: Date }>
+    >("SELECT ended_at FROM match_maps WHERE id = $1", [match.mapIds[0]]);
+
+    await postgres.query(
+      "UPDATE match_maps SET status = 'Live' WHERE id = $1",
+      [match.mapIds[1]],
+    );
+    await fx.round(match.mapIds[1], 1, {
+      l1Score: 0,
+      l2Score: 1,
+      time: new Date(Date.now() - 30 * 60_000).toISOString(),
+    });
+    await fx.round(match.mapIds[1], 2, {
+      l1Score: 0,
+      l2Score: 2,
+      time: new Date(Date.now() - 25 * 60_000).toISOString(),
+    });
+
+    const owner = await fx.player();
+    await postgres.query(
+      `INSERT INTO match_clips (user_steam_id, match_map_id, title, visibility)
+       VALUES ($1, $2, 'clip', 'private')`,
+      [owner, match.mapIds[0]],
+    );
+
+    const after = await matchRow(match.id);
+    expect(after.status).toBe("Live");
+    expect(after.winning_lineup_id).toBeNull();
+
+    const [{ ended_at: map1EndedAtAfter }] = await postgres.query<
+      Array<{ ended_at: Date }>
+    >("SELECT ended_at FROM match_maps WHERE id = $1", [match.mapIds[0]]);
+    expect(map1EndedAtAfter.getTime()).toBe(map1EndedAt.getTime());
+
+    await fx.round(match.mapIds[1], 3, { l1Score: 13, l2Score: 9 });
+    await finishMap(match.mapIds[1]);
+    expect((await matchRow(match.id)).status).toBe("Live");
+
+    await recordScore(match.mapIds[2], 13, 5);
+    await finishMap(match.mapIds[2]);
+
+    const done = await matchRow(match.id);
+    expect(done.status).toBe("Finished");
+    expect(done.winning_lineup_id).toBe(match.lineup_1_id);
+  });
+
+  it("non-status updates on a live map do not re-stamp started_at", async () => {
+    const match = await createLiveMatch(1);
+
+    await postgres.query(
+      "UPDATE match_maps SET status = 'Live' WHERE id = $1",
+      [match.mapIds[0]],
+    );
+    await postgres.query(
+      "UPDATE match_maps SET started_at = now() - interval '10 minutes' WHERE id = $1",
+      [match.mapIds[0]],
+    );
+    const [{ started_at: before }] = await postgres.query<
+      Array<{ started_at: Date }>
+    >("SELECT started_at FROM match_maps WHERE id = $1", [match.mapIds[0]]);
+
+    await postgres.query(
+      "UPDATE match_maps SET lineup_1_timeouts_available = 2 WHERE id = $1",
+      [match.mapIds[0]],
+    );
+    const [{ started_at: after }] = await postgres.query<
+      Array<{ started_at: Date }>
+    >("SELECT started_at FROM match_maps WHERE id = $1", [match.mapIds[0]]);
+    expect(after.getTime()).toBe(before.getTime());
+  });
+
   it("does not overwrite a forfeited match", async () => {
     const match = await createLiveMatch(1);
     await recordScore(match.mapIds[0], 13, 7);

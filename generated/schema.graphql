@@ -2311,6 +2311,388 @@ enum cursor_ordering {
 }
 
 """
+columns and relationships of "custom_pages"
+"""
+type custom_pages {
+  created_at: timestamptz!
+  enabled: Boolean!
+  exposed_module: String!
+  icon: String
+  id: uuid!
+  is_default: Boolean!
+  nav_group: String
+  nav_order: Int!
+  remote_entry_url: String!
+  remote_scope: String!
+  required_role: e_player_roles_enum
+  slug: String!
+  title: String!
+  updated_at: timestamptz!
+}
+
+"""
+aggregated selection of "custom_pages"
+"""
+type custom_pages_aggregate {
+  aggregate: custom_pages_aggregate_fields
+  nodes: [custom_pages!]!
+}
+
+"""
+aggregate fields of "custom_pages"
+"""
+type custom_pages_aggregate_fields {
+  avg: custom_pages_avg_fields
+  count(columns: [custom_pages_select_column!], distinct: Boolean): Int!
+  max: custom_pages_max_fields
+  min: custom_pages_min_fields
+  stddev: custom_pages_stddev_fields
+  stddev_pop: custom_pages_stddev_pop_fields
+  stddev_samp: custom_pages_stddev_samp_fields
+  sum: custom_pages_sum_fields
+  var_pop: custom_pages_var_pop_fields
+  var_samp: custom_pages_var_samp_fields
+  variance: custom_pages_variance_fields
+}
+
+"""aggregate avg on columns"""
+type custom_pages_avg_fields {
+  nav_order: Float
+}
+
+"""
+Boolean expression to filter rows from the table "custom_pages". All fields are combined with a logical 'AND'.
+"""
+input custom_pages_bool_exp {
+  _and: [custom_pages_bool_exp!]
+  _not: custom_pages_bool_exp
+  _or: [custom_pages_bool_exp!]
+  created_at: timestamptz_comparison_exp
+  enabled: Boolean_comparison_exp
+  exposed_module: String_comparison_exp
+  icon: String_comparison_exp
+  id: uuid_comparison_exp
+  is_default: Boolean_comparison_exp
+  nav_group: String_comparison_exp
+  nav_order: Int_comparison_exp
+  remote_entry_url: String_comparison_exp
+  remote_scope: String_comparison_exp
+  required_role: e_player_roles_enum_comparison_exp
+  slug: String_comparison_exp
+  title: String_comparison_exp
+  updated_at: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "custom_pages"
+"""
+enum custom_pages_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  custom_pages_pkey
+
+  """
+  unique or primary key constraint on columns "is_default"
+  """
+  custom_pages_single_default_idx
+
+  """
+  unique or primary key constraint on columns "slug"
+  """
+  custom_pages_slug_key
+}
+
+"""
+input type for incrementing numeric columns in table "custom_pages"
+"""
+input custom_pages_inc_input {
+  nav_order: Int
+}
+
+"""
+input type for inserting data into table "custom_pages"
+"""
+input custom_pages_insert_input {
+  created_at: timestamptz
+  enabled: Boolean
+  exposed_module: String
+  icon: String
+  id: uuid
+  is_default: Boolean
+  nav_group: String
+  nav_order: Int
+  remote_entry_url: String
+  remote_scope: String
+  required_role: e_player_roles_enum
+  slug: String
+  title: String
+  updated_at: timestamptz
+}
+
+"""aggregate max on columns"""
+type custom_pages_max_fields {
+  created_at: timestamptz
+  exposed_module: String
+  icon: String
+  id: uuid
+  nav_group: String
+  nav_order: Int
+  remote_entry_url: String
+  remote_scope: String
+  slug: String
+  title: String
+  updated_at: timestamptz
+}
+
+"""aggregate min on columns"""
+type custom_pages_min_fields {
+  created_at: timestamptz
+  exposed_module: String
+  icon: String
+  id: uuid
+  nav_group: String
+  nav_order: Int
+  remote_entry_url: String
+  remote_scope: String
+  slug: String
+  title: String
+  updated_at: timestamptz
+}
+
+"""
+response of any mutation on the table "custom_pages"
+"""
+type custom_pages_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [custom_pages!]!
+}
+
+"""
+on_conflict condition type for table "custom_pages"
+"""
+input custom_pages_on_conflict {
+  constraint: custom_pages_constraint!
+  update_columns: [custom_pages_update_column!]! = []
+  where: custom_pages_bool_exp
+}
+
+"""Ordering options when selecting data from "custom_pages"."""
+input custom_pages_order_by {
+  created_at: order_by
+  enabled: order_by
+  exposed_module: order_by
+  icon: order_by
+  id: order_by
+  is_default: order_by
+  nav_group: order_by
+  nav_order: order_by
+  remote_entry_url: order_by
+  remote_scope: order_by
+  required_role: order_by
+  slug: order_by
+  title: order_by
+  updated_at: order_by
+}
+
+"""primary key columns input for table: custom_pages"""
+input custom_pages_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "custom_pages"
+"""
+enum custom_pages_select_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  enabled
+
+  """column name"""
+  exposed_module
+
+  """column name"""
+  icon
+
+  """column name"""
+  id
+
+  """column name"""
+  is_default
+
+  """column name"""
+  nav_group
+
+  """column name"""
+  nav_order
+
+  """column name"""
+  remote_entry_url
+
+  """column name"""
+  remote_scope
+
+  """column name"""
+  required_role
+
+  """column name"""
+  slug
+
+  """column name"""
+  title
+
+  """column name"""
+  updated_at
+}
+
+"""
+input type for updating data in table "custom_pages"
+"""
+input custom_pages_set_input {
+  created_at: timestamptz
+  enabled: Boolean
+  exposed_module: String
+  icon: String
+  id: uuid
+  is_default: Boolean
+  nav_group: String
+  nav_order: Int
+  remote_entry_url: String
+  remote_scope: String
+  required_role: e_player_roles_enum
+  slug: String
+  title: String
+  updated_at: timestamptz
+}
+
+"""aggregate stddev on columns"""
+type custom_pages_stddev_fields {
+  nav_order: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type custom_pages_stddev_pop_fields {
+  nav_order: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type custom_pages_stddev_samp_fields {
+  nav_order: Float
+}
+
+"""
+Streaming cursor of the table "custom_pages"
+"""
+input custom_pages_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: custom_pages_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input custom_pages_stream_cursor_value_input {
+  created_at: timestamptz
+  enabled: Boolean
+  exposed_module: String
+  icon: String
+  id: uuid
+  is_default: Boolean
+  nav_group: String
+  nav_order: Int
+  remote_entry_url: String
+  remote_scope: String
+  required_role: e_player_roles_enum
+  slug: String
+  title: String
+  updated_at: timestamptz
+}
+
+"""aggregate sum on columns"""
+type custom_pages_sum_fields {
+  nav_order: Int
+}
+
+"""
+update columns of table "custom_pages"
+"""
+enum custom_pages_update_column {
+  """column name"""
+  created_at
+
+  """column name"""
+  enabled
+
+  """column name"""
+  exposed_module
+
+  """column name"""
+  icon
+
+  """column name"""
+  id
+
+  """column name"""
+  is_default
+
+  """column name"""
+  nav_group
+
+  """column name"""
+  nav_order
+
+  """column name"""
+  remote_entry_url
+
+  """column name"""
+  remote_scope
+
+  """column name"""
+  required_role
+
+  """column name"""
+  slug
+
+  """column name"""
+  title
+
+  """column name"""
+  updated_at
+}
+
+input custom_pages_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: custom_pages_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: custom_pages_set_input
+
+  """filter the rows which have to be updated"""
+  where: custom_pages_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type custom_pages_var_pop_fields {
+  nav_order: Float
+}
+
+"""aggregate var_samp on columns"""
+type custom_pages_var_samp_fields {
+  nav_order: Float
+}
+
+"""aggregate variance on columns"""
+type custom_pages_variance_fields {
+  nav_order: Float
+}
+
+"""
 columns and relationships of "db_backups"
 """
 type db_backups {
@@ -34187,6 +34569,19 @@ type mutation_root {
   delete_clip_render_jobs_by_pk(id: uuid!): clip_render_jobs
 
   """
+  delete data from the table: "custom_pages"
+  """
+  delete_custom_pages(
+    """filter the rows which have to be deleted"""
+    where: custom_pages_bool_exp!
+  ): custom_pages_mutation_response
+
+  """
+  delete single row from the table: "custom_pages"
+  """
+  delete_custom_pages_by_pk(id: uuid!): custom_pages
+
+  """
   delete data from the table: "db_backups"
   """
   delete_db_backups(
@@ -36170,6 +36565,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: clip_render_jobs_on_conflict
   ): clip_render_jobs
+
+  """
+  insert data into the table: "custom_pages"
+  """
+  insert_custom_pages(
+    """the rows to be inserted"""
+    objects: [custom_pages_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: custom_pages_on_conflict
+  ): custom_pages_mutation_response
+
+  """
+  insert a single row into the table: "custom_pages"
+  """
+  insert_custom_pages_one(
+    """the row to be inserted"""
+    object: custom_pages_insert_input!
+
+    """upsert condition"""
+    on_conflict: custom_pages_on_conflict
+  ): custom_pages
 
   """
   insert data into the table: "db_backups"
@@ -39858,6 +40275,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [clip_render_jobs_updates!]!
   ): [clip_render_jobs_mutation_response]
+
+  """
+  update data of the table: "custom_pages"
+  """
+  update_custom_pages(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: custom_pages_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: custom_pages_set_input
+
+    """filter the rows which have to be updated"""
+    where: custom_pages_bool_exp!
+  ): custom_pages_mutation_response
+
+  """
+  update single row of the table: "custom_pages"
+  """
+  update_custom_pages_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: custom_pages_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: custom_pages_set_input
+    pk_columns: custom_pages_pk_columns_input!
+  ): custom_pages
+
+  """
+  update multiples rows of table: "custom_pages"
+  """
+  update_custom_pages_many(
+    """updates to execute, in order"""
+    updates: [custom_pages_updates!]!
+  ): [custom_pages_mutation_response]
 
   """
   update data of the table: "db_backups"
@@ -66618,6 +67069,49 @@ type query_root {
   fetch data from the table: "clip_render_jobs" using primary key columns
   """
   clip_render_jobs_by_pk(id: uuid!): clip_render_jobs
+
+  """
+  fetch data from the table: "custom_pages"
+  """
+  custom_pages(
+    """distinct select on columns"""
+    distinct_on: [custom_pages_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [custom_pages_order_by!]
+
+    """filter the rows returned"""
+    where: custom_pages_bool_exp
+  ): [custom_pages!]!
+
+  """
+  fetch aggregated fields from the table: "custom_pages"
+  """
+  custom_pages_aggregate(
+    """distinct select on columns"""
+    distinct_on: [custom_pages_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [custom_pages_order_by!]
+
+    """filter the rows returned"""
+    where: custom_pages_bool_exp
+  ): custom_pages_aggregate!
+
+  """fetch data from the table: "custom_pages" using primary key columns"""
+  custom_pages_by_pk(id: uuid!): custom_pages
   dbStats: [DbStats]
 
   """
@@ -77251,6 +77745,63 @@ type subscription_root {
     """filter the rows returned"""
     where: clip_render_jobs_bool_exp
   ): [clip_render_jobs!]!
+
+  """
+  fetch data from the table: "custom_pages"
+  """
+  custom_pages(
+    """distinct select on columns"""
+    distinct_on: [custom_pages_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [custom_pages_order_by!]
+
+    """filter the rows returned"""
+    where: custom_pages_bool_exp
+  ): [custom_pages!]!
+
+  """
+  fetch aggregated fields from the table: "custom_pages"
+  """
+  custom_pages_aggregate(
+    """distinct select on columns"""
+    distinct_on: [custom_pages_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [custom_pages_order_by!]
+
+    """filter the rows returned"""
+    where: custom_pages_bool_exp
+  ): custom_pages_aggregate!
+
+  """fetch data from the table: "custom_pages" using primary key columns"""
+  custom_pages_by_pk(id: uuid!): custom_pages
+
+  """
+  fetch data from the table in a streaming manner: "custom_pages"
+  """
+  custom_pages_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [custom_pages_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: custom_pages_bool_exp
+  ): [custom_pages!]!
 
   """
   fetch data from the table: "db_backups"
@@ -97644,6 +98195,7 @@ type tournaments {
   """An object relationship"""
   admin: players!
   auto_start: Boolean!
+  banner: String
 
   """
   A computed field, executes function "can_cancel_tournament"
@@ -98337,6 +98889,7 @@ input tournaments_bool_exp {
   _or: [tournaments_bool_exp!]
   admin: players_bool_exp
   auto_start: Boolean_comparison_exp
+  banner: String_comparison_exp
   can_cancel: Boolean_comparison_exp
   can_close_registration: Boolean_comparison_exp
   can_join: Boolean_comparison_exp
@@ -98440,6 +98993,7 @@ input type for inserting data into table "tournaments"
 input tournaments_insert_input {
   admin: players_obj_rel_insert_input
   auto_start: Boolean
+  banner: String
   categories: tournament_categories_arr_rel_insert_input
   created_at: timestamptz
   description: String
@@ -98491,6 +99045,7 @@ input tournaments_insert_input {
 
 """aggregate max on columns"""
 type tournaments_max_fields {
+  banner: String
   created_at: timestamptz
   description: String
   discord_guild_id: String
@@ -98523,6 +99078,7 @@ type tournaments_max_fields {
 order by max() on columns of table "tournaments"
 """
 input tournaments_max_order_by {
+  banner: order_by
   created_at: order_by
   description: order_by
   discord_guild_id: order_by
@@ -98543,6 +99099,7 @@ input tournaments_max_order_by {
 
 """aggregate min on columns"""
 type tournaments_min_fields {
+  banner: String
   created_at: timestamptz
   description: String
   discord_guild_id: String
@@ -98575,6 +99132,7 @@ type tournaments_min_fields {
 order by min() on columns of table "tournaments"
 """
 input tournaments_min_order_by {
+  banner: order_by
   created_at: order_by
   description: order_by
   discord_guild_id: order_by
@@ -98627,6 +99185,7 @@ input tournaments_on_conflict {
 input tournaments_order_by {
   admin: players_order_by
   auto_start: order_by
+  banner: order_by
   can_cancel: order_by
   can_close_registration: order_by
   can_join: order_by
@@ -98700,6 +99259,9 @@ select columns of table "tournaments"
 enum tournaments_select_column {
   """column name"""
   auto_start
+
+  """column name"""
+  banner
 
   """column name"""
   created_at
@@ -99006,6 +99568,7 @@ input type for updating data in table "tournaments"
 """
 input tournaments_set_input {
   auto_start: Boolean
+  banner: String
   created_at: timestamptz
   description: String
   discord_guild_id: String
@@ -99133,6 +99696,7 @@ input tournaments_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input tournaments_stream_cursor_value_input {
   auto_start: Boolean
+  banner: String
   created_at: timestamptz
   description: String
   discord_guild_id: String
@@ -99200,6 +99764,9 @@ update columns of table "tournaments"
 enum tournaments_update_column {
   """column name"""
   auto_start
+
+  """column name"""
+  banner
 
   """column name"""
   created_at

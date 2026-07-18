@@ -30,7 +30,7 @@ BEGIN
         FROM matches
         WHERE id = _match_map.match_id;
 
-        IF current_match_status = 'Forfeit' OR current_match_status = 'Surrendered' THEN
+        IF current_match_status IN ('Finished', 'Forfeit', 'Surrendered', 'Canceled', 'Tie') THEN
             RETURN;
         END IF;
 
@@ -53,11 +53,13 @@ BEGIN
 
         lineup_1_wins := COALESCE(final_advantage, 0);
 
-        -- Loop through match maps and calculate wins
+        -- Only Finished maps count: an in-progress map's latest round snapshot
+        -- would otherwise credit a map win to whoever is momentarily ahead.
         FOR match_map IN
             SELECT *
             FROM match_maps
             WHERE match_id = _match_map.match_id
+              AND status = 'Finished'
         LOOP
          	map_lineup_1_score := lineup_1_score(match_map);
             map_lineup_2_score := lineup_2_score(match_map);
