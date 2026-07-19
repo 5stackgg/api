@@ -70,7 +70,7 @@ export class PluginsController {
       return response.status(400).json({ error: "invalid url" });
     }
 
-    if (CustomPagesController.isPrivateHost(raw)) {
+    if (PluginsController.isPrivateHost(raw)) {
       return response.status(400).json({ error: "invalid url" });
     }
 
@@ -116,7 +116,7 @@ export class PluginsController {
         scope: manifest.scope ?? null,
         module: manifest.module ?? manifest.exposedModule ?? null,
         requiredRole: manifest.requiredRole ?? null,
-        deployments: CustomPagesController.resolveDeployments(
+        deployments: PluginsController.resolveDeployments(
           manifest.deployments,
         ),
       });
