@@ -21,6 +21,20 @@ object_relationships:
     using:
       foreign_key_constraint_on: match_options_id
 array_relationships:
+  - name: categories
+    using:
+      foreign_key_constraint_on:
+        column: tournament_id
+        table:
+          name: tournament_categories
+          schema: public
+  - name: organizer_teams
+    using:
+      foreign_key_constraint_on:
+        column: tournament_id
+        table:
+          name: tournament_organizer_teams
+          schema: public
   - name: organizers
     using:
       foreign_key_constraint_on:
@@ -36,6 +50,13 @@ array_relationships:
         insertion_order: null
         remote_table:
           name: v_tournament_player_stats
+          schema: public
+  - name: prizes
+    using:
+      foreign_key_constraint_on:
+        column: tournament_id
+        table:
+          name: tournament_prizes
           schema: public
   - name: results
     using:
@@ -183,6 +204,12 @@ insert_permissions:
         - discord_notify_WaitingForServer
         - discord_role_id
         - discord_webhook
+        - homepage
+        - latitude
+        - location
+        - banner
+        - logo
+        - longitude
         - match_options_id
         - name
         - scheduling_mode
@@ -219,6 +246,12 @@ insert_permissions:
       columns:
         - auto_start
         - description
+        - homepage
+        - latitude
+        - location
+        - banner
+        - logo
+        - longitude
         - match_options_id
         - name
         - scheduling_mode
@@ -254,6 +287,12 @@ insert_permissions:
       columns:
         - auto_start
         - description
+        - homepage
+        - latitude
+        - location
+        - banner
+        - logo
+        - longitude
         - match_options_id
         - name
         - scheduling_mode
@@ -308,6 +347,12 @@ insert_permissions:
         - discord_notify_WaitingForServer
         - discord_role_id
         - discord_webhook
+        - homepage
+        - latitude
+        - location
+        - banner
+        - logo
+        - longitude
         - match_options_id
         - name
         - scheduling_mode
@@ -341,6 +386,12 @@ insert_permissions:
       columns:
         - auto_start
         - description
+        - homepage
+        - latitude
+        - location
+        - banner
+        - logo
+        - longitude
         - match_options_id
         - name
         - scheduling_mode
@@ -375,6 +426,12 @@ insert_permissions:
       columns:
         - auto_start
         - description
+        - homepage
+        - latitude
+        - location
+        - banner
+        - logo
+        - longitude
         - match_options_id
         - name
         - scheduling_mode
@@ -387,7 +444,13 @@ select_permissions:
         - auto_start
         - created_at
         - description
+        - homepage
         - id
+        - latitude
+        - location
+        - banner
+        - logo
+        - longitude
         - match_options_id
         - name
         - scheduling_mode
@@ -437,7 +500,13 @@ select_permissions:
         - discord_notify_WaitingForServer
         - discord_role_id
         - discord_webhook
+        - homepage
         - id
+        - latitude
+        - location
+        - banner
+        - logo
+        - longitude
         - match_options_id
         - name
         - scheduling_mode
@@ -473,7 +542,13 @@ select_permissions:
         - auto_start
         - created_at
         - description
+        - homepage
         - id
+        - latitude
+        - location
+        - banner
+        - logo
+        - longitude
         - match_options_id
         - name
         - scheduling_mode
@@ -526,6 +601,12 @@ update_permissions:
         - discord_notify_WaitingForServer
         - discord_role_id
         - discord_webhook
+        - homepage
+        - latitude
+        - location
+        - banner
+        - logo
+        - longitude
         - name
         - start
         - status
@@ -542,6 +623,12 @@ update_permissions:
       columns:
         - auto_start
         - description
+        - homepage
+        - latitude
+        - location
+        - banner
+        - logo
+        - longitude
         - name
         - start
         - status

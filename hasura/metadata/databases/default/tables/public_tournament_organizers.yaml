@@ -2,6 +2,9 @@ table:
   name: tournament_organizers
   schema: public
 object_relationships:
+  - name: organization_team
+    using:
+      foreign_key_constraint_on: organization_team_id
   - name: organizer
     using:
       foreign_key_constraint_on: steam_id
@@ -23,6 +26,7 @@ select_permissions:
   - role: guest
     permission:
       columns:
+        - organization_team_id
         - steam_id
         - tournament_id
       filter: {}

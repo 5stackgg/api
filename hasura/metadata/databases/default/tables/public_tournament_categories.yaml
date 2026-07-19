@@ -1,0 +1,37 @@
+table:
+  name: tournament_categories
+  schema: public
+object_relationships:
+  - name: e_tournament_category
+    using:
+      foreign_key_constraint_on: category
+  - name: tournament
+    using:
+      foreign_key_constraint_on: tournament_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        tournament:
+          is_organizer:
+            _eq: true
+      columns:
+        - category
+        - tournament_id
+    comment: ""
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - category
+        - tournament_id
+      filter: {}
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        tournament:
+          is_organizer:
+            _eq: true
+    comment: ""

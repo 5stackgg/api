@@ -107,3 +107,17 @@ event_triggers:
       num_retries: 6
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
+  - name: tournament_org_roster_events
+    definition:
+      delete:
+        columns: '*'
+      enable_manual: true
+      insert:
+        columns: '*'
+      update:
+        columns: '*'
+    retry_conf:
+      interval_sec: 10
+      num_retries: 6
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

@@ -8,6 +8,19 @@ import { User } from "../auth/types/User";
 import { DiscordTournamentVoiceService } from "../discord-bot/discord-tournament-voice/discord-tournament-voice.service";
 import { tournaments_set_input } from "../../generated";
 
+// These tables are newer than the generated GraphQL types; event payloads are
+// typed locally (mirrors the leagues controller).
+type TournamentOrganizerTeamRow = {
+  tournament_id?: string;
+  team_id?: string;
+};
+
+type TeamRosterRow = {
+  team_id?: string;
+  player_steam_id?: string;
+  role?: string;
+};
+
 @Controller("tournaments")
 export class TournamentsController {
   constructor(
@@ -40,6 +53,175 @@ export class TournamentsController {
         `[${tournamentId}] tournament cancelled, cleaned up assets across ${matchCount} matches`,
       );
     }
+  }
+
+  // Fired when an organisation team is linked to / unlinked from a tournament.
+  // Linking expands every accepted member of the team into tournament_organizers;
+  // unlinking removes the organizers that link contributed.
+  @HasuraEvent()
+  public async tournament_organizer_team_events(
+    data: HasuraEventData<TournamentOrganizerTeamRow>,
+  ) {
+    const tournamentId = (data.new?.tournament_id ||
+      data.old?.tournament_id) as string;
+    const teamId = (data.new?.team_id || data.old?.team_id) as string;
+
+    if (!tournamentId || !teamId) {
+      return;
+    }
+
+    if (data.op === "DELETE") {
+      await this.removeOrganizationTeamOrganizers(tournamentId, teamId);
+      await this.syncRemainingOrganizationTeams(tournamentId);
+      return;
+    }
+
+    await this.syncOrganizationTeamOrganizers(tournamentId, teamId);
+  }
+
+  // A tournament_organizers row carries a single organization_team_id, so someone
+  // on two linked org teams is only ever tagged with the first. Unlinking that team
+  // drops them even though the other team still entitles them, so re-sync whatever
+  // links remain to put them back.
+  private async syncRemainingOrganizationTeams(tournamentId: string) {
+    const { tournament_organizer_teams } = await this.hasura.query({
+      tournament_organizer_teams: {
+        __args: {
+          where: { tournament_id: { _eq: tournamentId } },
+        },
+        team_id: true,
+      },
+    });
+
+    for (const link of tournament_organizer_teams) {
+      await this.syncOrganizationTeamOrganizers(tournamentId, link.team_id);
+    }
+  }
+
+  // Fired when a team's roster changes. Re-syncs organizers for every tournament
+  // that uses this team as an organisation team so additions/removals propagate.
+  @HasuraEvent()
+  public async tournament_org_roster_events(
+    data: HasuraEventData<TeamRosterRow>,
+  ) {
+    const teamId = (data.new?.team_id || data.old?.team_id) as string;
+
+    if (!teamId) {
+      return;
+    }
+
+    const { tournament_organizer_teams } = await this.hasura.query({
+      tournament_organizer_teams: {
+        __args: {
+          where: { team_id: { _eq: teamId } },
+        },
+        tournament_id: true,
+      },
+    });
+
+    // Sync the changed team first (it performs the removals), then the
+    // tournament's other links: a removed member tagged with this team may
+    // still be entitled by another linked team, which must re-add them.
+    for (const link of tournament_organizer_teams) {
+      await this.syncOrganizationTeamOrganizers(link.tournament_id, teamId);
+      await this.syncRemainingOrganizationTeams(link.tournament_id);
+    }
+  }
+
+  // Every roster member of an organisation team. A team_roster row is already an
+  // accepted member -- pending invites live in team_invites, and e_team_roles
+  // ("Member" / "Invite" / "Admin") describes roster powers, not invite state, so
+  // filtering on role here would silently drop real members.
+  private async getOrganizationTeamSteamIds(teamId: string): Promise<string[]> {
+    const { team_roster } = await this.hasura.query({
+      team_roster: {
+        __args: {
+          where: {
+            team_id: { _eq: teamId },
+          },
+        },
+        player_steam_id: true,
+      },
+    });
+
+    return team_roster.map((member) => String(member.player_steam_id));
+  }
+
+  private async syncOrganizationTeamOrganizers(
+    tournamentId: string,
+    teamId: string,
+  ) {
+    const steamIds = await this.getOrganizationTeamSteamIds(teamId);
+
+    const { tournament_organizers: existing } = await this.hasura.query({
+      tournament_organizers: {
+        __args: {
+          where: { tournament_id: { _eq: tournamentId } },
+        },
+        steam_id: true,
+      },
+    });
+
+    const existingSteamIds = new Set(
+      existing.map((organizer) => String(organizer.steam_id)),
+    );
+    const toInsert = steamIds.filter(
+      (steamId) => !existingSteamIds.has(steamId),
+    );
+
+    if (toInsert.length > 0) {
+      // on_conflict: concurrent events for the same tournament race between the
+      // read above and this insert; the PK hit must not fail the whole batch.
+      await this.hasura.mutation({
+        insert_tournament_organizers: {
+          __args: {
+            objects: toInsert.map((steam_id) => ({
+              steam_id,
+              tournament_id: tournamentId,
+              organization_team_id: teamId,
+            })),
+            on_conflict: {
+              constraint: "tournament_organizers_pkey",
+              update_columns: [],
+            },
+          },
+          affected_rows: true,
+        },
+      });
+    }
+
+    // Drop organizers this team previously contributed who are no longer on its
+    // roster. Manually-added organizers (organization_team_id IS NULL) are left
+    // untouched.
+    await this.hasura.mutation({
+      delete_tournament_organizers: {
+        __args: {
+          where: {
+            tournament_id: { _eq: tournamentId },
+            organization_team_id: { _eq: teamId },
+            ...(steamIds.length > 0 ? { steam_id: { _nin: steamIds } } : {}),
+          },
+        },
+        affected_rows: true,
+      },
+    });
+  }
+
+  private async removeOrganizationTeamOrganizers(
+    tournamentId: string,
+    teamId: string,
+  ) {
+    await this.hasura.mutation({
+      delete_tournament_organizers: {
+        __args: {
+          where: {
+            tournament_id: { _eq: tournamentId },
+            organization_team_id: { _eq: teamId },
+          },
+        },
+        affected_rows: true,
+      },
+    });
   }
 
   @HasuraAction()

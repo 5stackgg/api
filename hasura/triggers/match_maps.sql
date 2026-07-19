@@ -8,7 +8,11 @@ END;
 $$;
 
 DROP TRIGGER IF EXISTS tau_match_maps ON public.match_maps;
-CREATE TRIGGER tau_match_maps AFTER UPDATE ON public.match_maps FOR EACH ROW EXECUTE FUNCTION public.tau_match_maps();
+-- Transition-only: post-finish touches of a Finished row (clip counters, demo
+-- metadata) must not re-run the series recount while a later map is in play.
+CREATE TRIGGER tau_match_maps AFTER UPDATE ON public.match_maps FOR EACH ROW
+    WHEN (NEW.status = 'Finished' AND OLD.status IS DISTINCT FROM NEW.status)
+    EXECUTE FUNCTION public.tau_match_maps();
 
 CREATE OR REPLACE FUNCTION public.tbi_match_maps() RETURNS TRIGGER
     LANGUAGE plpgsql
@@ -46,7 +50,7 @@ BEGIN
     _auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_int_setting('auto_cancel_duration', 15))::text || ' minutes';
     _live_match_timeout := COALESCE(_live_match_timeout_override, get_int_setting('live_match_timeout', 180))::text || ' minutes';
 
-    IF NEW.status = 'Warmup' THEN
+    IF NEW.status = 'Warmup' AND OLD.status IS DISTINCT FROM NEW.status THEN
         IF _auto_cancellation THEN
             UPDATE matches SET cancels_at = NOW() + (_auto_cancel_duration)::interval WHERE id = NEW.match_id;
         END IF;
@@ -62,14 +66,14 @@ BEGIN
         END IF;
     END IF;
 
-    IF OLD.status != 'Paused' AND (NEW.status = 'Knife' OR NEW.status = 'Live' OR NEW.status = 'Overtime') THEN
+    IF OLD.status != 'Paused' AND OLD.status IS DISTINCT FROM NEW.status AND (NEW.status = 'Knife' OR NEW.status = 'Live' OR NEW.status = 'Overtime') THEN
         NEW.started_at = NOW();
         IF _auto_cancellation THEN
             UPDATE matches SET cancels_at = NOW() + (_live_match_timeout)::interval WHERE id = NEW.match_id;
         END IF;
     END IF;
 
-    IF NEW.status = 'Finished' THEN
+    IF NEW.status = 'Finished' AND OLD.status IS DISTINCT FROM NEW.status THEN
         NEW.ended_at = NOW();
     END IF;
 

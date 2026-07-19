@@ -71,6 +71,8 @@ insert_permissions:
         - auto_cancellation
         - tv_delay
         - type
+        - halftime_pausematch
+        - round_restart_delay
     comment: ""
   - role: user
     permission:
@@ -93,6 +95,8 @@ insert_permissions:
         - timeout_setting
         - tv_delay
         - type
+        - halftime_pausematch
+        - round_restart_delay
     comment: ""
 select_permissions:
   - role: guest
@@ -121,6 +125,8 @@ select_permissions:
         - auto_cancellation
         - tv_delay
         - type
+        - halftime_pausematch
+        - round_restart_delay
       filter: {}
     comment: ""
 update_permissions:
@@ -149,6 +155,8 @@ update_permissions:
         - auto_cancellation
         - tv_delay
         - type
+        - halftime_pausematch
+        - round_restart_delay
       filter:
         _or:
           - matches:
@@ -204,6 +212,8 @@ update_permissions:
         - timeout_setting
         - tv_delay
         - type
+        - halftime_pausematch
+        - round_restart_delay
       filter:
         _or:
           - matches:
