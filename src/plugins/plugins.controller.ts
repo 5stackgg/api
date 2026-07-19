@@ -5,11 +5,13 @@ import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { e_player_roles_enum } from "generated";
 import { SystemService } from "src/system/system.service";
 
-@Controller("custom-pages")
-export class CustomPagesController {
+// "custom-pages" is the pre-rename path. Deployed plugin ingresses hardcode it
+// in their auth-url annotation, so dropping it would break them on upgrade.
+@Controller(["plugins", "custom-pages"])
+export class PluginsController {
   @Get("authorize")
   public authorize(@Req() request: Request, @Res() response: Response) {
-    // nginx forward-auth runs this for every request to a custom-page backend,
+    // nginx forward-auth runs this for every request to a plugin backend,
     // including the CORS preflight. Preflight (OPTIONS) requests never carry
     // cookies, so gating them would 401 the preflight and surface as a CORS
     // error before the real credentialed request is sent. Let them through.
@@ -36,7 +38,15 @@ export class CustomPagesController {
     response.setHeader("X-5stack-Steam-Id", user.steam_id);
     response.setHeader("X-5stack-Role", user.role);
     response.setHeader("X-5stack-Name", encodeURIComponent(user.name ?? ""));
-    return response.status(200).end();
+
+    // nginx discards the body on an auth subrequest, so serving JSON here costs
+    // the forward-auth path nothing while letting a plugin backend validate a
+    // cookie server-side against this same endpoint.
+    return response.status(200).json({
+      steam_id: user.steam_id,
+      role: user.role,
+      name: user.name ?? "",
+    });
   }
 
   @Options("authorize")

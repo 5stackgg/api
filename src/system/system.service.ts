@@ -33,7 +33,7 @@ export class SystemService {
     "hasura",
   ];
 
-  // Deployment names a custom page is never allowed to claim. A plugin manifest
+  // Deployment names a plugin is never allowed to claim. A plugin manifest
   // is third-party input, so without this a plugin declaring `deployments:
   // ["api"]` would render an Update button that restarts the panel itself.
   private static RESERVED_DEPLOYMENTS = [
@@ -452,7 +452,7 @@ export class SystemService {
     return services;
   }
 
-  // Deployments declared by registered custom pages. The image is read off the
+  // Deployments declared by registered plugins. The image is read off the
   // live deployment rather than the plugin manifest, so it can never drift from
   // what is actually running -- the manifest only supplies the name.
   private async getPluginServices() {
@@ -481,7 +481,7 @@ export class SystemService {
         },
       }));
     } catch (error) {
-      this.logger.warn("unable to fetch custom pages", error);
+      this.logger.warn("unable to fetch plugins", error);
       return services;
     }
 

@@ -56,7 +56,7 @@ import { NewsModule } from "./news/news.module";
 import { EventsModule } from "./events/events.module";
 import { ScrimsModule } from "./scrims/scrims.module";
 import { LeaguesModule } from "./leagues/leagues.module";
-import { CustomPagesModule } from "./custom-pages/custom-pages.module";
+import { PluginsModule } from "./plugins/plugins.module";
 
 @Module({
   imports: [
@@ -153,7 +153,7 @@ import { CustomPagesModule } from "./custom-pages/custom-pages.module";
     EventsModule,
     ScrimsModule,
     LeaguesModule,
-    CustomPagesModule,
+    PluginsModule,
   ],
   providers: [loggerFactory()],
   controllers: [AppController, QuickConnectController],
