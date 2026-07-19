@@ -275,7 +275,7 @@ export class SystemService {
 
       // An unreadable registry or pod tells us nothing. Reporting on it would
       // show a phantom update; restarting on it would be an endless rollout.
-      if (!version || !newVersion || version === newVersion) {
+      if (!image || !version || !newVersion || version === newVersion) {
         continue;
       }
 
@@ -338,7 +338,9 @@ export class SystemService {
         300,
       );
     } catch (error) {
-      this.logger.warn(`unable to resolve latest digest for ${image}`, error);
+      this.logger.warn(
+        `[updates] registry lookup failed for ${image}: ${error?.message ?? error}`,
+      );
       return null;
     }
   }
@@ -484,15 +486,19 @@ export class SystemService {
     }
 
     for (const { title, deployments } of customPages) {
-      if (!Array.isArray(deployments)) {
+      if (!Array.isArray(deployments) || deployments.length === 0) {
         continue;
       }
 
       for (const name of deployments) {
-        if (
-          typeof name !== "string" ||
-          SystemService.isReservedDeployment(name)
-        ) {
+        if (typeof name !== "string") {
+          continue;
+        }
+
+        if (SystemService.isReservedDeployment(name)) {
+          this.logger.warn(
+            `plugin "${title}" tried to claim reserved deployment "${name}"`,
+          );
           continue;
         }
 
@@ -532,7 +538,7 @@ export class SystemService {
           // removed out from under it. That's its problem, not the panel's.
           this.logger.warn(
             `unable to inspect plugin deployment ${name}`,
-            error,
+            error?.body?.message ?? error?.message ?? error,
           );
         }
       }
