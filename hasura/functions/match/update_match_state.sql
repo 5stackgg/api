@@ -39,7 +39,10 @@ BEGIN
         -- head start. Stays 0 (inert) for every other match.
         -- The grand final is stored as path 'WB' at round wb_rounds+1 with no parent
         -- (generate_double_elimination_bracket); 'GF' is only a round_best_of settings
-        -- key, never a stored path. assign_team_to_bracket_slot orders the WB feeder
+        -- key, never a stored path. A parentless WB bracket is NOT enough on its
+        -- own: a DE stage that passes 2+ teams to a next stage never creates a GF,
+        -- leaving each group's WB final parentless too — only the real GF has an
+        -- LB feeder as a child. assign_team_to_bracket_slot orders the WB feeder
         -- ahead of the LB feeder, so the winner-bracket team is always slot 1 /
         -- tournament_team_id_1, which schedule_tournament_match maps to lineup_1.
         SELECT COALESCE(ts.final_map_advantage, 0)
@@ -49,9 +52,20 @@ BEGIN
         WHERE tb.match_id = _match_map.match_id
           AND ts.type = 'DoubleElimination'
           AND tb.parent_bracket_id IS NULL
-          AND COALESCE(tb.path, 'WB') = 'WB';
+          AND COALESCE(tb.path, 'WB') = 'WB'
+          AND EXISTS (
+              SELECT 1
+              FROM tournament_brackets lb
+              WHERE lb.parent_bracket_id = tb.id
+                AND lb.path = 'LB'
+          );
 
-        lineup_1_wins := COALESCE(final_advantage, 0);
+        -- Clamp below the win threshold: at or above it the winner-bracket team
+        -- would take the match on the first finished map, even one it lost.
+        lineup_1_wins := LEAST(
+            COALESCE(final_advantage, 0),
+            CEIL(match_best_of / 2.0)::int - 1
+        );
 
         -- Only Finished maps count: an in-progress map's latest round snapshot
         -- would otherwise credit a map win to whoever is momentarily ahead.

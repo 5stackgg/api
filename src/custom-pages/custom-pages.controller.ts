@@ -59,6 +59,10 @@ export class CustomPagesController {
       return response.status(400).json({ error: "invalid url" });
     }
 
+    if (CustomPagesController.isPrivateHost(raw)) {
+      return response.status(400).json({ error: "invalid url" });
+    }
+
     const base = raw.replace(/\/+$/, "");
     const manifestUrl = base.endsWith(".json")
       ? base
@@ -107,5 +111,55 @@ export class CustomPagesController {
         .status(502)
         .json({ error: "could not fetch plugin manifest" });
     }
+  }
+
+  // Best-effort SSRF guard for the admin-only detect fetch: blocks loopback,
+  // link-local, private-range IP literals and obvious internal hostnames.
+  // Hostnames resolving to private IPs are not caught -- admins are trusted;
+  // this only keeps the endpoint from being a casual internal-network probe.
+  private static isPrivateHost(rawUrl: string): boolean {
+    let hostname: string;
+    try {
+      hostname = new URL(rawUrl).hostname.toLowerCase();
+    } catch {
+      return true;
+    }
+
+    if (
+      hostname === "localhost" ||
+      hostname.endsWith(".localhost") ||
+      hostname.endsWith(".local") ||
+      hostname.endsWith(".internal")
+    ) {
+      return true;
+    }
+
+    const ipv4 = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ipv4) {
+      const [a, b] = [Number(ipv4[1]), Number(ipv4[2])];
+      return (
+        a === 0 ||
+        a === 10 ||
+        a === 127 ||
+        (a === 100 && b >= 64 && b <= 127) ||
+        (a === 169 && b === 254) ||
+        (a === 172 && b >= 16 && b <= 31) ||
+        (a === 192 && b === 168) ||
+        (a === 198 && (b === 18 || b === 19))
+      );
+    }
+
+    const ipv6 = hostname.replace(/^\[|\]$/g, "");
+    if (ipv6.includes(":")) {
+      return (
+        ipv6 === "::1" ||
+        ipv6 === "::" ||
+        /^f[cd]/.test(ipv6) ||
+        /^fe[89ab]/.test(ipv6) ||
+        ipv6.startsWith("::ffff:")
+      );
+    }
+
+    return false;
   }
 }

@@ -73,8 +73,9 @@ ALTER TABLE public.match_options
 -- Winner-bracket advantage for the grand final of a double-elimination stage, expressed
 -- in map points. The winner-bracket team (bracket.tournament_team_id_1 / lineup_1) starts
 -- the grand-final match with this many map wins already banked. 0 disables the advantage.
--- Must stay below ceil(best_of / 2): at or above it the winner-bracket team is already at
--- the win threshold and takes the match on the first map to finish, even one it lost.
+-- update_match_state clamps it below ceil(best_of / 2) at apply time, since the GF's
+-- best_of is only known per match; at or above the threshold the winner-bracket team
+-- would otherwise take the match on the first map to finish, even one it lost.
 ALTER TABLE public.tournament_stages
     ADD COLUMN IF NOT EXISTS final_map_advantage integer NOT NULL DEFAULT 0;
 

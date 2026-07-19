@@ -26,6 +26,11 @@ describe("match scoring from rounds (SQL-driven)", () => {
   });
 
   beforeEach(async () => {
+    // Unlink first: cascading tournaments -> brackets fires triggers that also
+    // touch the linked match, which trips "tuple to be deleted was already
+    // modified" once both sides go in one command.
+    await postgres.query("UPDATE tournament_brackets SET match_id = NULL");
+    await postgres.query("DELETE FROM tournaments");
     await postgres.query("DELETE FROM matches");
     await postgres.query("DELETE FROM match_options");
   });
@@ -80,9 +85,7 @@ describe("match scoring from rounds (SQL-driven)", () => {
     // The early snapshot has lineup 1 ahead; the final one flips it.
     await recordScore(match.mapIds[0], 7, 13);
 
-    const [scores] = await postgres.query<
-      Array<{ s1: number; s2: number }>
-    >(
+    const [scores] = await postgres.query<Array<{ s1: number; s2: number }>>(
       "SELECT lineup_1_score(mm) AS s1, lineup_2_score(mm) AS s2 FROM match_maps mm WHERE id = $1",
       [match.mapIds[0]],
     );
@@ -208,13 +211,91 @@ describe("match scoring from rounds (SQL-driven)", () => {
     expect(after.getTime()).toBe(before.getTime());
   });
 
+  // Attaches the match to a double-elimination bracket row shaped like the
+  // generator's grand final: path 'WB', no parent, an LB feeder as a child.
+  // withLbFeeder=false models a parentless WB *final* in a stage that passes
+  // 2+ teams on (no grand final generated), which must NOT get the advantage.
+  const linkDoubleElimFinal = async (
+    matchId: string,
+    advantage: number,
+    { withLbFeeder = true } = {},
+  ) => {
+    const organizer = await fx.player();
+    const [{ match_options_id }] = await postgres.query<
+      Array<{ match_options_id: string }>
+    >("SELECT match_options_id FROM matches WHERE id = $1", [matchId]);
+    const [tournament] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO tournaments (name, start, organizer_steam_id, match_options_id, status)
+       VALUES ($1, now(), $2, $3, 'Setup') RETURNING id`,
+      [fx.nextName("de-cup"), organizer, match_options_id],
+    );
+    const [stage] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO tournament_stages (tournament_id, type, "order", min_teams, max_teams, final_map_advantage)
+       VALUES ($1, 'DoubleElimination', 1, 4, 8, $2) RETURNING id`,
+      [tournament.id, advantage],
+    );
+    const [finalBracket] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO tournament_brackets (tournament_stage_id, round, match_number, path, match_id)
+       VALUES ($1, 3, 1, 'WB', $2) RETURNING id`,
+      [stage.id, matchId],
+    );
+    if (withLbFeeder) {
+      await postgres.query(
+        `INSERT INTO tournament_brackets (tournament_stage_id, round, match_number, path, parent_bracket_id)
+         VALUES ($1, 2, 1, 'LB', $2)`,
+        [stage.id, finalBracket.id],
+      );
+    }
+  };
+
+  it("grand final: the winner-bracket team banks final_map_advantage map wins", async () => {
+    const match = await createLiveMatch(3);
+    await linkDoubleElimFinal(match.id, 1);
+
+    await recordScore(match.mapIds[0], 13, 7);
+    await finishMap(match.mapIds[0]);
+
+    const after = await matchRow(match.id);
+    expect(after.status).toBe("Finished");
+    expect(after.winning_lineup_id).toBe(match.lineup_1_id);
+  });
+
+  it("a parentless WB final without a grand final gets no advantage", async () => {
+    const match = await createLiveMatch(3);
+    await linkDoubleElimFinal(match.id, 1, { withLbFeeder: false });
+
+    await recordScore(match.mapIds[0], 13, 7);
+    await finishMap(match.mapIds[0]);
+
+    expect((await matchRow(match.id)).status).toBe("Live");
+  });
+
+  it("an over-sized advantage is clamped below the win threshold", async () => {
+    const match = await createLiveMatch(3);
+    await linkDoubleElimFinal(match.id, 2);
+
+    // Unclamped, advantage 2 in a Bo3 would finish the series for lineup 1
+    // here despite lineup 2 winning the map.
+    await recordScore(match.mapIds[0], 7, 13);
+    await finishMap(match.mapIds[0]);
+    expect((await matchRow(match.id)).status).toBe("Live");
+
+    await recordScore(match.mapIds[1], 5, 13);
+    await finishMap(match.mapIds[1]);
+
+    const after = await matchRow(match.id);
+    expect(after.status).toBe("Finished");
+    expect(after.winning_lineup_id).toBe(match.lineup_2_id);
+  });
+
   it("does not overwrite a forfeited match", async () => {
     const match = await createLiveMatch(1);
     await recordScore(match.mapIds[0], 13, 7);
 
-    await postgres.query("UPDATE matches SET status = 'Forfeit' WHERE id = $1", [
-      match.id,
-    ]);
+    await postgres.query(
+      "UPDATE matches SET status = 'Forfeit' WHERE id = $1",
+      [match.id],
+    );
     await finishMap(match.mapIds[0]);
 
     const after = await matchRow(match.id);
@@ -225,9 +306,10 @@ describe("match scoring from rounds (SQL-driven)", () => {
   it("a map going Live stamps started_at and arms the live-match timeout", async () => {
     const match = await createLiveMatch(1);
 
-    await postgres.query("UPDATE match_maps SET status = 'Live' WHERE id = $1", [
-      match.mapIds[0],
-    ]);
+    await postgres.query(
+      "UPDATE match_maps SET status = 'Live' WHERE id = $1",
+      [match.mapIds[0]],
+    );
 
     const [map] = await postgres.query<Array<{ started_at: Date | null }>>(
       "SELECT started_at FROM match_maps WHERE id = $1",

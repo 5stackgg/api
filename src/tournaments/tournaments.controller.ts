@@ -119,8 +119,12 @@ export class TournamentsController {
       },
     });
 
+    // Sync the changed team first (it performs the removals), then the
+    // tournament's other links: a removed member tagged with this team may
+    // still be entitled by another linked team, which must re-add them.
     for (const link of tournament_organizer_teams) {
       await this.syncOrganizationTeamOrganizers(link.tournament_id, teamId);
+      await this.syncRemainingOrganizationTeams(link.tournament_id);
     }
   }
 
@@ -166,6 +170,8 @@ export class TournamentsController {
     );
 
     if (toInsert.length > 0) {
+      // on_conflict: concurrent events for the same tournament race between the
+      // read above and this insert; the PK hit must not fail the whole batch.
       await this.hasura.mutation({
         insert_tournament_organizers: {
           __args: {
@@ -174,6 +180,10 @@ export class TournamentsController {
               tournament_id: tournamentId,
               organization_team_id: teamId,
             })),
+            on_conflict: {
+              constraint: "tournament_organizers_pkey",
+              update_columns: [],
+            },
           },
           affected_rows: true,
         },

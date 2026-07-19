@@ -55,8 +55,11 @@ select_permissions:
         - nav_group
         - nav_order
       filter:
-        enabled:
-          _eq: true
+        _and:
+          - enabled:
+              _eq: true
+          - required_role:
+              _is_null: true
     comment: ""
   - role: user
     permission:
@@ -74,8 +77,15 @@ select_permissions:
         - nav_group
         - nav_order
       filter:
-        enabled:
-          _eq: true
+        _and:
+          - enabled:
+              _eq: true
+          - _or:
+              - required_role:
+                  _is_null: true
+              - required_role:
+                  _in:
+                    - user
     comment: ""
   - role: verified_user
     permission:
@@ -93,8 +103,16 @@ select_permissions:
         - nav_group
         - nav_order
       filter:
-        enabled:
-          _eq: true
+        _and:
+          - enabled:
+              _eq: true
+          - _or:
+              - required_role:
+                  _is_null: true
+              - required_role:
+                  _in:
+                    - user
+                    - verified_user
     comment: ""
   - role: streamer
     permission:
@@ -112,8 +130,17 @@ select_permissions:
         - nav_group
         - nav_order
       filter:
-        enabled:
-          _eq: true
+        _and:
+          - enabled:
+              _eq: true
+          - _or:
+              - required_role:
+                  _is_null: true
+              - required_role:
+                  _in:
+                    - user
+                    - verified_user
+                    - streamer
     comment: ""
   - role: moderator
     permission:
@@ -131,8 +158,18 @@ select_permissions:
         - nav_group
         - nav_order
       filter:
-        enabled:
-          _eq: true
+        _and:
+          - enabled:
+              _eq: true
+          - _or:
+              - required_role:
+                  _is_null: true
+              - required_role:
+                  _in:
+                    - user
+                    - verified_user
+                    - streamer
+                    - moderator
     comment: ""
   - role: match_organizer
     permission:
@@ -150,8 +187,19 @@ select_permissions:
         - nav_group
         - nav_order
       filter:
-        enabled:
-          _eq: true
+        _and:
+          - enabled:
+              _eq: true
+          - _or:
+              - required_role:
+                  _is_null: true
+              - required_role:
+                  _in:
+                    - user
+                    - verified_user
+                    - streamer
+                    - moderator
+                    - match_organizer
     comment: ""
   - role: tournament_organizer
     permission:
@@ -169,8 +217,20 @@ select_permissions:
         - nav_group
         - nav_order
       filter:
-        enabled:
-          _eq: true
+        _and:
+          - enabled:
+              _eq: true
+          - _or:
+              - required_role:
+                  _is_null: true
+              - required_role:
+                  _in:
+                    - user
+                    - verified_user
+                    - streamer
+                    - moderator
+                    - match_organizer
+                    - tournament_organizer
     comment: ""
 update_permissions:
   - role: administrator
