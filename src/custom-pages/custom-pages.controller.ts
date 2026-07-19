@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import { User } from "../auth/types/User";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { e_player_roles_enum } from "generated";
+import { SystemService } from "src/system/system.service";
 
 @Controller("custom-pages")
 export class CustomPagesController {
@@ -105,12 +106,37 @@ export class CustomPagesController {
         scope: manifest.scope ?? null,
         module: manifest.module ?? manifest.exposedModule ?? null,
         requiredRole: manifest.requiredRole ?? null,
+        deployments: CustomPagesController.resolveDeployments(
+          manifest.deployments,
+        ),
       });
     } catch {
       return response
         .status(502)
         .json({ error: "could not fetch plugin manifest" });
     }
+  }
+
+  // Deployments the plugin wants watched for image updates. The panel restarts
+  // whatever is named here, and the manifest is third-party input, so reserved
+  // first-party names are dropped -- otherwise a plugin could declare "api" and
+  // get the panel to roll itself. Invalid entries are dropped rather than
+  // failing the detect, so one typo doesn't block registering the plugin.
+  private static resolveDeployments(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .filter((name): name is string => {
+        return (
+          typeof name === "string" &&
+          name.length <= 63 &&
+          /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/.test(name) &&
+          !SystemService.isReservedDeployment(name)
+        );
+      })
+      .slice(0, 8);
   }
 
   // Best-effort SSRF guard for the admin-only detect fetch: blocks loopback,
