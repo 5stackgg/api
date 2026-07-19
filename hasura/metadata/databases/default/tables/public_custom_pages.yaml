@@ -17,6 +17,7 @@ insert_permissions:
         - is_default
         - nav_group
         - nav_order
+        - deployments
     comment: ""
 select_permissions:
   - role: administrator
@@ -34,6 +35,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - deployments
         - created_at
         - updated_at
       filter: {}
@@ -247,6 +249,7 @@ update_permissions:
         - is_default
         - nav_group
         - nav_order
+        - deployments
       filter: {}
       check: {}
     comment: ""
