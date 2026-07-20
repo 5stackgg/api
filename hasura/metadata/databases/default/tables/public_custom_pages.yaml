@@ -17,7 +17,9 @@ insert_permissions:
         - is_default
         - nav_group
         - nav_order
+        - profile_tab_label
         - deployments
+        - manifest_url
     comment: ""
 select_permissions:
   - role: administrator
@@ -35,7 +37,9 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - profile_tab_label
         - deployments
+        - manifest_url
         - created_at
         - updated_at
       filter: {}
@@ -56,6 +60,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - profile_tab_label
       filter:
         _and:
           - enabled:
@@ -78,6 +83,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - profile_tab_label
       filter:
         _and:
           - enabled:
@@ -104,6 +110,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - profile_tab_label
       filter:
         _and:
           - enabled:
@@ -131,6 +138,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - profile_tab_label
       filter:
         _and:
           - enabled:
@@ -159,6 +167,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - profile_tab_label
       filter:
         _and:
           - enabled:
@@ -188,6 +197,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - profile_tab_label
       filter:
         _and:
           - enabled:
@@ -218,6 +228,7 @@ select_permissions:
         - is_default
         - nav_group
         - nav_order
+        - profile_tab_label
       filter:
         _and:
           - enabled:
@@ -249,7 +260,9 @@ update_permissions:
         - is_default
         - nav_group
         - nav_order
+        - profile_tab_label
         - deployments
+        - manifest_url
       filter: {}
       check: {}
     comment: ""
