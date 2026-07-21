@@ -389,6 +389,18 @@ export class SteamMatchHistoryService {
       if (response.status === 403) {
         return { nextCode: null, error: "invalid auth_code or share_code" };
       }
+      if (response.status === 412) {
+        // Steam returns 412 when the knowncode is not a valid share code for
+        // this account: a stale seed on the pollForUser walk, or a wrong code
+        // pasted into the linkAccount probe. fetchNextShareCode serves both
+        // callers, so keep this message context-neutral and actionable rather
+        // than the raw "responded with 412".
+        return {
+          nextCode: null,
+          error:
+            "share code not accepted, link again with your most recent share code",
+        };
+      }
       if (response.status === 202) {
         return { nextCode: null, error: null };
       }
