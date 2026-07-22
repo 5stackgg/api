@@ -25,9 +25,7 @@ export class RconGateway {
   ) {
     if (
       !client.user ||
-      client.user.role === "user" ||
-      client.user.role === "verified_user" ||
-      client.user.role === "streamer"
+      !(await this.rconService.canAccessServer(data.serverId, client.user))
     ) {
       return;
     }
