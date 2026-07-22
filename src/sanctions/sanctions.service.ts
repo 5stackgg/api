@@ -229,6 +229,27 @@ export class SanctionsService {
     });
   }
 
+  private async hasLiveMatch(serverId: string): Promise<boolean> {
+    const { matches } = await this.hasura.query({
+      matches: {
+        __args: {
+          where: {
+            server_id: {
+              _eq: serverId,
+            },
+            status: {
+              _nin: ["Canceled", "Finished", "Forfeit", "Surrendered", "Tie"],
+            },
+          },
+          limit: 1,
+        },
+        id: true,
+      },
+    });
+
+    return matches.length > 0;
+  }
+
   private async syncServer(
     serverId: string,
     kickUserid: string | null,
@@ -246,7 +267,19 @@ export class SanctionsService {
         await rcon.send(`kickid ${kickUserid} Banned`);
       }
 
-      await rcon.send("get_sanctions");
+      // The plugins carry mute/gag/ban as flags on the match payload, so a
+      // match refresh is what actually re-applies them live. A server with no
+      // match has no command to push sanctions to yet.
+      if (!(await this.hasLiveMatch(serverId))) {
+        return {
+          enforced: kickUserid !== null,
+          message: kickUserid
+            ? "sanction saved and player kicked; server has no match to sync"
+            : "sanction saved; server has no match to sync",
+        };
+      }
+
+      await rcon.send("get_match");
 
       return {
         enforced: true,
