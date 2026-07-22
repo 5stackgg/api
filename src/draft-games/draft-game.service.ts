@@ -44,6 +44,9 @@ export interface CreateDraftGameSettings {
 export interface DraftRosterEntry {
   steam_id: string;
   lineup: number | null;
+  // Which side this player belongs to even when benched, so backups stay
+  // pinned to the team they would sub for.
+  side?: number | null;
 }
 
 @Injectable()
@@ -108,8 +111,7 @@ export class DraftGameService {
     // Organizers can open a lobby they manage but do not play in; everyone else
     // is always seeded as the first accepted player.
     const hostJoins =
-      settings.host_joins === false &&
-      isRoleAbove(user.role, "match_organizer")
+      settings.host_joins === false && isRoleAbove(user.role, "match_organizer")
         ? false
         : true;
 
@@ -509,10 +511,14 @@ export class DraftGameService {
         continue;
       }
       seen.add(steamId);
-      const lineup =
+      const starting =
         entry.lineup === 1 || entry.lineup === 2 ? entry.lineup : null;
-      const status = lineup === null ? "Waitlist" : "Accepted";
-      const pickOrder = lineup === null ? null : ++pickOrders[lineup];
+      const status = starting === null ? "Waitlist" : "Accepted";
+      const pickOrder = starting === null ? null : ++pickOrders[starting];
+      // A benched roster member is a backup for their own side, not a floating
+      // spare: keep the side so the room can list them under that team.
+      const side = entry.side === 1 || entry.side === 2 ? entry.side : null;
+      const lineup = starting ?? side;
       const elo = await this.getPlayerElo(steamId, type);
 
       if (steamId === hostSteamId) {
@@ -912,7 +918,10 @@ export class DraftGameService {
         await this.hasura.mutation({
           update_draft_game_players_by_pk: {
             __args: {
-              pk_columns: { draft_game_id: draftGameId, steam_id: user.steam_id },
+              pk_columns: {
+                draft_game_id: draftGameId,
+                steam_id: user.steam_id,
+              },
               _set: { status },
             },
             __typename: true,
@@ -1382,6 +1391,7 @@ export class DraftGameService {
       match_options_id: draft_games_by_pk.match_options_id,
       team_1_id: draft_games_by_pk.team_1_id,
       team_2_id: draft_games_by_pk.team_2_id,
+      inner_squad: draft_games_by_pk.inner_squad,
       captain_selection: draft_games_by_pk.captain_selection,
       draft_order: draft_games_by_pk.draft_order,
       min_elo: draft_games_by_pk.min_elo,
