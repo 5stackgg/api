@@ -115,10 +115,13 @@ BEGIN
         FROM public.draft_game_players WHERE draft_game_id = game.id AND status = 'Accepted';
         EXIT WHEN accepted_count >= game.capacity;
 
+        -- A backup is pinned to the side it subs for, so promoting one from the
+        -- other team would leave that side over capacity while this one is short.
         SELECT steam_id INTO promote_steam_id
         FROM public.draft_game_players
         WHERE draft_game_id = game.id AND status = 'Waitlist'
-        ORDER BY joined_at ASC LIMIT 1;
+          AND (OLD.lineup IS NULL OR lineup IS NULL OR lineup = OLD.lineup)
+        ORDER BY (lineup IS DISTINCT FROM OLD.lineup), joined_at ASC LIMIT 1;
         EXIT WHEN promote_steam_id IS NULL;
 
         UPDATE public.draft_game_players SET status = 'Accepted'
