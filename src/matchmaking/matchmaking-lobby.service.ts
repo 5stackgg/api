@@ -15,7 +15,7 @@ import {
   getMatchmakingLobbyDetailsCacheKey,
 } from "./utilities/cacheKeys";
 import { JoinQueueError } from "./utilities/joinQueueError";
-import { getPartySizeError } from "./utilities/partySize";
+import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
 
 @Injectable()
 export class MatchmakingLobbyService {
@@ -118,7 +118,7 @@ export class MatchmakingLobbyService {
       throw new JoinQueueError(`you are not the captain of this lobby`);
     }
 
-    const partySizeError = getPartySizeError(type, lobby.players.length);
+    const partySizeError = this.getPartySizeError(type, lobby.players.length);
 
     if (partySizeError) {
       throw new JoinQueueError(partySizeError);
@@ -403,6 +403,37 @@ export class MatchmakingLobbyService {
     });
 
     return players_by_pk.current_lobby_id || steamId;
+  }
+
+  /**
+   * A party may queue a match type when it either fits inside a single lineup
+   * (half the match, matchmaking fills the other half) or fills the entire
+   * match on its own (both lineups, split in-house). Anything between those two
+   * — or anything above the full match size — cannot be placed.
+   *
+   * Duel (2): 1 or 2 · Wingman (4): 1-2 or 4 · Competitive (10): 1-5 or 10
+   */
+  private canPartyQueue(type: e_match_types_enum, partySize: number): boolean {
+    const expected = ExpectedPlayers[type];
+
+    if (!expected) {
+      return true;
+    }
+
+    return partySize <= expected / 2 || partySize === expected;
+  }
+
+  private getPartySizeError(
+    type: e_match_types_enum,
+    partySize: number,
+  ): string | undefined {
+    if (this.canPartyQueue(type, partySize)) {
+      return;
+    }
+
+    const expected = ExpectedPlayers[type];
+
+    return `To join a ${type} match, your lobby must have ${expected / 2} or fewer players, or exactly ${expected} players. You have ${partySize}.`;
   }
 
   private async verifyPlayer(
