@@ -15,6 +15,7 @@ import {
   getMatchmakingLobbyDetailsCacheKey,
 } from "./utilities/cacheKeys";
 import { JoinQueueError } from "./utilities/joinQueueError";
+import { getPartySizeError } from "./utilities/partySize";
 
 @Injectable()
 export class MatchmakingLobbyService {
@@ -117,30 +118,10 @@ export class MatchmakingLobbyService {
       throw new JoinQueueError(`you are not the captain of this lobby`);
     }
 
-    const totalPlayers = lobby.players.length;
+    const partySizeError = getPartySizeError(type, lobby.players.length);
 
-    switch (type) {
-      case "Competitive":
-        if (totalPlayers > 5 && totalPlayers !== 10) {
-          throw new JoinQueueError(
-            `To join a Competitive match, with a lobby greater than 5 players, you must have 10 players in your lobby`,
-          );
-        }
-        break;
-      case "Wingman":
-        if (totalPlayers > 2 && totalPlayers !== 4) {
-          throw new JoinQueueError(
-            `To join a Wingman match, with a lobby greater than 2 players, you must have 4 players in your lobby`,
-          );
-        }
-        break;
-      case "Duel":
-        if (totalPlayers > 1 && totalPlayers !== 2) {
-          throw new JoinQueueError(
-            `To join a Duel match, with a lobby greater than 1 player you must have 2 players in your lobby`,
-          );
-        }
-        break;
+    if (partySizeError) {
+      throw new JoinQueueError(partySizeError);
     }
 
     for (const player of lobby.players) {
