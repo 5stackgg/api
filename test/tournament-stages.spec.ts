@@ -359,6 +359,52 @@ describe("tournament stages: Swiss and RoundRobin (SQL-driven)", () => {
       expect(Number(stage1.min_teams)).toBe(8);
     });
 
+    const THREE_STAGES = [
+      { type: "SingleElimination", order: 1, minTeams: 16, maxTeams: 16 },
+      { type: "SingleElimination", order: 2, minTeams: 8, maxTeams: 8 },
+      { type: "SingleElimination", order: 3, minTeams: 4, maxTeams: 4 },
+    ];
+
+    it("deleting a stage closes the gap in the remaining stage order", async () => {
+      const t = await tfx.createTournament(THREE_STAGES);
+
+      await postgres.query("DELETE FROM tournament_stages WHERE id = $1", [
+        t.stageIds[0],
+      ]);
+
+      const stages = await postgres.query<Array<{ id: string; order: number }>>(
+        `SELECT id, "order" FROM tournament_stages WHERE tournament_id = $1 ORDER BY "order"`,
+        [t.id],
+      );
+      expect(stages.map((stage) => Number(stage.order))).toEqual([1, 2]);
+      expect(stages.map((stage) => stage.id)).toEqual([
+        t.stageIds[1],
+        t.stageIds[2],
+      ]);
+    });
+
+    it("deleting a middle stage keeps the surviving stages linked", async () => {
+      const t = await tfx.createTournament(THREE_STAGES);
+
+      await postgres.query("DELETE FROM tournament_stages WHERE id = $1", [
+        t.stageIds[1],
+      ]);
+
+      const stages = await postgres.query<Array<{ order: number }>>(
+        `SELECT "order" FROM tournament_stages WHERE tournament_id = $1 ORDER BY "order"`,
+        [t.id],
+      );
+      expect(stages.map((stage) => Number(stage.order))).toEqual([1, 2]);
+
+      // Stages link by "order" + 1, so the gap used to leave stage 3 orphaned.
+      const [linked] = await postgres.query<Array<{ count: string }>>(
+        `SELECT COUNT(*) FROM tournament_brackets
+          WHERE tournament_stage_id = $1 AND parent_bracket_id IS NOT NULL`,
+        [t.stageIds[0]],
+      );
+      expect(Number(linked.count)).toBeGreaterThan(0);
+    });
+
     it("a RoundRobin stage feeds its top teams into the elimination stage", async () => {
       const t = await tfx.launch(
         [

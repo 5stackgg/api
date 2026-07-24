@@ -83,6 +83,16 @@ DECLARE
     current_order INTEGER;
     next_stage_record RECORD;
 BEGIN
+    -- Resequencing after a delete only shifts "order"; the delete trigger
+    -- regenerates the brackets once for the whole tournament afterwards.
+    BEGIN
+        PERFORM 1 FROM pg_temp.resequencing_tournament_stages LIMIT 1;
+        RETURN NEW;
+    EXCEPTION
+        WHEN undefined_table THEN
+            NULL;
+    END;
+
     -- Format-only tweaks (per-round best-of settings, default best-of) don't
     -- affect bracket structure — they are read at match materialization — so
     -- they must not trigger a bracket regeneration.
@@ -203,6 +213,14 @@ DECLARE
     tournament_status text;
     stage_has_matches boolean;
 BEGIN
+    BEGIN
+        PERFORM 1 FROM pg_temp.resequencing_tournament_stages LIMIT 1;
+        RETURN NEW;
+    EXCEPTION
+        WHEN undefined_table THEN
+            NULL;
+    END;
+
     -- Format-only tweaks (per-round best-of settings, default best-of) are
     -- allowed at any point: they only apply to matches that have not been
     -- created yet, so a live tournament/league can adjust its series format.
@@ -284,6 +302,28 @@ CREATE OR REPLACE FUNCTION public.tad_tournament_stages() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
+    -- Stage order must stay 1..N with no gaps: stages are linked by
+    -- "order" + 1, so a hole leaves the stages after it orphaned.
+    CREATE TEMP TABLE IF NOT EXISTS resequencing_tournament_stages (dummy int);
+
+    BEGIN
+        UPDATE tournament_stages ts
+        SET "order" = resequenced.new_order
+        FROM (
+            SELECT id, (ROW_NUMBER() OVER (ORDER BY "order" ASC, id ASC))::int AS new_order
+            FROM tournament_stages
+            WHERE tournament_id = OLD.tournament_id
+        ) resequenced
+        WHERE ts.id = resequenced.id
+          AND ts."order" IS DISTINCT FROM resequenced.new_order;
+    EXCEPTION
+        WHEN OTHERS THEN
+            DROP TABLE IF EXISTS pg_temp.resequencing_tournament_stages;
+            RAISE;
+    END;
+
+    DROP TABLE IF EXISTS pg_temp.resequencing_tournament_stages;
+
     PERFORM update_tournament_stages(OLD.tournament_id);
     PERFORM cleanup_orphaned_match_options(OLD.match_options_id);
     RETURN OLD;
