@@ -109,6 +109,15 @@ export class TelemetryService {
     return (name: string) => (alias ? `${alias}.${name}` : name);
   }
 
+  private static activeLineups(interval: string) {
+    const recent = `${TelemetryService.nativeMatch("m")}
+      AND m.effective_at >= now() - interval '${interval}'`;
+
+    return `SELECT m.lineup_1_id FROM public.matches m WHERE ${recent}
+            UNION
+            SELECT m.lineup_2_id FROM public.matches m WHERE ${recent}`;
+  }
+
   constructor(
     private readonly logger: Logger,
     private readonly redisManagerService: RedisManagerService,
@@ -752,10 +761,28 @@ export class TelemetryService {
     return row?.value;
   }
 
+  // Telemetry is the least important thing a panel does, so it is never allowed
+  // to hold a connection open. SET LOCAL scopes the timeout to this transaction
+  // rather than leaking onto a pooled connection the rest of the app reuses. A
+  // timeout aborts the whole collection and send() skips the hour.
+  private static readonly CollectTimeoutMs = 15_000;
+
+  private async collectQuery<T>(sql: string): Promise<T> {
+    return await this.postgres.transaction(async (client) => {
+      await client.query(
+        `SET LOCAL statement_timeout = ${TelemetryService.CollectTimeoutMs}`,
+      );
+
+      const result = await client.query(sql);
+
+      return result.rows as T;
+    });
+  }
+
   private async getSettings(): Promise<Map<string, string>> {
-    const rows = await this.postgres.query<
-      Array<{ name: string; value: string }>
-    >(`SELECT name, value FROM public.settings`);
+    const rows = await this.collectQuery<Array<{ name: string; value: string }>>(
+      `SELECT name, value FROM public.settings`,
+    );
 
     return new Map(rows.map(({ name, value }) => [name, value]));
   }
@@ -770,9 +797,7 @@ export class TelemetryService {
   }
 
   private async getMatchesByType(): Promise<Record<string, number>> {
-    const rows = await this.postgres.query<
-      Array<{ type: string; count: string }>
-    >(
+    const rows = await this.collectQuery<Array<{ type: string; count: string }>>(
       `SELECT o.type, count(*) AS count
          FROM public.matches m
          JOIN public.match_options o ON o.id = m.match_options_id
@@ -784,7 +809,7 @@ export class TelemetryService {
   }
 
   private async getMatchesBySource(): Promise<Record<string, number>> {
-    const rows = await this.postgres.query<
+    const rows = await this.collectQuery<
       Array<{ source: string; count: string }>
     >(
       `SELECT source, count(*) AS count
@@ -814,7 +839,7 @@ export class TelemetryService {
   }
 
   private async getCounts(): Promise<TelemetryCounts> {
-    const [row] = await this.postgres.query<Array<TelemetryCounts>>(
+    const [row] = await this.collectQuery<Array<TelemetryCounts>>(
       `SELECT
         (SELECT min(created_at) FROM public.matches)                                     AS installed_at,
 
@@ -883,20 +908,21 @@ export class TelemetryService {
 
         (SELECT count(*) FROM public.players)                                            AS players_registered,
         (SELECT count(*) FROM public.teams)                                              AS teams_total,
+        -- An OR across both lineup columns cannot use an index and forces a
+        -- join over every lineup row. Feeding the two sides in separately lets
+        -- this ride the (match_lineup_id, steam_id) unique index instead.
         (SELECT count(DISTINCT p.steam_id)
            FROM public.match_lineup_players p
-           JOIN public.matches m
-             ON m.lineup_1_id = p.match_lineup_id OR m.lineup_2_id = p.match_lineup_id
           WHERE p.steam_id IS NOT NULL
-            AND ${TelemetryService.nativeMatch("m")}
-            AND m.effective_at >= now() - interval '7 days')                             AS players_active_7d,
+            AND p.match_lineup_id IN (
+              ${TelemetryService.activeLineups("7 days")}
+            ))                                                                           AS players_active_7d,
         (SELECT count(DISTINCT p.steam_id)
            FROM public.match_lineup_players p
-           JOIN public.matches m
-             ON m.lineup_1_id = p.match_lineup_id OR m.lineup_2_id = p.match_lineup_id
           WHERE p.steam_id IS NOT NULL
-            AND ${TelemetryService.nativeMatch("m")}
-            AND m.effective_at >= now() - interval '30 days')                            AS players_active_30d,
+            AND p.match_lineup_id IN (
+              ${TelemetryService.activeLineups("30 days")}
+            ))                                                                           AS players_active_30d,
 
         (SELECT count(*) FROM public.tournaments)                                        AS tournaments,
         (SELECT count(*) FROM public.league_seasons)                                     AS league_seasons,

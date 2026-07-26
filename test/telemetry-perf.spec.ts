@@ -1,4 +1,6 @@
 import { Logger } from "@nestjs/common";
+
+const report = (line: string) => process.stdout.write(`PERF ${line}\n`);
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 import { TelemetryService } from "./../src/telemetry/telemetry.service";
@@ -44,7 +46,7 @@ benchmark("telemetry perf", () => {
 
     const MATCHES = 20000;
 
-    console.log(`seeding ${MATCHES} matches...`);
+    report(`seeding ${MATCHES} matches...`);
     const started = Date.now();
 
     await postgres.query(
@@ -102,7 +104,7 @@ benchmark("telemetry perf", () => {
        FROM matches m`,
     );
 
-    console.log(`seeded in ${Date.now() - started}ms`);
+    report(`seeded in ${Date.now() - started}ms`);
 
     const counts = await postgres.query<Array<Record<string, string>>>(
       `SELECT
@@ -110,7 +112,7 @@ benchmark("telemetry perf", () => {
          (SELECT count(*) FROM match_lineup_players) AS lineup_players,
          (SELECT count(*) FROM match_maps) AS maps`,
     );
-    console.log("row counts:", counts[0]);
+    report(`row counts: ${JSON.stringify(counts[0])}`);
 
     await postgres.query("ANALYZE");
   }, 900_000);
@@ -123,7 +125,7 @@ benchmark("telemetry perf", () => {
     for (let i = 0; i < 3; i++) {
       const started = Date.now();
       await service.collect();
-      console.log(`collect() run ${i + 1}: ${Date.now() - started}ms`);
+      report(`collect() run ${i + 1}: ${Date.now() - started}ms`);
     }
   }, 300_000);
 
@@ -138,12 +140,12 @@ benchmark("telemetry perf", () => {
 
     const started = Date.now();
     await postgres.query(sql);
-    console.log(`OR-join active players: ${Date.now() - started}ms`);
+    report(`OR-join active players: ${Date.now() - started}ms`);
 
     const plan = await postgres.query<Array<Record<string, string>>>(
       `EXPLAIN (ANALYZE, BUFFERS) ${sql}`,
     );
-    console.log(plan.map((r) => r["QUERY PLAN"]).join("\n"));
+    report(plan.map((r) => r["QUERY PLAN"]).join("\n"));
   }, 300_000);
 
   it("times an IN-rewrite of the same thing", async () => {
@@ -160,11 +162,11 @@ benchmark("telemetry perf", () => {
 
     const started = Date.now();
     await postgres.query(sql);
-    console.log(`IN-rewrite active players: ${Date.now() - started}ms`);
+    report(`IN-rewrite active players: ${Date.now() - started}ms`);
 
     const plan = await postgres.query<Array<Record<string, string>>>(
       `EXPLAIN (ANALYZE, BUFFERS) ${sql}`,
     );
-    console.log(plan.map((r) => r["QUERY PLAN"]).join("\n"));
+    report(plan.map((r) => r["QUERY PLAN"]).join("\n"));
   }, 300_000);
 });
