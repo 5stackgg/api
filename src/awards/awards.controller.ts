@@ -81,15 +81,21 @@ export class AwardsController {
     player_steam_id?: string | null;
     team_id?: string | null;
     tournament_id?: string | null;
+    event_id?: string | null;
+    season_id?: string | null;
+    league_season_id?: string | null;
     note?: string | null;
     user?: User;
   }) {
-    const user = await this.assertCanGrant(data.user, data.tournament_id);
+    const user = await this.assertCanGrant(data.user, data);
     return await this.awards.grantAward({
       award_id: data.award_id,
       player_steam_id: data.player_steam_id,
       team_id: data.team_id,
       tournament_id: data.tournament_id,
+      event_id: data.event_id,
+      season_id: data.season_id,
+      league_season_id: data.league_season_id,
       note: data.note,
       awarded_by_steam_id: user.steam_id,
     });
@@ -98,7 +104,7 @@ export class AwardsController {
   @HasuraAction()
   public async revokeAward(data: { id: string; user?: User }) {
     const recipient = await this.awards.getRecipient(data.id);
-    await this.assertCanGrant(data.user, recipient.tournament_id);
+    await this.assertCanGrant(data.user, recipient);
     await this.awards.revokeAward(data.id);
     return { success: true };
   }
@@ -231,12 +237,20 @@ export class AwardsController {
   }
 
   // Tournament organizers can always hand out awards inside their own
-  // tournament, regardless of where the global grant floor sits.
+  // tournament, regardless of where the global grant floor sits. No other scope
+  // has a delegated role, so an event/season/league grant needs the floor.
   private async assertCanGrant(
     user: User | undefined,
-    tournamentId?: string | null,
+    scope: {
+      tournament_id?: string | null;
+      event_id?: string | null;
+      season_id?: string | null;
+      league_season_id?: string | null;
+    },
   ): Promise<User> {
     const resolved = this.requireUser(user);
+
+    this.awards.assertSingleScope(scope);
 
     const grantRole = (await this.system.getSetting(
       SystemSettingName.GrantAwardsRole,
@@ -247,13 +261,13 @@ export class AwardsController {
       return resolved;
     }
 
-    if (!tournamentId) {
+    if (!scope.tournament_id) {
       throw new ForbiddenException(
         "You do not have permission to grant awards",
       );
     }
 
-    await this.awards.requireOrganizer(tournamentId, resolved);
+    await this.awards.requireOrganizer(scope.tournament_id, resolved);
     return resolved;
   }
 

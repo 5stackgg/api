@@ -8,6 +8,12 @@ object_relationships:
   - name: awarded_by
     using:
       foreign_key_constraint_on: awarded_by_steam_id
+  - name: event
+    using:
+      foreign_key_constraint_on: event_id
+  - name: league_season
+    using:
+      foreign_key_constraint_on: league_season_id
   - name: player
     using:
       foreign_key_constraint_on: player_steam_id
@@ -41,6 +47,8 @@ select_permissions:
         - award_id
         - tournament_id
         - season_id
+        - event_id
+        - league_season_id
         - tournament_team_id
         - team_id
         - player_steam_id
