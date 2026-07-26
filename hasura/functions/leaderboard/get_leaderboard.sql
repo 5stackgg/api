@@ -546,12 +546,40 @@ BEGIN
       SUM(CASE WHEN ar.placement = 3 THEN 1 ELSE 0 END)::int as bronze,
       COUNT(*)::int as total
     FROM award_recipients ar
-    JOIN tournaments t ON t.id = ar.tournament_id
-    JOIN match_options mo ON mo.id = t.match_options_id
+    -- Tournament placements carry a match type and a start date, so they honour
+    -- the window and type filters. Season placements are ranked from the season
+    -- itself: they have no match_options, so they only apply when no type filter
+    -- is set, and their date is the season's end.
+    LEFT JOIN tournaments t ON t.id = ar.tournament_id
+    LEFT JOIN match_options mo ON mo.id = t.match_options_id
+    LEFT JOIN seasons s ON s.id = ar.season_id
     WHERE ar.player_steam_id IS NOT NULL
       AND ar.placement IS NOT NULL
-      AND ((_from IS NULL OR t.start >= _from) AND (_to IS NULL OR t.start < _to))
-      AND (_match_type IS NULL OR mo.type = _match_type)
+      AND (ar.tournament_id IS NOT NULL OR ar.season_id IS NOT NULL)
+      AND (
+        ar.tournament_id IS NULL
+        OR (
+          ((_from IS NULL OR t.start >= _from) AND (_to IS NULL OR t.start < _to))
+          AND (_match_type IS NULL OR mo.type = _match_type)
+        )
+      )
+      AND (
+        ar.season_id IS NULL
+        OR (
+          _match_type IS NULL
+          AND (
+            -- A season's own medals are handed out at its close, which is the
+            -- exclusive end of its window, so match the season directly rather
+            -- than by date when the board is already scoped to one.
+            (_season_id IS NOT NULL AND ar.season_id = _season_id)
+            OR (
+              _season_id IS NULL
+              AND (_from IS NULL OR coalesce(s.ends_at, s.starts_at) >= _from)
+              AND (_to IS NULL OR coalesce(s.ends_at, s.starts_at) < _to)
+            )
+          )
+        )
+      )
     GROUP BY ar.player_steam_id
   )
   SELECT

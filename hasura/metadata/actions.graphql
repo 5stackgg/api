@@ -1669,6 +1669,9 @@ type Mutation {
     player_steam_id: String
     team_id: uuid
     tournament_id: uuid
+    event_id: uuid
+    season_id: uuid
+    league_season_id: uuid
     note: String
   ): AwardRecipient
 }

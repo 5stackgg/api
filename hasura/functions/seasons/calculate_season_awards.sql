@@ -35,7 +35,11 @@ BEGIN
     FROM (
         SELECT
             entry.player_steam_id,
-            ROW_NUMBER() OVER (ORDER BY entry.value DESC) AS rank
+            -- steam_id breaks ties so a recalculation cannot swap two players
+            -- on equal elo between 2nd and 3rd.
+            ROW_NUMBER() OVER (
+                ORDER BY entry.value DESC, entry.player_steam_id ASC
+            ) AS rank
         FROM public._leaderboard_elo(0, NULL, false, _season_id) entry
     ) ranked
     WHERE ranked.rank <= 3

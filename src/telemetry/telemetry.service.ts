@@ -379,9 +379,12 @@ export class TelemetryService {
     }));
   }
 
-  private static toIntegers<T extends string>(
+  // `const T` keeps the key literals: without it T widens to `string`, the
+  // return type becomes an index signature, and spreading it into an object
+  // literal silently drops every property from the caller's type.
+  private static toIntegers<const T extends string>(
     row: Record<string, any> | undefined,
-    keys: Array<T>,
+    keys: readonly T[],
   ): Record<T, number> {
     const values = {} as Record<T, number>;
 

@@ -33,7 +33,10 @@ describe("telemetry (SQL-driven)", () => {
       postgres,
       { getPanelVersion: async () => "abcdef1234567890" } as never,
       // Pass-through so the aggregation SQL runs on every assertion.
-      { remember: async (_key, callback) => await callback() } as never,
+      {
+        remember: async (_key: string, callback: () => Promise<unknown>) =>
+          await callback(),
+      } as never,
     );
   }, 600_000);
 
@@ -161,7 +164,7 @@ describe("telemetry (SQL-driven)", () => {
       features: {
         events: { enabled: true, count: 4 },
         news: { enabled: false, count: 0 },
-        highlights: { enabled: null, count: 88 },
+        highlights: { enabled: null as boolean | null, count: 88 },
       },
       ...over,
     });
@@ -299,7 +302,7 @@ describe("telemetry (SQL-driven)", () => {
       players: { registered: 50, active_7d: 5, active_30d: 12, teams: 3 },
       features: {
         events: { enabled: installId === installA, count: 3 },
-        highlights: { enabled: null, count: 10 },
+        highlights: { enabled: null as boolean | null, count: 10 },
       },
     });
 

@@ -34,6 +34,18 @@ export interface AwardRow {
   updated_at: string;
 }
 
+export interface GrantAwardInput {
+  award_id: string;
+  player_steam_id?: string | null;
+  team_id?: string | null;
+  tournament_id?: string | null;
+  event_id?: string | null;
+  season_id?: string | null;
+  league_season_id?: string | null;
+  note?: string | null;
+  awarded_by_steam_id: string;
+}
+
 interface TournamentAwardRow {
   id: string;
   tournament_id: string;
@@ -83,15 +95,7 @@ export class AwardsService {
       throw new BadRequestException("Invalid silhouette");
     }
 
-    const scopes = [
-      input.tournament_id,
-      input.event_id,
-      input.season_id,
-      input.league_season_id,
-    ].filter(Boolean);
-    if (scopes.length > 1) {
-      throw new BadRequestException("An award belongs to one scope at most");
-    }
+    this.assertSingleScope(input);
 
     if (!input.id) {
       const [created] = await this.postgres.query<AwardRow[]>(
@@ -170,14 +174,7 @@ export class AwardsService {
     ]);
   }
 
-  public async grantAward(input: {
-    award_id: string;
-    player_steam_id?: string | null;
-    team_id?: string | null;
-    tournament_id?: string | null;
-    note?: string | null;
-    awarded_by_steam_id: string;
-  }) {
+  public async grantAward(input: GrantAwardInput) {
     const hasPlayer = !!input.player_steam_id;
     const hasTeam = !!input.team_id;
 
@@ -186,6 +183,8 @@ export class AwardsService {
         "An award goes to exactly one player or one team",
       );
     }
+
+    this.assertSingleScope(input);
 
     await this.requireAward(input.award_id);
 
@@ -201,8 +200,9 @@ export class AwardsService {
     const [granted] = await this.postgres.query<Array<{ id: string }>>(
       `INSERT INTO public.award_recipients
           (award_id, player_steam_id, team_id, tournament_id, tournament_team_id,
+           event_id, season_id, league_season_id,
            source, awarded_by_steam_id, note)
-        VALUES ($1, $2, $3, $4, $5, 'manual', $6, $7)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'manual', $9, $10)
         RETURNING *`,
       [
         input.award_id,
@@ -210,6 +210,9 @@ export class AwardsService {
         input.team_id ?? null,
         input.tournament_id ?? null,
         tournamentTeamId,
+        input.event_id ?? null,
+        input.season_id ?? null,
+        input.league_season_id ?? null,
         input.awarded_by_steam_id,
         input.note ?? null,
       ],
@@ -222,11 +225,36 @@ export class AwardsService {
     return granted;
   }
 
+  public assertSingleScope(input: {
+    tournament_id?: string | null;
+    event_id?: string | null;
+    season_id?: string | null;
+    league_season_id?: string | null;
+  }): void {
+    const scopes = [
+      input.tournament_id,
+      input.event_id,
+      input.season_id,
+      input.league_season_id,
+    ].filter(Boolean);
+
+    if (scopes.length > 1) {
+      throw new BadRequestException("An award belongs to one scope at most");
+    }
+  }
+
   public async getRecipient(recipientId: string) {
     const [recipient] = await this.postgres.query<
-      Array<{ id: string; source: string; tournament_id: string | null }>
+      Array<{
+        id: string;
+        source: string;
+        tournament_id: string | null;
+        event_id: string | null;
+        season_id: string | null;
+        league_season_id: string | null;
+      }>
     >(
-      `SELECT id, source, tournament_id
+      `SELECT id, source, tournament_id, event_id, season_id, league_season_id
          FROM public.award_recipients
         WHERE id = $1
         LIMIT 1`,
@@ -496,33 +524,34 @@ export class AwardsService {
   // to ON CONFLICT: tbi_award_recipients raises on a duplicate instead of
   // conflicting, so one existing holder would otherwise fail the whole grant.
   private async grantToRoster(
-    input: {
-      award_id: string;
-      team_id?: string | null;
-      tournament_id?: string | null;
-      note?: string | null;
-      awarded_by_steam_id: string;
-    },
+    input: GrantAwardInput,
     tournamentTeamId: string | null,
   ): Promise<void> {
     await this.postgres.query(
       `INSERT INTO public.award_recipients
           (award_id, player_steam_id, tournament_id, tournament_team_id,
+           event_id, season_id, league_season_id,
            source, awarded_by_steam_id, note)
-        SELECT $1, roster.player_steam_id, $2, $3, 'manual', $4, $5
+        SELECT $1, roster.player_steam_id, $2, $3, $4, $5, $6, 'manual', $7, $8
           FROM public.team_roster roster
-         WHERE roster.team_id = $6
+         WHERE roster.team_id = $9
            AND roster.role <> 'Invite'
            AND NOT EXISTS (
              SELECT 1 FROM public.award_recipients held
               WHERE held.award_id = $1
                 AND held.player_steam_id = roster.player_steam_id
                 AND held.tournament_id IS NOT DISTINCT FROM $2
+                AND held.event_id IS NOT DISTINCT FROM $4
+                AND held.season_id IS NOT DISTINCT FROM $5
+                AND held.league_season_id IS NOT DISTINCT FROM $6
            )`,
       [
         input.award_id,
         input.tournament_id ?? null,
         tournamentTeamId,
+        input.event_id ?? null,
+        input.season_id ?? null,
+        input.league_season_id ?? null,
         input.awarded_by_steam_id,
         input.note ?? null,
         input.team_id,

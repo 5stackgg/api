@@ -300,6 +300,39 @@ CREATE UNIQUE INDEX IF NOT EXISTS award_recipients_season_player_key
     ON public.award_recipients(season_id, player_steam_id, placement)
     WHERE season_id IS NOT NULL AND player_steam_id IS NOT NULL;
 
+-- Recipients can be scoped to every context `awards` can, otherwise a grant made
+-- from an event or league season page loses what it was given for.
+ALTER TABLE public.award_recipients
+    ADD COLUMN IF NOT EXISTS event_id uuid
+        REFERENCES public.events(id) ON DELETE CASCADE,
+    ADD COLUMN IF NOT EXISTS league_season_id uuid
+        REFERENCES public.league_seasons(id) ON DELETE CASCADE;
+
+CREATE INDEX IF NOT EXISTS idx_award_recipients_event
+    ON public.award_recipients(event_id, source) WHERE event_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_award_recipients_league_season
+    ON public.award_recipients(league_season_id, source)
+    WHERE league_season_id IS NOT NULL;
+
+-- A grant belongs to one context, mirroring awards_single_scope_check.
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conrelid = 'public.award_recipients'::regclass
+          AND conname = 'award_recipients_single_scope_check'
+    ) THEN
+        ALTER TABLE public.award_recipients
+            ADD CONSTRAINT award_recipients_single_scope_check
+            CHECK (
+                (CASE WHEN tournament_id IS NULL THEN 0 ELSE 1 END) +
+                (CASE WHEN season_id IS NULL THEN 0 ELSE 1 END) +
+                (CASE WHEN event_id IS NULL THEN 0 ELSE 1 END) +
+                (CASE WHEN league_season_id IS NULL THEN 0 ELSE 1 END) <= 1
+            );
+    END IF;
+END $$;
+
 INSERT INTO public.e_award_sources (value, description) VALUES
     ('season', 'Calculated from a season standing')
 ON CONFLICT (value) DO NOTHING;

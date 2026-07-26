@@ -19,10 +19,18 @@ DELETE FROM public.awards
  WHERE system_key IN
    ('season_mvp', 'season_gold', 'season_silver', 'season_bronze');
 
+ALTER TABLE public.award_recipients
+    DROP CONSTRAINT IF EXISTS award_recipients_single_scope_check;
+
+DROP INDEX IF EXISTS public.idx_award_recipients_league_season;
+DROP INDEX IF EXISTS public.idx_award_recipients_event;
 DROP INDEX IF EXISTS public.award_recipients_season_player_key;
 DROP INDEX IF EXISTS public.idx_award_recipients_season;
 
-ALTER TABLE public.award_recipients DROP COLUMN IF EXISTS season_id;
+ALTER TABLE public.award_recipients
+    DROP COLUMN IF EXISTS league_season_id,
+    DROP COLUMN IF EXISTS event_id,
+    DROP COLUMN IF EXISTS season_id;
 
 DELETE FROM public.e_award_sources WHERE value = 'season';
 
