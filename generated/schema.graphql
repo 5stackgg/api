@@ -45,12 +45,16 @@ type Award {
   created_at: String!
   created_by_steam_id: String
   description: String
+  event_id: uuid
   id: uuid!
   image_url: String
+  league_season_id: uuid
   name: String!
+  season_id: uuid
   silhouette: Int
   system_key: String
   tier: String!
+  tournament_id: uuid
   updated_at: String!
 }
 
@@ -776,8 +780,63 @@ type TeamCalendarOutput {
   url: String!
 }
 
+type TelemetryActivityPoint {
+  day: String!
+  installs: Int!
+  matches: Int!
+}
+
+type TelemetryFeatureAdoption {
+  enabled: Int!
+  installsUsing: Int!
+  key: String!
+  reporting: Int!
+  total: Int!
+}
+
+type TelemetryFleetTotals {
+  dedicatedServers: Int!
+  gameServerNodes: Int!
+  mapsPlayed: Int!
+  matches: Int!
+  matchesMonth: Int!
+  matchesWeek: Int!
+  matchesYear: Int!
+  playersActive30d: Int!
+  playersRegistered: Int!
+  publicServers: Int!
+  serverCapacity: Int!
+  servers: Int!
+  teams: Int!
+}
+
+type TelemetryGrowthPoint {
+  installs: Int!
+  month: String!
+}
+
+type TelemetryInstallCounts {
+  active24h: Int!
+  active30d: Int!
+  active7d: Int!
+  new30d: Int!
+  retained180d: Int!
+  total: Int!
+}
+
 type TelemetryStats {
+  activity: [TelemetryActivityPoint!]!
+  features: [TelemetryFeatureAdoption!]!
+  growth: [TelemetryGrowthPoint!]!
+  installs: TelemetryInstallCounts!
   online: Int!
+  totals: TelemetryFleetTotals!
+  versions: [TelemetryVersionSpread!]!
+}
+
+type TelemetryVersionSpread {
+  installs: Int!
+  version: String!
 }
 
 type TestUploadResponse {
@@ -1587,7 +1646,15 @@ type award_recipients {
   awarded_by: players
   awarded_by_steam_id: bigint
   created_at: timestamptz!
+
+  """An object relationship"""
+  event: events
+  event_id: uuid
   id: uuid!
+
+  """An object relationship"""
+  league_season: league_seasons
+  league_season_id: uuid
   note: String
   placement: Int
   placement_tier: String
@@ -1595,6 +1662,10 @@ type award_recipients {
   """An object relationship"""
   player: players
   player_steam_id: bigint
+
+  """An object relationship"""
+  season: seasons
+  season_id: uuid
   source: e_award_sources_enum!
 
   """An object relationship"""
@@ -1704,12 +1775,18 @@ input award_recipients_bool_exp {
   awarded_by: players_bool_exp
   awarded_by_steam_id: bigint_comparison_exp
   created_at: timestamptz_comparison_exp
+  event: events_bool_exp
+  event_id: uuid_comparison_exp
   id: uuid_comparison_exp
+  league_season: league_seasons_bool_exp
+  league_season_id: uuid_comparison_exp
   note: String_comparison_exp
   placement: Int_comparison_exp
   placement_tier: String_comparison_exp
   player: players_bool_exp
   player_steam_id: bigint_comparison_exp
+  season: seasons_bool_exp
+  season_id: uuid_comparison_exp
   source: e_award_sources_enum_comparison_exp
   team: teams_bool_exp
   team_id: uuid_comparison_exp
@@ -1740,6 +1817,11 @@ enum award_recipients_constraint {
   award_recipients_player_recipient_key
 
   """
+  unique or primary key constraint on columns "player_steam_id", "placement", "season_id"
+  """
+  award_recipients_season_player_key
+
+  """
   unique or primary key constraint on columns "placement", "tournament_team_id", "tournament_id", "team_id"
   """
   award_recipients_team_recipient_key
@@ -1763,11 +1845,17 @@ input award_recipients_insert_input {
   awarded_by: players_obj_rel_insert_input
   awarded_by_steam_id: bigint
   created_at: timestamptz
+  event: events_obj_rel_insert_input
+  event_id: uuid
   id: uuid
+  league_season: league_seasons_obj_rel_insert_input
+  league_season_id: uuid
   note: String
   placement: Int
   player: players_obj_rel_insert_input
   player_steam_id: bigint
+  season: seasons_obj_rel_insert_input
+  season_id: uuid
   source: e_award_sources_enum
   team: teams_obj_rel_insert_input
   team_id: uuid
@@ -1783,11 +1871,14 @@ type award_recipients_max_fields {
   award_id: uuid
   awarded_by_steam_id: bigint
   created_at: timestamptz
+  event_id: uuid
   id: uuid
+  league_season_id: uuid
   note: String
   placement: Int
   placement_tier: String
   player_steam_id: bigint
+  season_id: uuid
   team_id: uuid
   tournament_id: uuid
   tournament_team_id: uuid
@@ -1800,11 +1891,14 @@ input award_recipients_max_order_by {
   award_id: order_by
   awarded_by_steam_id: order_by
   created_at: order_by
+  event_id: order_by
   id: order_by
+  league_season_id: order_by
   note: order_by
   placement: order_by
   placement_tier: order_by
   player_steam_id: order_by
+  season_id: order_by
   team_id: order_by
   tournament_id: order_by
   tournament_team_id: order_by
@@ -1815,11 +1909,14 @@ type award_recipients_min_fields {
   award_id: uuid
   awarded_by_steam_id: bigint
   created_at: timestamptz
+  event_id: uuid
   id: uuid
+  league_season_id: uuid
   note: String
   placement: Int
   placement_tier: String
   player_steam_id: bigint
+  season_id: uuid
   team_id: uuid
   tournament_id: uuid
   tournament_team_id: uuid
@@ -1832,11 +1929,14 @@ input award_recipients_min_order_by {
   award_id: order_by
   awarded_by_steam_id: order_by
   created_at: order_by
+  event_id: order_by
   id: order_by
+  league_season_id: order_by
   note: order_by
   placement: order_by
   placement_tier: order_by
   player_steam_id: order_by
+  season_id: order_by
   team_id: order_by
   tournament_id: order_by
   tournament_team_id: order_by
@@ -1869,12 +1969,18 @@ input award_recipients_order_by {
   awarded_by: players_order_by
   awarded_by_steam_id: order_by
   created_at: order_by
+  event: events_order_by
+  event_id: order_by
   id: order_by
+  league_season: league_seasons_order_by
+  league_season_id: order_by
   note: order_by
   placement: order_by
   placement_tier: order_by
   player: players_order_by
   player_steam_id: order_by
+  season: seasons_order_by
+  season_id: order_by
   source: order_by
   team: teams_order_by
   team_id: order_by
@@ -1904,7 +2010,13 @@ enum award_recipients_select_column {
   created_at
 
   """column name"""
+  event_id
+
+  """column name"""
   id
+
+  """column name"""
+  league_season_id
 
   """column name"""
   note
@@ -1917,6 +2029,9 @@ enum award_recipients_select_column {
 
   """column name"""
   player_steam_id
+
+  """column name"""
+  season_id
 
   """column name"""
   source
@@ -1938,10 +2053,13 @@ input award_recipients_set_input {
   award_id: uuid
   awarded_by_steam_id: bigint
   created_at: timestamptz
+  event_id: uuid
   id: uuid
+  league_season_id: uuid
   note: String
   placement: Int
   player_steam_id: bigint
+  season_id: uuid
   source: e_award_sources_enum
   team_id: uuid
   tournament_id: uuid
@@ -2012,11 +2130,14 @@ input award_recipients_stream_cursor_value_input {
   award_id: uuid
   awarded_by_steam_id: bigint
   created_at: timestamptz
+  event_id: uuid
   id: uuid
+  league_season_id: uuid
   note: String
   placement: Int
   placement_tier: String
   player_steam_id: bigint
+  season_id: uuid
   source: e_award_sources_enum
   team_id: uuid
   tournament_id: uuid
@@ -2053,7 +2174,13 @@ enum award_recipients_update_column {
   created_at
 
   """column name"""
+  event_id
+
+  """column name"""
   id
+
+  """column name"""
+  league_season_id
 
   """column name"""
   note
@@ -2063,6 +2190,9 @@ enum award_recipients_update_column {
 
   """column name"""
   player_steam_id
+
+  """column name"""
+  season_id
 
   """column name"""
   source
@@ -2147,8 +2277,16 @@ type awards {
   created_by: players
   created_by_steam_id: bigint
   description: String
+
+  """An object relationship"""
+  event: events
+  event_id: uuid
   id: uuid!
   image_url: String
+
+  """An object relationship"""
+  league_season: league_seasons
+  league_season_id: uuid
   name: String!
 
   """An array relationship"""
@@ -2186,9 +2324,16 @@ type awards {
     """filter the rows returned"""
     where: award_recipients_bool_exp
   ): award_recipients_aggregate!
+
+  """An object relationship"""
+  season: seasons
+  season_id: uuid
   silhouette: Int
   system_key: String
   tier: e_award_tiers_enum!
+
+  """An object relationship"""
+  tournament: tournaments
 
   """An array relationship"""
   tournament_configs(
@@ -2225,6 +2370,7 @@ type awards {
     """filter the rows returned"""
     where: tournament_awards_bool_exp
   ): tournament_awards_aggregate!
+  tournament_id: uuid
   updated_at: timestamptz!
 }
 
@@ -2271,16 +2417,24 @@ input awards_bool_exp {
   created_by: players_bool_exp
   created_by_steam_id: bigint_comparison_exp
   description: String_comparison_exp
+  event: events_bool_exp
+  event_id: uuid_comparison_exp
   id: uuid_comparison_exp
   image_url: String_comparison_exp
+  league_season: league_seasons_bool_exp
+  league_season_id: uuid_comparison_exp
   name: String_comparison_exp
   recipients: award_recipients_bool_exp
   recipients_aggregate: award_recipients_aggregate_bool_exp
+  season: seasons_bool_exp
+  season_id: uuid_comparison_exp
   silhouette: Int_comparison_exp
   system_key: String_comparison_exp
   tier: e_award_tiers_enum_comparison_exp
+  tournament: tournaments_bool_exp
   tournament_configs: tournament_awards_bool_exp
   tournament_configs_aggregate: tournament_awards_aggregate_bool_exp
+  tournament_id: uuid_comparison_exp
   updated_at: timestamptz_comparison_exp
 }
 
@@ -2316,14 +2470,22 @@ input awards_insert_input {
   created_by: players_obj_rel_insert_input
   created_by_steam_id: bigint
   description: String
+  event: events_obj_rel_insert_input
+  event_id: uuid
   id: uuid
   image_url: String
+  league_season: league_seasons_obj_rel_insert_input
+  league_season_id: uuid
   name: String
   recipients: award_recipients_arr_rel_insert_input
+  season: seasons_obj_rel_insert_input
+  season_id: uuid
   silhouette: Int
   system_key: String
   tier: e_award_tiers_enum
+  tournament: tournaments_obj_rel_insert_input
   tournament_configs: tournament_awards_arr_rel_insert_input
+  tournament_id: uuid
   updated_at: timestamptz
 }
 
@@ -2332,11 +2494,15 @@ type awards_max_fields {
   created_at: timestamptz
   created_by_steam_id: bigint
   description: String
+  event_id: uuid
   id: uuid
   image_url: String
+  league_season_id: uuid
   name: String
+  season_id: uuid
   silhouette: Int
   system_key: String
+  tournament_id: uuid
   updated_at: timestamptz
 }
 
@@ -2345,11 +2511,15 @@ type awards_min_fields {
   created_at: timestamptz
   created_by_steam_id: bigint
   description: String
+  event_id: uuid
   id: uuid
   image_url: String
+  league_season_id: uuid
   name: String
+  season_id: uuid
   silhouette: Int
   system_key: String
+  tournament_id: uuid
   updated_at: timestamptz
 }
 
@@ -2390,14 +2560,22 @@ input awards_order_by {
   created_by: players_order_by
   created_by_steam_id: order_by
   description: order_by
+  event: events_order_by
+  event_id: order_by
   id: order_by
   image_url: order_by
+  league_season: league_seasons_order_by
+  league_season_id: order_by
   name: order_by
   recipients_aggregate: award_recipients_aggregate_order_by
+  season: seasons_order_by
+  season_id: order_by
   silhouette: order_by
   system_key: order_by
   tier: order_by
+  tournament: tournaments_order_by
   tournament_configs_aggregate: tournament_awards_aggregate_order_by
+  tournament_id: order_by
   updated_at: order_by
 }
 
@@ -2423,13 +2601,22 @@ enum awards_select_column {
   description
 
   """column name"""
+  event_id
+
+  """column name"""
   id
 
   """column name"""
   image_url
 
   """column name"""
+  league_season_id
+
+  """column name"""
   name
+
+  """column name"""
+  season_id
 
   """column name"""
   silhouette
@@ -2439,6 +2626,9 @@ enum awards_select_column {
 
   """column name"""
   tier
+
+  """column name"""
+  tournament_id
 
   """column name"""
   updated_at
@@ -2452,12 +2642,16 @@ input awards_set_input {
   created_at: timestamptz
   created_by_steam_id: bigint
   description: String
+  event_id: uuid
   id: uuid
   image_url: String
+  league_season_id: uuid
   name: String
+  season_id: uuid
   silhouette: Int
   system_key: String
   tier: e_award_tiers_enum
+  tournament_id: uuid
   updated_at: timestamptz
 }
 
@@ -2496,12 +2690,16 @@ input awards_stream_cursor_value_input {
   created_at: timestamptz
   created_by_steam_id: bigint
   description: String
+  event_id: uuid
   id: uuid
   image_url: String
+  league_season_id: uuid
   name: String
+  season_id: uuid
   silhouette: Int
   system_key: String
   tier: e_award_tiers_enum
+  tournament_id: uuid
   updated_at: timestamptz
 }
 
@@ -2528,13 +2726,22 @@ enum awards_update_column {
   description
 
   """column name"""
+  event_id
+
+  """column name"""
   id
 
   """column name"""
   image_url
 
   """column name"""
+  league_season_id
+
+  """column name"""
   name
+
+  """column name"""
+  season_id
 
   """column name"""
   silhouette
@@ -2544,6 +2751,9 @@ enum awards_update_column {
 
   """column name"""
   tier
+
+  """column name"""
+  tournament_id
 
   """column name"""
   updated_at
@@ -17031,6 +17241,42 @@ input event_tournaments_updates {
 columns and relationships of "events"
 """
 type events {
+  """An array relationship"""
+  awards(
+    """distinct select on columns"""
+    distinct_on: [award_recipients_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [award_recipients_order_by!]
+
+    """filter the rows returned"""
+    where: award_recipients_bool_exp
+  ): [award_recipients!]!
+
+  """An aggregate relationship"""
+  awards_aggregate(
+    """distinct select on columns"""
+    distinct_on: [award_recipients_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [award_recipients_order_by!]
+
+    """filter the rows returned"""
+    where: award_recipients_bool_exp
+  ): award_recipients_aggregate!
+
   """An object relationship"""
   banner: event_media
   banner_media_id: uuid
@@ -17317,6 +17563,8 @@ input events_bool_exp {
   _and: [events_bool_exp!]
   _not: events_bool_exp
   _or: [events_bool_exp!]
+  awards: award_recipients_bool_exp
+  awards_aggregate: award_recipients_aggregate_bool_exp
   banner: event_media_bool_exp
   banner_media_id: uuid_comparison_exp
   can_upload_media: Boolean_comparison_exp
@@ -17368,6 +17616,7 @@ input events_inc_input {
 input type for inserting data into table "events"
 """
 input events_insert_input {
+  awards: award_recipients_arr_rel_insert_input
   banner: event_media_obj_rel_insert_input
   banner_media_id: uuid
   created_at: timestamptz
@@ -17445,6 +17694,7 @@ input events_on_conflict {
 
 """Ordering options when selecting data from "events"."""
 input events_order_by {
+  awards_aggregate: award_recipients_aggregate_order_by
   banner: event_media_order_by
   banner_media_id: order_by
   can_upload_media: order_by
@@ -22324,6 +22574,42 @@ columns and relationships of "league_seasons"
 type league_seasons {
   auto_regular_season_format: Boolean!
 
+  """An array relationship"""
+  awards(
+    """distinct select on columns"""
+    distinct_on: [award_recipients_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [award_recipients_order_by!]
+
+    """filter the rows returned"""
+    where: award_recipients_bool_exp
+  ): [award_recipients!]!
+
+  """An aggregate relationship"""
+  awards_aggregate(
+    """distinct select on columns"""
+    distinct_on: [award_recipients_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [award_recipients_order_by!]
+
+    """filter the rows returned"""
+    where: award_recipients_bool_exp
+  ): award_recipients_aggregate!
+
   """
   A computed field, executes function "can_register_for_league_season"
   """
@@ -22711,6 +22997,8 @@ input league_seasons_bool_exp {
   _not: league_seasons_bool_exp
   _or: [league_seasons_bool_exp!]
   auto_regular_season_format: Boolean_comparison_exp
+  awards: award_recipients_bool_exp
+  awards_aggregate: award_recipients_aggregate_bool_exp
   can_register: Boolean_comparison_exp
   created_at: timestamptz_comparison_exp
   created_by_steam_id: bigint_comparison_exp
@@ -22832,6 +23120,7 @@ input type for inserting data into table "league_seasons"
 """
 input league_seasons_insert_input {
   auto_regular_season_format: Boolean
+  awards: award_recipients_arr_rel_insert_input
   created_at: timestamptz
   created_by_steam_id: bigint
   default_best_of: Int
@@ -22959,6 +23248,7 @@ input league_seasons_on_conflict {
 """Ordering options when selecting data from "league_seasons"."""
 input league_seasons_order_by {
   auto_regular_season_format: order_by
+  awards_aggregate: award_recipients_aggregate_order_by
   can_register: order_by
   created_at: order_by
   created_by_steam_id: order_by
@@ -38008,7 +38298,7 @@ type mutation_root {
   getTestUploadLink: GetTestUploadResponse!
 
   """Grant an award to a player or team"""
-  grantAward(award_id: uuid!, note: String, player_steam_id: String, team_id: uuid, tournament_id: uuid): AwardRecipient
+  grantAward(award_id: uuid!, event_id: uuid, league_season_id: uuid, note: String, player_steam_id: String, season_id: uuid, team_id: uuid, tournament_id: uuid): AwardRecipient
 
   """
   insert data into the table: "_map_pool"
@@ -41634,7 +41924,7 @@ type mutation_root {
   sanctionServerPlayer(duration: Float, reason: String, serverId: String, steam_id: String!, type: String!): SanctionResult!
 
   """Create or update a catalog award"""
-  saveAward(allow_multiple: Boolean, description: String, id: uuid, name: String!, silhouette: Int, tier: String!): Award
+  saveAward(allow_multiple: Boolean, description: String, event_id: uuid, id: uuid, league_season_id: uuid, name: String!, season_id: uuid, silhouette: Int, tier: String!, tournament_id: uuid): Award
 
   """
   Create or update a first-party news post. Caller role is verified against public.post_news_role.
@@ -76977,6 +77267,41 @@ input restart_league_season_args {
 columns and relationships of "seasons"
 """
 type seasons {
+  """An array relationship"""
+  awards(
+    """distinct select on columns"""
+    distinct_on: [award_recipients_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [award_recipients_order_by!]
+
+    """filter the rows returned"""
+    where: award_recipients_bool_exp
+  ): [award_recipients!]!
+
+  """An aggregate relationship"""
+  awards_aggregate(
+    """distinct select on columns"""
+    distinct_on: [award_recipients_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [award_recipients_order_by!]
+
+    """filter the rows returned"""
+    where: award_recipients_bool_exp
+  ): award_recipients_aggregate!
   created_at: timestamptz!
   description: String
   ends_at: timestamptz
@@ -77059,6 +77384,8 @@ input seasons_bool_exp {
   _and: [seasons_bool_exp!]
   _not: seasons_bool_exp
   _or: [seasons_bool_exp!]
+  awards: award_recipients_bool_exp
+  awards_aggregate: award_recipients_aggregate_bool_exp
   created_at: timestamptz_comparison_exp
   description: String_comparison_exp
   ends_at: timestamptz_comparison_exp
@@ -77091,6 +77418,7 @@ input seasons_inc_input {
 input type for inserting data into table "seasons"
 """
 input seasons_insert_input {
+  awards: award_recipients_arr_rel_insert_input
   created_at: timestamptz
   description: String
   ends_at: timestamptz
@@ -77153,6 +77481,7 @@ input seasons_on_conflict {
 
 """Ordering options when selecting data from "seasons"."""
 input seasons_order_by {
+  awards_aggregate: award_recipients_aggregate_order_by
   created_at: order_by
   description: order_by
   ends_at: order_by

@@ -77,6 +77,30 @@ export class TelemetryService {
     },
   };
 
+  // A match this panel actually hosted. Imported demos are stamped with a
+  // started_at (from demo metadata, or the import time when that is missing),
+  // so started_at alone would count every FACEIT import as a match we ran.
+  // external_id catches the case a 5stack-server demo is imported back in,
+  // which keeps source = '5stack'.
+  private static nativeMatch(alias?: string) {
+    const column = TelemetryService.column(alias);
+
+    return `${column("started_at")} IS NOT NULL
+      AND ${column("source")} = '5stack'
+      AND ${column("external_id")} IS NULL`;
+  }
+
+  private static importedMatch(alias?: string) {
+    const column = TelemetryService.column(alias);
+
+    return `${column("started_at")} IS NOT NULL
+      AND (${column("source")} <> '5stack' OR ${column("external_id")} IS NOT NULL)`;
+  }
+
+  private static column(alias?: string) {
+    return (name: string) => (alias ? `${alias}.${name}` : name);
+  }
+
   constructor(
     private readonly logger: Logger,
     private readonly redisManagerService: RedisManagerService,
@@ -161,6 +185,12 @@ export class TelemetryService {
         tournament: counts.matches_tournament,
         league: counts.matches_league,
         scrim: counts.matches_scrim,
+        external: {
+          total: counts.matches_external,
+          week: counts.matches_external_week,
+          month: counts.matches_external_month,
+          year: counts.matches_external_year,
+        },
       },
       players: {
         registered: counts.players_registered,
@@ -190,9 +220,28 @@ export class TelemetryService {
     await this.persist(payload, country);
   }
 
+  // SCAN rather than KEYS: this runs on a per-minute poll, and KEYS walks the
+  // whole keyspace in one blocking command that stalls every other client.
   async getOnlineSystemsCount(): Promise<number> {
-    const keys = await this.redis.keys("online_system:*");
-    return keys.length;
+    let cursor = "0";
+    // SCAN can hand back the same key on more than one pass, so count distinct.
+    const seen = new Set<string>();
+
+    do {
+      const [next, keys] = await this.redis.scan(
+        cursor,
+        "MATCH",
+        "online_system:*",
+        "COUNT",
+        1000,
+      );
+      cursor = next;
+      for (const key of keys) {
+        seen.add(key);
+      }
+    } while (cursor !== "0");
+
+    return seen.size;
   }
 
   // The nav badge polls this action every minute for `online` alone, and a
@@ -203,17 +252,16 @@ export class TelemetryService {
     const aggregates = await this.cache.remember(
       "telemetry:fleet",
       async () => {
-        const [installs, totals, features, versions, growth, activity] =
+        const [installs, totals, features, growth, activity] =
           await Promise.all([
             this.getInstallCounts(),
             this.getFleetTotals(),
             this.getFeatureAdoption(),
-            this.getVersionSpread(),
             this.getInstallGrowth(),
             this.getFleetActivity(),
           ]);
 
-        return { installs, totals, features, versions, growth, activity };
+        return { installs, totals, features, growth, activity };
       },
       300,
     );
@@ -311,23 +359,6 @@ export class TelemetryService {
         "installsUsing",
         "total",
       ]),
-    }));
-  }
-
-  private async getVersionSpread() {
-    const rows = await this.postgres.query<Array<Record<string, string>>>(
-      `SELECT
-         coalesce(nullif(panel_version, ''), 'unknown') AS version,
-         count(*)                                       AS installs
-       FROM public.telemetry_installs
-       WHERE last_seen_at >= now() - interval '30 days'
-       GROUP BY 1
-       ORDER BY installs DESC, version ASC`,
-    );
-
-    return rows.map((row) => ({
-      version: row.version,
-      ...TelemetryService.toIntegers(row, ["installs"]),
     }));
   }
 
@@ -765,31 +796,30 @@ export class TelemetryService {
         (SELECT coalesce(sum(max_players), 0) FROM public.servers)                       AS servers_capacity,
 
         (SELECT count(*) FROM public.matches)                                            AS matches_created,
-        (SELECT count(*) FROM public.matches WHERE ${TelemetryService.NativeMatch})      AS matches_ran,
+        (SELECT count(*) FROM public.matches WHERE ${TelemetryService.nativeMatch()})      AS matches_ran,
         (SELECT count(*) FROM public.matches
-          WHERE ${TelemetryService.NativeMatch}
+          WHERE ${TelemetryService.nativeMatch()}
             AND effective_at >= now() - interval '7 days')                               AS matches_week,
         (SELECT count(*) FROM public.matches
-          WHERE ${TelemetryService.NativeMatch}
+          WHERE ${TelemetryService.nativeMatch()}
             AND effective_at >= now() - interval '30 days')                              AS matches_month,
         (SELECT count(*) FROM public.matches
-          WHERE ${TelemetryService.NativeMatch}
+          WHERE ${TelemetryService.nativeMatch()}
             AND effective_at >= now() - interval '365 days')                             AS matches_year,
         (SELECT count(*) FROM public.match_maps mm
            JOIN public.matches m ON m.id = mm.match_id
           WHERE mm.status = 'Finished'
-            AND ${TelemetryService.NativeMatch.replace(/\b(source|external_id|started_at)\b/g, "m.$1")})
-                                                                                         AS maps_played,
+            AND ${TelemetryService.nativeMatch("m")})                                     AS maps_played,
 
-        (SELECT count(*) FROM public.matches WHERE ${TelemetryService.ImportedMatch})     AS matches_external,
+        (SELECT count(*) FROM public.matches WHERE ${TelemetryService.importedMatch()})     AS matches_external,
         (SELECT count(*) FROM public.matches
-          WHERE ${TelemetryService.ImportedMatch}
+          WHERE ${TelemetryService.importedMatch()}
             AND effective_at >= now() - interval '7 days')                                AS matches_external_week,
         (SELECT count(*) FROM public.matches
-          WHERE ${TelemetryService.ImportedMatch}
+          WHERE ${TelemetryService.importedMatch()}
             AND effective_at >= now() - interval '30 days')                               AS matches_external_month,
         (SELECT count(*) FROM public.matches
-          WHERE ${TelemetryService.ImportedMatch}
+          WHERE ${TelemetryService.importedMatch()}
             AND effective_at >= now() - interval '365 days')                              AS matches_external_year,
         (SELECT count(*) FROM public.matches WHERE source = 'faceit')                     AS matches_faceit,
 
