@@ -9,20 +9,21 @@ import { ThrottlerBehindProxyGuard } from "src/auth/strategies/ThrottlerBehindPr
 export class TelemetryController {
   constructor(private readonly telemetryService: TelemetryService) {}
 
+  // Throttled per address rather than per install: several panels can share one
+  // NAT, so a limit of 1 would silently drop every heartbeat but the first.
   @UseGuards(ThrottlerBehindProxyGuard)
-  @Throttle({ default: { limit: 1, ttl: 59 * 60 * 1000 } })
+  @Throttle({ default: { limit: 20, ttl: 59 * 60 * 1000 } })
   @Post()
   public async telemetry(@Req() request: Request) {
     await this.telemetryService.record(
       request.headers["cf-connecting-ip"] as string,
+      request.headers["cf-ipcountry"] as string,
       request.body,
     );
   }
 
   @HasuraAction()
   public async telemetryStats() {
-    return {
-      online: await this.telemetryService.getOnlineSystemsCount(),
-    };
+    return await this.telemetryService.getFleetStats();
   }
 }

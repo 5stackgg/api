@@ -152,6 +152,14 @@ export class HasuraService {
     await this.postgresService.query(
       "insert into settings (name, value) values ('public.steam_presence_enabled', 'true') on conflict (name) do nothing",
     );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.create_awards_role', 'administrator') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.grant_awards_role', 'administrator') on conflict (name) do nothing",
+    );
   }
 
   private async applyMigrations(path: string): Promise<number> {

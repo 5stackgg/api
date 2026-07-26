@@ -34,6 +34,13 @@ object_relationships:
           name: v_team_reputation
           schema: public
 array_relationships:
+  - name: awards
+    using:
+      foreign_key_constraint_on:
+        column: team_id
+        table:
+          name: award_recipients
+          schema: public
   - name: scrim_availability
     using:
       foreign_key_constraint_on:

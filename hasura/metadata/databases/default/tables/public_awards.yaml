@@ -1,0 +1,56 @@
+table:
+  name: awards
+  schema: public
+object_relationships:
+  - name: created_by
+    using:
+      foreign_key_constraint_on: created_by_steam_id
+  - name: event
+    using:
+      foreign_key_constraint_on: event_id
+  - name: league_season
+    using:
+      foreign_key_constraint_on: league_season_id
+  - name: season
+    using:
+      foreign_key_constraint_on: season_id
+  - name: tournament
+    using:
+      foreign_key_constraint_on: tournament_id
+array_relationships:
+  - name: recipients
+    using:
+      foreign_key_constraint_on:
+        column: award_id
+        table:
+          name: award_recipients
+          schema: public
+  - name: tournament_configs
+    using:
+      foreign_key_constraint_on:
+        column: award_id
+        table:
+          name: tournament_awards
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - name
+        - description
+        - tier
+        - silhouette
+        - image_url
+        - system_key
+        - allow_multiple
+        - created_by_steam_id
+        - tournament_id
+        - event_id
+        - season_id
+        - league_season_id
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""

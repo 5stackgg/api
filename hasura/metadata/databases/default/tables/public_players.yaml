@@ -278,12 +278,12 @@ array_relationships:
         table:
           name: tournament_team_roster
           schema: public
-  - name: tournament_trophies
+  - name: awards
     using:
       foreign_key_constraint_on:
         column: player_steam_id
         table:
-          name: tournament_trophies
+          name: award_recipients
           schema: public
   - name: tournaments
     using:

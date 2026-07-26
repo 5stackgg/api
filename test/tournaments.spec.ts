@@ -11,7 +11,7 @@ import {
 // (tbu_tournaments), stage validation, team registration (roster copy +
 // eligibility), bracket seeding on registration close, match scheduling,
 // winner propagation through the bracket (update_tournament_bracket), the
-// min-teams auto-cancel, automatic finish, and trophy calculation.
+// min-teams auto-cancel, automatic finish, and award calculation.
 describe("tournaments (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
@@ -396,7 +396,7 @@ describe("tournaments (SQL-driven)", () => {
       expect(final.match_id).toBeNull();
     });
 
-    it("winners propagate into the final, which finishes the tournament and awards trophies", async () => {
+    it("winners propagate into the final, which finishes the tournament and grants awards", async () => {
       const { tournament } = await seedFourTeamCup();
       await setStatus(tournament.id, tournament.organizer, "Live");
       expect((await getTournament(tournament.id)).status).toBe("Live");
@@ -426,21 +426,23 @@ describe("tournaments (SQL-driven)", () => {
 
       expect((await getTournament(tournament.id)).status).toBe("Finished");
 
-      const trophies = await postgres.query<
+      const awards = await postgres.query<
         Array<{
           placement: number;
           tournament_team_id: string;
-          manual: boolean;
+          source: string;
+          award_id: string;
         }>
       >(
-        `SELECT placement, tournament_team_id, manual FROM tournament_trophies
+        `SELECT placement, tournament_team_id, source, award_id FROM award_recipients
          WHERE tournament_id = $1 ORDER BY placement`,
         [tournament.id],
       );
-      expect(trophies.length).toBeGreaterThan(0);
-      expect(trophies.every((t) => t.manual === false)).toBe(true);
+      expect(awards.length).toBeGreaterThan(0);
+      expect(awards.every((t) => t.source === "tournament")).toBe(true);
+      expect(awards.every((t) => t.award_id !== null)).toBe(true);
       // The final's winner holds placement 1.
-      const champions = trophies.filter((t) => Number(t.placement) === 1);
+      const champions = awards.filter((t) => Number(t.placement) === 1);
       const [finalAfter] = (await getBrackets(tournament.id)).filter(
         (b) => b.round === 2,
       );
@@ -495,7 +497,7 @@ describe("tournaments (SQL-driven)", () => {
       ).rejects.toThrow(/Cannot leave/i);
     });
 
-    it("disabling trophies wipes auto placements; re-enabling rebuilds them", async () => {
+    it("disabling awards wipes auto placements; re-enabling rebuilds them", async () => {
       const { tournament } = await seedFourTeamCup();
       await setStatus(tournament.id, tournament.organizer, "Live");
 
@@ -513,7 +515,7 @@ describe("tournaments (SQL-driven)", () => {
         Number(
           (
             await postgres.query<Array<{ c: string }>>(
-              "SELECT count(*) AS c FROM tournament_trophies WHERE tournament_id = $1",
+              "SELECT count(*) AS c FROM award_recipients WHERE tournament_id = $1",
               [tournament.id],
             )
           )[0].c,
@@ -521,13 +523,13 @@ describe("tournaments (SQL-driven)", () => {
       expect(await count()).toBeGreaterThan(0);
 
       await postgres.query(
-        "UPDATE tournaments SET trophies_enabled = false WHERE id = $1",
+        "UPDATE tournaments SET awards_enabled = false WHERE id = $1",
         [tournament.id],
       );
       expect(await count()).toBe(0);
 
       await postgres.query(
-        "UPDATE tournaments SET trophies_enabled = true WHERE id = $1",
+        "UPDATE tournaments SET awards_enabled = true WHERE id = $1",
         [tournament.id],
       );
       expect(await count()).toBeGreaterThan(0);

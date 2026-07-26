@@ -12,11 +12,17 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { getQueuesProcessors } from "src/utilities/QueueProcessors";
 import { RedisModule } from "src/redis/redis.module";
+import { PostgresModule } from "src/postgres/postgres.module";
+import { SystemModule } from "src/system/system.module";
+import { CacheModule } from "src/cache/cache.module";
 
 @Module({
   imports: [
     RedisModule,
     HasuraModule,
+    PostgresModule,
+    SystemModule,
+    CacheModule,
     BullModule.registerQueue({
       name: TelemetryQueues.Telemetry,
     }),

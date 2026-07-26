@@ -1204,6 +1204,76 @@ actions:
     permissions:
       - role: administrator
     comment: Remove a friends-role presence bot account
+  - name: saveAward
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Create or update a catalog award
+  - name: deleteAward
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Delete a catalog award
+  - name: grantAward
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Grant an award to a player or team
+  - name: revokeAward
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Revoke a hand-granted award
+  - name: setTournamentAward
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Map a tournament placement to an award
 custom_types:
   enums: []
   input_objects:
@@ -1214,6 +1284,9 @@ custom_types:
     - name: ClipOutputInput
     - name: ClipSpecInput
   objects:
+    - name: Award
+    - name: AwardRecipient
+    - name: TournamentAward
     - name: SteamPresenceBotAssignment
     - name: SteamPresencePool
     - name: SteamPresenceBot
@@ -1251,6 +1324,11 @@ custom_types:
     - name: GpuStats
     - name: GpuDeviceStat
     - name: PodStats
+    - name: TelemetryInstallCounts
+    - name: TelemetryFleetTotals
+    - name: TelemetryFeatureAdoption
+    - name: TelemetryGrowthPoint
+    - name: TelemetryActivityPoint
     - name: TelemetryStats
     - name: TestUploadResponse
     - name: GetTestUploadResponse

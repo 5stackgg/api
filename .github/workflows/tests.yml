@@ -33,6 +33,12 @@ jobs:
     # template database and exercise the triggers/functions in parallel.
     # Docker is available on GitHub-hosted runners.
     runs-on: ubuntu-24.04
+    env:
+      # Locally the container is reused between runs to skip the boot and the
+      # migration pipeline. A CI runner starts empty so there is nothing to
+      # reuse, and on a shared runner a second job could rebuild the template
+      # while this one is cloning it — so take the throwaway path.
+      SQL_TEST_FRESH: "1"
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4

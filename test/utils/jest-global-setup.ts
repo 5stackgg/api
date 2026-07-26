@@ -2,7 +2,6 @@ import type { StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { bootContainerAndMigrate, endPool } from "./sql-test-db";
 
 declare global {
-   
   var __SQL_TEST_CONTAINER__: StartedPostgreSqlContainer | undefined;
 }
 
@@ -13,6 +12,7 @@ declare global {
 export default async function globalSetup(): Promise<void> {
   const { container, postgres } = await bootContainerAndMigrate(
     "SqlTestTemplate",
+    { reuse: process.env.SQL_TEST_FRESH !== "1" },
   );
 
   // The template must have zero connections when suites clone from it.

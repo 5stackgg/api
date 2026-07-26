@@ -54,7 +54,7 @@ BEGIN
     FROM tournament_stages ts
     WHERE ts.id = bracket.tournament_stage_id;
 
-    -- Refresh cached standings before advancement/seeding/trophies read them.
+    -- Refresh cached standings before advancement/seeding/awards read them.
     PERFORM public.recompute_tournament_stage_results(bracket.tournament_stage_id);
 
     IF tournament_id IS NOT NULL THEN

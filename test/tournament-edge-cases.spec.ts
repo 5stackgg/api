@@ -153,7 +153,7 @@ describe("tournament edge cases (SQL-driven)", () => {
       const bronzeTeams = await postgres.query<
         Array<{ tournament_team_id: string }>
       >(
-        `SELECT DISTINCT tournament_team_id FROM tournament_trophies
+        `SELECT DISTINCT tournament_team_id FROM award_recipients
          WHERE tournament_id = $1 AND placement = 3`,
         [t.id],
       );
@@ -164,7 +164,7 @@ describe("tournament edge cases (SQL-driven)", () => {
         finalThird.tournament_team_id_1,
       ]);
 
-      // And the trophies leaderboard hands each roster exactly its medal:
+      // And the awards leaderboard hands each roster exactly its medal:
       // value/secondary/tertiary are the gold/silver/bronze counts.
       const finalBracket = (await tfx.getBrackets(stage)).find(
         (b) => b.round === 2 && b.match_number === 1,
@@ -179,16 +179,16 @@ describe("tournament edge cases (SQL-driven)", () => {
         )
           .map((r) => r.player_steam_id)
           .sort();
-      const trophies = await postgres.query<
+      const medals = await postgres.query<
         Array<{
           player_steam_id: string;
           value: number;
           secondary_value: number;
           tertiary_value: number;
         }>
-      >("SELECT * FROM get_leaderboard('trophies', 0)");
-      const medalists = (pick: (r: (typeof trophies)[number]) => number) =>
-        trophies
+      >("SELECT * FROM get_leaderboard('awards', 0)");
+      const medalists = (pick: (r: (typeof medals)[number]) => number) =>
+        medals
           .filter((r) => Number(pick(r)) === 1)
           .map((r) => r.player_steam_id)
           .sort();

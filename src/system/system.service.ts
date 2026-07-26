@@ -599,7 +599,7 @@ export class SystemService {
     return `version:v2:${service}`;
   }
 
-  private async getPanelVersion() {
+  public async getPanelVersion() {
     try {
       const nodeList = await this.apiClient.listNode({
         labelSelector: "node-role.kubernetes.io/control-plane",

@@ -1,20 +1,32 @@
 table:
-  name: tournament_trophies
+  name: award_recipients
   schema: public
 object_relationships:
+  - name: award
+    using:
+      foreign_key_constraint_on: award_id
+  - name: awarded_by
+    using:
+      foreign_key_constraint_on: awarded_by_steam_id
+  - name: event
+    using:
+      foreign_key_constraint_on: event_id
+  - name: league_season
+    using:
+      foreign_key_constraint_on: league_season_id
   - name: player
     using:
       foreign_key_constraint_on: player_steam_id
+  - name: season
+    using:
+      foreign_key_constraint_on: season_id
   - name: team
     using:
       foreign_key_constraint_on: team_id
   - name: tournament
     using:
       foreign_key_constraint_on: tournament_id
-  - name: tournament_team
-    using:
-      foreign_key_constraint_on: tournament_team_id
-  - name: trophy_config
+  - name: tournament_award
     using:
       manual_configuration:
         column_mapping:
@@ -22,44 +34,30 @@ object_relationships:
           tournament_id: tournament_id
         insertion_order: null
         remote_table:
-          name: tournament_trophy_configs
+          name: tournament_awards
           schema: public
-insert_permissions:
-  - role: user
-    permission:
-      check:
-        tournament:
-          is_organizer:
-            _eq: true
-      set:
-        manual: "true"
-      columns:
-        - tournament_id
-        - tournament_team_id
-        - player_steam_id
-        - placement
-    comment: ""
+  - name: tournament_team
+    using:
+      foreign_key_constraint_on: tournament_team_id
 select_permissions:
   - role: guest
     permission:
       columns:
         - id
+        - award_id
         - tournament_id
+        - season_id
+        - event_id
+        - league_season_id
         - tournament_team_id
         - team_id
         - player_steam_id
         - placement
         - placement_tier
-        - manual
+        - source
+        - awarded_by_steam_id
+        - note
         - created_at
       filter: {}
       allow_aggregations: true
-    comment: ""
-delete_permissions:
-  - role: user
-    permission:
-      filter:
-        tournament:
-          is_organizer:
-            _eq: true
     comment: ""
