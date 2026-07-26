@@ -1189,6 +1189,8 @@ type TelemetryFleetTotals {
   matchesWeek: Int!
   matchesMonth: Int!
   matchesYear: Int!
+  matchesImported: Int!
+  matchesImportedMonth: Int!
   mapsPlayed: Int!
   playersRegistered: Int!
   playersActive30d: Int!
@@ -1201,11 +1203,6 @@ type TelemetryFeatureAdoption {
   reporting: Int!
   installsUsing: Int!
   total: Int!
-}
-
-type TelemetryVersionSpread {
-  version: String!
-  installs: Int!
 }
 
 type TelemetryGrowthPoint {
@@ -1224,7 +1221,6 @@ type TelemetryStats {
   installs: TelemetryInstallCounts!
   totals: TelemetryFleetTotals!
   features: [TelemetryFeatureAdoption!]!
-  versions: [TelemetryVersionSpread!]!
   growth: [TelemetryGrowthPoint!]!
   activity: [TelemetryActivityPoint!]!
 }

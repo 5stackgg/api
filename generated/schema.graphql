@@ -799,6 +799,8 @@ type TelemetryFleetTotals {
   gameServerNodes: Int!
   mapsPlayed: Int!
   matches: Int!
+  matchesImported: Int!
+  matchesImportedMonth: Int!
   matchesMonth: Int!
   matchesWeek: Int!
   matchesYear: Int!
@@ -831,12 +833,6 @@ type TelemetryStats {
   installs: TelemetryInstallCounts!
   online: Int!
   totals: TelemetryFleetTotals!
-  versions: [TelemetryVersionSpread!]!
-}
-
-type TelemetryVersionSpread {
-  installs: Int!
-  version: String!
 }
 
 type TestUploadResponse {
@@ -6265,6 +6261,9 @@ enum e_award_sources_constraint {
 enum e_award_sources_enum {
   """Granted by hand"""
   manual
+
+  """Calculated from a season standing"""
+  season
 
   """Calculated from a tournament placement"""
   tournament

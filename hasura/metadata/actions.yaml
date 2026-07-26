@@ -1327,7 +1327,6 @@ custom_types:
     - name: TelemetryInstallCounts
     - name: TelemetryFleetTotals
     - name: TelemetryFeatureAdoption
-    - name: TelemetryVersionSpread
     - name: TelemetryGrowthPoint
     - name: TelemetryActivityPoint
     - name: TelemetryStats

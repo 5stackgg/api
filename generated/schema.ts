@@ -723,6 +723,8 @@ export interface TelemetryFleetTotals {
     gameServerNodes: Scalars['Int']
     mapsPlayed: Scalars['Int']
     matches: Scalars['Int']
+    matchesImported: Scalars['Int']
+    matchesImportedMonth: Scalars['Int']
     matchesMonth: Scalars['Int']
     matchesWeek: Scalars['Int']
     matchesYear: Scalars['Int']
@@ -758,14 +760,7 @@ export interface TelemetryStats {
     installs: TelemetryInstallCounts
     online: Scalars['Int']
     totals: TelemetryFleetTotals
-    versions: TelemetryVersionSpread[]
     __typename: 'TelemetryStats'
-}
-
-export interface TelemetryVersionSpread {
-    installs: Scalars['Int']
-    version: Scalars['String']
-    __typename: 'TelemetryVersionSpread'
 }
 
 export interface TestUploadResponse {
@@ -2676,7 +2671,7 @@ export interface e_award_sources_aggregate_fields {
 /** unique or primary key constraints on table "e_award_sources" */
 export type e_award_sources_constraint = 'e_award_sources_pkey'
 
-export type e_award_sources_enum = 'manual' | 'tournament'
+export type e_award_sources_enum = 'manual' | 'season' | 'tournament'
 
 
 /** aggregate max on columns */
@@ -36367,6 +36362,8 @@ export interface TelemetryFleetTotalsGenqlSelection{
     gameServerNodes?: boolean | number
     mapsPlayed?: boolean | number
     matches?: boolean | number
+    matchesImported?: boolean | number
+    matchesImportedMonth?: boolean | number
     matchesMonth?: boolean | number
     matchesWeek?: boolean | number
     matchesYear?: boolean | number
@@ -36405,14 +36402,6 @@ export interface TelemetryStatsGenqlSelection{
     installs?: TelemetryInstallCountsGenqlSelection
     online?: boolean | number
     totals?: TelemetryFleetTotalsGenqlSelection
-    versions?: TelemetryVersionSpreadGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-export interface TelemetryVersionSpreadGenqlSelection{
-    installs?: boolean | number
-    version?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -100060,14 +100049,6 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
-    const TelemetryVersionSpread_possibleTypes: string[] = ['TelemetryVersionSpread']
-    export const isTelemetryVersionSpread = (obj?: { __typename?: any } | null): obj is TelemetryVersionSpread => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isTelemetryVersionSpread"')
-      return TelemetryVersionSpread_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
     const TestUploadResponse_possibleTypes: string[] = ['TestUploadResponse']
     export const isTestUploadResponse = (obj?: { __typename?: any } | null): obj is TestUploadResponse => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isTestUploadResponse"')
@@ -117306,6 +117287,7 @@ export const enumEAwardSourcesConstraint = {
 
 export const enumEAwardSourcesEnum = {
    manual: 'manual' as const,
+   season: 'season' as const,
    tournament: 'tournament' as const
 }
 

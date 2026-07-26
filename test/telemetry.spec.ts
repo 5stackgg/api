@@ -65,6 +65,23 @@ describe("telemetry (SQL-driven)", () => {
       // Never started: must land in `created` but not in `total` or the windows.
       await fx.bareMatch();
 
+      // An imported FACEIT demo. The importer stamps a started_at, so without
+      // the source split this reads as a match the panel hosted.
+      const imported = await fx.bareMatch(new Date().toISOString());
+      await postgres.query(
+        `UPDATE matches SET started_at = now(), source = 'faceit', external_id = $2
+          WHERE id = $1`,
+        [imported.matchId, "faceit-1"],
+      );
+
+      // A demo played on a 5stack server and imported back in keeps
+      // source = '5stack'; external_id is the only thing separating it.
+      const reimported = await fx.bareMatch(new Date().toISOString());
+      await postgres.query(
+        "UPDATE matches SET started_at = now(), external_id = $2 WHERE id = $1",
+        [reimported.matchId, "5stack-1"],
+      );
+
       payload = await service.collect();
     }, 600_000);
 
@@ -77,11 +94,20 @@ describe("telemetry (SQL-driven)", () => {
     });
 
     it("counts only started matches as ran, and every row as created", () => {
-      expect(payload.matches.created).toBe(2);
+      expect(payload.matches.created).toBe(4);
       expect(payload.matches.total).toBe(1);
       expect(payload.matches.week).toBe(1);
       expect(payload.matches.month).toBe(1);
       expect(payload.matches.year).toBe(1);
+    });
+
+    it("keeps imported matches out of the matches the panel ran", () => {
+      expect(payload.matches.external.total).toBe(2);
+      expect(payload.matches.external.week).toBe(2);
+      expect(payload.matches.external.year).toBe(2);
+
+      // by_source stays whole-fleet so the origin mix is still visible.
+      expect(payload.matches.by_source.faceit).toBe(1);
     });
 
     it("reports the servers seeded by the region fixture", () => {
@@ -159,6 +185,7 @@ describe("telemetry (SQL-driven)", () => {
         tournament: 60,
         league: 10,
         scrim: 25,
+        external: { total: 30, week: 1, month: 3, year: 12 },
       },
       players: { registered: 300, active_7d: 40, active_30d: 90, teams: 22 },
       features: {
@@ -298,6 +325,7 @@ describe("telemetry (SQL-driven)", () => {
         tournament: 1,
         league: 0,
         scrim: 2,
+        external: { total: matches / 10, week: 0, month: 2, year: 5 },
       },
       players: { registered: 50, active_7d: 5, active_30d: 12, teams: 3 },
       features: {
@@ -320,6 +348,9 @@ describe("telemetry (SQL-driven)", () => {
       expect(stats.totals.servers).toBe(10);
       expect(stats.totals.serverCapacity).toBe(100);
       expect(stats.totals.mapsPlayed).toBe(700);
+      // Imported matches are summed apart from the ones the panels hosted.
+      expect(stats.totals.matchesImported).toBe(35);
+      expect(stats.totals.matchesImportedMonth).toBe(4);
     });
 
     it("reports feature adoption across installs", async () => {
@@ -337,10 +368,9 @@ describe("telemetry (SQL-driven)", () => {
       expect(highlights.total).toBe(20);
     });
 
-    it("groups installs by panel version and first-seen month", async () => {
+    it("groups installs by first-seen month", async () => {
       const stats = await service.getFleetStats();
 
-      expect(stats.versions).toEqual([{ version: "cafebabe", installs: 2 }]);
       expect(stats.growth).toHaveLength(1);
       expect(stats.growth[0].installs).toBe(2);
     });
