@@ -2511,6 +2511,9 @@ export default {
             "enabled": [
                 40
             ],
+            "flagged": [
+                40
+            ],
             "installsUsing": [
                 40
             ],
@@ -2532,6 +2535,9 @@ export default {
                 40
             ],
             "gameServerNodes": [
+                40
+            ],
+            "gpuNodes": [
                 40
             ],
             "mapsPlayed": [

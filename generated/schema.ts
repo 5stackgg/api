@@ -711,6 +711,7 @@ export interface TelemetryActivityPoint {
 
 export interface TelemetryFeatureAdoption {
     enabled: Scalars['Int']
+    flagged: Scalars['Int']
     installsUsing: Scalars['Int']
     key: Scalars['String']
     reporting: Scalars['Int']
@@ -721,6 +722,7 @@ export interface TelemetryFeatureAdoption {
 export interface TelemetryFleetTotals {
     dedicatedServers: Scalars['Int']
     gameServerNodes: Scalars['Int']
+    gpuNodes: Scalars['Int']
     mapsPlayed: Scalars['Int']
     matches: Scalars['Int']
     matchesImported: Scalars['Int']
@@ -36349,6 +36351,7 @@ export interface TelemetryActivityPointGenqlSelection{
 
 export interface TelemetryFeatureAdoptionGenqlSelection{
     enabled?: boolean | number
+    flagged?: boolean | number
     installsUsing?: boolean | number
     key?: boolean | number
     reporting?: boolean | number
@@ -36360,6 +36363,7 @@ export interface TelemetryFeatureAdoptionGenqlSelection{
 export interface TelemetryFleetTotalsGenqlSelection{
     dedicatedServers?: boolean | number
     gameServerNodes?: boolean | number
+    gpuNodes?: boolean | number
     mapsPlayed?: boolean | number
     matches?: boolean | number
     matchesImported?: boolean | number
