@@ -788,6 +788,7 @@ type TelemetryActivityPoint {
 
 type TelemetryFeatureAdoption {
   enabled: Int!
+  flagged: Int!
   installsUsing: Int!
   key: String!
   reporting: Int!
@@ -797,6 +798,7 @@ type TelemetryFeatureAdoption {
 type TelemetryFleetTotals {
   dedicatedServers: Int!
   gameServerNodes: Int!
+  gpuNodes: Int!
   mapsPlayed: Int!
   matches: Int!
   matchesImported: Int!

@@ -137,6 +137,11 @@ describe("telemetry (SQL-driven)", () => {
       expect(payload.features.events.enabled).toBe(false);
       expect(payload.features.scrims.enabled).toBe(true);
       expect(payload.features.highlights.count).toBe(0);
+      // Auto highlights is gated by an unprefixed `auto_generate_match_clips`.
+      expect(payload.features.highlights.enabled).toBe(false);
+      // GPU workloads are switched per node, not by a setting.
+      expect(payload.features.demo_playback.enabled).toBe(false);
+      expect(payload.features.clip_renders.enabled).toBe(false);
     });
 
     it("keeps the install id out of the guest-readable settings namespace", async () => {
@@ -164,7 +169,7 @@ describe("telemetry (SQL-driven)", () => {
       installed_at: "2024-01-01T00:00:00.000Z",
       panel_version: "deadbeef",
       plugin_runtime: "swiftly",
-      nodes: { total: 2, enabled: 2, online: 1, regions: 1 },
+      nodes: { total: 2, enabled: 2, online: 1, regions: 1, gpu: 1 },
       servers: {
         total: 10,
         enabled: 9,
@@ -304,7 +309,7 @@ describe("telemetry (SQL-driven)", () => {
       installed_at: "2024-01-01T00:00:00.000Z",
       panel_version: "cafebabe",
       plugin_runtime: "css",
-      nodes: { total: 1, enabled: 1, online: 1, regions: 1 },
+      nodes: { total: 1, enabled: 1, online: 1, regions: 1, gpu: 1 },
       servers: {
         total: servers,
         enabled: servers,

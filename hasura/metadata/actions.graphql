@@ -1181,6 +1181,7 @@ type TelemetryInstallCounts {
 
 type TelemetryFleetTotals {
   gameServerNodes: Int!
+  gpuNodes: Int!
   servers: Int!
   dedicatedServers: Int!
   publicServers: Int!
