@@ -232,9 +232,11 @@ BEGIN
           AND status = 'Finished';
 
         IF FOUND THEN
-            -- Rewinding a finished tournament invalidates awarded placements.
-            DELETE FROM tournament_trophies
-            WHERE tournament_id = source_tournament_id;
+            -- Rewinding a finished tournament invalidates the calculated
+            -- placements. Hand-granted awards are the organizer's, not ours.
+            DELETE FROM award_recipients
+            WHERE tournament_id = source_tournament_id
+              AND source = 'tournament';
         END IF;
 
     END IF;

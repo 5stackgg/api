@@ -10,6 +10,8 @@ export enum SystemSettingName {
   NewsEnabled = "public.news_enabled",
   NewsLabel = "public.news_label",
   PostNewsRole = "public.post_news_role",
+  CreateAwardsRole = "public.create_awards_role",
+  GrantAwardsRole = "public.grant_awards_role",
   RequireLoginForLiveStreams = "public.require_login_for_live_streams",
   LeaguesEnabled = "public.leagues_enabled",
   GameServerPluginRuntime = "public.game_server_plugin_runtime",

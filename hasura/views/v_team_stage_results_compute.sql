@@ -9,7 +9,7 @@
 -- disagree:
 --   - `rank`      : ROW_NUMBER, unique & deterministic. Used by the UI display
 --                   and by get_team_at_stage_rank() for OFFSET-based seeding.
---   - `placement` : RANK, ties allowed. Used by calculate_tournament_trophies()
+--   - `placement` : RANK, ties allowed. Used by calculate_tournament_awards()
 --                   so multiple teams sharing a final-stage placement suppress
 --                   the bronze award when appropriate.
 --
@@ -375,7 +375,7 @@ stage_rows AS NOT MATERIALIZED (
 )
 -- Column order MUST keep the original 16 columns first (tournament_team_id ..
 -- group_number) and `rank` next so existing consumers (UI, get_team_at_stage_rank)
--- keep working. `placement` is appended at the end for the trophy calculator.
+-- keep working. `placement` is appended at the end for the award calculator.
 SELECT
     sr.tournament_team_id,
     sr.tournament_stage_id,

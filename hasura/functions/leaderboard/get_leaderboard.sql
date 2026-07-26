@@ -7,6 +7,7 @@
 -- actually re-run this cleanup against an already-broken database.
 DROP FUNCTION IF EXISTS public._leaderboard_trophies(INT);
 DROP FUNCTION IF EXISTS public._leaderboard_trophies(INT, TEXT);                     -- pre-_season 2-arg
+DROP FUNCTION IF EXISTS public._leaderboard_trophies(INT, TEXT, UUID);               -- pre-awards rename
 DROP FUNCTION IF EXISTS public.get_leaderboard(TEXT, INT, TEXT, BOOLEAN);            -- pre-_role 4-arg
 DROP FUNCTION IF EXISTS public.get_leaderboard(TEXT, INT, TEXT, BOOLEAN, TEXT);      -- pre-_season 5-arg
 DROP FUNCTION IF EXISTS public.get_player_leaderboard_rank(TEXT, INT, TEXT, TEXT, BOOLEAN); -- pre-_season 5-arg
@@ -60,8 +61,8 @@ BEGIN
   ELSIF _category = 'highest_hs_pct' THEN
     RETURN QUERY SELECT * FROM _leaderboard_hs_pct(_window_days, _match_type, _exclude_tournaments, _season_id);
 
-  ELSIF _category = 'trophies' THEN
-    RETURN QUERY SELECT * FROM _leaderboard_trophies(_window_days, _match_type, _season_id);
+  ELSIF _category = 'awards' THEN
+    RETURN QUERY SELECT * FROM _leaderboard_awards(_window_days, _match_type, _season_id);
 
   ELSIF _category = 'best_rating' THEN
     RETURN QUERY SELECT * FROM _leaderboard_hltv_metric('rating', _window_days, _match_type, _exclude_tournaments, _role, _season_id);
@@ -79,7 +80,7 @@ BEGIN
     RETURN QUERY SELECT * FROM _leaderboard_udr(_window_days, _match_type, _exclude_tournaments, _role, _season_id);
 
   ELSE
-    RAISE EXCEPTION 'Invalid category: %. Must be one of: elo, best_kdr, best_win_rate, highest_hs_pct, trophies, best_rating, best_adr, best_kpr, best_kast, best_udr', _category;
+    RAISE EXCEPTION 'Invalid category: %. Must be one of: elo, best_kdr, best_win_rate, highest_hs_pct, awards, best_rating, best_adr, best_kpr, best_kast, best_udr', _category;
   END IF;
 END;
 $$;
@@ -505,11 +506,12 @@ END;
 $$;
 
 -- ============================================================
--- Trophies leaderboard
+-- Awards leaderboard
 -- value = gold count, secondary = silver count, tertiary = bronze count
--- matches_played = total trophies. Olympic medal-table ordering.
+-- matches_played = total medals. Olympic medal-table ordering. Only tournament
+-- placements count; hand-granted awards must not move rankings.
 -- ============================================================
-CREATE OR REPLACE FUNCTION public._leaderboard_trophies(
+CREATE OR REPLACE FUNCTION public._leaderboard_awards(
   _window_days INT,
   _match_type TEXT DEFAULT NULL,
   _season_id UUID DEFAULT NULL
@@ -537,19 +539,20 @@ BEGIN
   RETURN QUERY
   WITH counts AS (
     SELECT
-      tt.player_steam_id,
-      SUM(CASE WHEN tt.placement = 0 THEN 1 ELSE 0 END)::int as mvp,
-      SUM(CASE WHEN tt.placement = 1 THEN 1 ELSE 0 END)::int as gold,
-      SUM(CASE WHEN tt.placement = 2 THEN 1 ELSE 0 END)::int as silver,
-      SUM(CASE WHEN tt.placement = 3 THEN 1 ELSE 0 END)::int as bronze,
+      ar.player_steam_id,
+      SUM(CASE WHEN ar.placement = 0 THEN 1 ELSE 0 END)::int as mvp,
+      SUM(CASE WHEN ar.placement = 1 THEN 1 ELSE 0 END)::int as gold,
+      SUM(CASE WHEN ar.placement = 2 THEN 1 ELSE 0 END)::int as silver,
+      SUM(CASE WHEN ar.placement = 3 THEN 1 ELSE 0 END)::int as bronze,
       COUNT(*)::int as total
-    FROM tournament_trophies tt
-    JOIN tournaments t ON t.id = tt.tournament_id
+    FROM award_recipients ar
+    JOIN tournaments t ON t.id = ar.tournament_id
     JOIN match_options mo ON mo.id = t.match_options_id
-    WHERE tt.player_steam_id IS NOT NULL
+    WHERE ar.player_steam_id IS NOT NULL
+      AND ar.placement IS NOT NULL
       AND ((_from IS NULL OR t.start >= _from) AND (_to IS NULL OR t.start < _to))
       AND (_match_type IS NULL OR mo.type = _match_type)
-    GROUP BY tt.player_steam_id
+    GROUP BY ar.player_steam_id
   )
   SELECT
     c.player_steam_id::text   as player_steam_id,

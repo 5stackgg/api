@@ -1,5 +1,5 @@
 function:
-  name: recalculate_tournament_trophies
+  name: recalculate_tournament_awards
   schema: public
 configuration:
   custom_root_fields: {}

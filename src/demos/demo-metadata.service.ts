@@ -6,7 +6,7 @@ import { PostgresService } from "../postgres/postgres.service";
 import { S3Service } from "../s3/s3.service";
 import { DemoParserService, ParsedDemo } from "./demo-parser.service";
 
-export const DEMO_METADATA_VERSION = 8;
+export const DEMO_METADATA_VERSION = 9;
 
 export type DemoRow = {
   id: string;
@@ -716,6 +716,8 @@ export class DemoMetadataService {
         `${blob.positions.length} positions, ` +
         `${blob.shots_fired.length} shots, ` +
         `${blob.grenade_throws.length} grenade events, ` +
+        `${blob.smoke_volumes.length} smoke volumes, ` +
+        `${blob.infernos.length} infernos, ` +
         `${blob.damages.length} damages)`,
     );
     return key;
@@ -847,6 +849,8 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     shots_fired,
     grenade_throws,
     grenade_trajectories: parsed.grenade_trajectories ?? [],
+    smoke_volumes: parsed.smoke_volumes ?? [],
+    infernos: parsed.infernos ?? [],
     damages,
     round_inventory,
   };

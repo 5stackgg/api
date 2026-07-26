@@ -2,6 +2,13 @@ table:
   name: seasons
   schema: public
 array_relationships:
+  - name: awards
+    using:
+      foreign_key_constraint_on:
+        column: season_id
+        table:
+          name: award_recipients
+          schema: public
   - name: player_season_stats
     using:
       foreign_key_constraint_on:

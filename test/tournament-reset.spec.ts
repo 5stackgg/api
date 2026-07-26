@@ -10,7 +10,7 @@ import {
 // Exercises reset_tournament_match / preview_tournament_match_reset: rewinding
 // a reported result unwinds every downstream bracket (slot clearing, match
 // deletion, unfinishing), restores the source match, and rolls a finished
-// tournament back to Live with its auto trophies revoked.
+// tournament back to Live with its calculated awards revoked.
 describe("tournament match reset (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
@@ -124,13 +124,13 @@ describe("tournament match reset (SQL-driven)", () => {
     expect(source.winning_lineup_id).toBeNull();
   });
 
-  it("rolls a finished tournament back to Live and revokes its trophies", async () => {
+  it("rolls a finished tournament back to Live and revokes its calculated awards", async () => {
     const t = await playedOutCup();
     expect(
       Number(
         (
           await postgres.query<Array<{ c: string }>>(
-            "SELECT count(*) AS c FROM tournament_trophies WHERE tournament_id = $1",
+            "SELECT count(*) AS c FROM award_recipients WHERE tournament_id = $1",
             [t.id],
           )
         )[0].c,
@@ -144,10 +144,42 @@ describe("tournament match reset (SQL-driven)", () => {
 
     expect(await tfx.tournamentStatus(t.id)).toBe("Live");
     const [{ c }] = await postgres.query<Array<{ c: string }>>(
-      "SELECT count(*) AS c FROM tournament_trophies WHERE tournament_id = $1",
+      "SELECT count(*) AS c FROM award_recipients WHERE tournament_id = $1",
       [t.id],
     );
     expect(Number(c)).toBe(0);
+  });
+
+  it("rolling a finished tournament back keeps hand-granted awards", async () => {
+    const t = await playedOutCup();
+
+    const [existing] = await postgres.query<
+      Array<{ tournament_team_id: string; player_steam_id: string }>
+    >(
+      `SELECT tournament_team_id, player_steam_id FROM award_recipients
+        WHERE tournament_id = $1 AND player_steam_id IS NOT NULL
+        LIMIT 1`,
+      [t.id],
+    );
+
+    await postgres.query(
+      `INSERT INTO award_recipients
+          (award_id, tournament_id, tournament_team_id, player_steam_id, source)
+        VALUES ((SELECT id FROM awards WHERE system_key = 'tournament_mvp'), $1, $2, $3, 'manual')`,
+      [t.id, existing.tournament_team_id, existing.player_steam_id],
+    );
+
+    const semi = (await tfx.getBrackets(t.stageIds[0])).find(
+      (b) => b.round === 1,
+    )!;
+    await resetMatch(semi.match_id!);
+
+    const [{ c }] = await postgres.query<Array<{ c: string }>>(
+      `SELECT count(*) AS c FROM award_recipients
+        WHERE tournament_id = $1 AND source = 'manual'`,
+      [t.id],
+    );
+    expect(Number(c)).toBe(1);
   });
 
   it("resetting with a corrected winner repropagates the bracket", async () => {
@@ -358,7 +390,7 @@ describe("tournament match reset (SQL-driven)", () => {
       await sweep(stage);
       expect(await tfx.tournamentStatus(t.id)).toBe("Finished");
       const [{ c }] = await postgres.query<Array<{ c: string }>>(
-        "SELECT count(*) AS c FROM tournament_trophies WHERE tournament_id = $1",
+        "SELECT count(*) AS c FROM award_recipients WHERE tournament_id = $1",
         [t.id],
       );
       expect(Number(c)).toBeGreaterThan(0);

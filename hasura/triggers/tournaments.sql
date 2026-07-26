@@ -211,27 +211,27 @@ CREATE TRIGGER tbi_tournaments
     FOR EACH ROW
     EXECUTE FUNCTION public.tbi_tournaments();
 
-CREATE OR REPLACE FUNCTION public.tau_tournaments_trophies() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION public.tau_tournaments_awards() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
     IF NEW.status = 'Finished' AND OLD.status IS DISTINCT FROM 'Finished' THEN
-        PERFORM public.calculate_tournament_trophies(NEW.id);
+        PERFORM public.calculate_tournament_awards(NEW.id);
     ELSIF OLD.status = 'Finished' AND NEW.status IS DISTINCT FROM 'Finished' THEN
-        -- Manual awards survive status rollbacks; only the auto-calculated
+        -- Hand-granted awards survive status rollbacks; only the auto-calculated
         -- placements drop so recalc can reseat them on the next finish.
-        DELETE FROM public.tournament_trophies
-        WHERE tournament_id = OLD.id AND manual = false;
+        DELETE FROM public.award_recipients
+        WHERE tournament_id = OLD.id AND source = 'tournament';
     END IF;
 
-    -- Trophies toggle: clearing it wipes the auto placements; turning it
+    -- Awards toggle: clearing it wipes the auto placements; turning it
     -- back on for a finished tournament rebuilds them.
-    IF NEW.trophies_enabled IS DISTINCT FROM OLD.trophies_enabled THEN
-        IF NEW.trophies_enabled = false THEN
-            DELETE FROM public.tournament_trophies
-            WHERE tournament_id = NEW.id AND manual = false;
+    IF NEW.awards_enabled IS DISTINCT FROM OLD.awards_enabled THEN
+        IF NEW.awards_enabled = false THEN
+            DELETE FROM public.award_recipients
+            WHERE tournament_id = NEW.id AND source = 'tournament';
         ELSIF NEW.status = 'Finished' THEN
-            PERFORM public.calculate_tournament_trophies(NEW.id);
+            PERFORM public.calculate_tournament_awards(NEW.id);
         END IF;
     END IF;
 
@@ -240,7 +240,10 @@ END;
 $$;
 
 DROP TRIGGER IF EXISTS tau_tournaments_trophies ON public.tournaments;
-CREATE TRIGGER tau_tournaments_trophies
+DROP FUNCTION IF EXISTS public.tau_tournaments_trophies();
+
+DROP TRIGGER IF EXISTS tau_tournaments_awards ON public.tournaments;
+CREATE TRIGGER tau_tournaments_awards
     AFTER UPDATE ON public.tournaments
     FOR EACH ROW
-    EXECUTE FUNCTION public.tau_tournaments_trophies();
+    EXECUTE FUNCTION public.tau_tournaments_awards();

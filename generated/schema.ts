@@ -52,6 +52,36 @@ export interface ApiKeyResponse {
     __typename: 'ApiKeyResponse'
 }
 
+export interface Award {
+    allow_multiple: Scalars['Boolean']
+    created_at: Scalars['String']
+    created_by_steam_id: (Scalars['String'] | null)
+    description: (Scalars['String'] | null)
+    id: Scalars['uuid']
+    image_url: (Scalars['String'] | null)
+    name: Scalars['String']
+    silhouette: (Scalars['Int'] | null)
+    system_key: (Scalars['String'] | null)
+    tier: Scalars['String']
+    updated_at: Scalars['String']
+    __typename: 'Award'
+}
+
+export interface AwardRecipient {
+    award_id: Scalars['uuid']
+    awarded_by_steam_id: (Scalars['String'] | null)
+    created_at: Scalars['String']
+    id: Scalars['uuid']
+    note: (Scalars['String'] | null)
+    placement: (Scalars['Int'] | null)
+    player_steam_id: (Scalars['String'] | null)
+    source: Scalars['String']
+    team_id: (Scalars['uuid'] | null)
+    tournament_id: (Scalars['uuid'] | null)
+    tournament_team_id: (Scalars['uuid'] | null)
+    __typename: 'AwardRecipient'
+}
+
 export interface ConnectionByState {
     count: Scalars['Int']
     state: Scalars['String']
@@ -694,6 +724,17 @@ export interface TimescaleStats {
     __typename: 'TimescaleStats'
 }
 
+export interface TournamentAward {
+    award_id: (Scalars['uuid'] | null)
+    custom_name: (Scalars['String'] | null)
+    id: Scalars['uuid']
+    image_url: (Scalars['String'] | null)
+    placement: Scalars['Int']
+    silhouette: (Scalars['Int'] | null)
+    tournament_id: Scalars['uuid']
+    __typename: 'TournamentAward'
+}
+
 export interface TournamentMatchResetImpact {
     bracket_id: Scalars['uuid']
     depth: Scalars['Int']
@@ -1046,6 +1087,359 @@ export interface api_keys_variance_fields {
 }
 
 
+/** columns and relationships of "award_recipients" */
+export interface award_recipients {
+    /** An object relationship */
+    award: awards
+    award_id: Scalars['uuid']
+    /** An object relationship */
+    awarded_by: (players | null)
+    awarded_by_steam_id: (Scalars['bigint'] | null)
+    created_at: Scalars['timestamptz']
+    id: Scalars['uuid']
+    note: (Scalars['String'] | null)
+    placement: (Scalars['Int'] | null)
+    placement_tier: (Scalars['String'] | null)
+    /** An object relationship */
+    player: (players | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    source: e_award_sources_enum
+    /** An object relationship */
+    team: (teams | null)
+    team_id: (Scalars['uuid'] | null)
+    /** An object relationship */
+    tournament: (tournaments | null)
+    /** An object relationship */
+    tournament_award: (tournament_awards | null)
+    tournament_id: (Scalars['uuid'] | null)
+    /** An object relationship */
+    tournament_team: (tournament_teams | null)
+    tournament_team_id: (Scalars['uuid'] | null)
+    __typename: 'award_recipients'
+}
+
+
+/** aggregated selection of "award_recipients" */
+export interface award_recipients_aggregate {
+    aggregate: (award_recipients_aggregate_fields | null)
+    nodes: award_recipients[]
+    __typename: 'award_recipients_aggregate'
+}
+
+
+/** aggregate fields of "award_recipients" */
+export interface award_recipients_aggregate_fields {
+    avg: (award_recipients_avg_fields | null)
+    count: Scalars['Int']
+    max: (award_recipients_max_fields | null)
+    min: (award_recipients_min_fields | null)
+    stddev: (award_recipients_stddev_fields | null)
+    stddev_pop: (award_recipients_stddev_pop_fields | null)
+    stddev_samp: (award_recipients_stddev_samp_fields | null)
+    sum: (award_recipients_sum_fields | null)
+    var_pop: (award_recipients_var_pop_fields | null)
+    var_samp: (award_recipients_var_samp_fields | null)
+    variance: (award_recipients_variance_fields | null)
+    __typename: 'award_recipients_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface award_recipients_avg_fields {
+    awarded_by_steam_id: (Scalars['Float'] | null)
+    placement: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'award_recipients_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "award_recipients" */
+export type award_recipients_constraint = 'award_recipients_one_mvp_per_tournament' | 'award_recipients_pkey' | 'award_recipients_player_recipient_key' | 'award_recipients_team_recipient_key'
+
+
+/** aggregate max on columns */
+export interface award_recipients_max_fields {
+    award_id: (Scalars['uuid'] | null)
+    awarded_by_steam_id: (Scalars['bigint'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    note: (Scalars['String'] | null)
+    placement: (Scalars['Int'] | null)
+    placement_tier: (Scalars['String'] | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    team_id: (Scalars['uuid'] | null)
+    tournament_id: (Scalars['uuid'] | null)
+    tournament_team_id: (Scalars['uuid'] | null)
+    __typename: 'award_recipients_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface award_recipients_min_fields {
+    award_id: (Scalars['uuid'] | null)
+    awarded_by_steam_id: (Scalars['bigint'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    note: (Scalars['String'] | null)
+    placement: (Scalars['Int'] | null)
+    placement_tier: (Scalars['String'] | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    team_id: (Scalars['uuid'] | null)
+    tournament_id: (Scalars['uuid'] | null)
+    tournament_team_id: (Scalars['uuid'] | null)
+    __typename: 'award_recipients_min_fields'
+}
+
+
+/** response of any mutation on the table "award_recipients" */
+export interface award_recipients_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: award_recipients[]
+    __typename: 'award_recipients_mutation_response'
+}
+
+
+/** select columns of table "award_recipients" */
+export type award_recipients_select_column = 'award_id' | 'awarded_by_steam_id' | 'created_at' | 'id' | 'note' | 'placement' | 'placement_tier' | 'player_steam_id' | 'source' | 'team_id' | 'tournament_id' | 'tournament_team_id'
+
+
+/** aggregate stddev on columns */
+export interface award_recipients_stddev_fields {
+    awarded_by_steam_id: (Scalars['Float'] | null)
+    placement: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'award_recipients_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface award_recipients_stddev_pop_fields {
+    awarded_by_steam_id: (Scalars['Float'] | null)
+    placement: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'award_recipients_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface award_recipients_stddev_samp_fields {
+    awarded_by_steam_id: (Scalars['Float'] | null)
+    placement: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'award_recipients_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface award_recipients_sum_fields {
+    awarded_by_steam_id: (Scalars['bigint'] | null)
+    placement: (Scalars['Int'] | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    __typename: 'award_recipients_sum_fields'
+}
+
+
+/** update columns of table "award_recipients" */
+export type award_recipients_update_column = 'award_id' | 'awarded_by_steam_id' | 'created_at' | 'id' | 'note' | 'placement' | 'player_steam_id' | 'source' | 'team_id' | 'tournament_id' | 'tournament_team_id'
+
+
+/** aggregate var_pop on columns */
+export interface award_recipients_var_pop_fields {
+    awarded_by_steam_id: (Scalars['Float'] | null)
+    placement: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'award_recipients_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface award_recipients_var_samp_fields {
+    awarded_by_steam_id: (Scalars['Float'] | null)
+    placement: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'award_recipients_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface award_recipients_variance_fields {
+    awarded_by_steam_id: (Scalars['Float'] | null)
+    placement: (Scalars['Float'] | null)
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'award_recipients_variance_fields'
+}
+
+
+/** columns and relationships of "awards" */
+export interface awards {
+    allow_multiple: Scalars['Boolean']
+    created_at: Scalars['timestamptz']
+    /** An object relationship */
+    created_by: (players | null)
+    created_by_steam_id: (Scalars['bigint'] | null)
+    description: (Scalars['String'] | null)
+    id: Scalars['uuid']
+    image_url: (Scalars['String'] | null)
+    name: Scalars['String']
+    /** An array relationship */
+    recipients: award_recipients[]
+    /** An aggregate relationship */
+    recipients_aggregate: award_recipients_aggregate
+    silhouette: (Scalars['Int'] | null)
+    system_key: (Scalars['String'] | null)
+    tier: e_award_tiers_enum
+    /** An array relationship */
+    tournament_configs: tournament_awards[]
+    /** An aggregate relationship */
+    tournament_configs_aggregate: tournament_awards_aggregate
+    updated_at: Scalars['timestamptz']
+    __typename: 'awards'
+}
+
+
+/** aggregated selection of "awards" */
+export interface awards_aggregate {
+    aggregate: (awards_aggregate_fields | null)
+    nodes: awards[]
+    __typename: 'awards_aggregate'
+}
+
+
+/** aggregate fields of "awards" */
+export interface awards_aggregate_fields {
+    avg: (awards_avg_fields | null)
+    count: Scalars['Int']
+    max: (awards_max_fields | null)
+    min: (awards_min_fields | null)
+    stddev: (awards_stddev_fields | null)
+    stddev_pop: (awards_stddev_pop_fields | null)
+    stddev_samp: (awards_stddev_samp_fields | null)
+    sum: (awards_sum_fields | null)
+    var_pop: (awards_var_pop_fields | null)
+    var_samp: (awards_var_samp_fields | null)
+    variance: (awards_variance_fields | null)
+    __typename: 'awards_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface awards_avg_fields {
+    created_by_steam_id: (Scalars['Float'] | null)
+    silhouette: (Scalars['Float'] | null)
+    __typename: 'awards_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "awards" */
+export type awards_constraint = 'awards_pkey' | 'awards_system_key_key'
+
+
+/** aggregate max on columns */
+export interface awards_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    created_by_steam_id: (Scalars['bigint'] | null)
+    description: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    image_url: (Scalars['String'] | null)
+    name: (Scalars['String'] | null)
+    silhouette: (Scalars['Int'] | null)
+    system_key: (Scalars['String'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'awards_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface awards_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    created_by_steam_id: (Scalars['bigint'] | null)
+    description: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    image_url: (Scalars['String'] | null)
+    name: (Scalars['String'] | null)
+    silhouette: (Scalars['Int'] | null)
+    system_key: (Scalars['String'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'awards_min_fields'
+}
+
+
+/** response of any mutation on the table "awards" */
+export interface awards_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: awards[]
+    __typename: 'awards_mutation_response'
+}
+
+
+/** select columns of table "awards" */
+export type awards_select_column = 'allow_multiple' | 'created_at' | 'created_by_steam_id' | 'description' | 'id' | 'image_url' | 'name' | 'silhouette' | 'system_key' | 'tier' | 'updated_at'
+
+
+/** aggregate stddev on columns */
+export interface awards_stddev_fields {
+    created_by_steam_id: (Scalars['Float'] | null)
+    silhouette: (Scalars['Float'] | null)
+    __typename: 'awards_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface awards_stddev_pop_fields {
+    created_by_steam_id: (Scalars['Float'] | null)
+    silhouette: (Scalars['Float'] | null)
+    __typename: 'awards_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface awards_stddev_samp_fields {
+    created_by_steam_id: (Scalars['Float'] | null)
+    silhouette: (Scalars['Float'] | null)
+    __typename: 'awards_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface awards_sum_fields {
+    created_by_steam_id: (Scalars['bigint'] | null)
+    silhouette: (Scalars['Int'] | null)
+    __typename: 'awards_sum_fields'
+}
+
+
+/** update columns of table "awards" */
+export type awards_update_column = 'allow_multiple' | 'created_at' | 'created_by_steam_id' | 'description' | 'id' | 'image_url' | 'name' | 'silhouette' | 'system_key' | 'tier' | 'updated_at'
+
+
+/** aggregate var_pop on columns */
+export interface awards_var_pop_fields {
+    created_by_steam_id: (Scalars['Float'] | null)
+    silhouette: (Scalars['Float'] | null)
+    __typename: 'awards_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface awards_var_samp_fields {
+    created_by_steam_id: (Scalars['Float'] | null)
+    silhouette: (Scalars['Float'] | null)
+    __typename: 'awards_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface awards_variance_fields {
+    created_by_steam_id: (Scalars['Float'] | null)
+    silhouette: (Scalars['Float'] | null)
+    __typename: 'awards_variance_fields'
+}
+
+
 /** columns and relationships of "clip_render_jobs" */
 export interface clip_render_jobs {
     /** An object relationship */
@@ -1253,13 +1647,16 @@ export type cursor_ordering = 'ASC' | 'DESC'
 /** columns and relationships of "custom_pages" */
 export interface custom_pages {
     created_at: Scalars['timestamptz']
+    deployments: Scalars['jsonb']
     enabled: Scalars['Boolean']
     exposed_module: Scalars['String']
     icon: (Scalars['String'] | null)
     id: Scalars['uuid']
     is_default: Scalars['Boolean']
+    manifest_url: (Scalars['String'] | null)
     nav_group: (Scalars['String'] | null)
     nav_order: Scalars['Int']
+    profile_tab_label: (Scalars['String'] | null)
     remote_entry_url: Scalars['String']
     remote_scope: Scalars['String']
     required_role: (e_player_roles_enum | null)
@@ -1312,8 +1709,10 @@ export interface custom_pages_max_fields {
     exposed_module: (Scalars['String'] | null)
     icon: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
+    manifest_url: (Scalars['String'] | null)
     nav_group: (Scalars['String'] | null)
     nav_order: (Scalars['Int'] | null)
+    profile_tab_label: (Scalars['String'] | null)
     remote_entry_url: (Scalars['String'] | null)
     remote_scope: (Scalars['String'] | null)
     slug: (Scalars['String'] | null)
@@ -1329,8 +1728,10 @@ export interface custom_pages_min_fields {
     exposed_module: (Scalars['String'] | null)
     icon: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
+    manifest_url: (Scalars['String'] | null)
     nav_group: (Scalars['String'] | null)
     nav_order: (Scalars['Int'] | null)
+    profile_tab_label: (Scalars['String'] | null)
     remote_entry_url: (Scalars['String'] | null)
     remote_scope: (Scalars['String'] | null)
     slug: (Scalars['String'] | null)
@@ -1351,7 +1752,7 @@ export interface custom_pages_mutation_response {
 
 
 /** select columns of table "custom_pages" */
-export type custom_pages_select_column = 'created_at' | 'enabled' | 'exposed_module' | 'icon' | 'id' | 'is_default' | 'nav_group' | 'nav_order' | 'remote_entry_url' | 'remote_scope' | 'required_role' | 'slug' | 'title' | 'updated_at'
+export type custom_pages_select_column = 'created_at' | 'deployments' | 'enabled' | 'exposed_module' | 'icon' | 'id' | 'is_default' | 'manifest_url' | 'nav_group' | 'nav_order' | 'profile_tab_label' | 'remote_entry_url' | 'remote_scope' | 'required_role' | 'slug' | 'title' | 'updated_at'
 
 
 /** aggregate stddev on columns */
@@ -1383,7 +1784,7 @@ export interface custom_pages_sum_fields {
 
 
 /** update columns of table "custom_pages" */
-export type custom_pages_update_column = 'created_at' | 'enabled' | 'exposed_module' | 'icon' | 'id' | 'is_default' | 'nav_group' | 'nav_order' | 'remote_entry_url' | 'remote_scope' | 'required_role' | 'slug' | 'title' | 'updated_at'
+export type custom_pages_update_column = 'created_at' | 'deployments' | 'enabled' | 'exposed_module' | 'icon' | 'id' | 'is_default' | 'manifest_url' | 'nav_group' | 'nav_order' | 'profile_tab_label' | 'remote_entry_url' | 'remote_scope' | 'required_role' | 'slug' | 'title' | 'updated_at'
 
 
 /** aggregate var_pop on columns */
@@ -2145,6 +2546,136 @@ export interface draft_games_variance_fields {
     min_elo: (Scalars['Float'] | null)
     __typename: 'draft_games_variance_fields'
 }
+
+
+/** columns and relationships of "e_award_sources" */
+export interface e_award_sources {
+    description: Scalars['String']
+    value: Scalars['String']
+    __typename: 'e_award_sources'
+}
+
+
+/** aggregated selection of "e_award_sources" */
+export interface e_award_sources_aggregate {
+    aggregate: (e_award_sources_aggregate_fields | null)
+    nodes: e_award_sources[]
+    __typename: 'e_award_sources_aggregate'
+}
+
+
+/** aggregate fields of "e_award_sources" */
+export interface e_award_sources_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_award_sources_max_fields | null)
+    min: (e_award_sources_min_fields | null)
+    __typename: 'e_award_sources_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_award_sources" */
+export type e_award_sources_constraint = 'e_award_sources_pkey'
+
+export type e_award_sources_enum = 'manual' | 'tournament'
+
+
+/** aggregate max on columns */
+export interface e_award_sources_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_award_sources_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_award_sources_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_award_sources_min_fields'
+}
+
+
+/** response of any mutation on the table "e_award_sources" */
+export interface e_award_sources_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_award_sources[]
+    __typename: 'e_award_sources_mutation_response'
+}
+
+
+/** select columns of table "e_award_sources" */
+export type e_award_sources_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_award_sources" */
+export type e_award_sources_update_column = 'description' | 'value'
+
+
+/** columns and relationships of "e_award_tiers" */
+export interface e_award_tiers {
+    description: Scalars['String']
+    value: Scalars['String']
+    __typename: 'e_award_tiers'
+}
+
+
+/** aggregated selection of "e_award_tiers" */
+export interface e_award_tiers_aggregate {
+    aggregate: (e_award_tiers_aggregate_fields | null)
+    nodes: e_award_tiers[]
+    __typename: 'e_award_tiers_aggregate'
+}
+
+
+/** aggregate fields of "e_award_tiers" */
+export interface e_award_tiers_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_award_tiers_max_fields | null)
+    min: (e_award_tiers_min_fields | null)
+    __typename: 'e_award_tiers_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_award_tiers" */
+export type e_award_tiers_constraint = 'e_award_tiers_pkey'
+
+export type e_award_tiers_enum = 'bronze' | 'gold' | 'mvp' | 'silver' | 'special'
+
+
+/** aggregate max on columns */
+export interface e_award_tiers_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_award_tiers_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_award_tiers_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_award_tiers_min_fields'
+}
+
+
+/** response of any mutation on the table "e_award_tiers" */
+export interface e_award_tiers_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_award_tiers[]
+    __typename: 'e_award_tiers_mutation_response'
+}
+
+
+/** select columns of table "e_award_tiers" */
+export type e_award_tiers_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_award_tiers" */
+export type e_award_tiers_update_column = 'description' | 'value'
 
 
 /** columns and relationships of "e_check_in_settings" */
@@ -11512,6 +12043,8 @@ export interface mutation_root {
     createScheduledMatch: (CreateScheduledMatchOutput | null)
     /** Create directory on game server */
     createServerDirectory: (SuccessOutput | null)
+    /** Delete a catalog award */
+    deleteAward: (SuccessOutput | null)
     /** Delete a saved clip and its underlying S3 object */
     deleteClip: (SuccessOutput | null)
     deleteMatch: (SuccessOutput | null)
@@ -11535,6 +12068,14 @@ export interface mutation_root {
     delete_api_keys: (api_keys_mutation_response | null)
     /** delete single row from the table: "api_keys" */
     delete_api_keys_by_pk: (api_keys | null)
+    /** delete data from the table: "award_recipients" */
+    delete_award_recipients: (award_recipients_mutation_response | null)
+    /** delete single row from the table: "award_recipients" */
+    delete_award_recipients_by_pk: (award_recipients | null)
+    /** delete data from the table: "awards" */
+    delete_awards: (awards_mutation_response | null)
+    /** delete single row from the table: "awards" */
+    delete_awards_by_pk: (awards | null)
     /** delete data from the table: "clip_render_jobs" */
     delete_clip_render_jobs: (clip_render_jobs_mutation_response | null)
     /** delete single row from the table: "clip_render_jobs" */
@@ -11559,6 +12100,14 @@ export interface mutation_root {
     delete_draft_games: (draft_games_mutation_response | null)
     /** delete single row from the table: "draft_games" */
     delete_draft_games_by_pk: (draft_games | null)
+    /** delete data from the table: "e_award_sources" */
+    delete_e_award_sources: (e_award_sources_mutation_response | null)
+    /** delete single row from the table: "e_award_sources" */
+    delete_e_award_sources_by_pk: (e_award_sources | null)
+    /** delete data from the table: "e_award_tiers" */
+    delete_e_award_tiers: (e_award_tiers_mutation_response | null)
+    /** delete single row from the table: "e_award_tiers" */
+    delete_e_award_tiers_by_pk: (e_award_tiers | null)
     /** delete data from the table: "e_check_in_settings" */
     delete_e_check_in_settings: (e_check_in_settings_mutation_response | null)
     /** delete single row from the table: "e_check_in_settings" */
@@ -12057,6 +12606,10 @@ export interface mutation_root {
     delete_teams: (teams_mutation_response | null)
     /** delete single row from the table: "teams" */
     delete_teams_by_pk: (teams | null)
+    /** delete data from the table: "tournament_awards" */
+    delete_tournament_awards: (tournament_awards_mutation_response | null)
+    /** delete single row from the table: "tournament_awards" */
+    delete_tournament_awards_by_pk: (tournament_awards | null)
     /** delete data from the table: "tournament_brackets" */
     delete_tournament_brackets: (tournament_brackets_mutation_response | null)
     /** delete single row from the table: "tournament_brackets" */
@@ -12097,14 +12650,6 @@ export interface mutation_root {
     delete_tournament_teams: (tournament_teams_mutation_response | null)
     /** delete single row from the table: "tournament_teams" */
     delete_tournament_teams_by_pk: (tournament_teams | null)
-    /** delete data from the table: "tournament_trophies" */
-    delete_tournament_trophies: (tournament_trophies_mutation_response | null)
-    /** delete single row from the table: "tournament_trophies" */
-    delete_tournament_trophies_by_pk: (tournament_trophies | null)
-    /** delete data from the table: "tournament_trophy_configs" */
-    delete_tournament_trophy_configs: (tournament_trophy_configs_mutation_response | null)
-    /** delete single row from the table: "tournament_trophy_configs" */
-    delete_tournament_trophy_configs_by_pk: (tournament_trophy_configs | null)
     /** delete data from the table: "tournaments" */
     delete_tournaments: (tournaments_mutation_response | null)
     /** delete single row from the table: "tournaments" */
@@ -12126,6 +12671,8 @@ export interface mutation_root {
     /** Live pod GSI snapshot — slots, sides, alive/dead. Drives the stream-deck. */
     getLiveStreamSpecState: (LiveStreamSpecState | null)
     getTestUploadLink: GetTestUploadResponse
+    /** Grant an award to a player or team */
+    grantAward: (AwardRecipient | null)
     /** insert data into the table: "_map_pool" */
     insert__map_pool: (_map_pool_mutation_response | null)
     /** insert a single row into the table: "_map_pool" */
@@ -12138,6 +12685,14 @@ export interface mutation_root {
     insert_api_keys: (api_keys_mutation_response | null)
     /** insert a single row into the table: "api_keys" */
     insert_api_keys_one: (api_keys | null)
+    /** insert data into the table: "award_recipients" */
+    insert_award_recipients: (award_recipients_mutation_response | null)
+    /** insert a single row into the table: "award_recipients" */
+    insert_award_recipients_one: (award_recipients | null)
+    /** insert data into the table: "awards" */
+    insert_awards: (awards_mutation_response | null)
+    /** insert a single row into the table: "awards" */
+    insert_awards_one: (awards | null)
     /** insert data into the table: "clip_render_jobs" */
     insert_clip_render_jobs: (clip_render_jobs_mutation_response | null)
     /** insert a single row into the table: "clip_render_jobs" */
@@ -12162,6 +12717,14 @@ export interface mutation_root {
     insert_draft_games: (draft_games_mutation_response | null)
     /** insert a single row into the table: "draft_games" */
     insert_draft_games_one: (draft_games | null)
+    /** insert data into the table: "e_award_sources" */
+    insert_e_award_sources: (e_award_sources_mutation_response | null)
+    /** insert a single row into the table: "e_award_sources" */
+    insert_e_award_sources_one: (e_award_sources | null)
+    /** insert data into the table: "e_award_tiers" */
+    insert_e_award_tiers: (e_award_tiers_mutation_response | null)
+    /** insert a single row into the table: "e_award_tiers" */
+    insert_e_award_tiers_one: (e_award_tiers | null)
     /** insert data into the table: "e_check_in_settings" */
     insert_e_check_in_settings: (e_check_in_settings_mutation_response | null)
     /** insert a single row into the table: "e_check_in_settings" */
@@ -12666,6 +13229,10 @@ export interface mutation_root {
     insert_teams: (teams_mutation_response | null)
     /** insert a single row into the table: "teams" */
     insert_teams_one: (teams | null)
+    /** insert data into the table: "tournament_awards" */
+    insert_tournament_awards: (tournament_awards_mutation_response | null)
+    /** insert a single row into the table: "tournament_awards" */
+    insert_tournament_awards_one: (tournament_awards | null)
     /** insert data into the table: "tournament_brackets" */
     insert_tournament_brackets: (tournament_brackets_mutation_response | null)
     /** insert a single row into the table: "tournament_brackets" */
@@ -12706,14 +13273,6 @@ export interface mutation_root {
     insert_tournament_teams: (tournament_teams_mutation_response | null)
     /** insert a single row into the table: "tournament_teams" */
     insert_tournament_teams_one: (tournament_teams | null)
-    /** insert data into the table: "tournament_trophies" */
-    insert_tournament_trophies: (tournament_trophies_mutation_response | null)
-    /** insert a single row into the table: "tournament_trophies" */
-    insert_tournament_trophies_one: (tournament_trophies | null)
-    /** insert data into the table: "tournament_trophy_configs" */
-    insert_tournament_trophy_configs: (tournament_trophy_configs_mutation_response | null)
-    /** insert a single row into the table: "tournament_trophy_configs" */
-    insert_tournament_trophy_configs_one: (tournament_trophy_configs | null)
     /** insert data into the table: "tournaments" */
     insert_tournaments: (tournaments_mutation_response | null)
     /** insert a single row into the table: "tournaments" */
@@ -12764,8 +13323,8 @@ export interface mutation_root {
     queueClipFromPreset: (CreateClipRenderOutput | null)
     randomizeTeams: (SuccessOutput | null)
     rebootMatchServer: (SuccessOutput | null)
-    /** execute VOLATILE function "recalculate_tournament_trophies" which returns "tournament_trophies" */
-    recalculate_tournament_trophies: tournament_trophies[]
+    /** execute VOLATILE function "recalculate_tournament_awards" which returns "award_recipients" */
+    recalculate_tournament_awards: award_recipients[]
     /** Wipe and rebuild all player ELO from finished matches in chronological order (admin only). Runs in the background; track via recomputePlayerEloStatus. */
     recomputePlayerElo: (RecomputeEloStartedOutput | null)
     /** Return the progress of the ELO recompute run (admin only). */
@@ -12811,7 +13370,11 @@ export interface mutation_root {
     /** Delete terminal clip_render_jobs rows for a match_map (all or only failed/cancelled) and re-create them from their saved specs. */
     retryClipRenderBatch: (SuccessOutput | null)
     retryPendingMatchImport: (PendingMatchImportActionOutput | null)
+    /** Revoke a hand-granted award */
+    revokeAward: (SuccessOutput | null)
     sanctionServerPlayer: SanctionResult
+    /** Create or update a catalog award */
+    saveAward: (Award | null)
     /** Create or update a first-party news post. Caller role is verified against public.post_news_role. */
     saveNewsPost: (NewsPost | null)
     /** Scan S3 for objects not referenced in the database (admin only). Runs in the background; results land in the logs and orphanedDemosScanResult. */
@@ -12830,6 +13393,8 @@ export interface mutation_root {
     setMatchWinner: (SuccessOutput | null)
     /** Publish or unpublish a news post. Caller role is verified against public.post_news_role. */
     setNewsPostStatus: (NewsPost | null)
+    /** Map a tournament placement to an award */
+    setTournamentAward: (TournamentAward | null)
     setupGameServer: (SetupGameServeOutput | null)
     skipShaders: (SuccessOutput | null)
     specAutodirector: (SuccessOutput | null)
@@ -12883,6 +13448,18 @@ export interface mutation_root {
     update_api_keys_by_pk: (api_keys | null)
     /** update multiples rows of table: "api_keys" */
     update_api_keys_many: ((api_keys_mutation_response | null)[] | null)
+    /** update data of the table: "award_recipients" */
+    update_award_recipients: (award_recipients_mutation_response | null)
+    /** update single row of the table: "award_recipients" */
+    update_award_recipients_by_pk: (award_recipients | null)
+    /** update multiples rows of table: "award_recipients" */
+    update_award_recipients_many: ((award_recipients_mutation_response | null)[] | null)
+    /** update data of the table: "awards" */
+    update_awards: (awards_mutation_response | null)
+    /** update single row of the table: "awards" */
+    update_awards_by_pk: (awards | null)
+    /** update multiples rows of table: "awards" */
+    update_awards_many: ((awards_mutation_response | null)[] | null)
     /** update data of the table: "clip_render_jobs" */
     update_clip_render_jobs: (clip_render_jobs_mutation_response | null)
     /** update single row of the table: "clip_render_jobs" */
@@ -12919,6 +13496,18 @@ export interface mutation_root {
     update_draft_games_by_pk: (draft_games | null)
     /** update multiples rows of table: "draft_games" */
     update_draft_games_many: ((draft_games_mutation_response | null)[] | null)
+    /** update data of the table: "e_award_sources" */
+    update_e_award_sources: (e_award_sources_mutation_response | null)
+    /** update single row of the table: "e_award_sources" */
+    update_e_award_sources_by_pk: (e_award_sources | null)
+    /** update multiples rows of table: "e_award_sources" */
+    update_e_award_sources_many: ((e_award_sources_mutation_response | null)[] | null)
+    /** update data of the table: "e_award_tiers" */
+    update_e_award_tiers: (e_award_tiers_mutation_response | null)
+    /** update single row of the table: "e_award_tiers" */
+    update_e_award_tiers_by_pk: (e_award_tiers | null)
+    /** update multiples rows of table: "e_award_tiers" */
+    update_e_award_tiers_many: ((e_award_tiers_mutation_response | null)[] | null)
     /** update data of the table: "e_check_in_settings" */
     update_e_check_in_settings: (e_check_in_settings_mutation_response | null)
     /** update single row of the table: "e_check_in_settings" */
@@ -13669,6 +14258,12 @@ export interface mutation_root {
     update_teams_by_pk: (teams | null)
     /** update multiples rows of table: "teams" */
     update_teams_many: ((teams_mutation_response | null)[] | null)
+    /** update data of the table: "tournament_awards" */
+    update_tournament_awards: (tournament_awards_mutation_response | null)
+    /** update single row of the table: "tournament_awards" */
+    update_tournament_awards_by_pk: (tournament_awards | null)
+    /** update multiples rows of table: "tournament_awards" */
+    update_tournament_awards_many: ((tournament_awards_mutation_response | null)[] | null)
     /** update data of the table: "tournament_brackets" */
     update_tournament_brackets: (tournament_brackets_mutation_response | null)
     /** update single row of the table: "tournament_brackets" */
@@ -13729,18 +14324,6 @@ export interface mutation_root {
     update_tournament_teams_by_pk: (tournament_teams | null)
     /** update multiples rows of table: "tournament_teams" */
     update_tournament_teams_many: ((tournament_teams_mutation_response | null)[] | null)
-    /** update data of the table: "tournament_trophies" */
-    update_tournament_trophies: (tournament_trophies_mutation_response | null)
-    /** update single row of the table: "tournament_trophies" */
-    update_tournament_trophies_by_pk: (tournament_trophies | null)
-    /** update multiples rows of table: "tournament_trophies" */
-    update_tournament_trophies_many: ((tournament_trophies_mutation_response | null)[] | null)
-    /** update data of the table: "tournament_trophy_configs" */
-    update_tournament_trophy_configs: (tournament_trophy_configs_mutation_response | null)
-    /** update single row of the table: "tournament_trophy_configs" */
-    update_tournament_trophy_configs_by_pk: (tournament_trophy_configs | null)
-    /** update multiples rows of table: "tournament_trophy_configs" */
-    update_tournament_trophy_configs_many: ((tournament_trophy_configs_mutation_response | null)[] | null)
     /** update data of the table: "tournaments" */
     update_tournaments: (tournaments_mutation_response | null)
     /** update single row of the table: "tournaments" */
@@ -21153,6 +21736,10 @@ export interface players {
     assited_by_players_aggregate: player_assists_aggregate
     avatar_url: (Scalars['String'] | null)
     /** An array relationship */
+    awards: award_recipients[]
+    /** An aggregate relationship */
+    awards_aggregate: award_recipients_aggregate
+    /** An array relationship */
     coach_lineups: match_lineups[]
     /** An aggregate relationship */
     coach_lineups_aggregate: match_lineups_aggregate
@@ -21337,10 +21924,6 @@ export interface players {
     tournament_rosters: tournament_team_roster[]
     /** An aggregate relationship */
     tournament_rosters_aggregate: tournament_team_roster_aggregate
-    /** An array relationship */
-    tournament_trophies: tournament_trophies[]
-    /** An aggregate relationship */
-    tournament_trophies_aggregate: tournament_trophies_aggregate
     /** An array relationship */
     tournaments: tournaments[]
     /** An aggregate relationship */
@@ -21915,6 +22498,18 @@ export interface query_root {
     api_keys_aggregate: api_keys_aggregate
     /** fetch data from the table: "api_keys" using primary key columns */
     api_keys_by_pk: (api_keys | null)
+    /** fetch data from the table: "award_recipients" */
+    award_recipients: award_recipients[]
+    /** fetch aggregated fields from the table: "award_recipients" */
+    award_recipients_aggregate: award_recipients_aggregate
+    /** fetch data from the table: "award_recipients" using primary key columns */
+    award_recipients_by_pk: (award_recipients | null)
+    /** fetch data from the table: "awards" */
+    awards: awards[]
+    /** fetch aggregated fields from the table: "awards" */
+    awards_aggregate: awards_aggregate
+    /** fetch data from the table: "awards" using primary key columns */
+    awards_by_pk: (awards | null)
     /** An array relationship */
     clip_render_jobs: clip_render_jobs[]
     /** An aggregate relationship */
@@ -21952,6 +22547,18 @@ export interface query_root {
     draft_games_aggregate: draft_games_aggregate
     /** fetch data from the table: "draft_games" using primary key columns */
     draft_games_by_pk: (draft_games | null)
+    /** fetch data from the table: "e_award_sources" */
+    e_award_sources: e_award_sources[]
+    /** fetch aggregated fields from the table: "e_award_sources" */
+    e_award_sources_aggregate: e_award_sources_aggregate
+    /** fetch data from the table: "e_award_sources" using primary key columns */
+    e_award_sources_by_pk: (e_award_sources | null)
+    /** fetch data from the table: "e_award_tiers" */
+    e_award_tiers: e_award_tiers[]
+    /** fetch aggregated fields from the table: "e_award_tiers" */
+    e_award_tiers_aggregate: e_award_tiers_aggregate
+    /** fetch data from the table: "e_award_tiers" using primary key columns */
+    e_award_tiers_by_pk: (e_award_tiers | null)
     /** fetch data from the table: "e_check_in_settings" */
     e_check_in_settings: e_check_in_settings[]
     /** fetch aggregated fields from the table: "e_check_in_settings" */
@@ -22787,6 +23394,12 @@ export interface query_root {
     /** fetch data from the table: "teams" using primary key columns */
     teams_by_pk: (teams | null)
     telemetryStats: TelemetryStats
+    /** fetch data from the table: "tournament_awards" */
+    tournament_awards: tournament_awards[]
+    /** fetch aggregated fields from the table: "tournament_awards" */
+    tournament_awards_aggregate: tournament_awards_aggregate
+    /** fetch data from the table: "tournament_awards" using primary key columns */
+    tournament_awards_by_pk: (tournament_awards | null)
     /** An array relationship */
     tournament_brackets: tournament_brackets[]
     /** An aggregate relationship */
@@ -22847,18 +23460,6 @@ export interface query_root {
     tournament_teams_aggregate: tournament_teams_aggregate
     /** fetch data from the table: "tournament_teams" using primary key columns */
     tournament_teams_by_pk: (tournament_teams | null)
-    /** An array relationship */
-    tournament_trophies: tournament_trophies[]
-    /** An aggregate relationship */
-    tournament_trophies_aggregate: tournament_trophies_aggregate
-    /** fetch data from the table: "tournament_trophies" using primary key columns */
-    tournament_trophies_by_pk: (tournament_trophies | null)
-    /** fetch data from the table: "tournament_trophy_configs" */
-    tournament_trophy_configs: tournament_trophy_configs[]
-    /** fetch aggregated fields from the table: "tournament_trophy_configs" */
-    tournament_trophy_configs_aggregate: tournament_trophy_configs_aggregate
-    /** fetch data from the table: "tournament_trophy_configs" using primary key columns */
-    tournament_trophy_configs_by_pk: (tournament_trophy_configs | null)
     /** An array relationship */
     tournaments: tournaments[]
     /** An aggregate relationship */
@@ -23887,6 +24488,22 @@ export interface subscription_root {
     api_keys_by_pk: (api_keys | null)
     /** fetch data from the table in a streaming manner: "api_keys" */
     api_keys_stream: api_keys[]
+    /** fetch data from the table: "award_recipients" */
+    award_recipients: award_recipients[]
+    /** fetch aggregated fields from the table: "award_recipients" */
+    award_recipients_aggregate: award_recipients_aggregate
+    /** fetch data from the table: "award_recipients" using primary key columns */
+    award_recipients_by_pk: (award_recipients | null)
+    /** fetch data from the table in a streaming manner: "award_recipients" */
+    award_recipients_stream: award_recipients[]
+    /** fetch data from the table: "awards" */
+    awards: awards[]
+    /** fetch aggregated fields from the table: "awards" */
+    awards_aggregate: awards_aggregate
+    /** fetch data from the table: "awards" using primary key columns */
+    awards_by_pk: (awards | null)
+    /** fetch data from the table in a streaming manner: "awards" */
+    awards_stream: awards[]
     /** An array relationship */
     clip_render_jobs: clip_render_jobs[]
     /** An aggregate relationship */
@@ -23935,6 +24552,22 @@ export interface subscription_root {
     draft_games_by_pk: (draft_games | null)
     /** fetch data from the table in a streaming manner: "draft_games" */
     draft_games_stream: draft_games[]
+    /** fetch data from the table: "e_award_sources" */
+    e_award_sources: e_award_sources[]
+    /** fetch aggregated fields from the table: "e_award_sources" */
+    e_award_sources_aggregate: e_award_sources_aggregate
+    /** fetch data from the table: "e_award_sources" using primary key columns */
+    e_award_sources_by_pk: (e_award_sources | null)
+    /** fetch data from the table in a streaming manner: "e_award_sources" */
+    e_award_sources_stream: e_award_sources[]
+    /** fetch data from the table: "e_award_tiers" */
+    e_award_tiers: e_award_tiers[]
+    /** fetch aggregated fields from the table: "e_award_tiers" */
+    e_award_tiers_aggregate: e_award_tiers_aggregate
+    /** fetch data from the table: "e_award_tiers" using primary key columns */
+    e_award_tiers_by_pk: (e_award_tiers | null)
+    /** fetch data from the table in a streaming manner: "e_award_tiers" */
+    e_award_tiers_stream: e_award_tiers[]
     /** fetch data from the table: "e_check_in_settings" */
     e_check_in_settings: e_check_in_settings[]
     /** fetch aggregated fields from the table: "e_check_in_settings" */
@@ -24983,6 +25616,14 @@ export interface subscription_root {
     teams_by_pk: (teams | null)
     /** fetch data from the table in a streaming manner: "teams" */
     teams_stream: teams[]
+    /** fetch data from the table: "tournament_awards" */
+    tournament_awards: tournament_awards[]
+    /** fetch aggregated fields from the table: "tournament_awards" */
+    tournament_awards_aggregate: tournament_awards_aggregate
+    /** fetch data from the table: "tournament_awards" using primary key columns */
+    tournament_awards_by_pk: (tournament_awards | null)
+    /** fetch data from the table in a streaming manner: "tournament_awards" */
+    tournament_awards_stream: tournament_awards[]
     /** An array relationship */
     tournament_brackets: tournament_brackets[]
     /** An aggregate relationship */
@@ -25063,22 +25704,6 @@ export interface subscription_root {
     tournament_teams_by_pk: (tournament_teams | null)
     /** fetch data from the table in a streaming manner: "tournament_teams" */
     tournament_teams_stream: tournament_teams[]
-    /** An array relationship */
-    tournament_trophies: tournament_trophies[]
-    /** An aggregate relationship */
-    tournament_trophies_aggregate: tournament_trophies_aggregate
-    /** fetch data from the table: "tournament_trophies" using primary key columns */
-    tournament_trophies_by_pk: (tournament_trophies | null)
-    /** fetch data from the table in a streaming manner: "tournament_trophies" */
-    tournament_trophies_stream: tournament_trophies[]
-    /** fetch data from the table: "tournament_trophy_configs" */
-    tournament_trophy_configs: tournament_trophy_configs[]
-    /** fetch aggregated fields from the table: "tournament_trophy_configs" */
-    tournament_trophy_configs_aggregate: tournament_trophy_configs_aggregate
-    /** fetch data from the table: "tournament_trophy_configs" using primary key columns */
-    tournament_trophy_configs_by_pk: (tournament_trophy_configs | null)
-    /** fetch data from the table in a streaming manner: "tournament_trophy_configs" */
-    tournament_trophy_configs_stream: tournament_trophy_configs[]
     /** An array relationship */
     tournaments: tournaments[]
     /** An aggregate relationship */
@@ -26606,6 +27231,10 @@ export interface team_suggestions_variance_fields {
 /** columns and relationships of "teams" */
 export interface teams {
     avatar_url: (Scalars['String'] | null)
+    /** An array relationship */
+    awards: award_recipients[]
+    /** An aggregate relationship */
+    awards_aggregate: award_recipients_aggregate
     /** A computed field, executes function "can_change_team_role" */
     can_change_role: (Scalars['Boolean'] | null)
     /** A computed field, executes function "can_invite_to_team" */
@@ -26802,6 +27431,166 @@ export interface teams_variance_fields {
     captain_steam_id: (Scalars['Float'] | null)
     owner_steam_id: (Scalars['Float'] | null)
     __typename: 'teams_variance_fields'
+}
+
+
+/** columns and relationships of "tournament_awards" */
+export interface tournament_awards {
+    /** An object relationship */
+    award: (awards | null)
+    award_id: (Scalars['uuid'] | null)
+    created_at: Scalars['timestamptz']
+    custom_name: (Scalars['String'] | null)
+    id: Scalars['uuid']
+    image_url: (Scalars['String'] | null)
+    placement: Scalars['Int']
+    silhouette: (Scalars['Int'] | null)
+    /** An object relationship */
+    tournament: tournaments
+    tournament_id: Scalars['uuid']
+    updated_at: Scalars['timestamptz']
+    __typename: 'tournament_awards'
+}
+
+
+/** aggregated selection of "tournament_awards" */
+export interface tournament_awards_aggregate {
+    aggregate: (tournament_awards_aggregate_fields | null)
+    nodes: tournament_awards[]
+    __typename: 'tournament_awards_aggregate'
+}
+
+
+/** aggregate fields of "tournament_awards" */
+export interface tournament_awards_aggregate_fields {
+    avg: (tournament_awards_avg_fields | null)
+    count: Scalars['Int']
+    max: (tournament_awards_max_fields | null)
+    min: (tournament_awards_min_fields | null)
+    stddev: (tournament_awards_stddev_fields | null)
+    stddev_pop: (tournament_awards_stddev_pop_fields | null)
+    stddev_samp: (tournament_awards_stddev_samp_fields | null)
+    sum: (tournament_awards_sum_fields | null)
+    var_pop: (tournament_awards_var_pop_fields | null)
+    var_samp: (tournament_awards_var_samp_fields | null)
+    variance: (tournament_awards_variance_fields | null)
+    __typename: 'tournament_awards_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface tournament_awards_avg_fields {
+    placement: (Scalars['Float'] | null)
+    silhouette: (Scalars['Float'] | null)
+    __typename: 'tournament_awards_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "tournament_awards" */
+export type tournament_awards_constraint = 'tournament_awards_pkey' | 'tournament_awards_tournament_id_placement_key'
+
+
+/** aggregate max on columns */
+export interface tournament_awards_max_fields {
+    award_id: (Scalars['uuid'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    custom_name: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    image_url: (Scalars['String'] | null)
+    placement: (Scalars['Int'] | null)
+    silhouette: (Scalars['Int'] | null)
+    tournament_id: (Scalars['uuid'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'tournament_awards_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface tournament_awards_min_fields {
+    award_id: (Scalars['uuid'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    custom_name: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    image_url: (Scalars['String'] | null)
+    placement: (Scalars['Int'] | null)
+    silhouette: (Scalars['Int'] | null)
+    tournament_id: (Scalars['uuid'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'tournament_awards_min_fields'
+}
+
+
+/** response of any mutation on the table "tournament_awards" */
+export interface tournament_awards_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: tournament_awards[]
+    __typename: 'tournament_awards_mutation_response'
+}
+
+
+/** select columns of table "tournament_awards" */
+export type tournament_awards_select_column = 'award_id' | 'created_at' | 'custom_name' | 'id' | 'image_url' | 'placement' | 'silhouette' | 'tournament_id' | 'updated_at'
+
+
+/** aggregate stddev on columns */
+export interface tournament_awards_stddev_fields {
+    placement: (Scalars['Float'] | null)
+    silhouette: (Scalars['Float'] | null)
+    __typename: 'tournament_awards_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface tournament_awards_stddev_pop_fields {
+    placement: (Scalars['Float'] | null)
+    silhouette: (Scalars['Float'] | null)
+    __typename: 'tournament_awards_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface tournament_awards_stddev_samp_fields {
+    placement: (Scalars['Float'] | null)
+    silhouette: (Scalars['Float'] | null)
+    __typename: 'tournament_awards_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface tournament_awards_sum_fields {
+    placement: (Scalars['Int'] | null)
+    silhouette: (Scalars['Int'] | null)
+    __typename: 'tournament_awards_sum_fields'
+}
+
+
+/** update columns of table "tournament_awards" */
+export type tournament_awards_update_column = 'award_id' | 'created_at' | 'custom_name' | 'id' | 'image_url' | 'placement' | 'silhouette' | 'tournament_id' | 'updated_at'
+
+
+/** aggregate var_pop on columns */
+export interface tournament_awards_var_pop_fields {
+    placement: (Scalars['Float'] | null)
+    silhouette: (Scalars['Float'] | null)
+    __typename: 'tournament_awards_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface tournament_awards_var_samp_fields {
+    placement: (Scalars['Float'] | null)
+    silhouette: (Scalars['Float'] | null)
+    __typename: 'tournament_awards_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface tournament_awards_variance_fields {
+    placement: (Scalars['Float'] | null)
+    silhouette: (Scalars['Float'] | null)
+    __typename: 'tournament_awards_variance_fields'
 }
 
 
@@ -28311,338 +29100,20 @@ export interface tournament_teams_variance_fields {
 }
 
 
-/** columns and relationships of "tournament_trophies" */
-export interface tournament_trophies {
-    created_at: Scalars['timestamptz']
-    id: Scalars['uuid']
-    manual: Scalars['Boolean']
-    placement: Scalars['Int']
-    placement_tier: (Scalars['String'] | null)
-    /** An object relationship */
-    player: (players | null)
-    player_steam_id: (Scalars['bigint'] | null)
-    /** An object relationship */
-    team: (teams | null)
-    team_id: (Scalars['uuid'] | null)
-    /** An object relationship */
-    tournament: tournaments
-    tournament_id: Scalars['uuid']
-    /** An object relationship */
-    tournament_team: tournament_teams
-    tournament_team_id: Scalars['uuid']
-    /** An object relationship */
-    trophy_config: (tournament_trophy_configs | null)
-    __typename: 'tournament_trophies'
-}
-
-
-/** aggregated selection of "tournament_trophies" */
-export interface tournament_trophies_aggregate {
-    aggregate: (tournament_trophies_aggregate_fields | null)
-    nodes: tournament_trophies[]
-    __typename: 'tournament_trophies_aggregate'
-}
-
-
-/** aggregate fields of "tournament_trophies" */
-export interface tournament_trophies_aggregate_fields {
-    avg: (tournament_trophies_avg_fields | null)
-    count: Scalars['Int']
-    max: (tournament_trophies_max_fields | null)
-    min: (tournament_trophies_min_fields | null)
-    stddev: (tournament_trophies_stddev_fields | null)
-    stddev_pop: (tournament_trophies_stddev_pop_fields | null)
-    stddev_samp: (tournament_trophies_stddev_samp_fields | null)
-    sum: (tournament_trophies_sum_fields | null)
-    var_pop: (tournament_trophies_var_pop_fields | null)
-    var_samp: (tournament_trophies_var_samp_fields | null)
-    variance: (tournament_trophies_variance_fields | null)
-    __typename: 'tournament_trophies_aggregate_fields'
-}
-
-
-/** aggregate avg on columns */
-export interface tournament_trophies_avg_fields {
-    placement: (Scalars['Float'] | null)
-    player_steam_id: (Scalars['Float'] | null)
-    __typename: 'tournament_trophies_avg_fields'
-}
-
-
-/** unique or primary key constraints on table "tournament_trophies" */
-export type tournament_trophies_constraint = 'tournament_trophies_one_mvp_per_tournament' | 'tournament_trophies_pkey' | 'tournament_trophies_player_recipient_key' | 'tournament_trophies_team_recipient_key'
-
-
-/** aggregate max on columns */
-export interface tournament_trophies_max_fields {
-    created_at: (Scalars['timestamptz'] | null)
-    id: (Scalars['uuid'] | null)
-    placement: (Scalars['Int'] | null)
-    placement_tier: (Scalars['String'] | null)
-    player_steam_id: (Scalars['bigint'] | null)
-    team_id: (Scalars['uuid'] | null)
-    tournament_id: (Scalars['uuid'] | null)
-    tournament_team_id: (Scalars['uuid'] | null)
-    __typename: 'tournament_trophies_max_fields'
-}
-
-
-/** aggregate min on columns */
-export interface tournament_trophies_min_fields {
-    created_at: (Scalars['timestamptz'] | null)
-    id: (Scalars['uuid'] | null)
-    placement: (Scalars['Int'] | null)
-    placement_tier: (Scalars['String'] | null)
-    player_steam_id: (Scalars['bigint'] | null)
-    team_id: (Scalars['uuid'] | null)
-    tournament_id: (Scalars['uuid'] | null)
-    tournament_team_id: (Scalars['uuid'] | null)
-    __typename: 'tournament_trophies_min_fields'
-}
-
-
-/** response of any mutation on the table "tournament_trophies" */
-export interface tournament_trophies_mutation_response {
-    /** number of rows affected by the mutation */
-    affected_rows: Scalars['Int']
-    /** data from the rows affected by the mutation */
-    returning: tournament_trophies[]
-    __typename: 'tournament_trophies_mutation_response'
-}
-
-
-/** select columns of table "tournament_trophies" */
-export type tournament_trophies_select_column = 'created_at' | 'id' | 'manual' | 'placement' | 'placement_tier' | 'player_steam_id' | 'team_id' | 'tournament_id' | 'tournament_team_id'
-
-
-/** select "tournament_trophies_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournament_trophies" */
-export type tournament_trophies_select_column_tournament_trophies_aggregate_bool_exp_bool_and_arguments_columns = 'manual'
-
-
-/** select "tournament_trophies_aggregate_bool_exp_bool_or_arguments_columns" columns of table "tournament_trophies" */
-export type tournament_trophies_select_column_tournament_trophies_aggregate_bool_exp_bool_or_arguments_columns = 'manual'
-
-
-/** aggregate stddev on columns */
-export interface tournament_trophies_stddev_fields {
-    placement: (Scalars['Float'] | null)
-    player_steam_id: (Scalars['Float'] | null)
-    __typename: 'tournament_trophies_stddev_fields'
-}
-
-
-/** aggregate stddev_pop on columns */
-export interface tournament_trophies_stddev_pop_fields {
-    placement: (Scalars['Float'] | null)
-    player_steam_id: (Scalars['Float'] | null)
-    __typename: 'tournament_trophies_stddev_pop_fields'
-}
-
-
-/** aggregate stddev_samp on columns */
-export interface tournament_trophies_stddev_samp_fields {
-    placement: (Scalars['Float'] | null)
-    player_steam_id: (Scalars['Float'] | null)
-    __typename: 'tournament_trophies_stddev_samp_fields'
-}
-
-
-/** aggregate sum on columns */
-export interface tournament_trophies_sum_fields {
-    placement: (Scalars['Int'] | null)
-    player_steam_id: (Scalars['bigint'] | null)
-    __typename: 'tournament_trophies_sum_fields'
-}
-
-
-/** update columns of table "tournament_trophies" */
-export type tournament_trophies_update_column = 'created_at' | 'id' | 'manual' | 'placement' | 'player_steam_id' | 'team_id' | 'tournament_id' | 'tournament_team_id'
-
-
-/** aggregate var_pop on columns */
-export interface tournament_trophies_var_pop_fields {
-    placement: (Scalars['Float'] | null)
-    player_steam_id: (Scalars['Float'] | null)
-    __typename: 'tournament_trophies_var_pop_fields'
-}
-
-
-/** aggregate var_samp on columns */
-export interface tournament_trophies_var_samp_fields {
-    placement: (Scalars['Float'] | null)
-    player_steam_id: (Scalars['Float'] | null)
-    __typename: 'tournament_trophies_var_samp_fields'
-}
-
-
-/** aggregate variance on columns */
-export interface tournament_trophies_variance_fields {
-    placement: (Scalars['Float'] | null)
-    player_steam_id: (Scalars['Float'] | null)
-    __typename: 'tournament_trophies_variance_fields'
-}
-
-
-/** columns and relationships of "tournament_trophy_configs" */
-export interface tournament_trophy_configs {
-    created_at: Scalars['timestamptz']
-    custom_name: (Scalars['String'] | null)
-    id: Scalars['uuid']
-    image_url: (Scalars['String'] | null)
-    placement: Scalars['Int']
-    silhouette: (Scalars['Int'] | null)
-    /** An object relationship */
-    tournament: tournaments
-    tournament_id: Scalars['uuid']
-    updated_at: Scalars['timestamptz']
-    __typename: 'tournament_trophy_configs'
-}
-
-
-/** aggregated selection of "tournament_trophy_configs" */
-export interface tournament_trophy_configs_aggregate {
-    aggregate: (tournament_trophy_configs_aggregate_fields | null)
-    nodes: tournament_trophy_configs[]
-    __typename: 'tournament_trophy_configs_aggregate'
-}
-
-
-/** aggregate fields of "tournament_trophy_configs" */
-export interface tournament_trophy_configs_aggregate_fields {
-    avg: (tournament_trophy_configs_avg_fields | null)
-    count: Scalars['Int']
-    max: (tournament_trophy_configs_max_fields | null)
-    min: (tournament_trophy_configs_min_fields | null)
-    stddev: (tournament_trophy_configs_stddev_fields | null)
-    stddev_pop: (tournament_trophy_configs_stddev_pop_fields | null)
-    stddev_samp: (tournament_trophy_configs_stddev_samp_fields | null)
-    sum: (tournament_trophy_configs_sum_fields | null)
-    var_pop: (tournament_trophy_configs_var_pop_fields | null)
-    var_samp: (tournament_trophy_configs_var_samp_fields | null)
-    variance: (tournament_trophy_configs_variance_fields | null)
-    __typename: 'tournament_trophy_configs_aggregate_fields'
-}
-
-
-/** aggregate avg on columns */
-export interface tournament_trophy_configs_avg_fields {
-    placement: (Scalars['Float'] | null)
-    silhouette: (Scalars['Float'] | null)
-    __typename: 'tournament_trophy_configs_avg_fields'
-}
-
-
-/** unique or primary key constraints on table "tournament_trophy_configs" */
-export type tournament_trophy_configs_constraint = 'tournament_trophy_configs_pkey' | 'tournament_trophy_configs_tournament_id_placement_key'
-
-
-/** aggregate max on columns */
-export interface tournament_trophy_configs_max_fields {
-    created_at: (Scalars['timestamptz'] | null)
-    custom_name: (Scalars['String'] | null)
-    id: (Scalars['uuid'] | null)
-    image_url: (Scalars['String'] | null)
-    placement: (Scalars['Int'] | null)
-    silhouette: (Scalars['Int'] | null)
-    tournament_id: (Scalars['uuid'] | null)
-    updated_at: (Scalars['timestamptz'] | null)
-    __typename: 'tournament_trophy_configs_max_fields'
-}
-
-
-/** aggregate min on columns */
-export interface tournament_trophy_configs_min_fields {
-    created_at: (Scalars['timestamptz'] | null)
-    custom_name: (Scalars['String'] | null)
-    id: (Scalars['uuid'] | null)
-    image_url: (Scalars['String'] | null)
-    placement: (Scalars['Int'] | null)
-    silhouette: (Scalars['Int'] | null)
-    tournament_id: (Scalars['uuid'] | null)
-    updated_at: (Scalars['timestamptz'] | null)
-    __typename: 'tournament_trophy_configs_min_fields'
-}
-
-
-/** response of any mutation on the table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_mutation_response {
-    /** number of rows affected by the mutation */
-    affected_rows: Scalars['Int']
-    /** data from the rows affected by the mutation */
-    returning: tournament_trophy_configs[]
-    __typename: 'tournament_trophy_configs_mutation_response'
-}
-
-
-/** select columns of table "tournament_trophy_configs" */
-export type tournament_trophy_configs_select_column = 'created_at' | 'custom_name' | 'id' | 'image_url' | 'placement' | 'silhouette' | 'tournament_id' | 'updated_at'
-
-
-/** aggregate stddev on columns */
-export interface tournament_trophy_configs_stddev_fields {
-    placement: (Scalars['Float'] | null)
-    silhouette: (Scalars['Float'] | null)
-    __typename: 'tournament_trophy_configs_stddev_fields'
-}
-
-
-/** aggregate stddev_pop on columns */
-export interface tournament_trophy_configs_stddev_pop_fields {
-    placement: (Scalars['Float'] | null)
-    silhouette: (Scalars['Float'] | null)
-    __typename: 'tournament_trophy_configs_stddev_pop_fields'
-}
-
-
-/** aggregate stddev_samp on columns */
-export interface tournament_trophy_configs_stddev_samp_fields {
-    placement: (Scalars['Float'] | null)
-    silhouette: (Scalars['Float'] | null)
-    __typename: 'tournament_trophy_configs_stddev_samp_fields'
-}
-
-
-/** aggregate sum on columns */
-export interface tournament_trophy_configs_sum_fields {
-    placement: (Scalars['Int'] | null)
-    silhouette: (Scalars['Int'] | null)
-    __typename: 'tournament_trophy_configs_sum_fields'
-}
-
-
-/** update columns of table "tournament_trophy_configs" */
-export type tournament_trophy_configs_update_column = 'created_at' | 'custom_name' | 'id' | 'image_url' | 'placement' | 'silhouette' | 'tournament_id' | 'updated_at'
-
-
-/** aggregate var_pop on columns */
-export interface tournament_trophy_configs_var_pop_fields {
-    placement: (Scalars['Float'] | null)
-    silhouette: (Scalars['Float'] | null)
-    __typename: 'tournament_trophy_configs_var_pop_fields'
-}
-
-
-/** aggregate var_samp on columns */
-export interface tournament_trophy_configs_var_samp_fields {
-    placement: (Scalars['Float'] | null)
-    silhouette: (Scalars['Float'] | null)
-    __typename: 'tournament_trophy_configs_var_samp_fields'
-}
-
-
-/** aggregate variance on columns */
-export interface tournament_trophy_configs_variance_fields {
-    placement: (Scalars['Float'] | null)
-    silhouette: (Scalars['Float'] | null)
-    __typename: 'tournament_trophy_configs_variance_fields'
-}
-
-
 /** columns and relationships of "tournaments" */
 export interface tournaments {
     /** An object relationship */
     admin: players
     auto_start: Scalars['Boolean']
+    /** An array relationship */
+    award_configs: tournament_awards[]
+    /** An aggregate relationship */
+    award_configs_aggregate: tournament_awards_aggregate
+    /** An array relationship */
+    awards: award_recipients[]
+    /** An aggregate relationship */
+    awards_aggregate: award_recipients_aggregate
+    awards_enabled: Scalars['Boolean']
     banner: (Scalars['String'] | null)
     /** A computed field, executes function "can_cancel_tournament" */
     can_cancel: (Scalars['Boolean'] | null)
@@ -28744,15 +29215,6 @@ export interface tournaments {
     teams: tournament_teams[]
     /** An aggregate relationship */
     teams_aggregate: tournament_teams_aggregate
-    /** An array relationship */
-    trophies: tournament_trophies[]
-    /** An aggregate relationship */
-    trophies_aggregate: tournament_trophies_aggregate
-    trophies_enabled: Scalars['Boolean']
-    /** An array relationship */
-    trophy_configs: tournament_trophy_configs[]
-    /** An aggregate relationship */
-    trophy_configs_aggregate: tournament_trophy_configs_aggregate
     __typename: 'tournaments'
 }
 
@@ -28864,7 +29326,7 @@ export interface tournaments_mutation_response {
 
 
 /** select columns of table "tournaments" */
-export type tournaments_select_column = 'auto_start' | 'banner' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'homepage' | 'id' | 'is_league' | 'latitude' | 'location' | 'logo' | 'longitude' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'scheduling_mode' | 'start' | 'status' | 'trophies_enabled'
+export type tournaments_select_column = 'auto_start' | 'awards_enabled' | 'banner' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'homepage' | 'id' | 'is_league' | 'latitude' | 'location' | 'logo' | 'longitude' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'scheduling_mode' | 'start' | 'status'
 
 
 /** select "tournaments_aggregate_bool_exp_avg_arguments_columns" columns of table "tournaments" */
@@ -28872,11 +29334,11 @@ export type tournaments_select_column_tournaments_aggregate_bool_exp_avg_argumen
 
 
 /** select "tournaments_aggregate_bool_exp_bool_and_arguments_columns" columns of table "tournaments" */
-export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_and_arguments_columns = 'auto_start' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_voice_enabled' | 'is_league' | 'trophies_enabled'
+export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_and_arguments_columns = 'auto_start' | 'awards_enabled' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_voice_enabled' | 'is_league'
 
 
 /** select "tournaments_aggregate_bool_exp_bool_or_arguments_columns" columns of table "tournaments" */
-export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_columns = 'auto_start' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_voice_enabled' | 'is_league' | 'trophies_enabled'
+export type tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_columns = 'auto_start' | 'awards_enabled' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_voice_enabled' | 'is_league'
 
 
 /** select "tournaments_aggregate_bool_exp_corr_arguments_columns" columns of table "tournaments" */
@@ -28960,7 +29422,7 @@ export interface tournaments_sum_fields {
 
 
 /** update columns of table "tournaments" */
-export type tournaments_update_column = 'auto_start' | 'banner' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'homepage' | 'id' | 'is_league' | 'latitude' | 'location' | 'logo' | 'longitude' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'scheduling_mode' | 'start' | 'status' | 'trophies_enabled'
+export type tournaments_update_column = 'auto_start' | 'awards_enabled' | 'banner' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'homepage' | 'id' | 'is_league' | 'latitude' | 'location' | 'logo' | 'longitude' | 'match_options_id' | 'name' | 'organizer_steam_id' | 'scheduling_mode' | 'start' | 'status'
 
 
 /** aggregate var_pop on columns */
@@ -34994,6 +35456,38 @@ export interface ApiKeyResponseGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface AwardGenqlSelection{
+    allow_multiple?: boolean | number
+    created_at?: boolean | number
+    created_by_steam_id?: boolean | number
+    description?: boolean | number
+    id?: boolean | number
+    image_url?: boolean | number
+    name?: boolean | number
+    silhouette?: boolean | number
+    system_key?: boolean | number
+    tier?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface AwardRecipientGenqlSelection{
+    award_id?: boolean | number
+    awarded_by_steam_id?: boolean | number
+    created_at?: boolean | number
+    id?: boolean | number
+    note?: boolean | number
+    placement?: boolean | number
+    player_steam_id?: boolean | number
+    source?: boolean | number
+    team_id?: boolean | number
+    tournament_id?: boolean | number
+    tournament_team_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 
 /** Boolean expression to compare columns of type "Boolean". All fields are combined with logical 'AND'. */
 export interface Boolean_comparison_exp {_eq?: (Scalars['Boolean'] | null),_gt?: (Scalars['Boolean'] | null),_gte?: (Scalars['Boolean'] | null),_in?: (Scalars['Boolean'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['Boolean'] | null),_lte?: (Scalars['Boolean'] | null),_neq?: (Scalars['Boolean'] | null),_nin?: (Scalars['Boolean'][] | null)}
@@ -35764,6 +36258,18 @@ export interface TimescaleStatsGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface TournamentAwardGenqlSelection{
+    award_id?: boolean | number
+    custom_name?: boolean | number
+    id?: boolean | number
+    image_url?: boolean | number
+    placement?: boolean | number
+    silhouette?: boolean | number
+    tournament_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface TournamentMatchResetImpactGenqlSelection{
     bracket_id?: boolean | number
     depth?: boolean | number
@@ -36310,6 +36816,559 @@ export interface api_keys_variance_fieldsGenqlSelection{
 export interface approve_league_season_movements_args {_league_season_id?: (Scalars['uuid'] | null)}
 
 
+/** columns and relationships of "award_recipients" */
+export interface award_recipientsGenqlSelection{
+    /** An object relationship */
+    award?: awardsGenqlSelection
+    award_id?: boolean | number
+    /** An object relationship */
+    awarded_by?: playersGenqlSelection
+    awarded_by_steam_id?: boolean | number
+    created_at?: boolean | number
+    id?: boolean | number
+    note?: boolean | number
+    placement?: boolean | number
+    placement_tier?: boolean | number
+    /** An object relationship */
+    player?: playersGenqlSelection
+    player_steam_id?: boolean | number
+    source?: boolean | number
+    /** An object relationship */
+    team?: teamsGenqlSelection
+    team_id?: boolean | number
+    /** An object relationship */
+    tournament?: tournamentsGenqlSelection
+    /** An object relationship */
+    tournament_award?: tournament_awardsGenqlSelection
+    tournament_id?: boolean | number
+    /** An object relationship */
+    tournament_team?: tournament_teamsGenqlSelection
+    tournament_team_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "award_recipients" */
+export interface award_recipients_aggregateGenqlSelection{
+    aggregate?: award_recipients_aggregate_fieldsGenqlSelection
+    nodes?: award_recipientsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface award_recipients_aggregate_bool_exp {count?: (award_recipients_aggregate_bool_exp_count | null)}
+
+export interface award_recipients_aggregate_bool_exp_count {arguments?: (award_recipients_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (award_recipients_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "award_recipients" */
+export interface award_recipients_aggregate_fieldsGenqlSelection{
+    avg?: award_recipients_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (award_recipients_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: award_recipients_max_fieldsGenqlSelection
+    min?: award_recipients_min_fieldsGenqlSelection
+    stddev?: award_recipients_stddev_fieldsGenqlSelection
+    stddev_pop?: award_recipients_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: award_recipients_stddev_samp_fieldsGenqlSelection
+    sum?: award_recipients_sum_fieldsGenqlSelection
+    var_pop?: award_recipients_var_pop_fieldsGenqlSelection
+    var_samp?: award_recipients_var_samp_fieldsGenqlSelection
+    variance?: award_recipients_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "award_recipients" */
+export interface award_recipients_aggregate_order_by {avg?: (award_recipients_avg_order_by | null),count?: (order_by | null),max?: (award_recipients_max_order_by | null),min?: (award_recipients_min_order_by | null),stddev?: (award_recipients_stddev_order_by | null),stddev_pop?: (award_recipients_stddev_pop_order_by | null),stddev_samp?: (award_recipients_stddev_samp_order_by | null),sum?: (award_recipients_sum_order_by | null),var_pop?: (award_recipients_var_pop_order_by | null),var_samp?: (award_recipients_var_samp_order_by | null),variance?: (award_recipients_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "award_recipients" */
+export interface award_recipients_arr_rel_insert_input {data: award_recipients_insert_input[],
+/** upsert condition */
+on_conflict?: (award_recipients_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface award_recipients_avg_fieldsGenqlSelection{
+    awarded_by_steam_id?: boolean | number
+    placement?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "award_recipients" */
+export interface award_recipients_avg_order_by {awarded_by_steam_id?: (order_by | null),placement?: (order_by | null),player_steam_id?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "award_recipients". All fields are combined with a logical 'AND'. */
+export interface award_recipients_bool_exp {_and?: (award_recipients_bool_exp[] | null),_not?: (award_recipients_bool_exp | null),_or?: (award_recipients_bool_exp[] | null),award?: (awards_bool_exp | null),award_id?: (uuid_comparison_exp | null),awarded_by?: (players_bool_exp | null),awarded_by_steam_id?: (bigint_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),note?: (String_comparison_exp | null),placement?: (Int_comparison_exp | null),placement_tier?: (String_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),source?: (e_award_sources_enum_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_award?: (tournament_awards_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),tournament_team?: (tournament_teams_bool_exp | null),tournament_team_id?: (uuid_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "award_recipients" */
+export interface award_recipients_inc_input {awarded_by_steam_id?: (Scalars['bigint'] | null),placement?: (Scalars['Int'] | null),player_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "award_recipients" */
+export interface award_recipients_insert_input {award?: (awards_obj_rel_insert_input | null),award_id?: (Scalars['uuid'] | null),awarded_by?: (players_obj_rel_insert_input | null),awarded_by_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),note?: (Scalars['String'] | null),placement?: (Scalars['Int'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),source?: (e_award_sources_enum | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_award?: (tournament_awards_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),tournament_team?: (tournament_teams_obj_rel_insert_input | null),tournament_team_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate max on columns */
+export interface award_recipients_max_fieldsGenqlSelection{
+    award_id?: boolean | number
+    awarded_by_steam_id?: boolean | number
+    created_at?: boolean | number
+    id?: boolean | number
+    note?: boolean | number
+    placement?: boolean | number
+    placement_tier?: boolean | number
+    player_steam_id?: boolean | number
+    team_id?: boolean | number
+    tournament_id?: boolean | number
+    tournament_team_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "award_recipients" */
+export interface award_recipients_max_order_by {award_id?: (order_by | null),awarded_by_steam_id?: (order_by | null),created_at?: (order_by | null),id?: (order_by | null),note?: (order_by | null),placement?: (order_by | null),placement_tier?: (order_by | null),player_steam_id?: (order_by | null),team_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface award_recipients_min_fieldsGenqlSelection{
+    award_id?: boolean | number
+    awarded_by_steam_id?: boolean | number
+    created_at?: boolean | number
+    id?: boolean | number
+    note?: boolean | number
+    placement?: boolean | number
+    placement_tier?: boolean | number
+    player_steam_id?: boolean | number
+    team_id?: boolean | number
+    tournament_id?: boolean | number
+    tournament_team_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "award_recipients" */
+export interface award_recipients_min_order_by {award_id?: (order_by | null),awarded_by_steam_id?: (order_by | null),created_at?: (order_by | null),id?: (order_by | null),note?: (order_by | null),placement?: (order_by | null),placement_tier?: (order_by | null),player_steam_id?: (order_by | null),team_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
+
+
+/** response of any mutation on the table "award_recipients" */
+export interface award_recipients_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: award_recipientsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "award_recipients" */
+export interface award_recipients_on_conflict {constraint: award_recipients_constraint,update_columns?: award_recipients_update_column[],where?: (award_recipients_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "award_recipients". */
+export interface award_recipients_order_by {award?: (awards_order_by | null),award_id?: (order_by | null),awarded_by?: (players_order_by | null),awarded_by_steam_id?: (order_by | null),created_at?: (order_by | null),id?: (order_by | null),note?: (order_by | null),placement?: (order_by | null),placement_tier?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),source?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_award?: (tournament_awards_order_by | null),tournament_id?: (order_by | null),tournament_team?: (tournament_teams_order_by | null),tournament_team_id?: (order_by | null)}
+
+
+/** primary key columns input for table: award_recipients */
+export interface award_recipients_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "award_recipients" */
+export interface award_recipients_set_input {award_id?: (Scalars['uuid'] | null),awarded_by_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),note?: (Scalars['String'] | null),placement?: (Scalars['Int'] | null),player_steam_id?: (Scalars['bigint'] | null),source?: (e_award_sources_enum | null),team_id?: (Scalars['uuid'] | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface award_recipients_stddev_fieldsGenqlSelection{
+    awarded_by_steam_id?: boolean | number
+    placement?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "award_recipients" */
+export interface award_recipients_stddev_order_by {awarded_by_steam_id?: (order_by | null),placement?: (order_by | null),player_steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface award_recipients_stddev_pop_fieldsGenqlSelection{
+    awarded_by_steam_id?: boolean | number
+    placement?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "award_recipients" */
+export interface award_recipients_stddev_pop_order_by {awarded_by_steam_id?: (order_by | null),placement?: (order_by | null),player_steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface award_recipients_stddev_samp_fieldsGenqlSelection{
+    awarded_by_steam_id?: boolean | number
+    placement?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "award_recipients" */
+export interface award_recipients_stddev_samp_order_by {awarded_by_steam_id?: (order_by | null),placement?: (order_by | null),player_steam_id?: (order_by | null)}
+
+
+/** Streaming cursor of the table "award_recipients" */
+export interface award_recipients_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: award_recipients_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface award_recipients_stream_cursor_value_input {award_id?: (Scalars['uuid'] | null),awarded_by_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),note?: (Scalars['String'] | null),placement?: (Scalars['Int'] | null),placement_tier?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),source?: (e_award_sources_enum | null),team_id?: (Scalars['uuid'] | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
+
+
+/** aggregate sum on columns */
+export interface award_recipients_sum_fieldsGenqlSelection{
+    awarded_by_steam_id?: boolean | number
+    placement?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "award_recipients" */
+export interface award_recipients_sum_order_by {awarded_by_steam_id?: (order_by | null),placement?: (order_by | null),player_steam_id?: (order_by | null)}
+
+export interface award_recipients_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (award_recipients_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (award_recipients_set_input | null),
+/** filter the rows which have to be updated */
+where: award_recipients_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface award_recipients_var_pop_fieldsGenqlSelection{
+    awarded_by_steam_id?: boolean | number
+    placement?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "award_recipients" */
+export interface award_recipients_var_pop_order_by {awarded_by_steam_id?: (order_by | null),placement?: (order_by | null),player_steam_id?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface award_recipients_var_samp_fieldsGenqlSelection{
+    awarded_by_steam_id?: boolean | number
+    placement?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "award_recipients" */
+export interface award_recipients_var_samp_order_by {awarded_by_steam_id?: (order_by | null),placement?: (order_by | null),player_steam_id?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface award_recipients_variance_fieldsGenqlSelection{
+    awarded_by_steam_id?: boolean | number
+    placement?: boolean | number
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "award_recipients" */
+export interface award_recipients_variance_order_by {awarded_by_steam_id?: (order_by | null),placement?: (order_by | null),player_steam_id?: (order_by | null)}
+
+
+/** columns and relationships of "awards" */
+export interface awardsGenqlSelection{
+    allow_multiple?: boolean | number
+    created_at?: boolean | number
+    /** An object relationship */
+    created_by?: playersGenqlSelection
+    created_by_steam_id?: boolean | number
+    description?: boolean | number
+    id?: boolean | number
+    image_url?: boolean | number
+    name?: boolean | number
+    /** An array relationship */
+    recipients?: (award_recipientsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (award_recipients_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (award_recipients_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (award_recipients_bool_exp | null)} })
+    /** An aggregate relationship */
+    recipients_aggregate?: (award_recipients_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (award_recipients_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (award_recipients_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (award_recipients_bool_exp | null)} })
+    silhouette?: boolean | number
+    system_key?: boolean | number
+    tier?: boolean | number
+    /** An array relationship */
+    tournament_configs?: (tournament_awardsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_awards_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_awards_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_awards_bool_exp | null)} })
+    /** An aggregate relationship */
+    tournament_configs_aggregate?: (tournament_awards_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_awards_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_awards_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_awards_bool_exp | null)} })
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "awards" */
+export interface awards_aggregateGenqlSelection{
+    aggregate?: awards_aggregate_fieldsGenqlSelection
+    nodes?: awardsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "awards" */
+export interface awards_aggregate_fieldsGenqlSelection{
+    avg?: awards_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (awards_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: awards_max_fieldsGenqlSelection
+    min?: awards_min_fieldsGenqlSelection
+    stddev?: awards_stddev_fieldsGenqlSelection
+    stddev_pop?: awards_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: awards_stddev_samp_fieldsGenqlSelection
+    sum?: awards_sum_fieldsGenqlSelection
+    var_pop?: awards_var_pop_fieldsGenqlSelection
+    var_samp?: awards_var_samp_fieldsGenqlSelection
+    variance?: awards_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface awards_avg_fieldsGenqlSelection{
+    created_by_steam_id?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "awards". All fields are combined with a logical 'AND'. */
+export interface awards_bool_exp {_and?: (awards_bool_exp[] | null),_not?: (awards_bool_exp | null),_or?: (awards_bool_exp[] | null),allow_multiple?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),created_by?: (players_bool_exp | null),created_by_steam_id?: (bigint_comparison_exp | null),description?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),image_url?: (String_comparison_exp | null),name?: (String_comparison_exp | null),recipients?: (award_recipients_bool_exp | null),recipients_aggregate?: (award_recipients_aggregate_bool_exp | null),silhouette?: (Int_comparison_exp | null),system_key?: (String_comparison_exp | null),tier?: (e_award_tiers_enum_comparison_exp | null),tournament_configs?: (tournament_awards_bool_exp | null),tournament_configs_aggregate?: (tournament_awards_aggregate_bool_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "awards" */
+export interface awards_inc_input {created_by_steam_id?: (Scalars['bigint'] | null),silhouette?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "awards" */
+export interface awards_insert_input {allow_multiple?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),created_by?: (players_obj_rel_insert_input | null),created_by_steam_id?: (Scalars['bigint'] | null),description?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),image_url?: (Scalars['String'] | null),name?: (Scalars['String'] | null),recipients?: (award_recipients_arr_rel_insert_input | null),silhouette?: (Scalars['Int'] | null),system_key?: (Scalars['String'] | null),tier?: (e_award_tiers_enum | null),tournament_configs?: (tournament_awards_arr_rel_insert_input | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate max on columns */
+export interface awards_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    created_by_steam_id?: boolean | number
+    description?: boolean | number
+    id?: boolean | number
+    image_url?: boolean | number
+    name?: boolean | number
+    silhouette?: boolean | number
+    system_key?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface awards_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    created_by_steam_id?: boolean | number
+    description?: boolean | number
+    id?: boolean | number
+    image_url?: boolean | number
+    name?: boolean | number
+    silhouette?: boolean | number
+    system_key?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "awards" */
+export interface awards_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: awardsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** input type for inserting object relation for remote table "awards" */
+export interface awards_obj_rel_insert_input {data: awards_insert_input,
+/** upsert condition */
+on_conflict?: (awards_on_conflict | null)}
+
+
+/** on_conflict condition type for table "awards" */
+export interface awards_on_conflict {constraint: awards_constraint,update_columns?: awards_update_column[],where?: (awards_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "awards". */
+export interface awards_order_by {allow_multiple?: (order_by | null),created_at?: (order_by | null),created_by?: (players_order_by | null),created_by_steam_id?: (order_by | null),description?: (order_by | null),id?: (order_by | null),image_url?: (order_by | null),name?: (order_by | null),recipients_aggregate?: (award_recipients_aggregate_order_by | null),silhouette?: (order_by | null),system_key?: (order_by | null),tier?: (order_by | null),tournament_configs_aggregate?: (tournament_awards_aggregate_order_by | null),updated_at?: (order_by | null)}
+
+
+/** primary key columns input for table: awards */
+export interface awards_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "awards" */
+export interface awards_set_input {allow_multiple?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),created_by_steam_id?: (Scalars['bigint'] | null),description?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),image_url?: (Scalars['String'] | null),name?: (Scalars['String'] | null),silhouette?: (Scalars['Int'] | null),system_key?: (Scalars['String'] | null),tier?: (e_award_tiers_enum | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface awards_stddev_fieldsGenqlSelection{
+    created_by_steam_id?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface awards_stddev_pop_fieldsGenqlSelection{
+    created_by_steam_id?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface awards_stddev_samp_fieldsGenqlSelection{
+    created_by_steam_id?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "awards" */
+export interface awards_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: awards_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface awards_stream_cursor_value_input {allow_multiple?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),created_by_steam_id?: (Scalars['bigint'] | null),description?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),image_url?: (Scalars['String'] | null),name?: (Scalars['String'] | null),silhouette?: (Scalars['Int'] | null),system_key?: (Scalars['String'] | null),tier?: (e_award_tiers_enum | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate sum on columns */
+export interface awards_sum_fieldsGenqlSelection{
+    created_by_steam_id?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface awards_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (awards_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (awards_set_input | null),
+/** filter the rows which have to be updated */
+where: awards_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface awards_var_pop_fieldsGenqlSelection{
+    created_by_steam_id?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface awards_var_samp_fieldsGenqlSelection{
+    created_by_steam_id?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface awards_variance_fieldsGenqlSelection{
+    created_by_steam_id?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
 /** Boolean expression to compare columns of type "bigint". All fields are combined with logical 'AND'. */
 export interface bigint_array_comparison_exp {
 /** is the array contained in the given array value */
@@ -36665,13 +37724,18 @@ export interface clone_league_season_args {_league_season_id?: (Scalars['uuid'] 
 /** columns and relationships of "custom_pages" */
 export interface custom_pagesGenqlSelection{
     created_at?: boolean | number
+    deployments?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
     enabled?: boolean | number
     exposed_module?: boolean | number
     icon?: boolean | number
     id?: boolean | number
     is_default?: boolean | number
+    manifest_url?: boolean | number
     nav_group?: boolean | number
     nav_order?: boolean | number
+    profile_tab_label?: boolean | number
     remote_entry_url?: boolean | number
     remote_scope?: boolean | number
     required_role?: boolean | number
@@ -36710,6 +37774,10 @@ export interface custom_pages_aggregate_fieldsGenqlSelection{
 }
 
 
+/** append existing jsonb value of filtered columns with new jsonb value */
+export interface custom_pages_append_input {deployments?: (Scalars['jsonb'] | null)}
+
+
 /** aggregate avg on columns */
 export interface custom_pages_avg_fieldsGenqlSelection{
     nav_order?: boolean | number
@@ -36719,7 +37787,19 @@ export interface custom_pages_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "custom_pages". All fields are combined with a logical 'AND'. */
-export interface custom_pages_bool_exp {_and?: (custom_pages_bool_exp[] | null),_not?: (custom_pages_bool_exp | null),_or?: (custom_pages_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),enabled?: (Boolean_comparison_exp | null),exposed_module?: (String_comparison_exp | null),icon?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_default?: (Boolean_comparison_exp | null),nav_group?: (String_comparison_exp | null),nav_order?: (Int_comparison_exp | null),remote_entry_url?: (String_comparison_exp | null),remote_scope?: (String_comparison_exp | null),required_role?: (e_player_roles_enum_comparison_exp | null),slug?: (String_comparison_exp | null),title?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+export interface custom_pages_bool_exp {_and?: (custom_pages_bool_exp[] | null),_not?: (custom_pages_bool_exp | null),_or?: (custom_pages_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),deployments?: (jsonb_comparison_exp | null),enabled?: (Boolean_comparison_exp | null),exposed_module?: (String_comparison_exp | null),icon?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_default?: (Boolean_comparison_exp | null),manifest_url?: (String_comparison_exp | null),nav_group?: (String_comparison_exp | null),nav_order?: (Int_comparison_exp | null),profile_tab_label?: (String_comparison_exp | null),remote_entry_url?: (String_comparison_exp | null),remote_scope?: (String_comparison_exp | null),required_role?: (e_player_roles_enum_comparison_exp | null),slug?: (String_comparison_exp | null),title?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export interface custom_pages_delete_at_path_input {deployments?: (Scalars['String'][] | null)}
+
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export interface custom_pages_delete_elem_input {deployments?: (Scalars['Int'] | null)}
+
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export interface custom_pages_delete_key_input {deployments?: (Scalars['String'] | null)}
 
 
 /** input type for incrementing numeric columns in table "custom_pages" */
@@ -36727,7 +37807,7 @@ export interface custom_pages_inc_input {nav_order?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "custom_pages" */
-export interface custom_pages_insert_input {created_at?: (Scalars['timestamptz'] | null),enabled?: (Scalars['Boolean'] | null),exposed_module?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_default?: (Scalars['Boolean'] | null),nav_group?: (Scalars['String'] | null),nav_order?: (Scalars['Int'] | null),remote_entry_url?: (Scalars['String'] | null),remote_scope?: (Scalars['String'] | null),required_role?: (e_player_roles_enum | null),slug?: (Scalars['String'] | null),title?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface custom_pages_insert_input {created_at?: (Scalars['timestamptz'] | null),deployments?: (Scalars['jsonb'] | null),enabled?: (Scalars['Boolean'] | null),exposed_module?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_default?: (Scalars['Boolean'] | null),manifest_url?: (Scalars['String'] | null),nav_group?: (Scalars['String'] | null),nav_order?: (Scalars['Int'] | null),profile_tab_label?: (Scalars['String'] | null),remote_entry_url?: (Scalars['String'] | null),remote_scope?: (Scalars['String'] | null),required_role?: (e_player_roles_enum | null),slug?: (Scalars['String'] | null),title?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate max on columns */
@@ -36736,8 +37816,10 @@ export interface custom_pages_max_fieldsGenqlSelection{
     exposed_module?: boolean | number
     icon?: boolean | number
     id?: boolean | number
+    manifest_url?: boolean | number
     nav_group?: boolean | number
     nav_order?: boolean | number
+    profile_tab_label?: boolean | number
     remote_entry_url?: boolean | number
     remote_scope?: boolean | number
     slug?: boolean | number
@@ -36754,8 +37836,10 @@ export interface custom_pages_min_fieldsGenqlSelection{
     exposed_module?: boolean | number
     icon?: boolean | number
     id?: boolean | number
+    manifest_url?: boolean | number
     nav_group?: boolean | number
     nav_order?: boolean | number
+    profile_tab_label?: boolean | number
     remote_entry_url?: boolean | number
     remote_scope?: boolean | number
     slug?: boolean | number
@@ -36782,15 +37866,19 @@ export interface custom_pages_on_conflict {constraint: custom_pages_constraint,u
 
 
 /** Ordering options when selecting data from "custom_pages". */
-export interface custom_pages_order_by {created_at?: (order_by | null),enabled?: (order_by | null),exposed_module?: (order_by | null),icon?: (order_by | null),id?: (order_by | null),is_default?: (order_by | null),nav_group?: (order_by | null),nav_order?: (order_by | null),remote_entry_url?: (order_by | null),remote_scope?: (order_by | null),required_role?: (order_by | null),slug?: (order_by | null),title?: (order_by | null),updated_at?: (order_by | null)}
+export interface custom_pages_order_by {created_at?: (order_by | null),deployments?: (order_by | null),enabled?: (order_by | null),exposed_module?: (order_by | null),icon?: (order_by | null),id?: (order_by | null),is_default?: (order_by | null),manifest_url?: (order_by | null),nav_group?: (order_by | null),nav_order?: (order_by | null),profile_tab_label?: (order_by | null),remote_entry_url?: (order_by | null),remote_scope?: (order_by | null),required_role?: (order_by | null),slug?: (order_by | null),title?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** primary key columns input for table: custom_pages */
 export interface custom_pages_pk_columns_input {id: Scalars['uuid']}
 
 
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export interface custom_pages_prepend_input {deployments?: (Scalars['jsonb'] | null)}
+
+
 /** input type for updating data in table "custom_pages" */
-export interface custom_pages_set_input {created_at?: (Scalars['timestamptz'] | null),enabled?: (Scalars['Boolean'] | null),exposed_module?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_default?: (Scalars['Boolean'] | null),nav_group?: (Scalars['String'] | null),nav_order?: (Scalars['Int'] | null),remote_entry_url?: (Scalars['String'] | null),remote_scope?: (Scalars['String'] | null),required_role?: (e_player_roles_enum | null),slug?: (Scalars['String'] | null),title?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface custom_pages_set_input {created_at?: (Scalars['timestamptz'] | null),deployments?: (Scalars['jsonb'] | null),enabled?: (Scalars['Boolean'] | null),exposed_module?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_default?: (Scalars['Boolean'] | null),manifest_url?: (Scalars['String'] | null),nav_group?: (Scalars['String'] | null),nav_order?: (Scalars['Int'] | null),profile_tab_label?: (Scalars['String'] | null),remote_entry_url?: (Scalars['String'] | null),remote_scope?: (Scalars['String'] | null),required_role?: (e_player_roles_enum | null),slug?: (Scalars['String'] | null),title?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -36826,7 +37914,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface custom_pages_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),enabled?: (Scalars['Boolean'] | null),exposed_module?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_default?: (Scalars['Boolean'] | null),nav_group?: (Scalars['String'] | null),nav_order?: (Scalars['Int'] | null),remote_entry_url?: (Scalars['String'] | null),remote_scope?: (Scalars['String'] | null),required_role?: (e_player_roles_enum | null),slug?: (Scalars['String'] | null),title?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface custom_pages_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),deployments?: (Scalars['jsonb'] | null),enabled?: (Scalars['Boolean'] | null),exposed_module?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_default?: (Scalars['Boolean'] | null),manifest_url?: (Scalars['String'] | null),nav_group?: (Scalars['String'] | null),nav_order?: (Scalars['Int'] | null),profile_tab_label?: (Scalars['String'] | null),remote_entry_url?: (Scalars['String'] | null),remote_scope?: (Scalars['String'] | null),required_role?: (e_player_roles_enum | null),slug?: (Scalars['String'] | null),title?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate sum on columns */
@@ -36837,8 +37925,18 @@ export interface custom_pages_sum_fieldsGenqlSelection{
 }
 
 export interface custom_pages_updates {
+/** append existing jsonb value of filtered columns with new jsonb value */
+_append?: (custom_pages_append_input | null),
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+_delete_at_path?: (custom_pages_delete_at_path_input | null),
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+_delete_elem?: (custom_pages_delete_elem_input | null),
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+_delete_key?: (custom_pages_delete_key_input | null),
 /** increments the numeric columns with given value of the filtered values */
 _inc?: (custom_pages_inc_input | null),
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+_prepend?: (custom_pages_prepend_input | null),
 /** sets the columns of the filtered rows to the given values */
 _set?: (custom_pages_set_input | null),
 /** filter the rows which have to be updated */
@@ -38005,6 +39103,212 @@ export interface draft_games_variance_fieldsGenqlSelection{
 
 /** order by variance() on columns of table "draft_games" */
 export interface draft_games_variance_order_by {capacity?: (order_by | null),current_pick_lineup?: (order_by | null),host_steam_id?: (order_by | null),max_elo?: (order_by | null),min_elo?: (order_by | null)}
+
+
+/** columns and relationships of "e_award_sources" */
+export interface e_award_sourcesGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_award_sources" */
+export interface e_award_sources_aggregateGenqlSelection{
+    aggregate?: e_award_sources_aggregate_fieldsGenqlSelection
+    nodes?: e_award_sourcesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_award_sources" */
+export interface e_award_sources_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_award_sources_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_award_sources_max_fieldsGenqlSelection
+    min?: e_award_sources_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_award_sources". All fields are combined with a logical 'AND'. */
+export interface e_award_sources_bool_exp {_and?: (e_award_sources_bool_exp[] | null),_not?: (e_award_sources_bool_exp | null),_or?: (e_award_sources_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_award_sources_enum". All fields are combined with logical 'AND'. */
+export interface e_award_sources_enum_comparison_exp {_eq?: (e_award_sources_enum | null),_in?: (e_award_sources_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_award_sources_enum | null),_nin?: (e_award_sources_enum[] | null)}
+
+
+/** input type for inserting data into table "e_award_sources" */
+export interface e_award_sources_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_award_sources_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_award_sources_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_award_sources" */
+export interface e_award_sources_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_award_sourcesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_award_sources" */
+export interface e_award_sources_on_conflict {constraint: e_award_sources_constraint,update_columns?: e_award_sources_update_column[],where?: (e_award_sources_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_award_sources". */
+export interface e_award_sources_order_by {description?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_award_sources */
+export interface e_award_sources_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_award_sources" */
+export interface e_award_sources_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_award_sources" */
+export interface e_award_sources_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_award_sources_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_award_sources_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_award_sources_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_award_sources_set_input | null),
+/** filter the rows which have to be updated */
+where: e_award_sources_bool_exp}
+
+
+/** columns and relationships of "e_award_tiers" */
+export interface e_award_tiersGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_award_tiers" */
+export interface e_award_tiers_aggregateGenqlSelection{
+    aggregate?: e_award_tiers_aggregate_fieldsGenqlSelection
+    nodes?: e_award_tiersGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_award_tiers" */
+export interface e_award_tiers_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_award_tiers_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_award_tiers_max_fieldsGenqlSelection
+    min?: e_award_tiers_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_award_tiers". All fields are combined with a logical 'AND'. */
+export interface e_award_tiers_bool_exp {_and?: (e_award_tiers_bool_exp[] | null),_not?: (e_award_tiers_bool_exp | null),_or?: (e_award_tiers_bool_exp[] | null),description?: (String_comparison_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_award_tiers_enum". All fields are combined with logical 'AND'. */
+export interface e_award_tiers_enum_comparison_exp {_eq?: (e_award_tiers_enum | null),_in?: (e_award_tiers_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_award_tiers_enum | null),_nin?: (e_award_tiers_enum[] | null)}
+
+
+/** input type for inserting data into table "e_award_tiers" */
+export interface e_award_tiers_insert_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_award_tiers_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_award_tiers_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_award_tiers" */
+export interface e_award_tiers_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_award_tiersGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_award_tiers" */
+export interface e_award_tiers_on_conflict {constraint: e_award_tiers_constraint,update_columns?: e_award_tiers_update_column[],where?: (e_award_tiers_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_award_tiers". */
+export interface e_award_tiers_order_by {description?: (order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_award_tiers */
+export interface e_award_tiers_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_award_tiers" */
+export interface e_award_tiers_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_award_tiers" */
+export interface e_award_tiers_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_award_tiers_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_award_tiers_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_award_tiers_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_award_tiers_set_input | null),
+/** filter the rows which have to be updated */
+where: e_award_tiers_bool_exp}
 
 
 /** columns and relationships of "e_check_in_settings" */
@@ -54194,6 +55498,8 @@ export interface mutation_rootGenqlSelection{
     createScheduledMatch?: (CreateScheduledMatchOutputGenqlSelection & { __args: {lineup_1: ScheduledLineupInput, lineup_2: ScheduledLineupInput, options: Scalars['jsonb'], scheduled_at: Scalars['String']} })
     /** Create directory on game server */
     createServerDirectory?: (SuccessOutputGenqlSelection & { __args: {dir_path: Scalars['String'], node_id: Scalars['String'], server_id?: (Scalars['String'] | null)} })
+    /** Delete a catalog award */
+    deleteAward?: (SuccessOutputGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** Delete a saved clip and its underlying S3 object */
     deleteClip?: (SuccessOutputGenqlSelection & { __args: {clip_id: Scalars['uuid']} })
     deleteMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
@@ -54223,6 +55529,18 @@ export interface mutation_rootGenqlSelection{
     where: api_keys_bool_exp} })
     /** delete single row from the table: "api_keys" */
     delete_api_keys_by_pk?: (api_keysGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "award_recipients" */
+    delete_award_recipients?: (award_recipients_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: award_recipients_bool_exp} })
+    /** delete single row from the table: "award_recipients" */
+    delete_award_recipients_by_pk?: (award_recipientsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "awards" */
+    delete_awards?: (awards_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: awards_bool_exp} })
+    /** delete single row from the table: "awards" */
+    delete_awards_by_pk?: (awardsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "clip_render_jobs" */
     delete_clip_render_jobs?: (clip_render_jobs_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -54259,6 +55577,18 @@ export interface mutation_rootGenqlSelection{
     where: draft_games_bool_exp} })
     /** delete single row from the table: "draft_games" */
     delete_draft_games_by_pk?: (draft_gamesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "e_award_sources" */
+    delete_e_award_sources?: (e_award_sources_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_award_sources_bool_exp} })
+    /** delete single row from the table: "e_award_sources" */
+    delete_e_award_sources_by_pk?: (e_award_sourcesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_award_tiers" */
+    delete_e_award_tiers?: (e_award_tiers_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_award_tiers_bool_exp} })
+    /** delete single row from the table: "e_award_tiers" */
+    delete_e_award_tiers_by_pk?: (e_award_tiersGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_check_in_settings" */
     delete_e_check_in_settings?: (e_check_in_settings_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -55009,6 +56339,12 @@ export interface mutation_rootGenqlSelection{
     where: teams_bool_exp} })
     /** delete single row from the table: "teams" */
     delete_teams_by_pk?: (teamsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "tournament_awards" */
+    delete_tournament_awards?: (tournament_awards_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: tournament_awards_bool_exp} })
+    /** delete single row from the table: "tournament_awards" */
+    delete_tournament_awards_by_pk?: (tournament_awardsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "tournament_brackets" */
     delete_tournament_brackets?: (tournament_brackets_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -55069,18 +56405,6 @@ export interface mutation_rootGenqlSelection{
     where: tournament_teams_bool_exp} })
     /** delete single row from the table: "tournament_teams" */
     delete_tournament_teams_by_pk?: (tournament_teamsGenqlSelection & { __args: {id: Scalars['uuid']} })
-    /** delete data from the table: "tournament_trophies" */
-    delete_tournament_trophies?: (tournament_trophies_mutation_responseGenqlSelection & { __args: {
-    /** filter the rows which have to be deleted */
-    where: tournament_trophies_bool_exp} })
-    /** delete single row from the table: "tournament_trophies" */
-    delete_tournament_trophies_by_pk?: (tournament_trophiesGenqlSelection & { __args: {id: Scalars['uuid']} })
-    /** delete data from the table: "tournament_trophy_configs" */
-    delete_tournament_trophy_configs?: (tournament_trophy_configs_mutation_responseGenqlSelection & { __args: {
-    /** filter the rows which have to be deleted */
-    where: tournament_trophy_configs_bool_exp} })
-    /** delete single row from the table: "tournament_trophy_configs" */
-    delete_tournament_trophy_configs_by_pk?: (tournament_trophy_configsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "tournaments" */
     delete_tournaments?: (tournaments_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -55114,6 +56438,8 @@ export interface mutation_rootGenqlSelection{
     /** Live pod GSI snapshot — slots, sides, alive/dead. Drives the stream-deck. */
     getLiveStreamSpecState?: (LiveStreamSpecStateGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     getTestUploadLink?: GetTestUploadResponseGenqlSelection
+    /** Grant an award to a player or team */
+    grantAward?: (AwardRecipientGenqlSelection & { __args: {award_id: Scalars['uuid'], note?: (Scalars['String'] | null), player_steam_id?: (Scalars['String'] | null), team_id?: (Scalars['uuid'] | null), tournament_id?: (Scalars['uuid'] | null)} })
     /** insert data into the table: "_map_pool" */
     insert__map_pool?: (_map_pool_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -55150,6 +56476,30 @@ export interface mutation_rootGenqlSelection{
     object: api_keys_insert_input, 
     /** upsert condition */
     on_conflict?: (api_keys_on_conflict | null)} })
+    /** insert data into the table: "award_recipients" */
+    insert_award_recipients?: (award_recipients_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: award_recipients_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (award_recipients_on_conflict | null)} })
+    /** insert a single row into the table: "award_recipients" */
+    insert_award_recipients_one?: (award_recipientsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: award_recipients_insert_input, 
+    /** upsert condition */
+    on_conflict?: (award_recipients_on_conflict | null)} })
+    /** insert data into the table: "awards" */
+    insert_awards?: (awards_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: awards_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (awards_on_conflict | null)} })
+    /** insert a single row into the table: "awards" */
+    insert_awards_one?: (awardsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: awards_insert_input, 
+    /** upsert condition */
+    on_conflict?: (awards_on_conflict | null)} })
     /** insert data into the table: "clip_render_jobs" */
     insert_clip_render_jobs?: (clip_render_jobs_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -55222,6 +56572,30 @@ export interface mutation_rootGenqlSelection{
     object: draft_games_insert_input, 
     /** upsert condition */
     on_conflict?: (draft_games_on_conflict | null)} })
+    /** insert data into the table: "e_award_sources" */
+    insert_e_award_sources?: (e_award_sources_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_award_sources_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_award_sources_on_conflict | null)} })
+    /** insert a single row into the table: "e_award_sources" */
+    insert_e_award_sources_one?: (e_award_sourcesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_award_sources_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_award_sources_on_conflict | null)} })
+    /** insert data into the table: "e_award_tiers" */
+    insert_e_award_tiers?: (e_award_tiers_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_award_tiers_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_award_tiers_on_conflict | null)} })
+    /** insert a single row into the table: "e_award_tiers" */
+    insert_e_award_tiers_one?: (e_award_tiersGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_award_tiers_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_award_tiers_on_conflict | null)} })
     /** insert data into the table: "e_check_in_settings" */
     insert_e_check_in_settings?: (e_check_in_settings_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -56722,6 +58096,18 @@ export interface mutation_rootGenqlSelection{
     object: teams_insert_input, 
     /** upsert condition */
     on_conflict?: (teams_on_conflict | null)} })
+    /** insert data into the table: "tournament_awards" */
+    insert_tournament_awards?: (tournament_awards_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: tournament_awards_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (tournament_awards_on_conflict | null)} })
+    /** insert a single row into the table: "tournament_awards" */
+    insert_tournament_awards_one?: (tournament_awardsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: tournament_awards_insert_input, 
+    /** upsert condition */
+    on_conflict?: (tournament_awards_on_conflict | null)} })
     /** insert data into the table: "tournament_brackets" */
     insert_tournament_brackets?: (tournament_brackets_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -56842,30 +58228,6 @@ export interface mutation_rootGenqlSelection{
     object: tournament_teams_insert_input, 
     /** upsert condition */
     on_conflict?: (tournament_teams_on_conflict | null)} })
-    /** insert data into the table: "tournament_trophies" */
-    insert_tournament_trophies?: (tournament_trophies_mutation_responseGenqlSelection & { __args: {
-    /** the rows to be inserted */
-    objects: tournament_trophies_insert_input[], 
-    /** upsert condition */
-    on_conflict?: (tournament_trophies_on_conflict | null)} })
-    /** insert a single row into the table: "tournament_trophies" */
-    insert_tournament_trophies_one?: (tournament_trophiesGenqlSelection & { __args: {
-    /** the row to be inserted */
-    object: tournament_trophies_insert_input, 
-    /** upsert condition */
-    on_conflict?: (tournament_trophies_on_conflict | null)} })
-    /** insert data into the table: "tournament_trophy_configs" */
-    insert_tournament_trophy_configs?: (tournament_trophy_configs_mutation_responseGenqlSelection & { __args: {
-    /** the rows to be inserted */
-    objects: tournament_trophy_configs_insert_input[], 
-    /** upsert condition */
-    on_conflict?: (tournament_trophy_configs_on_conflict | null)} })
-    /** insert a single row into the table: "tournament_trophy_configs" */
-    insert_tournament_trophy_configs_one?: (tournament_trophy_configsGenqlSelection & { __args: {
-    /** the row to be inserted */
-    object: tournament_trophy_configs_insert_input, 
-    /** upsert condition */
-    on_conflict?: (tournament_trophy_configs_on_conflict | null)} })
     /** insert data into the table: "tournaments" */
     insert_tournaments?: (tournaments_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -56960,20 +58322,20 @@ export interface mutation_rootGenqlSelection{
     queueClipFromPreset?: (CreateClipRenderOutputGenqlSelection & { __args: {fps?: (Scalars['Int'] | null), match_map_id: Scalars['uuid'], preset: Scalars['String'], resolution?: (Scalars['String'] | null), target_name?: (Scalars['String'] | null), target_steam_id: Scalars['String'], title?: (Scalars['String'] | null)} })
     randomizeTeams?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     rebootMatchServer?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
-    /** execute VOLATILE function "recalculate_tournament_trophies" which returns "tournament_trophies" */
-    recalculate_tournament_trophies?: (tournament_trophiesGenqlSelection & { __args: {
-    /** input parameters for function "recalculate_tournament_trophies" */
-    args: recalculate_tournament_trophies_args, 
+    /** execute VOLATILE function "recalculate_tournament_awards" which returns "award_recipients" */
+    recalculate_tournament_awards?: (award_recipientsGenqlSelection & { __args: {
+    /** input parameters for function "recalculate_tournament_awards" */
+    args: recalculate_tournament_awards_args, 
     /** distinct select on columns */
-    distinct_on?: (tournament_trophies_select_column[] | null), 
+    distinct_on?: (award_recipients_select_column[] | null), 
     /** limit the number of rows returned */
     limit?: (Scalars['Int'] | null), 
     /** skip the first n rows. Use only with order_by */
     offset?: (Scalars['Int'] | null), 
     /** sort the rows by one or more columns */
-    order_by?: (tournament_trophies_order_by[] | null), 
+    order_by?: (award_recipients_order_by[] | null), 
     /** filter the rows returned */
-    where?: (tournament_trophies_bool_exp | null)} })
+    where?: (award_recipients_bool_exp | null)} })
     /** Wipe and rebuild all player ELO from finished matches in chronological order (admin only). Runs in the background; track via recomputePlayerEloStatus. */
     recomputePlayerElo?: RecomputeEloStartedOutputGenqlSelection
     /** Return the progress of the ELO recompute run (admin only). */
@@ -57055,7 +58417,11 @@ export interface mutation_rootGenqlSelection{
     /** Delete terminal clip_render_jobs rows for a match_map (all or only failed/cancelled) and re-create them from their saved specs. */
     retryClipRenderBatch?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid'], only_failed?: (Scalars['Boolean'] | null)} })
     retryPendingMatchImport?: (PendingMatchImportActionOutputGenqlSelection & { __args: {valve_match_id: Scalars['String']} })
+    /** Revoke a hand-granted award */
+    revokeAward?: (SuccessOutputGenqlSelection & { __args: {id: Scalars['uuid']} })
     sanctionServerPlayer?: (SanctionResultGenqlSelection & { __args: {duration?: (Scalars['Float'] | null), reason?: (Scalars['String'] | null), serverId?: (Scalars['String'] | null), steam_id: Scalars['String'], type: Scalars['String']} })
+    /** Create or update a catalog award */
+    saveAward?: (AwardGenqlSelection & { __args: {allow_multiple?: (Scalars['Boolean'] | null), description?: (Scalars['String'] | null), id?: (Scalars['uuid'] | null), name: Scalars['String'], silhouette?: (Scalars['Int'] | null), tier: Scalars['String']} })
     /** Create or update a first-party news post. Caller role is verified against public.post_news_role. */
     saveNewsPost?: (NewsPostGenqlSelection & { __args: {content_markdown: Scalars['String'], cover_image_url?: (Scalars['String'] | null), id?: (Scalars['uuid'] | null), teaser?: (Scalars['String'] | null), title: Scalars['String']} })
     /** Scan S3 for objects not referenced in the database (admin only). Runs in the background; results land in the logs and orphanedDemosScanResult. */
@@ -57074,6 +58440,8 @@ export interface mutation_rootGenqlSelection{
     setMatchWinner?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], winning_lineup_id: Scalars['uuid']} })
     /** Publish or unpublish a news post. Caller role is verified against public.post_news_role. */
     setNewsPostStatus?: (NewsPostGenqlSelection & { __args: {id: Scalars['uuid'], status: Scalars['String']} })
+    /** Map a tournament placement to an award */
+    setTournamentAward?: (TournamentAwardGenqlSelection & { __args: {award_id?: (Scalars['uuid'] | null), custom_name?: (Scalars['String'] | null), placement: Scalars['Int'], silhouette?: (Scalars['Int'] | null), tournament_id: Scalars['uuid']} })
     setupGameServer?: SetupGameServeOutputGenqlSelection
     skipShaders?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     specAutodirector?: (SuccessOutputGenqlSelection & { __args: {enabled: Scalars['Boolean'], match_id: Scalars['uuid']} })
@@ -57159,6 +58527,42 @@ export interface mutation_rootGenqlSelection{
     update_api_keys_many?: (api_keys_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: api_keys_updates[]} })
+    /** update data of the table: "award_recipients" */
+    update_award_recipients?: (award_recipients_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (award_recipients_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (award_recipients_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: award_recipients_bool_exp} })
+    /** update single row of the table: "award_recipients" */
+    update_award_recipients_by_pk?: (award_recipientsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (award_recipients_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (award_recipients_set_input | null), pk_columns: award_recipients_pk_columns_input} })
+    /** update multiples rows of table: "award_recipients" */
+    update_award_recipients_many?: (award_recipients_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: award_recipients_updates[]} })
+    /** update data of the table: "awards" */
+    update_awards?: (awards_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (awards_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (awards_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: awards_bool_exp} })
+    /** update single row of the table: "awards" */
+    update_awards_by_pk?: (awardsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (awards_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (awards_set_input | null), pk_columns: awards_pk_columns_input} })
+    /** update multiples rows of table: "awards" */
+    update_awards_many?: (awards_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: awards_updates[]} })
     /** update data of the table: "clip_render_jobs" */
     update_clip_render_jobs?: (clip_render_jobs_mutation_responseGenqlSelection & { __args: {
     /** append existing jsonb value of filtered columns with new jsonb value */
@@ -57199,16 +58603,36 @@ export interface mutation_rootGenqlSelection{
     updates: clip_render_jobs_updates[]} })
     /** update data of the table: "custom_pages" */
     update_custom_pages?: (custom_pages_mutation_responseGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (custom_pages_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (custom_pages_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (custom_pages_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (custom_pages_delete_key_input | null), 
     /** increments the numeric columns with given value of the filtered values */
     _inc?: (custom_pages_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (custom_pages_prepend_input | null), 
     /** sets the columns of the filtered rows to the given values */
     _set?: (custom_pages_set_input | null), 
     /** filter the rows which have to be updated */
     where: custom_pages_bool_exp} })
     /** update single row of the table: "custom_pages" */
     update_custom_pages_by_pk?: (custom_pagesGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (custom_pages_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (custom_pages_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (custom_pages_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (custom_pages_delete_key_input | null), 
     /** increments the numeric columns with given value of the filtered values */
     _inc?: (custom_pages_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (custom_pages_prepend_input | null), 
     /** sets the columns of the filtered rows to the given values */
     _set?: (custom_pages_set_input | null), pk_columns: custom_pages_pk_columns_input} })
     /** update multiples rows of table: "custom_pages" */
@@ -57287,6 +58711,34 @@ export interface mutation_rootGenqlSelection{
     update_draft_games_many?: (draft_games_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: draft_games_updates[]} })
+    /** update data of the table: "e_award_sources" */
+    update_e_award_sources?: (e_award_sources_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_award_sources_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_award_sources_bool_exp} })
+    /** update single row of the table: "e_award_sources" */
+    update_e_award_sources_by_pk?: (e_award_sourcesGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_award_sources_set_input | null), pk_columns: e_award_sources_pk_columns_input} })
+    /** update multiples rows of table: "e_award_sources" */
+    update_e_award_sources_many?: (e_award_sources_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_award_sources_updates[]} })
+    /** update data of the table: "e_award_tiers" */
+    update_e_award_tiers?: (e_award_tiers_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_award_tiers_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_award_tiers_bool_exp} })
+    /** update single row of the table: "e_award_tiers" */
+    update_e_award_tiers_by_pk?: (e_award_tiersGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_award_tiers_set_input | null), pk_columns: e_award_tiers_pk_columns_input} })
+    /** update multiples rows of table: "e_award_tiers" */
+    update_e_award_tiers_many?: (e_award_tiers_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_award_tiers_updates[]} })
     /** update data of the table: "e_check_in_settings" */
     update_e_check_in_settings?: (e_check_in_settings_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -59495,6 +60947,24 @@ export interface mutation_rootGenqlSelection{
     update_teams_many?: (teams_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: teams_updates[]} })
+    /** update data of the table: "tournament_awards" */
+    update_tournament_awards?: (tournament_awards_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (tournament_awards_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (tournament_awards_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: tournament_awards_bool_exp} })
+    /** update single row of the table: "tournament_awards" */
+    update_tournament_awards_by_pk?: (tournament_awardsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (tournament_awards_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (tournament_awards_set_input | null), pk_columns: tournament_awards_pk_columns_input} })
+    /** update multiples rows of table: "tournament_awards" */
+    update_tournament_awards_many?: (tournament_awards_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: tournament_awards_updates[]} })
     /** update data of the table: "tournament_brackets" */
     update_tournament_brackets?: (tournament_brackets_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -59687,42 +61157,6 @@ export interface mutation_rootGenqlSelection{
     update_tournament_teams_many?: (tournament_teams_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: tournament_teams_updates[]} })
-    /** update data of the table: "tournament_trophies" */
-    update_tournament_trophies?: (tournament_trophies_mutation_responseGenqlSelection & { __args: {
-    /** increments the numeric columns with given value of the filtered values */
-    _inc?: (tournament_trophies_inc_input | null), 
-    /** sets the columns of the filtered rows to the given values */
-    _set?: (tournament_trophies_set_input | null), 
-    /** filter the rows which have to be updated */
-    where: tournament_trophies_bool_exp} })
-    /** update single row of the table: "tournament_trophies" */
-    update_tournament_trophies_by_pk?: (tournament_trophiesGenqlSelection & { __args: {
-    /** increments the numeric columns with given value of the filtered values */
-    _inc?: (tournament_trophies_inc_input | null), 
-    /** sets the columns of the filtered rows to the given values */
-    _set?: (tournament_trophies_set_input | null), pk_columns: tournament_trophies_pk_columns_input} })
-    /** update multiples rows of table: "tournament_trophies" */
-    update_tournament_trophies_many?: (tournament_trophies_mutation_responseGenqlSelection & { __args: {
-    /** updates to execute, in order */
-    updates: tournament_trophies_updates[]} })
-    /** update data of the table: "tournament_trophy_configs" */
-    update_tournament_trophy_configs?: (tournament_trophy_configs_mutation_responseGenqlSelection & { __args: {
-    /** increments the numeric columns with given value of the filtered values */
-    _inc?: (tournament_trophy_configs_inc_input | null), 
-    /** sets the columns of the filtered rows to the given values */
-    _set?: (tournament_trophy_configs_set_input | null), 
-    /** filter the rows which have to be updated */
-    where: tournament_trophy_configs_bool_exp} })
-    /** update single row of the table: "tournament_trophy_configs" */
-    update_tournament_trophy_configs_by_pk?: (tournament_trophy_configsGenqlSelection & { __args: {
-    /** increments the numeric columns with given value of the filtered values */
-    _inc?: (tournament_trophy_configs_inc_input | null), 
-    /** sets the columns of the filtered rows to the given values */
-    _set?: (tournament_trophy_configs_set_input | null), pk_columns: tournament_trophy_configs_pk_columns_input} })
-    /** update multiples rows of table: "tournament_trophy_configs" */
-    update_tournament_trophy_configs_many?: (tournament_trophy_configs_mutation_responseGenqlSelection & { __args: {
-    /** updates to execute, in order */
-    updates: tournament_trophy_configs_updates[]} })
     /** update data of the table: "tournaments" */
     update_tournaments?: (tournaments_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -69791,6 +71225,30 @@ export interface playersGenqlSelection{
     where?: (player_assists_bool_exp | null)} })
     avatar_url?: boolean | number
     /** An array relationship */
+    awards?: (award_recipientsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (award_recipients_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (award_recipients_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (award_recipients_bool_exp | null)} })
+    /** An aggregate relationship */
+    awards_aggregate?: (award_recipients_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (award_recipients_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (award_recipients_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (award_recipients_bool_exp | null)} })
+    /** An array relationship */
     coach_lineups?: (match_lineupsGenqlSelection & { __args?: {
     /** distinct select on columns */
     distinct_on?: (match_lineups_select_column[] | null), 
@@ -70620,30 +72078,6 @@ export interface playersGenqlSelection{
     /** filter the rows returned */
     where?: (tournament_team_roster_bool_exp | null)} })
     /** An array relationship */
-    tournament_trophies?: (tournament_trophiesGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (tournament_trophies_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (tournament_trophies_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (tournament_trophies_bool_exp | null)} })
-    /** An aggregate relationship */
-    tournament_trophies_aggregate?: (tournament_trophies_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (tournament_trophies_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (tournament_trophies_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (tournament_trophies_bool_exp | null)} })
-    /** An array relationship */
     tournaments?: (tournamentsGenqlSelection & { __args?: {
     /** distinct select on columns */
     distinct_on?: (tournaments_select_column[] | null), 
@@ -70790,7 +72224,7 @@ export interface players_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "players". All fields are combined with a logical 'AND'. */
-export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),aim_weapon_stats?: (player_aim_weapon_stats_bool_exp | null),aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_lobby_id?: (uuid_comparison_exp | null),custom_avatar_url?: (String_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),days_since_last_ban?: (Int_comparison_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),draft_game_players?: (draft_game_players_bool_exp | null),draft_game_players_aggregate?: (draft_game_players_aggregate_bool_exp | null),elo?: (jsonb_comparison_exp | null),elo_history?: (v_player_elo_bool_exp | null),elo_history_aggregate?: (v_player_elo_aggregate_bool_exp | null),faceit_elo?: (Int_comparison_exp | null),faceit_nickname?: (String_comparison_exp | null),faceit_player_id?: (String_comparison_exp | null),faceit_rank_history?: (player_faceit_rank_history_bool_exp | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_bool_exp | null),faceit_skill_level?: (Int_comparison_exp | null),faceit_updated_at?: (timestamptz_comparison_exp | null),faceit_url?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),friends?: (my_friends_bool_exp | null),friends_aggregate?: (my_friends_aggregate_bool_exp | null),game_ban_count?: (Int_comparison_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_banned?: (Boolean_comparison_exp | null),is_gagged?: (Boolean_comparison_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),is_in_draft?: (Boolean_comparison_exp | null),is_in_lobby?: (Boolean_comparison_exp | null),is_muted?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),kills_by_weapons?: (player_kills_by_weapon_bool_exp | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_bool_exp | null),language?: (String_comparison_exp | null),last_read_news_at?: (timestamptz_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),lobby_players?: (lobby_players_bool_exp | null),lobby_players_aggregate?: (lobby_players_aggregate_bool_exp | null),losses?: (Int_comparison_exp | null),losses_competitive?: (Int_comparison_exp | null),losses_duel?: (Int_comparison_exp | null),losses_wingman?: (Int_comparison_exp | null),match_map_hltv?: (v_player_match_map_hltv_bool_exp | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_bool_exp | null),match_map_stats?: (player_match_map_stats_bool_exp | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_bool_exp | null),match_stats?: (player_match_stats_v_bool_exp | null),match_stats_aggregate?: (player_match_stats_v_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),peak_elo?: (jsonb_comparison_exp | null),pending_match_imports?: (pending_match_import_players_bool_exp | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),premier_rank?: (Int_comparison_exp | null),premier_rank_history?: (player_premier_rank_history_bool_exp | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_bool_exp | null),premier_rank_updated_at?: (timestamptz_comparison_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),roster_image_url?: (String_comparison_exp | null),sanctions?: (player_sanctions_bool_exp | null),sanctions_aggregate?: (player_sanctions_aggregate_bool_exp | null),season_stats?: (player_season_stats_bool_exp | null),season_stats_aggregate?: (player_season_stats_aggregate_bool_exp | null),show_match_ready_modal?: (Boolean_comparison_exp | null),stats?: (player_stats_bool_exp | null),steam_bans_checked_at?: (timestamptz_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournament_trophies?: (tournament_trophies_bool_exp | null),tournament_trophies_aggregate?: (tournament_trophies_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null),vac_ban_count?: (Int_comparison_exp | null),vac_banned?: (Boolean_comparison_exp | null),weapon_stats?: (player_weapon_stats_v_bool_exp | null),weapon_stats_aggregate?: (player_weapon_stats_v_aggregate_bool_exp | null),wins?: (Int_comparison_exp | null),wins_competitive?: (Int_comparison_exp | null),wins_duel?: (Int_comparison_exp | null),wins_wingman?: (Int_comparison_exp | null)}
+export interface players_bool_exp {_and?: (players_bool_exp[] | null),_not?: (players_bool_exp | null),_or?: (players_bool_exp[] | null),abandoned_matches?: (abandoned_matches_bool_exp | null),abandoned_matches_aggregate?: (abandoned_matches_aggregate_bool_exp | null),aim_weapon_stats?: (player_aim_weapon_stats_bool_exp | null),aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregate_bool_exp | null),assists?: (player_assists_bool_exp | null),assists_aggregate?: (player_assists_aggregate_bool_exp | null),assited_by_players?: (player_assists_bool_exp | null),assited_by_players_aggregate?: (player_assists_aggregate_bool_exp | null),avatar_url?: (String_comparison_exp | null),awards?: (award_recipients_bool_exp | null),awards_aggregate?: (award_recipients_aggregate_bool_exp | null),coach_lineups?: (match_lineups_bool_exp | null),coach_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),country?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),current_lobby_id?: (uuid_comparison_exp | null),custom_avatar_url?: (String_comparison_exp | null),damage_dealt?: (player_damages_bool_exp | null),damage_dealt_aggregate?: (player_damages_aggregate_bool_exp | null),damage_taken?: (player_damages_bool_exp | null),damage_taken_aggregate?: (player_damages_aggregate_bool_exp | null),days_since_last_ban?: (Int_comparison_exp | null),deaths?: (player_kills_bool_exp | null),deaths_aggregate?: (player_kills_aggregate_bool_exp | null),discord_id?: (String_comparison_exp | null),draft_game_players?: (draft_game_players_bool_exp | null),draft_game_players_aggregate?: (draft_game_players_aggregate_bool_exp | null),elo?: (jsonb_comparison_exp | null),elo_history?: (v_player_elo_bool_exp | null),elo_history_aggregate?: (v_player_elo_aggregate_bool_exp | null),faceit_elo?: (Int_comparison_exp | null),faceit_nickname?: (String_comparison_exp | null),faceit_player_id?: (String_comparison_exp | null),faceit_rank_history?: (player_faceit_rank_history_bool_exp | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_bool_exp | null),faceit_skill_level?: (Int_comparison_exp | null),faceit_updated_at?: (timestamptz_comparison_exp | null),faceit_url?: (String_comparison_exp | null),flashed_by_players?: (player_flashes_bool_exp | null),flashed_by_players_aggregate?: (player_flashes_aggregate_bool_exp | null),flashed_players?: (player_flashes_bool_exp | null),flashed_players_aggregate?: (player_flashes_aggregate_bool_exp | null),friends?: (my_friends_bool_exp | null),friends_aggregate?: (my_friends_aggregate_bool_exp | null),game_ban_count?: (Int_comparison_exp | null),invited_players?: (team_invites_bool_exp | null),invited_players_aggregate?: (team_invites_aggregate_bool_exp | null),is_banned?: (Boolean_comparison_exp | null),is_gagged?: (Boolean_comparison_exp | null),is_in_another_match?: (Boolean_comparison_exp | null),is_in_draft?: (Boolean_comparison_exp | null),is_in_lobby?: (Boolean_comparison_exp | null),is_muted?: (Boolean_comparison_exp | null),kills?: (player_kills_bool_exp | null),kills_aggregate?: (player_kills_aggregate_bool_exp | null),kills_by_weapons?: (player_kills_by_weapon_bool_exp | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_bool_exp | null),language?: (String_comparison_exp | null),last_read_news_at?: (timestamptz_comparison_exp | null),last_sign_in_at?: (timestamptz_comparison_exp | null),lobby_players?: (lobby_players_bool_exp | null),lobby_players_aggregate?: (lobby_players_aggregate_bool_exp | null),losses?: (Int_comparison_exp | null),losses_competitive?: (Int_comparison_exp | null),losses_duel?: (Int_comparison_exp | null),losses_wingman?: (Int_comparison_exp | null),match_map_hltv?: (v_player_match_map_hltv_bool_exp | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_bool_exp | null),match_map_stats?: (player_match_map_stats_bool_exp | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_bool_exp | null),match_stats?: (player_match_stats_v_bool_exp | null),match_stats_aggregate?: (player_match_stats_v_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),matchmaking_cooldown?: (timestamptz_comparison_exp | null),multi_kills?: (v_player_multi_kills_bool_exp | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_bool_exp | null),name?: (String_comparison_exp | null),name_registered?: (Boolean_comparison_exp | null),notifications?: (notifications_bool_exp | null),notifications_aggregate?: (notifications_aggregate_bool_exp | null),objectives?: (player_objectives_bool_exp | null),objectives_aggregate?: (player_objectives_aggregate_bool_exp | null),owned_teams?: (teams_bool_exp | null),owned_teams_aggregate?: (teams_aggregate_bool_exp | null),peak_elo?: (jsonb_comparison_exp | null),pending_match_imports?: (pending_match_import_players_bool_exp | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_bool_exp | null),player_lineup?: (match_lineup_players_bool_exp | null),player_lineup_aggregate?: (match_lineup_players_aggregate_bool_exp | null),player_unused_utilities?: (player_unused_utility_bool_exp | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_bool_exp | null),premier_rank?: (Int_comparison_exp | null),premier_rank_history?: (player_premier_rank_history_bool_exp | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_bool_exp | null),premier_rank_updated_at?: (timestamptz_comparison_exp | null),profile_url?: (String_comparison_exp | null),role?: (e_player_roles_enum_comparison_exp | null),roster_image_url?: (String_comparison_exp | null),sanctions?: (player_sanctions_bool_exp | null),sanctions_aggregate?: (player_sanctions_aggregate_bool_exp | null),season_stats?: (player_season_stats_bool_exp | null),season_stats_aggregate?: (player_season_stats_aggregate_bool_exp | null),show_match_ready_modal?: (Boolean_comparison_exp | null),stats?: (player_stats_bool_exp | null),steam_bans_checked_at?: (timestamptz_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),team_invites?: (team_invites_bool_exp | null),team_invites_aggregate?: (team_invites_aggregate_bool_exp | null),team_members?: (team_roster_bool_exp | null),team_members_aggregate?: (team_roster_aggregate_bool_exp | null),teams?: (teams_bool_exp | null),total_matches?: (Int_comparison_exp | null),tournament_organizers?: (tournament_organizers_bool_exp | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),tournament_rosters?: (tournament_team_roster_bool_exp | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),tournaments?: (tournaments_bool_exp | null),tournaments_aggregate?: (tournaments_aggregate_bool_exp | null),utility_thrown?: (player_utility_bool_exp | null),utility_thrown_aggregate?: (player_utility_aggregate_bool_exp | null),vac_ban_count?: (Int_comparison_exp | null),vac_banned?: (Boolean_comparison_exp | null),weapon_stats?: (player_weapon_stats_v_bool_exp | null),weapon_stats_aggregate?: (player_weapon_stats_v_aggregate_bool_exp | null),wins?: (Int_comparison_exp | null),wins_competitive?: (Int_comparison_exp | null),wins_duel?: (Int_comparison_exp | null),wins_wingman?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "players" */
@@ -70798,7 +72232,7 @@ export interface players_inc_input {days_since_last_ban?: (Scalars['Int'] | null
 
 
 /** input type for inserting data into table "players" */
-export interface players_insert_input {abandoned_matches?: (abandoned_matches_arr_rel_insert_input | null),aim_weapon_stats?: (player_aim_weapon_stats_arr_rel_insert_input | null),assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),coach_lineups?: (match_lineups_arr_rel_insert_input | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),days_since_last_ban?: (Scalars['Int'] | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),draft_game_players?: (draft_game_players_arr_rel_insert_input | null),elo_history?: (v_player_elo_arr_rel_insert_input | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_rank_history?: (player_faceit_rank_history_arr_rel_insert_input | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),friends?: (my_friends_arr_rel_insert_input | null),game_ban_count?: (Scalars['Int'] | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),kills_by_weapons?: (player_kills_by_weapon_arr_rel_insert_input | null),language?: (Scalars['String'] | null),last_read_news_at?: (Scalars['timestamptz'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),lobby_players?: (lobby_players_arr_rel_insert_input | null),match_map_hltv?: (v_player_match_map_hltv_arr_rel_insert_input | null),match_map_stats?: (player_match_map_stats_arr_rel_insert_input | null),match_stats?: (player_match_stats_v_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notifications?: (notifications_arr_rel_insert_input | null),objectives?: (player_objectives_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),pending_match_imports?: (pending_match_import_players_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),premier_rank?: (Scalars['Int'] | null),premier_rank_history?: (player_premier_rank_history_arr_rel_insert_input | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),roster_image_url?: (Scalars['String'] | null),sanctions?: (player_sanctions_arr_rel_insert_input | null),season_stats?: (player_season_stats_arr_rel_insert_input | null),show_match_ready_modal?: (Scalars['Boolean'] | null),stats?: (player_stats_obj_rel_insert_input | null),steam_bans_checked_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournament_trophies?: (tournament_trophies_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null),vac_ban_count?: (Scalars['Int'] | null),vac_banned?: (Scalars['Boolean'] | null),weapon_stats?: (player_weapon_stats_v_arr_rel_insert_input | null)}
+export interface players_insert_input {abandoned_matches?: (abandoned_matches_arr_rel_insert_input | null),aim_weapon_stats?: (player_aim_weapon_stats_arr_rel_insert_input | null),assists?: (player_assists_arr_rel_insert_input | null),assited_by_players?: (player_assists_arr_rel_insert_input | null),avatar_url?: (Scalars['String'] | null),awards?: (award_recipients_arr_rel_insert_input | null),coach_lineups?: (match_lineups_arr_rel_insert_input | null),country?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),custom_avatar_url?: (Scalars['String'] | null),damage_dealt?: (player_damages_arr_rel_insert_input | null),damage_taken?: (player_damages_arr_rel_insert_input | null),days_since_last_ban?: (Scalars['Int'] | null),deaths?: (player_kills_arr_rel_insert_input | null),discord_id?: (Scalars['String'] | null),draft_game_players?: (draft_game_players_arr_rel_insert_input | null),elo_history?: (v_player_elo_arr_rel_insert_input | null),faceit_elo?: (Scalars['Int'] | null),faceit_nickname?: (Scalars['String'] | null),faceit_player_id?: (Scalars['String'] | null),faceit_rank_history?: (player_faceit_rank_history_arr_rel_insert_input | null),faceit_skill_level?: (Scalars['Int'] | null),faceit_updated_at?: (Scalars['timestamptz'] | null),faceit_url?: (Scalars['String'] | null),flashed_by_players?: (player_flashes_arr_rel_insert_input | null),flashed_players?: (player_flashes_arr_rel_insert_input | null),friends?: (my_friends_arr_rel_insert_input | null),game_ban_count?: (Scalars['Int'] | null),invited_players?: (team_invites_arr_rel_insert_input | null),kills?: (player_kills_arr_rel_insert_input | null),kills_by_weapons?: (player_kills_by_weapon_arr_rel_insert_input | null),language?: (Scalars['String'] | null),last_read_news_at?: (Scalars['timestamptz'] | null),last_sign_in_at?: (Scalars['timestamptz'] | null),lobby_players?: (lobby_players_arr_rel_insert_input | null),match_map_hltv?: (v_player_match_map_hltv_arr_rel_insert_input | null),match_map_stats?: (player_match_map_stats_arr_rel_insert_input | null),match_stats?: (player_match_stats_v_arr_rel_insert_input | null),multi_kills?: (v_player_multi_kills_arr_rel_insert_input | null),name?: (Scalars['String'] | null),name_registered?: (Scalars['Boolean'] | null),notifications?: (notifications_arr_rel_insert_input | null),objectives?: (player_objectives_arr_rel_insert_input | null),owned_teams?: (teams_arr_rel_insert_input | null),pending_match_imports?: (pending_match_import_players_arr_rel_insert_input | null),player_lineup?: (match_lineup_players_arr_rel_insert_input | null),player_unused_utilities?: (player_unused_utility_arr_rel_insert_input | null),premier_rank?: (Scalars['Int'] | null),premier_rank_history?: (player_premier_rank_history_arr_rel_insert_input | null),premier_rank_updated_at?: (Scalars['timestamptz'] | null),profile_url?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),roster_image_url?: (Scalars['String'] | null),sanctions?: (player_sanctions_arr_rel_insert_input | null),season_stats?: (player_season_stats_arr_rel_insert_input | null),show_match_ready_modal?: (Scalars['Boolean'] | null),stats?: (player_stats_obj_rel_insert_input | null),steam_bans_checked_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null),team_invites?: (team_invites_arr_rel_insert_input | null),team_members?: (team_roster_arr_rel_insert_input | null),tournament_organizers?: (tournament_organizers_arr_rel_insert_input | null),tournament_rosters?: (tournament_team_roster_arr_rel_insert_input | null),tournaments?: (tournaments_arr_rel_insert_input | null),utility_thrown?: (player_utility_arr_rel_insert_input | null),vac_ban_count?: (Scalars['Int'] | null),vac_banned?: (Scalars['Boolean'] | null),weapon_stats?: (player_weapon_stats_v_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -70929,7 +72363,7 @@ export interface players_on_conflict {constraint: players_constraint,update_colu
 
 
 /** Ordering options when selecting data from "players". */
-export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),current_lobby_id?: (order_by | null),custom_avatar_url?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),days_since_last_ban?: (order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),draft_game_players_aggregate?: (draft_game_players_aggregate_order_by | null),elo?: (order_by | null),elo_history_aggregate?: (v_player_elo_aggregate_order_by | null),faceit_elo?: (order_by | null),faceit_nickname?: (order_by | null),faceit_player_id?: (order_by | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_order_by | null),faceit_skill_level?: (order_by | null),faceit_updated_at?: (order_by | null),faceit_url?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),friends_aggregate?: (my_friends_aggregate_order_by | null),game_ban_count?: (order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_banned?: (order_by | null),is_gagged?: (order_by | null),is_in_another_match?: (order_by | null),is_in_draft?: (order_by | null),is_in_lobby?: (order_by | null),is_muted?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_order_by | null),language?: (order_by | null),last_read_news_at?: (order_by | null),last_sign_in_at?: (order_by | null),lobby_players_aggregate?: (lobby_players_aggregate_order_by | null),losses?: (order_by | null),losses_competitive?: (order_by | null),losses_duel?: (order_by | null),losses_wingman?: (order_by | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_order_by | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_order_by | null),match_stats_aggregate?: (player_match_stats_v_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),peak_elo?: (order_by | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),premier_rank?: (order_by | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_order_by | null),premier_rank_updated_at?: (order_by | null),profile_url?: (order_by | null),role?: (order_by | null),roster_image_url?: (order_by | null),sanctions_aggregate?: (player_sanctions_aggregate_order_by | null),season_stats_aggregate?: (player_season_stats_aggregate_order_by | null),show_match_ready_modal?: (order_by | null),stats?: (player_stats_order_by | null),steam_bans_checked_at?: (order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournament_trophies_aggregate?: (tournament_trophies_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null),vac_ban_count?: (order_by | null),vac_banned?: (order_by | null),weapon_stats_aggregate?: (player_weapon_stats_v_aggregate_order_by | null),wins?: (order_by | null),wins_competitive?: (order_by | null),wins_duel?: (order_by | null),wins_wingman?: (order_by | null)}
+export interface players_order_by {abandoned_matches_aggregate?: (abandoned_matches_aggregate_order_by | null),aim_weapon_stats_aggregate?: (player_aim_weapon_stats_aggregate_order_by | null),assists_aggregate?: (player_assists_aggregate_order_by | null),assited_by_players_aggregate?: (player_assists_aggregate_order_by | null),avatar_url?: (order_by | null),awards_aggregate?: (award_recipients_aggregate_order_by | null),coach_lineups_aggregate?: (match_lineups_aggregate_order_by | null),country?: (order_by | null),created_at?: (order_by | null),current_lobby_id?: (order_by | null),custom_avatar_url?: (order_by | null),damage_dealt_aggregate?: (player_damages_aggregate_order_by | null),damage_taken_aggregate?: (player_damages_aggregate_order_by | null),days_since_last_ban?: (order_by | null),deaths_aggregate?: (player_kills_aggregate_order_by | null),discord_id?: (order_by | null),draft_game_players_aggregate?: (draft_game_players_aggregate_order_by | null),elo?: (order_by | null),elo_history_aggregate?: (v_player_elo_aggregate_order_by | null),faceit_elo?: (order_by | null),faceit_nickname?: (order_by | null),faceit_player_id?: (order_by | null),faceit_rank_history_aggregate?: (player_faceit_rank_history_aggregate_order_by | null),faceit_skill_level?: (order_by | null),faceit_updated_at?: (order_by | null),faceit_url?: (order_by | null),flashed_by_players_aggregate?: (player_flashes_aggregate_order_by | null),flashed_players_aggregate?: (player_flashes_aggregate_order_by | null),friends_aggregate?: (my_friends_aggregate_order_by | null),game_ban_count?: (order_by | null),invited_players_aggregate?: (team_invites_aggregate_order_by | null),is_banned?: (order_by | null),is_gagged?: (order_by | null),is_in_another_match?: (order_by | null),is_in_draft?: (order_by | null),is_in_lobby?: (order_by | null),is_muted?: (order_by | null),kills_aggregate?: (player_kills_aggregate_order_by | null),kills_by_weapons_aggregate?: (player_kills_by_weapon_aggregate_order_by | null),language?: (order_by | null),last_read_news_at?: (order_by | null),last_sign_in_at?: (order_by | null),lobby_players_aggregate?: (lobby_players_aggregate_order_by | null),losses?: (order_by | null),losses_competitive?: (order_by | null),losses_duel?: (order_by | null),losses_wingman?: (order_by | null),match_map_hltv_aggregate?: (v_player_match_map_hltv_aggregate_order_by | null),match_map_stats_aggregate?: (player_match_map_stats_aggregate_order_by | null),match_stats_aggregate?: (player_match_stats_v_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),matchmaking_cooldown?: (order_by | null),multi_kills_aggregate?: (v_player_multi_kills_aggregate_order_by | null),name?: (order_by | null),name_registered?: (order_by | null),notifications_aggregate?: (notifications_aggregate_order_by | null),objectives_aggregate?: (player_objectives_aggregate_order_by | null),owned_teams_aggregate?: (teams_aggregate_order_by | null),peak_elo?: (order_by | null),pending_match_imports_aggregate?: (pending_match_import_players_aggregate_order_by | null),player_lineup_aggregate?: (match_lineup_players_aggregate_order_by | null),player_unused_utilities_aggregate?: (player_unused_utility_aggregate_order_by | null),premier_rank?: (order_by | null),premier_rank_history_aggregate?: (player_premier_rank_history_aggregate_order_by | null),premier_rank_updated_at?: (order_by | null),profile_url?: (order_by | null),role?: (order_by | null),roster_image_url?: (order_by | null),sanctions_aggregate?: (player_sanctions_aggregate_order_by | null),season_stats_aggregate?: (player_season_stats_aggregate_order_by | null),show_match_ready_modal?: (order_by | null),stats?: (player_stats_order_by | null),steam_bans_checked_at?: (order_by | null),steam_id?: (order_by | null),team_invites_aggregate?: (team_invites_aggregate_order_by | null),team_members_aggregate?: (team_roster_aggregate_order_by | null),teams_aggregate?: (teams_aggregate_order_by | null),total_matches?: (order_by | null),tournament_organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),tournament_rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),tournaments_aggregate?: (tournaments_aggregate_order_by | null),utility_thrown_aggregate?: (player_utility_aggregate_order_by | null),vac_ban_count?: (order_by | null),vac_banned?: (order_by | null),weapon_stats_aggregate?: (player_weapon_stats_v_aggregate_order_by | null),wins?: (order_by | null),wins_competitive?: (order_by | null),wins_duel?: (order_by | null),wins_wingman?: (order_by | null)}
 
 
 /** primary key columns input for table: players */
@@ -71443,6 +72877,58 @@ export interface query_rootGenqlSelection{
     where?: (api_keys_bool_exp | null)} })
     /** fetch data from the table: "api_keys" using primary key columns */
     api_keys_by_pk?: (api_keysGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "award_recipients" */
+    award_recipients?: (award_recipientsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (award_recipients_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (award_recipients_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (award_recipients_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "award_recipients" */
+    award_recipients_aggregate?: (award_recipients_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (award_recipients_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (award_recipients_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (award_recipients_bool_exp | null)} })
+    /** fetch data from the table: "award_recipients" using primary key columns */
+    award_recipients_by_pk?: (award_recipientsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "awards" */
+    awards?: (awardsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (awards_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (awards_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (awards_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "awards" */
+    awards_aggregate?: (awards_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (awards_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (awards_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (awards_bool_exp | null)} })
+    /** fetch data from the table: "awards" using primary key columns */
+    awards_by_pk?: (awardsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** An array relationship */
     clip_render_jobs?: (clip_render_jobsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -71600,6 +73086,58 @@ export interface query_rootGenqlSelection{
     where?: (draft_games_bool_exp | null)} })
     /** fetch data from the table: "draft_games" using primary key columns */
     draft_games_by_pk?: (draft_gamesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "e_award_sources" */
+    e_award_sources?: (e_award_sourcesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_award_sources_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_award_sources_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_award_sources_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_award_sources" */
+    e_award_sources_aggregate?: (e_award_sources_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_award_sources_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_award_sources_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_award_sources_bool_exp | null)} })
+    /** fetch data from the table: "e_award_sources" using primary key columns */
+    e_award_sources_by_pk?: (e_award_sourcesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_award_tiers" */
+    e_award_tiers?: (e_award_tiersGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_award_tiers_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_award_tiers_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_award_tiers_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_award_tiers" */
+    e_award_tiers_aggregate?: (e_award_tiers_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_award_tiers_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_award_tiers_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_award_tiers_bool_exp | null)} })
+    /** fetch data from the table: "e_award_tiers" using primary key columns */
+    e_award_tiers_by_pk?: (e_award_tiersGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_check_in_settings" */
     e_check_in_settings?: (e_check_in_settingsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -75151,6 +76689,32 @@ export interface query_rootGenqlSelection{
     /** fetch data from the table: "teams" using primary key columns */
     teams_by_pk?: (teamsGenqlSelection & { __args: {id: Scalars['uuid']} })
     telemetryStats?: TelemetryStatsGenqlSelection
+    /** fetch data from the table: "tournament_awards" */
+    tournament_awards?: (tournament_awardsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_awards_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_awards_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_awards_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "tournament_awards" */
+    tournament_awards_aggregate?: (tournament_awards_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_awards_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_awards_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_awards_bool_exp | null)} })
+    /** fetch data from the table: "tournament_awards" using primary key columns */
+    tournament_awards_by_pk?: (tournament_awardsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** An array relationship */
     tournament_brackets?: (tournament_bracketsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -75411,58 +76975,6 @@ export interface query_rootGenqlSelection{
     where?: (tournament_teams_bool_exp | null)} })
     /** fetch data from the table: "tournament_teams" using primary key columns */
     tournament_teams_by_pk?: (tournament_teamsGenqlSelection & { __args: {id: Scalars['uuid']} })
-    /** An array relationship */
-    tournament_trophies?: (tournament_trophiesGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (tournament_trophies_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (tournament_trophies_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (tournament_trophies_bool_exp | null)} })
-    /** An aggregate relationship */
-    tournament_trophies_aggregate?: (tournament_trophies_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (tournament_trophies_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (tournament_trophies_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (tournament_trophies_bool_exp | null)} })
-    /** fetch data from the table: "tournament_trophies" using primary key columns */
-    tournament_trophies_by_pk?: (tournament_trophiesGenqlSelection & { __args: {id: Scalars['uuid']} })
-    /** fetch data from the table: "tournament_trophy_configs" */
-    tournament_trophy_configs?: (tournament_trophy_configsGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (tournament_trophy_configs_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (tournament_trophy_configs_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (tournament_trophy_configs_bool_exp | null)} })
-    /** fetch aggregated fields from the table: "tournament_trophy_configs" */
-    tournament_trophy_configs_aggregate?: (tournament_trophy_configs_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (tournament_trophy_configs_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (tournament_trophy_configs_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (tournament_trophy_configs_bool_exp | null)} })
-    /** fetch data from the table: "tournament_trophy_configs" using primary key columns */
-    tournament_trophy_configs_by_pk?: (tournament_trophy_configsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** An array relationship */
     tournaments?: (tournamentsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -76263,7 +77775,7 @@ export interface query_rootGenqlSelection{
     __scalar?: boolean | number
 }
 
-export interface recalculate_tournament_trophies_args {_tournament_id?: (Scalars['uuid'] | null)}
+export interface recalculate_tournament_awards_args {_tournament_id?: (Scalars['uuid'] | null)}
 
 export interface remove_league_team_from_season_args {_league_team_season_id?: (Scalars['uuid'] | null)}
 
@@ -77684,6 +79196,74 @@ export interface subscription_rootGenqlSelection{
     cursor: (api_keys_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (api_keys_bool_exp | null)} })
+    /** fetch data from the table: "award_recipients" */
+    award_recipients?: (award_recipientsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (award_recipients_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (award_recipients_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (award_recipients_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "award_recipients" */
+    award_recipients_aggregate?: (award_recipients_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (award_recipients_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (award_recipients_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (award_recipients_bool_exp | null)} })
+    /** fetch data from the table: "award_recipients" using primary key columns */
+    award_recipients_by_pk?: (award_recipientsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "award_recipients" */
+    award_recipients_stream?: (award_recipientsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (award_recipients_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (award_recipients_bool_exp | null)} })
+    /** fetch data from the table: "awards" */
+    awards?: (awardsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (awards_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (awards_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (awards_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "awards" */
+    awards_aggregate?: (awards_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (awards_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (awards_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (awards_bool_exp | null)} })
+    /** fetch data from the table: "awards" using primary key columns */
+    awards_by_pk?: (awardsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "awards" */
+    awards_stream?: (awardsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (awards_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (awards_bool_exp | null)} })
     /** An array relationship */
     clip_render_jobs?: (clip_render_jobsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -77888,6 +79468,74 @@ export interface subscription_rootGenqlSelection{
     cursor: (draft_games_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (draft_games_bool_exp | null)} })
+    /** fetch data from the table: "e_award_sources" */
+    e_award_sources?: (e_award_sourcesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_award_sources_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_award_sources_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_award_sources_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_award_sources" */
+    e_award_sources_aggregate?: (e_award_sources_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_award_sources_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_award_sources_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_award_sources_bool_exp | null)} })
+    /** fetch data from the table: "e_award_sources" using primary key columns */
+    e_award_sources_by_pk?: (e_award_sourcesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_award_sources" */
+    e_award_sources_stream?: (e_award_sourcesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_award_sources_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_award_sources_bool_exp | null)} })
+    /** fetch data from the table: "e_award_tiers" */
+    e_award_tiers?: (e_award_tiersGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_award_tiers_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_award_tiers_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_award_tiers_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_award_tiers" */
+    e_award_tiers_aggregate?: (e_award_tiers_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_award_tiers_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_award_tiers_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_award_tiers_bool_exp | null)} })
+    /** fetch data from the table: "e_award_tiers" using primary key columns */
+    e_award_tiers_by_pk?: (e_award_tiersGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_award_tiers" */
+    e_award_tiers_stream?: (e_award_tiersGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_award_tiers_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_award_tiers_bool_exp | null)} })
     /** fetch data from the table: "e_check_in_settings" */
     e_check_in_settings?: (e_check_in_settingsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -82438,6 +84086,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (teams_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (teams_bool_exp | null)} })
+    /** fetch data from the table: "tournament_awards" */
+    tournament_awards?: (tournament_awardsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_awards_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_awards_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_awards_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "tournament_awards" */
+    tournament_awards_aggregate?: (tournament_awards_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_awards_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_awards_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_awards_bool_exp | null)} })
+    /** fetch data from the table: "tournament_awards" using primary key columns */
+    tournament_awards_by_pk?: (tournament_awardsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "tournament_awards" */
+    tournament_awards_stream?: (tournament_awardsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (tournament_awards_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (tournament_awards_bool_exp | null)} })
     /** An array relationship */
     tournament_brackets?: (tournament_bracketsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -82778,74 +84460,6 @@ export interface subscription_rootGenqlSelection{
     cursor: (tournament_teams_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (tournament_teams_bool_exp | null)} })
-    /** An array relationship */
-    tournament_trophies?: (tournament_trophiesGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (tournament_trophies_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (tournament_trophies_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (tournament_trophies_bool_exp | null)} })
-    /** An aggregate relationship */
-    tournament_trophies_aggregate?: (tournament_trophies_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (tournament_trophies_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (tournament_trophies_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (tournament_trophies_bool_exp | null)} })
-    /** fetch data from the table: "tournament_trophies" using primary key columns */
-    tournament_trophies_by_pk?: (tournament_trophiesGenqlSelection & { __args: {id: Scalars['uuid']} })
-    /** fetch data from the table in a streaming manner: "tournament_trophies" */
-    tournament_trophies_stream?: (tournament_trophiesGenqlSelection & { __args: {
-    /** maximum number of rows returned in a single batch */
-    batch_size: Scalars['Int'], 
-    /** cursor to stream the results returned by the query */
-    cursor: (tournament_trophies_stream_cursor_input | null)[], 
-    /** filter the rows returned */
-    where?: (tournament_trophies_bool_exp | null)} })
-    /** fetch data from the table: "tournament_trophy_configs" */
-    tournament_trophy_configs?: (tournament_trophy_configsGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (tournament_trophy_configs_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (tournament_trophy_configs_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (tournament_trophy_configs_bool_exp | null)} })
-    /** fetch aggregated fields from the table: "tournament_trophy_configs" */
-    tournament_trophy_configs_aggregate?: (tournament_trophy_configs_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (tournament_trophy_configs_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (tournament_trophy_configs_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (tournament_trophy_configs_bool_exp | null)} })
-    /** fetch data from the table: "tournament_trophy_configs" using primary key columns */
-    tournament_trophy_configs_by_pk?: (tournament_trophy_configsGenqlSelection & { __args: {id: Scalars['uuid']} })
-    /** fetch data from the table in a streaming manner: "tournament_trophy_configs" */
-    tournament_trophy_configs_stream?: (tournament_trophy_configsGenqlSelection & { __args: {
-    /** maximum number of rows returned in a single batch */
-    batch_size: Scalars['Int'], 
-    /** cursor to stream the results returned by the query */
-    cursor: (tournament_trophy_configs_stream_cursor_input | null)[], 
-    /** filter the rows returned */
-    where?: (tournament_trophy_configs_bool_exp | null)} })
     /** An array relationship */
     tournaments?: (tournamentsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -85936,6 +87550,30 @@ export interface team_suggestions_variance_fieldsGenqlSelection{
 /** columns and relationships of "teams" */
 export interface teamsGenqlSelection{
     avatar_url?: boolean | number
+    /** An array relationship */
+    awards?: (award_recipientsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (award_recipients_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (award_recipients_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (award_recipients_bool_exp | null)} })
+    /** An aggregate relationship */
+    awards_aggregate?: (award_recipients_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (award_recipients_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (award_recipients_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (award_recipients_bool_exp | null)} })
     /** A computed field, executes function "can_change_team_role" */
     can_change_role?: boolean | number
     /** A computed field, executes function "can_invite_to_team" */
@@ -86158,7 +87796,7 @@ export interface teams_avg_order_by {captain_steam_id?: (order_by | null),owner_
 
 
 /** Boolean expression to filter rows from the table "teams". All fields are combined with a logical 'AND'. */
-export interface teams_bool_exp {_and?: (teams_bool_exp[] | null),_not?: (teams_bool_exp | null),_or?: (teams_bool_exp[] | null),avatar_url?: (String_comparison_exp | null),can_change_role?: (Boolean_comparison_exp | null),can_invite?: (Boolean_comparison_exp | null),can_manage_scrims?: (Boolean_comparison_exp | null),can_remove?: (Boolean_comparison_exp | null),captain?: (players_bool_exp | null),captain_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),invites?: (team_invites_bool_exp | null),invites_aggregate?: (team_invites_aggregate_bool_exp | null),is_organization?: (Boolean_comparison_exp | null),match_lineups?: (match_lineups_bool_exp | null),match_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),name?: (String_comparison_exp | null),owner?: (players_bool_exp | null),owner_steam_id?: (bigint_comparison_exp | null),ranks?: (v_team_ranks_bool_exp | null),reputation?: (v_team_reputation_bool_exp | null),role?: (String_comparison_exp | null),roster?: (team_roster_bool_exp | null),roster_aggregate?: (team_roster_aggregate_bool_exp | null),scrim_availability?: (team_scrim_availability_bool_exp | null),scrim_availability_aggregate?: (team_scrim_availability_aggregate_bool_exp | null),scrim_settings?: (team_scrim_settings_bool_exp | null),short_name?: (String_comparison_exp | null),tournament_teams?: (tournament_teams_bool_exp | null),tournament_teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
+export interface teams_bool_exp {_and?: (teams_bool_exp[] | null),_not?: (teams_bool_exp | null),_or?: (teams_bool_exp[] | null),avatar_url?: (String_comparison_exp | null),awards?: (award_recipients_bool_exp | null),awards_aggregate?: (award_recipients_aggregate_bool_exp | null),can_change_role?: (Boolean_comparison_exp | null),can_invite?: (Boolean_comparison_exp | null),can_manage_scrims?: (Boolean_comparison_exp | null),can_remove?: (Boolean_comparison_exp | null),captain?: (players_bool_exp | null),captain_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),invites?: (team_invites_bool_exp | null),invites_aggregate?: (team_invites_aggregate_bool_exp | null),is_organization?: (Boolean_comparison_exp | null),match_lineups?: (match_lineups_bool_exp | null),match_lineups_aggregate?: (match_lineups_aggregate_bool_exp | null),matches?: (matches_bool_exp | null),name?: (String_comparison_exp | null),owner?: (players_bool_exp | null),owner_steam_id?: (bigint_comparison_exp | null),ranks?: (v_team_ranks_bool_exp | null),reputation?: (v_team_reputation_bool_exp | null),role?: (String_comparison_exp | null),roster?: (team_roster_bool_exp | null),roster_aggregate?: (team_roster_aggregate_bool_exp | null),scrim_availability?: (team_scrim_availability_bool_exp | null),scrim_availability_aggregate?: (team_scrim_availability_aggregate_bool_exp | null),scrim_settings?: (team_scrim_settings_bool_exp | null),short_name?: (String_comparison_exp | null),tournament_teams?: (tournament_teams_bool_exp | null),tournament_teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "teams" */
@@ -86166,7 +87804,7 @@ export interface teams_inc_input {captain_steam_id?: (Scalars['bigint'] | null),
 
 
 /** input type for inserting data into table "teams" */
-export interface teams_insert_input {avatar_url?: (Scalars['String'] | null),captain?: (players_obj_rel_insert_input | null),captain_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invites?: (team_invites_arr_rel_insert_input | null),is_organization?: (Scalars['Boolean'] | null),match_lineups?: (match_lineups_arr_rel_insert_input | null),name?: (Scalars['String'] | null),owner?: (players_obj_rel_insert_input | null),owner_steam_id?: (Scalars['bigint'] | null),ranks?: (v_team_ranks_obj_rel_insert_input | null),reputation?: (v_team_reputation_obj_rel_insert_input | null),roster?: (team_roster_arr_rel_insert_input | null),scrim_availability?: (team_scrim_availability_arr_rel_insert_input | null),scrim_settings?: (team_scrim_settings_obj_rel_insert_input | null),short_name?: (Scalars['String'] | null),tournament_teams?: (tournament_teams_arr_rel_insert_input | null)}
+export interface teams_insert_input {avatar_url?: (Scalars['String'] | null),awards?: (award_recipients_arr_rel_insert_input | null),captain?: (players_obj_rel_insert_input | null),captain_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invites?: (team_invites_arr_rel_insert_input | null),is_organization?: (Scalars['Boolean'] | null),match_lineups?: (match_lineups_arr_rel_insert_input | null),name?: (Scalars['String'] | null),owner?: (players_obj_rel_insert_input | null),owner_steam_id?: (Scalars['bigint'] | null),ranks?: (v_team_ranks_obj_rel_insert_input | null),reputation?: (v_team_reputation_obj_rel_insert_input | null),roster?: (team_roster_arr_rel_insert_input | null),scrim_availability?: (team_scrim_availability_arr_rel_insert_input | null),scrim_settings?: (team_scrim_settings_obj_rel_insert_input | null),short_name?: (Scalars['String'] | null),tournament_teams?: (tournament_teams_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -86229,7 +87867,7 @@ export interface teams_on_conflict {constraint: teams_constraint,update_columns?
 
 
 /** Ordering options when selecting data from "teams". */
-export interface teams_order_by {avatar_url?: (order_by | null),can_change_role?: (order_by | null),can_invite?: (order_by | null),can_manage_scrims?: (order_by | null),can_remove?: (order_by | null),captain?: (players_order_by | null),captain_steam_id?: (order_by | null),id?: (order_by | null),invites_aggregate?: (team_invites_aggregate_order_by | null),is_organization?: (order_by | null),match_lineups_aggregate?: (match_lineups_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),name?: (order_by | null),owner?: (players_order_by | null),owner_steam_id?: (order_by | null),ranks?: (v_team_ranks_order_by | null),reputation?: (v_team_reputation_order_by | null),role?: (order_by | null),roster_aggregate?: (team_roster_aggregate_order_by | null),scrim_availability_aggregate?: (team_scrim_availability_aggregate_order_by | null),scrim_settings?: (team_scrim_settings_order_by | null),short_name?: (order_by | null),tournament_teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
+export interface teams_order_by {avatar_url?: (order_by | null),awards_aggregate?: (award_recipients_aggregate_order_by | null),can_change_role?: (order_by | null),can_invite?: (order_by | null),can_manage_scrims?: (order_by | null),can_remove?: (order_by | null),captain?: (players_order_by | null),captain_steam_id?: (order_by | null),id?: (order_by | null),invites_aggregate?: (team_invites_aggregate_order_by | null),is_organization?: (order_by | null),match_lineups_aggregate?: (match_lineups_aggregate_order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),name?: (order_by | null),owner?: (players_order_by | null),owner_steam_id?: (order_by | null),ranks?: (v_team_ranks_order_by | null),reputation?: (v_team_reputation_order_by | null),role?: (order_by | null),roster_aggregate?: (team_roster_aggregate_order_by | null),scrim_availability_aggregate?: (team_scrim_availability_aggregate_order_by | null),scrim_settings?: (team_scrim_settings_order_by | null),short_name?: (order_by | null),tournament_teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: teams */
@@ -86353,6 +87991,276 @@ export interface teams_variance_order_by {captain_steam_id?: (order_by | null),o
 
 /** Boolean expression to compare columns of type "timestamptz". All fields are combined with logical 'AND'. */
 export interface timestamptz_comparison_exp {_eq?: (Scalars['timestamptz'] | null),_gt?: (Scalars['timestamptz'] | null),_gte?: (Scalars['timestamptz'] | null),_in?: (Scalars['timestamptz'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['timestamptz'] | null),_lte?: (Scalars['timestamptz'] | null),_neq?: (Scalars['timestamptz'] | null),_nin?: (Scalars['timestamptz'][] | null)}
+
+
+/** columns and relationships of "tournament_awards" */
+export interface tournament_awardsGenqlSelection{
+    /** An object relationship */
+    award?: awardsGenqlSelection
+    award_id?: boolean | number
+    created_at?: boolean | number
+    custom_name?: boolean | number
+    id?: boolean | number
+    image_url?: boolean | number
+    placement?: boolean | number
+    silhouette?: boolean | number
+    /** An object relationship */
+    tournament?: tournamentsGenqlSelection
+    tournament_id?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "tournament_awards" */
+export interface tournament_awards_aggregateGenqlSelection{
+    aggregate?: tournament_awards_aggregate_fieldsGenqlSelection
+    nodes?: tournament_awardsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface tournament_awards_aggregate_bool_exp {count?: (tournament_awards_aggregate_bool_exp_count | null)}
+
+export interface tournament_awards_aggregate_bool_exp_count {arguments?: (tournament_awards_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (tournament_awards_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "tournament_awards" */
+export interface tournament_awards_aggregate_fieldsGenqlSelection{
+    avg?: tournament_awards_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (tournament_awards_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: tournament_awards_max_fieldsGenqlSelection
+    min?: tournament_awards_min_fieldsGenqlSelection
+    stddev?: tournament_awards_stddev_fieldsGenqlSelection
+    stddev_pop?: tournament_awards_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: tournament_awards_stddev_samp_fieldsGenqlSelection
+    sum?: tournament_awards_sum_fieldsGenqlSelection
+    var_pop?: tournament_awards_var_pop_fieldsGenqlSelection
+    var_samp?: tournament_awards_var_samp_fieldsGenqlSelection
+    variance?: tournament_awards_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "tournament_awards" */
+export interface tournament_awards_aggregate_order_by {avg?: (tournament_awards_avg_order_by | null),count?: (order_by | null),max?: (tournament_awards_max_order_by | null),min?: (tournament_awards_min_order_by | null),stddev?: (tournament_awards_stddev_order_by | null),stddev_pop?: (tournament_awards_stddev_pop_order_by | null),stddev_samp?: (tournament_awards_stddev_samp_order_by | null),sum?: (tournament_awards_sum_order_by | null),var_pop?: (tournament_awards_var_pop_order_by | null),var_samp?: (tournament_awards_var_samp_order_by | null),variance?: (tournament_awards_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "tournament_awards" */
+export interface tournament_awards_arr_rel_insert_input {data: tournament_awards_insert_input[],
+/** upsert condition */
+on_conflict?: (tournament_awards_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface tournament_awards_avg_fieldsGenqlSelection{
+    placement?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "tournament_awards" */
+export interface tournament_awards_avg_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "tournament_awards". All fields are combined with a logical 'AND'. */
+export interface tournament_awards_bool_exp {_and?: (tournament_awards_bool_exp[] | null),_not?: (tournament_awards_bool_exp | null),_or?: (tournament_awards_bool_exp[] | null),award?: (awards_bool_exp | null),award_id?: (uuid_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),custom_name?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),image_url?: (String_comparison_exp | null),placement?: (Int_comparison_exp | null),silhouette?: (Int_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "tournament_awards" */
+export interface tournament_awards_inc_input {placement?: (Scalars['Int'] | null),silhouette?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "tournament_awards" */
+export interface tournament_awards_insert_input {award?: (awards_obj_rel_insert_input | null),award_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),custom_name?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),image_url?: (Scalars['String'] | null),placement?: (Scalars['Int'] | null),silhouette?: (Scalars['Int'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate max on columns */
+export interface tournament_awards_max_fieldsGenqlSelection{
+    award_id?: boolean | number
+    created_at?: boolean | number
+    custom_name?: boolean | number
+    id?: boolean | number
+    image_url?: boolean | number
+    placement?: boolean | number
+    silhouette?: boolean | number
+    tournament_id?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "tournament_awards" */
+export interface tournament_awards_max_order_by {award_id?: (order_by | null),created_at?: (order_by | null),custom_name?: (order_by | null),id?: (order_by | null),image_url?: (order_by | null),placement?: (order_by | null),silhouette?: (order_by | null),tournament_id?: (order_by | null),updated_at?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface tournament_awards_min_fieldsGenqlSelection{
+    award_id?: boolean | number
+    created_at?: boolean | number
+    custom_name?: boolean | number
+    id?: boolean | number
+    image_url?: boolean | number
+    placement?: boolean | number
+    silhouette?: boolean | number
+    tournament_id?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "tournament_awards" */
+export interface tournament_awards_min_order_by {award_id?: (order_by | null),created_at?: (order_by | null),custom_name?: (order_by | null),id?: (order_by | null),image_url?: (order_by | null),placement?: (order_by | null),silhouette?: (order_by | null),tournament_id?: (order_by | null),updated_at?: (order_by | null)}
+
+
+/** response of any mutation on the table "tournament_awards" */
+export interface tournament_awards_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: tournament_awardsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** input type for inserting object relation for remote table "tournament_awards" */
+export interface tournament_awards_obj_rel_insert_input {data: tournament_awards_insert_input,
+/** upsert condition */
+on_conflict?: (tournament_awards_on_conflict | null)}
+
+
+/** on_conflict condition type for table "tournament_awards" */
+export interface tournament_awards_on_conflict {constraint: tournament_awards_constraint,update_columns?: tournament_awards_update_column[],where?: (tournament_awards_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "tournament_awards". */
+export interface tournament_awards_order_by {award?: (awards_order_by | null),award_id?: (order_by | null),created_at?: (order_by | null),custom_name?: (order_by | null),id?: (order_by | null),image_url?: (order_by | null),placement?: (order_by | null),silhouette?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),updated_at?: (order_by | null)}
+
+
+/** primary key columns input for table: tournament_awards */
+export interface tournament_awards_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "tournament_awards" */
+export interface tournament_awards_set_input {award_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),custom_name?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),image_url?: (Scalars['String'] | null),placement?: (Scalars['Int'] | null),silhouette?: (Scalars['Int'] | null),tournament_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface tournament_awards_stddev_fieldsGenqlSelection{
+    placement?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "tournament_awards" */
+export interface tournament_awards_stddev_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface tournament_awards_stddev_pop_fieldsGenqlSelection{
+    placement?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "tournament_awards" */
+export interface tournament_awards_stddev_pop_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface tournament_awards_stddev_samp_fieldsGenqlSelection{
+    placement?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "tournament_awards" */
+export interface tournament_awards_stddev_samp_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
+
+
+/** Streaming cursor of the table "tournament_awards" */
+export interface tournament_awards_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: tournament_awards_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface tournament_awards_stream_cursor_value_input {award_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),custom_name?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),image_url?: (Scalars['String'] | null),placement?: (Scalars['Int'] | null),silhouette?: (Scalars['Int'] | null),tournament_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate sum on columns */
+export interface tournament_awards_sum_fieldsGenqlSelection{
+    placement?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "tournament_awards" */
+export interface tournament_awards_sum_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
+
+export interface tournament_awards_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (tournament_awards_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (tournament_awards_set_input | null),
+/** filter the rows which have to be updated */
+where: tournament_awards_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface tournament_awards_var_pop_fieldsGenqlSelection{
+    placement?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "tournament_awards" */
+export interface tournament_awards_var_pop_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface tournament_awards_var_samp_fieldsGenqlSelection{
+    placement?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "tournament_awards" */
+export interface tournament_awards_var_samp_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface tournament_awards_variance_fieldsGenqlSelection{
+    placement?: boolean | number
+    silhouette?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "tournament_awards" */
+export interface tournament_awards_variance_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
 
 
 /** columns and relationships of "tournament_brackets" */
@@ -88981,548 +90889,60 @@ export interface tournament_teams_variance_fieldsGenqlSelection{
 export interface tournament_teams_variance_order_by {captain_steam_id?: (order_by | null),owner_steam_id?: (order_by | null),seed?: (order_by | null)}
 
 
-/** columns and relationships of "tournament_trophies" */
-export interface tournament_trophiesGenqlSelection{
-    created_at?: boolean | number
-    id?: boolean | number
-    manual?: boolean | number
-    placement?: boolean | number
-    placement_tier?: boolean | number
-    /** An object relationship */
-    player?: playersGenqlSelection
-    player_steam_id?: boolean | number
-    /** An object relationship */
-    team?: teamsGenqlSelection
-    team_id?: boolean | number
-    /** An object relationship */
-    tournament?: tournamentsGenqlSelection
-    tournament_id?: boolean | number
-    /** An object relationship */
-    tournament_team?: tournament_teamsGenqlSelection
-    tournament_team_id?: boolean | number
-    /** An object relationship */
-    trophy_config?: tournament_trophy_configsGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregated selection of "tournament_trophies" */
-export interface tournament_trophies_aggregateGenqlSelection{
-    aggregate?: tournament_trophies_aggregate_fieldsGenqlSelection
-    nodes?: tournament_trophiesGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-export interface tournament_trophies_aggregate_bool_exp {bool_and?: (tournament_trophies_aggregate_bool_exp_bool_and | null),bool_or?: (tournament_trophies_aggregate_bool_exp_bool_or | null),count?: (tournament_trophies_aggregate_bool_exp_count | null)}
-
-export interface tournament_trophies_aggregate_bool_exp_bool_and {arguments: tournament_trophies_select_column_tournament_trophies_aggregate_bool_exp_bool_and_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_trophies_bool_exp | null),predicate: Boolean_comparison_exp}
-
-export interface tournament_trophies_aggregate_bool_exp_bool_or {arguments: tournament_trophies_select_column_tournament_trophies_aggregate_bool_exp_bool_or_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (tournament_trophies_bool_exp | null),predicate: Boolean_comparison_exp}
-
-export interface tournament_trophies_aggregate_bool_exp_count {arguments?: (tournament_trophies_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (tournament_trophies_bool_exp | null),predicate: Int_comparison_exp}
-
-
-/** aggregate fields of "tournament_trophies" */
-export interface tournament_trophies_aggregate_fieldsGenqlSelection{
-    avg?: tournament_trophies_avg_fieldsGenqlSelection
-    count?: { __args: {columns?: (tournament_trophies_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
-    max?: tournament_trophies_max_fieldsGenqlSelection
-    min?: tournament_trophies_min_fieldsGenqlSelection
-    stddev?: tournament_trophies_stddev_fieldsGenqlSelection
-    stddev_pop?: tournament_trophies_stddev_pop_fieldsGenqlSelection
-    stddev_samp?: tournament_trophies_stddev_samp_fieldsGenqlSelection
-    sum?: tournament_trophies_sum_fieldsGenqlSelection
-    var_pop?: tournament_trophies_var_pop_fieldsGenqlSelection
-    var_samp?: tournament_trophies_var_samp_fieldsGenqlSelection
-    variance?: tournament_trophies_variance_fieldsGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by aggregate values of table "tournament_trophies" */
-export interface tournament_trophies_aggregate_order_by {avg?: (tournament_trophies_avg_order_by | null),count?: (order_by | null),max?: (tournament_trophies_max_order_by | null),min?: (tournament_trophies_min_order_by | null),stddev?: (tournament_trophies_stddev_order_by | null),stddev_pop?: (tournament_trophies_stddev_pop_order_by | null),stddev_samp?: (tournament_trophies_stddev_samp_order_by | null),sum?: (tournament_trophies_sum_order_by | null),var_pop?: (tournament_trophies_var_pop_order_by | null),var_samp?: (tournament_trophies_var_samp_order_by | null),variance?: (tournament_trophies_variance_order_by | null)}
-
-
-/** input type for inserting array relation for remote table "tournament_trophies" */
-export interface tournament_trophies_arr_rel_insert_input {data: tournament_trophies_insert_input[],
-/** upsert condition */
-on_conflict?: (tournament_trophies_on_conflict | null)}
-
-
-/** aggregate avg on columns */
-export interface tournament_trophies_avg_fieldsGenqlSelection{
-    placement?: boolean | number
-    player_steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by avg() on columns of table "tournament_trophies" */
-export interface tournament_trophies_avg_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
-
-
-/** Boolean expression to filter rows from the table "tournament_trophies". All fields are combined with a logical 'AND'. */
-export interface tournament_trophies_bool_exp {_and?: (tournament_trophies_bool_exp[] | null),_not?: (tournament_trophies_bool_exp | null),_or?: (tournament_trophies_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),manual?: (Boolean_comparison_exp | null),placement?: (Int_comparison_exp | null),placement_tier?: (String_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),tournament_team?: (tournament_teams_bool_exp | null),tournament_team_id?: (uuid_comparison_exp | null),trophy_config?: (tournament_trophy_configs_bool_exp | null)}
-
-
-/** input type for incrementing numeric columns in table "tournament_trophies" */
-export interface tournament_trophies_inc_input {placement?: (Scalars['Int'] | null),player_steam_id?: (Scalars['bigint'] | null)}
-
-
-/** input type for inserting data into table "tournament_trophies" */
-export interface tournament_trophies_insert_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),manual?: (Scalars['Boolean'] | null),placement?: (Scalars['Int'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),tournament_team?: (tournament_teams_obj_rel_insert_input | null),tournament_team_id?: (Scalars['uuid'] | null),trophy_config?: (tournament_trophy_configs_obj_rel_insert_input | null)}
-
-
-/** aggregate max on columns */
-export interface tournament_trophies_max_fieldsGenqlSelection{
-    created_at?: boolean | number
-    id?: boolean | number
-    placement?: boolean | number
-    placement_tier?: boolean | number
-    player_steam_id?: boolean | number
-    team_id?: boolean | number
-    tournament_id?: boolean | number
-    tournament_team_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by max() on columns of table "tournament_trophies" */
-export interface tournament_trophies_max_order_by {created_at?: (order_by | null),id?: (order_by | null),placement?: (order_by | null),placement_tier?: (order_by | null),player_steam_id?: (order_by | null),team_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
-
-
-/** aggregate min on columns */
-export interface tournament_trophies_min_fieldsGenqlSelection{
-    created_at?: boolean | number
-    id?: boolean | number
-    placement?: boolean | number
-    placement_tier?: boolean | number
-    player_steam_id?: boolean | number
-    team_id?: boolean | number
-    tournament_id?: boolean | number
-    tournament_team_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by min() on columns of table "tournament_trophies" */
-export interface tournament_trophies_min_order_by {created_at?: (order_by | null),id?: (order_by | null),placement?: (order_by | null),placement_tier?: (order_by | null),player_steam_id?: (order_by | null),team_id?: (order_by | null),tournament_id?: (order_by | null),tournament_team_id?: (order_by | null)}
-
-
-/** response of any mutation on the table "tournament_trophies" */
-export interface tournament_trophies_mutation_responseGenqlSelection{
-    /** number of rows affected by the mutation */
-    affected_rows?: boolean | number
-    /** data from the rows affected by the mutation */
-    returning?: tournament_trophiesGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** on_conflict condition type for table "tournament_trophies" */
-export interface tournament_trophies_on_conflict {constraint: tournament_trophies_constraint,update_columns?: tournament_trophies_update_column[],where?: (tournament_trophies_bool_exp | null)}
-
-
-/** Ordering options when selecting data from "tournament_trophies". */
-export interface tournament_trophies_order_by {created_at?: (order_by | null),id?: (order_by | null),manual?: (order_by | null),placement?: (order_by | null),placement_tier?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),tournament_team?: (tournament_teams_order_by | null),tournament_team_id?: (order_by | null),trophy_config?: (tournament_trophy_configs_order_by | null)}
-
-
-/** primary key columns input for table: tournament_trophies */
-export interface tournament_trophies_pk_columns_input {id: Scalars['uuid']}
-
-
-/** input type for updating data in table "tournament_trophies" */
-export interface tournament_trophies_set_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),manual?: (Scalars['Boolean'] | null),placement?: (Scalars['Int'] | null),player_steam_id?: (Scalars['bigint'] | null),team_id?: (Scalars['uuid'] | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
-
-
-/** aggregate stddev on columns */
-export interface tournament_trophies_stddev_fieldsGenqlSelection{
-    placement?: boolean | number
-    player_steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by stddev() on columns of table "tournament_trophies" */
-export interface tournament_trophies_stddev_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
-
-
-/** aggregate stddev_pop on columns */
-export interface tournament_trophies_stddev_pop_fieldsGenqlSelection{
-    placement?: boolean | number
-    player_steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by stddev_pop() on columns of table "tournament_trophies" */
-export interface tournament_trophies_stddev_pop_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
-
-
-/** aggregate stddev_samp on columns */
-export interface tournament_trophies_stddev_samp_fieldsGenqlSelection{
-    placement?: boolean | number
-    player_steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by stddev_samp() on columns of table "tournament_trophies" */
-export interface tournament_trophies_stddev_samp_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
-
-
-/** Streaming cursor of the table "tournament_trophies" */
-export interface tournament_trophies_stream_cursor_input {
-/** Stream column input with initial value */
-initial_value: tournament_trophies_stream_cursor_value_input,
-/** cursor ordering */
-ordering?: (cursor_ordering | null)}
-
-
-/** Initial value of the column from where the streaming should start */
-export interface tournament_trophies_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),manual?: (Scalars['Boolean'] | null),placement?: (Scalars['Int'] | null),placement_tier?: (Scalars['String'] | null),player_steam_id?: (Scalars['bigint'] | null),team_id?: (Scalars['uuid'] | null),tournament_id?: (Scalars['uuid'] | null),tournament_team_id?: (Scalars['uuid'] | null)}
-
-
-/** aggregate sum on columns */
-export interface tournament_trophies_sum_fieldsGenqlSelection{
-    placement?: boolean | number
-    player_steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by sum() on columns of table "tournament_trophies" */
-export interface tournament_trophies_sum_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
-
-export interface tournament_trophies_updates {
-/** increments the numeric columns with given value of the filtered values */
-_inc?: (tournament_trophies_inc_input | null),
-/** sets the columns of the filtered rows to the given values */
-_set?: (tournament_trophies_set_input | null),
-/** filter the rows which have to be updated */
-where: tournament_trophies_bool_exp}
-
-
-/** aggregate var_pop on columns */
-export interface tournament_trophies_var_pop_fieldsGenqlSelection{
-    placement?: boolean | number
-    player_steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by var_pop() on columns of table "tournament_trophies" */
-export interface tournament_trophies_var_pop_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
-
-
-/** aggregate var_samp on columns */
-export interface tournament_trophies_var_samp_fieldsGenqlSelection{
-    placement?: boolean | number
-    player_steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by var_samp() on columns of table "tournament_trophies" */
-export interface tournament_trophies_var_samp_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
-
-
-/** aggregate variance on columns */
-export interface tournament_trophies_variance_fieldsGenqlSelection{
-    placement?: boolean | number
-    player_steam_id?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by variance() on columns of table "tournament_trophies" */
-export interface tournament_trophies_variance_order_by {placement?: (order_by | null),player_steam_id?: (order_by | null)}
-
-
-/** columns and relationships of "tournament_trophy_configs" */
-export interface tournament_trophy_configsGenqlSelection{
-    created_at?: boolean | number
-    custom_name?: boolean | number
-    id?: boolean | number
-    image_url?: boolean | number
-    placement?: boolean | number
-    silhouette?: boolean | number
-    /** An object relationship */
-    tournament?: tournamentsGenqlSelection
-    tournament_id?: boolean | number
-    updated_at?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** aggregated selection of "tournament_trophy_configs" */
-export interface tournament_trophy_configs_aggregateGenqlSelection{
-    aggregate?: tournament_trophy_configs_aggregate_fieldsGenqlSelection
-    nodes?: tournament_trophy_configsGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-export interface tournament_trophy_configs_aggregate_bool_exp {count?: (tournament_trophy_configs_aggregate_bool_exp_count | null)}
-
-export interface tournament_trophy_configs_aggregate_bool_exp_count {arguments?: (tournament_trophy_configs_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (tournament_trophy_configs_bool_exp | null),predicate: Int_comparison_exp}
-
-
-/** aggregate fields of "tournament_trophy_configs" */
-export interface tournament_trophy_configs_aggregate_fieldsGenqlSelection{
-    avg?: tournament_trophy_configs_avg_fieldsGenqlSelection
-    count?: { __args: {columns?: (tournament_trophy_configs_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
-    max?: tournament_trophy_configs_max_fieldsGenqlSelection
-    min?: tournament_trophy_configs_min_fieldsGenqlSelection
-    stddev?: tournament_trophy_configs_stddev_fieldsGenqlSelection
-    stddev_pop?: tournament_trophy_configs_stddev_pop_fieldsGenqlSelection
-    stddev_samp?: tournament_trophy_configs_stddev_samp_fieldsGenqlSelection
-    sum?: tournament_trophy_configs_sum_fieldsGenqlSelection
-    var_pop?: tournament_trophy_configs_var_pop_fieldsGenqlSelection
-    var_samp?: tournament_trophy_configs_var_samp_fieldsGenqlSelection
-    variance?: tournament_trophy_configs_variance_fieldsGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by aggregate values of table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_aggregate_order_by {avg?: (tournament_trophy_configs_avg_order_by | null),count?: (order_by | null),max?: (tournament_trophy_configs_max_order_by | null),min?: (tournament_trophy_configs_min_order_by | null),stddev?: (tournament_trophy_configs_stddev_order_by | null),stddev_pop?: (tournament_trophy_configs_stddev_pop_order_by | null),stddev_samp?: (tournament_trophy_configs_stddev_samp_order_by | null),sum?: (tournament_trophy_configs_sum_order_by | null),var_pop?: (tournament_trophy_configs_var_pop_order_by | null),var_samp?: (tournament_trophy_configs_var_samp_order_by | null),variance?: (tournament_trophy_configs_variance_order_by | null)}
-
-
-/** input type for inserting array relation for remote table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_arr_rel_insert_input {data: tournament_trophy_configs_insert_input[],
-/** upsert condition */
-on_conflict?: (tournament_trophy_configs_on_conflict | null)}
-
-
-/** aggregate avg on columns */
-export interface tournament_trophy_configs_avg_fieldsGenqlSelection{
-    placement?: boolean | number
-    silhouette?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by avg() on columns of table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_avg_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
-
-
-/** Boolean expression to filter rows from the table "tournament_trophy_configs". All fields are combined with a logical 'AND'. */
-export interface tournament_trophy_configs_bool_exp {_and?: (tournament_trophy_configs_bool_exp[] | null),_not?: (tournament_trophy_configs_bool_exp | null),_or?: (tournament_trophy_configs_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),custom_name?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),image_url?: (String_comparison_exp | null),placement?: (Int_comparison_exp | null),silhouette?: (Int_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
-
-
-/** input type for incrementing numeric columns in table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_inc_input {placement?: (Scalars['Int'] | null),silhouette?: (Scalars['Int'] | null)}
-
-
-/** input type for inserting data into table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_insert_input {created_at?: (Scalars['timestamptz'] | null),custom_name?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),image_url?: (Scalars['String'] | null),placement?: (Scalars['Int'] | null),silhouette?: (Scalars['Int'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
-
-
-/** aggregate max on columns */
-export interface tournament_trophy_configs_max_fieldsGenqlSelection{
-    created_at?: boolean | number
-    custom_name?: boolean | number
-    id?: boolean | number
-    image_url?: boolean | number
-    placement?: boolean | number
-    silhouette?: boolean | number
-    tournament_id?: boolean | number
-    updated_at?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by max() on columns of table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_max_order_by {created_at?: (order_by | null),custom_name?: (order_by | null),id?: (order_by | null),image_url?: (order_by | null),placement?: (order_by | null),silhouette?: (order_by | null),tournament_id?: (order_by | null),updated_at?: (order_by | null)}
-
-
-/** aggregate min on columns */
-export interface tournament_trophy_configs_min_fieldsGenqlSelection{
-    created_at?: boolean | number
-    custom_name?: boolean | number
-    id?: boolean | number
-    image_url?: boolean | number
-    placement?: boolean | number
-    silhouette?: boolean | number
-    tournament_id?: boolean | number
-    updated_at?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by min() on columns of table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_min_order_by {created_at?: (order_by | null),custom_name?: (order_by | null),id?: (order_by | null),image_url?: (order_by | null),placement?: (order_by | null),silhouette?: (order_by | null),tournament_id?: (order_by | null),updated_at?: (order_by | null)}
-
-
-/** response of any mutation on the table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_mutation_responseGenqlSelection{
-    /** number of rows affected by the mutation */
-    affected_rows?: boolean | number
-    /** data from the rows affected by the mutation */
-    returning?: tournament_trophy_configsGenqlSelection
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** input type for inserting object relation for remote table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_obj_rel_insert_input {data: tournament_trophy_configs_insert_input,
-/** upsert condition */
-on_conflict?: (tournament_trophy_configs_on_conflict | null)}
-
-
-/** on_conflict condition type for table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_on_conflict {constraint: tournament_trophy_configs_constraint,update_columns?: tournament_trophy_configs_update_column[],where?: (tournament_trophy_configs_bool_exp | null)}
-
-
-/** Ordering options when selecting data from "tournament_trophy_configs". */
-export interface tournament_trophy_configs_order_by {created_at?: (order_by | null),custom_name?: (order_by | null),id?: (order_by | null),image_url?: (order_by | null),placement?: (order_by | null),silhouette?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),updated_at?: (order_by | null)}
-
-
-/** primary key columns input for table: tournament_trophy_configs */
-export interface tournament_trophy_configs_pk_columns_input {id: Scalars['uuid']}
-
-
-/** input type for updating data in table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_set_input {created_at?: (Scalars['timestamptz'] | null),custom_name?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),image_url?: (Scalars['String'] | null),placement?: (Scalars['Int'] | null),silhouette?: (Scalars['Int'] | null),tournament_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
-
-
-/** aggregate stddev on columns */
-export interface tournament_trophy_configs_stddev_fieldsGenqlSelection{
-    placement?: boolean | number
-    silhouette?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by stddev() on columns of table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_stddev_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
-
-
-/** aggregate stddev_pop on columns */
-export interface tournament_trophy_configs_stddev_pop_fieldsGenqlSelection{
-    placement?: boolean | number
-    silhouette?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by stddev_pop() on columns of table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_stddev_pop_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
-
-
-/** aggregate stddev_samp on columns */
-export interface tournament_trophy_configs_stddev_samp_fieldsGenqlSelection{
-    placement?: boolean | number
-    silhouette?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by stddev_samp() on columns of table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_stddev_samp_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
-
-
-/** Streaming cursor of the table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_stream_cursor_input {
-/** Stream column input with initial value */
-initial_value: tournament_trophy_configs_stream_cursor_value_input,
-/** cursor ordering */
-ordering?: (cursor_ordering | null)}
-
-
-/** Initial value of the column from where the streaming should start */
-export interface tournament_trophy_configs_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),custom_name?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),image_url?: (Scalars['String'] | null),placement?: (Scalars['Int'] | null),silhouette?: (Scalars['Int'] | null),tournament_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
-
-
-/** aggregate sum on columns */
-export interface tournament_trophy_configs_sum_fieldsGenqlSelection{
-    placement?: boolean | number
-    silhouette?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by sum() on columns of table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_sum_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
-
-export interface tournament_trophy_configs_updates {
-/** increments the numeric columns with given value of the filtered values */
-_inc?: (tournament_trophy_configs_inc_input | null),
-/** sets the columns of the filtered rows to the given values */
-_set?: (tournament_trophy_configs_set_input | null),
-/** filter the rows which have to be updated */
-where: tournament_trophy_configs_bool_exp}
-
-
-/** aggregate var_pop on columns */
-export interface tournament_trophy_configs_var_pop_fieldsGenqlSelection{
-    placement?: boolean | number
-    silhouette?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by var_pop() on columns of table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_var_pop_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
-
-
-/** aggregate var_samp on columns */
-export interface tournament_trophy_configs_var_samp_fieldsGenqlSelection{
-    placement?: boolean | number
-    silhouette?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by var_samp() on columns of table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_var_samp_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
-
-
-/** aggregate variance on columns */
-export interface tournament_trophy_configs_variance_fieldsGenqlSelection{
-    placement?: boolean | number
-    silhouette?: boolean | number
-    __typename?: boolean | number
-    __scalar?: boolean | number
-}
-
-
-/** order by variance() on columns of table "tournament_trophy_configs" */
-export interface tournament_trophy_configs_variance_order_by {placement?: (order_by | null),silhouette?: (order_by | null)}
-
-
 /** columns and relationships of "tournaments" */
 export interface tournamentsGenqlSelection{
     /** An object relationship */
     admin?: playersGenqlSelection
     auto_start?: boolean | number
+    /** An array relationship */
+    award_configs?: (tournament_awardsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_awards_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_awards_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_awards_bool_exp | null)} })
+    /** An aggregate relationship */
+    award_configs_aggregate?: (tournament_awards_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_awards_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_awards_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_awards_bool_exp | null)} })
+    /** An array relationship */
+    awards?: (award_recipientsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (award_recipients_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (award_recipients_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (award_recipients_bool_exp | null)} })
+    /** An aggregate relationship */
+    awards_aggregate?: (award_recipients_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (award_recipients_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (award_recipients_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (award_recipients_bool_exp | null)} })
+    awards_enabled?: boolean | number
     banner?: boolean | number
     /** A computed field, executes function "can_cancel_tournament" */
     can_cancel?: boolean | number
@@ -89804,55 +91224,6 @@ export interface tournamentsGenqlSelection{
     order_by?: (tournament_teams_order_by[] | null), 
     /** filter the rows returned */
     where?: (tournament_teams_bool_exp | null)} })
-    /** An array relationship */
-    trophies?: (tournament_trophiesGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (tournament_trophies_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (tournament_trophies_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (tournament_trophies_bool_exp | null)} })
-    /** An aggregate relationship */
-    trophies_aggregate?: (tournament_trophies_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (tournament_trophies_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (tournament_trophies_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (tournament_trophies_bool_exp | null)} })
-    trophies_enabled?: boolean | number
-    /** An array relationship */
-    trophy_configs?: (tournament_trophy_configsGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (tournament_trophy_configs_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (tournament_trophy_configs_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (tournament_trophy_configs_bool_exp | null)} })
-    /** An aggregate relationship */
-    trophy_configs_aggregate?: (tournament_trophy_configs_aggregateGenqlSelection & { __args?: {
-    /** distinct select on columns */
-    distinct_on?: (tournament_trophy_configs_select_column[] | null), 
-    /** limit the number of rows returned */
-    limit?: (Scalars['Int'] | null), 
-    /** skip the first n rows. Use only with order_by */
-    offset?: (Scalars['Int'] | null), 
-    /** sort the rows by one or more columns */
-    order_by?: (tournament_trophy_configs_order_by[] | null), 
-    /** filter the rows returned */
-    where?: (tournament_trophy_configs_bool_exp | null)} })
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -89942,7 +91313,7 @@ export interface tournaments_avg_order_by {latitude?: (order_by | null),longitud
 
 
 /** Boolean expression to filter rows from the table "tournaments". All fields are combined with a logical 'AND'. */
-export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),auto_start?: (Boolean_comparison_exp | null),banner?: (String_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_close_registration?: (Boolean_comparison_exp | null),can_join?: (Boolean_comparison_exp | null),can_open_registration?: (Boolean_comparison_exp | null),can_pause?: (Boolean_comparison_exp | null),can_resume?: (Boolean_comparison_exp | null),can_setup?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),categories?: (tournament_categories_bool_exp | null),categories_aggregate?: (tournament_categories_aggregate_bool_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),discord_guild_id?: (String_comparison_exp | null),discord_notifications_enabled?: (Boolean_comparison_exp | null),discord_notify_Canceled?: (Boolean_comparison_exp | null),discord_notify_Finished?: (Boolean_comparison_exp | null),discord_notify_Forfeit?: (Boolean_comparison_exp | null),discord_notify_Live?: (Boolean_comparison_exp | null),discord_notify_MapPaused?: (Boolean_comparison_exp | null),discord_notify_PickingPlayers?: (Boolean_comparison_exp | null),discord_notify_Scheduled?: (Boolean_comparison_exp | null),discord_notify_Surrendered?: (Boolean_comparison_exp | null),discord_notify_Tie?: (Boolean_comparison_exp | null),discord_notify_Veto?: (Boolean_comparison_exp | null),discord_notify_WaitingForCheckIn?: (Boolean_comparison_exp | null),discord_notify_WaitingForServer?: (Boolean_comparison_exp | null),discord_role_id?: (String_comparison_exp | null),discord_voice_enabled?: (Boolean_comparison_exp | null),discord_webhook?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),has_min_teams?: (Boolean_comparison_exp | null),homepage?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_league?: (Boolean_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),joined_tournament?: (Boolean_comparison_exp | null),latitude?: (float8_comparison_exp | null),league_season_division?: (league_season_divisions_bool_exp | null),location?: (String_comparison_exp | null),logo?: (String_comparison_exp | null),longitude?: (float8_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizer_teams?: (tournament_organizer_teams_bool_exp | null),organizer_teams_aggregate?: (tournament_organizer_teams_aggregate_bool_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),player_stats?: (v_tournament_player_stats_bool_exp | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_bool_exp | null),prizes?: (tournament_prizes_bool_exp | null),prizes_aggregate?: (tournament_prizes_aggregate_bool_exp | null),results?: (v_team_tournament_results_bool_exp | null),results_aggregate?: (v_team_tournament_results_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),scheduling_mode?: (String_comparison_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null),trophies?: (tournament_trophies_bool_exp | null),trophies_aggregate?: (tournament_trophies_aggregate_bool_exp | null),trophies_enabled?: (Boolean_comparison_exp | null),trophy_configs?: (tournament_trophy_configs_bool_exp | null),trophy_configs_aggregate?: (tournament_trophy_configs_aggregate_bool_exp | null)}
+export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),auto_start?: (Boolean_comparison_exp | null),award_configs?: (tournament_awards_bool_exp | null),award_configs_aggregate?: (tournament_awards_aggregate_bool_exp | null),awards?: (award_recipients_bool_exp | null),awards_aggregate?: (award_recipients_aggregate_bool_exp | null),awards_enabled?: (Boolean_comparison_exp | null),banner?: (String_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_close_registration?: (Boolean_comparison_exp | null),can_join?: (Boolean_comparison_exp | null),can_open_registration?: (Boolean_comparison_exp | null),can_pause?: (Boolean_comparison_exp | null),can_resume?: (Boolean_comparison_exp | null),can_setup?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),categories?: (tournament_categories_bool_exp | null),categories_aggregate?: (tournament_categories_aggregate_bool_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),discord_guild_id?: (String_comparison_exp | null),discord_notifications_enabled?: (Boolean_comparison_exp | null),discord_notify_Canceled?: (Boolean_comparison_exp | null),discord_notify_Finished?: (Boolean_comparison_exp | null),discord_notify_Forfeit?: (Boolean_comparison_exp | null),discord_notify_Live?: (Boolean_comparison_exp | null),discord_notify_MapPaused?: (Boolean_comparison_exp | null),discord_notify_PickingPlayers?: (Boolean_comparison_exp | null),discord_notify_Scheduled?: (Boolean_comparison_exp | null),discord_notify_Surrendered?: (Boolean_comparison_exp | null),discord_notify_Tie?: (Boolean_comparison_exp | null),discord_notify_Veto?: (Boolean_comparison_exp | null),discord_notify_WaitingForCheckIn?: (Boolean_comparison_exp | null),discord_notify_WaitingForServer?: (Boolean_comparison_exp | null),discord_role_id?: (String_comparison_exp | null),discord_voice_enabled?: (Boolean_comparison_exp | null),discord_webhook?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),has_min_teams?: (Boolean_comparison_exp | null),homepage?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_league?: (Boolean_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),joined_tournament?: (Boolean_comparison_exp | null),latitude?: (float8_comparison_exp | null),league_season_division?: (league_season_divisions_bool_exp | null),location?: (String_comparison_exp | null),logo?: (String_comparison_exp | null),longitude?: (float8_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizer_teams?: (tournament_organizer_teams_bool_exp | null),organizer_teams_aggregate?: (tournament_organizer_teams_aggregate_bool_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),player_stats?: (v_tournament_player_stats_bool_exp | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_bool_exp | null),prizes?: (tournament_prizes_bool_exp | null),prizes_aggregate?: (tournament_prizes_aggregate_bool_exp | null),results?: (v_team_tournament_results_bool_exp | null),results_aggregate?: (v_team_tournament_results_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),scheduling_mode?: (String_comparison_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournaments" */
@@ -89950,7 +91321,7 @@ export interface tournaments_inc_input {latitude?: (Scalars['float8'] | null),lo
 
 
 /** input type for inserting data into table "tournaments" */
-export interface tournaments_insert_input {admin?: (players_obj_rel_insert_input | null),auto_start?: (Scalars['Boolean'] | null),banner?: (Scalars['String'] | null),categories?: (tournament_categories_arr_rel_insert_input | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),e_tournament_status?: (e_tournament_status_obj_rel_insert_input | null),homepage?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_league?: (Scalars['Boolean'] | null),latitude?: (Scalars['float8'] | null),league_season_division?: (league_season_divisions_obj_rel_insert_input | null),location?: (Scalars['String'] | null),logo?: (Scalars['String'] | null),longitude?: (Scalars['float8'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),options?: (match_options_obj_rel_insert_input | null),organizer_steam_id?: (Scalars['bigint'] | null),organizer_teams?: (tournament_organizer_teams_arr_rel_insert_input | null),organizers?: (tournament_organizers_arr_rel_insert_input | null),player_stats?: (v_tournament_player_stats_arr_rel_insert_input | null),prizes?: (tournament_prizes_arr_rel_insert_input | null),results?: (v_team_tournament_results_arr_rel_insert_input | null),rosters?: (tournament_team_roster_arr_rel_insert_input | null),scheduling_mode?: (Scalars['String'] | null),stages?: (tournament_stages_arr_rel_insert_input | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),teams?: (tournament_teams_arr_rel_insert_input | null),trophies?: (tournament_trophies_arr_rel_insert_input | null),trophies_enabled?: (Scalars['Boolean'] | null),trophy_configs?: (tournament_trophy_configs_arr_rel_insert_input | null)}
+export interface tournaments_insert_input {admin?: (players_obj_rel_insert_input | null),auto_start?: (Scalars['Boolean'] | null),award_configs?: (tournament_awards_arr_rel_insert_input | null),awards?: (award_recipients_arr_rel_insert_input | null),awards_enabled?: (Scalars['Boolean'] | null),banner?: (Scalars['String'] | null),categories?: (tournament_categories_arr_rel_insert_input | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),e_tournament_status?: (e_tournament_status_obj_rel_insert_input | null),homepage?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_league?: (Scalars['Boolean'] | null),latitude?: (Scalars['float8'] | null),league_season_division?: (league_season_divisions_obj_rel_insert_input | null),location?: (Scalars['String'] | null),logo?: (Scalars['String'] | null),longitude?: (Scalars['float8'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),options?: (match_options_obj_rel_insert_input | null),organizer_steam_id?: (Scalars['bigint'] | null),organizer_teams?: (tournament_organizer_teams_arr_rel_insert_input | null),organizers?: (tournament_organizers_arr_rel_insert_input | null),player_stats?: (v_tournament_player_stats_arr_rel_insert_input | null),prizes?: (tournament_prizes_arr_rel_insert_input | null),results?: (v_team_tournament_results_arr_rel_insert_input | null),rosters?: (tournament_team_roster_arr_rel_insert_input | null),scheduling_mode?: (Scalars['String'] | null),stages?: (tournament_stages_arr_rel_insert_input | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),teams?: (tournament_teams_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -90039,7 +91410,7 @@ export interface tournaments_on_conflict {constraint: tournaments_constraint,upd
 
 
 /** Ordering options when selecting data from "tournaments". */
-export interface tournaments_order_by {admin?: (players_order_by | null),auto_start?: (order_by | null),banner?: (order_by | null),can_cancel?: (order_by | null),can_close_registration?: (order_by | null),can_join?: (order_by | null),can_open_registration?: (order_by | null),can_pause?: (order_by | null),can_resume?: (order_by | null),can_setup?: (order_by | null),can_start?: (order_by | null),categories_aggregate?: (tournament_categories_aggregate_order_by | null),created_at?: (order_by | null),description?: (order_by | null),discord_guild_id?: (order_by | null),discord_notifications_enabled?: (order_by | null),discord_notify_Canceled?: (order_by | null),discord_notify_Finished?: (order_by | null),discord_notify_Forfeit?: (order_by | null),discord_notify_Live?: (order_by | null),discord_notify_MapPaused?: (order_by | null),discord_notify_PickingPlayers?: (order_by | null),discord_notify_Scheduled?: (order_by | null),discord_notify_Surrendered?: (order_by | null),discord_notify_Tie?: (order_by | null),discord_notify_Veto?: (order_by | null),discord_notify_WaitingForCheckIn?: (order_by | null),discord_notify_WaitingForServer?: (order_by | null),discord_role_id?: (order_by | null),discord_voice_enabled?: (order_by | null),discord_webhook?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),has_min_teams?: (order_by | null),homepage?: (order_by | null),id?: (order_by | null),is_league?: (order_by | null),is_organizer?: (order_by | null),joined_tournament?: (order_by | null),latitude?: (order_by | null),league_season_division?: (league_season_divisions_order_by | null),location?: (order_by | null),logo?: (order_by | null),longitude?: (order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_steam_id?: (order_by | null),organizer_teams_aggregate?: (tournament_organizer_teams_aggregate_order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_order_by | null),prizes_aggregate?: (tournament_prizes_aggregate_order_by | null),results_aggregate?: (v_team_tournament_results_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),scheduling_mode?: (order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null),trophies_aggregate?: (tournament_trophies_aggregate_order_by | null),trophies_enabled?: (order_by | null),trophy_configs_aggregate?: (tournament_trophy_configs_aggregate_order_by | null)}
+export interface tournaments_order_by {admin?: (players_order_by | null),auto_start?: (order_by | null),award_configs_aggregate?: (tournament_awards_aggregate_order_by | null),awards_aggregate?: (award_recipients_aggregate_order_by | null),awards_enabled?: (order_by | null),banner?: (order_by | null),can_cancel?: (order_by | null),can_close_registration?: (order_by | null),can_join?: (order_by | null),can_open_registration?: (order_by | null),can_pause?: (order_by | null),can_resume?: (order_by | null),can_setup?: (order_by | null),can_start?: (order_by | null),categories_aggregate?: (tournament_categories_aggregate_order_by | null),created_at?: (order_by | null),description?: (order_by | null),discord_guild_id?: (order_by | null),discord_notifications_enabled?: (order_by | null),discord_notify_Canceled?: (order_by | null),discord_notify_Finished?: (order_by | null),discord_notify_Forfeit?: (order_by | null),discord_notify_Live?: (order_by | null),discord_notify_MapPaused?: (order_by | null),discord_notify_PickingPlayers?: (order_by | null),discord_notify_Scheduled?: (order_by | null),discord_notify_Surrendered?: (order_by | null),discord_notify_Tie?: (order_by | null),discord_notify_Veto?: (order_by | null),discord_notify_WaitingForCheckIn?: (order_by | null),discord_notify_WaitingForServer?: (order_by | null),discord_role_id?: (order_by | null),discord_voice_enabled?: (order_by | null),discord_webhook?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),has_min_teams?: (order_by | null),homepage?: (order_by | null),id?: (order_by | null),is_league?: (order_by | null),is_organizer?: (order_by | null),joined_tournament?: (order_by | null),latitude?: (order_by | null),league_season_division?: (league_season_divisions_order_by | null),location?: (order_by | null),logo?: (order_by | null),longitude?: (order_by | null),match_options_id?: (order_by | null),max_players_per_lineup?: (order_by | null),min_players_per_lineup?: (order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_steam_id?: (order_by | null),organizer_teams_aggregate?: (tournament_organizer_teams_aggregate_order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_order_by | null),prizes_aggregate?: (tournament_prizes_aggregate_order_by | null),results_aggregate?: (v_team_tournament_results_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),scheduling_mode?: (order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: tournaments */
@@ -90047,7 +91418,7 @@ export interface tournaments_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "tournaments" */
-export interface tournaments_set_input {auto_start?: (Scalars['Boolean'] | null),banner?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),homepage?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_league?: (Scalars['Boolean'] | null),latitude?: (Scalars['float8'] | null),location?: (Scalars['String'] | null),logo?: (Scalars['String'] | null),longitude?: (Scalars['float8'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),scheduling_mode?: (Scalars['String'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),trophies_enabled?: (Scalars['Boolean'] | null)}
+export interface tournaments_set_input {auto_start?: (Scalars['Boolean'] | null),awards_enabled?: (Scalars['Boolean'] | null),banner?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),homepage?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_league?: (Scalars['Boolean'] | null),latitude?: (Scalars['float8'] | null),location?: (Scalars['String'] | null),logo?: (Scalars['String'] | null),longitude?: (Scalars['float8'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),scheduling_mode?: (Scalars['String'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -90113,7 +91484,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface tournaments_stream_cursor_value_input {auto_start?: (Scalars['Boolean'] | null),banner?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),homepage?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_league?: (Scalars['Boolean'] | null),latitude?: (Scalars['float8'] | null),location?: (Scalars['String'] | null),logo?: (Scalars['String'] | null),longitude?: (Scalars['float8'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),scheduling_mode?: (Scalars['String'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),trophies_enabled?: (Scalars['Boolean'] | null)}
+export interface tournaments_stream_cursor_value_input {auto_start?: (Scalars['Boolean'] | null),awards_enabled?: (Scalars['Boolean'] | null),banner?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),homepage?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_league?: (Scalars['Boolean'] | null),latitude?: (Scalars['float8'] | null),location?: (Scalars['String'] | null),logo?: (Scalars['String'] | null),longitude?: (Scalars['float8'] | null),match_options_id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),scheduling_mode?: (Scalars['String'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -97791,6 +99162,22 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const Award_possibleTypes: string[] = ['Award']
+    export const isAward = (obj?: { __typename?: any } | null): obj is Award => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isAward"')
+      return Award_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const AwardRecipient_possibleTypes: string[] = ['AwardRecipient']
+    export const isAwardRecipient = (obj?: { __typename?: any } | null): obj is AwardRecipient => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isAwardRecipient"')
+      return AwardRecipient_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const ConnectionByState_possibleTypes: string[] = ['ConnectionByState']
     export const isConnectionByState = (obj?: { __typename?: any } | null): obj is ConnectionByState => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isConnectionByState"')
@@ -98367,6 +99754,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const TournamentAward_possibleTypes: string[] = ['TournamentAward']
+    export const isTournamentAward = (obj?: { __typename?: any } | null): obj is TournamentAward => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTournamentAward"')
+      return TournamentAward_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const TournamentMatchResetImpact_possibleTypes: string[] = ['TournamentMatchResetImpact']
     export const isTournamentMatchResetImpact = (obj?: { __typename?: any } | null): obj is TournamentMatchResetImpact => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isTournamentMatchResetImpact"')
@@ -98651,6 +100046,230 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isapi_keys_variance_fields = (obj?: { __typename?: any } | null): obj is api_keys_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isapi_keys_variance_fields"')
       return api_keys_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const award_recipients_possibleTypes: string[] = ['award_recipients']
+    export const isaward_recipients = (obj?: { __typename?: any } | null): obj is award_recipients => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isaward_recipients"')
+      return award_recipients_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const award_recipients_aggregate_possibleTypes: string[] = ['award_recipients_aggregate']
+    export const isaward_recipients_aggregate = (obj?: { __typename?: any } | null): obj is award_recipients_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isaward_recipients_aggregate"')
+      return award_recipients_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const award_recipients_aggregate_fields_possibleTypes: string[] = ['award_recipients_aggregate_fields']
+    export const isaward_recipients_aggregate_fields = (obj?: { __typename?: any } | null): obj is award_recipients_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isaward_recipients_aggregate_fields"')
+      return award_recipients_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const award_recipients_avg_fields_possibleTypes: string[] = ['award_recipients_avg_fields']
+    export const isaward_recipients_avg_fields = (obj?: { __typename?: any } | null): obj is award_recipients_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isaward_recipients_avg_fields"')
+      return award_recipients_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const award_recipients_max_fields_possibleTypes: string[] = ['award_recipients_max_fields']
+    export const isaward_recipients_max_fields = (obj?: { __typename?: any } | null): obj is award_recipients_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isaward_recipients_max_fields"')
+      return award_recipients_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const award_recipients_min_fields_possibleTypes: string[] = ['award_recipients_min_fields']
+    export const isaward_recipients_min_fields = (obj?: { __typename?: any } | null): obj is award_recipients_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isaward_recipients_min_fields"')
+      return award_recipients_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const award_recipients_mutation_response_possibleTypes: string[] = ['award_recipients_mutation_response']
+    export const isaward_recipients_mutation_response = (obj?: { __typename?: any } | null): obj is award_recipients_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isaward_recipients_mutation_response"')
+      return award_recipients_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const award_recipients_stddev_fields_possibleTypes: string[] = ['award_recipients_stddev_fields']
+    export const isaward_recipients_stddev_fields = (obj?: { __typename?: any } | null): obj is award_recipients_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isaward_recipients_stddev_fields"')
+      return award_recipients_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const award_recipients_stddev_pop_fields_possibleTypes: string[] = ['award_recipients_stddev_pop_fields']
+    export const isaward_recipients_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is award_recipients_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isaward_recipients_stddev_pop_fields"')
+      return award_recipients_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const award_recipients_stddev_samp_fields_possibleTypes: string[] = ['award_recipients_stddev_samp_fields']
+    export const isaward_recipients_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is award_recipients_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isaward_recipients_stddev_samp_fields"')
+      return award_recipients_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const award_recipients_sum_fields_possibleTypes: string[] = ['award_recipients_sum_fields']
+    export const isaward_recipients_sum_fields = (obj?: { __typename?: any } | null): obj is award_recipients_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isaward_recipients_sum_fields"')
+      return award_recipients_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const award_recipients_var_pop_fields_possibleTypes: string[] = ['award_recipients_var_pop_fields']
+    export const isaward_recipients_var_pop_fields = (obj?: { __typename?: any } | null): obj is award_recipients_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isaward_recipients_var_pop_fields"')
+      return award_recipients_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const award_recipients_var_samp_fields_possibleTypes: string[] = ['award_recipients_var_samp_fields']
+    export const isaward_recipients_var_samp_fields = (obj?: { __typename?: any } | null): obj is award_recipients_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isaward_recipients_var_samp_fields"')
+      return award_recipients_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const award_recipients_variance_fields_possibleTypes: string[] = ['award_recipients_variance_fields']
+    export const isaward_recipients_variance_fields = (obj?: { __typename?: any } | null): obj is award_recipients_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isaward_recipients_variance_fields"')
+      return award_recipients_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const awards_possibleTypes: string[] = ['awards']
+    export const isawards = (obj?: { __typename?: any } | null): obj is awards => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isawards"')
+      return awards_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const awards_aggregate_possibleTypes: string[] = ['awards_aggregate']
+    export const isawards_aggregate = (obj?: { __typename?: any } | null): obj is awards_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isawards_aggregate"')
+      return awards_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const awards_aggregate_fields_possibleTypes: string[] = ['awards_aggregate_fields']
+    export const isawards_aggregate_fields = (obj?: { __typename?: any } | null): obj is awards_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isawards_aggregate_fields"')
+      return awards_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const awards_avg_fields_possibleTypes: string[] = ['awards_avg_fields']
+    export const isawards_avg_fields = (obj?: { __typename?: any } | null): obj is awards_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isawards_avg_fields"')
+      return awards_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const awards_max_fields_possibleTypes: string[] = ['awards_max_fields']
+    export const isawards_max_fields = (obj?: { __typename?: any } | null): obj is awards_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isawards_max_fields"')
+      return awards_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const awards_min_fields_possibleTypes: string[] = ['awards_min_fields']
+    export const isawards_min_fields = (obj?: { __typename?: any } | null): obj is awards_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isawards_min_fields"')
+      return awards_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const awards_mutation_response_possibleTypes: string[] = ['awards_mutation_response']
+    export const isawards_mutation_response = (obj?: { __typename?: any } | null): obj is awards_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isawards_mutation_response"')
+      return awards_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const awards_stddev_fields_possibleTypes: string[] = ['awards_stddev_fields']
+    export const isawards_stddev_fields = (obj?: { __typename?: any } | null): obj is awards_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isawards_stddev_fields"')
+      return awards_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const awards_stddev_pop_fields_possibleTypes: string[] = ['awards_stddev_pop_fields']
+    export const isawards_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is awards_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isawards_stddev_pop_fields"')
+      return awards_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const awards_stddev_samp_fields_possibleTypes: string[] = ['awards_stddev_samp_fields']
+    export const isawards_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is awards_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isawards_stddev_samp_fields"')
+      return awards_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const awards_sum_fields_possibleTypes: string[] = ['awards_sum_fields']
+    export const isawards_sum_fields = (obj?: { __typename?: any } | null): obj is awards_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isawards_sum_fields"')
+      return awards_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const awards_var_pop_fields_possibleTypes: string[] = ['awards_var_pop_fields']
+    export const isawards_var_pop_fields = (obj?: { __typename?: any } | null): obj is awards_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isawards_var_pop_fields"')
+      return awards_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const awards_var_samp_fields_possibleTypes: string[] = ['awards_var_samp_fields']
+    export const isawards_var_samp_fields = (obj?: { __typename?: any } | null): obj is awards_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isawards_var_samp_fields"')
+      return awards_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const awards_variance_fields_possibleTypes: string[] = ['awards_variance_fields']
+    export const isawards_variance_fields = (obj?: { __typename?: any } | null): obj is awards_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isawards_variance_fields"')
+      return awards_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -99323,6 +100942,102 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isdraft_games_variance_fields = (obj?: { __typename?: any } | null): obj is draft_games_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isdraft_games_variance_fields"')
       return draft_games_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_award_sources_possibleTypes: string[] = ['e_award_sources']
+    export const ise_award_sources = (obj?: { __typename?: any } | null): obj is e_award_sources => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_award_sources"')
+      return e_award_sources_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_award_sources_aggregate_possibleTypes: string[] = ['e_award_sources_aggregate']
+    export const ise_award_sources_aggregate = (obj?: { __typename?: any } | null): obj is e_award_sources_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_award_sources_aggregate"')
+      return e_award_sources_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_award_sources_aggregate_fields_possibleTypes: string[] = ['e_award_sources_aggregate_fields']
+    export const ise_award_sources_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_award_sources_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_award_sources_aggregate_fields"')
+      return e_award_sources_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_award_sources_max_fields_possibleTypes: string[] = ['e_award_sources_max_fields']
+    export const ise_award_sources_max_fields = (obj?: { __typename?: any } | null): obj is e_award_sources_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_award_sources_max_fields"')
+      return e_award_sources_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_award_sources_min_fields_possibleTypes: string[] = ['e_award_sources_min_fields']
+    export const ise_award_sources_min_fields = (obj?: { __typename?: any } | null): obj is e_award_sources_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_award_sources_min_fields"')
+      return e_award_sources_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_award_sources_mutation_response_possibleTypes: string[] = ['e_award_sources_mutation_response']
+    export const ise_award_sources_mutation_response = (obj?: { __typename?: any } | null): obj is e_award_sources_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_award_sources_mutation_response"')
+      return e_award_sources_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_award_tiers_possibleTypes: string[] = ['e_award_tiers']
+    export const ise_award_tiers = (obj?: { __typename?: any } | null): obj is e_award_tiers => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_award_tiers"')
+      return e_award_tiers_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_award_tiers_aggregate_possibleTypes: string[] = ['e_award_tiers_aggregate']
+    export const ise_award_tiers_aggregate = (obj?: { __typename?: any } | null): obj is e_award_tiers_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_award_tiers_aggregate"')
+      return e_award_tiers_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_award_tiers_aggregate_fields_possibleTypes: string[] = ['e_award_tiers_aggregate_fields']
+    export const ise_award_tiers_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_award_tiers_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_award_tiers_aggregate_fields"')
+      return e_award_tiers_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_award_tiers_max_fields_possibleTypes: string[] = ['e_award_tiers_max_fields']
+    export const ise_award_tiers_max_fields = (obj?: { __typename?: any } | null): obj is e_award_tiers_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_award_tiers_max_fields"')
+      return e_award_tiers_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_award_tiers_min_fields_possibleTypes: string[] = ['e_award_tiers_min_fields']
+    export const ise_award_tiers_min_fields = (obj?: { __typename?: any } | null): obj is e_award_tiers_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_award_tiers_min_fields"')
+      return e_award_tiers_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_award_tiers_mutation_response_possibleTypes: string[] = ['e_award_tiers_mutation_response']
+    export const ise_award_tiers_mutation_response = (obj?: { __typename?: any } | null): obj is e_award_tiers_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_award_tiers_mutation_response"')
+      return e_award_tiers_mutation_response_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -110335,6 +112050,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const tournament_awards_possibleTypes: string[] = ['tournament_awards']
+    export const istournament_awards = (obj?: { __typename?: any } | null): obj is tournament_awards => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_awards"')
+      return tournament_awards_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_awards_aggregate_possibleTypes: string[] = ['tournament_awards_aggregate']
+    export const istournament_awards_aggregate = (obj?: { __typename?: any } | null): obj is tournament_awards_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_awards_aggregate"')
+      return tournament_awards_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_awards_aggregate_fields_possibleTypes: string[] = ['tournament_awards_aggregate_fields']
+    export const istournament_awards_aggregate_fields = (obj?: { __typename?: any } | null): obj is tournament_awards_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_awards_aggregate_fields"')
+      return tournament_awards_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_awards_avg_fields_possibleTypes: string[] = ['tournament_awards_avg_fields']
+    export const istournament_awards_avg_fields = (obj?: { __typename?: any } | null): obj is tournament_awards_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_awards_avg_fields"')
+      return tournament_awards_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_awards_max_fields_possibleTypes: string[] = ['tournament_awards_max_fields']
+    export const istournament_awards_max_fields = (obj?: { __typename?: any } | null): obj is tournament_awards_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_awards_max_fields"')
+      return tournament_awards_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_awards_min_fields_possibleTypes: string[] = ['tournament_awards_min_fields']
+    export const istournament_awards_min_fields = (obj?: { __typename?: any } | null): obj is tournament_awards_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_awards_min_fields"')
+      return tournament_awards_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_awards_mutation_response_possibleTypes: string[] = ['tournament_awards_mutation_response']
+    export const istournament_awards_mutation_response = (obj?: { __typename?: any } | null): obj is tournament_awards_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_awards_mutation_response"')
+      return tournament_awards_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_awards_stddev_fields_possibleTypes: string[] = ['tournament_awards_stddev_fields']
+    export const istournament_awards_stddev_fields = (obj?: { __typename?: any } | null): obj is tournament_awards_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_awards_stddev_fields"')
+      return tournament_awards_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_awards_stddev_pop_fields_possibleTypes: string[] = ['tournament_awards_stddev_pop_fields']
+    export const istournament_awards_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is tournament_awards_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_awards_stddev_pop_fields"')
+      return tournament_awards_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_awards_stddev_samp_fields_possibleTypes: string[] = ['tournament_awards_stddev_samp_fields']
+    export const istournament_awards_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is tournament_awards_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_awards_stddev_samp_fields"')
+      return tournament_awards_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_awards_sum_fields_possibleTypes: string[] = ['tournament_awards_sum_fields']
+    export const istournament_awards_sum_fields = (obj?: { __typename?: any } | null): obj is tournament_awards_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_awards_sum_fields"')
+      return tournament_awards_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_awards_var_pop_fields_possibleTypes: string[] = ['tournament_awards_var_pop_fields']
+    export const istournament_awards_var_pop_fields = (obj?: { __typename?: any } | null): obj is tournament_awards_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_awards_var_pop_fields"')
+      return tournament_awards_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_awards_var_samp_fields_possibleTypes: string[] = ['tournament_awards_var_samp_fields']
+    export const istournament_awards_var_samp_fields = (obj?: { __typename?: any } | null): obj is tournament_awards_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_awards_var_samp_fields"')
+      return tournament_awards_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_awards_variance_fields_possibleTypes: string[] = ['tournament_awards_variance_fields']
+    export const istournament_awards_variance_fields = (obj?: { __typename?: any } | null): obj is tournament_awards_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_awards_variance_fields"')
+      return tournament_awards_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const tournament_brackets_possibleTypes: string[] = ['tournament_brackets']
     export const istournament_brackets = (obj?: { __typename?: any } | null): obj is tournament_brackets => {
       if (!obj?.__typename) throw new Error('__typename is missing in "istournament_brackets"')
@@ -111323,230 +113150,6 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const istournament_teams_variance_fields = (obj?: { __typename?: any } | null): obj is tournament_teams_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "istournament_teams_variance_fields"')
       return tournament_teams_variance_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophies_possibleTypes: string[] = ['tournament_trophies']
-    export const istournament_trophies = (obj?: { __typename?: any } | null): obj is tournament_trophies => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophies"')
-      return tournament_trophies_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophies_aggregate_possibleTypes: string[] = ['tournament_trophies_aggregate']
-    export const istournament_trophies_aggregate = (obj?: { __typename?: any } | null): obj is tournament_trophies_aggregate => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophies_aggregate"')
-      return tournament_trophies_aggregate_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophies_aggregate_fields_possibleTypes: string[] = ['tournament_trophies_aggregate_fields']
-    export const istournament_trophies_aggregate_fields = (obj?: { __typename?: any } | null): obj is tournament_trophies_aggregate_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophies_aggregate_fields"')
-      return tournament_trophies_aggregate_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophies_avg_fields_possibleTypes: string[] = ['tournament_trophies_avg_fields']
-    export const istournament_trophies_avg_fields = (obj?: { __typename?: any } | null): obj is tournament_trophies_avg_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophies_avg_fields"')
-      return tournament_trophies_avg_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophies_max_fields_possibleTypes: string[] = ['tournament_trophies_max_fields']
-    export const istournament_trophies_max_fields = (obj?: { __typename?: any } | null): obj is tournament_trophies_max_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophies_max_fields"')
-      return tournament_trophies_max_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophies_min_fields_possibleTypes: string[] = ['tournament_trophies_min_fields']
-    export const istournament_trophies_min_fields = (obj?: { __typename?: any } | null): obj is tournament_trophies_min_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophies_min_fields"')
-      return tournament_trophies_min_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophies_mutation_response_possibleTypes: string[] = ['tournament_trophies_mutation_response']
-    export const istournament_trophies_mutation_response = (obj?: { __typename?: any } | null): obj is tournament_trophies_mutation_response => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophies_mutation_response"')
-      return tournament_trophies_mutation_response_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophies_stddev_fields_possibleTypes: string[] = ['tournament_trophies_stddev_fields']
-    export const istournament_trophies_stddev_fields = (obj?: { __typename?: any } | null): obj is tournament_trophies_stddev_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophies_stddev_fields"')
-      return tournament_trophies_stddev_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophies_stddev_pop_fields_possibleTypes: string[] = ['tournament_trophies_stddev_pop_fields']
-    export const istournament_trophies_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is tournament_trophies_stddev_pop_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophies_stddev_pop_fields"')
-      return tournament_trophies_stddev_pop_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophies_stddev_samp_fields_possibleTypes: string[] = ['tournament_trophies_stddev_samp_fields']
-    export const istournament_trophies_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is tournament_trophies_stddev_samp_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophies_stddev_samp_fields"')
-      return tournament_trophies_stddev_samp_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophies_sum_fields_possibleTypes: string[] = ['tournament_trophies_sum_fields']
-    export const istournament_trophies_sum_fields = (obj?: { __typename?: any } | null): obj is tournament_trophies_sum_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophies_sum_fields"')
-      return tournament_trophies_sum_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophies_var_pop_fields_possibleTypes: string[] = ['tournament_trophies_var_pop_fields']
-    export const istournament_trophies_var_pop_fields = (obj?: { __typename?: any } | null): obj is tournament_trophies_var_pop_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophies_var_pop_fields"')
-      return tournament_trophies_var_pop_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophies_var_samp_fields_possibleTypes: string[] = ['tournament_trophies_var_samp_fields']
-    export const istournament_trophies_var_samp_fields = (obj?: { __typename?: any } | null): obj is tournament_trophies_var_samp_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophies_var_samp_fields"')
-      return tournament_trophies_var_samp_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophies_variance_fields_possibleTypes: string[] = ['tournament_trophies_variance_fields']
-    export const istournament_trophies_variance_fields = (obj?: { __typename?: any } | null): obj is tournament_trophies_variance_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophies_variance_fields"')
-      return tournament_trophies_variance_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophy_configs_possibleTypes: string[] = ['tournament_trophy_configs']
-    export const istournament_trophy_configs = (obj?: { __typename?: any } | null): obj is tournament_trophy_configs => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophy_configs"')
-      return tournament_trophy_configs_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophy_configs_aggregate_possibleTypes: string[] = ['tournament_trophy_configs_aggregate']
-    export const istournament_trophy_configs_aggregate = (obj?: { __typename?: any } | null): obj is tournament_trophy_configs_aggregate => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophy_configs_aggregate"')
-      return tournament_trophy_configs_aggregate_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophy_configs_aggregate_fields_possibleTypes: string[] = ['tournament_trophy_configs_aggregate_fields']
-    export const istournament_trophy_configs_aggregate_fields = (obj?: { __typename?: any } | null): obj is tournament_trophy_configs_aggregate_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophy_configs_aggregate_fields"')
-      return tournament_trophy_configs_aggregate_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophy_configs_avg_fields_possibleTypes: string[] = ['tournament_trophy_configs_avg_fields']
-    export const istournament_trophy_configs_avg_fields = (obj?: { __typename?: any } | null): obj is tournament_trophy_configs_avg_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophy_configs_avg_fields"')
-      return tournament_trophy_configs_avg_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophy_configs_max_fields_possibleTypes: string[] = ['tournament_trophy_configs_max_fields']
-    export const istournament_trophy_configs_max_fields = (obj?: { __typename?: any } | null): obj is tournament_trophy_configs_max_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophy_configs_max_fields"')
-      return tournament_trophy_configs_max_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophy_configs_min_fields_possibleTypes: string[] = ['tournament_trophy_configs_min_fields']
-    export const istournament_trophy_configs_min_fields = (obj?: { __typename?: any } | null): obj is tournament_trophy_configs_min_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophy_configs_min_fields"')
-      return tournament_trophy_configs_min_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophy_configs_mutation_response_possibleTypes: string[] = ['tournament_trophy_configs_mutation_response']
-    export const istournament_trophy_configs_mutation_response = (obj?: { __typename?: any } | null): obj is tournament_trophy_configs_mutation_response => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophy_configs_mutation_response"')
-      return tournament_trophy_configs_mutation_response_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophy_configs_stddev_fields_possibleTypes: string[] = ['tournament_trophy_configs_stddev_fields']
-    export const istournament_trophy_configs_stddev_fields = (obj?: { __typename?: any } | null): obj is tournament_trophy_configs_stddev_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophy_configs_stddev_fields"')
-      return tournament_trophy_configs_stddev_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophy_configs_stddev_pop_fields_possibleTypes: string[] = ['tournament_trophy_configs_stddev_pop_fields']
-    export const istournament_trophy_configs_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is tournament_trophy_configs_stddev_pop_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophy_configs_stddev_pop_fields"')
-      return tournament_trophy_configs_stddev_pop_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophy_configs_stddev_samp_fields_possibleTypes: string[] = ['tournament_trophy_configs_stddev_samp_fields']
-    export const istournament_trophy_configs_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is tournament_trophy_configs_stddev_samp_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophy_configs_stddev_samp_fields"')
-      return tournament_trophy_configs_stddev_samp_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophy_configs_sum_fields_possibleTypes: string[] = ['tournament_trophy_configs_sum_fields']
-    export const istournament_trophy_configs_sum_fields = (obj?: { __typename?: any } | null): obj is tournament_trophy_configs_sum_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophy_configs_sum_fields"')
-      return tournament_trophy_configs_sum_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophy_configs_var_pop_fields_possibleTypes: string[] = ['tournament_trophy_configs_var_pop_fields']
-    export const istournament_trophy_configs_var_pop_fields = (obj?: { __typename?: any } | null): obj is tournament_trophy_configs_var_pop_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophy_configs_var_pop_fields"')
-      return tournament_trophy_configs_var_pop_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophy_configs_var_samp_fields_possibleTypes: string[] = ['tournament_trophy_configs_var_samp_fields']
-    export const istournament_trophy_configs_var_samp_fields = (obj?: { __typename?: any } | null): obj is tournament_trophy_configs_var_samp_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophy_configs_var_samp_fields"')
-      return tournament_trophy_configs_var_samp_fields_possibleTypes.includes(obj.__typename)
-    }
-    
-
-
-    const tournament_trophy_configs_variance_fields_possibleTypes: string[] = ['tournament_trophy_configs_variance_fields']
-    export const istournament_trophy_configs_variance_fields = (obj?: { __typename?: any } | null): obj is tournament_trophy_configs_variance_fields => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_trophy_configs_variance_fields"')
-      return tournament_trophy_configs_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -115016,6 +116619,75 @@ export const enumApiKeysUpdateColumn = {
    steam_id: 'steam_id' as const
 }
 
+export const enumAwardRecipientsConstraint = {
+   award_recipients_one_mvp_per_tournament: 'award_recipients_one_mvp_per_tournament' as const,
+   award_recipients_pkey: 'award_recipients_pkey' as const,
+   award_recipients_player_recipient_key: 'award_recipients_player_recipient_key' as const,
+   award_recipients_team_recipient_key: 'award_recipients_team_recipient_key' as const
+}
+
+export const enumAwardRecipientsSelectColumn = {
+   award_id: 'award_id' as const,
+   awarded_by_steam_id: 'awarded_by_steam_id' as const,
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   note: 'note' as const,
+   placement: 'placement' as const,
+   placement_tier: 'placement_tier' as const,
+   player_steam_id: 'player_steam_id' as const,
+   source: 'source' as const,
+   team_id: 'team_id' as const,
+   tournament_id: 'tournament_id' as const,
+   tournament_team_id: 'tournament_team_id' as const
+}
+
+export const enumAwardRecipientsUpdateColumn = {
+   award_id: 'award_id' as const,
+   awarded_by_steam_id: 'awarded_by_steam_id' as const,
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   note: 'note' as const,
+   placement: 'placement' as const,
+   player_steam_id: 'player_steam_id' as const,
+   source: 'source' as const,
+   team_id: 'team_id' as const,
+   tournament_id: 'tournament_id' as const,
+   tournament_team_id: 'tournament_team_id' as const
+}
+
+export const enumAwardsConstraint = {
+   awards_pkey: 'awards_pkey' as const,
+   awards_system_key_key: 'awards_system_key_key' as const
+}
+
+export const enumAwardsSelectColumn = {
+   allow_multiple: 'allow_multiple' as const,
+   created_at: 'created_at' as const,
+   created_by_steam_id: 'created_by_steam_id' as const,
+   description: 'description' as const,
+   id: 'id' as const,
+   image_url: 'image_url' as const,
+   name: 'name' as const,
+   silhouette: 'silhouette' as const,
+   system_key: 'system_key' as const,
+   tier: 'tier' as const,
+   updated_at: 'updated_at' as const
+}
+
+export const enumAwardsUpdateColumn = {
+   allow_multiple: 'allow_multiple' as const,
+   created_at: 'created_at' as const,
+   created_by_steam_id: 'created_by_steam_id' as const,
+   description: 'description' as const,
+   id: 'id' as const,
+   image_url: 'image_url' as const,
+   name: 'name' as const,
+   silhouette: 'silhouette' as const,
+   system_key: 'system_key' as const,
+   tier: 'tier' as const,
+   updated_at: 'updated_at' as const
+}
+
 export const enumClipRenderJobsConstraint = {
    clip_render_jobs_pkey: 'clip_render_jobs_pkey' as const
 }
@@ -115081,13 +116753,16 @@ export const enumCustomPagesConstraint = {
 
 export const enumCustomPagesSelectColumn = {
    created_at: 'created_at' as const,
+   deployments: 'deployments' as const,
    enabled: 'enabled' as const,
    exposed_module: 'exposed_module' as const,
    icon: 'icon' as const,
    id: 'id' as const,
    is_default: 'is_default' as const,
+   manifest_url: 'manifest_url' as const,
    nav_group: 'nav_group' as const,
    nav_order: 'nav_order' as const,
+   profile_tab_label: 'profile_tab_label' as const,
    remote_entry_url: 'remote_entry_url' as const,
    remote_scope: 'remote_scope' as const,
    required_role: 'required_role' as const,
@@ -115098,13 +116773,16 @@ export const enumCustomPagesSelectColumn = {
 
 export const enumCustomPagesUpdateColumn = {
    created_at: 'created_at' as const,
+   deployments: 'deployments' as const,
    enabled: 'enabled' as const,
    exposed_module: 'exposed_module' as const,
    icon: 'icon' as const,
    id: 'id' as const,
    is_default: 'is_default' as const,
+   manifest_url: 'manifest_url' as const,
    nav_group: 'nav_group' as const,
    nav_order: 'nav_order' as const,
+   profile_tab_label: 'profile_tab_label' as const,
    remote_entry_url: 'remote_entry_url' as const,
    remote_scope: 'remote_scope' as const,
    required_role: 'required_role' as const,
@@ -115267,6 +116945,47 @@ export const enumDraftGamesUpdateColumn = {
    team_2_id: 'team_2_id' as const,
    type: 'type' as const,
    updated_at: 'updated_at' as const
+}
+
+export const enumEAwardSourcesConstraint = {
+   e_award_sources_pkey: 'e_award_sources_pkey' as const
+}
+
+export const enumEAwardSourcesEnum = {
+   manual: 'manual' as const,
+   tournament: 'tournament' as const
+}
+
+export const enumEAwardSourcesSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEAwardSourcesUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEAwardTiersConstraint = {
+   e_award_tiers_pkey: 'e_award_tiers_pkey' as const
+}
+
+export const enumEAwardTiersEnum = {
+   bronze: 'bronze' as const,
+   gold: 'gold' as const,
+   mvp: 'mvp' as const,
+   silver: 'silver' as const,
+   special: 'special' as const
+}
+
+export const enumEAwardTiersSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEAwardTiersUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
 }
 
 export const enumECheckInSettingsConstraint = {
@@ -119194,6 +120913,35 @@ export const enumTeamsUpdateColumn = {
    short_name: 'short_name' as const
 }
 
+export const enumTournamentAwardsConstraint = {
+   tournament_awards_pkey: 'tournament_awards_pkey' as const,
+   tournament_awards_tournament_id_placement_key: 'tournament_awards_tournament_id_placement_key' as const
+}
+
+export const enumTournamentAwardsSelectColumn = {
+   award_id: 'award_id' as const,
+   created_at: 'created_at' as const,
+   custom_name: 'custom_name' as const,
+   id: 'id' as const,
+   image_url: 'image_url' as const,
+   placement: 'placement' as const,
+   silhouette: 'silhouette' as const,
+   tournament_id: 'tournament_id' as const,
+   updated_at: 'updated_at' as const
+}
+
+export const enumTournamentAwardsUpdateColumn = {
+   award_id: 'award_id' as const,
+   created_at: 'created_at' as const,
+   custom_name: 'custom_name' as const,
+   id: 'id' as const,
+   image_url: 'image_url' as const,
+   placement: 'placement' as const,
+   silhouette: 'silhouette' as const,
+   tournament_id: 'tournament_id' as const,
+   updated_at: 'updated_at' as const
+}
+
 export const enumTournamentBracketsConstraint = {
    touarnment_brackets_pkey: 'touarnment_brackets_pkey' as const,
    tournament_brackets_id_tournament_team_id_1_tournament_team_id_: 'tournament_brackets_id_tournament_team_id_1_tournament_team_id_' as const
@@ -119470,71 +121218,6 @@ export const enumTournamentTeamsUpdateColumn = {
    tournament_id: 'tournament_id' as const
 }
 
-export const enumTournamentTrophiesConstraint = {
-   tournament_trophies_one_mvp_per_tournament: 'tournament_trophies_one_mvp_per_tournament' as const,
-   tournament_trophies_pkey: 'tournament_trophies_pkey' as const,
-   tournament_trophies_player_recipient_key: 'tournament_trophies_player_recipient_key' as const,
-   tournament_trophies_team_recipient_key: 'tournament_trophies_team_recipient_key' as const
-}
-
-export const enumTournamentTrophiesSelectColumn = {
-   created_at: 'created_at' as const,
-   id: 'id' as const,
-   manual: 'manual' as const,
-   placement: 'placement' as const,
-   placement_tier: 'placement_tier' as const,
-   player_steam_id: 'player_steam_id' as const,
-   team_id: 'team_id' as const,
-   tournament_id: 'tournament_id' as const,
-   tournament_team_id: 'tournament_team_id' as const
-}
-
-export const enumTournamentTrophiesSelectColumnTournamentTrophiesAggregateBoolExpBoolAndArgumentsColumns = {
-   manual: 'manual' as const
-}
-
-export const enumTournamentTrophiesSelectColumnTournamentTrophiesAggregateBoolExpBoolOrArgumentsColumns = {
-   manual: 'manual' as const
-}
-
-export const enumTournamentTrophiesUpdateColumn = {
-   created_at: 'created_at' as const,
-   id: 'id' as const,
-   manual: 'manual' as const,
-   placement: 'placement' as const,
-   player_steam_id: 'player_steam_id' as const,
-   team_id: 'team_id' as const,
-   tournament_id: 'tournament_id' as const,
-   tournament_team_id: 'tournament_team_id' as const
-}
-
-export const enumTournamentTrophyConfigsConstraint = {
-   tournament_trophy_configs_pkey: 'tournament_trophy_configs_pkey' as const,
-   tournament_trophy_configs_tournament_id_placement_key: 'tournament_trophy_configs_tournament_id_placement_key' as const
-}
-
-export const enumTournamentTrophyConfigsSelectColumn = {
-   created_at: 'created_at' as const,
-   custom_name: 'custom_name' as const,
-   id: 'id' as const,
-   image_url: 'image_url' as const,
-   placement: 'placement' as const,
-   silhouette: 'silhouette' as const,
-   tournament_id: 'tournament_id' as const,
-   updated_at: 'updated_at' as const
-}
-
-export const enumTournamentTrophyConfigsUpdateColumn = {
-   created_at: 'created_at' as const,
-   custom_name: 'custom_name' as const,
-   id: 'id' as const,
-   image_url: 'image_url' as const,
-   placement: 'placement' as const,
-   silhouette: 'silhouette' as const,
-   tournament_id: 'tournament_id' as const,
-   updated_at: 'updated_at' as const
-}
-
 export const enumTournamentsConstraint = {
    tournaments_match_options_id_key: 'tournaments_match_options_id_key' as const,
    tournaments_pkey: 'tournaments_pkey' as const
@@ -119542,6 +121225,7 @@ export const enumTournamentsConstraint = {
 
 export const enumTournamentsSelectColumn = {
    auto_start: 'auto_start' as const,
+   awards_enabled: 'awards_enabled' as const,
    banner: 'banner' as const,
    created_at: 'created_at' as const,
    description: 'description' as const,
@@ -119574,8 +121258,7 @@ export const enumTournamentsSelectColumn = {
    organizer_steam_id: 'organizer_steam_id' as const,
    scheduling_mode: 'scheduling_mode' as const,
    start: 'start' as const,
-   status: 'status' as const,
-   trophies_enabled: 'trophies_enabled' as const
+   status: 'status' as const
 }
 
 export const enumTournamentsSelectColumnTournamentsAggregateBoolExpAvgArgumentsColumns = {
@@ -119585,6 +121268,7 @@ export const enumTournamentsSelectColumnTournamentsAggregateBoolExpAvgArgumentsC
 
 export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolAndArgumentsColumns = {
    auto_start: 'auto_start' as const,
+   awards_enabled: 'awards_enabled' as const,
    discord_notifications_enabled: 'discord_notifications_enabled' as const,
    discord_notify_Canceled: 'discord_notify_Canceled' as const,
    discord_notify_Finished: 'discord_notify_Finished' as const,
@@ -119599,12 +121283,12 @@ export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolAndArgume
    discord_notify_WaitingForCheckIn: 'discord_notify_WaitingForCheckIn' as const,
    discord_notify_WaitingForServer: 'discord_notify_WaitingForServer' as const,
    discord_voice_enabled: 'discord_voice_enabled' as const,
-   is_league: 'is_league' as const,
-   trophies_enabled: 'trophies_enabled' as const
+   is_league: 'is_league' as const
 }
 
 export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolOrArgumentsColumns = {
    auto_start: 'auto_start' as const,
+   awards_enabled: 'awards_enabled' as const,
    discord_notifications_enabled: 'discord_notifications_enabled' as const,
    discord_notify_Canceled: 'discord_notify_Canceled' as const,
    discord_notify_Finished: 'discord_notify_Finished' as const,
@@ -119619,8 +121303,7 @@ export const enumTournamentsSelectColumnTournamentsAggregateBoolExpBoolOrArgumen
    discord_notify_WaitingForCheckIn: 'discord_notify_WaitingForCheckIn' as const,
    discord_notify_WaitingForServer: 'discord_notify_WaitingForServer' as const,
    discord_voice_enabled: 'discord_voice_enabled' as const,
-   is_league: 'is_league' as const,
-   trophies_enabled: 'trophies_enabled' as const
+   is_league: 'is_league' as const
 }
 
 export const enumTournamentsSelectColumnTournamentsAggregateBoolExpCorrArgumentsColumns = {
@@ -119660,6 +121343,7 @@ export const enumTournamentsSelectColumnTournamentsAggregateBoolExpVarSampArgume
 
 export const enumTournamentsUpdateColumn = {
    auto_start: 'auto_start' as const,
+   awards_enabled: 'awards_enabled' as const,
    banner: 'banner' as const,
    created_at: 'created_at' as const,
    description: 'description' as const,
@@ -119692,8 +121376,7 @@ export const enumTournamentsUpdateColumn = {
    organizer_steam_id: 'organizer_steam_id' as const,
    scheduling_mode: 'scheduling_mode' as const,
    start: 'start' as const,
-   status: 'status' as const,
-   trophies_enabled: 'trophies_enabled' as const
+   status: 'status' as const
 }
 
 export const enumVEventPlayerStatsSelectColumn = {

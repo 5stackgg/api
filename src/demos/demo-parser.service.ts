@@ -183,6 +183,38 @@ export type ParsedGrenadeEvent = {
   z?: number;
 };
 
+// One smoke's occupancy grid, derived by the parser from the map's collision
+// mesh rather than assumed to be a sphere. `occ` is a base64 bitmask of
+// dx*dy*dz bits, x-major then y then z: bit (k*dy + j)*dx + i is the cell whose
+// minimum corner sits at (ox,oy,oz) + (i,j,k)*vs, in source units.
+export type ParsedSmokeVolume = {
+  gid?: number;
+  round?: number;
+  start_tick: number;
+  end_tick?: number;
+  ox: number;
+  oy: number;
+  oz: number;
+  vs: number;
+  dx: number;
+  dy: number;
+  dz: number;
+  occ?: string;
+};
+
+// One molotov or incendiary burn. Flame positions come straight off the demo —
+// the engine networks each flame individually — so this is the exact ground the
+// fire denied and exactly when, including flames a smoke put out early.
+export type ParsedInferno = {
+  id: number;
+  round?: number;
+  thrower?: string;
+  thrower_team?: string;
+  start_tick: number;
+  end_tick?: number;
+  fires?: Array<{ x: number; y: number; z: number; s: number; e: number }>;
+};
+
 export type ParsedDemo = {
   total_ticks: number;
   tick_rate: number;
@@ -212,6 +244,8 @@ export type ParsedDemo = {
     gid: number;
     pts: Array<{ t: number; x: number; y: number; z: number }>;
   }>;
+  smoke_volumes?: ParsedSmokeVolume[];
+  infernos?: ParsedInferno[];
   flashes?: Array<{
     tick: number;
     round?: number;

@@ -1,9 +1,29 @@
-CREATE OR REPLACE FUNCTION public.calculate_tournament_trophies(_tournament_id uuid)
+CREATE OR REPLACE FUNCTION public.resolve_tournament_award(_tournament_id uuid, _placement int)
+RETURNS uuid
+LANGUAGE sql STABLE
+AS $$
+    SELECT COALESCE(
+        (SELECT ta.award_id
+           FROM public.tournament_awards ta
+          WHERE ta.tournament_id = _tournament_id
+            AND ta.placement = _placement),
+        (SELECT a.id
+           FROM public.awards a
+          WHERE a.system_key = CASE _placement
+                WHEN 0 THEN 'tournament_mvp'
+                WHEN 1 THEN 'tournament_gold'
+                WHEN 2 THEN 'tournament_silver'
+                WHEN 3 THEN 'tournament_bronze'
+          END)
+    );
+$$;
+
+CREATE OR REPLACE FUNCTION public.calculate_tournament_awards(_tournament_id uuid)
 RETURNS void
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    _trophies_enabled boolean;
+    _awards_enabled boolean;
     _final_stage_id uuid;
     _winning_team_id uuid;
     _runner_up_team_id uuid;
@@ -11,15 +31,15 @@ DECLARE
     _award_third boolean := false;
     _mvp_steam_id bigint;
 BEGIN
-    SELECT trophies_enabled INTO _trophies_enabled
+    SELECT awards_enabled INTO _awards_enabled
     FROM public.tournaments WHERE id = _tournament_id;
 
     -- Always clear prior auto rows so disabling / recalculating lands in a known state.
-    -- Manual awards survive; organizers own those explicitly.
-    DELETE FROM public.tournament_trophies
-    WHERE tournament_id = _tournament_id AND manual = false;
+    -- Hand-granted awards survive; organizers own those explicitly.
+    DELETE FROM public.award_recipients
+    WHERE tournament_id = _tournament_id AND source = 'tournament';
 
-    IF _trophies_enabled IS DISTINCT FROM true THEN
+    IF _awards_enabled IS DISTINCT FROM true THEN
         RETURN;
     END IF;
 
@@ -150,22 +170,24 @@ BEGIN
         LIMIT 1;
 
         IF _mvp_steam_id IS NOT NULL THEN
-            INSERT INTO public.tournament_trophies
-                (tournament_id, tournament_team_id, player_steam_id, placement)
+            INSERT INTO public.award_recipients
+                (award_id, tournament_id, tournament_team_id, player_steam_id, placement, source)
             VALUES
-                (_tournament_id, _winning_team_id, _mvp_steam_id, 0)
+                (public.resolve_tournament_award(_tournament_id, 0),
+                 _tournament_id, _winning_team_id, _mvp_steam_id, 0, 'tournament')
             ON CONFLICT DO NOTHING;
         END IF;
     END IF;
 
-    -- Team-level placement trophies. These are only awarded when the tournament
+    -- Team-level placement awards. These are only granted when the tournament
     -- entry is backed by a real team (tournament_teams.team_id); ad-hoc
-    -- tournament-only teams still only award player trophies.
+    -- tournament-only teams still only grant player awards.
     IF _winning_team_id IS NOT NULL THEN
-        INSERT INTO public.tournament_trophies
-            (tournament_id, tournament_team_id, team_id, placement)
+        INSERT INTO public.award_recipients
+            (award_id, tournament_id, tournament_team_id, team_id, placement, source)
         SELECT
-            _tournament_id, tournament_team.id, tournament_team.team_id, 1
+            public.resolve_tournament_award(_tournament_id, 1),
+            _tournament_id, tournament_team.id, tournament_team.team_id, 1, 'tournament'
         FROM public.tournament_teams tournament_team
         WHERE tournament_team.id = _winning_team_id
           AND tournament_team.tournament_id = _tournament_id
@@ -174,10 +196,11 @@ BEGIN
     END IF;
 
     IF _runner_up_team_id IS NOT NULL THEN
-        INSERT INTO public.tournament_trophies
-            (tournament_id, tournament_team_id, team_id, placement)
+        INSERT INTO public.award_recipients
+            (award_id, tournament_id, tournament_team_id, team_id, placement, source)
         SELECT
-            _tournament_id, tournament_team.id, tournament_team.team_id, 2
+            public.resolve_tournament_award(_tournament_id, 2),
+            _tournament_id, tournament_team.id, tournament_team.team_id, 2, 'tournament'
         FROM public.tournament_teams tournament_team
         WHERE tournament_team.id = _runner_up_team_id
           AND tournament_team.tournament_id = _tournament_id
@@ -186,10 +209,11 @@ BEGIN
     END IF;
 
     IF _award_third AND _third_team_id IS NOT NULL THEN
-        INSERT INTO public.tournament_trophies
-            (tournament_id, tournament_team_id, team_id, placement)
+        INSERT INTO public.award_recipients
+            (award_id, tournament_id, tournament_team_id, team_id, placement, source)
         SELECT
-            _tournament_id, tournament_team.id, tournament_team.team_id, 3
+            public.resolve_tournament_award(_tournament_id, 3),
+            _tournament_id, tournament_team.id, tournament_team.team_id, 3, 'tournament'
         FROM public.tournament_teams tournament_team
         WHERE tournament_team.id = _third_team_id
           AND tournament_team.tournament_id = _tournament_id
@@ -198,14 +222,15 @@ BEGIN
     END IF;
 
     -- Roster-wide gold / silver / bronze. ON CONFLICT skips any player who
-    -- already has a matching manual award at this placement. Leaving the
+    -- already has a matching hand-granted award at this placement. Leaving the
     -- conflict target unspecified keeps this function tolerant of both the
-    -- placement-aware trophy key and the partial MVP index.
+    -- placement-aware recipient key and the partial MVP index.
     IF _winning_team_id IS NOT NULL THEN
-        INSERT INTO public.tournament_trophies
-            (tournament_id, tournament_team_id, player_steam_id, placement)
+        INSERT INTO public.award_recipients
+            (award_id, tournament_id, tournament_team_id, player_steam_id, placement, source)
         SELECT
-            _tournament_id, _winning_team_id, roster.player_steam_id, 1
+            public.resolve_tournament_award(_tournament_id, 1),
+            _tournament_id, _winning_team_id, roster.player_steam_id, 1, 'tournament'
         FROM public.tournament_team_roster roster
         WHERE roster.tournament_team_id = _winning_team_id
           AND roster.tournament_id = _tournament_id
@@ -213,10 +238,11 @@ BEGIN
     END IF;
 
     IF _runner_up_team_id IS NOT NULL THEN
-        INSERT INTO public.tournament_trophies
-            (tournament_id, tournament_team_id, player_steam_id, placement)
+        INSERT INTO public.award_recipients
+            (award_id, tournament_id, tournament_team_id, player_steam_id, placement, source)
         SELECT
-            _tournament_id, _runner_up_team_id, roster.player_steam_id, 2
+            public.resolve_tournament_award(_tournament_id, 2),
+            _tournament_id, _runner_up_team_id, roster.player_steam_id, 2, 'tournament'
         FROM public.tournament_team_roster roster
         WHERE roster.tournament_team_id = _runner_up_team_id
           AND roster.tournament_id = _tournament_id
@@ -224,10 +250,11 @@ BEGIN
     END IF;
 
     IF _award_third AND _third_team_id IS NOT NULL THEN
-        INSERT INTO public.tournament_trophies
-            (tournament_id, tournament_team_id, player_steam_id, placement)
+        INSERT INTO public.award_recipients
+            (award_id, tournament_id, tournament_team_id, player_steam_id, placement, source)
         SELECT
-            _tournament_id, _third_team_id, roster.player_steam_id, 3
+            public.resolve_tournament_award(_tournament_id, 3),
+            _tournament_id, _third_team_id, roster.player_steam_id, 3, 'tournament'
         FROM public.tournament_team_roster roster
         WHERE roster.tournament_team_id = _third_team_id
           AND roster.tournament_id = _tournament_id

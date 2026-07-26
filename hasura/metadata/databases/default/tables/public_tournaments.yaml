@@ -88,19 +88,19 @@ array_relationships:
         table:
           name: tournament_teams
           schema: public
-  - name: trophies
+  - name: awards
     using:
       foreign_key_constraint_on:
         column: tournament_id
         table:
-          name: tournament_trophies
+          name: award_recipients
           schema: public
-  - name: trophy_configs
+  - name: award_configs
     using:
       foreign_key_constraint_on:
         column: tournament_id
         table:
-          name: tournament_trophy_configs
+          name: tournament_awards
           schema: public
 computed_fields:
   - name: can_cancel
@@ -457,7 +457,7 @@ select_permissions:
         - organizer_steam_id
         - start
         - status
-        - trophies_enabled
+        - awards_enabled
       computed_fields:
         - can_cancel
         - can_close_registration
@@ -513,7 +513,7 @@ select_permissions:
         - organizer_steam_id
         - start
         - status
-        - trophies_enabled
+        - awards_enabled
       computed_fields:
         - can_cancel
         - can_close_registration
@@ -555,7 +555,7 @@ select_permissions:
         - organizer_steam_id
         - start
         - status
-        - trophies_enabled
+        - awards_enabled
       computed_fields:
         - can_cancel
         - can_close_registration
@@ -610,7 +610,7 @@ update_permissions:
         - name
         - start
         - status
-        - trophies_enabled
+        - awards_enabled
       filter:
         is_organizer:
           _eq: true
@@ -632,7 +632,7 @@ update_permissions:
         - name
         - start
         - status
-        - trophies_enabled
+        - awards_enabled
       filter:
         is_organizer:
           _eq: true
