@@ -1,4 +1,6 @@
-import { randomBytes } from "crypto";
+import { createHash, randomBytes } from "crypto";
+import { readdirSync, readFileSync, statSync } from "fs";
+import { join } from "path";
 import { Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Client } from "pg";
@@ -20,6 +22,66 @@ const TEMPLATE_DB = "hasura";
 // template must have no concurrent access while it's being copied.
 const CLONE_LOCK_ID = 421337;
 
+// Where the fingerprint of the migrated template is kept. It lives in the
+// maintenance database so it survives dropping and rebuilding the template.
+const FINGERPRINT_TABLE = "public._sql_test_template";
+
+type Connection = {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+};
+
+function connectionFromEnv(): Connection {
+  return {
+    host: process.env.SQL_TEST_HOST!,
+    port: Number(process.env.SQL_TEST_PORT),
+    user: process.env.SQL_TEST_USER!,
+    password: process.env.SQL_TEST_PASSWORD!,
+  };
+}
+
+async function withAdmin<T>(
+  connection: Connection,
+  fn: (admin: Client) => Promise<T>,
+): Promise<T> {
+  // CREATE/DROP DATABASE cannot run inside a pool or a transaction; they need a
+  // raw client on the maintenance database.
+  const admin = new Client({ ...connection, database: "postgres" });
+  await admin.connect();
+  try {
+    return await fn(admin);
+  } finally {
+    await admin.end();
+  }
+}
+
+// Digest of every migration file. Migrations in this repo get edited in place
+// (squashed, renumbered), and an already-recorded version never re-runs, so a
+// reused template cannot be patched forward — any change means rebuild. Boot
+// phases are deliberately excluded: setup() hashes those files itself and
+// re-applies just the ones that changed, which costs nothing.
+function migrationsFingerprint(): string {
+  const root = join(process.cwd(), "hasura", "migrations");
+  const digest = createHash("sha1");
+
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir).sort()) {
+      const path = join(dir, entry);
+      if (statSync(path).isDirectory()) {
+        walk(path);
+        continue;
+      }
+      digest.update(path.slice(root.length));
+      digest.update(readFileSync(path));
+    }
+  };
+
+  walk(root);
+  return digest.digest("hex");
+}
+
 export interface SqlTestDb {
   container?: StartedPostgreSqlContainer;
   postgres: PostgresService;
@@ -27,13 +89,16 @@ export interface SqlTestDb {
   stop(): Promise<void>;
 }
 
-function makeServices(connection: {
-  host: string;
-  port: number;
-  user: string;
-  password: string;
-  database: string;
-}, loggerName: string): { postgres: PostgresService; hasura: HasuraService } {
+function makeServices(
+  connection: {
+    host: string;
+    port: number;
+    user: string;
+    password: string;
+    database: string;
+  },
+  loggerName: string,
+): { postgres: PostgresService; hasura: HasuraService } {
   const configService = new ConfigService({
     postgres: { connections: { default: { ...connection, max: 5 } } },
     app: { demosDomain: "demos.test", relayDomain: "relay.test" },
@@ -63,10 +128,15 @@ export async function endPool(postgres: PostgresService): Promise<void> {
 // Boots a throwaway Postgres and drives the real HasuraService.setup() through
 // the full migration -> enums -> functions -> views -> triggers pipeline, so
 // trigger/function behavior under test matches a fresh install exactly.
+//
+// `reuse` keeps the container alive between `yarn test:sql` runs and skips the
+// migration pipeline when nothing under hasura/migrations changed, which is the
+// difference between paying the boot cost once and paying it every invocation.
 export async function bootContainerAndMigrate(
   loggerName: string,
+  { reuse = false }: { reuse?: boolean } = {},
 ): Promise<SqlTestDb> {
-  const container = await new PostgreSqlContainer(IMAGE)
+  const builder = new PostgreSqlContainer(IMAGE)
     .withDatabase(TEMPLATE_DB)
     .withUsername("hasura")
     .withPassword("hasura")
@@ -98,24 +168,51 @@ export async function bootContainerAndMigrate(
       "timescaledb.max_background_workers=0",
       "-c",
       "timescaledb.telemetry_level=off",
-    ])
-    .start();
+    ]);
 
-  // The prod image provisions the timescaledb extension outside the migrations;
-  // do the same so create_hypertable migrations resolve.
+  const container = await (reuse ? builder.withReuse() : builder).start();
+
+  const connection = {
+    host: container.getHost(),
+    port: container.getPort(),
+    user: container.getUsername(),
+    password: container.getPassword(),
+  };
+
+  const stale = reuse ? await templateIsStale(connection) : true;
+
+  if (stale && reuse) {
+    await withAdmin(connection, async (admin) => {
+      await admin.query(
+        `DROP DATABASE IF EXISTS "${TEMPLATE_DB}" WITH (FORCE)`,
+      );
+      await admin.query(`CREATE DATABASE "${TEMPLATE_DB}"`);
+    });
+  }
+
   const { postgres, hasura } = makeServices(
-    {
-      host: container.getHost(),
-      port: container.getPort(),
-      user: container.getUsername(),
-      password: container.getPassword(),
-      database: container.getDatabase(),
-    },
+    { ...connection, database: TEMPLATE_DB },
     loggerName,
   );
-  await postgres.query("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE");
 
+  if (stale) {
+    // The prod image provisions the timescaledb extension outside the
+    // migrations; do the same so create_hypertable migrations resolve.
+    await postgres.query("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE");
+  }
+
+  // Runs even against an up-to-date template: setup() re-applies the boot-phase
+  // files whose digest changed, which is how an edited trigger or view reaches
+  // a reused container. With nothing to do it applies zero migrations.
   await hasura.setup();
+
+  if (reuse) {
+    await recordTemplateFingerprint(connection);
+  }
+
+  if (reuse) {
+    await sweepAbandonedClones(connection);
+  }
 
   return {
     container,
@@ -123,9 +220,68 @@ export async function bootContainerAndMigrate(
     hasura,
     stop: async () => {
       await endPool(postgres);
-      await container?.stop();
+      if (!reuse) {
+        await container?.stop();
+      }
     },
   };
+}
+
+async function templateIsStale(connection: Connection): Promise<boolean> {
+  return await withAdmin(connection, async (admin) => {
+    await admin.query(
+      `CREATE TABLE IF NOT EXISTS ${FINGERPRINT_TABLE} (fingerprint text NOT NULL)`,
+    );
+    const { rows } = await admin.query<{ fingerprint: string }>(
+      `SELECT fingerprint FROM ${FINGERPRINT_TABLE} LIMIT 1`,
+    );
+    const [template] = (
+      await admin.query<{ exists: boolean }>(
+        `SELECT to_regclass('pg_database') IS NOT NULL
+                AND EXISTS (SELECT 1 FROM pg_database WHERE datname = $1) AS exists`,
+        [TEMPLATE_DB],
+      )
+    ).rows;
+
+    return (
+      !template?.exists || rows[0]?.fingerprint !== migrationsFingerprint()
+    );
+  });
+}
+
+async function recordTemplateFingerprint(
+  connection: Connection,
+): Promise<void> {
+  await withAdmin(connection, async (admin) => {
+    await admin.query(`DELETE FROM ${FINGERPRINT_TABLE}`);
+    await admin.query(`INSERT INTO ${FINGERPRINT_TABLE} VALUES ($1)`, [
+      migrationsFingerprint(),
+    ]);
+  });
+}
+
+// Clones from crashed runs would otherwise pile up in a container that now
+// outlives the run. Skipped entirely while any clone still has a connection, so
+// a second test run against the same container never has its databases pulled
+// out from under it.
+async function sweepAbandonedClones(connection: Connection): Promise<void> {
+  await withAdmin(connection, async (admin) => {
+    const { rows: busy } = await admin.query<{ count: string }>(
+      `SELECT count(*) AS count FROM pg_stat_activity WHERE datname LIKE 'test\\_%'`,
+    );
+    if (Number(busy[0].count) > 0) {
+      return;
+    }
+
+    const { rows } = await admin.query<{ datname: string }>(
+      `SELECT datname FROM pg_database WHERE datname LIKE 'test\\_%'`,
+    );
+    for (const row of rows) {
+      await admin.query(
+        `DROP DATABASE IF EXISTS "${row.datname}" WITH (FORCE)`,
+      );
+    }
+  });
 }
 
 // Fast path used under test/jest-sql.config.js: the global setup already
@@ -134,22 +290,13 @@ export async function bootContainerAndMigrate(
 // that takes a fraction of a second instead of a container boot plus the
 // full migration pipeline.
 async function cloneFromTemplate(loggerName: string): Promise<SqlTestDb> {
-  const connection = {
-    host: process.env.SQL_TEST_HOST!,
-    port: Number(process.env.SQL_TEST_PORT),
-    user: process.env.SQL_TEST_USER!,
-    password: process.env.SQL_TEST_PASSWORD!,
-  };
+  const connection = connectionFromEnv();
 
   const database = `test_${loggerName
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")}_${randomBytes(4).toString("hex")}`;
 
-  // CREATE DATABASE cannot run inside a pool/transaction; use a raw client
-  // against the maintenance database.
-  const admin = new Client({ ...connection, database: "postgres" });
-  await admin.connect();
-  try {
+  await withAdmin(connection, async (admin) => {
     await admin.query("SELECT pg_advisory_lock($1)", [CLONE_LOCK_ID]);
     try {
       await admin.query(
@@ -158,9 +305,7 @@ async function cloneFromTemplate(loggerName: string): Promise<SqlTestDb> {
     } finally {
       await admin.query("SELECT pg_advisory_unlock($1)", [CLONE_LOCK_ID]);
     }
-  } finally {
-    await admin.end();
-  }
+  });
 
   const { postgres, hasura } = makeServices(
     { ...connection, database },
@@ -171,10 +316,16 @@ async function cloneFromTemplate(loggerName: string): Promise<SqlTestDb> {
     postgres,
     hasura,
     stop: async () => {
-      // The shared container outlives the suite (global teardown stops it);
-      // clones are cheap and die with it, so dropping them isn't worth a
-      // maintenance connection here.
       await endPool(postgres);
+      // The container now outlives the run, so a clone that is not dropped here
+      // stays on disk forever. A failure to drop must not fail the suite.
+      try {
+        await withAdmin(connection, (admin) =>
+          admin.query(`DROP DATABASE IF EXISTS "${database}" WITH (FORCE)`),
+        );
+      } catch {
+        // The sweep on the next run picks it up.
+      }
     },
   };
 }

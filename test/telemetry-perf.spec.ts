@@ -3,8 +3,11 @@ import { PostgresService } from "./../src/postgres/postgres.service";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 import { TelemetryService } from "./../src/telemetry/telemetry.service";
 
-// TEMPORARY benchmark — not a committed guard.
-describe("telemetry perf", () => {
+// Benchmark, not a guard: it seeds 20k matches and only prints timings, so a
+// normal `yarn test:sql` skips it. Run it with PERF=1.
+const benchmark = process.env.PERF === "1" ? describe : describe.skip;
+
+benchmark("telemetry perf", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
   let service: TelemetryService;
@@ -18,7 +21,7 @@ describe("telemetry perf", () => {
       {
         getConnection: () => ({
           setex: async () => "OK",
-          scan: async () => ["0", []],
+          scan: async (): Promise<[string, Array<string>]> => ["0", []],
         }),
       } as never,
       null as never,
@@ -76,11 +79,21 @@ describe("telemetry perf", () => {
        FROM generate_series(1, ${MATCHES * 10}) g`,
     );
 
-    // 10 players per match — the table the active-player join has to walk.
+    // check_match_lineup_players re-scans the whole table per row, so inserting
+    // 10 players a match this way is quadratic — minutes of seeding for a
+    // benchmark that measures a read. The rows are unique by construction
+    // (5 consecutive ids per lineup ordinal), so the check has nothing to catch.
+    await postgres.query(
+      "ALTER TABLE match_lineup_players DISABLE TRIGGER USER",
+    );
     await postgres.query(
       `INSERT INTO match_lineup_players (match_lineup_id, steam_id)
-       SELECT l.id, 76561190000000000 + (row_number() OVER ())
-       FROM match_lineups l, generate_series(1, 5) s`,
+       SELECT l.id, 76561190000000000 + ((l.rn - 1) * 5 + s)
+       FROM (SELECT id, row_number() OVER (ORDER BY id) AS rn FROM match_lineups) l,
+            generate_series(1, 5) s`,
+    );
+    await postgres.query(
+      "ALTER TABLE match_lineup_players ENABLE TRIGGER USER",
     );
 
     await postgres.query(
