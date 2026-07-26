@@ -1,7 +1,3 @@
--- Only the 5stack.gg panel ever writes these: every other install POSTs its
--- hourly heartbeat here. Panels are self-hosted and unauthenticated, so nothing
--- in these tables is trustworthy on its own — the receiver clamps and validates
--- before inserting, and aggregates should still be read as self-reported.
 CREATE TABLE IF NOT EXISTS public.telemetry_installs (
     install_id uuid PRIMARY KEY,
     first_seen_at timestamptz NOT NULL DEFAULT now(),

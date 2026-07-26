@@ -546,10 +546,8 @@ BEGIN
       SUM(CASE WHEN ar.placement = 3 THEN 1 ELSE 0 END)::int as bronze,
       COUNT(*)::int as total
     FROM award_recipients ar
-    -- Tournament placements carry a match type and a start date, so they honour
-    -- the window and type filters. Season placements are ranked from the season
-    -- itself: they have no match_options, so they only apply when no type filter
-    -- is set, and their date is the season's end.
+    -- Season placements have no match_options, so a match-type filter has to
+    -- exclude them rather than drop them for a missing join.
     LEFT JOIN tournaments t ON t.id = ar.tournament_id
     LEFT JOIN match_options mo ON mo.id = t.match_options_id
     LEFT JOIN seasons s ON s.id = ar.season_id
@@ -568,9 +566,8 @@ BEGIN
         OR (
           _match_type IS NULL
           AND (
-            -- A season's own medals are handed out at its close, which is the
-            -- exclusive end of its window, so match the season directly rather
-            -- than by date when the board is already scoped to one.
+            -- A season's medals land exactly on the exclusive end of its own
+            -- window, so a date compare would drop them.
             (_season_id IS NOT NULL AND ar.season_id = _season_id)
             OR (
               _season_id IS NULL

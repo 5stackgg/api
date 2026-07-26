@@ -1,12 +1,7 @@
--- Duplicate protection for hand-granted awards. This cannot be a partial
--- unique index: whether repeats are allowed lives on awards.allow_multiple.
---
--- The partial unique keys on (tournament_id, tournament_team_id, recipient,
--- placement) only bind when every column is present, so they do not cover a
--- hand-granted row — those carry a NULL placement, and a NULL
--- tournament_team_id whenever the recipient never appeared on a roster. NULLs
--- are distinct in a unique index, so without this trigger the same award could
--- be granted to the same recipient repeatedly.
+-- Duplicate protection for hand-granted awards. This cannot be a unique index:
+-- whether repeats are allowed lives on awards.allow_multiple, and a hand-granted
+-- row carries NULLs (placement, often tournament_team_id) which a unique index
+-- treats as distinct.
 CREATE OR REPLACE FUNCTION public.tbi_award_recipients() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$

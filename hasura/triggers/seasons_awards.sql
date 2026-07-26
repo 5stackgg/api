@@ -1,6 +1,4 @@
 -- A season has no status column, so "ended" is ends_at moving into the past.
--- Reopening a season (clearing ends_at or pushing it forward) drops the
--- calculated rows so they can be reseated when it ends again.
 CREATE OR REPLACE FUNCTION public.tau_seasons_awards() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$

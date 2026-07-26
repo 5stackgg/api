@@ -1,15 +1,3 @@
--- Awards: catalog + recipients, scopes, and season placements.
--- Squashed from the original award migrations; every statement is
--- idempotent so it applies to a fresh database and to one that already
--- ran the earlier split versions.
-
--- ── from 1873000000100_awards ─────────────────────────────────────────
--- Awards: promote tournament trophies into a first-class awards system.
---
--- tournament_trophies fused two ideas: what the award IS (name / artwork) and
--- WHO holds it. Splitting them lets awards be authored on their own and handed
--- out outside a tournament, while tournament placements stay automated.
-
 CREATE TABLE IF NOT EXISTS public.e_award_tiers (
     value text NOT NULL PRIMARY KEY,
     description text NOT NULL
@@ -41,8 +29,6 @@ CREATE TABLE IF NOT EXISTS public.awards (
         REFERENCES public.e_award_tiers(value),
     silhouette int CHECK (silhouette IS NULL OR (silhouette >= 0 AND silhouette <= 4)),
     image_url text,
-    -- Set only on the seeded awards the tournament automation falls back to.
-    -- These cannot be deleted; everything else in the catalog can.
     system_key text UNIQUE,
     allow_multiple boolean NOT NULL DEFAULT false,
     created_by_steam_id bigint REFERENCES public.players(steam_id) ON DELETE SET NULL,
@@ -140,7 +126,6 @@ ALTER TABLE public.award_recipients
     ALTER COLUMN tournament_team_id DROP NOT NULL,
     ALTER COLUMN placement DROP NOT NULL;
 
--- A tournament team only means anything alongside its tournament.
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -209,22 +194,16 @@ CREATE INDEX IF NOT EXISTS idx_award_recipients_award
 CREATE INDEX IF NOT EXISTS idx_award_recipients_source
     ON public.award_recipients(tournament_id, source);
 
--- ── from 1873000000200_award_tournament_owner ─────────────────────────────────────────
--- Awards authored from inside a tournament remember where they came from, so
--- the catalog can group them and other tournaments' pickers can hide them.
--- Nullable: catalog awards created from the awards page stay shared, and the
--- seeded system awards are never owned by anyone.
 ALTER TABLE public.awards
     ADD COLUMN IF NOT EXISTS tournament_id uuid
         REFERENCES public.tournaments(id) ON DELETE SET NULL;
 
--- Deleting the tournament must not take the award (and every grant hanging off
--- it) with it, hence SET NULL above: the award simply becomes unaffiliated.
+-- SET NULL, not CASCADE: deleting a tournament must not take the award and
+-- every grant hanging off it with it.
 CREATE INDEX IF NOT EXISTS idx_awards_tournament
     ON public.awards(tournament_id)
     WHERE tournament_id IS NOT NULL;
 
--- A built-in is shared by definition.
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -238,11 +217,6 @@ BEGIN
     END IF;
 END $$;
 
--- ── from 1873000000300_award_scopes ─────────────────────────────────────────
--- Awards can be scoped to whatever they were created for. Separate nullable
--- FKs rather than a (scope_type, scope_id) pair so Postgres still enforces
--- referential integrity and Hasura can expose a real relationship per scope.
---
 -- There is no `leagues` table (the platform runs one global league), so the
 -- league-shaped scope hangs off league_seasons.
 ALTER TABLE public.awards
@@ -283,10 +257,6 @@ BEGIN
     END IF;
 END $$;
 
--- ── from 1873000000500_season_awards ─────────────────────────────────────────
--- Season placements are calculated the same way tournament placements are, so
--- the recipient row needs to record which season it came from. Without this a
--- shared system award could not say which season it was won in.
 ALTER TABLE public.award_recipients
     ADD COLUMN IF NOT EXISTS season_id uuid
         REFERENCES public.seasons(id) ON DELETE CASCADE;
@@ -295,13 +265,10 @@ CREATE INDEX IF NOT EXISTS idx_award_recipients_season
     ON public.award_recipients(season_id, source)
     WHERE season_id IS NOT NULL;
 
--- Keeps a recalculation idempotent, mirroring the tournament recipient keys.
 CREATE UNIQUE INDEX IF NOT EXISTS award_recipients_season_player_key
     ON public.award_recipients(season_id, player_steam_id, placement)
     WHERE season_id IS NOT NULL AND player_steam_id IS NOT NULL;
 
--- Recipients can be scoped to every context `awards` can, otherwise a grant made
--- from an event or league season page loses what it was given for.
 ALTER TABLE public.award_recipients
     ADD COLUMN IF NOT EXISTS event_id uuid
         REFERENCES public.events(id) ON DELETE CASCADE,
@@ -314,7 +281,6 @@ CREATE INDEX IF NOT EXISTS idx_award_recipients_league_season
     ON public.award_recipients(league_season_id, source)
     WHERE league_season_id IS NOT NULL;
 
--- A grant belongs to one context, mirroring awards_single_scope_check.
 DO $$
 BEGIN
     IF NOT EXISTS (

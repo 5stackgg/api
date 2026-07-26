@@ -345,6 +345,9 @@ export class TelemetryService {
       `SELECT
          f.key                                                                AS key,
          count(*) FILTER (WHERE f.value->>'enabled' = 'true')                 AS enabled,
+         -- Separates "no panel turned it on" from "this feature has no switch":
+         -- a flagless feature reports a JSON null, which ->> yields as SQL NULL.
+         count(*) FILTER (WHERE f.value->>'enabled' IS NOT NULL)              AS flagged,
          count(*)                                                             AS reporting,
          count(*) FILTER (WHERE (f.value->>'count')::numeric > 0)             AS "installsUsing",
          coalesce(sum((f.value->>'count')::numeric), 0)                       AS total
@@ -359,6 +362,7 @@ export class TelemetryService {
       key: row.key,
       ...TelemetryService.toIntegers(row, [
         "enabled",
+        "flagged",
         "reporting",
         "installsUsing",
         "total",

@@ -1,6 +1,3 @@
--- Season placements, mirroring calculate_tournament_awards: the ladder decides
--- gold/silver/bronze and a performance metric decides MVP, so the two are not
--- always the same player.
 CREATE OR REPLACE FUNCTION public.calculate_season_awards(_season_id uuid)
 RETURNS void
 LANGUAGE plpgsql
@@ -8,8 +5,6 @@ AS $$
 DECLARE
     _mvp_steam_id bigint;
 BEGIN
-    -- Always clear prior calculated rows so a recalculation lands in a known
-    -- state. Hand-granted season awards are the organizer's and survive.
     DELETE FROM public.award_recipients
     WHERE season_id = _season_id AND source = 'season';
 
@@ -17,8 +12,6 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Ranking reuses the ELO leaderboard rather than re-deriving it, so the
-    -- award always agrees with what the leaderboard shows for the season.
     INSERT INTO public.award_recipients
         (award_id, season_id, player_steam_id, placement, source)
     SELECT
@@ -45,8 +38,6 @@ BEGIN
     WHERE ranked.rank <= 3
     ON CONFLICT DO NOTHING;
 
-    -- MVP: highest average in-match impact over the season, the same metric a
-    -- tournament MVP uses.
     SELECT pe.steam_id
       INTO _mvp_steam_id
     FROM public.player_elo pe

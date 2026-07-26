@@ -68,15 +68,18 @@ describe("telemetry perf", () => {
        FROM pairs`,
     );
 
+    // One player per lineup slot so no match ever gets the same steam id twice
+    // (a trigger rejects that), which keeps the join row counts realistic.
     await postgres.query(
       `INSERT INTO players (steam_id, name)
-       SELECT 76561190000000000 + g, 'p' || g FROM generate_series(1, 5000) g`,
+       SELECT 76561190000000000 + g, 'p' || g
+       FROM generate_series(1, ${MATCHES * 10}) g`,
     );
 
     // 10 players per match — the table the active-player join has to walk.
     await postgres.query(
       `INSERT INTO match_lineup_players (match_lineup_id, steam_id)
-       SELECT l.id, 76561190000000000 + ((row_number() OVER ()) % 5000) + 1
+       SELECT l.id, 76561190000000000 + (row_number() OVER ())
        FROM match_lineups l, generate_series(1, 5) s`,
     );
 

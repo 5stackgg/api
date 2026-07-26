@@ -1,8 +1,5 @@
--- The system_key awards are what resolve_tournament_award falls back to when a
--- placement has no override. Delete one and calculate_tournament_awards starts
--- inserting a NULL award_id, so finishing a tournament fails outright. The
--- delete action already refuses, but guard the table too: a raw SQL delete or a
--- future code path must not be able to break tournament completion.
+-- Deleting a system_key award makes calculate_tournament_awards insert a NULL
+-- award_id, so finishing a tournament fails outright.
 CREATE OR REPLACE FUNCTION public.tbd_awards() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$

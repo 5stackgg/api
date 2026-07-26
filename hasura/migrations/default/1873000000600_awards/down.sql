@@ -1,4 +1,3 @@
--- ── from 1873000000500_season_awards ─────────────────────────────────────────
 DROP TRIGGER IF EXISTS tau_seasons_awards ON public.seasons;
 DROP FUNCTION IF EXISTS public.tau_seasons_awards();
 DROP FUNCTION IF EXISTS public.calculate_season_awards(uuid);
@@ -34,7 +33,6 @@ ALTER TABLE public.award_recipients
 
 DELETE FROM public.e_award_sources WHERE value = 'season';
 
--- ── from 1873000000300_award_scopes ─────────────────────────────────────────
 ALTER TABLE public.awards
     DROP CONSTRAINT IF EXISTS awards_single_scope_check;
 
@@ -60,7 +58,6 @@ BEGIN
     END IF;
 END $$;
 
--- ── from 1873000000200_award_tournament_owner ─────────────────────────────────────────
 ALTER TABLE public.awards
     DROP CONSTRAINT IF EXISTS awards_system_award_is_shared_check;
 
@@ -69,7 +66,6 @@ DROP INDEX IF EXISTS public.idx_awards_tournament;
 ALTER TABLE public.awards
     DROP COLUMN IF EXISTS tournament_id;
 
--- ── from 1873000000100_awards ─────────────────────────────────────────
 -- These are created in later boot phases (hasura/functions, hasura/triggers)
 -- and are not reverted by re-running migrations, so they must be dropped here
 -- before the tables they depend on.

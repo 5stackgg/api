@@ -1200,6 +1200,7 @@ type TelemetryFleetTotals {
 type TelemetryFeatureAdoption {
   key: String!
   enabled: Int!
+  flagged: Int!
   reporting: Int!
   installsUsing: Int!
   total: Int!
