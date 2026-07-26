@@ -29,6 +29,14 @@ export class TelemetryService {
     string,
     { setting: string; defaultEnabled: boolean }
   > = {
+    // Not every switch is a `public.` setting — auto highlight generation is
+    // an unprefixed one, and the GPU workloads below are toggled per node.
+    highlights: { setting: "auto_generate_match_clips", defaultEnabled: false },
+    highlights_imported: {
+      setting: "auto_generate_match_clips_imported",
+      defaultEnabled: false,
+    },
+    clip_branding: { setting: "clip_bake_branding", defaultEnabled: false },
     leagues: { setting: "public.leagues_enabled", defaultEnabled: false },
     seasons: { setting: "public.seasons_enabled", defaultEnabled: false },
     events: { setting: "public.events_enabled", defaultEnabled: false },
@@ -164,6 +172,7 @@ export class TelemetryService {
         enabled: counts.nodes_enabled,
         online: counts.nodes_online,
         regions: counts.nodes_regions,
+        gpu: counts.gpu_nodes,
       },
       servers: {
         total: counts.servers_total,
@@ -302,6 +311,7 @@ export class TelemetryService {
     const [row] = await this.postgres.query<Array<Record<string, string>>>(
       `SELECT
          coalesce(sum((payload->'nodes'->>'total')::numeric), 0)              AS "gameServerNodes",
+         coalesce(sum((payload->'nodes'->>'gpu')::numeric), 0)                AS "gpuNodes",
          coalesce(sum((payload->'servers'->>'total')::numeric), 0)            AS servers,
          coalesce(sum((payload->'servers'->>'dedicated')::numeric), 0)        AS "dedicatedServers",
          coalesce(sum((payload->'servers'->>'public')::numeric), 0)           AS "publicServers",
@@ -323,6 +333,7 @@ export class TelemetryService {
 
     return TelemetryService.toIntegers(row, [
       "gameServerNodes",
+      "gpuNodes",
       "servers",
       "dedicatedServers",
       "publicServers",
@@ -517,6 +528,7 @@ export class TelemetryService {
         enabled: int(nodes.enabled),
         online: int(nodes.online),
         regions: int(nodes.regions),
+        gpu: int(nodes.gpu),
       },
       servers: {
         total: int(servers.total),
@@ -639,7 +651,7 @@ export class TelemetryService {
     settings: Map<string, string>,
     counts: TelemetryCounts,
   ): Record<string, TelemetryFeature> {
-    const usage: Record<string, number> = {
+    const usage: Record<string, number | null> = {
       tournaments: counts.tournaments,
       leagues: counts.league_seasons,
       seasons: counts.seasons,
@@ -659,6 +671,16 @@ export class TelemetryService {
       sanctions: counts.sanctions,
       api_keys: counts.api_keys,
       gamedata_validations: counts.gamedata_validations,
+      demo_playback: counts.demos,
+      live_streaming: null,
+    };
+
+    // Switched per GPU node instead of by a setting: on means at least one node
+    // is currently carrying that workload.
+    const gpuWorkloads: Record<string, boolean> = {
+      demo_playback: counts.gpu_demo_nodes > 0,
+      clip_renders: counts.gpu_render_nodes > 0,
+      live_streaming: counts.gpu_stream_nodes > 0,
     };
 
     const features: Record<string, TelemetryFeature> = {};
@@ -666,6 +688,7 @@ export class TelemetryService {
     for (const key of new Set([
       ...Object.keys(TelemetryService.FeatureFlags),
       ...Object.keys(usage),
+      ...Object.keys(gpuWorkloads),
     ])) {
       const flag = TelemetryService.FeatureFlags[key];
 
@@ -675,7 +698,7 @@ export class TelemetryService {
               settings.get(flag.setting),
               flag.defaultEnabled,
             )
-          : null,
+          : (gpuWorkloads[key] ?? null),
         count: usage[key] ?? null,
       };
     }
@@ -801,6 +824,17 @@ export class TelemetryService {
         (SELECT count(DISTINCT region) FROM public.game_server_nodes
           WHERE region IS NOT NULL)                                                      AS nodes_regions,
 
+        -- Demo playback, clip rendering and live streaming are each switched
+        -- per GPU node rather than by a setting, so "on" means at least one
+        -- node is carrying that workload.
+        (SELECT count(*) FROM public.game_server_nodes WHERE gpu)                        AS gpu_nodes,
+        (SELECT count(*) FROM public.game_server_nodes
+          WHERE gpu AND gpu_demos_enabled)                                               AS gpu_demo_nodes,
+        (SELECT count(*) FROM public.game_server_nodes
+          WHERE gpu AND gpu_rendering_enabled)                                           AS gpu_render_nodes,
+        (SELECT count(*) FROM public.game_server_nodes
+          WHERE gpu AND gpu_streaming_enabled)                                           AS gpu_stream_nodes,
+
         (SELECT count(*) FROM public.servers)                                            AS servers_total,
         (SELECT count(*) FROM public.servers WHERE enabled)                              AS servers_enabled,
         (SELECT count(*) FROM public.servers WHERE is_dedicated)                         AS servers_dedicated,
@@ -854,14 +888,14 @@ export class TelemetryService {
            JOIN public.matches m
              ON m.lineup_1_id = p.match_lineup_id OR m.lineup_2_id = p.match_lineup_id
           WHERE p.steam_id IS NOT NULL
-            AND m.started_at IS NOT NULL
+            AND ${TelemetryService.nativeMatch("m")}
             AND m.effective_at >= now() - interval '7 days')                             AS players_active_7d,
         (SELECT count(DISTINCT p.steam_id)
            FROM public.match_lineup_players p
            JOIN public.matches m
              ON m.lineup_1_id = p.match_lineup_id OR m.lineup_2_id = p.match_lineup_id
           WHERE p.steam_id IS NOT NULL
-            AND m.started_at IS NOT NULL
+            AND ${TelemetryService.nativeMatch("m")}
             AND m.effective_at >= now() - interval '30 days')                            AS players_active_30d,
 
         (SELECT count(*) FROM public.tournaments)                                        AS tournaments,

@@ -16,6 +16,7 @@ export type TelemetryPayload = {
     enabled: number;
     online: number;
     regions: number;
+    gpu: number;
   };
   servers: {
     total: number;
