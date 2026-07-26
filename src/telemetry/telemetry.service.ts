@@ -765,16 +765,33 @@ export class TelemetryService {
         (SELECT coalesce(sum(max_players), 0) FROM public.servers)                       AS servers_capacity,
 
         (SELECT count(*) FROM public.matches)                                            AS matches_created,
-        (SELECT count(*) FROM public.matches WHERE started_at IS NOT NULL)               AS matches_ran,
+        (SELECT count(*) FROM public.matches WHERE ${TelemetryService.NativeMatch})      AS matches_ran,
         (SELECT count(*) FROM public.matches
-          WHERE started_at IS NOT NULL AND effective_at >= now() - interval '7 days')    AS matches_week,
+          WHERE ${TelemetryService.NativeMatch}
+            AND effective_at >= now() - interval '7 days')                               AS matches_week,
         (SELECT count(*) FROM public.matches
-          WHERE started_at IS NOT NULL AND effective_at >= now() - interval '30 days')   AS matches_month,
+          WHERE ${TelemetryService.NativeMatch}
+            AND effective_at >= now() - interval '30 days')                              AS matches_month,
         (SELECT count(*) FROM public.matches
-          WHERE started_at IS NOT NULL AND effective_at >= now() - interval '365 days')  AS matches_year,
-        (SELECT count(*) FROM public.match_maps WHERE status = 'Finished')               AS maps_played,
-        (SELECT count(*) FROM public.matches WHERE source <> '5stack')                   AS matches_external,
-        (SELECT count(*) FROM public.matches WHERE source = 'faceit')                    AS matches_faceit,
+          WHERE ${TelemetryService.NativeMatch}
+            AND effective_at >= now() - interval '365 days')                             AS matches_year,
+        (SELECT count(*) FROM public.match_maps mm
+           JOIN public.matches m ON m.id = mm.match_id
+          WHERE mm.status = 'Finished'
+            AND ${TelemetryService.NativeMatch.replace(/\b(source|external_id|started_at)\b/g, "m.$1")})
+                                                                                         AS maps_played,
+
+        (SELECT count(*) FROM public.matches WHERE ${TelemetryService.ImportedMatch})     AS matches_external,
+        (SELECT count(*) FROM public.matches
+          WHERE ${TelemetryService.ImportedMatch}
+            AND effective_at >= now() - interval '7 days')                                AS matches_external_week,
+        (SELECT count(*) FROM public.matches
+          WHERE ${TelemetryService.ImportedMatch}
+            AND effective_at >= now() - interval '30 days')                               AS matches_external_month,
+        (SELECT count(*) FROM public.matches
+          WHERE ${TelemetryService.ImportedMatch}
+            AND effective_at >= now() - interval '365 days')                              AS matches_external_year,
+        (SELECT count(*) FROM public.matches WHERE source = 'faceit')                     AS matches_faceit,
 
         (SELECT count(DISTINCT b.match_id) FROM public.tournament_brackets b
           WHERE b.match_id IS NOT NULL)                                                  AS matches_tournament,

@@ -201,7 +201,9 @@ export class AwardsController {
     @Param("filename") filename: string,
     @Res() res: Response,
   ) {
-    if (!/^[A-Za-z0-9._-]+$/.test(filename)) {
+    // The character class alone still admits ".." — the key is built by
+    // concatenation, so keep anything that reads as a path segment out.
+    if (!/^[A-Za-z0-9._-]+$/.test(filename) || filename.includes("..")) {
       throw new NotFoundException("Award image not found");
     }
 

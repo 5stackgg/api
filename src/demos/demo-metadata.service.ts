@@ -782,6 +782,11 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     impact_x: s.impact_x ?? null,
     impact_y: s.impact_y ?? null,
     impact_z: s.impact_z ?? null,
+    // Where a missed round met world geometry, so the replay can stop the
+    // tracer at the wall instead of flying it a fixed distance through it.
+    miss_x: s.miss_x ?? null,
+    miss_y: s.miss_y ?? null,
+    miss_z: s.miss_z ?? null,
   }));
 
   const mapGrenade = (

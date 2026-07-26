@@ -9,6 +9,13 @@ object_relationships:
     using:
       foreign_key_constraint_on: match_options_id
 array_relationships:
+  - name: awards
+    using:
+      foreign_key_constraint_on:
+        column: league_season_id
+        table:
+          name: award_recipients
+          schema: public
   - name: match_weeks
     using:
       foreign_key_constraint_on:

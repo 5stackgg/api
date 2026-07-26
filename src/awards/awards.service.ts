@@ -29,6 +29,9 @@ export interface AwardRow {
   system_key: string | null;
   allow_multiple: boolean;
   tournament_id: string | null;
+  event_id: string | null;
+  season_id: string | null;
+  league_season_id: string | null;
   created_by_steam_id: string | null;
   created_at: string;
   updated_at: string;

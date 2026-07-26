@@ -1,4 +1,7 @@
+import { Logger } from "@nestjs/common";
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { AwardsService } from "./../src/awards/awards.service";
+import { AwardsController } from "./../src/awards/awards.controller";
 import { Fixtures } from "./utils/fixtures";
 import { TournamentFixtures } from "./utils/tournament-fixtures";
 import {
@@ -543,6 +546,68 @@ describe("awards (SQL-driven)", () => {
       expect(String(rows[3].player_steam_id)).toBe(String(players[2]));
     });
 
+    it("counts season medals on the awards leaderboard", async () => {
+      const [season] = await postgres.query<Array<{ id: string }>>(
+        "INSERT INTO seasons (starts_at) VALUES (now()) RETURNING id",
+      );
+      const players = await fx.players(3);
+
+      await seedSeasonElo(season.id, [
+        { steam: players[0], elo: 1400, impact: 1.0 },
+        { steam: players[1], elo: 1300, impact: 1.0 },
+        { steam: players[2], elo: 1200, impact: 1.0 },
+      ]);
+
+      await postgres.query("SELECT calculate_season_awards($1)", [season.id]);
+
+      // value = gold, tertiary_value = bronze, matches_played = mvp.
+      const rows = await postgres.query<
+        Array<{
+          player_steam_id: string;
+          value: string;
+          tertiary_value: string;
+          matches_played: number;
+        }>
+      >(
+        `SELECT player_steam_id, value, tertiary_value, matches_played
+           FROM get_leaderboard('awards', 0)`,
+      );
+      const board = new Map(rows.map((r) => [String(r.player_steam_id), r]));
+
+      const champion = board.get(String(players[0]));
+      expect(Number(champion.value)).toBe(1);
+      expect(Number(champion.matches_played)).toBe(1);
+      expect(Number(board.get(String(players[2])).tertiary_value)).toBe(1);
+    });
+
+    it("breaks an elo tie deterministically", async () => {
+      const [season] = await postgres.query<Array<{ id: string }>>(
+        "INSERT INTO seasons (starts_at) VALUES (now()) RETURNING id",
+      );
+      const players = await fx.players(3);
+
+      await seedSeasonElo(season.id, [
+        { steam: players[0], elo: 1200, impact: 1.0 },
+        { steam: players[1], elo: 1200, impact: 1.0 },
+        { steam: players[2], elo: 1200, impact: 1.0 },
+      ]);
+
+      const placements = async () => {
+        await postgres.query("SELECT calculate_season_awards($1)", [season.id]);
+        const rows = await postgres.query<
+          Array<{ placement: number; player_steam_id: string }>
+        >(
+          `SELECT placement, player_steam_id FROM award_recipients
+            WHERE season_id = $1 AND source = 'season' AND placement > 0
+            ORDER BY placement`,
+          [season.id],
+        );
+        return rows.map((r) => `${r.placement}:${r.player_steam_id}`);
+      };
+
+      expect(await placements()).toEqual(await placements());
+    });
+
     it("recalculates without duplicating, and keeps hand-granted rows", async () => {
       const [season] = await postgres.query<Array<{ id: string }>>(
         "INSERT INTO seasons (starts_at) VALUES (now()) RETURNING id",
@@ -657,6 +722,255 @@ describe("awards (SQL-driven)", () => {
         [awardId],
       );
       expect(Number(c)).toBe(1);
+    });
+  });
+  // The table permissions are read-only, so every write path runs through the
+  // action layer. These cover the authorization it adds on top of the SQL
+  // constraints exercised above.
+  describe("actions", () => {
+    let controller: AwardsController;
+    let createFloor: string;
+    let grantFloor: string;
+
+    beforeEach(() => {
+      createFloor = "administrator";
+      grantFloor = "administrator";
+
+      const service = new AwardsService(
+        new Logger("AwardsActionTest"),
+        // No test touches artwork, so a stub that fails loudly is enough.
+        {
+          put: jest.fn(),
+          remove: jest.fn(),
+          has: jest.fn().mockResolvedValue(false),
+        } as never,
+        postgres,
+      );
+
+      controller = new AwardsController(service, {
+        getSetting: async (name: string) =>
+          name.includes("create") ? createFloor : grantFloor,
+      } as never);
+    });
+
+    const user = (steam_id: string, role: string) =>
+      ({ steam_id, role }) as never;
+
+    const rosterOf = async (tournamentId: string) => {
+      const [row] = await postgres.query<
+        Array<{ player_steam_id: string; team_id: string }>
+      >(
+        `SELECT r.player_steam_id, tt.team_id
+           FROM tournament_team_roster r
+           JOIN tournament_teams tt ON tt.id = r.tournament_team_id
+          WHERE r.tournament_id = $1
+          LIMIT 1`,
+        [tournamentId],
+      );
+      return row;
+    };
+
+    describe("saveAward", () => {
+      it("rejects a role below the create floor", async () => {
+        const steam = await fx.player();
+
+        await expect(
+          controller.saveAward({
+            name: "Rejected",
+            tier: "special",
+            user: user(steam, "user"),
+          }),
+        ).rejects.toThrow("permission to manage awards");
+      });
+
+      it("lets a tournament organizer scope an award to their own tournament", async () => {
+        const t = await tfx.createTournament(SE4);
+        createFloor = "user";
+
+        const award = await controller.saveAward({
+          name: "Organizer's Pick",
+          tier: "special",
+          tournament_id: t.id,
+          user: user(t.organizer, "user"),
+        });
+
+        expect(award.tournament_id).toBe(t.id);
+      });
+
+      it("refuses to scope an award to someone else's tournament", async () => {
+        const t = await tfx.createTournament(SE4);
+        const stranger = await fx.player();
+        createFloor = "user";
+
+        await expect(
+          controller.saveAward({
+            name: "Not Mine",
+            tier: "special",
+            tournament_id: t.id,
+            user: user(stranger, "user"),
+          }),
+        ).rejects.toThrow("Not the tournament organizer");
+      });
+
+      it("keeps event, season and league scoping to administrators", async () => {
+        const season = await fx.season(new Date().toISOString());
+        createFloor = "user";
+
+        await expect(
+          controller.saveAward({
+            name: "Season Special",
+            tier: "special",
+            season_id: season,
+            user: user(await fx.player(), "tournament_organizer"),
+          }),
+        ).rejects.toThrow("Only administrators");
+
+        const award = await controller.saveAward({
+          name: "Season Special",
+          tier: "special",
+          season_id: season,
+          user: user(await fx.player(), "administrator"),
+        });
+        expect(award.season_id).toBe(season);
+      });
+    });
+
+    describe("deleteAward", () => {
+      it("refuses to delete a built-in award", async () => {
+        await expect(
+          controller.deleteAward({
+            id: await systemAward("tournament_gold"),
+            user: user(await fx.player(), "administrator"),
+          }),
+        ).rejects.toThrow("cannot be deleted");
+      });
+    });
+
+    describe("grantAward", () => {
+      it("rejects a global grant from a role below the grant floor", async () => {
+        const awardId = await createAward("Community Pick");
+
+        await expect(
+          controller.grantAward({
+            award_id: awardId,
+            player_steam_id: await fx.player(),
+            user: user(await fx.player(), "tournament_organizer"),
+          }),
+        ).rejects.toThrow("permission to grant awards");
+      });
+
+      it("lets an organizer below the floor grant inside their own tournament", async () => {
+        const t = await playedOutCup();
+        const awardId = await createAward("Clutch King");
+        const roster = await rosterOf(t.id);
+
+        const granted = await controller.grantAward({
+          award_id: awardId,
+          player_steam_id: roster.player_steam_id,
+          tournament_id: t.id,
+          user: user(t.organizer, "user"),
+        });
+
+        expect(granted.id).toBeTruthy();
+
+        // ...but not in a tournament they do not run.
+        const other = await tfx.createTournament(SE4);
+        await expect(
+          controller.grantAward({
+            award_id: awardId,
+            player_steam_id: roster.player_steam_id,
+            tournament_id: other.id,
+            user: user(t.organizer, "user"),
+          }),
+        ).rejects.toThrow("Not the tournament organizer");
+      });
+
+      it("refuses a recipient who never played in the tournament", async () => {
+        const t = await playedOutCup();
+        const awardId = await createAward("Outsider");
+
+        await expect(
+          controller.grantAward({
+            award_id: awardId,
+            player_steam_id: await fx.player(),
+            tournament_id: t.id,
+            user: user(t.organizer, "user"),
+          }),
+        ).rejects.toThrow("not part of this tournament");
+      });
+
+      it("refuses a grant that names more than one scope", async () => {
+        const t = await tfx.createTournament(SE4);
+        const season = await fx.season(new Date().toISOString());
+        const awardId = await createAward("Confused");
+
+        await expect(
+          controller.grantAward({
+            award_id: awardId,
+            player_steam_id: await fx.player(),
+            tournament_id: t.id,
+            season_id: season,
+            user: user(await fx.player(), "administrator"),
+          }),
+        ).rejects.toThrow("one scope at most");
+      });
+
+      it("stamps the season on a season-scoped grant", async () => {
+        const season = await fx.season(new Date().toISOString());
+        const awardId = await createAward("Season Special");
+        const steam = await fx.player();
+
+        const granted = await controller.grantAward({
+          award_id: awardId,
+          player_steam_id: steam,
+          season_id: season,
+          user: user(await fx.player(), "administrator"),
+        });
+
+        const [row] = await postgres.query<Array<{ season_id: string }>>(
+          "SELECT season_id FROM award_recipients WHERE id = $1",
+          [granted.id],
+        );
+        expect(row.season_id).toBe(season);
+      });
+    });
+
+    describe("revokeAward", () => {
+      it("refuses to revoke a calculated tournament placement", async () => {
+        const t = await playedOutCup();
+        const [calculated] = await postgres.query<Array<{ id: string }>>(
+          `SELECT id FROM award_recipients
+            WHERE tournament_id = $1 AND source = 'tournament' LIMIT 1`,
+          [t.id],
+        );
+
+        await expect(
+          controller.revokeAward({
+            id: calculated.id,
+            user: user(await fx.player(), "administrator"),
+          }),
+        ).rejects.toThrow("managed by the tournament");
+      });
+
+      it("removes a hand-granted row", async () => {
+        const awardId = await createAward("Removable");
+        const granted = await controller.grantAward({
+          award_id: awardId,
+          player_steam_id: await fx.player(),
+          user: user(await fx.player(), "administrator"),
+        });
+
+        await controller.revokeAward({
+          id: granted.id,
+          user: user(await fx.player(), "administrator"),
+        });
+
+        const rows = await postgres.query<Array<{ id: string }>>(
+          "SELECT id FROM award_recipients WHERE id = $1",
+          [granted.id],
+        );
+        expect(rows).toHaveLength(0);
+      });
     });
   });
 });

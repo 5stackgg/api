@@ -29,6 +29,9 @@ BEGIN
         WHERE existing.award_id = NEW.award_id
           AND existing.source = 'manual'
           AND existing.tournament_id IS NOT DISTINCT FROM NEW.tournament_id
+          AND existing.event_id IS NOT DISTINCT FROM NEW.event_id
+          AND existing.season_id IS NOT DISTINCT FROM NEW.season_id
+          AND existing.league_season_id IS NOT DISTINCT FROM NEW.league_season_id
           AND existing.id IS DISTINCT FROM NEW.id
           AND (
               (NEW.player_steam_id IS NOT NULL AND existing.player_steam_id = NEW.player_steam_id)

@@ -13,7 +13,7 @@ describe("telemetry (SQL-driven)", () => {
   let postgres: PostgresService;
   let fx: Fixtures;
   let service: TelemetryService;
-  let redis: { setex: jest.Mock; keys: jest.Mock };
+  let redis: { setex: jest.Mock; scan: jest.Mock };
 
   beforeAll(async () => {
     db = await bootMigratedDb("TelemetryTest");
@@ -22,7 +22,7 @@ describe("telemetry (SQL-driven)", () => {
 
     redis = {
       setex: jest.fn().mockResolvedValue("OK"),
-      keys: jest.fn().mockResolvedValue([]),
+      scan: jest.fn().mockResolvedValue(["0", []]),
     };
 
     service = new TelemetryService(

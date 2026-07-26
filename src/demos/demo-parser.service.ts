@@ -92,6 +92,11 @@ export type ParsedShotFired = {
   impact_x?: number;
   impact_y?: number;
   impact_z?: number;
+  // Where a missed round met world geometry, raycast against the map's
+  // collision mesh. Absent on maps with no mesh, or when the shot found nothing.
+  miss_x?: number;
+  miss_y?: number;
+  miss_z?: number;
 };
 
 export type ParsedPosition = {

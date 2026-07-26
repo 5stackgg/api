@@ -25,6 +25,9 @@ export type TelemetryPayload = {
     public: number;
     capacity: number;
   };
+  // Everything outside `external` counts only matches this panel actually ran.
+  // An imported demo is stamped with a started_at, so without the split it
+  // would read as a match the panel hosted.
   matches: {
     total: number;
     created: number;
@@ -37,6 +40,12 @@ export type TelemetryPayload = {
     tournament: number;
     scrim: number;
     league: number;
+    external: {
+      total: number;
+      week: number;
+      month: number;
+      year: number;
+    };
   };
   players: {
     registered: number;
