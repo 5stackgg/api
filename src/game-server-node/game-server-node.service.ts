@@ -1056,6 +1056,14 @@ export class GameServerNodeService {
                   },
                 },
                 restartPolicy: "Never",
+                dnsConfig: {
+                  options: [
+                    {
+                      name: "ndots",
+                      value: "1",
+                    },
+                  ],
+                },
                 containers: [
                   {
                     name: "validate-gamedata",
