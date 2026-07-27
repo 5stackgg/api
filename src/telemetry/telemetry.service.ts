@@ -109,6 +109,12 @@ export class TelemetryService {
     return (name: string) => (alias ? `${alias}.${name}` : name);
   }
 
+  // populate_game_servers materializes a `servers` row for every port pair in
+  // a node's range the moment the node is enabled, so a node with a 216 port
+  // range adds 108 rows nobody provisioned. Counting raw rows reports a fleet
+  // of thousands of servers that do not exist.
+  private static readonly RealServer = `(game_server_node_id IS NULL OR is_dedicated)`;
+
   private static activeLineups(interval: string) {
     const recent = `${TelemetryService.nativeMatch("m")}
       AND m.effective_at >= now() - interval '${interval}'`;
@@ -187,9 +193,7 @@ export class TelemetryService {
         total: counts.servers_total,
         enabled: counts.servers_enabled,
         dedicated: counts.servers_dedicated,
-        on_demand: counts.servers_on_demand,
         public: counts.servers_public,
-        capacity: counts.servers_capacity,
       },
       matches: {
         total: counts.matches_ran,
@@ -211,7 +215,9 @@ export class TelemetryService {
         },
       },
       players: {
+        known: counts.players_known,
         registered: counts.players_registered,
+        played: counts.players_played,
         active_7d: counts.players_active_7d,
         active_30d: counts.players_active_30d,
         teams: counts.teams_total,
@@ -324,7 +330,6 @@ export class TelemetryService {
          coalesce(sum((payload->'servers'->>'total')::numeric), 0)            AS servers,
          coalesce(sum((payload->'servers'->>'dedicated')::numeric), 0)        AS "dedicatedServers",
          coalesce(sum((payload->'servers'->>'public')::numeric), 0)           AS "publicServers",
-         coalesce(sum((payload->'servers'->>'capacity')::numeric), 0)         AS "serverCapacity",
          coalesce(sum((payload->'matches'->>'total')::numeric), 0)            AS matches,
          coalesce(sum((payload->'matches'->>'week')::numeric), 0)             AS "matchesWeek",
          coalesce(sum((payload->'matches'->>'month')::numeric), 0)            AS "matchesMonth",
@@ -332,7 +337,9 @@ export class TelemetryService {
          coalesce(sum((payload->'matches'->'external'->>'total')::numeric), 0) AS "matchesImported",
          coalesce(sum((payload->'matches'->'external'->>'month')::numeric), 0) AS "matchesImportedMonth",
          coalesce(sum((payload->'matches'->>'maps_played')::numeric), 0)      AS "mapsPlayed",
+         coalesce(sum((payload->'players'->>'known')::numeric), 0)            AS "playersKnown",
          coalesce(sum((payload->'players'->>'registered')::numeric), 0)       AS "playersRegistered",
+         coalesce(sum((payload->'players'->>'played')::numeric), 0)           AS "playersPlayed",
          coalesce(sum((payload->'players'->>'active_30d')::numeric), 0)       AS "playersActive30d",
          coalesce(sum((payload->'players'->>'teams')::numeric), 0)            AS teams
        FROM public.telemetry_installs
@@ -346,7 +353,6 @@ export class TelemetryService {
       "servers",
       "dedicatedServers",
       "publicServers",
-      "serverCapacity",
       "matches",
       "matchesWeek",
       "matchesMonth",
@@ -354,7 +360,9 @@ export class TelemetryService {
       "matchesImported",
       "matchesImportedMonth",
       "mapsPlayed",
+      "playersKnown",
       "playersRegistered",
+      "playersPlayed",
       "playersActive30d",
       "teams",
     ]);
@@ -543,9 +551,7 @@ export class TelemetryService {
         total: int(servers.total),
         enabled: int(servers.enabled),
         dedicated: int(servers.dedicated),
-        on_demand: int(servers.on_demand),
         public: int(servers.public),
-        capacity: int(servers.capacity),
       },
       matches: {
         total: int(matches.total),
@@ -567,7 +573,9 @@ export class TelemetryService {
         },
       },
       players: {
+        known: int(players.known),
         registered: int(players.registered),
+        played: int(players.played),
         active_7d: int(players.active_7d),
         active_30d: int(players.active_30d),
         teams: int(players.teams),
@@ -780,9 +788,9 @@ export class TelemetryService {
   }
 
   private async getSettings(): Promise<Map<string, string>> {
-    const rows = await this.collectQuery<Array<{ name: string; value: string }>>(
-      `SELECT name, value FROM public.settings`,
-    );
+    const rows = await this.collectQuery<
+      Array<{ name: string; value: string }>
+    >(`SELECT name, value FROM public.settings`);
 
     return new Map(rows.map(({ name, value }) => [name, value]));
   }
@@ -797,7 +805,9 @@ export class TelemetryService {
   }
 
   private async getMatchesByType(): Promise<Record<string, number>> {
-    const rows = await this.collectQuery<Array<{ type: string; count: string }>>(
+    const rows = await this.collectQuery<
+      Array<{ type: string; count: string }>
+    >(
       `SELECT o.type, count(*) AS count
          FROM public.matches m
          JOIN public.match_options o ON o.id = m.match_options_id
@@ -860,13 +870,13 @@ export class TelemetryService {
         (SELECT count(*) FROM public.game_server_nodes
           WHERE gpu AND gpu_streaming_enabled)                                           AS gpu_stream_nodes,
 
-        (SELECT count(*) FROM public.servers)                                            AS servers_total,
-        (SELECT count(*) FROM public.servers WHERE enabled)                              AS servers_enabled,
+        (SELECT count(*) FROM public.servers
+          WHERE ${TelemetryService.RealServer})                                          AS servers_total,
+        (SELECT count(*) FROM public.servers
+          WHERE ${TelemetryService.RealServer} AND enabled)                              AS servers_enabled,
         (SELECT count(*) FROM public.servers WHERE is_dedicated)                         AS servers_dedicated,
         (SELECT count(*) FROM public.servers
-          WHERE game_server_node_id IS NOT NULL)                                         AS servers_on_demand,
-        (SELECT count(*) FROM public.servers WHERE type <> 'Ranked')                     AS servers_public,
-        (SELECT coalesce(sum(max_players), 0) FROM public.servers)                       AS servers_capacity,
+          WHERE ${TelemetryService.RealServer} AND type <> 'Ranked')                     AS servers_public,
 
         (SELECT count(*) FROM public.matches)                                            AS matches_created,
         (SELECT count(*) FROM public.matches WHERE ${TelemetryService.nativeMatch()})      AS matches_ran,
@@ -906,7 +916,14 @@ export class TelemetryService {
         (SELECT count(DISTINCT r.match_id) FROM public.team_scrim_requests r
           WHERE r.match_id IS NOT NULL)                                                  AS matches_scrim,
 
-        (SELECT count(*) FROM public.players)                                            AS players_registered,
+        -- Connect events, lineup syncs, demo imports and sanctions all create a
+        -- players row, so the table is mostly steam ids that never signed in.
+        -- last_sign_in_at is only ever written by the Steam login callback.
+        (SELECT count(*) FROM public.players)                                            AS players_known,
+        (SELECT count(*) FROM public.players WHERE last_sign_in_at IS NOT NULL)          AS players_registered,
+        -- Stats land per map from live round events and from parsed demos, so
+        -- this is everyone who played rather than everyone who was rostered.
+        (SELECT count(DISTINCT steam_id) FROM public.player_match_map_stats)             AS players_played,
         (SELECT count(*) FROM public.teams)                                              AS teams_total,
         -- An OR across both lineup columns cannot use an index and forces a
         -- join over every lineup row. Feeding the two sides in separately lets

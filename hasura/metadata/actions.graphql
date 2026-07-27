@@ -1185,7 +1185,6 @@ type TelemetryFleetTotals {
   servers: Int!
   dedicatedServers: Int!
   publicServers: Int!
-  serverCapacity: Int!
   matches: Int!
   matchesWeek: Int!
   matchesMonth: Int!
@@ -1193,7 +1192,9 @@ type TelemetryFleetTotals {
   matchesImported: Int!
   matchesImportedMonth: Int!
   mapsPlayed: Int!
+  playersKnown: Int!
   playersRegistered: Int!
+  playersPlayed: Int!
   playersActive30d: Int!
   teams: Int!
 }
