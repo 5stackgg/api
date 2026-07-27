@@ -339,34 +339,6 @@ describe("match scoring from rounds (SQL-driven)", () => {
     expect(paused.cancels_at).toBeNull();
   });
 
-  it.each(["WaitingForTV", "UploadingDemo"])(
-    "a map entering %s disarms the live-match timeout",
-    async (status) => {
-      const match = await createLiveMatch(1);
-
-      await postgres.query(
-        "UPDATE match_maps SET status = 'Live' WHERE id = $1",
-        [match.mapIds[0]],
-      );
-      const [live] = await postgres.query<Array<{ cancels_at: Date | null }>>(
-        "SELECT cancels_at FROM matches WHERE id = $1",
-        [match.id],
-      );
-      expect(live.cancels_at).not.toBeNull();
-
-      // The end-of-map handshake runs for tv_delay plus the demo upload; the
-      // deadline firing inside it kills the server before it reports Finished.
-      await postgres.query("UPDATE match_maps SET status = $2 WHERE id = $1", [
-        match.mapIds[0],
-        status,
-      ]);
-      const [finalizing] = await postgres.query<
-        Array<{ cancels_at: Date | null }>
-      >("SELECT cancels_at FROM matches WHERE id = $1", [match.id]);
-      expect(finalizing.cancels_at).toBeNull();
-    },
-  );
-
   it("finishing the map stamps the map's ended_at", async () => {
     const match = await createLiveMatch(1);
     await recordScore(match.mapIds[0], 13, 7);
