@@ -326,6 +326,79 @@ describe("matchmaking (end to end)", () => {
     });
   });
 
+  describe("matches per pass", () => {
+    it("drains three matches out of a thirty player queue in one pass", async () => {
+      const lobbies = Array.from({ length: 30 }, (_, i) =>
+        makeLobby(`solo-${i}`, [5000 + (i % 5) * 10]),
+      );
+      await enqueue(lobbies);
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toHaveLength(3);
+      expect(queuedIn("us-east")).toHaveLength(0);
+      assertInvariants(lobbies);
+    });
+
+    it("matches what it can and leaves the remainder queued", async () => {
+      const lobbies = Array.from({ length: 25 }, (_, i) =>
+        makeLobby(`solo-${i}`, [5000]),
+      );
+      await enqueue(lobbies);
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toHaveLength(2);
+      expect(queuedIn("us-east")).toHaveLength(5);
+      assertInvariants(lobbies);
+    });
+
+    it("keeps unused lobbies claimed between matches instead of churning them", async () => {
+      const lobbies = Array.from({ length: 23 }, (_, i) =>
+        makeLobby(`solo-${i}`, [5000]),
+      );
+      await enqueue(lobbies);
+
+      const requeuedBefore = redis.zaddCount();
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      // two matches leave 3 lobbies over. releasing and re-claiming the
+      // spares between iterations would requeue them - and push a redundant
+      // queue update to every one of them - so each should be written back
+      // once per region key, at the end, and no more.
+      const leftover = queuedIn("us-east");
+      expect(leftover).toHaveLength(3);
+      expect(redis.zaddCount() - requeuedBefore).toBe(leftover.length * 2);
+    });
+
+    it("stops carving when the remainder cannot legally split", async () => {
+      // the duos sit outside the rank window of the long waiting solos, so the
+      // first match is the ten solos and the remainder is five duos - ten
+      // players that can never make two teams of five
+      const lobbies = [
+        ...Array.from({ length: 10 }, (_, i) =>
+          makeLobby(`solo-${i}`, [5000], { waitSeconds: 300 }),
+        ),
+        ...Array.from({ length: 5 }, (_, i) =>
+          makeLobby(`duo-${i}`, [9600, 9600], { waitSeconds: 5 }),
+        ),
+      ];
+      await enqueue(lobbies);
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(confirmations).toHaveLength(1);
+      expect(queuedIn("us-east").sort()).toEqual([
+        "duo-0",
+        "duo-1",
+        "duo-2",
+        "duo-3",
+        "duo-4",
+      ]);
+      assertInvariants(lobbies);
+    });
+  });
+
   describe("parties", () => {
     it("never splits a party across teams", async () => {
       const lobbies = [

@@ -106,11 +106,19 @@ export class FakeRedis {
     return 1;
   }
 
+  private zadds = 0;
+
   async zadd(key: string, score: number, member: string) {
+    this.zadds++;
     const set = this.zset(key);
     const isNew = !set.has(member);
     set.set(member, score);
     return isNew ? 1 : 0;
+  }
+
+  /** Total zadds issued, for asserting the queue is not churned needlessly. */
+  zaddCount() {
+    return this.zadds;
   }
 
   async zrem(key: string, member: string) {

@@ -278,127 +278,147 @@ export class MatchmakeService {
     return lobbyDetails;
   }
 
+  /**
+   * Carves as many matches as possible out of the queue in one pass.
+   *
+   * Lobbies stay claimed between iterations: a lobby that misses one match is a
+   * candidate for the next, and releasing it just to re-claim it would churn the
+   * queue keys and push a redundant queue update to everyone in it.
+   *
+   * Returns the number of players left unmatched, which the caller uses to
+   * decide whether another pass could help. 0 means "do not bother retrying".
+   */
   private async createMatches(
     region: string,
     type: e_match_types_enum,
     lobbies: Array<MatchmakingLobby>,
   ): Promise<number> {
     const requiredPlayers = ExpectedPlayers[type];
-    const totalPlayers = lobbies.reduce(
-      (acc, lobby) => acc + lobby.players.length,
-      0,
+
+    // lobbies we hold the lock for and have not committed to a match
+    const claimed = new Map<string, MatchmakingLobby>();
+    // lobbies we have not tried to claim yet
+    const untried = new Map<string, MatchmakingLobby>(
+      lobbies.map((lobby) => [lobby.lobbyId, lobby]),
     );
 
-    if (lobbies.length === 0) {
-      return 0;
-    }
-
-    if (totalPlayers < requiredPlayers) {
-      return totalPlayers;
-    }
-
-    // parties are atomic, so a queue can hold enough players and still have no
-    // legal split - five duos can never make two teams of five. nothing will
-    // change until the queue does, so report 0 rather than spinning the retry.
-    if (
-      !canFillTeams(
-        lobbies.map((lobby) => lobby.players.length),
-        requiredPlayers,
-      )
-    ) {
-      this.logger.warn(
-        `${type}/${region}: ${totalPlayers} queued but the party sizes cannot fill two lineups`,
-      );
-      return 0;
-    }
-
-    const selection = selectMatchCandidates(lobbies, requiredPlayers);
-
-    if (!selection) {
-      return totalPlayers;
-    }
-
-    // claim in preference order. selectMatchCandidates returns every lobby, not
-    // just the window, so lobbies that fail to claim are topped up from the tail.
-    const claimed: Array<MatchmakingLobby> = [];
-    const pending = new Set<string>();
-
-    for (const lobby of selection.candidates) {
-      if (claimed.length >= WINDOW_CAP) {
-        break;
-      }
-
-      let acquired = false;
-      try {
-        acquired = await this.claimLobby(lobby.lobbyId, lobby);
-      } catch (error) {
-        this.logger.error(`Error claiming lobby ${lobby.lobbyId}:`, error);
-        continue;
-      }
-
-      if (!acquired) {
-        // another region is matchmaking it - we never owned it, so it must not
-        // be requeued here
-        this.logger.warn(
-          `Unable to acquire lobby lock for ${lobby.lobbyId} - lobby is already being processed`,
-        );
-        continue;
-      }
-
-      claimed.push(lobby);
-      pending.add(lobby.lobbyId);
-    }
+    const countPlayers = (pool: Array<MatchmakingLobby>) =>
+      pool.reduce((acc, lobby) => acc + lobby.players.length, 0);
 
     try {
-      // everything below is pure until the confirmation, so the teams we pick
-      // are guaranteed to still be ours
-      let balanced = balanceTeams(claimed, requiredPlayers);
+      for (;;) {
+        const pool = [...claimed.values(), ...untried.values()];
+        const remainingPlayers = countPlayers(pool);
 
-      if (!balanced) {
-        // the anchor itself may be what makes the split impossible
-        balanced = balanceTeams(claimed, requiredPlayers, { pinAnchor: false });
-      }
-
-      if (!balanced) {
-        this.logger.warn(
-          `${type}/${region}: no valid split among ${claimed.length} claimed lobbies`,
-        );
-        return totalPlayers;
-      }
-
-      this.logger.log(
-        `${type}/${region} matched: elo diff ${balanced.avgRankDifference.toFixed(
-          1,
-        )} (win probability ${winProbability(
-          balanced.avgRankDifference,
-        ).toFixed(3)}), spread ${balanced.spread}, cost ${balanced.cost.toFixed(
-          1,
-        )}, ${balanced.nodesVisited} nodes, optimal ${balanced.exhausted}`,
-      );
-
-      const team1 = toMatchmakingTeam(balanced.team1);
-      const team2 = toMatchmakingTeam(balanced.team2);
-
-      // hand the locks to the confirmation, which re-ttls them, before awaiting
-      for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
-        pending.delete(lobbyId);
-      }
-
-      try {
-        await this.createMatchConfirmation(region, type, { team1, team2 });
-      } catch (error) {
-        this.logger.error(`Error creating match confirmation:`, error);
-        for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
-          pending.add(lobbyId);
+        if (remainingPlayers < requiredPlayers) {
+          return remainingPlayers;
         }
-        return totalPlayers;
-      }
 
-      return totalPlayers - requiredPlayers;
+        // parties are atomic, so a pool can hold enough players and still have
+        // no legal split - five duos can never make two teams of five. that
+        // cannot resolve on its own, so report 0 rather than spinning the retry.
+        if (
+          !canFillTeams(
+            pool.map((lobby) => lobby.players.length),
+            requiredPlayers,
+          )
+        ) {
+          this.logger.warn(
+            `${type}/${region}: ${remainingPlayers} queued but the party sizes cannot fill two lineups`,
+          );
+          return 0;
+        }
+
+        const selection = selectMatchCandidates(pool, requiredPlayers);
+
+        if (!selection) {
+          return remainingPlayers;
+        }
+
+        // top up the claimed pool in preference order. selectMatchCandidates
+        // returns every lobby rather than just the window, so lobbies that fail
+        // to claim are replaced from the tail.
+        for (const lobby of selection.candidates) {
+          if (claimed.size >= WINDOW_CAP) {
+            break;
+          }
+
+          if (claimed.has(lobby.lobbyId)) {
+            continue;
+          }
+
+          let acquired = false;
+          try {
+            acquired = await this.claimLobby(lobby.lobbyId, lobby);
+          } catch (error) {
+            this.logger.error(`Error claiming lobby ${lobby.lobbyId}:`, error);
+            untried.delete(lobby.lobbyId);
+            continue;
+          }
+
+          untried.delete(lobby.lobbyId);
+
+          if (!acquired) {
+            // another region is matchmaking it - we never owned it, so it must
+            // not be requeued here
+            this.logger.warn(
+              `Unable to acquire lobby lock for ${lobby.lobbyId} - lobby is already being processed`,
+            );
+            continue;
+          }
+
+          claimed.set(lobby.lobbyId, lobby);
+        }
+
+        // pure from here until the confirmation, so the teams we pick are
+        // guaranteed to still be ours
+        const claimedPool = [...claimed.values()];
+        const balanced =
+          balanceTeams(claimedPool, requiredPlayers) ??
+          // the anchor itself may be what makes the split impossible
+          balanceTeams(claimedPool, requiredPlayers, { pinAnchor: false });
+
+        if (!balanced) {
+          this.logger.warn(
+            `${type}/${region}: no valid split among ${claimed.size} claimed lobbies`,
+          );
+          return remainingPlayers;
+        }
+
+        this.logger.log(
+          `${type}/${region} matched: elo diff ${balanced.avgRankDifference.toFixed(
+            1,
+          )} (win probability ${winProbability(
+            balanced.avgRankDifference,
+          ).toFixed(3)}), spread ${balanced.spread}, cost ${balanced.cost.toFixed(
+            1,
+          )}, ${balanced.nodesVisited} nodes, optimal ${balanced.exhausted}`,
+        );
+
+        const matched = [...balanced.team1, ...balanced.team2];
+        const team1 = toMatchmakingTeam(balanced.team1);
+        const team2 = toMatchmakingTeam(balanced.team2);
+
+        // the confirmation re-ttls these locks and owns them from here
+        for (const lobby of matched) {
+          claimed.delete(lobby.lobbyId);
+        }
+
+        try {
+          await this.createMatchConfirmation(region, type, { team1, team2 });
+        } catch (error) {
+          this.logger.error(`Error creating match confirmation:`, error);
+          // ownership comes back to us, so the settle path requeues them
+          for (const lobby of matched) {
+            claimed.set(lobby.lobbyId, lobby);
+          }
+          return remainingPlayers;
+        }
+      }
     } finally {
-      // single settle path - every claimed lobby is either in the confirmed
-      // match or requeued here, exactly once, even if the above threw
-      for (const lobbyId of pending) {
+      // single settle path - every lobby we still hold is requeued exactly
+      // once, even if the loop threw
+      for (const lobbyId of claimed.keys()) {
         try {
           await this.releaseLobbyAndRequeue(lobbyId);
         } catch (error) {
