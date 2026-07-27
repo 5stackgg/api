@@ -27,7 +27,6 @@ export type TelemetryPayload = {
     enabled: number;
     dedicated: number;
     public: number;
-    capacity: number;
   };
   // Everything outside `external` counts only matches this panel actually ran.
   // An imported demo is stamped with a started_at, so without the split it

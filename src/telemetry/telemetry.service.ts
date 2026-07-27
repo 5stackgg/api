@@ -194,7 +194,6 @@ export class TelemetryService {
         enabled: counts.servers_enabled,
         dedicated: counts.servers_dedicated,
         public: counts.servers_public,
-        capacity: counts.servers_capacity,
       },
       matches: {
         total: counts.matches_ran,
@@ -331,7 +330,6 @@ export class TelemetryService {
          coalesce(sum((payload->'servers'->>'total')::numeric), 0)            AS servers,
          coalesce(sum((payload->'servers'->>'dedicated')::numeric), 0)        AS "dedicatedServers",
          coalesce(sum((payload->'servers'->>'public')::numeric), 0)           AS "publicServers",
-         coalesce(sum((payload->'servers'->>'capacity')::numeric), 0)         AS "serverCapacity",
          coalesce(sum((payload->'matches'->>'total')::numeric), 0)            AS matches,
          coalesce(sum((payload->'matches'->>'week')::numeric), 0)             AS "matchesWeek",
          coalesce(sum((payload->'matches'->>'month')::numeric), 0)            AS "matchesMonth",
@@ -355,7 +353,6 @@ export class TelemetryService {
       "servers",
       "dedicatedServers",
       "publicServers",
-      "serverCapacity",
       "matches",
       "matchesWeek",
       "matchesMonth",
@@ -555,7 +552,6 @@ export class TelemetryService {
         enabled: int(servers.enabled),
         dedicated: int(servers.dedicated),
         public: int(servers.public),
-        capacity: int(servers.capacity),
       },
       matches: {
         total: int(matches.total),
@@ -881,8 +877,6 @@ export class TelemetryService {
         (SELECT count(*) FROM public.servers WHERE is_dedicated)                         AS servers_dedicated,
         (SELECT count(*) FROM public.servers
           WHERE ${TelemetryService.RealServer} AND type <> 'Ranked')                     AS servers_public,
-        (SELECT coalesce(sum(max_players), 0) FROM public.servers
-          WHERE ${TelemetryService.RealServer})                                          AS servers_capacity,
 
         (SELECT count(*) FROM public.matches)                                            AS matches_created,
         (SELECT count(*) FROM public.matches WHERE ${TelemetryService.nativeMatch()})      AS matches_ran,

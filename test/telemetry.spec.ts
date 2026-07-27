@@ -145,9 +145,6 @@ describe("telemetry (SQL-driven)", () => {
       expect(Number(rows.count)).toBe(6);
       expect(payload.servers.total).toBe(1);
       expect(payload.servers.dedicated).toBe(1);
-      // 32 is the max_players default every slot carries, and counting them
-      // reported a capacity of thousands on a panel with one real server.
-      expect(payload.servers.capacity).toBe(32);
     });
 
     it("counts only players who have signed in as registered", () => {
@@ -219,7 +216,6 @@ describe("telemetry (SQL-driven)", () => {
         enabled: 9,
         dedicated: 3,
         public: 4,
-        capacity: 120,
       },
       matches: {
         total: 500,
@@ -365,7 +361,6 @@ describe("telemetry (SQL-driven)", () => {
         enabled: servers,
         dedicated: 1,
         public: 2,
-        capacity: servers * 10,
       },
       matches: {
         total: matches,
@@ -407,7 +402,6 @@ describe("telemetry (SQL-driven)", () => {
       expect(stats.installs.active24h).toBe(2);
       expect(stats.totals.matches).toBe(350);
       expect(stats.totals.servers).toBe(10);
-      expect(stats.totals.serverCapacity).toBe(100);
       expect(stats.totals.mapsPlayed).toBe(700);
       expect(stats.totals.playersKnown).toBe(400);
       expect(stats.totals.playersRegistered).toBe(100);
