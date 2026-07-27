@@ -42,6 +42,7 @@ import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
 import { SocketsModule } from "../sockets/sockets.module";
 import { CleanAbandonedMatches } from "./jobs/CleanAbandonedMatches";
+import { FinalizeStrandedMaps } from "./jobs/FinalizeStrandedMaps";
 import { ReapIdleDemoSessions } from "./jobs/ReapIdleDemoSessions";
 import { PollMediaMtxViewers } from "./jobs/PollMediaMtxViewers";
 import { MatchMaking } from "src/matchmaking/matchmaking.module";
@@ -167,6 +168,7 @@ import { LeaguesModule } from "../leagues/leagues.module";
     StopOnDemandServer,
     CancelInvalidTournaments,
     CleanAbandonedMatches,
+    FinalizeStrandedMaps,
     ReapIdleDemoSessions,
     PollMediaMtxViewers,
     EloCalculation,
@@ -283,6 +285,16 @@ export class MatchesModule implements NestModule {
 
     void matchServersQueue.add(
       CancelInvalidTournaments.name,
+      {},
+      {
+        repeat: {
+          pattern: "* * * * *",
+        },
+      },
+    );
+
+    void scheduleMatchQueue.add(
+      FinalizeStrandedMaps.name,
       {},
       {
         repeat: {

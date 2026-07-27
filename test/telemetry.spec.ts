@@ -56,6 +56,14 @@ describe("telemetry (SQL-driven)", () => {
     beforeAll(async () => {
       await fx.region("TelemetryRegion");
 
+      // Enabling a node pre-provisions a `servers` row per port pair in its
+      // range, so this seeds five rows that are slots, not servers.
+      await postgres.query(
+        `INSERT INTO game_server_nodes
+           (id, public_ip, start_port_range, end_port_range, region, status, enabled, label)
+         VALUES ('telemetry-node', '203.0.113.1', 27015, 27025, 'TelemetryRegion', 'Online', true, 'telemetry-node')`,
+      );
+
       const ran = await fx.bareMatch(new Date().toISOString());
       await postgres.query(
         "UPDATE matches SET started_at = now() WHERE id = $1",
@@ -80,6 +88,23 @@ describe("telemetry (SQL-driven)", () => {
       await postgres.query(
         "UPDATE matches SET started_at = now(), external_id = $2 WHERE id = $1",
         [reimported.matchId, "5stack-1"],
+      );
+
+      // Only the first of these ever signed in; the other two are the rows a
+      // panel creates for a steam id it saw in a lineup or a demo.
+      const signedIn = await fx.player("signed-in");
+      const ghost = await fx.player("ghost");
+      await fx.player("never-seen-again");
+
+      await postgres.query(
+        "UPDATE players SET last_sign_in_at = now() WHERE steam_id = $1",
+        [signedIn],
+      );
+
+      await postgres.query(
+        `INSERT INTO player_match_map_stats (steam_id, match_map_id, match_id, kills)
+         VALUES ($1, $3, $4, 10), ($2, $3, $4, 4)`,
+        [signedIn, ghost, ran.mapId, ran.matchId],
       );
 
       payload = await service.collect();
@@ -110,9 +135,28 @@ describe("telemetry (SQL-driven)", () => {
       expect(payload.matches.by_source.faceit).toBe(1);
     });
 
-    it("reports the servers seeded by the region fixture", () => {
-      expect(payload.servers.total).toBeGreaterThanOrEqual(1);
-      expect(payload.servers.dedicated).toBeGreaterThanOrEqual(1);
+    it("keeps a node's pre-provisioned port slots out of the server count", async () => {
+      const [rows] = await postgres.query<Array<{ count: string }>>(
+        "SELECT count(*) FROM servers",
+      );
+
+      // Six rows: the region fixture's dedicated server plus the node's five
+      // port slots. Only the dedicated one is a server anybody runs.
+      expect(Number(rows.count)).toBe(6);
+      expect(payload.servers.total).toBe(1);
+      expect(payload.servers.dedicated).toBe(1);
+      // 32 is the max_players default every slot carries, and counting them
+      // reported a capacity of thousands on a panel with one real server.
+      expect(payload.servers.capacity).toBe(32);
+    });
+
+    it("counts only players who have signed in as registered", () => {
+      expect(payload.players.known).toBe(3);
+      expect(payload.players.registered).toBe(1);
+    });
+
+    it("counts players with stats on at least one map as having played", () => {
+      expect(payload.players.played).toBe(2);
     });
 
     it("reports every feature with an enabled flag or a usage count", () => {
@@ -164,7 +208,7 @@ describe("telemetry (SQL-driven)", () => {
     const install = "11111111-2222-3333-4444-555555555555";
 
     const report = (over: Record<string, any> = {}) => ({
-      schema: 1,
+      schema: 2,
       install_id: install,
       installed_at: "2024-01-01T00:00:00.000Z",
       panel_version: "deadbeef",
@@ -174,7 +218,6 @@ describe("telemetry (SQL-driven)", () => {
         total: 10,
         enabled: 9,
         dedicated: 3,
-        on_demand: 7,
         public: 4,
         capacity: 120,
       },
@@ -192,7 +235,14 @@ describe("telemetry (SQL-driven)", () => {
         scrim: 25,
         external: { total: 30, week: 1, month: 3, year: 12 },
       },
-      players: { registered: 300, active_7d: 40, active_30d: 90, teams: 22 },
+      players: {
+        known: 900,
+        registered: 300,
+        played: 210,
+        active_7d: 40,
+        active_30d: 90,
+        teams: 22,
+      },
       features: {
         events: { enabled: true, count: 4 },
         news: { enabled: false, count: 0 },
@@ -304,7 +354,7 @@ describe("telemetry (SQL-driven)", () => {
     const installB = "bbbbbbbb-0000-4000-8000-000000000002";
 
     const report = (installId: string, matches: number, servers: number) => ({
-      schema: 1,
+      schema: 2,
       install_id: installId,
       installed_at: "2024-01-01T00:00:00.000Z",
       panel_version: "cafebabe",
@@ -314,7 +364,6 @@ describe("telemetry (SQL-driven)", () => {
         total: servers,
         enabled: servers,
         dedicated: 1,
-        on_demand: servers - 1,
         public: 2,
         capacity: servers * 10,
       },
@@ -332,7 +381,14 @@ describe("telemetry (SQL-driven)", () => {
         scrim: 2,
         external: { total: matches / 10, week: 0, month: 2, year: 5 },
       },
-      players: { registered: 50, active_7d: 5, active_30d: 12, teams: 3 },
+      players: {
+        known: 200,
+        registered: 50,
+        played: 35,
+        active_7d: 5,
+        active_30d: 12,
+        teams: 3,
+      },
       features: {
         events: { enabled: installId === installA, count: 3 },
         highlights: { enabled: null as boolean | null, count: 10 },
@@ -353,6 +409,9 @@ describe("telemetry (SQL-driven)", () => {
       expect(stats.totals.servers).toBe(10);
       expect(stats.totals.serverCapacity).toBe(100);
       expect(stats.totals.mapsPlayed).toBe(700);
+      expect(stats.totals.playersKnown).toBe(400);
+      expect(stats.totals.playersRegistered).toBe(100);
+      expect(stats.totals.playersPlayed).toBe(70);
       // Imported matches are summed apart from the ones the panels hosted.
       expect(stats.totals.matchesImported).toBe(35);
       expect(stats.totals.matchesImportedMonth).toBe(4);

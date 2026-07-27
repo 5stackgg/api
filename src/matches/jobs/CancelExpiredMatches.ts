@@ -7,6 +7,7 @@ import { HasuraService } from "../../hasura/hasura.service";
 import { NotificationsService } from "../../notifications/notifications.service";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { DISCORD_COLORS } from "../../notifications/utilities/constants";
+import { e_match_map_status_enum } from "../../../generated";
 
 @UseQueue("Matches", MatchQueues.ScheduledMatches)
 export class CancelExpiredMatches extends WorkerHost {
@@ -21,6 +22,23 @@ export class CancelExpiredMatches extends WorkerHost {
     super();
     this.appConfig = this.configService.get<AppConfig>("app");
   }
+  // A map that has left Live is inside the game server's end-of-map handshake
+  // (WaitingForTV -> UploadingDemo -> Finished), which runs for tv_delay plus
+  // the demo upload. Reaping the match there kills the server pod before it can
+  // report the result, so the map strands and the series never resolves.
+  // FinalizeStrandedMaps is the backstop if the server dies anyway.
+  private static notFinalizingMap() {
+    return {
+      _not: {
+        match_maps: {
+          status: {
+            _in: ["WaitingForTV", "UploadingDemo"] as e_match_map_status_enum[],
+          },
+        },
+      },
+    };
+  }
+
   async process(): Promise<number> {
     const { update_matches } = await this.hasura.mutation({
       update_matches: {
@@ -47,6 +65,7 @@ export class CancelExpiredMatches extends WorkerHost {
                   _lte: new Date(),
                 },
               },
+              CancelExpiredMatches.notFinalizingMap(),
             ],
           },
           _set: {
@@ -194,6 +213,7 @@ export class CancelExpiredMatches extends WorkerHost {
                   _lte: new Date(),
                 },
               },
+              CancelExpiredMatches.notFinalizingMap(),
             ],
           },
         },

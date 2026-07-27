@@ -73,6 +73,16 @@ BEGIN
         END IF;
     END IF;
 
+    -- The auto-cancel deadline reaps matches stuck *in play*. Once the map has
+    -- left Live the game server owns a multi-minute end-of-map handshake
+    -- (WaitingForTV for tv_delay, then UploadingDemo, then Finished); letting
+    -- the deadline fire inside that window cancels the match and kills the
+    -- server pod before it can report the result.
+    IF NEW.status IN ('WaitingForTV', 'UploadingDemo', 'Finished', 'Surrendered')
+        AND OLD.status IS DISTINCT FROM NEW.status THEN
+        UPDATE matches SET cancels_at = NULL WHERE id = NEW.match_id;
+    END IF;
+
     IF NEW.status = 'Finished' AND OLD.status IS DISTINCT FROM NEW.status THEN
         NEW.ended_at = NOW();
     END IF;

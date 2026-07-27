@@ -1193,7 +1193,9 @@ type TelemetryFleetTotals {
   matchesImported: Int!
   matchesImportedMonth: Int!
   mapsPlayed: Int!
+  playersKnown: Int!
   playersRegistered: Int!
+  playersPlayed: Int!
   playersActive30d: Int!
   teams: Int!
 }
