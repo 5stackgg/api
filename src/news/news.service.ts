@@ -32,6 +32,7 @@ const EXTENSION_BY_MIMETYPE: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/webp": "webp",
   "image/gif": "gif",
+  "video/mp4": "mp4",
 };
 
 @Injectable()
@@ -225,12 +226,51 @@ export class NewsService {
     );
   }
 
+  public generateFilename(extension: string): string {
+    return `${crypto.randomBytes(12).toString("hex")}.${extension}`;
+  }
+
+  public mediaKey(filename: string): string {
+    return `${NewsService.IMAGE_PREFIX}/${filename}`;
+  }
+
+  // Keys handed back by the client on multipart complete/abort are untrusted:
+  // pin them to the news prefix and the exact shape generateFilename produces
+  // so a caller can never point the assembler at somebody else's object.
+  public assertMediaKey(key: string | undefined, extension: string): string {
+    const expected = new RegExp(
+      `^${NewsService.IMAGE_PREFIX}/[0-9a-f]{24}\\.${extension}$`,
+    );
+    if (!key || !expected.test(key)) {
+      throw new BadRequestException("invalid upload key");
+    }
+    return key;
+  }
+
   public async uploadImage(buffer: Buffer, mimetype: string): Promise<string> {
     const ext = EXTENSION_BY_MIMETYPE[mimetype] || "png";
-    const filename = `${crypto.randomBytes(12).toString("hex")}.${ext}`;
-    await this.s3.put(`${NewsService.IMAGE_PREFIX}/${filename}`, buffer);
+    const filename = this.generateFilename(ext);
+    await this.s3.put(this.mediaKey(filename), buffer, mimetype);
     this.logger.log(`Uploaded news image ${filename}`);
     return filename;
+  }
+
+  public async uploadVideo(buffer: Buffer): Promise<string> {
+    const filename = this.generateFilename("mp4");
+    await this.s3.put(this.mediaKey(filename), buffer, "video/mp4");
+    this.logger.log(`Uploaded news video ${filename}`);
+    return filename;
+  }
+
+  // Mirrors EventsService.getCloudflareWorkerUrl — when a worker is configured
+  // the part PUTs must route through it (it answers the CORS preflight and
+  // signs the B2 write itself) rather than using a presigned S3 URL.
+  public async getCloudflareWorkerUrl(): Promise<string | null> {
+    const rows = await this.postgres.query<Array<{ value: string }>>(
+      `SELECT value FROM public.settings WHERE name = 'cloudflare_worker_url' LIMIT 1`,
+    );
+    const value = rows.at(0)?.value?.trim();
+    return value ? value.replace(/\/+$/, "") : null;
   }
 
   public async getImageStream(
@@ -286,6 +326,9 @@ export class NewsService {
     }
     if (filename.endsWith(".gif")) {
       return "image/gif";
+    }
+    if (filename.endsWith(".mp4")) {
+      return "video/mp4";
     }
     return "application/octet-stream";
   }
