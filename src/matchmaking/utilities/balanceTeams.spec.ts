@@ -6,6 +6,7 @@ import {
   greedyAssign,
   matchCost,
 } from "./balanceTeams";
+import { TIE_EPSILON } from "./matchmakingTuning";
 
 const NOW = 1_700_000_000_000;
 const COMPETITIVE: e_match_types_enum = "Competitive";
@@ -448,6 +449,140 @@ describe("balanceTeams", () => {
 
       // while still keeping every one of those games close
       expect(widestGap).toBeLessThan(200);
+    });
+
+    it("rotates which of the top three play together as the field pulls apart", () => {
+      // the three strongest win every game and the three weakest lose every one
+      // at a different rate, so the ratings spread unevenly and dead even splits
+      // stop existing. counting lineups is not enough here - the ratings change
+      // every round, so even a fixed candidate order produces new lineups. what
+      // matters is whether the same two of the top three keep landing together.
+      const winners = ["p0", "p1", "p2"];
+      const losers = new Set(["p7", "p8", "p9"]);
+      const pairs = [
+        ["p0", "p1"],
+        ["p0", "p2"],
+        ["p1", "p2"],
+      ];
+      const rounds = 40;
+
+      for (const seed of [2026, 7, 555, 31337]) {
+        const random = mulberry32(seed);
+        const elo = new Map<string, number>(
+          Array.from({ length: 10 }, (_, i) => [`p${i}`, 5000]),
+        );
+
+        const pairedRounds = new Map(pairs.map(([a, b]) => [`${a}|${b}`, 0]));
+        const teammates = new Map(winners.map((id) => [id, new Set<string>()]));
+        const seen = new Set<string>();
+        let longestRepeat = 0;
+        let repeat = 0;
+        let previousCarve = "";
+        let widestGap = 0;
+
+        for (let round = 0; round < rounds; round++) {
+          const candidates = [...elo.entries()].map(([id, rank]) =>
+            lobby([rank], { id }),
+          );
+
+          const result = balanceTeams(candidates, 10, { now: NOW, random });
+          expect(result).not.toBeNull();
+
+          const onTeam1 = new Set(result.team1.map((entry) => entry.lobbyId));
+          const sideOf = (id: string) => (onTeam1.has(id) ? 1 : 2);
+
+          seen.add(compositionOf(result));
+          widestGap = Math.max(widestGap, result.avgRankDifference);
+
+          for (const [a, b] of pairs) {
+            if (sideOf(a) === sideOf(b)) {
+              const key = `${a}|${b}`;
+              pairedRounds.set(key, pairedRounds.get(key) + 1);
+            }
+          }
+
+          for (const id of winners) {
+            for (const other of elo.keys()) {
+              if (other !== id && sideOf(other) === sideOf(id)) {
+                teammates.get(id).add(other);
+              }
+            }
+          }
+
+          // which of the top three sat together, independent of side
+          const carve = winners
+            .map((id) => (sideOf(id) === sideOf(winners[0]) ? "a" : "b"))
+            .join("");
+          repeat = carve === previousCarve ? repeat + 1 : 1;
+          previousCarve = carve;
+          longestRepeat = Math.max(longestRepeat, repeat);
+
+          for (const id of elo.keys()) {
+            if (winners.includes(id)) {
+              elo.set(id, elo.get(id) + 40);
+            } else if (losers.has(id)) {
+              elo.set(id, elo.get(id) - 25);
+            }
+          }
+        }
+
+        // the field really did pull apart, and unevenly
+        expect(elo.get("p0") - elo.get("p9")).toBe(2600);
+
+        // none of the top three ends up with a fixed circle - each one plays
+        // alongside every other player at some point over the run
+        for (const id of winners) {
+          expect(teammates.get(id).size).toBe(9);
+        }
+
+        // an even rotation puts each pair together a third of the time. the
+        // bounds are loose, but a pair that has calcified sits at one extreme:
+        // before the tie-break was randomised one pair shared a team 36 rounds
+        // out of 40 while another never shared one at all.
+        for (const together of pairedRounds.values()) {
+          expect(together).toBeGreaterThan(3);
+          expect(together).toBeLessThan(28);
+        }
+
+        // and no single carve of the top three survives for long
+        expect(longestRepeat).toBeLessThanOrEqual(12);
+        expect(seen.size).toBeGreaterThanOrEqual(18);
+
+        // the spread is absorbed rather than pushed into the scoreline
+        expect(widestGap).toBeLessThan(150);
+      }
+    });
+
+    it("collects alternatives before bailing out on a tightly packed field", () => {
+      // every rating here is distinct but only 60 elo separates first from
+      // last, so no two players sit the same distance from the reference and
+      // the random tie-break never gets a tie to break. the only thing keeping
+      // this group off identical teams is the search collecting alternatives
+      // instead of returning the first good split it walks into - bailing on
+      // the first leaf pins this exact field to one lineup, on every seed.
+      const tight = [5021, 5015, 5011, 5003, 4996, 4988, 4983, 4975, 4968, 4961];
+
+      for (const seed of [1, 99, 2026]) {
+        const random = mulberry32(seed);
+        const candidates = tight.map((rank, index) =>
+          lobby([rank], { id: `p${index}` }),
+        );
+        const seen = new Set<string>();
+        let widestGap = 0;
+
+        for (let i = 0; i < 200; i++) {
+          const result = balanceTeams(candidates, 10, { now: NOW, random });
+          seen.add(compositionOf(result));
+          widestGap = Math.max(widestGap, result.avgRankDifference);
+        }
+
+        expect(seen.size).toBeGreaterThanOrEqual(12);
+
+        // the variety is not bought with worse games. these alternatives are
+        // all inside TIE_EPSILON, so the widest is a rounding error next to
+        // the 60 elo the field already spans
+        expect(widestGap).toBeLessThanOrEqual(TIE_EPSILON);
+      }
     });
   });
 
