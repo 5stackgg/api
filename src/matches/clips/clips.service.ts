@@ -1443,8 +1443,6 @@ export class ClipsService {
     // Boot ticks land in status_history without overwriting `status` —
     // IN_FLIGHT_STATUSES filtering depends on the row status staying queued,
     // and clip_render_jobs_status_chk would reject anything off-enum anyway.
-    // An `event` is the same thing by another name: the milestone rides in as
-    // the boot_stage so it shows up in the stepper.
     const isEvent = GameStreamerService.isTruthyFlag(body.event);
     const isBoot = body.status === "booting" || isEvent;
     const bootStage = isEvent ? body.status : body.boot_stage;

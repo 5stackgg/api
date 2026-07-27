@@ -84,8 +84,6 @@ export class ClipRendersController {
     @Req() request: Request,
     @Res() response: Response,
   ) {
-    // Boot ticks arrive every couple of seconds — logging them drowns the
-    // real transitions. Events are one-shot, so those still get a line.
     if (body?.status !== "booting") {
       this.logger.log(
         `[clip ${jobId}] status POST: ${JSON.stringify(body ?? {})}`,
