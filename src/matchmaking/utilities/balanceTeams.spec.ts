@@ -334,6 +334,123 @@ describe("balanceTeams", () => {
     });
   });
 
+  describe("variety", () => {
+    const compositionOf = (result: { team1: MatchmakingLobby[] }) =>
+      result.team1
+        .map((entry) => entry.lobbyId)
+        .sort()
+        .join(",");
+
+    it("does not hand the same ten players the same teams every time", () => {
+      const random = mulberry32(1234);
+      const candidates = solos(new Array(10).fill(5000));
+      const seen = new Set<string>();
+
+      for (let i = 0; i < 200; i++) {
+        seen.add(
+          compositionOf(balanceTeams(candidates, 10, { now: NOW, random })),
+        );
+      }
+
+      // 126 distinct splits exist for ten interchangeable players. a fixed
+      // candidate order would return the same one every time, which is what a
+      // recurring group would experience as "always the same teams".
+      expect(seen.size).toBeGreaterThan(50);
+    });
+
+    it("finds every perfectly balanced split once ratings have spread out", () => {
+      const random = mulberry32(99);
+      const candidates = [
+        ...solos([6200, 5900, 5600]),
+        ...solos([5100, 5000, 5000, 4900]),
+        ...solos([4400, 4200, 3900]),
+      ];
+      const seen = new Set<string>();
+
+      for (let i = 0; i < 200; i++) {
+        const result = balanceTeams(candidates, 10, { now: NOW, random });
+        seen.add(compositionOf(result));
+        expect(result.avgRankDifference).toBe(0);
+      }
+
+      // exhaustive enumeration of this rating set says exactly 5 of the 126
+      // partitions are dead even. variety here is bounded by the ratings, not
+      // by the search - and it reaches all 5 rather than settling on one.
+      expect(seen.size).toBe(5);
+    });
+
+    it("splits the strongest players up instead of stacking them", () => {
+      const random = mulberry32(5);
+      const strong = ["s0", "s1", "s2"];
+      const candidates = [
+        ...strong.map((id) => lobby([7000], { id })),
+        ...solos(new Array(7).fill(4000)),
+      ];
+
+      for (let i = 0; i < 100; i++) {
+        const result = balanceTeams(candidates, 10, { now: NOW, random });
+        const onTeam1 = new Set(result.team1.map((entry) => entry.lobbyId));
+        const stacked = strong.filter((id) => onTeam1.has(id)).length;
+
+        // three strong on one side averages 5200 vs 4000; two versus one
+        // averages 4800 vs 4400, so the balancer always breaks them up
+        expect(stacked === 0 || stacked === 3).toBe(false);
+      }
+    });
+
+    it("keeps mixing the winners as their ratings pull away", () => {
+      // the three strongest keep winning and the three weakest keep losing, so
+      // the spread widens every round. the teams should keep churning rather
+      // than settling into a fixed lineup.
+      const random = mulberry32(2026);
+      const elo = new Map<string, number>(
+        Array.from({ length: 10 }, (_, i) => [`p${i}`, 5000]),
+      );
+      const winners = new Set(["p0", "p1", "p2"]);
+      const losers = new Set(["p7", "p8", "p9"]);
+
+      const seen = new Set<string>();
+      let stackedRounds = 0;
+      let widestGap = 0;
+
+      for (let round = 0; round < 40; round++) {
+        const candidates = [...elo.entries()].map(([id, rank]) =>
+          lobby([rank], { id }),
+        );
+
+        const result = balanceTeams(candidates, 10, { now: NOW, random });
+        expect(result).not.toBeNull();
+
+        seen.add(compositionOf(result));
+        widestGap = Math.max(widestGap, result.avgRankDifference);
+
+        const onTeam1 = new Set(result.team1.map((entry) => entry.lobbyId));
+        const together = [...winners].filter((id) => onTeam1.has(id)).length;
+        if (together === 0 || together === 3) {
+          stackedRounds++;
+        }
+
+        for (const id of elo.keys()) {
+          if (winners.has(id)) {
+            elo.set(id, elo.get(id) + 40);
+          } else if (losers.has(id)) {
+            elo.set(id, elo.get(id) - 40);
+          }
+        }
+      }
+
+      // ratings really did diverge over the run
+      expect(elo.get("p0") - elo.get("p9")).toBe(3200);
+
+      // and the balancer kept producing different lineups rather than locking in
+      expect(seen.size).toBeGreaterThan(20);
+      expect(stackedRounds).toBe(0);
+
+      // while still keeping every one of those games close
+      expect(widestGap).toBeLessThan(200);
+    });
+  });
+
   describe("search bounds", () => {
     it("falls back to the greedy seed when the node budget is exhausted", () => {
       const candidates = solos([

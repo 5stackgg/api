@@ -202,13 +202,42 @@ export class MatchmakeService {
       `${totalPlayerNotQueued} players not queued, expanding search....`,
     );
 
-    // randomize the time to prevent all regions from matchingmake at the same time
-    setTimeout(
-      () => {
-        void this.matchmake(type, region);
-      },
+    await this.scheduleExpandedSearch(
+      type,
+      region,
       10000 + Math.floor(Math.random() * 10000),
     );
+  }
+
+  /**
+   * Queues another pass over a region.
+   *
+   * A delayed job rather than a setTimeout: the jobId collapses duplicates, so
+   * the several callers that can all want another pass at once do not stack up
+   * timers, and a pending pass survives a restart instead of being lost.
+   */
+  private async scheduleExpandedSearch(
+    type: e_match_types_enum,
+    region: string,
+    delay: number,
+  ) {
+    try {
+      await this.queue.add(
+        "ExpandMatchmaking",
+        { type, region },
+        {
+          delay,
+          jobId: `matchmaking.expand.${type}.${region}`,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      );
+    } catch (error) {
+      this.logger.error(
+        `Unable to schedule another matchmaking pass for ${type}/${region}:`,
+        error,
+      );
+    }
   }
 
   private async processLobbyData(
@@ -685,11 +714,9 @@ export class MatchmakeService {
     await this.sendRegionStats();
 
     if (shouldMatchmake) {
-      // randomize the time to prevent all regions from matchingmake at the same time
-      setTimeout(
-        () => {
-          void this.matchmake(type, region);
-        },
+      await this.scheduleExpandedSearch(
+        type,
+        region,
         Math.floor(Math.random() * 10000),
       );
     }

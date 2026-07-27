@@ -50,18 +50,14 @@ describe("matchmaking (end to end)", () => {
     updateMatchStatus: jest.Mock;
   };
   let hasura: { query: jest.Mock; mutation: jest.Mock };
+  let queue: { add: jest.Mock; remove: jest.Mock };
 
   beforeEach(async () => {
     redis = new FakeRedis();
     lobbyStore = new Map();
     confirmations = [];
 
-    // matchmake() reschedules itself when players are left over; the tests
-    // drive each pass explicitly, so swallow the timer rather than leaving it
-    // pending after the run
-    jest
-      .spyOn(global, "setTimeout")
-      .mockImplementation((() => 0) as unknown as typeof setTimeout);
+    queue = { add: jest.fn(), remove: jest.fn() };
 
     confirmationIds = [];
     lineupInserts = [];
@@ -138,7 +134,7 @@ describe("matchmaking (end to end)", () => {
         },
         {
           provide: `BullQueue_${MatchmakingQueues.Matchmaking}`,
-          useValue: { add: jest.fn(), remove: jest.fn() } as unknown as Queue,
+          useValue: queue as unknown as Queue,
         },
       ],
     }).compile();
@@ -369,6 +365,48 @@ describe("matchmaking (end to end)", () => {
       const leftover = queuedIn("us-east");
       expect(leftover).toHaveLength(3);
       expect(redis.zaddCount() - requeuedBefore).toBe(leftover.length * 2);
+    });
+
+    it("schedules one deduplicated pass when lobbies could not be claimed", async () => {
+      const lobbies = Array.from({ length: 20 }, (_, i) =>
+        makeLobby(`solo-${i}`, [5000]),
+      );
+      await enqueue(lobbies);
+
+      // everything is already locked by another worker, so nothing can be
+      // claimed and the pass has to be retried later
+      for (const lobby of lobbies) {
+        await redis.set(`matchmaking:lock:${lobby.lobbyId}`, 1, "EX", 10, "NX");
+      }
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      const expandJobs = queue.add.mock.calls.filter(
+        ([name]) => name === "ExpandMatchmaking",
+      );
+      expect(expandJobs).toHaveLength(1);
+
+      // a fixed jobId so concurrent callers collapse into one pending pass
+      // instead of stacking timers
+      expect(expandJobs[0][2]).toMatchObject({
+        jobId: "matchmaking.expand.Competitive.us-east",
+      });
+      expect(expandJobs[0][1]).toEqual({
+        type: COMPETITIVE,
+        region: "us-east",
+      });
+    });
+
+    it("does not schedule another pass once the queue is drained", async () => {
+      await enqueue(
+        Array.from({ length: 10 }, (_, i) => makeLobby(`solo-${i}`, [5000])),
+      );
+
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      expect(
+        queue.add.mock.calls.filter(([name]) => name === "ExpandMatchmaking"),
+      ).toHaveLength(0);
     });
 
     it("stops carving when the remainder cannot legally split", async () => {

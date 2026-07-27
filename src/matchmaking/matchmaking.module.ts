@@ -15,6 +15,7 @@ import { MatchmakingQueues } from "./enums/MatchmakingQueues";
 import { CancelMatchMaking } from "./jobs/CancelMatchMaking";
 import { MatchmakingController } from "./matchmaking.controller";
 import { MarkPlayerOffline } from "./jobs/MarkPlayerOffline";
+import { ExpandMatchmaking } from "./jobs/ExpandMatchmaking";
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { MarkPlayerOffline } from "./jobs/MarkPlayerOffline";
     MatchmakingLobbyService,
     CancelMatchMaking,
     MarkPlayerOffline,
+    ExpandMatchmaking,
     ...getQueuesProcessors("Matchmaking"),
     loggerFactory(),
   ],

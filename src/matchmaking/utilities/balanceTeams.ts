@@ -223,6 +223,13 @@ export function balanceTeams(
   // best with the anchor come first. outliers sort to the tail, where the
   // "leave it queued" branch gets reached long before the node budget runs out.
   const reference = anchor?.avgRank ?? usable.at(0)?.avgRank ?? 0;
+
+  // equally good candidates are ordered randomly rather than by id. the search
+  // returns the first optimal split it reaches, so a fixed order would hand the
+  // same ten players the same teams every night. injecting a constant rng makes
+  // this a stable sort, and therefore deterministic, for tests.
+  const jitter = new Map(usable.map((lobby) => [lobby.lobbyId, random()]));
+
   const order = [...usable].sort((a, b) => {
     if (a === anchor) {
       return -1;
@@ -233,7 +240,9 @@ export function balanceTeams(
 
     const rankDiff =
       Math.abs(a.avgRank - reference) - Math.abs(b.avgRank - reference);
-    return rankDiff !== 0 ? rankDiff : a.lobbyId.localeCompare(b.lobbyId);
+    return rankDiff !== 0
+      ? rankDiff
+      : jitter.get(a.lobbyId) - jitter.get(b.lobbyId);
   });
 
   const size = order.length;
@@ -394,8 +403,10 @@ export function balanceTeams(
     }
 
     // judged on quality, not cost - the wait term is a per-cohort offset that
-    // would otherwise make this fire always or never
-    if (bestQuality <= EARLY_EXIT_COST) {
+    // would otherwise make this fire always or never. holding off until the
+    // reservoir is full matters: the greedy seed can already be optimal, and
+    // bailing on the first leaf would leave nothing to pick between.
+    if (bestQuality <= EARLY_EXIT_COST && reservoir.length >= MAX_TIED_SOLUTIONS) {
       exhausted = false;
       stop = true;
     }
