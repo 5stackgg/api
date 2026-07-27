@@ -3,6 +3,7 @@ import { Logger } from "@nestjs/common";
 import { Queue } from "bullmq";
 import { e_match_types_enum } from "generated";
 import { MatchmakingLobby } from "./types/MatchmakingLobby";
+import { MatchmakingTeam } from "./types/MatchmakingTeam";
 import Redis from "ioredis";
 
 // Mock the problematic modules before importing the service
@@ -19,6 +20,8 @@ import { MatchAssistantService } from "../matches/match-assistant/match-assistan
 import { MatchmakingLobbyService } from "./matchmaking-lobby.service";
 import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import { MatchmakingQueues } from "./enums/MatchmakingQueues";
+
+type ConfirmationTeams = { team1: MatchmakingTeam; team2: MatchmakingTeam };
 
 describe("MatchmakeService", () => {
   let service: MatchmakeService;
@@ -188,7 +191,7 @@ describe("MatchmakeService", () => {
       expect(callArgs[0]).toBe(region);
       expect(callArgs[1]).toBe(type);
 
-      const { team1, team2 } = callArgs[2];
+      const { team1, team2 } = callArgs[2] as ConfirmationTeams;
 
       // Verify each team has exactly 5 players (half of 10)
       expect(team1.players.length).toBe(5);
@@ -197,10 +200,14 @@ describe("MatchmakeService", () => {
       // Verify total players in the match is 10
       expect(team1.players.length + team2.players.length).toBe(requiredPlayers);
 
-      // Note: The method returns 0 after successfully creating a match
-      // The remaining 5 players would be handled in a recursive call, but that result isn't returned
-      // The important thing is that exactly 1 match was created with 10 players
-      expect(result).toBe(0);
+      // 15 queued, 10 matched, so 5 are left over and reported accurately so
+      // the caller knows to expand the search
+      expect(result).toBe(5);
+
+      // the two closest lobbies play; the 1100 lobby stays queued
+      const matched = [...team1.lobbies, ...team2.lobbies];
+      expect(matched.sort()).toEqual(["lobby-1", "lobby-2"]);
+      expect(Math.abs(team1.avgRank - team2.avgRank)).toBe(50);
 
       // Verify claimLobby was called (via redis.eval) for each lobby
       expect(mockRedis.eval).toHaveBeenCalled();
@@ -399,7 +406,7 @@ describe("MatchmakeService", () => {
       expect(firstCallArgs[0]).toBe(region);
       expect(firstCallArgs[1]).toBe(type);
 
-      const { team1: team1Match1, team2: team2Match1 } = firstCallArgs[2];
+      const { team1: team1Match1, team2: team2Match1 } = firstCallArgs[2] as ConfirmationTeams;
       expect(team1Match1.players.length).toBe(5);
       expect(team2Match1.players.length).toBe(5);
       expect(team1Match1.players.length + team2Match1.players.length).toBe(10);
@@ -409,7 +416,7 @@ describe("MatchmakeService", () => {
       expect(secondCallArgs[0]).toBe(region);
       expect(secondCallArgs[1]).toBe(type);
 
-      const { team1: team1Match2, team2: team2Match2 } = secondCallArgs[2];
+      const { team1: team1Match2, team2: team2Match2 } = secondCallArgs[2] as ConfirmationTeams;
       expect(team1Match2.players.length).toBe(5);
       expect(team2Match2.players.length).toBe(5);
       expect(team1Match2.players.length + team2Match2.players.length).toBe(10);
@@ -558,73 +565,31 @@ describe("MatchmakeService", () => {
       expect(callArgs[0]).toBe(region);
       expect(callArgs[1]).toBe(type);
 
-      const { team1, team2 } = callArgs[2];
+      const { team1, team2 } = callArgs[2] as ConfirmationTeams;
 
       // Verify each team has exactly 5 players
       expect(team1.players.length).toBe(5);
       expect(team2.players.length).toBe(5);
       expect(team1.players.length + team2.players.length).toBe(10);
 
-      // Log the team compositions and ranks for inspection
-      // Extract steam_id from player objects for logging
-      const team1PlayerIds = team1.players.map((p) =>
-        typeof p === "string" ? p : p.steam_id,
-      );
-      const team2PlayerIds = team2.players.map((p) =>
-        typeof p === "string" ? p : p.steam_id,
-      );
-      console.log(
-        `Team 1 players: ${team1PlayerIds.join(", ")} | ranks: ${team1.players
-          .map((p) => (typeof p === "object" ? p.rank : "N/A"))
-          .join(", ")}`,
-      );
-      console.log(
-        `Team 2 players: ${team2PlayerIds.join(", ")} | ranks: ${team2.players
-          .map((p) => (typeof p === "object" ? p.rank : "N/A"))
-          .join(", ")}`,
-      );
-      console.log(`Team 1 avg rank: ${team1.avgRank}`);
-      console.log(`Team 2 avg rank: ${team2.avgRank}`);
-      console.log(`Team 1 lobbies: ${team1.lobbies.join(", ")}`);
-      console.log(`Team 2 lobbies: ${team2.lobbies.join(", ")}`);
+      // every party is wholly on one team, and every lobby is used
+      for (const lobby of lobbies) {
+        const onTeam1 = team1.lobbies.includes(lobby.lobbyId);
+        const onTeam2 = team2.lobbies.includes(lobby.lobbyId);
+        expect(onTeam1 !== onTeam2).toBe(true);
+      }
 
-      // Verify that the rank difference between teams is very small (well balanced)
-      const rankDifference = Math.abs(team1.avgRank - team2.avgRank);
-      console.log(`Rank difference between teams: ${rankDifference}`);
-
-      // The ranks should be very similar (within 50 points for this test)
-      // This ensures the ELO matching algorithm is working correctly
-      //   expect(rankDifference).toBeLessThan(50);
-
-      // Verify all players are accounted for
-      // Extract steam_id from player objects for comparison
+      // every player is used exactly once
       const allMatchedPlayers = [
-        ...team1.players.map((p) => (typeof p === "string" ? p : p.steam_id)),
-        ...team2.players.map((p) => (typeof p === "string" ? p : p.steam_id)),
+        ...team1.players.map((p) => p.steam_id),
+        ...team2.players.map((p) => p.steam_id),
       ];
       expect(allMatchedPlayers.sort()).toEqual(allLobbyPlayers.sort());
 
-      // Verify specific players are on the correct teams
-      // Extract steam_id values for easier checking
-      const team1SteamIds = team1.players.map((p) =>
-        typeof p === "string" ? p : p.steam_id,
-      );
-      const team2SteamIds = team2.players.map((p) =>
-        typeof p === "string" ? p : p.steam_id,
-      );
-
-      expect(team1SteamIds).toContain("steam-1");
-      expect(team1SteamIds).toContain("steam-4");
-      expect(team1SteamIds).toContain("steam-5");
-      expect(team1SteamIds).toContain("steam-6");
-      expect(team1SteamIds).toContain("steam-7");
-
-      // Verify that steam-2 and steam-3 (from lobby-2 with avgRank 4500) are on team 2
-      expect(team2SteamIds).toContain("steam-2");
-      expect(team2SteamIds).toContain("steam-3");
-      expect(team2SteamIds).toContain("steam-8");
-      expect(team2SteamIds).toContain("steam-9");
-      expect(team2SteamIds).toContain("steam-10");
+      // the party sizes here (1/2/1/3/1/2) only allow side totals of 11500,
+      // 13500, 15500, 16500, 18500 or 20500 out of 32000, so a perfect
+      // 16000/16000 split does not exist and 200 is the optimum
+      expect(Math.abs(team1.avgRank - team2.avgRank)).toBe(200);
 
       // Result should be 0 since all players were matched
       expect(result).toBe(0);
@@ -686,7 +651,7 @@ describe("MatchmakeService", () => {
 
       // Verify eval was called with correct keys
       const evalCall = mockRedis.eval.mock.calls[0];
-      const numKeys = evalCall[1];
+      const numKeys = evalCall[1] as number;
       const keys = evalCall.slice(2, 2 + numKeys);
 
       // Should have: 1 lock key + 2 regions * 2 keys (queue + rank) = 5 keys
@@ -755,11 +720,12 @@ describe("MatchmakeService", () => {
         },
       );
 
-      // lobby-1 fails to claim (another region got it), lobby-2 and lobby-3 succeed
-      mockRedis.eval
-        .mockResolvedValueOnce(0) // lobby-1: already claimed
-        .mockResolvedValueOnce(1) // lobby-2: claimed
-        .mockResolvedValueOnce(1); // lobby-3: claimed
+      // lobby-1 fails to claim (another region got it), lobby-2 and lobby-3 succeed.
+      // keyed off the lock key rather than call order, since lobbies are now
+      // claimed in preference order rather than input order
+      mockRedis.eval.mockImplementation((...args: any[]) =>
+        Promise.resolve(args[2] === "matchmaking:lock:lobby-1" ? 0 : 1),
+      );
 
       const createMatchConfirmationSpy = jest
         .spyOn(service as any, "createMatchConfirmation")
@@ -770,12 +736,150 @@ describe("MatchmakeService", () => {
       // Should still create a match from lobby-2 + lobby-3
       expect(createMatchConfirmationSpy).toHaveBeenCalledTimes(1);
       const callArgs = createMatchConfirmationSpy.mock.calls[0];
-      const { team1, team2 } = callArgs[2];
+      const { team1, team2 } = callArgs[2] as ConfirmationTeams;
       expect(team1.players.length + team2.players.length).toBe(10);
 
       // lobby-1 should NOT be in either team
       const allLobbies = [...team1.lobbies, ...team2.lobbies];
       expect(allLobbies).not.toContain("lobby-1");
+
+      // we never owned lobby-1's lock, so it must not be requeued here
+      const requeued = mockRedis.zadd.mock.calls.map((call) => call[2] as string);
+      expect(requeued).not.toContain("lobby-1");
+
+      createMatchConfirmationSpy.mockRestore();
+    });
+  });
+
+  describe("lobby locks", () => {
+    const region = "us-east";
+    const type: e_match_types_enum = "Competitive";
+
+    const soloLobbies = (count: number, rank = 1000): MatchmakingLobby[] =>
+      Array.from({ length: count }, (_, i) => ({
+        lobbyId: `lobby-${i + 1}`,
+        type,
+        regions: [region],
+        players: [{ steam_id: `steam-${i + 1}`, rank }],
+        avgRank: rank,
+        joinedAt: new Date(),
+        regionPositions: {},
+      }));
+
+    it("requeues every claimed but unused lobby exactly once", async () => {
+      const lobbies = soloLobbies(12);
+      mockMatchmakingLobbyService.getLobbyDetails.mockImplementation(
+        async (lobbyId: string) =>
+          lobbies.find((l) => l.lobbyId === lobbyId) || null,
+      );
+
+      const createMatchConfirmationSpy = jest
+        .spyOn(service as any, "createMatchConfirmation")
+        .mockResolvedValue(undefined);
+
+      await (service as any).createMatches(region, type, lobbies);
+
+      const { team1, team2 } = createMatchConfirmationSpy.mock.calls[0][2] as ConfirmationTeams;
+      const matched = new Set([...team1.lobbies, ...team2.lobbies]);
+      const requeued = mockRedis.zadd.mock.calls.map((call) => call[2] as string);
+
+      // matched lobbies keep their lock, the confirmation owns them
+      for (const lobbyId of matched) {
+        expect(requeued).not.toContain(lobbyId);
+      }
+
+      // the other two are released, once each (one zadd per region key)
+      for (const lobby of lobbies) {
+        if (matched.has(lobby.lobbyId)) {
+          continue;
+        }
+        expect(
+          requeued.filter((id) => id === lobby.lobbyId),
+        ).toHaveLength(2);
+      }
+
+      createMatchConfirmationSpy.mockRestore();
+    });
+
+    it("leaks no locks when creating the confirmation throws", async () => {
+      const lobbies = soloLobbies(12);
+      mockMatchmakingLobbyService.getLobbyDetails.mockImplementation(
+        async (lobbyId: string) =>
+          lobbies.find((l) => l.lobbyId === lobbyId) || null,
+      );
+
+      const createMatchConfirmationSpy = jest
+        .spyOn(service as any, "createMatchConfirmation")
+        .mockRejectedValue(new Error("redis is down"));
+
+      const result = await (service as any).createMatches(
+        region,
+        type,
+        lobbies,
+      );
+
+      const requeued = new Set(
+        mockRedis.zadd.mock.calls.map((call) => call[2] as string),
+      );
+      for (const lobby of lobbies) {
+        expect(requeued.has(lobby.lobbyId)).toBe(true);
+      }
+      expect(result).toBe(12);
+
+      createMatchConfirmationSpy.mockRestore();
+    });
+
+    it("claims nothing when the party sizes can never fill two lineups", async () => {
+      // five duos is ten players, but 2s cannot sum to a lineup of 5
+      const lobbies: MatchmakingLobby[] = Array.from(
+        { length: 5 },
+        (_, i) => ({
+          lobbyId: `duo-${i + 1}`,
+          type,
+          regions: [region],
+          players: [
+            { steam_id: `steam-${i * 2 + 1}`, rank: 1000 },
+            { steam_id: `steam-${i * 2 + 2}`, rank: 1000 },
+          ],
+          avgRank: 1000,
+          joinedAt: new Date(),
+          regionPositions: {},
+        }),
+      );
+
+      const createMatchConfirmationSpy = jest
+        .spyOn(service as any, "createMatchConfirmation")
+        .mockResolvedValue(undefined);
+
+      const result = await (service as any).createMatches(
+        region,
+        type,
+        lobbies,
+      );
+
+      expect(createMatchConfirmationSpy).not.toHaveBeenCalled();
+      expect(mockRedis.eval).not.toHaveBeenCalled();
+      // 0 so the caller does not spin retrying something that cannot resolve
+      expect(result).toBe(0);
+
+      createMatchConfirmationSpy.mockRestore();
+    });
+
+    it("does not mutate the lobbies it was given", async () => {
+      const lobbies = soloLobbies(12);
+      const snapshot = [...lobbies];
+      mockMatchmakingLobbyService.getLobbyDetails.mockImplementation(
+        async (lobbyId: string) =>
+          lobbies.find((l) => l.lobbyId === lobbyId) || null,
+      );
+
+      const createMatchConfirmationSpy = jest
+        .spyOn(service as any, "createMatchConfirmation")
+        .mockResolvedValue(undefined);
+
+      await (service as any).createMatches(region, type, lobbies);
+
+      expect(lobbies).toEqual(snapshot);
 
       createMatchConfirmationSpy.mockRestore();
     });

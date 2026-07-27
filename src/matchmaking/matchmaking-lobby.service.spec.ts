@@ -280,3 +280,108 @@ describe("MatchmakingLobbyService.verifyLobby", () => {
     ).rejects.toThrow("banned-player is banned");
   });
 });
+
+/**
+ * The elo snapshot taken when a lobby joins the queue. get_player_elo returns a
+ * jsonb blob whose per-type value is SQL NULL for a player with no rated games,
+ * and which has no key at all for Premier/Faceit. Number(null) is 0 and
+ * Number(undefined) is NaN, so an unguarded read either seeds a brand new
+ * player at rank 0 or poisons every average in the queue with NaN.
+ */
+describe("MatchmakingLobbyService.setLobbyDetails", () => {
+  let service: MatchmakingLobbyService;
+  let mockHasura: jest.Mocked<HasuraService>;
+  let stored: Record<string, string>;
+
+  const buildLobby = (steamIds: string[]) => ({
+    id: "lobby-1",
+    players: steamIds.map((steam_id) => ({
+      steam_id,
+      is_banned: false,
+      matchmaking_cooldown: false,
+    })),
+  });
+
+  const queuedRanks = () =>
+    JSON.parse(stored.details).players.map(
+      (player: { rank: number }) => player.rank,
+    );
+
+  const setup = (elo: Record<string, unknown>[]) => {
+    stored = {};
+    mockHasura = {
+      query: jest.fn().mockResolvedValue({
+        players: elo.map((value, index) => ({
+          steam_id: `steam-${index + 1}`,
+          elo: value,
+        })),
+      }),
+    } as any;
+
+    const mockRedisManager = {
+      getConnection: jest.fn().mockReturnValue({
+        hset: jest.fn(async (_key: string, field: string, value: string) => {
+          stored[field] = value;
+          return 1;
+        }),
+      } as unknown as Redis),
+    } as any;
+
+    service = new MatchmakingLobbyService(
+      new Logger("Test"),
+      mockHasura,
+      mockRedisManager,
+      {} as MatchmakeService,
+    );
+  };
+
+  it("uses the rated elo when the player has one", async () => {
+    setup([{ competitive: 4200 }]);
+
+    await service.setLobbyDetails(["us-east"], "Competitive", buildLobby(["steam-1"]));
+
+    expect(queuedRanks()).toEqual([4200]);
+  });
+
+  it("defaults an unrated player to 5000 rather than 0", async () => {
+    // get_player_elo_by_type returns NULL for a player with no player_elo rows
+    setup([{ competitive: null }]);
+
+    await service.setLobbyDetails(["us-east"], "Competitive", buildLobby(["steam-1"]));
+
+    expect(queuedRanks()).toEqual([5000]);
+  });
+
+  it("defaults to 5000 when the type is missing from the blob", async () => {
+    setup([{ competitive: 4200 }]);
+
+    await service.setLobbyDetails(["us-east"], "Premier", buildLobby(["steam-1"]));
+
+    expect(queuedRanks()).toEqual([5000]);
+  });
+
+  it("defaults to 5000 when the player has no elo row at all", async () => {
+    setup([]);
+
+    await service.setLobbyDetails(["us-east"], "Competitive", buildLobby(["steam-1"]));
+
+    expect(queuedRanks()).toEqual([5000]);
+  });
+
+  it("keeps avgRank finite when some of the party is unrated", async () => {
+    setup([{ competitive: 3000 }, { competitive: null }, { competitive: null }]);
+
+    await service.setLobbyDetails(
+      ["us-east"],
+      "Competitive",
+      buildLobby(["steam-1", "steam-2", "steam-3"]),
+    );
+
+    const details = JSON.parse(stored.details);
+    expect(details.players.map((p: { rank: number }) => p.rank)).toEqual([
+      3000, 5000, 5000,
+    ]);
+    expect(Number.isFinite(details.avgRank)).toBe(true);
+    expect(details.avgRank).toBeCloseTo(13000 / 3, 9);
+  });
+});
