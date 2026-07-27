@@ -149,6 +149,19 @@ describe("GameStreamerService", () => {
       expect(history[0].at).toBe("2026-01-01T00:00:00.000Z");
     });
 
+    it("clamps an oversized status before it reaches the row or history", async () => {
+      hasura.query.mockResolvedValueOnce({
+        match_demo_sessions_by_pk: { status: "booting", status_history: [] },
+      });
+      hasura.mutation.mockResolvedValueOnce({});
+
+      await service.reportDemoStatus("session-1", { status: "x".repeat(500) });
+
+      const set = setOf();
+      expect(set.status).toHaveLength(64);
+      expect((set.status_history as any[])[0].status).toHaveLength(64);
+    });
+
     it("no-ops when the session row is gone", async () => {
       hasura.query.mockResolvedValueOnce({ match_demo_sessions_by_pk: null });
 

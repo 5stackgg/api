@@ -1441,8 +1441,13 @@ export class ClipsService {
     }
 
     // Boot ticks land in status_history without overwriting `status` —
-    // IN_FLIGHT_STATUSES filtering depends on the row status staying queued.
-    const isBoot = body.status === "booting";
+    // IN_FLIGHT_STATUSES filtering depends on the row status staying queued,
+    // and clip_render_jobs_status_chk would reject anything off-enum anyway.
+    // An `event` is the same thing by another name: the milestone rides in as
+    // the boot_stage so it shows up in the stepper.
+    const isEvent = GameStreamerService.isTruthyFlag(body.event);
+    const isBoot = body.status === "booting" || isEvent;
+    const bootStage = isEvent ? body.status : body.boot_stage;
 
     const prevHistory = current.status_history as
       | Array<{
@@ -1455,12 +1460,12 @@ export class ClipsService {
       | undefined;
     const nextHistory = Array.isArray(prevHistory) ? [...prevHistory] : [];
     const entry: Record<string, unknown> = {
-      status: body.status,
+      status: isBoot ? "booting" : body.status,
       at: new Date().toISOString(),
     };
     if (isBoot) {
-      if (typeof body.boot_stage === "string" && body.boot_stage.length > 0) {
-        entry.boot_stage = body.boot_stage.slice(0, 64);
+      if (typeof bootStage === "string" && bootStage.length > 0) {
+        entry.boot_stage = bootStage.slice(0, 64);
       }
       if (
         typeof body.boot_progress === "number" &&
