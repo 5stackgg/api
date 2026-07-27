@@ -3184,6 +3184,14 @@ export class GameStreamerService {
           },
           spec: {
             restartPolicy: "Never",
+            dnsConfig: {
+              options: [
+                {
+                  name: "ndots",
+                  value: "1",
+                },
+              ],
+            },
             runtimeClassName: "nvidia",
             hostNetwork: true,
             dnsPolicy: "ClusterFirstWithHostNet",
