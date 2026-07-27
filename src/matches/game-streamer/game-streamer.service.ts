@@ -406,12 +406,32 @@ export class GameStreamerService {
     return trimmed.slice(0, 64);
   }
 
+  // bash sends flags as the strings "1"/"0"; "0" and "false" must not
+  // read as true the way a bare truthiness check would.
+  public static isTruthyFlag(raw: unknown): boolean {
+    if (typeof raw === "boolean") return raw;
+    if (typeof raw === "number") return raw !== 0;
+    if (typeof raw !== "string") return false;
+    const normalized = raw.trim().toLowerCase();
+    return normalized === "1" || normalized === "true";
+  }
+
+  // `status` is a free-form string off an unauthenticated cluster-internal
+  // endpoint and lands in a jsonb history capped by entry count, not size.
+  // Clamp it like progress_stage/boot_stage already are.
+  private static parseStatus(raw: string): string {
+    return raw.trim().slice(0, 64);
+  }
+
   // Builds the next status_history. Status change → append. Same status
   // with progress → mutate the last entry in place so download ticks
   // don't blow the cap-50.
+  //
+  // Coalescing compares against the LAST HISTORY ENTRY, not the row's
+  // status: an `event` tick appends without moving the row, so the two
+  // diverge and comparing against the row would rewrite the event entry.
   private nextStatusHistory(
     rawPrevious: unknown,
-    currentStatus: unknown,
     newStatus: string,
     progress: number | null,
     progress_stage: string | null,
@@ -426,10 +446,12 @@ export class GameStreamerService {
     if (progress !== null) entry.progress = progress;
     if (progress_stage !== null) entry.progress_stage = progress_stage;
 
-    if (currentStatus !== newStatus || previous.length === 0) {
+    const last = previous[previous.length - 1] as
+      | Record<string, unknown>
+      | undefined;
+    if (previous.length === 0 || last?.status !== newStatus) {
       return [...previous, entry].slice(-STATUS_HISTORY_CAP);
     }
-    const last = previous[previous.length - 1] as Record<string, unknown>;
     entry.at = (last?.at as string) ?? entry.at;
     return [...previous.slice(0, -1), entry];
   }
@@ -1253,23 +1275,29 @@ export class GameStreamerService {
       return;
     }
 
+    const status = GameStreamerService.parseStatus(body.status);
     const progress = this.parseProgress(body.progress);
     const progress_stage = this.parseProgressStage(body.progress_stage);
     const nextHistory = this.nextStatusHistory(
       current.status_history,
-      current.status,
-      body.status,
+      status,
       progress,
       progress_stage,
     );
 
-    const statusChanged = current.status !== body.status;
+    // An `event` is a one-shot milestone (demo_ready) raised by a worker
+    // running alongside the main boot — it marks a stage complete in the
+    // history without yanking the row off whatever setup-steam is doing.
+    const isEvent = GameStreamerService.isTruthyFlag(body.event);
+    const statusChanged = current.status !== status;
     const set: Record<string, unknown> = {
-      status: body.status,
-      error_message: body.error ?? null,
       status_history: nextHistory,
     };
-    if (statusChanged) {
+    if (!isEvent) {
+      set.status = status;
+      set.error_message = body.error ?? null;
+    }
+    if (isEvent || statusChanged) {
       set.last_status_at = "now()";
     }
 
@@ -1288,7 +1316,7 @@ export class GameStreamerService {
         ? ` progress=${progress}${progress_stage ? ` stage=${progress_stage}` : ""}`
         : "";
     this.logger.log(
-      `[demo ${sessionId}] status=${body.status}${progressNote}${body.error ? ` err=${body.error}` : ""}`,
+      `[demo ${sessionId}] ${isEvent ? "event" : "status"}=${status}${progressNote}${body.error ? ` err=${body.error}` : ""}`,
     );
   }
 
@@ -2741,25 +2769,35 @@ export class GameStreamerService {
       },
     });
     const row = match_streams?.[0];
+    const status = GameStreamerService.parseStatus(body.status);
     const progress = this.parseProgress(body.progress);
     const progress_stage = this.parseProgressStage(body.progress_stage);
     const nextHistory = this.nextStatusHistory(
       row?.status_history,
-      row?.status,
-      body.status,
+      status,
       progress,
       progress_stage,
     );
 
-    const statusChanged = row?.status !== body.status;
+    // See reportDemoStatus: an event only appends to the history. Letting it
+    // through the normal path would also blank stream_url and is_live, which
+    // are derived from the body the main boot sends.
+    const isEvent = GameStreamerService.isTruthyFlag(body.event);
+    const statusChanged = row?.status !== status;
     const setClause: Record<string, unknown> = {
-      status: body.status,
-      stream_url: body.stream_url ?? null,
-      error_message: body.error ?? null,
-      is_live: body.status === "live",
       status_history: nextHistory,
     };
-    if (statusChanged) {
+    if (!isEvent) {
+      setClause.status = status;
+      setClause.stream_url = body.stream_url ?? null;
+      setClause.error_message = body.error ?? null;
+      setClause.is_live = status === "live";
+    } else if (body.stream_url) {
+      // run-demo.sh reports the url alongside its first tick, which is an
+      // event when the demo was already on disk — take it, just never clear it.
+      setClause.stream_url = body.stream_url;
+    }
+    if (isEvent || statusChanged) {
       setClause.last_status_at = "now()";
     }
 
@@ -2782,7 +2820,7 @@ export class GameStreamerService {
         ? ` progress=${progress}${progress_stage ? ` stage=${progress_stage}` : ""}`
         : "";
     this.logger.log(
-      `[${matchId}] reportStatus status=${body.status}${progressNote} updated=${updated}`,
+      `[${matchId}] reportStatus ${isEvent ? "event" : "status"}=${status}${progressNote} updated=${updated}`,
     );
 
     if (updated === 0) {
@@ -2807,6 +2845,9 @@ export class GameStreamerService {
               link: `${this.appConfig.gameStreamDomain}/${matchId}/`,
               priority: 0,
               is_game_streamer: true,
+              // Seed `status` first: an event omits it from setClause, and a
+              // brand-new row is better off with the reported stage than null.
+              status,
               ...setClause,
             },
           },
@@ -2816,9 +2857,9 @@ export class GameStreamerService {
       this.logger.log(`[${matchId}] inserted new match_streams row`);
     }
 
-    if (body.status === "live") {
+    if (status === "live") {
       this.logger.log(`[${matchId}] "${GAME_STREAMER_TITLE}" → live`);
-    } else if (body.status === "errored") {
+    } else if (status === "errored") {
       this.logger.warn(
         `[${matchId}] streamer errored: ${body.error ?? "<no message>"}`,
       );
@@ -3090,7 +3131,6 @@ export class GameStreamerService {
 
     const nextHistory = this.nextStatusHistory(
       node?.shader_bake_status_history,
-      node?.shader_bake_status,
       status,
       progress,
       progress_stage,

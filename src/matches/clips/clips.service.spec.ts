@@ -183,4 +183,81 @@ describe("ClipsService", () => {
       expect(batchQueue.add).toHaveBeenCalledTimes(2);
     });
   });
+  describe("reportClipRenderStatus", () => {
+    const setOf = () =>
+      hasura.mutation.mock.calls[0][0].update_clip_render_jobs_by_pk.__args
+        ._set;
+
+    beforeEach(() => {
+      hasura.mutation.mockResolvedValue({
+        update_clip_render_jobs_by_pk: { id: "job-1" },
+      });
+    });
+
+    it("moves the row for a real status", async () => {
+      hasura.query.mockResolvedValueOnce({
+        clip_render_jobs_by_pk: { status: "queued", status_history: [] },
+      });
+
+      await service.reportClipRenderStatus("job-1", {
+        status: "rendering",
+        progress: 0.5,
+      });
+
+      const set = setOf();
+      expect(set.status).toBe("rendering");
+      expect(set.progress).toBe(0.5);
+    });
+
+    it("keeps the row queued for a boot tick", async () => {
+      hasura.query.mockResolvedValueOnce({
+        clip_render_jobs_by_pk: { status: "queued", status_history: [] },
+      });
+
+      await service.reportClipRenderStatus("job-1", {
+        status: "booting",
+        boot_stage: "downloading_cs2:Verifying",
+        boot_progress: 0.42,
+      });
+
+      const set = setOf();
+      expect(set.status).toBeUndefined();
+      const history = set.status_history as any[];
+      expect(history[0].status).toBe("booting");
+      expect(history[0].boot_stage).toBe("downloading_cs2:Verifying");
+      expect(history[0].boot_progress).toBe(0.42);
+    });
+
+    it("files an event as a boot stage instead of an off-enum status", async () => {
+      // clip_render_jobs_status_chk only allows the six pipeline statuses, so
+      // a raw `demo_ready` in `status` would fail the mutation outright.
+      hasura.query.mockResolvedValueOnce({
+        clip_render_jobs_by_pk: { status: "queued", status_history: [] },
+      });
+
+      await service.reportClipRenderStatus("job-1", {
+        status: "demo_ready",
+        event: "1",
+      });
+
+      const set = setOf();
+      expect(set.status).toBeUndefined();
+      const history = set.status_history as any[];
+      expect(history[0].status).toBe("booting");
+      expect(history[0].boot_stage).toBe("demo_ready");
+    });
+
+    it("ignores event=0", async () => {
+      hasura.query.mockResolvedValueOnce({
+        clip_render_jobs_by_pk: { status: "queued", status_history: [] },
+      });
+
+      await service.reportClipRenderStatus("job-1", {
+        status: "rendering",
+        event: "0",
+      });
+
+      expect(setOf().status).toBe("rendering");
+    });
+  });
 });
