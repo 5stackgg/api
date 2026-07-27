@@ -15,6 +15,7 @@ import {
   getMatchmakingLobbyDetailsCacheKey,
 } from "./utilities/cacheKeys";
 import { JoinQueueError } from "./utilities/joinQueueError";
+import { DEFAULT_ELO } from "./utilities/matchmakingTuning";
 import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
 
 @Injectable()
@@ -158,12 +159,17 @@ export class MatchmakingLobbyService {
     const eloMap = new Map(players.map((p) => [p.steam_id, p.elo]));
 
     const _players = lobby.players.map(({ steam_id }) => {
-      const playerElo = eloMap.get(steam_id);
-      let elo = 5000;
-      if (playerElo) {
-        elo = Number(playerElo[type.toLowerCase()]);
-      }
-      return { steam_id, rank: elo };
+      // get_player_elo returns SQL NULL for a player with no player_elo rows,
+      // and has no key at all for Premier/Faceit. Number(null) is 0 and
+      // Number(undefined) is NaN, so both have to fall back explicitly.
+      const raw = eloMap.get(steam_id)?.[type.toLowerCase()];
+      const elo = Number(raw);
+      return {
+        steam_id,
+        rank: raw === null || raw === undefined || !Number.isFinite(elo)
+          ? DEFAULT_ELO
+          : elo,
+      };
     });
 
     const matchmakingLobby: MatchmakingLobby = {

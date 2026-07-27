@@ -19,6 +19,24 @@ import {
   getMatchmakingRankCacheKey,
 } from "./utilities/cacheKeys";
 import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
+import { shuffleSplit } from "./utilities/shuffleSplit";
+import { balanceTeams, canFillTeams } from "./utilities/balanceTeams";
+import { selectMatchCandidates } from "./utilities/selectMatchCandidates";
+import { WINDOW_CAP, winProbability } from "./utilities/matchmakingTuning";
+
+function averageRank(players: Array<{ rank: number }>) {
+  return players.reduce((acc, player) => acc + player.rank, 0) / players.length;
+}
+
+function toMatchmakingTeam(lobbies: MatchmakingLobby[]): MatchmakingTeam {
+  const players = lobbies.flatMap((lobby) => lobby.players);
+
+  return {
+    lobbies: lobbies.map((lobby) => lobby.lobbyId),
+    players,
+    avgRank: averageRank(players),
+  };
+}
 
 @Injectable()
 export class MatchmakeService {
@@ -39,6 +57,15 @@ export class MatchmakeService {
     const lobby = await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
     if (!lobby) {
       this.logger.warn(`Cannot requeue lobby ${lobbyId} - details not found`);
+      return;
+    }
+
+    // a non-finite score makes redis reject the whole zadd, which would silently
+    // drop the lobby from the queue
+    if (!Number.isFinite(lobby.avgRank)) {
+      this.logger.error(
+        `Cannot queue lobby ${lobbyId} - avgRank is ${lobby.avgRank}`,
+      );
       return;
     }
 
@@ -151,97 +178,20 @@ export class MatchmakeService {
       "WITHSCORES",
     );
 
-    let lobbies = await this.processLobbyData(lobbiesData);
+    const lobbies = await this.processLobbyData(lobbiesData, region);
 
     if (lobbies.length === 0) {
       await this.releaseMatchmakeRegionLock(region);
       return;
     }
 
-    // sort lobbies by a weighted score combining rank difference and wait time
-    lobbies = lobbies.sort((a, b) => {
-      // normalize wait times to 0-1 range (longer wait = higher priority)
-      const aWaitTime = (Date.now() - a.joinedAt.getTime()) / 1000;
-      const bWaitTime = (Date.now() - b.joinedAt.getTime()) / 1000;
-
-      const maxWaitTime = Math.max(aWaitTime, bWaitTime);
-
-      const normalizedAWait = aWaitTime / maxWaitTime;
-      const normalizedBWait = bWaitTime / maxWaitTime;
-
-      // weight rank differences more heavily (0.7) than wait time (0.3)
-      const rankWeight = 0.7;
-      const waitWeight = 0.3;
-
-      return (
-        rankWeight * b.avgRank +
-        waitWeight * normalizedBWait -
-        rankWeight * a.avgRank +
-        waitWeight * normalizedAWait
-      );
-    });
-
-    // group lobbies based on rank differences that expand with wait time
-    const groupedLobbies = [];
-    let currentGroup = [lobbies.at(0)];
-
-    for (const currentLobby of lobbies.slice(1)) {
-      const firstLobbyInGroup = currentGroup.at(0);
-
-      // TODO - check if rank difference feature is enabled
-      const rankDiffEnabled = false;
-
-      if (!rankDiffEnabled) {
-        // if rank difference feature is disabled, just add lobbies in order
-        currentGroup.push(currentLobby);
-        continue;
-      }
-
-      // calculate wait time in seconds
-      const waitTimeSeconds = Math.max(
-        10,
-        Math.floor((Date.now() - firstLobbyInGroup.joinedAt.getTime()) / 1000),
-      );
-
-      // maximum allowed rank difference increases proportionally with wait time (100 per minute)
-      const maxRankDiff = 25 * waitTimeSeconds;
-
-      // check if current lobby's rank is within acceptable range
-      if (
-        Math.abs(currentLobby.avgRank - firstLobbyInGroup.avgRank) <=
-        maxRankDiff
-      ) {
-        currentGroup.push(currentLobby);
-        continue;
-      }
-
-      // start new group if rank difference is too high
-      if (currentGroup.length > 0) {
-        groupedLobbies.push([...currentGroup]);
-      }
-      currentGroup = [currentLobby];
-    }
-
-    // add final group
-    if (currentGroup.length > 0) {
-      groupedLobbies.push(currentGroup);
-    }
-
-    const createMatchesPromises = [];
-
-    for (const group of groupedLobbies) {
-      createMatchesPromises.push(this.createMatches(region, type, group));
-    }
-
-    // once all results are returned as false we no longer need to matchmake
-    const results = await Promise.all(createMatchesPromises).finally(() => {
+    const totalPlayerNotQueued = await this.createMatches(
+      region,
+      type,
+      lobbies,
+    ).finally(() => {
       void this.releaseMatchmakeRegionLock(region);
     });
-
-    const totalPlayerNotQueued = results.reduce(
-      (acc, result) => acc + result,
-      0,
-    );
 
     if (totalPlayerNotQueued < ExpectedPlayers[type]) {
       await this.releaseMatchmakeRegionLock(region);
@@ -252,17 +202,47 @@ export class MatchmakeService {
       `${totalPlayerNotQueued} players not queued, expanding search....`,
     );
 
-    // randomize the time to prevent all regions from matchingmake at the same time
-    setTimeout(
-      () => {
-        void this.matchmake(type, region);
-      },
+    await this.scheduleExpandedSearch(
+      type,
+      region,
       10000 + Math.floor(Math.random() * 10000),
     );
   }
 
+  /**
+   * Queues another pass over a region.
+   *
+   * A delayed job rather than a setTimeout: the jobId collapses duplicates, so
+   * the several callers that can all want another pass at once do not stack up
+   * timers, and a pending pass survives a restart instead of being lost.
+   */
+  private async scheduleExpandedSearch(
+    type: e_match_types_enum,
+    region: string,
+    delay: number,
+  ) {
+    try {
+      await this.queue.add(
+        "ExpandMatchmaking",
+        { type, region },
+        {
+          delay,
+          jobId: `matchmaking.expand.${type}.${region}`,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      );
+    } catch (error) {
+      this.logger.error(
+        `Unable to schedule another matchmaking pass for ${type}/${region}:`,
+        error,
+      );
+    }
+  }
+
   private async processLobbyData(
     lobbiesData: string[],
+    region: string,
   ): Promise<MatchmakingLobby[]> {
     const lobbyDetails = [];
 
@@ -285,38 +265,28 @@ export class MatchmakeService {
         }
 
         try {
-          const shuffledPlayers = [...details.players].sort(
-            () => Math.random() - 0.5,
-          );
-          const halfLength = Math.floor(shuffledPlayers.length / 2);
+          // a party that fills the whole match keeps a random split - they
+          // queued together for a scrim, not for a rating-balanced game
+          const [players1, players2] = shuffleSplit(details.players);
 
           const team1: MatchmakingTeam = {
-            players: shuffledPlayers.slice(0, halfLength),
-            lobbies: [],
-            avgRank: 0,
+            players: players1,
+            lobbies: [details.lobbyId],
+            avgRank: averageRank(players1),
           };
           const team2: MatchmakingTeam = {
-            players: shuffledPlayers.slice(halfLength),
+            // both teams come from the same lobby, but the id is only recorded
+            // once so the confirmation doesn't process it twice
+            players: players2,
             lobbies: [],
-            avgRank: 0,
+            avgRank: averageRank(players2),
           };
 
-          team1.lobbies.push(details.lobbyId);
-          team2.lobbies.push(details.lobbyId);
-
-          team1.avgRank =
-            team1.players.reduce((acc, player) => acc + player.rank, 0) /
-            team1.players.length;
-          team2.avgRank =
-            team2.players.reduce((acc, player) => acc + player.rank, 0) /
-            team2.players.length;
-
-          const region = details.regions.at(0);
-
-          await this.createMatchConfirmation(region, details.type, {
-            team1,
-            team2,
-          });
+          await this.createMatchConfirmation(
+            details.regions.includes(region) ? region : details.regions.at(0),
+            details.type,
+            { team1, team2 },
+          );
         } catch (error) {
           this.logger.error(
             `Error creating match confirmation for lobby ${details.lobbyId}:`,
@@ -329,7 +299,7 @@ export class MatchmakeService {
       }
       lobbyDetails.push({
         ...details,
-        avgRank: parseInt(lobbiesData[i + 1]),
+        avgRank: averageRank(details.players),
         joinedAt: new Date(details.joinedAt),
       });
     }
@@ -337,191 +307,154 @@ export class MatchmakeService {
     return lobbyDetails;
   }
 
+  /**
+   * Carves as many matches as possible out of the queue in one pass.
+   *
+   * Lobbies stay claimed between iterations: a lobby that misses one match is a
+   * candidate for the next, and releasing it just to re-claim it would churn the
+   * queue keys and push a redundant queue update to everyone in it.
+   *
+   * Returns the number of players left unmatched, which the caller uses to
+   * decide whether another pass could help. 0 means "do not bother retrying".
+   */
   private async createMatches(
     region: string,
     type: e_match_types_enum,
     lobbies: Array<MatchmakingLobby>,
   ): Promise<number> {
     const requiredPlayers = ExpectedPlayers[type];
-    const totalPlayers = lobbies.reduce(
-      (acc, lobby) => acc + lobby.players.length,
-      0,
+
+    // lobbies we hold the lock for and have not committed to a match
+    const claimed = new Map<string, MatchmakingLobby>();
+    // lobbies we have not tried to claim yet
+    const untried = new Map<string, MatchmakingLobby>(
+      lobbies.map((lobby) => [lobby.lobbyId, lobby]),
     );
 
-    if (lobbies.length === 0) {
-      return 0;
-    }
+    const countPlayers = (pool: Array<MatchmakingLobby>) =>
+      pool.reduce((acc, lobby) => acc + lobby.players.length, 0);
 
-    if (totalPlayers < requiredPlayers) {
-      return totalPlayers;
-    }
+    try {
+      for (;;) {
+        const pool = [...claimed.values(), ...untried.values()];
+        const remainingPlayers = countPlayers(pool);
 
-    // try to make as many valid matches as possible
-    const team1: MatchmakingTeam = {
-      players: [],
-      lobbies: [],
-      avgRank: 0,
-    };
-    const team2: MatchmakingTeam = {
-      players: [],
-      lobbies: [],
-      avgRank: 0,
-    };
+        if (remainingPlayers < requiredPlayers) {
+          return remainingPlayers;
+        }
 
-    const lobbiesAdded: Array<string> = [];
-    const playersPerTeam = requiredPlayers / 2;
-
-    let lobbyLocks = new Set<string>();
-
-    // try to fill teams with available lobbies
-    // if they are unable to accuire the lock, it means they are already being matched, or another region is trying to matchmake
-    // we assign lobbies to the team that keeps average elo between teams as close as possible
-    for (const lobby of lobbies) {
-      try {
-        const lock = await this.claimLobby(lobby.lobbyId, lobby);
-
-        if (!lock) {
+        // parties are atomic, so a pool can hold enough players and still have
+        // no legal split - five duos can never make two teams of five. that
+        // cannot resolve on its own, so report 0 rather than spinning the retry.
+        if (
+          !canFillTeams(
+            pool.map((lobby) => lobby.players.length),
+            requiredPlayers,
+          )
+        ) {
           this.logger.warn(
-            `Unable to acquire lobby lock for ${lobby.lobbyId} - lobby is already being processed`,
+            `${type}/${region}: ${remainingPlayers} queued but the party sizes cannot fill two lineups`,
           );
-          continue;
+          return 0;
         }
 
-        const team1HasRoom =
-          team1.players.length + lobby.players.length <= playersPerTeam;
-        const team2HasRoom =
-          team2.players.length + lobby.players.length <= playersPerTeam;
+        const selection = selectMatchCandidates(pool, requiredPlayers);
 
-        if (!team1HasRoom && !team2HasRoom) {
-          await this.releaseLobbyAndRequeue(lobby.lobbyId);
-          continue;
+        if (!selection) {
+          return remainingPlayers;
         }
 
-        let targetTeam: MatchmakingTeam;
+        // top up the claimed pool in preference order. selectMatchCandidates
+        // returns every lobby rather than just the window, so lobbies that fail
+        // to claim are replaced from the tail.
+        for (const lobby of selection.candidates) {
+          if (claimed.size >= WINDOW_CAP) {
+            break;
+          }
 
-        if (!team1HasRoom) {
-          targetTeam = team2;
-        } else if (!team2HasRoom) {
-          targetTeam = team1;
-        } else {
-          // Calculate current team totals and player counts
-          const team1TotalRank = team1.players.reduce(
-            (acc, player) => acc + player.rank,
-            0,
-          );
-          const team2TotalRank = team2.players.reduce(
-            (acc, player) => acc + player.rank,
-            0,
-          );
-          const lobbyTotalRank = lobby.players.reduce(
-            (acc, player) => acc + player.rank,
-            0,
-          );
+          if (claimed.has(lobby.lobbyId)) {
+            continue;
+          }
 
-          // Calculate what the new averages would be if we add this lobby to each team
-          const team1NewAvg =
-            (team1TotalRank + lobbyTotalRank) /
-            (team1.players.length + lobby.players.length);
-          const team2NewAvg =
-            (team2TotalRank + lobbyTotalRank) /
-            (team2.players.length + lobby.players.length);
+          let acquired = false;
+          try {
+            acquired = await this.claimLobby(lobby.lobbyId, lobby);
+          } catch (error) {
+            this.logger.error(`Error claiming lobby ${lobby.lobbyId}:`, error);
+            untried.delete(lobby.lobbyId);
+            continue;
+          }
 
-          // Calculate current team averages
-          const team1CurrentAvg =
-            team1.players.length > 0
-              ? team1TotalRank / team1.players.length
-              : 0;
-          const team2CurrentAvg =
-            team2.players.length > 0
-              ? team2TotalRank / team2.players.length
-              : 0;
+          untried.delete(lobby.lobbyId);
 
-          const diffIfToTeam1 = Math.abs(team1NewAvg - team2CurrentAvg);
-          const diffIfToTeam2 = Math.abs(team1CurrentAvg - team2NewAvg);
+          if (!acquired) {
+            // another region is matchmaking it - we never owned it, so it must
+            // not be requeued here
+            this.logger.warn(
+              `Unable to acquire lobby lock for ${lobby.lobbyId} - lobby is already being processed`,
+            );
+            continue;
+          }
 
-          targetTeam = diffIfToTeam1 <= diffIfToTeam2 ? team1 : team2;
+          claimed.set(lobby.lobbyId, lobby);
         }
 
-        lobbyLocks.add(lobby.lobbyId);
+        // pure from here until the confirmation, so the teams we pick are
+        // guaranteed to still be ours
+        const claimedPool = [...claimed.values()];
+        const balanced =
+          balanceTeams(claimedPool, requiredPlayers) ??
+          // the anchor itself may be what makes the split impossible
+          balanceTeams(claimedPool, requiredPlayers, { pinAnchor: false });
 
-        targetTeam.players.push(...lobby.players);
-        targetTeam.lobbies.push(lobby.lobbyId);
+        if (!balanced) {
+          this.logger.warn(
+            `${type}/${region}: no valid split among ${claimed.size} claimed lobbies`,
+          );
+          return remainingPlayers;
+        }
 
-        targetTeam.avgRank =
-          targetTeam.players.reduce((acc, player) => acc + player.rank, 0) /
-          targetTeam.players.length;
+        this.logger.log(
+          `${type}/${region} matched: elo diff ${balanced.avgRankDifference.toFixed(
+            1,
+          )} (win probability ${winProbability(
+            balanced.avgRankDifference,
+          ).toFixed(3)}), spread ${balanced.spread}, cost ${balanced.cost.toFixed(
+            1,
+          )}, ${balanced.nodesVisited} nodes, optimal ${balanced.exhausted}`,
+        );
 
-        lobbiesAdded.push(lobby.lobbyId);
-      } catch (error) {
-        this.logger.error(`Error processing lobby ${lobby.lobbyId}:`, error);
-        // If we acquired a lock but failed to process, release it
-        if (lobbyLocks.has(lobby.lobbyId)) {
-          await this.releaseLobbyAndRequeue(lobby.lobbyId);
-          lobbyLocks.delete(lobby.lobbyId);
+        const matched = [...balanced.team1, ...balanced.team2];
+        const team1 = toMatchmakingTeam(balanced.team1);
+        const team2 = toMatchmakingTeam(balanced.team2);
+
+        // the confirmation re-ttls these locks and owns them from here
+        for (const lobby of matched) {
+          claimed.delete(lobby.lobbyId);
+        }
+
+        try {
+          await this.createMatchConfirmation(region, type, { team1, team2 });
+        } catch (error) {
+          this.logger.error(`Error creating match confirmation:`, error);
+          // ownership comes back to us, so the settle path requeues them
+          for (const lobby of matched) {
+            claimed.set(lobby.lobbyId, lobby);
+          }
+          return remainingPlayers;
         }
       }
-    }
-
-    for (const lobbyId of lobbiesAdded) {
-      const lobbyIndex = lobbies.findIndex(
-        (lobby) => lobby.lobbyId === lobbyId,
-      );
-      if (lobbyIndex !== -1) {
-        lobbies.splice(lobbyIndex, 1);
-      }
-    }
-
-    let totalPlayerNotQueued = 0;
-    // check if we have valid teams for this match
-    if (
-      team1.players.length === playersPerTeam &&
-      team2.players.length === playersPerTeam
-    ) {
-      try {
-        // lobby locks will be released after confimrmation
-        for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
-          lobbyLocks.delete(lobbyId);
-        }
-
-        await this.createMatchConfirmation(region, type, {
-          team1,
-          team2,
-        });
-      } catch (error) {
-        this.logger.error(`Error creating match confirmation:`, error);
-        // Release all locks if match confirmation fails
-        for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
+    } finally {
+      // single settle path - every lobby we still hold is requeued exactly
+      // once, even if the loop threw
+      for (const lobbyId of claimed.keys()) {
+        try {
           await this.releaseLobbyAndRequeue(lobbyId);
+        } catch (error) {
+          this.logger.error(`Failed to requeue lobby ${lobbyId}:`, error);
         }
-        totalPlayerNotQueued = team1.players.length + team2.players.length;
-      }
-    } else {
-      totalPlayerNotQueued = team1.players.length + team2.players.length;
-      // Release all acquired locks since we can't create a match
-      for (const lobbyId of [...team1.lobbies, ...team2.lobbies]) {
-        await this.releaseLobbyAndRequeue(lobbyId);
       }
     }
-
-    // only try to re-matchmake lobbies that we were able to accuire a lock for
-    const lobbiesToMatch = lobbies.filter((lobby) =>
-      lobbyLocks.has(lobby.lobbyId),
-    );
-    if (lobbiesToMatch.length > 0) {
-      for (const lobby of lobbiesToMatch) {
-        await this.releaseLobbyAndRequeue(lobby.lobbyId);
-      }
-      await this.createMatches(region, type, lobbiesToMatch);
-    }
-
-    // Safety check: ensure all remaining locks are released
-    if (lobbyLocks.size > 0) {
-      for (const lobbyId of lobbyLocks) {
-        await this.releaseLobbyAndRequeue(lobbyId);
-      }
-    }
-
-    return totalPlayerNotQueued;
   }
 
   private async aquireMatchmakeRegionLock(region: string): Promise<boolean> {
@@ -781,11 +714,9 @@ export class MatchmakeService {
     await this.sendRegionStats();
 
     if (shouldMatchmake) {
-      // randomize the time to prevent all regions from matchingmake at the same time
-      setTimeout(
-        () => {
-          void this.matchmake(type, region);
-        },
+      await this.scheduleExpandedSearch(
+        type,
+        region,
         Math.floor(Math.random() * 10000),
       );
     }
