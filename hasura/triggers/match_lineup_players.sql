@@ -107,3 +107,31 @@ $$;
 
 DROP TRIGGER IF EXISTS tad_match_lineup_players ON public.match_lineup_players;
 CREATE TRIGGER tad_match_lineup_players AFTER DELETE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tad_match_lineup_players();
+
+CREATE OR REPLACE FUNCTION public.tai_match_lineup_players_parties() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    v_match_id uuid;
+BEGIN
+    FOR v_match_id IN
+        SELECT DISTINCT ml.match_id
+          FROM new_rows nr
+          JOIN public.match_lineups ml ON ml.id = nr.match_lineup_id
+         WHERE ml.match_id IS NOT NULL
+    LOOP
+        PERFORM public.assign_lobby_parties(v_match_id);
+    END LOOP;
+
+    RETURN NULL;
+END;
+$$;
+
+-- Statement level, not per row: assign_lobby_parties asks whether anyone else
+-- from the lobby is in this match, which is never true on the first row of a
+-- bulk insert.
+DROP TRIGGER IF EXISTS tai_match_lineup_players_parties ON public.match_lineup_players;
+CREATE TRIGGER tai_match_lineup_players_parties
+    AFTER INSERT ON public.match_lineup_players
+    REFERENCING NEW TABLE AS new_rows
+    FOR EACH STATEMENT EXECUTE FUNCTION public.tai_match_lineup_players_parties();

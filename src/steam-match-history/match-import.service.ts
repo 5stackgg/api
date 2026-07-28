@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { Inject, Injectable, Logger, forwardRef } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
@@ -11,10 +12,27 @@ import { ParsedDemo, ParsedPlayer } from "../demos/demo-parser.service";
 import { S3Service } from "../s3/s3.service";
 import { FaceitService } from "../faceit/faceit.service";
 import { SteamPresenceService } from "../steam-presence/steam-presence.service";
-import { e_match_types_enum } from "../../generated";
+import {
+  e_match_party_sources_enum,
+  e_match_types_enum,
+} from "../../generated";
+import { MatchParty } from "./types/MatchParty";
 
 type MatchType = e_match_types_enum;
 type Side = "T" | "CT";
+
+// "lobby" is written by the assign_lobby_parties trigger, never here.
+function toPartySource(source: string): e_match_party_sources_enum | null {
+  return source === "valve" ? "valve" : null;
+}
+
+export type ImportExternalDemoOptions = {
+  demoUrl?: string;
+  matchStartTime?: string | null;
+  externalId?: string | null;
+  sourceObjectKey?: string;
+  parties?: MatchParty[] | null;
+};
 
 type SteamPlayerSummary = {
   steamid: string;
@@ -48,11 +66,11 @@ export class MatchImportService {
     parsed: ParsedDemo,
     source: string,
     sourceKey: string,
-    demoUrl?: string,
-    matchStartTime?: string | null,
-    externalId?: string | null,
-    sourceObjectKey?: string,
+    options: ImportExternalDemoOptions = {},
   ): Promise<{ matchId: string | null; skipped?: string }> {
+    const { demoUrl, matchStartTime, externalId, sourceObjectKey, parties } =
+      options;
+
     if (MatchImportService.isFaceitServer(parsed.server_name)) {
       source = "faceit";
     } else if (MatchImportService.isFiveStackServer(parsed.server_name)) {
@@ -130,8 +148,30 @@ export class MatchImportService {
     const lineup1Id = await this.insertLineup();
     const lineup2Id = await this.insertLineup();
 
-    await this.insertLineupPlayers(lineup1Id, lineup1Players);
-    await this.insertLineupPlayers(lineup2Id, lineup2Players);
+    // source is re-derived from the server name above and can be "5stack",
+    // which the party_source FK would reject.
+    const partySource = toPartySource(source);
+    const partyIds = partySource
+      ? MatchImportService.mapPartyIds(parties)
+      : new Map<string, string>();
+    if (partyIds.size > 0) {
+      this.logger.log(
+        `parties for ${source}/${sourceKey}: ${new Set(partyIds.values()).size} group(s) covering ${partyIds.size} player(s)`,
+      );
+    }
+
+    await this.insertLineupPlayers(
+      lineup1Id,
+      lineup1Players,
+      partyIds,
+      partySource,
+    );
+    await this.insertLineupPlayers(
+      lineup2Id,
+      lineup2Players,
+      partyIds,
+      partySource,
+    );
 
     let startedAt = matchStartTime ?? null;
     let startSource = startedAt ? "gc-matchtime" : "none";
@@ -516,6 +556,17 @@ export class MatchImportService {
 
   private static computeStartingSides(parsed: ParsedDemo): Map<string, Side> {
     const sides = new Map<string, Side>();
+
+    // The demo knows each player's team outright. Prefer it: the kill scan
+    // below can only place players who killed or died in round 1, and
+    // splitLineupsBySide deals the rest into whichever lineup is shorter.
+    for (const player of parsed.players ?? []) {
+      const side = MatchImportService.normalizeTeam(player.starting_side);
+      if (player.steam_id && side) {
+        sides.set(player.steam_id, side);
+      }
+    }
+
     // A player's side must be read from round 1 — sides swap at halftime, so
     // a player's first kill later in the demo can be on the opposite side and
     // would scramble the lineup split.
@@ -555,6 +606,27 @@ export class MatchImportService {
       return "CT";
     }
     return null;
+  }
+
+  // Source party ids are only unique within their own match, so each gets a
+  // fresh uuid.
+  private static mapPartyIds(
+    parties: MatchParty[] | null | undefined,
+  ): Map<string, string> {
+    const byKey = new Map<string, string>();
+    const bySteamId = new Map<string, string>();
+    for (const party of parties ?? []) {
+      if (!party.steam_id || !party.party_key) {
+        continue;
+      }
+      let partyId = byKey.get(party.party_key);
+      if (!partyId) {
+        partyId = randomUUID();
+        byKey.set(party.party_key, partyId);
+      }
+      bySteamId.set(party.steam_id, partyId);
+    }
+    return bySteamId;
   }
 
   private static splitLineupsBySide(
@@ -943,10 +1015,14 @@ export class MatchImportService {
   private async insertLineupPlayers(
     lineupId: string,
     players: ParsedPlayer[],
+    parties?: Map<string, string>,
+    partySource?: e_match_party_sources_enum | null,
   ): Promise<void> {
     const objects = players.map((p) => ({
       match_lineup_id: lineupId,
       steam_id: p.steam_id,
+      party_id: parties?.get(p.steam_id) ?? null,
+      party_source: parties?.has(p.steam_id) ? partySource : null,
     }));
     if (objects.length === 0) {
       return;

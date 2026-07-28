@@ -86,14 +86,11 @@ export class FaceitMatchImportService {
       throw new Error("demo parse failed");
     }
 
-    return this.matchImport.importExternalDemo(
-      parsed,
-      "faceit",
-      matchId,
-      resourceUrl,
-      startedAt,
-      matchId,
-    );
+    return this.matchImport.importExternalDemo(parsed, "faceit", matchId, {
+      demoUrl: resourceUrl,
+      matchStartTime: startedAt,
+      externalId: matchId,
+    });
   }
 
   public async pollForPlayer(steamId: string): Promise<number> {

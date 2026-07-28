@@ -66,6 +66,7 @@ export type ParsedKitDrop = {
 export type ParsedPlayer = {
   steam_id: string;
   name: string;
+  starting_side?: string;
   rank?: number;
   rank_type?: number;
   previous_rank?: number;

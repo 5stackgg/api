@@ -62,8 +62,10 @@ select_permissions:
         - checked_in
         - discord_id
         - placeholder_name
+        - party_source
         - id
         - match_lineup_id
+        - party_id
       filter: {}
     comment: ""
 update_permissions:
