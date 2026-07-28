@@ -191,26 +191,33 @@ delete_permissions:
   - role: user
     permission:
       filter:
-        _or:
-          - team:
-              roster:
-                _and:
-                  - role:
-                      _eq: Admin
-                  - player_steam_id:
+        _and:
+          - _or:
+              - team:
+                  roster:
+                    _and:
+                      - role:
+                          _eq: Admin
+                      - player_steam_id:
+                          _eq: X-Hasura-User-Id
+              - team:
+                  owner_steam_id:
+                    _eq: X-Hasura-User-Id
+              - team:
+                  captain_steam_id:
+                    _eq: X-Hasura-User-Id
+              - _and:
+                  - team_id:
+                      _is_null: true
+                  - owner_steam_id:
                       _eq: X-Hasura-User-Id
-          - _and:
-              - team_id:
-                  _is_null: true
-              - owner_steam_id:
-                  _eq: X-Hasura-User-Id
-          - tournament:
-              is_organizer:
-                _eq: true
+              - tournament:
+                  is_organizer:
+                    _eq: true
           - tournament:
               status:
-                _in:
-                  - Setup
-                  - RegistrationOpen
-                  - RegistrationClosed
+                _nin:
+                  - Cancelled
+                  - CancelledMinTeams
+                  - Finished
     comment: ""
