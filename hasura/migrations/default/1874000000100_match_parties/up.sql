@@ -5,8 +5,7 @@ CREATE TABLE IF NOT EXISTS public.e_match_party_sources (
 
 INSERT INTO public.e_match_party_sources (value, description) VALUES
     ('lobby', '5stack matchmaking lobby'),
-    ('valve', 'Valve matchmaking reservation'),
-    ('faceit', 'FACEIT match room party')
+    ('valve', 'Valve matchmaking reservation')
 ON CONFLICT (value) DO NOTHING;
 
 -- Solo queuers stay NULL. No FK to lobbies: tad_lobby_players deletes the

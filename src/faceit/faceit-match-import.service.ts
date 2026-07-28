@@ -90,7 +90,6 @@ export class FaceitMatchImportService {
       demoUrl: resourceUrl,
       matchStartTime: startedAt,
       externalId: matchId,
-      parties: await this.faceit.getMatchParties(matchId),
     });
   }
 

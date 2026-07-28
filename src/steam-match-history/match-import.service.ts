@@ -21,10 +21,9 @@ import { MatchParty } from "./types/MatchParty";
 type MatchType = e_match_types_enum;
 type Side = "T" | "CT";
 
-const PARTY_SOURCES: e_match_party_sources_enum[] = ["valve", "faceit"];
-
+// "lobby" is written by the assign_lobby_parties trigger, never here.
 function toPartySource(source: string): e_match_party_sources_enum | null {
-  return PARTY_SOURCES.find((partySource) => partySource === source) ?? null;
+  return source === "valve" ? "valve" : null;
 }
 
 export type ImportExternalDemoOptions = {
