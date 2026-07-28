@@ -7,5 +7,4 @@ export enum SteamMatchHistoryQueues {
   CheckSteamBans = "CheckSteamBans",
   PollSteamMatchHistoryForUser = "PollSteamMatchHistoryForUser",
   SyncMatchParties = "SyncMatchParties",
-  BackfillShareCodes = "BackfillShareCodes",
 }

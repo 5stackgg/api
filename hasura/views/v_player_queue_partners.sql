@@ -1,16 +1,9 @@
--- Who each player queues with. Rows are ordered pairs (both directions), so a
--- profile page filters on steam_id alone rather than OR-ing two columns.
+-- Ordered pairs (both directions) so a profile filters on steam_id alone.
 --
--- The join is party_id AND same match, never party_id alone: for 5stack
--- matchmaking party_id is the lobby id, which survives across matches, so
--- joining on it by itself would fuse every match that lobby ever played into
--- one pair. It is also not narrowed to a single lineup, because a lobby that
--- fills the whole match is split across both sides and those players still
--- queued together.
---
--- Deliberately narrower than suggest_player_groups.sql, which joins on
--- match_lineup_id and therefore means "was on the same team as", including
--- the nine strangers a solo queuer gets matched with.
+-- Joined on party_id AND same match, never party_id alone: a 5stack party_id is
+-- the lobby id and survives across matches, so party_id by itself would fuse
+-- every match that lobby ever played into one pair. Not narrowed to a single
+-- lineup either — a lobby that fills the whole match is split across both.
 CREATE OR REPLACE VIEW public.v_player_queue_partners AS
  SELECT a.steam_id,
         b.steam_id AS partner_steam_id,

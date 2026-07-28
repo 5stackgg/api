@@ -452,9 +452,8 @@ export class DemoMetadataService {
       return;
     }
 
-    // Only imported matches need this. A 5stack match's parties come from the
-    // lobby via the assign_lobby_parties trigger, so re-asking an external
-    // source would be pointless work — and the sync must never touch them.
+    // 5stack parties come from the lobby via the assign_lobby_parties trigger;
+    // there is no external source to re-ask.
     const rows = await this.postgres.query<Array<{ source: string }>>(
       `SELECT source FROM public.matches WHERE id = $1::uuid`,
       [matchId],
@@ -468,8 +467,6 @@ export class DemoMetadataService {
         "SyncMatchParties",
         { match_id: matchId },
         {
-          // One pending sync per match, so a reparse-all doesn't queue the
-          // same match twice for a multi-map series.
           jobId: `sync-parties-${matchId}`,
           attempts: 2,
           backoff: { type: "exponential", delay: 30_000 },
@@ -477,7 +474,6 @@ export class DemoMetadataService {
         },
       );
     } catch (error) {
-      // Supplementary data — never fail a parse over it.
       this.logger.warn(
         `unable to queue party sync for match ${matchId}: ${(error as Error)?.message}`,
       );
@@ -497,10 +493,6 @@ export class DemoMetadataService {
 
     await this.persistDemoStats(demo.id, demo.match_id, parsed);
 
-    // Party grouping isn't in the demo, so a reparse can only refresh it by
-    // re-asking the source. Queued rather than awaited: it's a GC / HTTP round
-    // trip that must not gate the parse, and a reparse-all fans out one per
-    // match.
     await this.queuePartySync(demo.match_id);
 
     const playbackFile = await this.uploadPlaybackBlob(

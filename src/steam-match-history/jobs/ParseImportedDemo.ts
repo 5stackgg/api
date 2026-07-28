@@ -42,9 +42,8 @@ export class ParseImportedDemo extends WorkerHost {
       valve_match_id,
     );
     if (existing) {
-      // Keep the share code even though the import is a no-op: it is the only
-      // handle the GC accepts, so a match imported before we stored it can
-      // still become party-syncable just by being re-polled.
+      // The share code is the only handle the GC accepts, so keep it even
+      // though the import itself is a no-op.
       const shareCode = job.data.share_code;
       if (shareCode) {
         await this.postgres.query(
@@ -145,8 +144,6 @@ export class ParseImportedDemo extends WorkerHost {
         matchStartTime,
         externalId: valveMatchId,
         parties,
-        // Kept on the match so a later reparse can re-ask the GC for the
-        // reservation; nothing else identifies the match to the GC.
         shareCode,
       },
     );

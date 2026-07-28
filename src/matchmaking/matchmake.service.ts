@@ -32,9 +32,7 @@ function toMatchmakingTeam(lobbies: MatchmakingLobby[]): MatchmakingTeam {
   const players = lobbies.flatMap((lobby) =>
     lobby.players.map((player) => ({
       ...player,
-      // A solo queuer's lobbyId is their own steam id (see
-      // MatchmakingLobbyService.getPlayerLobby) — not a lobby, and not a
-      // uuid. One player is not a party either way.
+      // A solo queuer's lobbyId is their own steam id, not a lobby.
       lobby_id: lobby.players.length > 1 ? lobby.lobbyId : undefined,
     })),
   );
@@ -432,7 +430,9 @@ export class MatchmakeService {
             1,
           )} (win probability ${winProbability(
             balanced.avgRankDifference,
-          ).toFixed(3)}), spread ${balanced.spread}, cost ${balanced.cost.toFixed(
+          ).toFixed(
+            3,
+          )}), spread ${balanced.spread}, cost ${balanced.cost.toFixed(
             1,
           )}, ${balanced.nodesVisited} nodes, optimal ${balanced.exhausted}`,
         );

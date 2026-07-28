@@ -44,19 +44,8 @@ export class SteamMatchHistoryController {
     private readonly postgres: PostgresService,
     @InjectQueue(SteamMatchHistoryQueues.SyncMatchParties)
     private readonly syncPartiesQueue: Queue,
-    @InjectQueue(SteamMatchHistoryQueues.BackfillShareCodes)
-    private readonly backfillShareCodesQueue: Queue,
   ) {}
 
-  /**
-   * Backfills the queue-party grouping for matches imported before parties
-   * were recorded, without reparsing their demos — the grouping comes from the
-   * source (Steam GC / FACEIT), not the demo, so a reparse is not required.
-   *
-   * Scoped to Valve/FACEIT matches that have an external id and no parties
-   * yet. Valve matches the GC no longer lists as "recent" cannot be recovered
-   * and are simply skipped by the job.
-   */
   @Post("backfill-parties")
   @UseGuards(SteamGuard)
   public async backfillParties(
@@ -73,9 +62,6 @@ export class SteamMatchHistoryController {
       throw new ForbiddenException("administrator access required");
     }
 
-    // Single match, optionally supplying the share code by hand. Matches
-    // imported before share codes were kept have no other handle the GC will
-    // accept, so this is the only way to recover their parties.
     if (body?.match_id) {
       if (body.share_code) {
         try {
@@ -97,9 +83,8 @@ export class SteamMatchHistoryController {
 
     const limit = Math.min(Math.max(body?.limit ?? 500, 1), 5000);
 
-    // Valve only by default: its party data comes from the GC reservation and
-    // is known to be there. FACEIT's depends on an undocumented match-room
-    // field, so it is opt-in rather than something a backfill fires blindly.
+    // FACEIT is opt-in: its party data rides on an undocumented match-room
+    // field, so a blind backfill would mostly be wasted calls.
     const sources = (body?.sources ?? ["valve"]).filter((source) =>
       ["valve", "faceit"].includes(source),
     );
@@ -111,9 +96,6 @@ export class SteamMatchHistoryController {
       `SELECT m.id
          FROM public.matches m
         WHERE m.source = ANY($2::text[])
-          -- Valve matches are found by roster fingerprint when they have no
-          -- usable match id (an uploaded demo's external_id is its filename),
-          -- so only FACEIT strictly requires one.
           AND (m.source <> 'faceit' OR m.external_id IS NOT NULL)
           AND NOT EXISTS (
             SELECT 1
@@ -137,61 +119,6 @@ export class SteamMatchHistoryController {
     );
 
     return { queued: matches.length };
-  }
-
-  /**
-   * Recovers queue parties across a player's whole match history from a single
-   * share code, by walking Steam's chain forward and recording each code on the
-   * match it belongs to.
-   *
-   * Self-serve: a player supplies a code for their own account. One seed heals
-   * every match from that point on — and because a share code identifies a
-   * match rather than a player, it heals those matches for all ten
-   * participants, not just the person who ran it.
-   */
-  @Post("backfill-share-codes")
-  @UseGuards(SteamGuard)
-  public async backfillShareCodes(
-    @Req() request: Request,
-    @Body() body: { from_share_code?: string; steam_id?: string },
-  ): Promise<{ queued: boolean }> {
-    if (!request.user) {
-      throw new ForbiddenException("authentication required");
-    }
-
-    // Only an admin may run this against somebody else's history.
-    const steamId = body?.steam_id ?? request.user.steam_id;
-    if (
-      String(steamId) !== String(request.user.steam_id) &&
-      request.user.role !== "administrator"
-    ) {
-      throw new ForbiddenException("administrator access required");
-    }
-
-    if (!body?.from_share_code) {
-      throw new BadRequestException("from_share_code required");
-    }
-    try {
-      decodeShareCode(body.from_share_code);
-    } catch (error) {
-      throw new BadRequestException(
-        `invalid share code: ${(error as Error).message}`,
-      );
-    }
-
-    await this.backfillShareCodesQueue.add(
-      "BackfillShareCodes",
-      { steam_id: String(steamId), from_share_code: body.from_share_code },
-      {
-        // One walk per player at a time; re-running just replaces the pending
-        // job rather than doubling the Steam API traffic.
-        jobId: `backfill-share-codes-${steamId}`,
-        attempts: 1,
-        removeOnComplete: true,
-      },
-    );
-
-    return { queued: true };
   }
 
   private async queuePartySync(matchId: string): Promise<void> {
