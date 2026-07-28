@@ -451,6 +451,18 @@ export class DemoMetadataService {
     if (!matchId) {
       return;
     }
+
+    // Only imported matches need this. A 5stack match's parties come from the
+    // lobby via the assign_lobby_parties trigger, so re-asking an external
+    // source would be pointless work — and the sync must never touch them.
+    const rows = await this.postgres.query<Array<{ source: string }>>(
+      `SELECT source FROM public.matches WHERE id = $1::uuid`,
+      [matchId],
+    );
+    if (!["valve", "faceit"].includes(rows.at(0)?.source ?? "")) {
+      return;
+    }
+
     try {
       await this.syncPartiesQueue.add(
         "SyncMatchParties",

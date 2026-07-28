@@ -107,3 +107,75 @@ $$;
 
 DROP TRIGGER IF EXISTS tad_match_lineup_players ON public.match_lineup_players;
 CREATE TRIGGER tad_match_lineup_players AFTER DELETE ON public.match_lineup_players FOR EACH ROW EXECUTE FUNCTION public.tad_match_lineup_players();
+
+-- Queue parties for 5stack matches.
+--
+-- We already know who queued together — it is the lobby — so this is derived in
+-- the database rather than posted by the API. Covers every path that fills a
+-- lineup from a lobby (matchmaking, and web-created matches split out of the
+-- creator's lobby by tai_match), with no external call.
+--
+-- Statement level with a transition table, not per row: the "is anyone else
+-- from my lobby in this match" test needs the other players to already be
+-- inserted, which is never true on the first row of a bulk insert. Matchmaking
+-- inserts one statement per team, and the second recomputes the whole match, so
+-- a lobby split across both lineups still resolves.
+CREATE OR REPLACE FUNCTION public.assign_lobby_parties(_match_id uuid) RETURNS void
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    UPDATE public.match_lineup_players mlp
+       SET party_id = lp.lobby_id,
+           party_source = 'lobby'
+      FROM public.match_lineups ml,
+           public.lobby_players lp
+     WHERE ml.id = mlp.match_lineup_id
+       AND ml.match_id = _match_id
+       AND lp.steam_id = mlp.steam_id
+       AND lp.status = 'Accepted'
+       -- Never clobber a party the importer already resolved from Valve or
+       -- FACEIT, and never rewrite one we have already set.
+       AND mlp.party_id IS NULL
+       -- A lobby only counts as a party when someone else from it is actually
+       -- in this match. Without this, being in any lobby would tag you as
+       -- partied on unrelated matches (tournaments, scrims) whose lineups come
+       -- from a team roster.
+       AND EXISTS (
+           SELECT 1
+             FROM public.match_lineup_players other
+             JOIN public.match_lineups other_ml
+               ON other_ml.id = other.match_lineup_id
+             JOIN public.lobby_players other_lp
+               ON other_lp.steam_id = other.steam_id
+              AND other_lp.lobby_id = lp.lobby_id
+              AND other_lp.status = 'Accepted'
+            WHERE other_ml.match_id = _match_id
+              AND other.steam_id IS DISTINCT FROM mlp.steam_id
+       );
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.tai_match_lineup_players_parties() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    v_match_id uuid;
+BEGIN
+    FOR v_match_id IN
+        SELECT DISTINCT ml.match_id
+          FROM new_rows nr
+          JOIN public.match_lineups ml ON ml.id = nr.match_lineup_id
+         WHERE ml.match_id IS NOT NULL
+    LOOP
+        PERFORM public.assign_lobby_parties(v_match_id);
+    END LOOP;
+
+    RETURN NULL;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tai_match_lineup_players_parties ON public.match_lineup_players;
+CREATE TRIGGER tai_match_lineup_players_parties
+    AFTER INSERT ON public.match_lineup_players
+    REFERENCING NEW TABLE AS new_rows
+    FOR EACH STATEMENT EXECUTE FUNCTION public.tai_match_lineup_players_parties();
