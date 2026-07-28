@@ -1,6 +1,6 @@
-import { Job } from "bullmq";
+import { Job, Queue } from "bullmq";
 import { Logger } from "@nestjs/common";
-import { WorkerHost } from "@nestjs/bullmq";
+import { InjectQueue, WorkerHost } from "@nestjs/bullmq";
 import { UseQueue } from "src/utilities/QueueProcessors";
 import { SteamMatchHistoryQueues } from "../enums/SteamMatchHistoryQueues";
 import { SteamMatchHistoryService } from "../steam-match-history.service";
@@ -20,6 +20,8 @@ export class BackfillShareCodes extends WorkerHost {
   constructor(
     private readonly logger: Logger,
     private readonly steamMatchHistory: SteamMatchHistoryService,
+    @InjectQueue(SteamMatchHistoryQueues.BackfillShareCodes)
+    private readonly queue: Queue,
   ) {
     super();
   }
@@ -27,14 +29,29 @@ export class BackfillShareCodes extends WorkerHost {
   async process(job: Job<BackfillShareCodesPayload>): Promise<void> {
     const { steam_id, from_share_code } = job.data;
 
-    const { walked, healed, error } =
+    const { walked, healed, error, lastShareCode, exhausted } =
       await this.steamMatchHistory.backfillShareCodes(
         steam_id,
         from_share_code,
       );
 
     this.logger.log(
-      `backfill-share-codes done steam_id=${steam_id} walked=${walked} healed=${healed}${error ? ` error=${error}` : ""}`,
+      `backfill-share-codes steam_id=${steam_id} walked=${walked} healed=${healed} exhausted=${exhausted}${error ? ` error=${error}` : ""}`,
     );
+
+    // Hit the per-run cap with chain left: continue from where we stopped
+    // rather than making an operator re-run it, and never from the original
+    // seed — every code re-walked is another rate-limited Steam call.
+    if (!exhausted && !error && walked > 0 && lastShareCode) {
+      await this.queue.add(
+        BackfillShareCodes.name,
+        { steam_id, from_share_code: lastShareCode },
+        {
+          jobId: `backfill-share-codes-${steam_id}`,
+          attempts: 1,
+          removeOnComplete: true,
+        },
+      );
+    }
   }
 }

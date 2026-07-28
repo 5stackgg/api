@@ -31,7 +31,7 @@ export class SyncMatchParties extends WorkerHost {
     // solo queuers), not a failure to retry.
     const stamped = await this.matchImport.syncPartiesForMatch(match_id);
     if (stamped === 0) {
-      this.logger.debug?.(`sync-match-parties ${match_id}: no parties`);
+      this.logger.debug(`sync-match-parties ${match_id}: no parties`);
     }
   }
 }

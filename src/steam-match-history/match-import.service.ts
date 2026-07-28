@@ -736,16 +736,19 @@ export class MatchImportService {
       return 0;
     }
 
-    // Re-stamped wholesale rather than merged: the source is the authority, so
-    // a player who is no longer in a party must lose the stale id too.
+    // Clear this source's previous answer before re-stamping: the source is the
+    // authority, so a player who is no longer in a party must lose the stale id
+    // too. Scoped to party_source so a lobby-derived party is never collateral
+    // damage — those are ours, not the source's, to overwrite.
     await this.postgres.query(
       `UPDATE public.match_lineup_players mlp
           SET party_id = NULL, party_source = NULL
          FROM public.match_lineups ml
         WHERE ml.id = mlp.match_lineup_id
           AND ml.match_id = $1::uuid
-          AND mlp.party_id IS NOT NULL`,
-      [matchId],
+          AND mlp.party_id IS NOT NULL
+          AND mlp.party_source = $2`,
+      [matchId, partySource],
     );
 
     const steamIds = [...partyIds.keys()];
@@ -758,6 +761,9 @@ export class MatchImportService {
         WHERE ml.id = mlp.match_lineup_id
           AND ml.match_id = $1::uuid
           AND mlp.steam_id = data.steam_id
+          -- Same reasoning as the clear above: a lobby party is ours, and the
+          -- external source has no say over it.
+          AND (mlp.party_source IS NULL OR mlp.party_source = $3)
         RETURNING mlp.steam_id`,
       [matchId, steamIds, partySource, assigned],
     );

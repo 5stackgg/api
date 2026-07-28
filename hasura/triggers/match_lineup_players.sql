@@ -124,6 +124,25 @@ CREATE OR REPLACE FUNCTION public.assign_lobby_parties(_match_id uuid) RETURNS v
     LANGUAGE plpgsql
     AS $$
 BEGIN
+    -- Only matches we ran ourselves. An imported match's parties come from the
+    -- source's own queue data (the Valve reservation / FACEIT match room), and
+    -- a lobby two of its players happen to share says nothing about how they
+    -- queued for someone else's server.
+    --
+    -- This is not belt-and-braces: for an import the lineups are filled before
+    -- the match row exists, so match_id is still NULL here and the loop below
+    -- would skip it anyway. But that is an accident of insert ordering, and
+    -- adding a player to an imported match later (an admin moving someone) has
+    -- match_id set and would otherwise stamp a bogus lobby party.
+    IF NOT EXISTS (
+        SELECT 1
+          FROM public.matches
+         WHERE id = _match_id
+           AND source = '5stack'
+    ) THEN
+        RETURN;
+    END IF;
+
     UPDATE public.match_lineup_players mlp
        SET party_id = lp.lobby_id,
            party_source = 'lobby'

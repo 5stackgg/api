@@ -316,16 +316,31 @@ export class SteamMatchHistoryService {
     steamId: string,
     fromShareCode: string,
     maxCodes = 200,
-  ): Promise<{ walked: number; healed: number; error: string | null }> {
+  ): Promise<{
+    walked: number;
+    healed: number;
+    error: string | null;
+    lastShareCode: string | null;
+    exhausted: boolean;
+  }> {
     const link = await this.loadLink(steamId);
     if (!link) {
-      return { walked: 0, healed: 0, error: "no linked auth for steam_id" };
+      return {
+        walked: 0,
+        healed: 0,
+        error: "no linked auth for steam_id",
+        lastShareCode: null,
+        exhausted: true,
+      };
     }
 
     let known = fromShareCode;
     let walked = 0;
     let healed = 0;
     let error: string | null = null;
+    // Cleared the moment the chain runs out, so a caller can tell "hit the cap,
+    // resume from lastShareCode" apart from "reached the end".
+    let exhausted = false;
 
     for (let i = 0; i < maxCodes; i++) {
       const result = await this.fetchNextShareCode(
@@ -338,6 +353,7 @@ export class SteamMatchHistoryService {
         break;
       }
       if (!result.nextCode) {
+        exhausted = true;
         break;
       }
 
@@ -382,10 +398,13 @@ export class SteamMatchHistoryService {
     }
 
     this.logger.log(
-      `backfill-share-codes steam_id=${steamId} walked=${walked} healed=${healed} error=${error ?? "none"}`,
+      `backfill-share-codes steam_id=${steamId} walked=${walked} healed=${healed} exhausted=${exhausted} error=${error ?? "none"}`,
     );
 
-    return { walked, healed, error };
+    // Resuming from `known` rather than the original seed matters: the walk is
+    // one rate-limited Steam call per match, so restarting from the seed would
+    // re-request every code already handled.
+    return { walked, healed, error, lastShareCode: known, exhausted };
   }
 
   public async pollAllActive(): Promise<void> {

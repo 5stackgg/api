@@ -311,6 +311,12 @@ describe("lobby parties trigger (SQL-driven)", () => {
       )
     ).map((r) => r.id);
 
+  const setSource = (matchId: string, source: string) =>
+    pg3.query(`UPDATE matches SET source = $2 WHERE id = $1::uuid`, [
+      matchId,
+      source,
+    ]);
+
   it("stamps the lobby on players who queued together", async () => {
     const duoA = await fx3.player();
     const duoB = await fx3.player();
@@ -350,6 +356,30 @@ describe("lobby parties trigger (SQL-driven)", () => {
 
     const [row] = await partiesOf(matchId);
     expect(row.party_id).toBeNull();
+  });
+
+  it("refuses to stamp a lobby on an imported match", async () => {
+    // Two players who happen to share a 5stack lobby also appear in an
+    // imported Valve match. Their lobby says nothing about how they queued
+    // for Valve, so it must not be recorded as a party there.
+    const a = await fx3.player();
+    const b = await fx3.player();
+    await newLobby([a, b]);
+
+    const { matchId } = await fx3.bareMatch();
+    await setSource(matchId, "valve");
+    const [lineup1] = await lineupsFor(matchId);
+
+    await pg3.query(
+      `INSERT INTO match_lineup_players (match_lineup_id, steam_id)
+       SELECT $1, unnest($2::bigint[])`,
+      [lineup1, [a, b]],
+    );
+
+    for (const row of await partiesOf(matchId)) {
+      expect(row.party_id).toBeNull();
+      expect(row.party_source).toBeNull();
+    }
   });
 
   it("never overwrites a party the importer already resolved", async () => {
@@ -396,5 +426,138 @@ describe("lobby parties trigger (SQL-driven)", () => {
 
     const rows = await partiesOf(matchId);
     expect(rows.map((r) => r.party_id)).toEqual([lobbyId, lobbyId]);
+  });
+});
+
+// syncPartiesForMatch's clear + re-stamp runs raw SQL against the real schema,
+// and must leave lobby-derived parties alone.
+describe("party-sync clear/re-stamp SQL", () => {
+  let db4: SqlTestDb;
+  let pg4: PostgresService;
+  let fx4: Fixtures;
+
+  beforeAll(async () => {
+    db4 = await bootMigratedDb("PartySyncWriteTest");
+    pg4 = db4.postgres;
+    fx4 = new Fixtures(pg4, 76561199600000000n);
+    await seedRegionWithServer(pg4, "TestA");
+  }, 600_000);
+
+  afterAll(async () => {
+    await db4?.stop();
+  });
+
+  const clearForSource = (matchId: string, source: string) =>
+    pg4.query(
+      `UPDATE public.match_lineup_players mlp
+          SET party_id = NULL, party_source = NULL
+         FROM public.match_lineups ml
+        WHERE ml.id = mlp.match_lineup_id
+          AND ml.match_id = $1::uuid
+          AND mlp.party_id IS NOT NULL
+          AND mlp.party_source = $2`,
+      [matchId, source],
+    );
+
+  const stamp = (
+    matchId: string,
+    source: string,
+    steamIds: string[],
+    partyIds: string[],
+  ) =>
+    pg4.query<Array<{ steam_id: string }>>(
+      `UPDATE public.match_lineup_players mlp
+          SET party_id = data.party_id::uuid, party_source = $3
+         FROM public.match_lineups ml,
+              unnest($2::bigint[], $4::uuid[]) AS data(steam_id, party_id)
+        WHERE ml.id = mlp.match_lineup_id
+          AND ml.match_id = $1::uuid
+          AND mlp.steam_id = data.steam_id
+          AND (mlp.party_source IS NULL OR mlp.party_source = $3)
+        RETURNING mlp.steam_id`,
+      [matchId, steamIds, source, partyIds],
+    );
+
+  const rowsOf = (matchId: string) =>
+    pg4.query<
+      Array<{
+        steam_id: string;
+        party_id: string | null;
+        party_source: string | null;
+      }>
+    >(
+      `SELECT mlp.steam_id::text AS steam_id, mlp.party_id::text AS party_id, mlp.party_source
+         FROM match_lineup_players mlp
+         JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
+        WHERE ml.match_id = $1::uuid
+        ORDER BY mlp.steam_id`,
+      [matchId],
+    );
+
+  it("re-stamps the source's own parties and clears stale ones", async () => {
+    const { matchId } = await fx4.bareMatch();
+    const [lineup] = (
+      await pg4.query<Array<{ id: string }>>(
+        `SELECT id FROM match_lineups WHERE match_id = $1 ORDER BY id`,
+        [matchId],
+      )
+    ).map((r) => r.id);
+
+    const a = await fx4.lineupPlayer(lineup);
+    const b = await fx4.lineupPlayer(lineup);
+    const dropped = await fx4.lineupPlayer(lineup);
+
+    const [{ old: oldParty }] = await pg4.query<Array<{ old: string }>>(
+      "SELECT gen_random_uuid() AS old",
+    );
+    await stamp(
+      matchId,
+      "valve",
+      [a, b, dropped],
+      [oldParty, oldParty, oldParty],
+    );
+
+    // a fresh sync: dropped is no longer partied
+    const [{ fresh }] = await pg4.query<Array<{ fresh: string }>>(
+      "SELECT gen_random_uuid() AS fresh",
+    );
+    await clearForSource(matchId, "valve");
+    await stamp(matchId, "valve", [a, b], [fresh, fresh]);
+
+    const byId = new Map((await rowsOf(matchId)).map((r) => [r.steam_id, r]));
+    expect(byId.get(a).party_id).toBe(fresh);
+    expect(byId.get(b).party_id).toBe(fresh);
+    // stale membership must not survive the re-sync
+    expect(byId.get(dropped).party_id).toBeNull();
+    expect(byId.get(dropped).party_source).toBeNull();
+  });
+
+  it("never clears or overwrites a lobby party", async () => {
+    const { matchId } = await fx4.bareMatch();
+    const [lineup] = (
+      await pg4.query<Array<{ id: string }>>(
+        `SELECT id FROM match_lineups WHERE match_id = $1 ORDER BY id`,
+        [matchId],
+      )
+    ).map((r) => r.id);
+
+    const lobbyA = await fx4.lineupPlayer(lineup);
+    const lobbyB = await fx4.lineupPlayer(lineup);
+    const [{ lobby }] = await pg4.query<Array<{ lobby: string }>>(
+      "SELECT gen_random_uuid() AS lobby",
+    );
+    await stamp(matchId, "lobby", [lobbyA, lobbyB], [lobby, lobby]);
+
+    // a valve sync lands on the same match
+    const [{ valve }] = await pg4.query<Array<{ valve: string }>>(
+      "SELECT gen_random_uuid() AS valve",
+    );
+    await clearForSource(matchId, "valve");
+    await stamp(matchId, "valve", [lobbyA, lobbyB], [valve, valve]);
+
+    for (const row of await rowsOf(matchId)) {
+      expect(row.party_source).toBe("lobby");
+      expect(row.party_id).toBe(lobby);
+    }
   });
 });
