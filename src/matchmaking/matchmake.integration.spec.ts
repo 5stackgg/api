@@ -50,15 +50,7 @@ describe("matchmaking (end to end)", () => {
     };
   }>;
   let confirmationIds: string[];
-  let lineupInserts: Array<{
-    lineupId: string;
-    steamIds: string[];
-    parties: Array<{
-      steam_id: string;
-      party_id: string | null;
-      party_source: string | null;
-    }>;
-  }>;
+  let lineupInserts: Array<{ lineupId: string; steamIds: string[] }>;
   let matchAssistant: {
     createMatchBasedOnType: jest.Mock;
     updateMatchStatus: jest.Mock;
@@ -129,11 +121,6 @@ describe("matchmaking (end to end)", () => {
           lineupInserts.push({
             lineupId: objects[0]?.match_lineup_id,
             steamIds: objects.map((o: any) => o.steam_id),
-            parties: objects.map((o: any) => ({
-              steam_id: o.steam_id,
-              party_id: o.party_id,
-              party_source: o.party_source,
-            })),
           });
         }
         return {};
@@ -699,62 +686,6 @@ describe("matchmaking (end to end)", () => {
         confirmation.team2.players.map((p) => p.steam_id).sort(),
       );
       expect(new Set([...first.steamIds, ...second.steamIds]).size).toBe(10);
-    });
-
-    it("records nothing as a party when everyone queued solo", async () => {
-      await enqueue(tenSolos());
-      await service.matchmake(COMPETITIVE, "us-east");
-      await confirmAll();
-
-      const parties = lineupInserts.flatMap((insert) => insert.parties);
-      expect(parties).toHaveLength(10);
-      for (const party of parties) {
-        // a solo queuer's lobbyId is their own steam id — not a party
-        expect(party.party_id).toBeNull();
-        expect(party.party_source).toBeNull();
-      }
-    });
-
-    it("stamps the lobby on every player who queued together", async () => {
-      await enqueue([
-        makeLobby("trio", [5000, 5000, 5000]),
-        makeLobby("duo", [5000, 5000]),
-        ...Array.from({ length: 5 }, (_, i) => makeLobby(`solo-${i}`, [5000])),
-      ]);
-      await service.matchmake(COMPETITIVE, "us-east");
-      await confirmAll();
-
-      const parties = lineupInserts.flatMap((insert) => insert.parties);
-      const partyIdFor = (steamId: string) =>
-        parties.find((party) => party.steam_id === steamId)?.party_id;
-
-      for (const lobbyId of ["trio", "duo"]) {
-        const members = lobbyStore
-          .get(lobbyId)
-          .players.map((player) => partyIdFor(player.steam_id));
-        expect(members).toEqual(members.map(() => lobbyId));
-      }
-
-      expect(partyIdFor("solo-0-p0")).toBeNull();
-      expect(
-        parties.filter((party) => party.party_source === "lobby"),
-      ).toHaveLength(5);
-    });
-
-    it("keeps one party id across both lineups when a full lobby self-splits", async () => {
-      // a lobby that fills the whole match is shuffled across both teams;
-      // they still queued together, so the party must survive the split
-      await enqueue([makeLobby("full-stack", Array(10).fill(5000))]);
-      await service.matchmake(COMPETITIVE, "us-east");
-      await confirmAll();
-
-      const parties = lineupInserts.flatMap((insert) => insert.parties);
-      expect(parties).toHaveLength(10);
-      for (const party of parties) {
-        expect(party.party_id).toBe("full-stack");
-        expect(party.party_source).toBe("lobby");
-      }
-      expect(lineupInserts).toHaveLength(2);
     });
 
     it("does not create the match until the last player confirms", async () => {

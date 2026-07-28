@@ -677,7 +677,10 @@ export class MatchImportService {
    * Re-asks the source for a match's party grouping. Parties are never in the
    * demo, so a reparse can only refresh them this way.
    */
-  public async syncPartiesForMatch(matchId: string): Promise<number> {
+  public async syncPartiesForMatch(
+    matchId: string,
+    { force = false }: { force?: boolean } = {},
+  ): Promise<number> {
     const rows = await this.postgres.query<
       Array<{
         source: string;
@@ -697,8 +700,14 @@ export class MatchImportService {
     if (!partySource) {
       return 0;
     }
-    // Valve can fall back to fingerprinting the roster; FACEIT cannot.
     if (partySource === "faceit" && !match.external_id) {
+      return 0;
+    }
+
+    // Nothing to recover, so don't spend a GC round trip. Reparsing does not
+    // clear parties, so the overwhelmingly common case is that they are
+    // already here.
+    if (!force && (await this.hasParties(matchId))) {
       return 0;
     }
 
@@ -773,54 +782,30 @@ export class MatchImportService {
       return null;
     }
 
-    if (shareCode) {
-      const resolved = await this.steamGc.resolveShareCode(shareCode);
-      if (resolved?.parties?.length) {
-        return resolved.parties;
-      }
+    // The share code is the only handle the GC accepts for a match the bot
+    // account did not play.
+    if (!shareCode) {
       this.logger.warn(
-        `party-sync got no reservation back for match ${matchId} from its share code`,
+        `party-sync has no share code for match ${matchId}; imported before they were kept`,
       );
       return null;
     }
 
-    // Long shot: the GC only answers requestRecentGames for accounts it is
-    // authorized for and never replies otherwise, so this costs a full timeout.
-    const roster = await this.matchPlayerSteamIds(matchId);
-    const steamId = roster.at(0);
-    if (!steamId) {
-      return null;
-    }
-
-    const parties = await this.steamGc.resolveRecentGameParties(
-      steamId,
-      externalId,
-      roster,
-    );
-    if (parties?.length) {
-      return parties;
-    }
-
-    this.logger.warn(
-      `party-sync could not recover parties for match ${matchId} (valve ${externalId}): no share code stored, and the GC did not return recent games for ${steamId}. Matches imported before share codes were kept are not backfillable.`,
-    );
-    return null;
+    const resolved = await this.steamGc.resolveShareCode(shareCode);
+    return resolved?.parties ?? null;
   }
 
-  // Linked players first: they are the only ones we know have match sharing on.
-  private async matchPlayerSteamIds(matchId: string): Promise<string[]> {
-    const rows = await this.postgres.query<Array<{ steam_id: string }>>(
-      `SELECT DISTINCT mlp.steam_id::text AS steam_id,
-              (psma.steam_id IS NOT NULL) AS linked
-         FROM public.match_lineup_players mlp
-         JOIN public.match_lineups ml ON ml.id = mlp.match_lineup_id
-         LEFT JOIN public.player_steam_match_auth psma
-           ON psma.steam_id = mlp.steam_id
-        WHERE ml.match_id = $1::uuid AND mlp.steam_id IS NOT NULL
-        ORDER BY linked DESC, steam_id`,
+  private async hasParties(matchId: string): Promise<boolean> {
+    const rows = await this.postgres.query<Array<{ exists: boolean }>>(
+      `SELECT EXISTS (
+         SELECT 1
+           FROM public.match_lineup_players mlp
+           JOIN public.match_lineups ml ON ml.id = mlp.match_lineup_id
+          WHERE ml.match_id = $1::uuid AND mlp.party_id IS NOT NULL
+       ) AS exists`,
       [matchId],
     );
-    return rows.map((row) => row.steam_id);
+    return rows.at(0)?.exists === true;
   }
 
   public async findExistingExternalMatch(

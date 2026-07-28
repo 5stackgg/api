@@ -26,10 +26,6 @@ export type ResolvedMatch = {
 // account id -> steam64
 const STEAM_ID_BASE = 76561197960265728n;
 
-// Roster fingerprinting thresholds, used when we have no Valve match id.
-const MIN_ROSTER_OVERLAP = 4;
-const ROSTER_MATCH_RATIO = 0.7;
-
 export class SteamGcConnectionError extends Error {}
 
 @Injectable()
@@ -228,108 +224,6 @@ export class SteamGcService
     return SteamGcService.extractMatchInfo(matches);
   }
 
-  // Party grouping for an already-imported match, without its share code.
-  // The GC will hand back a player's recent games on request, and each entry
-  // carries the same reservation the share-code path reads — so a match that
-  // was imported before parties existed can still be backfilled, as long as
-  // the GC still considers it recent for at least one of its players.
-  public async resolveRecentGameParties(
-    steamId: string,
-    valveMatchId: string | null,
-    expectedSteamIds: string[] = [],
-  ): Promise<MatchParty[] | null> {
-    const matches = await this.requestMatchList(
-      (cs) => cs.requestRecentGames(steamId),
-      `recent games for ${steamId}`,
-    );
-    if (!Array.isArray(matches)) {
-      return null;
-    }
-
-    // Only share-code imports carry a real Valve match id; a manually uploaded
-    // demo's external_id is derived from its filename, so it will never match.
-    const byId =
-      valveMatchId && /^\d+$/.test(valveMatchId)
-        ? matches.find(
-            (entry: { matchid?: unknown }) =>
-              String(entry?.matchid) === valveMatchId,
-          )
-        : undefined;
-
-    const match =
-      byId ?? SteamGcService.findByRoster(matches, expectedSteamIds, steamId);
-
-    if (!match) {
-      this.logger.warn(
-        `steam-gc recent games for ${steamId} did not include match ${valveMatchId ?? "<no id>"} (too old, or roster did not match)`,
-      );
-      return null;
-    }
-
-    return SteamGcService.extractParties(
-      (match as { roundstatsall?: unknown }).roundstatsall as never,
-    );
-  }
-
-  // Identifies the match by who played in it, for demos we hold no Valve match
-  // id for. The reservation names every participant, so the roster is a strong
-  // fingerprint — but it is a fuzzy match, so it demands a clear majority
-  // rather than any overlap: the same ten players can meet twice in a row, and
-  // a stack of five reappears across many of each other's matches.
-  private static findByRoster(
-    matches: unknown[],
-    expectedSteamIds: string[],
-    requestedFor: string,
-  ): unknown {
-    const expected = new Set(expectedSteamIds);
-    if (expected.size < MIN_ROSTER_OVERLAP) {
-      return undefined;
-    }
-    const needed = Math.max(
-      MIN_ROSTER_OVERLAP,
-      Math.ceil(expected.size * ROSTER_MATCH_RATIO),
-    );
-
-    let best: { entry: unknown; overlap: number } | null = null;
-    for (const entry of matches) {
-      const roster = SteamGcService.reservationSteamIds(entry);
-      if (roster.length === 0) {
-        continue;
-      }
-      // The player we asked about must be in it, or we are looking at
-      // somebody else's game that happens to share players.
-      if (!roster.includes(requestedFor)) {
-        continue;
-      }
-      const overlap = roster.filter((id) => expected.has(id)).length;
-      if (overlap >= needed && (!best || overlap > best.overlap)) {
-        best = { entry, overlap };
-      }
-    }
-    return best?.entry;
-  }
-
-  private static reservationSteamIds(entry: unknown): string[] {
-    const roundStats = (entry as { roundstatsall?: Array<unknown> })
-      ?.roundstatsall;
-    if (!Array.isArray(roundStats)) {
-      return [];
-    }
-    for (let i = roundStats.length - 1; i >= 0; i--) {
-      const accountIds = (
-        roundStats[i] as { reservation?: { account_ids?: number[] } }
-      )?.reservation?.account_ids;
-      if (accountIds?.length) {
-        return accountIds
-          .filter((accountId) => !!accountId)
-          .map((accountId) => (BigInt(accountId) + STEAM_ID_BASE).toString());
-      }
-    }
-    return [];
-  }
-
-  // The GC answers every match-list request on the same `matchList` event, so
-  // each call owns the listener for its own timeout window.
   private async requestMatchList(
     send: (cs: GlobalOffensive) => void,
     label: string,

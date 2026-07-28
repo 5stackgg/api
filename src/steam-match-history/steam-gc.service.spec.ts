@@ -14,16 +14,6 @@ const extractMatchInfo = (
   }
 ).extractMatchInfo;
 
-const findByRoster = (
-  SteamGcService as unknown as {
-    findByRoster: (
-      matches: unknown[],
-      expected: string[],
-      requestedFor: string,
-    ) => unknown;
-  }
-).findByRoster;
-
 const extractParties = (
   SteamGcService as unknown as {
     extractParties: (roundStats?: unknown[]) => MatchParty[] | null;
@@ -136,58 +126,5 @@ describe("SteamGcService.extractMatchInfo", () => {
     ]);
     expect(resolved.demoUrl).toBe("http://replay/demo.dem.bz2");
     expect(resolved.parties).toBeNull();
-  });
-});
-
-// A manually uploaded demo has no Valve match id (external_id is its
-// filename), so the match is identified by who played in it instead.
-describe("SteamGcService.findByRoster", () => {
-  const entry = (accountIds: number[], matchid = "1") => ({
-    matchid,
-    roundstatsall: [
-      {
-        reservation: {
-          account_ids: accountIds,
-          party_ids: accountIds.map(() => 0),
-        },
-      },
-    ],
-  });
-
-  const TEN = [11, 22, 33, 44, 55, 66, 77, 88, 99, 100];
-  const roster = TEN.map(steamId);
-
-  it("finds the match whose roster matches", () => {
-    const wanted = entry(TEN, "7777");
-    const found = findByRoster(
-      [entry([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "1111"), wanted],
-      roster,
-      steamId(11),
-    );
-    expect((found as { matchid: string })?.matchid).toBe("7777");
-  });
-
-  it("ignores a game the requested player was not in", () => {
-    // same ten players, but we asked on behalf of someone absent
-    expect(findByRoster([entry(TEN)], roster, steamId(999))).toBeUndefined();
-  });
-
-  it("refuses a weak overlap rather than guessing", () => {
-    // only 3 of 10 shared - a different game with a few of the same players
-    const overlapping = entry([11, 22, 33, 501, 502, 503, 504, 505, 506, 507]);
-    expect(findByRoster([overlapping], roster, steamId(11))).toBeUndefined();
-  });
-
-  it("prefers the strongest overlap", () => {
-    const partial = entry([11, 22, 33, 44, 55, 66, 77, 901, 902, 903], "weak");
-    const exact = entry(TEN, "strong");
-    const found = findByRoster([partial, exact], roster, steamId(11));
-    expect((found as { matchid: string })?.matchid).toBe("strong");
-  });
-
-  it("does not fingerprint off a roster we barely know", () => {
-    expect(
-      findByRoster([entry(TEN)], [steamId(11)], steamId(11)),
-    ).toBeUndefined();
   });
 });
