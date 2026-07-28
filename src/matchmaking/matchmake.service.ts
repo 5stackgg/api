@@ -419,9 +419,7 @@ export class MatchmakeService {
             1,
           )} (win probability ${winProbability(
             balanced.avgRankDifference,
-          ).toFixed(
-            3,
-          )}), spread ${balanced.spread}, cost ${balanced.cost.toFixed(
+          ).toFixed(3)}), spread ${balanced.spread}, cost ${balanced.cost.toFixed(
             1,
           )}, ${balanced.nodesVisited} nodes, optimal ${balanced.exhausted}`,
         );

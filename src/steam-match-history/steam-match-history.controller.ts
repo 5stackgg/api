@@ -123,9 +123,7 @@ export class SteamMatchHistoryController {
       try {
         await this.s3.abortMultipartUpload(key, body.uploadId);
       } catch (abortError) {
-        this.logger.warn(
-          `abort after failed complete key=${key}: ${abortError}`,
-        );
+        this.logger.warn(`abort after failed complete key=${key}: ${abortError}`);
       }
       throw new BadRequestException(
         `could not assemble upload: ${(error as Error)?.message ?? error}`,
@@ -146,9 +144,7 @@ export class SteamMatchHistoryController {
       throw new BadRequestException("not a valid CS2 demo file");
     }
 
-    this.logger.log(
-      `demo upload complete steam_id=${user.steam_id} key=${key}`,
-    );
+    this.logger.log(`demo upload complete steam_id=${user.steam_id} key=${key}`);
 
     await this.processUploadQueue.add(
       ProcessUploadedDemo.name,

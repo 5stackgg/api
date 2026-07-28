@@ -40,14 +40,8 @@ describe("matchmaking (end to end)", () => {
   let confirmations: Array<{
     region: string;
     type: e_match_types_enum;
-    team1: {
-      lobbies: string[];
-      players: Array<{ steam_id: string; rank: number }>;
-    };
-    team2: {
-      lobbies: string[];
-      players: Array<{ steam_id: string; rank: number }>;
-    };
+    team1: { lobbies: string[]; players: Array<{ steam_id: string; rank: number }> };
+    team2: { lobbies: string[]; players: Array<{ steam_id: string; rank: number }> };
   }>;
   let confirmationIds: string[];
   let lineupInserts: Array<{ lineupId: string; steamIds: string[] }>;
@@ -163,11 +157,7 @@ describe("matchmaking (end to end)", () => {
   function makeLobby(
     lobbyId: string,
     ranks: number[],
-    options?: {
-      regions?: string[];
-      waitSeconds?: number;
-      type?: e_match_types_enum;
-    },
+    options?: { regions?: string[]; waitSeconds?: number; type?: e_match_types_enum },
   ): MatchmakingLobby {
     return {
       lobbyId,
@@ -206,10 +196,7 @@ describe("matchmaking (end to end)", () => {
   }
 
   function matchedLobbies() {
-    return confirmations.flatMap((c) => [
-      ...c.team1.lobbies,
-      ...c.team2.lobbies,
-    ]);
+    return confirmations.flatMap((c) => [...c.team1.lobbies, ...c.team2.lobbies]);
   }
 
   /** The invariants that must hold no matter what the queue looked like. */
@@ -503,9 +490,7 @@ describe("matchmaking (end to end)", () => {
       const avg = (players: Array<{ rank: number }>) =>
         players.reduce((acc, p) => acc + p.rank, 0) / players.length;
       expect(
-        Math.abs(
-          avg(confirmation.team1.players) - avg(confirmation.team2.players),
-        ),
+        Math.abs(avg(confirmation.team1.players) - avg(confirmation.team2.players)),
       ).toBe(0);
       assertInvariants(lobbies, "Wingman");
     });
@@ -593,9 +578,7 @@ describe("matchmaking (end to end)", () => {
 
       // greedy produces a 1120 point gap on this exact queue
       expect(
-        Math.abs(
-          avg(confirmation.team1.players) - avg(confirmation.team2.players),
-        ),
+        Math.abs(avg(confirmation.team1.players) - avg(confirmation.team2.players)),
       ).toBe(0);
     });
 
