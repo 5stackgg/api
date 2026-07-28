@@ -217,17 +217,6 @@ export class SteamGcService
   public async resolveShareCode(
     shareCode: string,
   ): Promise<ResolvedMatch | null> {
-    const matches = await this.requestMatchList(
-      (cs) => cs.requestGame(shareCode),
-      shareCode,
-    );
-    return SteamGcService.extractMatchInfo(matches);
-  }
-
-  private async requestMatchList(
-    send: (cs: GlobalOffensive) => void,
-    label: string,
-  ): Promise<unknown> {
     await this.ensureReady();
 
     const cs = this.cs;
@@ -236,31 +225,33 @@ export class SteamGcService
     }
 
     try {
-      return await new Promise<unknown>((resolve) => {
+      const matches = await new Promise<unknown>((resolve) => {
         const timer = setTimeout(() => {
           cs.removeListener("matchList", onMatchList);
-          this.logger.warn(`steam-gc timeout resolving ${label}`);
+          this.logger.warn(`steam-gc timeout resolving ${shareCode}`);
           resolve(null);
         }, REQUEST_TIMEOUT_MS);
 
-        const onMatchList = (matches: unknown): void => {
+        const onMatchList = (list: unknown): void => {
           clearTimeout(timer);
           cs.removeListener("matchList", onMatchList);
-          resolve(matches);
+          resolve(list);
         };
 
         cs.on("matchList", onMatchList);
         try {
-          send(cs);
+          cs.requestGame(shareCode);
         } catch (err) {
           clearTimeout(timer);
           cs.removeListener("matchList", onMatchList);
           this.logger.error(
-            `steam-gc request threw for ${label}: ${(err as Error).message}`,
+            `steam-gc requestGame threw for ${shareCode}: ${(err as Error).message}`,
           );
           resolve(null);
         }
       });
+
+      return SteamGcService.extractMatchInfo(matches);
     } finally {
       this.armIdleTimer();
     }
