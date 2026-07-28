@@ -5,6 +5,7 @@ import { BullModule, InjectQueue } from "@nestjs/bullmq";
 import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { DemoQueues } from "./enums/DemoQueues";
+import { SteamMatchHistoryQueues } from "../steam-match-history/enums/SteamMatchHistoryQueues";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { Queue } from "bullmq";
 import { CleanDemos } from "./jobs/CleanDemos";
@@ -29,6 +30,13 @@ import { DemoReparseService } from "./demo-reparse.service";
     }),
     BullModule.registerQueue({
       name: DemoQueues.ReparseAll,
+    }),
+    // Producer only — the worker lives in SteamMatchHistoryModule. Registering
+    // the queue here (rather than importing that module) keeps the reparse
+    // path free of a circular dependency: SteamMatchHistoryModule already
+    // imports DemosModule.
+    BullModule.registerQueue({
+      name: SteamMatchHistoryQueues.SyncMatchParties,
     }),
     BullBoardModule.forFeature({
       name: DemoQueues.Demos,

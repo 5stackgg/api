@@ -807,9 +807,10 @@ type TelemetryFleetTotals {
   matchesWeek: Int!
   matchesYear: Int!
   playersActive30d: Int!
+  playersKnown: Int!
+  playersPlayed: Int!
   playersRegistered: Int!
   publicServers: Int!
-  serverCapacity: Int!
   servers: Int!
   teams: Int!
 }
@@ -10546,6 +10547,220 @@ input e_match_mode_updates {
 
   """filter the rows which have to be updated"""
   where: e_match_mode_bool_exp!
+}
+
+"""
+columns and relationships of "e_match_party_sources"
+"""
+type e_match_party_sources {
+  description: String!
+
+  """An array relationship"""
+  match_lineup_players(
+    """distinct select on columns"""
+    distinct_on: [match_lineup_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_lineup_players_order_by!]
+
+    """filter the rows returned"""
+    where: match_lineup_players_bool_exp
+  ): [match_lineup_players!]!
+
+  """An aggregate relationship"""
+  match_lineup_players_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_lineup_players_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_lineup_players_order_by!]
+
+    """filter the rows returned"""
+    where: match_lineup_players_bool_exp
+  ): match_lineup_players_aggregate!
+  value: String!
+}
+
+"""
+aggregated selection of "e_match_party_sources"
+"""
+type e_match_party_sources_aggregate {
+  aggregate: e_match_party_sources_aggregate_fields
+  nodes: [e_match_party_sources!]!
+}
+
+"""
+aggregate fields of "e_match_party_sources"
+"""
+type e_match_party_sources_aggregate_fields {
+  count(columns: [e_match_party_sources_select_column!], distinct: Boolean): Int!
+  max: e_match_party_sources_max_fields
+  min: e_match_party_sources_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_match_party_sources". All fields are combined with a logical 'AND'.
+"""
+input e_match_party_sources_bool_exp {
+  _and: [e_match_party_sources_bool_exp!]
+  _not: e_match_party_sources_bool_exp
+  _or: [e_match_party_sources_bool_exp!]
+  description: String_comparison_exp
+  match_lineup_players: match_lineup_players_bool_exp
+  match_lineup_players_aggregate: match_lineup_players_aggregate_bool_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_match_party_sources"
+"""
+enum e_match_party_sources_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_match_party_sources_pkey
+}
+
+enum e_match_party_sources_enum {
+  """FACEIT match room party"""
+  faceit
+
+  """5stack matchmaking lobby"""
+  lobby
+
+  """Valve matchmaking reservation"""
+  valve
+}
+
+"""
+Boolean expression to compare columns of type "e_match_party_sources_enum". All fields are combined with logical 'AND'.
+"""
+input e_match_party_sources_enum_comparison_exp {
+  _eq: e_match_party_sources_enum
+  _in: [e_match_party_sources_enum!]
+  _is_null: Boolean
+  _neq: e_match_party_sources_enum
+  _nin: [e_match_party_sources_enum!]
+}
+
+"""
+input type for inserting data into table "e_match_party_sources"
+"""
+input e_match_party_sources_insert_input {
+  description: String
+  match_lineup_players: match_lineup_players_arr_rel_insert_input
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_match_party_sources_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_match_party_sources_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_match_party_sources"
+"""
+type e_match_party_sources_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_match_party_sources!]!
+}
+
+"""
+on_conflict condition type for table "e_match_party_sources"
+"""
+input e_match_party_sources_on_conflict {
+  constraint: e_match_party_sources_constraint!
+  update_columns: [e_match_party_sources_update_column!]! = []
+  where: e_match_party_sources_bool_exp
+}
+
+"""Ordering options when selecting data from "e_match_party_sources"."""
+input e_match_party_sources_order_by {
+  description: order_by
+  match_lineup_players_aggregate: match_lineup_players_aggregate_order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_match_party_sources"""
+input e_match_party_sources_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_match_party_sources"
+"""
+enum e_match_party_sources_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_match_party_sources"
+"""
+input e_match_party_sources_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_match_party_sources"
+"""
+input e_match_party_sources_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_match_party_sources_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_match_party_sources_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_match_party_sources"
+"""
+enum e_match_party_sources_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_match_party_sources_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_match_party_sources_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_match_party_sources_bool_exp!
 }
 
 """
@@ -28187,6 +28402,8 @@ type match_lineup_players {
   """An object relationship"""
   lineup: match_lineups!
   match_lineup_id: uuid!
+  party_id: uuid
+  party_source: e_match_party_sources_enum
   placeholder_name: String
 
   """An object relationship"""
@@ -28298,6 +28515,8 @@ input match_lineup_players_bool_exp {
   id: uuid_comparison_exp
   lineup: match_lineups_bool_exp
   match_lineup_id: uuid_comparison_exp
+  party_id: uuid_comparison_exp
+  party_source: e_match_party_sources_enum_comparison_exp
   placeholder_name: String_comparison_exp
   player: players_bool_exp
   steam_id: bigint_comparison_exp
@@ -28340,6 +28559,8 @@ input match_lineup_players_insert_input {
   id: uuid
   lineup: match_lineups_obj_rel_insert_input
   match_lineup_id: uuid
+  party_id: uuid
+  party_source: e_match_party_sources_enum
   placeholder_name: String
   player: players_obj_rel_insert_input
   steam_id: bigint
@@ -28350,6 +28571,7 @@ type match_lineup_players_max_fields {
   discord_id: String
   id: uuid
   match_lineup_id: uuid
+  party_id: uuid
   placeholder_name: String
   steam_id: bigint
 }
@@ -28361,6 +28583,7 @@ input match_lineup_players_max_order_by {
   discord_id: order_by
   id: order_by
   match_lineup_id: order_by
+  party_id: order_by
   placeholder_name: order_by
   steam_id: order_by
 }
@@ -28370,6 +28593,7 @@ type match_lineup_players_min_fields {
   discord_id: String
   id: uuid
   match_lineup_id: uuid
+  party_id: uuid
   placeholder_name: String
   steam_id: bigint
 }
@@ -28381,6 +28605,7 @@ input match_lineup_players_min_order_by {
   discord_id: order_by
   id: order_by
   match_lineup_id: order_by
+  party_id: order_by
   placeholder_name: order_by
   steam_id: order_by
 }
@@ -28413,6 +28638,8 @@ input match_lineup_players_order_by {
   id: order_by
   lineup: match_lineups_order_by
   match_lineup_id: order_by
+  party_id: order_by
+  party_source: order_by
   placeholder_name: order_by
   player: players_order_by
   steam_id: order_by
@@ -28441,6 +28668,12 @@ enum match_lineup_players_select_column {
 
   """column name"""
   match_lineup_id
+
+  """column name"""
+  party_id
+
+  """column name"""
+  party_source
 
   """column name"""
   placeholder_name
@@ -28480,6 +28713,8 @@ input match_lineup_players_set_input {
   discord_id: String
   id: uuid
   match_lineup_id: uuid
+  party_id: uuid
+  party_source: e_match_party_sources_enum
   placeholder_name: String
   steam_id: bigint
 }
@@ -28538,6 +28773,8 @@ input match_lineup_players_stream_cursor_value_input {
   discord_id: String
   id: uuid
   match_lineup_id: uuid
+  party_id: uuid
+  party_source: e_match_party_sources_enum
   placeholder_name: String
   steam_id: bigint
 }
@@ -28572,6 +28809,12 @@ enum match_lineup_players_update_column {
 
   """column name"""
   match_lineup_id
+
+  """column name"""
+  party_id
+
+  """column name"""
+  party_source
 
   """column name"""
   placeholder_name
@@ -36740,6 +36983,19 @@ type mutation_root {
   delete_e_match_mode_by_pk(value: String!): e_match_mode
 
   """
+  delete data from the table: "e_match_party_sources"
+  """
+  delete_e_match_party_sources(
+    """filter the rows which have to be deleted"""
+    where: e_match_party_sources_bool_exp!
+  ): e_match_party_sources_mutation_response
+
+  """
+  delete single row from the table: "e_match_party_sources"
+  """
+  delete_e_match_party_sources_by_pk(value: String!): e_match_party_sources
+
+  """
   delete data from the table: "e_match_status"
   """
   delete_e_match_status(
@@ -39048,6 +39304,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_match_mode_on_conflict
   ): e_match_mode
+
+  """
+  insert data into the table: "e_match_party_sources"
+  """
+  insert_e_match_party_sources(
+    """the rows to be inserted"""
+    objects: [e_match_party_sources_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_match_party_sources_on_conflict
+  ): e_match_party_sources_mutation_response
+
+  """
+  insert a single row into the table: "e_match_party_sources"
+  """
+  insert_e_match_party_sources_one(
+    """the row to be inserted"""
+    object: e_match_party_sources_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_match_party_sources_on_conflict
+  ): e_match_party_sources
 
   """
   insert data into the table: "e_match_status"
@@ -43099,6 +43377,34 @@ type mutation_root {
   ): [e_match_mode_mutation_response]
 
   """
+  update data of the table: "e_match_party_sources"
+  """
+  update_e_match_party_sources(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_match_party_sources_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_match_party_sources_bool_exp!
+  ): e_match_party_sources_mutation_response
+
+  """
+  update single row of the table: "e_match_party_sources"
+  """
+  update_e_match_party_sources_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_match_party_sources_set_input
+    pk_columns: e_match_party_sources_pk_columns_input!
+  ): e_match_party_sources
+
+  """
+  update multiples rows of table: "e_match_party_sources"
+  """
+  update_e_match_party_sources_many(
+    """updates to execute, in order"""
+    updates: [e_match_party_sources_updates!]!
+  ): [e_match_party_sources_mutation_response]
+
+  """
   update data of the table: "e_match_status"
   """
   update_e_match_status(
@@ -45481,8 +45787,29 @@ type mutation_root {
   update data of the table: "pending_match_imports"
   """
   update_pending_match_imports(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: pending_match_imports_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: pending_match_imports_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: pending_match_imports_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: pending_match_imports_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: pending_match_imports_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: pending_match_imports_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: pending_match_imports_set_input
@@ -45495,8 +45822,29 @@ type mutation_root {
   update single row of the table: "pending_match_imports"
   """
   update_pending_match_imports_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: pending_match_imports_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: pending_match_imports_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: pending_match_imports_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: pending_match_imports_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: pending_match_imports_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: pending_match_imports_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: pending_match_imports_set_input
@@ -49650,6 +49998,10 @@ type pending_match_imports {
   error: String
   map_name: String
   match_start_time: timestamptz
+  parties(
+    """JSON select path"""
+    path: String
+  ): jsonb
 
   """An array relationship"""
   players(
@@ -49717,6 +50069,11 @@ type pending_match_imports_aggregate_fields {
   variance: pending_match_imports_variance_fields
 }
 
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input pending_match_imports_append_input {
+  parties: jsonb
+}
+
 """aggregate avg on columns"""
 type pending_match_imports_avg_fields {
   valve_match_id: Float
@@ -49734,6 +50091,7 @@ input pending_match_imports_bool_exp {
   error: String_comparison_exp
   map_name: String_comparison_exp
   match_start_time: timestamptz_comparison_exp
+  parties: jsonb_comparison_exp
   players: pending_match_import_players_bool_exp
   players_aggregate: pending_match_import_players_aggregate_bool_exp
   share_code: String_comparison_exp
@@ -49753,6 +50111,27 @@ enum pending_match_imports_constraint {
 }
 
 """
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input pending_match_imports_delete_at_path_input {
+  parties: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input pending_match_imports_delete_elem_input {
+  parties: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input pending_match_imports_delete_key_input {
+  parties: String
+}
+
+"""
 input type for incrementing numeric columns in table "pending_match_imports"
 """
 input pending_match_imports_inc_input {
@@ -49768,6 +50147,7 @@ input pending_match_imports_insert_input {
   error: String
   map_name: String
   match_start_time: timestamptz
+  parties: jsonb
   players: pending_match_import_players_arr_rel_insert_input
   share_code: String
   status: String
@@ -49838,6 +50218,7 @@ input pending_match_imports_order_by {
   error: order_by
   map_name: order_by
   match_start_time: order_by
+  parties: order_by
   players_aggregate: pending_match_import_players_aggregate_order_by
   share_code: order_by
   status: order_by
@@ -49848,6 +50229,11 @@ input pending_match_imports_order_by {
 """primary key columns input for table: pending_match_imports"""
 input pending_match_imports_pk_columns_input {
   valve_match_id: numeric!
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input pending_match_imports_prepend_input {
+  parties: jsonb
 }
 
 """
@@ -49868,6 +50254,9 @@ enum pending_match_imports_select_column {
 
   """column name"""
   match_start_time
+
+  """column name"""
+  parties
 
   """column name"""
   share_code
@@ -49891,6 +50280,7 @@ input pending_match_imports_set_input {
   error: String
   map_name: String
   match_start_time: timestamptz
+  parties: jsonb
   share_code: String
   status: String
   updated_at: timestamptz
@@ -49930,6 +50320,7 @@ input pending_match_imports_stream_cursor_value_input {
   error: String
   map_name: String
   match_start_time: timestamptz
+  parties: jsonb
   share_code: String
   status: String
   updated_at: timestamptz
@@ -49961,6 +50352,9 @@ enum pending_match_imports_update_column {
   match_start_time
 
   """column name"""
+  parties
+
+  """column name"""
   share_code
 
   """column name"""
@@ -49974,8 +50368,29 @@ enum pending_match_imports_update_column {
 }
 
 input pending_match_imports_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: pending_match_imports_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: pending_match_imports_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: pending_match_imports_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: pending_match_imports_delete_key_input
+
   """increments the numeric columns with given value of the filtered values"""
   _inc: pending_match_imports_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: pending_match_imports_prepend_input
 
   """sets the columns of the filtered rows to the given values"""
   _set: pending_match_imports_set_input
@@ -70426,6 +70841,51 @@ type query_root {
   e_match_mode_by_pk(value: String!): e_match_mode
 
   """
+  fetch data from the table: "e_match_party_sources"
+  """
+  e_match_party_sources(
+    """distinct select on columns"""
+    distinct_on: [e_match_party_sources_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_match_party_sources_order_by!]
+
+    """filter the rows returned"""
+    where: e_match_party_sources_bool_exp
+  ): [e_match_party_sources!]!
+
+  """
+  fetch aggregated fields from the table: "e_match_party_sources"
+  """
+  e_match_party_sources_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_match_party_sources_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_match_party_sources_order_by!]
+
+    """filter the rows returned"""
+    where: e_match_party_sources_bool_exp
+  ): e_match_party_sources_aggregate!
+
+  """
+  fetch data from the table: "e_match_party_sources" using primary key columns
+  """
+  e_match_party_sources_by_pk(value: String!): e_match_party_sources
+
+  """
   fetch data from the table: "e_match_status"
   """
   e_match_status(
@@ -72866,9 +73326,7 @@ type query_root {
   """
   match_demo_sessions_by_pk(id: uuid!): match_demo_sessions
 
-  """
-  fetch data from the table: "match_lineup_players"
-  """
+  """An array relationship"""
   match_lineup_players(
     """distinct select on columns"""
     distinct_on: [match_lineup_players_select_column!]
@@ -72886,9 +73344,7 @@ type query_root {
     where: match_lineup_players_bool_exp
   ): [match_lineup_players!]!
 
-  """
-  fetch aggregated fields from the table: "match_lineup_players"
-  """
+  """An aggregate relationship"""
   match_lineup_players_aggregate(
     """distinct select on columns"""
     distinct_on: [match_lineup_players_select_column!]
@@ -76881,6 +77337,46 @@ type query_root {
     """filter the rows returned"""
     where: v_player_multi_kills_bool_exp
   ): v_player_multi_kills_aggregate!
+
+  """
+  fetch data from the table: "v_player_queue_partners"
+  """
+  v_player_queue_partners(
+    """distinct select on columns"""
+    distinct_on: [v_player_queue_partners_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_queue_partners_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_queue_partners_bool_exp
+  ): [v_player_queue_partners!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_queue_partners"
+  """
+  v_player_queue_partners_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_queue_partners_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_queue_partners_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_queue_partners_bool_exp
+  ): v_player_queue_partners_aggregate!
 
   """
   fetch data from the table: "v_player_weapon_damage"
@@ -81693,6 +82189,65 @@ type subscription_root {
   ): [e_match_mode!]!
 
   """
+  fetch data from the table: "e_match_party_sources"
+  """
+  e_match_party_sources(
+    """distinct select on columns"""
+    distinct_on: [e_match_party_sources_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_match_party_sources_order_by!]
+
+    """filter the rows returned"""
+    where: e_match_party_sources_bool_exp
+  ): [e_match_party_sources!]!
+
+  """
+  fetch aggregated fields from the table: "e_match_party_sources"
+  """
+  e_match_party_sources_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_match_party_sources_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_match_party_sources_order_by!]
+
+    """filter the rows returned"""
+    where: e_match_party_sources_bool_exp
+  ): e_match_party_sources_aggregate!
+
+  """
+  fetch data from the table: "e_match_party_sources" using primary key columns
+  """
+  e_match_party_sources_by_pk(value: String!): e_match_party_sources
+
+  """
+  fetch data from the table in a streaming manner: "e_match_party_sources"
+  """
+  e_match_party_sources_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_match_party_sources_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_match_party_sources_bool_exp
+  ): [e_match_party_sources!]!
+
+  """
   fetch data from the table: "e_match_status"
   """
   e_match_status(
@@ -84781,9 +85336,7 @@ type subscription_root {
     where: match_demo_sessions_bool_exp
   ): [match_demo_sessions!]!
 
-  """
-  fetch data from the table: "match_lineup_players"
-  """
+  """An array relationship"""
   match_lineup_players(
     """distinct select on columns"""
     distinct_on: [match_lineup_players_select_column!]
@@ -84801,9 +85354,7 @@ type subscription_root {
     where: match_lineup_players_bool_exp
   ): [match_lineup_players!]!
 
-  """
-  fetch aggregated fields from the table: "match_lineup_players"
-  """
+  """An aggregate relationship"""
   match_lineup_players_aggregate(
     """distinct select on columns"""
     distinct_on: [match_lineup_players_select_column!]
@@ -90103,6 +90654,60 @@ type subscription_root {
     """filter the rows returned"""
     where: v_player_multi_kills_bool_exp
   ): [v_player_multi_kills!]!
+
+  """
+  fetch data from the table: "v_player_queue_partners"
+  """
+  v_player_queue_partners(
+    """distinct select on columns"""
+    distinct_on: [v_player_queue_partners_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_queue_partners_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_queue_partners_bool_exp
+  ): [v_player_queue_partners!]!
+
+  """
+  fetch aggregated fields from the table: "v_player_queue_partners"
+  """
+  v_player_queue_partners_aggregate(
+    """distinct select on columns"""
+    distinct_on: [v_player_queue_partners_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [v_player_queue_partners_order_by!]
+
+    """filter the rows returned"""
+    where: v_player_queue_partners_bool_exp
+  ): v_player_queue_partners_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_player_queue_partners"
+  """
+  v_player_queue_partners_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [v_player_queue_partners_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: v_player_queue_partners_bool_exp
+  ): [v_player_queue_partners!]!
 
   """
   fetch data from the table: "v_player_weapon_damage"
@@ -110326,6 +110931,206 @@ input v_player_multi_kills_variance_order_by {
   attacker_steam_id: order_by
   kills: order_by
   round: order_by
+}
+
+"""
+columns and relationships of "v_player_queue_partners"
+"""
+type v_player_queue_partners {
+  first_played_at: timestamptz
+  last_played_at: timestamptz
+  matches_together: Int
+
+  """An object relationship"""
+  partner: players
+  partner_steam_id: bigint
+
+  """An object relationship"""
+  player: players
+  steam_id: bigint
+  wins_together: Int
+}
+
+"""
+aggregated selection of "v_player_queue_partners"
+"""
+type v_player_queue_partners_aggregate {
+  aggregate: v_player_queue_partners_aggregate_fields
+  nodes: [v_player_queue_partners!]!
+}
+
+"""
+aggregate fields of "v_player_queue_partners"
+"""
+type v_player_queue_partners_aggregate_fields {
+  avg: v_player_queue_partners_avg_fields
+  count(columns: [v_player_queue_partners_select_column!], distinct: Boolean): Int!
+  max: v_player_queue_partners_max_fields
+  min: v_player_queue_partners_min_fields
+  stddev: v_player_queue_partners_stddev_fields
+  stddev_pop: v_player_queue_partners_stddev_pop_fields
+  stddev_samp: v_player_queue_partners_stddev_samp_fields
+  sum: v_player_queue_partners_sum_fields
+  var_pop: v_player_queue_partners_var_pop_fields
+  var_samp: v_player_queue_partners_var_samp_fields
+  variance: v_player_queue_partners_variance_fields
+}
+
+"""aggregate avg on columns"""
+type v_player_queue_partners_avg_fields {
+  matches_together: Float
+  partner_steam_id: Float
+  steam_id: Float
+  wins_together: Float
+}
+
+"""
+Boolean expression to filter rows from the table "v_player_queue_partners". All fields are combined with a logical 'AND'.
+"""
+input v_player_queue_partners_bool_exp {
+  _and: [v_player_queue_partners_bool_exp!]
+  _not: v_player_queue_partners_bool_exp
+  _or: [v_player_queue_partners_bool_exp!]
+  first_played_at: timestamptz_comparison_exp
+  last_played_at: timestamptz_comparison_exp
+  matches_together: Int_comparison_exp
+  partner: players_bool_exp
+  partner_steam_id: bigint_comparison_exp
+  player: players_bool_exp
+  steam_id: bigint_comparison_exp
+  wins_together: Int_comparison_exp
+}
+
+"""aggregate max on columns"""
+type v_player_queue_partners_max_fields {
+  first_played_at: timestamptz
+  last_played_at: timestamptz
+  matches_together: Int
+  partner_steam_id: bigint
+  steam_id: bigint
+  wins_together: Int
+}
+
+"""aggregate min on columns"""
+type v_player_queue_partners_min_fields {
+  first_played_at: timestamptz
+  last_played_at: timestamptz
+  matches_together: Int
+  partner_steam_id: bigint
+  steam_id: bigint
+  wins_together: Int
+}
+
+"""Ordering options when selecting data from "v_player_queue_partners"."""
+input v_player_queue_partners_order_by {
+  first_played_at: order_by
+  last_played_at: order_by
+  matches_together: order_by
+  partner: players_order_by
+  partner_steam_id: order_by
+  player: players_order_by
+  steam_id: order_by
+  wins_together: order_by
+}
+
+"""
+select columns of table "v_player_queue_partners"
+"""
+enum v_player_queue_partners_select_column {
+  """column name"""
+  first_played_at
+
+  """column name"""
+  last_played_at
+
+  """column name"""
+  matches_together
+
+  """column name"""
+  partner_steam_id
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  wins_together
+}
+
+"""aggregate stddev on columns"""
+type v_player_queue_partners_stddev_fields {
+  matches_together: Float
+  partner_steam_id: Float
+  steam_id: Float
+  wins_together: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type v_player_queue_partners_stddev_pop_fields {
+  matches_together: Float
+  partner_steam_id: Float
+  steam_id: Float
+  wins_together: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type v_player_queue_partners_stddev_samp_fields {
+  matches_together: Float
+  partner_steam_id: Float
+  steam_id: Float
+  wins_together: Float
+}
+
+"""
+Streaming cursor of the table "v_player_queue_partners"
+"""
+input v_player_queue_partners_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: v_player_queue_partners_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input v_player_queue_partners_stream_cursor_value_input {
+  first_played_at: timestamptz
+  last_played_at: timestamptz
+  matches_together: Int
+  partner_steam_id: bigint
+  steam_id: bigint
+  wins_together: Int
+}
+
+"""aggregate sum on columns"""
+type v_player_queue_partners_sum_fields {
+  matches_together: Int
+  partner_steam_id: bigint
+  steam_id: bigint
+  wins_together: Int
+}
+
+"""aggregate var_pop on columns"""
+type v_player_queue_partners_var_pop_fields {
+  matches_together: Float
+  partner_steam_id: Float
+  steam_id: Float
+  wins_together: Float
+}
+
+"""aggregate var_samp on columns"""
+type v_player_queue_partners_var_samp_fields {
+  matches_together: Float
+  partner_steam_id: Float
+  steam_id: Float
+  wins_together: Float
+}
+
+"""aggregate variance on columns"""
+type v_player_queue_partners_variance_fields {
+  matches_together: Float
+  partner_steam_id: Float
+  steam_id: Float
+  wins_together: Float
 }
 
 """

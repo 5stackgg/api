@@ -2,6 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { CacheService } from "../cache/cache.service";
 import { HasuraService } from "../hasura/hasura.service";
+import { MatchParty } from "../steam-match-history/types/MatchParty";
 
 export type FaceitPlayerData = {
   faceit_player_id: string;
@@ -14,6 +15,10 @@ export type FaceitPlayerData = {
 @Injectable()
 export class FaceitService {
   private static readonly BASE_URL = "https://open.faceit.com/data/v4";
+  // Undocumented match-room API — the only source of party grouping. Takes no
+  // api key. See getMatchParties.
+  private static readonly MATCH_ROOM_URL =
+    "https://api.faceit.com/match/v2/match";
   private static readonly REFRESH_INTERVAL_SECONDS = 60 * 60;
   private static readonly NO_ACCOUNT_TTL_SECONDS = 12 * 60 * 60;
   private readonly apiKey: string;
@@ -254,6 +259,93 @@ export class FaceitService {
       }
     }
     return out;
+  }
+
+  // Who queued together. The public Data API's match payload has rosters but
+  // no party grouping — only the match-room API exposes partyId per roster
+  // entry, and that endpoint is undocumented. Treat it as a probe: any
+  // failure or shape change just means this match has no party data, which
+  // costs nothing since parties are supplementary to the import.
+  public async getMatchParties(matchId: string): Promise<MatchParty[] | null> {
+    let data: {
+      payload?: {
+        teams?: Record<
+          string,
+          {
+            roster?: Array<{ gameId?: string; partyId?: string }>;
+          }
+        >;
+      };
+    } | null = null;
+
+    try {
+      const res = await fetch(
+        `${FaceitService.MATCH_ROOM_URL}/${encodeURIComponent(matchId)}`,
+        {
+          headers: { Accept: "application/json" },
+          signal: AbortSignal.timeout(15_000),
+        },
+      );
+      if (!res.ok) {
+        this.logger.warn(
+          `faceit match-room responded ${res.status} for ${matchId}; no party data`,
+        );
+        return null;
+      }
+      data = await res.json();
+    } catch (error) {
+      this.logger.warn(
+        `faceit match-room lookup failed for ${matchId}: ${(error as Error)?.message ?? "unknown"}`,
+      );
+      return null;
+    }
+
+    const teams = Object.values(data?.payload?.teams ?? {});
+    if (teams.length === 0) {
+      this.logger.warn(
+        `faceit match-room returned no teams for ${matchId}; no party data`,
+      );
+      return null;
+    }
+
+    const byParty = new Map<string, string[]>();
+    let sawPartyId = false;
+    for (const team of teams) {
+      for (const member of team.roster ?? []) {
+        if (!member.partyId) {
+          continue;
+        }
+        sawPartyId = true;
+        // gameId is the steam id on cs2 match rooms.
+        if (!member.gameId || !/^\d+$/.test(member.gameId)) {
+          continue;
+        }
+        byParty.set(member.partyId, [
+          ...(byParty.get(member.partyId) ?? []),
+          member.gameId,
+        ]);
+      }
+    }
+
+    if (!sawPartyId) {
+      this.logger.warn(
+        `faceit match-room exposes no partyId for ${matchId}; party import is a no-op`,
+      );
+      return null;
+    }
+
+    const parties: MatchParty[] = [];
+    for (const [partyKey, steamIds] of byParty) {
+      // FACEIT gives a solo queuer their own party id.
+      if (steamIds.length < 2) {
+        continue;
+      }
+      for (const steamId of steamIds) {
+        parties.push({ steam_id: steamId, party_key: partyKey });
+      }
+    }
+
+    return parties.length > 0 ? parties : null;
   }
 
   public async getMatchDemo(

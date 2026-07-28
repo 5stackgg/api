@@ -6,6 +6,8 @@ declare module "globaloffensive" {
     constructor(steamUser: SteamUser);
     haveGCSession: boolean;
     requestGame(shareCode: string): void;
+    // Returns false if the steam id is not a valid public individual id.
+    requestRecentGames(steamId: string): boolean | void;
   }
 
   export = GlobalOffensive;

@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { Inject, Injectable, Logger, forwardRef } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
@@ -11,10 +12,38 @@ import { ParsedDemo, ParsedPlayer } from "../demos/demo-parser.service";
 import { S3Service } from "../s3/s3.service";
 import { FaceitService } from "../faceit/faceit.service";
 import { SteamPresenceService } from "../steam-presence/steam-presence.service";
-import { e_match_types_enum } from "../../generated";
+import {
+  e_match_party_sources_enum,
+  e_match_types_enum,
+} from "../../generated";
+import { MatchParty } from "./types/MatchParty";
+import { SteamGcService } from "./steam-gc.service";
 
 type MatchType = e_match_types_enum;
 type Side = "T" | "CT";
+
+// The importer's subset of public.e_match_party_sources — "lobby" is written
+// by matchmaking, never here.
+const PARTY_SOURCES: e_match_party_sources_enum[] = ["valve", "faceit"];
+
+// How many of a match's players to ask the GC about before concluding the
+// match has aged out of everyone's recent-games list.
+const PARTY_LOOKUP_PLAYER_ATTEMPTS = 3;
+
+function toPartySource(source: string): e_match_party_sources_enum | null {
+  return PARTY_SOURCES.find((partySource) => partySource === source) ?? null;
+}
+
+export type ImportExternalDemoOptions = {
+  demoUrl?: string;
+  matchStartTime?: string | null;
+  externalId?: string | null;
+  sourceObjectKey?: string;
+  // Who queued together, from the source's own queue data (the Valve GC
+  // reservation or the FACEIT match room). The demo itself carries no
+  // party grouping, so this is the only way to know.
+  parties?: MatchParty[] | null;
+};
 
 type SteamPlayerSummary = {
   steamid: string;
@@ -38,6 +67,7 @@ export class MatchImportService {
     @Inject(forwardRef(() => FaceitService))
     private readonly faceit: FaceitService,
     private readonly steamPresence: SteamPresenceService,
+    private readonly steamGc: SteamGcService,
     @InjectQueue(SteamMatchHistoryQueues.CheckSteamBansForMatch)
     private readonly steamBansQueue: Queue,
   ) {
@@ -48,11 +78,11 @@ export class MatchImportService {
     parsed: ParsedDemo,
     source: string,
     sourceKey: string,
-    demoUrl?: string,
-    matchStartTime?: string | null,
-    externalId?: string | null,
-    sourceObjectKey?: string,
+    options: ImportExternalDemoOptions = {},
   ): Promise<{ matchId: string | null; skipped?: string }> {
+    const { demoUrl, matchStartTime, externalId, sourceObjectKey, parties } =
+      options;
+
     if (MatchImportService.isFaceitServer(parsed.server_name)) {
       source = "faceit";
     } else if (MatchImportService.isFiveStackServer(parsed.server_name)) {
@@ -130,8 +160,32 @@ export class MatchImportService {
     const lineup1Id = await this.insertLineup();
     const lineup2Id = await this.insertLineup();
 
-    await this.insertLineupPlayers(lineup1Id, lineup1Players);
-    await this.insertLineupPlayers(lineup2Id, lineup2Players);
+    // source is re-derived from the demo's server name above and can be
+    // "5stack", which is not a party source. Only stamp parties when the
+    // source is one e_match_party_sources actually knows about, or the FK
+    // would fail the whole import over supplementary data.
+    const partySource = toPartySource(source);
+    const partyIds = partySource
+      ? MatchImportService.mapPartyIds(parties)
+      : new Map<string, string>();
+    if (partyIds.size > 0) {
+      this.logger.log(
+        `parties for ${source}/${sourceKey}: ${new Set(partyIds.values()).size} group(s) covering ${partyIds.size} player(s)`,
+      );
+    }
+
+    await this.insertLineupPlayers(
+      lineup1Id,
+      lineup1Players,
+      partyIds,
+      partySource,
+    );
+    await this.insertLineupPlayers(
+      lineup2Id,
+      lineup2Players,
+      partyIds,
+      partySource,
+    );
 
     let startedAt = matchStartTime ?? null;
     let startSource = startedAt ? "gc-matchtime" : "none";
@@ -516,6 +570,17 @@ export class MatchImportService {
 
   private static computeStartingSides(parsed: ParsedDemo): Map<string, Side> {
     const sides = new Map<string, Side>();
+
+    // The demo knows each player's team outright. Prefer it: the kill scan
+    // below can only place players who killed or died in round 1, and
+    // splitLineupsBySide deals the rest into whichever lineup is shorter.
+    for (const player of parsed.players ?? []) {
+      const side = MatchImportService.normalizeTeam(player.starting_side);
+      if (player.steam_id && side) {
+        sides.set(player.steam_id, side);
+      }
+    }
+
     // A player's side must be read from round 1 — sides swap at halftime, so
     // a player's first kill later in the demo can be on the opposite side and
     // would scramble the lineup split.
@@ -557,6 +622,28 @@ export class MatchImportService {
     return null;
   }
 
+  // The source's party ids (a Valve uint32, a FACEIT uuid string) are only
+  // unique within their own match, so they get remapped onto a fresh uuid per
+  // party. Players not in the map queued alone.
+  private static mapPartyIds(
+    parties: MatchParty[] | null | undefined,
+  ): Map<string, string> {
+    const byKey = new Map<string, string>();
+    const bySteamId = new Map<string, string>();
+    for (const party of parties ?? []) {
+      if (!party.steam_id || !party.party_key) {
+        continue;
+      }
+      let partyId = byKey.get(party.party_key);
+      if (!partyId) {
+        partyId = randomUUID();
+        byKey.set(party.party_key, partyId);
+      }
+      bySteamId.set(party.steam_id, partyId);
+    }
+    return bySteamId;
+  }
+
   private static splitLineupsBySide(
     players: ParsedPlayer[],
     sides: Map<string, Side>,
@@ -582,6 +669,145 @@ export class MatchImportService {
       }
     }
     return [t, ct];
+  }
+
+  /**
+   * (Re)builds the party grouping for an already-imported match.
+   *
+   * Parties are not in the demo — they come from the source's own queue data —
+   * so this re-asks the source rather than re-reading anything local. That
+   * makes it safe to run over matches imported before parties existed, and
+   * makes it the backfill path for a reparse.
+   *
+   * Returns the number of players stamped; 0 means the source had nothing
+   * (everyone solo-queued, or the match is too old for the GC to still list).
+   */
+  public async syncPartiesForMatch(matchId: string): Promise<number> {
+    const rows = await this.postgres.query<
+      Array<{ source: string; external_id: string | null }>
+    >(`SELECT source, external_id FROM public.matches WHERE id = $1::uuid`, [
+      matchId,
+    ]);
+    const match = rows.at(0);
+    if (!match) {
+      return 0;
+    }
+
+    const partySource = toPartySource(match.source);
+    if (!partySource || !match.external_id) {
+      return 0;
+    }
+
+    const parties = await this.fetchPartiesFromSource(
+      partySource,
+      match.external_id,
+      matchId,
+    );
+    if (!parties?.length) {
+      return 0;
+    }
+
+    const partyIds = MatchImportService.mapPartyIds(parties);
+    if (partyIds.size === 0) {
+      return 0;
+    }
+
+    // Re-stamped wholesale rather than merged: the source is the authority, so
+    // a player who is no longer in a party must lose the stale id too.
+    await this.postgres.query(
+      `UPDATE public.match_lineup_players mlp
+          SET party_id = NULL, party_source = NULL
+         FROM public.match_lineups ml
+        WHERE ml.id = mlp.match_lineup_id
+          AND ml.match_id = $1::uuid
+          AND mlp.party_id IS NOT NULL`,
+      [matchId],
+    );
+
+    const steamIds = [...partyIds.keys()];
+    const assigned = steamIds.map((steamId) => partyIds.get(steamId));
+    const updated = await this.postgres.query<Array<{ steam_id: string }>>(
+      `UPDATE public.match_lineup_players mlp
+          SET party_id = data.party_id::uuid, party_source = $3
+         FROM public.match_lineups ml,
+              unnest($2::bigint[], $4::uuid[]) AS data(steam_id, party_id)
+        WHERE ml.id = mlp.match_lineup_id
+          AND ml.match_id = $1::uuid
+          AND mlp.steam_id = data.steam_id
+        RETURNING mlp.steam_id`,
+      [matchId, steamIds, partySource, assigned],
+    );
+
+    this.logger.log(
+      `party-sync ${match.source}/${match.external_id} match=${matchId}: ${new Set(assigned).size} group(s), ${updated.length}/${steamIds.length} players stamped`,
+    );
+
+    return updated.length;
+  }
+
+  private async fetchPartiesFromSource(
+    partySource: e_match_party_sources_enum,
+    externalId: string,
+    matchId: string,
+  ): Promise<MatchParty[] | null> {
+    if (partySource === "faceit") {
+      const faceitMatchId =
+        MatchImportService.extractFaceitMatchId(externalId) ?? externalId;
+      return this.faceit.getMatchParties(faceitMatchId);
+    }
+
+    // Valve: the share code is consumed at import and not kept, so ask the GC
+    // for a participant's recent games instead and pick this match out of them.
+    //
+    // Deliberately not gated on isReady(): the GC session logs off after a few
+    // minutes idle, and resolveRecentGameParties reconnects on demand. Checking
+    // readiness here would skip nearly every sync.
+    if (!this.steamGc.isAvailable()) {
+      this.logger.warn(
+        `party-sync skipped for ${matchId}: steam-gc not configured`,
+      );
+      return null;
+    }
+
+    // Bounded: each attempt is its own GC round trip with a 30s timeout, and a
+    // match nobody still has in recent history would otherwise burn ten of them
+    // before giving up.
+    const steamIds = (await this.matchPlayerSteamIds(matchId)).slice(
+      0,
+      PARTY_LOOKUP_PLAYER_ATTEMPTS,
+    );
+    for (const steamId of steamIds) {
+      const parties = await this.steamGc.resolveRecentGameParties(
+        steamId,
+        externalId,
+      );
+      if (parties?.length) {
+        return parties;
+      }
+    }
+
+    this.logger.warn(
+      `party-sync found no reservation for match ${matchId} (valve ${externalId}) after ${steamIds.length} player(s); likely past the GC's recent-games window`,
+    );
+    return null;
+  }
+
+  // Linked players first: the match was imported from one of their share codes
+  // in the first place, so they are the most likely to still have it in their
+  // recent games — and the only ones we know have match sharing switched on.
+  private async matchPlayerSteamIds(matchId: string): Promise<string[]> {
+    const rows = await this.postgres.query<Array<{ steam_id: string }>>(
+      `SELECT DISTINCT mlp.steam_id::text AS steam_id,
+              (psma.steam_id IS NOT NULL) AS linked
+         FROM public.match_lineup_players mlp
+         JOIN public.match_lineups ml ON ml.id = mlp.match_lineup_id
+         LEFT JOIN public.player_steam_match_auth psma
+           ON psma.steam_id = mlp.steam_id
+        WHERE ml.match_id = $1::uuid AND mlp.steam_id IS NOT NULL
+        ORDER BY linked DESC, steam_id`,
+      [matchId],
+    );
+    return rows.map((row) => row.steam_id);
   }
 
   public async findExistingExternalMatch(
@@ -943,10 +1169,14 @@ export class MatchImportService {
   private async insertLineupPlayers(
     lineupId: string,
     players: ParsedPlayer[],
+    parties?: Map<string, string>,
+    partySource?: e_match_party_sources_enum | null,
   ): Promise<void> {
     const objects = players.map((p) => ({
       match_lineup_id: lineupId,
       steam_id: p.steam_id,
+      party_id: parties?.get(p.steam_id) ?? null,
+      party_source: parties?.has(p.steam_id) ? partySource : null,
     }));
     if (objects.length === 0) {
       return;

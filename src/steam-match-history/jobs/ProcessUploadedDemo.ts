@@ -50,10 +50,11 @@ export class ProcessUploadedDemo extends WorkerHost {
         parsed,
         "valve",
         dedupeKey,
-        undefined,
-        null,
-        dedupeKey,
-        key,
+        {
+          matchStartTime: null,
+          externalId: dedupeKey,
+          sourceObjectKey: key,
+        },
       );
 
       this.logger.log(

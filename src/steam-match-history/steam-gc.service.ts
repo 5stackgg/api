@@ -8,6 +8,7 @@ import { ConfigService } from "@nestjs/config";
 import SteamUser from "steam-user";
 import GlobalOffensive from "globaloffensive";
 import { CacheService } from "../cache/cache.service";
+import { MatchParty } from "./types/MatchParty";
 
 const CS2_APP_ID = 730;
 const REFRESH_TOKEN_CACHE_KEY = "steam-gc:refresh-token";
@@ -19,7 +20,11 @@ export type ResolvedMatch = {
   demoUrl: string;
   mapName: string | null;
   matchStartTime: string | null;
+  parties: MatchParty[] | null;
 };
+
+// account id -> steam64
+const STEAM_ID_BASE = 76561197960265728n;
 
 export class SteamGcConnectionError extends Error {}
 
@@ -212,6 +217,50 @@ export class SteamGcService
   public async resolveShareCode(
     shareCode: string,
   ): Promise<ResolvedMatch | null> {
+    const matches = await this.requestMatchList(
+      (cs) => cs.requestGame(shareCode),
+      shareCode,
+    );
+    return SteamGcService.extractMatchInfo(matches);
+  }
+
+  // Party grouping for an already-imported match, without its share code.
+  // The GC will hand back a player's recent games on request, and each entry
+  // carries the same reservation the share-code path reads — so a match that
+  // was imported before parties existed can still be backfilled, as long as
+  // the GC still considers it recent for at least one of its players.
+  public async resolveRecentGameParties(
+    steamId: string,
+    valveMatchId: string,
+  ): Promise<MatchParty[] | null> {
+    const matches = await this.requestMatchList(
+      (cs) => cs.requestRecentGames(steamId),
+      `recent games for ${steamId}`,
+    );
+    if (!Array.isArray(matches)) {
+      return null;
+    }
+
+    const match = matches.find(
+      (entry: { matchid?: unknown }) => String(entry?.matchid) === valveMatchId,
+    ) as { roundstatsall?: Array<{ reservation?: unknown }> } | undefined;
+
+    if (!match) {
+      this.logger.warn(
+        `steam-gc recent games for ${steamId} did not include match ${valveMatchId} (too old?)`,
+      );
+      return null;
+    }
+
+    return SteamGcService.extractParties(match.roundstatsall as never);
+  }
+
+  // The GC answers every match-list request on the same `matchList` event, so
+  // each call owns the listener for its own timeout window.
+  private async requestMatchList(
+    send: (cs: GlobalOffensive) => void,
+    label: string,
+  ): Promise<unknown> {
     await this.ensureReady();
 
     const cs = this.cs;
@@ -220,27 +269,27 @@ export class SteamGcService
     }
 
     try {
-      return await new Promise<ResolvedMatch | null>((resolve) => {
+      return await new Promise<unknown>((resolve) => {
         const timer = setTimeout(() => {
           cs.removeListener("matchList", onMatchList);
-          this.logger.warn(`steam-gc timeout resolving ${shareCode}`);
+          this.logger.warn(`steam-gc timeout resolving ${label}`);
           resolve(null);
         }, REQUEST_TIMEOUT_MS);
 
         const onMatchList = (matches: unknown): void => {
           clearTimeout(timer);
           cs.removeListener("matchList", onMatchList);
-          resolve(SteamGcService.extractMatchInfo(matches));
+          resolve(matches);
         };
 
         cs.on("matchList", onMatchList);
         try {
-          cs.requestGame(shareCode);
+          send(cs);
         } catch (err) {
           clearTimeout(timer);
           cs.removeListener("matchList", onMatchList);
           this.logger.error(
-            `steam-gc requestGame threw for ${shareCode}: ${(err as Error).message}`,
+            `steam-gc request threw for ${label}: ${(err as Error).message}`,
           );
           resolve(null);
         }
@@ -258,7 +307,13 @@ export class SteamGcService
       matchtime?: number;
       watchablematchinfo?: { game_mapgroup?: string; game_map?: string };
       roundstats_legacy?: { map?: string };
-      roundstatsall?: Array<{ map?: string }>;
+      roundstatsall?: Array<{
+        map?: string;
+        // The reservation the GC handed the game server. account_ids and
+        // party_ids are index-aligned; players who queued together share a
+        // party id. This is the only place the queue grouping survives.
+        reservation?: { account_ids?: number[]; party_ids?: number[] };
+      }>;
     };
 
     let demoUrl: string | null = null;
@@ -294,6 +349,69 @@ export class SteamGcService
     // game_mapgroup is "mg_de_dust2"-style; strip the "mg_" prefix.
     const mapName = rawMap?.replace(/^mg_/, "") ?? null;
 
-    return { demoUrl, mapName, matchStartTime };
+    return {
+      demoUrl,
+      mapName,
+      matchStartTime,
+      parties: SteamGcService.extractParties(match.roundstatsall),
+    };
+  }
+
+  // Zips the reservation's index-aligned account_ids/party_ids into per-player
+  // party membership. Returns null when the GC gave us no reservation — party
+  // data is a bonus, never a reason to fail an import.
+  private static extractParties(
+    roundStats?: Array<{
+      reservation?: { account_ids?: number[]; party_ids?: number[] };
+    }>,
+  ): MatchParty[] | null {
+    if (!Array.isArray(roundStats)) {
+      return null;
+    }
+
+    // Later entries are the fuller picture; take the last one that has both
+    // halves of the pairing.
+    let reservation: { account_ids?: number[]; party_ids?: number[] } | null =
+      null;
+    for (let i = roundStats.length - 1; i >= 0; i--) {
+      const candidate = roundStats[i]?.reservation;
+      if (candidate?.account_ids?.length && candidate?.party_ids?.length) {
+        reservation = candidate;
+        break;
+      }
+    }
+    if (!reservation) {
+      return null;
+    }
+
+    const accountIds = reservation.account_ids ?? [];
+    const partyIds = reservation.party_ids ?? [];
+
+    const byParty = new Map<string, string[]>();
+    for (let i = 0; i < accountIds.length; i++) {
+      const accountId = accountIds[i];
+      const partyId = partyIds[i];
+      // 0 / missing means "queued alone" — not a party.
+      if (!accountId || !partyId) {
+        continue;
+      }
+      const key = String(partyId);
+      const steamId = (BigInt(accountId) + STEAM_ID_BASE).toString();
+      byParty.set(key, [...(byParty.get(key) ?? []), steamId]);
+    }
+
+    const parties: MatchParty[] = [];
+    for (const [partyKey, steamIds] of byParty) {
+      // A "party" of one is just a solo queuer whose party id happened to be
+      // populated.
+      if (steamIds.length < 2) {
+        continue;
+      }
+      for (const steamId of steamIds) {
+        parties.push({ steam_id: steamId, party_key: partyKey });
+      }
+    }
+
+    return parties.length > 0 ? parties : null;
   }
 }

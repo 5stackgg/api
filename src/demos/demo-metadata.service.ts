@@ -1,9 +1,12 @@
 import zlib from "zlib";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
 import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { S3Service } from "../s3/s3.service";
+import { SteamMatchHistoryQueues } from "../steam-match-history/enums/SteamMatchHistoryQueues";
 import { DemoParserService, ParsedDemo } from "./demo-parser.service";
 
 export const DEMO_METADATA_VERSION = 9;
@@ -33,6 +36,8 @@ export class DemoMetadataService {
     private readonly s3: S3Service,
     private readonly demoParser: DemoParserService,
     private readonly config: ConfigService,
+    @InjectQueue(SteamMatchHistoryQueues.SyncMatchParties)
+    private readonly syncPartiesQueue: Queue,
   ) {}
 
   public static isExternalDemoUrl(file: string | null | undefined): boolean {
@@ -442,6 +447,31 @@ export class DemoMetadataService {
     return (match_map_demos_by_pk as DemoRow) ?? null;
   }
 
+  private async queuePartySync(matchId: string | null): Promise<void> {
+    if (!matchId) {
+      return;
+    }
+    try {
+      await this.syncPartiesQueue.add(
+        "SyncMatchParties",
+        { match_id: matchId },
+        {
+          // One pending sync per match, so a reparse-all doesn't queue the
+          // same match twice for a multi-map series.
+          jobId: `sync-parties-${matchId}`,
+          attempts: 2,
+          backoff: { type: "exponential", delay: 30_000 },
+          removeOnComplete: true,
+        },
+      );
+    } catch (error) {
+      // Supplementary data — never fail a parse over it.
+      this.logger.warn(
+        `unable to queue party sync for match ${matchId}: ${(error as Error)?.message}`,
+      );
+    }
+  }
+
   private async parseAndPersist(demo: DemoRow): Promise<DemoRow> {
     this.logger.log(
       `[demo-parser] parsing match_map_demo ${demo.id} (file=${demo.file})`,
@@ -454,6 +484,12 @@ export class DemoMetadataService {
     }
 
     await this.persistDemoStats(demo.id, demo.match_id, parsed);
+
+    // Party grouping isn't in the demo, so a reparse can only refresh it by
+    // re-asking the source. Queued rather than awaited: it's a GC / HTTP round
+    // trip that must not gate the parse, and a reparse-all fans out one per
+    // match.
+    await this.queuePartySync(demo.match_id);
 
     const playbackFile = await this.uploadPlaybackBlob(
       demo.match_id,

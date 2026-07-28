@@ -27,6 +27,7 @@ import { PollSteamMatchHistoryForUser } from "./jobs/PollSteamMatchHistoryForUse
 import { ResolveMatchMetadata } from "./jobs/ResolveMatchMetadata";
 import { ParseImportedDemo } from "./jobs/ParseImportedDemo";
 import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
+import { SyncMatchParties } from "./jobs/SyncMatchParties";
 
 @Module({
   imports: [
@@ -51,6 +52,9 @@ import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
     BullModule.registerQueue({
       name: SteamMatchHistoryQueues.PollSteamMatchHistoryForUser,
     }),
+    BullModule.registerQueue({
+      name: SteamMatchHistoryQueues.SyncMatchParties,
+    }),
     BullBoardModule.forFeature({
       name: SteamMatchHistoryQueues.PollAllSteamMatchHistory,
       adapter: BullMQAdapter,
@@ -79,6 +83,10 @@ import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
       name: SteamMatchHistoryQueues.ProcessUploadedDemo,
       adapter: BullMQAdapter,
     }),
+    BullBoardModule.forFeature({
+      name: SteamMatchHistoryQueues.SyncMatchParties,
+      adapter: BullMQAdapter,
+    }),
     HasuraModule,
     RedisModule,
     CacheModule,
@@ -101,6 +109,7 @@ import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
     ResolveMatchMetadata,
     ParseImportedDemo,
     ProcessUploadedDemo,
+    SyncMatchParties,
     ...getQueuesProcessors("SteamMatchHistory"),
     loggerFactory(),
   ],

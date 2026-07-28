@@ -25,6 +25,14 @@ const computeStartingSides = (
   }
 ).computeStartingSides;
 
+const mapPartyIds = (
+  MatchImportService as unknown as {
+    mapPartyIds: (
+      parties: Array<{ steam_id: string; party_key: string }> | null,
+    ) => Map<string, string>;
+  }
+).mapPartyIds;
+
 describe("MatchImportService.detectMatchType", () => {
   it("uses the majority rank_type, not the first player", () => {
     const players = [
@@ -136,6 +144,72 @@ describe("MatchImportService.computeStartingSides", () => {
     expect(sides.has("C")).toBe(false);
   });
 
+  it("prefers the parser's starting_side over the kill scan", () => {
+    const parsed = {
+      players: [
+        { steam_id: "A", name: "a", starting_side: "t" },
+        { steam_id: "B", name: "b", starting_side: "ct" },
+      ],
+      round_ticks: [{ round: 1, start_tick: 0, end_tick: 100 }],
+      kills: [
+        // Contradicts the demo's own team assignment; must lose.
+        {
+          tick: 50,
+          killer: "A",
+          killer_team: "CT",
+          victim: "B",
+          victim_team: "TERRORIST",
+        },
+      ],
+    };
+    const sides = computeStartingSides(parsed);
+    expect(sides.get("A")).toBe("T");
+    expect(sides.get("B")).toBe("CT");
+  });
+
+  it("covers players who never appear in a round 1 kill", () => {
+    const parsed = {
+      // C neither killed nor died in round 1 — without starting_side it would
+      // be dealt into whichever lineup happened to be shorter.
+      players: [
+        { steam_id: "A", name: "a", starting_side: "ct" },
+        { steam_id: "B", name: "b", starting_side: "t" },
+        { steam_id: "C", name: "c", starting_side: "t" },
+      ],
+      round_ticks: [{ round: 1, start_tick: 0, end_tick: 100 }],
+      kills: [
+        {
+          tick: 50,
+          killer: "A",
+          killer_team: "CT",
+          victim: "B",
+          victim_team: "TERRORIST",
+        },
+      ],
+    };
+    expect(computeStartingSides(parsed).get("C")).toBe("T");
+  });
+
+  it("falls back to the kill scan for players the parser gave no side", () => {
+    const parsed = {
+      // Demo parsed before the parser emitted starting_side.
+      players: [{ steam_id: "A", name: "a" }],
+      round_ticks: [{ round: 1, start_tick: 0, end_tick: 100 }],
+      kills: [
+        {
+          tick: 50,
+          killer: "A",
+          killer_team: "CT",
+          victim: "B",
+          victim_team: "TERRORIST",
+        },
+      ],
+    };
+    const sides = computeStartingSides(parsed);
+    expect(sides.get("A")).toBe("CT");
+    expect(sides.get("B")).toBe("T");
+  });
+
   it("falls back to all kills when the demo has no round data", () => {
     const parsed = {
       round_ticks: [] as unknown[],
@@ -152,5 +226,43 @@ describe("MatchImportService.computeStartingSides", () => {
     const sides = computeStartingSides(parsed);
     expect(sides.get("C")).toBe("CT");
     expect(sides.get("A")).toBe("T");
+  });
+});
+
+describe("MatchImportService.mapPartyIds", () => {
+  it("gives everyone in the same source party one shared uuid", () => {
+    const ids = mapPartyIds([
+      { steam_id: "A", party_key: "9" },
+      { steam_id: "B", party_key: "9" },
+      { steam_id: "C", party_key: "4" },
+      { steam_id: "D", party_key: "4" },
+    ]);
+
+    expect(ids.get("A")).toBe(ids.get("B"));
+    expect(ids.get("C")).toBe(ids.get("D"));
+    expect(ids.get("A")).not.toBe(ids.get("C"));
+    expect(ids.get("A")).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+  });
+
+  it("does not reuse a source party key across imports", () => {
+    // Valve party ids are only unique within their own match, so two
+    // different matches that both saw party "9" must not look like the
+    // same group.
+    const first = mapPartyIds([
+      { steam_id: "A", party_key: "9" },
+      { steam_id: "B", party_key: "9" },
+    ]);
+    const second = mapPartyIds([
+      { steam_id: "C", party_key: "9" },
+      { steam_id: "D", party_key: "9" },
+    ]);
+    expect(first.get("A")).not.toBe(second.get("C"));
+  });
+
+  it("leaves players out when there is no party data", () => {
+    expect(mapPartyIds(null).size).toBe(0);
+    expect(mapPartyIds([]).size).toBe(0);
   });
 });

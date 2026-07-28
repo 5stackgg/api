@@ -1,0 +1,35 @@
+table:
+  name: v_player_queue_partners
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      manual_configuration:
+        column_mapping:
+          steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+  - name: partner
+    using:
+      manual_configuration:
+        column_mapping:
+          partner_steam_id: steam_id
+        insertion_order: null
+        remote_table:
+          name: players
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - steam_id
+        - partner_steam_id
+        - matches_together
+        - wins_together
+        - first_played_at
+        - last_played_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""

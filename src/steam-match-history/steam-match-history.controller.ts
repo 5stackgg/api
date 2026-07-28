@@ -17,6 +17,7 @@ import { HasuraAction } from "../hasura/hasura.controller";
 import { SteamGuard } from "../auth/strategies/SteamGuard";
 import { User } from "../auth/types/User";
 import { S3Service } from "../s3/s3.service";
+import { PostgresService } from "../postgres/postgres.service";
 import { SteamMatchHistoryQueues } from "./enums/SteamMatchHistoryQueues";
 import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
 import { SteamMatchHistoryService } from "./steam-match-history.service";
@@ -39,7 +40,79 @@ export class SteamMatchHistoryController {
     private readonly s3: S3Service,
     @InjectQueue(SteamMatchHistoryQueues.ProcessUploadedDemo)
     private readonly processUploadQueue: Queue,
+    private readonly postgres: PostgresService,
+    @InjectQueue(SteamMatchHistoryQueues.SyncMatchParties)
+    private readonly syncPartiesQueue: Queue,
   ) {}
+
+  /**
+   * Backfills the queue-party grouping for matches imported before parties
+   * were recorded, without reparsing their demos — the grouping comes from the
+   * source (Steam GC / FACEIT), not the demo, so a reparse is not required.
+   *
+   * Scoped to Valve/FACEIT matches that have an external id and no parties
+   * yet. Valve matches the GC no longer lists as "recent" cannot be recovered
+   * and are simply skipped by the job.
+   */
+  @Post("backfill-parties")
+  @UseGuards(SteamGuard)
+  public async backfillParties(
+    @Req() request: Request,
+    @Body() body: { limit?: number; sources?: string[] },
+  ): Promise<{ queued: number }> {
+    if (request.user?.role !== "administrator") {
+      throw new ForbiddenException("administrator access required");
+    }
+
+    const limit = Math.min(Math.max(body?.limit ?? 500, 1), 5000);
+
+    // Valve only by default: its party data comes from the GC reservation and
+    // is known to be there. FACEIT's depends on an undocumented match-room
+    // field, so it is opt-in rather than something a backfill fires blindly.
+    const sources = (body?.sources ?? ["valve"]).filter((source) =>
+      ["valve", "faceit"].includes(source),
+    );
+    if (sources.length === 0) {
+      throw new BadRequestException("sources must include valve and/or faceit");
+    }
+
+    const matches = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT m.id
+         FROM public.matches m
+        WHERE m.source = ANY($2::text[])
+          AND m.external_id IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1
+              FROM public.match_lineups ml
+              JOIN public.match_lineup_players mlp
+                ON mlp.match_lineup_id = ml.id
+             WHERE ml.match_id = m.id
+               AND mlp.party_id IS NOT NULL
+          )
+        ORDER BY m.effective_at DESC NULLS LAST
+        LIMIT $1`,
+      [limit, sources],
+    );
+
+    for (const match of matches) {
+      await this.syncPartiesQueue.add(
+        "SyncMatchParties",
+        { match_id: match.id },
+        {
+          jobId: `sync-parties-${match.id}`,
+          attempts: 2,
+          backoff: { type: "exponential", delay: 30_000 },
+          removeOnComplete: true,
+        },
+      );
+    }
+
+    this.logger.log(
+      `backfill-parties queued ${matches.length} ${sources.join("/")} match(es) by ${request.user.steam_id}`,
+    );
+
+    return { queued: matches.length };
+  }
 
   @Post("upload/initiate")
   @UseGuards(SteamGuard)
@@ -123,7 +196,9 @@ export class SteamMatchHistoryController {
       try {
         await this.s3.abortMultipartUpload(key, body.uploadId);
       } catch (abortError) {
-        this.logger.warn(`abort after failed complete key=${key}: ${abortError}`);
+        this.logger.warn(
+          `abort after failed complete key=${key}: ${abortError}`,
+        );
       }
       throw new BadRequestException(
         `could not assemble upload: ${(error as Error)?.message ?? error}`,
@@ -144,7 +219,9 @@ export class SteamMatchHistoryController {
       throw new BadRequestException("not a valid CS2 demo file");
     }
 
-    this.logger.log(`demo upload complete steam_id=${user.steam_id} key=${key}`);
+    this.logger.log(
+      `demo upload complete steam_id=${user.steam_id} key=${key}`,
+    );
 
     await this.processUploadQueue.add(
       ProcessUploadedDemo.name,

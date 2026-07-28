@@ -29,7 +29,15 @@ function averageRank(players: Array<{ rank: number }>) {
 }
 
 function toMatchmakingTeam(lobbies: MatchmakingLobby[]): MatchmakingTeam {
-  const players = lobbies.flatMap((lobby) => lobby.players);
+  const players = lobbies.flatMap((lobby) =>
+    lobby.players.map((player) => ({
+      ...player,
+      // A solo queuer's lobbyId is their own steam id (see
+      // MatchmakingLobbyService.getPlayerLobby) — not a lobby, and not a
+      // uuid. One player is not a party either way.
+      lobby_id: lobby.players.length > 1 ? lobby.lobbyId : undefined,
+    })),
+  );
 
   return {
     lobbies: lobbies.map((lobby) => lobby.lobbyId),
@@ -267,7 +275,12 @@ export class MatchmakeService {
         try {
           // a party that fills the whole match keeps a random split - they
           // queued together for a scrim, not for a rating-balanced game
-          const [players1, players2] = shuffleSplit(details.players);
+          const [players1, players2] = shuffleSplit(
+            details.players.map((player) => ({
+              ...player,
+              lobby_id: details.lobbyId,
+            })),
+          );
 
           const team1: MatchmakingTeam = {
             players: players1,
@@ -631,8 +644,8 @@ export class MatchmakeService {
     type: e_match_types_enum;
     region: string;
     lobbyIds: string[];
-    team1: { steam_id: string; rank: number }[];
-    team2: { steam_id: string; rank: number }[];
+    team1: { steam_id: string; rank: number; lobby_id?: string }[];
+    team2: { steam_id: string; rank: number; lobby_id?: string }[];
     matchId: string;
     expiresAt: string;
     confirmed: string[];
@@ -773,6 +786,8 @@ export class MatchmakeService {
           objects: team1.map((player) => ({
             steam_id: player.steam_id,
             match_lineup_id: match.lineup_1_id,
+            party_id: player.lobby_id ?? null,
+            party_source: player.lobby_id ? "lobby" : null,
           })),
         },
         __typename: true,
@@ -785,6 +800,8 @@ export class MatchmakeService {
           objects: team2.map((player) => ({
             steam_id: player.steam_id,
             match_lineup_id: match.lineup_2_id,
+            party_id: player.lobby_id ?? null,
+            party_source: player.lobby_id ? "lobby" : null,
           })),
         },
         __typename: true,
