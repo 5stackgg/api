@@ -1,12 +1,9 @@
 import zlib from "zlib";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { InjectQueue } from "@nestjs/bullmq";
-import { Queue } from "bullmq";
 import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { S3Service } from "../s3/s3.service";
-import { SteamMatchHistoryQueues } from "../steam-match-history/enums/SteamMatchHistoryQueues";
 import { DemoParserService, ParsedDemo } from "./demo-parser.service";
 
 export const DEMO_METADATA_VERSION = 9;
@@ -36,8 +33,6 @@ export class DemoMetadataService {
     private readonly s3: S3Service,
     private readonly demoParser: DemoParserService,
     private readonly config: ConfigService,
-    @InjectQueue(SteamMatchHistoryQueues.SyncMatchParties)
-    private readonly syncPartiesQueue: Queue,
   ) {}
 
   public static isExternalDemoUrl(file: string | null | undefined): boolean {
@@ -447,39 +442,6 @@ export class DemoMetadataService {
     return (match_map_demos_by_pk as DemoRow) ?? null;
   }
 
-  private async queuePartySync(matchId: string | null): Promise<void> {
-    if (!matchId) {
-      return;
-    }
-
-    // 5stack parties come from the lobby via the assign_lobby_parties trigger;
-    // there is no external source to re-ask.
-    const rows = await this.postgres.query<Array<{ source: string }>>(
-      `SELECT source FROM public.matches WHERE id = $1::uuid`,
-      [matchId],
-    );
-    if (!["valve", "faceit"].includes(rows.at(0)?.source ?? "")) {
-      return;
-    }
-
-    try {
-      await this.syncPartiesQueue.add(
-        "SyncMatchParties",
-        { match_id: matchId },
-        {
-          jobId: `sync-parties-${matchId}`,
-          attempts: 2,
-          backoff: { type: "exponential", delay: 30_000 },
-          removeOnComplete: true,
-        },
-      );
-    } catch (error) {
-      this.logger.warn(
-        `unable to queue party sync for match ${matchId}: ${(error as Error)?.message}`,
-      );
-    }
-  }
-
   private async parseAndPersist(demo: DemoRow): Promise<DemoRow> {
     this.logger.log(
       `[demo-parser] parsing match_map_demo ${demo.id} (file=${demo.file})`,
@@ -492,8 +454,6 @@ export class DemoMetadataService {
     }
 
     await this.persistDemoStats(demo.id, demo.match_id, parsed);
-
-    await this.queuePartySync(demo.match_id);
 
     const playbackFile = await this.uploadPlaybackBlob(
       demo.match_id,

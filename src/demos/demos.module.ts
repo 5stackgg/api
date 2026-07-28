@@ -5,7 +5,6 @@ import { BullModule, InjectQueue } from "@nestjs/bullmq";
 import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { DemoQueues } from "./enums/DemoQueues";
-import { SteamMatchHistoryQueues } from "../steam-match-history/enums/SteamMatchHistoryQueues";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { Queue } from "bullmq";
 import { CleanDemos } from "./jobs/CleanDemos";
@@ -30,11 +29,6 @@ import { DemoReparseService } from "./demo-reparse.service";
     }),
     BullModule.registerQueue({
       name: DemoQueues.ReparseAll,
-    }),
-    // Producer only. Importing SteamMatchHistoryModule would be circular — it
-    // already imports this one.
-    BullModule.registerQueue({
-      name: SteamMatchHistoryQueues.SyncMatchParties,
     }),
     BullBoardModule.forFeature({
       name: DemoQueues.Demos,

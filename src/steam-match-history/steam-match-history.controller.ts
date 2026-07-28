@@ -17,13 +17,11 @@ import { HasuraAction } from "../hasura/hasura.controller";
 import { SteamGuard } from "../auth/strategies/SteamGuard";
 import { User } from "../auth/types/User";
 import { S3Service } from "../s3/s3.service";
-import { PostgresService } from "../postgres/postgres.service";
 import { SteamMatchHistoryQueues } from "./enums/SteamMatchHistoryQueues";
 import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
 import { SteamMatchHistoryService } from "./steam-match-history.service";
 import { SteamBansService } from "./steam-bans.service";
 import { signUploadToken } from "./uploadToken";
-import { decodeShareCode } from "./shareCode";
 
 const MAX_UPLOAD_SIZE = 2 * 1024 * 1024 * 1024;
 const UPLOAD_CHUNK_SIZE = 64 * 1024 * 1024;
@@ -41,98 +39,7 @@ export class SteamMatchHistoryController {
     private readonly s3: S3Service,
     @InjectQueue(SteamMatchHistoryQueues.ProcessUploadedDemo)
     private readonly processUploadQueue: Queue,
-    private readonly postgres: PostgresService,
-    @InjectQueue(SteamMatchHistoryQueues.SyncMatchParties)
-    private readonly syncPartiesQueue: Queue,
   ) {}
-
-  @Post("backfill-parties")
-  @UseGuards(SteamGuard)
-  public async backfillParties(
-    @Req() request: Request,
-    @Body()
-    body: {
-      limit?: number;
-      sources?: string[];
-      match_id?: string;
-      share_code?: string;
-    },
-  ): Promise<{ queued: number }> {
-    if (request.user?.role !== "administrator") {
-      throw new ForbiddenException("administrator access required");
-    }
-
-    if (body?.match_id) {
-      if (body.share_code) {
-        try {
-          decodeShareCode(body.share_code);
-        } catch (error) {
-          throw new BadRequestException(
-            `invalid share code: ${(error as Error).message}`,
-          );
-        }
-        await this.postgres.query(
-          `UPDATE public.matches SET share_code = $2 WHERE id = $1::uuid`,
-          [body.match_id, body.share_code],
-        );
-      }
-
-      await this.queuePartySync(body.match_id);
-      return { queued: 1 };
-    }
-
-    const limit = Math.min(Math.max(body?.limit ?? 500, 1), 5000);
-
-    // FACEIT is opt-in: its party data rides on an undocumented match-room
-    // field, so a blind backfill would mostly be wasted calls.
-    const sources = (body?.sources ?? ["valve"]).filter((source) =>
-      ["valve", "faceit"].includes(source),
-    );
-    if (sources.length === 0) {
-      throw new BadRequestException("sources must include valve and/or faceit");
-    }
-
-    const matches = await this.postgres.query<Array<{ id: string }>>(
-      `SELECT m.id
-         FROM public.matches m
-        WHERE m.source = ANY($2::text[])
-          AND (m.source <> 'faceit' OR m.external_id IS NOT NULL)
-          AND NOT EXISTS (
-            SELECT 1
-              FROM public.match_lineups ml
-              JOIN public.match_lineup_players mlp
-                ON mlp.match_lineup_id = ml.id
-             WHERE ml.match_id = m.id
-               AND mlp.party_id IS NOT NULL
-          )
-        ORDER BY m.effective_at DESC NULLS LAST
-        LIMIT $1`,
-      [limit, sources],
-    );
-
-    for (const match of matches) {
-      await this.queuePartySync(match.id);
-    }
-
-    this.logger.log(
-      `backfill-parties queued ${matches.length} ${sources.join("/")} match(es) by ${request.user.steam_id}`,
-    );
-
-    return { queued: matches.length };
-  }
-
-  private async queuePartySync(matchId: string): Promise<void> {
-    await this.syncPartiesQueue.add(
-      "SyncMatchParties",
-      { match_id: matchId },
-      {
-        jobId: `sync-parties-${matchId}`,
-        attempts: 2,
-        backoff: { type: "exponential", delay: 30_000 },
-        removeOnComplete: true,
-      },
-    );
-  }
 
   @Post("upload/initiate")
   @UseGuards(SteamGuard)

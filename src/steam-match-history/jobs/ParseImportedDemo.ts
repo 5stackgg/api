@@ -42,18 +42,6 @@ export class ParseImportedDemo extends WorkerHost {
       valve_match_id,
     );
     if (existing) {
-      // The share code is the only handle the GC accepts, so keep it even
-      // though the import itself is a no-op.
-      const shareCode = job.data.share_code;
-      if (shareCode) {
-        await this.postgres.query(
-          `UPDATE public.matches
-              SET share_code = $2
-            WHERE id = $1::uuid AND share_code IS NULL`,
-          [existing, shareCode],
-        );
-      }
-
       this.logger.log(
         `parse-imported-demo skip valve_match_id=${valve_match_id}: match already imported (${existing}); admin must delete the match to re-import`,
       );
@@ -144,7 +132,6 @@ export class ParseImportedDemo extends WorkerHost {
         matchStartTime,
         externalId: valveMatchId,
         parties,
-        shareCode,
       },
     );
     if (!result.matchId) {

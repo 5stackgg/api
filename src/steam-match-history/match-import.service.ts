@@ -17,7 +17,6 @@ import {
   e_match_types_enum,
 } from "../../generated";
 import { MatchParty } from "./types/MatchParty";
-import { SteamGcService } from "./steam-gc.service";
 
 type MatchType = e_match_types_enum;
 type Side = "T" | "CT";
@@ -33,7 +32,6 @@ export type ImportExternalDemoOptions = {
   matchStartTime?: string | null;
   externalId?: string | null;
   sourceObjectKey?: string;
-  shareCode?: string | null;
   parties?: MatchParty[] | null;
 };
 
@@ -59,7 +57,6 @@ export class MatchImportService {
     @Inject(forwardRef(() => FaceitService))
     private readonly faceit: FaceitService,
     private readonly steamPresence: SteamPresenceService,
-    private readonly steamGc: SteamGcService,
     @InjectQueue(SteamMatchHistoryQueues.CheckSteamBansForMatch)
     private readonly steamBansQueue: Queue,
   ) {
@@ -72,14 +69,8 @@ export class MatchImportService {
     sourceKey: string,
     options: ImportExternalDemoOptions = {},
   ): Promise<{ matchId: string | null; skipped?: string }> {
-    const {
-      demoUrl,
-      matchStartTime,
-      externalId,
-      sourceObjectKey,
-      parties,
-      shareCode,
-    } = options;
+    const { demoUrl, matchStartTime, externalId, sourceObjectKey, parties } =
+      options;
 
     if (MatchImportService.isFaceitServer(parsed.server_name)) {
       source = "faceit";
@@ -219,13 +210,6 @@ export class MatchImportService {
       await this.postgres.query(
         `UPDATE public.matches SET external_id = $2 WHERE id = $1::uuid`,
         [matchId, externalId],
-      );
-    }
-
-    if (shareCode) {
-      await this.postgres.query(
-        `UPDATE public.matches SET share_code = $2 WHERE id = $1::uuid`,
-        [matchId, shareCode],
       );
     }
 
@@ -671,141 +655,6 @@ export class MatchImportService {
       }
     }
     return [t, ct];
-  }
-
-  /**
-   * Re-asks the source for a match's party grouping. Parties are never in the
-   * demo, so a reparse can only refresh them this way.
-   */
-  public async syncPartiesForMatch(
-    matchId: string,
-    { force = false }: { force?: boolean } = {},
-  ): Promise<number> {
-    const rows = await this.postgres.query<
-      Array<{
-        source: string;
-        external_id: string | null;
-        share_code: string | null;
-      }>
-    >(
-      `SELECT source, external_id, share_code FROM public.matches WHERE id = $1::uuid`,
-      [matchId],
-    );
-    const match = rows.at(0);
-    if (!match) {
-      return 0;
-    }
-
-    const partySource = toPartySource(match.source);
-    if (!partySource) {
-      return 0;
-    }
-    if (partySource === "faceit" && !match.external_id) {
-      return 0;
-    }
-
-    // Nothing to recover, so don't spend a GC round trip. Reparsing does not
-    // clear parties, so the overwhelmingly common case is that they are
-    // already here.
-    if (!force && (await this.hasParties(matchId))) {
-      return 0;
-    }
-
-    const parties = await this.fetchPartiesFromSource(
-      partySource,
-      match.external_id,
-      matchId,
-      match.share_code,
-    );
-    if (!parties?.length) {
-      return 0;
-    }
-
-    const partyIds = MatchImportService.mapPartyIds(parties);
-    if (partyIds.size === 0) {
-      return 0;
-    }
-
-    // Scoped to party_source throughout: a lobby party is ours, not the
-    // source's, to clear or overwrite.
-    await this.postgres.query(
-      `UPDATE public.match_lineup_players mlp
-          SET party_id = NULL, party_source = NULL
-         FROM public.match_lineups ml
-        WHERE ml.id = mlp.match_lineup_id
-          AND ml.match_id = $1::uuid
-          AND mlp.party_id IS NOT NULL
-          AND mlp.party_source = $2`,
-      [matchId, partySource],
-    );
-
-    const steamIds = [...partyIds.keys()];
-    const assigned = steamIds.map((steamId) => partyIds.get(steamId));
-    const updated = await this.postgres.query<Array<{ steam_id: string }>>(
-      `UPDATE public.match_lineup_players mlp
-          SET party_id = data.party_id::uuid, party_source = $3
-         FROM public.match_lineups ml,
-              unnest($2::bigint[], $4::uuid[]) AS data(steam_id, party_id)
-        WHERE ml.id = mlp.match_lineup_id
-          AND ml.match_id = $1::uuid
-          AND mlp.steam_id = data.steam_id
-          AND (mlp.party_source IS NULL OR mlp.party_source = $3)
-        RETURNING mlp.steam_id`,
-      [matchId, steamIds, partySource, assigned],
-    );
-
-    this.logger.log(
-      `party-sync ${match.source}/${match.external_id} match=${matchId}: ${new Set(assigned).size} group(s), ${updated.length}/${steamIds.length} players stamped`,
-    );
-
-    return updated.length;
-  }
-
-  private async fetchPartiesFromSource(
-    partySource: e_match_party_sources_enum,
-    externalId: string | null,
-    matchId: string,
-    shareCode: string | null = null,
-  ): Promise<MatchParty[] | null> {
-    if (partySource === "faceit") {
-      const faceitMatchId =
-        MatchImportService.extractFaceitMatchId(externalId) ?? externalId;
-      return faceitMatchId ? this.faceit.getMatchParties(faceitMatchId) : null;
-    }
-
-    // Not gated on isReady(): the GC session logs off after a few minutes idle
-    // and reconnects on demand, so a readiness check would skip most syncs.
-    if (!this.steamGc.isAvailable()) {
-      this.logger.warn(
-        `party-sync skipped for ${matchId}: steam-gc not configured`,
-      );
-      return null;
-    }
-
-    // The share code is the only handle the GC accepts for a match the bot
-    // account did not play.
-    if (!shareCode) {
-      this.logger.warn(
-        `party-sync has no share code for match ${matchId}; imported before they were kept`,
-      );
-      return null;
-    }
-
-    const resolved = await this.steamGc.resolveShareCode(shareCode);
-    return resolved?.parties ?? null;
-  }
-
-  private async hasParties(matchId: string): Promise<boolean> {
-    const rows = await this.postgres.query<Array<{ exists: boolean }>>(
-      `SELECT EXISTS (
-         SELECT 1
-           FROM public.match_lineup_players mlp
-           JOIN public.match_lineups ml ON ml.id = mlp.match_lineup_id
-          WHERE ml.match_id = $1::uuid AND mlp.party_id IS NOT NULL
-       ) AS exists`,
-      [matchId],
-    );
-    return rows.at(0)?.exists === true;
   }
 
   public async findExistingExternalMatch(

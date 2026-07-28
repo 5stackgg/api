@@ -15,8 +15,7 @@ export type FaceitPlayerData = {
 @Injectable()
 export class FaceitService {
   private static readonly BASE_URL = "https://open.faceit.com/data/v4";
-  // Undocumented match-room API — the only source of party grouping. Takes no
-  // api key. See getMatchParties.
+  // Undocumented; the public Data API exposes no party grouping.
   private static readonly MATCH_ROOM_URL =
     "https://api.faceit.com/match/v2/match";
   private static readonly REFRESH_INTERVAL_SECONDS = 60 * 60;
