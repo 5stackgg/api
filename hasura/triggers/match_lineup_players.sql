@@ -127,6 +127,9 @@ BEGIN
 END;
 $$;
 
+-- Statement level, not per row: assign_lobby_parties asks whether anyone else
+-- from the lobby is in this match, which is never true on the first row of a
+-- bulk insert.
 DROP TRIGGER IF EXISTS tai_match_lineup_players_parties ON public.match_lineup_players;
 CREATE TRIGGER tai_match_lineup_players_parties
     AFTER INSERT ON public.match_lineup_players
