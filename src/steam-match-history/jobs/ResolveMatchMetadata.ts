@@ -6,7 +6,6 @@ import { UseQueue } from "src/utilities/QueueProcessors";
 import { PostgresService } from "../../postgres/postgres.service";
 import { SteamMatchHistoryQueues } from "../enums/SteamMatchHistoryQueues";
 import { SteamGcService, ResolvedMatch } from "../steam-gc.service";
-import { MatchParty } from "../types/MatchParty";
 import { MatchImportService } from "../match-import.service";
 import { ParseImportedDemo } from "./ParseImportedDemo";
 
@@ -38,10 +37,9 @@ export class ResolveMatchMetadata extends WorkerHost {
         share_code: string;
         demo_url: string | null;
         match_start_time: string | null;
-        parties: MatchParty[] | null;
       }>
     >(
-      `SELECT share_code, demo_url, match_start_time, parties
+      `SELECT share_code, demo_url, match_start_time
          FROM public.pending_match_imports
         WHERE valve_match_id = $1::numeric`,
       [valve_match_id],
@@ -57,7 +55,6 @@ export class ResolveMatchMetadata extends WorkerHost {
         share_code: row.share_code,
         demo_url: row.demo_url,
         match_start_time: row.match_start_time,
-        parties: row.parties,
       });
       return;
     }
@@ -79,42 +76,39 @@ export class ResolveMatchMetadata extends WorkerHost {
       throw error;
     }
     if (!resolved) {
-      await this.markFailed(valve_match_id, "gc returned no demo url");
+      await this.markFailed(valve_match_id, "gc returned no match");
       return;
     }
 
+    const demoUrl = resolved.demoUrl ?? row.demo_url;
+
     const matchStartTime =
       resolved.matchStartTime ??
-      (await this.matchImport.resolveDemoStartTime(resolved.demoUrl));
+      row.match_start_time ??
+      (demoUrl ? await this.matchImport.resolveDemoStartTime(demoUrl) : null);
 
-    const partyCount = new Set(
-      (resolved.parties ?? []).map((party) => party.party_key),
-    ).size;
     this.logger.log(
-      `resolved valve_match_id=${valve_match_id} map=${resolved.mapName ?? "<none>"} matchStartTime=${matchStartTime ?? "<none>"} [source=${resolved.matchStartTime ? "gc-matchtime" : matchStartTime ? "demo-cdn-last-modified" : "none"}] parties=${partyCount} demoUrl=${resolved.demoUrl}`,
+      `resolved valve_match_id=${valve_match_id} map=${resolved.mapName ?? "<none>"} matchStartTime=${matchStartTime ?? "<none>"} [source=${resolved.matchStartTime ? "gc-matchtime" : matchStartTime ? "demo-cdn-last-modified" : "none"}] demoUrl=${demoUrl ?? "<none>"}`,
     );
 
     await this.postgres.query(
       `UPDATE public.pending_match_imports
-         SET map_name = $2,
+         SET map_name = coalesce($2, map_name),
              match_start_time = $3,
-             demo_url = $4,
-             parties = $5::jsonb
+             demo_url = $4
        WHERE valve_match_id = $1::numeric`,
-      [
-        valve_match_id,
-        resolved.mapName,
-        matchStartTime,
-        resolved.demoUrl,
-        resolved.parties ? JSON.stringify(resolved.parties) : null,
-      ],
+      [valve_match_id, resolved.mapName, matchStartTime, demoUrl],
     );
+
+    if (!demoUrl) {
+      await this.markFailed(valve_match_id, "gc returned no demo url");
+      return;
+    }
 
     await this.enqueueParse(valve_match_id, {
       share_code: row.share_code,
-      demo_url: resolved.demoUrl,
+      demo_url: demoUrl,
       match_start_time: matchStartTime,
-      parties: resolved.parties,
     });
   }
 
@@ -124,7 +118,6 @@ export class ResolveMatchMetadata extends WorkerHost {
       share_code: string;
       demo_url: string | null;
       match_start_time: string | null;
-      parties: MatchParty[] | null;
     },
   ): Promise<void> {
     const jobId = `parse-${valveMatchId}`;

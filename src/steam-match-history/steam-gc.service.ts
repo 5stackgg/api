@@ -8,7 +8,6 @@ import { ConfigService } from "@nestjs/config";
 import SteamUser from "steam-user";
 import GlobalOffensive from "globaloffensive";
 import { CacheService } from "../cache/cache.service";
-import { MatchParty } from "./types/MatchParty";
 
 const CS2_APP_ID = 730;
 const REFRESH_TOKEN_CACHE_KEY = "steam-gc:refresh-token";
@@ -17,14 +16,12 @@ const GC_READY_TIMEOUT_MS = 30_000;
 const IDLE_LOGOFF_MS = 5 * 60_000;
 
 export type ResolvedMatch = {
-  demoUrl: string;
+  // Null when the GC answered but the demo link has expired or is missing —
+  // the map and match time are still worth keeping in that case.
+  demoUrl: string | null;
   mapName: string | null;
   matchStartTime: string | null;
-  parties: MatchParty[] | null;
 };
-
-// account id -> steam64
-const STEAM_ID_BASE = 76561197960265728n;
 
 export class SteamGcConnectionError extends Error {}
 
@@ -265,13 +262,7 @@ export class SteamGcService
       matchtime?: number;
       watchablematchinfo?: { game_mapgroup?: string; game_map?: string };
       roundstats_legacy?: { map?: string };
-      roundstatsall?: Array<{
-        map?: string;
-        // The reservation the GC handed the game server. account_ids and
-        // party_ids are index-aligned; players who queued together share a
-        // party id. This is the only place the queue grouping survives.
-        reservation?: { account_ids?: number[]; party_ids?: number[] };
-      }>;
+      roundstatsall?: Array<{ map?: string }>;
     };
 
     let demoUrl: string | null = null;
@@ -291,9 +282,6 @@ export class SteamGcService
         }
       }
     }
-    if (!demoUrl) {
-      return null;
-    }
 
     const matchStartTime =
       typeof match.matchtime === "number" && match.matchtime > 0
@@ -311,65 +299,6 @@ export class SteamGcService
       demoUrl,
       mapName,
       matchStartTime,
-      parties: SteamGcService.extractParties(match.roundstatsall),
     };
-  }
-
-  // Zips the reservation's index-aligned account_ids/party_ids into per-player
-  // party membership. Returns null when the GC gave us no reservation — party
-  // data is a bonus, never a reason to fail an import.
-  private static extractParties(
-    roundStats?: Array<{
-      reservation?: { account_ids?: number[]; party_ids?: number[] };
-    }>,
-  ): MatchParty[] | null {
-    if (!Array.isArray(roundStats)) {
-      return null;
-    }
-
-    // Later entries are the fuller picture; take the last one that has both
-    // halves of the pairing.
-    let reservation: { account_ids?: number[]; party_ids?: number[] } | null =
-      null;
-    for (let i = roundStats.length - 1; i >= 0; i--) {
-      const candidate = roundStats[i]?.reservation;
-      if (candidate?.account_ids?.length && candidate?.party_ids?.length) {
-        reservation = candidate;
-        break;
-      }
-    }
-    if (!reservation) {
-      return null;
-    }
-
-    const accountIds = reservation.account_ids ?? [];
-    const partyIds = reservation.party_ids ?? [];
-
-    const byParty = new Map<string, string[]>();
-    for (let i = 0; i < accountIds.length; i++) {
-      const accountId = accountIds[i];
-      const partyId = partyIds[i];
-      // 0 / missing means "queued alone" — not a party.
-      if (!accountId || !partyId) {
-        continue;
-      }
-      const key = String(partyId);
-      const steamId = (BigInt(accountId) + STEAM_ID_BASE).toString();
-      byParty.set(key, [...(byParty.get(key) ?? []), steamId]);
-    }
-
-    const parties: MatchParty[] = [];
-    for (const [partyKey, steamIds] of byParty) {
-      // A "party" of one is just a solo queuer whose party id happened to be
-      // populated.
-      if (steamIds.length < 2) {
-        continue;
-      }
-      for (const steamId of steamIds) {
-        parties.push({ steam_id: steamId, party_key: partyKey });
-      }
-    }
-
-    return parties.length > 0 ? parties : null;
   }
 }

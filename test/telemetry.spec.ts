@@ -28,7 +28,6 @@ describe("telemetry (SQL-driven)", () => {
     service = new TelemetryService(
       new Logger("TelemetryTest"),
       { getConnection: () => redis } as never,
-      null as never,
       { get: () => ({ webDomain: "https://panel.test" }) } as never,
       postgres,
       { getPanelVersion: async () => "abcdef1234567890" } as never,
