@@ -33,6 +33,8 @@ export class SteamMatchHistoryService {
     private readonly logger: Logger,
     @InjectQueue(SteamMatchHistoryQueues.ResolveMatchMetadata)
     private readonly resolveQueue: Queue,
+    @InjectQueue(SteamMatchHistoryQueues.SyncMatchParties)
+    private readonly syncPartiesQueue: Queue,
   ) {
     this.steamApiKey = this.config.get("steam.steamApiKey");
   }
@@ -294,6 +296,96 @@ export class SteamMatchHistoryService {
       lastShareCode: known,
       error: pollError,
     };
+  }
+
+  /**
+   * Walks a player's share-code chain forward from `fromShareCode` and records
+   * each code on the match it belongs to, so its queue parties can be
+   * regenerated. Matches imported before share codes were kept have no other
+   * handle the GC will accept.
+   *
+   * Needs a seed because Steam's chain is forward-only and we overwrite
+   * last_known_share_code as we poll — but the seed only has to be supplied
+   * once per player, and share codes identify a *match*, not a player, so one
+   * player's chain heals that match for all ten participants.
+   *
+   * Deliberately does not touch last_known_share_code: this walk starts behind
+   * the poller and must not drag its cursor backwards.
+   */
+  public async backfillShareCodes(
+    steamId: string,
+    fromShareCode: string,
+    maxCodes = 200,
+  ): Promise<{ walked: number; healed: number; error: string | null }> {
+    const link = await this.loadLink(steamId);
+    if (!link) {
+      return { walked: 0, healed: 0, error: "no linked auth for steam_id" };
+    }
+
+    let known = fromShareCode;
+    let walked = 0;
+    let healed = 0;
+    let error: string | null = null;
+
+    for (let i = 0; i < maxCodes; i++) {
+      const result = await this.fetchNextShareCode(
+        steamId,
+        link.auth_code,
+        known,
+      );
+      if (result.error || result.rateLimited) {
+        error = result.error;
+        break;
+      }
+      if (!result.nextCode) {
+        break;
+      }
+
+      known = result.nextCode;
+      walked++;
+
+      let valveMatchId: string;
+      try {
+        valveMatchId = decodeShareCode(known).matchId.toString();
+      } catch {
+        continue;
+      }
+
+      const updated = await this.postgres.query<Array<{ id: string }>>(
+        `UPDATE public.matches
+            SET share_code = $2
+          WHERE source = 'valve'
+            AND external_id = $1
+            AND share_code IS NULL
+        RETURNING id`,
+        [valveMatchId, known],
+      );
+
+      const matchId = updated.at(0)?.id;
+      if (matchId) {
+        healed++;
+        await this.syncPartiesQueue.add(
+          "SyncMatchParties",
+          { match_id: matchId },
+          {
+            jobId: `sync-parties-${matchId}`,
+            attempts: 2,
+            backoff: { type: "exponential", delay: 30_000 },
+            removeOnComplete: true,
+          },
+        );
+      }
+
+      await new Promise((res) =>
+        setTimeout(res, SteamMatchHistoryService.INTER_REQUEST_DELAY_MS),
+      );
+    }
+
+    this.logger.log(
+      `backfill-share-codes steam_id=${steamId} walked=${walked} healed=${healed} error=${error ?? "none"}`,
+    );
+
+    return { walked, healed, error };
   }
 
   public async pollAllActive(): Promise<void> {

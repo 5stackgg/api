@@ -23,6 +23,7 @@ import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
 import { SteamMatchHistoryService } from "./steam-match-history.service";
 import { SteamBansService } from "./steam-bans.service";
 import { signUploadToken } from "./uploadToken";
+import { decodeShareCode } from "./shareCode";
 
 const MAX_UPLOAD_SIZE = 2 * 1024 * 1024 * 1024;
 const UPLOAD_CHUNK_SIZE = 64 * 1024 * 1024;
@@ -43,6 +44,8 @@ export class SteamMatchHistoryController {
     private readonly postgres: PostgresService,
     @InjectQueue(SteamMatchHistoryQueues.SyncMatchParties)
     private readonly syncPartiesQueue: Queue,
+    @InjectQueue(SteamMatchHistoryQueues.BackfillShareCodes)
+    private readonly backfillShareCodesQueue: Queue,
   ) {}
 
   /**
@@ -58,10 +61,38 @@ export class SteamMatchHistoryController {
   @UseGuards(SteamGuard)
   public async backfillParties(
     @Req() request: Request,
-    @Body() body: { limit?: number; sources?: string[] },
+    @Body()
+    body: {
+      limit?: number;
+      sources?: string[];
+      match_id?: string;
+      share_code?: string;
+    },
   ): Promise<{ queued: number }> {
     if (request.user?.role !== "administrator") {
       throw new ForbiddenException("administrator access required");
+    }
+
+    // Single match, optionally supplying the share code by hand. Matches
+    // imported before share codes were kept have no other handle the GC will
+    // accept, so this is the only way to recover their parties.
+    if (body?.match_id) {
+      if (body.share_code) {
+        try {
+          decodeShareCode(body.share_code);
+        } catch (error) {
+          throw new BadRequestException(
+            `invalid share code: ${(error as Error).message}`,
+          );
+        }
+        await this.postgres.query(
+          `UPDATE public.matches SET share_code = $2 WHERE id = $1::uuid`,
+          [body.match_id, body.share_code],
+        );
+      }
+
+      await this.queuePartySync(body.match_id);
+      return { queued: 1 };
     }
 
     const limit = Math.min(Math.max(body?.limit ?? 500, 1), 5000);
@@ -80,7 +111,10 @@ export class SteamMatchHistoryController {
       `SELECT m.id
          FROM public.matches m
         WHERE m.source = ANY($2::text[])
-          AND m.external_id IS NOT NULL
+          -- Valve matches are found by roster fingerprint when they have no
+          -- usable match id (an uploaded demo's external_id is its filename),
+          -- so only FACEIT strictly requires one.
+          AND (m.source <> 'faceit' OR m.external_id IS NOT NULL)
           AND NOT EXISTS (
             SELECT 1
               FROM public.match_lineups ml
@@ -95,16 +129,7 @@ export class SteamMatchHistoryController {
     );
 
     for (const match of matches) {
-      await this.syncPartiesQueue.add(
-        "SyncMatchParties",
-        { match_id: match.id },
-        {
-          jobId: `sync-parties-${match.id}`,
-          attempts: 2,
-          backoff: { type: "exponential", delay: 30_000 },
-          removeOnComplete: true,
-        },
-      );
+      await this.queuePartySync(match.id);
     }
 
     this.logger.log(
@@ -112,6 +137,74 @@ export class SteamMatchHistoryController {
     );
 
     return { queued: matches.length };
+  }
+
+  /**
+   * Recovers queue parties across a player's whole match history from a single
+   * share code, by walking Steam's chain forward and recording each code on the
+   * match it belongs to.
+   *
+   * Self-serve: a player supplies a code for their own account. One seed heals
+   * every match from that point on — and because a share code identifies a
+   * match rather than a player, it heals those matches for all ten
+   * participants, not just the person who ran it.
+   */
+  @Post("backfill-share-codes")
+  @UseGuards(SteamGuard)
+  public async backfillShareCodes(
+    @Req() request: Request,
+    @Body() body: { from_share_code?: string; steam_id?: string },
+  ): Promise<{ queued: boolean }> {
+    if (!request.user) {
+      throw new ForbiddenException("authentication required");
+    }
+
+    // Only an admin may run this against somebody else's history.
+    const steamId = body?.steam_id ?? request.user.steam_id;
+    if (
+      String(steamId) !== String(request.user.steam_id) &&
+      request.user.role !== "administrator"
+    ) {
+      throw new ForbiddenException("administrator access required");
+    }
+
+    if (!body?.from_share_code) {
+      throw new BadRequestException("from_share_code required");
+    }
+    try {
+      decodeShareCode(body.from_share_code);
+    } catch (error) {
+      throw new BadRequestException(
+        `invalid share code: ${(error as Error).message}`,
+      );
+    }
+
+    await this.backfillShareCodesQueue.add(
+      "BackfillShareCodes",
+      { steam_id: String(steamId), from_share_code: body.from_share_code },
+      {
+        // One walk per player at a time; re-running just replaces the pending
+        // job rather than doubling the Steam API traffic.
+        jobId: `backfill-share-codes-${steamId}`,
+        attempts: 1,
+        removeOnComplete: true,
+      },
+    );
+
+    return { queued: true };
+  }
+
+  private async queuePartySync(matchId: string): Promise<void> {
+    await this.syncPartiesQueue.add(
+      "SyncMatchParties",
+      { match_id: matchId },
+      {
+        jobId: `sync-parties-${matchId}`,
+        attempts: 2,
+        backoff: { type: "exponential", delay: 30_000 },
+        removeOnComplete: true,
+      },
+    );
   }
 
   @Post("upload/initiate")

@@ -28,6 +28,7 @@ import { ResolveMatchMetadata } from "./jobs/ResolveMatchMetadata";
 import { ParseImportedDemo } from "./jobs/ParseImportedDemo";
 import { ProcessUploadedDemo } from "./jobs/ProcessUploadedDemo";
 import { SyncMatchParties } from "./jobs/SyncMatchParties";
+import { BackfillShareCodes } from "./jobs/BackfillShareCodes";
 
 @Module({
   imports: [
@@ -55,6 +56,9 @@ import { SyncMatchParties } from "./jobs/SyncMatchParties";
     BullModule.registerQueue({
       name: SteamMatchHistoryQueues.SyncMatchParties,
     }),
+    BullModule.registerQueue({
+      name: SteamMatchHistoryQueues.BackfillShareCodes,
+    }),
     BullBoardModule.forFeature({
       name: SteamMatchHistoryQueues.PollAllSteamMatchHistory,
       adapter: BullMQAdapter,
@@ -87,6 +91,10 @@ import { SyncMatchParties } from "./jobs/SyncMatchParties";
       name: SteamMatchHistoryQueues.SyncMatchParties,
       adapter: BullMQAdapter,
     }),
+    BullBoardModule.forFeature({
+      name: SteamMatchHistoryQueues.BackfillShareCodes,
+      adapter: BullMQAdapter,
+    }),
     HasuraModule,
     RedisModule,
     CacheModule,
@@ -110,6 +118,7 @@ import { SyncMatchParties } from "./jobs/SyncMatchParties";
     ParseImportedDemo,
     ProcessUploadedDemo,
     SyncMatchParties,
+    BackfillShareCodes,
     ...getQueuesProcessors("SteamMatchHistory"),
     loggerFactory(),
   ],

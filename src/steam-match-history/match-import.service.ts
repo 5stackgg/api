@@ -26,10 +26,6 @@ type Side = "T" | "CT";
 // by matchmaking, never here.
 const PARTY_SOURCES: e_match_party_sources_enum[] = ["valve", "faceit"];
 
-// How many of a match's players to ask the GC about before concluding the
-// match has aged out of everyone's recent-games list.
-const PARTY_LOOKUP_PLAYER_ATTEMPTS = 3;
-
 function toPartySource(source: string): e_match_party_sources_enum | null {
   return PARTY_SOURCES.find((partySource) => partySource === source) ?? null;
 }
@@ -39,6 +35,10 @@ export type ImportExternalDemoOptions = {
   matchStartTime?: string | null;
   externalId?: string | null;
   sourceObjectKey?: string;
+  // Valve share code. Kept on the match so its party grouping can be
+  // regenerated later — it is the only handle the GC accepts for a match the
+  // bot account did not play.
+  shareCode?: string | null;
   // Who queued together, from the source's own queue data (the Valve GC
   // reservation or the FACEIT match room). The demo itself carries no
   // party grouping, so this is the only way to know.
@@ -80,8 +80,14 @@ export class MatchImportService {
     sourceKey: string,
     options: ImportExternalDemoOptions = {},
   ): Promise<{ matchId: string | null; skipped?: string }> {
-    const { demoUrl, matchStartTime, externalId, sourceObjectKey, parties } =
-      options;
+    const {
+      demoUrl,
+      matchStartTime,
+      externalId,
+      sourceObjectKey,
+      parties,
+      shareCode,
+    } = options;
 
     if (MatchImportService.isFaceitServer(parsed.server_name)) {
       source = "faceit";
@@ -223,6 +229,13 @@ export class MatchImportService {
       await this.postgres.query(
         `UPDATE public.matches SET external_id = $2 WHERE id = $1::uuid`,
         [matchId, externalId],
+      );
+    }
+
+    if (shareCode) {
+      await this.postgres.query(
+        `UPDATE public.matches SET share_code = $2 WHERE id = $1::uuid`,
+        [matchId, shareCode],
       );
     }
 
@@ -684,17 +697,27 @@ export class MatchImportService {
    */
   public async syncPartiesForMatch(matchId: string): Promise<number> {
     const rows = await this.postgres.query<
-      Array<{ source: string; external_id: string | null }>
-    >(`SELECT source, external_id FROM public.matches WHERE id = $1::uuid`, [
-      matchId,
-    ]);
+      Array<{
+        source: string;
+        external_id: string | null;
+        share_code: string | null;
+      }>
+    >(
+      `SELECT source, external_id, share_code FROM public.matches WHERE id = $1::uuid`,
+      [matchId],
+    );
     const match = rows.at(0);
     if (!match) {
       return 0;
     }
 
     const partySource = toPartySource(match.source);
-    if (!partySource || !match.external_id) {
+    if (!partySource) {
+      return 0;
+    }
+    // FACEIT is looked up strictly by match id; Valve can fall back to
+    // fingerprinting the roster, so it does not need one.
+    if (partySource === "faceit" && !match.external_id) {
       return 0;
     }
 
@@ -702,6 +725,7 @@ export class MatchImportService {
       partySource,
       match.external_id,
       matchId,
+      match.share_code,
     );
     if (!parties?.length) {
       return 0;
@@ -747,13 +771,14 @@ export class MatchImportService {
 
   private async fetchPartiesFromSource(
     partySource: e_match_party_sources_enum,
-    externalId: string,
+    externalId: string | null,
     matchId: string,
+    shareCode: string | null = null,
   ): Promise<MatchParty[] | null> {
     if (partySource === "faceit") {
       const faceitMatchId =
         MatchImportService.extractFaceitMatchId(externalId) ?? externalId;
-      return this.faceit.getMatchParties(faceitMatchId);
+      return faceitMatchId ? this.faceit.getMatchParties(faceitMatchId) : null;
     }
 
     // Valve: the share code is consumed at import and not kept, so ask the GC
@@ -769,25 +794,41 @@ export class MatchImportService {
       return null;
     }
 
-    // Bounded: each attempt is its own GC round trip with a 30s timeout, and a
-    // match nobody still has in recent history would otherwise burn ten of them
-    // before giving up.
-    const steamIds = (await this.matchPlayerSteamIds(matchId)).slice(
-      0,
-      PARTY_LOOKUP_PLAYER_ATTEMPTS,
-    );
-    for (const steamId of steamIds) {
-      const parties = await this.steamGc.resolveRecentGameParties(
-        steamId,
-        externalId,
-      );
-      if (parties?.length) {
-        return parties;
+    // The share code is the only handle the GC reliably honours: it decodes to
+    // the matchId/outcomeId/token triple, and it is the same request that found
+    // this demo at import.
+    if (shareCode) {
+      const resolved = await this.steamGc.resolveShareCode(shareCode);
+      if (resolved?.parties?.length) {
+        return resolved.parties;
       }
+      this.logger.warn(
+        `party-sync got no reservation back for match ${matchId} from its share code`,
+      );
+      return null;
+    }
+
+    // No share code (imported before we kept them, or an uploaded demo). Recent
+    // games is a long shot — the GC only answers for accounts it is authorized
+    // for, and simply never replies otherwise, so this costs a full timeout.
+    // One attempt, not one per player.
+    const roster = await this.matchPlayerSteamIds(matchId);
+    const steamId = roster.at(0);
+    if (!steamId) {
+      return null;
+    }
+
+    const parties = await this.steamGc.resolveRecentGameParties(
+      steamId,
+      externalId,
+      roster,
+    );
+    if (parties?.length) {
+      return parties;
     }
 
     this.logger.warn(
-      `party-sync found no reservation for match ${matchId} (valve ${externalId}) after ${steamIds.length} player(s); likely past the GC's recent-games window`,
+      `party-sync could not recover parties for match ${matchId} (valve ${externalId}): no share code stored, and the GC did not return recent games for ${steamId}. Matches imported before share codes were kept are not backfillable.`,
     );
     return null;
   }
