@@ -16,22 +16,19 @@ import {
   e_match_party_sources_enum,
   e_match_types_enum,
 } from "../../generated";
-import { MatchParty } from "./types/MatchParty";
 
 type MatchType = e_match_types_enum;
 type Side = "T" | "CT";
-
-// "lobby" is written by the assign_lobby_parties trigger, never here.
-function toPartySource(source: string): e_match_party_sources_enum | null {
-  return source === "valve" ? "valve" : null;
-}
 
 export type ImportExternalDemoOptions = {
   demoUrl?: string;
   matchStartTime?: string | null;
   externalId?: string | null;
   sourceObjectKey?: string;
-  parties?: MatchParty[] | null;
+  // Our one stable handle on a Valve match — demo URLs expire, share codes
+  // don't. The pending import row that carries it is deleted once the demo
+  // parses, so it has to be copied onto the match.
+  shareCode?: string | null;
 };
 
 type SteamPlayerSummary = {
@@ -68,7 +65,7 @@ export class MatchImportService {
     sourceKey: string,
     options: ImportExternalDemoOptions = {},
   ): Promise<{ matchId: string | null; skipped?: string }> {
-    const { demoUrl, matchStartTime, externalId, sourceObjectKey, parties } =
+    const { demoUrl, matchStartTime, externalId, sourceObjectKey, shareCode } =
       options;
 
     if (MatchImportService.isFaceitServer(parsed.server_name)) {
@@ -103,6 +100,7 @@ export class MatchImportService {
           faceitMatchId,
         );
       }
+      await this.persistShareCode(existing, shareCode ?? sourceKey);
       return { matchId: existing, skipped: "already imported" };
     }
 
@@ -148,30 +146,8 @@ export class MatchImportService {
     const lineup1Id = await this.insertLineup();
     const lineup2Id = await this.insertLineup();
 
-    // source is re-derived from the server name above and can be "5stack",
-    // which the party_source FK would reject.
-    const partySource = toPartySource(source);
-    const partyIds = partySource
-      ? MatchImportService.mapPartyIds(parties)
-      : new Map<string, string>();
-    if (partyIds.size > 0) {
-      this.logger.log(
-        `parties for ${source}/${sourceKey}: ${new Set(partyIds.values()).size} group(s) covering ${partyIds.size} player(s)`,
-      );
-    }
-
-    await this.insertLineupPlayers(
-      lineup1Id,
-      lineup1Players,
-      partyIds,
-      partySource,
-    );
-    await this.insertLineupPlayers(
-      lineup2Id,
-      lineup2Players,
-      partyIds,
-      partySource,
-    );
+    await this.insertLineupPlayers(lineup1Id, lineup1Players);
+    await this.insertLineupPlayers(lineup2Id, lineup2Players);
 
     let startedAt = matchStartTime ?? null;
     let startSource = startedAt ? "gc-matchtime" : "none";
@@ -204,6 +180,8 @@ export class MatchImportService {
       matchOptionsId,
       startedAt,
     });
+
+    await this.persistShareCode(matchId, shareCode ?? sourceKey);
 
     if (externalId) {
       await this.postgres.query(
@@ -608,25 +586,27 @@ export class MatchImportService {
     return null;
   }
 
-  // Source party ids are only unique within their own match, so each gets a
-  // fresh uuid.
-  private static mapPartyIds(
-    parties: MatchParty[] | null | undefined,
-  ): Map<string, string> {
-    const byKey = new Map<string, string>();
-    const bySteamId = new Map<string, string>();
-    for (const party of parties ?? []) {
-      if (!party.steam_id || !party.party_key) {
-        continue;
-      }
-      let partyId = byKey.get(party.party_key);
-      if (!partyId) {
-        partyId = randomUUID();
-        byKey.set(party.party_key, partyId);
-      }
-      bySteamId.set(party.steam_id, partyId);
+  // sourceKey is the share code for share-code imports and the valve match id
+  // for everything else, so the shape is the only way to tell them apart.
+  private static asShareCode(value: string | null | undefined): string | null {
+    return value && /^CSGO(-[a-zA-Z0-9]{5}){5}$/.test(value) ? value : null;
+  }
+
+  public async persistShareCode(
+    matchId: string,
+    value: string | null | undefined,
+  ): Promise<void> {
+    const shareCode = MatchImportService.asShareCode(value);
+    if (!shareCode) {
+      return;
     }
-    return bySteamId;
+    await this.postgres.query(
+      `UPDATE public.matches
+          SET share_code = $2
+        WHERE id = $1::uuid
+          AND share_code IS DISTINCT FROM $2`,
+      [matchId, shareCode],
+    );
   }
 
   private static splitLineupsBySide(
@@ -1015,14 +995,10 @@ export class MatchImportService {
   private async insertLineupPlayers(
     lineupId: string,
     players: ParsedPlayer[],
-    parties?: Map<string, string>,
-    partySource?: e_match_party_sources_enum | null,
   ): Promise<void> {
     const objects = players.map((p) => ({
       match_lineup_id: lineupId,
       steam_id: p.steam_id,
-      party_id: parties?.get(p.steam_id) ?? null,
-      party_source: parties?.has(p.steam_id) ? partySource : null,
     }));
     if (objects.length === 0) {
       return;

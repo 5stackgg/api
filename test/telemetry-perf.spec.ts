@@ -26,7 +26,6 @@ benchmark("telemetry perf", () => {
           scan: async (): Promise<[string, Array<string>]> => ["0", []],
         }),
       } as never,
-      null as never,
       { get: () => ({ webDomain: "https://panel.test" }) } as never,
       postgres,
       { getPanelVersion: async () => "abc" } as never,

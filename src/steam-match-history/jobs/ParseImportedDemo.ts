@@ -6,7 +6,6 @@ import { PostgresService } from "../../postgres/postgres.service";
 import { DemoParserService } from "../../demos/demo-parser.service";
 import { SteamMatchHistoryQueues } from "../enums/SteamMatchHistoryQueues";
 import { MatchImportService } from "../match-import.service";
-import { MatchParty } from "../types/MatchParty";
 
 export type ParseImportedDemoPayload = {
   valve_match_id: string;
@@ -16,7 +15,6 @@ export type ParseImportedDemoPayload = {
   share_code?: string;
   demo_url?: string | null;
   match_start_time?: string | null;
-  parties?: MatchParty[] | null;
 };
 
 @UseQueue("SteamMatchHistory", SteamMatchHistoryQueues.ParseImportedDemo, {
@@ -45,6 +43,18 @@ export class ParseImportedDemo extends WorkerHost {
       this.logger.log(
         `parse-imported-demo skip valve_match_id=${valve_match_id}: match already imported (${existing}); admin must delete the match to re-import`,
       );
+      // The pending row is about to go and it holds the only copy of the share
+      // code, which is our one stable handle on this match. Harvest it first.
+      const pending = await this.postgres.query<Array<{ share_code: string }>>(
+        `SELECT share_code
+           FROM public.pending_match_imports
+          WHERE valve_match_id = $1::numeric`,
+        [valve_match_id],
+      );
+      await this.matchImport.persistShareCode(
+        existing,
+        pending.at(0)?.share_code ?? job.data.share_code,
+      );
       await this.postgres.query(
         `DELETE FROM public.pending_match_imports WHERE valve_match_id = $1::numeric`,
         [valve_match_id],
@@ -57,10 +67,9 @@ export class ParseImportedDemo extends WorkerHost {
         share_code: string;
         demo_url: string | null;
         match_start_time: string | null;
-        parties: MatchParty[] | null;
       }>
     >(
-      `SELECT share_code, demo_url, match_start_time, parties
+      `SELECT share_code, demo_url, match_start_time
          FROM public.pending_match_imports
         WHERE valve_match_id = $1::numeric`,
       [valve_match_id],
@@ -76,7 +85,6 @@ export class ParseImportedDemo extends WorkerHost {
       row?.match_start_time ?? job.data.match_start_time ?? null;
 
     const demoUrl = row?.demo_url ?? job.data.demo_url ?? null;
-    const parties = row?.parties ?? job.data.parties ?? null;
 
     if (!demoUrl) {
       this.logger.warn(
@@ -91,13 +99,7 @@ export class ParseImportedDemo extends WorkerHost {
         [valve_match_id],
       );
 
-      await this.runImport(
-        valve_match_id,
-        shareCode,
-        demoUrl,
-        matchStartTime,
-        parties,
-      );
+      await this.runImport(valve_match_id, shareCode, demoUrl, matchStartTime);
     } catch (err) {
       const lastAttempt =
         (job.attemptsMade ?? 0) >= (job.opts.attempts ?? 1) - 1;
@@ -116,7 +118,6 @@ export class ParseImportedDemo extends WorkerHost {
     shareCode: string | null,
     demoUrl: string,
     matchStartTime: string | null,
-    parties: MatchParty[] | null,
   ): Promise<void> {
     const parsed = await this.demoParser.parseFromUrl(demoUrl);
     if (!parsed) {
@@ -131,7 +132,7 @@ export class ParseImportedDemo extends WorkerHost {
         demoUrl,
         matchStartTime,
         externalId: valveMatchId,
-        parties,
+        shareCode,
       },
     );
     if (!result.matchId) {
