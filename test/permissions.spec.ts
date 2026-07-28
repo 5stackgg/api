@@ -2,9 +2,11 @@ import { PostgresService } from "./../src/postgres/postgres.service";
 import { Fixtures } from "./utils/fixtures";
 import {
   bootMigratedDb,
+  runAsUser,
   seedRegionWithServer,
   SqlTestDb,
 } from "./utils/sql-test-db";
+import { TournamentFixtures } from "./utils/tournament-fixtures";
 
 // Exercises the Hasura permission functions — the layer that decides what a
 // session may do. These run as plain SELECTs with an explicit session JSON,
@@ -328,6 +330,60 @@ describe("permission functions (SQL-driven)", () => {
           session(outsider, "administrator"),
         ),
       ).toBe(true);
+    });
+  });
+
+  describe("can_manage_tournament_team", () => {
+    const canManage = (tournamentTeamId: string, steamId: string) =>
+      boolFn(
+        "can_manage_tournament_team",
+        "tournament_teams",
+        tournamentTeamId,
+        "id",
+        session(steamId),
+      );
+
+    // A free-agent entry: no team_id, so the joiner's own roster row is
+    // promoted to Admin by tbi_tournament_team_roster.
+    const joinAsFreeAgent = async (tournamentId: string) => {
+      const joiner = await fx.player();
+      const id = await runAsUser(postgres, joiner, "user", async (query) => {
+        const [row] = (await query(
+          `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id)
+           VALUES ($1, $2, $3) RETURNING id`,
+          [tournamentId, fx.nextName("solo"), joiner],
+        )) as Array<{ id: string }>;
+        await query(
+          `INSERT INTO tournament_team_roster (tournament_team_id, tournament_id, player_steam_id)
+           VALUES ($1, $2, $3)`,
+          [row.id, tournamentId, joiner],
+        );
+        return row.id;
+      });
+      return { id, joiner };
+    };
+
+    it("scopes management to the joiner's own team", async () => {
+      const tf = new TournamentFixtures(postgres, fx);
+      const tournament = await tf.createTournament([
+        { type: "SingleElimination", order: 1, minTeams: 4, maxTeams: 8 },
+      ]);
+      await tf.setStatus(tournament.id, tournament.organizer, "RegistrationOpen");
+
+      const team = await fx.team(1);
+      const registered = await tf.registerTeam(tournament.id, team);
+      const solo = await joinAsFreeAgent(tournament.id);
+
+      expect(await canManage(solo.id, solo.joiner)).toBe(true);
+      expect(await canManage(registered, team.owner)).toBe(true);
+
+      // Being Admin of one entry in the tournament must not carry over.
+      expect(await canManage(registered, solo.joiner)).toBe(false);
+      expect(await canManage(solo.id, team.owner)).toBe(false);
+
+      const outsider = await fx.player();
+      expect(await canManage(registered, outsider)).toBe(false);
+      expect(await canManage(solo.id, outsider)).toBe(false);
     });
   });
 });
