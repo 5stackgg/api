@@ -1,7 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "src/configs/types/AppConfig";
-import { HasuraService } from "src/hasura/hasura.service";
 import Redis from "ioredis";
 import { RedisManagerService } from "src/redis/redis-manager/redis-manager.service";
 import { PostgresService } from "src/postgres/postgres.service";
@@ -127,7 +126,6 @@ export class TelemetryService {
   constructor(
     private readonly logger: Logger,
     private readonly redisManagerService: RedisManagerService,
-    private readonly hasuraService: HasuraService,
     private readonly configService: ConfigService,
     private readonly postgres: PostgresService,
     private readonly systemService: SystemService,
@@ -138,8 +136,8 @@ export class TelemetryService {
   }
 
   async send() {
-    if (!(await this.isEnabled())) {
-      this.logger.log("telemetry is disabled");
+    // The panel receiving the reports would otherwise report to itself.
+    if (this.appConfig.webDomain.includes("://5stack.gg")) {
       return;
     }
 
@@ -973,23 +971,6 @@ export class TelemetryService {
     }
 
     return counts as TelemetryCounts;
-  }
-
-  private async isEnabled() {
-    if (this.appConfig.webDomain.includes("://5stack.gg")) {
-      return false;
-    }
-
-    const { settings_by_pk: telemetry } = await this.hasuraService.query({
-      settings_by_pk: {
-        __args: {
-          name: "telemetry",
-        },
-        value: true,
-      },
-    });
-
-    return telemetry?.value !== "false";
   }
 }
 
