@@ -36,6 +36,10 @@ DECLARE
     _elo_change INTEGER;
     _scale_factor INTEGER := 4000;
     _default_elo INTEGER := 5000;
+    -- How much of the expected score comes from the player's own rating versus
+    -- their team's average. See _rating_for_expected below.
+    _individual_weight FLOAT := 0.5;
+    _rating_for_expected FLOAT;
 
     -- Performance metrics
     _player_kills INTEGER;
@@ -301,14 +305,30 @@ BEGIN
 
     _performance_multiplier := _impact;
 
-    -- Calculate the expected score based on team ELO averages
+    -- The rating this player is judged on. Rating a player purely off their
+    -- team's average gives every teammate an identical expected score, so a
+    -- 6000 and a 4600 on the same lineup moved by the same amount no matter how
+    -- they were rated going in. Rating them purely off their own ELO fixes that
+    -- but drops any notion of who they played with, which makes carrying a
+    -- low-rated party member the cheapest way to inflate a rating: at full
+    -- individual weight a 3000 queuing with four 9000s against a 5000 lineup is
+    -- scored as if they beat it alone.
+    --
+    -- Blending keeps the differentiation and caps the carry. At 0.5, the 3000
+    -- above is rated 5400 rather than 3000, and teammates on a mixed lineup
+    -- still separate cleanly. Raising _individual_weight sharpens per-player
+    -- differences and widens the carry window; lowering it does the reverse.
+    _rating_for_expected :=
+        _individual_weight * _current_player_elo
+        + (1.0 - _individual_weight) * _player_team_elo_avg;
+
     -- ELO formula: Expected Score = 1 / (1 + 10^((Opponent Rating - Player Rating) / Scale Factor))
     -- The scale factor (4000) is increased for a wider ELO range:
     -- - A difference of 4000 points means the stronger player is expected to win 10 times more often
     -- - A difference of 2000 points means the stronger player is expected to win 3 times more often
     -- - A difference of 1000 points means the stronger player is expected to win 1.6 times more often
     -- This allows for a much wider range of ratings (0-50,000+) with 28,000 being expert level
-    _expected_score := 1.0 / (1.0 + POWER(10.0, (_opponent_team_elo_avg - _player_team_elo_avg) / _scale_factor));
+    _expected_score := 1.0 / (1.0 + POWER(10.0, (_opponent_team_elo_avg - _rating_for_expected) / _scale_factor));
 
     -- Determine the actual score based on match result
     -- 1.0 for a win, 0.0 for a loss
@@ -333,7 +353,9 @@ BEGIN
         'elo_change', _elo_change, -- The change in ELO rating for the player after the match
         'player_team_elo_avg', _player_team_elo_avg, -- The average ELO rating of the player's team before the match
         'opponent_team_elo_avg', _opponent_team_elo_avg, -- The average ELO rating of the opponent's team before the match
-        'expected_score', _expected_score, -- The expected score for the player's team based on ELO ratings
+        'rating_for_expected', _rating_for_expected, -- The blend of own rating and team average this player was judged on
+        'individual_weight', _individual_weight, -- How much of that blend came from the player's own rating
+        'expected_score', _expected_score, -- The expected score for this player, from rating_for_expected vs the opponent average
         'actual_score', _actual_score, -- The actual score for the player's team based on the match result
         'k_factor', _k_factor, -- The K-factor used in the calculation
         'kills', _player_kills,
@@ -475,6 +497,7 @@ BEGIN
             k_factor,
             player_team_elo_avg,
             opponent_team_elo_avg,
+            rating_for_expected,
             kills,
             deaths,
             assists,
@@ -500,6 +523,7 @@ BEGIN
             (elo_data->>'k_factor')::integer,
             (elo_data->>'player_team_elo_avg')::double precision,
             (elo_data->>'opponent_team_elo_avg')::double precision,
+            (elo_data->>'rating_for_expected')::double precision,
             (elo_data->>'kills')::integer,
             (elo_data->>'deaths')::integer,
             (elo_data->>'assists')::integer,

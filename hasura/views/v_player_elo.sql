@@ -14,6 +14,7 @@ SELECT
     pe.change::INTEGER AS elo_change,
     pe.player_team_elo_avg,
     pe.opponent_team_elo_avg,
+    pe.rating_for_expected,
     pe.expected_score,
     pe.actual_score,
     pe.k_factor,

@@ -35138,6 +35138,7 @@ type matches {
   A computed field, executes function "get_match_server_type"
   """
   server_type: String
+  share_code: String
   source: String!
   started_at: timestamptz
   status: e_match_status_enum!
@@ -35418,6 +35419,7 @@ input matches_bool_exp {
   server_plugin_runtime: String_comparison_exp
   server_region: String_comparison_exp
   server_type: String_comparison_exp
+  share_code: String_comparison_exp
   source: String_comparison_exp
   started_at: timestamptz_comparison_exp
   status: e_match_status_enum_comparison_exp
@@ -35509,6 +35511,7 @@ input matches_insert_input {
   server: servers_obj_rel_insert_input
   server_error: String
   server_id: uuid
+  share_code: String
   source: String
   started_at: timestamptz
   status: e_match_status_enum
@@ -35596,6 +35599,7 @@ type matches_max_fields {
   A computed field, executes function "get_match_server_type"
   """
   server_type: String
+  share_code: String
   source: String
   started_at: timestamptz
 
@@ -35626,6 +35630,7 @@ input matches_max_order_by {
   scheduled_at: order_by
   server_error: order_by
   server_id: order_by
+  share_code: order_by
   source: order_by
   started_at: order_by
   winning_lineup_id: order_by
@@ -35709,6 +35714,7 @@ type matches_min_fields {
   A computed field, executes function "get_match_server_type"
   """
   server_type: String
+  share_code: String
   source: String
   started_at: timestamptz
 
@@ -35739,6 +35745,7 @@ input matches_min_order_by {
   scheduled_at: order_by
   server_error: order_by
   server_id: order_by
+  share_code: order_by
   source: order_by
   started_at: order_by
   winning_lineup_id: order_by
@@ -35844,6 +35851,7 @@ input matches_order_by {
   server_plugin_runtime: order_by
   server_region: order_by
   server_type: order_by
+  share_code: order_by
   source: order_by
   started_at: order_by
   status: order_by
@@ -35913,6 +35921,9 @@ enum matches_select_column {
   server_id
 
   """column name"""
+  share_code
+
+  """column name"""
   source
 
   """column name"""
@@ -35944,6 +35955,7 @@ input matches_set_input {
   scheduled_at: timestamptz
   server_error: String
   server_id: uuid
+  share_code: String
   source: String
   started_at: timestamptz
   status: e_match_status_enum
@@ -36042,6 +36054,7 @@ input matches_stream_cursor_value_input {
   scheduled_at: timestamptz
   server_error: String
   server_id: uuid
+  share_code: String
   source: String
   started_at: timestamptz
   status: e_match_status_enum
@@ -36117,6 +36130,9 @@ enum matches_update_column {
 
   """column name"""
   server_id
+
+  """column name"""
+  share_code
 
   """column name"""
   source
@@ -45787,29 +45803,8 @@ type mutation_root {
   update data of the table: "pending_match_imports"
   """
   update_pending_match_imports(
-    """append existing jsonb value of filtered columns with new jsonb value"""
-    _append: pending_match_imports_append_input
-
-    """
-    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
-    """
-    _delete_at_path: pending_match_imports_delete_at_path_input
-
-    """
-    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
-    """
-    _delete_elem: pending_match_imports_delete_elem_input
-
-    """
-    delete key/value pair or string element. key/value pairs are matched based on their key value
-    """
-    _delete_key: pending_match_imports_delete_key_input
-
     """increments the numeric columns with given value of the filtered values"""
     _inc: pending_match_imports_inc_input
-
-    """prepend existing jsonb value of filtered columns with new jsonb value"""
-    _prepend: pending_match_imports_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: pending_match_imports_set_input
@@ -45822,29 +45817,8 @@ type mutation_root {
   update single row of the table: "pending_match_imports"
   """
   update_pending_match_imports_by_pk(
-    """append existing jsonb value of filtered columns with new jsonb value"""
-    _append: pending_match_imports_append_input
-
-    """
-    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
-    """
-    _delete_at_path: pending_match_imports_delete_at_path_input
-
-    """
-    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
-    """
-    _delete_elem: pending_match_imports_delete_elem_input
-
-    """
-    delete key/value pair or string element. key/value pairs are matched based on their key value
-    """
-    _delete_key: pending_match_imports_delete_key_input
-
     """increments the numeric columns with given value of the filtered values"""
     _inc: pending_match_imports_inc_input
-
-    """prepend existing jsonb value of filtered columns with new jsonb value"""
-    _prepend: pending_match_imports_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: pending_match_imports_set_input
@@ -49998,10 +49972,6 @@ type pending_match_imports {
   error: String
   map_name: String
   match_start_time: timestamptz
-  parties(
-    """JSON select path"""
-    path: String
-  ): jsonb
 
   """An array relationship"""
   players(
@@ -50069,11 +50039,6 @@ type pending_match_imports_aggregate_fields {
   variance: pending_match_imports_variance_fields
 }
 
-"""append existing jsonb value of filtered columns with new jsonb value"""
-input pending_match_imports_append_input {
-  parties: jsonb
-}
-
 """aggregate avg on columns"""
 type pending_match_imports_avg_fields {
   valve_match_id: Float
@@ -50091,7 +50056,6 @@ input pending_match_imports_bool_exp {
   error: String_comparison_exp
   map_name: String_comparison_exp
   match_start_time: timestamptz_comparison_exp
-  parties: jsonb_comparison_exp
   players: pending_match_import_players_bool_exp
   players_aggregate: pending_match_import_players_aggregate_bool_exp
   share_code: String_comparison_exp
@@ -50111,27 +50075,6 @@ enum pending_match_imports_constraint {
 }
 
 """
-delete the field or element with specified path (for JSON arrays, negative integers count from the end)
-"""
-input pending_match_imports_delete_at_path_input {
-  parties: [String!]
-}
-
-"""
-delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
-"""
-input pending_match_imports_delete_elem_input {
-  parties: Int
-}
-
-"""
-delete key/value pair or string element. key/value pairs are matched based on their key value
-"""
-input pending_match_imports_delete_key_input {
-  parties: String
-}
-
-"""
 input type for incrementing numeric columns in table "pending_match_imports"
 """
 input pending_match_imports_inc_input {
@@ -50147,7 +50090,6 @@ input pending_match_imports_insert_input {
   error: String
   map_name: String
   match_start_time: timestamptz
-  parties: jsonb
   players: pending_match_import_players_arr_rel_insert_input
   share_code: String
   status: String
@@ -50218,7 +50160,6 @@ input pending_match_imports_order_by {
   error: order_by
   map_name: order_by
   match_start_time: order_by
-  parties: order_by
   players_aggregate: pending_match_import_players_aggregate_order_by
   share_code: order_by
   status: order_by
@@ -50229,11 +50170,6 @@ input pending_match_imports_order_by {
 """primary key columns input for table: pending_match_imports"""
 input pending_match_imports_pk_columns_input {
   valve_match_id: numeric!
-}
-
-"""prepend existing jsonb value of filtered columns with new jsonb value"""
-input pending_match_imports_prepend_input {
-  parties: jsonb
 }
 
 """
@@ -50254,9 +50190,6 @@ enum pending_match_imports_select_column {
 
   """column name"""
   match_start_time
-
-  """column name"""
-  parties
 
   """column name"""
   share_code
@@ -50280,7 +50213,6 @@ input pending_match_imports_set_input {
   error: String
   map_name: String
   match_start_time: timestamptz
-  parties: jsonb
   share_code: String
   status: String
   updated_at: timestamptz
@@ -50320,7 +50252,6 @@ input pending_match_imports_stream_cursor_value_input {
   error: String
   map_name: String
   match_start_time: timestamptz
-  parties: jsonb
   share_code: String
   status: String
   updated_at: timestamptz
@@ -50352,9 +50283,6 @@ enum pending_match_imports_update_column {
   match_start_time
 
   """column name"""
-  parties
-
-  """column name"""
   share_code
 
   """column name"""
@@ -50368,29 +50296,8 @@ enum pending_match_imports_update_column {
 }
 
 input pending_match_imports_updates {
-  """append existing jsonb value of filtered columns with new jsonb value"""
-  _append: pending_match_imports_append_input
-
-  """
-  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
-  """
-  _delete_at_path: pending_match_imports_delete_at_path_input
-
-  """
-  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
-  """
-  _delete_elem: pending_match_imports_delete_elem_input
-
-  """
-  delete key/value pair or string element. key/value pairs are matched based on their key value
-  """
-  _delete_key: pending_match_imports_delete_key_input
-
   """increments the numeric columns with given value of the filtered values"""
   _inc: pending_match_imports_inc_input
-
-  """prepend existing jsonb value of filtered columns with new jsonb value"""
-  _prepend: pending_match_imports_prepend_input
 
   """sets the columns of the filtered rows to the given values"""
   _set: pending_match_imports_set_input
@@ -53308,6 +53215,7 @@ type player_elo {
   """An object relationship"""
   player: players!
   player_team_elo_avg: float8
+  rating_for_expected: float8
 
   """An object relationship"""
   season: seasons
@@ -53362,6 +53270,7 @@ type player_elo_avg_fields {
   opponent_team_elo_avg: Float
   performance_multiplier: Float
   player_team_elo_avg: Float
+  rating_for_expected: Float
   series_multiplier: Float
   steam_id: Float
   team_avg_kda: Float
@@ -53395,6 +53304,7 @@ input player_elo_bool_exp {
   performance_multiplier: float8_comparison_exp
   player: players_bool_exp
   player_team_elo_avg: float8_comparison_exp
+  rating_for_expected: float8_comparison_exp
   season: seasons_bool_exp
   season_id: uuid_comparison_exp
   series_multiplier: Int_comparison_exp
@@ -53434,6 +53344,7 @@ input player_elo_inc_input {
   opponent_team_elo_avg: float8
   performance_multiplier: float8
   player_team_elo_avg: float8
+  rating_for_expected: float8
   series_multiplier: Int
   steam_id: bigint
   team_avg_kda: float8
@@ -53464,6 +53375,7 @@ input player_elo_insert_input {
   performance_multiplier: float8
   player: players_obj_rel_insert_input
   player_team_elo_avg: float8
+  rating_for_expected: float8
   season: seasons_obj_rel_insert_input
   season_id: uuid
   series_multiplier: Int
@@ -53493,6 +53405,7 @@ type player_elo_max_fields {
   opponent_team_elo_avg: float8
   performance_multiplier: float8
   player_team_elo_avg: float8
+  rating_for_expected: float8
   season_id: uuid
   series_multiplier: Int
   steam_id: bigint
@@ -53520,6 +53433,7 @@ type player_elo_min_fields {
   opponent_team_elo_avg: float8
   performance_multiplier: float8
   player_team_elo_avg: float8
+  rating_for_expected: float8
   season_id: uuid
   series_multiplier: Int
   steam_id: bigint
@@ -53569,6 +53483,7 @@ input player_elo_order_by {
   performance_multiplier: order_by
   player: players_order_by
   player_team_elo_avg: order_by
+  rating_for_expected: order_by
   season: seasons_order_by
   season_id: order_by
   series_multiplier: order_by
@@ -53646,6 +53561,9 @@ enum player_elo_select_column {
   player_team_elo_avg
 
   """column name"""
+  rating_for_expected
+
+  """column name"""
   season_id
 
   """column name"""
@@ -53684,6 +53602,7 @@ input player_elo_set_input {
   opponent_team_elo_avg: float8
   performance_multiplier: float8
   player_team_elo_avg: float8
+  rating_for_expected: float8
   season_id: uuid
   series_multiplier: Int
   steam_id: bigint
@@ -53710,6 +53629,7 @@ type player_elo_stddev_fields {
   opponent_team_elo_avg: Float
   performance_multiplier: Float
   player_team_elo_avg: Float
+  rating_for_expected: Float
   series_multiplier: Float
   steam_id: Float
   team_avg_kda: Float
@@ -53734,6 +53654,7 @@ type player_elo_stddev_pop_fields {
   opponent_team_elo_avg: Float
   performance_multiplier: Float
   player_team_elo_avg: Float
+  rating_for_expected: Float
   series_multiplier: Float
   steam_id: Float
   team_avg_kda: Float
@@ -53758,6 +53679,7 @@ type player_elo_stddev_samp_fields {
   opponent_team_elo_avg: Float
   performance_multiplier: Float
   player_team_elo_avg: Float
+  rating_for_expected: Float
   series_multiplier: Float
   steam_id: Float
   team_avg_kda: Float
@@ -53795,6 +53717,7 @@ input player_elo_stream_cursor_value_input {
   opponent_team_elo_avg: float8
   performance_multiplier: float8
   player_team_elo_avg: float8
+  rating_for_expected: float8
   season_id: uuid
   series_multiplier: Int
   steam_id: bigint
@@ -53821,6 +53744,7 @@ type player_elo_sum_fields {
   opponent_team_elo_avg: float8
   performance_multiplier: float8
   player_team_elo_avg: float8
+  rating_for_expected: float8
   series_multiplier: Int
   steam_id: bigint
   team_avg_kda: float8
@@ -53888,6 +53812,9 @@ enum player_elo_update_column {
   player_team_elo_avg
 
   """column name"""
+  rating_for_expected
+
+  """column name"""
   season_id
 
   """column name"""
@@ -53933,6 +53860,7 @@ type player_elo_var_pop_fields {
   opponent_team_elo_avg: Float
   performance_multiplier: Float
   player_team_elo_avg: Float
+  rating_for_expected: Float
   series_multiplier: Float
   steam_id: Float
   team_avg_kda: Float
@@ -53957,6 +53885,7 @@ type player_elo_var_samp_fields {
   opponent_team_elo_avg: Float
   performance_multiplier: Float
   player_team_elo_avg: Float
+  rating_for_expected: Float
   series_multiplier: Float
   steam_id: Float
   team_avg_kda: Float
@@ -53981,6 +53910,7 @@ type player_elo_variance_fields {
   opponent_team_elo_avg: Float
   performance_multiplier: Float
   player_team_elo_avg: Float
+  rating_for_expected: Float
   series_multiplier: Float
   steam_id: Float
   team_avg_kda: Float
@@ -107383,6 +107313,7 @@ type v_player_elo {
   player_name: String
   player_steam_id: bigint
   player_team_elo_avg: float8
+  rating_for_expected: float8
   season_id: uuid
   series_multiplier: Int
   team_avg_kda: float8
@@ -107544,6 +107475,7 @@ type v_player_elo_avg_fields {
   performance_multiplier: Float
   player_steam_id: Float
   player_team_elo_avg: Float
+  rating_for_expected: Float
   series_multiplier: Float
   team_avg_kda: Float
   updated_elo: Float
@@ -107571,6 +107503,7 @@ input v_player_elo_avg_order_by {
   performance_multiplier: order_by
   player_steam_id: order_by
   player_team_elo_avg: order_by
+  rating_for_expected: order_by
   series_multiplier: order_by
   team_avg_kda: order_by
   updated_elo: order_by
@@ -107606,6 +107539,7 @@ input v_player_elo_bool_exp {
   player_name: String_comparison_exp
   player_steam_id: bigint_comparison_exp
   player_team_elo_avg: float8_comparison_exp
+  rating_for_expected: float8_comparison_exp
   season_id: uuid_comparison_exp
   series_multiplier: Int_comparison_exp
   team_avg_kda: float8_comparison_exp
@@ -107640,6 +107574,7 @@ input v_player_elo_insert_input {
   player_name: String
   player_steam_id: bigint
   player_team_elo_avg: float8
+  rating_for_expected: float8
   season_id: uuid
   series_multiplier: Int
   team_avg_kda: float8
@@ -107671,6 +107606,7 @@ type v_player_elo_max_fields {
   player_name: String
   player_steam_id: bigint
   player_team_elo_avg: float8
+  rating_for_expected: float8
   season_id: uuid
   series_multiplier: Int
   team_avg_kda: float8
@@ -107704,6 +107640,7 @@ input v_player_elo_max_order_by {
   player_name: order_by
   player_steam_id: order_by
   player_team_elo_avg: order_by
+  rating_for_expected: order_by
   season_id: order_by
   series_multiplier: order_by
   team_avg_kda: order_by
@@ -107735,6 +107672,7 @@ type v_player_elo_min_fields {
   player_name: String
   player_steam_id: bigint
   player_team_elo_avg: float8
+  rating_for_expected: float8
   season_id: uuid
   series_multiplier: Int
   team_avg_kda: float8
@@ -107768,6 +107706,7 @@ input v_player_elo_min_order_by {
   player_name: order_by
   player_steam_id: order_by
   player_team_elo_avg: order_by
+  rating_for_expected: order_by
   season_id: order_by
   series_multiplier: order_by
   team_avg_kda: order_by
@@ -107800,6 +107739,7 @@ input v_player_elo_order_by {
   player_name: order_by
   player_steam_id: order_by
   player_team_elo_avg: order_by
+  rating_for_expected: order_by
   season_id: order_by
   series_multiplier: order_by
   team_avg_kda: order_by
@@ -107878,6 +107818,9 @@ enum v_player_elo_select_column {
   player_team_elo_avg
 
   """column name"""
+  rating_for_expected
+
+  """column name"""
   season_id
 
   """column name"""
@@ -107922,6 +107865,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_avg_arguments_co
   player_team_elo_avg
 
   """column name"""
+  rating_for_expected
+
+  """column name"""
   team_avg_kda
 }
 
@@ -107952,6 +107898,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_corr_arguments_c
 
   """column name"""
   player_team_elo_avg
+
+  """column name"""
+  rating_for_expected
 
   """column name"""
   team_avg_kda
@@ -107986,6 +107935,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_covar_samp_argum
   player_team_elo_avg
 
   """column name"""
+  rating_for_expected
+
+  """column name"""
   team_avg_kda
 }
 
@@ -108016,6 +107968,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_max_arguments_co
 
   """column name"""
   player_team_elo_avg
+
+  """column name"""
+  rating_for_expected
 
   """column name"""
   team_avg_kda
@@ -108050,6 +108005,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_min_arguments_co
   player_team_elo_avg
 
   """column name"""
+  rating_for_expected
+
+  """column name"""
   team_avg_kda
 }
 
@@ -108080,6 +108038,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_stddev_samp_argu
 
   """column name"""
   player_team_elo_avg
+
+  """column name"""
+  rating_for_expected
 
   """column name"""
   team_avg_kda
@@ -108114,6 +108075,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_sum_arguments_co
   player_team_elo_avg
 
   """column name"""
+  rating_for_expected
+
+  """column name"""
   team_avg_kda
 }
 
@@ -108146,6 +108110,9 @@ enum v_player_elo_select_column_v_player_elo_aggregate_bool_exp_var_samp_argumen
   player_team_elo_avg
 
   """column name"""
+  rating_for_expected
+
+  """column name"""
   team_avg_kda
 }
 
@@ -108169,6 +108136,7 @@ type v_player_elo_stddev_fields {
   performance_multiplier: Float
   player_steam_id: Float
   player_team_elo_avg: Float
+  rating_for_expected: Float
   series_multiplier: Float
   team_avg_kda: Float
   updated_elo: Float
@@ -108196,6 +108164,7 @@ input v_player_elo_stddev_order_by {
   performance_multiplier: order_by
   player_steam_id: order_by
   player_team_elo_avg: order_by
+  rating_for_expected: order_by
   series_multiplier: order_by
   team_avg_kda: order_by
   updated_elo: order_by
@@ -108221,6 +108190,7 @@ type v_player_elo_stddev_pop_fields {
   performance_multiplier: Float
   player_steam_id: Float
   player_team_elo_avg: Float
+  rating_for_expected: Float
   series_multiplier: Float
   team_avg_kda: Float
   updated_elo: Float
@@ -108248,6 +108218,7 @@ input v_player_elo_stddev_pop_order_by {
   performance_multiplier: order_by
   player_steam_id: order_by
   player_team_elo_avg: order_by
+  rating_for_expected: order_by
   series_multiplier: order_by
   team_avg_kda: order_by
   updated_elo: order_by
@@ -108273,6 +108244,7 @@ type v_player_elo_stddev_samp_fields {
   performance_multiplier: Float
   player_steam_id: Float
   player_team_elo_avg: Float
+  rating_for_expected: Float
   series_multiplier: Float
   team_avg_kda: Float
   updated_elo: Float
@@ -108300,6 +108272,7 @@ input v_player_elo_stddev_samp_order_by {
   performance_multiplier: order_by
   player_steam_id: order_by
   player_team_elo_avg: order_by
+  rating_for_expected: order_by
   series_multiplier: order_by
   team_avg_kda: order_by
   updated_elo: order_by
@@ -108340,6 +108313,7 @@ input v_player_elo_stream_cursor_value_input {
   player_name: String
   player_steam_id: bigint
   player_team_elo_avg: float8
+  rating_for_expected: float8
   season_id: uuid
   series_multiplier: Int
   team_avg_kda: float8
@@ -108367,6 +108341,7 @@ type v_player_elo_sum_fields {
   performance_multiplier: float8
   player_steam_id: bigint
   player_team_elo_avg: float8
+  rating_for_expected: float8
   series_multiplier: Int
   team_avg_kda: float8
   updated_elo: Int
@@ -108394,6 +108369,7 @@ input v_player_elo_sum_order_by {
   performance_multiplier: order_by
   player_steam_id: order_by
   player_team_elo_avg: order_by
+  rating_for_expected: order_by
   series_multiplier: order_by
   team_avg_kda: order_by
   updated_elo: order_by
@@ -108419,6 +108395,7 @@ type v_player_elo_var_pop_fields {
   performance_multiplier: Float
   player_steam_id: Float
   player_team_elo_avg: Float
+  rating_for_expected: Float
   series_multiplier: Float
   team_avg_kda: Float
   updated_elo: Float
@@ -108446,6 +108423,7 @@ input v_player_elo_var_pop_order_by {
   performance_multiplier: order_by
   player_steam_id: order_by
   player_team_elo_avg: order_by
+  rating_for_expected: order_by
   series_multiplier: order_by
   team_avg_kda: order_by
   updated_elo: order_by
@@ -108471,6 +108449,7 @@ type v_player_elo_var_samp_fields {
   performance_multiplier: Float
   player_steam_id: Float
   player_team_elo_avg: Float
+  rating_for_expected: Float
   series_multiplier: Float
   team_avg_kda: Float
   updated_elo: Float
@@ -108498,6 +108477,7 @@ input v_player_elo_var_samp_order_by {
   performance_multiplier: order_by
   player_steam_id: order_by
   player_team_elo_avg: order_by
+  rating_for_expected: order_by
   series_multiplier: order_by
   team_avg_kda: order_by
   updated_elo: order_by
@@ -108523,6 +108503,7 @@ type v_player_elo_variance_fields {
   performance_multiplier: Float
   player_steam_id: Float
   player_team_elo_avg: Float
+  rating_for_expected: Float
   series_multiplier: Float
   team_avg_kda: Float
   updated_elo: Float
@@ -108550,6 +108531,7 @@ input v_player_elo_variance_order_by {
   performance_multiplier: order_by
   player_steam_id: order_by
   player_team_elo_avg: order_by
+  rating_for_expected: order_by
   series_multiplier: order_by
   team_avg_kda: order_by
   updated_elo: order_by

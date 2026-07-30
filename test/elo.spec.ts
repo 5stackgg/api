@@ -7,11 +7,22 @@ import {
   SqlTestDb,
 } from "./utils/sql-test-db";
 
+// Mirrors the blend in get_player_elo_for_match. Kept here rather than derived
+// so a change to the SQL has to be made deliberately in both places.
+const SCALE_FACTOR = 4000;
+const INDIVIDUAL_WEIGHT = 0.5;
+
+const expectedScore = (own: number, teamAvg: number, opponentAvg: number) => {
+  const rating = INDIVIDUAL_WEIGHT * own + (1 - INDIVIDUAL_WEIGHT) * teamAvg;
+  return 1 / (1 + Math.pow(10, (opponentAvg - rating) / SCALE_FACTOR));
+};
+
 // Exercises the ELO engine (generate_player_elo_for_match /
 // get_player_elo_for_match): the 5000 baseline, rating chaining across
 // matches, series-differential scaling, recompute idempotency, the
 // source/winner guards, per-season ladder isolation, the tournament track,
-// and the loss-protection transform for strong performers on losing teams.
+// the own-rating/team-average blend behind the expected score, and the
+// loss-protection transform for strong performers on losing teams.
 describe("ELO engine (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
@@ -74,6 +85,45 @@ describe("ELO engine (SQL-driven)", () => {
     return match;
   };
 
+  // A finished 2v2, so the two players on a lineup share a team average while
+  // holding different ratings of their own.
+  const wingman = async (
+    teamA: Array<string>,
+    teamB: Array<string>,
+    { winner = "a", endedDaysAgo = 1 }: { winner?: "a" | "b"; endedDaysAgo?: number } = {},
+  ) => {
+    const match = await fx.match({ type: "Wingman" });
+    for (const steamId of teamA) {
+      await fx.lineupPlayer(match.lineup_1_id, steamId);
+    }
+    for (const steamId of teamB) {
+      await fx.lineupPlayer(match.lineup_2_id, steamId);
+    }
+    await postgres.query(
+      `UPDATE matches SET winning_lineup_id = ${
+        winner === "a" ? "lineup_1_id" : "lineup_2_id"
+      }, ended_at = now() - make_interval(days => $2) WHERE id = $1`,
+      [match.id, endedDaysAgo],
+    );
+    return match;
+  };
+
+  // Standing ratings for a type, hung off one finished match old enough to be
+  // picked up as "the rating going in" by the match under test.
+  const seedRatings = async (
+    ratings: Record<string, number>,
+    { type = "Wingman", daysAgo = 30 }: { type?: string; daysAgo?: number } = {},
+  ) => {
+    const { matchId } = await fx.bareMatch();
+    for (const [steamId, current] of Object.entries(ratings)) {
+      await postgres.query(
+        `INSERT INTO player_elo (steam_id, match_id, "type", current, change, created_at)
+         VALUES ($1, $2, $3, $4, 0, now() - make_interval(days => $5))`,
+        [steamId, matchId, type, current, daysAgo],
+      );
+    }
+  };
+
   const generate = async (matchId: string) => {
     const [row] = await postgres.query<
       Array<{ generate_player_elo_for_match: number }>
@@ -87,6 +137,7 @@ describe("ELO engine (SQL-driven)", () => {
     change: number;
     actual_score: number;
     expected_score: number;
+    rating_for_expected: number | null;
     series_multiplier: number;
     performance_multiplier: number;
     season_id: string | null;
@@ -95,7 +146,8 @@ describe("ELO engine (SQL-driven)", () => {
   const eloRows = (matchId: string) =>
     postgres.query<Array<EloRow>>(
       `SELECT steam_id, current, change, actual_score, expected_score,
-              series_multiplier, performance_multiplier, season_id
+              rating_for_expected, series_multiplier, performance_multiplier,
+              season_id
        FROM player_elo WHERE match_id = $1 ORDER BY steam_id`,
       [matchId],
     );
@@ -259,6 +311,59 @@ describe("ELO engine (SQL-driven)", () => {
     );
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.every((r) => r.season_id === null)).toBe(true);
+  });
+
+  // A 7000 and a 3000 on one lineup average out to the 5000 they are playing,
+  // so a team-average-only expected score cannot tell them apart.
+  const mixedLineup = async () => {
+    const [strong, weak, oppOne, oppTwo] = await fx.players(4);
+    await seedRatings({
+      [strong]: 7000,
+      [weak]: 3000,
+      [oppOne]: 5000,
+      [oppTwo]: 5000,
+    });
+    const match = await wingman([strong, weak], [oppOne, oppTwo]);
+    await generate(match.id);
+    const rows = await eloRows(match.id);
+    return {
+      strong: rows.find((r) => r.steam_id === strong)!,
+      weak: rows.find((r) => r.steam_id === weak)!,
+      opponent: rows.find((r) => r.steam_id === oppOne)!,
+    };
+  };
+
+  it("rates teammates off their own ratings, not one shared team average", async () => {
+    const { strong, weak, opponent } = await mixedLineup();
+
+    expect(strong.expected_score).toBeCloseTo(expectedScore(7000, 5000, 5000));
+    expect(weak.expected_score).toBeCloseTo(expectedScore(3000, 5000, 5000));
+
+    // Persisted so the badge can show what each was actually judged on, and so
+    // the row stays readable if _individual_weight is ever retuned.
+    expect(Number(strong.rating_for_expected)).toBeCloseTo(6000);
+    expect(Number(weak.rating_for_expected)).toBeCloseTo(4000);
+
+    // The team averages are level, so team-average-only rating would have put
+    // both of them — and both opponents — at exactly 0.5.
+    expect(strong.expected_score).toBeGreaterThan(0.5);
+    expect(weak.expected_score).toBeLessThan(0.5);
+    expect(opponent.expected_score).toBeCloseTo(0.5);
+
+    // Both won, and both took the same (statless) performance multiplier, so
+    // the gap in change comes purely from what each was expected to do.
+    expect(Number(strong.change)).toBeGreaterThan(0);
+    expect(Number(weak.change)).toBeGreaterThan(Number(strong.change));
+  });
+
+  it("keeps the team average in the expected score so carries are not free", async () => {
+    const { weak } = await mixedLineup();
+
+    // Judging the 3000 purely on their own rating would score this as beating
+    // a 5000 lineup alone. The team term is what stops a low-rated player from
+    // farming a rating off stronger teammates.
+    const ownRatingOnly = 1 / (1 + Math.pow(10, (5000 - 3000) / SCALE_FACTOR));
+    expect(weak.expected_score).toBeGreaterThan(ownRatingOnly);
   });
 
   it("protects strong performers on losing teams", async () => {
