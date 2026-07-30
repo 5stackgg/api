@@ -3,6 +3,7 @@ export enum SystemSettingName {
   ChatMessageTtl = "chat_message_ttl",
   DemoNetworkLimiter = "demo_network_limiter",
   PublicDefaultModels = "public.default_models",
+  VetoPickTimeout = "public.veto_pick_timeout",
   SupportsDiscordBot = "public.supports_discord_bot",
   SupportsGameServerNodes = "supports_game_server_nodes",
   SupportsGameServerVersionPinning = "supports_game_server_version_pinning",

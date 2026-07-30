@@ -60,6 +60,8 @@ export class MatchAssistantService {
     private readonly loggingService: LoggingService,
     private readonly pluginRuntimeService: PluginRuntimeService,
     @InjectQueue(MatchQueues.MatchServers) private queue: Queue,
+    @InjectQueue(MatchQueues.ScheduledMatches)
+    private scheduledMatchesQueue: Queue,
   ) {
     this.appConfig = this.config.get<AppConfig>("app");
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
@@ -1168,6 +1170,93 @@ export class MatchAssistantService {
         __typename: true,
       },
     });
+  }
+
+  public static VetoPickJobPrefix(matchId: string) {
+    return `match.${matchId}.veto-pick.`;
+  }
+
+  /**
+   * Mirrors matches.veto_pick_expires_at (which Postgres owns) onto a delayed
+   * job that fires at exactly that moment. Passing null just cancels.
+   */
+  public async scheduleVetoPickTimeout(
+    matchId: string,
+    expiresAt: string | null,
+  ) {
+    await this.removeVetoPickTimeout(matchId);
+
+    if (!expiresAt) {
+      return;
+    }
+
+    const pickCount = await this.getVetoPickCount(matchId);
+
+    await this.scheduledMatchesQueue.add(
+      MatchJobs.AutoPickExpiredVeto,
+      {
+        matchId,
+        pickCount,
+      },
+      {
+        // Floored at 0 so an event we picked up late fires immediately rather
+        // than being rejected for a negative delay.
+        delay: Math.max(0, new Date(expiresAt).getTime() - Date.now()),
+        attempts: 1,
+        removeOnFail: true,
+        removeOnComplete: true,
+        jobId: `${MatchAssistantService.VetoPickJobPrefix(matchId)}${pickCount}`,
+      },
+    );
+  }
+
+  public async removeVetoPickTimeout(matchId: string) {
+    const prefix = MatchAssistantService.VetoPickJobPrefix(matchId);
+
+    try {
+      const delayed = await this.scheduledMatchesQueue.getDelayed();
+
+      for (const job of delayed) {
+        if (job.id?.startsWith(prefix)) {
+          await job.remove();
+        }
+      }
+    } catch {
+      this.logger.debug(`[${matchId}] no veto pick timers to remove`);
+    }
+  }
+
+  private async getVetoPickCount(matchId: string) {
+    const {
+      match_map_veto_picks_aggregate,
+      match_region_veto_picks_aggregate,
+    } = await this.hasura.query({
+      match_map_veto_picks_aggregate: {
+        __args: {
+          where: {
+            match_id: { _eq: matchId },
+          },
+        },
+        aggregate: {
+          count: true,
+        },
+      },
+      match_region_veto_picks_aggregate: {
+        __args: {
+          where: {
+            match_id: { _eq: matchId },
+          },
+        },
+        aggregate: {
+          count: true,
+        },
+      },
+    });
+
+    return (
+      (match_map_veto_picks_aggregate?.aggregate?.count ?? 0) +
+      (match_region_veto_picks_aggregate?.aggregate?.count ?? 0)
+    );
   }
 
   public async delayCheckOnDemandServer(matchId: string) {

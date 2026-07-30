@@ -125,6 +125,12 @@ BEGIN
         PERFORM setup_match_maps(_match_id, NEW.id);
     END IF;
 
+    -- Retiming mid-veto: the resulting matches update re-fires match_events,
+    -- which re-arms the delayed job against the new deadline.
+    IF (NEW.veto_pick_timeout IS DISTINCT FROM OLD.veto_pick_timeout AND _match_status = 'Veto') THEN
+        PERFORM refresh_veto_pick_expiry(_match_id);
+    END IF;
+
     RETURN NEW;
 END;
 $$;

@@ -19,6 +19,7 @@ export type MatchOptionsOverrides = {
   regions?: Array<string>;
   mapPoolId?: string;
   substitutes?: number;
+  vetoPickTimeout?: number;
 };
 
 export type MatchRow = {
@@ -135,8 +136,9 @@ export class Fixtures {
       ));
     const [row] = await this.postgres.query<Array<{ id: string }>>(
       `INSERT INTO match_options
-         (mr, best_of, type, map_pool_id, map_veto, region_veto, regions, number_of_substitutes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+         (mr, best_of, type, map_pool_id, map_veto, region_veto, regions, number_of_substitutes,
+          veto_pick_timeout)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
       [
         over.mr ?? 12,
         over.bestOf ?? 1,
@@ -146,6 +148,7 @@ export class Fixtures {
         over.regionVeto ?? true,
         over.regions ?? ["TestA"],
         over.substitutes ?? 0,
+        over.vetoPickTimeout ?? 60,
       ],
     );
     return row.id;
