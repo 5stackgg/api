@@ -31,6 +31,7 @@ import { MatchServerMiddlewareMiddleware } from "./match-server-middleware/match
 import { Queue } from "bullmq";
 import { CheckForScheduledMatches } from "./jobs/CheckForScheduledMatches";
 import { CancelExpiredMatches } from "./jobs/CancelExpiredMatches";
+import { AutoPickExpiredVeto } from "./jobs/AutoPickExpiredVeto";
 import { RemoveCancelledMatches } from "./jobs/RemoveCancelledMatches";
 import { CheckForTournamentStart } from "./jobs/CheckForTournamentStart";
 import { CheckForScheduledTournamentBrackets } from "./jobs/CheckForScheduledTournamentBrackets";
@@ -157,6 +158,7 @@ import { LeaguesModule } from "../leagues/leagues.module";
     CheckOnDemandServerJob,
     CheckOnDemandServerJobEvents,
     CancelExpiredMatches,
+    AutoPickExpiredVeto,
     CheckForTournamentStart,
     CheckForScheduledTournamentBrackets,
     CheckLeagueSeasonTransitions,
@@ -253,6 +255,20 @@ export class MatchesModule implements NestModule {
 
     void scheduleMatchQueue.add(
       RemoveCancelledMatches.name,
+      {},
+      {
+        repeat: {
+          pattern: "* * * * *",
+        },
+      },
+    );
+
+    // Fallback only. The real timer is a per-match delayed job armed from
+    // match_events; this catches vetoes whose job was lost to a Redis flush or
+    // a dropped event. Empty payload means no fencing token, so it sweeps
+    // anything already past its deadline.
+    void scheduleMatchQueue.add(
+      AutoPickExpiredVeto.name,
       {},
       {
         repeat: {
