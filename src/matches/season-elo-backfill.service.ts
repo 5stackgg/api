@@ -7,6 +7,10 @@ import {
   e_player_roles_enum,
 } from "../../generated";
 import { PlayerEloRecomputeService } from "./player-elo-recompute.service";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import { TypesenseQueues } from "../type-sense/enums/TypesenseQueues";
+import { RefreshAllPlayersJob } from "../type-sense/jobs/RefreshAllPlayers";
 
 // Redis-backed so any replica can read progress / request cancellation. Backfill
 // runs on a concurrency-1 queue, so a single global status blob is sufficient.
@@ -40,6 +44,8 @@ export class SeasonEloBackfillService {
     private readonly cache: CacheService,
     private readonly notifications: NotificationsService,
     private readonly eloRecompute: PlayerEloRecomputeService,
+    @InjectQueue(TypesenseQueues.PlayerReindex)
+    private readonly reindexQueue: Queue,
   ) {}
 
   public async isRunning(): Promise<boolean> {
@@ -165,11 +171,21 @@ export class SeasonEloBackfillService {
       status.finished_at = new Date().toISOString();
       await this.saveStatus(status, FINAL_TTL_SECONDS);
       await this.cache.forget(CANCEL_KEY);
-      // Per-row player_elo search events stay suppressed for the whole run: the
-      // backfill recomputes ELO only and deliberately does NOT reindex the player
-      // search index (use the manual "Reindex Search" action when desired).
+      // Per-row player_elo search events stay suppressed for the whole run, so
+      // the search index would otherwise keep serving pre-backfill ELO forever.
+      // One deduped reindex at the end syncs it without the per-row fan-out.
       await this.eloRecompute.setSuppressEvents(false);
       await this.cache.forget(LOCK_KEY);
+
+      await this.reindexQueue.add(
+        RefreshAllPlayersJob.name,
+        {},
+        {
+          jobId: RefreshAllPlayersJob.name,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      );
 
       this.logger.log(
         `[season-backfill] finished season ${seasonId}: ${status.completed}/${status.total} processed, ${status.failed} failed${status.canceled ? " (canceled)" : ""}`,
