@@ -14,8 +14,6 @@ SELECT
     pe.change::INTEGER AS elo_change,
     pe.player_team_elo_avg,
     pe.opponent_team_elo_avg,
-    -- NULL on rows written before the blend landed; those were rated on
-    -- player_team_elo_avg alone.
     pe.rating_for_expected,
     pe.expected_score,
     pe.actual_score,
