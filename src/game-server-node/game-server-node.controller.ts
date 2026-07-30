@@ -715,6 +715,15 @@ cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/tailscale-state-check.c
 	ExecStartPre=/usr/local/bin/5stack-tailscale-state-check.sh
 DROPIN
 
+cat <<-'DROPIN' >/etc/systemd/system/k3s-agent.service.d/tailscale-prewarm.conf
+	[Unit]
+	After=tailscaled.service
+	Wants=tailscaled.service
+
+	[Service]
+	ExecStartPre=-/bin/bash -c '. /etc/systemd/system/k3s-agent.service.env 2>/dev/null || true; H=$(echo "\${K3S_URL#*://}" | cut -d: -f1 | cut -d/ -f1); [ -n "$H" ] && echo "[5stack] pre-warming tailscale path to $H" && timeout 15 tailscale ping -c 3 "$H" >/dev/null 2>&1 || true'
+DROPIN
+
 cat <<-'UNIT' >/etc/systemd/system/5stack-tailscale-state-check.service
 	[Unit]
 	Description=5stack tailscale state check
