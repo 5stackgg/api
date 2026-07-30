@@ -58,6 +58,23 @@ export class TypeSenseService {
       },
       { name: "steam_id", type: "string", index: true },
       { name: "teams", type: "string[]", optional: true },
+      // Rank/range on the same number the UI shows (competitive, else wingman,
+      // else duel). Sorting on elo_competitive alone leaves every wingman/duel
+      // only player tied as "missing", so asc/desc never reorders them.
+      {
+        name: "elo",
+        type: "int32",
+        optional: true,
+        sort: true,
+        index: true,
+      },
+      {
+        name: "tournament_elo",
+        type: "int32",
+        optional: true,
+        sort: true,
+        index: true,
+      },
       {
         name: "elo_competitive",
         type: "int32",
@@ -105,6 +122,7 @@ export class TypeSenseService {
       { name: "deaths", type: "int32", optional: true },
       { name: "wins", type: "int32", optional: true },
       { name: "losses", type: "int32", optional: true },
+      { name: "total_matches", type: "int32", optional: true, index: true },
       { name: "country", type: "string", optional: true, index: true },
       { name: "sanctions", type: "int32", optional: true, index: true },
       { name: "is_banned", type: "bool", optional: true, index: true },
@@ -308,6 +326,7 @@ export class TypeSenseService {
         last_sign_in_at: true,
         wins: true,
         losses: true,
+        total_matches: true,
         stats: {
           kills: true,
           deaths: true,
@@ -389,6 +408,19 @@ export class TypeSenseService {
         Object.assign({}, player, elo, {
           id: steamId,
           steam_id: steamId,
+          elo: TypeSenseService.primaryElo(
+            elo.elo_competitive,
+            elo.elo_wingman,
+            elo.elo_duel,
+          ),
+          tournament_elo: TypeSenseService.primaryElo(
+            elo.tournament_elo_competitive,
+            elo.tournament_elo_wingman,
+            elo.tournament_elo_duel,
+          ),
+          total_matches: player.total_matches
+            ? parseInt(String(player.total_matches), 10)
+            : 0,
           kills: player.stats?.kills
             ? parseInt(String(player.stats.kills), 10)
             : 0,
@@ -406,6 +438,11 @@ export class TypeSenseService {
           is_muted: player.is_muted,
         }),
       );
+  }
+
+  // Mirrors PlayerElo's display order so the sorted value is the one on screen.
+  private static primaryElo(...values: Array<number | null>): number | null {
+    return values.find((value) => value !== null) ?? null;
   }
 
   public async removePlayer(steamId: string) {
