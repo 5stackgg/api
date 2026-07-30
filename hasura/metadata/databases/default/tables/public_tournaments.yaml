@@ -608,6 +608,7 @@ update_permissions:
         - logo
         - longitude
         - name
+        - scheduling_mode
         - start
         - status
         - awards_enabled
@@ -630,6 +631,7 @@ update_permissions:
         - logo
         - longitude
         - name
+        - scheduling_mode
         - start
         - status
         - awards_enabled
