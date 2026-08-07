@@ -106,6 +106,9 @@ describe("event <-> tournament match links (SQL-driven)", () => {
     expect(await linkedMatchIds(eventId)).toEqual(scheduled);
   });
 
+  // Pins the view's invariant directly rather than waiting for the FK to blow
+  // up: event_match_links_match_id_fkey is deferrable, so a phantom row would
+  // survive to COMMIT and this suite would go green on a broken view.
   it("the tournament branch never emits a match that does not exist", async () => {
     const eventId = await createEvent(new Date().toISOString(), null);
     const tournament = await tfx.launch(
@@ -113,6 +116,30 @@ describe("event <-> tournament match links (SQL-driven)", () => {
       4,
     );
     await attach(eventId, tournament.id);
+
+    // Recreate the window schedule_tournament_match() opens: the bracket points
+    // at a matches row that does not exist yet (its FK is deferred), so the
+    // view must simply not yield that bracket.
+    let phantomsInWindow = -1;
+    await expect(
+      postgres.transaction(async (client) => {
+        await client.query(
+          `UPDATE tournament_brackets SET match_id = gen_random_uuid()
+           WHERE id = (SELECT id FROM tournament_brackets
+                       WHERE tournament_stage_id = $1 ORDER BY match_number LIMIT 1)`,
+          [tournament.stageIds[0]],
+        );
+        const { rows } = await client.query(
+          `SELECT count(*)::int AS count
+           FROM v_event_matches v
+           LEFT JOIN matches m ON m.id = v.match_id
+           WHERE m.id IS NULL`,
+        );
+        phantomsInWindow = rows[0].count;
+        throw new Error("__rollback__");
+      }),
+    ).rejects.toThrow("__rollback__");
+    expect(phantomsInWindow).toBe(0);
 
     const [{ count: phantoms }] = await postgres.query<
       Array<{ count: number }>
