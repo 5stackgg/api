@@ -35,6 +35,14 @@ WITH windowed AS (
 )
 SELECT DISTINCT s.event_id, s.match_id
 FROM (
+    -- The join to matches is load-bearing, not cosmetic:
+    -- tournament_brackets.match_id is DEFERRABLE INITIALLY DEFERRED and
+    -- schedule_tournament_match() sets it BEFORE inserting the matches row.
+    -- The bracket's AFTER UPDATE OF match_id trigger fires inside that window,
+    -- so an unjoined tb.match_id yields a match that does not exist yet and
+    -- event_match_links' immediate FK rejects it, aborting the whole
+    -- transaction. Ignoring the bracket until its match exists is safe: the
+    -- matches INSERT trigger re-derives the link a moment later.
     SELECT et.event_id, tb.match_id
     FROM event_tournaments et
     JOIN tournament_stages ts ON ts.tournament_id = et.tournament_id
