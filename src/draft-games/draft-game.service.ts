@@ -1028,6 +1028,7 @@ export class DraftGameService {
       ready_setting: source.ready_setting,
       tech_timeout_setting: source.tech_timeout_setting,
       tv_delay: source.tv_delay,
+      veto_pick_timeout: source.veto_pick_timeout,
     };
 
     if (source.map_pool_id) {

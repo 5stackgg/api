@@ -4,6 +4,7 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     PERFORM create_match_map_from_veto(NEW);
+    PERFORM refresh_veto_pick_expiry(NEW.match_id);
     RETURN NEW;
 END;
 $$;

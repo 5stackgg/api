@@ -54,6 +54,7 @@ select_permissions:
       columns:
         - region
         - type
+        - auto_picked
         - created_at
         - id
         - match_id

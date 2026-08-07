@@ -284,6 +284,7 @@ DECLARE
     _match_options match_options%ROWTYPE;
     _auto_cancellation boolean;
     _auto_cancel_duration_override integer;
+    _veto_pick_timeout integer;
 BEGIN
     SELECT auto_cancellation, auto_cancel_duration INTO _auto_cancellation, _auto_cancel_duration_override FROM resolve_match_auto_cancel(NEW.id);
     _auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_int_setting('auto_cancel_duration', 15))::text || ' minutes';
@@ -417,16 +418,30 @@ BEGIN
             NEW.cancels_at = COALESCE(scheduled_at, NOW()) + (_auto_cancel_duration)::interval;
         END IF;
         NEW.ended_at = null;
+
+        -- Arm the first veto turn. Set here rather than via
+        -- refresh_veto_pick_expiry because this is a BEFORE trigger.
+        SELECT veto_pick_timeout INTO _veto_pick_timeout
+        FROM match_options
+        WHERE id = NEW.match_options_id;
+
+        IF COALESCE(_veto_pick_timeout, 0) > 0 THEN
+            NEW.veto_pick_expires_at = NOW() + (_veto_pick_timeout || ' seconds')::interval;
+        ELSE
+            NEW.veto_pick_expires_at = null;
+        END IF;
     END IF;
 
     IF NEW.status = 'WaitingForServer' AND OLD.status != 'WaitingForServer' THEN
         NEW.cancels_at = null;
         NEW.ended_at = null;
+        NEW.veto_pick_expires_at = null;
     END IF;
 
     IF (NEW.status = 'Canceled' AND OLD.status != 'Canceled')  THEN
         NEW.cancels_at = NOW();
         NEW.ended_at = null;
+        NEW.veto_pick_expires_at = null;
 
         DELETE FROM match_region_veto_picks WHERE match_id = NEW.id;
         DELETE FROM match_map_veto_picks WHERE match_id = NEW.id;
@@ -436,6 +451,7 @@ BEGIN
         NEW.started_at = NOW();
         NEW.cancels_at = null;
         NEW.ended_at = null;
+        NEW.veto_pick_expires_at = null;
     END IF;
 
     IF 
@@ -445,6 +461,7 @@ BEGIN
     THEN
         NEW.ended_at = NOW();
         NEW.cancels_at = null;
+        NEW.veto_pick_expires_at = null;
     END IF;
 
     PERFORM check_match_status(NEW);

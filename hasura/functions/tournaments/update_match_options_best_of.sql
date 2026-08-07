@@ -51,7 +51,8 @@ BEGIN
         overtime, knife_round, mr, best_of, coaches, number_of_substitutes,
         map_veto, timeout_setting, tech_timeout_setting, map_pool_id, type,
         regions, prefer_dedicated_server, invite_code,
-        region_veto, ready_setting, check_in_setting, default_models, tv_delay
+        region_veto, ready_setting, check_in_setting, default_models, tv_delay,
+        veto_pick_timeout
     ) VALUES (
         match_options_record.overtime, match_options_record.knife_round,
         match_options_record.mr, match_options_record.best_of,
@@ -62,7 +63,8 @@ BEGIN
         match_options_record.prefer_dedicated_server, match_options_record.invite_code,
         match_options_record.region_veto,
         match_options_record.ready_setting, match_options_record.check_in_setting,
-        match_options_record.default_models, match_options_record.tv_delay
+        match_options_record.default_models, match_options_record.tv_delay,
+        match_options_record.veto_pick_timeout
     )
     RETURNING id INTO final_match_options_id;
 

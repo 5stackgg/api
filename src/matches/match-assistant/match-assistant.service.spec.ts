@@ -19,6 +19,10 @@ describe("MatchAssistantService", () => {
   let queue: {
     add: jest.Mock;
   };
+  let scheduledMatchesQueue: {
+    add: jest.Mock;
+    getDelayed: jest.Mock;
+  };
 
   beforeEach(() => {
     hasura = {
@@ -30,6 +34,10 @@ describe("MatchAssistantService", () => {
     };
     queue = {
       add: jest.fn(),
+    };
+    scheduledMatchesQueue = {
+      add: jest.fn(),
+      getDelayed: jest.fn(async (): Promise<unknown[]> => []),
     };
 
     service = new MatchAssistantService(
@@ -64,6 +72,7 @@ describe("MatchAssistantService", () => {
         resolvePluginRuntime: jest.fn(async () => "swiftlys2"),
       } as any,
       queue as any,
+      scheduledMatchesQueue as any,
     );
   });
 

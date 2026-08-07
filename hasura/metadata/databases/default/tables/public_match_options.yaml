@@ -70,6 +70,7 @@ insert_permissions:
         - live_match_timeout
         - auto_cancellation
         - tv_delay
+        - veto_pick_timeout
         - type
         - halftime_pausematch
         - round_restart_delay
@@ -94,6 +95,7 @@ insert_permissions:
         - tech_timeout_setting
         - timeout_setting
         - tv_delay
+        - veto_pick_timeout
         - type
         - halftime_pausematch
         - round_restart_delay
@@ -124,6 +126,7 @@ select_permissions:
         - live_match_timeout
         - auto_cancellation
         - tv_delay
+        - veto_pick_timeout
         - type
         - halftime_pausematch
         - round_restart_delay
@@ -154,6 +157,7 @@ update_permissions:
         - live_match_timeout
         - auto_cancellation
         - tv_delay
+        - veto_pick_timeout
         - type
         - halftime_pausematch
         - round_restart_delay
@@ -211,6 +215,7 @@ update_permissions:
         - tech_timeout_setting
         - timeout_setting
         - tv_delay
+        - veto_pick_timeout
         - type
         - halftime_pausematch
         - round_restart_delay
