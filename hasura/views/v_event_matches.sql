@@ -47,6 +47,7 @@ FROM (
     FROM event_tournaments et
     JOIN tournament_stages ts ON ts.tournament_id = et.tournament_id
     JOIN tournament_brackets tb ON tb.tournament_stage_id = ts.id
+    JOIN matches m ON m.id = tb.match_id
     WHERE tb.match_id IS NOT NULL
 
     UNION ALL
