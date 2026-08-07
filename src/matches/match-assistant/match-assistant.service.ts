@@ -442,6 +442,13 @@ export class MatchAssistantService {
     };
   }
 
+  // Boot the server in the right mode instead of leaving the plugin to correct
+  // it after the map has already loaded — game_mode picks the map layout
+  // (Wingman/Duel get the 2v2 version) and only applies at map load.
+  private static getGameMode(type?: e_match_types_enum): number {
+    return type === "Wingman" || type === "Duel" ? 2 : 1;
+  }
+
   private async assignDedicatedServer(
     matchId: string,
     region: string,
@@ -542,6 +549,9 @@ export class MatchAssistantService {
         server_id: true,
         max_players_per_lineup: true,
         is_tournament_match: true,
+        options: {
+          type: true,
+        },
         match_maps: {
           __args: {
             order_by: [
@@ -865,7 +875,7 @@ export class MatchAssistantService {
                           },
                           {
                             name: "EXTRA_GAME_PARAMS",
-                            value: `-maxplayers ${match.max_players_per_lineup * 2 + 3} ${map.workshop_map_id ? `+map de_inferno` : `+map ${map.name}`} +sv_password ${match.password}`,
+                            value: `-maxplayers ${match.max_players_per_lineup * 2 + 3} ${map.workshop_map_id ? `+map de_inferno` : `+map ${map.name}`} +game_type 0 +game_mode ${MatchAssistantService.getGameMode(match.options?.type)} +sv_password ${match.password}`,
                           },
                           { name: "SERVER_ID", value: server.id },
                           {
