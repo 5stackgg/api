@@ -1028,11 +1028,16 @@ export class DraftGameService {
       ready_setting: source.ready_setting,
       tech_timeout_setting: source.tech_timeout_setting,
       tv_delay: source.tv_delay,
-      veto_pick_timeout: source.veto_pick_timeout,
     };
 
     if (source.map_pool_id) {
       object.map_pool_id = source.map_pool_id;
+    }
+
+    // These run through Hasura as admin, so the match_options column
+    // permissions never apply — the role gates have to be repeated here.
+    if (isRoleAbove(user.role, "match_organizer")) {
+      object.veto_pick_timeout = source.veto_pick_timeout;
     }
 
     if (isRoleAbove(user.role, "tournament_organizer")) {

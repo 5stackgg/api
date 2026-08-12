@@ -95,7 +95,6 @@ insert_permissions:
         - tech_timeout_setting
         - timeout_setting
         - tv_delay
-        - veto_pick_timeout
         - type
         - halftime_pausematch
         - round_restart_delay
@@ -215,7 +214,6 @@ update_permissions:
         - tech_timeout_setting
         - timeout_setting
         - tv_delay
-        - veto_pick_timeout
         - type
         - halftime_pausematch
         - round_restart_delay
