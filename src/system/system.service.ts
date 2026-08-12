@@ -646,6 +646,23 @@ export class SystemService {
             `ALTER TABLE "public"."match_options" ALTER COLUMN "default_models" SET DEFAULT ${setting.value === "true" ? true : false}`,
           );
           break;
+        case SystemSettingName.VetoPickTimeout: {
+          // Interpolated into DDL, which cannot take a bind parameter, so the
+          // value has to be proven to be a plain non-negative integer first.
+          const vetoPickTimeout = Number.parseInt(setting.value, 10);
+
+          if (Number.isNaN(vetoPickTimeout) || vetoPickTimeout < 0) {
+            this.logger.warn(
+              `ignoring invalid ${SystemSettingName.VetoPickTimeout} setting: ${setting.value}`,
+            );
+            break;
+          }
+
+          await this.postgres.query(
+            `ALTER TABLE "public"."match_options" ALTER COLUMN "veto_pick_timeout" SET DEFAULT ${vetoPickTimeout}`,
+          );
+          break;
+        }
         default:
           break;
       }

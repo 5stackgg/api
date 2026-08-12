@@ -1034,6 +1034,12 @@ export class DraftGameService {
       object.map_pool_id = source.map_pool_id;
     }
 
+    // These run through Hasura as admin, so the match_options column
+    // permissions never apply — the role gates have to be repeated here.
+    if (isRoleAbove(user.role, "match_organizer")) {
+      object.veto_pick_timeout = source.veto_pick_timeout;
+    }
+
     if (isRoleAbove(user.role, "tournament_organizer")) {
       object.auto_cancellation = source.auto_cancellation;
       object.match_mode = source.match_mode;

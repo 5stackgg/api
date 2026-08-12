@@ -4,6 +4,7 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
     PERFORM auto_select_region_veto(NEW);
+    PERFORM refresh_veto_pick_expiry(NEW.match_id);
     RETURN NEW;
 END;
 $$;

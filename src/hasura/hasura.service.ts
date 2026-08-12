@@ -160,6 +160,13 @@ export class HasuraService {
     await this.postgresService.query(
       "insert into settings (name, value) values ('public.grant_awards_role', 'administrator') on conflict (name) do nothing",
     );
+
+    // Seeds the platform default new match_options rows inherit. `do nothing`
+    // preserves an operator's explicit value (including 0, which disables the
+    // veto timer entirely).
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.veto_pick_timeout', '60') on conflict (name) do nothing",
+    );
   }
 
   private async applyMigrations(path: string): Promise<number> {

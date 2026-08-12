@@ -61,6 +61,7 @@ select_permissions:
       columns:
         - side
         - type
+        - auto_picked
         - created_at
         - id
         - map_id
