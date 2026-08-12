@@ -50,6 +50,8 @@ insert_permissions:
       check: {}
       columns:
         - best_of
+        - camera_required
+        - camera_allow_teammates
         - check_in_setting
         - coaches
         - default_models
@@ -104,6 +106,8 @@ select_permissions:
     permission:
       columns:
         - best_of
+        - camera_required
+        - camera_allow_teammates
         - check_in_setting
         - coaches
         - default_models
@@ -136,6 +140,8 @@ update_permissions:
     permission:
       columns:
         - best_of
+        - camera_required
+        - camera_allow_teammates
         - check_in_setting
         - coaches
         - default_models

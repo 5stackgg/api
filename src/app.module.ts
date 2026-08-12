@@ -6,6 +6,7 @@ import { TypeSenseModule } from "./type-sense/type-sense.module";
 import { AuthModule } from "./auth/auth.module";
 import { DiscordBotModule } from "./discord-bot/discord-bot.module";
 import { MatchesModule } from "./matches/matches.module";
+import { VoiceModule } from "./voice/voice.module";
 
 import { EncryptionModule } from "./encryption/encryption.module";
 import { CacheModule } from "./cache/cache.module";
@@ -67,6 +68,7 @@ import { PluginsModule } from "./plugins/plugins.module";
     SocketsModule,
     TypeSenseModule,
     MatchesModule,
+    VoiceModule,
     MatchMaking,
     DraftGamesModule,
     EncryptionModule,

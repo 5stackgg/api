@@ -3315,13 +3315,15 @@ export class GameStreamerService {
                 // No CPU request/limit — 1 streamer per GPU node, so let it
                 // use every core (uncapped = no CFS throttling; the CPU-bound
                 // shader compile wants them all). GPU + memory still bounded.
+                // The 8Gi request tracks real steady-state (cs2 alone sits at
+                // ~7Gi) so the scheduler stops treating the node as near-empty.
                 resources: {
                   limits: {
                     memory: "16Gi",
                     "nvidia.com/gpu": "1",
                   },
                   requests: {
-                    memory: "2Gi",
+                    memory: "8Gi",
                     "nvidia.com/gpu": "1",
                   },
                 },

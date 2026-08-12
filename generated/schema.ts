@@ -9546,6 +9546,144 @@ export type maps_select_column_maps_aggregate_bool_exp_bool_or_arguments_columns
 export type maps_update_column = 'active_pool' | 'enabled' | 'id' | 'label' | 'name' | 'patch' | 'poster' | 'type' | 'workshop_map_id'
 
 
+/** columns and relationships of "match_camera_tokens" */
+export interface match_camera_tokens {
+    created_at: Scalars['timestamptz']
+    id: Scalars['uuid']
+    /** An object relationship */
+    match: matches
+    match_id: Scalars['uuid']
+    steam_id: Scalars['bigint']
+    token: Scalars['uuid']
+    __typename: 'match_camera_tokens'
+}
+
+
+/** aggregated selection of "match_camera_tokens" */
+export interface match_camera_tokens_aggregate {
+    aggregate: (match_camera_tokens_aggregate_fields | null)
+    nodes: match_camera_tokens[]
+    __typename: 'match_camera_tokens_aggregate'
+}
+
+
+/** aggregate fields of "match_camera_tokens" */
+export interface match_camera_tokens_aggregate_fields {
+    avg: (match_camera_tokens_avg_fields | null)
+    count: Scalars['Int']
+    max: (match_camera_tokens_max_fields | null)
+    min: (match_camera_tokens_min_fields | null)
+    stddev: (match_camera_tokens_stddev_fields | null)
+    stddev_pop: (match_camera_tokens_stddev_pop_fields | null)
+    stddev_samp: (match_camera_tokens_stddev_samp_fields | null)
+    sum: (match_camera_tokens_sum_fields | null)
+    var_pop: (match_camera_tokens_var_pop_fields | null)
+    var_samp: (match_camera_tokens_var_samp_fields | null)
+    variance: (match_camera_tokens_variance_fields | null)
+    __typename: 'match_camera_tokens_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface match_camera_tokens_avg_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'match_camera_tokens_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "match_camera_tokens" */
+export type match_camera_tokens_constraint = 'match_camera_tokens_match_id_steam_id_key' | 'match_camera_tokens_pkey' | 'match_camera_tokens_token_key'
+
+
+/** aggregate max on columns */
+export interface match_camera_tokens_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    match_id: (Scalars['uuid'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    token: (Scalars['uuid'] | null)
+    __typename: 'match_camera_tokens_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface match_camera_tokens_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    match_id: (Scalars['uuid'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    token: (Scalars['uuid'] | null)
+    __typename: 'match_camera_tokens_min_fields'
+}
+
+
+/** response of any mutation on the table "match_camera_tokens" */
+export interface match_camera_tokens_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: match_camera_tokens[]
+    __typename: 'match_camera_tokens_mutation_response'
+}
+
+
+/** select columns of table "match_camera_tokens" */
+export type match_camera_tokens_select_column = 'created_at' | 'id' | 'match_id' | 'steam_id' | 'token'
+
+
+/** aggregate stddev on columns */
+export interface match_camera_tokens_stddev_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'match_camera_tokens_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface match_camera_tokens_stddev_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'match_camera_tokens_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface match_camera_tokens_stddev_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'match_camera_tokens_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface match_camera_tokens_sum_fields {
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'match_camera_tokens_sum_fields'
+}
+
+
+/** update columns of table "match_camera_tokens" */
+export type match_camera_tokens_update_column = 'created_at' | 'id' | 'match_id' | 'steam_id' | 'token'
+
+
+/** aggregate var_pop on columns */
+export interface match_camera_tokens_var_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'match_camera_tokens_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface match_camera_tokens_var_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'match_camera_tokens_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface match_camera_tokens_variance_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'match_camera_tokens_variance_fields'
+}
+
+
 /** columns and relationships of "match_clips" */
 export interface match_clips {
     created_at: Scalars['timestamptz']
@@ -11166,6 +11304,8 @@ export interface match_options {
     auto_cancel_duration: (Scalars['Int'] | null)
     auto_cancellation: Scalars['Boolean']
     best_of: Scalars['Int']
+    camera_allow_teammates: Scalars['Boolean']
+    camera_required: Scalars['Boolean']
     check_in_setting: e_check_in_settings_enum
     coaches: Scalars['Boolean']
     default_models: (Scalars['Boolean'] | null)
@@ -11298,7 +11438,7 @@ export interface match_options_mutation_response {
 
 
 /** select columns of table "match_options" */
-export type match_options_select_column = 'auto_cancel_duration' | 'auto_cancellation' | 'best_of' | 'check_in_setting' | 'coaches' | 'default_models' | 'halftime_pausematch' | 'id' | 'invite_code' | 'knife_round' | 'live_match_timeout' | 'map_pool_id' | 'map_veto' | 'match_mode' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'round_restart_delay' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type' | 'veto_pick_timeout'
+export type match_options_select_column = 'auto_cancel_duration' | 'auto_cancellation' | 'best_of' | 'camera_allow_teammates' | 'camera_required' | 'check_in_setting' | 'coaches' | 'default_models' | 'halftime_pausematch' | 'id' | 'invite_code' | 'knife_round' | 'live_match_timeout' | 'map_pool_id' | 'map_veto' | 'match_mode' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'round_restart_delay' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type' | 'veto_pick_timeout'
 
 
 /** aggregate stddev on columns */
@@ -11358,7 +11498,7 @@ export interface match_options_sum_fields {
 
 
 /** update columns of table "match_options" */
-export type match_options_update_column = 'auto_cancel_duration' | 'auto_cancellation' | 'best_of' | 'check_in_setting' | 'coaches' | 'default_models' | 'halftime_pausematch' | 'id' | 'invite_code' | 'knife_round' | 'live_match_timeout' | 'map_pool_id' | 'map_veto' | 'match_mode' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'round_restart_delay' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type' | 'veto_pick_timeout'
+export type match_options_update_column = 'auto_cancel_duration' | 'auto_cancellation' | 'best_of' | 'camera_allow_teammates' | 'camera_required' | 'check_in_setting' | 'coaches' | 'default_models' | 'halftime_pausematch' | 'id' | 'invite_code' | 'knife_round' | 'live_match_timeout' | 'map_pool_id' | 'map_veto' | 'match_mode' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'round_restart_delay' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type' | 'veto_pick_timeout'
 
 
 /** aggregate var_pop on columns */
@@ -12612,6 +12752,10 @@ export interface mutation_root {
     delete_maps: (maps_mutation_response | null)
     /** delete single row from the table: "maps" */
     delete_maps_by_pk: (maps | null)
+    /** delete data from the table: "match_camera_tokens" */
+    delete_match_camera_tokens: (match_camera_tokens_mutation_response | null)
+    /** delete single row from the table: "match_camera_tokens" */
+    delete_match_camera_tokens_by_pk: (match_camera_tokens | null)
     /** delete data from the table: "match_clips" */
     delete_match_clips: (match_clips_mutation_response | null)
     /** delete single row from the table: "match_clips" */
@@ -13236,6 +13380,10 @@ export interface mutation_root {
     insert_maps: (maps_mutation_response | null)
     /** insert a single row into the table: "maps" */
     insert_maps_one: (maps | null)
+    /** insert data into the table: "match_camera_tokens" */
+    insert_match_camera_tokens: (match_camera_tokens_mutation_response | null)
+    /** insert a single row into the table: "match_camera_tokens" */
+    insert_match_camera_tokens_one: (match_camera_tokens | null)
     /** insert data into the table: "match_clips" */
     insert_match_clips: (match_clips_mutation_response | null)
     /** insert a single row into the table: "match_clips" */
@@ -14161,6 +14309,12 @@ export interface mutation_root {
     update_maps_by_pk: (maps | null)
     /** update multiples rows of table: "maps" */
     update_maps_many: ((maps_mutation_response | null)[] | null)
+    /** update data of the table: "match_camera_tokens" */
+    update_match_camera_tokens: (match_camera_tokens_mutation_response | null)
+    /** update single row of the table: "match_camera_tokens" */
+    update_match_camera_tokens_by_pk: (match_camera_tokens | null)
+    /** update multiples rows of table: "match_camera_tokens" */
+    update_match_camera_tokens_many: ((match_camera_tokens_mutation_response | null)[] | null)
     /** update data of the table: "match_clips" */
     update_match_clips: (match_clips_mutation_response | null)
     /** update single row of the table: "match_clips" */
@@ -23291,6 +23445,12 @@ export interface query_root {
     maps_aggregate: maps_aggregate
     /** fetch data from the table: "maps" using primary key columns */
     maps_by_pk: (maps | null)
+    /** fetch data from the table: "match_camera_tokens" */
+    match_camera_tokens: match_camera_tokens[]
+    /** fetch aggregated fields from the table: "match_camera_tokens" */
+    match_camera_tokens_aggregate: match_camera_tokens_aggregate
+    /** fetch data from the table: "match_camera_tokens" using primary key columns */
+    match_camera_tokens_by_pk: (match_camera_tokens | null)
     /** An array relationship */
     match_clips: match_clips[]
     /** An aggregate relationship */
@@ -25418,6 +25578,14 @@ export interface subscription_root {
     maps_by_pk: (maps | null)
     /** fetch data from the table in a streaming manner: "maps" */
     maps_stream: maps[]
+    /** fetch data from the table: "match_camera_tokens" */
+    match_camera_tokens: match_camera_tokens[]
+    /** fetch aggregated fields from the table: "match_camera_tokens" */
+    match_camera_tokens_aggregate: match_camera_tokens_aggregate
+    /** fetch data from the table: "match_camera_tokens" using primary key columns */
+    match_camera_tokens_by_pk: (match_camera_tokens | null)
+    /** fetch data from the table in a streaming manner: "match_camera_tokens" */
+    match_camera_tokens_stream: match_camera_tokens[]
     /** An array relationship */
     match_clips: match_clips[]
     /** An aggregate relationship */
@@ -51500,6 +51668,194 @@ _set?: (maps_set_input | null),
 where: maps_bool_exp}
 
 
+/** columns and relationships of "match_camera_tokens" */
+export interface match_camera_tokensGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    /** An object relationship */
+    match?: matchesGenqlSelection
+    match_id?: boolean | number
+    steam_id?: boolean | number
+    token?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "match_camera_tokens" */
+export interface match_camera_tokens_aggregateGenqlSelection{
+    aggregate?: match_camera_tokens_aggregate_fieldsGenqlSelection
+    nodes?: match_camera_tokensGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "match_camera_tokens" */
+export interface match_camera_tokens_aggregate_fieldsGenqlSelection{
+    avg?: match_camera_tokens_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (match_camera_tokens_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: match_camera_tokens_max_fieldsGenqlSelection
+    min?: match_camera_tokens_min_fieldsGenqlSelection
+    stddev?: match_camera_tokens_stddev_fieldsGenqlSelection
+    stddev_pop?: match_camera_tokens_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: match_camera_tokens_stddev_samp_fieldsGenqlSelection
+    sum?: match_camera_tokens_sum_fieldsGenqlSelection
+    var_pop?: match_camera_tokens_var_pop_fieldsGenqlSelection
+    var_samp?: match_camera_tokens_var_samp_fieldsGenqlSelection
+    variance?: match_camera_tokens_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface match_camera_tokens_avg_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "match_camera_tokens". All fields are combined with a logical 'AND'. */
+export interface match_camera_tokens_bool_exp {_and?: (match_camera_tokens_bool_exp[] | null),_not?: (match_camera_tokens_bool_exp | null),_or?: (match_camera_tokens_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),token?: (uuid_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "match_camera_tokens" */
+export interface match_camera_tokens_inc_input {steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "match_camera_tokens" */
+export interface match_camera_tokens_insert_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),token?: (Scalars['uuid'] | null)}
+
+
+/** aggregate max on columns */
+export interface match_camera_tokens_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    match_id?: boolean | number
+    steam_id?: boolean | number
+    token?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface match_camera_tokens_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    id?: boolean | number
+    match_id?: boolean | number
+    steam_id?: boolean | number
+    token?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "match_camera_tokens" */
+export interface match_camera_tokens_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: match_camera_tokensGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "match_camera_tokens" */
+export interface match_camera_tokens_on_conflict {constraint: match_camera_tokens_constraint,update_columns?: match_camera_tokens_update_column[],where?: (match_camera_tokens_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "match_camera_tokens". */
+export interface match_camera_tokens_order_by {created_at?: (order_by | null),id?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),steam_id?: (order_by | null),token?: (order_by | null)}
+
+
+/** primary key columns input for table: match_camera_tokens */
+export interface match_camera_tokens_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "match_camera_tokens" */
+export interface match_camera_tokens_set_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),token?: (Scalars['uuid'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface match_camera_tokens_stddev_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface match_camera_tokens_stddev_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface match_camera_tokens_stddev_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "match_camera_tokens" */
+export interface match_camera_tokens_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: match_camera_tokens_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface match_camera_tokens_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),match_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),token?: (Scalars['uuid'] | null)}
+
+
+/** aggregate sum on columns */
+export interface match_camera_tokens_sum_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface match_camera_tokens_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (match_camera_tokens_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (match_camera_tokens_set_input | null),
+/** filter the rows which have to be updated */
+where: match_camera_tokens_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface match_camera_tokens_var_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface match_camera_tokens_var_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface match_camera_tokens_variance_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
 /** columns and relationships of "match_clips" */
 export interface match_clipsGenqlSelection{
     created_at?: boolean | number
@@ -54368,6 +54724,8 @@ export interface match_optionsGenqlSelection{
     auto_cancel_duration?: boolean | number
     auto_cancellation?: boolean | number
     best_of?: boolean | number
+    camera_allow_teammates?: boolean | number
+    camera_required?: boolean | number
     check_in_setting?: boolean | number
     coaches?: boolean | number
     default_models?: boolean | number
@@ -54474,7 +54832,7 @@ export interface match_options_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "match_options". All fields are combined with a logical 'AND'. */
-export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),auto_cancel_duration?: (Int_comparison_exp | null),auto_cancellation?: (Boolean_comparison_exp | null),best_of?: (Int_comparison_exp | null),check_in_setting?: (e_check_in_settings_enum_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),default_models?: (Boolean_comparison_exp | null),halftime_pausematch?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),live_match_timeout?: (Int_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),match_mode?: (e_match_mode_enum_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),prefer_dedicated_server?: (Boolean_comparison_exp | null),ready_setting?: (e_ready_settings_enum_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),regions?: (String_array_comparison_exp | null),round_restart_delay?: (Int_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_bracket?: (tournament_brackets_bool_exp | null),tournament_stage?: (tournament_stages_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null),veto_pick_timeout?: (Int_comparison_exp | null)}
+export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),auto_cancel_duration?: (Int_comparison_exp | null),auto_cancellation?: (Boolean_comparison_exp | null),best_of?: (Int_comparison_exp | null),camera_allow_teammates?: (Boolean_comparison_exp | null),camera_required?: (Boolean_comparison_exp | null),check_in_setting?: (e_check_in_settings_enum_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),default_models?: (Boolean_comparison_exp | null),halftime_pausematch?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),live_match_timeout?: (Int_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),match_mode?: (e_match_mode_enum_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),prefer_dedicated_server?: (Boolean_comparison_exp | null),ready_setting?: (e_ready_settings_enum_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),regions?: (String_array_comparison_exp | null),round_restart_delay?: (Int_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_bracket?: (tournament_brackets_bool_exp | null),tournament_stage?: (tournament_stages_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null),veto_pick_timeout?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_options" */
@@ -54482,7 +54840,7 @@ export interface match_options_inc_input {auto_cancel_duration?: (Scalars['Int']
 
 
 /** input type for inserting data into table "match_options" */
-export interface match_options_insert_input {auto_cancel_duration?: (Scalars['Int'] | null),auto_cancellation?: (Scalars['Boolean'] | null),best_of?: (Scalars['Int'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),halftime_pausematch?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),live_match_timeout?: (Scalars['Int'] | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),match_mode?: (e_match_mode_enum | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),round_restart_delay?: (Scalars['Int'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_bracket?: (tournament_brackets_obj_rel_insert_input | null),tournament_stage?: (tournament_stages_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null),veto_pick_timeout?: (Scalars['Int'] | null)}
+export interface match_options_insert_input {auto_cancel_duration?: (Scalars['Int'] | null),auto_cancellation?: (Scalars['Boolean'] | null),best_of?: (Scalars['Int'] | null),camera_allow_teammates?: (Scalars['Boolean'] | null),camera_required?: (Scalars['Boolean'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),halftime_pausematch?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),live_match_timeout?: (Scalars['Int'] | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),match_mode?: (e_match_mode_enum | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),round_restart_delay?: (Scalars['Int'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_bracket?: (tournament_brackets_obj_rel_insert_input | null),tournament_stage?: (tournament_stages_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null),veto_pick_timeout?: (Scalars['Int'] | null)}
 
 
 /** aggregate max on columns */
@@ -54545,7 +54903,7 @@ export interface match_options_on_conflict {constraint: match_options_constraint
 
 
 /** Ordering options when selecting data from "match_options". */
-export interface match_options_order_by {auto_cancel_duration?: (order_by | null),auto_cancellation?: (order_by | null),best_of?: (order_by | null),check_in_setting?: (order_by | null),coaches?: (order_by | null),default_models?: (order_by | null),halftime_pausematch?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),knife_round?: (order_by | null),live_match_timeout?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),match_mode?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),overtime?: (order_by | null),prefer_dedicated_server?: (order_by | null),ready_setting?: (order_by | null),region_veto?: (order_by | null),regions?: (order_by | null),round_restart_delay?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_bracket?: (tournament_brackets_order_by | null),tournament_stage?: (tournament_stages_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null),veto_pick_timeout?: (order_by | null)}
+export interface match_options_order_by {auto_cancel_duration?: (order_by | null),auto_cancellation?: (order_by | null),best_of?: (order_by | null),camera_allow_teammates?: (order_by | null),camera_required?: (order_by | null),check_in_setting?: (order_by | null),coaches?: (order_by | null),default_models?: (order_by | null),halftime_pausematch?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),knife_round?: (order_by | null),live_match_timeout?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),match_mode?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),overtime?: (order_by | null),prefer_dedicated_server?: (order_by | null),ready_setting?: (order_by | null),region_veto?: (order_by | null),regions?: (order_by | null),round_restart_delay?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_bracket?: (tournament_brackets_order_by | null),tournament_stage?: (tournament_stages_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null),veto_pick_timeout?: (order_by | null)}
 
 
 /** primary key columns input for table: match_options */
@@ -54553,7 +54911,7 @@ export interface match_options_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_options" */
-export interface match_options_set_input {auto_cancel_duration?: (Scalars['Int'] | null),auto_cancellation?: (Scalars['Boolean'] | null),best_of?: (Scalars['Int'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),halftime_pausematch?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),live_match_timeout?: (Scalars['Int'] | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),match_mode?: (e_match_mode_enum | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),round_restart_delay?: (Scalars['Int'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null),veto_pick_timeout?: (Scalars['Int'] | null)}
+export interface match_options_set_input {auto_cancel_duration?: (Scalars['Int'] | null),auto_cancellation?: (Scalars['Boolean'] | null),best_of?: (Scalars['Int'] | null),camera_allow_teammates?: (Scalars['Boolean'] | null),camera_required?: (Scalars['Boolean'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),halftime_pausematch?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),live_match_timeout?: (Scalars['Int'] | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),match_mode?: (e_match_mode_enum | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),round_restart_delay?: (Scalars['Int'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null),veto_pick_timeout?: (Scalars['Int'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -54610,7 +54968,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_options_stream_cursor_value_input {auto_cancel_duration?: (Scalars['Int'] | null),auto_cancellation?: (Scalars['Boolean'] | null),best_of?: (Scalars['Int'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),halftime_pausematch?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),live_match_timeout?: (Scalars['Int'] | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),match_mode?: (e_match_mode_enum | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),round_restart_delay?: (Scalars['Int'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null),veto_pick_timeout?: (Scalars['Int'] | null)}
+export interface match_options_stream_cursor_value_input {auto_cancel_duration?: (Scalars['Int'] | null),auto_cancellation?: (Scalars['Boolean'] | null),best_of?: (Scalars['Int'] | null),camera_allow_teammates?: (Scalars['Boolean'] | null),camera_required?: (Scalars['Boolean'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),halftime_pausematch?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),live_match_timeout?: (Scalars['Int'] | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),match_mode?: (e_match_mode_enum | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),round_restart_delay?: (Scalars['Int'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null),veto_pick_timeout?: (Scalars['Int'] | null)}
 
 
 /** aggregate sum on columns */
@@ -56800,6 +57158,12 @@ export interface mutation_rootGenqlSelection{
     where: maps_bool_exp} })
     /** delete single row from the table: "maps" */
     delete_maps_by_pk?: (mapsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "match_camera_tokens" */
+    delete_match_camera_tokens?: (match_camera_tokens_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: match_camera_tokens_bool_exp} })
+    /** delete single row from the table: "match_camera_tokens" */
+    delete_match_camera_tokens_by_pk?: (match_camera_tokensGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "match_clips" */
     delete_match_clips?: (match_clips_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -58232,6 +58596,18 @@ export interface mutation_rootGenqlSelection{
     object: maps_insert_input, 
     /** upsert condition */
     on_conflict?: (maps_on_conflict | null)} })
+    /** insert data into the table: "match_camera_tokens" */
+    insert_match_camera_tokens?: (match_camera_tokens_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: match_camera_tokens_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (match_camera_tokens_on_conflict | null)} })
+    /** insert a single row into the table: "match_camera_tokens" */
+    insert_match_camera_tokens_one?: (match_camera_tokensGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: match_camera_tokens_insert_input, 
+    /** upsert condition */
+    on_conflict?: (match_camera_tokens_on_conflict | null)} })
     /** insert data into the table: "match_clips" */
     insert_match_clips?: (match_clips_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -60681,6 +61057,24 @@ export interface mutation_rootGenqlSelection{
     update_maps_many?: (maps_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: maps_updates[]} })
+    /** update data of the table: "match_camera_tokens" */
+    update_match_camera_tokens?: (match_camera_tokens_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (match_camera_tokens_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (match_camera_tokens_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: match_camera_tokens_bool_exp} })
+    /** update single row of the table: "match_camera_tokens" */
+    update_match_camera_tokens_by_pk?: (match_camera_tokensGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (match_camera_tokens_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (match_camera_tokens_set_input | null), pk_columns: match_camera_tokens_pk_columns_input} })
+    /** update multiples rows of table: "match_camera_tokens" */
+    update_match_camera_tokens_many?: (match_camera_tokens_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: match_camera_tokens_updates[]} })
     /** update data of the table: "match_clips" */
     update_match_clips?: (match_clips_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -75951,6 +76345,32 @@ export interface query_rootGenqlSelection{
     where?: (maps_bool_exp | null)} })
     /** fetch data from the table: "maps" using primary key columns */
     maps_by_pk?: (mapsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "match_camera_tokens" */
+    match_camera_tokens?: (match_camera_tokensGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_camera_tokens_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_camera_tokens_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_camera_tokens_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "match_camera_tokens" */
+    match_camera_tokens_aggregate?: (match_camera_tokens_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_camera_tokens_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_camera_tokens_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_camera_tokens_bool_exp | null)} })
+    /** fetch data from the table: "match_camera_tokens" using primary key columns */
+    match_camera_tokens_by_pk?: (match_camera_tokensGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** An array relationship */
     match_clips?: (match_clipsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -82947,6 +83367,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (maps_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (maps_bool_exp | null)} })
+    /** fetch data from the table: "match_camera_tokens" */
+    match_camera_tokens?: (match_camera_tokensGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_camera_tokens_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_camera_tokens_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_camera_tokens_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "match_camera_tokens" */
+    match_camera_tokens_aggregate?: (match_camera_tokens_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (match_camera_tokens_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (match_camera_tokens_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (match_camera_tokens_bool_exp | null)} })
+    /** fetch data from the table: "match_camera_tokens" using primary key columns */
+    match_camera_tokens_by_pk?: (match_camera_tokensGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "match_camera_tokens" */
+    match_camera_tokens_stream?: (match_camera_tokensGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (match_camera_tokens_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (match_camera_tokens_bool_exp | null)} })
     /** An array relationship */
     match_clips?: (match_clipsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -106856,6 +107310,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const match_camera_tokens_possibleTypes: string[] = ['match_camera_tokens']
+    export const ismatch_camera_tokens = (obj?: { __typename?: any } | null): obj is match_camera_tokens => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_camera_tokens"')
+      return match_camera_tokens_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_camera_tokens_aggregate_possibleTypes: string[] = ['match_camera_tokens_aggregate']
+    export const ismatch_camera_tokens_aggregate = (obj?: { __typename?: any } | null): obj is match_camera_tokens_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_camera_tokens_aggregate"')
+      return match_camera_tokens_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_camera_tokens_aggregate_fields_possibleTypes: string[] = ['match_camera_tokens_aggregate_fields']
+    export const ismatch_camera_tokens_aggregate_fields = (obj?: { __typename?: any } | null): obj is match_camera_tokens_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_camera_tokens_aggregate_fields"')
+      return match_camera_tokens_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_camera_tokens_avg_fields_possibleTypes: string[] = ['match_camera_tokens_avg_fields']
+    export const ismatch_camera_tokens_avg_fields = (obj?: { __typename?: any } | null): obj is match_camera_tokens_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_camera_tokens_avg_fields"')
+      return match_camera_tokens_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_camera_tokens_max_fields_possibleTypes: string[] = ['match_camera_tokens_max_fields']
+    export const ismatch_camera_tokens_max_fields = (obj?: { __typename?: any } | null): obj is match_camera_tokens_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_camera_tokens_max_fields"')
+      return match_camera_tokens_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_camera_tokens_min_fields_possibleTypes: string[] = ['match_camera_tokens_min_fields']
+    export const ismatch_camera_tokens_min_fields = (obj?: { __typename?: any } | null): obj is match_camera_tokens_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_camera_tokens_min_fields"')
+      return match_camera_tokens_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_camera_tokens_mutation_response_possibleTypes: string[] = ['match_camera_tokens_mutation_response']
+    export const ismatch_camera_tokens_mutation_response = (obj?: { __typename?: any } | null): obj is match_camera_tokens_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_camera_tokens_mutation_response"')
+      return match_camera_tokens_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_camera_tokens_stddev_fields_possibleTypes: string[] = ['match_camera_tokens_stddev_fields']
+    export const ismatch_camera_tokens_stddev_fields = (obj?: { __typename?: any } | null): obj is match_camera_tokens_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_camera_tokens_stddev_fields"')
+      return match_camera_tokens_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_camera_tokens_stddev_pop_fields_possibleTypes: string[] = ['match_camera_tokens_stddev_pop_fields']
+    export const ismatch_camera_tokens_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is match_camera_tokens_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_camera_tokens_stddev_pop_fields"')
+      return match_camera_tokens_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_camera_tokens_stddev_samp_fields_possibleTypes: string[] = ['match_camera_tokens_stddev_samp_fields']
+    export const ismatch_camera_tokens_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is match_camera_tokens_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_camera_tokens_stddev_samp_fields"')
+      return match_camera_tokens_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_camera_tokens_sum_fields_possibleTypes: string[] = ['match_camera_tokens_sum_fields']
+    export const ismatch_camera_tokens_sum_fields = (obj?: { __typename?: any } | null): obj is match_camera_tokens_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_camera_tokens_sum_fields"')
+      return match_camera_tokens_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_camera_tokens_var_pop_fields_possibleTypes: string[] = ['match_camera_tokens_var_pop_fields']
+    export const ismatch_camera_tokens_var_pop_fields = (obj?: { __typename?: any } | null): obj is match_camera_tokens_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_camera_tokens_var_pop_fields"')
+      return match_camera_tokens_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_camera_tokens_var_samp_fields_possibleTypes: string[] = ['match_camera_tokens_var_samp_fields']
+    export const ismatch_camera_tokens_var_samp_fields = (obj?: { __typename?: any } | null): obj is match_camera_tokens_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_camera_tokens_var_samp_fields"')
+      return match_camera_tokens_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const match_camera_tokens_variance_fields_possibleTypes: string[] = ['match_camera_tokens_variance_fields']
+    export const ismatch_camera_tokens_variance_fields = (obj?: { __typename?: any } | null): obj is match_camera_tokens_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_camera_tokens_variance_fields"')
+      return match_camera_tokens_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const match_clips_possibleTypes: string[] = ['match_clips']
     export const ismatch_clips = (obj?: { __typename?: any } | null): obj is match_clips => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ismatch_clips"')
@@ -120107,6 +120673,28 @@ export const enumMapsUpdateColumn = {
    workshop_map_id: 'workshop_map_id' as const
 }
 
+export const enumMatchCameraTokensConstraint = {
+   match_camera_tokens_match_id_steam_id_key: 'match_camera_tokens_match_id_steam_id_key' as const,
+   match_camera_tokens_pkey: 'match_camera_tokens_pkey' as const,
+   match_camera_tokens_token_key: 'match_camera_tokens_token_key' as const
+}
+
+export const enumMatchCameraTokensSelectColumn = {
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   match_id: 'match_id' as const,
+   steam_id: 'steam_id' as const,
+   token: 'token' as const
+}
+
+export const enumMatchCameraTokensUpdateColumn = {
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   match_id: 'match_id' as const,
+   steam_id: 'steam_id' as const,
+   token: 'token' as const
+}
+
 export const enumMatchClipsConstraint = {
    match_clips_pkey: 'match_clips_pkey' as const
 }
@@ -120444,6 +121032,8 @@ export const enumMatchOptionsSelectColumn = {
    auto_cancel_duration: 'auto_cancel_duration' as const,
    auto_cancellation: 'auto_cancellation' as const,
    best_of: 'best_of' as const,
+   camera_allow_teammates: 'camera_allow_teammates' as const,
+   camera_required: 'camera_required' as const,
    check_in_setting: 'check_in_setting' as const,
    coaches: 'coaches' as const,
    default_models: 'default_models' as const,
@@ -120474,6 +121064,8 @@ export const enumMatchOptionsUpdateColumn = {
    auto_cancel_duration: 'auto_cancel_duration' as const,
    auto_cancellation: 'auto_cancellation' as const,
    best_of: 'best_of' as const,
+   camera_allow_teammates: 'camera_allow_teammates' as const,
+   camera_required: 'camera_required' as const,
    check_in_setting: 'check_in_setting' as const,
    coaches: 'coaches' as const,
    default_models: 'default_models' as const,

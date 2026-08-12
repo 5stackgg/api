@@ -279,8 +279,15 @@ BEGIN
     v_match_id, v_match_map_id,
     rt_match.round,
     v_start_time + ((elem->>'tick')::int::numeric / v_tick_rate::numeric) * interval '1 second',
-    NULLIF(elem->>'killer', '')::bigint,
-    NULLIF(elem->>'killer_team', ''),
+    -- A bomb or world death has no killer. The live path records those as
+    -- self-inflicted (see KillEvent.ts, "self damage") so the death still
+    -- lands; mirror it here rather than dropping the row, or the same death
+    -- counts in a live match and vanishes from an imported demo. Attributing
+    -- it to the victim does not invent a kill: recompute_player_match_map_stats
+    -- counts kills FILTER (attacker_team <> attacked_team), and a self-kill has
+    -- the same team on both sides.
+    COALESCE(NULLIF(elem->>'killer', '')::bigint, NULLIF(elem->>'victim', '')::bigint),
+    COALESCE(NULLIF(elem->>'killer_team', ''), NULLIF(elem->>'victim_team', '')),
     '',
     NULLIF(concat_ws(' ', elem->>'attacker_x', elem->>'attacker_y', elem->>'attacker_z'), ''),
     NULLIF(elem->>'victim', '')::bigint,
@@ -304,8 +311,7 @@ BEGIN
     ORDER BY (rt->>'round')::int
     LIMIT 1
   ) rt_match
-  WHERE NULLIF(elem->>'victim', '') IS NOT NULL
-    AND NULLIF(elem->>'killer', '') IS NOT NULL;
+  WHERE NULLIF(elem->>'victim', '') IS NOT NULL;
 
   INSERT INTO public.player_assists (
     match_id, match_map_id, round, time,

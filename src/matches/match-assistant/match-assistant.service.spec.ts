@@ -459,4 +459,75 @@ describe("MatchAssistantService", () => {
       }),
     );
   });
+
+  // Matchmaking builds its match_options inline rather than through the match
+  // form, so the platform defaults have to be read here or a "cameras on all
+  // matches" operator would still get ranked games without them.
+  describe("camera defaults on matchmaking-created matches", () => {
+    const createMatch = async (
+      settings: Array<{ name: string; value: string }>,
+    ) => {
+      hasura.query.mockImplementation(async (request: any) => {
+        if (request.settings) {
+          return { settings };
+        }
+        return { map_pools: [{ id: "pool-1" }] };
+      });
+      hasura.mutation.mockResolvedValue({
+        insert_matches_one: {
+          id: "match-1",
+          lineup_1_id: "l1",
+          lineup_2_id: "l2",
+        },
+      });
+
+      await service.createMatchBasedOnType("Competitive" as any, "Ranked" as any, {
+        mr: 12,
+        best_of: 1,
+        knife: true,
+        overtime: true,
+        maps: ["map-1"],
+      } as any);
+
+      return hasura.mutation.mock.calls[0][0].insert_matches_one.__args.object
+        .options.data;
+    };
+
+    it("is off when the platform default is off", async () => {
+      const options = await createMatch([]);
+
+      expect(options.camera_required).toBe(false);
+      expect(options.camera_allow_teammates).toBe(false);
+    });
+
+    it("requires cameras when the platform default says so", async () => {
+      const options = await createMatch([
+        { name: "public.camera_required_default", value: "true" },
+      ]);
+
+      expect(options.camera_required).toBe(true);
+      expect(options.camera_allow_teammates).toBe(false);
+    });
+
+    it("carries the teammate default alongside it", async () => {
+      const options = await createMatch([
+        { name: "public.camera_required_default", value: "true" },
+        { name: "public.camera_allow_teammates_default", value: "true" },
+      ]);
+
+      expect(options.camera_required).toBe(true);
+      expect(options.camera_allow_teammates).toBe(true);
+    });
+
+    // Teammate viewing on its own would let players watch a feed nobody has to
+    // publish, so it never turns itself on in isolation.
+    it("ignores the teammate default when cameras are not required", async () => {
+      const options = await createMatch([
+        { name: "public.camera_allow_teammates_default", value: "true" },
+      ]);
+
+      expect(options.camera_required).toBe(false);
+      expect(options.camera_allow_teammates).toBe(false);
+    });
+  });
 });

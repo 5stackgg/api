@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { Injectable, Logger } from "@nestjs/common";
 import { User } from "../auth/types/User";
 import Redis from "ioredis";
@@ -386,6 +387,9 @@ export class ChatService {
 
     const timestamp = new Date();
     const message = {
+      // Both the history snapshot sent on join and the live broadcast carry the
+      // message, so clients need something stable to recognize it by.
+      id: randomUUID(),
       message: _message,
       timestamp: timestamp.toISOString(),
       from: {
@@ -398,7 +402,9 @@ export class ChatService {
     };
 
     const messageKey = `chat_${type}_${id}`;
-    const messageField = `${player.steam_id}:${Date.now().toString()}`;
+    // Keyed by id and not `${steam_id}:${now}`, which silently dropped a
+    // message when the same player landed two within the same millisecond.
+    const messageField = message.id;
     await this.redis.hset(messageKey, messageField, JSON.stringify(message));
 
     await this.redis.sendCommand(

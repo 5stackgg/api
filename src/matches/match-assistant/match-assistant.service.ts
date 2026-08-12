@@ -1550,6 +1550,43 @@ export class MatchAssistantService {
     return matches_by_pk?.can_reassign_winner ?? false;
   }
 
+  // Matchmaking builds its match_options inline rather than through the match
+  // form, so the platform defaults have to be read here too — otherwise an
+  // operator who turned cameras on for "all matches" would still get ranked
+  // games without them.
+  private async cameraDefaults() {
+    const { settings } = await this.hasura.query({
+      settings: {
+        __args: {
+          where: {
+            name: {
+              _in: [
+                "public.camera_required_default",
+                "public.camera_allow_teammates_default",
+              ],
+            },
+          },
+        },
+        name: true,
+        value: true,
+      },
+    });
+
+    const isOn = (name: string) => {
+      return settings.find((setting) => setting.name === name)?.value === "true";
+    };
+
+    const camera_required = isOn("public.camera_required_default");
+
+    return {
+      camera_required,
+      // Meaningless without a camera to watch, so it never turns itself on in
+      // isolation.
+      camera_allow_teammates:
+        camera_required && isOn("public.camera_allow_teammates_default"),
+    };
+  }
+
   public async createMatchBasedOnType(
     matchType: e_match_types_enum,
     mapPoolType: e_map_pool_types_enum,
@@ -1626,6 +1663,7 @@ export class MatchAssistantService {
                 overtime: options.overtime,
                 knife_round: options.knife,
                 region_veto: options.region ? false : true,
+                ...(await this.cameraDefaults()),
                 ...(options.timeout_setting && {
                   timeout_setting: options.timeout_setting,
                 }),

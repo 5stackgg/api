@@ -1028,6 +1028,8 @@ export class DraftGameService {
       ready_setting: source.ready_setting,
       tech_timeout_setting: source.tech_timeout_setting,
       tv_delay: source.tv_delay,
+      round_restart_delay: source.round_restart_delay ?? null,
+      halftime_pausematch: source.halftime_pausematch ?? false,
     };
 
     if (source.map_pool_id) {
@@ -1038,6 +1040,8 @@ export class DraftGameService {
     // permissions never apply — the role gates have to be repeated here.
     if (isRoleAbove(user.role, "match_organizer")) {
       object.veto_pick_timeout = source.veto_pick_timeout;
+      object.camera_required = source.camera_required ?? false;
+      object.camera_allow_teammates = source.camera_allow_teammates ?? false;
     }
 
     if (isRoleAbove(user.role, "tournament_organizer")) {

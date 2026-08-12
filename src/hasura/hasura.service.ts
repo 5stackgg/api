@@ -167,6 +167,28 @@ export class HasuraService {
     await this.postgresService.query(
       "insert into settings (name, value) values ('public.veto_pick_timeout', '60') on conflict (name) do nothing",
     );
+
+    // Off by default: player cameras need MediaMTX reachable and a publicly
+    // routable WebRTC host, which not every install has.
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.player_cameras_enabled', 'false') on conflict (name) do nothing",
+    );
+
+    // Same WebRTC requirement as cameras above.
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.voice_chat_enabled', 'false') on conflict (name) do nothing",
+    );
+
+    // Platform defaults new match_options rows inherit. Both off: requiring a
+    // webcam everywhere is a deliberate choice for an event, not a sane default,
+    // and letting teammates watch each other is opt-in on top of that.
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.camera_required_default', 'false') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.camera_allow_teammates_default', 'false') on conflict (name) do nothing",
+    );
   }
 
   private async applyMigrations(path: string): Promise<number> {

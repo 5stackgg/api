@@ -1,0 +1,254 @@
+import { Injectable, Logger } from "@nestjs/common";
+import Redis from "ioredis";
+import { PostgresService } from "../../postgres/postgres.service";
+import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
+import { RconService } from "../../rcon/rcon.service";
+import { MediaMtxService } from "../../mediamtx/mediamtx.service";
+import { CameraService, type CameraHealth } from "./camera.service";
+
+// How long a camera may be anything other than `live` before the match is
+// paused. Long enough to ride out a WebRTC renegotiation, a wifi blip or a
+// phone locking its screen; short enough to catch a real drop inside a round.
+const GRACE_MS = 30_000;
+
+type PlayerSample = {
+  bytes: number;
+  // When this player was last observed healthy. The grace window is measured
+  // from here, so a feed that flaps never resets its way out of a pause.
+  healthyAt: number;
+  health: CameraHealth;
+};
+
+type MonitoredPlayer = {
+  steamId: string;
+  name: string | null;
+  health: CameraHealth;
+  offline: boolean;
+};
+
+@Injectable()
+export class CameraMonitorService {
+  private readonly redis: Redis;
+
+  constructor(
+    private readonly logger: Logger,
+    private readonly postgres: PostgresService,
+    private readonly rcon: RconService,
+    private readonly mediaMtx: MediaMtxService,
+    redisManager: RedisManagerService,
+  ) {
+    this.redis = redisManager.getConnection();
+  }
+
+  private static samplesKey(matchId: string) {
+    return `camera:samples:${matchId}`;
+  }
+
+  private static reportedKey(matchId: string) {
+    return `camera:reported:${matchId}`;
+  }
+
+  public async monitorLiveMatches(now = Date.now()) {
+    const rows = await this.postgres.query<
+      Array<{
+        match_id: string;
+        server_id: string | null;
+        steam_id: string;
+        name: string | null;
+      }>
+    >(
+      `SELECT m.id AS match_id,
+              m.server_id::text AS server_id,
+              mlp.steam_id::text AS steam_id,
+              p.name
+       FROM matches m
+       INNER JOIN match_options mo ON mo.id = m.match_options_id
+       INNER JOIN match_lineup_players mlp
+         ON mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+       LEFT JOIN players p ON p.steam_id = mlp.steam_id
+       WHERE m.status = 'Live'
+         AND mo.camera_required = true
+         AND m.server_id IS NOT NULL
+         AND mlp.steam_id IS NOT NULL
+         AND mlp.is_connected = true`,
+    );
+
+    if (rows.length === 0) {
+      return;
+    }
+
+    // One list call covers every camera on the box, however many matches are
+    // live — a per-player status request would scale with the roster.
+    const paths = await this.mediaMtx.listPaths();
+
+    // Fail open. If MediaMTX is unreachable we cannot tell a dead camera from
+    // a dead monitor, and pausing every live match on our own outage is far
+    // worse than missing a drop.
+    if (!paths) {
+      this.logger.warn(
+        "[camera] skipping monitor pass: mediamtx did not answer",
+      );
+      return;
+    }
+
+    const byMatch = new Map<
+      string,
+      { serverId: string; players: Array<{ steamId: string; name: string | null }> }
+    >();
+
+    for (const row of rows) {
+      if (!row.server_id) {
+        continue;
+      }
+
+      const match = byMatch.get(row.match_id) ?? {
+        serverId: row.server_id,
+        players: [],
+      };
+      match.players.push({ steamId: row.steam_id, name: row.name });
+      byMatch.set(row.match_id, match);
+    }
+
+    for (const [matchId, { serverId, players }] of byMatch) {
+      await this.monitorMatch(matchId, serverId, players, paths, now);
+    }
+  }
+
+  private async monitorMatch(
+    matchId: string,
+    serverId: string,
+    players: Array<{ steamId: string; name: string | null }>,
+    paths: Map<string, { ready: boolean; bytesReceived: number }>,
+    now: number,
+  ) {
+    const samplesKey = CameraMonitorService.samplesKey(matchId);
+    const stored = await this.redis.hgetall(samplesKey);
+    const nextSamples: Record<string, string> = {};
+    const monitored: Array<MonitoredPlayer> = [];
+
+    for (const { steamId, name } of players) {
+      const path = paths.get(CameraService.pathForPlayer(matchId, steamId));
+      const previous = CameraMonitorService.parseSample(stored[steamId]);
+
+      let health: CameraHealth;
+      if (!path?.ready) {
+        health = "down";
+      } else if (!previous || path.bytesReceived > previous.bytes) {
+        health = "live";
+      } else {
+        // The path is up but nothing has arrived since the last pass: a
+        // suspended tab or a dead uplink whose session has not torn down yet.
+        health = "stalled";
+      }
+
+      const healthyAt = health === "live" ? now : (previous?.healthyAt ?? now);
+
+      nextSamples[steamId] =
+        `${path?.bytesReceived ?? 0}:${healthyAt}:${health}`;
+
+      monitored.push({
+        steamId,
+        name,
+        health,
+        offline: health !== "live" && now - healthyAt >= GRACE_MS,
+      });
+    }
+
+    await this.redis.hset(samplesKey, nextSamples);
+    await this.redis.expire(samplesKey, 3600);
+
+    await this.reportToServer(matchId, serverId, monitored);
+  }
+
+  // Edge-triggered: the plugin owns the pause, so it only needs to hear when
+  // the offending set actually changes, not once every pass.
+  private async reportToServer(
+    matchId: string,
+    serverId: string,
+    monitored: Array<MonitoredPlayer>,
+  ) {
+    const offenders = monitored
+      .filter((player) => player.offline)
+      .map((player) => player.steamId)
+      .sort();
+
+    const payload = offenders.join(",");
+    const reportedKey = CameraMonitorService.reportedKey(matchId);
+    // No key means nothing is currently reported, which is the same state as an
+    // empty payload — without collapsing the two, a healthy match would be sent
+    // a redundant all-clear on every pass.
+    const reported = (await this.redis.get(reportedKey)) ?? "";
+
+    if (reported === payload) {
+      return;
+    }
+
+    const rcon = await this.rcon.connect(serverId);
+
+    if (!rcon) {
+      this.logger.warn(
+        `[${matchId}] camera state changed but rcon is unavailable; will retry next pass`,
+      );
+      return;
+    }
+
+    await rcon.send(`camera_state ${payload}`);
+
+    if (payload) {
+      await this.redis.setex(reportedKey, 3600, payload);
+      this.logger.log(
+        `[${matchId}] cameras offline: ${offenders.join(", ")} — asked the server to pause`,
+      );
+      return;
+    }
+
+    await this.redis.del(reportedKey);
+    this.logger.log(`[${matchId}] all cameras restored`);
+  }
+
+  public async clearMatch(matchId: string) {
+    await this.redis.del(
+      CameraMonitorService.samplesKey(matchId),
+      CameraMonitorService.reportedKey(matchId),
+    );
+  }
+
+  // The health of every camera on a match as of the last pass, for callers that
+  // report state rather than decide it (the game-server payload, the admin grid).
+  public async healthFor(matchId: string) {
+    const stored = await this.redis.hgetall(
+      CameraMonitorService.samplesKey(matchId),
+    );
+    const health = new Map<string, CameraHealth>();
+
+    for (const [steamId, raw] of Object.entries(stored)) {
+      const sample = CameraMonitorService.parseSample(raw);
+
+      if (sample) {
+        health.set(steamId, sample.health);
+      }
+    }
+
+    return health;
+  }
+
+  private static parseSample(raw?: string): PlayerSample | null {
+    if (!raw) {
+      return null;
+    }
+
+    const [bytes, healthyAt, health] = raw.split(":");
+    const parsedBytes = Number(bytes);
+    const parsedHealthyAt = Number(healthyAt);
+
+    if (!Number.isFinite(parsedBytes) || !Number.isFinite(parsedHealthyAt)) {
+      return null;
+    }
+
+    return {
+      bytes: parsedBytes,
+      healthyAt: parsedHealthyAt,
+      health: health === "live" || health === "stalled" ? health : "down",
+    };
+  }
+}

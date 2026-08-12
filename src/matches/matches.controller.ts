@@ -46,6 +46,8 @@ import { GameStreamerService } from "./game-streamer/game-streamer.service";
 import { isRoleAbove } from "../utilities/isRoleAbove";
 import { DemoMetadataService } from "../demos/demo-metadata.service";
 import { ClipsService } from "./clips/clips.service";
+import { CameraService } from "./camera/camera.service";
+import { CameraMonitorService } from "./camera/camera-monitor.service";
 import { ClipSpec } from "./clips/types/ClipSpec";
 
 @Controller("matches")
@@ -108,6 +110,8 @@ export class MatchesController {
     private readonly demoMetadata: DemoMetadataService,
     private readonly clips: ClipsService,
     private readonly matchImport: MatchImportService,
+    private readonly camera: CameraService,
+    private readonly cameraMonitor: CameraMonitorService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -467,9 +471,51 @@ export class MatchesController {
 
     match.options.use_playcast = usePlaycast?.value === "true" ? true : false;
 
+    await this.decorateWithCameraState(match);
+
     const data = JSON.parse(safeJsonStringify(match));
 
     response.status(200).json(data);
+  }
+
+  // camera_required and per-player camera health are read straight from
+  // Postgres/Redis rather than the Hasura selection above, so the plugin
+  // payload does not wait on Zeus codegen to learn about a new column.
+  private async decorateWithCameraState(match: {
+    id: string;
+    options: Record<string, unknown>;
+    lineup_1?: { lineup_players?: Array<Record<string, unknown>> };
+    lineup_2?: { lineup_players?: Array<Record<string, unknown>> };
+  }) {
+    const [row] = await this.postgres.query<
+      Array<{ camera_required: boolean }>
+    >(
+      `SELECT mo.camera_required
+       FROM matches m
+       INNER JOIN match_options mo ON mo.id = m.match_options_id
+       WHERE m.id = $1`,
+      [match.id],
+    );
+
+    const cameraRequired = row?.camera_required === true;
+    match.options.camera_required = cameraRequired;
+
+    if (!cameraRequired) {
+      return;
+    }
+
+    const health = await this.cameraMonitor.healthFor(match.id);
+
+    for (const lineup of [match.lineup_1, match.lineup_2]) {
+      for (const player of lineup?.lineup_players ?? []) {
+        const steamId = player.steam_id;
+        // Unknown means the monitor has not sampled this player yet (they just
+        // joined, or the match only went Live seconds ago) — treat that as fine
+        // rather than flagging someone the monitor has never looked at.
+        player.camera_ok =
+          steamId == null || (health.get(String(steamId)) ?? "live") === "live";
+      }
+    }
   }
 
   @HasuraEvent()
@@ -616,6 +662,8 @@ export class MatchesController {
       await this.removeDiscordIntegration(matchId);
       await this.matchmaking.cancelMatchMakingByMatchId(matchId);
       await this.releaseScrimScheduledNotifications(matchId);
+      await this.camera.revokeTokens(matchId);
+      await this.cameraMonitor.clearMatch(matchId);
 
       await this.eloCalculationQueue.add(EloCalculation.name, {
         matchId,
@@ -743,15 +791,17 @@ export class MatchesController {
       }
     }
 
-    if (
-      status === "Live" &&
-      data.old.status !== "Live" &&
-      match.server?.game_server_node_id
-    ) {
-      await this.maybePauseRendersForServerNode(
-        matchId,
-        String(match.server.game_server_node_id),
-      );
+    if (status === "Live" && data.old.status !== "Live") {
+      if (match.server?.game_server_node_id) {
+        await this.maybePauseRendersForServerNode(
+          matchId,
+          String(match.server.game_server_node_id),
+        );
+      }
+
+      // Veto finishing is what flips a match Live (create_match_map_from_veto),
+      // and that is the first point the lineups can no longer change.
+      await this.camera.generateTokensIfRequired(matchId);
     }
 
     await this.discordMatchOverview.updateMatchOverview(matchId);
