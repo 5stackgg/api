@@ -33,6 +33,15 @@ BEGIN
      END IF;
 
      IF OLD.match_id IS NOT NULL THEN
+        -- The match already exists, so nothing below will schedule it. If the
+        -- teams themselves changed (an organizer reassigning a winner), the
+        -- match's lineups are still pointing at the previously advanced team
+        -- and have to be re-pointed here or they never get updated at all.
+        IF (OLD.tournament_team_id_1 IS DISTINCT FROM NEW.tournament_team_id_1)
+           OR (OLD.tournament_team_id_2 IS DISTINCT FROM NEW.tournament_team_id_2) THEN
+            PERFORM refresh_tournament_match_lineup_teams(NEW);
+        END IF;
+
         return NEW;
      END IF;
 
@@ -123,15 +132,7 @@ CREATE TRIGGER tbd_tournament_brackets
     FOR EACH ROW
     EXECUTE FUNCTION public.tbd_tournament_brackets();
 
-CREATE OR REPLACE FUNCTION public.tad_tournament_brackets() RETURNS TRIGGER
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    PERFORM cleanup_orphaned_match_options(OLD.match_options_id);
-    RETURN OLD;
-END;
-$$;
-
 DROP TRIGGER IF EXISTS tad_tournament_brackets ON public.tournament_brackets;
 CREATE TRIGGER tad_tournament_brackets AFTER DELETE ON public.tournament_brackets
-    FOR EACH ROW EXECUTE FUNCTION public.tad_tournament_brackets();
+    FOR EACH ROW EXECUTE FUNCTION public.tad_cleanup_match_options();
+DROP FUNCTION IF EXISTS public.tad_tournament_brackets();

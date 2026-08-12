@@ -181,6 +181,12 @@ export class TypeSenseController {
           id: true,
           lineup: {
             id: true,
+            lineup_players: {
+              steam_id: true,
+              player: {
+                is_banned: true,
+              },
+            },
             match: {
               id: true,
               status: true,
@@ -193,7 +199,25 @@ export class TypeSenseController {
 
       for (const matchLineupPlayer of match_lineup_players) {
         switch (matchLineupPlayer.lineup.match.status) {
-          case "Live":
+          case "Live": {
+            // Only forfeit if this ban leaves the lineup with nobody able to
+            // play. Forfeiting on any single ban ended matches the banned
+            // player's teammates were still actively playing, and because it
+            // never touched match_maps (left Live, no ended_at) the resulting
+            // matches update still queued an ELO calculation that docked them.
+            // Placeholder slots carry no steam_id and no player, so they read
+            // as unbanned and would keep a lineup "alive" with nobody in it.
+            const remaining = matchLineupPlayer.lineup.lineup_players.filter(
+              (lineupPlayer) =>
+                lineupPlayer.steam_id &&
+                lineupPlayer.steam_id !== data.new.player_steam_id &&
+                !lineupPlayer.player?.is_banned,
+            );
+
+            if (remaining.length > 0) {
+              break;
+            }
+
             await this.hasura.mutation({
               update_matches_by_pk: {
                 __args: {
@@ -213,6 +237,7 @@ export class TypeSenseController {
               },
             });
             break;
+          }
           case "PickingPlayers":
             await this.hasura.mutation({
               delete_match_lineup_players_by_pk: {

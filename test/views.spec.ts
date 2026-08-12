@@ -29,6 +29,7 @@ describe("read-side views and aggregations (SQL-driven)", () => {
 
   beforeEach(async () => {
     await postgres.query("DELETE FROM matches");
+    await postgres.query("DELETE FROM tournaments");
     await postgres.query("DELETE FROM match_options");
     await postgres.query("DELETE FROM team_scrim_requests");
     await postgres.query("DELETE FROM teams");
@@ -262,6 +263,82 @@ describe("read-side views and aggregations (SQL-driven)", () => {
       expect(Number(ranks.avg_faceit_elo)).toBe(2000);
       expect(Number(ranks.avg_faceit_level)).toBe(8);
     });
+
+    const teamRanks = (teamId: string) =>
+      postgres.query<
+        Array<{
+          roster_size: number;
+          avg_elo: number;
+          avg_wingman_elo: number | null;
+          avg_duel_elo: number | null;
+        }>
+      >("SELECT * FROM v_team_ranks WHERE team_id = $1", [teamId]);
+
+    const rosterOf = async (teamId: string) => {
+      const rows = await postgres.query<Array<{ player_steam_id: string }>>(
+        "SELECT player_steam_id FROM team_roster WHERE team_id = $1 ORDER BY player_steam_id",
+        [teamId],
+      );
+      return rows.map((r) => r.player_steam_id);
+    };
+
+    it("excludes coaches from the roster averages", async () => {
+      const team = await fx.team(1);
+      const [p1, p2] = await rosterOf(team.id);
+      const { matchId } = await fx.bareMatch(T(60));
+      await postgres.query(
+        `INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at)
+         VALUES ($1, $3, 'Competitive', 6000, 0, now() - interval '1 hour'),
+                ($2, $3, 'Competitive', 2000, 0, now() - interval '1 hour')`,
+        [p1, p2, matchId],
+      );
+      await postgres.query(
+        "UPDATE team_roster SET coach = true WHERE team_id = $1 AND player_steam_id = $2",
+        [team.id, p2],
+      );
+
+      const [ranks] = await teamRanks(team.id);
+      // The 2000 coach must not drag the average down.
+      expect(Number(ranks.roster_size)).toBe(1);
+      expect(Number(ranks.avg_elo)).toBe(6000);
+    });
+
+    it("uses the active-season rating, not a stale lifetime row", async () => {
+      await fx.enableSeasons(true);
+      const seasonId = await fx.season(T(60 * 24));
+      const team = await fx.team(1);
+      const [p1, p2] = await rosterOf(team.id);
+      const { matchId } = await fx.bareMatch(T(60));
+      await postgres.query(
+        `INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at, season_id)
+         VALUES ($1, $3, 'Competitive', 7000, 0, now() - interval '1 hour', $4),
+                ($2, $3, 'Competitive', 9000, 0, now() - interval '1 hour', NULL)`,
+        [p1, p2, matchId, seasonId],
+      );
+
+      const [ranks] = await teamRanks(team.id);
+      // p1 counts at their season row (7000); p2 has no season row so they
+      // count at the 5000 season default, never their stale 9000.
+      expect(Number(ranks.avg_elo)).toBe(6000);
+    });
+
+    it("resolves Wingman and Duel averages independently of Competitive", async () => {
+      const team = await fx.team(0);
+      const [solo] = await rosterOf(team.id);
+      const { matchId } = await fx.bareMatch(T(60));
+      await postgres.query(
+        `INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at)
+         VALUES ($1, $2, 'Competitive', 6000, 0, now() - interval '1 hour'),
+                ($1, $2, 'Wingman', 3000, 0, now() - interval '1 hour'),
+                ($1, $2, 'Duel', 1000, 0, now() - interval '1 hour')`,
+        [solo, matchId],
+      );
+
+      const [ranks] = await teamRanks(team.id);
+      expect(Number(ranks.avg_elo)).toBe(6000);
+      expect(Number(ranks.avg_wingman_elo)).toBe(3000);
+      expect(Number(ranks.avg_duel_elo)).toBe(1000);
+    });
   });
 
   describe("v_team_reputation", () => {
@@ -395,6 +472,286 @@ describe("read-side views and aggregations (SQL-driven)", () => {
       );
       return { match, ctx: { matchId: match.id, mapId: map.id } };
     };
+
+    // Marks a match as a tournament match by hanging a bracket off it, which is
+    // what the leaderboard's tournament detection actually keys on.
+    const markAsTournamentMatch = async (matchId: string, organizer: string) => {
+      const [options] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO match_options (mr, best_of, type, map_pool_id, map_veto, region_veto, regions)
+         SELECT 8, 1, 'Competitive', id, false, true, '{TestA}'
+         FROM map_pools WHERE type = 'Competitive' AND seed = true RETURNING id`,
+      );
+      const [tournament] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO tournaments (name, start, organizer_steam_id, match_options_id, status)
+         VALUES ($1, now() + interval '1 day', $2, $3, 'Setup') RETURNING id`,
+        [fx.nextName("cup"), organizer, options.id],
+      );
+      const [stage] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO tournament_stages (tournament_id, type, "order", min_teams, max_teams)
+         VALUES ($1, 'SingleElimination', 1, 4, 8) RETURNING id`,
+        [tournament.id],
+      );
+      await postgres.query(
+        `INSERT INTO tournament_brackets (tournament_stage_id, match_id, round)
+         VALUES ($1, $2, 1)`,
+        [stage.id, matchId],
+      );
+    };
+
+    const seasonLeaderboard = (seasonId: string, type = "Competitive") =>
+      postgres.query<Array<LeaderboardRow>>(
+        "SELECT * FROM get_leaderboard($1, $2, $3, $4, $5, $6)",
+        ["elo", 0, type, false, null, seasonId],
+      );
+
+    it("counts tournament elo toward the active season", async () => {
+      await fx.enableSeasons(true);
+      const seasonId = await fx.season(T(60 * 24 * 7));
+      const [player] = await fx.players(1);
+
+      const regular = await fx.bareMatch(T(60 * 24 * 2));
+      const tourney = await fx.bareMatch(T(60 * 24));
+      await markAsTournamentMatch(tourney.matchId, player);
+
+      // Regular season row carries the season rating; the tournament row is
+      // written season-independent (season_id NULL) and only contributes its
+      // change.
+      await postgres.query(
+        `INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at, season_id)
+         VALUES ($1, $2, 'Competitive', 5100, 100, now() - interval '2 days', $4),
+                ($1, $3, 'Competitive', 7000, 200, now() - interval '1 day', NULL)`,
+        [player, regular.matchId, tourney.matchId, seasonId],
+      );
+
+      const [row] = await seasonLeaderboard(seasonId);
+
+      // Season rating (5100) adjusted by the tournament swing (+200) -- never
+      // the tournament ladder's own 7000.
+      expect(Number(row.value)).toBe(5300);
+      expect(Number(row.matches_played)).toBe(2);
+    });
+
+    it("includes a tournament-only player in the active season at the baseline", async () => {
+      await fx.enableSeasons(true);
+      const seasonId = await fx.season(T(60 * 24 * 7));
+      const [player] = await fx.players(1);
+
+      const tourney = await fx.bareMatch(T(60 * 24));
+      await markAsTournamentMatch(tourney.matchId, player);
+
+      await postgres.query(
+        `INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at, season_id)
+         VALUES ($1, $2, 'Competitive', 7000, 150, now() - interval '1 day', NULL)`,
+        [player, tourney.matchId],
+      );
+
+      const [row] = await seasonLeaderboard(seasonId);
+
+      // No regular-season row yet: season baseline plus the tournament swing.
+      expect(Number(row.value)).toBe(5150);
+      expect(Number(row.matches_played)).toBe(1);
+    });
+
+    const sourceLeaderboard = (
+      category: string,
+      source: string,
+      type = "Competitive",
+    ) =>
+      postgres.query<Array<LeaderboardRow>>(
+        "SELECT * FROM get_leaderboard($1, $2, $3, $4, $5, $6, $7)",
+        [category, 30, type, false, null, null, source],
+      );
+
+    it("carries the player's custom avatar through every producer", async () => {
+      const [player, victim] = await fx.players(2);
+      await postgres.query(
+        "UPDATE players SET custom_avatar_url = $2 WHERE steam_id = $1",
+        [player, "https://cdn.example/custom.png"],
+      );
+
+      const mm = await statMatch();
+      await fx.kill(mm.ctx, player, victim);
+      const { matchId } = await fx.bareMatch(T(60));
+      await postgres.query(
+        `INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at)
+         VALUES ($1, $2, 'Competitive', 5100, 100, now() - interval '1 day')`,
+        [player, matchId],
+      );
+
+      // RETURN QUERY matches the composite type by position, so a producer that
+      // selects the new column out of order silently returns it as another
+      // field rather than failing. Check a value that could only be the avatar.
+      for (const category of ["elo", "best_kdr", "highest_hs_pct"]) {
+        const rows = await postgres.query<
+          Array<LeaderboardRow & { player_custom_avatar_url: string | null }>
+        >("SELECT * FROM get_leaderboard($1, $2, $3)", [
+          category,
+          30,
+          "Competitive",
+        ]);
+        const row = rows.find((r) => r.player_steam_id === player);
+        expect(row).toBeDefined();
+        expect(row!.player_custom_avatar_url).toBe(
+          "https://cdn.example/custom.png",
+        );
+        // Neighbouring positional fields must not have absorbed it.
+        expect(Number.isFinite(Number(row!.value))).toBe(true);
+        expect(Number.isFinite(Number(row!.matches_played))).toBe(true);
+      }
+    });
+
+    it("buckets stat leaderboards by match source", async () => {
+      const [mmPlayer, tPlayer, victim] = await fx.players(3);
+
+      const mm = await statMatch();
+      await fx.kill(mm.ctx, mmPlayer, victim);
+
+      const tourney = await statMatch();
+      await markAsTournamentMatch(tourney.match.id, tPlayer);
+      await fx.kill(tourney.ctx, tPlayer, victim);
+
+      const overall = await sourceLeaderboard("best_kdr", "overall");
+      expect(overall.map((r) => r.player_steam_id).sort()).toEqual(
+        [mmPlayer, tPlayer].sort(),
+      );
+
+      const matchmaking = await sourceLeaderboard("best_kdr", "matchmaking");
+      expect(matchmaking.map((r) => r.player_steam_id)).toEqual([mmPlayer]);
+
+      const tournamentOnly = await sourceLeaderboard("best_kdr", "tournament");
+      expect(tournamentOnly.map((r) => r.player_steam_id)).toEqual([tPlayer]);
+    });
+
+    it("keeps ELO value source-invariant while scoping change and matches", async () => {
+      const [player] = await fx.players(1);
+      const mm = await fx.bareMatch(T(60 * 24 * 2));
+      const tourney = await fx.bareMatch(T(60 * 24));
+      await markAsTournamentMatch(tourney.matchId, player);
+
+      await postgres.query(
+        `INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at)
+         VALUES ($1, $2, 'Competitive', 5100, 100, now() - interval '2 days'),
+                ($1, $3, 'Competitive', 5300, 200, now() - interval '1 day')`,
+        [player, mm.matchId, tourney.matchId],
+      );
+
+      const [overall] = await sourceLeaderboard("elo", "overall");
+      const [matchmaking] = await sourceLeaderboard("elo", "matchmaking");
+      const [tournamentOnly] = await sourceLeaderboard("elo", "tournament");
+
+      // The canonical rating is one ladder: it must not move with the filter.
+      expect(Number(overall.value)).toBe(5300);
+      expect(Number(matchmaking.value)).toBe(5300);
+      expect(Number(tournamentOnly.value)).toBe(5300);
+
+      // Only the contribution figures scope.
+      expect(Number(overall.matches_played)).toBe(2);
+      expect(Number(matchmaking.matches_played)).toBe(1);
+      expect(Number(matchmaking.secondary_value)).toBe(100);
+      expect(Number(tournamentOnly.matches_played)).toBe(1);
+      expect(Number(tournamentOnly.secondary_value)).toBe(200);
+    });
+
+    it("scopes the ELO win streak to the selected source", async () => {
+      const [a, b] = await fx.players(2);
+
+      // Two tournament wins, then two matchmaking wins, all won by `a`.
+      for (const daysAgo of [8, 7]) {
+        const match = await ratedDuel(a, b, daysAgo);
+        await markAsTournamentMatch(match.id, a);
+      }
+      await ratedDuel(a, b, 3);
+      await ratedDuel(a, b, 2);
+
+      const [overall] = await sourceLeaderboard("elo", "overall", "Duel");
+      const [matchmaking] = await sourceLeaderboard(
+        "elo",
+        "matchmaking",
+        "Duel",
+      );
+      const [tournamentOnly] = await sourceLeaderboard(
+        "elo",
+        "tournament",
+        "Duel",
+      );
+
+      // Without scoping, the non-Overall rows silently report the Overall
+      // streak of 4 while showing only 2 matches.
+      expect(Number(overall.tertiary_value)).toBe(4);
+      expect(Number(matchmaking.tertiary_value)).toBe(2);
+      expect(Number(tournamentOnly.tertiary_value)).toBe(2);
+    });
+
+    it("still resolves the pre-_source call signature", async () => {
+      const [player] = await fx.players(1);
+      const { matchId } = await fx.bareMatch(T(60));
+      await postgres.query(
+        `INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at)
+         VALUES ($1, $2, 'Competitive', 5100, 100, now() - interval '1 day')`,
+        [player, matchId],
+      );
+
+      const rows = await postgres.query<Array<LeaderboardRow>>(
+        "SELECT * FROM get_leaderboard($1, $2, $3, $4, $5, $6)",
+        ["elo", 30, "Competitive", false, null, null],
+      );
+      expect(rows.length).toBe(1);
+      expect(Number(rows[0].value)).toBe(5100);
+    });
+
+    it("computes the tournament-free all-time peak without letting later tournament results move it", async () => {
+      const [player] = await fx.players(1);
+      const climb = await fx.bareMatch(T(60 * 24 * 9));
+      const drop = await fx.bareMatch(T(60 * 24 * 5));
+      const tourney = await fx.bareMatch(T(60 * 24));
+      await markAsTournamentMatch(tourney.matchId, player);
+
+      // Non-tournament trajectory: 5000 -> 6000 -> 5500, so the true
+      // tournament-free peak is 6000. The tournament win afterwards must not
+      // change a peak that was already set before it happened.
+      await postgres.query(
+        `INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at)
+         VALUES ($1, $2, 'Competitive', 6000, 1000, now() - interval '9 days'),
+                ($1, $3, 'Competitive', 5500, -500, now() - interval '5 days'),
+                ($1, $4, 'Competitive', 6300, 800,  now() - interval '1 day')`,
+        [player, climb.matchId, drop.matchId, tourney.matchId],
+      );
+
+      const [row] = await postgres.query<Array<LeaderboardRow>>(
+        "SELECT * FROM get_leaderboard($1, $2, $3, $4)",
+        ["elo", 0, "Competitive", true],
+      );
+
+      // Subtracting the lifetime tournament total (800) from the raw peak
+      // (6300) would report 5500 -- an 800 swing that landed after the peak.
+      expect(Number(row.value)).toBe(6000);
+    });
+
+    it("reports rolling-window ELO change as the sum of in-window changes", async () => {
+      const [player] = await fx.players(1);
+      const first = await fx.bareMatch(T(60 * 24 * 5));
+      const reset = await fx.bareMatch(T(60 * 24 * 3));
+      const last = await fx.bareMatch(T(60));
+
+      // Three in-window rows. The middle one is a rating discontinuity: current
+      // drops to 5000 with change 0, the shape a season reset leaves behind.
+      // Summing in-window changes gives the ELO actually earned from matches
+      // (100 + 0 + 50 = 150). The old "latest minus the window's starting
+      // baseline" formula instead reads 5050 - 5000 = 50, silently absorbing
+      // the reset as if the player had lost that rating by playing.
+      await postgres.query(
+        `INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at)
+         VALUES ($1, $2, 'Competitive', 5100, 100, now() - interval '5 days'),
+                ($1, $3, 'Competitive', 5000, 0,   now() - interval '3 days'),
+                ($1, $4, 'Competitive', 5050, 50,  now() - interval '1 day')`,
+        [player, first.matchId, reset.matchId, last.matchId],
+      );
+
+      const [row] = await leaderboard("elo", 30, "Competitive");
+      expect(Number(row.value)).toBe(5050);
+      expect(Number(row.secondary_value)).toBe(150);
+      expect(Number(row.matches_played)).toBe(3);
+    });
 
     it("ranks the elo ladder and per-player stats categories", async () => {
       const [a, b] = await fx.players(2);

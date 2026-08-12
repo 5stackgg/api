@@ -198,6 +198,29 @@ export class SystemController {
       },
     });
 
+    await this.notifications.notifyPlayers("NameChangeApproved", {
+      message: `Your name change to ${NotificationsService.escapeHtml(data.name)} was approved`,
+      title: "Name Change Approved",
+      role: "user",
+      entity_id: data.steam_id,
+      steamIds: [data.steam_id],
+    });
+
+    return {
+      success: true,
+    };
+  }
+
+  @HasuraAction()
+  public async denyNameChange(data: { name: string; steam_id: string }) {
+    await this.notifications.notifyPlayers("NameChangeDenied", {
+      message: `Your name change to ${NotificationsService.escapeHtml(data.name)} was denied`,
+      title: "Name Change Denied",
+      role: "user",
+      entity_id: data.steam_id,
+      steamIds: [data.steam_id],
+    });
+
     return {
       success: true,
     };
@@ -250,6 +273,20 @@ export class SystemController {
         entity_id: data.steam_id,
       },
       [
+        {
+          label: "Deny",
+          graphql: {
+            type: "mutation",
+            action: "denyNameChange",
+            variables: {
+              name: data.name,
+              steam_id: data.steam_id,
+            },
+            selection: {
+              success: true,
+            },
+          },
+        },
         {
           label: "Approve",
           graphql: {

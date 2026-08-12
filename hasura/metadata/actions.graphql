@@ -64,6 +64,13 @@ type Mutation {
 }
 
 type Mutation {
+  denyNameChange(
+    steam_id: bigint!
+    name: String!
+  ): SuccessOutput
+}
+
+type Mutation {
   attachDemo: WatchDemoOutput
 }
 

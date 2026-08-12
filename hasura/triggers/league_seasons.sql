@@ -331,17 +331,9 @@ CREATE TRIGGER tbd_league_seasons
     EXECUTE FUNCTION public.tbd_league_seasons();
 
 -- A season's match_options template is owned by the season; GC it on delete.
-CREATE OR REPLACE FUNCTION public.tad_league_seasons() RETURNS TRIGGER
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    PERFORM public.cleanup_orphaned_match_options(OLD.match_options_id);
-    RETURN OLD;
-END;
-$$;
-
 DROP TRIGGER IF EXISTS tad_league_seasons ON public.league_seasons;
 CREATE TRIGGER tad_league_seasons
     AFTER DELETE ON public.league_seasons
     FOR EACH ROW
-    EXECUTE FUNCTION public.tad_league_seasons();
+    EXECUTE FUNCTION public.tad_cleanup_match_options();
+DROP FUNCTION IF EXISTS public.tad_league_seasons();

@@ -79,18 +79,9 @@ $$;
 DROP TRIGGER IF EXISTS tau_tournaments ON public.tournaments;
 CREATE TRIGGER tau_tournaments AFTER UPDATE ON public.tournaments FOR EACH ROW EXECUTE FUNCTION public.tau_tournaments();
 
-CREATE OR REPLACE FUNCTION public.tad_tournaments() RETURNS TRIGGER
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-  PERFORM cleanup_orphaned_match_options(OLD.match_options_id);
-
-  RETURN NEW;
-END;
-$$;
-
 DROP TRIGGER IF EXISTS tad_tournaments ON public.tournaments;
-CREATE TRIGGER tad_tournaments AFTER DELETE ON public.tournaments FOR EACH ROW EXECUTE FUNCTION public.tad_tournaments();
+CREATE TRIGGER tad_tournaments AFTER DELETE ON public.tournaments FOR EACH ROW EXECUTE FUNCTION public.tad_cleanup_match_options();
+DROP FUNCTION IF EXISTS public.tad_tournaments();
 
 
 CREATE OR REPLACE FUNCTION public.tbu_tournaments() RETURNS TRIGGER

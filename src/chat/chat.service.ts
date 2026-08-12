@@ -66,6 +66,42 @@ export class ChatService {
         }
 
         break;
+      case ChatLobbyType.MatchTeam: {
+        const [matchId, lineupId] = id.split(":");
+
+        if (!matchId || !lineupId) {
+          return;
+        }
+
+        const { match_lineups_by_pk } = await this.hasuraService.query(
+          {
+            match_lineups_by_pk: {
+              __args: {
+                id: lineupId,
+              },
+              match_id: true,
+              coach_steam_id: true,
+              is_on_lineup: true,
+            },
+          },
+          user.steam_id,
+        );
+
+        // The lineup has to actually be one side of this match, otherwise the
+        // room key could be pointed at any lineup in the system.
+        if (!match_lineups_by_pk || match_lineups_by_pk.match_id !== matchId) {
+          return;
+        }
+
+        if (
+          match_lineups_by_pk.is_on_lineup === false &&
+          match_lineups_by_pk.coach_steam_id !== user.steam_id
+        ) {
+          return;
+        }
+
+        break;
+      }
       case ChatLobbyType.MatchMaking:
         const { lobby_players_by_pk } = await this.hasuraService.query({
           lobby_players_by_pk: {

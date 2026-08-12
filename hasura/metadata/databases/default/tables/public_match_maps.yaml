@@ -155,6 +155,7 @@ select_permissions:
         - created_at
         - ended_at
         - started_at
+        - demo_processing_started_at
         - id
         - map_id
         - match_id

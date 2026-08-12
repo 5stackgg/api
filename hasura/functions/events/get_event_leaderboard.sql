@@ -112,7 +112,8 @@ SELECT
     END AS value,
     a.kills  AS secondary_value,
     a.deaths AS tertiary_value,
-    a.matches_played
+    a.matches_played,
+    p.custom_avatar_url AS player_custom_avatar_url
 FROM agg a
 JOIN players p ON p.steam_id = a.steam_id
 LEFT JOIN wins w ON w.steam_id = a.steam_id

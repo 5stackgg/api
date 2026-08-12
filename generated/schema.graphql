@@ -1047,6 +1047,10 @@ columns and relationships of "abandoned_matches"
 type abandoned_matches {
   abandoned_at: timestamptz!
   id: uuid!
+
+  """An object relationship"""
+  match: matches
+  match_id: uuid
   steam_id: bigint!
 }
 
@@ -1134,6 +1138,8 @@ input abandoned_matches_bool_exp {
   _or: [abandoned_matches_bool_exp!]
   abandoned_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
+  match: matches_bool_exp
+  match_id: uuid_comparison_exp
   steam_id: bigint_comparison_exp
 }
 
@@ -1160,6 +1166,8 @@ input type for inserting data into table "abandoned_matches"
 input abandoned_matches_insert_input {
   abandoned_at: timestamptz
   id: uuid
+  match: matches_obj_rel_insert_input
+  match_id: uuid
   steam_id: bigint
 }
 
@@ -1167,6 +1175,7 @@ input abandoned_matches_insert_input {
 type abandoned_matches_max_fields {
   abandoned_at: timestamptz
   id: uuid
+  match_id: uuid
   steam_id: bigint
 }
 
@@ -1176,6 +1185,7 @@ order by max() on columns of table "abandoned_matches"
 input abandoned_matches_max_order_by {
   abandoned_at: order_by
   id: order_by
+  match_id: order_by
   steam_id: order_by
 }
 
@@ -1183,6 +1193,7 @@ input abandoned_matches_max_order_by {
 type abandoned_matches_min_fields {
   abandoned_at: timestamptz
   id: uuid
+  match_id: uuid
   steam_id: bigint
 }
 
@@ -1192,6 +1203,7 @@ order by min() on columns of table "abandoned_matches"
 input abandoned_matches_min_order_by {
   abandoned_at: order_by
   id: order_by
+  match_id: order_by
   steam_id: order_by
 }
 
@@ -1219,6 +1231,8 @@ input abandoned_matches_on_conflict {
 input abandoned_matches_order_by {
   abandoned_at: order_by
   id: order_by
+  match: matches_order_by
+  match_id: order_by
   steam_id: order_by
 }
 
@@ -1238,6 +1252,9 @@ enum abandoned_matches_select_column {
   id
 
   """column name"""
+  match_id
+
+  """column name"""
   steam_id
 }
 
@@ -1247,6 +1264,7 @@ input type for updating data in table "abandoned_matches"
 input abandoned_matches_set_input {
   abandoned_at: timestamptz
   id: uuid
+  match_id: uuid
   steam_id: bigint
 }
 
@@ -1301,6 +1319,7 @@ input abandoned_matches_stream_cursor_input {
 input abandoned_matches_stream_cursor_value_input {
   abandoned_at: timestamptz
   id: uuid
+  match_id: uuid
   steam_id: bigint
 }
 
@@ -1325,6 +1344,9 @@ enum abandoned_matches_update_column {
 
   """column name"""
   id
+
+  """column name"""
+  match_id
 
   """column name"""
   steam_id
@@ -11326,6 +11348,9 @@ enum e_notification_types_enum {
   """Your league team no longer meets the minimum roster size"""
   LeagueRosterUndersized
 
+  """A player abandoned a match"""
+  MatchAbandoned
+
   """A Valve match you played was imported to 5stack"""
   MatchImported
 
@@ -11334,6 +11359,12 @@ enum e_notification_types_enum {
 
   """MatchSupport"""
   MatchSupport
+
+  """Your name change request was approved"""
+  NameChangeApproved
+
+  """Your name change request was denied"""
+  NameChangeDenied
 
   """NameChangeRequest"""
   NameChangeRequest
@@ -20469,6 +20500,7 @@ input get_leaderboard_args {
   _match_type: String
   _role: String
   _season_id: uuid
+  _source: String
   _window_days: Int
 }
 
@@ -20484,6 +20516,7 @@ input get_player_leaderboard_rank_args {
   _match_type: String
   _player_steam_id: String
   _season_id: uuid
+  _source: String
   _window_days: Int
 }
 
@@ -20565,6 +20598,7 @@ type leaderboard_entries {
   matches_played: Int
   player_avatar_url: String
   player_country: String
+  player_custom_avatar_url: String
   player_name: String!
   player_steam_id: String!
   secondary_value: float8
@@ -20612,6 +20646,7 @@ input leaderboard_entries_bool_exp {
   matches_played: Int_comparison_exp
   player_avatar_url: String_comparison_exp
   player_country: String_comparison_exp
+  player_custom_avatar_url: String_comparison_exp
   player_name: String_comparison_exp
   player_steam_id: String_comparison_exp
   secondary_value: float8_comparison_exp
@@ -20636,6 +20671,7 @@ input leaderboard_entries_insert_input {
   matches_played: Int
   player_avatar_url: String
   player_country: String
+  player_custom_avatar_url: String
   player_name: String
   player_steam_id: String
   secondary_value: float8
@@ -20648,6 +20684,7 @@ type leaderboard_entries_max_fields {
   matches_played: Int
   player_avatar_url: String
   player_country: String
+  player_custom_avatar_url: String
   player_name: String
   player_steam_id: String
   secondary_value: float8
@@ -20660,6 +20697,7 @@ type leaderboard_entries_min_fields {
   matches_played: Int
   player_avatar_url: String
   player_country: String
+  player_custom_avatar_url: String
   player_name: String
   player_steam_id: String
   secondary_value: float8
@@ -20683,6 +20721,7 @@ input leaderboard_entries_order_by {
   matches_played: order_by
   player_avatar_url: order_by
   player_country: order_by
+  player_custom_avatar_url: order_by
   player_name: order_by
   player_steam_id: order_by
   secondary_value: order_by
@@ -20702,6 +20741,9 @@ enum leaderboard_entries_select_column {
 
   """column name"""
   player_country
+
+  """column name"""
+  player_custom_avatar_url
 
   """column name"""
   player_name
@@ -20726,6 +20768,7 @@ input leaderboard_entries_set_input {
   matches_played: Int
   player_avatar_url: String
   player_country: String
+  player_custom_avatar_url: String
   player_name: String
   player_steam_id: String
   secondary_value: float8
@@ -20773,6 +20816,7 @@ input leaderboard_entries_stream_cursor_value_input {
   matches_played: Int
   player_avatar_url: String
   player_country: String
+  player_custom_avatar_url: String
   player_name: String
   player_steam_id: String
   secondary_value: float8
@@ -28398,6 +28442,7 @@ type match_lineup_players {
   checked_in: Boolean!
   discord_id: String
   id: uuid!
+  is_connected: Boolean!
 
   """An object relationship"""
   lineup: match_lineups!
@@ -28513,6 +28558,7 @@ input match_lineup_players_bool_exp {
   checked_in: Boolean_comparison_exp
   discord_id: String_comparison_exp
   id: uuid_comparison_exp
+  is_connected: Boolean_comparison_exp
   lineup: match_lineups_bool_exp
   match_lineup_id: uuid_comparison_exp
   party_id: uuid_comparison_exp
@@ -28557,6 +28603,7 @@ input match_lineup_players_insert_input {
   checked_in: Boolean
   discord_id: String
   id: uuid
+  is_connected: Boolean
   lineup: match_lineups_obj_rel_insert_input
   match_lineup_id: uuid
   party_id: uuid
@@ -28636,6 +28683,7 @@ input match_lineup_players_order_by {
   checked_in: order_by
   discord_id: order_by
   id: order_by
+  is_connected: order_by
   lineup: match_lineups_order_by
   match_lineup_id: order_by
   party_id: order_by
@@ -28667,6 +28715,9 @@ enum match_lineup_players_select_column {
   id
 
   """column name"""
+  is_connected
+
+  """column name"""
   match_lineup_id
 
   """column name"""
@@ -28691,6 +28742,9 @@ enum match_lineup_players_select_column_match_lineup_players_aggregate_bool_exp_
 
   """column name"""
   checked_in
+
+  """column name"""
+  is_connected
 }
 
 """
@@ -28702,6 +28756,9 @@ enum match_lineup_players_select_column_match_lineup_players_aggregate_bool_exp_
 
   """column name"""
   checked_in
+
+  """column name"""
+  is_connected
 }
 
 """
@@ -28712,6 +28769,7 @@ input match_lineup_players_set_input {
   checked_in: Boolean
   discord_id: String
   id: uuid
+  is_connected: Boolean
   match_lineup_id: uuid
   party_id: uuid
   party_source: e_match_party_sources_enum
@@ -28772,6 +28830,7 @@ input match_lineup_players_stream_cursor_value_input {
   checked_in: Boolean
   discord_id: String
   id: uuid
+  is_connected: Boolean
   match_lineup_id: uuid
   party_id: uuid
   party_source: e_match_party_sources_enum
@@ -28806,6 +28865,9 @@ enum match_lineup_players_update_column {
 
   """column name"""
   id
+
+  """column name"""
+  is_connected
 
   """column name"""
   match_lineup_id
@@ -31113,6 +31175,7 @@ input match_map_rounds_variance_order_by {
 columns and relationships of "match_map_veto_picks"
 """
 type match_map_veto_picks {
+  auto_picked: Boolean!
   created_at: timestamptz!
   id: uuid!
 
@@ -31140,7 +31203,23 @@ type match_map_veto_picks_aggregate {
 }
 
 input match_map_veto_picks_aggregate_bool_exp {
+  bool_and: match_map_veto_picks_aggregate_bool_exp_bool_and
+  bool_or: match_map_veto_picks_aggregate_bool_exp_bool_or
   count: match_map_veto_picks_aggregate_bool_exp_count
+}
+
+input match_map_veto_picks_aggregate_bool_exp_bool_and {
+  arguments: match_map_veto_picks_select_column_match_map_veto_picks_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: match_map_veto_picks_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input match_map_veto_picks_aggregate_bool_exp_bool_or {
+  arguments: match_map_veto_picks_select_column_match_map_veto_picks_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: match_map_veto_picks_bool_exp
+  predicate: Boolean_comparison_exp!
 }
 
 input match_map_veto_picks_aggregate_bool_exp_count {
@@ -31185,6 +31264,7 @@ input match_map_veto_picks_bool_exp {
   _and: [match_map_veto_picks_bool_exp!]
   _not: match_map_veto_picks_bool_exp
   _or: [match_map_veto_picks_bool_exp!]
+  auto_picked: Boolean_comparison_exp
   created_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
   map: maps_bool_exp
@@ -31216,6 +31296,7 @@ enum match_map_veto_picks_constraint {
 input type for inserting data into table "match_map_veto_picks"
 """
 input match_map_veto_picks_insert_input {
+  auto_picked: Boolean
   created_at: timestamptz
   id: uuid
   map: maps_obj_rel_insert_input
@@ -31294,6 +31375,7 @@ input match_map_veto_picks_on_conflict {
 
 """Ordering options when selecting data from "match_map_veto_picks"."""
 input match_map_veto_picks_order_by {
+  auto_picked: order_by
   created_at: order_by
   id: order_by
   map: maps_order_by
@@ -31315,6 +31397,9 @@ input match_map_veto_picks_pk_columns_input {
 select columns of table "match_map_veto_picks"
 """
 enum match_map_veto_picks_select_column {
+  """column name"""
+  auto_picked
+
   """column name"""
   created_at
 
@@ -31338,9 +31423,26 @@ enum match_map_veto_picks_select_column {
 }
 
 """
+select "match_map_veto_picks_aggregate_bool_exp_bool_and_arguments_columns" columns of table "match_map_veto_picks"
+"""
+enum match_map_veto_picks_select_column_match_map_veto_picks_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  auto_picked
+}
+
+"""
+select "match_map_veto_picks_aggregate_bool_exp_bool_or_arguments_columns" columns of table "match_map_veto_picks"
+"""
+enum match_map_veto_picks_select_column_match_map_veto_picks_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  auto_picked
+}
+
+"""
 input type for updating data in table "match_map_veto_picks"
 """
 input match_map_veto_picks_set_input {
+  auto_picked: Boolean
   created_at: timestamptz
   id: uuid
   map_id: uuid
@@ -31363,6 +31465,7 @@ input match_map_veto_picks_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input match_map_veto_picks_stream_cursor_value_input {
+  auto_picked: Boolean
   created_at: timestamptz
   id: uuid
   map_id: uuid
@@ -31376,6 +31479,9 @@ input match_map_veto_picks_stream_cursor_value_input {
 update columns of table "match_map_veto_picks"
 """
 enum match_map_veto_picks_update_column {
+  """column name"""
+  auto_picked
+
   """column name"""
   created_at
 
@@ -31412,6 +31518,7 @@ columns and relationships of "match_maps"
 type match_maps {
   clips_count: Int!
   created_at: timestamptz!
+  demo_processing_started_at: timestamptz
 
   """An array relationship"""
   demos(
@@ -31966,6 +32073,7 @@ input match_maps_bool_exp {
   _or: [match_maps_bool_exp!]
   clips_count: Int_comparison_exp
   created_at: timestamptz_comparison_exp
+  demo_processing_started_at: timestamptz_comparison_exp
   demos: match_map_demos_bool_exp
   demos_aggregate: match_map_demos_aggregate_bool_exp
   demos_download_url: String_comparison_exp
@@ -32045,6 +32153,7 @@ input type for inserting data into table "match_maps"
 input match_maps_insert_input {
   clips_count: Int
   created_at: timestamptz
+  demo_processing_started_at: timestamptz
   demos: match_map_demos_arr_rel_insert_input
   e_match_map_status: e_match_map_status_obj_rel_insert_input
   ended_at: timestamptz
@@ -32080,6 +32189,7 @@ input match_maps_insert_input {
 type match_maps_max_fields {
   clips_count: Int
   created_at: timestamptz
+  demo_processing_started_at: timestamptz
 
   """
   A computed field, executes function "match_map_demo_download_url"
@@ -32120,6 +32230,7 @@ order by max() on columns of table "match_maps"
 input match_maps_max_order_by {
   clips_count: order_by
   created_at: order_by
+  demo_processing_started_at: order_by
   ended_at: order_by
   id: order_by
   latest_clip_at: order_by
@@ -32138,6 +32249,7 @@ input match_maps_max_order_by {
 type match_maps_min_fields {
   clips_count: Int
   created_at: timestamptz
+  demo_processing_started_at: timestamptz
 
   """
   A computed field, executes function "match_map_demo_download_url"
@@ -32178,6 +32290,7 @@ order by min() on columns of table "match_maps"
 input match_maps_min_order_by {
   clips_count: order_by
   created_at: order_by
+  demo_processing_started_at: order_by
   ended_at: order_by
   id: order_by
   latest_clip_at: order_by
@@ -32226,6 +32339,7 @@ input match_maps_on_conflict {
 input match_maps_order_by {
   clips_count: order_by
   created_at: order_by
+  demo_processing_started_at: order_by
   demos_aggregate: match_map_demos_aggregate_order_by
   demos_download_url: order_by
   demos_total_size: order_by
@@ -32276,6 +32390,9 @@ enum match_maps_select_column {
 
   """column name"""
   created_at
+
+  """column name"""
+  demo_processing_started_at
 
   """column name"""
   ended_at
@@ -32329,6 +32446,7 @@ input type for updating data in table "match_maps"
 input match_maps_set_input {
   clips_count: Int
   created_at: timestamptz
+  demo_processing_started_at: timestamptz
   ended_at: timestamptz
   id: uuid
   latest_clip_at: timestamptz
@@ -32466,6 +32584,7 @@ input match_maps_stream_cursor_input {
 input match_maps_stream_cursor_value_input {
   clips_count: Int
   created_at: timestamptz
+  demo_processing_started_at: timestamptz
   ended_at: timestamptz
   id: uuid
   latest_clip_at: timestamptz
@@ -32527,6 +32646,9 @@ enum match_maps_update_column {
 
   """column name"""
   created_at
+
+  """column name"""
+  demo_processing_started_at
 
   """column name"""
   ended_at
@@ -32773,6 +32895,7 @@ type match_options {
   tournament_stage: tournament_stages
   tv_delay: Int!
   type: e_match_types_enum!
+  veto_pick_timeout: Int!
 }
 
 """
@@ -32809,6 +32932,7 @@ type match_options_avg_fields {
   number_of_substitutes: Float
   round_restart_delay: Float
   tv_delay: Float
+  veto_pick_timeout: Float
 }
 
 """
@@ -32851,6 +32975,7 @@ input match_options_bool_exp {
   tournament_stage: tournament_stages_bool_exp
   tv_delay: Int_comparison_exp
   type: e_match_types_enum_comparison_exp
+  veto_pick_timeout: Int_comparison_exp
 }
 
 """
@@ -32874,6 +32999,7 @@ input match_options_inc_input {
   number_of_substitutes: Int
   round_restart_delay: Int
   tv_delay: Int
+  veto_pick_timeout: Int
 }
 
 """
@@ -32911,6 +33037,7 @@ input match_options_insert_input {
   tournament_stage: tournament_stages_obj_rel_insert_input
   tv_delay: Int
   type: e_match_types_enum
+  veto_pick_timeout: Int
 }
 
 """aggregate max on columns"""
@@ -32926,6 +33053,7 @@ type match_options_max_fields {
   regions: [String!]
   round_restart_delay: Int
   tv_delay: Int
+  veto_pick_timeout: Int
 }
 
 """aggregate min on columns"""
@@ -32941,6 +33069,7 @@ type match_options_min_fields {
   regions: [String!]
   round_restart_delay: Int
   tv_delay: Int
+  veto_pick_timeout: Int
 }
 
 """
@@ -33007,6 +33136,7 @@ input match_options_order_by {
   tournament_stage: tournament_stages_order_by
   tv_delay: order_by
   type: order_by
+  veto_pick_timeout: order_by
 }
 
 """primary key columns input for table: match_options"""
@@ -33095,6 +33225,9 @@ enum match_options_select_column {
 
   """column name"""
   type
+
+  """column name"""
+  veto_pick_timeout
 }
 
 """
@@ -33127,6 +33260,7 @@ input match_options_set_input {
   timeout_setting: e_timeout_settings_enum
   tv_delay: Int
   type: e_match_types_enum
+  veto_pick_timeout: Int
 }
 
 """aggregate stddev on columns"""
@@ -33138,6 +33272,7 @@ type match_options_stddev_fields {
   number_of_substitutes: Float
   round_restart_delay: Float
   tv_delay: Float
+  veto_pick_timeout: Float
 }
 
 """aggregate stddev_pop on columns"""
@@ -33149,6 +33284,7 @@ type match_options_stddev_pop_fields {
   number_of_substitutes: Float
   round_restart_delay: Float
   tv_delay: Float
+  veto_pick_timeout: Float
 }
 
 """aggregate stddev_samp on columns"""
@@ -33160,6 +33296,7 @@ type match_options_stddev_samp_fields {
   number_of_substitutes: Float
   round_restart_delay: Float
   tv_delay: Float
+  veto_pick_timeout: Float
 }
 
 """
@@ -33201,6 +33338,7 @@ input match_options_stream_cursor_value_input {
   timeout_setting: e_timeout_settings_enum
   tv_delay: Int
   type: e_match_types_enum
+  veto_pick_timeout: Int
 }
 
 """aggregate sum on columns"""
@@ -33212,6 +33350,7 @@ type match_options_sum_fields {
   number_of_substitutes: Int
   round_restart_delay: Int
   tv_delay: Int
+  veto_pick_timeout: Int
 }
 
 """
@@ -33295,6 +33434,9 @@ enum match_options_update_column {
 
   """column name"""
   type
+
+  """column name"""
+  veto_pick_timeout
 }
 
 input match_options_updates {
@@ -33317,6 +33459,7 @@ type match_options_var_pop_fields {
   number_of_substitutes: Float
   round_restart_delay: Float
   tv_delay: Float
+  veto_pick_timeout: Float
 }
 
 """aggregate var_samp on columns"""
@@ -33328,6 +33471,7 @@ type match_options_var_samp_fields {
   number_of_substitutes: Float
   round_restart_delay: Float
   tv_delay: Float
+  veto_pick_timeout: Float
 }
 
 """aggregate variance on columns"""
@@ -33339,12 +33483,14 @@ type match_options_variance_fields {
   number_of_substitutes: Float
   round_restart_delay: Float
   tv_delay: Float
+  veto_pick_timeout: Float
 }
 
 """
 columns and relationships of "match_region_veto_picks"
 """
 type match_region_veto_picks {
+  auto_picked: Boolean!
   created_at: timestamptz!
   id: uuid!
 
@@ -33368,7 +33514,23 @@ type match_region_veto_picks_aggregate {
 }
 
 input match_region_veto_picks_aggregate_bool_exp {
+  bool_and: match_region_veto_picks_aggregate_bool_exp_bool_and
+  bool_or: match_region_veto_picks_aggregate_bool_exp_bool_or
   count: match_region_veto_picks_aggregate_bool_exp_count
+}
+
+input match_region_veto_picks_aggregate_bool_exp_bool_and {
+  arguments: match_region_veto_picks_select_column_match_region_veto_picks_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: match_region_veto_picks_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input match_region_veto_picks_aggregate_bool_exp_bool_or {
+  arguments: match_region_veto_picks_select_column_match_region_veto_picks_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: match_region_veto_picks_bool_exp
+  predicate: Boolean_comparison_exp!
 }
 
 input match_region_veto_picks_aggregate_bool_exp_count {
@@ -33413,6 +33575,7 @@ input match_region_veto_picks_bool_exp {
   _and: [match_region_veto_picks_bool_exp!]
   _not: match_region_veto_picks_bool_exp
   _or: [match_region_veto_picks_bool_exp!]
+  auto_picked: Boolean_comparison_exp
   created_at: timestamptz_comparison_exp
   id: uuid_comparison_exp
   match: matches_bool_exp
@@ -33442,6 +33605,7 @@ enum match_region_veto_picks_constraint {
 input type for inserting data into table "match_region_veto_picks"
 """
 input match_region_veto_picks_insert_input {
+  auto_picked: Boolean
   created_at: timestamptz
   id: uuid
   match: matches_obj_rel_insert_input
@@ -33514,6 +33678,7 @@ input match_region_veto_picks_on_conflict {
 
 """Ordering options when selecting data from "match_region_veto_picks"."""
 input match_region_veto_picks_order_by {
+  auto_picked: order_by
   created_at: order_by
   id: order_by
   match: matches_order_by
@@ -33534,6 +33699,9 @@ select columns of table "match_region_veto_picks"
 """
 enum match_region_veto_picks_select_column {
   """column name"""
+  auto_picked
+
+  """column name"""
   created_at
 
   """column name"""
@@ -33553,9 +33721,26 @@ enum match_region_veto_picks_select_column {
 }
 
 """
+select "match_region_veto_picks_aggregate_bool_exp_bool_and_arguments_columns" columns of table "match_region_veto_picks"
+"""
+enum match_region_veto_picks_select_column_match_region_veto_picks_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  auto_picked
+}
+
+"""
+select "match_region_veto_picks_aggregate_bool_exp_bool_or_arguments_columns" columns of table "match_region_veto_picks"
+"""
+enum match_region_veto_picks_select_column_match_region_veto_picks_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  auto_picked
+}
+
+"""
 input type for updating data in table "match_region_veto_picks"
 """
 input match_region_veto_picks_set_input {
+  auto_picked: Boolean
   created_at: timestamptz
   id: uuid
   match_id: uuid
@@ -33577,6 +33762,7 @@ input match_region_veto_picks_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input match_region_veto_picks_stream_cursor_value_input {
+  auto_picked: Boolean
   created_at: timestamptz
   id: uuid
   match_id: uuid
@@ -33589,6 +33775,9 @@ input match_region_veto_picks_stream_cursor_value_input {
 update columns of table "match_region_veto_picks"
 """
 enum match_region_veto_picks_update_column {
+  """column name"""
+  auto_picked
+
   """column name"""
   created_at
 
@@ -35239,6 +35428,7 @@ type matches {
   A computed field, executes function "get_match_tv_connection_string"
   """
   tv_connection_string: String
+  veto_pick_expires_at: timestamptz
 
   """An object relationship"""
   winner: match_lineups
@@ -35429,6 +35619,7 @@ input matches_bool_exp {
   tournament_brackets: tournament_brackets_bool_exp
   tournament_brackets_aggregate: tournament_brackets_aggregate_bool_exp
   tv_connection_string: String_comparison_exp
+  veto_pick_expires_at: timestamptz_comparison_exp
   winner: match_lineups_bool_exp
   winning_lineup_id: uuid_comparison_exp
 }
@@ -35517,6 +35708,7 @@ input matches_insert_input {
   status: e_match_status_enum
   streams: match_streams_arr_rel_insert_input
   tournament_brackets: tournament_brackets_arr_rel_insert_input
+  veto_pick_expires_at: timestamptz
   winner: match_lineups_obj_rel_insert_input
   winning_lineup_id: uuid
 }
@@ -35607,6 +35799,7 @@ type matches_max_fields {
   A computed field, executes function "get_match_tv_connection_string"
   """
   tv_connection_string: String
+  veto_pick_expires_at: timestamptz
   winning_lineup_id: uuid
 }
 
@@ -35633,6 +35826,7 @@ input matches_max_order_by {
   share_code: order_by
   source: order_by
   started_at: order_by
+  veto_pick_expires_at: order_by
   winning_lineup_id: order_by
 }
 
@@ -35722,6 +35916,7 @@ type matches_min_fields {
   A computed field, executes function "get_match_tv_connection_string"
   """
   tv_connection_string: String
+  veto_pick_expires_at: timestamptz
   winning_lineup_id: uuid
 }
 
@@ -35748,6 +35943,7 @@ input matches_min_order_by {
   share_code: order_by
   source: order_by
   started_at: order_by
+  veto_pick_expires_at: order_by
   winning_lineup_id: order_by
 }
 
@@ -35859,6 +36055,7 @@ input matches_order_by {
   teams_aggregate: teams_aggregate_order_by
   tournament_brackets_aggregate: tournament_brackets_aggregate_order_by
   tv_connection_string: order_by
+  veto_pick_expires_at: order_by
   winner: match_lineups_order_by
   winning_lineup_id: order_by
 }
@@ -35933,6 +36130,9 @@ enum matches_select_column {
   status
 
   """column name"""
+  veto_pick_expires_at
+
+  """column name"""
   winning_lineup_id
 }
 
@@ -35959,6 +36159,7 @@ input matches_set_input {
   source: String
   started_at: timestamptz
   status: e_match_status_enum
+  veto_pick_expires_at: timestamptz
   winning_lineup_id: uuid
 }
 
@@ -36058,6 +36259,7 @@ input matches_stream_cursor_value_input {
   source: String
   started_at: timestamptz
   status: e_match_status_enum
+  veto_pick_expires_at: timestamptz
   winning_lineup_id: uuid
 }
 
@@ -36142,6 +36344,9 @@ enum matches_update_column {
 
   """column name"""
   status
+
+  """column name"""
+  veto_pick_expires_at
 
   """column name"""
   winning_lineup_id
@@ -38562,6 +38767,7 @@ type mutation_root {
   """
   delete_v_team_stage_results_by_pk(tournament_stage_id: uuid!, tournament_team_id: uuid!): v_team_stage_results
   denyInvite(invite_id: uuid!, type: String!): SuccessOutput
+  denyNameChange(name: String!, steam_id: bigint!): SuccessOutput
   forfeitMatch(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
 
   """
@@ -66366,6 +66572,11 @@ type players {
     where: award_recipients_bool_exp
   ): award_recipients_aggregate!
 
+  """
+  A computed field, executes function "banned_until"
+  """
+  banned_until: timestamptz
+
   """An array relationship"""
   coach_lineups(
     """distinct select on columns"""
@@ -66788,6 +66999,11 @@ type players {
   ): team_invites_aggregate!
 
   """
+  A computed field, executes function "is_admin_sanctioned"
+  """
+  is_admin_sanctioned: Boolean
+
+  """
   A computed field, executes function "is_banned"
   """
   is_banned: Boolean
@@ -66816,6 +67032,11 @@ type players {
   A computed field, executes function "is_muted"
   """
   is_muted: Boolean
+
+  """
+  A computed field, executes function "is_registered"
+  """
+  is_registered: Boolean
 
   """An array relationship"""
   kills(
@@ -67861,6 +68082,7 @@ input players_bool_exp {
   avatar_url: String_comparison_exp
   awards: award_recipients_bool_exp
   awards_aggregate: award_recipients_aggregate_bool_exp
+  banned_until: timestamptz_comparison_exp
   coach_lineups: match_lineups_bool_exp
   coach_lineups_aggregate: match_lineups_aggregate_bool_exp
   country: String_comparison_exp
@@ -67897,12 +68119,14 @@ input players_bool_exp {
   game_ban_count: Int_comparison_exp
   invited_players: team_invites_bool_exp
   invited_players_aggregate: team_invites_aggregate_bool_exp
+  is_admin_sanctioned: Boolean_comparison_exp
   is_banned: Boolean_comparison_exp
   is_gagged: Boolean_comparison_exp
   is_in_another_match: Boolean_comparison_exp
   is_in_draft: Boolean_comparison_exp
   is_in_lobby: Boolean_comparison_exp
   is_muted: Boolean_comparison_exp
+  is_registered: Boolean_comparison_exp
   kills: player_kills_bool_exp
   kills_aggregate: player_kills_aggregate_bool_exp
   kills_by_weapons: player_kills_by_weapon_bool_exp
@@ -68090,6 +68314,11 @@ input players_insert_input {
 """aggregate max on columns"""
 type players_max_fields {
   avatar_url: String
+
+  """
+  A computed field, executes function "banned_until"
+  """
+  banned_until: timestamptz
   country: String
   created_at: timestamptz
 
@@ -68173,6 +68402,11 @@ type players_max_fields {
 """aggregate min on columns"""
 type players_min_fields {
   avatar_url: String
+
+  """
+  A computed field, executes function "banned_until"
+  """
+  banned_until: timestamptz
   country: String
   created_at: timestamptz
 
@@ -68291,6 +68525,7 @@ input players_order_by {
   assited_by_players_aggregate: player_assists_aggregate_order_by
   avatar_url: order_by
   awards_aggregate: award_recipients_aggregate_order_by
+  banned_until: order_by
   coach_lineups_aggregate: match_lineups_aggregate_order_by
   country: order_by
   created_at: order_by
@@ -68316,12 +68551,14 @@ input players_order_by {
   friends_aggregate: my_friends_aggregate_order_by
   game_ban_count: order_by
   invited_players_aggregate: team_invites_aggregate_order_by
+  is_admin_sanctioned: order_by
   is_banned: order_by
   is_gagged: order_by
   is_in_another_match: order_by
   is_in_draft: order_by
   is_in_lobby: order_by
   is_muted: order_by
+  is_registered: order_by
   kills_aggregate: player_kills_aggregate_order_by
   kills_by_weapons_aggregate: player_kills_by_weapon_aggregate_order_by
   language: order_by
@@ -111942,10 +112179,12 @@ type v_steam_account_pool_status_variance_fields {
 columns and relationships of "v_team_ranks"
 """
 type v_team_ranks {
+  avg_duel_elo: Int
   avg_elo: Int
   avg_faceit_elo: Int
   avg_faceit_level: float8
   avg_premier: Int
+  avg_wingman_elo: Int
   max_elo: Int
   min_elo: Int
   roster_size: bigint
@@ -111982,10 +112221,12 @@ type v_team_ranks_aggregate_fields {
 
 """aggregate avg on columns"""
 type v_team_ranks_avg_fields {
+  avg_duel_elo: Float
   avg_elo: Float
   avg_faceit_elo: Float
   avg_faceit_level: Float
   avg_premier: Float
+  avg_wingman_elo: Float
   max_elo: Float
   min_elo: Float
   roster_size: Float
@@ -111998,10 +112239,12 @@ input v_team_ranks_bool_exp {
   _and: [v_team_ranks_bool_exp!]
   _not: v_team_ranks_bool_exp
   _or: [v_team_ranks_bool_exp!]
+  avg_duel_elo: Int_comparison_exp
   avg_elo: Int_comparison_exp
   avg_faceit_elo: Int_comparison_exp
   avg_faceit_level: float8_comparison_exp
   avg_premier: Int_comparison_exp
+  avg_wingman_elo: Int_comparison_exp
   max_elo: Int_comparison_exp
   min_elo: Int_comparison_exp
   roster_size: bigint_comparison_exp
@@ -112013,10 +112256,12 @@ input v_team_ranks_bool_exp {
 input type for inserting data into table "v_team_ranks"
 """
 input v_team_ranks_insert_input {
+  avg_duel_elo: Int
   avg_elo: Int
   avg_faceit_elo: Int
   avg_faceit_level: float8
   avg_premier: Int
+  avg_wingman_elo: Int
   max_elo: Int
   min_elo: Int
   roster_size: bigint
@@ -112026,10 +112271,12 @@ input v_team_ranks_insert_input {
 
 """aggregate max on columns"""
 type v_team_ranks_max_fields {
+  avg_duel_elo: Int
   avg_elo: Int
   avg_faceit_elo: Int
   avg_faceit_level: float8
   avg_premier: Int
+  avg_wingman_elo: Int
   max_elo: Int
   min_elo: Int
   roster_size: bigint
@@ -112038,10 +112285,12 @@ type v_team_ranks_max_fields {
 
 """aggregate min on columns"""
 type v_team_ranks_min_fields {
+  avg_duel_elo: Int
   avg_elo: Int
   avg_faceit_elo: Int
   avg_faceit_level: float8
   avg_premier: Int
+  avg_wingman_elo: Int
   max_elo: Int
   min_elo: Int
   roster_size: bigint
@@ -112057,10 +112306,12 @@ input v_team_ranks_obj_rel_insert_input {
 
 """Ordering options when selecting data from "v_team_ranks"."""
 input v_team_ranks_order_by {
+  avg_duel_elo: order_by
   avg_elo: order_by
   avg_faceit_elo: order_by
   avg_faceit_level: order_by
   avg_premier: order_by
+  avg_wingman_elo: order_by
   max_elo: order_by
   min_elo: order_by
   roster_size: order_by
@@ -112073,6 +112324,9 @@ select columns of table "v_team_ranks"
 """
 enum v_team_ranks_select_column {
   """column name"""
+  avg_duel_elo
+
+  """column name"""
   avg_elo
 
   """column name"""
@@ -112083,6 +112337,9 @@ enum v_team_ranks_select_column {
 
   """column name"""
   avg_premier
+
+  """column name"""
+  avg_wingman_elo
 
   """column name"""
   max_elo
@@ -112099,10 +112356,12 @@ enum v_team_ranks_select_column {
 
 """aggregate stddev on columns"""
 type v_team_ranks_stddev_fields {
+  avg_duel_elo: Float
   avg_elo: Float
   avg_faceit_elo: Float
   avg_faceit_level: Float
   avg_premier: Float
+  avg_wingman_elo: Float
   max_elo: Float
   min_elo: Float
   roster_size: Float
@@ -112110,10 +112369,12 @@ type v_team_ranks_stddev_fields {
 
 """aggregate stddev_pop on columns"""
 type v_team_ranks_stddev_pop_fields {
+  avg_duel_elo: Float
   avg_elo: Float
   avg_faceit_elo: Float
   avg_faceit_level: Float
   avg_premier: Float
+  avg_wingman_elo: Float
   max_elo: Float
   min_elo: Float
   roster_size: Float
@@ -112121,10 +112382,12 @@ type v_team_ranks_stddev_pop_fields {
 
 """aggregate stddev_samp on columns"""
 type v_team_ranks_stddev_samp_fields {
+  avg_duel_elo: Float
   avg_elo: Float
   avg_faceit_elo: Float
   avg_faceit_level: Float
   avg_premier: Float
+  avg_wingman_elo: Float
   max_elo: Float
   min_elo: Float
   roster_size: Float
@@ -112143,10 +112406,12 @@ input v_team_ranks_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input v_team_ranks_stream_cursor_value_input {
+  avg_duel_elo: Int
   avg_elo: Int
   avg_faceit_elo: Int
   avg_faceit_level: float8
   avg_premier: Int
+  avg_wingman_elo: Int
   max_elo: Int
   min_elo: Int
   roster_size: bigint
@@ -112155,10 +112420,12 @@ input v_team_ranks_stream_cursor_value_input {
 
 """aggregate sum on columns"""
 type v_team_ranks_sum_fields {
+  avg_duel_elo: Int
   avg_elo: Int
   avg_faceit_elo: Int
   avg_faceit_level: float8
   avg_premier: Int
+  avg_wingman_elo: Int
   max_elo: Int
   min_elo: Int
   roster_size: bigint
@@ -112166,10 +112433,12 @@ type v_team_ranks_sum_fields {
 
 """aggregate var_pop on columns"""
 type v_team_ranks_var_pop_fields {
+  avg_duel_elo: Float
   avg_elo: Float
   avg_faceit_elo: Float
   avg_faceit_level: Float
   avg_premier: Float
+  avg_wingman_elo: Float
   max_elo: Float
   min_elo: Float
   roster_size: Float
@@ -112177,10 +112446,12 @@ type v_team_ranks_var_pop_fields {
 
 """aggregate var_samp on columns"""
 type v_team_ranks_var_samp_fields {
+  avg_duel_elo: Float
   avg_elo: Float
   avg_faceit_elo: Float
   avg_faceit_level: Float
   avg_premier: Float
+  avg_wingman_elo: Float
   max_elo: Float
   min_elo: Float
   roster_size: Float
@@ -112188,10 +112459,12 @@ type v_team_ranks_var_samp_fields {
 
 """aggregate variance on columns"""
 type v_team_ranks_variance_fields {
+  avg_duel_elo: Float
   avg_elo: Float
   avg_faceit_elo: Float
   avg_faceit_level: Float
   avg_premier: Float
+  avg_wingman_elo: Float
   max_elo: Float
   min_elo: Float
   roster_size: Float

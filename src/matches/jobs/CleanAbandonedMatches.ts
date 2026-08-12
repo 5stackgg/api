@@ -12,15 +12,25 @@ export class CleanAbandonedMatches extends WorkerHost {
   ) {
     super();
   }
+  // Matchmaking cooldown forgives an abandon after a week, but it windows the
+  // rows by date rather than relying on them being gone. The record itself is
+  // kept far longer because elo reads it: generate_player_elo_for_match applies
+  // the leaver penalty from this table, so deleting a row at a week silently
+  // changes what a recompute or season backfill produces for that match.
+  private static readonly RETENTION_DAYS = 365;
+
   async process(): Promise<number> {
-    const oneWeekAgo = new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
+    const cutoff = new Date(
+      Date.now() -
+        1000 * 60 * 60 * 24 * CleanAbandonedMatches.RETENTION_DAYS,
+    );
 
     const { delete_abandoned_matches } = await this.hasura.mutation({
       delete_abandoned_matches: {
         __args: {
           where: {
             abandoned_at: {
-              _lt: oneWeekAgo,
+              _lt: cutoff,
             },
           },
         },

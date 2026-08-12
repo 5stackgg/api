@@ -136,6 +136,10 @@ export class TypeSenseService {
         sort: true,
         index: true,
       },
+      // Has the player ever signed in here, as opposed to a Steam account we
+      // only know about (e.g. picked up from someone else's friend list).
+      // Informational — every player stays searchable either way.
+      { name: "is_registered", type: "bool", optional: true, index: true },
       { name: "avatar_url", type: "string", optional: true, index: false },
       {
         name: "custom_avatar_url",
@@ -375,6 +379,8 @@ export class TypeSenseService {
       }
     }
 
+    const isRegistered = !!player.last_sign_in_at;
+
     // this is to allow filtering
     player.last_sign_in_at = player.last_sign_in_at || "~~";
 
@@ -408,6 +414,7 @@ export class TypeSenseService {
         Object.assign({}, player, elo, {
           id: steamId,
           steam_id: steamId,
+          is_registered: isRegistered,
           elo: TypeSenseService.primaryElo(
             elo.elo_competitive,
             elo.elo_wingman,

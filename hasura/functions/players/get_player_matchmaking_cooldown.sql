@@ -13,15 +13,22 @@ BEGIN
         RETURN NULL;
     END IF;
 
+    -- Windowed rather than counting every row ever. The escalation used to be
+    -- forgiven by CleanAbandonedMatches deleting the rows, which made the
+    -- record too short-lived to recompute elo from -- a leaver penalty applied
+    -- at match time silently vanished from any later recompute. The window
+    -- keeps the same forgiveness while the rows stay put.
     SELECT COUNT(*) INTO abandoned_count
     FROM abandoned_matches
-    WHERE steam_id = player.steam_id;
+    WHERE steam_id = player.steam_id
+      AND abandoned_at > NOW() - INTERVAL '7 days';
 
     IF abandoned_count > 0 THEN
         SELECT abandoned_at
         INTO last_abandoned_time
         FROM abandoned_matches
         WHERE steam_id = player.steam_id
+          AND abandoned_at > NOW() - INTERVAL '7 days'
         ORDER BY abandoned_at DESC
         LIMIT 1;
 

@@ -165,10 +165,17 @@ export class MatchesController {
         id: true,
         status: true,
         password: true,
+        cancels_at: true,
         lineup_1_id: true,
         lineup_2_id: true,
         current_match_map_id: true,
         is_tournament_match: true,
+        draft_games: {
+          __args: {
+            limit: 1,
+          },
+          id: true,
+        },
         server: {
           server_region: {
             is_lan: true,
@@ -203,6 +210,9 @@ export class MatchesController {
           },
           order: true,
           status: true,
+          // Lets the server tell a series that is over from one that merely has
+          // another map slot vetoed but never played.
+          winning_lineup_id: true,
           lineup_1_side: true,
           lineup_2_side: true,
           lineup_1_timeouts_available: true,
@@ -294,6 +304,7 @@ export class MatchesController {
 
     const match = matches_by_pk as typeof matches_by_pk & {
       is_lan: boolean;
+      is_draft_match: boolean;
       options: typeof matches_by_pk.options & {
         use_playcast: boolean;
         show_elo_ranks: boolean;
@@ -325,6 +336,9 @@ export class MatchesController {
 
     match.is_lan = match.server.server_region.is_lan;
     delete match.server;
+
+    match.is_draft_match = match.draft_games.length > 0;
+    delete match.draft_games;
 
     const fivestackRanksSettingName = match.is_tournament_match
       ? "fivestack_ranks_tournaments"
