@@ -948,8 +948,11 @@ $$;
 -- HLTV-stat leaderboards (rating / ADR / KPR / KAST), rounds-weighted
 -- value = _metric, secondary = complementary stat, tertiary = rounds played
 --
--- Deliberately no minimum-rounds floor: one sized for 5v5 empties this
--- leaderboard entirely for Duel, Wingman, and early-season data.
+-- Minimum-rounds floor comes from the leaderboard_min_rounds setting. The old
+-- hard-coded 50 was sized for 5v5 and emptied this board entirely for Duel,
+-- Wingman and early-season data; dropping it outright let a single 20-3 map
+-- outrank every regular, since the value is a rounds-weighted average. The
+-- default sits at roughly one competitive map. Set it to 0 to disable.
 -- ============================================================
 CREATE OR REPLACE FUNCTION public._leaderboard_hltv_metric(
   _metric TEXT,
@@ -1005,6 +1008,7 @@ BEGIN
       AND (lower(_source) = 'overall' OR public._leaderboard_match_source(h.match_id) = lower(_source))
       AND (_role IS NULL OR r.role = _role)
     GROUP BY h.steam_id
+    HAVING SUM(h.rounds_played) >= get_int_setting('leaderboard_min_rounds', 20)
   )
   SELECT
     a.steam_id::text   AS player_steam_id,
@@ -1086,6 +1090,7 @@ BEGIN
       AND (lower(_source) = 'overall' OR public._leaderboard_match_source(s.match_id) = lower(_source))
       AND (_role IS NULL OR r.role = _role)
     GROUP BY s.steam_id
+    HAVING SUM(s.rounds_played) >= get_int_setting('leaderboard_min_rounds', 20)
   )
   SELECT
     a.steam_id::text          AS player_steam_id,

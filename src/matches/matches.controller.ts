@@ -210,6 +210,9 @@ export class MatchesController {
           },
           order: true,
           status: true,
+          // Lets the server tell a series that is over from one that merely has
+          // another map slot vetoed but never played.
+          winning_lineup_id: true,
           lineup_1_side: true,
           lineup_2_side: true,
           lineup_1_timeouts_available: true,

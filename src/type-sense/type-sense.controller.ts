@@ -205,8 +205,11 @@ export class TypeSenseController {
             // player's teammates were still actively playing, and because it
             // never touched match_maps (left Live, no ended_at) the resulting
             // matches update still queued an ELO calculation that docked them.
+            // Placeholder slots carry no steam_id and no player, so they read
+            // as unbanned and would keep a lineup "alive" with nobody in it.
             const remaining = matchLineupPlayer.lineup.lineup_players.filter(
               (lineupPlayer) =>
+                lineupPlayer.steam_id &&
                 lineupPlayer.steam_id !== data.new.player_steam_id &&
                 !lineupPlayer.player?.is_banned,
             );

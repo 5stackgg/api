@@ -155,8 +155,6 @@ export class CancelExpiredMatches extends WorkerHost {
     // just disappears out from under them.
     await this.announceCancellation(match);
 
-    await this.recordNoShows(match);
-
     await this.hasura.mutation({
       update_matches_by_pk: {
         __args: {
@@ -170,6 +168,11 @@ export class CancelExpiredMatches extends WorkerHost {
         __typename: true,
       },
     });
+
+    // Only after the status flip: getExpiredMatches skips Canceled matches, so
+    // this runs exactly once. Recorded first, a failed flip would leave the
+    // rows behind and the next pass would insert a second set.
+    await this.recordNoShows(match);
   }
 
   // The match never started, so the people who turned up shouldn't carry
@@ -178,10 +181,18 @@ export class CancelExpiredMatches extends WorkerHost {
   // there's no honest team-level answer to who was at fault.
   //
   // Leaving a match that did start is a different thing and is already handled
-  // elsewhere; this is only ever reached for a match that never went live.
+  // elsewhere.
   private async recordNoShows(
     match: Awaited<ReturnType<typeof this.getExpiredMatches>>[number],
   ) {
+    // cancels_at is also the hung-live-match safety net, so a match that played
+    // out and then stalled lands here too. Nobody no-showed that one -- they
+    // all turned up -- and by the time it expires they have long since
+    // disconnected, so is_connected would read every one of them as absent.
+    if (!this.isAwaitingWarmup(match)) {
+      return;
+    }
+
     // No server was ever assigned, so nobody could have connected. Penalising
     // the whole lobby for that would be blaming them for our own failure.
     if (!match.server_id) {

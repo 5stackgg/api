@@ -367,6 +367,68 @@ describe("CancelExpiredMatches", () => {
 
       expect(abandonedFor()).toEqual([]);
     });
+
+    it("penalises nobody when a match that already went live is cleaned up", async () => {
+      // cancels_at doubles as the hung-live-match safety net. Everyone here
+      // played and then disconnected from a dead server, so is_connected reads
+      // false for all of them -- but nobody no-showed.
+      tournamentMatches = [
+        expiredTournamentMatch({
+          is_tournament_match: false,
+          match_maps: [{ status: "Live" }],
+          lineup_1: {
+            id: "lineup-1",
+            is_ready: true,
+            lineup_players: [
+              { steam_id: "played-a", is_connected: false },
+              { steam_id: "played-b", is_connected: false },
+            ],
+          },
+          lineup_2: {
+            id: "lineup-2",
+            is_ready: true,
+            lineup_players: [{ steam_id: "played-c", is_connected: false }],
+          },
+        }),
+      ];
+
+      await job.process();
+
+      expect(abandonedFor()).toEqual([]);
+    });
+
+    it("records no-shows only after the match is marked canceled", async () => {
+      // Inserting first leaves the rows behind if the status flip fails, and
+      // the next pass re-inserts them -- doubling the cooldown ladder.
+      tournamentMatches = [
+        expiredTournamentMatch({
+          is_tournament_match: false,
+          lineup_1: {
+            id: "lineup-1",
+            is_ready: false,
+            lineup_players: [{ steam_id: "no-show-a", is_connected: false }],
+          },
+          lineup_2: {
+            id: "lineup-2",
+            is_ready: false,
+            lineup_players: [{ steam_id: "no-show-b", is_connected: false }],
+          },
+        }),
+      ];
+
+      await job.process();
+
+      const order = hasura.mutation.mock.calls.map(([arg]: [any]) =>
+        arg?.insert_abandoned_matches
+          ? "abandon"
+          : arg?.update_matches_by_pk?.__args?._set?.status === "Canceled"
+            ? "cancel"
+            : "other",
+      );
+
+      expect(order.indexOf("cancel")).toBeGreaterThanOrEqual(0);
+      expect(order.indexOf("abandon")).toBeGreaterThan(order.indexOf("cancel"));
+    });
   });
 
   describe("force starting ahead of the deadline", () => {

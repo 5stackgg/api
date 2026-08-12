@@ -106,18 +106,21 @@ BEGIN
 
         -- Seat every desired player, reusing a row where one is free.
         FOR _index IN 1..COALESCE(array_length(_desired, 1), 0) LOOP
+            -- COALESCE because tournament_teams.captain_steam_id is nullable
+            -- (and is SET NULL when the captain's player row goes away). The
+            -- bare comparison yields NULL there, and captain is NOT NULL.
             IF _index <= COALESCE(array_length(_existing_ids, 1), 0) THEN
                 UPDATE match_lineup_players
                 SET steam_id = _desired[_index],
                     placeholder_name = NULL,
-                    captain = (_desired[_index] = _captain_steam_id)
+                    captain = COALESCE(_desired[_index] = _captain_steam_id, false)
                 WHERE id = _existing_ids[_index];
             ELSE
                 INSERT INTO match_lineup_players (match_lineup_id, steam_id, captain)
                 VALUES (
                     _lineup.match_lineup_id,
                     _desired[_index],
-                    _desired[_index] = _captain_steam_id
+                    COALESCE(_desired[_index] = _captain_steam_id, false)
                 );
             END IF;
         END LOOP;
