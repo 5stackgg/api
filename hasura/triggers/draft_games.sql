@@ -81,9 +81,10 @@ CREATE OR REPLACE FUNCTION public.tad_draft_games() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    IF OLD.match_options_id IS NOT NULL THEN
-        DELETE FROM public.match_options WHERE id = OLD.match_options_id;
-    END IF;
+    -- Deleting unconditionally fails: tbd_matches removes the draft_games row
+    -- before the owning matches row is gone, and matches.match_options_id still
+    -- points at it (ON DELETE RESTRICT). tad_matches cleans up afterwards.
+    PERFORM cleanup_orphaned_match_options(OLD.match_options_id);
     RETURN OLD;
 END;
 $$;

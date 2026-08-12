@@ -430,8 +430,9 @@ export class AwardsService {
   public async getStream(
     filename: string,
   ): Promise<{ stream: Readable; contentType: string; etag?: string } | null> {
-    // Images uploaded before the awards rename still live under `trophies/`
-    // and their keys are stored verbatim in image_url.
+    // Images uploaded before the awards rename still live under `trophies/`:
+    // the migration renamed tables in place, so image_url keeps those keys
+    // verbatim. Callers pass a bare filename, so try both prefixes.
     let key = `awards/${filename}`;
 
     if (!(await this.s3.has(key))) {

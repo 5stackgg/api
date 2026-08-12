@@ -29,9 +29,11 @@ describe("match options locks (SQL-driven)", () => {
   });
 
   beforeEach(async () => {
+    await postgres.query("DELETE FROM draft_games");
     await postgres.query("DELETE FROM matches");
     await postgres.query("DELETE FROM match_options");
     await postgres.query("DELETE FROM map_pools WHERE type = 'Custom'");
+    await postgres.query("DELETE FROM players");
   });
 
   const createPool = async (offset = 0) => {
@@ -44,6 +46,21 @@ describe("match options locks (SQL-driven)", () => {
     const match = await fx.match({ mapPoolId: poolId });
     return { matchId: match.id, optionsId: match.options_id, poolId, mapId };
   };
+
+  // Mirrors DraftMatchService.createMatch: the draft game and the match it
+  // creates point at the same match_options row.
+  const createDraftGame = async (optionsId: string, matchId?: string) => {
+    const host = await fx.player();
+    const [draft] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO draft_games (host_steam_id, type, match_options_id, match_id)
+       VALUES ($1, 'Wingman', $2, $3) RETURNING id`,
+      [host, optionsId, matchId ?? null],
+    );
+    return draft.id;
+  };
+
+  const linkDraftGame = (matchId: string, optionsId: string) =>
+    createDraftGame(optionsId, matchId);
 
   const setMatchStatus = (matchId: string, status: string) =>
     postgres.query("UPDATE matches SET status = $1 WHERE id = $2", [
@@ -161,5 +178,57 @@ describe("match options locks (SQL-driven)", () => {
       [poolId],
     );
     expect(pools.length).toBe(0);
+  });
+
+  // A draft game and the match it creates share one match_options row, and
+  // tbd_matches drops the draft game while the match is still present. An
+  // unconditional delete in tad_draft_games trips matches_match_options_id_fkey
+  // (ON DELETE RESTRICT) here.
+  it("deleting a match with a linked draft game still garbage-collects its options", async () => {
+    const { matchId, optionsId } = await createMatch();
+    await linkDraftGame(matchId, optionsId);
+
+    await postgres.query("DELETE FROM matches WHERE id = $1", [matchId]);
+
+    const options = await postgres.query<Array<unknown>>(
+      "SELECT 1 FROM match_options WHERE id = $1",
+      [optionsId],
+    );
+    expect(options.length).toBe(0);
+  });
+
+  it("deleting the draft game keeps options alive until the match goes", async () => {
+    const { matchId, optionsId } = await createMatch();
+    const draftId = await linkDraftGame(matchId, optionsId);
+
+    await postgres.query("DELETE FROM draft_games WHERE id = $1", [draftId]);
+
+    const stillThere = await postgres.query<Array<unknown>>(
+      "SELECT 1 FROM match_options WHERE id = $1",
+      [optionsId],
+    );
+    expect(stillThere.length).toBe(1);
+
+    await postgres.query("DELETE FROM matches WHERE id = $1", [matchId]);
+
+    const cleaned = await postgres.query<Array<unknown>>(
+      "SELECT 1 FROM match_options WHERE id = $1",
+      [optionsId],
+    );
+    expect(cleaned.length).toBe(0);
+  });
+
+  it("deleting a draft game with no match garbage-collects its options", async () => {
+    const { poolId } = await createPool(0);
+    const optionsId = await fx.matchOptions({ mapPoolId: poolId });
+    const draftId = await createDraftGame(optionsId);
+
+    await postgres.query("DELETE FROM draft_games WHERE id = $1", [draftId]);
+
+    const remaining = await postgres.query<Array<unknown>>(
+      "SELECT 1 FROM match_options WHERE id = $1",
+      [optionsId],
+    );
+    expect(remaining.length).toBe(0);
   });
 });

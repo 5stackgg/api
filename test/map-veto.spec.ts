@@ -68,6 +68,15 @@ describe("map veto (SQL-driven)", () => {
       [matchId, type, lineupId, mapId, side],
     );
 
+  const patternFor = async (bestOf: number, poolSize: number) => {
+    const match = await createVetoMatch(bestOf, poolSize);
+    const [{ pattern }] = await postgres.query<Array<{ pattern: string[] }>>(
+      "SELECT get_map_veto_pattern(m) AS pattern FROM matches m WHERE id = $1",
+      [match.id],
+    );
+    return pattern;
+  };
+
   it("computes the CS rulebook patterns", async () => {
     const bo1 = await createVetoMatch(1, 3);
     const [{ pattern: p1 }] = await postgres.query<
@@ -264,6 +273,168 @@ describe("map veto (SQL-driven)", () => {
       [match.id],
     );
     expect(maps.length).toBe(0);
+  });
+
+  // Pools larger than the hardcoded rulebook patterns get their surplus maps
+  // banned. Those bans used to be appended AFTER the Decider, so once the
+  // rulebook steps ran out get_map_veto_type reported 'Decider' with several
+  // maps still unaccounted for: nothing could satisfy that step (the Decider is
+  // only ever auto-inserted once one map is left) and every BO3/BO5 veto on a
+  // pool larger than 7 hung there permanently.
+  describe("pools larger than the rulebook pattern", () => {
+    it.each([
+      [1, 8],
+      [1, 12],
+      [3, 8],
+      [3, 9],
+      [3, 12],
+      [5, 8],
+      [5, 9],
+      [5, 12],
+    ])(
+      "BO%i pool %i: the pattern covers the whole pool and ends on the Decider",
+      async (bestOf, poolSize) => {
+        const pattern = await patternFor(bestOf, poolSize);
+
+        const bans = pattern.filter((type) => type === "Ban").length;
+        const picks = pattern.filter((type) => type === "Pick").length;
+        const sides = pattern.filter((type) => type === "Side").length;
+        const deciders = pattern.filter((type) => type === "Decider").length;
+
+        // Every map in the pool is consumed exactly once, and the maps that
+        // survive to be played are the picks plus the decider.
+        expect(bans + picks + deciders).toBe(poolSize);
+        expect(picks + deciders).toBe(bestOf);
+        expect(sides).toBe(picks);
+        expect(deciders).toBe(1);
+        expect(pattern[pattern.length - 1]).toBe("Decider");
+      },
+    );
+
+    it.each([
+      [3, 5, ["Ban", "Pick", "Side", "Pick", "Side", "Ban", "Decider"]],
+      [3, 6, ["Ban", "Ban", "Pick", "Side", "Pick", "Side", "Ban", "Decider"]],
+      [
+        3,
+        7,
+        [
+          "Ban",
+          "Ban",
+          "Pick",
+          "Side",
+          "Pick",
+          "Side",
+          "Ban",
+          "Ban",
+          "Decider",
+        ],
+      ],
+      [
+        5,
+        6,
+        [
+          "Ban",
+          "Pick",
+          "Side",
+          "Pick",
+          "Side",
+          "Pick",
+          "Side",
+          "Pick",
+          "Side",
+          "Decider",
+        ],
+      ],
+      [
+        5,
+        7,
+        [
+          "Ban",
+          "Ban",
+          "Pick",
+          "Side",
+          "Pick",
+          "Side",
+          "Pick",
+          "Side",
+          "Pick",
+          "Side",
+          "Decider",
+        ],
+      ],
+    ])(
+      "BO%i pool %i is unchanged by the surplus-ban fix",
+      async (bestOf, poolSize, expected) => {
+        expect(await patternFor(bestOf as number, poolSize as number)).toEqual(
+          expected,
+        );
+      },
+    );
+
+    // Drives the veto by always submitting whatever the SQL reports as next,
+    // which is the actual proof a large pool completes: asserting on the
+    // pattern array alone would not have caught the original hang.
+    const runVetoToCompletion = async (bestOf: number, poolSize: number) => {
+      const match = await createVetoMatch(bestOf, poolSize);
+      const used = new Set<string>();
+      let lastPicked: string | null = null;
+
+      for (let step = 0; step <= poolSize * 2; step++) {
+        const state = await vetoState(match.id);
+        if (state.status !== "Veto") {
+          return match;
+        }
+
+        const remaining = match.mapIds.filter((id) => !used.has(id));
+        if (state.veto_type === "Decider") {
+          throw new Error(
+            `Decider requested with ${remaining.length} maps left — the veto cannot progress`,
+          );
+        }
+
+        if (state.veto_type === "Side") {
+          await insertPick(match.id, "Side", state.picking!, lastPicked!, "CT");
+          continue;
+        }
+
+        const mapId = remaining[0];
+        used.add(mapId);
+        if (state.veto_type === "Pick") {
+          lastPicked = mapId;
+        }
+        await insertPick(match.id, state.veto_type!, state.picking!, mapId);
+      }
+
+      throw new Error("veto never completed");
+    };
+
+    it.each([
+      [3, 12],
+      [5, 12],
+    ])(
+      "BO%i pool %i runs to completion and goes Live",
+      async (bestOf, poolSize) => {
+        const match = await runVetoToCompletion(bestOf, poolSize);
+
+        expect((await vetoState(match.id)).status).toBe("Live");
+
+        const maps = await postgres.query<Array<{ id: string }>>(
+          "SELECT id FROM match_maps WHERE match_id = $1",
+          [match.id],
+        );
+        expect(maps.length).toBe(bestOf);
+
+        const picks = await postgres.query<Array<{ type: string }>>(
+          "SELECT type FROM match_map_veto_picks WHERE match_id = $1",
+          [match.id],
+        );
+        expect(picks.filter((p) => p.type === "Ban").length).toBe(
+          poolSize - bestOf,
+        );
+        expect(picks.filter((p) => p.type === "Pick").length).toBe(bestOf - 1);
+        expect(picks.filter((p) => p.type === "Decider").length).toBe(1);
+      },
+    );
   });
 
   it("cancelling a match mid-veto wipes its veto picks", async () => {
