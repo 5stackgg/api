@@ -20,6 +20,30 @@ export default class PlayerConnected extends MatchEventProcessor<{
         __typename: true,
       },
     });
+    // Marks them as present. Cleared again on disconnect, so this always means
+    // "in the server right now" -- which is what both the force-start check and
+    // the no-show penalty on cancellation read.
+    await this.hasura.mutation({
+      update_match_lineup_players: {
+        __args: {
+          where: {
+            steam_id: {
+              _eq: this.data.steam_id,
+            },
+            lineup: {
+              match_id: {
+                _eq: this.matchId,
+              },
+            },
+          },
+          _set: {
+            is_connected: true,
+          },
+        },
+        affected_rows: true,
+      },
+    });
+
     await this.chat.joinLobbyViaGame(this.matchId, this.data.steam_id);
   }
 }

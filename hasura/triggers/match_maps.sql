@@ -77,6 +77,13 @@ BEGIN
         NEW.ended_at = NOW();
     END IF;
 
+    -- Server-side anchor for how long demo recording/upload has been running,
+    -- so the stats-ready countdown survives a page refresh instead of
+    -- restarting from the full estimate on every mount.
+    IF NEW.status = 'WaitingForTV' AND OLD.status IS DISTINCT FROM NEW.status THEN
+        NEW.demo_processing_started_at = NOW();
+    END IF;
+
 	RETURN NEW;
 END;
 $$;

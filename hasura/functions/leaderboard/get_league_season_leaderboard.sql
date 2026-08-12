@@ -64,7 +64,8 @@ BEGIN
         WHEN 'best_kast'   THEN ROUND(a.rating::numeric, 2)
       END)::float        AS secondary_value,
       a.rounds::float    AS tertiary_value,
-      a.match_count      AS matches_played
+      a.match_count      AS matches_played,
+      p.custom_avatar_url AS player_custom_avatar_url
     FROM agg a
     JOIN players p ON p.steam_id = a.steam_id
     ORDER BY value DESC NULLS LAST;
@@ -105,7 +106,8 @@ BEGIN
       ROUND(a.udr, 1)::float  AS value,
       a.util_damage::float    AS secondary_value,
       a.rounds::float         AS tertiary_value,
-      a.match_count           AS matches_played
+      a.match_count           AS matches_played,
+      p.custom_avatar_url     AS player_custom_avatar_url
     FROM agg a
     JOIN players p ON p.steam_id = a.steam_id
     ORDER BY value DESC NULLS LAST;

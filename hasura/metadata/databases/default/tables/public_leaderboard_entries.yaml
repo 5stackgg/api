@@ -8,6 +8,7 @@ select_permissions:
         - player_steam_id
         - player_name
         - player_avatar_url
+        - player_custom_avatar_url
         - player_country
         - value
         - secondary_value

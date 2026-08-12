@@ -311,10 +311,25 @@ computed_fields:
       function:
         name: get_player_elo
         schema: public
+  - name: banned_until
+    definition:
+      function:
+        name: banned_until
+        schema: public
+  - name: is_admin_sanctioned
+    definition:
+      function:
+        name: is_admin_sanctioned
+        schema: public
   - name: is_banned
     definition:
       function:
         name: is_banned
+        schema: public
+  - name: is_registered
+    definition:
+      function:
+        name: is_registered
         schema: public
   - name: is_gagged
     definition:
@@ -437,7 +452,10 @@ select_permissions:
       computed_fields:
         - current_lobby_id
         - elo
+        - banned_until
+        - is_admin_sanctioned
         - is_banned
+        - is_registered
         - is_gagged
         - is_muted
         - losses
@@ -484,7 +502,10 @@ select_permissions:
       computed_fields:
         - current_lobby_id
         - elo
+        - banned_until
+        - is_admin_sanctioned
         - is_banned
+        - is_registered
         - is_gagged
         - is_in_another_match
         - is_in_draft
@@ -533,7 +554,10 @@ select_permissions:
       computed_fields:
         - current_lobby_id
         - elo
+        - banned_until
+        - is_admin_sanctioned
         - is_banned
+        - is_registered
         - is_gagged
         - is_in_another_match
         - is_in_draft

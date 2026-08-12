@@ -398,4 +398,69 @@ describe("ELO engine (SQL-driven)", () => {
       Math.abs(Number(silentLoser.change)),
     );
   });
+
+  describe("abandon penalty", () => {
+    beforeEach(async () => {
+      await postgres.query(
+        "DELETE FROM settings WHERE name = 'leaver_elo_penalty'",
+      );
+    });
+
+    const setPenalty = (value: number) =>
+      postgres.query(
+        `INSERT INTO settings (name, value) VALUES ('leaver_elo_penalty', $1)
+         ON CONFLICT (name) DO UPDATE SET value = $1`,
+        [String(value)],
+      );
+
+    const abandon = (matchId: string, steamId: string) =>
+      postgres.query(
+        "INSERT INTO abandoned_matches (steam_id, match_id) VALUES ($1, $2)",
+        [steamId, matchId],
+      );
+
+    it("applies a fixed loss to whoever abandoned, not the scored result", async () => {
+      const [a, b] = await fx.players(2);
+      const match = await duel(a, b, { winner: "a" });
+      await abandon(match.id, b);
+      await generate(match.id);
+
+      const rows = await eloRows(match.id);
+      const leaver = rows.find((r) => r.steam_id === b)!;
+      const stayed = rows.find((r) => r.steam_id === a)!;
+
+      expect(Number(leaver.change)).toBe(-150);
+      // The opponent is scored normally — the penalty is on the leaver alone.
+      expect(Number(stayed.change)).toBeGreaterThan(0);
+    });
+
+    it("applies even when the abandoning player's team won", async () => {
+      const [a, b] = await fx.players(2);
+      const match = await duel(a, b, { winner: "a" });
+      await abandon(match.id, a);
+      await generate(match.id);
+
+      const winner = (await eloRows(match.id)).find((r) => r.steam_id === a)!;
+      expect(Number(winner.change)).toBe(-150);
+    });
+
+    it("honours the configured penalty, and 0 disables it", async () => {
+      const [a, b] = await fx.players(2);
+      await setPenalty(400);
+      const heavy = await duel(a, b, { winner: "a" });
+      await abandon(heavy.id, b);
+      await generate(heavy.id);
+      expect(
+        Number((await eloRows(heavy.id)).find((r) => r.steam_id === b)!.change),
+      ).toBe(-400);
+
+      await setPenalty(0);
+      const off = await duel(a, b, { winner: "a" });
+      await abandon(off.id, b);
+      await generate(off.id);
+      expect(
+        Number((await eloRows(off.id)).find((r) => r.steam_id === b)!.change),
+      ).toBe(0);
+    });
+  });
 });

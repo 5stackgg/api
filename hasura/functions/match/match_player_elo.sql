@@ -347,6 +347,20 @@ BEGIN
     -- ELO change formula: New Rating = Old Rating + K * (Actual Score - Expected Score) * Performance Multiplier * Series Multiplier
     _elo_change := ROUND(_k_factor * (_actual_score - _expected_score) * _performance_multiplier * _series_multiplier);
 
+    -- Abandoning the match overrides the result entirely: a fixed loss, applied
+    -- whichever way the match ended. Scoring an abandon through the normal
+    -- formula produces an inconsistent and often trivial penalty -- it scales
+    -- with the rating gap, so leaving a match you were losing can cost almost
+    -- nothing. Set leaver_elo_penalty to 0 to disable.
+    IF EXISTS (
+        SELECT 1
+        FROM abandoned_matches am
+        WHERE am.match_id = match_record.id
+          AND am.steam_id = player_record.steam_id
+    ) THEN
+        _elo_change := -1 * get_int_setting('leaver_elo_penalty', 150);
+    END IF;
+
     -- Return the elo change as JSON with detailed information
     RETURN jsonb_build_object(
         'current_elo', _current_player_elo, -- The current ELO rating of the player (including base ELO)

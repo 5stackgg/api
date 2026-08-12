@@ -75,3 +75,12 @@ CREATE TRIGGER tbd_match_cancel_scrim
     BEFORE DELETE ON public.matches
     FOR EACH ROW
     EXECUTE FUNCTION public.tbd_match_cancel_scrim();
+
+-- A request shares its match_options row with the match it schedules and
+-- outlives it, so cleanup_orphaned_match_options holds the row until the
+-- request goes (it cascades away with either team).
+DROP TRIGGER IF EXISTS tad_team_scrim_requests ON public.team_scrim_requests;
+CREATE TRIGGER tad_team_scrim_requests
+    AFTER DELETE ON public.team_scrim_requests
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tad_cleanup_match_options();

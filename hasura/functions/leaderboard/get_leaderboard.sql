@@ -29,6 +29,12 @@ BEGIN
     WHERE p.pronamespace = 'public'::regnamespace
       AND p.proname IN (
         'get_leaderboard',
+        'get_player_leaderboard_rank',
+        '_leaderboard_elo',
+        '_leaderboard_kdr',
+        '_leaderboard_win_rate',
+        '_leaderboard_hs_pct',
+        '_leaderboard_awards',
         '_leaderboard_hltv_metric',
         '_leaderboard_udr'
       )
@@ -37,47 +43,87 @@ BEGIN
   END LOOP;
 END $$;
 
+-- ============================================================
+-- Match-source classification for the Source filter
+--
+-- Derived entirely from existing relationships: a match with no bracket is
+-- matchmaking; one whose bracket belongs to a league tournament is league;
+-- anything else is a regular tournament. No schema or metadata changes.
+-- ============================================================
+CREATE OR REPLACE FUNCTION public._leaderboard_match_source(_match_id uuid)
+RETURNS text
+LANGUAGE sql STABLE
+AS $$
+  SELECT CASE
+    WHEN NOT EXISTS (
+      SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = _match_id
+    ) THEN 'matchmaking'
+    WHEN EXISTS (
+      SELECT 1
+      FROM tournament_brackets tb
+      JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+      WHERE tb.match_id = _match_id
+        AND public.is_league_tournament(ts.tournament_id)
+    ) THEN 'league'
+    ELSE 'tournament'
+  END;
+$$;
+
+-- Awards join straight to tournaments, never to a match, so they classify from
+-- the tournament directly. There is no matchmaking bucket for an award.
+CREATE OR REPLACE FUNCTION public._leaderboard_tournament_source(_tournament_id uuid)
+RETURNS text
+LANGUAGE sql STABLE
+AS $$
+  SELECT CASE
+    WHEN _tournament_id IS NOT NULL AND public.is_league_tournament(_tournament_id)
+      THEN 'league'
+    ELSE 'tournament'
+  END;
+$$;
+
 CREATE OR REPLACE FUNCTION public.get_leaderboard(
   _category TEXT,
   _window_days INT,
   _match_type TEXT DEFAULT NULL,
   _exclude_tournaments BOOLEAN DEFAULT FALSE,
   _role TEXT DEFAULT NULL,
-  _season_id UUID DEFAULT NULL
+  _season_id UUID DEFAULT NULL,
+  _source TEXT DEFAULT 'overall'
 )
 RETURNS SETOF public.leaderboard_entries
 LANGUAGE plpgsql STABLE
 AS $$
 BEGIN
   IF _category = 'elo' THEN
-    RETURN QUERY SELECT * FROM _leaderboard_elo(_window_days, _match_type, _exclude_tournaments, _season_id);
+    RETURN QUERY SELECT * FROM _leaderboard_elo(_window_days, _match_type, _exclude_tournaments, _season_id, _source);
 
   ELSIF _category = 'best_kdr' THEN
-    RETURN QUERY SELECT * FROM _leaderboard_kdr(_window_days, _match_type, _exclude_tournaments, _season_id);
+    RETURN QUERY SELECT * FROM _leaderboard_kdr(_window_days, _match_type, _exclude_tournaments, _season_id, _source);
 
   ELSIF _category = 'best_win_rate' THEN
-    RETURN QUERY SELECT * FROM _leaderboard_win_rate(_window_days, _match_type, _exclude_tournaments, _season_id);
+    RETURN QUERY SELECT * FROM _leaderboard_win_rate(_window_days, _match_type, _exclude_tournaments, _season_id, _source);
 
   ELSIF _category = 'highest_hs_pct' THEN
-    RETURN QUERY SELECT * FROM _leaderboard_hs_pct(_window_days, _match_type, _exclude_tournaments, _season_id);
+    RETURN QUERY SELECT * FROM _leaderboard_hs_pct(_window_days, _match_type, _exclude_tournaments, _season_id, _source);
 
   ELSIF _category = 'awards' THEN
-    RETURN QUERY SELECT * FROM _leaderboard_awards(_window_days, _match_type, _season_id);
+    RETURN QUERY SELECT * FROM _leaderboard_awards(_window_days, _match_type, _season_id, _source);
 
   ELSIF _category = 'best_rating' THEN
-    RETURN QUERY SELECT * FROM _leaderboard_hltv_metric('rating', _window_days, _match_type, _exclude_tournaments, _role, _season_id);
+    RETURN QUERY SELECT * FROM _leaderboard_hltv_metric('rating', _window_days, _match_type, _exclude_tournaments, _role, _season_id, _source);
 
   ELSIF _category = 'best_adr' THEN
-    RETURN QUERY SELECT * FROM _leaderboard_hltv_metric('adr', _window_days, _match_type, _exclude_tournaments, _role, _season_id);
+    RETURN QUERY SELECT * FROM _leaderboard_hltv_metric('adr', _window_days, _match_type, _exclude_tournaments, _role, _season_id, _source);
 
   ELSIF _category = 'best_kpr' THEN
-    RETURN QUERY SELECT * FROM _leaderboard_hltv_metric('kpr', _window_days, _match_type, _exclude_tournaments, _role, _season_id);
+    RETURN QUERY SELECT * FROM _leaderboard_hltv_metric('kpr', _window_days, _match_type, _exclude_tournaments, _role, _season_id, _source);
 
   ELSIF _category = 'best_kast' THEN
-    RETURN QUERY SELECT * FROM _leaderboard_hltv_metric('kast', _window_days, _match_type, _exclude_tournaments, _role, _season_id);
+    RETURN QUERY SELECT * FROM _leaderboard_hltv_metric('kast', _window_days, _match_type, _exclude_tournaments, _role, _season_id, _source);
 
   ELSIF _category = 'best_udr' THEN
-    RETURN QUERY SELECT * FROM _leaderboard_udr(_window_days, _match_type, _exclude_tournaments, _role, _season_id);
+    RETURN QUERY SELECT * FROM _leaderboard_udr(_window_days, _match_type, _exclude_tournaments, _role, _season_id, _source);
 
   ELSE
     RAISE EXCEPTION 'Invalid category: %. Must be one of: elo, best_kdr, best_win_rate, highest_hs_pct, awards, best_rating, best_adr, best_kpr, best_kast, best_udr', _category;
@@ -93,7 +139,8 @@ CREATE OR REPLACE FUNCTION public._leaderboard_elo(
   _window_days INT,
   _match_type TEXT,
   _exclude_tournaments BOOLEAN,
-  _season_id UUID DEFAULT NULL
+  _season_id UUID DEFAULT NULL,
+  _source TEXT DEFAULT 'overall'
 )
 RETURNS SETOF public.leaderboard_entries
 LANGUAGE plpgsql STABLE
@@ -102,6 +149,8 @@ DECLARE
   _from timestamptz;
   _to timestamptz;
   _all_time_peak boolean;
+  _is_rolling_window boolean;
+  _is_active_season boolean;
 BEGIN
   IF _season_id IS NOT NULL THEN
     SELECT s.starts_at, COALESCE(s.ends_at, now())
@@ -117,6 +166,22 @@ BEGIN
   END IF;
 
   _all_time_peak := (_season_id IS NULL AND _window_days = 0);
+
+  -- A rolling window's ELO Change has to be the SUM of each match's own change
+  -- inside the window. "Latest ELO minus the ELO just before the window" looks
+  -- equivalent but is not: it silently swallows anything that moved the rating
+  -- without a match in range -- a mid-window season reset to the starting value
+  -- being the obvious one -- and it compares a tournament-adjusted current
+  -- against an unadjusted baseline. Named seasons and All Time keep their
+  -- existing formulas.
+  _is_rolling_window := (_season_id IS NULL AND _window_days > 0);
+
+  -- Tournament matches are written season-independent (match_player_elo.sql
+  -- sets season_id = NULL for them), so a named season's ELO would otherwise
+  -- not see a tournament played during that season at all. Only the season
+  -- currently running is corrected: a completed season keeps whatever it
+  -- finished with, so historical standings do not move under people.
+  _is_active_season := (_season_id IS NOT NULL AND _season_id = get_active_season());
 
   IF _exclude_tournaments THEN
     RETURN QUERY
@@ -150,6 +215,45 @@ BEGIN
         AND EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id)
       GROUP BY pe.steam_id
     ),
+    rolling_change AS (
+      SELECT pe.steam_id, SUM(pe.change) as total_change
+      FROM player_elo pe
+      WHERE 1=1
+        AND (_match_type IS NULL OR pe.type = _match_type)
+        AND (_season_id IS NULL OR pe.season_id = _season_id)
+        AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
+        AND NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id)
+      GROUP BY pe.steam_id
+    ),
+    -- Peak excluding tournaments, reconstructed by re-walking each
+    -- non-tournament change onto a fresh baseline.
+    --
+    -- Subtracting the lifetime tournament total from MAX(current) -- which is
+    -- what this used to do -- is only valid for a *current* value, where both
+    -- sides are cumulative to the same instant. A peak is a single moment in
+    -- the timeline, so that subtraction also removes tournament swings that
+    -- happened after it, and can push the reported peak either way depending on
+    -- when those swings landed.
+    --
+    -- Partitioned by season so a season's reset to the baseline is preserved
+    -- rather than read as carry-over, and by type so the mode ladders never mix.
+    peak_no_tourney AS (
+      SELECT walk.steam_id, MAX(walk.reconstructed_current) as peak_current
+      FROM (
+        SELECT
+          pe.steam_id,
+          5000::numeric + SUM(pe.change) OVER (
+            PARTITION BY pe.steam_id, pe.type, pe.season_id
+            ORDER BY pe.created_at, pe.match_id
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+          ) AS reconstructed_current
+        FROM player_elo pe
+        WHERE _all_time_peak
+          AND (_match_type IS NULL OR pe.type = _match_type)
+          AND NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id)
+      ) walk
+      GROUP BY walk.steam_id
+    ),
     first_elo AS (
       SELECT DISTINCT ON (pe.steam_id)
         pe.steam_id,
@@ -169,6 +273,17 @@ BEGIN
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
         AND NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id)
+        AND (lower(_source) = 'overall' OR public._leaderboard_match_source(pe.match_id) = lower(_source))
+      GROUP BY pe.steam_id
+    ),
+    source_change AS (
+      SELECT pe.steam_id, SUM(pe.change) as total_change
+      FROM player_elo pe
+      WHERE 1=1
+        AND (_match_type IS NULL OR pe.type = _match_type)
+        AND (_season_id IS NULL OR pe.season_id = _season_id)
+        AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
+        AND (lower(_source) = 'overall' OR public._leaderboard_match_source(pe.match_id) = lower(_source))
       GROUP BY pe.steam_id
     ),
     win_streak AS (
@@ -190,6 +305,7 @@ BEGIN
           AND ((_from IS NULL OR m.ended_at >= _from) AND (_to IS NULL OR m.ended_at < _to))
           AND (_match_type IS NULL OR mo.type = _match_type)
           AND NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = m.id)
+          AND (lower(_source) = 'overall' OR public._leaderboard_match_source(m.id) = lower(_source))
       ) sub
       GROUP BY sub.steam_id
     )
@@ -199,22 +315,147 @@ BEGIN
       p.avatar_url               as player_avatar_url,
       p.country                  as player_country,
       CASE WHEN _all_time_peak
-        THEN (pk_e.peak_current - COALESCE(ta.tourney_total, 0))::float
+        THEN COALESCE(pnt.peak_current, 5000)::float
         ELSE (le.raw_current - COALESCE(ta.tourney_total, 0))::float
       END                        as value,
       CASE WHEN _all_time_peak
         THEN 0::float
+        WHEN lower(_source) <> 'overall'
+        THEN COALESCE(sch.total_change, 0)::float
+        WHEN _is_rolling_window
+        THEN COALESCE(rc.total_change, 0)::float
         ELSE ((le.raw_current - COALESCE(ta.tourney_total, 0)) - fe.starting_elo)::float
       END                        as secondary_value,
       COALESCE(ws.streak, 0)::float as tertiary_value,
-      COALESCE(mc.matches_played, 0)::int as matches_played
+      COALESCE(mc.matches_played, 0)::int as matches_played,
+      p.custom_avatar_url        as player_custom_avatar_url
     FROM last_elo_raw le
     JOIN peak_elo pk_e ON pk_e.steam_id = le.steam_id
     LEFT JOIN tournament_adj ta ON ta.steam_id = le.steam_id
+    LEFT JOIN rolling_change rc ON rc.steam_id = le.steam_id
+    LEFT JOIN peak_no_tourney pnt ON pnt.steam_id = le.steam_id
     JOIN first_elo fe ON fe.steam_id = le.steam_id
     LEFT JOIN match_counts mc ON mc.steam_id = le.steam_id
     LEFT JOIN win_streak ws ON ws.steam_id = le.steam_id
+    LEFT JOIN source_change sch ON sch.steam_id = le.steam_id
     JOIN players p ON p.steam_id = le.steam_id
+    WHERE lower(_source) = 'overall' OR COALESCE(mc.matches_played, 0) > 0
+    ORDER BY value DESC;
+
+  ELSIF _is_active_season THEN
+    -- Active named season, tournaments included. A player's season rating is
+    -- their regular-season rating plus whatever their tournament results moved
+    -- it during the season window. The tournament row's own `current` is never
+    -- read as the season rating -- it belongs to the season-independent ladder
+    -- and would overwrite the season figure rather than adjust it.
+    RETURN QUERY
+    WITH eligible AS (
+      SELECT
+        pe.steam_id,
+        pe.match_id,
+        pe.current,
+        pe.change,
+        pe.created_at,
+        EXISTS (
+          SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id
+        ) AS is_tournament
+      FROM player_elo pe
+      WHERE (_match_type IS NULL OR pe.type = _match_type)
+        AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
+        AND (
+          pe.season_id = _season_id
+          OR (
+            pe.season_id IS NULL
+            AND EXISTS (
+              SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pe.match_id
+            )
+          )
+        )
+    ),
+    season_current AS (
+      SELECT DISTINCT ON (e.steam_id) e.steam_id, e.current
+      FROM eligible e
+      WHERE NOT e.is_tournament
+      ORDER BY e.steam_id, e.created_at DESC
+    ),
+    tournament_delta AS (
+      SELECT e.steam_id, SUM(e.change) as total_change
+      FROM eligible e
+      WHERE e.is_tournament
+      GROUP BY e.steam_id
+    ),
+    last_change AS (
+      SELECT DISTINCT ON (e.steam_id) e.steam_id, e.change
+      FROM eligible e
+      ORDER BY e.steam_id, e.created_at DESC, e.match_id DESC
+    ),
+    match_counts AS (
+      SELECT e.steam_id, COUNT(*)::int as matches_played
+      FROM eligible e
+      WHERE lower(_source) = 'overall'
+         OR public._leaderboard_match_source(e.match_id) = lower(_source)
+      GROUP BY e.steam_id
+    ),
+    ranked_players AS (
+      SELECT DISTINCT e.steam_id FROM eligible e
+    ),
+    -- Built from `eligible` rather than player_elo directly: this season's rows
+    -- plus the season-independent tournament rows inside the window. Filtering
+    -- player_elo on season_id here would drop the tournament rows outright and
+    -- make a Tournament source in an active season always come back empty.
+    source_change AS (
+      SELECT e.steam_id, SUM(e.change) as total_change
+      FROM eligible e
+      WHERE lower(_source) = 'overall'
+         OR public._leaderboard_match_source(e.match_id) = lower(_source)
+      GROUP BY e.steam_id
+    ),
+    win_streak AS (
+      SELECT sub.steam_id,
+        COALESCE(MIN(CASE WHEN sub.won = 0 THEN sub.rn END) - 1, MAX(sub.rn))::int as streak
+      FROM (
+        SELECT
+          mlp.steam_id,
+          CASE WHEN m.winning_lineup_id = mlp.match_lineup_id THEN 1 ELSE 0 END as won,
+          ROW_NUMBER() OVER (PARTITION BY mlp.steam_id ORDER BY m.ended_at DESC) as rn
+        FROM match_lineup_players mlp
+        JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
+        JOIN matches m ON m.id = ml.match_id
+        JOIN match_options mo ON mo.id = m.match_options_id
+        WHERE m.status = 'Finished'
+          AND m.source = '5stack'
+          AND mlp.steam_id IS NOT NULL
+          AND m.winning_lineup_id IS NOT NULL
+          AND ((_from IS NULL OR m.ended_at >= _from) AND (_to IS NULL OR m.ended_at < _to))
+          AND (_match_type IS NULL OR mo.type = _match_type)
+          AND (lower(_source) = 'overall' OR public._leaderboard_match_source(m.id) = lower(_source))
+      ) sub
+      GROUP BY sub.steam_id
+    )
+    SELECT
+      rp.steam_id::text          as player_steam_id,
+      p.name                     as player_name,
+      p.avatar_url               as player_avatar_url,
+      p.country                  as player_country,
+      -- No regular-season row yet (tournament-only so far): start from the
+      -- season baseline rather than showing them at zero.
+      (COALESCE(sc.current, 5000) + COALESCE(td.total_change, 0))::float as value,
+      CASE WHEN lower(_source) <> 'overall'
+        THEN COALESCE(sch.total_change, 0)::float
+        ELSE COALESCE(lc.change, 0)::float
+      END                        as secondary_value,
+      COALESCE(ws.streak, 0)::float as tertiary_value,
+      COALESCE(mc.matches_played, 0)::int as matches_played,
+      p.custom_avatar_url        as player_custom_avatar_url
+    FROM ranked_players rp
+    LEFT JOIN season_current sc ON sc.steam_id = rp.steam_id
+    LEFT JOIN tournament_delta td ON td.steam_id = rp.steam_id
+    LEFT JOIN last_change lc ON lc.steam_id = rp.steam_id
+    LEFT JOIN match_counts mc ON mc.steam_id = rp.steam_id
+    LEFT JOIN win_streak ws ON ws.steam_id = rp.steam_id
+    LEFT JOIN source_change sch ON sch.steam_id = rp.steam_id
+    JOIN players p ON p.steam_id = rp.steam_id
+    WHERE lower(_source) = 'overall' OR COALESCE(mc.matches_played, 0) > 0
     ORDER BY value DESC;
 
   ELSE
@@ -239,6 +480,15 @@ BEGIN
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
       GROUP BY pe.steam_id
     ),
+    rolling_change AS (
+      SELECT pe.steam_id, SUM(pe.change) as total_change
+      FROM player_elo pe
+      WHERE 1=1
+        AND (_match_type IS NULL OR pe.type = _match_type)
+        AND (_season_id IS NULL OR pe.season_id = _season_id)
+        AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
+      GROUP BY pe.steam_id
+    ),
     first_elo AS (
       SELECT DISTINCT ON (pe.steam_id)
         pe.steam_id,
@@ -257,6 +507,17 @@ BEGIN
         AND (_match_type IS NULL OR pe.type = _match_type)
         AND (_season_id IS NULL OR pe.season_id = _season_id)
         AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
+        AND (lower(_source) = 'overall' OR public._leaderboard_match_source(pe.match_id) = lower(_source))
+      GROUP BY pe.steam_id
+    ),
+    source_change AS (
+      SELECT pe.steam_id, SUM(pe.change) as total_change
+      FROM player_elo pe
+      WHERE 1=1
+        AND (_match_type IS NULL OR pe.type = _match_type)
+        AND (_season_id IS NULL OR pe.season_id = _season_id)
+        AND ((_from IS NULL OR pe.created_at >= _from) AND (_to IS NULL OR pe.created_at < _to))
+        AND (lower(_source) = 'overall' OR public._leaderboard_match_source(pe.match_id) = lower(_source))
       GROUP BY pe.steam_id
     ),
     win_streak AS (
@@ -277,6 +538,7 @@ BEGIN
           AND m.winning_lineup_id IS NOT NULL
           AND ((_from IS NULL OR m.ended_at >= _from) AND (_to IS NULL OR m.ended_at < _to))
           AND (_match_type IS NULL OR mo.type = _match_type)
+          AND (lower(_source) = 'overall' OR public._leaderboard_match_source(m.id) = lower(_source))
       ) sub
       GROUP BY sub.steam_id
     )
@@ -291,16 +553,24 @@ BEGIN
       END                        as value,
       CASE WHEN _all_time_peak
         THEN 0::float
+        WHEN lower(_source) <> 'overall'
+        THEN COALESCE(sch.total_change, 0)::float
+        WHEN _is_rolling_window
+        THEN COALESCE(rc.total_change, 0)::float
         ELSE (le.current_elo - fe.starting_elo)::float
       END                        as secondary_value,
       COALESCE(ws.streak, 0)::float as tertiary_value,
-      mc.matches_played::int     as matches_played
+      mc.matches_played::int     as matches_played,
+      p.custom_avatar_url        as player_custom_avatar_url
     FROM last_elo le
     JOIN peak_elo pk_e ON pk_e.steam_id = le.steam_id
+    LEFT JOIN rolling_change rc ON rc.steam_id = le.steam_id
     JOIN first_elo fe ON fe.steam_id = le.steam_id
     JOIN match_counts mc ON mc.steam_id = le.steam_id
     LEFT JOIN win_streak ws ON ws.steam_id = le.steam_id
+    LEFT JOIN source_change sch ON sch.steam_id = le.steam_id
     JOIN players p ON p.steam_id = le.steam_id
+    WHERE lower(_source) = 'overall' OR COALESCE(mc.matches_played, 0) > 0
     ORDER BY value DESC;
   END IF;
 END;
@@ -314,7 +584,8 @@ CREATE OR REPLACE FUNCTION public._leaderboard_kdr(
   _window_days INT,
   _match_type TEXT,
   _exclude_tournaments BOOLEAN,
-  _season_id UUID DEFAULT NULL
+  _season_id UUID DEFAULT NULL,
+  _source TEXT DEFAULT 'overall'
 )
 RETURNS SETOF public.leaderboard_entries
 LANGUAGE plpgsql STABLE
@@ -351,6 +622,7 @@ BEGIN
       AND ((_from IS NULL OR pk.time >= _from) AND (_to IS NULL OR pk.time < _to))
       AND (_match_type IS NULL OR mo.type = _match_type)
       AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pk.match_id))
+      AND (lower(_source) = 'overall' OR public._leaderboard_match_source(pk.match_id) = lower(_source))
     GROUP BY pk.attacker_steam_id
   ),
   deaths AS (
@@ -365,6 +637,7 @@ BEGIN
       AND ((_from IS NULL OR dk.time >= _from) AND (_to IS NULL OR dk.time < _to))
       AND (_match_type IS NULL OR mo2.type = _match_type)
       AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = dk.match_id))
+      AND (lower(_source) = 'overall' OR public._leaderboard_match_source(dk.match_id) = lower(_source))
     GROUP BY dk.attacked_steam_id
   )
   SELECT
@@ -378,7 +651,8 @@ BEGIN
     END                        as value,
     k.kill_count::float        as secondary_value,
     COALESCE(d.death_count, 0)::float as tertiary_value,
-    k.match_count              as matches_played
+    k.match_count              as matches_played,
+    p.custom_avatar_url        as player_custom_avatar_url
   FROM kills k
   LEFT JOIN deaths d ON d.steam_id = k.steam_id
   JOIN players p ON p.steam_id = k.steam_id
@@ -394,7 +668,8 @@ CREATE OR REPLACE FUNCTION public._leaderboard_win_rate(
   _window_days INT,
   _match_type TEXT,
   _exclude_tournaments BOOLEAN,
-  _season_id UUID DEFAULT NULL
+  _season_id UUID DEFAULT NULL,
+  _source TEXT DEFAULT 'overall'
 )
 RETURNS SETOF public.leaderboard_entries
 LANGUAGE plpgsql STABLE
@@ -433,6 +708,7 @@ BEGIN
       AND ((_from IS NULL OR m.ended_at >= _from) AND (_to IS NULL OR m.ended_at < _to))
       AND (_match_type IS NULL OR mo.type = _match_type)
       AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = m.id))
+      AND (lower(_source) = 'overall' OR public._leaderboard_match_source(m.id) = lower(_source))
   )
   SELECT
     pm.steam_id::text          as player_steam_id,
@@ -442,10 +718,11 @@ BEGIN
     ROUND((SUM(pm.won)::numeric / COUNT(*)::numeric) * 100, 2)::float as value,
     SUM(pm.won)::float         as secondary_value,
     (COUNT(*) - SUM(pm.won))::float as tertiary_value,
-    COUNT(*)::int              as matches_played
+    COUNT(*)::int              as matches_played,
+    p.custom_avatar_url        as player_custom_avatar_url
   FROM player_matches pm
   JOIN players p ON p.steam_id = pm.steam_id
-  GROUP BY pm.steam_id, p.name, p.avatar_url, p.country
+  GROUP BY pm.steam_id, p.name, p.avatar_url, p.country, p.custom_avatar_url
   ORDER BY value DESC;
 END;
 $$;
@@ -458,7 +735,8 @@ CREATE OR REPLACE FUNCTION public._leaderboard_hs_pct(
   _window_days INT,
   _match_type TEXT,
   _exclude_tournaments BOOLEAN,
-  _season_id UUID DEFAULT NULL
+  _season_id UUID DEFAULT NULL,
+  _source TEXT DEFAULT 'overall'
 )
 RETURNS SETOF public.leaderboard_entries
 LANGUAGE plpgsql STABLE
@@ -489,7 +767,8 @@ BEGIN
     ROUND((SUM(CASE WHEN pk.headshot THEN 1 ELSE 0 END)::numeric / COUNT(*)::numeric) * 100, 2)::float as value,
     COUNT(*)::float            as secondary_value,
     NULL::float                as tertiary_value,
-    COUNT(DISTINCT pk.match_id)::int as matches_played
+    COUNT(DISTINCT pk.match_id)::int as matches_played,
+    p.custom_avatar_url        as player_custom_avatar_url
   FROM player_kills pk
   JOIN players p ON p.steam_id = pk.attacker_steam_id
   JOIN matches m ON m.id = pk.match_id
@@ -500,7 +779,8 @@ BEGIN
     AND ((_from IS NULL OR pk.time >= _from) AND (_to IS NULL OR pk.time < _to))
     AND (_match_type IS NULL OR mo.type = _match_type)
     AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pk.match_id))
-  GROUP BY pk.attacker_steam_id, p.name, p.avatar_url, p.country
+    AND (lower(_source) = 'overall' OR public._leaderboard_match_source(pk.match_id) = lower(_source))
+  GROUP BY pk.attacker_steam_id, p.name, p.avatar_url, p.country, p.custom_avatar_url
   ORDER BY value DESC;
 END;
 $$;
@@ -514,7 +794,8 @@ $$;
 CREATE OR REPLACE FUNCTION public._leaderboard_awards(
   _window_days INT,
   _match_type TEXT DEFAULT NULL,
-  _season_id UUID DEFAULT NULL
+  _season_id UUID DEFAULT NULL,
+  _source TEXT DEFAULT 'overall'
 )
 RETURNS SETOF public.leaderboard_entries
 LANGUAGE plpgsql STABLE
@@ -554,6 +835,16 @@ BEGIN
     WHERE ar.player_steam_id IS NOT NULL
       AND ar.placement IS NOT NULL
       AND (ar.tournament_id IS NOT NULL OR ar.season_id IS NOT NULL)
+      -- Awards hang off a tournament, so there is no matchmaking bucket: any
+      -- non-Overall source keeps only tournament-backed awards of that kind,
+      -- and Matchmaking correctly comes back empty.
+      AND (
+        lower(_source) = 'overall'
+        OR (
+          ar.tournament_id IS NOT NULL
+          AND public._leaderboard_tournament_source(ar.tournament_id) = lower(_source)
+        )
+      )
       AND (
         ar.tournament_id IS NULL
         OR (
@@ -587,7 +878,8 @@ BEGIN
     c.gold::float             as value,
     c.silver::float           as secondary_value,
     c.bronze::float           as tertiary_value,
-    c.mvp                     as matches_played
+    c.mvp                     as matches_played,
+    p.custom_avatar_url       as player_custom_avatar_url
   FROM counts c
   JOIN players p ON p.steam_id = c.player_steam_id
   WHERE c.total > 0
@@ -604,7 +896,9 @@ CREATE TABLE IF NOT EXISTS public.player_leaderboard_rank (
 
 -- Drop every stale overload so the get_leaderboard() call below resolves
 -- unambiguously. The current get_leaderboard / get_player_leaderboard_rank both
--- take 6 args, so anything with a different arg count is a stale signature.
+-- take 7 args (the 7th being _source), so anything with a different arg count is
+-- a stale signature. Keep this count in step with those signatures -- if it says
+-- 6 while they take 7 it drops the functions this file just created.
 DO $$
 DECLARE r record;
 BEGIN
@@ -613,7 +907,7 @@ BEGIN
     FROM pg_proc p
     WHERE p.pronamespace = 'public'::regnamespace
       AND p.proname IN ('get_leaderboard', 'get_player_leaderboard_rank')
-      AND p.pronargs <> 6
+      AND p.pronargs <> 7
   LOOP
     EXECUTE 'DROP FUNCTION ' || r.sig;
   END LOOP;
@@ -625,7 +919,8 @@ CREATE OR REPLACE FUNCTION public.get_player_leaderboard_rank(
   _player_steam_id TEXT,
   _match_type TEXT DEFAULT NULL,
   _exclude_tournaments BOOLEAN DEFAULT FALSE,
-  _season_id UUID DEFAULT NULL
+  _season_id UUID DEFAULT NULL,
+  _source TEXT DEFAULT 'overall'
 )
 RETURNS SETOF public.player_leaderboard_rank
 LANGUAGE plpgsql STABLE
@@ -638,9 +933,9 @@ BEGIN
       le.value,
       (RANK() OVER (ORDER BY le.value DESC))::int AS rank,
       (COUNT(*) OVER ())::int AS total
-    -- Pass all 6 args explicitly. A shorter call binds ambiguously if a stale
-    -- overload still exists; exact arity always resolves the 6-arg one.
-    FROM public.get_leaderboard(_category, _window_days, _match_type, _exclude_tournaments, NULL::text, _season_id) le
+    -- Pass all 7 args explicitly. A shorter call binds ambiguously if a stale
+    -- overload still exists; exact arity always resolves the 7-arg one.
+    FROM public.get_leaderboard(_category, _window_days, _match_type, _exclude_tournaments, NULL::text, _season_id, _source) le
   )
   SELECT r.player_steam_id, r.value, r.rank, r.total
   FROM ranked r
@@ -652,6 +947,9 @@ $$;
 -- ============================================================
 -- HLTV-stat leaderboards (rating / ADR / KPR / KAST), rounds-weighted
 -- value = _metric, secondary = complementary stat, tertiary = rounds played
+--
+-- Deliberately no minimum-rounds floor: one sized for 5v5 empties this
+-- leaderboard entirely for Duel, Wingman, and early-season data.
 -- ============================================================
 CREATE OR REPLACE FUNCTION public._leaderboard_hltv_metric(
   _metric TEXT,
@@ -659,7 +957,8 @@ CREATE OR REPLACE FUNCTION public._leaderboard_hltv_metric(
   _match_type TEXT,
   _exclude_tournaments BOOLEAN,
   _role TEXT DEFAULT NULL,
-  _season_id UUID DEFAULT NULL
+  _season_id UUID DEFAULT NULL,
+  _source TEXT DEFAULT 'overall'
 )
 RETURNS SETOF public.leaderboard_entries
 LANGUAGE plpgsql STABLE
@@ -703,9 +1002,9 @@ BEGIN
       AND ((_from IS NULL OR m.created_at >= _from) AND (_to IS NULL OR m.created_at < _to))
       AND (_match_type IS NULL OR mo.type = _match_type)
       AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = h.match_id))
+      AND (lower(_source) = 'overall' OR public._leaderboard_match_source(h.match_id) = lower(_source))
       AND (_role IS NULL OR r.role = _role)
     GROUP BY h.steam_id
-    HAVING SUM(h.rounds_played) >= 50
   )
   SELECT
     a.steam_id::text   AS player_steam_id,
@@ -725,7 +1024,8 @@ BEGIN
       WHEN 'kast'   THEN ROUND(a.rating::numeric, 2)
     END)::float        AS secondary_value,
     a.rounds::float    AS tertiary_value,
-    a.match_count      AS matches_played
+    a.match_count      AS matches_played,
+    p.custom_avatar_url AS player_custom_avatar_url
   FROM agg a
   JOIN players p ON p.steam_id = a.steam_id
   ORDER BY value DESC NULLS LAST;
@@ -741,7 +1041,8 @@ CREATE OR REPLACE FUNCTION public._leaderboard_udr(
   _match_type TEXT,
   _exclude_tournaments BOOLEAN,
   _role TEXT DEFAULT NULL,
-  _season_id UUID DEFAULT NULL
+  _season_id UUID DEFAULT NULL,
+  _source TEXT DEFAULT 'overall'
 )
 RETURNS SETOF public.leaderboard_entries
 LANGUAGE plpgsql STABLE
@@ -782,9 +1083,9 @@ BEGIN
       AND ((_from IS NULL OR m.created_at >= _from) AND (_to IS NULL OR m.created_at < _to))
       AND (_match_type IS NULL OR mo.type = _match_type)
       AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = s.match_id))
+      AND (lower(_source) = 'overall' OR public._leaderboard_match_source(s.match_id) = lower(_source))
       AND (_role IS NULL OR r.role = _role)
     GROUP BY s.steam_id
-    HAVING SUM(s.rounds_played) >= 50
   )
   SELECT
     a.steam_id::text          AS player_steam_id,
@@ -794,7 +1095,8 @@ BEGIN
     ROUND(a.udr, 1)::float    AS value,
     a.util_damage::float      AS secondary_value,
     a.rounds::float           AS tertiary_value,
-    a.match_count             AS matches_played
+    a.match_count             AS matches_played,
+    p.custom_avatar_url       AS player_custom_avatar_url
   FROM agg a
   JOIN players p ON p.steam_id = a.steam_id
   ORDER BY value DESC NULLS LAST;

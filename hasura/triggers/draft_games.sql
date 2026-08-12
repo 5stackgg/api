@@ -77,17 +77,9 @@ DROP TRIGGER IF EXISTS tbu_draft_games ON public.draft_games;
 CREATE TRIGGER tbu_draft_games BEFORE UPDATE ON public.draft_games FOR EACH ROW EXECUTE FUNCTION public.tbu_draft_games();
 
 
-CREATE OR REPLACE FUNCTION public.tad_draft_games() RETURNS TRIGGER
-    LANGUAGE plpgsql
-    AS $$
-BEGIN
-    -- Deleting unconditionally fails: tbd_matches removes the draft_games row
-    -- before the owning matches row is gone, and matches.match_options_id still
-    -- points at it (ON DELETE RESTRICT). tad_matches cleans up afterwards.
-    PERFORM cleanup_orphaned_match_options(OLD.match_options_id);
-    RETURN OLD;
-END;
-$$;
-
+-- Deleting unconditionally fails: tbd_matches removes the draft_games row
+-- before the owning matches row is gone, and matches.match_options_id still
+-- points at it (ON DELETE RESTRICT). tad_matches cleans up afterwards.
 DROP TRIGGER IF EXISTS tad_draft_games ON public.draft_games;
-CREATE TRIGGER tad_draft_games AFTER DELETE ON public.draft_games FOR EACH ROW EXECUTE FUNCTION public.tad_draft_games();
+CREATE TRIGGER tad_draft_games AFTER DELETE ON public.draft_games FOR EACH ROW EXECUTE FUNCTION public.tad_cleanup_match_options();
+DROP FUNCTION IF EXISTS public.tad_draft_games();

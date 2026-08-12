@@ -31,6 +31,7 @@ describe("match options locks (SQL-driven)", () => {
   beforeEach(async () => {
     await postgres.query("DELETE FROM draft_games");
     await postgres.query("DELETE FROM matches");
+    await postgres.query("DELETE FROM teams");
     await postgres.query("DELETE FROM match_options");
     await postgres.query("DELETE FROM map_pools WHERE type = 'Custom'");
     await postgres.query("DELETE FROM players");
@@ -58,9 +59,6 @@ describe("match options locks (SQL-driven)", () => {
     );
     return draft.id;
   };
-
-  const linkDraftGame = (matchId: string, optionsId: string) =>
-    createDraftGame(optionsId, matchId);
 
   const setMatchStatus = (matchId: string, status: string) =>
     postgres.query("UPDATE matches SET status = $1 WHERE id = $2", [
@@ -186,7 +184,7 @@ describe("match options locks (SQL-driven)", () => {
   // (ON DELETE RESTRICT) here.
   it("deleting a match with a linked draft game still garbage-collects its options", async () => {
     const { matchId, optionsId } = await createMatch();
-    await linkDraftGame(matchId, optionsId);
+    await createDraftGame(optionsId, matchId);
 
     await postgres.query("DELETE FROM matches WHERE id = $1", [matchId]);
 
@@ -199,7 +197,7 @@ describe("match options locks (SQL-driven)", () => {
 
   it("deleting the draft game keeps options alive until the match goes", async () => {
     const { matchId, optionsId } = await createMatch();
-    const draftId = await linkDraftGame(matchId, optionsId);
+    const draftId = await createDraftGame(optionsId, matchId);
 
     await postgres.query("DELETE FROM draft_games WHERE id = $1", [draftId]);
 
@@ -210,6 +208,44 @@ describe("match options locks (SQL-driven)", () => {
     expect(stillThere.length).toBe(1);
 
     await postgres.query("DELETE FROM matches WHERE id = $1", [matchId]);
+
+    const cleaned = await postgres.query<Array<unknown>>(
+      "SELECT 1 FROM match_options WHERE id = $1",
+      [optionsId],
+    );
+    expect(cleaned.length).toBe(0);
+  });
+
+  // A scrim request shares its match_options row with the match it schedules
+  // and is designed to outlive it (RemoveCancelledMatches drops canceled scrim
+  // matches a day later), so the GC has to hold the row until the request goes
+  // — the FK is ON DELETE SET NULL and would quietly blank the agreed settings.
+  it("keeps a scrim request's options alive after its match is deleted", async () => {
+    const { matchId, optionsId } = await createMatch();
+    const from = await fx.team();
+    const to = await fx.team();
+    const [request] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO team_scrim_requests
+         (from_team_id, to_team_id, requested_by_steam_id, awaiting_team_id,
+          proposed_scheduled_at, expires_at, match_options_id, match_id)
+       VALUES ($1, $2, $3, $2, now() + interval '1 day', now() + interval '1 day', $4, $5)
+       RETURNING id`,
+      [from.id, to.id, from.owner, optionsId, matchId],
+    );
+
+    await postgres.query("DELETE FROM matches WHERE id = $1", [matchId]);
+
+    const [linked] = await postgres.query<Array<{ best_of: number }>>(
+      `SELECT mo.best_of FROM team_scrim_requests r
+       INNER JOIN match_options mo ON mo.id = r.match_options_id
+       WHERE r.id = $1`,
+      [request.id],
+    );
+    expect(linked.best_of).toBe(1);
+
+    await postgres.query("DELETE FROM team_scrim_requests WHERE id = $1", [
+      request.id,
+    ]);
 
     const cleaned = await postgres.query<Array<unknown>>(
       "SELECT 1 FROM match_options WHERE id = $1",
