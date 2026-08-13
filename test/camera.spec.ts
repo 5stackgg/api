@@ -26,6 +26,7 @@ describe("camera tokens (SQL-driven)", () => {
       postgres,
       {} as any,
       {} as any,
+      {} as any,
     );
     await seedRegionWithServer(postgres, "CameraTestRegion", 27015);
   }, 600_000);
@@ -122,6 +123,7 @@ describe("camera tokens (SQL-driven)", () => {
       new Logger("CameraTest"),
       {} as any,
       failing,
+      {} as any,
       {} as any,
       {} as any,
     );

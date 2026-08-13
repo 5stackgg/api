@@ -92,6 +92,22 @@ export class CameraController {
     return { ok: true };
   }
 
+  // The broadcast pod: no session, authenticates as the match itself.
+  @Post("broadcast/:matchId/:steamId/whep")
+  public async broadcastWatch(
+    @Param("matchId") matchId: string,
+    @Param("steamId") steamId: string,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const originAuth = request.headers["x-origin-auth"];
+    const sdp = await this.readRawBody(request);
+
+    await this.sendSdp(response, () =>
+      this.camera.proxyBroadcastWatch(matchId, steamId, originAuth, sdp),
+    );
+  }
+
   // The admin routes are gated by session + organizer.
 
   @Get("admin/:matchId/players")

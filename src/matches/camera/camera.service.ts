@@ -3,6 +3,7 @@ import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";
 import { MediaMtxService } from "../../mediamtx/mediamtx.service";
 import { MatchAssistantService } from "../match-assistant/match-assistant.service";
+import { GameStreamerService } from "../game-streamer/game-streamer.service";
 import { User } from "../../auth/types/User";
 import { isRoleAbove } from "../../utilities/isRoleAbove";
 
@@ -50,6 +51,7 @@ export class CameraService {
     private readonly postgres: PostgresService,
     private readonly mediaMtx: MediaMtxService,
     private readonly matchAssistant: MatchAssistantService,
+    private readonly gameStreamer: GameStreamerService,
   ) {}
 
   public static pathForPlayer(matchId: string, steamId: string) {
@@ -218,6 +220,52 @@ export class CameraService {
     if (!row) {
       throw new Error(NOT_AUTHORIZED);
     }
+  }
+
+  // The broadcast pod has no site session — it authenticates as the match
+  // itself, the same scheme status-reporter and snapshot already use. Scoped to
+  // one match, and only to players actually on that match's roster.
+  public async proxyBroadcastWatch(
+    matchId: string,
+    steamId: string,
+    originAuth: unknown,
+    sdp: string,
+  ) {
+    if (!UUID_PATTERN.test(matchId) || !STEAM_ID_PATTERN.test(steamId)) {
+      throw new Error(NOT_AUTHORIZED);
+    }
+
+    const authorized = await this.gameStreamer.validateStatusOriginAuth(
+      matchId,
+      originAuth,
+    );
+
+    if (!authorized) {
+      throw new Error(NOT_AUTHORIZED);
+    }
+
+    const [row] = await this.postgres.query<Array<{ exists: boolean }>>(
+      `SELECT true AS exists
+       FROM matches m
+       INNER JOIN match_options mo ON mo.id = m.match_options_id
+       INNER JOIN match_lineup_players mlp
+         ON mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+       WHERE m.id = $1
+         AND mlp.steam_id = $2
+         AND mo.camera_required = true
+       LIMIT 1`,
+      [matchId, steamId],
+    );
+
+    if (!row) {
+      throw new Error(NOT_AUTHORIZED);
+    }
+
+    return this.mediaMtx.proxySdp(
+      CameraService.pathForPlayer(matchId, steamId),
+      "whep",
+      sdp,
+    );
   }
 
   public async proxyPlayerPublish(token: string, sdp: string) {

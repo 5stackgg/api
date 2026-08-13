@@ -17,6 +17,7 @@ describe("CameraService authorization", () => {
   let postgres: { query: jest.Mock };
   let mediaMtx: { proxySdp: jest.Mock; isPathReady: jest.Mock; kickSessions: jest.Mock };
   let matchAssistant: { isOrganizer: jest.Mock };
+  let gameStreamer: { validateStatusOriginAuth: jest.Mock };
   let service: CameraService;
 
   const scopeRow = (myLineupId: string | null, allowTeammates: boolean) => [
@@ -31,6 +32,9 @@ describe("CameraService authorization", () => {
       kickSessions: jest.fn().mockResolvedValue(undefined),
     };
     matchAssistant = { isOrganizer: jest.fn().mockResolvedValue(false) };
+    gameStreamer = {
+      validateStatusOriginAuth: jest.fn().mockResolvedValue(true),
+    };
 
     service = new CameraService(
       new Logger("CameraAuthTest"),
@@ -38,6 +42,7 @@ describe("CameraService authorization", () => {
       postgres as any,
       mediaMtx as any,
       matchAssistant as any,
+      gameStreamer as any,
     );
   });
 
@@ -157,5 +162,48 @@ describe("CameraService authorization", () => {
     await expect(service.watchScope(MATCH_ID, admin)).rejects.toThrow(
       /not authorized/i,
     );
+  });
+
+  // The broadcast pod has no session; it authenticates as the match itself.
+  describe("broadcast overlay", () => {
+    const AUTH = "match-1:secret";
+
+    it("proxies a rostered player's camera", async () => {
+      postgres.query.mockResolvedValue([{ exists: true }]);
+
+      await service.proxyBroadcastWatch(MATCH_ID, TEAMMATE, AUTH, "offer");
+
+      expect(mediaMtx.proxySdp).toHaveBeenCalledWith(
+        `camera-${MATCH_ID}-${TEAMMATE}`,
+        "whep",
+        "offer",
+      );
+    });
+
+    it("refuses a bad origin auth", async () => {
+      gameStreamer.validateStatusOriginAuth.mockResolvedValue(false);
+
+      await expect(
+        service.proxyBroadcastWatch(MATCH_ID, TEAMMATE, "nope", "offer"),
+      ).rejects.toThrow(/not authorized/i);
+      expect(mediaMtx.proxySdp).not.toHaveBeenCalled();
+    });
+
+    // One pod is authorized for one match: it must not be able to name a
+    // player from a different one.
+    it("refuses a player who is not on this match", async () => {
+      postgres.query.mockResolvedValue([]);
+
+      await expect(
+        service.proxyBroadcastWatch(MATCH_ID, TEAMMATE, AUTH, "offer"),
+      ).rejects.toThrow(/not authorized/i);
+    });
+
+    it("refuses a steam id that is not a Steam64", async () => {
+      await expect(
+        service.proxyBroadcastWatch(MATCH_ID, "../../x", AUTH, "offer"),
+      ).rejects.toThrow(/not authorized/i);
+      expect(gameStreamer.validateStatusOriginAuth).not.toHaveBeenCalled();
+    });
   });
 });
