@@ -30,14 +30,15 @@ export class VoiceService {
 
   // Read straight from the settings table rather than through SystemService,
   // which would drag its whole module graph (chat, k8s, s3, queues) into this
-  // feature for the sake of one row.
+  // feature for the sake of one row. On by default — only an explicit "false"
+  // disables it, matching require_login_for_live_streams.
   public async isEnabled() {
     const [row] = await this.postgres.query<Array<{ value: string }>>(
       `SELECT value FROM public.settings WHERE name = $1 LIMIT 1`,
       [SystemSettingName.VoiceChatEnabled],
     );
 
-    return row?.value === "true";
+    return row?.value !== "false";
   }
 
   // Voice is only ever offered to a lobby you are actually in, and only for

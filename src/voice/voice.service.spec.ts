@@ -14,6 +14,7 @@ describe("VoiceService", () => {
   // The service reads the enabled flag and then the membership row, so the
   // happy path needs both in order.
   const enabled = (value: boolean) => [{ value: String(value) }];
+  // Voice is on unless explicitly disabled, so "no row" is enabled.
 
   const accepted = () =>
     postgres.query
@@ -66,6 +67,16 @@ describe("VoiceService", () => {
 
     await expect(service.publish(LOBBY_ID, ME, "offer")).rejects.toThrow(
       /not a member/i,
+    );
+  });
+
+  it("is enabled when no setting row exists", async () => {
+    postgres.query
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ status: "Accepted" }]);
+
+    await expect(service.publish(LOBBY_ID, ME, "offer")).resolves.toBe(
+      "answer-sdp",
     );
   });
 

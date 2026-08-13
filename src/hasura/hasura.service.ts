@@ -174,9 +174,11 @@ export class HasuraService {
       "insert into settings (name, value) values ('public.player_cameras_enabled', 'false') on conflict (name) do nothing",
     );
 
-    // Same WebRTC requirement as cameras above.
+    // On by default, unlike cameras: party voice is a convenience for players
+    // who opted into a lobby together, not a surveillance control. Seeded so
+    // the admin toggle reflects it; `do nothing` preserves an explicit off.
     await this.postgresService.query(
-      "insert into settings (name, value) values ('public.voice_chat_enabled', 'false') on conflict (name) do nothing",
+      "insert into settings (name, value) values ('public.voice_chat_enabled', 'true') on conflict (name) do nothing",
     );
 
     // Platform defaults new match_options rows inherit. Both off: requiring a
