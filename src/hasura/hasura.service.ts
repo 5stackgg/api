@@ -168,12 +168,6 @@ export class HasuraService {
       "insert into settings (name, value) values ('public.veto_pick_timeout', '60') on conflict (name) do nothing",
     );
 
-    // Off by default: player cameras need MediaMTX reachable and a publicly
-    // routable WebRTC host, which not every install has.
-    await this.postgresService.query(
-      "insert into settings (name, value) values ('public.player_cameras_enabled', 'false') on conflict (name) do nothing",
-    );
-
     // On by default, unlike cameras: party voice is a convenience for players
     // who opted into a lobby together, not a surveillance control. Seeded so
     // the admin toggle reflects it; `do nothing` preserves an explicit off.

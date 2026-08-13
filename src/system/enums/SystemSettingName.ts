@@ -14,7 +14,6 @@ export enum SystemSettingName {
   CreateAwardsRole = "public.create_awards_role",
   GrantAwardsRole = "public.grant_awards_role",
   RequireLoginForLiveStreams = "public.require_login_for_live_streams",
-  PlayerCamerasEnabled = "public.player_cameras_enabled",
   CameraRequiredDefault = "public.camera_required_default",
   CameraAllowTeammatesDefault = "public.camera_allow_teammates_default",
   VoiceChatEnabled = "public.voice_chat_enabled",
