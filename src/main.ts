@@ -83,18 +83,6 @@ async function bootstrap() {
     allowedOrigins.push("http://localhost:3000", "http://0.0.0.0:3000", "http://localhost:3001", "http://0.0.0.0:3001");
   }
 
-  // Comma-separated extra origins, for developing against a deployed API from
-  // somewhere that is not one of the configured domains. Empty by default --
-  // Hasura reflects the request origin, so GraphQL already works from anywhere
-  // and only the routes served by this process need to be opted in.
-  for (const origin of (process.env.EXTRA_CORS_ORIGINS ?? "").split(",")) {
-    const trimmed = origin.trim();
-
-    if (trimmed) {
-      allowedOrigins.push(trimmed);
-    }
-  }
-
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,
