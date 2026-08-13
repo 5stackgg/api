@@ -45,10 +45,10 @@ describe("persist_imported_demo kill ingestion", () => {
   };
 
   const importDemo = async (demoId: string, parsed: unknown) => {
-    await postgres.query("SELECT public.persist_imported_demo($1::uuid, $2::jsonb)", [
-      demoId,
-      JSON.stringify(parsed),
-    ]);
+    await postgres.query(
+      "SELECT public.persist_imported_demo($1::uuid, $2::jsonb)",
+      [demoId, JSON.stringify(parsed)],
+    );
   };
 
   const killRows = async (mapId: string) =>
@@ -148,6 +148,96 @@ describe("persist_imported_demo kill ingestion", () => {
     expect(stats?.kills).toBe(0);
   });
 
+  // The demo keeps recording after the final round — the post-match walkaround,
+  // where players shoot each other for fun. Those are not scoreboard deaths.
+  it("drops a death that lands after the last round ended", async () => {
+    const ctx = await fx.bareMatch();
+    const demoId = await demoFor(ctx);
+    const [shooter, victim] = await fx.players(2);
+
+    await importDemo(demoId, {
+      map_name: "de_cache",
+      tick_rate: 64,
+      total_ticks: 5000,
+      round_ticks: [{ round: 1, start_tick: 0, end_tick: 2000 }],
+      players: [shooter, victim].map((steam_id) => ({
+        steam_id,
+        name: `p-${steam_id}`,
+      })),
+      kills: [
+        {
+          tick: 100, // during the round
+          killer: shooter,
+          killer_team: "ct",
+          victim,
+          victim_team: "t",
+          weapon: "ak47",
+        },
+        {
+          tick: 4000, // long after round 1 ended at 2000
+          killer: shooter,
+          killer_team: "ct",
+          victim,
+          victim_team: "t",
+          weapon: "deagle",
+        },
+        {
+          tick: 4100, // a post-match world death, likewise ignored
+          killer: "",
+          killer_team: "",
+          victim,
+          victim_team: "t",
+          weapon: "world",
+        },
+      ],
+    });
+
+    const rows = await killRows(ctx.mapId);
+    expect(rows.map((r) => r.with)).toEqual(["ak47"]);
+
+    const [stats] = await postgres.query<Array<{ deaths: number }>>(
+      `SELECT deaths FROM player_match_map_stats
+        WHERE match_map_id = $1 AND steam_id = $2`,
+      [ctx.mapId, victim],
+    );
+    expect(stats?.deaths).toBe(1);
+  });
+
+  it("drops a post-match assist along with its kill", async () => {
+    const ctx = await fx.bareMatch();
+    const demoId = await demoFor(ctx);
+    const [shooter, victim, helper] = await fx.players(3);
+
+    await importDemo(demoId, {
+      map_name: "de_cache",
+      tick_rate: 64,
+      total_ticks: 5000,
+      round_ticks: [{ round: 1, start_tick: 0, end_tick: 2000 }],
+      players: [shooter, victim, helper].map((steam_id) => ({
+        steam_id,
+        name: `p-${steam_id}`,
+      })),
+      kills: [
+        {
+          tick: 4000,
+          killer: shooter,
+          killer_team: "ct",
+          victim,
+          victim_team: "t",
+          weapon: "ak47",
+          assist: helper,
+        },
+      ],
+    });
+
+    expect(await killRows(ctx.mapId)).toHaveLength(0);
+    const [assists] = await postgres.query<Array<{ count: string }>>(
+      "SELECT COUNT(*)::text AS count FROM player_assists WHERE match_map_id = $1",
+      [ctx.mapId],
+    );
+    expect(assists.count).toBe("0");
+  });
+
   it("still drops an entry with no victim at all", async () => {
     const ctx = await fx.bareMatch();
     const demoId = await demoFor(ctx);
@@ -160,7 +250,13 @@ describe("persist_imported_demo kill ingestion", () => {
       round_ticks: [{ round: 1, start_tick: 0, end_tick: 2000 }],
       players: [{ steam_id: shooter, name: "p" }],
       kills: [
-        { tick: 100, killer: shooter, killer_team: "ct", victim: "", weapon: "ak47" },
+        {
+          tick: 100,
+          killer: shooter,
+          killer_team: "ct",
+          victim: "",
+          weapon: "ak47",
+        },
       ],
     });
 

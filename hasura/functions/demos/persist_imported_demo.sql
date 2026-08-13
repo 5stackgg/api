@@ -303,15 +303,22 @@ BEGIN
     false, false,
     NULLIF(elem->>'assist', '') IS NOT NULL
   FROM jsonb_array_elements(COALESCE(p_parsed->'kills', '[]'::jsonb)) elem
-  CROSS JOIN LATERAL (
+  LEFT JOIN LATERAL (
     SELECT COALESCE((rt->>'round')::int, 0) AS round
     FROM jsonb_array_elements(COALESCE(p_parsed->'round_ticks', '[]'::jsonb)) rt
     WHERE (elem->>'tick')::int >= COALESCE((rt->>'start_tick')::int, 0)
       AND (elem->>'tick')::int <= COALESCE((rt->>'end_tick')::int, 2147483647)
     ORDER BY (rt->>'round')::int
     LIMIT 1
-  ) rt_match
-  WHERE NULLIF(elem->>'victim', '') IS NOT NULL;
+  ) rt_match ON true
+  WHERE NULLIF(elem->>'victim', '') IS NOT NULL
+    -- A death outside every round window did not happen during play: the demo
+    -- keeps recording through the post-match walkaround, where players shoot
+    -- each other for fun. That is not a scoreboard death, so it is dropped.
+    -- Written as a LEFT JOIN plus an explicit test rather than leaning on a
+    -- CROSS JOIN quietly matching nothing — the exclusion is deliberate, and
+    -- the next person to touch this join should have to mean it.
+    AND rt_match.round IS NOT NULL;
 
   INSERT INTO public.player_assists (
     match_id, match_map_id, round, time,
@@ -329,16 +336,19 @@ BEGIN
     COALESCE(NULLIF(elem->>'victim_team', ''), ''),
     COALESCE((elem->>'assist_flash')::boolean, false)
   FROM jsonb_array_elements(COALESCE(p_parsed->'kills', '[]'::jsonb)) elem
-  CROSS JOIN LATERAL (
+  LEFT JOIN LATERAL (
     SELECT COALESCE((rt->>'round')::int, 0) AS round
     FROM jsonb_array_elements(COALESCE(p_parsed->'round_ticks', '[]'::jsonb)) rt
     WHERE (elem->>'tick')::int >= COALESCE((rt->>'start_tick')::int, 0)
       AND (elem->>'tick')::int <= COALESCE((rt->>'end_tick')::int, 2147483647)
     ORDER BY (rt->>'round')::int
     LIMIT 1
-  ) rt_match
+  ) rt_match ON true
   WHERE NULLIF(elem->>'assist', '') IS NOT NULL
-    AND NULLIF(elem->>'victim', '') IS NOT NULL;
+    AND NULLIF(elem->>'victim', '') IS NOT NULL
+    -- Same round gate as the kills insert above, so a post-match kill and its
+    -- assist are dropped together rather than leaving an orphaned assist.
+    AND rt_match.round IS NOT NULL;
 
   INSERT INTO public.player_damages (
     match_id, match_map_id, round, time,
