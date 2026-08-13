@@ -622,6 +622,7 @@ export class MatchesController {
     ) {
       await this.tournamentVoice.createMatchVoiceChannels(matchId);
       await this.tournamentVoice.movePlayersToMatchChannels(matchId);
+      await this.camera.generateTokensIfRequired(matchId);
     }
 
     if (
@@ -2133,6 +2134,16 @@ export class MatchesController {
 
     if (matches_by_pk.status !== "WaitingForCheckIn") {
       throw Error("match is not accepting check in's at this time");
+    }
+
+    // Checking in is the commitment to play, so it is the right gate: letting
+    // it through and only enforcing at Live means a player reaches the server
+    // unwatched and the match pauses on them instead.
+    if (
+      (await this.camera.isRequired(data.match_id)) &&
+      !(await this.camera.isPlayerLive(data.match_id, data.user.steam_id))
+    ) {
+      throw Error("connect your camera before checking in");
     }
 
     const { update_match_lineup_players } = await this.hasura.mutation({

@@ -9,7 +9,12 @@ import { isRoleAbove } from "../../utilities/isRoleAbove";
 
 // A token is only meaningful while the match is actually being played, so a
 // leaked link stops working on its own without needing an expiry column.
-const CAMERA_ACTIVE_MATCH_STATUSES = ["Veto", "Live", "WaitingForServer"];
+const CAMERA_ACTIVE_MATCH_STATUSES = [
+  "WaitingForCheckIn",
+  "Veto",
+  "Live",
+  "WaitingForServer",
+];
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -102,6 +107,28 @@ export class CameraService {
     );
   }
 
+  // Whether this player's own camera is publishing right now. Used to gate
+  // check-in, which happens before the monitor starts sampling.
+  public async isPlayerLive(matchId: string, steamId: string) {
+    return this.mediaMtx.isPathReady(
+      CameraService.pathForPlayer(matchId, steamId),
+    );
+  }
+
+  public async isRequired(matchId: string) {
+    const [row] = await this.postgres.query<
+      Array<{ camera_required: boolean }>
+    >(
+      `SELECT mo.camera_required
+       FROM matches m
+       INNER JOIN match_options mo ON mo.id = m.match_options_id
+       WHERE m.id = $1`,
+      [matchId],
+    );
+
+    return row?.camera_required === true;
+  }
+
   public async revokeTokens(matchId: string) {
     await this.postgres.query(
       `DELETE FROM match_camera_tokens WHERE match_id = $1`,
@@ -170,6 +197,15 @@ export class CameraService {
     }
 
     if (row.my_lineup_id) {
+      // Deliberate exception to "nobody playing may watch": a site
+      // administrator keeps full access so the feature can be exercised
+      // end-to-end without a second account. Organizers playing stay scoped to
+      // their own side -- they are competitors, and a live view of the other
+      // team is the advantage this exists to prevent.
+      if (isRoleAbove(user.role, "administrator")) {
+        return { kind: "all" };
+      }
+
       // A player only ever sees their own side, and only when the match was set
       // up to allow it. The opposing side is never visible to a competitor.
       if (!row.allow_teammates) {

@@ -80,7 +80,7 @@ async function bootstrap() {
   ];
 
   if (process.env.DEV) {
-    allowedOrigins.push("http://localhost:3000", "http://0.0.0.0:3000", "http://localhost:3001", "http://0.0.0.0:3001");
+    allowedOrigins.push("http://localhost:3000", "http://0.0.0.0:3000", "http://localhost:3002", "http://0.0.0.0:3002");
   }
 
   app.enableCors({

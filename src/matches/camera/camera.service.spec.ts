@@ -74,12 +74,14 @@ describe("CameraService authorization", () => {
     );
   });
 
-  it("refuses an administrator who is rostered in the match", async () => {
+  // Deliberate exception so the feature can be exercised end-to-end without a
+  // second account; organizers playing stay scoped to their own side.
+  it("still gives a rostered administrator both lineups", async () => {
     postgres.query.mockResolvedValue(scopeRow(MY_LINEUP, false));
 
-    await expect(service.watchScope(MATCH_ID, admin)).rejects.toThrow(
-      /not authorized/i,
-    );
+    await expect(service.watchScope(MATCH_ID, admin)).resolves.toEqual({
+      kind: "all",
+    });
   });
 
   it("refuses a player when teammate viewing is off", async () => {
