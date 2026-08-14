@@ -51,18 +51,24 @@ export class CameraMonitorService {
   }
 
   public async monitorLiveMatches(now = Date.now()) {
+    // Coaches are included, but on different terms -- see monitorMatch. A
+    // player is only watched once they are in the server (`is_connected`), and
+    // a coach has no equivalent of that, so the query cannot filter them the
+    // same way and the attendance rule lives downstream instead.
     const rows = await this.postgres.query<
       Array<{
         match_id: string;
         server_id: string | null;
         steam_id: string;
         name: string | null;
+        coach: boolean;
       }>
     >(
       `SELECT m.id AS match_id,
               m.server_id::text AS server_id,
               mlp.steam_id::text AS steam_id,
-              p.name
+              p.name,
+              false AS coach
        FROM matches m
        INNER JOIN match_options mo ON mo.id = m.match_options_id
        INNER JOIN match_lineup_players mlp
@@ -72,7 +78,24 @@ export class CameraMonitorService {
          AND mo.camera_required = true
          AND m.server_id IS NOT NULL
          AND mlp.steam_id IS NOT NULL
-         AND mlp.is_connected = true`,
+         AND mlp.is_connected = true
+
+       UNION ALL
+
+       SELECT m.id AS match_id,
+              m.server_id::text AS server_id,
+              ml.coach_steam_id::text AS steam_id,
+              p.name,
+              true AS coach
+       FROM matches m
+       INNER JOIN match_options mo ON mo.id = m.match_options_id
+       INNER JOIN match_lineups ml
+         ON ml.id IN (m.lineup_1_id, m.lineup_2_id)
+       LEFT JOIN players p ON p.steam_id = ml.coach_steam_id
+       WHERE m.status = 'Live'
+         AND mo.camera_required = true
+         AND m.server_id IS NOT NULL
+         AND ml.coach_steam_id IS NOT NULL`,
     );
 
     if (rows.length === 0) {
@@ -95,7 +118,14 @@ export class CameraMonitorService {
 
     const byMatch = new Map<
       string,
-      { serverId: string; players: Array<{ steamId: string; name: string | null }> }
+      {
+        serverId: string;
+        players: Array<{
+          steamId: string;
+          name: string | null;
+          coach: boolean;
+        }>;
+      }
     >();
 
     for (const row of rows) {
@@ -107,7 +137,11 @@ export class CameraMonitorService {
         serverId: row.server_id,
         players: [],
       };
-      match.players.push({ steamId: row.steam_id, name: row.name });
+      match.players.push({
+        steamId: row.steam_id,
+        name: row.name,
+        coach: row.coach === true,
+      });
       byMatch.set(row.match_id, match);
     }
 
@@ -119,7 +153,7 @@ export class CameraMonitorService {
   private async monitorMatch(
     matchId: string,
     serverId: string,
-    players: Array<{ steamId: string; name: string | null }>,
+    players: Array<{ steamId: string; name: string | null; coach: boolean }>,
     paths: Map<string, { ready: boolean; bytesReceived: number }>,
     now: number,
   ) {
@@ -128,9 +162,18 @@ export class CameraMonitorService {
     const nextSamples: Record<string, string> = {};
     const monitored: Array<MonitoredPlayer> = [];
 
-    for (const { steamId, name } of players) {
+    for (const { steamId, name, coach } of players) {
       const path = paths.get(CameraService.pathForPlayer(matchId, steamId));
       const previous = CameraMonitorService.parseSample(stored[steamId]);
+
+      // A coach is watched from the moment they first appear on camera, and not
+      // before. `is_connected` says a player is in the server; a coach has no
+      // such signal, so their own camera is the attendance record. Without this
+      // an assigned-but-absent coach -- a very ordinary thing -- would hold a
+      // match paused from the first pass and nobody could start it.
+      if (coach && !previous && !path?.ready) {
+        continue;
+      }
 
       let health: CameraHealth;
       if (!path?.ready) {

@@ -7,8 +7,7 @@ import { GameStreamerService } from "../game-streamer/game-streamer.service";
 import { User } from "../../auth/types/User";
 import { isRoleAbove } from "../../utilities/isRoleAbove";
 
-// A token is only meaningful while the match is actually being played, so a
-// leaked link stops working on its own without needing an expiry column.
+// A camera is only publishable while the match is actually being played.
 export const CAMERA_ACTIVE_MATCH_STATUSES = [
   "WaitingForCheckIn",
   "Veto",
@@ -23,11 +22,6 @@ const UUID_PATTERN =
 // into a MediaMTX path, and anything containing a separator could address a
 // path other than the one the caller was authorized for.
 const STEAM_ID_PATTERN = /^\d{17}$/;
-
-export type CameraTokenLookup = {
-  matchId: string;
-  steamId: string;
-};
 
 const NOT_AUTHORIZED = "not authorized to view cameras for this match";
 
@@ -49,6 +43,10 @@ export type CameraPlayerStatus = {
   // "stalled" is a path that is still up but has stopped delivering — it looks
   // identical to a working camera in the grid unless we say so.
   health: CameraHealth;
+  // Coaching this side rather than playing on it. An official watching the grid
+  // needs to tell them apart: the coach is the tile that matters during a
+  // technical timeout, and the one that never appears in the server.
+  coach: boolean;
 };
 
 @Injectable()
@@ -70,44 +68,6 @@ export class CameraService {
   // the player's required camera publish.
   public static talkPathForPlayer(matchId: string, steamId: string) {
     return `camera-talk-${matchId}-${steamId}`;
-  }
-
-  public async generateTokensIfRequired(matchId: string) {
-    const rows = await this.postgres.query<
-      Array<{ camera_required: boolean; steam_id: string | null }>
-    >(
-      `SELECT mo.camera_required, mlp.steam_id::text AS steam_id
-       FROM matches m
-       INNER JOIN match_options mo ON mo.id = m.match_options_id
-       LEFT JOIN match_lineup_players mlp
-         ON mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
-        AND mlp.steam_id IS NOT NULL
-       WHERE m.id = $1`,
-      [matchId],
-    );
-
-    if (rows.length === 0 || !rows[0].camera_required) {
-      return;
-    }
-
-    const steamIds = rows
-      .map((row) => row.steam_id)
-      .filter((steamId): steamId is string => Boolean(steamId));
-
-    if (steamIds.length === 0) {
-      this.logger.warn(
-        `[${matchId}] camera_required is on but the lineups are empty; not minting tokens`,
-      );
-      return;
-    }
-
-    // Idempotent: the Live edge can fire more than once for one match.
-    await this.postgres.query(
-      `INSERT INTO match_camera_tokens (match_id, steam_id)
-       SELECT $1, unnest($2::bigint[])
-       ON CONFLICT (match_id, steam_id) DO NOTHING`,
-      [matchId, steamIds],
-    );
   }
 
   // Whether this player's own camera is publishing right now. Used to gate
@@ -132,36 +92,46 @@ export class CameraService {
     return row?.camera_required === true;
   }
 
-  public async revokeTokens(matchId: string) {
-    await this.postgres.query(
-      `DELETE FROM match_camera_tokens WHERE match_id = $1`,
-      [matchId],
-    );
-  }
-
-  public async validateToken(token: string): Promise<CameraTokenLookup | null> {
-    // The column is a uuid, so anything else (a stray URL, someone probing the
-    // endpoint) would reach Postgres and fail as a 500 rather than a clean miss.
-    if (!token || !UUID_PATTERN.test(token)) {
-      return null;
+  // Who may publish a camera for this match: anyone actually in it, while it is
+  // still being played.
+  //
+  // This used to be a minted token handed to a phone over a QR code. It no
+  // longer is -- the phone signs in like anything else, so the session already
+  // says who it is, and a bearer credential for a device that can just log in
+  // was surface area for nothing. Coaches count: they stand behind the team
+  // during a technical timeout, so "on camera" has to mean them too.
+  public async assertCameraPlayer(matchId: string, user: User) {
+    if (!UUID_PATTERN.test(matchId)) {
+      throw new Error(NOT_AUTHORIZED);
     }
 
-    const [row] = await this.postgres.query<
-      Array<{ match_id: string; steam_id: string; status: string }>
-    >(
-      `SELECT t.match_id, t.steam_id::text AS steam_id, m.status
-       FROM match_camera_tokens t
-       INNER JOIN matches m ON m.id = t.match_id
-       WHERE t.token = $1
+    const [row] = await this.postgres.query<Array<{ status: string }>>(
+      `SELECT m.status
+       FROM matches m
+       WHERE m.id = $1
+         AND (
+           EXISTS (
+             SELECT 1
+             FROM match_lineup_players mlp
+             WHERE mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+               AND mlp.steam_id = $2
+           )
+           OR EXISTS (
+             SELECT 1
+             FROM match_lineups ml
+             WHERE ml.id IN (m.lineup_1_id, m.lineup_2_id)
+               AND ml.coach_steam_id = $2
+           )
+         )
        LIMIT 1`,
-      [token],
+      [matchId, user.steam_id],
     );
 
+    // A finished match is not one you can still publish to, the same way an
+    // expired token used to stop working.
     if (!row || !CAMERA_ACTIVE_MATCH_STATUSES.includes(row.status)) {
-      return null;
+      throw new Error(NOT_AUTHORIZED);
     }
-
-    return { matchId: row.match_id, steamId: row.steam_id };
   }
 
   // Site admins, or an organizer of this specific match — deliberately not the
@@ -181,12 +151,25 @@ export class CameraService {
         allow_teammates: boolean;
       }>
     >(
+      // "My side", not "my roster spot": a coach belongs to a lineup just as
+      // much as a player does, and now publishes a camera of their own. Reading
+      // only the roster here meant a coach who also organised the match was
+      // handed both lineups -- a live view of the team they are playing
+      // against, which is the exact advantage this rule exists to prevent.
       `SELECT mo.camera_allow_teammates AS allow_teammates,
               (
-                SELECT mlp.match_lineup_id::text
-                FROM match_lineup_players mlp
-                WHERE mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
-                  AND mlp.steam_id = $2
+                SELECT ml.id::text
+                FROM match_lineups ml
+                WHERE ml.id IN (m.lineup_1_id, m.lineup_2_id)
+                  AND (
+                    ml.coach_steam_id = $2
+                    OR EXISTS (
+                      SELECT 1
+                      FROM match_lineup_players mlp
+                      WHERE mlp.match_lineup_id = ml.id
+                        AND mlp.steam_id = $2
+                    )
+                  )
                 LIMIT 1
               ) AS my_lineup_id
        FROM matches m
@@ -248,10 +231,21 @@ export class CameraService {
       return;
     }
 
+    // Same widening as watchScope: a lineup is its roster and its coach, so a
+    // teammate may watch their own coach's camera and nobody else's.
     const [row] = await this.postgres.query<Array<{ exists: boolean }>>(
       `SELECT true AS exists
-       FROM match_lineup_players
-       WHERE match_lineup_id = $1 AND steam_id = $2
+       FROM match_lineups ml
+       WHERE ml.id = $1
+         AND (
+           ml.coach_steam_id = $2
+           OR EXISTS (
+             SELECT 1
+             FROM match_lineup_players mlp
+             WHERE mlp.match_lineup_id = ml.id
+               AND mlp.steam_id = $2
+           )
+         )
        LIMIT 1`,
       [scope.lineupId, steamId],
     );
@@ -307,26 +301,22 @@ export class CameraService {
     );
   }
 
-  public async proxyPlayerPublish(token: string, sdp: string) {
-    const lookup = await this.requireToken(token);
+  public async proxyPlayerPublish(matchId: string, user: User, sdp: string) {
+    await this.assertCameraPlayer(matchId, user);
 
     return this.mediaMtx.proxySdp(
-      CameraService.pathForPlayer(lookup.matchId, lookup.steamId),
+      CameraService.pathForPlayer(matchId, user.steam_id),
       "whip",
       sdp,
     );
   }
 
-  public async getPlayerStatus(token: string) {
-    const lookup = await this.validateToken(token);
-
-    if (!lookup) {
-      return { ready: false };
-    }
+  public async getPlayerStatus(matchId: string, user: User) {
+    await this.assertCameraPlayer(matchId, user);
 
     return {
       ready: await this.mediaMtx.isPathReady(
-        CameraService.pathForPlayer(lookup.matchId, lookup.steamId),
+        CameraService.pathForPlayer(matchId, user.steam_id),
       ),
     };
   }
@@ -361,26 +351,22 @@ export class CameraService {
     );
   }
 
-  public async proxyPlayerTalk(token: string, sdp: string) {
-    const lookup = await this.requireToken(token);
+  public async proxyPlayerTalk(matchId: string, user: User, sdp: string) {
+    await this.assertCameraPlayer(matchId, user);
 
     return this.mediaMtx.proxySdp(
-      CameraService.talkPathForPlayer(lookup.matchId, lookup.steamId),
+      CameraService.talkPathForPlayer(matchId, user.steam_id),
       "whep",
       sdp,
     );
   }
 
-  public async getPlayerTalkStatus(token: string) {
-    const lookup = await this.validateToken(token);
-
-    if (!lookup) {
-      return { ready: false };
-    }
+  public async getPlayerTalkStatus(matchId: string, user: User) {
+    await this.assertCameraPlayer(matchId, user);
 
     return {
       ready: await this.mediaMtx.isPathReady(
-        CameraService.talkPathForPlayer(lookup.matchId, lookup.steamId),
+        CameraService.talkPathForPlayer(matchId, user.steam_id),
       ),
     };
   }
@@ -403,15 +389,11 @@ export class CameraService {
     );
   }
 
-  public async hangupPlayerTalk(token: string) {
-    const lookup = await this.validateToken(token);
-
-    if (!lookup) {
-      return;
-    }
+  public async hangupPlayerTalk(matchId: string, user: User) {
+    await this.assertCameraPlayer(matchId, user);
 
     await this.mediaMtx.kickSessions(
-      CameraService.talkPathForPlayer(lookup.matchId, lookup.steamId),
+      CameraService.talkPathForPlayer(matchId, user.steam_id),
     );
   }
 
@@ -431,6 +413,11 @@ export class CameraService {
           id: true,
           name: true,
           team_id: true,
+          coach: {
+            steam_id: true,
+            name: true,
+            avatar_url: true,
+          },
           team: {
             roster: {
               player_steam_id: true,
@@ -449,6 +436,11 @@ export class CameraService {
           id: true,
           name: true,
           team_id: true,
+          coach: {
+            steam_id: true,
+            name: true,
+            avatar_url: true,
+          },
           team: {
             roster: {
               player_steam_id: true,
@@ -489,16 +481,6 @@ export class CameraService {
     return { lineups };
   }
 
-  private async requireToken(token: string) {
-    const lookup = await this.validateToken(token);
-
-    if (!lookup) {
-      throw new Error("invalid or expired camera link");
-    }
-
-    return lookup;
-  }
-
   private lineupWithCameraStatus(
     matchId: string,
     lineup: {
@@ -510,6 +492,11 @@ export class CameraService {
           player_steam_id: string | number;
           roster_image_url?: string | null;
         }> | null;
+      } | null;
+      coach?: {
+        steam_id: string;
+        name?: string | null;
+        avatar_url?: string | null;
       } | null;
       lineup_players?: Array<{
         steam_id: string;
@@ -532,30 +519,55 @@ export class CameraService {
       }
     }
 
+    // Same shape for a player and for the coach, so the grid does not need two
+    // code paths for what is one tile with one camera behind it.
+    const describe = (
+      steamId: string,
+      name: string | null,
+      avatarUrl: string | null,
+      coach: boolean,
+    ) => {
+      const ready =
+        paths.get(CameraService.pathForPlayer(matchId, steamId))?.ready === true;
+
+      return {
+        steamId,
+        name,
+        avatarUrl: rosterImages.get(String(steamId)) ?? avatarUrl ?? null,
+        lineupId: lineup.id,
+        ready,
+        coach,
+        // Fall back to the live path check when the monitor has no sample:
+        // it only runs for Live matches, and the grid opens during veto too.
+        health: health.get(String(steamId)) ?? (ready ? "live" : "down"),
+      } satisfies CameraPlayerStatus;
+    };
+
     return {
       id: lineup.id,
       name: lineup.name,
-      players: (lineup.lineup_players ?? []).map((lineupPlayer) => {
-        const ready =
-          paths.get(CameraService.pathForPlayer(matchId, lineupPlayer.steam_id))
-            ?.ready === true;
-
-        return {
-          steamId: lineupPlayer.steam_id,
-          name: lineupPlayer.player?.name ?? null,
-          avatarUrl:
-            rosterImages.get(String(lineupPlayer.steam_id)) ??
-            lineupPlayer.player?.avatar_url ??
-            null,
-          lineupId: lineup.id,
-          ready,
-          // Fall back to the live path check when the monitor has no sample:
-          // it only runs for Live matches, and the grid opens during veto too.
-          health:
-            health.get(String(lineupPlayer.steam_id)) ??
-            (ready ? "live" : "down"),
-        } satisfies CameraPlayerStatus;
-      }),
+      // The coach goes last: the five players are what an official scans, and
+      // the coach is the one they look for deliberately.
+      players: [
+        ...(lineup.lineup_players ?? []).map((lineupPlayer) =>
+          describe(
+            lineupPlayer.steam_id,
+            lineupPlayer.player?.name ?? null,
+            lineupPlayer.player?.avatar_url ?? null,
+            false,
+          ),
+        ),
+        ...(lineup.coach
+          ? [
+              describe(
+                lineup.coach.steam_id,
+                lineup.coach.name ?? null,
+                lineup.coach.avatar_url ?? null,
+                true,
+              ),
+            ]
+          : []),
+      ],
     };
   }
 }

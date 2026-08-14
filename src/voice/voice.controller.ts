@@ -56,6 +56,32 @@ export class VoiceController {
     await this.sendSdp(response, () => this.voice.publish(lobbyId, user, sdp));
   }
 
+  // Declared ahead of the `:steamId` routes below so a literal `cam` segment is
+  // never a candidate steam id.
+  @Post(":lobbyId/cam/whip")
+  public async publishVideo(
+    @Param("lobbyId") lobbyId: string,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const user = this.requireUser(request);
+    const sdp = await this.readRawBody(request);
+
+    await this.sendSdp(response, () =>
+      this.voice.publishVideo(lobbyId, user, sdp),
+    );
+  }
+
+  @Post(":lobbyId/cam/stop")
+  public async stopVideo(
+    @Param("lobbyId") lobbyId: string,
+    @Req() request: Request,
+  ) {
+    await this.voice.stopVideo(lobbyId, this.requireUser(request));
+
+    return { ok: true };
+  }
+
   @Post(":lobbyId/:steamId/whep")
   public async subscribe(
     @Param("lobbyId") lobbyId: string,
@@ -69,6 +95,35 @@ export class VoiceController {
     await this.sendSdp(response, () =>
       this.voice.subscribe(lobbyId, steamId, user, sdp),
     );
+  }
+
+  @Post(":lobbyId/:steamId/cam/whep")
+  public async subscribeVideo(
+    @Param("lobbyId") lobbyId: string,
+    @Param("steamId") steamId: string,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const user = this.requireUser(request);
+    const sdp = await this.readRawBody(request);
+
+    await this.sendSdp(response, () =>
+      this.voice.subscribeVideo(lobbyId, steamId, user, sdp),
+    );
+  }
+
+  // Where this player already is, across every window and device -- the tab
+  // bridge only ever sees tabs of the same browser profile.
+  @Get("active")
+  public async active(@Req() request: Request) {
+    return this.voice.activeChannel(this.requireUser(request));
+  }
+
+  // Not scoped to a channel: the same relay serves every call, and a client
+  // needs this before it has picked one.
+  @Get("ice-servers")
+  public async iceServers(@Req() request: Request) {
+    return this.voice.iceServers(this.requireUser(request));
   }
 
   @Get(":lobbyId/participants")

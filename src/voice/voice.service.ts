@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { createHmac } from "crypto";
 import { Redis } from "ioredis";
 import { PostgresService } from "../postgres/postgres.service";
 import { MediaMtxService } from "../mediamtx/mediamtx.service";
@@ -32,6 +33,27 @@ const PUBLISHING_TTL_SECONDS = 120;
 const MEMBER_PATH_PATTERN =
   /^voice-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})-(\d+)$/i;
 
+// A member's camera rides a path of its own rather than a second track on the
+// one above. Turning a camera on or off would otherwise renegotiate the audio
+// publish and force every other member to re-subscribe -- a drop-out in the
+// middle of a call, for a change that has nothing to do with the microphone.
+// The prefix cannot be confused for the audio one: MEMBER_PATH_PATTERN anchors
+// on `voice-` immediately followed by the uuid.
+const CAMERA_PATH_PATTERN =
+  /^voicecam-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})-(\d+)$/i;
+
+// Long enough to cover a match without a client ever having to re-ask
+// mid-connection, short enough that a leaked pair is not worth much. The
+// credential is only checked when a peer connection is established, so an
+// expiry part-way through a call does not interrupt one already running.
+const TURN_CREDENTIAL_TTL = 6 * 60 * 60;
+
+export type RTCIceServerConfig = {
+  urls: string | Array<string>;
+  username?: string;
+  credential?: string;
+};
+
 export type VoiceParticipant = {
   steamId: string;
   name: string | null;
@@ -44,12 +66,21 @@ export type VoiceParticipant = {
   // which is the only thing that knows: MediaMTX sees a continuous stream
   // whether or not anyone is talking into it.
   speaking: boolean;
+  // Coaching this lineup rather than playing on it. Worth saying: a coach in a
+  // team channel is a different thing to a teammate, and the roster on screen
+  // should not make you work out which of the five voices is not playing.
+  coach: boolean;
+  // Publishing a camera as well. Independent of `connected` on purpose: being in
+  // the call and being on camera are separate choices, and either can be true
+  // without the other.
+  video: boolean;
 };
 
 type VoiceMember = {
   steam_id: string;
   name: string | null;
   avatar_url: string | null;
+  coach: boolean;
 };
 
 @Injectable()
@@ -71,6 +102,10 @@ export class VoiceService {
     return `voice-${lobbyId}-${steamId}`;
   }
 
+  public static pathForMemberCamera(lobbyId: string, steamId: string) {
+    return `voicecam-${lobbyId}-${steamId}`;
+  }
+
   private static speakingKey(channelId: string, steamId: string) {
     return `voice:speaking:${channelId}:${steamId}`;
   }
@@ -90,6 +125,12 @@ export class VoiceService {
     return match ? { channelId: match[1], steamId: match[2] } : null;
   }
 
+  public static parseCameraPath(path: string) {
+    const match = CAMERA_PATH_PATTERN.exec(path);
+
+    return match ? { channelId: match[1], steamId: match[2] } : null;
+  }
+
   // Read straight from the settings table rather than through SystemService,
   // which would drag its whole module graph (chat, k8s, s3, queues) into this
   // feature for the sake of one row. On by default — only an explicit "false"
@@ -101,6 +142,88 @@ export class VoiceService {
     );
 
     return row?.value !== "false";
+  }
+
+  // ICE servers for a voice or video peer connection.
+  //
+  // Deliberately an endpoint rather than a constant in the web bundle: the TURN
+  // secret never leaves this process, credentials expire on their own, and a
+  // relay can be switched on or off without shipping a web build.
+  //
+  // Handed only to the call surfaces. The regional matchmaking probes must keep
+  // their own STUN-only list -- they open a data channel per region and time it,
+  // so a relay candidate would measure the hop to the relay instead of the
+  // region -- and so must game streams, where relaying is a bandwidth disaster.
+  public iceServers(user: User) {
+    return VoiceService.buildIceServers(user.steam_id);
+  }
+
+  // Static, and keyed on a steam id rather than a User, so the camera feature
+  // can mint the same credentials for a phone holding a join token. That phone
+  // has no session -- and is the case a relay exists for, since a mobile network
+  // is behind carrier-grade NAT by definition.
+  public static buildIceServers(steamId: string): {
+    iceServers: Array<RTCIceServerConfig>;
+    ttl: number;
+  } {
+    const stun: RTCIceServerConfig = {
+      urls: "stun:stun.l.google.com:19302",
+    };
+
+    const domain = process.env.TURN_DOMAIN;
+    const secret = process.env.TURN_SECRET;
+
+    // No relay configured is the normal case for a small install, not an error:
+    // STUN alone is enough for most players.
+    if (!domain || !secret) {
+      return { iceServers: [stun], ttl: 0 };
+    }
+
+    // coturn's REST scheme: the username carries its own expiry, and the
+    // password is an HMAC of it. Nothing has to be stored on either side, and a
+    // leaked pair stops working on its own.
+    const expiresAt = Math.floor(Date.now() / 1000) + TURN_CREDENTIAL_TTL;
+    const username = `${expiresAt}:${steamId}`;
+    const credential = createHmac("sha1", secret)
+      .update(username)
+      .digest("base64");
+
+    return {
+      iceServers: [
+        stun,
+        {
+          // TCP as well as UDP: the networks that need a relay at all are
+          // usually the ones blocking UDP outright.
+          urls: [
+            `turn:${domain}:3478?transport=udp`,
+            `turn:${domain}:3478?transport=tcp`,
+          ],
+          username,
+          credential,
+        },
+      ],
+      ttl: TURN_CREDENTIAL_TTL,
+    };
+  }
+
+  // On unless explicitly disabled, like voice. Only the camera switch -- whether
+  // voice itself is on is assertMember's business, and asking twice is a second
+  // settings round trip per negotiation.
+  public async isVideoEnabled() {
+    const [row] = await this.postgres.query<Array<{ value: string }>>(
+      `SELECT value FROM public.settings WHERE name = $1 LIMIT 1`,
+      [SystemSettingName.VideoChatEnabled],
+    );
+
+    return row?.value !== "false";
+  }
+
+  private async assertVideoMember(channelId: string, user: User) {
+    await this.assertMember(channelId, user);
+
+    if (!(await this.isVideoEnabled())) {
+      throw new Error("video chat is not enabled");
+    }
   }
 
   // A channel id is either a lobby id or a match lineup id. Both are uuids and
@@ -128,15 +251,26 @@ export class VoiceService {
       return;
     }
 
+    // Rostered on the lineup, or coaching it. A coach is not a
+    // match_lineup_players row, but talking to the side they are coaching is
+    // the whole job -- so membership is asked of the lineup, not of its roster.
     const [lineup] = await this.postgres.query<Array<{ exists: boolean }>>(
       `SELECT true AS exists
-       FROM match_lineup_players mlp
+       FROM match_lineups ml
        INNER JOIN matches m
-         ON m.lineup_1_id = mlp.match_lineup_id
-         OR m.lineup_2_id = mlp.match_lineup_id
-       WHERE mlp.match_lineup_id = $1
-         AND mlp.steam_id = $2
+         ON m.lineup_1_id = ml.id
+         OR m.lineup_2_id = ml.id
+       WHERE ml.id = $1
          AND m.status NOT IN ('Finished', 'Canceled', 'Forfeit', 'Surrendered', 'Tie')
+         AND (
+           ml.coach_steam_id = $2
+           OR EXISTS (
+             SELECT 1
+             FROM match_lineup_players mlp
+             WHERE mlp.match_lineup_id = ml.id
+               AND mlp.steam_id = $2
+           )
+         )
        LIMIT 1`,
       [channelId, user.steam_id],
     );
@@ -148,11 +282,58 @@ export class VoiceService {
     throw new Error(NOT_A_MEMBER);
   }
 
+  // Which channel this player already has a live microphone on, if any.
+  //
+  // The web app mirrors a running call between tabs over a BroadcastChannel,
+  // which only ever reaches tabs of the same browser profile -- a second window
+  // signed in under a different profile, another browser, or a phone sees
+  // nothing and cheerfully offers to join a call the player is already in.
+  // MediaMTX knows the truth for all of them, so this asks it.
+  public async activeChannel(user: User) {
+    const paths = await this.mediaMtx.listPaths();
+
+    // Unreachable is not the same as "not in a call": answering null here would
+    // have the client draw a join button for a call that is still running.
+    if (!paths) {
+      return { known: false, channelId: null, video: false };
+    }
+
+    for (const [path, state] of paths) {
+      if (!state?.ready) {
+        continue;
+      }
+
+      const member = VoiceService.parseMemberPath(path);
+
+      if (member?.steamId !== user.steam_id) {
+        continue;
+      }
+
+      return {
+        known: true,
+        channelId: member.channelId,
+        video:
+          paths.get(
+            VoiceService.pathForMemberCamera(member.channelId, member.steamId),
+          )?.ready === true,
+      };
+    }
+
+    return { known: true, channelId: null, video: false };
+  }
+
   public async publish(lobbyId: string, user: User, sdp: string) {
     await this.assertMember(lobbyId, user);
 
+    return this.publishAs(lobbyId, user.steam_id, sdp);
+  }
+
+  // Keyed on a steam id rather than a User so the token paths can reuse it --
+  // a phone joining is the same publish, it just proved who it was differently.
+  // Callers do the authorising; this only does the work.
+  private async publishAs(lobbyId: string, steamId: string, sdp: string) {
     const answer = await this.mediaMtx.proxySdp(
-      VoiceService.pathForMember(lobbyId, user.steam_id),
+      VoiceService.pathForMember(lobbyId, steamId),
       "whip",
       sdp,
     );
@@ -160,19 +341,31 @@ export class VoiceService {
     // Somebody joining is a change to the party, and it is the one moment a
     // stale membership cache would hide the new arrival from everyone else.
     await this.redis.del(VoiceService.membersKey(lobbyId));
-    // Deferred: MediaMTX only reports the path as ready once the session is
-    // actually up, which is after this answer gets back to the publisher.
-    setTimeout(() => {
-      void this.pushParticipants(lobbyId).catch((error: unknown) => {
-        this.logger.warn(
-          `failed to push voice participants for ${lobbyId}: ${
-            (error as Error)?.message
-          }`,
-        );
-      });
-    }, 1000);
+    this.pushParticipantsSoon(lobbyId);
 
     return answer;
+  }
+
+  // Deferred: MediaMTX only reports the path as ready once the session is
+  // actually up, which is after the answer gets back to the publisher.
+  //
+  // Twice, because that moment cannot be predicted, only bracketed. A single
+  // one-second wait was tuned to always be late enough, which made every camera
+  // coming on cost a second before anyone else saw it. The early push usually
+  // lands and the late one is a no-op -- pushParticipants only emits when the
+  // roster actually changed, so the extra call is free when the first won.
+  private pushParticipantsSoon(lobbyId: string) {
+    for (const delay of [250, 1200]) {
+      setTimeout(() => {
+        void this.pushParticipants(lobbyId).catch((error: unknown) => {
+          this.logger.warn(
+            `failed to push voice participants for ${lobbyId}: ${
+              (error as Error)?.message
+            }`,
+          );
+        });
+      }, delay);
+    }
   }
 
   public async subscribe(
@@ -200,8 +393,66 @@ export class VoiceService {
     await this.mediaMtx.kickSessions(
       VoiceService.pathForMember(lobbyId, user.steam_id),
     );
+    // A camera outlives its microphone otherwise: the member is gone from the
+    // call but their tile keeps playing for everyone still in it.
+    await this.mediaMtx.kickSessions(
+      VoiceService.pathForMemberCamera(lobbyId, user.steam_id),
+    );
 
     await this.redis.del(VoiceService.speakingKey(lobbyId, user.steam_id));
+    await this.pushParticipants(lobbyId);
+  }
+
+  // The camera half of publish/subscribe/leave above. Same membership gate, same
+  // proxy, a different path -- see CAMERA_PATH_PATTERN for why it is not simply
+  // a second track on the audio one.
+  public async publishVideo(lobbyId: string, user: User, sdp: string) {
+    await this.assertVideoMember(lobbyId, user);
+
+    return this.publishVideoAs(lobbyId, user.steam_id, sdp);
+  }
+
+  private async publishVideoAs(lobbyId: string, steamId: string, sdp: string) {
+    const answer = await this.mediaMtx.proxySdp(
+      VoiceService.pathForMemberCamera(lobbyId, steamId),
+      "whip",
+      sdp,
+    );
+
+    this.pushParticipantsSoon(lobbyId);
+
+    return answer;
+  }
+
+  public async subscribeVideo(
+    lobbyId: string,
+    steamId: string,
+    user: User,
+    sdp: string,
+  ) {
+    await this.assertVideoMember(lobbyId, user);
+
+    if (steamId === user.steam_id) {
+      throw new Error("cannot subscribe to your own camera");
+    }
+
+    return this.mediaMtx.proxySdp(
+      VoiceService.pathForMemberCamera(lobbyId, steamId),
+      "whep",
+      sdp,
+    );
+  }
+
+  // Turning a camera off, without leaving the call. Deliberately gated on
+  // membership alone rather than assertVideoMember: switching the feature off
+  // platform-wide must not strand a camera nobody can now stop publishing.
+  public async stopVideo(lobbyId: string, user: User) {
+    await this.assertMember(lobbyId, user);
+
+    await this.mediaMtx.kickSessions(
+      VoiceService.pathForMemberCamera(lobbyId, user.steam_id),
+    );
+
     await this.pushParticipants(lobbyId);
   }
 
@@ -231,22 +482,39 @@ export class VoiceService {
     // Union rather than a branch on channel kind: a given id only ever matches
     // one of the two tables, so this stays a single round trip and the caller
     // never has to say which sort of channel it is asking about.
+    // Grouped rather than plain UNION: someone who is both rostered and listed
+    // as the coach would otherwise arrive as two rows that differ only in the
+    // flag, and be counted twice in their own channel.
     const members = await this.postgres.query<Array<VoiceMember>>(
-      `SELECT steam_id::text AS steam_id, name, avatar_url
+      `SELECT steam_id::text AS steam_id,
+              MAX(name) AS name,
+              MAX(avatar_url) AS avatar_url,
+              bool_or(coach) AS coach
        FROM (
-         SELECT lp.steam_id, p.name, p.avatar_url
+         SELECT lp.steam_id, p.name, p.avatar_url, false AS coach
          FROM lobby_players lp
          LEFT JOIN players p ON p.steam_id = lp.steam_id
          WHERE lp.lobby_id = $1 AND lp.status = 'Accepted'
 
-         UNION
+         UNION ALL
 
-         SELECT mlp.steam_id, p.name, p.avatar_url
+         SELECT mlp.steam_id, p.name, p.avatar_url, false AS coach
          FROM match_lineup_players mlp
          LEFT JOIN players p ON p.steam_id = mlp.steam_id
          WHERE mlp.match_lineup_id = $1
+
+         UNION ALL
+
+         -- The coach is in the channel too, and this list is what decides who
+         -- gets the speaking and participant pushes -- leaving them out would
+         -- admit them and then never tell them anything.
+         SELECT ml.coach_steam_id AS steam_id, p.name, p.avatar_url, true AS coach
+         FROM match_lineups ml
+         LEFT JOIN players p ON p.steam_id = ml.coach_steam_id
+         WHERE ml.id = $1 AND ml.coach_steam_id IS NOT NULL
        ) members
-       ORDER BY name`,
+       GROUP BY steam_id
+       ORDER BY MAX(name)`,
       [channelId],
     );
 
@@ -286,6 +554,11 @@ export class VoiceService {
       );
 
       const connected = path?.ready === true;
+      // Read out of the map already in hand rather than asked for separately --
+      // the monitor lists every path on the box once for all channels.
+      const camera = paths?.get(
+        VoiceService.pathForMemberCamera(channelId, member.steam_id),
+      );
 
       return {
         steamId: member.steam_id,
@@ -297,6 +570,8 @@ export class VoiceService {
         // A flag left behind by a client that dropped would keep someone lit up
         // forever, so it only counts while they are still publishing.
         speaking: connected && speaking[index] !== null,
+        coach: member.coach === true,
+        video: camera?.ready === true,
       } satisfies VoiceParticipant;
     });
   }
@@ -379,7 +654,21 @@ export class VoiceService {
       return;
     }
 
-    const publishing = new Map<string, Array<string>>();
+    // Cameras are tracked alongside microphones, not instead of them: a member
+    // who turns their camera off while staying on mic does not change the set of
+    // steam ids, so a snapshot of ids alone would report no change and leave
+    // everyone else rendering a tile that stopped publishing.
+    const publishing = new Map<string, Map<string, { video: boolean }>>();
+
+    function entryFor(channelId: string, steamId: string) {
+      const channel = publishing.get(channelId) ?? new Map();
+      publishing.set(channelId, channel);
+
+      const entry = channel.get(steamId) ?? { video: false };
+      channel.set(steamId, entry);
+
+      return entry;
+    }
 
     for (const [path, state] of paths) {
       if (!state?.ready) {
@@ -388,17 +677,27 @@ export class VoiceService {
 
       const member = VoiceService.parseMemberPath(path);
 
-      if (!member) {
+      if (member) {
+        entryFor(member.channelId, member.steamId);
         continue;
       }
 
-      const channel = publishing.get(member.channelId) ?? [];
-      channel.push(member.steamId);
-      publishing.set(member.channelId, channel);
+      const camera = VoiceService.parseCameraPath(path);
+
+      if (camera) {
+        entryFor(camera.channelId, camera.steamId).video = true;
+      }
     }
 
-    for (const [channelId, steamIds] of publishing) {
-      const snapshot = steamIds.sort().join(",");
+    for (const [channelId, members] of publishing) {
+      // A member on mic alone is written exactly as before, so the snapshots a
+      // running deployment already holds stay comparable across the deploy that
+      // adds video -- otherwise every live channel reads as changed once and
+      // pushes to everyone at the same moment.
+      const snapshot = [...members.entries()]
+        .map(([steamId, entry]) => (entry.video ? `${steamId}:v` : steamId))
+        .sort()
+        .join(",");
       const key = VoiceService.publishingKey(channelId);
       const previous = await this.redis.get(key);
 

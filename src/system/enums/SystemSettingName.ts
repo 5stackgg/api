@@ -17,6 +17,11 @@ export enum SystemSettingName {
   CameraRequiredDefault = "public.camera_required_default",
   CameraAllowTeammatesDefault = "public.camera_allow_teammates_default",
   VoiceChatEnabled = "public.voice_chat_enabled",
+  // Only the master switch is read here. Which surfaces offer a camera --
+  // lobbies, matches -- is decided in the web app, exactly as the voice
+  // equivalents are: gating it here would mean asking which sort of channel an
+  // id belongs to, and assertMember is deliberately built not to care.
+  VideoChatEnabled = "public.video_chat_enabled",
   LeaguesEnabled = "public.leagues_enabled",
   GameServerPluginRuntime = "public.game_server_plugin_runtime",
   GameServerPluginRuntimeLocked = "game_server_plugin_runtime_locked",

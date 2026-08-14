@@ -786,10 +786,14 @@ export class DraftGameService {
     return isRoleAbove(role, threshold as e_player_roles_enum);
   }
 
+  // `lineup` lets a host drop someone straight into a roster slot. Without it
+  // the player would land in the lobby pool first and only move on a second
+  // mutation, which both flickers in the UI and can strand them there.
   public async addDraftPlayer(
     user: User,
     draftGameId: string,
     steamId: string,
+    lineup?: number | null,
   ) {
     return this.draftLock(draftGameId, async () => {
       const draftGame = await this.getDraftGame(draftGameId);
@@ -815,6 +819,10 @@ export class DraftGameService {
 
       if (draftGame.players.find((player) => player.steam_id === steamId)) {
         return;
+      }
+
+      if (lineup != null && ![1, 2].includes(lineup)) {
+        throw new DraftGameError("Invalid lineup");
       }
 
       const addWithoutInvite = await this.canAddWithoutInvite(user.role);
@@ -853,6 +861,7 @@ export class DraftGameService {
                 steam_id: steamId,
                 elo_snapshot: elo,
                 status: status as e_draft_game_player_status_enum,
+                ...(lineup != null ? { lineup } : {}),
               },
             },
             __typename: true,

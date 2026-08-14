@@ -1,6 +1,7 @@
 import { Logger } from "@nestjs/common";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { CameraService } from "./../src/matches/camera/camera.service";
+import { User } from "./../src/auth/types/User";
 import { Fixtures } from "./utils/fixtures";
 import {
   bootMigratedDb,
@@ -8,9 +9,15 @@ import {
   SqlTestDb,
 } from "./utils/sql-test-db";
 
-// Runs CameraService's real SQL (minting, revoking, token lookup) against a
-// migrated database, so the queries are covered rather than re-typed here.
-describe("camera tokens (SQL-driven)", () => {
+// Who may publish a camera for a match, run as real SQL against a migrated
+// database so the query is covered rather than re-typed here.
+//
+// This used to exercise minting, revoking and looking up match_camera_tokens.
+// That table is gone: the camera page is behind the ordinary login now, so
+// there is no unauthenticated device to hand a bearer credential to, and the
+// question the token was standing in for -- "are you in this match, while it is
+// still being played" -- is asked directly.
+describe("camera authorization (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
   let fx: Fixtures;
@@ -41,113 +48,104 @@ describe("camera tokens (SQL-driven)", () => {
     await postgres.query("DELETE FROM players");
   });
 
-  const rosteredMatch = async (cameraRequired: boolean) => {
+  const asUser = (steamId: string) => ({ steam_id: steamId }) as User;
+
+  const rosteredMatch = async (status = "Live") => {
     const { poolId } = await fx.mapPool(1);
     const match = await fx.match({ mapPoolId: poolId });
 
-    await postgres.query(
-      "UPDATE match_options SET camera_required = $1 WHERE id = $2",
-      [cameraRequired, match.options_id],
-    );
-
-    const steamIds = [
-      await fx.lineupPlayer(match.lineup_1_id),
+    const players = [
       await fx.lineupPlayer(match.lineup_1_id),
       await fx.lineupPlayer(match.lineup_2_id),
     ];
 
-    return { matchId: match.id, steamIds };
+    const coach = await fx.player();
+    await postgres.query(
+      "UPDATE match_lineups SET coach_steam_id = $1 WHERE id = $2",
+      [coach, match.lineup_1_id],
+    );
+
+    await postgres.query("UPDATE matches SET status = $1 WHERE id = $2", [
+      status,
+      match.id,
+    ]);
+
+    return { matchId: match.id, players, coach };
   };
 
-  const tokensFor = (matchId: string) =>
-    postgres.query<Array<{ steam_id: string; token: string }>>(
-      "SELECT steam_id::text AS steam_id, token::text AS token FROM match_camera_tokens WHERE match_id = $1 ORDER BY steam_id",
-      [matchId],
-    );
+  it("admits a player rostered on either lineup", async () => {
+    const { matchId, players } = await rosteredMatch();
 
-  it("mints one token per rostered player when camera_required is on", async () => {
-    const { matchId, steamIds } = await rosteredMatch(true);
-
-    await camera.generateTokensIfRequired(matchId);
-
-    const tokens = await tokensFor(matchId);
-    expect(tokens.map((row) => row.steam_id).sort()).toEqual(
-      [...steamIds].sort(),
-    );
-    expect(new Set(tokens.map((row) => row.token)).size).toBe(steamIds.length);
+    for (const steamId of players) {
+      await expect(
+        camera.assertCameraPlayer(matchId, asUser(steamId)),
+      ).resolves.toBeUndefined();
+    }
   });
 
-  it("mints nothing when camera_required is off", async () => {
-    const { matchId } = await rosteredMatch(false);
+  // A coach stands behind the team during a technical timeout, so "on camera"
+  // has to mean them as well.
+  it("admits the lineup's coach", async () => {
+    const { matchId, coach } = await rosteredMatch();
 
-    await camera.generateTokensIfRequired(matchId);
-
-    expect(await tokensFor(matchId)).toHaveLength(0);
+    await expect(
+      camera.assertCameraPlayer(matchId, asUser(coach)),
+    ).resolves.toBeUndefined();
   });
 
-  // The Live edge can fire more than once for a single match.
-  it("is idempotent and keeps the token a player already has", async () => {
-    const { matchId } = await rosteredMatch(true);
+  it("refuses somebody who is not in the match at all", async () => {
+    const { matchId } = await rosteredMatch();
+    const stranger = await fx.player();
 
-    await camera.generateTokensIfRequired(matchId);
-    const first = await tokensFor(matchId);
-
-    await camera.generateTokensIfRequired(matchId);
-    const second = await tokensFor(matchId);
-
-    expect(second).toEqual(first);
+    await expect(
+      camera.assertCameraPlayer(matchId, asUser(stranger)),
+    ).rejects.toThrow(/not authorized/i);
   });
 
-  it("resolves a token to its match and player only while the match is active", async () => {
-    const { matchId } = await rosteredMatch(true);
-    await camera.generateTokensIfRequired(matchId);
-    const [{ steam_id: steamId, token }] = await tokensFor(matchId);
+  // Being rostered somewhere is not being rostered here.
+  it("refuses a player rostered on a different match", async () => {
+    const { matchId } = await rosteredMatch();
+    const other = await rosteredMatch();
 
-    await postgres.query("UPDATE matches SET status = 'Live' WHERE id = $1", [
-      matchId,
-    ]);
-    expect(await camera.validateToken(token)).toEqual({ matchId, steamId });
-
-    await postgres.query(
-      "UPDATE matches SET status = 'Canceled' WHERE id = $1",
-      [matchId],
-    );
-    expect(await camera.validateToken(token)).toBeNull();
+    await expect(
+      camera.assertCameraPlayer(matchId, asUser(other.players[0])),
+    ).rejects.toThrow(/not authorized/i);
   });
 
-  it("rejects a token that is not a uuid without reaching the database", async () => {
-    const failing = {
-      query: jest.fn(),
-    } as unknown as PostgresService;
-    const guard = new CameraService(
-      new Logger("CameraTest"),
-      {} as any,
-      failing,
-      {} as any,
-      {} as any,
-      {} as any,
-    );
+  // What a token's match-status check used to do on its own.
+  it.each(["Finished", "Canceled", "Forfeit"])(
+    "refuses once the match is %s",
+    async (status) => {
+      const { matchId, players } = await rosteredMatch(status);
 
-    expect(await guard.validateToken("../../etc/passwd")).toBeNull();
-    expect(await guard.validateToken("")).toBeNull();
-    expect(failing.query).not.toHaveBeenCalled();
-  });
+      await expect(
+        camera.assertCameraPlayer(matchId, asUser(players[0])),
+      ).rejects.toThrow(/not authorized/i);
+    },
+  );
 
-  it("revokes every token for a match", async () => {
-    const { matchId } = await rosteredMatch(true);
-    await camera.generateTokensIfRequired(matchId);
+  it.each(["WaitingForCheckIn", "Veto", "Live", "WaitingForServer"])(
+    "admits while the match is %s",
+    async (status) => {
+      const { matchId, players } = await rosteredMatch(status);
 
-    await camera.revokeTokens(matchId);
+      await expect(
+        camera.assertCameraPlayer(matchId, asUser(players[0])),
+      ).resolves.toBeUndefined();
+    },
+  );
 
-    expect(await tokensFor(matchId)).toHaveLength(0);
-  });
+  // The id is interpolated into a query as a uuid, so anything else has to be
+  // turned away before it gets there.
+  it("rejects a match id that is not a uuid without reaching the database", async () => {
+    const spy = jest.spyOn(postgres, "query");
+    spy.mockClear();
 
-  it("drops tokens with the match", async () => {
-    const { matchId } = await rosteredMatch(true);
-    await camera.generateTokensIfRequired(matchId);
+    await expect(
+      camera.assertCameraPlayer("../../etc/passwd", asUser("76561198000000001")),
+    ).rejects.toThrow(/not authorized/i);
+    expect(spy).not.toHaveBeenCalled();
 
-    await postgres.query("DELETE FROM matches WHERE id = $1", [matchId]);
-
-    expect(await tokensFor(matchId)).toHaveLength(0);
+    spy.mockRestore();
   });
 });

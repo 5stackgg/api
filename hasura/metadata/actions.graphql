@@ -1591,6 +1591,7 @@ type Mutation {
   addDraftPlayer(
     draftGameId: uuid!
     steamId: String!
+    lineup: Int
   ): SuccessOutput
 }
 

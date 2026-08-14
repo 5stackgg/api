@@ -29,6 +29,13 @@ describe("CameraMonitorService", () => {
     server_id: SERVER_ID,
     steam_id: steamId,
     name: `player-${steamId}`,
+    coach: false,
+  });
+
+  const coachRow = (steamId: string) => ({
+    ...rosterRow(steamId),
+    name: `coach-${steamId}`,
+    coach: true,
   });
 
   beforeEach(() => {
@@ -102,6 +109,50 @@ describe("CameraMonitorService", () => {
     expect(rcon.connect).not.toHaveBeenCalled();
     expect(redis.hset).toHaveBeenCalledWith(`camera:samples:${MATCH_ID}`, {
       [STEAM_ID]: `900:${1000 + 31_000}:live`,
+    });
+  });
+
+  // A coach has no `is_connected` to say whether they turned up, so their own
+  // camera is the attendance record: watched from the moment it first appears,
+  // and not before.
+  describe("coaches", () => {
+    const COACH = "76561198000000009";
+
+    it("ignores a coach who has never been on camera", async () => {
+      postgres.query.mockResolvedValue([coachRow(COACH)]);
+      redis.hgetall.mockResolvedValue({});
+      mediaMtx.listPaths.mockResolvedValue(listing([]));
+
+      await service.monitorLiveMatches(1000 + 60_000);
+
+      expect(rcon.connect).not.toHaveBeenCalled();
+      // Nothing sampled either: an absent coach leaves no trace to age out of.
+      expect(redis.hset).toHaveBeenCalledWith(`camera:samples:${MATCH_ID}`, {});
+    });
+
+    it("starts watching a coach once their camera appears", async () => {
+      postgres.query.mockResolvedValue([coachRow(COACH)]);
+      redis.hgetall.mockResolvedValue({});
+      mediaMtx.listPaths.mockResolvedValue(
+        listing([[path(COACH), { ready: true, bytesReceived: 400 }]]),
+      );
+
+      await service.monitorLiveMatches(5000);
+
+      expect(rcon.connect).not.toHaveBeenCalled();
+      expect(redis.hset).toHaveBeenCalledWith(`camera:samples:${MATCH_ID}`, {
+        [COACH]: `400:5000:live`,
+      });
+    });
+
+    it("pauses on a coach who was on camera and then dropped", async () => {
+      postgres.query.mockResolvedValue([coachRow(COACH)]);
+      redis.hgetall.mockResolvedValue({ [COACH]: "400:1000:live" });
+      mediaMtx.listPaths.mockResolvedValue(listing([]));
+
+      await service.monitorLiveMatches(1000 + 30_000);
+
+      expect(rconClient.send).toHaveBeenCalledWith(`camera_state ${COACH}`);
     });
   });
 

@@ -1,5 +1,29 @@
 import { Injectable, Logger } from "@nestjs/common";
 
+// What a path is for, worked out from its prefix -- MediaMTX itself has no
+// notion of this, and every feature on the box shares the one instance.
+export type MediaMtxPathKind =
+  | "gameStreams"
+  | "playerCameras"
+  | "cameraTalkback"
+  | "voice"
+  | "videoCalls";
+
+export type MediaMtxKindStats = {
+  paths: number;
+  // Actually publishing. A path can exist without a live publisher.
+  ready: number;
+  bytesReceived: number;
+};
+
+export type MediaMtxStats = {
+  paths: number;
+  ready: number;
+  // Null when MediaMTX answered for paths but not for sessions.
+  webrtcSessions: number | null;
+  byKind: Record<MediaMtxPathKind, MediaMtxKindStats>;
+};
+
 @Injectable()
 export class MediaMtxService {
   constructor(private readonly logger: Logger) {}
@@ -24,6 +48,105 @@ export class MediaMtxService {
       /\/$/,
       "",
     );
+  }
+
+  // What the one media server is actually carrying, broken down by what each
+  // path is for. Every feature on the box shares a single MediaMTX instance and
+  // a single muxed UDP port, so "how loaded is it" is otherwise unanswerable
+  // without shelling into the pod.
+  //
+  // The kind comes from the path prefix, which is the only place that
+  // information exists -- MediaMTX has no notion of what a path is for.
+  public static kindForPath(path: string): MediaMtxPathKind {
+    if (path.startsWith("voicecam-")) {
+      return "videoCalls";
+    }
+
+    if (path.startsWith("voice-")) {
+      return "voice";
+    }
+
+    // Checked before `camera-`, which is its prefix.
+    if (path.startsWith("camera-talk-")) {
+      return "cameraTalkback";
+    }
+
+    if (path.startsWith("camera-")) {
+      return "playerCameras";
+    }
+
+    return "gameStreams";
+  }
+
+  public async stats(): Promise<MediaMtxStats | null> {
+    const [paths, sessions] = await Promise.all([
+      this.listPaths(),
+      this.listWebrtcSessions(),
+    ]);
+
+    // Null rather than zeroes: an unreachable MediaMTX must not be drawn as an
+    // idle one, which is the same distinction listPaths already makes.
+    if (!paths) {
+      return null;
+    }
+
+    const empty = (): MediaMtxKindStats => ({
+      paths: 0,
+      ready: 0,
+      bytesReceived: 0,
+    });
+
+    const byKind: Record<MediaMtxPathKind, MediaMtxKindStats> = {
+      gameStreams: empty(),
+      playerCameras: empty(),
+      cameraTalkback: empty(),
+      voice: empty(),
+      videoCalls: empty(),
+    };
+
+    for (const [path, state] of paths) {
+      const kind = byKind[MediaMtxService.kindForPath(path)];
+
+      kind.paths += 1;
+      kind.bytesReceived += state.bytesReceived ?? 0;
+
+      if (state.ready) {
+        kind.ready += 1;
+      }
+    }
+
+    return {
+      paths: paths.size,
+      ready: [...paths.values()].filter((state) => state.ready).length,
+      // Null when MediaMTX answered for paths but not for sessions, so the UI
+      // can say "unknown" rather than draw a zero it did not measure.
+      webrtcSessions: sessions,
+      byKind,
+    };
+  }
+
+  private async listWebrtcSessions(): Promise<number | null> {
+    try {
+      const response = await fetch(`${this.apiBase()}/v3/webrtcsessions/list`, {
+        signal: AbortSignal.timeout(5_000),
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const { itemCount, items } = (await response.json()) as {
+        itemCount?: number;
+        items?: Array<unknown>;
+      };
+
+      return itemCount ?? items?.length ?? 0;
+    } catch (error) {
+      this.logger.warn(
+        `[mediamtx] listing webrtc sessions failed: ${(error as Error)?.message}`,
+      );
+      return null;
+    }
   }
 
   public async proxySdp(path: string, action: "whip" | "whep", sdp: string) {

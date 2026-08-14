@@ -625,7 +625,6 @@ export class MatchesController {
     ) {
       await this.tournamentVoice.createMatchVoiceChannels(matchId);
       await this.tournamentVoice.movePlayersToMatchChannels(matchId);
-      await this.camera.generateTokensIfRequired(matchId);
     }
 
     if (
@@ -666,7 +665,6 @@ export class MatchesController {
       await this.removeDiscordIntegration(matchId);
       await this.matchmaking.cancelMatchMakingByMatchId(matchId);
       await this.releaseScrimScheduledNotifications(matchId);
-      await this.camera.revokeTokens(matchId);
       await this.cameraMonitor.clearMatch(matchId);
 
       await this.eloCalculationQueue.add(EloCalculation.name, {
@@ -805,7 +803,6 @@ export class MatchesController {
 
       // Veto finishing is what flips a match Live (create_match_map_from_veto),
       // and that is the first point the lineups can no longer change.
-      await this.camera.generateTokensIfRequired(matchId);
     }
 
     await this.discordMatchOverview.updateMatchOverview(matchId);
@@ -2741,7 +2738,6 @@ export class MatchesController {
     // mints tokens, and without one they can never check in. Idempotent, so
     // re-running it for the rest of the roster costs nothing.
     if (CAMERA_ACTIVE_MATCH_STATUSES.includes(match.status)) {
-      await this.camera.generateTokensIfRequired(match.id);
     }
 
     if (!["Live"].includes(match.status)) {

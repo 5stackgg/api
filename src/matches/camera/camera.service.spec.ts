@@ -134,6 +134,131 @@ describe("CameraService authorization", () => {
     expect(mediaMtx.proxySdp).not.toHaveBeenCalled();
   });
 
+  // Coaches publish a camera of their own now, so they belong to a side for
+  // every rule that asks "whose side are you on".
+  describe("coaches", () => {
+    it("treats a lineup as its roster plus its coach when scoping", async () => {
+      postgres.query.mockResolvedValue(scopeRow(MY_LINEUP, true));
+
+      await service.watchScope(MATCH_ID, player);
+
+      const [sql] = postgres.query.mock.calls[0];
+      expect(sql).toMatch(/coach_steam_id/);
+      expect(sql).toMatch(/FROM match_lineups/);
+    });
+
+    // The hole this closes: a coach who also organised the match used to fall
+    // through the "not playing" branch and be handed both lineups -- a live
+    // view of the team they are coaching against.
+    it("keeps a coach scoped to their own side even if they organise", async () => {
+      postgres.query.mockResolvedValue(scopeRow(MY_LINEUP, true));
+      matchAssistant.isOrganizer.mockResolvedValue(true);
+
+      await expect(service.watchScope(MATCH_ID, player)).resolves.toEqual({
+        kind: "lineup",
+        lineupId: MY_LINEUP,
+      });
+    });
+
+    it("refuses a coach entirely when teammate viewing is off", async () => {
+      postgres.query.mockResolvedValue(scopeRow(MY_LINEUP, false));
+
+      await expect(service.watchScope(MATCH_ID, player)).rejects.toThrow(
+        /not authorized/i,
+      );
+    });
+
+    it("lets a teammate watch their own coach", async () => {
+      postgres.query
+        .mockResolvedValueOnce(scopeRow(MY_LINEUP, true))
+        .mockResolvedValueOnce([{ exists: true }]);
+
+      await service.proxyAdminWatch(MATCH_ID, TEAMMATE, player, "offer");
+
+      const [sql] = postgres.query.mock.calls[1];
+      expect(sql).toMatch(/coach_steam_id/);
+      expect(mediaMtx.proxySdp).toHaveBeenCalledWith(
+        `camera-${MATCH_ID}-${TEAMMATE}`,
+        "whep",
+        "offer",
+      );
+    });
+
+    // Coaches stand behind the team during a technical timeout, so "on camera"
+    // has to mean them too. This used to be proven by them being minted a token
+    // alongside the roster; the token is gone, so it is proven where the check
+    // now lives instead.
+    it("lets a coach publish their own camera", async () => {
+      postgres.query.mockResolvedValueOnce([{ status: "Live" }]);
+
+      await service.proxyPlayerPublish(MATCH_ID, player, "offer");
+
+      const [sql] = postgres.query.mock.calls[0];
+      expect(sql).toMatch(/coach_steam_id/);
+      expect(mediaMtx.proxySdp).toHaveBeenCalledWith(
+        `camera-${MATCH_ID}-${player.steam_id}`,
+        "whip",
+        "offer",
+      );
+    });
+  });
+
+  // Authorisation for publishing your own camera. There is no token to check
+  // any more: the session says who you are, and the only question left is
+  // whether you are in this match while it is still being played.
+  describe("publishing your own camera", () => {
+    it("publishes to the caller's own path, never one named by the request", async () => {
+      postgres.query.mockResolvedValueOnce([{ status: "Live" }]);
+
+      await service.proxyPlayerPublish(MATCH_ID, player, "offer");
+
+      expect(mediaMtx.proxySdp).toHaveBeenCalledWith(
+        `camera-${MATCH_ID}-${player.steam_id}`,
+        "whip",
+        "offer",
+      );
+      expect(mediaMtx.proxySdp).not.toHaveBeenCalledWith(
+        expect.stringContaining(TEAMMATE),
+        expect.anything(),
+        expect.anything(),
+      );
+    });
+
+    it("refuses someone who is not in the match", async () => {
+      postgres.query.mockResolvedValue([]);
+
+      await expect(
+        service.proxyPlayerPublish(MATCH_ID, player, "offer"),
+      ).rejects.toThrow(/not authorized/i);
+      expect(mediaMtx.proxySdp).not.toHaveBeenCalled();
+    });
+
+    // The same thing an expired token used to do on its own.
+    it("refuses once the match is over", async () => {
+      postgres.query.mockResolvedValueOnce([{ status: "Finished" }]);
+
+      await expect(
+        service.proxyPlayerPublish(MATCH_ID, player, "offer"),
+      ).rejects.toThrow(/not authorized/i);
+      expect(mediaMtx.proxySdp).not.toHaveBeenCalled();
+    });
+
+    it("refuses a match id that is not a uuid without reaching postgres", async () => {
+      await expect(
+        service.proxyPlayerPublish("../../etc/passwd", player, "offer"),
+      ).rejects.toThrow(/not authorized/i);
+      expect(postgres.query).not.toHaveBeenCalled();
+    });
+
+    it("gates the talk-back leg the same way", async () => {
+      postgres.query.mockResolvedValue([]);
+
+      await expect(
+        service.getPlayerTalkStatus(MATCH_ID, player),
+      ).rejects.toThrow(/not authorized/i);
+    });
+  });
+
   // `..` segments in a steam id resolve away the path prefix and reach a
   // different camera entirely once the URL is parsed.
   it.each([

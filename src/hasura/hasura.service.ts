@@ -117,6 +117,20 @@ export class HasuraService {
       "create table if not exists hdb_catalog.schema_migrations (version bigint not null, dirty boolean not null)",
     );
 
+    // The table shipped without a unique constraint, so a version could be
+    // recorded twice -- which made `on conflict` guards against it silently do
+    // nothing, and left the applied set looking like something it was not.
+    // Dedupe first: the index cannot be created while duplicates exist.
+    await this.postgresService.query(
+      `DELETE FROM hdb_catalog.schema_migrations a
+        USING hdb_catalog.schema_migrations b
+        WHERE a.ctid > b.ctid AND a.version = b.version`,
+    );
+
+    await this.postgresService.query(
+      "create unique index if not exists schema_migrations_version_idx on hdb_catalog.schema_migrations (version)",
+    );
+
     await this.applyMigrations(path.resolve("./hasura/migrations/default"));
 
     await this.apply(path.resolve("./hasura/enums"));
@@ -185,6 +199,22 @@ export class HasuraService {
     await this.postgresService.query(
       "insert into settings (name, value) values ('public.camera_allow_teammates_default', 'false') on conflict (name) do nothing",
     );
+
+    // On wherever voice is, and gated the same way. Turning a camera on is still
+    // always a deliberate act by the player -- these only decide whether the
+    // control is offered at all. The two per-surface toggles are read by the web
+    // app to decide which surfaces show it; the API only enforces the master.
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.video_chat_enabled', 'true') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.video_chat_lobbies_enabled', 'true') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.video_chat_matches_enabled', 'true') on conflict (name) do nothing",
+    );
   }
 
   private async applyMigrations(path: string): Promise<number> {
@@ -199,7 +229,7 @@ export class HasuraService {
           this.logger.log("    applying", version.toString());
           let patchedSQL = sql;
           const disableTransactions = sql.startsWith(`-- @disable-transaction`);
-          const updateSchemaMigrations = `insert into hdb_catalog.schema_migrations (version, dirty) values (${version}, false)`;
+          const updateSchemaMigrations = `insert into hdb_catalog.schema_migrations (version, dirty) values (${version}, false) on conflict (version) do nothing`;
           if (!disableTransactions) {
             // Disable the pool's statement_timeout for the migration; some run long.
             patchedSQL = `begin;set local statement_timeout = 0;${patchedSQL};${updateSchemaMigrations};commit;`;

@@ -48,46 +48,60 @@ export class CameraController {
     }
   }
 
-  // The player routes are gated by the secret token alone: the phone scanning
-  // the QR code has no session of its own.
+  // The player routes are gated by the session, like everything else. They used
+  // to take a minted token instead, because the phone scanning the QR had no
+  // login of its own -- it does now, and the QR carries only a URL.
 
-  @Post("player/:token/whip")
+  @Post("player/:matchId/whip")
   public async playerPublish(
-    @Param("token") token: string,
+    @Param("matchId") matchId: string,
     @Req() request: Request,
     @Res() response: Response,
   ) {
+    const user = this.requireUser(request);
     const sdp = await this.readRawBody(request);
 
     await this.sendSdp(response, () =>
-      this.camera.proxyPlayerPublish(token, sdp),
+      this.camera.proxyPlayerPublish(matchId, user, sdp),
     );
   }
 
-  @Get("player/:token/status")
-  public async playerStatus(@Param("token") token: string) {
-    return this.camera.getPlayerStatus(token);
+  @Get("player/:matchId/status")
+  public async playerStatus(
+    @Param("matchId") matchId: string,
+    @Req() request: Request,
+  ) {
+    return this.camera.getPlayerStatus(matchId, this.requireUser(request));
   }
 
-  @Post("player/:token/talk/whep")
+  @Post("player/:matchId/talk/whep")
   public async playerTalk(
-    @Param("token") token: string,
+    @Param("matchId") matchId: string,
     @Req() request: Request,
     @Res() response: Response,
   ) {
+    const user = this.requireUser(request);
     const sdp = await this.readRawBody(request);
 
-    await this.sendSdp(response, () => this.camera.proxyPlayerTalk(token, sdp));
+    await this.sendSdp(response, () =>
+      this.camera.proxyPlayerTalk(matchId, user, sdp),
+    );
   }
 
-  @Get("player/:token/talk/status")
-  public async playerTalkStatus(@Param("token") token: string) {
-    return this.camera.getPlayerTalkStatus(token);
+  @Get("player/:matchId/talk/status")
+  public async playerTalkStatus(
+    @Param("matchId") matchId: string,
+    @Req() request: Request,
+  ) {
+    return this.camera.getPlayerTalkStatus(matchId, this.requireUser(request));
   }
 
-  @Post("player/:token/talk/hangup")
-  public async playerTalkHangup(@Param("token") token: string) {
-    await this.camera.hangupPlayerTalk(token);
+  @Post("player/:matchId/talk/hangup")
+  public async playerTalkHangup(
+    @Param("matchId") matchId: string,
+    @Req() request: Request,
+  ) {
+    await this.camera.hangupPlayerTalk(matchId, this.requireUser(request));
 
     return { ok: true };
   }
