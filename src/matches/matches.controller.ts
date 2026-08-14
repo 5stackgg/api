@@ -46,7 +46,10 @@ import { GameStreamerService } from "./game-streamer/game-streamer.service";
 import { isRoleAbove } from "../utilities/isRoleAbove";
 import { DemoMetadataService } from "../demos/demo-metadata.service";
 import { ClipsService } from "./clips/clips.service";
-import { CameraService } from "./camera/camera.service";
+import {
+  CAMERA_ACTIVE_MATCH_STATUSES,
+  CameraService,
+} from "./camera/camera.service";
 import { CameraMonitorService } from "./camera/camera-monitor.service";
 import { ClipSpec } from "./clips/types/ClipSpec";
 
@@ -200,6 +203,7 @@ export class MatchesController {
           number_of_substitutes: true,
           round_restart_delay: true,
           halftime_pausematch: true,
+          camera_required: true,
         },
         match_maps: {
           id: true,
@@ -478,29 +482,16 @@ export class MatchesController {
     response.status(200).json(data);
   }
 
-  // camera_required and per-player camera health are read straight from
-  // Postgres/Redis rather than the Hasura selection above, so the plugin
-  // payload does not wait on Zeus codegen to learn about a new column.
+  // Per-player camera health is read straight from Redis: it is the monitor's
+  // running state, not a column, and the plugin needs it to pick its own state
+  // back up after a restart or a map load mid-match.
   private async decorateWithCameraState(match: {
     id: string;
     options: Record<string, unknown>;
     lineup_1?: { lineup_players?: Array<Record<string, unknown>> };
     lineup_2?: { lineup_players?: Array<Record<string, unknown>> };
   }) {
-    const [row] = await this.postgres.query<
-      Array<{ camera_required: boolean }>
-    >(
-      `SELECT mo.camera_required
-       FROM matches m
-       INNER JOIN match_options mo ON mo.id = m.match_options_id
-       WHERE m.id = $1`,
-      [match.id],
-    );
-
-    const cameraRequired = row?.camera_required === true;
-    match.options.camera_required = cameraRequired;
-
-    if (!cameraRequired) {
+    if (match.options.camera_required !== true) {
       return;
     }
 
@@ -2744,6 +2735,13 @@ export class MatchesController {
       this.logger.warn(
         `team auto-detect failed for match ${match.id}: ${(error as Error)?.message ?? String(error)}`,
       );
+    }
+
+    // A substitute added after check-in opened missed the status edge that
+    // mints tokens, and without one they can never check in. Idempotent, so
+    // re-running it for the rest of the roster costs nothing.
+    if (CAMERA_ACTIVE_MATCH_STATUSES.includes(match.status)) {
+      await this.camera.generateTokensIfRequired(match.id);
     }
 
     if (!["Live"].includes(match.status)) {

@@ -97,6 +97,12 @@ export class PushNotificationsController {
       return;
     }
 
+    // Written as part of a fan-out whose author already queued one job for the
+    // whole burst. One lookup here replaces two queries and a send per row.
+    if (await this.pushNotifications.isFanOutClaimed(data.new.id)) {
+      return;
+    }
+
     // A fan-out type inserts one row per player, and this fires per row.
     // The jobId collapses them into a single send.
     if (PushNotificationsService.isBatched(data.new.type)) {

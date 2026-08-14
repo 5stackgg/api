@@ -14,6 +14,7 @@ import {
 import { DISCORD_COLORS } from "./utilities/constants";
 import { NotificationsQueues } from "./enums/NotificationsQueues";
 import { NotificationPreferencesService } from "./preferences/notification-preferences.service";
+import { PushNotificationsService } from "./push/push-notifications.service";
 import { inAppKeyForType } from "./preferences/notification-categories";
 
 @Injectable()
@@ -47,8 +48,11 @@ export class NotificationsService {
     private readonly logger: Logger,
     private readonly configService: ConfigService,
     private readonly preferences: NotificationPreferencesService,
+    private readonly pushNotifications: PushNotificationsService,
     @InjectQueue(NotificationsQueues.SanctionNotifications)
     private readonly sanctionNotificationsQueue: Queue,
+    @InjectQueue(NotificationsQueues.PushBroadcast)
+    private readonly pushBroadcastQueue: Queue,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -303,6 +307,44 @@ export class NotificationsService {
     }
   }
 
+  // Hasura's event trigger fires once per inserted row, so a fan-out that wrote
+  // 200 rows would resolve recipients and send 200 times over. The rows are
+  // claimed here so those events fall through, and one job covers the burst.
+  //
+  // A single row is left to its own event: it is one query either way, and the
+  // claim would only add a round trip.
+  private async pushFanOut(
+    ids: string[],
+    window?: { type: string; entityId: string },
+  ) {
+    if (ids.length < 2) {
+      return;
+    }
+
+    try {
+      // Queued before the rows are claimed, deliberately. Claiming first and
+      // then failing to queue would silence the push entirely; this order fails
+      // the other way, into a duplicate the device collapses on its tag.
+      await this.pushBroadcastQueue.add(
+        "PushBroadcast",
+        window ?? { ids },
+        {
+          ...(window
+            ? { jobId: `push-broadcast.${window.type}.${window.entityId}` }
+            : {}),
+          removeOnComplete: { age: 3600 },
+          removeOnFail: { age: 3600 },
+        },
+      );
+
+      await this.pushNotifications.claimFanOut(ids);
+    } catch (error) {
+      // The per-row events are still queued behind this, so a failure here
+      // degrades to the unbatched path rather than losing the push.
+      this.logger.warn("unable to batch push for a fan-out notification", error);
+    }
+  }
+
   private async postDiscord(
     webhook: string,
     roleId: string | undefined,
@@ -368,7 +410,7 @@ export class NotificationsService {
     );
 
     if (steamIds.length > 0) {
-      await this.hasura.mutation({
+      const { insert_notifications } = await this.hasura.mutation({
         insert_notifications: {
           __args: {
             objects: steamIds.map((steam_id) => ({
@@ -384,9 +426,15 @@ export class NotificationsService {
                 : {}),
             })),
           },
-          affected_rows: true,
+          returning: {
+            id: true,
+          },
         },
       });
+
+      await this.pushFanOut(
+        (insert_notifications?.returning ?? []).map(({ id }) => id as string),
+      );
     }
 
     const webhook = await this.getSettingValue("discord_support_webhook");
@@ -492,7 +540,7 @@ export class NotificationsService {
   ) {
     const key = inAppKeyForType(type);
 
-    await this.postgres.query(
+    const inserted = await this.postgres.query<Array<{ id: string }>>(
       `INSERT INTO public.notifications (type, title, message, role, steam_id, entity_id)
             SELECT $1, $2, $3, 'user', p.steam_id, $4
               FROM public.players p
@@ -501,7 +549,8 @@ export class NotificationsService {
                AND np.channel = 'in_app'
                AND np.key = $5
              WHERE p.last_sign_in_at >= now() - $6::interval
-               AND COALESCE(np.enabled, $7::boolean) = true`,
+               AND COALESCE(np.enabled, $7::boolean) = true
+         RETURNING id::text AS id`,
       [
         type,
         notification.title,
@@ -512,6 +561,17 @@ export class NotificationsService {
         key?.defaultEnabled ?? true,
       ],
     );
+
+    // The recipient list here is the whole player base, so the ids are claimed
+    // but not carried in the job: sendForBatch resolves them from
+    // (type, entity_id) in one statement rather than shipping a payload with a
+    // row per player in it.
+    if (notification.entity_id) {
+      await this.pushFanOut(
+        inserted.map(({ id }) => id),
+        { type, entityId: notification.entity_id },
+      );
+    }
   }
 
   private async getSettingValue(name: string): Promise<string | undefined> {

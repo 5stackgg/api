@@ -228,13 +228,26 @@ describe("notifications (SQL-driven)", () => {
   });
 
   describe("push recipient resolution", () => {
+    // Only the fan-out claim touches redis, and none of these exercise it.
+    const redisManager = {
+      getConnection: () => ({
+        exists: async () => 0,
+        pipeline: () => ({ set: () => {}, exec: async () => [] }),
+      }),
+    };
+
     const service = () =>
-      new PushNotificationsService(logger as any, postgres, {
-        get: (key: string) =>
-          key === "app"
-            ? { webDomain: "https://example.com" }
-            : { publicKey: undefined, privateKey: undefined, subject: "x" },
-      } as any);
+      new PushNotificationsService(
+        logger as any,
+        postgres,
+        {
+          get: (key: string) =>
+            key === "app"
+              ? { webDomain: "https://example.com" }
+              : { publicKey: undefined, privateKey: undefined, subject: "x" },
+        } as any,
+        redisManager as any,
+      );
 
     it("runs the recipient query without erroring", async () => {
       // VAPID is unconfigured here so nothing is actually sent -- this is

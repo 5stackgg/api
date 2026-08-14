@@ -8,8 +8,7 @@ import { SystemModule } from "../system/system.module";
 import { loggerFactory } from "../utilities/LoggerFactory";
 
 @Module({
-  imports: [
-    NotificationsModule,S3Module, PostgresModule, SystemModule],
+  imports: [NotificationsModule, S3Module, PostgresModule, SystemModule],
   providers: [AwardsService, loggerFactory()],
   controllers: [AwardsController],
   exports: [AwardsService],

@@ -9,7 +9,7 @@ import { isRoleAbove } from "../../utilities/isRoleAbove";
 
 // A token is only meaningful while the match is actually being played, so a
 // leaked link stops working on its own without needing an expiry column.
-const CAMERA_ACTIVE_MATCH_STATUSES = [
+export const CAMERA_ACTIVE_MATCH_STATUSES = [
   "WaitingForCheckIn",
   "Veto",
   "Live",
@@ -476,10 +476,14 @@ export class CameraService {
       return scope.kind === "all" || lineup.id === scope.lineupId;
     });
 
-    const lineups = await Promise.all(
-      visible.map((lineup) =>
-        this.lineupWithCameraStatus(matchId, lineup, health),
-      ),
+    // One list call covers every camera in the match. A per-player status
+    // request would scale with the roster, and this endpoint is polled.
+    // A null listing means MediaMTX did not answer, which reads the same as
+    // nothing publishing here — the same answer a per-path check gave.
+    const paths = (await this.mediaMtx.listPaths()) ?? new Map();
+
+    const lineups = visible.map((lineup) =>
+      this.lineupWithCameraStatus(matchId, lineup, health, paths),
     );
 
     return { lineups };
@@ -495,7 +499,7 @@ export class CameraService {
     return lookup;
   }
 
-  private async lineupWithCameraStatus(
+  private lineupWithCameraStatus(
     matchId: string,
     lineup: {
       id: string;
@@ -513,6 +517,7 @@ export class CameraService {
       }>;
     },
     health: Map<string, CameraHealth>,
+    paths: Map<string, { ready: boolean; bytesReceived: number }>,
   ) {
     // A team's roster image wins over the player's own steam avatar, matching
     // what every other roster surface shows. Resolved here rather than per
@@ -530,29 +535,27 @@ export class CameraService {
     return {
       id: lineup.id,
       name: lineup.name,
-      players: await Promise.all(
-        (lineup.lineup_players ?? []).map(async (lineupPlayer) => {
-          const ready = await this.mediaMtx.isPathReady(
-            CameraService.pathForPlayer(matchId, lineupPlayer.steam_id),
-          );
+      players: (lineup.lineup_players ?? []).map((lineupPlayer) => {
+        const ready =
+          paths.get(CameraService.pathForPlayer(matchId, lineupPlayer.steam_id))
+            ?.ready === true;
 
-          return {
-            steamId: lineupPlayer.steam_id,
-            name: lineupPlayer.player?.name ?? null,
-            avatarUrl:
-              rosterImages.get(String(lineupPlayer.steam_id)) ??
-              lineupPlayer.player?.avatar_url ??
-              null,
-            lineupId: lineup.id,
-            ready,
-            // Fall back to the live path check when the monitor has no sample:
-            // it only runs for Live matches, and the grid opens during veto too.
-            health:
-              health.get(String(lineupPlayer.steam_id)) ??
-              (ready ? "live" : "down"),
-          } satisfies CameraPlayerStatus;
-        }),
-      ),
+        return {
+          steamId: lineupPlayer.steam_id,
+          name: lineupPlayer.player?.name ?? null,
+          avatarUrl:
+            rosterImages.get(String(lineupPlayer.steam_id)) ??
+            lineupPlayer.player?.avatar_url ??
+            null,
+          lineupId: lineup.id,
+          ready,
+          // Fall back to the live path check when the monitor has no sample:
+          // it only runs for Live matches, and the grid opens during veto too.
+          health:
+            health.get(String(lineupPlayer.steam_id)) ??
+            (ready ? "live" : "down"),
+        } satisfies CameraPlayerStatus;
+      }),
     };
   }
 }

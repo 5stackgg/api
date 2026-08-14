@@ -329,9 +329,7 @@ export class SystemController {
         data.new.value !== data.old.value)
     ) {
       const ttl = parseInt(data.new.value, 10);
-      await this.chatService.updateChatMessageTTL(
-        isNaN(ttl) ? 60 * 60 * 24 : ttl,
-      );
+      await this.chatService.updateChatMessageTTL(isNaN(ttl) ? 60 * 60 : ttl);
     }
 
     await this.system.updateDefaultOptions();

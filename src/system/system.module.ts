@@ -77,11 +77,11 @@ export class SystemModule {
       await this.chatService.updateChatMessageTTL(
         await this.systemService.getSetting<number>(
           SystemSettingName.ChatMessageTtl,
-          60 * 60 * 24,
+          60 * 60,
         ),
       );
     } catch {
-      // Default TTL (86400s) is already set on ChatService init — safe to continue
+      // Default TTL (3600s) is already set on ChatService init — safe to continue
     }
   }
 }

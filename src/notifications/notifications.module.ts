@@ -6,6 +6,7 @@ import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { NotificationsService } from "./notifications.service";
 import { HasuraModule } from "../hasura/hasura.module";
 import { PostgresModule } from "../postgres/postgres.module";
+import { RedisModule } from "../redis/redis.module";
 import { loggerFactory } from "src/utilities/LoggerFactory";
 import { getQueuesProcessors } from "src/utilities/QueueProcessors";
 import { NotificationsQueues } from "./enums/NotificationsQueues";
@@ -21,6 +22,7 @@ import { NotificationPreferencesController } from "./preferences/notification-pr
     HasuraModule,
     PostgresModule,
     ConfigModule,
+    RedisModule,
     BullModule.registerQueue({
       name: NotificationsQueues.SanctionNotifications,
     }),

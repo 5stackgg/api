@@ -229,27 +229,36 @@ export class AwardsService {
       // returned rows.
       const roster = await this.grantToRoster(input, tournamentTeamId);
 
-      for (const recipient of roster) {
-        void this.notifyAwarded(
-          recipient.player_steam_id,
-          input.award_id,
-          recipient.id,
-        );
-      }
+      void this.notifyAwarded(
+        roster.map((recipient) => recipient.player_steam_id),
+        input.award_id,
+        granted.id,
+      );
     }
 
     if (input.player_steam_id) {
-      void this.notifyAwarded(input.player_steam_id, input.award_id, granted.id);
+      void this.notifyAwarded(
+        [input.player_steam_id],
+        input.award_id,
+        granted.id,
+      );
     }
 
     return granted;
   }
 
+  // The whole roster in one call: the only per-recipient part of this message
+  // is who receives it, so the grant is looked up once and notifyPlayers is
+  // handed every steam id rather than being called per player.
   private async notifyAwarded(
-    steamId: string,
+    steamIds: string[],
     awardId: string,
     recipientId: string,
   ) {
+    if (steamIds.length === 0) {
+      return;
+    }
+
     try {
       const [award] = await this.postgres.query<Array<{ name: string }>>(
         `SELECT name FROM public.awards WHERE id = $1::uuid`,
@@ -263,11 +272,11 @@ export class AwardsService {
         )}</b>.`,
         role: "user",
         entity_id: recipientId,
-        steamIds: [steamId],
+        steamIds,
       });
     } catch (error) {
       this.logger.warn(
-        `unable to notify ${steamId} of award ${awardId}`,
+        `unable to notify ${steamIds.join(", ")} of award ${awardId}`,
         error,
       );
     }

@@ -32,6 +32,14 @@ describe("PushNotificationsService", () => {
   const configService = {
     get: jest.fn<Record<string, string>, [string]>(),
   };
+  const redis = {
+    exists: jest.fn().mockResolvedValue(0),
+    pipeline: jest.fn(() => ({
+      set: jest.fn(),
+      exec: jest.fn().mockResolvedValue([]),
+    })),
+  };
+  const redisManager = { getConnection: () => redis };
 
   // Re-applied per test: clearAllMocks resets calls but not implementations, so
   // a test that swaps this out would otherwise leak into the next one.
@@ -58,6 +66,7 @@ describe("PushNotificationsService", () => {
       logger as any,
       postgres as any,
       configService as any,
+      redisManager as any,
     );
     await service.loadKeys();
     return service;

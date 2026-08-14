@@ -15,10 +15,12 @@ import { parseDirectRoomId } from "./utilities/directRoomId";
 export class ChatService {
   private redis: Redis;
 
-  private expiresIn = 60 * 60 * 24;
+  private expiresIn = 60 * 60;
 
-  // A direct message is a conversation, not lobby chatter -- losing it after a
-  // day would make DMs useless. Everything else keeps the shared TTL.
+  // A direct message is a conversation, not lobby chatter -- losing it after an
+  // hour would make DMs useless. Only this type gets the longer window; raising
+  // the shared one would hold a day of every match, tournament and draft room
+  // in redis for the sake of DMs.
   private directExpiresIn = 60 * 60 * 24 * 30;
 
   constructor(

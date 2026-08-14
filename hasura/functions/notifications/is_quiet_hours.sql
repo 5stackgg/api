@@ -8,7 +8,10 @@ CREATE OR REPLACE FUNCTION public.is_quiet_hours(
     _timezone text
 ) RETURNS boolean
 LANGUAGE plpgsql
-IMMUTABLE
+-- STABLE, not IMMUTABLE: the answer depends on now(). Marked IMMUTABLE the
+-- planner may fold the call at plan time and reuse it across executions of a
+-- cached plan, which keeps returning the stale answer across a window boundary.
+STABLE
 AS $$
 DECLARE
     _local time;

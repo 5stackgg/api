@@ -1,7 +1,9 @@
 import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import * as webPush from "web-push";
+import Redis from "ioredis";
 import { PostgresService } from "../../postgres/postgres.service";
+import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
 import { AppConfig } from "src/configs/types/AppConfig";
 import { WebPushConfig } from "src/configs/types/WebPushConfig";
 import { e_player_roles_enum } from "generated/schema";
@@ -60,10 +62,17 @@ const BATCHED_TYPES = new Set<string>(["TournamentCreated", "NewsPublished"]);
 
 const SEND_CHUNK_SIZE = 25;
 
+const fanOutClaimKey = (id: string) => `notifications:fan-out:${id}`;
+
+// Long enough to outlast Hasura's delivery of the last row in a fan-out,
+// including its retry_conf (3 retries, 10s apart, 60s timeout each).
+const FAN_OUT_CLAIM_TTL_SECONDS = 900;
+
 @Injectable()
 export class PushNotificationsService {
   private readonly appConfig: AppConfig;
   private readonly webPushConfig: WebPushConfig;
+  private readonly redis: Redis;
   private publicKey: string | null = null;
   private configured = false;
 
@@ -71,9 +80,36 @@ export class PushNotificationsService {
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
     private readonly configService: ConfigService,
+    redisManager: RedisManagerService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
     this.webPushConfig = this.configService.get<WebPushConfig>("webPush");
+    this.redis = redisManager.getConnection();
+  }
+
+  // A fan-out writes one notification row per recipient and Hasura's event
+  // trigger fires for every one of them, so the naive path costs two queries
+  // and a send per row. The writer claims the rows it just inserted and pushes
+  // them in a single pass instead; the per-row events then cost one set lookup.
+  //
+  // Claimed by id rather than by (type, entity_id) so a later single-recipient
+  // notification for the same conversation is never swallowed by a stale claim.
+  public async claimFanOut(ids: string[]): Promise<void> {
+    if (ids.length === 0) {
+      return;
+    }
+
+    const pipeline = this.redis.pipeline();
+
+    for (const id of ids) {
+      pipeline.set(fanOutClaimKey(id), 1, "EX", FAN_OUT_CLAIM_TTL_SECONDS);
+    }
+
+    await pipeline.exec();
+  }
+
+  public async isFanOutClaimed(id: string): Promise<boolean> {
+    return (await this.redis.exists(fanOutClaimKey(id))) === 1;
   }
 
   // Keys live in `settings` so an operator can generate them from the panel --
@@ -293,6 +329,50 @@ export class PushNotificationsService {
         category?.key ?? "",
         category?.defaultEnabled ?? true,
       ],
+    );
+
+    await this.deliver(subscriptions, row);
+  }
+
+  // The counterpart for a fan-out whose recipients are known: one pass over the
+  // exact rows the insert produced. Preferred over sendForBatch wherever the
+  // ids are to hand — it carries no time window, so it can never pick up a row
+  // from an earlier message and push someone their own words back at them.
+  public async sendForIds(ids: string[]): Promise<void> {
+    if (!this.configured || ids.length === 0) {
+      return;
+    }
+
+    const [row] = await this.postgres.query<NotificationRow[]>(
+      `SELECT id::text AS id, type::text AS type, role::text AS role,
+              title, message, entity_id
+         FROM public.notifications
+        WHERE id = ANY($1::uuid[])
+        ORDER BY created_at DESC
+        LIMIT 1`,
+      [ids],
+    );
+
+    if (!row) {
+      return;
+    }
+
+    const category = pushCategoryForType(row.type);
+
+    const subscriptions = await this.postgres.query<SubscriptionRow[]>(
+      `SELECT DISTINCT ps.id::text AS id, ps.endpoint, ps.p256dh, ps.auth
+         FROM public.notifications n
+         JOIN public.players p ON p.steam_id = n.steam_id
+         JOIN public.push_subscriptions ps ON ps.steam_id = n.steam_id
+    LEFT JOIN public.notification_preferences np
+           ON np.steam_id = n.steam_id
+          AND np.channel = 'push'
+          AND np.key = $2
+        WHERE n.id = ANY($1::uuid[])
+          AND COALESCE(np.enabled, $3::boolean) = true
+          AND NOT public.is_quiet_hours(
+                p.quiet_hours_start, p.quiet_hours_end, p.notification_timezone)`,
+      [ids, category?.key ?? "", category?.defaultEnabled ?? true],
     );
 
     await this.deliver(subscriptions, row);
