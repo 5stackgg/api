@@ -1087,6 +1087,7 @@ export class DraftGameService {
     }
 
     if (isRoleAbove(user.role, "tournament_organizer")) {
+      object.check_in_setting = source.check_in_setting;
       object.auto_cancellation = source.auto_cancellation;
       object.match_mode = source.match_mode;
       object.auto_cancel_duration = source.auto_cancel_duration ?? null;
@@ -1281,6 +1282,11 @@ export class DraftGameService {
 
       if (settings.options && draftGame.match_options_id) {
         const optionSet = this.matchOptionScalars(user, settings.options);
+        // The match is spawned straight off match_options, so the type has to
+        // follow the draft or the lobby and the match disagree on format.
+        if (settings.type) {
+          optionSet.type = settings.type;
+        }
         if (mapPoolId) {
           optionSet.map_pool_id = mapPoolId;
         }
