@@ -13,6 +13,7 @@ import {
   e_draft_game_captain_selection_enum,
 } from "generated";
 import { HasuraService } from "src/hasura/hasura.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { CacheService } from "src/cache/cache.service";
 import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
@@ -66,6 +67,7 @@ export class DraftGameService {
     @Inject(forwardRef(() => DraftService))
     private readonly draftService: DraftService,
     @InjectQueue(DraftGameQueues.DraftGames) private queue: Queue,
+    private readonly notifications: NotificationsService,
   ) {}
 
   public static lockKey(draftGameId: string): string {
@@ -784,10 +786,14 @@ export class DraftGameService {
     return isRoleAbove(role, threshold as e_player_roles_enum);
   }
 
+  // `lineup` lets a host drop someone straight into a roster slot. Without it
+  // the player would land in the lobby pool first and only move on a second
+  // mutation, which both flickers in the UI and can strand them there.
   public async addDraftPlayer(
     user: User,
     draftGameId: string,
     steamId: string,
+    lineup?: number | null,
   ) {
     return this.draftLock(draftGameId, async () => {
       const draftGame = await this.getDraftGame(draftGameId);
@@ -813,6 +819,10 @@ export class DraftGameService {
 
       if (draftGame.players.find((player) => player.steam_id === steamId)) {
         return;
+      }
+
+      if (lineup != null && ![1, 2].includes(lineup)) {
+        throw new DraftGameError("Invalid lineup");
       }
 
       const addWithoutInvite = await this.canAddWithoutInvite(user.role);
@@ -851,6 +861,7 @@ export class DraftGameService {
                 steam_id: steamId,
                 elo_snapshot: elo,
                 status: status as e_draft_game_player_status_enum,
+                ...(lineup != null ? { lineup } : {}),
               },
             },
             __typename: true,
@@ -860,8 +871,39 @@ export class DraftGameService {
         if (status === "Accepted") {
           await this.clearOtherRequests(steamId, draftGameId);
         }
+
+        if (status === "Invited") {
+          // Notified from here rather than from a table trigger:
+          // draft_game_players is keyed (draft_game_id, steam_id) with no uuid
+          // of its own, and a trigger payload carries steam_id as a JSON number
+          // -- past 2^53, so there would be no safe way to tell which row fired.
+          void this.notifyOfDraftInvite(steamId, draftGameId, user);
+        }
       });
     });
+  }
+
+  private async notifyOfDraftInvite(
+    steamId: string,
+    draftGameId: string,
+    invitedBy: User,
+  ) {
+    try {
+      await this.notifications.notifyPlayers("DraftInvite", {
+        title: "Draft Invite",
+        message: `<b>${NotificationsService.escapeHtml(invitedBy?.name)}</b> invited you to a draft lobby.`,
+        role: "user",
+        entity_id: draftGameId,
+        steamIds: [steamId],
+      });
+    } catch (error) {
+      // The invite row is already written; a failed notification must not fail
+      // the invite.
+      this.logger.warn(
+        `unable to notify ${steamId} of draft invite ${draftGameId}`,
+        error,
+      );
+    }
   }
 
   public async respondDraftInvite(
@@ -1028,6 +1070,8 @@ export class DraftGameService {
       ready_setting: source.ready_setting,
       tech_timeout_setting: source.tech_timeout_setting,
       tv_delay: source.tv_delay,
+      round_restart_delay: source.round_restart_delay ?? null,
+      halftime_pausematch: source.halftime_pausematch ?? false,
     };
 
     if (source.map_pool_id) {
@@ -1038,9 +1082,12 @@ export class DraftGameService {
     // permissions never apply — the role gates have to be repeated here.
     if (isRoleAbove(user.role, "match_organizer")) {
       object.veto_pick_timeout = source.veto_pick_timeout;
+      object.camera_required = source.camera_required ?? false;
+      object.camera_allow_teammates = source.camera_allow_teammates ?? false;
     }
 
     if (isRoleAbove(user.role, "tournament_organizer")) {
+      object.check_in_setting = source.check_in_setting;
       object.auto_cancellation = source.auto_cancellation;
       object.match_mode = source.match_mode;
       object.auto_cancel_duration = source.auto_cancel_duration ?? null;
@@ -1235,6 +1282,11 @@ export class DraftGameService {
 
       if (settings.options && draftGame.match_options_id) {
         const optionSet = this.matchOptionScalars(user, settings.options);
+        // The match is spawned straight off match_options, so the type has to
+        // follow the draft or the lobby and the match disagree on format.
+        if (settings.type) {
+          optionSet.type = settings.type;
+        }
         if (mapPoolId) {
           optionSet.map_pool_id = mapPoolId;
         }

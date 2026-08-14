@@ -886,6 +886,16 @@ type WatchDemoOutput {
   success: Boolean!
 }
 
+type WebPushKeysOutput {
+  success: Boolean!
+}
+
+type WebPushStatusOutput {
+  configured: Boolean!
+  managed_by_environment: Boolean!
+  subscriptions: Int!
+}
+
 """
 columns and relationships of "_map_pool"
 """
@@ -11312,14 +11322,29 @@ enum e_notification_types_constraint {
 }
 
 enum e_notification_types_enum {
+  """You received an award"""
+  AwardGranted
+
+  """A new message in a chat you are part of"""
+  ChatMessage
+
+  """A clip you requested finished rendering"""
+  ClipReady
+
   """DedicatedServerRconStatus"""
   DedicatedServerRconStatus
 
   """DedicatedServerStatus"""
   DedicatedServerStatus
 
+  """You were invited to a draft lobby"""
+  DraftInvite
+
   """Player ELO recompute finished"""
   EloRecompute
+
+  """An event you are attending starts soon"""
+  EventReminder
 
   """You frequently play with these players"""
   FormTeamSuggestion
@@ -11354,6 +11379,9 @@ enum e_notification_types_enum {
   """A Valve match you played was imported to 5stack"""
   MatchImported
 
+  """Stats for a match you played are ready"""
+  MatchStatsReady
+
   """Match Status Change Notification"""
   MatchStatusChange
 
@@ -11368,6 +11396,9 @@ enum e_notification_types_enum {
 
   """NameChangeRequest"""
   NameChangeRequest
+
+  """A news article was published"""
+  NewsPublished
 
   """Player search reindex finished"""
   PlayerReindex
@@ -11402,8 +11433,23 @@ enum e_notification_types_enum {
   """A scheduled scrim time changed"""
   ScrimTimeChanged
 
+  """A season has ended"""
+  SeasonEnded
+
   """Storage Scan"""
   StorageScan
+
+  """You were invited to a team"""
+  TeamInvite
+
+  """Registration opened for a tournament"""
+  TournamentCreated
+
+  """A tournament you are registered for starts soon"""
+  TournamentReminder
+
+  """You were invited to play in a tournament"""
+  TournamentTeamInvite
 }
 
 """
@@ -32819,6 +32865,8 @@ type match_options {
   auto_cancel_duration: Int
   auto_cancellation: Boolean!
   best_of: Int!
+  camera_allow_teammates: Boolean!
+  camera_required: Boolean!
   check_in_setting: e_check_in_settings_enum!
   coaches: Boolean!
   default_models: Boolean
@@ -32945,6 +32993,8 @@ input match_options_bool_exp {
   auto_cancel_duration: Int_comparison_exp
   auto_cancellation: Boolean_comparison_exp
   best_of: Int_comparison_exp
+  camera_allow_teammates: Boolean_comparison_exp
+  camera_required: Boolean_comparison_exp
   check_in_setting: e_check_in_settings_enum_comparison_exp
   coaches: Boolean_comparison_exp
   default_models: Boolean_comparison_exp
@@ -33009,6 +33059,8 @@ input match_options_insert_input {
   auto_cancel_duration: Int
   auto_cancellation: Boolean
   best_of: Int
+  camera_allow_teammates: Boolean
+  camera_required: Boolean
   check_in_setting: e_check_in_settings_enum
   coaches: Boolean
   default_models: Boolean
@@ -33107,6 +33159,8 @@ input match_options_order_by {
   auto_cancel_duration: order_by
   auto_cancellation: order_by
   best_of: order_by
+  camera_allow_teammates: order_by
+  camera_required: order_by
   check_in_setting: order_by
   coaches: order_by
   default_models: order_by
@@ -33156,6 +33210,12 @@ enum match_options_select_column {
 
   """column name"""
   best_of
+
+  """column name"""
+  camera_allow_teammates
+
+  """column name"""
+  camera_required
 
   """column name"""
   check_in_setting
@@ -33237,6 +33297,8 @@ input match_options_set_input {
   auto_cancel_duration: Int
   auto_cancellation: Boolean
   best_of: Int
+  camera_allow_teammates: Boolean
+  camera_required: Boolean
   check_in_setting: e_check_in_settings_enum
   coaches: Boolean
   default_models: Boolean
@@ -33315,6 +33377,8 @@ input match_options_stream_cursor_value_input {
   auto_cancel_duration: Int
   auto_cancellation: Boolean
   best_of: Int
+  camera_allow_teammates: Boolean
+  camera_required: Boolean
   check_in_setting: e_check_in_settings_enum
   coaches: Boolean
   default_models: Boolean
@@ -33365,6 +33429,12 @@ enum match_options_update_column {
 
   """column name"""
   best_of
+
+  """column name"""
+  camera_allow_teammates
+
+  """column name"""
+  camera_required
 
   """column name"""
   check_in_setting
@@ -36587,7 +36657,7 @@ type mutation_root {
   acceptInvite(invite_id: uuid!, type: String!): SuccessOutput
 
   """addDraftPlayer"""
-  addDraftPlayer(draftGameId: uuid!, steamId: String!): SuccessOutput
+  addDraftPlayer(draftGameId: uuid!, lineup: Int, steamId: String!): SuccessOutput
 
   """Add a friends-role presence bot account to the pool"""
   addSteamPresenceBotAccount(bot_secret: String!, friend_capacity: Int, username: String!): SuccessOutput
@@ -38039,6 +38109,19 @@ type mutation_root {
   delete_news_articles_by_pk(id: uuid!): news_articles
 
   """
+  delete data from the table: "notification_preferences"
+  """
+  delete_notification_preferences(
+    """filter the rows which have to be deleted"""
+    where: notification_preferences_bool_exp!
+  ): notification_preferences_mutation_response
+
+  """
+  delete single row from the table: "notification_preferences"
+  """
+  delete_notification_preferences_by_pk(channel: String!, key: String!, steam_id: bigint!): notification_preferences
+
+  """
   delete data from the table: "notifications"
   """
   delete_notifications(
@@ -38357,6 +38440,19 @@ type mutation_root {
   delete single row from the table: "plugin_versions"
   """
   delete_plugin_versions_by_pk(runtime: e_plugin_runtimes_enum!, version: String!): plugin_versions
+
+  """
+  delete data from the table: "push_subscriptions"
+  """
+  delete_push_subscriptions(
+    """filter the rows which have to be deleted"""
+    where: push_subscriptions_bool_exp!
+  ): push_subscriptions_mutation_response
+
+  """
+  delete single row from the table: "push_subscriptions"
+  """
+  delete_push_subscriptions_by_pk(id: uuid!): push_subscriptions
 
   """
   delete data from the table: "seasons"
@@ -38769,6 +38865,11 @@ type mutation_root {
   denyInvite(invite_id: uuid!, type: String!): SuccessOutput
   denyNameChange(name: String!, steam_id: bigint!): SuccessOutput
   forfeitMatch(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
+
+  """
+  Generates a fresh self-signed VAPID keypair; invalidates every existing subscription
+  """
+  generateWebPushKeys: WebPushKeysOutput
 
   """
   Live pod GSI snapshot — slots, sides, alive/dead. Drives the stream-deck.
@@ -40946,6 +41047,28 @@ type mutation_root {
   ): news_articles
 
   """
+  insert data into the table: "notification_preferences"
+  """
+  insert_notification_preferences(
+    """the rows to be inserted"""
+    objects: [notification_preferences_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: notification_preferences_on_conflict
+  ): notification_preferences_mutation_response
+
+  """
+  insert a single row into the table: "notification_preferences"
+  """
+  insert_notification_preferences_one(
+    """the row to be inserted"""
+    object: notification_preferences_insert_input!
+
+    """upsert condition"""
+    on_conflict: notification_preferences_on_conflict
+  ): notification_preferences
+
+  """
   insert data into the table: "notifications"
   """
   insert_notifications(
@@ -41488,6 +41611,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: plugin_versions_on_conflict
   ): plugin_versions
+
+  """
+  insert data into the table: "push_subscriptions"
+  """
+  insert_push_subscriptions(
+    """the rows to be inserted"""
+    objects: [push_subscriptions_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: push_subscriptions_on_conflict
+  ): push_subscriptions_mutation_response
+
+  """
+  insert a single row into the table: "push_subscriptions"
+  """
+  insert_push_subscriptions_one(
+    """the row to be inserted"""
+    object: push_subscriptions_insert_input!
+
+    """upsert condition"""
+    on_conflict: push_subscriptions_on_conflict
+  ): push_subscriptions
 
   """
   insert data into the table: "seasons"
@@ -45896,6 +46041,40 @@ type mutation_root {
   ): [news_articles_mutation_response]
 
   """
+  update data of the table: "notification_preferences"
+  """
+  update_notification_preferences(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: notification_preferences_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: notification_preferences_set_input
+
+    """filter the rows which have to be updated"""
+    where: notification_preferences_bool_exp!
+  ): notification_preferences_mutation_response
+
+  """
+  update single row of the table: "notification_preferences"
+  """
+  update_notification_preferences_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: notification_preferences_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: notification_preferences_set_input
+    pk_columns: notification_preferences_pk_columns_input!
+  ): notification_preferences
+
+  """
+  update multiples rows of table: "notification_preferences"
+  """
+  update_notification_preferences_many(
+    """updates to execute, in order"""
+    updates: [notification_preferences_updates!]!
+  ): [notification_preferences_mutation_response]
+
+  """
   update data of the table: "notifications"
   """
   update_notifications(
@@ -46816,6 +46995,40 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [plugin_versions_updates!]!
   ): [plugin_versions_mutation_response]
+
+  """
+  update data of the table: "push_subscriptions"
+  """
+  update_push_subscriptions(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: push_subscriptions_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: push_subscriptions_set_input
+
+    """filter the rows which have to be updated"""
+    where: push_subscriptions_bool_exp!
+  ): push_subscriptions_mutation_response
+
+  """
+  update single row of the table: "push_subscriptions"
+  """
+  update_push_subscriptions_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: push_subscriptions_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: push_subscriptions_set_input
+    pk_columns: push_subscriptions_pk_columns_input!
+  ): push_subscriptions
+
+  """
+  update multiples rows of table: "push_subscriptions"
+  """
+  update_push_subscriptions_many(
+    """updates to execute, in order"""
+    updates: [push_subscriptions_updates!]!
+  ): [push_subscriptions_mutation_response]
 
   """
   update data of the table: "seasons"
@@ -49205,6 +49418,258 @@ type news_articles_variance_fields {
 }
 
 """
+columns and relationships of "notification_preferences"
+"""
+type notification_preferences {
+  channel: String!
+  enabled: Boolean!
+  key: String!
+  steam_id: bigint!
+  updated_at: timestamptz!
+}
+
+"""
+aggregated selection of "notification_preferences"
+"""
+type notification_preferences_aggregate {
+  aggregate: notification_preferences_aggregate_fields
+  nodes: [notification_preferences!]!
+}
+
+"""
+aggregate fields of "notification_preferences"
+"""
+type notification_preferences_aggregate_fields {
+  avg: notification_preferences_avg_fields
+  count(columns: [notification_preferences_select_column!], distinct: Boolean): Int!
+  max: notification_preferences_max_fields
+  min: notification_preferences_min_fields
+  stddev: notification_preferences_stddev_fields
+  stddev_pop: notification_preferences_stddev_pop_fields
+  stddev_samp: notification_preferences_stddev_samp_fields
+  sum: notification_preferences_sum_fields
+  var_pop: notification_preferences_var_pop_fields
+  var_samp: notification_preferences_var_samp_fields
+  variance: notification_preferences_variance_fields
+}
+
+"""aggregate avg on columns"""
+type notification_preferences_avg_fields {
+  steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "notification_preferences". All fields are combined with a logical 'AND'.
+"""
+input notification_preferences_bool_exp {
+  _and: [notification_preferences_bool_exp!]
+  _not: notification_preferences_bool_exp
+  _or: [notification_preferences_bool_exp!]
+  channel: String_comparison_exp
+  enabled: Boolean_comparison_exp
+  key: String_comparison_exp
+  steam_id: bigint_comparison_exp
+  updated_at: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "notification_preferences"
+"""
+enum notification_preferences_constraint {
+  """
+  unique or primary key constraint on columns "key", "steam_id", "channel"
+  """
+  notification_preferences_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "notification_preferences"
+"""
+input notification_preferences_inc_input {
+  steam_id: bigint
+}
+
+"""
+input type for inserting data into table "notification_preferences"
+"""
+input notification_preferences_insert_input {
+  channel: String
+  enabled: Boolean
+  key: String
+  steam_id: bigint
+  updated_at: timestamptz
+}
+
+"""aggregate max on columns"""
+type notification_preferences_max_fields {
+  channel: String
+  key: String
+  steam_id: bigint
+  updated_at: timestamptz
+}
+
+"""aggregate min on columns"""
+type notification_preferences_min_fields {
+  channel: String
+  key: String
+  steam_id: bigint
+  updated_at: timestamptz
+}
+
+"""
+response of any mutation on the table "notification_preferences"
+"""
+type notification_preferences_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [notification_preferences!]!
+}
+
+"""
+on_conflict condition type for table "notification_preferences"
+"""
+input notification_preferences_on_conflict {
+  constraint: notification_preferences_constraint!
+  update_columns: [notification_preferences_update_column!]! = []
+  where: notification_preferences_bool_exp
+}
+
+"""Ordering options when selecting data from "notification_preferences"."""
+input notification_preferences_order_by {
+  channel: order_by
+  enabled: order_by
+  key: order_by
+  steam_id: order_by
+  updated_at: order_by
+}
+
+"""primary key columns input for table: notification_preferences"""
+input notification_preferences_pk_columns_input {
+  channel: String!
+  key: String!
+  steam_id: bigint!
+}
+
+"""
+select columns of table "notification_preferences"
+"""
+enum notification_preferences_select_column {
+  """column name"""
+  channel
+
+  """column name"""
+  enabled
+
+  """column name"""
+  key
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  updated_at
+}
+
+"""
+input type for updating data in table "notification_preferences"
+"""
+input notification_preferences_set_input {
+  channel: String
+  enabled: Boolean
+  key: String
+  steam_id: bigint
+  updated_at: timestamptz
+}
+
+"""aggregate stddev on columns"""
+type notification_preferences_stddev_fields {
+  steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type notification_preferences_stddev_pop_fields {
+  steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type notification_preferences_stddev_samp_fields {
+  steam_id: Float
+}
+
+"""
+Streaming cursor of the table "notification_preferences"
+"""
+input notification_preferences_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: notification_preferences_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input notification_preferences_stream_cursor_value_input {
+  channel: String
+  enabled: Boolean
+  key: String
+  steam_id: bigint
+  updated_at: timestamptz
+}
+
+"""aggregate sum on columns"""
+type notification_preferences_sum_fields {
+  steam_id: bigint
+}
+
+"""
+update columns of table "notification_preferences"
+"""
+enum notification_preferences_update_column {
+  """column name"""
+  channel
+
+  """column name"""
+  enabled
+
+  """column name"""
+  key
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  updated_at
+}
+
+input notification_preferences_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: notification_preferences_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: notification_preferences_set_input
+
+  """filter the rows which have to be updated"""
+  where: notification_preferences_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type notification_preferences_var_pop_fields {
+  steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type notification_preferences_var_samp_fields {
+  steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type notification_preferences_variance_fields {
+  steam_id: Float
+}
+
+"""
 columns and relationships of "notifications"
 """
 type notifications {
@@ -49217,6 +49682,7 @@ type notifications {
   deleted_at: timestamptz
   entity_id: String
   id: uuid!
+  in_app: Boolean!
   is_read: Boolean!
   message: String!
 
@@ -49337,6 +49803,7 @@ input notifications_bool_exp {
   deleted_at: timestamptz_comparison_exp
   entity_id: String_comparison_exp
   id: uuid_comparison_exp
+  in_app: Boolean_comparison_exp
   is_read: Boolean_comparison_exp
   message: String_comparison_exp
   player: players_bool_exp
@@ -49394,6 +49861,7 @@ input notifications_insert_input {
   deleted_at: timestamptz
   entity_id: String
   id: uuid
+  in_app: Boolean
   is_read: Boolean
   message: String
   player: players_obj_rel_insert_input
@@ -49479,6 +49947,7 @@ input notifications_order_by {
   deleted_at: order_by
   entity_id: order_by
   id: order_by
+  in_app: order_by
   is_read: order_by
   message: order_by
   player: players_order_by
@@ -49521,6 +49990,9 @@ enum notifications_select_column {
   id
 
   """column name"""
+  in_app
+
+  """column name"""
   is_read
 
   """column name"""
@@ -49547,6 +50019,9 @@ enum notifications_select_column_notifications_aggregate_bool_exp_bool_and_argum
   deletable
 
   """column name"""
+  in_app
+
+  """column name"""
   is_read
 }
 
@@ -49556,6 +50031,9 @@ select "notifications_aggregate_bool_exp_bool_or_arguments_columns" columns of t
 enum notifications_select_column_notifications_aggregate_bool_exp_bool_or_arguments_columns {
   """column name"""
   deletable
+
+  """column name"""
+  in_app
 
   """column name"""
   is_read
@@ -49571,6 +50049,7 @@ input notifications_set_input {
   deleted_at: timestamptz
   entity_id: String
   id: uuid
+  in_app: Boolean
   is_read: Boolean
   message: String
   role: e_player_roles_enum
@@ -49634,6 +50113,7 @@ input notifications_stream_cursor_value_input {
   deleted_at: timestamptz
   entity_id: String
   id: uuid
+  in_app: Boolean
   is_read: Boolean
   message: String
   role: e_player_roles_enum
@@ -49675,6 +50155,9 @@ enum notifications_update_column {
 
   """column name"""
   id
+
+  """column name"""
+  in_app
 
   """column name"""
   is_read
@@ -67339,6 +67822,7 @@ type players {
   ): v_player_multi_kills_aggregate!
   name: String!
   name_registered: Boolean!
+  notification_timezone: String
 
   """An array relationship"""
   notifications(
@@ -67602,6 +68086,8 @@ type players {
   ): player_premier_rank_history_aggregate!
   premier_rank_updated_at: timestamptz
   profile_url: String
+  quiet_hours_end: time
+  quiet_hours_start: time
   role: e_player_roles_enum!
   roster_image_url: String
 
@@ -68152,6 +68638,7 @@ input players_bool_exp {
   multi_kills_aggregate: v_player_multi_kills_aggregate_bool_exp
   name: String_comparison_exp
   name_registered: Boolean_comparison_exp
+  notification_timezone: String_comparison_exp
   notifications: notifications_bool_exp
   notifications_aggregate: notifications_aggregate_bool_exp
   objectives: player_objectives_bool_exp
@@ -68170,6 +68657,8 @@ input players_bool_exp {
   premier_rank_history_aggregate: player_premier_rank_history_aggregate_bool_exp
   premier_rank_updated_at: timestamptz_comparison_exp
   profile_url: String_comparison_exp
+  quiet_hours_end: time_comparison_exp
+  quiet_hours_start: time_comparison_exp
   role: e_player_roles_enum_comparison_exp
   roster_image_url: String_comparison_exp
   sanctions: player_sanctions_bool_exp
@@ -68282,6 +68771,7 @@ input players_insert_input {
   multi_kills: v_player_multi_kills_arr_rel_insert_input
   name: String
   name_registered: Boolean
+  notification_timezone: String
   notifications: notifications_arr_rel_insert_input
   objectives: player_objectives_arr_rel_insert_input
   owned_teams: teams_arr_rel_insert_input
@@ -68292,6 +68782,8 @@ input players_insert_input {
   premier_rank_history: player_premier_rank_history_arr_rel_insert_input
   premier_rank_updated_at: timestamptz
   profile_url: String
+  quiet_hours_end: time
+  quiet_hours_start: time
   role: e_player_roles_enum
   roster_image_url: String
   sanctions: player_sanctions_arr_rel_insert_input
@@ -68365,6 +68857,7 @@ type players_max_fields {
   """
   matchmaking_cooldown: timestamptz
   name: String
+  notification_timezone: String
   premier_rank: Int
   premier_rank_updated_at: timestamptz
   profile_url: String
@@ -68453,6 +68946,7 @@ type players_min_fields {
   """
   matchmaking_cooldown: timestamptz
   name: String
+  notification_timezone: String
   premier_rank: Int
   premier_rank_updated_at: timestamptz
   profile_url: String
@@ -68577,6 +69071,7 @@ input players_order_by {
   multi_kills_aggregate: v_player_multi_kills_aggregate_order_by
   name: order_by
   name_registered: order_by
+  notification_timezone: order_by
   notifications_aggregate: notifications_aggregate_order_by
   objectives_aggregate: player_objectives_aggregate_order_by
   owned_teams_aggregate: teams_aggregate_order_by
@@ -68588,6 +69083,8 @@ input players_order_by {
   premier_rank_history_aggregate: player_premier_rank_history_aggregate_order_by
   premier_rank_updated_at: order_by
   profile_url: order_by
+  quiet_hours_end: order_by
+  quiet_hours_start: order_by
   role: order_by
   roster_image_url: order_by
   sanctions_aggregate: player_sanctions_aggregate_order_by
@@ -68677,6 +69174,9 @@ enum players_select_column {
   name_registered
 
   """column name"""
+  notification_timezone
+
+  """column name"""
   premier_rank
 
   """column name"""
@@ -68684,6 +69184,12 @@ enum players_select_column {
 
   """column name"""
   profile_url
+
+  """column name"""
+  quiet_hours_end
+
+  """column name"""
+  quiet_hours_start
 
   """column name"""
   role
@@ -68729,9 +69235,12 @@ input players_set_input {
   last_sign_in_at: timestamptz
   name: String
   name_registered: Boolean
+  notification_timezone: String
   premier_rank: Int
   premier_rank_updated_at: timestamptz
   profile_url: String
+  quiet_hours_end: time
+  quiet_hours_start: time
   role: e_player_roles_enum
   roster_image_url: String
   show_match_ready_modal: Boolean
@@ -68940,9 +69449,12 @@ input players_stream_cursor_value_input {
   last_sign_in_at: timestamptz
   name: String
   name_registered: Boolean
+  notification_timezone: String
   premier_rank: Int
   premier_rank_updated_at: timestamptz
   profile_url: String
+  quiet_hours_end: time
+  quiet_hours_start: time
   role: e_player_roles_enum
   roster_image_url: String
   show_match_ready_modal: Boolean
@@ -69067,6 +69579,9 @@ enum players_update_column {
   name_registered
 
   """column name"""
+  notification_timezone
+
+  """column name"""
   premier_rank
 
   """column name"""
@@ -69074,6 +69589,12 @@ enum players_update_column {
 
   """column name"""
   profile_url
+
+  """column name"""
+  quiet_hours_end
+
+  """column name"""
+  quiet_hours_start
 
   """column name"""
   role
@@ -69511,6 +70032,305 @@ type plugin_versions_var_samp_fields {
 """aggregate variance on columns"""
 type plugin_versions_variance_fields {
   min_game_build_id: Float
+}
+
+"""
+columns and relationships of "push_subscriptions"
+"""
+type push_subscriptions {
+  auth: String!
+  created_at: timestamptz!
+  endpoint: String!
+  id: uuid!
+  last_used_at: timestamptz
+  p256dh: String!
+  steam_id: bigint!
+  user_agent: String
+}
+
+"""
+aggregated selection of "push_subscriptions"
+"""
+type push_subscriptions_aggregate {
+  aggregate: push_subscriptions_aggregate_fields
+  nodes: [push_subscriptions!]!
+}
+
+"""
+aggregate fields of "push_subscriptions"
+"""
+type push_subscriptions_aggregate_fields {
+  avg: push_subscriptions_avg_fields
+  count(columns: [push_subscriptions_select_column!], distinct: Boolean): Int!
+  max: push_subscriptions_max_fields
+  min: push_subscriptions_min_fields
+  stddev: push_subscriptions_stddev_fields
+  stddev_pop: push_subscriptions_stddev_pop_fields
+  stddev_samp: push_subscriptions_stddev_samp_fields
+  sum: push_subscriptions_sum_fields
+  var_pop: push_subscriptions_var_pop_fields
+  var_samp: push_subscriptions_var_samp_fields
+  variance: push_subscriptions_variance_fields
+}
+
+"""aggregate avg on columns"""
+type push_subscriptions_avg_fields {
+  steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "push_subscriptions". All fields are combined with a logical 'AND'.
+"""
+input push_subscriptions_bool_exp {
+  _and: [push_subscriptions_bool_exp!]
+  _not: push_subscriptions_bool_exp
+  _or: [push_subscriptions_bool_exp!]
+  auth: String_comparison_exp
+  created_at: timestamptz_comparison_exp
+  endpoint: String_comparison_exp
+  id: uuid_comparison_exp
+  last_used_at: timestamptz_comparison_exp
+  p256dh: String_comparison_exp
+  steam_id: bigint_comparison_exp
+  user_agent: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "push_subscriptions"
+"""
+enum push_subscriptions_constraint {
+  """
+  unique or primary key constraint on columns "endpoint"
+  """
+  push_subscriptions_endpoint_key
+
+  """
+  unique or primary key constraint on columns "id"
+  """
+  push_subscriptions_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "push_subscriptions"
+"""
+input push_subscriptions_inc_input {
+  steam_id: bigint
+}
+
+"""
+input type for inserting data into table "push_subscriptions"
+"""
+input push_subscriptions_insert_input {
+  auth: String
+  created_at: timestamptz
+  endpoint: String
+  id: uuid
+  last_used_at: timestamptz
+  p256dh: String
+  steam_id: bigint
+  user_agent: String
+}
+
+"""aggregate max on columns"""
+type push_subscriptions_max_fields {
+  auth: String
+  created_at: timestamptz
+  endpoint: String
+  id: uuid
+  last_used_at: timestamptz
+  p256dh: String
+  steam_id: bigint
+  user_agent: String
+}
+
+"""aggregate min on columns"""
+type push_subscriptions_min_fields {
+  auth: String
+  created_at: timestamptz
+  endpoint: String
+  id: uuid
+  last_used_at: timestamptz
+  p256dh: String
+  steam_id: bigint
+  user_agent: String
+}
+
+"""
+response of any mutation on the table "push_subscriptions"
+"""
+type push_subscriptions_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [push_subscriptions!]!
+}
+
+"""
+on_conflict condition type for table "push_subscriptions"
+"""
+input push_subscriptions_on_conflict {
+  constraint: push_subscriptions_constraint!
+  update_columns: [push_subscriptions_update_column!]! = []
+  where: push_subscriptions_bool_exp
+}
+
+"""Ordering options when selecting data from "push_subscriptions"."""
+input push_subscriptions_order_by {
+  auth: order_by
+  created_at: order_by
+  endpoint: order_by
+  id: order_by
+  last_used_at: order_by
+  p256dh: order_by
+  steam_id: order_by
+  user_agent: order_by
+}
+
+"""primary key columns input for table: push_subscriptions"""
+input push_subscriptions_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "push_subscriptions"
+"""
+enum push_subscriptions_select_column {
+  """column name"""
+  auth
+
+  """column name"""
+  created_at
+
+  """column name"""
+  endpoint
+
+  """column name"""
+  id
+
+  """column name"""
+  last_used_at
+
+  """column name"""
+  p256dh
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  user_agent
+}
+
+"""
+input type for updating data in table "push_subscriptions"
+"""
+input push_subscriptions_set_input {
+  auth: String
+  created_at: timestamptz
+  endpoint: String
+  id: uuid
+  last_used_at: timestamptz
+  p256dh: String
+  steam_id: bigint
+  user_agent: String
+}
+
+"""aggregate stddev on columns"""
+type push_subscriptions_stddev_fields {
+  steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type push_subscriptions_stddev_pop_fields {
+  steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type push_subscriptions_stddev_samp_fields {
+  steam_id: Float
+}
+
+"""
+Streaming cursor of the table "push_subscriptions"
+"""
+input push_subscriptions_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: push_subscriptions_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input push_subscriptions_stream_cursor_value_input {
+  auth: String
+  created_at: timestamptz
+  endpoint: String
+  id: uuid
+  last_used_at: timestamptz
+  p256dh: String
+  steam_id: bigint
+  user_agent: String
+}
+
+"""aggregate sum on columns"""
+type push_subscriptions_sum_fields {
+  steam_id: bigint
+}
+
+"""
+update columns of table "push_subscriptions"
+"""
+enum push_subscriptions_update_column {
+  """column name"""
+  auth
+
+  """column name"""
+  created_at
+
+  """column name"""
+  endpoint
+
+  """column name"""
+  id
+
+  """column name"""
+  last_used_at
+
+  """column name"""
+  p256dh
+
+  """column name"""
+  steam_id
+
+  """column name"""
+  user_agent
+}
+
+input push_subscriptions_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: push_subscriptions_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: push_subscriptions_set_input
+
+  """filter the rows which have to be updated"""
+  where: push_subscriptions_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type push_subscriptions_var_pop_fields {
+  steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type push_subscriptions_var_samp_fields {
+  steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type push_subscriptions_variance_fields {
+  steam_id: Float
 }
 
 type query_root {
@@ -74099,6 +74919,51 @@ type query_root {
   """fetch data from the table: "news_articles" using primary key columns"""
   news_articles_by_pk(id: uuid!): news_articles
 
+  """
+  fetch data from the table: "notification_preferences"
+  """
+  notification_preferences(
+    """distinct select on columns"""
+    distinct_on: [notification_preferences_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [notification_preferences_order_by!]
+
+    """filter the rows returned"""
+    where: notification_preferences_bool_exp
+  ): [notification_preferences!]!
+
+  """
+  fetch aggregated fields from the table: "notification_preferences"
+  """
+  notification_preferences_aggregate(
+    """distinct select on columns"""
+    distinct_on: [notification_preferences_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [notification_preferences_order_by!]
+
+    """filter the rows returned"""
+    where: notification_preferences_bool_exp
+  ): notification_preferences_aggregate!
+
+  """
+  fetch data from the table: "notification_preferences" using primary key columns
+  """
+  notification_preferences_by_pk(channel: String!, key: String!, steam_id: bigint!): notification_preferences
+
   """An array relationship"""
   notifications(
     """distinct select on columns"""
@@ -75366,6 +76231,51 @@ type query_root {
 
   """fetch data from the table: "plugin_versions" using primary key columns"""
   plugin_versions_by_pk(runtime: e_plugin_runtimes_enum!, version: String!): plugin_versions
+
+  """
+  fetch data from the table: "push_subscriptions"
+  """
+  push_subscriptions(
+    """distinct select on columns"""
+    distinct_on: [push_subscriptions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [push_subscriptions_order_by!]
+
+    """filter the rows returned"""
+    where: push_subscriptions_bool_exp
+  ): [push_subscriptions!]!
+
+  """
+  fetch aggregated fields from the table: "push_subscriptions"
+  """
+  push_subscriptions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [push_subscriptions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [push_subscriptions_order_by!]
+
+    """filter the rows returned"""
+    where: push_subscriptions_bool_exp
+  ): push_subscriptions_aggregate!
+
+  """
+  fetch data from the table: "push_subscriptions" using primary key columns
+  """
+  push_subscriptions_by_pk(id: uuid!): push_subscriptions
 
   """Read file content from game server"""
   readServerFile(file_path: String!, node_id: String!, server_id: String): FileContentResponse!
@@ -77909,6 +78819,11 @@ type query_root {
     """filter the rows returned"""
     where: v_tournament_player_stats_bool_exp
   ): v_tournament_player_stats_aggregate!
+
+  """
+  Web push setup status for the application settings page; never returns the private key
+  """
+  webPushStatus: WebPushStatusOutput
 }
 
 input recalculate_tournament_awards_args {
@@ -86292,6 +87207,65 @@ type subscription_root {
     where: news_articles_bool_exp
   ): [news_articles!]!
 
+  """
+  fetch data from the table: "notification_preferences"
+  """
+  notification_preferences(
+    """distinct select on columns"""
+    distinct_on: [notification_preferences_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [notification_preferences_order_by!]
+
+    """filter the rows returned"""
+    where: notification_preferences_bool_exp
+  ): [notification_preferences!]!
+
+  """
+  fetch aggregated fields from the table: "notification_preferences"
+  """
+  notification_preferences_aggregate(
+    """distinct select on columns"""
+    distinct_on: [notification_preferences_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [notification_preferences_order_by!]
+
+    """filter the rows returned"""
+    where: notification_preferences_bool_exp
+  ): notification_preferences_aggregate!
+
+  """
+  fetch data from the table: "notification_preferences" using primary key columns
+  """
+  notification_preferences_by_pk(channel: String!, key: String!, steam_id: bigint!): notification_preferences
+
+  """
+  fetch data from the table in a streaming manner: "notification_preferences"
+  """
+  notification_preferences_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [notification_preferences_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: notification_preferences_bool_exp
+  ): [notification_preferences!]!
+
   """An array relationship"""
   notifications(
     """distinct select on columns"""
@@ -87979,6 +88953,65 @@ type subscription_root {
     """filter the rows returned"""
     where: plugin_versions_bool_exp
   ): [plugin_versions!]!
+
+  """
+  fetch data from the table: "push_subscriptions"
+  """
+  push_subscriptions(
+    """distinct select on columns"""
+    distinct_on: [push_subscriptions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [push_subscriptions_order_by!]
+
+    """filter the rows returned"""
+    where: push_subscriptions_bool_exp
+  ): [push_subscriptions!]!
+
+  """
+  fetch aggregated fields from the table: "push_subscriptions"
+  """
+  push_subscriptions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [push_subscriptions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [push_subscriptions_order_by!]
+
+    """filter the rows returned"""
+    where: push_subscriptions_bool_exp
+  ): push_subscriptions_aggregate!
+
+  """
+  fetch data from the table: "push_subscriptions" using primary key columns
+  """
+  push_subscriptions_by_pk(id: uuid!): push_subscriptions
+
+  """
+  fetch data from the table in a streaming manner: "push_subscriptions"
+  """
+  push_subscriptions_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [push_subscriptions_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: push_subscriptions_bool_exp
+  ): [push_subscriptions!]!
 
   """
   fetch data from the table: "seasons"
@@ -95701,6 +96734,23 @@ order by variance() on columns of table "teams"
 input teams_variance_order_by {
   captain_steam_id: order_by
   owner_steam_id: order_by
+}
+
+scalar time
+
+"""
+Boolean expression to compare columns of type "time". All fields are combined with logical 'AND'.
+"""
+input time_comparison_exp {
+  _eq: time
+  _gt: time
+  _gte: time
+  _in: [time!]
+  _is_null: Boolean
+  _lt: time
+  _lte: time
+  _neq: time
+  _nin: [time!]
 }
 
 scalar timestamp

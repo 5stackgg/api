@@ -4,11 +4,18 @@ import { PostgresModule } from "src/postgres/postgres.module";
 import { SystemModule } from "src/system/system.module";
 import { S3Module } from "src/s3/s3.module";
 import { loggerFactory } from "src/utilities/LoggerFactory";
+import { NotificationsModule } from "src/notifications/notifications.module";
 import { NewsService } from "./news.service";
 import { NewsController } from "./news.controller";
 
 @Module({
-  imports: [HasuraModule, PostgresModule, SystemModule, S3Module],
+  imports: [
+    HasuraModule,
+    PostgresModule,
+    SystemModule,
+    S3Module,
+    NotificationsModule,
+  ],
   controllers: [NewsController],
   providers: [NewsService, loggerFactory()],
   exports: [NewsService],

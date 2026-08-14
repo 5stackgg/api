@@ -267,4 +267,100 @@ describe("match options locks (SQL-driven)", () => {
     );
     expect(remaining.length).toBe(0);
   });
+
+  // clone_match_options and update_match_options_best_of both used to carry a
+  // hand-maintained column list, and both silently dropped every setting added
+  // after they were written (round_restart_delay, halftime_pausematch,
+  // auto_cancellation, ...) — a tournament would generate matches that ignored
+  // its own options. Assert against the live column list so a new column that
+  // stops round-tripping fails here rather than in production.
+  describe("clone_match_options copies every column", () => {
+    const columnsToCompare = async () => {
+      const rows = await postgres.query<Array<{ column_name: string }>>(
+        `SELECT column_name
+         FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND table_name = 'match_options'
+           AND column_name <> 'id'
+         ORDER BY column_name`,
+      );
+
+      return rows.map((row) => row.column_name);
+    };
+
+    // Push every column off its default so a clone that drops one produces a
+    // visibly different value instead of coincidentally matching.
+    const createDivergentOptions = async () => {
+      const { poolId } = await createPool(0);
+      const optionsId = await fx.matchOptions({ mapPoolId: poolId });
+
+      await postgres.query(
+        `UPDATE match_options SET
+           overtime = NOT overtime,
+           knife_round = NOT knife_round,
+           coaches = NOT coaches,
+           map_veto = NOT map_veto,
+           region_veto = NOT region_veto,
+           default_models = NOT default_models,
+           prefer_dedicated_server = NOT prefer_dedicated_server,
+           halftime_pausematch = NOT halftime_pausematch,
+           camera_required = NOT camera_required,
+           auto_cancellation = NOT auto_cancellation,
+           number_of_substitutes = 3,
+           round_restart_delay = 17,
+           tv_delay = 42,
+           veto_pick_timeout = 33,
+           auto_cancel_duration = 11,
+           live_match_timeout = 22,
+           match_mode = 'admin',
+           timeout_setting = 'Admin',
+           tech_timeout_setting = 'Admin',
+           ready_setting = 'Captains',
+           check_in_setting = 'Captains'
+         WHERE id = $1`,
+        [optionsId],
+      );
+
+      return optionsId;
+    };
+
+    const readOptions = async (optionsId: string, columns: Array<string>) => {
+      const [row] = await postgres.query<Array<Record<string, unknown>>>(
+        `SELECT ${columns.join(", ")} FROM match_options WHERE id = $1`,
+        [optionsId],
+      );
+
+      return row;
+    };
+
+    it("round-trips through clone_match_options", async () => {
+      const columns = await columnsToCompare();
+      const optionsId = await createDivergentOptions();
+
+      const [{ clone_match_options: clonedId }] = await postgres.query<
+        Array<{ clone_match_options: string }>
+      >("SELECT clone_match_options($1)", [optionsId]);
+
+      expect(clonedId).toBeTruthy();
+      expect(await readOptions(clonedId, columns)).toEqual(
+        await readOptions(optionsId, columns),
+      );
+    });
+
+    it("round-trips through clone_match_options_with_best_of, changing only best_of", async () => {
+      const columns = await columnsToCompare();
+      const optionsId = await createDivergentOptions();
+
+      const [{ clone_match_options_with_best_of: clonedId }] =
+        await postgres.query<
+          Array<{ clone_match_options_with_best_of: string }>
+        >("SELECT clone_match_options_with_best_of($1, 3)", [optionsId]);
+
+      const source = await readOptions(optionsId, columns);
+      const clone = await readOptions(clonedId, columns);
+
+      expect(clone.best_of).toBe(3);
+      expect({ ...clone, best_of: source.best_of }).toEqual(source);
+    });
+  });
 });

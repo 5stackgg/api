@@ -35,7 +35,7 @@ export class TelemetryService {
       setting: "auto_generate_match_clips_imported",
       defaultEnabled: false,
     },
-    clip_branding: { setting: "clip_bake_branding", defaultEnabled: false },
+    clip_branding: { setting: "clip_bake_branding", defaultEnabled: true },
     leagues: { setting: "public.leagues_enabled", defaultEnabled: false },
     seasons: { setting: "public.seasons_enabled", defaultEnabled: false },
     events: { setting: "public.events_enabled", defaultEnabled: false },

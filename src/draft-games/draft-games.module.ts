@@ -6,6 +6,7 @@ import { HasuraModule } from "src/hasura/hasura.module";
 import { RedisModule } from "src/redis/redis.module";
 import { CacheModule } from "src/cache/cache.module";
 import { ChatModule } from "src/chat/chat.module";
+import { NotificationsModule } from "../notifications/notifications.module";
 import { MatchesModule } from "src/matches/matches.module";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { BullBoardModule } from "@bull-board/nestjs";
@@ -25,6 +26,7 @@ import { CleanExpiredDraftGames } from "./jobs/CleanExpiredDraftGames";
     HasuraModule,
     CacheModule,
     ChatModule,
+    NotificationsModule,
     forwardRef(() => MatchesModule),
     BullModule.registerQueue({
       name: DraftGameQueues.DraftGames,

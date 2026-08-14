@@ -201,6 +201,10 @@ export class SocketsService {
     );
   }
 
+  // Every client on this pod. Callers almost always want every client
+  // *everywhere* -- see broadcastToCluster. This stays public because the
+  // pub/sub subscriber above is what turns a cluster broadcast into these
+  // local sends on each pod.
   public async broadcastMessage(event: string, data: unknown) {
     for (const client of Array.from(this.clients.values())) {
       client.send(
@@ -210,6 +214,17 @@ export class SocketsService {
         }),
       );
     }
+  }
+
+  // Every client on every pod. A direct broadcastMessage call reaches only the
+  // sockets attached to whichever pod happens to run the code, which on a
+  // multi-pod deployment silently drops the message for most of the users it
+  // was meant for.
+  public async broadcastToCluster(event: string, data: unknown) {
+    await this.redis.publish(
+      "broadcast-message",
+      JSON.stringify({ event, data }),
+    );
   }
 
   public async sendMessageToClient(

@@ -9,7 +9,7 @@ import { SocketsService } from "./sockets.service";
 import { GameStreamerModule } from "src/matches/game-streamer/game-streamer.module";
 
 @Module({
-  exports: [],
+  exports: [SocketsService],
   imports: [RedisModule, MatchMaking, HasuraModule, GameStreamerModule],
   providers: [SocketsGateway, loggerFactory(), SocketsService],
   controllers: [SocketsController],

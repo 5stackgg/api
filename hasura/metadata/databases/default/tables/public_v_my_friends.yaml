@@ -30,6 +30,7 @@ select_permissions:
         - avatar_url
         - country
         - created_at
+        - custom_avatar_url
         - discord_id
         - elo
         - invited_by_steam_id

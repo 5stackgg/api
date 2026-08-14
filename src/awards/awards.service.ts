@@ -9,6 +9,7 @@ import {
 } from "@nestjs/common";
 import { S3Service } from "../s3/s3.service";
 import { PostgresService } from "../postgres/postgres.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { User } from "../auth/types/User";
 
 const EXTENSION_BY_MIMETYPE: Record<string, string> = {
@@ -65,6 +66,7 @@ export class AwardsService {
     private readonly logger: Logger,
     private readonly s3: S3Service,
     private readonly postgres: PostgresService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   public async listAwards(): Promise<AwardRow[]> {
@@ -222,10 +224,62 @@ export class AwardsService {
     );
 
     if (input.team_id) {
-      await this.grantToRoster(input, tournamentTeamId);
+      // grantToRoster inserts the roster in one statement rather than looping
+      // back through here, so a team grant has to be notified from its own
+      // returned rows.
+      const roster = await this.grantToRoster(input, tournamentTeamId);
+
+      void this.notifyAwarded(
+        roster.map((recipient) => recipient.player_steam_id),
+        input.award_id,
+        granted.id,
+      );
+    }
+
+    if (input.player_steam_id) {
+      void this.notifyAwarded(
+        [input.player_steam_id],
+        input.award_id,
+        granted.id,
+      );
     }
 
     return granted;
+  }
+
+  // The whole roster in one call: the only per-recipient part of this message
+  // is who receives it, so the grant is looked up once and notifyPlayers is
+  // handed every steam id rather than being called per player.
+  private async notifyAwarded(
+    steamIds: string[],
+    awardId: string,
+    recipientId: string,
+  ) {
+    if (steamIds.length === 0) {
+      return;
+    }
+
+    try {
+      const [award] = await this.postgres.query<Array<{ name: string }>>(
+        `SELECT name FROM public.awards WHERE id = $1::uuid`,
+        [awardId],
+      );
+
+      await this.notifications.notifyPlayers("AwardGranted", {
+        title: "Award Received",
+        message: `You were awarded <b>${NotificationsService.escapeHtml(
+          award?.name ?? "an award",
+        )}</b>.`,
+        role: "user",
+        entity_id: recipientId,
+        steamIds,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `unable to notify ${steamIds.join(", ")} of award ${awardId}`,
+        error,
+      );
+    }
   }
 
   public assertSingleScope(input: {
@@ -530,8 +584,13 @@ export class AwardsService {
   private async grantToRoster(
     input: GrantAwardInput,
     tournamentTeamId: string | null,
-  ): Promise<void> {
-    await this.postgres.query(
+  ): Promise<Array<{ id: string; player_steam_id: string }>> {
+    // RETURNING, so only the players who actually received the award are
+    // notified -- the NOT EXISTS below skips anyone who already held it, and
+    // re-notifying them would be a lie.
+    return await this.postgres.query<
+      Array<{ id: string; player_steam_id: string }>
+    >(
       `INSERT INTO public.award_recipients
           (award_id, player_steam_id, tournament_id, tournament_team_id,
            event_id, season_id, league_season_id,
@@ -548,7 +607,8 @@ export class AwardsService {
                 AND held.event_id IS NOT DISTINCT FROM $4
                 AND held.season_id IS NOT DISTINCT FROM $5
                 AND held.league_season_id IS NOT DISTINCT FROM $6
-           )`,
+           )
+        RETURNING id, player_steam_id::text AS player_steam_id`,
       [
         input.award_id,
         input.tournament_id ?? null,

@@ -42,6 +42,10 @@ async function bootstrap() {
 
   app.useBodyParser("json", { limit: "50mb" });
   app.useBodyParser("urlencoded", { limit: "50mb", extended: true });
+  // WHIP/WHEP offers. Parsing them here rather than draining the stream inside
+  // the handler is what makes a request that arrives under some other content
+  // type a 400 instead of a socket waiting on an `end` that already fired.
+  app.useBodyParser("text", { type: "application/sdp", limit: "256kb" });
 
   if (process.env.RUN_MIGRATIONS || process.env.DEV) {
     const hasura = app.get(HasuraService);
@@ -80,7 +84,7 @@ async function bootstrap() {
   ];
 
   if (process.env.DEV) {
-    allowedOrigins.push("http://localhost:3000", "http://0.0.0.0:3000", "http://localhost:3001", "http://0.0.0.0:3001");
+    allowedOrigins.push("http://localhost:3000", "http://0.0.0.0:3000", "http://localhost:3002", "http://0.0.0.0:3002");
   }
 
   app.enableCors({

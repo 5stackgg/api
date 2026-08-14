@@ -149,6 +149,22 @@ actions:
     permissions:
       - role: streamer
     comment: Dev-only — attach the demo player to a standing dev game-streamer pod (no Job boot)
+  - name: webPushStatus
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Web push setup status for the application settings page; never returns the private key
+  - name: generateWebPushKeys
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Generates a fresh self-signed VAPID keypair; invalidates every existing subscription
   - name: bakeShaders
     definition:
       kind: synchronous
@@ -1318,6 +1334,8 @@ custom_types:
           source: default
           type: object
     - name: SuccessOutput
+    - name: WebPushStatusOutput
+    - name: WebPushKeysOutput
     - name: ScanStartedOutput
     - name: OrphanObject
     - name: OrphanScanResultOutput

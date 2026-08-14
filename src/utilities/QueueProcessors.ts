@@ -30,7 +30,8 @@ type Modules =
   | "SteamMatchHistory"
   | "Faceit"
   | "S3Scan"
-  | "Scrims";
+  | "Scrims"
+  | "Voice";
 
 export type UseQueueOptions = {
   concurrency?: number;

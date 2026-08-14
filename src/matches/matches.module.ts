@@ -38,6 +38,8 @@ import { CheckForScheduledTournamentBrackets } from "./jobs/CheckForScheduledTou
 import { CheckLeagueSeasonTransitions } from "./jobs/CheckLeagueSeasonTransitions";
 import { ApplyLeagueDefaultSchedules } from "./jobs/ApplyLeagueDefaultSchedules";
 import { LeagueWeekReminders } from "./jobs/LeagueWeekReminders";
+import { TournamentReminders } from "./jobs/TournamentReminders";
+import { EventReminders } from "./jobs/EventReminders";
 import { EncryptionModule } from "../encryption/encryption.module";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
@@ -45,6 +47,7 @@ import { SocketsModule } from "../sockets/sockets.module";
 import { CleanAbandonedMatches } from "./jobs/CleanAbandonedMatches";
 import { ReapIdleDemoSessions } from "./jobs/ReapIdleDemoSessions";
 import { PollMediaMtxViewers } from "./jobs/PollMediaMtxViewers";
+import { MonitorMatchCameras } from "./jobs/MonitorMatchCameras";
 import { MatchMaking } from "src/matchmaking/matchmaking.module";
 import { MatchEventsGateway } from "./match-events.gateway";
 import { PostgresModule } from "src/postgres/postgres.module";
@@ -68,10 +71,15 @@ import { DemosModule } from "../demos/demos.module";
 import { ClipsModule } from "./clips/clips.module";
 import { SteamMatchHistoryModule } from "../steam-match-history/steam-match-history.module";
 import { LeaguesModule } from "../leagues/leagues.module";
+import { MediaMtxModule } from "../mediamtx/mediamtx.module";
+import { CameraController } from "./camera/camera.controller";
+import { CameraService } from "./camera/camera.service";
+import { CameraMonitorService } from "./camera/camera-monitor.service";
 
 @Module({
   imports: [
     HasuraModule,
+    MediaMtxModule,
     forwardRef(() => RconModule),
     CacheModule,
     RedisModule,
@@ -149,12 +157,14 @@ import { LeaguesModule } from "../leagues/leagues.module";
       },
     ),
   ],
-  controllers: [MatchesController, MatchRelayController],
+  controllers: [MatchesController, MatchRelayController, CameraController],
   exports: [MatchAssistantService, PlayerEloRecomputeService],
   providers: [
     MatchEventsGateway,
     MatchAssistantService,
     MatchRelayService,
+    CameraService,
+    CameraMonitorService,
     CheckOnDemandServerJob,
     CheckOnDemandServerJobEvents,
     CancelExpiredMatches,
@@ -164,6 +174,8 @@ import { LeaguesModule } from "../leagues/leagues.module";
     CheckLeagueSeasonTransitions,
     ApplyLeagueDefaultSchedules,
     LeagueWeekReminders,
+    TournamentReminders,
+    EventReminders,
     CheckForScheduledMatches,
     RemoveCancelledMatches,
     StopOnDemandServer,
@@ -171,6 +183,7 @@ import { LeaguesModule } from "../leagues/leagues.module";
     CleanAbandonedMatches,
     ReapIdleDemoSessions,
     PollMediaMtxViewers,
+    MonitorMatchCameras,
     EloCalculation,
     RecomputeAllElo,
     PlayerEloRecomputeService,
@@ -229,6 +242,29 @@ export class MatchesModule implements NestModule {
       {
         repeat: {
           pattern: "30 * * * *",
+        },
+      },
+    );
+
+    // Hourly: both windows here are days wide, unlike the tournament 2h one.
+    void scheduleMatchQueue.add(
+      EventReminders.name,
+      {},
+      {
+        repeat: {
+          pattern: "15 * * * *",
+        },
+      },
+    );
+
+    // More often than the reminders above, because the 2h window is far
+    // tighter than their day-wide ones.
+    void scheduleMatchQueue.add(
+      TournamentReminders.name,
+      {},
+      {
+        repeat: {
+          pattern: "*/5 * * * *",
         },
       },
     );
@@ -323,6 +359,18 @@ export class MatchesModule implements NestModule {
       {
         repeat: {
           every: 30_000,
+        },
+      },
+    );
+
+    // Faster than the viewer poll: this one decides whether a live match keeps
+    // playing, and the grace window is only 30s.
+    void scheduleMatchQueue.add(
+      MonitorMatchCameras.name,
+      {},
+      {
+        repeat: {
+          every: 10_000,
         },
       },
     );

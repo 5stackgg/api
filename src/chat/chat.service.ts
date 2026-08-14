@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { Injectable, Logger } from "@nestjs/common";
 import { User } from "../auth/types/User";
 import Redis from "ioredis";
@@ -8,23 +9,40 @@ import { FiveStackWebSocketClient } from "src/sockets/types/FiveStackWebSocketCl
 import { ChatLobbyType } from "./enums/ChatLobbyTypes";
 import { e_player_roles_enum } from "generated/schema";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
+import { NotificationsService } from "src/notifications/notifications.service";
+import { parseDirectRoomId } from "./utilities/directRoomId";
 @Injectable()
 export class ChatService {
   private redis: Redis;
 
   private expiresIn = 60 * 60;
 
+  // A direct message is a conversation, not lobby chatter -- losing it after an
+  // hour would make DMs useless. Only this type gets the longer window; raising
+  // the shared one would hold a day of every match, tournament and draft room
+  // in redis for the sake of DMs.
+  private directExpiresIn = 60 * 60 * 24 * 30;
+
   constructor(
     private readonly logger: Logger,
     private readonly rcon: RconService,
     private readonly hasuraService: HasuraService,
     private readonly redisManager: RedisManagerService,
+    private readonly notifications: NotificationsService,
   ) {
     this.redis = this.redisManager.getConnection();
   }
 
   public async updateChatMessageTTL(expiresIn: number) {
     this.expiresIn = expiresIn;
+  }
+
+  public async updateDirectChatMessageTTL(expiresIn: number) {
+    this.directExpiresIn = expiresIn;
+  }
+
+  private ttlFor(type: ChatLobbyType): number {
+    return type === ChatLobbyType.Direct ? this.directExpiresIn : this.expiresIn;
   }
 
   public async joinMatchLobby(
@@ -197,6 +215,52 @@ export class ChatService {
         }
 
         break;
+      case ChatLobbyType.Direct: {
+        const parties = parseDirectRoomId(id);
+
+        if (!parties || !parties.includes(String(user.steam_id))) {
+          return;
+        }
+
+        // Being one of the two parties is not on its own an authorization:
+        // anyone can build the id for any pair of steam ids, since it is just
+        // their sorted pair. The friendship is the only thing standing between
+        // this and unsolicited messages from strangers.
+        //
+        // No administrator bypass, unlike Draft/Organizer above -- those are
+        // group rooms an organizer runs, this is a private conversation.
+        const otherSteamId = parties.find(
+          (party) => party !== String(user.steam_id),
+        );
+
+        const { friends } = await this.hasuraService.query({
+          friends: {
+            __args: {
+              where: {
+                status: { _eq: "Accepted" },
+                _or: [
+                  {
+                    player_steam_id: { _eq: user.steam_id },
+                    other_player_steam_id: { _eq: otherSteamId },
+                  },
+                  {
+                    player_steam_id: { _eq: otherSteamId },
+                    other_player_steam_id: { _eq: user.steam_id },
+                  },
+                ],
+              },
+              limit: 1,
+            },
+            status: true,
+          },
+        });
+
+        if (friends.length === 0) {
+          return;
+        }
+
+        break;
+      }
       default:
         this.logger.warn(`Unknown lobby type: ${type}`);
         return;
@@ -386,6 +450,9 @@ export class ChatService {
 
     const timestamp = new Date();
     const message = {
+      // Both the history snapshot sent on join and the live broadcast carry the
+      // message, so clients need something stable to recognize it by.
+      id: randomUUID(),
       message: _message,
       timestamp: timestamp.toISOString(),
       from: {
@@ -398,13 +465,15 @@ export class ChatService {
     };
 
     const messageKey = `chat_${type}_${id}`;
-    const messageField = `${player.steam_id}:${Date.now().toString()}`;
+    // Keyed by id and not `${steam_id}:${now}`, which silently dropped a
+    // message when the same player landed two within the same millisecond.
+    const messageField = message.id;
     await this.redis.hset(messageKey, messageField, JSON.stringify(message));
 
     await this.redis.sendCommand(
       new Redis.Command("HEXPIRE", [
         messageKey,
-        this.expiresIn,
+        this.ttlFor(type),
         "FIELDS",
         1,
         messageField,
@@ -412,6 +481,392 @@ export class ChatService {
     );
 
     void this.to(type, id, "chat", message);
+
+    if (type === ChatLobbyType.Direct) {
+      void this.deliverDirectMessage(id, player, message);
+    }
+
+    // Best effort, and never allowed to take a message delivery down with it.
+    void this.notifyLobbyMembers(
+      type,
+      id,
+      player,
+      message.from.name,
+      _message,
+    ).catch(
+      (error) => {
+        this.logger.warn(`unable to notify ${type}:${id} of a message`, error);
+      },
+    );
+  }
+
+  // Deliberately does NOT skip members who are "present" in the lobby.
+  //
+  // The presence hash tracks whether a client holds an open socket to the room,
+  // which is tied to the chat widget's mount lifecycle rather than to anyone
+  // actually reading it -- on a match page the connection outlives the panel
+  // being open. Filtering on it silently suppressed the notification for anyone
+  // who had merely visited the page earlier, which is the whole audience it
+  // exists for. An occasional redundant notification while actively chatting is
+  // the cheaper mistake.
+  private async notifyLobbyMembers(
+    type: ChatLobbyType,
+    id: string,
+    sender: User,
+    senderName: string,
+    message: string,
+  ) {
+    const members = await this.getLobbyMemberSteamIds(type, id);
+    const senderSteamId = String(sender.steam_id);
+
+    const targets = members.filter((steamId) => steamId !== senderSteamId);
+
+    if (targets.length === 0) {
+      return;
+    }
+
+    const entityId = `${type}:${id}`;
+
+    await this.notifications.notifyPlayers("ChatMessage", {
+      title: senderName,
+      message: NotificationsService.escapeHtml(
+        message.length > 140 ? `${message.slice(0, 140)}…` : message,
+      ),
+      role: "user",
+      entity_id: entityId,
+      steamIds: targets,
+    });
+
+    // Collapse to one unread bell row per conversation, and only after the
+    // insert above. Editing an existing row instead would produce no INSERT,
+    // and the INSERT is what the push event trigger fires on -- so the bell
+    // would be tidy and the phone would stay silent.
+    await this.notifications.collapseOlderUnread(
+      "ChatMessage",
+      entityId,
+      targets,
+    );
+  }
+
+  // The fixed roster of a lobby, as opposed to getAllUsersInLobby's "who is
+  // connected right now".
+  //
+  // Mirrors joinMatchLobby's authorization switch above -- that switch is the
+  // definition of who belongs in a room, so the two have to move together.
+  public async getLobbyMemberSteamIds(
+    type: ChatLobbyType,
+    id: string,
+  ): Promise<string[]> {
+    const steamIds = new Set<string>();
+    const add = (value: unknown) => {
+      if (value !== null && value !== undefined) {
+        steamIds.add(String(value));
+      }
+    };
+
+    switch (type) {
+      case ChatLobbyType.Match: {
+        const { matches_by_pk } = await this.hasuraService.query({
+          matches_by_pk: {
+            __args: { id },
+            organizer_steam_id: true,
+            lineup_1: {
+              coach_steam_id: true,
+              lineup_players: { steam_id: true },
+            },
+            lineup_2: {
+              coach_steam_id: true,
+              lineup_players: { steam_id: true },
+            },
+          },
+        });
+
+        if (!matches_by_pk) {
+          break;
+        }
+
+        add(matches_by_pk.organizer_steam_id);
+
+        for (const lineup of [matches_by_pk.lineup_1, matches_by_pk.lineup_2]) {
+          add(lineup?.coach_steam_id);
+          for (const lineupPlayer of lineup?.lineup_players ?? []) {
+            add(lineupPlayer.steam_id);
+          }
+        }
+
+        break;
+      }
+      case ChatLobbyType.MatchTeam: {
+        const [, lineupId] = id.split(":");
+
+        if (!lineupId) {
+          break;
+        }
+
+        const { match_lineups_by_pk } = await this.hasuraService.query({
+          match_lineups_by_pk: {
+            __args: { id: lineupId },
+            coach_steam_id: true,
+            lineup_players: { steam_id: true },
+          },
+        });
+
+        add(match_lineups_by_pk?.coach_steam_id);
+
+        for (const lineupPlayer of match_lineups_by_pk?.lineup_players ?? []) {
+          add(lineupPlayer.steam_id);
+        }
+
+        break;
+      }
+      case ChatLobbyType.MatchMaking: {
+        const { lobby_players } = await this.hasuraService.query({
+          lobby_players: {
+            __args: {
+              where: {
+                lobby_id: { _eq: id },
+                status: { _eq: "Accepted" },
+              },
+            },
+            steam_id: true,
+          },
+        });
+
+        for (const lobbyPlayer of lobby_players ?? []) {
+          add(lobbyPlayer.steam_id);
+        }
+
+        break;
+      }
+      case ChatLobbyType.Tournament: {
+        const { tournaments_by_pk } = await this.hasuraService.query({
+          tournaments_by_pk: {
+            __args: { id },
+            organizer_steam_id: true,
+            organizers: { steam_id: true },
+            teams: {
+              owner_steam_id: true,
+              roster: { player_steam_id: true },
+            },
+          },
+        });
+
+        add(tournaments_by_pk?.organizer_steam_id);
+
+        for (const organizer of tournaments_by_pk?.organizers ?? []) {
+          add(organizer.steam_id);
+        }
+
+        for (const team of tournaments_by_pk?.teams ?? []) {
+          add(team.owner_steam_id);
+          for (const roster of team.roster ?? []) {
+            add(roster.player_steam_id);
+          }
+        }
+
+        break;
+      }
+      case ChatLobbyType.Draft: {
+        const { draft_games_by_pk } = await this.hasuraService.query({
+          draft_games_by_pk: {
+            __args: { id },
+            host_steam_id: true,
+            players: {
+              steam_id: true,
+              status: true,
+              lineup: true,
+            },
+          },
+        });
+
+        add(draft_games_by_pk?.host_steam_id);
+
+        // Same predicate as canSendDraftMessage: a waitlisted backup seated in
+        // a lineup is playing, whatever their status still says.
+        for (const draftPlayer of draft_games_by_pk?.players ?? []) {
+          if (draftPlayer.status === "Accepted" || draftPlayer.lineup != null) {
+            add(draftPlayer.steam_id);
+          }
+        }
+
+        break;
+      }
+      case ChatLobbyType.Direct: {
+        for (const party of parseDirectRoomId(id) ?? []) {
+          add(party);
+        }
+
+        break;
+      }
+      default:
+        // Organizer membership is role-based rather than a fixed roster, and
+        // nothing ever opens a Team room. Neither has anyone to notify.
+        break;
+    }
+
+    return [...steamIds];
+  }
+
+  // `to()` only reaches steam ids currently sitting in the lobby hash, and the
+  // other side of a DM usually isn't -- they have no tab open for a
+  // conversation they don't know exists yet. So the recipient is addressed
+  // directly, which is what makes a first-contact message arrive at all.
+  private async deliverDirectMessage(
+    id: string,
+    sender: User,
+    message: Record<string, any>,
+  ) {
+    const parties = parseDirectRoomId(id);
+
+    if (!parties) {
+      return;
+    }
+
+    const now = Date.now();
+
+    for (const steamId of parties) {
+      // Newest-conversation-first ordering, so listing someone's DMs is one
+      // ZREVRANGE rather than a scan over every room they have ever opened.
+      await this.redis.zadd(ChatService.DIRECT_INDEX_KEY(steamId), now, id);
+      await this.redis.expire(
+        ChatService.DIRECT_INDEX_KEY(steamId),
+        this.directExpiresIn,
+      );
+
+      if (steamId === String(sender.steam_id)) {
+        continue;
+      }
+
+      await this.redis.publish(
+        "send-message-to-steam-id",
+        JSON.stringify({
+          steamId,
+          event: "direct:incoming",
+          data: {
+            roomId: id,
+            from: message.from,
+            message,
+          },
+        }),
+      );
+    }
+  }
+
+  private static DIRECT_INDEX_KEY(steamId: string) {
+    return `chat:direct:index:${steamId}`;
+  }
+
+  private static DIRECT_READ_KEY(steamId: string) {
+    return `chat:direct:read:${steamId}`;
+  }
+
+  // Server-side read state, so unread counts survive a reload instead of
+  // living only in the tab bar's memory.
+  public async markDirectRead(id: string, user: User) {
+    const parties = parseDirectRoomId(id);
+
+    if (!parties || !parties.includes(String(user.steam_id))) {
+      return;
+    }
+
+    await this.redis.hset(
+      ChatService.DIRECT_READ_KEY(user.steam_id),
+      id,
+      new Date().toISOString(),
+    );
+    await this.redis.expire(
+      ChatService.DIRECT_READ_KEY(user.steam_id),
+      this.directExpiresIn,
+    );
+
+    await this.notifications.markConversationRead(
+      "ChatMessage",
+      `${ChatLobbyType.Direct}:${id}`,
+      user.steam_id,
+    );
+  }
+
+  // Every conversation a player has, newest first, with the unread count each
+  // one carries.
+  public async getDirectConversations(user: User) {
+    const roomIds = await this.redis.zrevrange(
+      ChatService.DIRECT_INDEX_KEY(user.steam_id),
+      0,
+      99,
+    );
+
+    if (roomIds.length === 0) {
+      return [];
+    }
+
+    const readState = await this.redis.hgetall(
+      ChatService.DIRECT_READ_KEY(user.steam_id),
+    );
+
+    // One round trip for every room rather than one each: a player with a
+    // hundred threads was paying a hundred sequential awaits on page load.
+    const pipeline = this.redis.pipeline();
+
+    for (const roomId of roomIds) {
+      pipeline.hgetall(`chat_${ChatLobbyType.Direct}_${roomId}`);
+    }
+
+    const stored = await pipeline.exec();
+    const conversations = [];
+
+    for (const [index, roomId] of roomIds.entries()) {
+      const parties = parseDirectRoomId(roomId);
+
+      if (!parties) {
+        continue;
+      }
+
+      const [, hash] = stored?.[index] ?? [];
+      const raw = Object.values((hash as Record<string, string>) ?? {});
+
+      if (raw.length === 0) {
+        continue;
+      }
+
+      const peerSteamId = parties.find(
+        (party) => party !== String(user.steam_id),
+      );
+      const readAt = readState[roomId] ? new Date(readState[roomId]) : null;
+
+      let unread = 0;
+      let peer: { steam_id: string } | undefined;
+      // ISO strings, so the newest is also the largest.
+      let lastMessageAt: string | undefined;
+
+      for (const value of raw) {
+        const message = JSON.parse(value);
+        const from = String(message.from?.steam_id);
+
+        if (!peer && from === peerSteamId) {
+          peer = message.from;
+        }
+
+        if (
+          from !== String(user.steam_id) &&
+          (!readAt || new Date(message.timestamp) > readAt)
+        ) {
+          unread++;
+        }
+
+        if (!lastMessageAt || message.timestamp > lastMessageAt) {
+          lastMessageAt = message.timestamp;
+        }
+      }
+
+      conversations.push({
+        roomId,
+        unread,
+        peer: peer ?? { steam_id: peerSteamId },
+        lastMessageAt,
+      });
+    }
+
+    return conversations;
   }
 
   public async to(
@@ -707,7 +1162,7 @@ export class ChatService {
       await this.redis.sendCommand(
         new Redis.Command("HEXPIRE", [
           toKey,
-          this.expiresIn,
+          this.ttlFor(toType),
           "FIELDS",
           1,
           field,

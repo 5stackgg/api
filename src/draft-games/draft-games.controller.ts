@@ -118,11 +118,13 @@ export class DraftGamesController {
     user: User;
     draftGameId: string;
     steamId: string;
+    lineup?: number;
   }) {
     await this.draftGameService.addDraftPlayer(
       data.user,
       data.draftGameId,
       data.steamId,
+      data.lineup,
     );
     return { success: true };
   }

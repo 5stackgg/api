@@ -74,6 +74,14 @@ type Mutation {
   attachDemo: WatchDemoOutput
 }
 
+type Query {
+  webPushStatus: WebPushStatusOutput
+}
+
+type Mutation {
+  generateWebPushKeys: WebPushKeysOutput
+}
+
 type Mutation {
   bakeShaders(
     game_server_node_id: uuid!
@@ -979,6 +987,16 @@ type SuccessOutput {
   success: Boolean!
 }
 
+type WebPushStatusOutput {
+  configured: Boolean!
+  managed_by_environment: Boolean!
+  subscriptions: Int!
+}
+
+type WebPushKeysOutput {
+  success: Boolean!
+}
+
 type DraftGamePreviewPlayer {
   steam_id: String!
   name: String
@@ -1573,6 +1591,7 @@ type Mutation {
   addDraftPlayer(
     draftGameId: uuid!
     steamId: String!
+    lineup: Int
   ): SuccessOutput
 }
 

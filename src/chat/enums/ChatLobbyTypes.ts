@@ -9,4 +9,8 @@ export enum ChatLobbyType {
   Tournament = "tournament",
   Organizer = "organizers",
   Draft = "draft",
+  // A 1:1 private conversation. The id is the two participants' steam ids
+  // sorted ascending and joined with ":", so both sides derive the same room
+  // with no lookup and no row to allocate. See utilities/directRoomId.ts.
+  Direct = "direct",
 }

@@ -4,6 +4,7 @@ import { Readable } from "node:stream";
 import { e_player_roles_enum } from "generated/schema";
 import { HasuraService } from "../../hasura/hasura.service";
 import { PostgresService } from "../../postgres/postgres.service";
+import { NotificationsService } from "../../notifications/notifications.service";
 import { S3Service } from "../../s3/s3.service";
 import { GameStreamerService } from "../game-streamer/game-streamer.service";
 import { SteamAccountService } from "../game-streamer/steam-account.service";
@@ -39,6 +40,7 @@ export class ClipsService {
     private readonly redisManager: RedisManagerService,
     @InjectQueue(MatchQueues.Clips)
     private readonly batchQueue: Queue,
+    private readonly notifications: NotificationsService,
   ) {}
 
   public static GetClipS3Key(userSteamId: string, jobId: string) {
@@ -1528,6 +1530,43 @@ export class ClipsService {
         id: true,
       },
     });
+
+    if (!isBoot && body.status === "completed") {
+      // Renders take minutes and people navigate away, so the finish is the
+      // whole reason to notify at all.
+      void this.notifyClipReady(jobId);
+    }
+  }
+
+  private async notifyClipReady(jobId: string) {
+    try {
+      const [job] = await this.postgres.query<
+        Array<{ user_steam_id: string; match_id: string | null }>
+      >(
+        `SELECT crj.user_steam_id::text AS user_steam_id,
+                mm.match_id::text AS match_id
+           FROM public.clip_render_jobs crj
+      LEFT JOIN public.match_maps mm ON mm.id = crj.match_map_id
+          WHERE crj.id = $1::uuid`,
+        [jobId],
+      );
+
+      if (!job?.user_steam_id) {
+        return;
+      }
+
+      await this.notifications.notifyPlayers("ClipReady", {
+        title: "Clip Ready",
+        message: job.match_id
+          ? `Your clip is ready. <a href="/matches/${job.match_id}">View Match</a>`
+          : "Your clip is ready to watch.",
+        role: "user",
+        entity_id: jobId,
+        steamIds: [job.user_steam_id],
+      });
+    } catch (error) {
+      this.logger.warn(`unable to notify of finished clip ${jobId}`, error);
+    }
   }
 
   private async resolveClipRound(

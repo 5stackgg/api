@@ -7,6 +7,7 @@ import { ClipsService } from "../matches/clips/clips.service";
 import { User } from "../auth/types/User";
 import { DiscordTournamentVoiceService } from "../discord-bot/discord-tournament-voice/discord-tournament-voice.service";
 import { tournaments_set_input } from "../../generated";
+import { NotificationsService } from "../notifications/notifications.service";
 
 // These tables are newer than the generated GraphQL types; event payloads are
 // typed locally (mirrors the leagues controller).
@@ -29,12 +30,45 @@ export class TournamentsController {
     private readonly demoMetadata: DemoMetadataService,
     private readonly clips: ClipsService,
     private readonly tournamentVoice: DiscordTournamentVoiceService,
+    private readonly notifications: NotificationsService,
   ) {}
+
+  private async announceRegistrationOpen(
+    tournamentId: string,
+    tournament: tournaments_set_input,
+  ) {
+    try {
+      const name = NotificationsService.escapeHtml(
+        (tournament.name as string) ?? "A tournament",
+      );
+
+      await this.notifications.notifyActivePlayers("TournamentCreated", {
+        title: "New tournament",
+        message: `<a href="/tournaments/${tournamentId}"><b>${name}</b></a> is open for signups.`,
+        entity_id: tournamentId,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `[${tournamentId}] unable to announce open registration`,
+        error,
+      );
+    }
+  }
 
   @HasuraEvent()
   public async tournament_events(data: HasuraEventData<tournaments_set_input>) {
     const tournamentId = (data.new.id || data.old.id) as string;
     const status = data.new.status as string;
+
+    // "Created", from a player's point of view, is when signups open. Firing
+    // on the table INSERT instead would announce tournaments an organizer is
+    // still halfway through configuring.
+    if (
+      status === "RegistrationOpen" &&
+      data.old.status !== "RegistrationOpen"
+    ) {
+      await this.announceRegistrationOpen(tournamentId, data.new);
+    }
 
     if (status === "Live" && data.old.status !== "Live") {
       await this.tournamentVoice.createTournamentReadyRoom(tournamentId);

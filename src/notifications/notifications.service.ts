@@ -13,6 +13,9 @@ import {
 } from "generated/schema";
 import { DISCORD_COLORS } from "./utilities/constants";
 import { NotificationsQueues } from "./enums/NotificationsQueues";
+import { NotificationPreferencesService } from "./preferences/notification-preferences.service";
+import { PushNotificationsService } from "./push/push-notifications.service";
+import { inAppKeyForType } from "./preferences/notification-categories";
 
 @Injectable()
 export class NotificationsService {
@@ -29,15 +32,27 @@ export class NotificationsService {
     "ScrimTimeChanged",
     "ScrimAlertMatch",
     "FormTeamSuggestion",
+    // Relaying every chat line to a Discord webhook would be unusable, and
+    // the people in the lobby are already the ones being notified.
+    "ChatMessage",
   ]);
+
+  // Nobody has seen a notification in six months who hasn't signed in, and a
+  // broadcast to every player row would include shadow rows created by match
+  // imports.
+  private static readonly ACTIVE_PLAYER_WINDOW = "30 days";
 
   constructor(
     private readonly hasura: HasuraService,
     private readonly postgres: PostgresService,
     private readonly logger: Logger,
     private readonly configService: ConfigService,
+    private readonly preferences: NotificationPreferencesService,
+    private readonly pushNotifications: PushNotificationsService,
     @InjectQueue(NotificationsQueues.SanctionNotifications)
     private readonly sanctionNotificationsQueue: Queue,
+    @InjectQueue(NotificationsQueues.PushBroadcast)
+    private readonly pushBroadcastQueue: Queue,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -292,6 +307,44 @@ export class NotificationsService {
     }
   }
 
+  // Hasura's event trigger fires once per inserted row, so a fan-out that wrote
+  // 200 rows would resolve recipients and send 200 times over. The rows are
+  // claimed here so those events fall through, and one job covers the burst.
+  //
+  // A single row is left to its own event: it is one query either way, and the
+  // claim would only add a round trip.
+  private async pushFanOut(
+    ids: string[],
+    window?: { type: string; entityId: string },
+  ) {
+    if (ids.length < 2) {
+      return;
+    }
+
+    try {
+      // Queued before the rows are claimed, deliberately. Claiming first and
+      // then failing to queue would silence the push entirely; this order fails
+      // the other way, into a duplicate the device collapses on its tag.
+      await this.pushBroadcastQueue.add(
+        "PushBroadcast",
+        window ?? { ids },
+        {
+          ...(window
+            ? { jobId: `push-broadcast.${window.type}.${window.entityId}` }
+            : {}),
+          removeOnComplete: { age: 3600 },
+          removeOnFail: { age: 3600 },
+        },
+      );
+
+      await this.pushNotifications.claimFanOut(ids);
+    } catch (error) {
+      // The per-row events are still queued behind this, so a failure here
+      // degrades to the unbatched path rather than losing the push.
+      this.logger.warn("unable to batch push for a fan-out notification", error);
+    }
+  }
+
   private async postDiscord(
     webhook: string,
     roleId: string | undefined,
@@ -348,10 +401,32 @@ export class NotificationsService {
     }>,
     color?: number,
   ) {
-    const steamIds = Array.from(new Set(notification.steamIds));
+    // Resolved before the insert rather than at read time: the bell reads
+    // `notifications` straight through Hasura, and "hide rows whose type the
+    // viewer muted" isn't expressible as a select_permission, so `in_app`
+    // carries the answer on the row itself.
+    //
+    // A muted recipient still gets a row if they can be pushed to. Push is
+    // delivered by the INSERT trigger on this table and has a preference of its
+    // own, so skipping the row entirely would silence a channel they never
+    // turned off. Recipients with no subscription at all are skipped -- their
+    // row could only ever be dead weight.
+    const recipients = Array.from(new Set(notification.steamIds));
+    const inApp = new Set(
+      await this.preferences.filterInAppRecipients(type, recipients),
+    );
+    const pushable = new Set(
+      await this.pushNotifications.filterSubscribed(
+        recipients.filter((steamId) => !inApp.has(steamId)),
+      ),
+    );
+
+    const steamIds = recipients.filter(
+      (steamId) => inApp.has(steamId) || pushable.has(steamId),
+    );
 
     if (steamIds.length > 0) {
-      await this.hasura.mutation({
+      const { insert_notifications } = await this.hasura.mutation({
         insert_notifications: {
           __args: {
             objects: steamIds.map((steam_id) => ({
@@ -362,14 +437,21 @@ export class NotificationsService {
               steam_id,
               entity_id: notification.entity_id,
               actions,
+              in_app: inApp.has(steam_id),
               ...(notification.deletable === false
                 ? { deletable: false }
                 : {}),
             })),
           },
-          affected_rows: true,
+          returning: {
+            id: true,
+          },
         },
       });
+
+      await this.pushFanOut(
+        (insert_notifications?.returning ?? []).map(({ id }) => id as string),
+      );
     }
 
     const webhook = await this.getSettingValue("discord_support_webhook");
@@ -379,6 +461,138 @@ export class NotificationsService {
         message: notification.message,
         color,
       });
+    }
+  }
+
+  // Retracts alerts that describe a condition rather than an event.
+  //
+  // "Map is paused" and "waiting for a server" are true only while they are
+  // true -- once the match resumes, ends or is cancelled they describe nothing.
+  // Left alone they pile up: a month of pauses on one match produced over a
+  // hundred rows nobody could act on.
+  //
+  // Cleared rather than collapsed, deliberately. Collapsing keeps one stale
+  // alert per match forever; clearing leaves the bell holding only conditions
+  // that currently hold.
+  async resolveMatchAlerts(matchId: string) {
+    await this.postgres.query(
+      `UPDATE public.notifications
+          SET deleted_at = now()
+        WHERE type = 'MatchStatusChange'
+          AND entity_id = $1
+          AND deleted_at IS NULL`,
+      [matchId],
+    );
+  }
+
+  // Soft-deletes every unread row for an entity except the newest, so a busy
+  // conversation shows one bell entry rather than one per message. Push is
+  // unaffected -- each message already fired its own INSERT.
+  async collapseOlderUnread(
+    type: e_notification_types_enum,
+    entityId: string,
+    steamIds: string[],
+  ) {
+    if (steamIds.length === 0) {
+      return;
+    }
+
+    await this.postgres.query(
+      `UPDATE public.notifications n
+          SET deleted_at = now()
+        WHERE n.type = $1
+          AND n.entity_id = $2
+          AND n.steam_id = ANY($3::bigint[])
+          AND n.is_read = false
+          AND n.deleted_at IS NULL
+          AND n.id <> (
+            SELECT newest.id
+              FROM public.notifications newest
+             WHERE newest.type = n.type
+               AND newest.entity_id = n.entity_id
+               AND newest.steam_id = n.steam_id
+               AND newest.deleted_at IS NULL
+             ORDER BY newest.created_at DESC
+             LIMIT 1
+          )`,
+      [type, entityId, steamIds],
+    );
+  }
+
+  // Opening a conversation should clear its badge everywhere, not just in the
+  // tab that was open.
+  async markConversationRead(
+    type: e_notification_types_enum,
+    entityId: string,
+    steamId: string,
+  ) {
+    await this.postgres.query(
+      `UPDATE public.notifications
+          SET is_read = true
+        WHERE type = $1
+          AND entity_id = $2
+          AND steam_id = $3::bigint
+          AND is_read = false`,
+      [type, entityId, steamId],
+    );
+  }
+
+  // Announce something to the whole player base.
+  //
+  // This deliberately writes one row per player rather than a single
+  // role-targeted row: our notifications select_permissions are a per-role
+  // enumeration, and `user` only ever matches on steam_id -- so a
+  // `role: 'user'` broadcast with a null steam_id is visible to nobody.
+  //
+  // Written as one INSERT..SELECT because the recipient list is the whole
+  // players table, and the in-app preference is resolved inline for the same
+  // reason. See notifyPlayers for why a player who muted the bell still gets a
+  // row when they have somewhere to be pushed.
+  async notifyActivePlayers(
+    type: e_notification_types_enum,
+    notification: {
+      title: string;
+      message: string;
+      entity_id?: string;
+    },
+  ) {
+    const key = inAppKeyForType(type);
+
+    const inserted = await this.postgres.query<Array<{ id: string }>>(
+      `INSERT INTO public.notifications (type, title, message, role, steam_id, entity_id, in_app)
+            SELECT $1, $2, $3, 'user', p.steam_id, $4,
+                   COALESCE(np.enabled, $7::boolean)
+              FROM public.players p
+         LEFT JOIN public.notification_preferences np
+                ON np.steam_id = p.steam_id
+               AND np.channel = 'in_app'
+               AND np.key = $5
+             WHERE p.last_sign_in_at >= now() - $6::interval
+               AND (COALESCE(np.enabled, $7::boolean) = true
+                    OR EXISTS (SELECT 1
+                                 FROM public.push_subscriptions ps
+                                WHERE ps.steam_id = p.steam_id))
+         RETURNING id::text AS id`,
+      [
+        type,
+        notification.title,
+        notification.message,
+        notification.entity_id ?? null,
+        key?.key ?? "",
+        NotificationsService.ACTIVE_PLAYER_WINDOW,
+        key?.defaultEnabled ?? true,
+      ],
+    );
+
+    // The recipient list here is the whole player base, so the ids are claimed
+    // but not carried in the job: sendForBatch resolves them from
+    // (type, entity_id) in one statement rather than shipping a payload with a
+    // row per player in it.
+    if (notification.entity_id) {
+      await this.pushFanOut(
+        inserted.map(({ id }) => id),
+        { type, entityId: notification.entity_id },
+      );
     }
   }
 

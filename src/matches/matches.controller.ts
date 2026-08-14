@@ -46,6 +46,8 @@ import { GameStreamerService } from "./game-streamer/game-streamer.service";
 import { isRoleAbove } from "../utilities/isRoleAbove";
 import { DemoMetadataService } from "../demos/demo-metadata.service";
 import { ClipsService } from "./clips/clips.service";
+import { CameraService } from "./camera/camera.service";
+import { CameraMonitorService } from "./camera/camera-monitor.service";
 import { ClipSpec } from "./clips/types/ClipSpec";
 
 @Controller("matches")
@@ -108,6 +110,8 @@ export class MatchesController {
     private readonly demoMetadata: DemoMetadataService,
     private readonly clips: ClipsService,
     private readonly matchImport: MatchImportService,
+    private readonly camera: CameraService,
+    private readonly cameraMonitor: CameraMonitorService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -196,6 +200,7 @@ export class MatchesController {
           number_of_substitutes: true,
           round_restart_delay: true,
           halftime_pausematch: true,
+          camera_required: true,
         },
         match_maps: {
           id: true,
@@ -467,9 +472,38 @@ export class MatchesController {
 
     match.options.use_playcast = usePlaycast?.value === "true" ? true : false;
 
+    await this.decorateWithCameraState(match);
+
     const data = JSON.parse(safeJsonStringify(match));
 
     response.status(200).json(data);
+  }
+
+  // Per-player camera health is read straight from Redis: it is the monitor's
+  // running state, not a column, and the plugin needs it to pick its own state
+  // back up after a restart or a map load mid-match.
+  private async decorateWithCameraState(match: {
+    id: string;
+    options: Record<string, unknown>;
+    lineup_1?: { lineup_players?: Array<Record<string, unknown>> };
+    lineup_2?: { lineup_players?: Array<Record<string, unknown>> };
+  }) {
+    if (match.options.camera_required !== true) {
+      return;
+    }
+
+    const health = await this.cameraMonitor.healthFor(match.id);
+
+    for (const lineup of [match.lineup_1, match.lineup_2]) {
+      for (const player of lineup?.lineup_players ?? []) {
+        const steamId = player.steam_id;
+        // Unknown means the monitor has not sampled this player yet (they just
+        // joined, or the match only went Live seconds ago) — treat that as fine
+        // rather than flagging someone the monitor has never looked at.
+        player.camera_ok =
+          steamId == null || (health.get(String(steamId)) ?? "live") === "live";
+      }
+    }
   }
 
   @HasuraEvent()
@@ -534,6 +568,18 @@ export class MatchesController {
       data.old.status !== "WaitingForServer"
     ) {
       void this.notifications.sendMatchWaitingForServerNotification(matchId);
+    }
+
+    // A match that has stopped is a match whose alerts no longer describe
+    // anything -- the pause it was paused for and the server it was waiting on
+    // are both moot. See NotificationsService.resolveMatchAlerts.
+    if (
+      data.op === "DELETE" ||
+      ["Canceled", "Finished", "Forfeit", "Tie", "Surrendered"].includes(
+        status as string,
+      )
+    ) {
+      void this.notifications.resolveMatchAlerts(matchId);
     }
 
     // Postgres owns the deadline; this mirrors every change to it onto the
@@ -616,6 +662,7 @@ export class MatchesController {
       await this.removeDiscordIntegration(matchId);
       await this.matchmaking.cancelMatchMakingByMatchId(matchId);
       await this.releaseScrimScheduledNotifications(matchId);
+      await this.cameraMonitor.clearMatch(matchId);
 
       await this.eloCalculationQueue.add(EloCalculation.name, {
         matchId,
@@ -2083,6 +2130,25 @@ export class MatchesController {
 
     if (matches_by_pk.status !== "WaitingForCheckIn") {
       throw Error("match is not accepting check in's at this time");
+    }
+
+    // Checking in is the commitment to play, so it is the right gate: letting
+    // it through and only enforcing at Live means a player reaches the server
+    // unwatched and the match pauses on them instead.
+    //
+    // Only a definite "not publishing" blocks. MediaMTX being unreachable
+    // answers `null`, and turning our own outage into a check-in nobody can
+    // complete is worse than admitting a player whose camera the live monitor
+    // will catch anyway -- the same trade the monitor itself makes.
+    if (await this.camera.isRequired(data.match_id)) {
+      const live = await this.camera.isPlayerLive(
+        data.match_id,
+        data.user.steam_id,
+      );
+
+      if (live === false) {
+        throw Error("connect your camera before checking in");
+      }
     }
 
     const { update_match_lineup_players } = await this.hasura.mutation({

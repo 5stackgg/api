@@ -279,8 +279,15 @@ BEGIN
     v_match_id, v_match_map_id,
     rt_match.round,
     v_start_time + ((elem->>'tick')::int::numeric / v_tick_rate::numeric) * interval '1 second',
-    NULLIF(elem->>'killer', '')::bigint,
-    NULLIF(elem->>'killer_team', ''),
+    -- A bomb or world death has no killer. The live path records those as
+    -- self-inflicted (see KillEvent.ts, "self damage") so the death still
+    -- lands; mirror it here rather than dropping the row, or the same death
+    -- counts in a live match and vanishes from an imported demo. Attributing
+    -- it to the victim does not invent a kill: recompute_player_match_map_stats
+    -- counts kills FILTER (attacker_team <> attacked_team), and a self-kill has
+    -- the same team on both sides.
+    COALESCE(NULLIF(elem->>'killer', '')::bigint, NULLIF(elem->>'victim', '')::bigint),
+    COALESCE(NULLIF(elem->>'killer_team', ''), NULLIF(elem->>'victim_team', '')),
     '',
     NULLIF(concat_ws(' ', elem->>'attacker_x', elem->>'attacker_y', elem->>'attacker_z'), ''),
     NULLIF(elem->>'victim', '')::bigint,
@@ -296,16 +303,22 @@ BEGIN
     false, false,
     NULLIF(elem->>'assist', '') IS NOT NULL
   FROM jsonb_array_elements(COALESCE(p_parsed->'kills', '[]'::jsonb)) elem
-  CROSS JOIN LATERAL (
+  LEFT JOIN LATERAL (
     SELECT COALESCE((rt->>'round')::int, 0) AS round
     FROM jsonb_array_elements(COALESCE(p_parsed->'round_ticks', '[]'::jsonb)) rt
     WHERE (elem->>'tick')::int >= COALESCE((rt->>'start_tick')::int, 0)
       AND (elem->>'tick')::int <= COALESCE((rt->>'end_tick')::int, 2147483647)
     ORDER BY (rt->>'round')::int
     LIMIT 1
-  ) rt_match
+  ) rt_match ON true
   WHERE NULLIF(elem->>'victim', '') IS NOT NULL
-    AND NULLIF(elem->>'killer', '') IS NOT NULL;
+    -- A death outside every round window did not happen during play: the demo
+    -- keeps recording through the post-match walkaround, where players shoot
+    -- each other for fun. That is not a scoreboard death, so it is dropped.
+    -- Written as a LEFT JOIN plus an explicit test rather than leaning on a
+    -- CROSS JOIN quietly matching nothing — the exclusion is deliberate, and
+    -- the next person to touch this join should have to mean it.
+    AND rt_match.round IS NOT NULL;
 
   INSERT INTO public.player_assists (
     match_id, match_map_id, round, time,
@@ -323,16 +336,19 @@ BEGIN
     COALESCE(NULLIF(elem->>'victim_team', ''), ''),
     COALESCE((elem->>'assist_flash')::boolean, false)
   FROM jsonb_array_elements(COALESCE(p_parsed->'kills', '[]'::jsonb)) elem
-  CROSS JOIN LATERAL (
+  LEFT JOIN LATERAL (
     SELECT COALESCE((rt->>'round')::int, 0) AS round
     FROM jsonb_array_elements(COALESCE(p_parsed->'round_ticks', '[]'::jsonb)) rt
     WHERE (elem->>'tick')::int >= COALESCE((rt->>'start_tick')::int, 0)
       AND (elem->>'tick')::int <= COALESCE((rt->>'end_tick')::int, 2147483647)
     ORDER BY (rt->>'round')::int
     LIMIT 1
-  ) rt_match
+  ) rt_match ON true
   WHERE NULLIF(elem->>'assist', '') IS NOT NULL
-    AND NULLIF(elem->>'victim', '') IS NOT NULL;
+    AND NULLIF(elem->>'victim', '') IS NOT NULL
+    -- Same round gate as the kills insert above, so a post-match kill and its
+    -- assist are dropped together rather than leaving an orphaned assist.
+    AND rt_match.round IS NOT NULL;
 
   INSERT INTO public.player_damages (
     match_id, match_map_id, round, time,
