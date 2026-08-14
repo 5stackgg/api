@@ -224,12 +224,20 @@ export class AwardsService {
     );
 
     if (input.team_id) {
-      await this.grantToRoster(input, tournamentTeamId);
+      // grantToRoster inserts the roster in one statement rather than looping
+      // back through here, so a team grant has to be notified from its own
+      // returned rows.
+      const roster = await this.grantToRoster(input, tournamentTeamId);
+
+      for (const recipient of roster) {
+        void this.notifyAwarded(
+          recipient.player_steam_id,
+          input.award_id,
+          recipient.id,
+        );
+      }
     }
 
-    // A team grant fans out to the roster through grantToRoster, which comes
-    // back through here per player, so notifying on the player branch alone
-    // covers both.
     if (input.player_steam_id) {
       void this.notifyAwarded(input.player_steam_id, input.award_id, granted.id);
     }
@@ -567,8 +575,13 @@ export class AwardsService {
   private async grantToRoster(
     input: GrantAwardInput,
     tournamentTeamId: string | null,
-  ): Promise<void> {
-    await this.postgres.query(
+  ): Promise<Array<{ id: string; player_steam_id: string }>> {
+    // RETURNING, so only the players who actually received the award are
+    // notified -- the NOT EXISTS below skips anyone who already held it, and
+    // re-notifying them would be a lie.
+    return await this.postgres.query<
+      Array<{ id: string; player_steam_id: string }>
+    >(
       `INSERT INTO public.award_recipients
           (award_id, player_steam_id, tournament_id, tournament_team_id,
            event_id, season_id, league_season_id,
@@ -585,7 +598,8 @@ export class AwardsService {
                 AND held.event_id IS NOT DISTINCT FROM $4
                 AND held.season_id IS NOT DISTINCT FROM $5
                 AND held.league_season_id IS NOT DISTINCT FROM $6
-           )`,
+           )
+        RETURNING id, player_steam_id::text AS player_steam_id`,
       [
         input.award_id,
         input.tournament_id ?? null,

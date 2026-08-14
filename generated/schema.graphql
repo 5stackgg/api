@@ -11322,8 +11322,14 @@ enum e_notification_types_constraint {
 }
 
 enum e_notification_types_enum {
+  """You received an award"""
+  AwardGranted
+
   """A new message in a chat you are part of"""
   ChatMessage
+
+  """A clip you requested finished rendering"""
+  ClipReady
 
   """DedicatedServerRconStatus"""
   DedicatedServerRconStatus
@@ -11331,8 +11337,14 @@ enum e_notification_types_enum {
   """DedicatedServerStatus"""
   DedicatedServerStatus
 
+  """You were invited to a draft lobby"""
+  DraftInvite
+
   """Player ELO recompute finished"""
   EloRecompute
+
+  """An event you are attending starts soon"""
+  EventReminder
 
   """You frequently play with these players"""
   FormTeamSuggestion
@@ -11366,6 +11378,9 @@ enum e_notification_types_enum {
 
   """A Valve match you played was imported to 5stack"""
   MatchImported
+
+  """Stats for a match you played are ready"""
+  MatchStatsReady
 
   """Match Status Change Notification"""
   MatchStatusChange
@@ -11418,14 +11433,23 @@ enum e_notification_types_enum {
   """A scheduled scrim time changed"""
   ScrimTimeChanged
 
+  """A season has ended"""
+  SeasonEnded
+
   """Storage Scan"""
   StorageScan
+
+  """You were invited to a team"""
+  TeamInvite
 
   """Registration opened for a tournament"""
   TournamentCreated
 
   """A tournament you are registered for starts soon"""
   TournamentReminder
+
+  """You were invited to play in a tournament"""
+  TournamentTeamInvite
 }
 
 """
@@ -68117,6 +68141,7 @@ type players {
   ): v_player_multi_kills_aggregate!
   name: String!
   name_registered: Boolean!
+  notification_timezone: String
 
   """An array relationship"""
   notifications(
@@ -68380,6 +68405,8 @@ type players {
   ): player_premier_rank_history_aggregate!
   premier_rank_updated_at: timestamptz
   profile_url: String
+  quiet_hours_end: time
+  quiet_hours_start: time
   role: e_player_roles_enum!
   roster_image_url: String
 
@@ -68930,6 +68957,7 @@ input players_bool_exp {
   multi_kills_aggregate: v_player_multi_kills_aggregate_bool_exp
   name: String_comparison_exp
   name_registered: Boolean_comparison_exp
+  notification_timezone: String_comparison_exp
   notifications: notifications_bool_exp
   notifications_aggregate: notifications_aggregate_bool_exp
   objectives: player_objectives_bool_exp
@@ -68948,6 +68976,8 @@ input players_bool_exp {
   premier_rank_history_aggregate: player_premier_rank_history_aggregate_bool_exp
   premier_rank_updated_at: timestamptz_comparison_exp
   profile_url: String_comparison_exp
+  quiet_hours_end: time_comparison_exp
+  quiet_hours_start: time_comparison_exp
   role: e_player_roles_enum_comparison_exp
   roster_image_url: String_comparison_exp
   sanctions: player_sanctions_bool_exp
@@ -69060,6 +69090,7 @@ input players_insert_input {
   multi_kills: v_player_multi_kills_arr_rel_insert_input
   name: String
   name_registered: Boolean
+  notification_timezone: String
   notifications: notifications_arr_rel_insert_input
   objectives: player_objectives_arr_rel_insert_input
   owned_teams: teams_arr_rel_insert_input
@@ -69070,6 +69101,8 @@ input players_insert_input {
   premier_rank_history: player_premier_rank_history_arr_rel_insert_input
   premier_rank_updated_at: timestamptz
   profile_url: String
+  quiet_hours_end: time
+  quiet_hours_start: time
   role: e_player_roles_enum
   roster_image_url: String
   sanctions: player_sanctions_arr_rel_insert_input
@@ -69143,6 +69176,7 @@ type players_max_fields {
   """
   matchmaking_cooldown: timestamptz
   name: String
+  notification_timezone: String
   premier_rank: Int
   premier_rank_updated_at: timestamptz
   profile_url: String
@@ -69231,6 +69265,7 @@ type players_min_fields {
   """
   matchmaking_cooldown: timestamptz
   name: String
+  notification_timezone: String
   premier_rank: Int
   premier_rank_updated_at: timestamptz
   profile_url: String
@@ -69355,6 +69390,7 @@ input players_order_by {
   multi_kills_aggregate: v_player_multi_kills_aggregate_order_by
   name: order_by
   name_registered: order_by
+  notification_timezone: order_by
   notifications_aggregate: notifications_aggregate_order_by
   objectives_aggregate: player_objectives_aggregate_order_by
   owned_teams_aggregate: teams_aggregate_order_by
@@ -69366,6 +69402,8 @@ input players_order_by {
   premier_rank_history_aggregate: player_premier_rank_history_aggregate_order_by
   premier_rank_updated_at: order_by
   profile_url: order_by
+  quiet_hours_end: order_by
+  quiet_hours_start: order_by
   role: order_by
   roster_image_url: order_by
   sanctions_aggregate: player_sanctions_aggregate_order_by
@@ -69455,6 +69493,9 @@ enum players_select_column {
   name_registered
 
   """column name"""
+  notification_timezone
+
+  """column name"""
   premier_rank
 
   """column name"""
@@ -69462,6 +69503,12 @@ enum players_select_column {
 
   """column name"""
   profile_url
+
+  """column name"""
+  quiet_hours_end
+
+  """column name"""
+  quiet_hours_start
 
   """column name"""
   role
@@ -69507,9 +69554,12 @@ input players_set_input {
   last_sign_in_at: timestamptz
   name: String
   name_registered: Boolean
+  notification_timezone: String
   premier_rank: Int
   premier_rank_updated_at: timestamptz
   profile_url: String
+  quiet_hours_end: time
+  quiet_hours_start: time
   role: e_player_roles_enum
   roster_image_url: String
   show_match_ready_modal: Boolean
@@ -69718,9 +69768,12 @@ input players_stream_cursor_value_input {
   last_sign_in_at: timestamptz
   name: String
   name_registered: Boolean
+  notification_timezone: String
   premier_rank: Int
   premier_rank_updated_at: timestamptz
   profile_url: String
+  quiet_hours_end: time
+  quiet_hours_start: time
   role: e_player_roles_enum
   roster_image_url: String
   show_match_ready_modal: Boolean
@@ -69845,6 +69898,9 @@ enum players_update_column {
   name_registered
 
   """column name"""
+  notification_timezone
+
+  """column name"""
   premier_rank
 
   """column name"""
@@ -69852,6 +69908,12 @@ enum players_update_column {
 
   """column name"""
   profile_url
+
+  """column name"""
+  quiet_hours_end
+
+  """column name"""
+  quiet_hours_start
 
   """column name"""
   role
@@ -97095,6 +97157,23 @@ order by variance() on columns of table "teams"
 input teams_variance_order_by {
   captain_steam_id: order_by
   owner_steam_id: order_by
+}
+
+scalar time
+
+"""
+Boolean expression to compare columns of type "time". All fields are combined with logical 'AND'.
+"""
+input time_comparison_exp {
+  _eq: time
+  _gt: time
+  _gte: time
+  _in: [time!]
+  _is_null: Boolean
+  _lt: time
+  _lte: time
+  _neq: time
+  _nin: [time!]
 }
 
 scalar timestamp

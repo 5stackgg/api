@@ -305,6 +305,19 @@ export class DemosController {
 
   private async notifyStatsReady(matchId: string) {
     try {
+      // Fired once per match, not once per demo. A Bo3 parses three of them,
+      // and a reparse runs the whole thing again -- either would otherwise send
+      // the same "your stats are ready" several times over.
+      const [alreadySent] = await this.postgres.query<Array<{ id: string }>>(
+        `SELECT id FROM public.notifications
+          WHERE type = 'MatchStatsReady' AND entity_id = $1 LIMIT 1`,
+        [matchId],
+      );
+
+      if (alreadySent) {
+        return;
+      }
+
       const players = await this.postgres.query<Array<{ steam_id: string }>>(
         `SELECT DISTINCT mlp.steam_id::text AS steam_id
            FROM public.matches m
