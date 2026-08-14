@@ -20,4 +20,10 @@ export enum SystemSettingName {
   LeaguesEnabled = "public.leagues_enabled",
   GameServerPluginRuntime = "public.game_server_plugin_runtime",
   GameServerPluginRuntimeLocked = "game_server_plugin_runtime_locked",
+  // VAPID identifies this panel to the browser push services. The keypair is
+  // self-generated -- there is no vendor to register with -- so it is stored
+  // here rather than demanding an env var of every operator. The private half
+  // is never exposed to any role; see public_settings.yaml.
+  WebPushPublicKey = "web_push_public_key",
+  WebPushPrivateKey = "web_push_private_key",
 }

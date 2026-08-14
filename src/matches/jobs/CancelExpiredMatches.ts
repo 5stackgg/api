@@ -273,6 +273,14 @@ export class CancelExpiredMatches extends WorkerHost {
     }
 
     await this.forfeitMatch(match);
+
+    // Same ordering as cancelMatch, and for the same reason: the matches
+    // trigger clears cancels_at on the Forfeit/Finished transition and
+    // getExpiredMatches requires cancels_at IS NOT NULL, so the match leaves
+    // the window and this runs exactly once. abandoned_matches has no unique
+    // constraint, so a second insert would silently double the escalating
+    // cooldown.
+    await this.recordNoShows(match);
   }
 
   private async forfeitMatch(

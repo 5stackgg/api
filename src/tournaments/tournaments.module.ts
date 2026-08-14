@@ -5,6 +5,7 @@ import { DemosModule } from "../demos/demos.module";
 import { ClipsModule } from "../matches/clips/clips.module";
 import { DiscordTournamentVoiceModule } from "../discord-bot/discord-tournament-voice/discord-tournament-voice.module";
 import { loggerFactory } from "../utilities/LoggerFactory";
+import { NotificationsModule } from "../notifications/notifications.module";
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { loggerFactory } from "../utilities/LoggerFactory";
     DemosModule,
     ClipsModule,
     DiscordTournamentVoiceModule,
+    NotificationsModule,
   ],
   controllers: [TournamentsController],
   providers: [loggerFactory()],

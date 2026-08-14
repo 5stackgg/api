@@ -1,0 +1,3 @@
+table:
+  name: push_subscriptions
+  schema: public

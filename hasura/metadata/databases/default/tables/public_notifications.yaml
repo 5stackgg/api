@@ -1,6 +1,17 @@
 table:
   name: notifications
   schema: public
+event_triggers:
+  - name: notification_events
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+    retry_conf:
+      interval_sec: 10
+      num_retries: 3
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
 object_relationships:
   - name: player
     using:

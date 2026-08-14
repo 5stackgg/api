@@ -28,6 +28,10 @@ INSERT INTO e_notification_types ("value", "description") VALUES
     ('LeagueProposalDeclined', 'Your league match time proposal was declined'),
     ('LeagueMatchUnscheduled', 'A league matchup is unscheduled and will default soon'),
     ('LeagueRegistrationDecision', 'Your league registration was reviewed'),
-    ('LeagueRosterUndersized', 'Your league team no longer meets the minimum roster size')
+    ('LeagueRosterUndersized', 'Your league team no longer meets the minimum roster size'),
+    ('ChatMessage', 'A new message in a chat you are part of'),
+    ('TournamentCreated', 'Registration opened for a tournament'),
+    ('TournamentReminder', 'A tournament you are registered for starts soon'),
+    ('NewsPublished', 'A news article was published')
 ON CONFLICT("value") DO UPDATE
     SET "description" = EXCLUDED."description";

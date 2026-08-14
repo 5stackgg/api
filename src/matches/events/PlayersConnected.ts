@@ -37,6 +37,14 @@ export default class PlayersConnected extends MatchEventProcessor<{
           on_conflict: {
             constraint: "players_steam_id_key",
             update_columns: ["name"],
+            // See PlayerConnected.ts -- the _or is load bearing because
+            // name_registered is nullable with no default.
+            where: {
+              _or: [
+                { name_registered: { _is_null: true } },
+                { name_registered: { _eq: false } },
+              ],
+            },
           },
         },
         affected_rows: true,

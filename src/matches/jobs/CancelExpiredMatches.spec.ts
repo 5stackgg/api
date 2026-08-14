@@ -429,6 +429,70 @@ describe("CancelExpiredMatches", () => {
       expect(order.indexOf("cancel")).toBeGreaterThanOrEqual(0);
       expect(order.indexOf("abandon")).toBeGreaterThan(order.indexOf("cancel"));
     });
+
+    it("penalises tournament no-shows too, not just matchmaking ones", async () => {
+      // A tournament no-show used to cost nothing while abandoning the same
+      // match mid-game cost an escalating cooldown -- an accident of which
+      // code path fired, not a decision.
+      tournamentMatches = [expiredTournamentMatch()];
+
+      await job.process();
+
+      expect(abandonedFor().sort()).toEqual(["1", "2"]);
+    });
+
+    it("penalises nobody while an organizer is still deciding", async () => {
+      tournamentMatches = [
+        expiredTournamentMatch({
+          options: {
+            match_mode: "admin",
+          },
+        }),
+      ];
+
+      await job.process();
+
+      expect(abandonedFor()).toEqual([]);
+    });
+
+    it("penalises nobody when a tournament match that went live is cleaned up", async () => {
+      tournamentMatches = [
+        expiredTournamentMatch({
+          match_maps: [{ status: "Live" }],
+          lineup_1: {
+            id: "lineup-1",
+            is_ready: true,
+            lineup_players: [{ steam_id: "played-a", is_connected: false }],
+          },
+          lineup_2: {
+            id: "lineup-2",
+            is_ready: true,
+            lineup_players: [{ steam_id: "played-b", is_connected: false }],
+          },
+        }),
+      ];
+
+      await job.process();
+
+      expect(abandonedFor()).toEqual([]);
+    });
+
+    it("records tournament no-shows only after the forfeit lands", async () => {
+      tournamentMatches = [expiredTournamentMatch()];
+
+      await job.process();
+
+      const order = hasura.mutation.mock.calls.map(([arg]: [any]) =>
+        arg?.insert_abandoned_matches
+          ? "abandon"
+          : arg?.update_matches_by_pk?.__args?._set?.status === "Forfeit"
+            ? "forfeit"
+            : "other",
+      );
+
+      expect(order.indexOf("forfeit")).toBeGreaterThanOrEqual(0);
+      expect(order.indexOf("abandon")).toBeGreaterThan(order.indexOf("forfeit"));
+    });
   });
 
   describe("force starting ahead of the deadline", () => {

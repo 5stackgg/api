@@ -3,6 +3,7 @@ import { Readable } from "stream";
 import { Injectable, Logger, BadRequestException } from "@nestjs/common";
 import { PostgresService } from "src/postgres/postgres.service";
 import { S3Service } from "src/s3/s3.service";
+import { NotificationsService } from "src/notifications/notifications.service";
 
 export interface NewsPostRow {
   id: string;
@@ -43,7 +44,18 @@ export class NewsService {
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
     private readonly s3: S3Service,
+    private readonly notifications: NotificationsService,
   ) {}
+
+  private async announcePublished(article: NewsPostRow): Promise<void> {
+    await this.notifications.notifyActivePlayers("NewsPublished", {
+      title: "New article",
+      message: `<a href="/news/${article.slug}"><b>${NotificationsService.escapeHtml(
+        article.title,
+      )}</b></a> was just published.`,
+      entity_id: article.id,
+    });
+  }
 
   public async listPosts(limit = 200): Promise<NewsPostRow[]> {
     return await this.postgres.query<NewsPostRow[]>(
@@ -170,13 +182,16 @@ export class NewsService {
       return row;
     }
 
-    const [current] = await this.postgres.query<Array<{ title: string }>>(
-      `SELECT title FROM public.news_articles WHERE id = $1`,
-      [id],
-    );
+    const [current] = await this.postgres.query<
+      Array<{ title: string; status: string }>
+    >(`SELECT title, status FROM public.news_articles WHERE id = $1`, [id]);
     if (!current) {
       throw new BadRequestException("News post not found");
     }
+
+    // Only a real draft -> published transition announces. Without this, every
+    // subsequent save of a published article re-notifies everyone.
+    const isFirstPublish = current.status !== "published";
 
     const baseSlug = this.slugify(current.title);
     for (let attempt = 0; attempt < 5; attempt++) {
@@ -198,6 +213,16 @@ export class NewsService {
            RETURNING *`,
           [id, slug],
         );
+
+        if (isFirstPublish) {
+          void this.announcePublished(row).catch((error) => {
+            this.logger.warn(
+              `unable to announce published article ${id}`,
+              error,
+            );
+          });
+        }
+
         return row;
       } catch (error) {
         if (this.isSlugConflict(error) && attempt < 4) {

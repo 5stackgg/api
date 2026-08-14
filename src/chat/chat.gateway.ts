@@ -47,6 +47,22 @@ export class ChatGateway {
     void this.chat.removeFromLobby(data.type, data.id, client);
   }
 
+  @SubscribeMessage("lobby:read")
+  async markRead(
+    @MessageBody()
+    data: {
+      id: string;
+      type: ChatLobbyType;
+    },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    if (!client.user || data.type !== ChatLobbyType.Direct) {
+      return;
+    }
+
+    await this.chat.markDirectRead(data.id, client.user);
+  }
+
   @SubscribeMessage("lobby:chat")
   async lobby(
     @MessageBody()

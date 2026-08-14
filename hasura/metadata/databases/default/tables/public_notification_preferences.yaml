@@ -1,0 +1,3 @@
+table:
+  name: notification_preferences
+  schema: public

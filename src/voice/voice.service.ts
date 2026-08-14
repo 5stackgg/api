@@ -7,6 +7,10 @@ import { User } from "../auth/types/User";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// One message for "lobby" and "match lineup" alike: which of the two a channel
+// id belongs to is not something a caller who failed the check should learn.
+const NOT_A_MEMBER = "not a member of this voice channel";
+
 export type VoiceParticipant = {
   steamId: string;
   name: string | null;
@@ -41,26 +45,49 @@ export class VoiceService {
     return row?.value !== "false";
   }
 
-  // Voice is only ever offered to a lobby you are actually in, and only for
-  // members who accepted — an invite that has not been taken up is not a seat
-  // at the table.
-  public async assertMember(lobbyId: string, user: User) {
+  // A channel id is either a lobby id or a match lineup id. Both are uuids and
+  // neither can collide, so match voice reuses the whole lobby transport rather
+  // than duplicating it — the only thing that differs is who counts as a member.
+  //
+  // Match voice is deliberately scoped to one lineup, never the whole match: an
+  // open channel between opposing teams is the same advantage the camera rules
+  // exist to prevent.
+  public async assertMember(channelId: string, user: User) {
     if (!(await this.isEnabled())) {
       throw new Error("voice chat is not enabled");
     }
 
-    if (!UUID_PATTERN.test(lobbyId)) {
-      throw new Error("not a member of this lobby");
+    if (!UUID_PATTERN.test(channelId)) {
+      throw new Error(NOT_A_MEMBER);
     }
 
-    const [row] = await this.postgres.query<Array<{ status: string }>>(
+    const [lobby] = await this.postgres.query<Array<{ status: string }>>(
       `SELECT status FROM lobby_players WHERE lobby_id = $1 AND steam_id = $2`,
-      [lobbyId, user.steam_id],
+      [channelId, user.steam_id],
     );
 
-    if (row?.status !== "Accepted") {
-      throw new Error("not a member of this lobby");
+    if (lobby?.status === "Accepted") {
+      return;
     }
+
+    const [lineup] = await this.postgres.query<Array<{ exists: boolean }>>(
+      `SELECT true AS exists
+       FROM match_lineup_players mlp
+       INNER JOIN matches m
+         ON m.lineup_1_id = mlp.match_lineup_id
+         OR m.lineup_2_id = mlp.match_lineup_id
+       WHERE mlp.match_lineup_id = $1
+         AND mlp.steam_id = $2
+         AND m.status NOT IN ('Finished', 'Canceled', 'Forfeit', 'Surrendered', 'Tie')
+       LIMIT 1`,
+      [channelId, user.steam_id],
+    );
+
+    if (lineup?.exists) {
+      return;
+    }
+
+    throw new Error(NOT_A_MEMBER);
   }
 
   public async publish(lobbyId: string, user: User, sdp: string) {
@@ -105,14 +132,27 @@ export class VoiceService {
   public async participants(lobbyId: string, user: User) {
     await this.assertMember(lobbyId, user);
 
+    // Union rather than a branch on channel kind: a given id only ever matches
+    // one of the two tables, so this stays a single round trip and the caller
+    // never has to say which sort of channel it is asking about.
     const members = await this.postgres.query<
       Array<{ steam_id: string; name: string | null; avatar_url: string | null }>
     >(
-      `SELECT lp.steam_id::text AS steam_id, p.name, p.avatar_url
-       FROM lobby_players lp
-       LEFT JOIN players p ON p.steam_id = lp.steam_id
-       WHERE lp.lobby_id = $1 AND lp.status = 'Accepted'
-       ORDER BY p.name`,
+      `SELECT steam_id::text AS steam_id, name, avatar_url
+       FROM (
+         SELECT lp.steam_id, p.name, p.avatar_url
+         FROM lobby_players lp
+         LEFT JOIN players p ON p.steam_id = lp.steam_id
+         WHERE lp.lobby_id = $1 AND lp.status = 'Accepted'
+
+         UNION
+
+         SELECT mlp.steam_id, p.name, p.avatar_url
+         FROM match_lineup_players mlp
+         LEFT JOIN players p ON p.steam_id = mlp.steam_id
+         WHERE mlp.match_lineup_id = $1
+       ) members
+       ORDER BY name`,
       [lobbyId],
     );
 

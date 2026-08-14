@@ -41,6 +41,9 @@ export type CameraHealth = "live" | "stalled" | "down";
 export type CameraPlayerStatus = {
   steamId: string;
   name: string | null;
+  // Surfaces do not all have the player row to hand -- the stream deck keys off
+  // GSI, which carries no avatar -- so it rides along with the camera status.
+  avatarUrl: string | null;
   lineupId: string;
   ready: boolean;
   // "stalled" is a path that is still up but has stopped delivering — it looks
@@ -427,20 +430,36 @@ export class CameraService {
         lineup_1: {
           id: true,
           name: true,
+          team_id: true,
+          team: {
+            roster: {
+              player_steam_id: true,
+              roster_image_url: true,
+            },
+          },
           lineup_players: {
             steam_id: true,
             player: {
               name: true,
+              avatar_url: true,
             },
           },
         },
         lineup_2: {
           id: true,
           name: true,
+          team_id: true,
+          team: {
+            roster: {
+              player_steam_id: true,
+              roster_image_url: true,
+            },
+          },
           lineup_players: {
             steam_id: true,
             player: {
               name: true,
+              avatar_url: true,
             },
           },
         },
@@ -481,13 +500,33 @@ export class CameraService {
     lineup: {
       id: string;
       name: string;
+      team_id?: string | null;
+      team?: {
+        roster?: Array<{
+          player_steam_id: string | number;
+          roster_image_url?: string | null;
+        }> | null;
+      } | null;
       lineup_players?: Array<{
         steam_id: string;
-        player?: { name?: string | null } | null;
+        player?: { name?: string | null; avatar_url?: string | null } | null;
       }>;
     },
     health: Map<string, CameraHealth>,
   ) {
+    // A team's roster image wins over the player's own steam avatar, matching
+    // what every other roster surface shows. Resolved here rather than per
+    // client because the stream deck keys off GSI and never loads the team.
+    const rosterImages = new Map<string, string>();
+
+    if (lineup.team_id) {
+      for (const entry of lineup.team?.roster ?? []) {
+        if (entry.roster_image_url) {
+          rosterImages.set(String(entry.player_steam_id), entry.roster_image_url);
+        }
+      }
+    }
+
     return {
       id: lineup.id,
       name: lineup.name,
@@ -500,6 +539,10 @@ export class CameraService {
           return {
             steamId: lineupPlayer.steam_id,
             name: lineupPlayer.player?.name ?? null,
+            avatarUrl:
+              rosterImages.get(String(lineupPlayer.steam_id)) ??
+              lineupPlayer.player?.avatar_url ??
+              null,
             lineupId: lineup.id,
             ready,
             // Fall back to the live path check when the monitor has no sample:

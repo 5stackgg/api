@@ -15,7 +15,10 @@ select_permissions:
       columns:
         - name
         - value
-      filter: {}
+      filter:
+        name:
+          _nin:
+            - web_push_private_key
     comment: ""
   - role: guest
     permission:

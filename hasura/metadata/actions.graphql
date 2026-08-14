@@ -74,6 +74,14 @@ type Mutation {
   attachDemo: WatchDemoOutput
 }
 
+type Query {
+  webPushStatus: WebPushStatusOutput
+}
+
+type Mutation {
+  generateWebPushKeys: WebPushKeysOutput
+}
+
 type Mutation {
   bakeShaders(
     game_server_node_id: uuid!
@@ -976,6 +984,16 @@ type MeResponse {
 }
 
 type SuccessOutput {
+  success: Boolean!
+}
+
+type WebPushStatusOutput {
+  configured: Boolean!
+  managed_by_environment: Boolean!
+  subscriptions: Int!
+}
+
+type WebPushKeysOutput {
   success: Boolean!
 }
 

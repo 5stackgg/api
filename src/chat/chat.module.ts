@@ -6,9 +6,15 @@ import { RconModule } from "src/rcon/rcon.module";
 import { RedisModule } from "src/redis/redis.module";
 import { loggerFactory } from "src/utilities/LoggerFactory";
 import { ChatController } from "./chat.controller";
+import { NotificationsModule } from "src/notifications/notifications.module";
 
 @Module({
-  imports: [HasuraModule, RedisModule, forwardRef(() => RconModule)],
+  imports: [
+    HasuraModule,
+    RedisModule,
+    forwardRef(() => RconModule),
+    NotificationsModule,
+  ],
   providers: [ChatService, ChatGateway, loggerFactory()],
   exports: [ChatService],
   controllers: [ChatController],

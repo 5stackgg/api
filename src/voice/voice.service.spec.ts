@@ -169,4 +169,82 @@ describe("VoiceService", () => {
       `voice-${LOBBY_ID}-${ME.steam_id}`,
     );
   });
+
+  describe("match lineup channels", () => {
+    const LINEUP_ID = "22222222-2222-2222-2222-222222222222";
+
+    // Not in any lobby, but rostered on the lineup: the second lookup is what
+    // lets a match channel reuse the lobby transport.
+    const rostered = () =>
+      postgres.query
+        .mockResolvedValueOnce(enabled(true))
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ exists: true }]);
+
+    it("admits a player rostered on the lineup", async () => {
+      rostered();
+
+      await expect(service.publish(LINEUP_ID, ME, "offer")).resolves.toBe(
+        "answer-sdp",
+      );
+      expect(mediaMtx.proxySdp).toHaveBeenCalledWith(
+        `voice-${LINEUP_ID}-${ME.steam_id}`,
+        "whip",
+        "offer",
+      );
+    });
+
+    it("refuses someone who is on neither the lobby nor the lineup", async () => {
+      postgres.query
+        .mockResolvedValueOnce(enabled(true))
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+
+      await expect(service.publish(LINEUP_ID, ME, "offer")).rejects.toThrow(
+        /not a member/i,
+      );
+      expect(mediaMtx.proxySdp).not.toHaveBeenCalled();
+    });
+
+    // The whole point of scoping to a lineup rather than a match: the id is the
+    // team, so there is no path that resolves to the opposing side.
+    it("only ever addresses paths under the lineup it was given", async () => {
+      rostered();
+
+      await service.subscribe(LINEUP_ID, PEER, ME, "offer");
+
+      expect(mediaMtx.proxySdp).toHaveBeenCalledWith(
+        `voice-${LINEUP_ID}-${PEER}`,
+        "whep",
+        "offer",
+      );
+    });
+
+    it("excludes finished matches from membership", async () => {
+      rostered();
+
+      await service.publish(LINEUP_ID, ME, "offer");
+
+      const [sql] = postgres.query.mock.calls[2];
+      expect(sql).toMatch(/match_lineup_players/);
+      expect(sql).toMatch(/Finished/);
+      expect(sql).toMatch(/Canceled/);
+    });
+
+    it("lists lineup members as participants", async () => {
+      rostered();
+      postgres.query.mockResolvedValueOnce([
+        { steam_id: ME.steam_id, name: "me", avatar_url: null },
+        { steam_id: PEER, name: "peer", avatar_url: null },
+      ]);
+      mediaMtx.listPaths.mockResolvedValue(
+        new Map([[`voice-${LINEUP_ID}-${PEER}`, { ready: true }]]),
+      );
+
+      const participants = await service.participants(LINEUP_ID, ME);
+
+      expect(participants.map((p) => p.steamId)).toEqual([ME.steam_id, PEER]);
+      expect(participants.find((p) => p.steamId === PEER)?.speaking).toBe(true);
+    });
+  });
 });

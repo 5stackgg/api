@@ -13,6 +13,8 @@ import {
 } from "generated/schema";
 import { DISCORD_COLORS } from "./utilities/constants";
 import { NotificationsQueues } from "./enums/NotificationsQueues";
+import { NotificationPreferencesService } from "./preferences/notification-preferences.service";
+import { inAppKeyForType } from "./preferences/notification-categories";
 
 @Injectable()
 export class NotificationsService {
@@ -29,13 +31,22 @@ export class NotificationsService {
     "ScrimTimeChanged",
     "ScrimAlertMatch",
     "FormTeamSuggestion",
+    // Relaying every chat line to a Discord webhook would be unusable, and
+    // the people in the lobby are already the ones being notified.
+    "ChatMessage",
   ]);
+
+  // Nobody has seen a notification in six months who hasn't signed in, and a
+  // broadcast to every player row would include shadow rows created by match
+  // imports.
+  private static readonly ACTIVE_PLAYER_WINDOW = "30 days";
 
   constructor(
     private readonly hasura: HasuraService,
     private readonly postgres: PostgresService,
     private readonly logger: Logger,
     private readonly configService: ConfigService,
+    private readonly preferences: NotificationPreferencesService,
     @InjectQueue(NotificationsQueues.SanctionNotifications)
     private readonly sanctionNotificationsQueue: Queue,
   ) {
@@ -348,7 +359,13 @@ export class NotificationsService {
     }>,
     color?: number,
   ) {
-    const steamIds = Array.from(new Set(notification.steamIds));
+    // Filtered before the insert rather than at read time: the bell reads
+    // `notifications` straight through Hasura, and "hide rows whose type the
+    // viewer muted" isn't expressible as a select_permission.
+    const steamIds = await this.preferences.filterInAppRecipients(
+      type,
+      Array.from(new Set(notification.steamIds)),
+    );
 
     if (steamIds.length > 0) {
       await this.hasura.mutation({
@@ -380,6 +397,100 @@ export class NotificationsService {
         color,
       });
     }
+  }
+
+  // Soft-deletes every unread row for an entity except the newest, so a busy
+  // conversation shows one bell entry rather than one per message. Push is
+  // unaffected -- each message already fired its own INSERT.
+  async collapseOlderUnread(
+    type: e_notification_types_enum,
+    entityId: string,
+    steamIds: string[],
+  ) {
+    if (steamIds.length === 0) {
+      return;
+    }
+
+    await this.postgres.query(
+      `UPDATE public.notifications n
+          SET deleted_at = now()
+        WHERE n.type = $1
+          AND n.entity_id = $2
+          AND n.steam_id = ANY($3::bigint[])
+          AND n.is_read = false
+          AND n.deleted_at IS NULL
+          AND n.id <> (
+            SELECT newest.id
+              FROM public.notifications newest
+             WHERE newest.type = n.type
+               AND newest.entity_id = n.entity_id
+               AND newest.steam_id = n.steam_id
+               AND newest.deleted_at IS NULL
+             ORDER BY newest.created_at DESC
+             LIMIT 1
+          )`,
+      [type, entityId, steamIds],
+    );
+  }
+
+  // Opening a conversation should clear its badge everywhere, not just in the
+  // tab that was open.
+  async markConversationRead(
+    type: e_notification_types_enum,
+    entityId: string,
+    steamId: string,
+  ) {
+    await this.postgres.query(
+      `UPDATE public.notifications
+          SET is_read = true
+        WHERE type = $1
+          AND entity_id = $2
+          AND steam_id = $3::bigint
+          AND is_read = false`,
+      [type, entityId, steamId],
+    );
+  }
+
+  // Announce something to the whole player base.
+  //
+  // This deliberately writes one row per player rather than a single
+  // role-targeted row: our notifications select_permissions are a per-role
+  // enumeration, and `user` only ever matches on steam_id -- so a
+  // `role: 'user'` broadcast with a null steam_id is visible to nobody.
+  //
+  // Written as one INSERT..SELECT because the recipient list is the whole
+  // players table, and the in-app preference filter is inlined for the same
+  // reason.
+  async notifyActivePlayers(
+    type: e_notification_types_enum,
+    notification: {
+      title: string;
+      message: string;
+      entity_id?: string;
+    },
+  ) {
+    const key = inAppKeyForType(type);
+
+    await this.postgres.query(
+      `INSERT INTO public.notifications (type, title, message, role, steam_id, entity_id)
+            SELECT $1, $2, $3, 'user', p.steam_id, $4
+              FROM public.players p
+         LEFT JOIN public.notification_preferences np
+                ON np.steam_id = p.steam_id
+               AND np.channel = 'in_app'
+               AND np.key = $5
+             WHERE p.last_sign_in_at >= now() - $6::interval
+               AND COALESCE(np.enabled, $7::boolean) = true`,
+      [
+        type,
+        notification.title,
+        notification.message,
+        notification.entity_id ?? null,
+        key?.key ?? "",
+        NotificationsService.ACTIVE_PLAYER_WINDOW,
+        key?.defaultEnabled ?? true,
+      ],
+    );
   }
 
   private async getSettingValue(name: string): Promise<string | undefined> {

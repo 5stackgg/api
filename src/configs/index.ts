@@ -9,6 +9,7 @@ import gameServers from "./game-servers";
 import typesense from "./typesense";
 import tailscale from "./tailscale";
 import faceit from "./faceit";
+import webPush from "./web-push";
 
 export default [
   app,
@@ -22,4 +23,5 @@ export default [
   typesense,
   tailscale,
   faceit,
+  webPush,
 ];
