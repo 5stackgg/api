@@ -4,6 +4,7 @@ import { PostgresService } from "../../postgres/postgres.service";
 import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
 import { RconService } from "../../rcon/rcon.service";
 import { MediaMtxService } from "../../mediamtx/mediamtx.service";
+import { SocketsService } from "../../sockets/sockets.service";
 import { CameraService, type CameraHealth } from "./camera.service";
 
 // How long a camera may be anything other than `live` before the match is
@@ -35,6 +36,7 @@ export class CameraMonitorService {
     private readonly postgres: PostgresService,
     private readonly rcon: RconService,
     private readonly mediaMtx: MediaMtxService,
+    private readonly sockets: SocketsService,
     redisManager: RedisManagerService,
   ) {
     this.redis = redisManager.getConnection();
@@ -182,6 +184,19 @@ export class CameraMonitorService {
     if (reported === payload) {
       return;
     }
+
+    // Tell every watching surface to re-read now rather than wait out its poll.
+    // Deliberately carries no player data: this reaches all connected clients,
+    // so the actual status still has to be fetched through the authorized
+    // endpoint. Emitted before the rcon call so the UI still updates when the
+    // game server is unreachable.
+    void this.sockets.broadcastMessage("camera-status", { matchId }).catch(
+      (error: unknown): void => {
+        this.logger.warn(
+          `[${matchId}] failed to push camera status: ${(error as Error)?.message ?? error}`,
+        );
+      },
+    );
 
     const rcon = await this.rcon.connect(serverId);
 

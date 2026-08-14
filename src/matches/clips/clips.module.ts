@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { NotificationsModule } from "../../notifications/notifications.module";
 import { BullModule, InjectQueue } from "@nestjs/bullmq";
 import { BullBoardModule } from "@bull-board/nestjs";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
@@ -24,6 +25,7 @@ import { ReconcileQueuedHighlights } from "./jobs/ReconcileQueuedHighlights";
 
 @Module({
   imports: [
+    NotificationsModule,
     HasuraModule,
     PostgresModule,
     S3Module,

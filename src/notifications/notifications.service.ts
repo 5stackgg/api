@@ -399,6 +399,27 @@ export class NotificationsService {
     }
   }
 
+  // Retracts alerts that describe a condition rather than an event.
+  //
+  // "Map is paused" and "waiting for a server" are true only while they are
+  // true -- once the match resumes, ends or is cancelled they describe nothing.
+  // Left alone they pile up: a month of pauses on one match produced over a
+  // hundred rows nobody could act on.
+  //
+  // Cleared rather than collapsed, deliberately. Collapsing keeps one stale
+  // alert per match forever; clearing leaves the bell holding only conditions
+  // that currently hold.
+  async resolveMatchAlerts(matchId: string) {
+    await this.postgres.query(
+      `UPDATE public.notifications
+          SET deleted_at = now()
+        WHERE type = 'MatchStatusChange'
+          AND entity_id = $1
+          AND deleted_at IS NULL`,
+      [matchId],
+    );
+  }
+
   // Soft-deletes every unread row for an entity except the newest, so a busy
   // conversation shows one bell entry rather than one per message. Push is
   // unaffected -- each message already fired its own INSERT.

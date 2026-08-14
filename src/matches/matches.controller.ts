@@ -582,6 +582,18 @@ export class MatchesController {
       void this.notifications.sendMatchWaitingForServerNotification(matchId);
     }
 
+    // A match that has stopped is a match whose alerts no longer describe
+    // anything -- the pause it was paused for and the server it was waiting on
+    // are both moot. See NotificationsService.resolveMatchAlerts.
+    if (
+      data.op === "DELETE" ||
+      ["Canceled", "Finished", "Forfeit", "Tie", "Surrendered"].includes(
+        status as string,
+      )
+    ) {
+      void this.notifications.resolveMatchAlerts(matchId);
+    }
+
     // Postgres owns the deadline; this mirrors every change to it onto the
     // delayed job. Entering Veto arms it, each pick re-arms it, and leaving
     // Veto nulls the column, which is what cancels.

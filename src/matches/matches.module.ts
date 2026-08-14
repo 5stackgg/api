@@ -39,6 +39,7 @@ import { CheckLeagueSeasonTransitions } from "./jobs/CheckLeagueSeasonTransition
 import { ApplyLeagueDefaultSchedules } from "./jobs/ApplyLeagueDefaultSchedules";
 import { LeagueWeekReminders } from "./jobs/LeagueWeekReminders";
 import { TournamentReminders } from "./jobs/TournamentReminders";
+import { EventReminders } from "./jobs/EventReminders";
 import { EncryptionModule } from "../encryption/encryption.module";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
 import { CancelInvalidTournaments } from "./jobs/CancelInvalidTournaments";
@@ -174,6 +175,7 @@ import { CameraMonitorService } from "./camera/camera-monitor.service";
     ApplyLeagueDefaultSchedules,
     LeagueWeekReminders,
     TournamentReminders,
+    EventReminders,
     CheckForScheduledMatches,
     RemoveCancelledMatches,
     StopOnDemandServer,
@@ -246,6 +248,17 @@ export class MatchesModule implements NestModule {
 
     // More often than the league reminder above, because the 2h window is far
     // tighter than its 48h one.
+    // Hourly: both windows here are days wide, unlike the tournament 2h one.
+    void scheduleMatchQueue.add(
+      EventReminders.name,
+      {},
+      {
+        repeat: {
+          pattern: "15 * * * *",
+        },
+      },
+    );
+
     void scheduleMatchQueue.add(
       TournamentReminders.name,
       {},

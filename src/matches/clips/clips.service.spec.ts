@@ -29,6 +29,7 @@ describe("ClipsService", () => {
       { release: jest.fn() } as any,
       { getConnection: jest.fn() } as any,
       batchQueue as any,
+      { notifyPlayers: jest.fn() } as any,
     );
   });
 

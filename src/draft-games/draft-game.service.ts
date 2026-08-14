@@ -13,6 +13,7 @@ import {
   e_draft_game_captain_selection_enum,
 } from "generated";
 import { HasuraService } from "src/hasura/hasura.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { CacheService } from "src/cache/cache.service";
 import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
@@ -66,6 +67,7 @@ export class DraftGameService {
     @Inject(forwardRef(() => DraftService))
     private readonly draftService: DraftService,
     @InjectQueue(DraftGameQueues.DraftGames) private queue: Queue,
+    private readonly notifications: NotificationsService,
   ) {}
 
   public static lockKey(draftGameId: string): string {
@@ -860,8 +862,39 @@ export class DraftGameService {
         if (status === "Accepted") {
           await this.clearOtherRequests(steamId, draftGameId);
         }
+
+        if (status === "Invited") {
+          // Notified from here rather than from a table trigger:
+          // draft_game_players is keyed (draft_game_id, steam_id) with no uuid
+          // of its own, and a trigger payload carries steam_id as a JSON number
+          // -- past 2^53, so there would be no safe way to tell which row fired.
+          void this.notifyOfDraftInvite(steamId, draftGameId, user);
+        }
       });
     });
+  }
+
+  private async notifyOfDraftInvite(
+    steamId: string,
+    draftGameId: string,
+    invitedBy: User,
+  ) {
+    try {
+      await this.notifications.notifyPlayers("DraftInvite", {
+        title: "Draft Invite",
+        message: `<b>${NotificationsService.escapeHtml(invitedBy?.name)}</b> invited you to a draft lobby.`,
+        role: "user",
+        entity_id: draftGameId,
+        steamIds: [steamId],
+      });
+    } catch (error) {
+      // The invite row is already written; a failed notification must not fail
+      // the invite.
+      this.logger.warn(
+        `unable to notify ${steamId} of draft invite ${draftGameId}`,
+        error,
+      );
+    }
   }
 
   public async respondDraftInvite(

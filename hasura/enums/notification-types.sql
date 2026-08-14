@@ -32,6 +32,14 @@ INSERT INTO e_notification_types ("value", "description") VALUES
     ('ChatMessage', 'A new message in a chat you are part of'),
     ('TournamentCreated', 'Registration opened for a tournament'),
     ('TournamentReminder', 'A tournament you are registered for starts soon'),
-    ('NewsPublished', 'A news article was published')
+    ('NewsPublished', 'A news article was published'),
+    ('TeamInvite', 'You were invited to a team'),
+    ('TournamentTeamInvite', 'You were invited to play in a tournament'),
+    ('DraftInvite', 'You were invited to a draft lobby'),
+    ('MatchStatsReady', 'Stats for a match you played are ready'),
+    ('ClipReady', 'A clip you requested finished rendering'),
+    ('AwardGranted', 'You received an award'),
+    ('EventReminder', 'An event you are attending starts soon'),
+    ('SeasonEnded', 'A season has ended')
 ON CONFLICT("value") DO UPDATE
     SET "description" = EXCLUDED."description";

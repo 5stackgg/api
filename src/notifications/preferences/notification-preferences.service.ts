@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { PostgresService } from "../../postgres/postgres.service";
 import {
   NotificationChannel,
@@ -6,6 +6,12 @@ import {
   keysForChannel,
   inAppKeyForType,
 } from "./notification-categories";
+
+export type QuietHours = {
+  start: string | null;
+  end: string | null;
+  timezone: string | null;
+};
 
 export type ResolvedPreference = PreferenceKey & {
   enabled: boolean;
@@ -65,6 +71,62 @@ export class NotificationPreferencesService {
       `DELETE FROM public.notification_preferences
              WHERE steam_id = $1::bigint AND channel = $2 AND key = $3`,
       [steamId, channel, key],
+    );
+  }
+
+  public async getQuietHours(steamId: string): Promise<QuietHours> {
+    const [row] = await this.postgres.query<QuietHours[]>(
+      `SELECT to_char(quiet_hours_start, 'HH24:MI') AS start,
+              to_char(quiet_hours_end, 'HH24:MI') AS "end",
+              notification_timezone AS timezone
+         FROM public.players
+        WHERE steam_id = $1::bigint`,
+      [steamId],
+    );
+
+    return row ?? { start: null, end: null, timezone: null };
+  }
+
+  public async setQuietHours(
+    steamId: string,
+    quietHours: QuietHours,
+  ): Promise<void> {
+    const start = quietHours.start || null;
+    const end = quietHours.end || null;
+
+    if ((start === null) !== (end === null)) {
+      throw new BadRequestException("quiet hours need both a start and an end");
+    }
+
+    for (const value of [start, end]) {
+      if (value !== null && !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
+        throw new BadRequestException(`invalid time: ${value}`);
+      }
+    }
+
+    // An unknown zone would make `AT TIME ZONE` raise inside the recipient
+    // query, which would silence push for everyone rather than for this player.
+    // is_quiet_hours falls back to UTC as a second line of defence, but a bad
+    // value should never get stored in the first place.
+    const timezone = quietHours.timezone || null;
+    if (timezone) {
+      const [known] = await this.postgres.query<Array<{ name: string }>>(
+        `SELECT name FROM pg_timezone_names WHERE name = $1 LIMIT 1`,
+        [timezone],
+      );
+
+      if (!known) {
+        throw new BadRequestException(`unknown timezone: ${timezone}`);
+      }
+    }
+
+    await this.postgres.query(
+      `UPDATE public.players
+          SET quiet_hours_start = $2::time,
+              quiet_hours_end = $3::time,
+              notification_timezone = $4
+        WHERE steam_id = $1::bigint`,
+      [steamId, start, end, timezone],
     );
   }
 

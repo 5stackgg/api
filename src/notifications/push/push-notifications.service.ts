@@ -282,7 +282,11 @@ export class PushNotificationsService {
           AND np.channel = 'push'
           AND np.key = $3
         WHERE n.id = $1::uuid
-          AND COALESCE(np.enabled, $4::boolean) = true`,
+          AND COALESCE(np.enabled, $4::boolean) = true
+          -- Push only. The bell row is already written either way, so a quiet
+          -- window silences the buzz without losing the notification.
+          AND NOT public.is_quiet_hours(
+                p.quiet_hours_start, p.quiet_hours_end, p.notification_timezone)`,
       [
         row.id,
         RECIPIENT_ROLES[row.role] ?? [],
@@ -321,6 +325,7 @@ export class PushNotificationsService {
       `SELECT DISTINCT ps.id::text AS id, ps.endpoint, ps.p256dh, ps.auth
          FROM public.notifications n
          JOIN public.push_subscriptions ps ON ps.steam_id = n.steam_id
+         JOIN public.players p ON p.steam_id = n.steam_id
     LEFT JOIN public.notification_preferences np
            ON np.steam_id = n.steam_id
           AND np.channel = 'push'
@@ -328,7 +333,9 @@ export class PushNotificationsService {
         WHERE n.type = $1
           AND n.entity_id = $2
           AND n.created_at > now() - interval '15 minutes'
-          AND COALESCE(np.enabled, $4::boolean) = true`,
+          AND COALESCE(np.enabled, $4::boolean) = true
+          AND NOT public.is_quiet_hours(
+                p.quiet_hours_start, p.quiet_hours_end, p.notification_timezone)`,
       [type, entityId, category?.key ?? "", category?.defaultEnabled ?? true],
     );
 

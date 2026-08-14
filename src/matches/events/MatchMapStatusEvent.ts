@@ -100,6 +100,11 @@ export default class MatchMapStatusEvent extends MatchEventProcessor<{
 
     if (this.data.status === "Paused") {
       void this.notifications.sendMatchMapPauseNotification(this.matchId);
+    } else {
+      // Any other status means the pause (or the wait for a server) is over, so
+      // the alert describing it is stale. Retracting here covers resume, knife,
+      // overtime and finish in one place.
+      void this.notifications.resolveMatchAlerts(this.matchId);
     }
 
     if (isFinished) {

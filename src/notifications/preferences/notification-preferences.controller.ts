@@ -16,13 +16,34 @@ import {
   NotificationChannel,
   isKnownKey,
 } from "./notification-categories";
-import { NotificationPreferencesService } from "./notification-preferences.service";
+import {
+  NotificationPreferencesService,
+  QuietHours,
+} from "./notification-preferences.service";
 
 @Controller("notifications/preferences")
 @UseGuards(SteamGuard)
 export class NotificationPreferencesController {
   constructor(private readonly preferences: NotificationPreferencesService) {}
 
+  @Get("quiet-hours")
+  public async getQuietHours(@Req() request: Request) {
+    return {
+      quietHours: await this.preferences.getQuietHours(request.user.steam_id),
+    };
+  }
+
+  @Put("quiet-hours")
+  public async setQuietHours(
+    @Req() request: Request,
+    @Body() body: QuietHours,
+  ) {
+    await this.preferences.setQuietHours(request.user.steam_id, body);
+
+    return { success: true };
+  }
+
+  // Declared after quiet-hours so ":channel" doesn't swallow it.
   @Get(":channel")
   public async list(
     @Req() request: Request,

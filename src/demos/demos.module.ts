@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { NotificationsModule } from "../notifications/notifications.module";
 import { DemosController } from "../demos/demos.controller";
 import { DemoReparseController } from "./demo-reparse.controller";
 import { BullModule, InjectQueue } from "@nestjs/bullmq";
@@ -20,6 +21,7 @@ import { DemoReparseService } from "./demo-reparse.service";
 
 @Module({
   imports: [
+    NotificationsModule,
     S3Module,
     AuthModule,
     HasuraModule,

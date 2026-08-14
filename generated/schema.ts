@@ -4401,7 +4401,7 @@ export interface e_notification_types_aggregate_fields {
 /** unique or primary key constraints on table "e_notification_types" */
 export type e_notification_types_constraint = 'e_notification_types_pkey'
 
-export type e_notification_types_enum = 'ChatMessage' | 'DedicatedServerRconStatus' | 'DedicatedServerStatus' | 'EloRecompute' | 'FormTeamSuggestion' | 'GameNodeStatus' | 'GameUpdate' | 'LeagueMatchUnscheduled' | 'LeagueProposalAccepted' | 'LeagueProposalDeclined' | 'LeagueProposalReceived' | 'LeagueRegistrationDecision' | 'LeagueRosterUndersized' | 'MatchAbandoned' | 'MatchImported' | 'MatchStatusChange' | 'MatchSupport' | 'NameChangeApproved' | 'NameChangeDenied' | 'NameChangeRequest' | 'NewsPublished' | 'PlayerReindex' | 'PlayerSanctioned' | 'ScrimAlertMatch' | 'ScrimMatchCanceled' | 'ScrimMatchScheduled' | 'ScrimRequestAccepted' | 'ScrimRequestCountered' | 'ScrimRequestDeclined' | 'ScrimRequestExpired' | 'ScrimRequestReceived' | 'ScrimTimeChanged' | 'StorageScan' | 'TournamentCreated' | 'TournamentReminder'
+export type e_notification_types_enum = 'ChatMessage' | 'EventReminder' | 'SeasonEnded' | 'MatchStatsReady' | 'ClipReady' | 'AwardGranted' | 'TeamInvite' | 'TournamentTeamInvite' | 'DraftInvite' | 'DedicatedServerRconStatus' | 'DedicatedServerStatus' | 'EloRecompute' | 'FormTeamSuggestion' | 'GameNodeStatus' | 'GameUpdate' | 'LeagueMatchUnscheduled' | 'LeagueProposalAccepted' | 'LeagueProposalDeclined' | 'LeagueProposalReceived' | 'LeagueRegistrationDecision' | 'LeagueRosterUndersized' | 'MatchAbandoned' | 'MatchImported' | 'MatchStatusChange' | 'MatchSupport' | 'NameChangeApproved' | 'NameChangeDenied' | 'NameChangeRequest' | 'NewsPublished' | 'PlayerReindex' | 'PlayerSanctioned' | 'ScrimAlertMatch' | 'ScrimMatchCanceled' | 'ScrimMatchScheduled' | 'ScrimRequestAccepted' | 'ScrimRequestCountered' | 'ScrimRequestDeclined' | 'ScrimRequestExpired' | 'ScrimRequestReceived' | 'ScrimTimeChanged' | 'StorageScan' | 'TournamentCreated' | 'TournamentReminder'
 
 
 /** aggregate max on columns */
@@ -120670,6 +120670,14 @@ export const enumENotificationTypesConstraint = {
 
 export const enumENotificationTypesEnum = {
    ChatMessage: 'ChatMessage' as const,
+   EventReminder: 'EventReminder' as const,
+   SeasonEnded: 'SeasonEnded' as const,
+   MatchStatsReady: 'MatchStatsReady' as const,
+   ClipReady: 'ClipReady' as const,
+   AwardGranted: 'AwardGranted' as const,
+   TeamInvite: 'TeamInvite' as const,
+   TournamentTeamInvite: 'TournamentTeamInvite' as const,
+   DraftInvite: 'DraftInvite' as const,
    DedicatedServerRconStatus: 'DedicatedServerRconStatus' as const,
    DedicatedServerStatus: 'DedicatedServerStatus' as const,
    EloRecompute: 'EloRecompute' as const,

@@ -19,6 +19,7 @@ describe("CameraMonitorService", () => {
   let rconClient: { send: jest.Mock };
   let rcon: { connect: jest.Mock };
   let mediaMtx: { listPaths: jest.Mock };
+  let sockets: { broadcastMessage: jest.Mock };
   let service: CameraMonitorService;
 
   const path = (steamId: string) => `camera-${MATCH_ID}-${steamId}`;
@@ -43,12 +44,14 @@ describe("CameraMonitorService", () => {
     rconClient = { send: jest.fn().mockResolvedValue("") };
     rcon = { connect: jest.fn().mockResolvedValue(rconClient) };
     mediaMtx = { listPaths: jest.fn() };
+    sockets = { broadcastMessage: jest.fn().mockResolvedValue(undefined) };
 
     service = new CameraMonitorService(
       new Logger("CameraMonitorTest"),
       postgres as any,
       rcon as any,
       mediaMtx as any,
+      sockets as any,
       { getConnection: () => redis } as any,
     );
   });
@@ -171,5 +174,42 @@ describe("CameraMonitorService", () => {
     await service.monitorLiveMatches(1000 + 60_000);
 
     expect(redis.setex).not.toHaveBeenCalled();
+  });
+
+  it("pushes a camera-status change to watching clients", async () => {
+    redis.hgetall.mockResolvedValue({ [STEAM_ID]: "500:1000:live" });
+    mediaMtx.listPaths.mockResolvedValue(listing([]));
+
+    await service.monitorLiveMatches(1000 + 60_000);
+
+    expect(sockets.broadcastMessage).toHaveBeenCalledWith("camera-status", {
+      matchId: MATCH_ID,
+    });
+  });
+
+  // The push is what stops a grid sitting stale for a whole poll, so it must
+  // not be coupled to the game server being reachable.
+  it("still pushes when rcon is unreachable", async () => {
+    redis.hgetall.mockResolvedValue({ [STEAM_ID]: "500:1000:live" });
+    rcon.connect.mockResolvedValue(null);
+    mediaMtx.listPaths.mockResolvedValue(listing([]));
+
+    await service.monitorLiveMatches(1000 + 60_000);
+
+    expect(sockets.broadcastMessage).toHaveBeenCalledWith("camera-status", {
+      matchId: MATCH_ID,
+    });
+  });
+
+  // Nothing changed means nothing to say: a push per pass would have every
+  // client refetching every 10s for no reason.
+  it("does not push when the offending set is unchanged", async () => {
+    redis.hgetall.mockResolvedValue({ [STEAM_ID]: "500:1000:live" });
+    redis.get.mockResolvedValue(STEAM_ID);
+    mediaMtx.listPaths.mockResolvedValue(listing([]));
+
+    await service.monitorLiveMatches(1000 + 60_000);
+
+    expect(sockets.broadcastMessage).not.toHaveBeenCalled();
   });
 });

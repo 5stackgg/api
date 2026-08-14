@@ -283,6 +283,180 @@ describe("notifications (SQL-driven)", () => {
     });
   });
 
+  describe("quiet hours", () => {
+    const isQuiet = async (start: string, end: string, tz = "UTC") => {
+      const [row] = await postgres.query<Array<{ quiet: boolean }>>(
+        `SELECT public.is_quiet_hours($1::time, $2::time, $3) AS quiet`,
+        [start, end, tz],
+      );
+      return row.quiet;
+    };
+
+    // Anchored on the DB's own clock so the assertions hold whenever this runs.
+    const nowLocal = async (tz = "UTC") => {
+      const [row] = await postgres.query<Array<{ hhmm: string }>>(
+        `SELECT to_char((now() AT TIME ZONE $1)::time, 'HH24:MI') AS hhmm`,
+        [tz],
+      );
+      return row.hhmm;
+    };
+
+    const shiftHours = (hhmm: string, hours: number) => {
+      const [h, m] = hhmm.split(":").map(Number);
+      const shifted = (((h + hours) % 24) + 24) % 24;
+      return `${String(shifted).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    };
+
+    it("is off when unset", async () => {
+      const [row] = await postgres.query<Array<{ quiet: boolean }>>(
+        `SELECT public.is_quiet_hours(NULL, NULL, 'UTC') AS quiet`,
+      );
+      expect(row.quiet).toBe(false);
+    });
+
+    it("is off for a zero-width window", async () => {
+      const now = await nowLocal();
+      expect(await isQuiet(now, now)).toBe(false);
+    });
+
+    it("catches a window the current time sits inside", async () => {
+      const now = await nowLocal();
+      expect(await isQuiet(shiftHours(now, -1), shiftHours(now, 1))).toBe(true);
+    });
+
+    it("ignores a window the current time sits outside", async () => {
+      const now = await nowLocal();
+      expect(await isQuiet(shiftHours(now, 2), shiftHours(now, 4))).toBe(false);
+    });
+
+    describe("windows that wrap midnight", () => {
+      // 22:00 -> 07:00 is the whole point of the feature, and it is the case a
+      // naive `time BETWEEN start AND end` gets backwards.
+      it("catches a time inside the wrapped window", async () => {
+        const now = await nowLocal();
+        expect(await isQuiet(shiftHours(now, -1), shiftHours(now, -3))).toBe(
+          true,
+        );
+      });
+
+      it("ignores a time outside the wrapped window", async () => {
+        const now = await nowLocal();
+        expect(await isQuiet(shiftHours(now, 1), shiftHours(now, -1))).toBe(
+          false,
+        );
+      });
+    });
+
+    it("falls back to UTC rather than raising on an unknown timezone", async () => {
+      // Raising here would abort the whole recipient query and silence push for
+      // everyone, not just the player with the bad value.
+      const now = await nowLocal("UTC");
+      await expect(
+        isQuiet(shiftHours(now, -1), shiftHours(now, 1), "Not/AZone"),
+      ).resolves.toBe(true);
+    });
+
+    it("stores and reads back a window", async () => {
+      const steamId = await fx.player();
+      const service = preferences();
+
+      await service.setQuietHours(steamId, {
+        start: "22:00",
+        end: "07:00",
+        timezone: "America/New_York",
+      });
+
+      expect(await service.getQuietHours(steamId)).toEqual({
+        start: "22:00",
+        end: "07:00",
+        timezone: "America/New_York",
+      });
+    });
+
+    it("refuses a timezone Postgres does not know", async () => {
+      const steamId = await fx.player();
+
+      await expect(
+        preferences().setQuietHours(steamId, {
+          start: "22:00",
+          end: "07:00",
+          timezone: "Middle/Earth",
+        }),
+      ).rejects.toThrow();
+    });
+
+    it("refuses half a window", async () => {
+      const steamId = await fx.player();
+
+      await expect(
+        preferences().setQuietHours(steamId, {
+          start: "22:00",
+          end: null,
+          timezone: "UTC",
+        }),
+      ).rejects.toThrow();
+    });
+  });
+
+  describe("resolveMatchAlerts", () => {
+    const raiseAlert = async (matchId: string, steamId: string) =>
+      postgres.query(
+        `INSERT INTO notifications (type, title, message, role, steam_id, entity_id)
+              VALUES ('MatchStatusChange', 'Match Alert: Map Paused', 'paused',
+                      'user', $1::bigint, $2)`,
+        [steamId, matchId],
+      );
+
+    const liveAlerts = async () => {
+      const rows = await postgres.query<Array<{ entity_id: string }>>(
+        `SELECT entity_id FROM notifications
+          WHERE type = 'MatchStatusChange' AND deleted_at IS NULL`,
+      );
+      return rows.map((row) => row.entity_id);
+    };
+
+    it("retracts every outstanding alert for the match", async () => {
+      // A month of pauses on one match is what produced 100+ rows nobody could
+      // act on. Resuming should leave none of them behind.
+      const steamId = await fx.player();
+      for (let i = 0; i < 5; i++) {
+        await raiseAlert("match-1", steamId);
+      }
+
+      await notifications().resolveMatchAlerts("match-1");
+
+      expect(await liveAlerts()).toEqual([]);
+    });
+
+    it("leaves another match's alerts alone", async () => {
+      const steamId = await fx.player();
+      await raiseAlert("match-1", steamId);
+      await raiseAlert("match-2", steamId);
+
+      await notifications().resolveMatchAlerts("match-1");
+
+      expect(await liveAlerts()).toEqual(["match-2"]);
+    });
+
+    it("does not touch other notification types for the same match", async () => {
+      const steamId = await fx.player();
+      await postgres.query(
+        `INSERT INTO notifications (type, title, message, role, steam_id, entity_id)
+              VALUES ('MatchSupport', 'Help', 'help', 'user', $1::bigint, 'match-1')`,
+        [steamId],
+      );
+      await raiseAlert("match-1", steamId);
+
+      await notifications().resolveMatchAlerts("match-1");
+
+      const [row] = await postgres.query<Array<{ count: string }>>(
+        `SELECT count(*)::text AS count FROM notifications
+          WHERE deleted_at IS NULL AND type = 'MatchSupport'`,
+      );
+      expect(row.count).toBe("1");
+    });
+  });
+
   describe("push_subscriptions endpoint constraint", () => {
     // The CHECK constraint and isAllowedPushEndpoint() enforce the same rule in
     // two languages. If they drift, either real browsers get rejected or the

@@ -21,9 +21,11 @@ export type PreferenceKey = {
 // insert into e_notification_types (MatchImported only exists in the latter),
 // and fails if anything is unmapped.
 export const PUSH_CATEGORIES: Record<string, e_notification_types_enum[]> = {
-  matches: ["MatchStatusChange", "MatchImported"],
+  matches: ["MatchStatusChange", "MatchImported", "MatchStatsReady", "ClipReady"],
   chat: ["ChatMessage"],
   tournaments: ["TournamentCreated", "TournamentReminder"],
+  events: ["EventReminder"],
+  seasons: ["SeasonEnded"],
   scrims: [
     "ScrimRequestReceived",
     "ScrimRequestCountered",
@@ -44,7 +46,8 @@ export const PUSH_CATEGORIES: Record<string, e_notification_types_enum[]> = {
     "LeagueRosterUndersized",
   ],
   teams: ["FormTeamSuggestion"],
-  account: ["NameChangeApproved", "NameChangeDenied", "PlayerSanctioned"],
+  invites: ["TeamInvite", "TournamentTeamInvite", "DraftInvite"],
+  account: ["NameChangeApproved", "NameChangeDenied", "PlayerSanctioned", "AwardGranted"],
   news: ["NewsPublished"],
   staff_moderation: ["MatchSupport", "MatchAbandoned", "NameChangeRequest"],
   staff_infrastructure: [
@@ -62,9 +65,12 @@ export const PUSH_KEYS: PreferenceKey[] = [
   { key: "matches", defaultEnabled: true },
   { key: "chat", defaultEnabled: true },
   { key: "tournaments", defaultEnabled: true },
+  { key: "events", defaultEnabled: true },
+  { key: "seasons", defaultEnabled: true },
   { key: "scrims", defaultEnabled: true },
   { key: "leagues", defaultEnabled: true },
   { key: "teams", defaultEnabled: true },
+  { key: "invites", defaultEnabled: true },
   { key: "account", defaultEnabled: true },
   { key: "news", defaultEnabled: true },
   { key: "staff_moderation", defaultEnabled: true, adminOnly: true },
@@ -81,9 +87,17 @@ export const PUSH_KEYS: PreferenceKey[] = [
 // such list to filter against.
 export const IN_APP_KEYS: PreferenceKey[] = [
   { key: "ChatMessage", defaultEnabled: true },
+  { key: "TeamInvite", defaultEnabled: true },
+  { key: "TournamentTeamInvite", defaultEnabled: true },
+  { key: "DraftInvite", defaultEnabled: true },
   { key: "MatchImported", defaultEnabled: false },
+  { key: "MatchStatsReady", defaultEnabled: true },
+  { key: "ClipReady", defaultEnabled: true },
+  { key: "AwardGranted", defaultEnabled: true },
   { key: "NewsPublished", defaultEnabled: true },
   { key: "TournamentReminder", defaultEnabled: true },
+  { key: "EventReminder", defaultEnabled: true },
+  { key: "SeasonEnded", defaultEnabled: true },
   { key: "FormTeamSuggestion", defaultEnabled: true },
   { key: "ScrimAlertMatch", defaultEnabled: true },
   { key: "LeagueMatchUnscheduled", defaultEnabled: true },

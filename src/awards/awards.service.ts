@@ -9,6 +9,7 @@ import {
 } from "@nestjs/common";
 import { S3Service } from "../s3/s3.service";
 import { PostgresService } from "../postgres/postgres.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { User } from "../auth/types/User";
 
 const EXTENSION_BY_MIMETYPE: Record<string, string> = {
@@ -65,6 +66,7 @@ export class AwardsService {
     private readonly logger: Logger,
     private readonly s3: S3Service,
     private readonly postgres: PostgresService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   public async listAwards(): Promise<AwardRow[]> {
@@ -225,7 +227,42 @@ export class AwardsService {
       await this.grantToRoster(input, tournamentTeamId);
     }
 
+    // A team grant fans out to the roster through grantToRoster, which comes
+    // back through here per player, so notifying on the player branch alone
+    // covers both.
+    if (input.player_steam_id) {
+      void this.notifyAwarded(input.player_steam_id, input.award_id, granted.id);
+    }
+
     return granted;
+  }
+
+  private async notifyAwarded(
+    steamId: string,
+    awardId: string,
+    recipientId: string,
+  ) {
+    try {
+      const [award] = await this.postgres.query<Array<{ name: string }>>(
+        `SELECT name FROM public.awards WHERE id = $1::uuid`,
+        [awardId],
+      );
+
+      await this.notifications.notifyPlayers("AwardGranted", {
+        title: "Award Received",
+        message: `You were awarded <b>${NotificationsService.escapeHtml(
+          award?.name ?? "an award",
+        )}</b>.`,
+        role: "user",
+        entity_id: recipientId,
+        steamIds: [steamId],
+      });
+    } catch (error) {
+      this.logger.warn(
+        `unable to notify ${steamId} of award ${awardId}`,
+        error,
+      );
+    }
   }
 
   public assertSingleScope(input: {

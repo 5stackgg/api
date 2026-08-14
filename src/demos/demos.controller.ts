@@ -16,6 +16,7 @@ import { HasuraService } from "../hasura/hasura.service";
 import { HasuraAction } from "../hasura/hasura.controller";
 import { S3Service } from "../s3/s3.service";
 import { PostgresService } from "../postgres/postgres.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import archiver from "archiver";
 import zlib from "zlib";
 import path from "path";
@@ -31,6 +32,7 @@ export class DemosController {
     protected readonly postgres: PostgresService,
     protected readonly logger: Logger,
     protected readonly demoMetadata: DemoMetadataService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   private static isValidDemoName(demo: unknown): demo is string {
@@ -293,7 +295,43 @@ export class DemosController {
 
     await this.demoMetadata.persistParsed(matchMapDemoId, parsed);
 
+    // The end of the wait the stats-ready countdown has been showing since
+    // WaitingForTV (see the tbu_match_maps trigger). Everyone who played is
+    // waiting on exactly this.
+    void this.notifyStatsReady(matchId);
+
     return response.status(200).json({ matchMapDemoId });
+  }
+
+  private async notifyStatsReady(matchId: string) {
+    try {
+      const players = await this.postgres.query<Array<{ steam_id: string }>>(
+        `SELECT DISTINCT mlp.steam_id::text AS steam_id
+           FROM public.matches m
+           JOIN public.match_lineup_players mlp
+             ON mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+          WHERE m.id = $1::uuid
+            AND mlp.steam_id IS NOT NULL`,
+        [matchId],
+      );
+
+      if (players.length === 0) {
+        return;
+      }
+
+      await this.notifications.notifyPlayers("MatchStatsReady", {
+        title: "Match Stats Ready",
+        message: `Your match stats are ready. <a href="/matches/${matchId}">View Match</a>`,
+        role: "user",
+        entity_id: matchId,
+        steamIds: players.map((player) => player.steam_id),
+      });
+    } catch (error) {
+      this.logger.warn(
+        `unable to notify players that stats are ready for ${matchId}`,
+        error,
+      );
+    }
   }
 
   private async upsertDemoRow(
