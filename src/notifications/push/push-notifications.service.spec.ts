@@ -21,7 +21,7 @@ const notification = (overrides: Record<string, any> = {}) => ({
 
 const subscription = (id: string) => ({
   id,
-  endpoint: `https://push.example.com/${id}`,
+  endpoint: `https://fcm.googleapis.com/fcm/send/${id}`,
   p256dh: "p256dh",
   auth: "auth",
 });
