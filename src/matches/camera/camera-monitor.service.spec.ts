@@ -19,7 +19,7 @@ describe("CameraMonitorService", () => {
   let rconClient: { send: jest.Mock };
   let rcon: { connect: jest.Mock };
   let mediaMtx: { listPaths: jest.Mock };
-  let sockets: { broadcastMessage: jest.Mock };
+  let sockets: { broadcastToCluster: jest.Mock };
   let service: CameraMonitorService;
 
   const path = (steamId: string) => `camera-${MATCH_ID}-${steamId}`;
@@ -44,7 +44,7 @@ describe("CameraMonitorService", () => {
     rconClient = { send: jest.fn().mockResolvedValue("") };
     rcon = { connect: jest.fn().mockResolvedValue(rconClient) };
     mediaMtx = { listPaths: jest.fn() };
-    sockets = { broadcastMessage: jest.fn().mockResolvedValue(undefined) };
+    sockets = { broadcastToCluster: jest.fn().mockResolvedValue(undefined) };
 
     service = new CameraMonitorService(
       new Logger("CameraMonitorTest"),
@@ -182,7 +182,7 @@ describe("CameraMonitorService", () => {
 
     await service.monitorLiveMatches(1000 + 60_000);
 
-    expect(sockets.broadcastMessage).toHaveBeenCalledWith("camera-status", {
+    expect(sockets.broadcastToCluster).toHaveBeenCalledWith("camera-status", {
       matchId: MATCH_ID,
     });
   });
@@ -196,7 +196,7 @@ describe("CameraMonitorService", () => {
 
     await service.monitorLiveMatches(1000 + 60_000);
 
-    expect(sockets.broadcastMessage).toHaveBeenCalledWith("camera-status", {
+    expect(sockets.broadcastToCluster).toHaveBeenCalledWith("camera-status", {
       matchId: MATCH_ID,
     });
   });
@@ -210,6 +210,6 @@ describe("CameraMonitorService", () => {
 
     await service.monitorLiveMatches(1000 + 60_000);
 
-    expect(sockets.broadcastMessage).not.toHaveBeenCalled();
+    expect(sockets.broadcastToCluster).not.toHaveBeenCalled();
   });
 });

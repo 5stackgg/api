@@ -190,7 +190,7 @@ export class CameraMonitorService {
     // so the actual status still has to be fetched through the authorized
     // endpoint. Emitted before the rcon call so the UI still updates when the
     // game server is unreachable.
-    void this.sockets.broadcastMessage("camera-status", { matchId }).catch(
+    void this.sockets.broadcastToCluster("camera-status", { matchId }).catch(
       (error: unknown): void => {
         this.logger.warn(
           `[${matchId}] failed to push camera status: ${(error as Error)?.message ?? error}`,
