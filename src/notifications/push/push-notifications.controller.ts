@@ -38,20 +38,11 @@ export class PushNotificationsController {
   // never returns the private key.
   @HasuraAction()
   public async webPushStatus() {
-    const [subscriptions] = await this.pushNotifications.countSubscriptions();
-
     return {
       configured: this.pushNotifications.isConfigured(),
       managed_by_environment: this.pushNotifications.isManagedByEnvironment(),
-      subscriptions,
+      ...(await this.pushNotifications.getSubscriptionStats()),
     };
-  }
-
-  @HasuraAction()
-  public async generateWebPushKeys() {
-    await this.pushNotifications.generateKeys();
-
-    return { success: true };
   }
 
   @Post("subscribe")

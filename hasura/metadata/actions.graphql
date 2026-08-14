@@ -79,10 +79,6 @@ type Query {
 }
 
 type Mutation {
-  generateWebPushKeys: WebPushKeysOutput
-}
-
-type Mutation {
   bakeShaders(
     game_server_node_id: uuid!
   ): SuccessOutput
@@ -987,14 +983,21 @@ type SuccessOutput {
   success: Boolean!
 }
 
+type WebPushPlatformCount {
+  platform: String!
+  devices: Int!
+}
+
 type WebPushStatusOutput {
   configured: Boolean!
   managed_by_environment: Boolean!
   subscriptions: Int!
-}
-
-type WebPushKeysOutput {
-  success: Boolean!
+  players: Int!
+  active_7d: Int!
+  new_7d: Int!
+  never_delivered: Int!
+  last_delivered_at: timestamptz
+  platforms: [WebPushPlatformCount!]!
 }
 
 type DraftGamePreviewPlayer {

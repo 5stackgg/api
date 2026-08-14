@@ -37,6 +37,16 @@ type SubscriptionRow = {
   auth: string;
 };
 
+export type SubscriptionStats = {
+  subscriptions: number;
+  players: number;
+  active_7d: number;
+  new_7d: number;
+  never_delivered: number;
+  last_delivered_at: string | null;
+  platforms: Array<{ platform: string; devices: number }>;
+};
+
 // Which roles can actually see a role-broadcast notification, mirroring the
 // select_permissions in
 // hasura/metadata/databases/default/tables/public_notifications.yaml.
@@ -64,8 +74,6 @@ const SEND_CHUNK_SIZE = 25;
 
 const fanOutClaimKey = (id: string) => `notifications:fan-out:${id}`;
 
-const KEYS_CHANGED_CHANNEL = "web-push-keys-changed";
-
 // Long enough to outlast Hasura's delivery of the last row in a fan-out,
 // including its retry_conf (3 retries, 10s apart, 60s timeout each).
 const FAN_OUT_CLAIM_TTL_SECONDS = 900;
@@ -87,22 +95,6 @@ export class PushNotificationsService {
     this.appConfig = this.configService.get<AppConfig>("app");
     this.webPushConfig = this.configService.get<WebPushConfig>("webPush");
     this.redis = redisManager.getConnection();
-
-    // A rotation on one pod has to reach the others. They would otherwise keep
-    // signing with the retired private key, and keep handing the retired public
-    // key to anyone subscribing, until they happened to restart.
-    const sub = redisManager.getConnection("sub");
-
-    void sub.subscribe(KEYS_CHANGED_CHANNEL);
-    sub.on("message", (channel: string) => {
-      if (channel !== KEYS_CHANGED_CHANNEL) {
-        return;
-      }
-
-      void this.loadKeys().catch((error: unknown) => {
-        this.logger.warn("unable to reload VAPID keys", error);
-      });
-    });
   }
 
   // A fan-out writes one notification row per recipient and Hasura's event
@@ -130,10 +122,11 @@ export class PushNotificationsService {
     return (await this.redis.exists(fanOutClaimKey(id))) === 1;
   }
 
-  // Keys live in `settings` so an operator can generate them from the panel --
-  // VAPID is a self-signed keypair, not a vendor credential, so there is
-  // nothing to register and no reason to force an env var. Env still wins when
-  // set, for anyone who would rather manage secrets outside the database.
+  // Keys live in `settings` and are generated on first boot -- VAPID is a
+  // self-signed keypair, not a vendor credential, so there is nothing to
+  // register and no reason to force an env var or to expose rotation. Env still
+  // wins when set, for anyone who would rather manage secrets outside the
+  // database.
   public async loadKeys(): Promise<void> {
     const publicKey =
       this.webPushConfig?.publicKey ||
@@ -174,33 +167,6 @@ export class PushNotificationsService {
     this.publicKey = publicKey;
   }
 
-  // Generates a fresh keypair and stores it.
-  //
-  // Rotating invalidates every existing subscription -- the browser signed up
-  // against the old public key and the push service will reject sends signed by
-  // the new one -- so the stale rows are cleared out rather than left to fail
-  // one 403 at a time.
-  public async generateKeys(): Promise<{ publicKey: string }> {
-    if (this.webPushConfig?.publicKey || this.webPushConfig?.privateKey) {
-      throw new Error(
-        "web push keys are set through the environment; unset WEB_PUSH_PUBLIC_KEY/WEB_PUSH_PRIVATE_KEY to manage them here",
-      );
-    }
-
-    const keys = webPush.generateVAPIDKeys();
-
-    await this.setSetting(SystemSettingName.WebPushPublicKey, keys.publicKey);
-    await this.setSetting(SystemSettingName.WebPushPrivateKey, keys.privateKey);
-    await this.postgres.query(`DELETE FROM public.push_subscriptions`);
-
-    await this.loadKeys();
-
-    // Valid JSON with no payload: the "sub" connection is shared, and the
-    // sockets subscriber on it parses every message it receives.
-    await this.redis.publish(KEYS_CHANGED_CHANNEL, "{}");
-
-    return { publicKey: keys.publicKey };
-  }
 
   // Which of these players could receive a push at all. Callers use it to
   // decide whether a recipient who muted the bell still needs a notifications
@@ -221,12 +187,65 @@ export class PushNotificationsService {
     return rows.map((row) => row.steam_id);
   }
 
-  public async countSubscriptions(): Promise<[number]> {
-    const [row] = await this.postgres.query<Array<{ count: string }>>(
-      `SELECT count(*)::text AS count FROM public.push_subscriptions`,
+  // Everything the admin status page shows, derived from push_subscriptions --
+  // no counters to keep in sync, and `last_used_at` is already stamped on every
+  // successful send, which makes it the only real proof that delivery works
+  // end to end rather than just that a keypair exists.
+  public async getSubscriptionStats(): Promise<SubscriptionStats> {
+    const [totals] = await this.postgres.query<
+      Array<{
+        devices: string;
+        players: string;
+        active_7d: string;
+        new_7d: string;
+        never_delivered: string;
+        last_delivered_at: Date | null;
+      }>
+    >(
+      `SELECT count(*)::text AS devices,
+              count(DISTINCT steam_id)::text AS players,
+              (count(*) FILTER (
+                 WHERE last_used_at > now() - interval '7 days'))::text AS active_7d,
+              (count(*) FILTER (
+                 WHERE created_at > now() - interval '7 days'))::text AS new_7d,
+              (count(*) FILTER (WHERE last_used_at IS NULL))::text AS never_delivered,
+              max(last_used_at) AS last_delivered_at
+         FROM public.push_subscriptions`,
     );
 
-    return [Number(row?.count ?? 0)];
+    // The push service is the only platform signal that can be trusted --
+    // user_agent is whatever the browser felt like sending, but the endpoint
+    // host is enforced by the table's CHECK constraint.
+    const platforms = await this.postgres.query<
+      Array<{ platform: string; devices: string }>
+    >(
+      `SELECT CASE
+                WHEN endpoint ~* 'push\\.apple\\.com' THEN 'apple'
+                WHEN endpoint ~* '(fcm|android)\\.googleapis\\.com' THEN 'google'
+                WHEN endpoint ~* 'push\\.services\\.mozilla\\.com' THEN 'mozilla'
+                WHEN endpoint ~* 'notify\\.windows\\.com' THEN 'windows'
+                ELSE 'other'
+              END AS platform,
+              count(*)::text AS devices
+         FROM public.push_subscriptions
+        GROUP BY 1
+        ORDER BY count(*) DESC`,
+    );
+
+    return {
+      subscriptions: Number(totals?.devices ?? 0),
+      players: Number(totals?.players ?? 0),
+      active_7d: Number(totals?.active_7d ?? 0),
+      new_7d: Number(totals?.new_7d ?? 0),
+      never_delivered: Number(totals?.never_delivered ?? 0),
+      last_delivered_at: totals?.last_delivered_at
+        ? new Date(totals.last_delivered_at).toISOString()
+        : null,
+      platforms: platforms.map((row) => ({
+        platform: row.platform,
+        devices: Number(row.devices),
+      })),
+    };
   }
 
   private async getSetting(name: string): Promise<string | undefined> {
@@ -238,19 +257,11 @@ export class PushNotificationsService {
     return row?.value || undefined;
   }
 
-  private async setSetting(name: string, value: string): Promise<void> {
-    await this.postgres.query(
-      `INSERT INTO public.settings (name, value) VALUES ($1, $2)
-       ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value`,
-      [name, value],
-    );
-  }
-
-  // The install-time write, as opposed to the deliberate rotation in
-  // generateKeys(): the first pod to get here wins and every other pod adopts
-  // what is already stored. Overwriting instead would leave pods signing with
-  // different private keys, and every subscription a browser took out against
-  // the loser's public key rejected with a 403 until that pod restarted.
+  // The install-time write, and the only one there is -- keys are never
+  // rotated. The first pod to get here wins and every other pod adopts what is
+  // already stored. Overwriting instead would leave pods signing with different
+  // private keys, and every subscription a browser took out against the loser's
+  // public key rejected with a 403 until that pod restarted.
   //
   // Both rows go in one statement so a race cannot leave two halves of
   // different keypairs behind, and the read is a second statement because a
