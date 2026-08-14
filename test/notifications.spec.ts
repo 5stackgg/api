@@ -95,6 +95,8 @@ describe("notifications (SQL-driven)", () => {
       { get: () => ({ webDomain: "https://example.com" }) } as any,
       preferences(),
       pushNotifications() as any,
+      { add: jest.fn() } as any,
+      { add: jest.fn() } as any,
     );
 
   const subscribed = async (steamId: string) => {
@@ -279,7 +281,10 @@ describe("notifications (SQL-driven)", () => {
     const redisManager = {
       getConnection: () => ({
         exists: async () => 0,
-        pipeline: () => ({ set: () => {}, exec: async () => [] }),
+        pipeline: () => ({
+          set: () => {},
+          exec: async (): Promise<Array<unknown>> => [],
+        }),
         subscribe: async () => 1,
         publish: async () => 1,
         on: () => {},
@@ -294,7 +299,11 @@ describe("notifications (SQL-driven)", () => {
           get: (key: string) =>
             key === "app"
               ? { webDomain: "https://example.com" }
-              : { publicKey: undefined, privateKey: undefined, subject: "x" },
+              : {
+                  publicKey: undefined as string | undefined,
+                  privateKey: undefined as string | undefined,
+                  subject: "x",
+                },
         } as any,
         redisManager as any,
       );
