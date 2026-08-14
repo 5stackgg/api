@@ -56988,6 +56988,9 @@ export default {
             "id": [
                 5084
             ],
+            "in_app": [
+                5
+            ],
             "is_read": [
                 5
             ],
@@ -57237,6 +57240,9 @@ export default {
             "id": [
                 5086
             ],
+            "in_app": [
+                6
+            ],
             "is_read": [
                 6
             ],
@@ -57313,6 +57319,9 @@ export default {
             ],
             "id": [
                 5084
+            ],
+            "in_app": [
+                5
             ],
             "is_read": [
                 5
@@ -57487,6 +57496,9 @@ export default {
             "id": [
                 3008
             ],
+            "in_app": [
+                3008
+            ],
             "is_read": [
                 3008
             ],
@@ -57549,6 +57561,9 @@ export default {
             ],
             "id": [
                 5084
+            ],
+            "in_app": [
+                5
             ],
             "is_read": [
                 5
@@ -57649,6 +57664,9 @@ export default {
             ],
             "id": [
                 5084
+            ],
+            "in_app": [
+                5
             ],
             "is_read": [
                 5

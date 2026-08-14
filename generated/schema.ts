@@ -15236,6 +15236,7 @@ export interface notifications {
     deleted_at: (Scalars['timestamptz'] | null)
     entity_id: (Scalars['String'] | null)
     id: Scalars['uuid']
+    in_app: Scalars['Boolean']
     is_read: Scalars['Boolean']
     message: Scalars['String']
     /** An object relationship */
@@ -15321,15 +15322,15 @@ export interface notifications_mutation_response {
 
 
 /** select columns of table "notifications" */
-export type notifications_select_column = 'actions' | 'created_at' | 'deletable' | 'deleted_at' | 'entity_id' | 'id' | 'is_read' | 'message' | 'role' | 'steam_id' | 'title' | 'type'
+export type notifications_select_column = 'actions' | 'created_at' | 'deletable' | 'deleted_at' | 'entity_id' | 'id' | 'in_app' | 'is_read' | 'message' | 'role' | 'steam_id' | 'title' | 'type'
 
 
 /** select "notifications_aggregate_bool_exp_bool_and_arguments_columns" columns of table "notifications" */
-export type notifications_select_column_notifications_aggregate_bool_exp_bool_and_arguments_columns = 'deletable' | 'is_read'
+export type notifications_select_column_notifications_aggregate_bool_exp_bool_and_arguments_columns = 'deletable' | 'in_app' | 'is_read'
 
 
 /** select "notifications_aggregate_bool_exp_bool_or_arguments_columns" columns of table "notifications" */
-export type notifications_select_column_notifications_aggregate_bool_exp_bool_or_arguments_columns = 'deletable' | 'is_read'
+export type notifications_select_column_notifications_aggregate_bool_exp_bool_or_arguments_columns = 'deletable' | 'in_app' | 'is_read'
 
 
 /** aggregate stddev on columns */
@@ -15361,7 +15362,7 @@ export interface notifications_sum_fields {
 
 
 /** update columns of table "notifications" */
-export type notifications_update_column = 'actions' | 'created_at' | 'deletable' | 'deleted_at' | 'entity_id' | 'id' | 'is_read' | 'message' | 'role' | 'steam_id' | 'title' | 'type'
+export type notifications_update_column = 'actions' | 'created_at' | 'deletable' | 'deleted_at' | 'entity_id' | 'id' | 'in_app' | 'is_read' | 'message' | 'role' | 'steam_id' | 'title' | 'type'
 
 
 /** aggregate var_pop on columns */
@@ -63347,6 +63348,7 @@ export interface notificationsGenqlSelection{
     deleted_at?: boolean | number
     entity_id?: boolean | number
     id?: boolean | number
+    in_app?: boolean | number
     is_read?: boolean | number
     message?: boolean | number
     /** An object relationship */
@@ -63422,7 +63424,7 @@ export interface notifications_avg_order_by {steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "notifications". All fields are combined with a logical 'AND'. */
-export interface notifications_bool_exp {_and?: (notifications_bool_exp[] | null),_not?: (notifications_bool_exp | null),_or?: (notifications_bool_exp[] | null),actions?: (jsonb_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),deletable?: (Boolean_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),entity_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),is_read?: (Boolean_comparison_exp | null),message?: (String_comparison_exp | null),player?: (players_bool_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),title?: (String_comparison_exp | null),type?: (e_notification_types_enum_comparison_exp | null)}
+export interface notifications_bool_exp {_and?: (notifications_bool_exp[] | null),_not?: (notifications_bool_exp | null),_or?: (notifications_bool_exp[] | null),actions?: (jsonb_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),deletable?: (Boolean_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),entity_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),in_app?: (Boolean_comparison_exp | null),is_read?: (Boolean_comparison_exp | null),message?: (String_comparison_exp | null),player?: (players_bool_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),title?: (String_comparison_exp | null),type?: (e_notification_types_enum_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -63442,7 +63444,7 @@ export interface notifications_inc_input {steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "notifications" */
-export interface notifications_insert_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),deletable?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),player?: (players_obj_rel_insert_input | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
+export interface notifications_insert_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),deletable?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),in_app?: (Scalars['Boolean'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),player?: (players_obj_rel_insert_input | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -63497,7 +63499,7 @@ export interface notifications_on_conflict {constraint: notifications_constraint
 
 
 /** Ordering options when selecting data from "notifications". */
-export interface notifications_order_by {actions?: (order_by | null),created_at?: (order_by | null),deletable?: (order_by | null),deleted_at?: (order_by | null),entity_id?: (order_by | null),id?: (order_by | null),is_read?: (order_by | null),message?: (order_by | null),player?: (players_order_by | null),role?: (order_by | null),steam_id?: (order_by | null),title?: (order_by | null),type?: (order_by | null)}
+export interface notifications_order_by {actions?: (order_by | null),created_at?: (order_by | null),deletable?: (order_by | null),deleted_at?: (order_by | null),entity_id?: (order_by | null),id?: (order_by | null),in_app?: (order_by | null),is_read?: (order_by | null),message?: (order_by | null),player?: (players_order_by | null),role?: (order_by | null),steam_id?: (order_by | null),title?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: notifications */
@@ -63509,7 +63511,7 @@ export interface notifications_prepend_input {actions?: (Scalars['jsonb'] | null
 
 
 /** input type for updating data in table "notifications" */
-export interface notifications_set_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),deletable?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
+export interface notifications_set_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),deletable?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),in_app?: (Scalars['Boolean'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -63557,7 +63559,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface notifications_stream_cursor_value_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),deletable?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
+export interface notifications_stream_cursor_value_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),deletable?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),in_app?: (Scalars['Boolean'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -122002,6 +122004,7 @@ export const enumNotificationsSelectColumn = {
    deleted_at: 'deleted_at' as const,
    entity_id: 'entity_id' as const,
    id: 'id' as const,
+   in_app: 'in_app' as const,
    is_read: 'is_read' as const,
    message: 'message' as const,
    role: 'role' as const,
@@ -122012,11 +122015,13 @@ export const enumNotificationsSelectColumn = {
 
 export const enumNotificationsSelectColumnNotificationsAggregateBoolExpBoolAndArgumentsColumns = {
    deletable: 'deletable' as const,
+   in_app: 'in_app' as const,
    is_read: 'is_read' as const
 }
 
 export const enumNotificationsSelectColumnNotificationsAggregateBoolExpBoolOrArgumentsColumns = {
    deletable: 'deletable' as const,
+   in_app: 'in_app' as const,
    is_read: 'is_read' as const
 }
 
@@ -122027,6 +122032,7 @@ export const enumNotificationsUpdateColumn = {
    deleted_at: 'deleted_at' as const,
    entity_id: 'entity_id' as const,
    id: 'id' as const,
+   in_app: 'in_app' as const,
    is_read: 'is_read' as const,
    message: 'message' as const,
    role: 'role' as const,

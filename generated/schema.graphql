@@ -49682,6 +49682,7 @@ type notifications {
   deleted_at: timestamptz
   entity_id: String
   id: uuid!
+  in_app: Boolean!
   is_read: Boolean!
   message: String!
 
@@ -49802,6 +49803,7 @@ input notifications_bool_exp {
   deleted_at: timestamptz_comparison_exp
   entity_id: String_comparison_exp
   id: uuid_comparison_exp
+  in_app: Boolean_comparison_exp
   is_read: Boolean_comparison_exp
   message: String_comparison_exp
   player: players_bool_exp
@@ -49859,6 +49861,7 @@ input notifications_insert_input {
   deleted_at: timestamptz
   entity_id: String
   id: uuid
+  in_app: Boolean
   is_read: Boolean
   message: String
   player: players_obj_rel_insert_input
@@ -49944,6 +49947,7 @@ input notifications_order_by {
   deleted_at: order_by
   entity_id: order_by
   id: order_by
+  in_app: order_by
   is_read: order_by
   message: order_by
   player: players_order_by
@@ -49986,6 +49990,9 @@ enum notifications_select_column {
   id
 
   """column name"""
+  in_app
+
+  """column name"""
   is_read
 
   """column name"""
@@ -50012,6 +50019,9 @@ enum notifications_select_column_notifications_aggregate_bool_exp_bool_and_argum
   deletable
 
   """column name"""
+  in_app
+
+  """column name"""
   is_read
 }
 
@@ -50021,6 +50031,9 @@ select "notifications_aggregate_bool_exp_bool_or_arguments_columns" columns of t
 enum notifications_select_column_notifications_aggregate_bool_exp_bool_or_arguments_columns {
   """column name"""
   deletable
+
+  """column name"""
+  in_app
 
   """column name"""
   is_read
@@ -50036,6 +50049,7 @@ input notifications_set_input {
   deleted_at: timestamptz
   entity_id: String
   id: uuid
+  in_app: Boolean
   is_read: Boolean
   message: String
   role: e_player_roles_enum
@@ -50099,6 +50113,7 @@ input notifications_stream_cursor_value_input {
   deleted_at: timestamptz
   entity_id: String
   id: uuid
+  in_app: Boolean
   is_read: Boolean
   message: String
   role: e_player_roles_enum
@@ -50140,6 +50155,9 @@ enum notifications_update_column {
 
   """column name"""
   id
+
+  """column name"""
+  in_app
 
   """column name"""
   is_read
