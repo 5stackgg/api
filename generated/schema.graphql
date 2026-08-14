@@ -886,13 +886,20 @@ type WatchDemoOutput {
   success: Boolean!
 }
 
-type WebPushKeysOutput {
-  success: Boolean!
+type WebPushPlatformCount {
+  devices: Int!
+  platform: String!
 }
 
 type WebPushStatusOutput {
+  active_7d: Int!
   configured: Boolean!
+  last_delivered_at: timestamptz
   managed_by_environment: Boolean!
+  never_delivered: Int!
+  new_7d: Int!
+  platforms: [WebPushPlatformCount!]!
+  players: Int!
   subscriptions: Int!
 }
 
@@ -38865,11 +38872,6 @@ type mutation_root {
   denyInvite(invite_id: uuid!, type: String!): SuccessOutput
   denyNameChange(name: String!, steam_id: bigint!): SuccessOutput
   forfeitMatch(match_id: uuid!, winning_lineup_id: uuid!): SuccessOutput
-
-  """
-  Generates a fresh self-signed VAPID keypair; invalidates every existing subscription
-  """
-  generateWebPushKeys: WebPushKeysOutput
 
   """
   Live pod GSI snapshot — slots, sides, alive/dead. Drives the stream-deck.

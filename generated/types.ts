@@ -2779,20 +2779,41 @@ export default {
                 80
             ]
         },
-        "WebPushKeysOutput": {
-            "success": [
-                5
+        "WebPushPlatformCount": {
+            "devices": [
+                40
+            ],
+            "platform": [
+                80
             ],
             "__typename": [
                 80
             ]
         },
         "WebPushStatusOutput": {
+            "active_7d": [
+                40
+            ],
             "configured": [
                 5
             ],
+            "last_delivered_at": [
+                4584
+            ],
             "managed_by_environment": [
                 5
+            ],
+            "never_delivered": [
+                40
+            ],
+            "new_7d": [
+                40
+            ],
+            "platforms": [
+                100
+            ],
+            "players": [
+                40
             ],
             "subscriptions": [
                 40
@@ -152369,9 +152390,6 @@ export default {
                         "uuid!"
                     ]
                 }
-            ],
-            "generateWebPushKeys": [
-                100
             ],
             "getLiveStreamSpecState": [
                 45,

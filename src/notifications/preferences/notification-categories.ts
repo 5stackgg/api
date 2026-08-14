@@ -90,7 +90,7 @@ export const IN_APP_KEYS: PreferenceKey[] = [
   { key: "TeamInvite", defaultEnabled: true },
   { key: "TournamentTeamInvite", defaultEnabled: true },
   { key: "DraftInvite", defaultEnabled: true },
-  { key: "MatchImported", defaultEnabled: false },
+  { key: "MatchImported", defaultEnabled: true },
   { key: "MatchStatsReady", defaultEnabled: true },
   { key: "ClipReady", defaultEnabled: true },
   { key: "AwardGranted", defaultEnabled: true },

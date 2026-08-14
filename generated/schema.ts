@@ -821,14 +821,21 @@ export interface WatchDemoOutput {
     __typename: 'WatchDemoOutput'
 }
 
-export interface WebPushKeysOutput {
-    success: Scalars['Boolean']
-    __typename: 'WebPushKeysOutput'
+export interface WebPushPlatformCount {
+    devices: Scalars['Int']
+    platform: Scalars['String']
+    __typename: 'WebPushPlatformCount'
 }
 
 export interface WebPushStatusOutput {
+    active_7d: Scalars['Int']
     configured: Scalars['Boolean']
+    last_delivered_at: (Scalars['timestamptz'] | null)
     managed_by_environment: Scalars['Boolean']
+    never_delivered: Scalars['Int']
+    new_7d: Scalars['Int']
+    platforms: WebPushPlatformCount[]
+    players: Scalars['Int']
     subscriptions: Scalars['Int']
     __typename: 'WebPushStatusOutput'
 }
@@ -12922,8 +12929,6 @@ export interface mutation_root {
     denyInvite: (SuccessOutput | null)
     denyNameChange: (SuccessOutput | null)
     forfeitMatch: (SuccessOutput | null)
-    /** Generates a fresh self-signed VAPID keypair; invalidates every existing subscription */
-    generateWebPushKeys: (WebPushKeysOutput | null)
     /** Live pod GSI snapshot — slots, sides, alive/dead. Drives the stream-deck. */
     getLiveStreamSpecState: (LiveStreamSpecState | null)
     getTestUploadLink: GetTestUploadResponse
@@ -37194,15 +37199,22 @@ export interface WatchDemoOutputGenqlSelection{
     __scalar?: boolean | number
 }
 
-export interface WebPushKeysOutputGenqlSelection{
-    success?: boolean | number
+export interface WebPushPlatformCountGenqlSelection{
+    devices?: boolean | number
+    platform?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 export interface WebPushStatusOutputGenqlSelection{
+    active_7d?: boolean | number
     configured?: boolean | number
+    last_delivered_at?: boolean | number
     managed_by_environment?: boolean | number
+    never_delivered?: boolean | number
+    new_7d?: boolean | number
+    platforms?: WebPushPlatformCountGenqlSelection
+    players?: boolean | number
     subscriptions?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -57623,8 +57635,6 @@ export interface mutation_rootGenqlSelection{
     denyInvite?: (SuccessOutputGenqlSelection & { __args: {invite_id: Scalars['uuid'], type: Scalars['String']} })
     denyNameChange?: (SuccessOutputGenqlSelection & { __args: {name: Scalars['String'], steam_id: Scalars['bigint']} })
     forfeitMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], winning_lineup_id: Scalars['uuid']} })
-    /** Generates a fresh self-signed VAPID keypair; invalidates every existing subscription */
-    generateWebPushKeys?: WebPushKeysOutputGenqlSelection
     /** Live pod GSI snapshot — slots, sides, alive/dead. Drives the stream-deck. */
     getLiveStreamSpecState?: (LiveStreamSpecStateGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     getTestUploadLink?: GetTestUploadResponseGenqlSelection
@@ -101977,10 +101987,10 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
-    const WebPushKeysOutput_possibleTypes: string[] = ['WebPushKeysOutput']
-    export const isWebPushKeysOutput = (obj?: { __typename?: any } | null): obj is WebPushKeysOutput => {
-      if (!obj?.__typename) throw new Error('__typename is missing in "isWebPushKeysOutput"')
-      return WebPushKeysOutput_possibleTypes.includes(obj.__typename)
+    const WebPushPlatformCount_possibleTypes: string[] = ['WebPushPlatformCount']
+    export const isWebPushPlatformCount = (obj?: { __typename?: any } | null): obj is WebPushPlatformCount => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isWebPushPlatformCount"')
+      return WebPushPlatformCount_possibleTypes.includes(obj.__typename)
     }
     
 
