@@ -745,6 +745,7 @@ describe("awards (SQL-driven)", () => {
           has: jest.fn().mockResolvedValue(false),
         } as never,
         postgres,
+        { notifyPlayers: jest.fn() } as never,
       );
 
       controller = new AwardsController(service, {
