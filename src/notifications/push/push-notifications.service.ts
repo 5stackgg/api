@@ -64,6 +64,8 @@ const SEND_CHUNK_SIZE = 25;
 
 const fanOutClaimKey = (id: string) => `notifications:fan-out:${id}`;
 
+const KEYS_CHANGED_CHANNEL = "web-push-keys-changed";
+
 // Long enough to outlast Hasura's delivery of the last row in a fan-out,
 // including its retry_conf (3 retries, 10s apart, 60s timeout each).
 const FAN_OUT_CLAIM_TTL_SECONDS = 900;
@@ -85,6 +87,22 @@ export class PushNotificationsService {
     this.appConfig = this.configService.get<AppConfig>("app");
     this.webPushConfig = this.configService.get<WebPushConfig>("webPush");
     this.redis = redisManager.getConnection();
+
+    // A rotation on one pod has to reach the others. They would otherwise keep
+    // signing with the retired private key, and keep handing the retired public
+    // key to anyone subscribing, until they happened to restart.
+    const sub = redisManager.getConnection("sub");
+
+    void sub.subscribe(KEYS_CHANGED_CHANNEL);
+    sub.on("message", (channel: string) => {
+      if (channel !== KEYS_CHANGED_CHANNEL) {
+        return;
+      }
+
+      void this.loadKeys().catch((error: unknown) => {
+        this.logger.warn("unable to reload VAPID keys", error);
+      });
+    });
   }
 
   // A fan-out writes one notification row per recipient and Hasura's event
@@ -137,15 +155,9 @@ export class PushNotificationsService {
     this.logger.log("no VAPID keys found; generating a keypair");
 
     try {
-      const keys = webPush.generateVAPIDKeys();
+      const claimed = await this.claimKeys(webPush.generateVAPIDKeys());
 
-      await this.setSetting(SystemSettingName.WebPushPublicKey, keys.publicKey);
-      await this.setSetting(
-        SystemSettingName.WebPushPrivateKey,
-        keys.privateKey,
-      );
-
-      this.apply(keys.publicKey, keys.privateKey);
+      this.apply(claimed.publicKey, claimed.privateKey);
     } catch (error) {
       this.configured = false;
       this.publicKey = null;
@@ -183,7 +195,30 @@ export class PushNotificationsService {
 
     await this.loadKeys();
 
+    // Valid JSON with no payload: the "sub" connection is shared, and the
+    // sockets subscriber on it parses every message it receives.
+    await this.redis.publish(KEYS_CHANGED_CHANNEL, "{}");
+
     return { publicKey: keys.publicKey };
+  }
+
+  // Which of these players could receive a push at all. Callers use it to
+  // decide whether a recipient who muted the bell still needs a notifications
+  // row written for them -- the INSERT event trigger is what delivers push, so
+  // no row means no push, but a row nobody can be pushed to is dead weight.
+  public async filterSubscribed(steamIds: string[]): Promise<string[]> {
+    if (!this.configured || steamIds.length === 0) {
+      return [];
+    }
+
+    const rows = await this.postgres.query<Array<{ steam_id: string }>>(
+      `SELECT DISTINCT steam_id::text AS steam_id
+         FROM public.push_subscriptions
+        WHERE steam_id = ANY($1::bigint[])`,
+      [steamIds],
+    );
+
+    return rows.map((row) => row.steam_id);
   }
 
   public async countSubscriptions(): Promise<[number]> {
@@ -209,6 +244,48 @@ export class PushNotificationsService {
        ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value`,
       [name, value],
     );
+  }
+
+  // The install-time write, as opposed to the deliberate rotation in
+  // generateKeys(): the first pod to get here wins and every other pod adopts
+  // what is already stored. Overwriting instead would leave pods signing with
+  // different private keys, and every subscription a browser took out against
+  // the loser's public key rejected with a 403 until that pod restarted.
+  //
+  // Both rows go in one statement so a race cannot leave two halves of
+  // different keypairs behind, and the read is a second statement because a
+  // CTE's SELECT runs against the snapshot from before its own INSERT.
+  private async claimKeys(keys: {
+    publicKey: string;
+    privateKey: string;
+  }): Promise<{ publicKey: string; privateKey: string }> {
+    const names = [
+      SystemSettingName.WebPushPublicKey,
+      SystemSettingName.WebPushPrivateKey,
+    ];
+
+    await this.postgres.query(
+      `INSERT INTO public.settings (name, value)
+            VALUES ($1, $2), ($3, $4)
+       ON CONFLICT (name) DO NOTHING`,
+      [names[0], keys.publicKey, names[1], keys.privateKey],
+    );
+
+    const rows = await this.postgres.query<
+      Array<{ name: string; value: string }>
+    >(`SELECT name, value FROM public.settings WHERE name = ANY($1::text[])`, [
+      names,
+    ]);
+
+    const stored = new Map(rows.map((row) => [row.name, row.value]));
+    const publicKey = stored.get(names[0]);
+    const privateKey = stored.get(names[1]);
+
+    if (!publicKey || !privateKey) {
+      throw new Error("VAPID keys were not stored");
+    }
+
+    return { publicKey, privateKey };
   }
 
   public isConfigured(): boolean {

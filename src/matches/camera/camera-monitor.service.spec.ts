@@ -126,8 +126,9 @@ describe("CameraMonitorService", () => {
       await service.monitorLiveMatches(1000 + 60_000);
 
       expect(rcon.connect).not.toHaveBeenCalled();
-      // Nothing sampled either: an absent coach leaves no trace to age out of.
-      expect(redis.hset).toHaveBeenCalledWith(`camera:samples:${MATCH_ID}`, {});
+      // Nothing sampled either: an absent coach leaves no trace to age out of,
+      // and redis rejects an hset with no fields.
+      expect(redis.hset).not.toHaveBeenCalled();
     });
 
     it("starts watching a coach once their camera appears", async () => {

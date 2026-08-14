@@ -401,12 +401,28 @@ export class NotificationsService {
     }>,
     color?: number,
   ) {
-    // Filtered before the insert rather than at read time: the bell reads
+    // Resolved before the insert rather than at read time: the bell reads
     // `notifications` straight through Hasura, and "hide rows whose type the
-    // viewer muted" isn't expressible as a select_permission.
-    const steamIds = await this.preferences.filterInAppRecipients(
-      type,
-      Array.from(new Set(notification.steamIds)),
+    // viewer muted" isn't expressible as a select_permission, so `in_app`
+    // carries the answer on the row itself.
+    //
+    // A muted recipient still gets a row if they can be pushed to. Push is
+    // delivered by the INSERT trigger on this table and has a preference of its
+    // own, so skipping the row entirely would silence a channel they never
+    // turned off. Recipients with no subscription at all are skipped -- their
+    // row could only ever be dead weight.
+    const recipients = Array.from(new Set(notification.steamIds));
+    const inApp = new Set(
+      await this.preferences.filterInAppRecipients(type, recipients),
+    );
+    const pushable = new Set(
+      await this.pushNotifications.filterSubscribed(
+        recipients.filter((steamId) => !inApp.has(steamId)),
+      ),
+    );
+
+    const steamIds = recipients.filter(
+      (steamId) => inApp.has(steamId) || pushable.has(steamId),
     );
 
     if (steamIds.length > 0) {
@@ -421,6 +437,7 @@ export class NotificationsService {
               steam_id,
               entity_id: notification.entity_id,
               actions,
+              in_app: inApp.has(steam_id),
               ...(notification.deletable === false
                 ? { deletable: false }
                 : {}),
@@ -528,8 +545,9 @@ export class NotificationsService {
   // `role: 'user'` broadcast with a null steam_id is visible to nobody.
   //
   // Written as one INSERT..SELECT because the recipient list is the whole
-  // players table, and the in-app preference filter is inlined for the same
-  // reason.
+  // players table, and the in-app preference is resolved inline for the same
+  // reason. See notifyPlayers for why a player who muted the bell still gets a
+  // row when they have somewhere to be pushed.
   async notifyActivePlayers(
     type: e_notification_types_enum,
     notification: {
@@ -541,15 +559,19 @@ export class NotificationsService {
     const key = inAppKeyForType(type);
 
     const inserted = await this.postgres.query<Array<{ id: string }>>(
-      `INSERT INTO public.notifications (type, title, message, role, steam_id, entity_id)
-            SELECT $1, $2, $3, 'user', p.steam_id, $4
+      `INSERT INTO public.notifications (type, title, message, role, steam_id, entity_id, in_app)
+            SELECT $1, $2, $3, 'user', p.steam_id, $4,
+                   COALESCE(np.enabled, $7::boolean)
               FROM public.players p
          LEFT JOIN public.notification_preferences np
                 ON np.steam_id = p.steam_id
                AND np.channel = 'in_app'
                AND np.key = $5
              WHERE p.last_sign_in_at >= now() - $6::interval
-               AND COALESCE(np.enabled, $7::boolean) = true
+               AND (COALESCE(np.enabled, $7::boolean) = true
+                    OR EXISTS (SELECT 1
+                                 FROM public.push_subscriptions ps
+                                WHERE ps.steam_id = p.steam_id))
          RETURNING id::text AS id`,
       [
         type,

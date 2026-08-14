@@ -53,8 +53,8 @@ describe("notifications (SQL-driven)", () => {
 
       for (const object of insert.__args.objects) {
         await postgres.query(
-          `INSERT INTO notifications (type, title, message, role, steam_id, entity_id)
-                VALUES ($1, $2, $3, $4, $5::bigint, $6)`,
+          `INSERT INTO notifications (type, title, message, role, steam_id, entity_id, in_app)
+                VALUES ($1, $2, $3, $4, $5::bigint, $6, $7)`,
           [
             object.type,
             object.title,
@@ -62,12 +62,29 @@ describe("notifications (SQL-driven)", () => {
             object.role,
             object.steam_id,
             object.entity_id ?? null,
+            object.in_app ?? true,
           ],
         );
       }
 
       return { insert_notifications: { affected_rows: insert.length } };
     }),
+  });
+
+  // notifyPlayers asks who could be pushed to at all, so this answers from the
+  // real table rather than a fixed list.
+  const pushNotifications = () => ({
+    add: jest.fn(),
+    claimFanOut: jest.fn(),
+    filterSubscribed: async (steamIds: Array<string>) =>
+      (
+        await postgres.query<Array<{ steam_id: string }>>(
+          `SELECT DISTINCT steam_id::text AS steam_id
+             FROM push_subscriptions
+            WHERE steam_id = ANY($1::bigint[])`,
+          [steamIds],
+        )
+      ).map((row) => row.steam_id),
   });
 
   const notifications = () =>
@@ -77,8 +94,16 @@ describe("notifications (SQL-driven)", () => {
       logger as any,
       { get: () => ({ webDomain: "https://example.com" }) } as any,
       preferences(),
-      { add: jest.fn() } as any,
+      pushNotifications() as any,
     );
+
+  const subscribed = async (steamId: string) => {
+    await postgres.query(
+      `INSERT INTO push_subscriptions (steam_id, endpoint, p256dh, auth)
+            VALUES ($1::bigint, $2, 'key', 'auth')`,
+      [steamId, `https://fcm.googleapis.com/fcm/send/${steamId}`],
+    );
+  };
 
   const activePlayer = async () => {
     const steamId = await fx.player();
@@ -179,6 +204,28 @@ describe("notifications (SQL-driven)", () => {
       );
       expect(row.count).toBe("0");
     });
+
+    // Push is delivered by the insert trigger on this table, so a muted bell
+    // must not take the push with it -- push has its own preference.
+    it("still writes a row for a muted player who can be pushed to", async () => {
+      const active = await activePlayer();
+      await preferences().set(active, "in_app", "NewsPublished", false);
+      await subscribed(active);
+
+      await notifications().notifyActivePlayers("NewsPublished", {
+        title: "New article",
+        message: "something happened",
+        entity_id: "article-3",
+      });
+
+      const rows = await postgres.query<
+        Array<{ steam_id: string; in_app: boolean }>
+      >(
+        `SELECT steam_id::text AS steam_id, in_app FROM notifications`,
+      );
+
+      expect(rows).toEqual([{ steam_id: active, in_app: false }]);
+    });
   });
 
   describe("collapseOlderUnread", () => {
@@ -233,6 +280,9 @@ describe("notifications (SQL-driven)", () => {
       getConnection: () => ({
         exists: async () => 0,
         pipeline: () => ({ set: () => {}, exec: async () => [] }),
+        subscribe: async () => 1,
+        publish: async () => 1,
+        on: () => {},
       }),
     };
 

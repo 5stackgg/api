@@ -803,47 +803,66 @@ export class ChatService {
       ChatService.DIRECT_READ_KEY(user.steam_id),
     );
 
-    const conversations = [];
+    // One round trip for every room rather than one each: a player with a
+    // hundred threads was paying a hundred sequential awaits on page load.
+    const pipeline = this.redis.pipeline();
 
     for (const roomId of roomIds) {
+      pipeline.hgetall(`chat_${ChatLobbyType.Direct}_${roomId}`);
+    }
+
+    const stored = await pipeline.exec();
+    const conversations = [];
+
+    for (const [index, roomId] of roomIds.entries()) {
       const parties = parseDirectRoomId(roomId);
 
       if (!parties) {
         continue;
       }
 
-      const peerSteamId = parties.find(
-        (party) => party !== String(user.steam_id),
-      );
+      const [, hash] = stored?.[index] ?? [];
+      const raw = Object.values((hash as Record<string, string>) ?? {});
 
-      const messages = Object.values(
-        await this.redis.hgetall(`chat_${ChatLobbyType.Direct}_${roomId}`),
-      ).map((value) => JSON.parse(value));
-
-      if (messages.length === 0) {
+      if (raw.length === 0) {
         continue;
       }
 
+      const peerSteamId = parties.find(
+        (party) => party !== String(user.steam_id),
+      );
       const readAt = readState[roomId] ? new Date(readState[roomId]) : null;
 
-      const unread = messages.filter(
-        (message) =>
-          String(message.from?.steam_id) !== String(user.steam_id) &&
-          (!readAt || new Date(message.timestamp) > readAt),
-      ).length;
+      let unread = 0;
+      let peer: { steam_id: string } | undefined;
+      // ISO strings, so the newest is also the largest.
+      let lastMessageAt: string | undefined;
 
-      const peer = messages.find(
-        (message) => String(message.from?.steam_id) === peerSteamId,
-      )?.from;
+      for (const value of raw) {
+        const message = JSON.parse(value);
+        const from = String(message.from?.steam_id);
+
+        if (!peer && from === peerSteamId) {
+          peer = message.from;
+        }
+
+        if (
+          from !== String(user.steam_id) &&
+          (!readAt || new Date(message.timestamp) > readAt)
+        ) {
+          unread++;
+        }
+
+        if (!lastMessageAt || message.timestamp > lastMessageAt) {
+          lastMessageAt = message.timestamp;
+        }
+      }
 
       conversations.push({
         roomId,
         unread,
         peer: peer ?? { steam_id: peerSteamId },
-        lastMessageAt: messages
-          .map((message) => message.timestamp)
-          .sort()
-          .pop(),
+        lastMessageAt,
       });
     }
 

@@ -46,10 +46,7 @@ import { GameStreamerService } from "./game-streamer/game-streamer.service";
 import { isRoleAbove } from "../utilities/isRoleAbove";
 import { DemoMetadataService } from "../demos/demo-metadata.service";
 import { ClipsService } from "./clips/clips.service";
-import {
-  CAMERA_ACTIVE_MATCH_STATUSES,
-  CameraService,
-} from "./camera/camera.service";
+import { CameraService } from "./camera/camera.service";
 import { CameraMonitorService } from "./camera/camera-monitor.service";
 import { ClipSpec } from "./clips/types/ClipSpec";
 
@@ -793,16 +790,15 @@ export class MatchesController {
       }
     }
 
-    if (status === "Live" && data.old.status !== "Live") {
-      if (match.server?.game_server_node_id) {
-        await this.maybePauseRendersForServerNode(
-          matchId,
-          String(match.server.game_server_node_id),
-        );
-      }
-
-      // Veto finishing is what flips a match Live (create_match_map_from_veto),
-      // and that is the first point the lineups can no longer change.
+    if (
+      status === "Live" &&
+      data.old.status !== "Live" &&
+      match.server?.game_server_node_id
+    ) {
+      await this.maybePauseRendersForServerNode(
+        matchId,
+        String(match.server.game_server_node_id),
+      );
     }
 
     await this.discordMatchOverview.updateMatchOverview(matchId);
@@ -2139,11 +2135,20 @@ export class MatchesController {
     // Checking in is the commitment to play, so it is the right gate: letting
     // it through and only enforcing at Live means a player reaches the server
     // unwatched and the match pauses on them instead.
-    if (
-      (await this.camera.isRequired(data.match_id)) &&
-      !(await this.camera.isPlayerLive(data.match_id, data.user.steam_id))
-    ) {
-      throw Error("connect your camera before checking in");
+    //
+    // Only a definite "not publishing" blocks. MediaMTX being unreachable
+    // answers `null`, and turning our own outage into a check-in nobody can
+    // complete is worse than admitting a player whose camera the live monitor
+    // will catch anyway -- the same trade the monitor itself makes.
+    if (await this.camera.isRequired(data.match_id)) {
+      const live = await this.camera.isPlayerLive(
+        data.match_id,
+        data.user.steam_id,
+      );
+
+      if (live === false) {
+        throw Error("connect your camera before checking in");
+      }
     }
 
     const { update_match_lineup_players } = await this.hasura.mutation({
@@ -2732,12 +2737,6 @@ export class MatchesController {
       this.logger.warn(
         `team auto-detect failed for match ${match.id}: ${(error as Error)?.message ?? String(error)}`,
       );
-    }
-
-    // A substitute added after check-in opened missed the status edge that
-    // mints tokens, and without one they can never check in. Idempotent, so
-    // re-running it for the rest of the roster costs nothing.
-    if (CAMERA_ACTIVE_MATCH_STATUSES.includes(match.status)) {
     }
 
     if (!["Live"].includes(match.status)) {

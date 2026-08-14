@@ -1,4 +1,10 @@
--- Web push notifications, whole.
+-- Notifications, whole: web push delivery, per-channel preferences, quiet
+-- hours, and the indexes the bell reads through.
+--
+-- Every statement here is idempotent, and has to stay that way. This started
+-- life as 1877000000000 plus two follow-ups; squashing them meant stacks that
+-- had already applied the first would never see the rest, so the version was
+-- bumped to re-run the lot over whatever they already have.
 --
 -- One row per browser/device push subscription. A single steam_id can have
 -- several rows (phone + desktop), and every matching one gets sent to.
@@ -52,6 +58,15 @@ CREATE TABLE IF NOT EXISTS "public"."notification_preferences" (
         CHECK ("channel" IN ('push', 'in_app'))
 );
 
+-- Push is delivered by the INSERT event trigger on `notifications`, so dropping
+-- a recipient who muted the type in the bell would silence their push as well --
+-- even though push carries its own, separate preference. Every recipient who
+-- can receive one or the other gets a row, and this column is what keeps the
+-- muted ones out of the bell. The select_permissions filter on it; nothing
+-- reads it client side.
+ALTER TABLE "public"."notifications"
+    ADD COLUMN IF NOT EXISTS "in_app" boolean NOT NULL DEFAULT true;
+
 -- notifications had no index beyond its primary key. Three separate features
 -- dedupe by (type, entity_id) via NOT EXISTS -- LeagueWeekReminders,
 -- TournamentReminders, and the ChatMessage bell collapse -- and the bell reads
@@ -70,3 +85,28 @@ ALTER TABLE "public"."players"
   ADD COLUMN IF NOT EXISTS "quiet_hours_start" time,
   ADD COLUMN IF NOT EXISTS "quiet_hours_end" time,
   ADD COLUMN IF NOT EXISTS "notification_timezone" text;
+
+-- One-off sweep of the alerts that accumulated before they were retracted on
+-- resume/finish/cancel (see NotificationsService.resolveMatchAlerts).
+--
+-- "Map is paused" and "waiting for a server" describe a condition, so any of
+-- them still outstanding against a match that has since stopped is describing
+-- nothing. Live matches are deliberately left alone -- their alerts may still
+-- be true.
+UPDATE public.notifications n
+   SET deleted_at = now()
+  FROM public.matches m
+ WHERE n.type = 'MatchStatusChange'
+   AND n.deleted_at IS NULL
+   AND m.id::text = n.entity_id
+   AND m.status IN ('Canceled', 'Finished', 'Forfeit', 'Tie', 'Surrendered');
+
+-- Alerts whose match no longer exists at all can never be resolved by an event,
+-- so they would otherwise sit in the bell forever.
+UPDATE public.notifications n
+   SET deleted_at = now()
+ WHERE n.type = 'MatchStatusChange'
+   AND n.deleted_at IS NULL
+   AND NOT EXISTS (
+     SELECT 1 FROM public.matches m WHERE m.id::text = n.entity_id
+   );

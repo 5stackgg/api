@@ -114,8 +114,10 @@ export class VoiceService {
     return `voice:members:${channelId}`;
   }
 
+  private static readonly PUBLISHING_KEY_PREFIX = "voice:publishing:";
+
   private static publishingKey(channelId: string) {
-    return `voice:publishing:${channelId}`;
+    return `${VoiceService.PUBLISHING_KEY_PREFIX}${channelId}`;
   }
 
   // The inverse of pathForMember, kept beside it so the two cannot drift.
@@ -238,6 +240,14 @@ export class VoiceService {
       throw new Error("voice chat is not enabled");
     }
 
+    await this.assertMembership(channelId, user);
+  }
+
+  // Membership on its own, with no feature switch in front of it. Everything
+  // that starts something asks assertMember; the teardown paths ask this,
+  // because switching voice off platform-wide must not strand a microphone or a
+  // camera nobody can now stop publishing.
+  private async assertMembership(channelId: string, user: User) {
     if (!UUID_PATTERN.test(channelId)) {
       throw new Error(NOT_A_MEMBER);
     }
@@ -346,14 +356,15 @@ export class VoiceService {
     return answer;
   }
 
-  // Deferred: MediaMTX only reports the path as ready once the session is
-  // actually up, which is after the answer gets back to the publisher.
+  // Deferred: MediaMTX reports a path as ready only once the session is really
+  // up, and keeps reporting it until the session is really gone -- both of which
+  // land after the answer or the kick has returned here. Reading the path list
+  // straight afterwards describes the call as it was, not as it now is.
   //
   // Twice, because that moment cannot be predicted, only bracketed. A single
   // one-second wait was tuned to always be late enough, which made every camera
   // coming on cost a second before anyone else saw it. The early push usually
-  // lands and the late one is a no-op -- pushParticipants only emits when the
-  // roster actually changed, so the extra call is free when the first won.
+  // lands; the late one is one extra message per member and settles the rest.
   private pushParticipantsSoon(lobbyId: string) {
     for (const delay of [250, 1200]) {
       setTimeout(() => {
@@ -388,7 +399,7 @@ export class VoiceService {
   }
 
   public async leave(lobbyId: string, user: User) {
-    await this.assertMember(lobbyId, user);
+    await this.assertMembership(lobbyId, user);
 
     await this.mediaMtx.kickSessions(
       VoiceService.pathForMember(lobbyId, user.steam_id),
@@ -400,7 +411,7 @@ export class VoiceService {
     );
 
     await this.redis.del(VoiceService.speakingKey(lobbyId, user.steam_id));
-    await this.pushParticipants(lobbyId);
+    this.pushParticipantsSoon(lobbyId);
   }
 
   // The camera half of publish/subscribe/leave above. Same membership gate, same
@@ -447,13 +458,13 @@ export class VoiceService {
   // membership alone rather than assertVideoMember: switching the feature off
   // platform-wide must not strand a camera nobody can now stop publishing.
   public async stopVideo(lobbyId: string, user: User) {
-    await this.assertMember(lobbyId, user);
+    await this.assertMembership(lobbyId, user);
 
     await this.mediaMtx.kickSessions(
       VoiceService.pathForMemberCamera(lobbyId, user.steam_id),
     );
 
-    await this.pushParticipants(lobbyId);
+    this.pushParticipantsSoon(lobbyId);
   }
 
   // Everyone in the channel: who is in the call, and who is talking right now.
@@ -640,9 +651,10 @@ export class VoiceService {
   // a killed tab -- by watching MediaMTX itself, the same way camera health is
   // watched. One list call covers every channel on the box.
   //
-  // A channel that empties completely is not reported: with no publisher left
-  // there is nobody still in the call to tell, and the member who dropped is
-  // the one who would have been told.
+  // A channel that empties completely is still reported. `push` addresses the
+  // whole member list, not just the publishers, so there is somebody to tell:
+  // a teammate with the lobby open who never joined the call would otherwise
+  // keep rendering everyone as connected until the snapshot aged out on its own.
   public async monitorChannels() {
     const paths = await this.mediaMtx.listPaths();
 
@@ -712,6 +724,49 @@ export class VoiceService {
 
       await this.pushParticipants(channelId, paths);
     }
+
+    // Channels that emptied since the last pass are not in `publishing` at all,
+    // so the loop above never visits them. Their snapshot is what says they were
+    // occupied a moment ago.
+    for (const key of await this.emptiedChannelKeys(publishing)) {
+      await this.redis.del(key);
+
+      await this.pushParticipants(
+        key.slice(VoiceService.PUBLISHING_KEY_PREFIX.length),
+        paths,
+      );
+    }
+  }
+
+  private async emptiedChannelKeys(
+    publishing: Map<string, unknown>,
+  ): Promise<string[]> {
+    const emptied: string[] = [];
+    let cursor = "0";
+
+    do {
+      const [next, keys] = await this.redis.scan(
+        cursor,
+        "MATCH",
+        `${VoiceService.PUBLISHING_KEY_PREFIX}*`,
+        "COUNT",
+        100,
+      );
+
+      cursor = next;
+
+      for (const key of keys) {
+        const channelId = key.slice(
+          VoiceService.PUBLISHING_KEY_PREFIX.length,
+        );
+
+        if (!publishing.has(channelId)) {
+          emptied.push(key);
+        }
+      }
+    } while (cursor !== "0");
+
+    return emptied;
   }
 
   // Addressed to the channel's members rather than broadcast: who is in a voice

@@ -17,6 +17,7 @@ describe("VoiceService", () => {
     mget: jest.Mock;
     expire: jest.Mock;
     publish: jest.Mock;
+    scan: jest.Mock;
   };
   let service: VoiceService;
 
@@ -29,6 +30,11 @@ describe("VoiceService", () => {
     postgres.query
       .mockResolvedValueOnce(enabled(true))
       .mockResolvedValueOnce([{ status: "Accepted" }]);
+
+  // The teardown paths ask membership without the feature switch in front of
+  // it, so the membership row is the first query they make.
+  const member = () =>
+    postgres.query.mockResolvedValueOnce([{ status: "Accepted" }]);
 
   beforeEach(() => {
     postgres = { query: jest.fn().mockResolvedValue([]) };
@@ -49,6 +55,7 @@ describe("VoiceService", () => {
         ),
       expire: jest.fn().mockResolvedValue(1),
       publish: jest.fn().mockResolvedValue(1),
+      scan: jest.fn().mockResolvedValue(["0", []]),
     };
     service = new VoiceService(
       new Logger("VoiceTest"),
@@ -312,7 +319,7 @@ describe("VoiceService", () => {
   });
 
   it("drops only your own session on leave", async () => {
-    accepted();
+    member();
 
     await service.leave(LOBBY_ID, ME);
 
@@ -661,6 +668,39 @@ describe("VoiceService", () => {
       expect(redis.set).not.toHaveBeenCalled();
       expect(pushed()).toHaveLength(0);
     });
+
+    // A channel with no publisher left never appears in the pass at all, so the
+    // stored snapshot is the only thing that knows it was occupied a moment ago.
+    // Members who were never publishing still have to be told.
+    it("announces a channel that emptied completely", async () => {
+      roster();
+      snapshot(`${ME.steam_id},${PEER}`);
+      redis.scan.mockResolvedValue(["0", [`voice:publishing:${LOBBY_ID}`]]);
+      mediaMtx.listPaths.mockResolvedValue(new Map());
+
+      await service.monitorChannels();
+
+      expect(redis.del).toHaveBeenCalledWith(`voice:publishing:${LOBBY_ID}`);
+      expect(pushed()).toHaveLength(2);
+      expect(pushed()[0].data.participants).toEqual([
+        expect.objectContaining({ connected: false }),
+        expect.objectContaining({ connected: false }),
+      ]);
+    });
+
+    it("leaves a channel that is still publishing alone", async () => {
+      roster();
+      snapshot(`${ME.steam_id}`);
+      redis.scan.mockResolvedValue(["0", [`voice:publishing:${LOBBY_ID}`]]);
+      mediaMtx.listPaths.mockResolvedValue(
+        new Map([[path(ME.steam_id), { ready: true, bytesReceived: 1 }]]),
+      );
+
+      await service.monitorChannels();
+
+      expect(redis.del).not.toHaveBeenCalled();
+      expect(pushed()).toHaveLength(0);
+    });
   });
 
   // Video rides a second path per member rather than a second track on the
@@ -741,7 +781,7 @@ describe("VoiceService", () => {
     // A camera that outlived its microphone would keep playing for everyone
     // still in the call, long after the member had gone.
     it("drops the camera as well as the microphone on leave", async () => {
-      accepted();
+      member();
 
       await service.leave(LOBBY_ID, ME);
 
@@ -754,7 +794,7 @@ describe("VoiceService", () => {
     });
 
     it("stops only the camera, leaving the microphone published", async () => {
-      accepted();
+      member();
 
       await service.stopVideo(LOBBY_ID, ME);
 
@@ -766,16 +806,33 @@ describe("VoiceService", () => {
       );
     });
 
-    // Turning the feature off platform-wide must not strand a camera whose
-    // owner can no longer reach the endpoint that stops it.
+    // Turning either feature off platform-wide must not strand a camera whose
+    // owner can no longer reach the endpoint that stops it. Neither switch is
+    // even read here -- membership is the whole gate.
     it("still stops a camera after video is disabled platform-wide", async () => {
-      postgres.query
-        .mockResolvedValueOnce(enabled(true))
-        .mockResolvedValueOnce([{ status: "Accepted" }]);
+      member();
 
       await expect(service.stopVideo(LOBBY_ID, ME)).resolves.toBeUndefined();
       expect(mediaMtx.kickSessions).toHaveBeenCalledWith(
         `voicecam-${LOBBY_ID}-${ME.steam_id}`,
+      );
+    });
+
+    it("still stops a camera after voice itself is disabled", async () => {
+      member();
+
+      await expect(service.stopVideo(LOBBY_ID, ME)).resolves.toBeUndefined();
+      expect(mediaMtx.kickSessions).toHaveBeenCalledWith(
+        `voicecam-${LOBBY_ID}-${ME.steam_id}`,
+      );
+    });
+
+    it("still leaves a call after voice itself is disabled", async () => {
+      member();
+
+      await expect(service.leave(LOBBY_ID, ME)).resolves.toBeUndefined();
+      expect(mediaMtx.kickSessions).toHaveBeenCalledWith(
+        `voice-${LOBBY_ID}-${ME.steam_id}`,
       );
     });
 

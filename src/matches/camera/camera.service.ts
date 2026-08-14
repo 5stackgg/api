@@ -72,8 +72,11 @@ export class CameraService {
 
   // Whether this player's own camera is publishing right now. Used to gate
   // check-in, which happens before the monitor starts sampling.
+  //
+  // `null` when MediaMTX could not answer, so the gate can fail open rather
+  // than lock out a player whose camera is fine.
   public async isPlayerLive(matchId: string, steamId: string) {
-    return this.mediaMtx.isPathReady(
+    return this.mediaMtx.pathReadyState(
       CameraService.pathForPlayer(matchId, steamId),
     );
   }

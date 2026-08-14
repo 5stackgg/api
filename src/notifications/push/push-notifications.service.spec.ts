@@ -34,6 +34,9 @@ describe("PushNotificationsService", () => {
   };
   const redis = {
     exists: jest.fn().mockResolvedValue(0),
+    subscribe: jest.fn().mockResolvedValue(1),
+    publish: jest.fn().mockResolvedValue(1),
+    on: jest.fn(),
     pipeline: jest.fn(() => ({
       set: jest.fn(),
       exec: jest.fn().mockResolvedValue([]),
@@ -56,6 +59,7 @@ describe("PushNotificationsService", () => {
 
   let service: PushNotificationsService;
   let notificationRow: Record<string, any> | undefined;
+  let settings: Record<string, string>;
   let subscriptions: Array<ReturnType<typeof subscription>>;
   let updates: Array<{ sql: string; bindings: any[] }>;
 
@@ -78,6 +82,7 @@ describe("PushNotificationsService", () => {
     notificationRow = notification();
     subscriptions = [subscription("sub-1")];
     updates = [];
+    settings = {};
 
     postgres.query.mockImplementation(async (sql: string, bindings: any[]) => {
       if (sql.includes("FROM public.notifications\n")) {
@@ -85,6 +90,30 @@ describe("PushNotificationsService", () => {
       }
       if (sql.includes("push_subscriptions ps")) {
         return subscriptions;
+      }
+      if (sql.includes("INSERT INTO public.settings")) {
+        updates.push({ sql, bindings });
+
+        for (let i = 0; i < bindings.length; i += 2) {
+          // DO NOTHING is the bootstrap write: whoever got there first keeps it.
+          if (
+            sql.includes("DO NOTHING") &&
+            settings[bindings[i]] !== undefined
+          ) {
+            continue;
+          }
+
+          settings[bindings[i]] = bindings[i + 1];
+        }
+
+        return [];
+      }
+      if (sql.includes("FROM public.settings")) {
+        const wanted = Array.isArray(bindings[0]) ? bindings[0] : [bindings[0]];
+
+        return wanted
+          .filter((name: string) => settings[name] !== undefined)
+          .map((name: string) => ({ name, value: settings[name] }));
       }
       updates.push({ sql, bindings });
       return [];
@@ -227,9 +256,39 @@ describe("PushNotificationsService", () => {
         updates.some(
           ({ sql, bindings }) =>
             sql.includes("INSERT INTO public.settings") &&
-            bindings[0] === "web_push_private_key",
+            bindings.includes("web_push_private_key") &&
+            bindings.includes("generated-private"),
         ),
       ).toBe(true);
+    });
+
+    // Two pods booting into an install with no keys both generate one. If the
+    // second overwrote the first, they would sign with different private keys
+    // and every subscription taken out against the loser's public key would be
+    // rejected 403 until that pod restarted.
+    it("adopts the keypair another pod stored first", async () => {
+      withoutEnvKeys();
+      (webPush.generateVAPIDKeys as jest.Mock).mockReturnValue({
+        publicKey: "first-public",
+        privateKey: "first-private",
+      });
+
+      const first = await build();
+
+      (webPush.generateVAPIDKeys as jest.Mock).mockReturnValue({
+        publicKey: "second-public",
+        privateKey: "second-private",
+      });
+
+      const second = await build();
+
+      expect(first.getPublicKey()).toBe("first-public");
+      expect(second.getPublicKey()).toBe("first-public");
+      expect(webPush.setVapidDetails).toHaveBeenLastCalledWith(
+        "https://example.com",
+        "first-public",
+        "first-private",
+      );
     });
 
     it("stays inert when a keypair cannot be produced", async () => {

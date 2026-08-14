@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   ForbiddenException,
   Get,
@@ -15,15 +16,16 @@ import { User } from "../auth/types/User";
 export class VoiceController {
   constructor(private readonly voice: VoiceService) {}
 
-  // WHIP/WHEP bodies are `application/sdp`, which neither parser registered in
-  // main.ts claims, so the stream is still unread here.
-  private readRawBody(request: Request): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const chunks: Array<Buffer> = [];
-      request.on("data", (chunk) => chunks.push(chunk));
-      request.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
-      request.on("error", reject);
-    });
+  // WHIP/WHEP bodies are `application/sdp`, parsed by the text parser
+  // registered in main.ts.
+  private readSdp(request: Request): string {
+    const sdp = request.body;
+
+    if (typeof sdp !== "string" || !sdp) {
+      throw new BadRequestException("expected an application/sdp body");
+    }
+
+    return sdp;
   }
 
   private requireUser(request: Request) {
@@ -51,7 +53,7 @@ export class VoiceController {
     @Res() response: Response,
   ) {
     const user = this.requireUser(request);
-    const sdp = await this.readRawBody(request);
+    const sdp = this.readSdp(request);
 
     await this.sendSdp(response, () => this.voice.publish(lobbyId, user, sdp));
   }
@@ -65,7 +67,7 @@ export class VoiceController {
     @Res() response: Response,
   ) {
     const user = this.requireUser(request);
-    const sdp = await this.readRawBody(request);
+    const sdp = this.readSdp(request);
 
     await this.sendSdp(response, () =>
       this.voice.publishVideo(lobbyId, user, sdp),
@@ -90,7 +92,7 @@ export class VoiceController {
     @Res() response: Response,
   ) {
     const user = this.requireUser(request);
-    const sdp = await this.readRawBody(request);
+    const sdp = this.readSdp(request);
 
     await this.sendSdp(response, () =>
       this.voice.subscribe(lobbyId, steamId, user, sdp),
@@ -105,7 +107,7 @@ export class VoiceController {
     @Res() response: Response,
   ) {
     const user = this.requireUser(request);
-    const sdp = await this.readRawBody(request);
+    const sdp = this.readSdp(request);
 
     await this.sendSdp(response, () =>
       this.voice.subscribeVideo(lobbyId, steamId, user, sdp),

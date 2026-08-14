@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   ForbiddenException,
   Get,
@@ -19,15 +20,16 @@ export class CameraController {
     private readonly monitor: CameraMonitorService,
   ) {}
 
-  // WHIP/WHEP bodies are `application/sdp`, a content type neither of the
-  // parsers registered in main.ts claims, so the stream is still unread here.
-  private readRawBody(request: Request): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const chunks: Array<Buffer> = [];
-      request.on("data", (chunk) => chunks.push(chunk));
-      request.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
-      request.on("error", reject);
-    });
+  // WHIP/WHEP bodies are `application/sdp`, parsed by the text parser
+  // registered in main.ts.
+  private readSdp(request: Request): string {
+    const sdp = request.body;
+
+    if (typeof sdp !== "string" || !sdp) {
+      throw new BadRequestException("expected an application/sdp body");
+    }
+
+    return sdp;
   }
 
   private requireUser(request: Request) {
@@ -59,7 +61,7 @@ export class CameraController {
     @Res() response: Response,
   ) {
     const user = this.requireUser(request);
-    const sdp = await this.readRawBody(request);
+    const sdp = this.readSdp(request);
 
     await this.sendSdp(response, () =>
       this.camera.proxyPlayerPublish(matchId, user, sdp),
@@ -81,7 +83,7 @@ export class CameraController {
     @Res() response: Response,
   ) {
     const user = this.requireUser(request);
-    const sdp = await this.readRawBody(request);
+    const sdp = this.readSdp(request);
 
     await this.sendSdp(response, () =>
       this.camera.proxyPlayerTalk(matchId, user, sdp),
@@ -115,7 +117,7 @@ export class CameraController {
     @Res() response: Response,
   ) {
     const originAuth = request.headers["x-origin-auth"];
-    const sdp = await this.readRawBody(request);
+    const sdp = this.readSdp(request);
 
     await this.sendSdp(response, () =>
       this.camera.proxyBroadcastWatch(matchId, steamId, originAuth, sdp),
@@ -144,7 +146,7 @@ export class CameraController {
     @Res() response: Response,
   ) {
     const user = this.requireUser(request);
-    const sdp = await this.readRawBody(request);
+    const sdp = this.readSdp(request);
 
     await this.sendSdp(response, () =>
       this.camera.proxyAdminWatch(matchId, steamId, user, sdp),
@@ -159,7 +161,7 @@ export class CameraController {
     @Res() response: Response,
   ) {
     const user = this.requireUser(request);
-    const sdp = await this.readRawBody(request);
+    const sdp = this.readSdp(request);
 
     await this.sendSdp(response, () =>
       this.camera.proxyAdminTalk(matchId, steamId, user, sdp),

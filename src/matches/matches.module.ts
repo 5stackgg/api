@@ -246,8 +246,6 @@ export class MatchesModule implements NestModule {
       },
     );
 
-    // More often than the league reminder above, because the 2h window is far
-    // tighter than its 48h one.
     // Hourly: both windows here are days wide, unlike the tournament 2h one.
     void scheduleMatchQueue.add(
       EventReminders.name,
@@ -259,6 +257,8 @@ export class MatchesModule implements NestModule {
       },
     );
 
+    // More often than the reminders above, because the 2h window is far
+    // tighter than their day-wide ones.
     void scheduleMatchQueue.add(
       TournamentReminders.name,
       {},

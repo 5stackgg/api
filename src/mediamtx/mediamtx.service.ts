@@ -227,7 +227,10 @@ export class MediaMtxService {
     }
   }
 
-  public async isPathReady(path: string) {
+  // `null` means MediaMTX could not be asked, which is not the same answer as
+  // "nothing is publishing". A caller that blocks on a feed being live has to
+  // be able to tell our own outage apart from a camera that never connected.
+  public async pathReadyState(path: string): Promise<boolean | null> {
     try {
       const response = await fetch(
         `${this.apiBase()}/v3/paths/get/${this.encodePath(path)}`,
@@ -236,8 +239,14 @@ export class MediaMtxService {
         },
       );
 
-      if (!response.ok) {
+      // The one non-ok status that is an answer rather than a failure: no such
+      // path is exactly what a path with no publisher looks like.
+      if (response.status === 404) {
         return false;
+      }
+
+      if (!response.ok) {
+        return null;
       }
 
       const { ready } = (await response.json()) as { ready?: boolean };
@@ -247,8 +256,12 @@ export class MediaMtxService {
       this.logger.warn(
         `[mediamtx] status check for ${path} failed: ${(error as Error)?.message}`,
       );
-      return false;
+      return null;
     }
+  }
+
+  public async isPathReady(path: string) {
+    return (await this.pathReadyState(path)) === true;
   }
 
   // Dropping the publisher is what actually ends a session for everyone

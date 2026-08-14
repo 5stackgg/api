@@ -32,11 +32,20 @@ export function notificationUrl(
     .first()
     .attr("href");
 
-  if (href?.startsWith(webDomain)) {
-    return href.slice(webDomain.length) || "/";
+  // The trailing slash matters: without it `https://5stack.gg.evil.test/x` is
+  // also a prefix match.
+  if (href === webDomain) {
+    return "/";
   }
 
-  if (href?.startsWith("/")) {
+  if (href?.startsWith(`${webDomain}/`)) {
+    return href.slice(webDomain.length);
+  }
+
+  // Not `startsWith("/")` on its own: `//evil.test/x` passes that and is a
+  // fully qualified URL to somewhere else, which the service worker would hand
+  // straight to clients.openWindow.
+  if (href?.startsWith("/") && !href.startsWith("//")) {
     return href;
   }
 

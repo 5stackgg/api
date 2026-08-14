@@ -199,8 +199,12 @@ export class CameraMonitorService {
       });
     }
 
-    await this.redis.hset(samplesKey, nextSamples);
-    await this.redis.expire(samplesKey, 3600);
+    // hset errors on an empty payload, and an empty pass is ordinary: a match
+    // flips Live with nobody connected yet and an assigned coach not on camera.
+    if (Object.keys(nextSamples).length > 0) {
+      await this.redis.hset(samplesKey, nextSamples);
+      await this.redis.expire(samplesKey, 3600);
+    }
 
     await this.reportToServer(matchId, serverId, monitored);
   }

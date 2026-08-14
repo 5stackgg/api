@@ -33,11 +33,14 @@ select_permissions:
         - title
         - type
       filter:
-        _or:
-          - steam_id:
-              _eq: X-Hasura-User-Id
-          - role:
-              _eq: administrator
+        _and:
+          - _or:
+              - steam_id:
+                  _eq: X-Hasura-User-Id
+              - role:
+                  _eq: administrator
+          - in_app:
+              _eq: true
     comment: ""
   - role: match_organizer
     permission:
@@ -55,11 +58,14 @@ select_permissions:
         - title
         - type
       filter:
-        _or:
-          - steam_id:
-              _eq: X-Hasura-User-Id
-          - role:
-              _eq: match_organizer
+        _and:
+          - _or:
+              - steam_id:
+                  _eq: X-Hasura-User-Id
+              - role:
+                  _eq: match_organizer
+          - in_app:
+              _eq: true
     comment: ""
   - role: tournament_organizer
     permission:
@@ -77,13 +83,16 @@ select_permissions:
         - title
         - type
       filter:
-        _or:
-          - steam_id:
-              _eq: X-Hasura-User-Id
-          - role:
-              _in:
-                - match_organizer
-                - tournament_organizer
+        _and:
+          - _or:
+              - steam_id:
+                  _eq: X-Hasura-User-Id
+              - role:
+                  _in:
+                    - match_organizer
+                    - tournament_organizer
+          - in_app:
+              _eq: true
     comment: ""
   - role: user
     permission:
@@ -101,8 +110,11 @@ select_permissions:
         - title
         - type
       filter:
-        steam_id:
-          _eq: X-Hasura-User-Id
+        _and:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - in_app:
+              _eq: true
     comment: ""
 update_permissions:
   - role: administrator
