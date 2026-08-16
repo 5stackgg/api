@@ -8347,8 +8347,14 @@ export default {
             ]
         },
         "direct_conversations": {
+            "is_open": [
+                5
+            ],
             "last_message_at": [
                 4665
+            ],
+            "position": [
+                40
             ],
             "room_id": [
                 80
@@ -8419,6 +8425,9 @@ export default {
             ]
         },
         "direct_conversations_avg_fields": {
+            "position": [
+                31
+            ],
             "steam_id": [
                 31
             ],
@@ -8436,8 +8445,14 @@ export default {
             "_or": [
                 406
             ],
+            "is_open": [
+                6
+            ],
             "last_message_at": [
                 4666
+            ],
+            "position": [
+                41
             ],
             "room_id": [
                 82
@@ -8451,6 +8466,9 @@ export default {
         },
         "direct_conversations_constraint": {},
         "direct_conversations_inc_input": {
+            "position": [
+                40
+            ],
             "steam_id": [
                 259
             ],
@@ -8459,8 +8477,14 @@ export default {
             ]
         },
         "direct_conversations_insert_input": {
+            "is_open": [
+                5
+            ],
             "last_message_at": [
                 4665
+            ],
+            "position": [
+                40
             ],
             "room_id": [
                 80
@@ -8476,6 +8500,9 @@ export default {
             "last_message_at": [
                 4665
             ],
+            "position": [
+                40
+            ],
             "room_id": [
                 80
             ],
@@ -8489,6 +8516,9 @@ export default {
         "direct_conversations_min_fields": {
             "last_message_at": [
                 4665
+            ],
+            "position": [
+                40
             ],
             "room_id": [
                 80
@@ -8526,7 +8556,13 @@ export default {
             ]
         },
         "direct_conversations_order_by": {
+            "is_open": [
+                3089
+            ],
             "last_message_at": [
+                3089
+            ],
+            "position": [
                 3089
             ],
             "room_id": [
@@ -8552,8 +8588,14 @@ export default {
         },
         "direct_conversations_select_column": {},
         "direct_conversations_set_input": {
+            "is_open": [
+                5
+            ],
             "last_message_at": [
                 4665
+            ],
+            "position": [
+                40
             ],
             "room_id": [
                 80
@@ -8566,6 +8608,9 @@ export default {
             ]
         },
         "direct_conversations_stddev_fields": {
+            "position": [
+                31
+            ],
             "steam_id": [
                 31
             ],
@@ -8574,6 +8619,9 @@ export default {
             ]
         },
         "direct_conversations_stddev_pop_fields": {
+            "position": [
+                31
+            ],
             "steam_id": [
                 31
             ],
@@ -8582,6 +8630,9 @@ export default {
             ]
         },
         "direct_conversations_stddev_samp_fields": {
+            "position": [
+                31
+            ],
             "steam_id": [
                 31
             ],
@@ -8601,8 +8652,14 @@ export default {
             ]
         },
         "direct_conversations_stream_cursor_value_input": {
+            "is_open": [
+                5
+            ],
             "last_message_at": [
                 4665
+            ],
+            "position": [
+                40
             ],
             "room_id": [
                 80
@@ -8615,6 +8672,9 @@ export default {
             ]
         },
         "direct_conversations_sum_fields": {
+            "position": [
+                40
+            ],
             "steam_id": [
                 259
             ],
@@ -8638,6 +8698,9 @@ export default {
             ]
         },
         "direct_conversations_var_pop_fields": {
+            "position": [
+                31
+            ],
             "steam_id": [
                 31
             ],
@@ -8646,6 +8709,9 @@ export default {
             ]
         },
         "direct_conversations_var_samp_fields": {
+            "position": [
+                31
+            ],
             "steam_id": [
                 31
             ],
@@ -8654,6 +8720,9 @@ export default {
             ]
         },
         "direct_conversations_variance_fields": {
+            "position": [
+                31
+            ],
             "steam_id": [
                 31
             ],
@@ -8676,6 +8745,9 @@ export default {
             ],
             "room_id": [
                 80
+            ],
+            "seq": [
+                259
             ],
             "__typename": [
                 80
@@ -8743,6 +8815,9 @@ export default {
             "from_steam_id": [
                 31
             ],
+            "seq": [
+                31
+            ],
             "__typename": [
                 80
             ]
@@ -8772,6 +8847,9 @@ export default {
             "room_id": [
                 82
             ],
+            "seq": [
+                261
+            ],
             "__typename": [
                 80
             ]
@@ -8779,6 +8857,9 @@ export default {
         "direct_messages_constraint": {},
         "direct_messages_inc_input": {
             "from_steam_id": [
+                259
+            ],
+            "seq": [
                 259
             ],
             "__typename": [
@@ -8801,6 +8882,9 @@ export default {
             "room_id": [
                 80
             ],
+            "seq": [
+                259
+            ],
             "__typename": [
                 80
             ]
@@ -8821,6 +8905,9 @@ export default {
             "room_id": [
                 80
             ],
+            "seq": [
+                259
+            ],
             "__typename": [
                 80
             ]
@@ -8840,6 +8927,9 @@ export default {
             ],
             "room_id": [
                 80
+            ],
+            "seq": [
+                259
             ],
             "__typename": [
                 80
@@ -8886,6 +8976,9 @@ export default {
             "room_id": [
                 3089
             ],
+            "seq": [
+                3089
+            ],
             "__typename": [
                 80
             ]
@@ -8915,12 +9008,18 @@ export default {
             "room_id": [
                 80
             ],
+            "seq": [
+                259
+            ],
             "__typename": [
                 80
             ]
         },
         "direct_messages_stddev_fields": {
             "from_steam_id": [
+                31
+            ],
+            "seq": [
                 31
             ],
             "__typename": [
@@ -8931,12 +9030,18 @@ export default {
             "from_steam_id": [
                 31
             ],
+            "seq": [
+                31
+            ],
             "__typename": [
                 80
             ]
         },
         "direct_messages_stddev_samp_fields": {
             "from_steam_id": [
+                31
+            ],
+            "seq": [
                 31
             ],
             "__typename": [
@@ -8970,12 +9075,18 @@ export default {
             "room_id": [
                 80
             ],
+            "seq": [
+                259
+            ],
             "__typename": [
                 80
             ]
         },
         "direct_messages_sum_fields": {
             "from_steam_id": [
+                259
+            ],
+            "seq": [
                 259
             ],
             "__typename": [
@@ -9001,6 +9112,9 @@ export default {
             "from_steam_id": [
                 31
             ],
+            "seq": [
+                31
+            ],
             "__typename": [
                 80
             ]
@@ -9009,12 +9123,18 @@ export default {
             "from_steam_id": [
                 31
             ],
+            "seq": [
+                31
+            ],
             "__typename": [
                 80
             ]
         },
         "direct_messages_variance_fields": {
             "from_steam_id": [
+                31
+            ],
+            "seq": [
                 31
             ],
             "__typename": [

@@ -2196,7 +2196,9 @@ export interface db_backups_variance_fields {
 
 /** columns and relationships of "direct_conversations" */
 export interface direct_conversations {
+    is_open: Scalars['Boolean']
     last_message_at: Scalars['timestamptz']
+    position: Scalars['Int']
     room_id: Scalars['String']
     steam_id: Scalars['bigint']
     __typename: 'direct_conversations'
@@ -2230,6 +2232,7 @@ export interface direct_conversations_aggregate_fields {
 
 /** aggregate avg on columns */
 export interface direct_conversations_avg_fields {
+    position: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'direct_conversations_avg_fields'
 }
@@ -2242,6 +2245,7 @@ export type direct_conversations_constraint = 'direct_conversations_pkey'
 /** aggregate max on columns */
 export interface direct_conversations_max_fields {
     last_message_at: (Scalars['timestamptz'] | null)
+    position: (Scalars['Int'] | null)
     room_id: (Scalars['String'] | null)
     steam_id: (Scalars['bigint'] | null)
     __typename: 'direct_conversations_max_fields'
@@ -2251,6 +2255,7 @@ export interface direct_conversations_max_fields {
 /** aggregate min on columns */
 export interface direct_conversations_min_fields {
     last_message_at: (Scalars['timestamptz'] | null)
+    position: (Scalars['Int'] | null)
     room_id: (Scalars['String'] | null)
     steam_id: (Scalars['bigint'] | null)
     __typename: 'direct_conversations_min_fields'
@@ -2268,11 +2273,12 @@ export interface direct_conversations_mutation_response {
 
 
 /** select columns of table "direct_conversations" */
-export type direct_conversations_select_column = 'last_message_at' | 'room_id' | 'steam_id'
+export type direct_conversations_select_column = 'is_open' | 'last_message_at' | 'position' | 'room_id' | 'steam_id'
 
 
 /** aggregate stddev on columns */
 export interface direct_conversations_stddev_fields {
+    position: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'direct_conversations_stddev_fields'
 }
@@ -2280,6 +2286,7 @@ export interface direct_conversations_stddev_fields {
 
 /** aggregate stddev_pop on columns */
 export interface direct_conversations_stddev_pop_fields {
+    position: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'direct_conversations_stddev_pop_fields'
 }
@@ -2287,6 +2294,7 @@ export interface direct_conversations_stddev_pop_fields {
 
 /** aggregate stddev_samp on columns */
 export interface direct_conversations_stddev_samp_fields {
+    position: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'direct_conversations_stddev_samp_fields'
 }
@@ -2294,17 +2302,19 @@ export interface direct_conversations_stddev_samp_fields {
 
 /** aggregate sum on columns */
 export interface direct_conversations_sum_fields {
+    position: (Scalars['Int'] | null)
     steam_id: (Scalars['bigint'] | null)
     __typename: 'direct_conversations_sum_fields'
 }
 
 
 /** update columns of table "direct_conversations" */
-export type direct_conversations_update_column = 'last_message_at' | 'room_id' | 'steam_id'
+export type direct_conversations_update_column = 'is_open' | 'last_message_at' | 'position' | 'room_id' | 'steam_id'
 
 
 /** aggregate var_pop on columns */
 export interface direct_conversations_var_pop_fields {
+    position: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'direct_conversations_var_pop_fields'
 }
@@ -2312,6 +2322,7 @@ export interface direct_conversations_var_pop_fields {
 
 /** aggregate var_samp on columns */
 export interface direct_conversations_var_samp_fields {
+    position: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'direct_conversations_var_samp_fields'
 }
@@ -2319,6 +2330,7 @@ export interface direct_conversations_var_samp_fields {
 
 /** aggregate variance on columns */
 export interface direct_conversations_variance_fields {
+    position: (Scalars['Float'] | null)
     steam_id: (Scalars['Float'] | null)
     __typename: 'direct_conversations_variance_fields'
 }
@@ -2331,6 +2343,7 @@ export interface direct_messages {
     id: Scalars['uuid']
     message: Scalars['String']
     room_id: Scalars['String']
+    seq: Scalars['bigint']
     __typename: 'direct_messages'
 }
 
@@ -2363,6 +2376,7 @@ export interface direct_messages_aggregate_fields {
 /** aggregate avg on columns */
 export interface direct_messages_avg_fields {
     from_steam_id: (Scalars['Float'] | null)
+    seq: (Scalars['Float'] | null)
     __typename: 'direct_messages_avg_fields'
 }
 
@@ -2378,6 +2392,7 @@ export interface direct_messages_max_fields {
     id: (Scalars['uuid'] | null)
     message: (Scalars['String'] | null)
     room_id: (Scalars['String'] | null)
+    seq: (Scalars['bigint'] | null)
     __typename: 'direct_messages_max_fields'
 }
 
@@ -2389,6 +2404,7 @@ export interface direct_messages_min_fields {
     id: (Scalars['uuid'] | null)
     message: (Scalars['String'] | null)
     room_id: (Scalars['String'] | null)
+    seq: (Scalars['bigint'] | null)
     __typename: 'direct_messages_min_fields'
 }
 
@@ -2404,12 +2420,13 @@ export interface direct_messages_mutation_response {
 
 
 /** select columns of table "direct_messages" */
-export type direct_messages_select_column = 'created_at' | 'from_steam_id' | 'id' | 'message' | 'room_id'
+export type direct_messages_select_column = 'created_at' | 'from_steam_id' | 'id' | 'message' | 'room_id' | 'seq'
 
 
 /** aggregate stddev on columns */
 export interface direct_messages_stddev_fields {
     from_steam_id: (Scalars['Float'] | null)
+    seq: (Scalars['Float'] | null)
     __typename: 'direct_messages_stddev_fields'
 }
 
@@ -2417,6 +2434,7 @@ export interface direct_messages_stddev_fields {
 /** aggregate stddev_pop on columns */
 export interface direct_messages_stddev_pop_fields {
     from_steam_id: (Scalars['Float'] | null)
+    seq: (Scalars['Float'] | null)
     __typename: 'direct_messages_stddev_pop_fields'
 }
 
@@ -2424,6 +2442,7 @@ export interface direct_messages_stddev_pop_fields {
 /** aggregate stddev_samp on columns */
 export interface direct_messages_stddev_samp_fields {
     from_steam_id: (Scalars['Float'] | null)
+    seq: (Scalars['Float'] | null)
     __typename: 'direct_messages_stddev_samp_fields'
 }
 
@@ -2431,17 +2450,19 @@ export interface direct_messages_stddev_samp_fields {
 /** aggregate sum on columns */
 export interface direct_messages_sum_fields {
     from_steam_id: (Scalars['bigint'] | null)
+    seq: (Scalars['bigint'] | null)
     __typename: 'direct_messages_sum_fields'
 }
 
 
 /** update columns of table "direct_messages" */
-export type direct_messages_update_column = 'created_at' | 'from_steam_id' | 'id' | 'message' | 'room_id'
+export type direct_messages_update_column = 'created_at' | 'from_steam_id' | 'id' | 'message' | 'room_id' | 'seq'
 
 
 /** aggregate var_pop on columns */
 export interface direct_messages_var_pop_fields {
     from_steam_id: (Scalars['Float'] | null)
+    seq: (Scalars['Float'] | null)
     __typename: 'direct_messages_var_pop_fields'
 }
 
@@ -2449,6 +2470,7 @@ export interface direct_messages_var_pop_fields {
 /** aggregate var_samp on columns */
 export interface direct_messages_var_samp_fields {
     from_steam_id: (Scalars['Float'] | null)
+    seq: (Scalars['Float'] | null)
     __typename: 'direct_messages_var_samp_fields'
 }
 
@@ -2456,6 +2478,7 @@ export interface direct_messages_var_samp_fields {
 /** aggregate variance on columns */
 export interface direct_messages_variance_fields {
     from_steam_id: (Scalars['Float'] | null)
+    seq: (Scalars['Float'] | null)
     __typename: 'direct_messages_variance_fields'
 }
 
@@ -39779,7 +39802,9 @@ export interface db_backups_variance_fieldsGenqlSelection{
 
 /** columns and relationships of "direct_conversations" */
 export interface direct_conversationsGenqlSelection{
+    is_open?: boolean | number
     last_message_at?: boolean | number
+    position?: boolean | number
     room_id?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
@@ -39816,6 +39841,7 @@ export interface direct_conversations_aggregate_fieldsGenqlSelection{
 
 /** aggregate avg on columns */
 export interface direct_conversations_avg_fieldsGenqlSelection{
+    position?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -39823,20 +39849,21 @@ export interface direct_conversations_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "direct_conversations". All fields are combined with a logical 'AND'. */
-export interface direct_conversations_bool_exp {_and?: (direct_conversations_bool_exp[] | null),_not?: (direct_conversations_bool_exp | null),_or?: (direct_conversations_bool_exp[] | null),last_message_at?: (timestamptz_comparison_exp | null),room_id?: (String_comparison_exp | null),steam_id?: (bigint_comparison_exp | null)}
+export interface direct_conversations_bool_exp {_and?: (direct_conversations_bool_exp[] | null),_not?: (direct_conversations_bool_exp | null),_or?: (direct_conversations_bool_exp[] | null),is_open?: (Boolean_comparison_exp | null),last_message_at?: (timestamptz_comparison_exp | null),position?: (Int_comparison_exp | null),room_id?: (String_comparison_exp | null),steam_id?: (bigint_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "direct_conversations" */
-export interface direct_conversations_inc_input {steam_id?: (Scalars['bigint'] | null)}
+export interface direct_conversations_inc_input {position?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "direct_conversations" */
-export interface direct_conversations_insert_input {last_message_at?: (Scalars['timestamptz'] | null),room_id?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface direct_conversations_insert_input {is_open?: (Scalars['Boolean'] | null),last_message_at?: (Scalars['timestamptz'] | null),position?: (Scalars['Int'] | null),room_id?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate max on columns */
 export interface direct_conversations_max_fieldsGenqlSelection{
     last_message_at?: boolean | number
+    position?: boolean | number
     room_id?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
@@ -39847,6 +39874,7 @@ export interface direct_conversations_max_fieldsGenqlSelection{
 /** aggregate min on columns */
 export interface direct_conversations_min_fieldsGenqlSelection{
     last_message_at?: boolean | number
+    position?: boolean | number
     room_id?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
@@ -39870,7 +39898,7 @@ export interface direct_conversations_on_conflict {constraint: direct_conversati
 
 
 /** Ordering options when selecting data from "direct_conversations". */
-export interface direct_conversations_order_by {last_message_at?: (order_by | null),room_id?: (order_by | null),steam_id?: (order_by | null)}
+export interface direct_conversations_order_by {is_open?: (order_by | null),last_message_at?: (order_by | null),position?: (order_by | null),room_id?: (order_by | null),steam_id?: (order_by | null)}
 
 
 /** primary key columns input for table: direct_conversations */
@@ -39878,11 +39906,12 @@ export interface direct_conversations_pk_columns_input {room_id: Scalars['String
 
 
 /** input type for updating data in table "direct_conversations" */
-export interface direct_conversations_set_input {last_message_at?: (Scalars['timestamptz'] | null),room_id?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface direct_conversations_set_input {is_open?: (Scalars['Boolean'] | null),last_message_at?: (Scalars['timestamptz'] | null),position?: (Scalars['Int'] | null),room_id?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate stddev on columns */
 export interface direct_conversations_stddev_fieldsGenqlSelection{
+    position?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -39891,6 +39920,7 @@ export interface direct_conversations_stddev_fieldsGenqlSelection{
 
 /** aggregate stddev_pop on columns */
 export interface direct_conversations_stddev_pop_fieldsGenqlSelection{
+    position?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -39899,6 +39929,7 @@ export interface direct_conversations_stddev_pop_fieldsGenqlSelection{
 
 /** aggregate stddev_samp on columns */
 export interface direct_conversations_stddev_samp_fieldsGenqlSelection{
+    position?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -39914,11 +39945,12 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface direct_conversations_stream_cursor_value_input {last_message_at?: (Scalars['timestamptz'] | null),room_id?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+export interface direct_conversations_stream_cursor_value_input {is_open?: (Scalars['Boolean'] | null),last_message_at?: (Scalars['timestamptz'] | null),position?: (Scalars['Int'] | null),room_id?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
 
 
 /** aggregate sum on columns */
 export interface direct_conversations_sum_fieldsGenqlSelection{
+    position?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -39935,6 +39967,7 @@ where: direct_conversations_bool_exp}
 
 /** aggregate var_pop on columns */
 export interface direct_conversations_var_pop_fieldsGenqlSelection{
+    position?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -39943,6 +39976,7 @@ export interface direct_conversations_var_pop_fieldsGenqlSelection{
 
 /** aggregate var_samp on columns */
 export interface direct_conversations_var_samp_fieldsGenqlSelection{
+    position?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -39951,6 +39985,7 @@ export interface direct_conversations_var_samp_fieldsGenqlSelection{
 
 /** aggregate variance on columns */
 export interface direct_conversations_variance_fieldsGenqlSelection{
+    position?: boolean | number
     steam_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -39964,6 +39999,7 @@ export interface direct_messagesGenqlSelection{
     id?: boolean | number
     message?: boolean | number
     room_id?: boolean | number
+    seq?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -39999,21 +40035,22 @@ export interface direct_messages_aggregate_fieldsGenqlSelection{
 /** aggregate avg on columns */
 export interface direct_messages_avg_fieldsGenqlSelection{
     from_steam_id?: boolean | number
+    seq?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
 
 
 /** Boolean expression to filter rows from the table "direct_messages". All fields are combined with a logical 'AND'. */
-export interface direct_messages_bool_exp {_and?: (direct_messages_bool_exp[] | null),_not?: (direct_messages_bool_exp | null),_or?: (direct_messages_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),from_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),message?: (String_comparison_exp | null),room_id?: (String_comparison_exp | null)}
+export interface direct_messages_bool_exp {_and?: (direct_messages_bool_exp[] | null),_not?: (direct_messages_bool_exp | null),_or?: (direct_messages_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),from_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),message?: (String_comparison_exp | null),room_id?: (String_comparison_exp | null),seq?: (bigint_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "direct_messages" */
-export interface direct_messages_inc_input {from_steam_id?: (Scalars['bigint'] | null)}
+export interface direct_messages_inc_input {from_steam_id?: (Scalars['bigint'] | null),seq?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "direct_messages" */
-export interface direct_messages_insert_input {created_at?: (Scalars['timestamptz'] | null),from_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null)}
+export interface direct_messages_insert_input {created_at?: (Scalars['timestamptz'] | null),from_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null),seq?: (Scalars['bigint'] | null)}
 
 
 /** aggregate max on columns */
@@ -40023,6 +40060,7 @@ export interface direct_messages_max_fieldsGenqlSelection{
     id?: boolean | number
     message?: boolean | number
     room_id?: boolean | number
+    seq?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40035,6 +40073,7 @@ export interface direct_messages_min_fieldsGenqlSelection{
     id?: boolean | number
     message?: boolean | number
     room_id?: boolean | number
+    seq?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40056,7 +40095,7 @@ export interface direct_messages_on_conflict {constraint: direct_messages_constr
 
 
 /** Ordering options when selecting data from "direct_messages". */
-export interface direct_messages_order_by {created_at?: (order_by | null),from_steam_id?: (order_by | null),id?: (order_by | null),message?: (order_by | null),room_id?: (order_by | null)}
+export interface direct_messages_order_by {created_at?: (order_by | null),from_steam_id?: (order_by | null),id?: (order_by | null),message?: (order_by | null),room_id?: (order_by | null),seq?: (order_by | null)}
 
 
 /** primary key columns input for table: direct_messages */
@@ -40064,12 +40103,13 @@ export interface direct_messages_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "direct_messages" */
-export interface direct_messages_set_input {created_at?: (Scalars['timestamptz'] | null),from_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null)}
+export interface direct_messages_set_input {created_at?: (Scalars['timestamptz'] | null),from_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null),seq?: (Scalars['bigint'] | null)}
 
 
 /** aggregate stddev on columns */
 export interface direct_messages_stddev_fieldsGenqlSelection{
     from_steam_id?: boolean | number
+    seq?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40078,6 +40118,7 @@ export interface direct_messages_stddev_fieldsGenqlSelection{
 /** aggregate stddev_pop on columns */
 export interface direct_messages_stddev_pop_fieldsGenqlSelection{
     from_steam_id?: boolean | number
+    seq?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40086,6 +40127,7 @@ export interface direct_messages_stddev_pop_fieldsGenqlSelection{
 /** aggregate stddev_samp on columns */
 export interface direct_messages_stddev_samp_fieldsGenqlSelection{
     from_steam_id?: boolean | number
+    seq?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40100,12 +40142,13 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface direct_messages_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),from_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null)}
+export interface direct_messages_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),from_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null),seq?: (Scalars['bigint'] | null)}
 
 
 /** aggregate sum on columns */
 export interface direct_messages_sum_fieldsGenqlSelection{
     from_steam_id?: boolean | number
+    seq?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40122,6 +40165,7 @@ where: direct_messages_bool_exp}
 /** aggregate var_pop on columns */
 export interface direct_messages_var_pop_fieldsGenqlSelection{
     from_steam_id?: boolean | number
+    seq?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40130,6 +40174,7 @@ export interface direct_messages_var_pop_fieldsGenqlSelection{
 /** aggregate var_samp on columns */
 export interface direct_messages_var_samp_fieldsGenqlSelection{
     from_steam_id?: boolean | number
+    seq?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -40138,6 +40183,7 @@ export interface direct_messages_var_samp_fieldsGenqlSelection{
 /** aggregate variance on columns */
 export interface direct_messages_variance_fieldsGenqlSelection{
     from_steam_id?: boolean | number
+    seq?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -121102,13 +121148,17 @@ export const enumDirectConversationsConstraint = {
 }
 
 export const enumDirectConversationsSelectColumn = {
+   is_open: 'is_open' as const,
    last_message_at: 'last_message_at' as const,
+   position: 'position' as const,
    room_id: 'room_id' as const,
    steam_id: 'steam_id' as const
 }
 
 export const enumDirectConversationsUpdateColumn = {
+   is_open: 'is_open' as const,
    last_message_at: 'last_message_at' as const,
+   position: 'position' as const,
    room_id: 'room_id' as const,
    steam_id: 'steam_id' as const
 }
@@ -121122,7 +121172,8 @@ export const enumDirectMessagesSelectColumn = {
    from_steam_id: 'from_steam_id' as const,
    id: 'id' as const,
    message: 'message' as const,
-   room_id: 'room_id' as const
+   room_id: 'room_id' as const,
+   seq: 'seq' as const
 }
 
 export const enumDirectMessagesUpdateColumn = {
@@ -121130,7 +121181,8 @@ export const enumDirectMessagesUpdateColumn = {
    from_steam_id: 'from_steam_id' as const,
    id: 'id' as const,
    message: 'message' as const,
-   room_id: 'room_id' as const
+   room_id: 'room_id' as const,
+   seq: 'seq' as const
 }
 
 export const enumDraftGamePicksConstraint = {

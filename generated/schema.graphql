@@ -4543,7 +4543,9 @@ type db_backups_variance_fields {
 columns and relationships of "direct_conversations"
 """
 type direct_conversations {
+  is_open: Boolean!
   last_message_at: timestamptz!
+  position: Int!
   room_id: String!
   steam_id: bigint!
 }
@@ -4575,6 +4577,7 @@ type direct_conversations_aggregate_fields {
 
 """aggregate avg on columns"""
 type direct_conversations_avg_fields {
+  position: Float
   steam_id: Float
 }
 
@@ -4585,7 +4588,9 @@ input direct_conversations_bool_exp {
   _and: [direct_conversations_bool_exp!]
   _not: direct_conversations_bool_exp
   _or: [direct_conversations_bool_exp!]
+  is_open: Boolean_comparison_exp
   last_message_at: timestamptz_comparison_exp
+  position: Int_comparison_exp
   room_id: String_comparison_exp
   steam_id: bigint_comparison_exp
 }
@@ -4604,6 +4609,7 @@ enum direct_conversations_constraint {
 input type for incrementing numeric columns in table "direct_conversations"
 """
 input direct_conversations_inc_input {
+  position: Int
   steam_id: bigint
 }
 
@@ -4611,7 +4617,9 @@ input direct_conversations_inc_input {
 input type for inserting data into table "direct_conversations"
 """
 input direct_conversations_insert_input {
+  is_open: Boolean
   last_message_at: timestamptz
+  position: Int
   room_id: String
   steam_id: bigint
 }
@@ -4619,6 +4627,7 @@ input direct_conversations_insert_input {
 """aggregate max on columns"""
 type direct_conversations_max_fields {
   last_message_at: timestamptz
+  position: Int
   room_id: String
   steam_id: bigint
 }
@@ -4626,6 +4635,7 @@ type direct_conversations_max_fields {
 """aggregate min on columns"""
 type direct_conversations_min_fields {
   last_message_at: timestamptz
+  position: Int
   room_id: String
   steam_id: bigint
 }
@@ -4652,7 +4662,9 @@ input direct_conversations_on_conflict {
 
 """Ordering options when selecting data from "direct_conversations"."""
 input direct_conversations_order_by {
+  is_open: order_by
   last_message_at: order_by
+  position: order_by
   room_id: order_by
   steam_id: order_by
 }
@@ -4668,7 +4680,13 @@ select columns of table "direct_conversations"
 """
 enum direct_conversations_select_column {
   """column name"""
+  is_open
+
+  """column name"""
   last_message_at
+
+  """column name"""
+  position
 
   """column name"""
   room_id
@@ -4681,23 +4699,28 @@ enum direct_conversations_select_column {
 input type for updating data in table "direct_conversations"
 """
 input direct_conversations_set_input {
+  is_open: Boolean
   last_message_at: timestamptz
+  position: Int
   room_id: String
   steam_id: bigint
 }
 
 """aggregate stddev on columns"""
 type direct_conversations_stddev_fields {
+  position: Float
   steam_id: Float
 }
 
 """aggregate stddev_pop on columns"""
 type direct_conversations_stddev_pop_fields {
+  position: Float
   steam_id: Float
 }
 
 """aggregate stddev_samp on columns"""
 type direct_conversations_stddev_samp_fields {
+  position: Float
   steam_id: Float
 }
 
@@ -4714,13 +4737,16 @@ input direct_conversations_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input direct_conversations_stream_cursor_value_input {
+  is_open: Boolean
   last_message_at: timestamptz
+  position: Int
   room_id: String
   steam_id: bigint
 }
 
 """aggregate sum on columns"""
 type direct_conversations_sum_fields {
+  position: Int
   steam_id: bigint
 }
 
@@ -4729,7 +4755,13 @@ update columns of table "direct_conversations"
 """
 enum direct_conversations_update_column {
   """column name"""
+  is_open
+
+  """column name"""
   last_message_at
+
+  """column name"""
+  position
 
   """column name"""
   room_id
@@ -4751,16 +4783,19 @@ input direct_conversations_updates {
 
 """aggregate var_pop on columns"""
 type direct_conversations_var_pop_fields {
+  position: Float
   steam_id: Float
 }
 
 """aggregate var_samp on columns"""
 type direct_conversations_var_samp_fields {
+  position: Float
   steam_id: Float
 }
 
 """aggregate variance on columns"""
 type direct_conversations_variance_fields {
+  position: Float
   steam_id: Float
 }
 
@@ -4773,6 +4808,7 @@ type direct_messages {
   id: uuid!
   message: String!
   room_id: String!
+  seq: bigint!
 }
 
 """
@@ -4803,6 +4839,7 @@ type direct_messages_aggregate_fields {
 """aggregate avg on columns"""
 type direct_messages_avg_fields {
   from_steam_id: Float
+  seq: Float
 }
 
 """
@@ -4817,6 +4854,7 @@ input direct_messages_bool_exp {
   id: uuid_comparison_exp
   message: String_comparison_exp
   room_id: String_comparison_exp
+  seq: bigint_comparison_exp
 }
 
 """
@@ -4834,6 +4872,7 @@ input type for incrementing numeric columns in table "direct_messages"
 """
 input direct_messages_inc_input {
   from_steam_id: bigint
+  seq: bigint
 }
 
 """
@@ -4845,6 +4884,7 @@ input direct_messages_insert_input {
   id: uuid
   message: String
   room_id: String
+  seq: bigint
 }
 
 """aggregate max on columns"""
@@ -4854,6 +4894,7 @@ type direct_messages_max_fields {
   id: uuid
   message: String
   room_id: String
+  seq: bigint
 }
 
 """aggregate min on columns"""
@@ -4863,6 +4904,7 @@ type direct_messages_min_fields {
   id: uuid
   message: String
   room_id: String
+  seq: bigint
 }
 
 """
@@ -4892,6 +4934,7 @@ input direct_messages_order_by {
   id: order_by
   message: order_by
   room_id: order_by
+  seq: order_by
 }
 
 """primary key columns input for table: direct_messages"""
@@ -4917,6 +4960,9 @@ enum direct_messages_select_column {
 
   """column name"""
   room_id
+
+  """column name"""
+  seq
 }
 
 """
@@ -4928,21 +4974,25 @@ input direct_messages_set_input {
   id: uuid
   message: String
   room_id: String
+  seq: bigint
 }
 
 """aggregate stddev on columns"""
 type direct_messages_stddev_fields {
   from_steam_id: Float
+  seq: Float
 }
 
 """aggregate stddev_pop on columns"""
 type direct_messages_stddev_pop_fields {
   from_steam_id: Float
+  seq: Float
 }
 
 """aggregate stddev_samp on columns"""
 type direct_messages_stddev_samp_fields {
   from_steam_id: Float
+  seq: Float
 }
 
 """
@@ -4963,11 +5013,13 @@ input direct_messages_stream_cursor_value_input {
   id: uuid
   message: String
   room_id: String
+  seq: bigint
 }
 
 """aggregate sum on columns"""
 type direct_messages_sum_fields {
   from_steam_id: bigint
+  seq: bigint
 }
 
 """
@@ -4988,6 +5040,9 @@ enum direct_messages_update_column {
 
   """column name"""
   room_id
+
+  """column name"""
+  seq
 }
 
 input direct_messages_updates {
@@ -5004,16 +5059,19 @@ input direct_messages_updates {
 """aggregate var_pop on columns"""
 type direct_messages_var_pop_fields {
   from_steam_id: Float
+  seq: Float
 }
 
 """aggregate var_samp on columns"""
 type direct_messages_var_samp_fields {
   from_steam_id: Float
+  seq: Float
 }
 
 """aggregate variance on columns"""
 type direct_messages_variance_fields {
   from_steam_id: Float
+  seq: Float
 }
 
 """
@@ -12084,6 +12142,9 @@ enum e_notification_types_enum {
 
   """A player abandoned a match"""
   MatchAbandoned
+
+  """A new message in a match's chat"""
+  MatchChatMessage
 
   """A Valve match you played was imported to 5stack"""
   MatchImported
