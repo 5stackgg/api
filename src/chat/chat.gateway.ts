@@ -56,11 +56,14 @@ export class ChatGateway {
     },
     @ConnectedSocket() client: FiveStackWebSocketClient,
   ) {
-    if (!client.user || data.type !== ChatLobbyType.Direct) {
+    if (!client.user) {
       return;
     }
 
-    await this.chat.markDirectRead(data.id, client.user);
+    // Every lobby type, not just DMs: the read cursor is what stops a push
+    // firing for a conversation the recipient is already caught up on, and a
+    // match lobby is where that happens most.
+    await this.chat.markThreadRead(data.type, data.id, client.user);
   }
 
   @SubscribeMessage("lobby:chat")

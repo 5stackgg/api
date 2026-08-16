@@ -3,6 +3,7 @@ import { BullModule } from "@nestjs/bullmq";
 import { CacheModule } from "../cache/cache.module";
 import { PostgresModule } from "../postgres/postgres.module";
 import { RedisModule } from "../redis/redis.module";
+import { NotificationsModule } from "../notifications/notifications.module";
 import { SteamMatchHistoryQueues } from "../steam-match-history/enums/SteamMatchHistoryQueues";
 import { loggerFactory } from "../utilities/LoggerFactory";
 import { SteamPresenceService } from "./steam-presence.service";
@@ -16,6 +17,7 @@ import { SteamPresenceController } from "./steam-presence.controller";
     CacheModule,
     PostgresModule,
     RedisModule,
+    NotificationsModule,
   ],
   providers: [SteamPresenceService, loggerFactory()],
   controllers: [SteamPresenceController],

@@ -23,6 +23,7 @@ export type PreferenceKey = {
 export const PUSH_CATEGORIES: Record<string, e_notification_types_enum[]> = {
   matches: ["MatchStatusChange", "MatchImported", "MatchStatsReady", "ClipReady"],
   chat: ["ChatMessage"],
+  match_chat: ["MatchChatMessage"],
   tournaments: ["TournamentCreated", "TournamentReminder"],
   events: ["EventReminder"],
   seasons: ["SeasonEnded"],
@@ -64,6 +65,10 @@ export const PUSH_CATEGORIES: Record<string, e_notification_types_enum[]> = {
 export const PUSH_KEYS: PreferenceKey[] = [
   { key: "matches", defaultEnabled: true },
   { key: "chat", defaultEnabled: true },
+  // Off by default. In-game chat is relayed into the match's room line by
+  // line, so this is the one category that fires constantly and reaches the
+  // player least able to act on it -- they are in the game, reading it there.
+  { key: "match_chat", defaultEnabled: false },
   { key: "tournaments", defaultEnabled: true },
   { key: "events", defaultEnabled: true },
   { key: "seasons", defaultEnabled: true },
@@ -87,6 +92,7 @@ export const PUSH_KEYS: PreferenceKey[] = [
 // such list to filter against.
 export const IN_APP_KEYS: PreferenceKey[] = [
   { key: "ChatMessage", defaultEnabled: true },
+  { key: "MatchChatMessage", defaultEnabled: true },
   { key: "TeamInvite", defaultEnabled: true },
   { key: "TournamentTeamInvite", defaultEnabled: true },
   { key: "DraftInvite", defaultEnabled: true },

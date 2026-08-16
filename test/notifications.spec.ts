@@ -1,3 +1,4 @@
+import * as webPush from "web-push";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
@@ -6,6 +7,15 @@ import { NotificationsService } from "./../src/notifications/notifications.servi
 import { NotificationPreferencesService } from "./../src/notifications/preferences/notification-preferences.service";
 import { PushNotificationsService } from "./../src/notifications/push/push-notifications.service";
 import { isAllowedPushEndpoint } from "./../src/notifications/push/push-endpoint";
+
+// The delivery path is exercised for real below, so the transport is the one
+// thing that has to be stubbed -- otherwise the recipient tests would POST to
+// Google's push service.
+jest.mock("web-push", () => ({
+  setVapidDetails: jest.fn(),
+  sendNotification: jest.fn().mockResolvedValue({}),
+  generateVAPIDKeys: jest.fn(),
+}));
 
 // Runs the raw SQL behind the notification work against a real Postgres.
 // Everything here is hand-written SQL rather than generated queries, so a
@@ -276,15 +286,130 @@ describe("notifications (SQL-driven)", () => {
     });
   });
 
+  // A notification that reaches the support webhook is posted verbatim into a
+  // staff channel. Most types are fine there; some are somebody's own words or
+  // are addressed to one player, and the only thing standing between them and
+  // that channel is IN_APP_ONLY_TYPES.
+  //
+  // This exists because routing two writers through notifyPlayers -- which is
+  // where the webhook lives -- silently made them Discord-facing. The next
+  // reroute should fail here rather than in a staff channel.
+  describe("discord relay", () => {
+    const withWebhook = () => {
+      const hasura = hasuraWritingToPostgres();
+      hasura.query = jest.fn().mockResolvedValue({
+        settings_by_pk: { value: "https://discord.com/api/webhooks/1/token" },
+      });
+
+      return new NotificationsService(
+        hasura as any,
+        postgres,
+        logger as any,
+        { get: () => ({ webDomain: "https://example.com" }) } as any,
+        preferences(),
+        pushNotifications() as any,
+        { add: jest.fn() } as any,
+        { add: jest.fn() } as any,
+      );
+    };
+
+    let posted: string[];
+
+    beforeEach(() => {
+      posted = [];
+      jest
+        .spyOn(global, "fetch")
+        .mockImplementation(async (_url: any, init: any) => {
+          posted.push(String(init?.body ?? ""));
+          return { ok: true } as any;
+        });
+    });
+
+    afterEach(() => {
+      (global.fetch as jest.Mock).mockRestore?.();
+    });
+
+    const notify = async (type: string, message: string) => {
+      const steamId = await fx.player();
+      await withWebhook().notifyPlayers(type as any, {
+        title: "Something",
+        message,
+        role: "user",
+        entity_id: "e-1",
+        steamIds: [steamId],
+      });
+    };
+
+    it("never relays what somebody typed", async () => {
+      // The body of a ChatMessage is the message itself, DMs included.
+      await notify("ChatMessage", "meet me on B, bring flashes");
+
+      expect(posted).toEqual([]);
+    });
+
+    it("never relays a player's own match report", async () => {
+      await notify("MatchImported", "Your match was imported — you went 14/9.");
+
+      expect(posted).toEqual([]);
+    });
+
+    it("keeps league scheduling out of the staff channel", async () => {
+      await notify("LeagueProposalReceived", "A time was proposed.");
+
+      expect(posted).toEqual([]);
+    });
+
+    it("still relays the types that are meant for it", async () => {
+      // Guards the test itself: if the webhook never fired for any type, every
+      // assertion above would pass for the wrong reason.
+      await notify("TeamInvite", "You were invited to a team.");
+
+      expect(posted).toHaveLength(1);
+      expect(posted[0]).toContain("You were invited to a team.");
+    });
+  });
+
   describe("push recipient resolution", () => {
-    // Only the fan-out claim touches redis, and none of these exercise it.
+    // What a bundling window has waiting in it, for the trailing-summary case.
+    let pending: string[] = [];
+    // Jobs the delivery queue was handed, so a deferred push can be told apart
+    // from a dropped one.
+    let pendingQueued: Array<{ delay?: number }> = [];
+
+    // These are about the SQL, so redis is stubbed into its most permissive
+    // shape: nobody has the thread focused, and every bundling window is free.
     const redisManager = {
       getConnection: () => ({
         exists: async () => 0,
-        pipeline: () => ({
-          set: () => {},
-          exec: async (): Promise<Array<unknown>> => [],
+        set: async () => "OK",
+        get: async () => null,
+        ttl: async () => -2,
+        del: async () => 1,
+        rpush: async () => 1,
+        expire: async () => 1,
+        multi: () => ({
+          lrange() {
+            return this;
+          },
+          del() {
+            return this;
+          },
+          rpush() {
+            return this;
+          },
+          expire() {
+            return this;
+          },
+          exec: async (): Promise<Array<unknown>> => [[null, pending]],
         }),
+        pipeline: () => {
+          const queued: string[] = [];
+          return {
+            set: () => {},
+            hvals: (key: string) => queued.push(key),
+            exec: async () => queued.map(() => [null, []]),
+          };
+        },
         subscribe: async () => 1,
         publish: async () => 1,
         on: () => {},
@@ -305,15 +430,260 @@ describe("notifications (SQL-driven)", () => {
                   subject: "x",
                 },
         } as any,
+        { add: async () => ({}) } as any,
         redisManager as any,
       );
 
+    // The service above is deliberately left unconfigured, which makes every
+    // send return before it reaches the database. This one has keys, so the
+    // recipient SQL actually runs.
+    const configuredService = async () => {
+      const push = new PushNotificationsService(
+        logger as any,
+        postgres,
+        {
+          get: (key: string) =>
+            key === "app"
+              ? { webDomain: "https://example.com" }
+              : {
+                  publicKey: "public-key",
+                  privateKey: "private-key",
+                  subject: "https://example.com",
+                },
+        } as any,
+        {
+          add: async (_name: string, _data: unknown, options: any) => {
+            pendingQueued.push(options ?? {});
+            return {};
+          },
+        } as any,
+        redisManager as any,
+      );
+      await push.loadKeys();
+      return push;
+    };
+
+    const chatNotification = async (
+      steamId: string,
+      overrides: { createdAt?: string; isRead?: boolean } = {},
+    ) => {
+      const [row] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO notifications
+                (type, title, message, role, steam_id, entity_id, is_read, data, created_at)
+              VALUES ('ChatMessage', 'Luke', 'hey', 'user', $1::bigint,
+                      'match:m-1', $2,
+                      '{"threadKey":"chat:match:m-1"}'::jsonb,
+                      COALESCE($3::timestamptz, now()))
+           RETURNING id::text AS id`,
+        [steamId, overrides.isRead ?? false, overrides.createdAt ?? null],
+      );
+      return row.id;
+    };
+
+    const subscribe = async (steamId: string) =>
+      await postgres.query(
+        `INSERT INTO push_subscriptions (steam_id, endpoint, p256dh, auth)
+              VALUES ($1::bigint, $2, 'key', 'auth')`,
+        [steamId, `https://fcm.googleapis.com/fcm/send/${steamId}`],
+      );
+
     it("runs the recipient query without erroring", async () => {
-      // VAPID is unconfigured here so nothing is actually sent -- this is
-      // about the SQL parsing and casting cleanly.
       await expect(
         service().sendForNotification({ id: crypto.randomUUID(), type: "x" }),
       ).resolves.toBeUndefined();
+    });
+
+    it("resolves a subscribed recipient", async () => {
+      const steamId = await fx.player();
+      await subscribe(steamId);
+      const id = await chatNotification(steamId);
+
+      await (await configuredService()).sendForNotification({
+        id,
+        type: "ChatMessage",
+      });
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+    });
+
+    it("says nothing when the thread was read after the message", async () => {
+      // The whole point of the read cursor: a message the recipient has
+      // already scrolled past is not worth a buzz.
+      const steamId = await fx.player();
+      await subscribe(steamId);
+      const id = await chatNotification(steamId, {
+        createdAt: new Date(Date.now() - 60_000).toISOString(),
+      });
+
+      await postgres.query(
+        `INSERT INTO chat_read_state (steam_id, thread, last_read_at)
+              VALUES ($1::bigint, 'chat:match:m-1', now())`,
+        [steamId],
+      );
+
+      await (await configuredService()).sendForNotification({
+        id,
+        type: "ChatMessage",
+      });
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("still buzzes for a message newer than the cursor", async () => {
+      const steamId = await fx.player();
+      await subscribe(steamId);
+
+      await postgres.query(
+        `INSERT INTO chat_read_state (steam_id, thread, last_read_at)
+              VALUES ($1::bigint, 'chat:match:m-1', now() - interval '1 hour')`,
+        [steamId],
+      );
+
+      const id = await chatNotification(steamId);
+
+      await (await configuredService()).sendForNotification({
+        id,
+        type: "ChatMessage",
+      });
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+    });
+
+    it("ignores a cursor for a different thread", async () => {
+      const steamId = await fx.player();
+      await subscribe(steamId);
+      const id = await chatNotification(steamId);
+
+      await postgres.query(
+        `INSERT INTO chat_read_state (steam_id, thread, last_read_at)
+              VALUES ($1::bigint, 'chat:match:m-2', now())`,
+        [steamId],
+      );
+
+      await (await configuredService()).sendForNotification({
+        id,
+        type: "ChatMessage",
+      });
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+    });
+
+    it("drops a row already dealt with in the bell", async () => {
+      const steamId = await fx.player();
+      await subscribe(steamId);
+      const id = await chatNotification(steamId, { isRead: true });
+
+      await (await configuredService()).sendForNotification({
+        id,
+        type: "ChatMessage",
+      });
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("keeps sending a type that does not require the row to be unseen", async () => {
+      // An announcement's bell entry routinely sits unread for days, so a seen
+      // check there would be measuring nothing.
+      const steamId = await fx.player();
+      await subscribe(steamId);
+
+      const [row] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO notifications (type, title, message, role, steam_id, entity_id, is_read)
+              VALUES ('NewsPublished', 'News', 'A post', 'user', $1::bigint, 'a-1', true)
+           RETURNING id::text AS id`,
+        [steamId],
+      );
+
+      await (await configuredService()).sendForNotification({
+        id: row.id,
+        type: "NewsPublished",
+      });
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+    });
+
+    it("holds back a read row for a type that does require it", async () => {
+      // The same row, under a type whose policy asks for it, goes nowhere --
+      // which is what makes the flag above load-bearing rather than decorative.
+      const steamId = await fx.player();
+      await subscribe(steamId);
+      const id = await chatNotification(steamId, { isRead: true });
+
+      await (await configuredService()).sendForNotification({
+        id,
+        type: "ChatMessage",
+      });
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+
+    it("still counts a burst whose older rows the bell collapsed", async () => {
+      // collapseOlderUnread soft-deletes every superseded ChatMessage row so
+      // the bell shows one entry per conversation. The summary's count comes
+      // from the window rather than from those rows for exactly that reason --
+      // resolving them finds one survivor and would report a burst of three as
+      // a single message.
+      const steamId = await fx.player();
+      await subscribe(steamId);
+
+      const ids = [
+        await chatNotification(steamId, {
+          createdAt: new Date(Date.now() - 3000).toISOString(),
+        }),
+        await chatNotification(steamId, {
+          createdAt: new Date(Date.now() - 2000).toISOString(),
+        }),
+        await chatNotification(steamId),
+      ];
+
+      await notifications().collapseOlderUnread("ChatMessage", "match:m-1", [
+        steamId,
+      ]);
+
+      const [surviving] = await postgres.query<Array<{ count: string }>>(
+        `SELECT count(*)::text AS count FROM notifications
+          WHERE type = 'ChatMessage' AND deleted_at IS NULL`,
+      );
+      expect(surviving.count).toBe("1");
+
+      pending = ids;
+      await (await configuredService()).sendPending(steamId, "chat:match:m-1");
+
+      const [, payload] = (webPush.sendNotification as jest.Mock).mock.calls[0];
+      expect(JSON.parse(payload)).toMatchObject({
+        body: "3 new messages",
+        count: 3,
+      });
+    });
+
+    it("holds rather than drops during the recipient's quiet hours", async () => {
+      const steamId = await fx.player();
+      await subscribe(steamId);
+      await postgres.query(
+        `UPDATE players
+            SET quiet_hours_start = (now() at time zone 'UTC' - interval '1 hour')::time,
+                quiet_hours_end = (now() at time zone 'UTC' + interval '1 hour')::time,
+                notification_timezone = 'UTC'
+          WHERE steam_id = $1::bigint`,
+        [steamId],
+      );
+      const id = await chatNotification(steamId);
+
+      pendingQueued = [];
+      await (await configuredService()).sendForNotification({
+        id,
+        type: "ChatMessage",
+      });
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+
+      // Woken when the window closes rather than thrown away. The delay comes
+      // from quiet_hours_seconds_remaining, which is what this really tests.
+      const [job] = pendingQueued;
+      expect(job).toBeDefined();
+      expect(job.delay).toBeGreaterThan(0);
+      // The window above ends an hour from now.
+      expect(job.delay).toBeLessThanOrEqual(60 * 60 * 1000 + 5000);
     });
 
     it("stores a subscription and reassigns it on a shared browser", async () => {

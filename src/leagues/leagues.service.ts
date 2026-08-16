@@ -30,6 +30,7 @@ export class LeaguesService {
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
     private readonly postgres: PostgresService,
+    private readonly notifications: NotificationsService,
     configService: ConfigService,
   ) {
     this.appConfig = configService.get<AppConfig>("app");
@@ -121,21 +122,20 @@ export class LeaguesService {
       return 0;
     }
 
-    await this.hasura.mutation({
-      insert_notifications: {
-        __args: {
-          objects: Array.from(recipients).map((steamId) => ({
-            type: params.type as e_notification_types_enum,
-            title: params.title,
-            message: params.message,
-            role: "user" as e_player_roles_enum,
-            steam_id: steamId,
-            entity_id: params.entityId,
-          })),
-        },
-        affected_rows: true,
+    // Through notifyPlayers rather than a raw insert: that is where the in-app
+    // preference is resolved, where recipients with nowhere to push are dropped,
+    // and where the fan-out is claimed so the event trigger does not resolve and
+    // send once per row.
+    await this.notifications.notifyPlayers(
+      params.type as e_notification_types_enum,
+      {
+        title: params.title,
+        message: params.message,
+        role: "user" as e_player_roles_enum,
+        entity_id: params.entityId,
+        steamIds: Array.from(recipients),
       },
-    });
+    );
 
     return recipients.size;
   }

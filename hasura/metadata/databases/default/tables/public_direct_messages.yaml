@@ -1,0 +1,3 @@
+table:
+  name: direct_messages
+  schema: public

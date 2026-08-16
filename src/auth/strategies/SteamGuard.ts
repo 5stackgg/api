@@ -7,6 +7,7 @@ import { AuthGuard } from "@nestjs/passport";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { ConfigService } from "@nestjs/config";
 import { Logger } from "@nestjs/common";
+import { isAllowedOrigin } from "../../utilities/isAllowedOrigin";
 
 @Injectable()
 export class SteamGuard extends AuthGuard("steam") {
@@ -46,11 +47,11 @@ export class SteamGuard extends AuthGuard("steam") {
       const request = context.switchToHttp().getRequest();
 
       const { redirect } = request.query;
-      const webDomain = this.config.get<AppConfig>("app").webDomain;
+      const cookieDomain = this.config.get<AppConfig>("app").authCookieDomain;
 
       if (
         typeof redirect === "string" &&
-        SteamGuard.isSafeRedirect(redirect, webDomain)
+        SteamGuard.isSafeRedirect(redirect, cookieDomain)
       ) {
         request.session.redirect = redirect;
       }
@@ -74,7 +75,18 @@ export class SteamGuard extends AuthGuard("steam") {
     }
   }
 
-  private static isSafeRedirect(redirect: string, webDomain: string): boolean {
+  // Anywhere inside the session cookie's own scope, rather than the one exact
+  // web domain. The cookie is set on `.${WEB_DOMAIN}` (see getCookieOptions), so
+  // a sibling subdomain is already carrying this session by the time it is
+  // redirected to -- refusing to send someone back to the panel they started on
+  // does not withhold anything from them. It is what lets a dev tunnel on
+  // dev.5stack.gg finish a login rather than landing on production, and it is
+  // still a closed list: an arbitrary URL is refused, which is the open-redirect
+  // this guards against.
+  private static isSafeRedirect(
+    redirect: string,
+    cookieDomain: string,
+  ): boolean {
     if (!redirect) {
       return false;
     }
@@ -85,7 +97,9 @@ export class SteamGuard extends AuthGuard("steam") {
       return true;
     }
     try {
-      return new URL(redirect).origin === new URL(webDomain).origin;
+      return isAllowedOrigin({ origins: [], cookieDomain })(
+        new URL(redirect).origin,
+      );
     } catch {
       return false;
     }

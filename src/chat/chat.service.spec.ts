@@ -31,6 +31,13 @@ describe("ChatService direct messages", () => {
   let service: ChatService;
   let acceptedFriendships: Array<[string, string]>;
   let role: string;
+  let queries: Array<{ sql: string; bindings: any[] }>;
+  const postgres = {
+    query: jest.fn(async (sql: string, bindings: any[]): Promise<any[]> => {
+      queries.push({ sql, bindings });
+      return [];
+    }),
+  };
 
   const client = (steamId: string) =>
     ({
@@ -79,10 +86,12 @@ describe("ChatService direct messages", () => {
     jest.clearAllMocks();
     acceptedFriendships = [[ME, FRIEND]];
     role = "user";
+    queries = [];
     service = new ChatService(
       logger as any,
       { } as any,
       hasuraService as any,
+      postgres as any,
       { getConnection: () => redis } as any,
       { notifyPlayers: jest.fn(), markConversationRead: jest.fn() } as any,
     );
@@ -176,24 +185,40 @@ describe("ChatService direct messages", () => {
   });
 
   describe("read state", () => {
-    it("ignores a room the caller is not part of", async () => {
-      await service.markDirectRead(directRoomId(FRIEND, STRANGER), {
-        steam_id: ME,
-      } as any);
+    const cursorWrites = () =>
+      queries.filter(({ sql }) => sql.includes("chat_read_state"));
 
-      expect(redis.hset).not.toHaveBeenCalled();
+    it("ignores a room the caller is not part of", async () => {
+      await service.markThreadRead(
+        ChatLobbyType.Direct,
+        directRoomId(FRIEND, STRANGER),
+        { steam_id: ME } as any,
+      );
+
+      expect(cursorWrites()).toHaveLength(0);
     });
 
     it("records a read for a conversation the caller is in", async () => {
-      await service.markDirectRead(directRoomId(ME, FRIEND), {
+      await service.markThreadRead(
+        ChatLobbyType.Direct,
+        directRoomId(ME, FRIEND),
+        { steam_id: ME } as any,
+      );
+
+      expect(cursorWrites().at(0)?.bindings).toEqual([
+        ME,
+        `chat:direct:${directRoomId(ME, FRIEND)}`,
+      ]);
+    });
+
+    it("records a read for a lobby, not just a conversation", async () => {
+      // The cursor is what stops a push firing for a match lobby the recipient
+      // is already reading, which was the whole gap.
+      await service.markThreadRead(ChatLobbyType.Match, "m-1", {
         steam_id: ME,
       } as any);
 
-      expect(redis.hset).toHaveBeenCalledWith(
-        `chat:direct:read:${ME}`,
-        directRoomId(ME, FRIEND),
-        expect.any(String),
-      );
+      expect(cursorWrites().at(0)?.bindings).toEqual([ME, "chat:match:m-1"]);
     });
   });
 });

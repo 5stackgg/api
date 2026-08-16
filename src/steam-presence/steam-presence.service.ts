@@ -131,6 +131,7 @@ export class SteamPresenceService
     private readonly cache: CacheService,
     private readonly postgres: PostgresService,
     private readonly redisManager: RedisManagerService,
+    private readonly notifications: NotificationsService,
     @InjectQueue(SteamMatchHistoryQueues.PollSteamMatchHistoryForUser)
     private readonly pollQueue: Queue,
   ) {
@@ -717,12 +718,18 @@ export class SteamPresenceService
         `Your ${safeType} match on ${safeMap} was imported — ` +
         `you went ${stats.kills}/${stats.deaths}. ` +
         `<a href="${safeUrl}">View it on 5stack</a>.`;
-      await this.postgres
-        .query(
-          `INSERT INTO public.notifications (title, message, steam_id, role, type, entity_id)
-           VALUES ('Match Imported', $1, $2::bigint, 'user', 'MatchImported', $3)`,
-          [message, friend.steam_id, notice.matchId],
-        )
+      // One call per recipient rather than one fan-out, because the message
+      // carries that player's own scoreline. Still routed through
+      // notifyPlayers and not a raw insert: that is what applies the in-app
+      // preference and drops recipients with nowhere to push.
+      await this.notifications
+        .notifyPlayers("MatchImported", {
+          title: "Match Imported",
+          message,
+          role: "user",
+          entity_id: notice.matchId,
+          steamIds: [friend.steam_id],
+        })
         .catch((err) =>
           this.logger.warn(
             `steam-presence in-app notify failed for ${friend.steam_id}: ${(err as Error).message}`,

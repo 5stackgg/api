@@ -14,6 +14,7 @@ import { MatchmakingLobbyService } from "src/matchmaking/matchmaking-lobby.servi
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { DemoSessionWatcherService } from "src/matches/game-streamer/demo-session-watcher.service";
+import { presenceFocusKey } from "src/notifications/push/notification-delivery";
 
 @Injectable()
 export class SocketsService {
@@ -22,6 +23,10 @@ export class SocketsService {
   private nodeId: string = process.env.POD_NAME;
 
   private clients: Map<string, FiveStackWebSocketClient> = new Map();
+
+  // Twice the client's ping interval, so a focus survives a missed heartbeat
+  // but a closed laptop stops claiming to be reading anything within a round.
+  private static readonly FOCUS_TTL_SECONDS = 40;
 
   constructor(
     private readonly logger: Logger,
@@ -107,6 +112,45 @@ export class SocketsService {
     return `latency-test:${sessionId}`;
   }
 
+  // What the player is actually looking at, as opposed to whether they hold a
+  // socket.
+  //
+  // `players:{steamId}` only says a tab exists somewhere, and chat room
+  // membership is worse still -- it tracks the widget's mount lifecycle, so it
+  // stays true for anyone who merely visited a match page an hour ago. Neither
+  // can answer "are they reading this conversation right now", which is the
+  // only question worth asking before buzzing someone's phone.
+  //
+  // One field per client, because a player with the conversation open in a
+  // pinned tab and a match page in another is focused on whichever is in front.
+  // Per-field expiry rather than a key TTL for the same reason: a tab that dies
+  // without closing cleanly must drop out on its own without taking the other
+  // tabs' focus with it.
+  public async setFocus(
+    steamId: string,
+    clientId: string,
+    focus: string | null,
+  ) {
+    const key = presenceFocusKey(steamId);
+
+    if (!focus) {
+      await this.redis.hdel(key, clientId);
+      return;
+    }
+
+    await this.redis.hset(key, clientId, focus);
+
+    await this.redis.sendCommand(
+      new Redis.Command("HEXPIRE", [
+        key,
+        SocketsService.FOCUS_TTL_SECONDS,
+        "FIELDS",
+        1,
+        clientId,
+      ]),
+    );
+  }
+
   public async setupSocket(client: FiveStackWebSocketClient, request: Request) {
     session({
       rolling: true,
@@ -166,6 +210,8 @@ export class SocketsService {
               client.id,
             ),
           );
+
+          await this.setFocus(client.user.steam_id, client.id, null);
 
           const clients = await this.redis.keys(
             `${SocketsService.GET_PLAYER_CLIENTS(client.user.steam_id)}:*`,
