@@ -382,7 +382,7 @@ describe("notifications (SQL-driven)", () => {
       getConnection: () => ({
         exists: async () => 0,
         set: async () => "OK",
-        get: async () => null,
+        get: async (): Promise<string | null> => null,
         ttl: async () => -2,
         del: async () => 1,
         rpush: async () => 1,
@@ -407,7 +407,8 @@ describe("notifications (SQL-driven)", () => {
           return {
             set: () => {},
             hvals: (key: string) => queued.push(key),
-            exec: async () => queued.map(() => [null, []]),
+            exec: async (): Promise<Array<unknown>> =>
+              queued.map(() => [null, []] as [unknown, Array<unknown>]),
           };
         },
         subscribe: async () => 1,
