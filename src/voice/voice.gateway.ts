@@ -21,6 +21,39 @@ export class VoiceGateway {
     private readonly voice: VoiceService,
   ) {}
 
+  // Relayed rather than derived: only the device that took the microphone or the
+  // camera knows it took it, and it is the player's own clients that need to be
+  // told. Everyone else already sees the same call either way.
+  @SubscribeMessage("voice:device-claim")
+  public async deviceClaim(
+    @MessageBody()
+    data: { channelId?: string; kind?: "mic" | "cam"; claimed?: boolean },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    if (
+      !client.user ||
+      !data?.channelId ||
+      (data.kind !== "mic" && data.kind !== "cam")
+    ) {
+      return;
+    }
+
+    try {
+      await this.voice.relayDeviceClaim(
+        data.channelId,
+        client.user,
+        data.kind,
+        data.claimed === true,
+      );
+    } catch (error) {
+      this.logger.debug(
+        `[voice] ignoring device claim from ${client.user.steam_id}: ${
+          (error as Error)?.message
+        }`,
+      );
+    }
+  }
+
   @SubscribeMessage("voice:speaking")
   public async speaking(
     @MessageBody() data: { channelId?: string; speaking?: boolean },

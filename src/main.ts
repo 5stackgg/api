@@ -4,6 +4,7 @@ import { Transport } from "@nestjs/microservices";
 import { AppModule } from "./app.module";
 import RedisStore from "connect-redis";
 import { getCookieOptions } from "./utilities/getCookieOptions";
+import { isAllowedOrigin } from "./utilities/isAllowedOrigin";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import passport from "passport";
 import { WsAdapter } from "@nestjs/platform-ws";
@@ -81,14 +82,28 @@ async function bootstrap() {
     appConfig.relayDomain,
     appConfig.demosDomain,
     appConfig.wsDomain,
+    // Anywhere else the panel is served from, for origins outside the cookie
+    // domain that isAllowedOrigin covers on its own -- a trycloudflare or ngrok
+    // hostname, say.
+    ...appConfig.extraCorsOrigins,
   ];
 
   if (process.env.DEV) {
-    allowedOrigins.push("http://localhost:3000", "http://0.0.0.0:3000", "http://localhost:3002", "http://0.0.0.0:3002");
+    allowedOrigins.push(
+      "http://localhost:3000",
+      "http://0.0.0.0:3000",
+      "http://localhost:3002",
+      "http://0.0.0.0:3002",
+    );
   }
 
+  const allowOrigin = isAllowedOrigin({
+    origins: allowedOrigins,
+    cookieDomain: appConfig.authCookieDomain,
+  });
+
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => callback(null, allowOrigin(origin)),
     credentials: true,
   });
 

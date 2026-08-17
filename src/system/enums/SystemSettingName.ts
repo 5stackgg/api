@@ -1,6 +1,18 @@
 export enum SystemSettingName {
   Updates = "updates",
-  ChatMessageTtl = "chat_message_ttl",
+  // Per lobby type, and `public.`-prefixed like everything else the settings
+  // page writes. The single `chat_message_ttl` these replace never took effect:
+  // the form wrote `public.chat_message_ttl` and this enum read the unprefixed
+  // name, so ChatService ran on its hard-coded default throughout.
+  ChatTtlMatch = "public.chat_ttl_match",
+  ChatTtlMatchTeam = "public.chat_ttl_match_team",
+  ChatTtlMatchMaking = "public.chat_ttl_matchmaking",
+  ChatTtlTournament = "public.chat_ttl_tournament",
+  ChatTtlOrganizers = "public.chat_ttl_organizers",
+  ChatTtlDraft = "public.chat_ttl_draft",
+  // Days, not seconds: DMs are swept rather than expired, because they live in
+  // postgres. 0 keeps them forever.
+  ChatRetentionDirectDays = "public.chat_retention_direct_days",
   DemoNetworkLimiter = "demo_network_limiter",
   PublicDefaultModels = "public.default_models",
   VetoPickTimeout = "public.veto_pick_timeout",

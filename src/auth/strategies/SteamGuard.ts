@@ -7,6 +7,7 @@ import { AuthGuard } from "@nestjs/passport";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { ConfigService } from "@nestjs/config";
 import { Logger } from "@nestjs/common";
+import { isAllowedOrigin } from "../../utilities/isAllowedOrigin";
 
 @Injectable()
 export class SteamGuard extends AuthGuard("steam") {
@@ -46,11 +47,11 @@ export class SteamGuard extends AuthGuard("steam") {
       const request = context.switchToHttp().getRequest();
 
       const { redirect } = request.query;
-      const webDomain = this.config.get<AppConfig>("app").webDomain;
+      const { authCookieDomain, webDomain } = this.config.get<AppConfig>("app");
 
       if (
         typeof redirect === "string" &&
-        SteamGuard.isSafeRedirect(redirect, webDomain)
+        SteamGuard.isSafeRedirect(redirect, webDomain, authCookieDomain)
       ) {
         request.session.redirect = redirect;
       }
@@ -74,7 +75,24 @@ export class SteamGuard extends AuthGuard("steam") {
     }
   }
 
-  private static isSafeRedirect(redirect: string, webDomain: string): boolean {
+  // The panel itself, plus anywhere inside the session cookie's own scope. The
+  // cookie is set on `.${WEB_DOMAIN}` by default (see getCookieOptions), so a
+  // sibling subdomain is already carrying this session by the time it is
+  // redirected to -- refusing to send someone back to the panel they started on
+  // does not withhold anything from them. It is what lets a dev tunnel on
+  // dev.5stack.gg finish a login rather than landing on production, and it is
+  // still a closed list: an arbitrary URL is refused, which is the open-redirect
+  // this guards against.
+  //
+  // webDomain is named separately rather than left to the cookie domain to
+  // cover: AUTH_COOKIE_DOMAIN is an override, and one set narrower than the
+  // panel's own host would otherwise stop a deployment honouring redirects back
+  // to itself.
+  private static isSafeRedirect(
+    redirect: string,
+    webDomain: string,
+    cookieDomain: string,
+  ): boolean {
     if (!redirect) {
       return false;
     }
@@ -85,7 +103,9 @@ export class SteamGuard extends AuthGuard("steam") {
       return true;
     }
     try {
-      return new URL(redirect).origin === new URL(webDomain).origin;
+      return isAllowedOrigin({ origins: [webDomain], cookieDomain })(
+        new URL(redirect).origin,
+      );
     } catch {
       return false;
     }

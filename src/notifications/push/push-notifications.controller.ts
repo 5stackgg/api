@@ -98,7 +98,8 @@ export class PushNotificationsController {
     // The jobId collapses them into a single send.
     if (PushNotificationsService.isBatched(data.new.type)) {
       await this.pushBroadcastQueue.add(
-        "PushBroadcast",
+        // The handler is registered under its class name, not the queue's.
+        "SendPushBroadcast",
         { type: data.new.type, entityId: data.new.entity_id },
         {
           jobId: `push-broadcast.${data.new.type}.${data.new.entity_id}`,

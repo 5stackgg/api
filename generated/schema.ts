@@ -1563,6 +1563,136 @@ export interface awards_variance_fields {
 }
 
 
+/** columns and relationships of "chat_read_state" */
+export interface chat_read_state {
+    last_read_at: Scalars['timestamptz']
+    steam_id: Scalars['bigint']
+    thread: Scalars['String']
+    __typename: 'chat_read_state'
+}
+
+
+/** aggregated selection of "chat_read_state" */
+export interface chat_read_state_aggregate {
+    aggregate: (chat_read_state_aggregate_fields | null)
+    nodes: chat_read_state[]
+    __typename: 'chat_read_state_aggregate'
+}
+
+
+/** aggregate fields of "chat_read_state" */
+export interface chat_read_state_aggregate_fields {
+    avg: (chat_read_state_avg_fields | null)
+    count: Scalars['Int']
+    max: (chat_read_state_max_fields | null)
+    min: (chat_read_state_min_fields | null)
+    stddev: (chat_read_state_stddev_fields | null)
+    stddev_pop: (chat_read_state_stddev_pop_fields | null)
+    stddev_samp: (chat_read_state_stddev_samp_fields | null)
+    sum: (chat_read_state_sum_fields | null)
+    var_pop: (chat_read_state_var_pop_fields | null)
+    var_samp: (chat_read_state_var_samp_fields | null)
+    variance: (chat_read_state_variance_fields | null)
+    __typename: 'chat_read_state_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface chat_read_state_avg_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_read_state_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "chat_read_state" */
+export type chat_read_state_constraint = 'chat_read_state_pkey'
+
+
+/** aggregate max on columns */
+export interface chat_read_state_max_fields {
+    last_read_at: (Scalars['timestamptz'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    thread: (Scalars['String'] | null)
+    __typename: 'chat_read_state_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface chat_read_state_min_fields {
+    last_read_at: (Scalars['timestamptz'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    thread: (Scalars['String'] | null)
+    __typename: 'chat_read_state_min_fields'
+}
+
+
+/** response of any mutation on the table "chat_read_state" */
+export interface chat_read_state_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: chat_read_state[]
+    __typename: 'chat_read_state_mutation_response'
+}
+
+
+/** select columns of table "chat_read_state" */
+export type chat_read_state_select_column = 'last_read_at' | 'steam_id' | 'thread'
+
+
+/** aggregate stddev on columns */
+export interface chat_read_state_stddev_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_read_state_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface chat_read_state_stddev_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_read_state_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface chat_read_state_stddev_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_read_state_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface chat_read_state_sum_fields {
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'chat_read_state_sum_fields'
+}
+
+
+/** update columns of table "chat_read_state" */
+export type chat_read_state_update_column = 'last_read_at' | 'steam_id' | 'thread'
+
+
+/** aggregate var_pop on columns */
+export interface chat_read_state_var_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_read_state_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface chat_read_state_var_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_read_state_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface chat_read_state_variance_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'chat_read_state_variance_fields'
+}
+
+
 /** columns and relationships of "clip_render_jobs" */
 export interface clip_render_jobs {
     /** An object relationship */
@@ -2061,6 +2191,295 @@ export interface db_backups_var_samp_fields {
 export interface db_backups_variance_fields {
     size: (Scalars['Float'] | null)
     __typename: 'db_backups_variance_fields'
+}
+
+
+/** columns and relationships of "direct_conversations" */
+export interface direct_conversations {
+    is_open: Scalars['Boolean']
+    last_message_at: Scalars['timestamptz']
+    position: Scalars['Int']
+    room_id: Scalars['String']
+    steam_id: Scalars['bigint']
+    __typename: 'direct_conversations'
+}
+
+
+/** aggregated selection of "direct_conversations" */
+export interface direct_conversations_aggregate {
+    aggregate: (direct_conversations_aggregate_fields | null)
+    nodes: direct_conversations[]
+    __typename: 'direct_conversations_aggregate'
+}
+
+
+/** aggregate fields of "direct_conversations" */
+export interface direct_conversations_aggregate_fields {
+    avg: (direct_conversations_avg_fields | null)
+    count: Scalars['Int']
+    max: (direct_conversations_max_fields | null)
+    min: (direct_conversations_min_fields | null)
+    stddev: (direct_conversations_stddev_fields | null)
+    stddev_pop: (direct_conversations_stddev_pop_fields | null)
+    stddev_samp: (direct_conversations_stddev_samp_fields | null)
+    sum: (direct_conversations_sum_fields | null)
+    var_pop: (direct_conversations_var_pop_fields | null)
+    var_samp: (direct_conversations_var_samp_fields | null)
+    variance: (direct_conversations_variance_fields | null)
+    __typename: 'direct_conversations_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface direct_conversations_avg_fields {
+    position: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'direct_conversations_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "direct_conversations" */
+export type direct_conversations_constraint = 'direct_conversations_pkey'
+
+
+/** aggregate max on columns */
+export interface direct_conversations_max_fields {
+    last_message_at: (Scalars['timestamptz'] | null)
+    position: (Scalars['Int'] | null)
+    room_id: (Scalars['String'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'direct_conversations_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface direct_conversations_min_fields {
+    last_message_at: (Scalars['timestamptz'] | null)
+    position: (Scalars['Int'] | null)
+    room_id: (Scalars['String'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'direct_conversations_min_fields'
+}
+
+
+/** response of any mutation on the table "direct_conversations" */
+export interface direct_conversations_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: direct_conversations[]
+    __typename: 'direct_conversations_mutation_response'
+}
+
+
+/** select columns of table "direct_conversations" */
+export type direct_conversations_select_column = 'is_open' | 'last_message_at' | 'position' | 'room_id' | 'steam_id'
+
+
+/** aggregate stddev on columns */
+export interface direct_conversations_stddev_fields {
+    position: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'direct_conversations_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface direct_conversations_stddev_pop_fields {
+    position: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'direct_conversations_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface direct_conversations_stddev_samp_fields {
+    position: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'direct_conversations_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface direct_conversations_sum_fields {
+    position: (Scalars['Int'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'direct_conversations_sum_fields'
+}
+
+
+/** update columns of table "direct_conversations" */
+export type direct_conversations_update_column = 'is_open' | 'last_message_at' | 'position' | 'room_id' | 'steam_id'
+
+
+/** aggregate var_pop on columns */
+export interface direct_conversations_var_pop_fields {
+    position: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'direct_conversations_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface direct_conversations_var_samp_fields {
+    position: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'direct_conversations_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface direct_conversations_variance_fields {
+    position: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'direct_conversations_variance_fields'
+}
+
+
+/** columns and relationships of "direct_messages" */
+export interface direct_messages {
+    created_at: Scalars['timestamptz']
+    from_steam_id: Scalars['bigint']
+    id: Scalars['uuid']
+    message: Scalars['String']
+    room_id: Scalars['String']
+    seq: Scalars['bigint']
+    __typename: 'direct_messages'
+}
+
+
+/** aggregated selection of "direct_messages" */
+export interface direct_messages_aggregate {
+    aggregate: (direct_messages_aggregate_fields | null)
+    nodes: direct_messages[]
+    __typename: 'direct_messages_aggregate'
+}
+
+
+/** aggregate fields of "direct_messages" */
+export interface direct_messages_aggregate_fields {
+    avg: (direct_messages_avg_fields | null)
+    count: Scalars['Int']
+    max: (direct_messages_max_fields | null)
+    min: (direct_messages_min_fields | null)
+    stddev: (direct_messages_stddev_fields | null)
+    stddev_pop: (direct_messages_stddev_pop_fields | null)
+    stddev_samp: (direct_messages_stddev_samp_fields | null)
+    sum: (direct_messages_sum_fields | null)
+    var_pop: (direct_messages_var_pop_fields | null)
+    var_samp: (direct_messages_var_samp_fields | null)
+    variance: (direct_messages_variance_fields | null)
+    __typename: 'direct_messages_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface direct_messages_avg_fields {
+    from_steam_id: (Scalars['Float'] | null)
+    seq: (Scalars['Float'] | null)
+    __typename: 'direct_messages_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "direct_messages" */
+export type direct_messages_constraint = 'direct_messages_pkey'
+
+
+/** aggregate max on columns */
+export interface direct_messages_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    from_steam_id: (Scalars['bigint'] | null)
+    id: (Scalars['uuid'] | null)
+    message: (Scalars['String'] | null)
+    room_id: (Scalars['String'] | null)
+    seq: (Scalars['bigint'] | null)
+    __typename: 'direct_messages_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface direct_messages_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    from_steam_id: (Scalars['bigint'] | null)
+    id: (Scalars['uuid'] | null)
+    message: (Scalars['String'] | null)
+    room_id: (Scalars['String'] | null)
+    seq: (Scalars['bigint'] | null)
+    __typename: 'direct_messages_min_fields'
+}
+
+
+/** response of any mutation on the table "direct_messages" */
+export interface direct_messages_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: direct_messages[]
+    __typename: 'direct_messages_mutation_response'
+}
+
+
+/** select columns of table "direct_messages" */
+export type direct_messages_select_column = 'created_at' | 'from_steam_id' | 'id' | 'message' | 'room_id' | 'seq'
+
+
+/** aggregate stddev on columns */
+export interface direct_messages_stddev_fields {
+    from_steam_id: (Scalars['Float'] | null)
+    seq: (Scalars['Float'] | null)
+    __typename: 'direct_messages_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface direct_messages_stddev_pop_fields {
+    from_steam_id: (Scalars['Float'] | null)
+    seq: (Scalars['Float'] | null)
+    __typename: 'direct_messages_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface direct_messages_stddev_samp_fields {
+    from_steam_id: (Scalars['Float'] | null)
+    seq: (Scalars['Float'] | null)
+    __typename: 'direct_messages_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface direct_messages_sum_fields {
+    from_steam_id: (Scalars['bigint'] | null)
+    seq: (Scalars['bigint'] | null)
+    __typename: 'direct_messages_sum_fields'
+}
+
+
+/** update columns of table "direct_messages" */
+export type direct_messages_update_column = 'created_at' | 'from_steam_id' | 'id' | 'message' | 'room_id' | 'seq'
+
+
+/** aggregate var_pop on columns */
+export interface direct_messages_var_pop_fields {
+    from_steam_id: (Scalars['Float'] | null)
+    seq: (Scalars['Float'] | null)
+    __typename: 'direct_messages_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface direct_messages_var_samp_fields {
+    from_steam_id: (Scalars['Float'] | null)
+    seq: (Scalars['Float'] | null)
+    __typename: 'direct_messages_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface direct_messages_variance_fields {
+    from_steam_id: (Scalars['Float'] | null)
+    seq: (Scalars['Float'] | null)
+    __typename: 'direct_messages_variance_fields'
 }
 
 
@@ -4409,7 +4828,7 @@ export interface e_notification_types_aggregate_fields {
 /** unique or primary key constraints on table "e_notification_types" */
 export type e_notification_types_constraint = 'e_notification_types_pkey'
 
-export type e_notification_types_enum = 'AwardGranted' | 'ChatMessage' | 'ClipReady' | 'DedicatedServerRconStatus' | 'DedicatedServerStatus' | 'DraftInvite' | 'EloRecompute' | 'EventReminder' | 'FormTeamSuggestion' | 'GameNodeStatus' | 'GameUpdate' | 'LeagueMatchUnscheduled' | 'LeagueProposalAccepted' | 'LeagueProposalDeclined' | 'LeagueProposalReceived' | 'LeagueRegistrationDecision' | 'LeagueRosterUndersized' | 'MatchAbandoned' | 'MatchImported' | 'MatchStatsReady' | 'MatchStatusChange' | 'MatchSupport' | 'NameChangeApproved' | 'NameChangeDenied' | 'NameChangeRequest' | 'NewsPublished' | 'PlayerReindex' | 'PlayerSanctioned' | 'ScrimAlertMatch' | 'ScrimMatchCanceled' | 'ScrimMatchScheduled' | 'ScrimRequestAccepted' | 'ScrimRequestCountered' | 'ScrimRequestDeclined' | 'ScrimRequestExpired' | 'ScrimRequestReceived' | 'ScrimTimeChanged' | 'SeasonEnded' | 'StorageScan' | 'TeamInvite' | 'TournamentCreated' | 'TournamentReminder' | 'TournamentTeamInvite'
+export type e_notification_types_enum = 'AwardGranted' | 'ChatMessage' | 'ClipReady' | 'DedicatedServerRconStatus' | 'DedicatedServerStatus' | 'DraftInvite' | 'EloRecompute' | 'EventReminder' | 'FormTeamSuggestion' | 'GameNodeStatus' | 'GameUpdate' | 'LeagueMatchUnscheduled' | 'LeagueProposalAccepted' | 'LeagueProposalDeclined' | 'LeagueProposalReceived' | 'LeagueRegistrationDecision' | 'LeagueRosterUndersized' | 'MatchAbandoned' | 'MatchChatMessage' | 'MatchImported' | 'MatchStatsReady' | 'MatchStatusChange' | 'MatchSupport' | 'NameChangeApproved' | 'NameChangeDenied' | 'NameChangeRequest' | 'NewsPublished' | 'PlayerReindex' | 'PlayerSanctioned' | 'ScrimAlertMatch' | 'ScrimMatchCanceled' | 'ScrimMatchScheduled' | 'ScrimRequestAccepted' | 'ScrimRequestCountered' | 'ScrimRequestDeclined' | 'ScrimRequestExpired' | 'ScrimRequestReceived' | 'ScrimTimeChanged' | 'SeasonEnded' | 'StorageScan' | 'TeamInvite' | 'TournamentCreated' | 'TournamentReminder' | 'TournamentTeamInvite'
 
 
 /** aggregate max on columns */
@@ -12324,6 +12743,10 @@ export interface mutation_root {
     delete_awards: (awards_mutation_response | null)
     /** delete single row from the table: "awards" */
     delete_awards_by_pk: (awards | null)
+    /** delete data from the table: "chat_read_state" */
+    delete_chat_read_state: (chat_read_state_mutation_response | null)
+    /** delete single row from the table: "chat_read_state" */
+    delete_chat_read_state_by_pk: (chat_read_state | null)
     /** delete data from the table: "clip_render_jobs" */
     delete_clip_render_jobs: (clip_render_jobs_mutation_response | null)
     /** delete single row from the table: "clip_render_jobs" */
@@ -12336,6 +12759,14 @@ export interface mutation_root {
     delete_db_backups: (db_backups_mutation_response | null)
     /** delete single row from the table: "db_backups" */
     delete_db_backups_by_pk: (db_backups | null)
+    /** delete data from the table: "direct_conversations" */
+    delete_direct_conversations: (direct_conversations_mutation_response | null)
+    /** delete single row from the table: "direct_conversations" */
+    delete_direct_conversations_by_pk: (direct_conversations | null)
+    /** delete data from the table: "direct_messages" */
+    delete_direct_messages: (direct_messages_mutation_response | null)
+    /** delete single row from the table: "direct_messages" */
+    delete_direct_messages_by_pk: (direct_messages | null)
     /** delete data from the table: "draft_game_picks" */
     delete_draft_game_picks: (draft_game_picks_mutation_response | null)
     /** delete single row from the table: "draft_game_picks" */
@@ -12954,6 +13385,10 @@ export interface mutation_root {
     insert_awards: (awards_mutation_response | null)
     /** insert a single row into the table: "awards" */
     insert_awards_one: (awards | null)
+    /** insert data into the table: "chat_read_state" */
+    insert_chat_read_state: (chat_read_state_mutation_response | null)
+    /** insert a single row into the table: "chat_read_state" */
+    insert_chat_read_state_one: (chat_read_state | null)
     /** insert data into the table: "clip_render_jobs" */
     insert_clip_render_jobs: (clip_render_jobs_mutation_response | null)
     /** insert a single row into the table: "clip_render_jobs" */
@@ -12966,6 +13401,14 @@ export interface mutation_root {
     insert_db_backups: (db_backups_mutation_response | null)
     /** insert a single row into the table: "db_backups" */
     insert_db_backups_one: (db_backups | null)
+    /** insert data into the table: "direct_conversations" */
+    insert_direct_conversations: (direct_conversations_mutation_response | null)
+    /** insert a single row into the table: "direct_conversations" */
+    insert_direct_conversations_one: (direct_conversations | null)
+    /** insert data into the table: "direct_messages" */
+    insert_direct_messages: (direct_messages_mutation_response | null)
+    /** insert a single row into the table: "direct_messages" */
+    insert_direct_messages_one: (direct_messages | null)
     /** insert data into the table: "draft_game_picks" */
     insert_draft_game_picks: (draft_game_picks_mutation_response | null)
     /** insert a single row into the table: "draft_game_picks" */
@@ -13733,6 +14176,12 @@ export interface mutation_root {
     update_awards_by_pk: (awards | null)
     /** update multiples rows of table: "awards" */
     update_awards_many: ((awards_mutation_response | null)[] | null)
+    /** update data of the table: "chat_read_state" */
+    update_chat_read_state: (chat_read_state_mutation_response | null)
+    /** update single row of the table: "chat_read_state" */
+    update_chat_read_state_by_pk: (chat_read_state | null)
+    /** update multiples rows of table: "chat_read_state" */
+    update_chat_read_state_many: ((chat_read_state_mutation_response | null)[] | null)
     /** update data of the table: "clip_render_jobs" */
     update_clip_render_jobs: (clip_render_jobs_mutation_response | null)
     /** update single row of the table: "clip_render_jobs" */
@@ -13751,6 +14200,18 @@ export interface mutation_root {
     update_db_backups_by_pk: (db_backups | null)
     /** update multiples rows of table: "db_backups" */
     update_db_backups_many: ((db_backups_mutation_response | null)[] | null)
+    /** update data of the table: "direct_conversations" */
+    update_direct_conversations: (direct_conversations_mutation_response | null)
+    /** update single row of the table: "direct_conversations" */
+    update_direct_conversations_by_pk: (direct_conversations | null)
+    /** update multiples rows of table: "direct_conversations" */
+    update_direct_conversations_many: ((direct_conversations_mutation_response | null)[] | null)
+    /** update data of the table: "direct_messages" */
+    update_direct_messages: (direct_messages_mutation_response | null)
+    /** update single row of the table: "direct_messages" */
+    update_direct_messages_by_pk: (direct_messages | null)
+    /** update multiples rows of table: "direct_messages" */
+    update_direct_messages_many: ((direct_messages_mutation_response | null)[] | null)
     /** update data of the table: "draft_game_picks" */
     update_draft_game_picks: (draft_game_picks_mutation_response | null)
     /** update single row of the table: "draft_game_picks" */
@@ -15237,6 +15698,7 @@ export interface notification_preferences_variance_fields {
 export interface notifications {
     actions: (Scalars['jsonb'] | null)
     created_at: Scalars['timestamptz']
+    data: (Scalars['jsonb'] | null)
     deletable: Scalars['Boolean']
     deleted_at: (Scalars['timestamptz'] | null)
     entity_id: (Scalars['String'] | null)
@@ -15327,7 +15789,7 @@ export interface notifications_mutation_response {
 
 
 /** select columns of table "notifications" */
-export type notifications_select_column = 'actions' | 'created_at' | 'deletable' | 'deleted_at' | 'entity_id' | 'id' | 'in_app' | 'is_read' | 'message' | 'role' | 'steam_id' | 'title' | 'type'
+export type notifications_select_column = 'actions' | 'created_at' | 'data' | 'deletable' | 'deleted_at' | 'entity_id' | 'id' | 'in_app' | 'is_read' | 'message' | 'role' | 'steam_id' | 'title' | 'type'
 
 
 /** select "notifications_aggregate_bool_exp_bool_and_arguments_columns" columns of table "notifications" */
@@ -15367,7 +15829,7 @@ export interface notifications_sum_fields {
 
 
 /** update columns of table "notifications" */
-export type notifications_update_column = 'actions' | 'created_at' | 'deletable' | 'deleted_at' | 'entity_id' | 'id' | 'in_app' | 'is_read' | 'message' | 'role' | 'steam_id' | 'title' | 'type'
+export type notifications_update_column = 'actions' | 'created_at' | 'data' | 'deletable' | 'deleted_at' | 'entity_id' | 'id' | 'in_app' | 'is_read' | 'message' | 'role' | 'steam_id' | 'title' | 'type'
 
 
 /** aggregate var_pop on columns */
@@ -23107,6 +23569,12 @@ export interface query_root {
     awards_aggregate: awards_aggregate
     /** fetch data from the table: "awards" using primary key columns */
     awards_by_pk: (awards | null)
+    /** fetch data from the table: "chat_read_state" */
+    chat_read_state: chat_read_state[]
+    /** fetch aggregated fields from the table: "chat_read_state" */
+    chat_read_state_aggregate: chat_read_state_aggregate
+    /** fetch data from the table: "chat_read_state" using primary key columns */
+    chat_read_state_by_pk: (chat_read_state | null)
     /** An array relationship */
     clip_render_jobs: clip_render_jobs[]
     /** An aggregate relationship */
@@ -23126,6 +23594,18 @@ export interface query_root {
     db_backups_aggregate: db_backups_aggregate
     /** fetch data from the table: "db_backups" using primary key columns */
     db_backups_by_pk: (db_backups | null)
+    /** fetch data from the table: "direct_conversations" */
+    direct_conversations: direct_conversations[]
+    /** fetch aggregated fields from the table: "direct_conversations" */
+    direct_conversations_aggregate: direct_conversations_aggregate
+    /** fetch data from the table: "direct_conversations" using primary key columns */
+    direct_conversations_by_pk: (direct_conversations | null)
+    /** fetch data from the table: "direct_messages" */
+    direct_messages: direct_messages[]
+    /** fetch aggregated fields from the table: "direct_messages" */
+    direct_messages_aggregate: direct_messages_aggregate
+    /** fetch data from the table: "direct_messages" using primary key columns */
+    direct_messages_by_pk: (direct_messages | null)
     /** fetch data from the table: "draft_game_picks" */
     draft_game_picks: draft_game_picks[]
     /** fetch aggregated fields from the table: "draft_game_picks" */
@@ -25129,6 +25609,14 @@ export interface subscription_root {
     awards_by_pk: (awards | null)
     /** fetch data from the table in a streaming manner: "awards" */
     awards_stream: awards[]
+    /** fetch data from the table: "chat_read_state" */
+    chat_read_state: chat_read_state[]
+    /** fetch aggregated fields from the table: "chat_read_state" */
+    chat_read_state_aggregate: chat_read_state_aggregate
+    /** fetch data from the table: "chat_read_state" using primary key columns */
+    chat_read_state_by_pk: (chat_read_state | null)
+    /** fetch data from the table in a streaming manner: "chat_read_state" */
+    chat_read_state_stream: chat_read_state[]
     /** An array relationship */
     clip_render_jobs: clip_render_jobs[]
     /** An aggregate relationship */
@@ -25153,6 +25641,22 @@ export interface subscription_root {
     db_backups_by_pk: (db_backups | null)
     /** fetch data from the table in a streaming manner: "db_backups" */
     db_backups_stream: db_backups[]
+    /** fetch data from the table: "direct_conversations" */
+    direct_conversations: direct_conversations[]
+    /** fetch aggregated fields from the table: "direct_conversations" */
+    direct_conversations_aggregate: direct_conversations_aggregate
+    /** fetch data from the table: "direct_conversations" using primary key columns */
+    direct_conversations_by_pk: (direct_conversations | null)
+    /** fetch data from the table in a streaming manner: "direct_conversations" */
+    direct_conversations_stream: direct_conversations[]
+    /** fetch data from the table: "direct_messages" */
+    direct_messages: direct_messages[]
+    /** fetch aggregated fields from the table: "direct_messages" */
+    direct_messages_aggregate: direct_messages_aggregate
+    /** fetch data from the table: "direct_messages" using primary key columns */
+    direct_messages_by_pk: (direct_messages | null)
+    /** fetch data from the table in a streaming manner: "direct_messages" */
+    direct_messages_stream: direct_messages[]
     /** fetch data from the table: "draft_game_picks" */
     draft_game_picks: draft_game_picks[]
     /** fetch aggregated fields from the table: "draft_game_picks" */
@@ -38351,6 +38855,186 @@ export interface bigint_comparison_exp {_eq?: (Scalars['bigint'] | null),_gt?: (
 export interface bytea_comparison_exp {_eq?: (Scalars['bytea'] | null),_gt?: (Scalars['bytea'] | null),_gte?: (Scalars['bytea'] | null),_in?: (Scalars['bytea'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['bytea'] | null),_lte?: (Scalars['bytea'] | null),_neq?: (Scalars['bytea'] | null),_nin?: (Scalars['bytea'][] | null)}
 
 
+/** columns and relationships of "chat_read_state" */
+export interface chat_read_stateGenqlSelection{
+    last_read_at?: boolean | number
+    steam_id?: boolean | number
+    thread?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "chat_read_state" */
+export interface chat_read_state_aggregateGenqlSelection{
+    aggregate?: chat_read_state_aggregate_fieldsGenqlSelection
+    nodes?: chat_read_stateGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "chat_read_state" */
+export interface chat_read_state_aggregate_fieldsGenqlSelection{
+    avg?: chat_read_state_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (chat_read_state_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: chat_read_state_max_fieldsGenqlSelection
+    min?: chat_read_state_min_fieldsGenqlSelection
+    stddev?: chat_read_state_stddev_fieldsGenqlSelection
+    stddev_pop?: chat_read_state_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: chat_read_state_stddev_samp_fieldsGenqlSelection
+    sum?: chat_read_state_sum_fieldsGenqlSelection
+    var_pop?: chat_read_state_var_pop_fieldsGenqlSelection
+    var_samp?: chat_read_state_var_samp_fieldsGenqlSelection
+    variance?: chat_read_state_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface chat_read_state_avg_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "chat_read_state". All fields are combined with a logical 'AND'. */
+export interface chat_read_state_bool_exp {_and?: (chat_read_state_bool_exp[] | null),_not?: (chat_read_state_bool_exp | null),_or?: (chat_read_state_bool_exp[] | null),last_read_at?: (timestamptz_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),thread?: (String_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "chat_read_state" */
+export interface chat_read_state_inc_input {steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "chat_read_state" */
+export interface chat_read_state_insert_input {last_read_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null),thread?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface chat_read_state_max_fieldsGenqlSelection{
+    last_read_at?: boolean | number
+    steam_id?: boolean | number
+    thread?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface chat_read_state_min_fieldsGenqlSelection{
+    last_read_at?: boolean | number
+    steam_id?: boolean | number
+    thread?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "chat_read_state" */
+export interface chat_read_state_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: chat_read_stateGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "chat_read_state" */
+export interface chat_read_state_on_conflict {constraint: chat_read_state_constraint,update_columns?: chat_read_state_update_column[],where?: (chat_read_state_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "chat_read_state". */
+export interface chat_read_state_order_by {last_read_at?: (order_by | null),steam_id?: (order_by | null),thread?: (order_by | null)}
+
+
+/** primary key columns input for table: chat_read_state */
+export interface chat_read_state_pk_columns_input {steam_id: Scalars['bigint'],thread: Scalars['String']}
+
+
+/** input type for updating data in table "chat_read_state" */
+export interface chat_read_state_set_input {last_read_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null),thread?: (Scalars['String'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface chat_read_state_stddev_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface chat_read_state_stddev_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface chat_read_state_stddev_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "chat_read_state" */
+export interface chat_read_state_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: chat_read_state_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface chat_read_state_stream_cursor_value_input {last_read_at?: (Scalars['timestamptz'] | null),steam_id?: (Scalars['bigint'] | null),thread?: (Scalars['String'] | null)}
+
+
+/** aggregate sum on columns */
+export interface chat_read_state_sum_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface chat_read_state_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (chat_read_state_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (chat_read_state_set_input | null),
+/** filter the rows which have to be updated */
+where: chat_read_state_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface chat_read_state_var_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface chat_read_state_var_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface chat_read_state_variance_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
 /** columns and relationships of "clip_render_jobs" */
 export interface clip_render_jobsGenqlSelection{
     /** An object relationship */
@@ -39111,6 +39795,395 @@ export interface db_backups_var_samp_fieldsGenqlSelection{
 /** aggregate variance on columns */
 export interface db_backups_variance_fieldsGenqlSelection{
     size?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** columns and relationships of "direct_conversations" */
+export interface direct_conversationsGenqlSelection{
+    is_open?: boolean | number
+    last_message_at?: boolean | number
+    position?: boolean | number
+    room_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "direct_conversations" */
+export interface direct_conversations_aggregateGenqlSelection{
+    aggregate?: direct_conversations_aggregate_fieldsGenqlSelection
+    nodes?: direct_conversationsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "direct_conversations" */
+export interface direct_conversations_aggregate_fieldsGenqlSelection{
+    avg?: direct_conversations_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (direct_conversations_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: direct_conversations_max_fieldsGenqlSelection
+    min?: direct_conversations_min_fieldsGenqlSelection
+    stddev?: direct_conversations_stddev_fieldsGenqlSelection
+    stddev_pop?: direct_conversations_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: direct_conversations_stddev_samp_fieldsGenqlSelection
+    sum?: direct_conversations_sum_fieldsGenqlSelection
+    var_pop?: direct_conversations_var_pop_fieldsGenqlSelection
+    var_samp?: direct_conversations_var_samp_fieldsGenqlSelection
+    variance?: direct_conversations_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface direct_conversations_avg_fieldsGenqlSelection{
+    position?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "direct_conversations". All fields are combined with a logical 'AND'. */
+export interface direct_conversations_bool_exp {_and?: (direct_conversations_bool_exp[] | null),_not?: (direct_conversations_bool_exp | null),_or?: (direct_conversations_bool_exp[] | null),is_open?: (Boolean_comparison_exp | null),last_message_at?: (timestamptz_comparison_exp | null),position?: (Int_comparison_exp | null),room_id?: (String_comparison_exp | null),steam_id?: (bigint_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "direct_conversations" */
+export interface direct_conversations_inc_input {position?: (Scalars['Int'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "direct_conversations" */
+export interface direct_conversations_insert_input {is_open?: (Scalars['Boolean'] | null),last_message_at?: (Scalars['timestamptz'] | null),position?: (Scalars['Int'] | null),room_id?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate max on columns */
+export interface direct_conversations_max_fieldsGenqlSelection{
+    last_message_at?: boolean | number
+    position?: boolean | number
+    room_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface direct_conversations_min_fieldsGenqlSelection{
+    last_message_at?: boolean | number
+    position?: boolean | number
+    room_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "direct_conversations" */
+export interface direct_conversations_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: direct_conversationsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "direct_conversations" */
+export interface direct_conversations_on_conflict {constraint: direct_conversations_constraint,update_columns?: direct_conversations_update_column[],where?: (direct_conversations_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "direct_conversations". */
+export interface direct_conversations_order_by {is_open?: (order_by | null),last_message_at?: (order_by | null),position?: (order_by | null),room_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** primary key columns input for table: direct_conversations */
+export interface direct_conversations_pk_columns_input {room_id: Scalars['String'],steam_id: Scalars['bigint']}
+
+
+/** input type for updating data in table "direct_conversations" */
+export interface direct_conversations_set_input {is_open?: (Scalars['Boolean'] | null),last_message_at?: (Scalars['timestamptz'] | null),position?: (Scalars['Int'] | null),room_id?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface direct_conversations_stddev_fieldsGenqlSelection{
+    position?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface direct_conversations_stddev_pop_fieldsGenqlSelection{
+    position?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface direct_conversations_stddev_samp_fieldsGenqlSelection{
+    position?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "direct_conversations" */
+export interface direct_conversations_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: direct_conversations_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface direct_conversations_stream_cursor_value_input {is_open?: (Scalars['Boolean'] | null),last_message_at?: (Scalars['timestamptz'] | null),position?: (Scalars['Int'] | null),room_id?: (Scalars['String'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate sum on columns */
+export interface direct_conversations_sum_fieldsGenqlSelection{
+    position?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface direct_conversations_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (direct_conversations_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (direct_conversations_set_input | null),
+/** filter the rows which have to be updated */
+where: direct_conversations_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface direct_conversations_var_pop_fieldsGenqlSelection{
+    position?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface direct_conversations_var_samp_fieldsGenqlSelection{
+    position?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface direct_conversations_variance_fieldsGenqlSelection{
+    position?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** columns and relationships of "direct_messages" */
+export interface direct_messagesGenqlSelection{
+    created_at?: boolean | number
+    from_steam_id?: boolean | number
+    id?: boolean | number
+    message?: boolean | number
+    room_id?: boolean | number
+    seq?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "direct_messages" */
+export interface direct_messages_aggregateGenqlSelection{
+    aggregate?: direct_messages_aggregate_fieldsGenqlSelection
+    nodes?: direct_messagesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "direct_messages" */
+export interface direct_messages_aggregate_fieldsGenqlSelection{
+    avg?: direct_messages_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (direct_messages_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: direct_messages_max_fieldsGenqlSelection
+    min?: direct_messages_min_fieldsGenqlSelection
+    stddev?: direct_messages_stddev_fieldsGenqlSelection
+    stddev_pop?: direct_messages_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: direct_messages_stddev_samp_fieldsGenqlSelection
+    sum?: direct_messages_sum_fieldsGenqlSelection
+    var_pop?: direct_messages_var_pop_fieldsGenqlSelection
+    var_samp?: direct_messages_var_samp_fieldsGenqlSelection
+    variance?: direct_messages_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface direct_messages_avg_fieldsGenqlSelection{
+    from_steam_id?: boolean | number
+    seq?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "direct_messages". All fields are combined with a logical 'AND'. */
+export interface direct_messages_bool_exp {_and?: (direct_messages_bool_exp[] | null),_not?: (direct_messages_bool_exp | null),_or?: (direct_messages_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),from_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),message?: (String_comparison_exp | null),room_id?: (String_comparison_exp | null),seq?: (bigint_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "direct_messages" */
+export interface direct_messages_inc_input {from_steam_id?: (Scalars['bigint'] | null),seq?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "direct_messages" */
+export interface direct_messages_insert_input {created_at?: (Scalars['timestamptz'] | null),from_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null),seq?: (Scalars['bigint'] | null)}
+
+
+/** aggregate max on columns */
+export interface direct_messages_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    from_steam_id?: boolean | number
+    id?: boolean | number
+    message?: boolean | number
+    room_id?: boolean | number
+    seq?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface direct_messages_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    from_steam_id?: boolean | number
+    id?: boolean | number
+    message?: boolean | number
+    room_id?: boolean | number
+    seq?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "direct_messages" */
+export interface direct_messages_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: direct_messagesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "direct_messages" */
+export interface direct_messages_on_conflict {constraint: direct_messages_constraint,update_columns?: direct_messages_update_column[],where?: (direct_messages_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "direct_messages". */
+export interface direct_messages_order_by {created_at?: (order_by | null),from_steam_id?: (order_by | null),id?: (order_by | null),message?: (order_by | null),room_id?: (order_by | null),seq?: (order_by | null)}
+
+
+/** primary key columns input for table: direct_messages */
+export interface direct_messages_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "direct_messages" */
+export interface direct_messages_set_input {created_at?: (Scalars['timestamptz'] | null),from_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null),seq?: (Scalars['bigint'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface direct_messages_stddev_fieldsGenqlSelection{
+    from_steam_id?: boolean | number
+    seq?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface direct_messages_stddev_pop_fieldsGenqlSelection{
+    from_steam_id?: boolean | number
+    seq?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface direct_messages_stddev_samp_fieldsGenqlSelection{
+    from_steam_id?: boolean | number
+    seq?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "direct_messages" */
+export interface direct_messages_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: direct_messages_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface direct_messages_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),from_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),message?: (Scalars['String'] | null),room_id?: (Scalars['String'] | null),seq?: (Scalars['bigint'] | null)}
+
+
+/** aggregate sum on columns */
+export interface direct_messages_sum_fieldsGenqlSelection{
+    from_steam_id?: boolean | number
+    seq?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface direct_messages_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (direct_messages_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (direct_messages_set_input | null),
+/** filter the rows which have to be updated */
+where: direct_messages_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface direct_messages_var_pop_fieldsGenqlSelection{
+    from_steam_id?: boolean | number
+    seq?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface direct_messages_var_samp_fieldsGenqlSelection{
+    from_steam_id?: boolean | number
+    seq?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface direct_messages_variance_fieldsGenqlSelection{
+    from_steam_id?: boolean | number
+    seq?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -56722,6 +57795,12 @@ export interface mutation_rootGenqlSelection{
     where: awards_bool_exp} })
     /** delete single row from the table: "awards" */
     delete_awards_by_pk?: (awardsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "chat_read_state" */
+    delete_chat_read_state?: (chat_read_state_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: chat_read_state_bool_exp} })
+    /** delete single row from the table: "chat_read_state" */
+    delete_chat_read_state_by_pk?: (chat_read_stateGenqlSelection & { __args: {steam_id: Scalars['bigint'], thread: Scalars['String']} })
     /** delete data from the table: "clip_render_jobs" */
     delete_clip_render_jobs?: (clip_render_jobs_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -56740,6 +57819,18 @@ export interface mutation_rootGenqlSelection{
     where: db_backups_bool_exp} })
     /** delete single row from the table: "db_backups" */
     delete_db_backups_by_pk?: (db_backupsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "direct_conversations" */
+    delete_direct_conversations?: (direct_conversations_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: direct_conversations_bool_exp} })
+    /** delete single row from the table: "direct_conversations" */
+    delete_direct_conversations_by_pk?: (direct_conversationsGenqlSelection & { __args: {room_id: Scalars['String'], steam_id: Scalars['bigint']} })
+    /** delete data from the table: "direct_messages" */
+    delete_direct_messages?: (direct_messages_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: direct_messages_bool_exp} })
+    /** delete single row from the table: "direct_messages" */
+    delete_direct_messages_by_pk?: (direct_messagesGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "draft_game_picks" */
     delete_draft_game_picks?: (draft_game_picks_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -57700,6 +58791,18 @@ export interface mutation_rootGenqlSelection{
     object: awards_insert_input, 
     /** upsert condition */
     on_conflict?: (awards_on_conflict | null)} })
+    /** insert data into the table: "chat_read_state" */
+    insert_chat_read_state?: (chat_read_state_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: chat_read_state_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (chat_read_state_on_conflict | null)} })
+    /** insert a single row into the table: "chat_read_state" */
+    insert_chat_read_state_one?: (chat_read_stateGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: chat_read_state_insert_input, 
+    /** upsert condition */
+    on_conflict?: (chat_read_state_on_conflict | null)} })
     /** insert data into the table: "clip_render_jobs" */
     insert_clip_render_jobs?: (clip_render_jobs_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -57736,6 +58839,30 @@ export interface mutation_rootGenqlSelection{
     object: db_backups_insert_input, 
     /** upsert condition */
     on_conflict?: (db_backups_on_conflict | null)} })
+    /** insert data into the table: "direct_conversations" */
+    insert_direct_conversations?: (direct_conversations_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: direct_conversations_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (direct_conversations_on_conflict | null)} })
+    /** insert a single row into the table: "direct_conversations" */
+    insert_direct_conversations_one?: (direct_conversationsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: direct_conversations_insert_input, 
+    /** upsert condition */
+    on_conflict?: (direct_conversations_on_conflict | null)} })
+    /** insert data into the table: "direct_messages" */
+    insert_direct_messages?: (direct_messages_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: direct_messages_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (direct_messages_on_conflict | null)} })
+    /** insert a single row into the table: "direct_messages" */
+    insert_direct_messages_one?: (direct_messagesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: direct_messages_insert_input, 
+    /** upsert condition */
+    on_conflict?: (direct_messages_on_conflict | null)} })
     /** insert data into the table: "draft_game_picks" */
     insert_draft_game_picks?: (draft_game_picks_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -59799,6 +60926,24 @@ export interface mutation_rootGenqlSelection{
     update_awards_many?: (awards_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: awards_updates[]} })
+    /** update data of the table: "chat_read_state" */
+    update_chat_read_state?: (chat_read_state_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (chat_read_state_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (chat_read_state_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: chat_read_state_bool_exp} })
+    /** update single row of the table: "chat_read_state" */
+    update_chat_read_state_by_pk?: (chat_read_stateGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (chat_read_state_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (chat_read_state_set_input | null), pk_columns: chat_read_state_pk_columns_input} })
+    /** update multiples rows of table: "chat_read_state" */
+    update_chat_read_state_many?: (chat_read_state_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: chat_read_state_updates[]} })
     /** update data of the table: "clip_render_jobs" */
     update_clip_render_jobs?: (clip_render_jobs_mutation_responseGenqlSelection & { __args: {
     /** append existing jsonb value of filtered columns with new jsonb value */
@@ -59893,6 +61038,42 @@ export interface mutation_rootGenqlSelection{
     update_db_backups_many?: (db_backups_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: db_backups_updates[]} })
+    /** update data of the table: "direct_conversations" */
+    update_direct_conversations?: (direct_conversations_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (direct_conversations_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (direct_conversations_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: direct_conversations_bool_exp} })
+    /** update single row of the table: "direct_conversations" */
+    update_direct_conversations_by_pk?: (direct_conversationsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (direct_conversations_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (direct_conversations_set_input | null), pk_columns: direct_conversations_pk_columns_input} })
+    /** update multiples rows of table: "direct_conversations" */
+    update_direct_conversations_many?: (direct_conversations_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: direct_conversations_updates[]} })
+    /** update data of the table: "direct_messages" */
+    update_direct_messages?: (direct_messages_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (direct_messages_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (direct_messages_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: direct_messages_bool_exp} })
+    /** update single row of the table: "direct_messages" */
+    update_direct_messages_by_pk?: (direct_messagesGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (direct_messages_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (direct_messages_set_input | null), pk_columns: direct_messages_pk_columns_input} })
+    /** update multiples rows of table: "direct_messages" */
+    update_direct_messages_many?: (direct_messages_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: direct_messages_updates[]} })
     /** update data of the table: "draft_game_picks" */
     update_draft_game_picks?: (draft_game_picks_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -63354,6 +64535,9 @@ export interface notificationsGenqlSelection{
     /** JSON select path */
     path?: (Scalars['String'] | null)} } | boolean | number
     created_at?: boolean | number
+    data?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
     deletable?: boolean | number
     deleted_at?: boolean | number
     entity_id?: boolean | number
@@ -63412,7 +64596,7 @@ export interface notifications_aggregate_order_by {avg?: (notifications_avg_orde
 
 
 /** append existing jsonb value of filtered columns with new jsonb value */
-export interface notifications_append_input {actions?: (Scalars['jsonb'] | null)}
+export interface notifications_append_input {actions?: (Scalars['jsonb'] | null),data?: (Scalars['jsonb'] | null)}
 
 
 /** input type for inserting array relation for remote table "notifications" */
@@ -63434,19 +64618,19 @@ export interface notifications_avg_order_by {steam_id?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "notifications". All fields are combined with a logical 'AND'. */
-export interface notifications_bool_exp {_and?: (notifications_bool_exp[] | null),_not?: (notifications_bool_exp | null),_or?: (notifications_bool_exp[] | null),actions?: (jsonb_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),deletable?: (Boolean_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),entity_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),in_app?: (Boolean_comparison_exp | null),is_read?: (Boolean_comparison_exp | null),message?: (String_comparison_exp | null),player?: (players_bool_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),title?: (String_comparison_exp | null),type?: (e_notification_types_enum_comparison_exp | null)}
+export interface notifications_bool_exp {_and?: (notifications_bool_exp[] | null),_not?: (notifications_bool_exp | null),_or?: (notifications_bool_exp[] | null),actions?: (jsonb_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),data?: (jsonb_comparison_exp | null),deletable?: (Boolean_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),entity_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),in_app?: (Boolean_comparison_exp | null),is_read?: (Boolean_comparison_exp | null),message?: (String_comparison_exp | null),player?: (players_bool_exp | null),role?: (e_player_roles_enum_comparison_exp | null),steam_id?: (bigint_comparison_exp | null),title?: (String_comparison_exp | null),type?: (e_notification_types_enum_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
-export interface notifications_delete_at_path_input {actions?: (Scalars['String'][] | null)}
+export interface notifications_delete_at_path_input {actions?: (Scalars['String'][] | null),data?: (Scalars['String'][] | null)}
 
 
 /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
-export interface notifications_delete_elem_input {actions?: (Scalars['Int'] | null)}
+export interface notifications_delete_elem_input {actions?: (Scalars['Int'] | null),data?: (Scalars['Int'] | null)}
 
 
 /** delete key/value pair or string element. key/value pairs are matched based on their key value */
-export interface notifications_delete_key_input {actions?: (Scalars['String'] | null)}
+export interface notifications_delete_key_input {actions?: (Scalars['String'] | null),data?: (Scalars['String'] | null)}
 
 
 /** input type for incrementing numeric columns in table "notifications" */
@@ -63454,7 +64638,7 @@ export interface notifications_inc_input {steam_id?: (Scalars['bigint'] | null)}
 
 
 /** input type for inserting data into table "notifications" */
-export interface notifications_insert_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),deletable?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),in_app?: (Scalars['Boolean'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),player?: (players_obj_rel_insert_input | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
+export interface notifications_insert_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),data?: (Scalars['jsonb'] | null),deletable?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),in_app?: (Scalars['Boolean'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),player?: (players_obj_rel_insert_input | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
 
 
 /** aggregate max on columns */
@@ -63509,7 +64693,7 @@ export interface notifications_on_conflict {constraint: notifications_constraint
 
 
 /** Ordering options when selecting data from "notifications". */
-export interface notifications_order_by {actions?: (order_by | null),created_at?: (order_by | null),deletable?: (order_by | null),deleted_at?: (order_by | null),entity_id?: (order_by | null),id?: (order_by | null),in_app?: (order_by | null),is_read?: (order_by | null),message?: (order_by | null),player?: (players_order_by | null),role?: (order_by | null),steam_id?: (order_by | null),title?: (order_by | null),type?: (order_by | null)}
+export interface notifications_order_by {actions?: (order_by | null),created_at?: (order_by | null),data?: (order_by | null),deletable?: (order_by | null),deleted_at?: (order_by | null),entity_id?: (order_by | null),id?: (order_by | null),in_app?: (order_by | null),is_read?: (order_by | null),message?: (order_by | null),player?: (players_order_by | null),role?: (order_by | null),steam_id?: (order_by | null),title?: (order_by | null),type?: (order_by | null)}
 
 
 /** primary key columns input for table: notifications */
@@ -63517,11 +64701,11 @@ export interface notifications_pk_columns_input {id: Scalars['uuid']}
 
 
 /** prepend existing jsonb value of filtered columns with new jsonb value */
-export interface notifications_prepend_input {actions?: (Scalars['jsonb'] | null)}
+export interface notifications_prepend_input {actions?: (Scalars['jsonb'] | null),data?: (Scalars['jsonb'] | null)}
 
 
 /** input type for updating data in table "notifications" */
-export interface notifications_set_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),deletable?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),in_app?: (Scalars['Boolean'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
+export interface notifications_set_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),data?: (Scalars['jsonb'] | null),deletable?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),in_app?: (Scalars['Boolean'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -63569,7 +64753,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface notifications_stream_cursor_value_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),deletable?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),in_app?: (Scalars['Boolean'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
+export interface notifications_stream_cursor_value_input {actions?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),data?: (Scalars['jsonb'] | null),deletable?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),entity_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),in_app?: (Scalars['Boolean'] | null),is_read?: (Scalars['Boolean'] | null),message?: (Scalars['String'] | null),role?: (e_player_roles_enum | null),steam_id?: (Scalars['bigint'] | null),title?: (Scalars['String'] | null),type?: (e_notification_types_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -74621,6 +75805,32 @@ export interface query_rootGenqlSelection{
     where?: (awards_bool_exp | null)} })
     /** fetch data from the table: "awards" using primary key columns */
     awards_by_pk?: (awardsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "chat_read_state" */
+    chat_read_state?: (chat_read_stateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_read_state_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_read_state_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_read_state_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "chat_read_state" */
+    chat_read_state_aggregate?: (chat_read_state_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_read_state_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_read_state_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_read_state_bool_exp | null)} })
+    /** fetch data from the table: "chat_read_state" using primary key columns */
+    chat_read_state_by_pk?: (chat_read_stateGenqlSelection & { __args: {steam_id: Scalars['bigint'], thread: Scalars['String']} })
     /** An array relationship */
     clip_render_jobs?: (clip_render_jobsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -74700,6 +75910,58 @@ export interface query_rootGenqlSelection{
     where?: (db_backups_bool_exp | null)} })
     /** fetch data from the table: "db_backups" using primary key columns */
     db_backups_by_pk?: (db_backupsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "direct_conversations" */
+    direct_conversations?: (direct_conversationsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (direct_conversations_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (direct_conversations_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (direct_conversations_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "direct_conversations" */
+    direct_conversations_aggregate?: (direct_conversations_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (direct_conversations_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (direct_conversations_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (direct_conversations_bool_exp | null)} })
+    /** fetch data from the table: "direct_conversations" using primary key columns */
+    direct_conversations_by_pk?: (direct_conversationsGenqlSelection & { __args: {room_id: Scalars['String'], steam_id: Scalars['bigint']} })
+    /** fetch data from the table: "direct_messages" */
+    direct_messages?: (direct_messagesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (direct_messages_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (direct_messages_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (direct_messages_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "direct_messages" */
+    direct_messages_aggregate?: (direct_messages_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (direct_messages_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (direct_messages_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (direct_messages_bool_exp | null)} })
+    /** fetch data from the table: "direct_messages" using primary key columns */
+    direct_messages_by_pk?: (direct_messagesGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "draft_game_picks" */
     draft_game_picks?: (draft_game_picksGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -81084,6 +82346,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (awards_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (awards_bool_exp | null)} })
+    /** fetch data from the table: "chat_read_state" */
+    chat_read_state?: (chat_read_stateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_read_state_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_read_state_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_read_state_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "chat_read_state" */
+    chat_read_state_aggregate?: (chat_read_state_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (chat_read_state_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (chat_read_state_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (chat_read_state_bool_exp | null)} })
+    /** fetch data from the table: "chat_read_state" using primary key columns */
+    chat_read_state_by_pk?: (chat_read_stateGenqlSelection & { __args: {steam_id: Scalars['bigint'], thread: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "chat_read_state" */
+    chat_read_state_stream?: (chat_read_stateGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (chat_read_state_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (chat_read_state_bool_exp | null)} })
     /** An array relationship */
     clip_render_jobs?: (clip_render_jobsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -81186,6 +82482,74 @@ export interface subscription_rootGenqlSelection{
     cursor: (db_backups_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (db_backups_bool_exp | null)} })
+    /** fetch data from the table: "direct_conversations" */
+    direct_conversations?: (direct_conversationsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (direct_conversations_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (direct_conversations_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (direct_conversations_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "direct_conversations" */
+    direct_conversations_aggregate?: (direct_conversations_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (direct_conversations_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (direct_conversations_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (direct_conversations_bool_exp | null)} })
+    /** fetch data from the table: "direct_conversations" using primary key columns */
+    direct_conversations_by_pk?: (direct_conversationsGenqlSelection & { __args: {room_id: Scalars['String'], steam_id: Scalars['bigint']} })
+    /** fetch data from the table in a streaming manner: "direct_conversations" */
+    direct_conversations_stream?: (direct_conversationsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (direct_conversations_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (direct_conversations_bool_exp | null)} })
+    /** fetch data from the table: "direct_messages" */
+    direct_messages?: (direct_messagesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (direct_messages_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (direct_messages_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (direct_messages_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "direct_messages" */
+    direct_messages_aggregate?: (direct_messages_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (direct_messages_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (direct_messages_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (direct_messages_bool_exp | null)} })
+    /** fetch data from the table: "direct_messages" using primary key columns */
+    direct_messages_by_pk?: (direct_messagesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "direct_messages" */
+    direct_messages_stream?: (direct_messagesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (direct_messages_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (direct_messages_bool_exp | null)} })
     /** fetch data from the table: "draft_game_picks" */
     draft_game_picks?: (draft_game_picksGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -102499,6 +103863,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const chat_read_state_possibleTypes: string[] = ['chat_read_state']
+    export const ischat_read_state = (obj?: { __typename?: any } | null): obj is chat_read_state => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state"')
+      return chat_read_state_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_read_state_aggregate_possibleTypes: string[] = ['chat_read_state_aggregate']
+    export const ischat_read_state_aggregate = (obj?: { __typename?: any } | null): obj is chat_read_state_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state_aggregate"')
+      return chat_read_state_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_read_state_aggregate_fields_possibleTypes: string[] = ['chat_read_state_aggregate_fields']
+    export const ischat_read_state_aggregate_fields = (obj?: { __typename?: any } | null): obj is chat_read_state_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state_aggregate_fields"')
+      return chat_read_state_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_read_state_avg_fields_possibleTypes: string[] = ['chat_read_state_avg_fields']
+    export const ischat_read_state_avg_fields = (obj?: { __typename?: any } | null): obj is chat_read_state_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state_avg_fields"')
+      return chat_read_state_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_read_state_max_fields_possibleTypes: string[] = ['chat_read_state_max_fields']
+    export const ischat_read_state_max_fields = (obj?: { __typename?: any } | null): obj is chat_read_state_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state_max_fields"')
+      return chat_read_state_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_read_state_min_fields_possibleTypes: string[] = ['chat_read_state_min_fields']
+    export const ischat_read_state_min_fields = (obj?: { __typename?: any } | null): obj is chat_read_state_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state_min_fields"')
+      return chat_read_state_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_read_state_mutation_response_possibleTypes: string[] = ['chat_read_state_mutation_response']
+    export const ischat_read_state_mutation_response = (obj?: { __typename?: any } | null): obj is chat_read_state_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state_mutation_response"')
+      return chat_read_state_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_read_state_stddev_fields_possibleTypes: string[] = ['chat_read_state_stddev_fields']
+    export const ischat_read_state_stddev_fields = (obj?: { __typename?: any } | null): obj is chat_read_state_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state_stddev_fields"')
+      return chat_read_state_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_read_state_stddev_pop_fields_possibleTypes: string[] = ['chat_read_state_stddev_pop_fields']
+    export const ischat_read_state_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is chat_read_state_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state_stddev_pop_fields"')
+      return chat_read_state_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_read_state_stddev_samp_fields_possibleTypes: string[] = ['chat_read_state_stddev_samp_fields']
+    export const ischat_read_state_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is chat_read_state_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state_stddev_samp_fields"')
+      return chat_read_state_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_read_state_sum_fields_possibleTypes: string[] = ['chat_read_state_sum_fields']
+    export const ischat_read_state_sum_fields = (obj?: { __typename?: any } | null): obj is chat_read_state_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state_sum_fields"')
+      return chat_read_state_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_read_state_var_pop_fields_possibleTypes: string[] = ['chat_read_state_var_pop_fields']
+    export const ischat_read_state_var_pop_fields = (obj?: { __typename?: any } | null): obj is chat_read_state_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state_var_pop_fields"')
+      return chat_read_state_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_read_state_var_samp_fields_possibleTypes: string[] = ['chat_read_state_var_samp_fields']
+    export const ischat_read_state_var_samp_fields = (obj?: { __typename?: any } | null): obj is chat_read_state_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state_var_samp_fields"')
+      return chat_read_state_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const chat_read_state_variance_fields_possibleTypes: string[] = ['chat_read_state_variance_fields']
+    export const ischat_read_state_variance_fields = (obj?: { __typename?: any } | null): obj is chat_read_state_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ischat_read_state_variance_fields"')
+      return chat_read_state_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const clip_render_jobs_possibleTypes: string[] = ['clip_render_jobs']
     export const isclip_render_jobs = (obj?: { __typename?: any } | null): obj is clip_render_jobs => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isclip_render_jobs"')
@@ -102831,6 +104307,230 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isdb_backups_variance_fields = (obj?: { __typename?: any } | null): obj is db_backups_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isdb_backups_variance_fields"')
       return db_backups_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_conversations_possibleTypes: string[] = ['direct_conversations']
+    export const isdirect_conversations = (obj?: { __typename?: any } | null): obj is direct_conversations => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_conversations"')
+      return direct_conversations_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_conversations_aggregate_possibleTypes: string[] = ['direct_conversations_aggregate']
+    export const isdirect_conversations_aggregate = (obj?: { __typename?: any } | null): obj is direct_conversations_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_conversations_aggregate"')
+      return direct_conversations_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_conversations_aggregate_fields_possibleTypes: string[] = ['direct_conversations_aggregate_fields']
+    export const isdirect_conversations_aggregate_fields = (obj?: { __typename?: any } | null): obj is direct_conversations_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_conversations_aggregate_fields"')
+      return direct_conversations_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_conversations_avg_fields_possibleTypes: string[] = ['direct_conversations_avg_fields']
+    export const isdirect_conversations_avg_fields = (obj?: { __typename?: any } | null): obj is direct_conversations_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_conversations_avg_fields"')
+      return direct_conversations_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_conversations_max_fields_possibleTypes: string[] = ['direct_conversations_max_fields']
+    export const isdirect_conversations_max_fields = (obj?: { __typename?: any } | null): obj is direct_conversations_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_conversations_max_fields"')
+      return direct_conversations_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_conversations_min_fields_possibleTypes: string[] = ['direct_conversations_min_fields']
+    export const isdirect_conversations_min_fields = (obj?: { __typename?: any } | null): obj is direct_conversations_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_conversations_min_fields"')
+      return direct_conversations_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_conversations_mutation_response_possibleTypes: string[] = ['direct_conversations_mutation_response']
+    export const isdirect_conversations_mutation_response = (obj?: { __typename?: any } | null): obj is direct_conversations_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_conversations_mutation_response"')
+      return direct_conversations_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_conversations_stddev_fields_possibleTypes: string[] = ['direct_conversations_stddev_fields']
+    export const isdirect_conversations_stddev_fields = (obj?: { __typename?: any } | null): obj is direct_conversations_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_conversations_stddev_fields"')
+      return direct_conversations_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_conversations_stddev_pop_fields_possibleTypes: string[] = ['direct_conversations_stddev_pop_fields']
+    export const isdirect_conversations_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is direct_conversations_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_conversations_stddev_pop_fields"')
+      return direct_conversations_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_conversations_stddev_samp_fields_possibleTypes: string[] = ['direct_conversations_stddev_samp_fields']
+    export const isdirect_conversations_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is direct_conversations_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_conversations_stddev_samp_fields"')
+      return direct_conversations_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_conversations_sum_fields_possibleTypes: string[] = ['direct_conversations_sum_fields']
+    export const isdirect_conversations_sum_fields = (obj?: { __typename?: any } | null): obj is direct_conversations_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_conversations_sum_fields"')
+      return direct_conversations_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_conversations_var_pop_fields_possibleTypes: string[] = ['direct_conversations_var_pop_fields']
+    export const isdirect_conversations_var_pop_fields = (obj?: { __typename?: any } | null): obj is direct_conversations_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_conversations_var_pop_fields"')
+      return direct_conversations_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_conversations_var_samp_fields_possibleTypes: string[] = ['direct_conversations_var_samp_fields']
+    export const isdirect_conversations_var_samp_fields = (obj?: { __typename?: any } | null): obj is direct_conversations_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_conversations_var_samp_fields"')
+      return direct_conversations_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_conversations_variance_fields_possibleTypes: string[] = ['direct_conversations_variance_fields']
+    export const isdirect_conversations_variance_fields = (obj?: { __typename?: any } | null): obj is direct_conversations_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_conversations_variance_fields"')
+      return direct_conversations_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_messages_possibleTypes: string[] = ['direct_messages']
+    export const isdirect_messages = (obj?: { __typename?: any } | null): obj is direct_messages => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_messages"')
+      return direct_messages_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_messages_aggregate_possibleTypes: string[] = ['direct_messages_aggregate']
+    export const isdirect_messages_aggregate = (obj?: { __typename?: any } | null): obj is direct_messages_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_messages_aggregate"')
+      return direct_messages_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_messages_aggregate_fields_possibleTypes: string[] = ['direct_messages_aggregate_fields']
+    export const isdirect_messages_aggregate_fields = (obj?: { __typename?: any } | null): obj is direct_messages_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_messages_aggregate_fields"')
+      return direct_messages_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_messages_avg_fields_possibleTypes: string[] = ['direct_messages_avg_fields']
+    export const isdirect_messages_avg_fields = (obj?: { __typename?: any } | null): obj is direct_messages_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_messages_avg_fields"')
+      return direct_messages_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_messages_max_fields_possibleTypes: string[] = ['direct_messages_max_fields']
+    export const isdirect_messages_max_fields = (obj?: { __typename?: any } | null): obj is direct_messages_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_messages_max_fields"')
+      return direct_messages_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_messages_min_fields_possibleTypes: string[] = ['direct_messages_min_fields']
+    export const isdirect_messages_min_fields = (obj?: { __typename?: any } | null): obj is direct_messages_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_messages_min_fields"')
+      return direct_messages_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_messages_mutation_response_possibleTypes: string[] = ['direct_messages_mutation_response']
+    export const isdirect_messages_mutation_response = (obj?: { __typename?: any } | null): obj is direct_messages_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_messages_mutation_response"')
+      return direct_messages_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_messages_stddev_fields_possibleTypes: string[] = ['direct_messages_stddev_fields']
+    export const isdirect_messages_stddev_fields = (obj?: { __typename?: any } | null): obj is direct_messages_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_messages_stddev_fields"')
+      return direct_messages_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_messages_stddev_pop_fields_possibleTypes: string[] = ['direct_messages_stddev_pop_fields']
+    export const isdirect_messages_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is direct_messages_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_messages_stddev_pop_fields"')
+      return direct_messages_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_messages_stddev_samp_fields_possibleTypes: string[] = ['direct_messages_stddev_samp_fields']
+    export const isdirect_messages_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is direct_messages_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_messages_stddev_samp_fields"')
+      return direct_messages_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_messages_sum_fields_possibleTypes: string[] = ['direct_messages_sum_fields']
+    export const isdirect_messages_sum_fields = (obj?: { __typename?: any } | null): obj is direct_messages_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_messages_sum_fields"')
+      return direct_messages_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_messages_var_pop_fields_possibleTypes: string[] = ['direct_messages_var_pop_fields']
+    export const isdirect_messages_var_pop_fields = (obj?: { __typename?: any } | null): obj is direct_messages_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_messages_var_pop_fields"')
+      return direct_messages_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_messages_var_samp_fields_possibleTypes: string[] = ['direct_messages_var_samp_fields']
+    export const isdirect_messages_var_samp_fields = (obj?: { __typename?: any } | null): obj is direct_messages_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_messages_var_samp_fields"')
+      return direct_messages_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const direct_messages_variance_fields_possibleTypes: string[] = ['direct_messages_variance_fields']
+    export const isdirect_messages_variance_fields = (obj?: { __typename?: any } | null): obj is direct_messages_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isdirect_messages_variance_fields"')
+      return direct_messages_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -119306,6 +121006,22 @@ export const enumAwardsUpdateColumn = {
    updated_at: 'updated_at' as const
 }
 
+export const enumChatReadStateConstraint = {
+   chat_read_state_pkey: 'chat_read_state_pkey' as const
+}
+
+export const enumChatReadStateSelectColumn = {
+   last_read_at: 'last_read_at' as const,
+   steam_id: 'steam_id' as const,
+   thread: 'thread' as const
+}
+
+export const enumChatReadStateUpdateColumn = {
+   last_read_at: 'last_read_at' as const,
+   steam_id: 'steam_id' as const,
+   thread: 'thread' as const
+}
+
 export const enumClipRenderJobsConstraint = {
    clip_render_jobs_pkey: 'clip_render_jobs_pkey' as const
 }
@@ -119425,6 +121141,48 @@ export const enumDbBackupsUpdateColumn = {
    id: 'id' as const,
    name: 'name' as const,
    size: 'size' as const
+}
+
+export const enumDirectConversationsConstraint = {
+   direct_conversations_pkey: 'direct_conversations_pkey' as const
+}
+
+export const enumDirectConversationsSelectColumn = {
+   is_open: 'is_open' as const,
+   last_message_at: 'last_message_at' as const,
+   position: 'position' as const,
+   room_id: 'room_id' as const,
+   steam_id: 'steam_id' as const
+}
+
+export const enumDirectConversationsUpdateColumn = {
+   is_open: 'is_open' as const,
+   last_message_at: 'last_message_at' as const,
+   position: 'position' as const,
+   room_id: 'room_id' as const,
+   steam_id: 'steam_id' as const
+}
+
+export const enumDirectMessagesConstraint = {
+   direct_messages_pkey: 'direct_messages_pkey' as const
+}
+
+export const enumDirectMessagesSelectColumn = {
+   created_at: 'created_at' as const,
+   from_steam_id: 'from_steam_id' as const,
+   id: 'id' as const,
+   message: 'message' as const,
+   room_id: 'room_id' as const,
+   seq: 'seq' as const
+}
+
+export const enumDirectMessagesUpdateColumn = {
+   created_at: 'created_at' as const,
+   from_steam_id: 'from_steam_id' as const,
+   id: 'id' as const,
+   message: 'message' as const,
+   room_id: 'room_id' as const,
+   seq: 'seq' as const
 }
 
 export const enumDraftGamePicksConstraint = {
@@ -120152,6 +121910,7 @@ export const enumENotificationTypesEnum = {
    LeagueRegistrationDecision: 'LeagueRegistrationDecision' as const,
    LeagueRosterUndersized: 'LeagueRosterUndersized' as const,
    MatchAbandoned: 'MatchAbandoned' as const,
+   MatchChatMessage: 'MatchChatMessage' as const,
    MatchImported: 'MatchImported' as const,
    MatchStatsReady: 'MatchStatsReady' as const,
    MatchStatusChange: 'MatchStatusChange' as const,
@@ -122010,6 +123769,7 @@ export const enumNotificationsConstraint = {
 export const enumNotificationsSelectColumn = {
    actions: 'actions' as const,
    created_at: 'created_at' as const,
+   data: 'data' as const,
    deletable: 'deletable' as const,
    deleted_at: 'deleted_at' as const,
    entity_id: 'entity_id' as const,
@@ -122038,6 +123798,7 @@ export const enumNotificationsSelectColumnNotificationsAggregateBoolExpBoolOrArg
 export const enumNotificationsUpdateColumn = {
    actions: 'actions' as const,
    created_at: 'created_at' as const,
+   data: 'data' as const,
    deletable: 'deletable' as const,
    deleted_at: 'deleted_at' as const,
    entity_id: 'entity_id' as const,

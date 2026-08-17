@@ -9,7 +9,11 @@ describe("VoiceService", () => {
   const PEER = "76561198000000002";
 
   let postgres: { query: jest.Mock };
-  let mediaMtx: { proxySdp: jest.Mock; kickSessions: jest.Mock; listPaths: jest.Mock };
+  let mediaMtx: {
+    proxySdp: jest.Mock;
+    kickSessions: jest.Mock;
+    listPaths: jest.Mock;
+  };
   let redis: {
     get: jest.Mock;
     set: jest.Mock;
@@ -177,6 +181,8 @@ describe("VoiceService", () => {
         speaking: false,
         coach: false,
         video: false,
+        micRemote: false,
+        camRemote: false,
       },
       {
         steamId: PEER,
@@ -186,8 +192,58 @@ describe("VoiceService", () => {
         speaking: false,
         coach: false,
         video: false,
+        micRemote: false,
+        camRemote: false,
       },
     ]);
+  });
+
+  // Which device is carrying the call. The panel cannot work this out for
+  // itself: MediaMTX kicks the publisher it displaces without telling it, so a
+  // PC whose microphone has been taken over by a phone sits in "connected" until
+  // ICE consent freshness gives up. The flag is set by whoever published last.
+  it("reports the microphone as remote once a phone has published it", async () => {
+    postgres.query
+      .mockResolvedValueOnce(enabled(true))
+      .mockResolvedValueOnce([{ status: "Accepted" }])
+      .mockResolvedValueOnce([
+        { steam_id: ME.steam_id, name: "me", avatar_url: null },
+      ]);
+    mediaMtx.listPaths.mockResolvedValue(
+      new Map([
+        [
+          `voice-${LOBBY_ID}-${ME.steam_id}`,
+          { ready: true, bytesReceived: 10 },
+        ],
+      ]),
+    );
+    // One read for all three flags: speaking, then remote mic, then remote cam.
+    redis.mget.mockResolvedValueOnce([null, "1", null]);
+
+    const [me] = await service.participants(LOBBY_ID, ME);
+
+    expect(me.micRemote).toBe(true);
+    expect(me.camRemote).toBe(false);
+  });
+
+  // A phone that closed without saying so leaves the key behind. Reporting it
+  // would have the panel insisting the microphone is somewhere it is not, and
+  // refusing to let the PC take it back.
+  it("ignores a stale remote flag once the path stops publishing", async () => {
+    postgres.query
+      .mockResolvedValueOnce(enabled(true))
+      .mockResolvedValueOnce([{ status: "Accepted" }])
+      .mockResolvedValueOnce([
+        { steam_id: ME.steam_id, name: "me", avatar_url: null },
+      ]);
+    mediaMtx.listPaths.mockResolvedValue(new Map());
+    redis.mget.mockResolvedValueOnce([null, "1", "1"]);
+
+    const [me] = await service.participants(LOBBY_ID, ME);
+
+    expect(me.connected).toBe(false);
+    expect(me.micRemote).toBe(false);
+    expect(me.camRemote).toBe(false);
   });
 
   // The distinction the old flag got wrong: MediaMTX only knows a mic is
@@ -196,11 +252,13 @@ describe("VoiceService", () => {
     postgres.query
       .mockResolvedValueOnce(enabled(true))
       .mockResolvedValueOnce([{ status: "Accepted" }])
-      .mockResolvedValueOnce([{ steam_id: PEER, name: "peer", avatar_url: null }]);
+      .mockResolvedValueOnce([
+        { steam_id: PEER, name: "peer", avatar_url: null },
+      ]);
     mediaMtx.listPaths.mockResolvedValue(
       new Map([[`voice-${LOBBY_ID}-${PEER}`, { ready: true }]]),
     );
-    redis.mget.mockResolvedValue(["1"]);
+    redis.mget.mockResolvedValue(["1", null, null]);
 
     const [participant] = await service.participants(LOBBY_ID, ME);
 
@@ -213,9 +271,11 @@ describe("VoiceService", () => {
     postgres.query
       .mockResolvedValueOnce(enabled(true))
       .mockResolvedValueOnce([{ status: "Accepted" }])
-      .mockResolvedValueOnce([{ steam_id: PEER, name: "peer", avatar_url: null }]);
+      .mockResolvedValueOnce([
+        { steam_id: PEER, name: "peer", avatar_url: null },
+      ]);
     mediaMtx.listPaths.mockResolvedValue(new Map());
-    redis.mget.mockResolvedValue(["1"]);
+    redis.mget.mockResolvedValue(["1", null, null]);
 
     const [participant] = await service.participants(LOBBY_ID, ME);
 
@@ -495,9 +555,7 @@ describe("VoiceService", () => {
     // with the publishing snapshot (or the other way round).
     const snapshot = (value: string | null) =>
       redis.get.mockImplementation((key: string) =>
-        Promise.resolve(
-          key === `voice:publishing:${LOBBY_ID}` ? value : null,
-        ),
+        Promise.resolve(key === `voice:publishing:${LOBBY_ID}` ? value : null),
       );
 
     const pushed = () =>
@@ -576,10 +634,7 @@ describe("VoiceService", () => {
         new Map([
           [path(ME.steam_id), { ready: true, bytesReceived: 1 }],
           [path(PEER), { ready: true, bytesReceived: 1 }],
-          [
-            `voicecam-${LOBBY_ID}-${PEER}`,
-            { ready: true, bytesReceived: 1 },
-          ],
+          [`voicecam-${LOBBY_ID}-${PEER}`, { ready: true, bytesReceived: 1 }],
         ]),
       );
 
@@ -716,9 +771,9 @@ describe("VoiceService", () => {
     it("publishes a camera to its own path, not the microphone's", async () => {
       videoAccepted();
 
-      await expect(
-        service.publishVideo(LOBBY_ID, ME, "offer"),
-      ).resolves.toBe("answer-sdp");
+      await expect(service.publishVideo(LOBBY_ID, ME, "offer")).resolves.toBe(
+        "answer-sdp",
+      );
       expect(mediaMtx.proxySdp).toHaveBeenCalledWith(
         `voicecam-${LOBBY_ID}-${ME.steam_id}`,
         "whip",
@@ -764,18 +819,18 @@ describe("VoiceService", () => {
         .mockResolvedValueOnce([{ status: "Accepted" }])
         .mockResolvedValueOnce([{ value: "false" }]);
 
-      await expect(
-        service.publishVideo(LOBBY_ID, ME, "offer"),
-      ).rejects.toThrow(/not enabled/i);
+      await expect(service.publishVideo(LOBBY_ID, ME, "offer")).rejects.toThrow(
+        /not enabled/i,
+      );
       expect(mediaMtx.proxySdp).not.toHaveBeenCalled();
     });
 
     it("refuses video while voice itself is off", async () => {
       postgres.query.mockResolvedValue(enabled(false));
 
-      await expect(
-        service.publishVideo(LOBBY_ID, ME, "offer"),
-      ).rejects.toThrow(/not enabled/i);
+      await expect(service.publishVideo(LOBBY_ID, ME, "offer")).rejects.toThrow(
+        /not enabled/i,
+      );
     });
 
     // A camera that outlived its microphone would keep playing for everyone
@@ -965,7 +1020,6 @@ describe("VoiceService", () => {
       expect(mine.credential).not.toBe(theirs.credential);
     });
   });
-
 
   // The tab bridge only reaches tabs of one browser profile. A second window
   // under another profile, another browser, or a phone has to be able to find

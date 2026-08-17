@@ -1,7 +1,10 @@
 import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
 import * as webPush from "web-push";
 import Redis from "ioredis";
+import { NotificationsQueues } from "../enums/NotificationsQueues";
 import { PostgresService } from "../../postgres/postgres.service";
 import { RedisManagerService } from "../../redis/redis-manager/redis-manager.service";
 import { AppConfig } from "src/configs/types/AppConfig";
@@ -12,6 +15,13 @@ import { pushCategoryForType } from "../preferences/notification-categories";
 import { stripHtml } from "../utilities/stripHtml";
 import { notificationUrl } from "../utilities/notificationUrl";
 import { isAllowedPushEndpoint } from "./push-endpoint";
+import {
+  DEFAULT_DELIVERY_POLICY,
+  DeliveryPolicy,
+  deliveryPolicyForType,
+  presenceFocusKey,
+  threadKeyFor,
+} from "./notification-delivery";
 
 export type PushSubscriptionPayload = {
   endpoint: string;
@@ -21,6 +31,13 @@ export type PushSubscriptionPayload = {
   };
 };
 
+export type NotificationData = {
+  threadKey?: string;
+  threadLabel?: string;
+  icon?: string;
+  senderSteamId?: string;
+};
+
 export type NotificationRow = {
   id: string;
   type: string;
@@ -28,6 +45,7 @@ export type NotificationRow = {
   title: string;
   message: string;
   entity_id?: string | null;
+  data?: NotificationData | null;
 };
 
 type SubscriptionRow = {
@@ -36,6 +54,36 @@ type SubscriptionRow = {
   p256dh: string;
   auth: string;
 };
+
+// One (notification, recipient, device) triple. The row fields repeat per
+// device, which costs a few duplicated strings and saves a second query.
+type DeliveryRow = NotificationRow & {
+  steam_id: string;
+  quiet_seconds: number;
+  subscription_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+};
+
+// Everything owed to one player on one thread, once preferences, quiet hours
+// and the seen check have had their say.
+type Delivery = {
+  steamId: string;
+  notifications: NotificationRow[];
+  subscriptions: SubscriptionRow[];
+  // Seconds until this recipient's quiet window closes, 0 when they are not in
+  // one. Held rather than dropped, so a night of messages arrives as one
+  // summary in the morning instead of as nothing at all.
+  quietSeconds: number;
+};
+
+// Which rows to consider. `ids` is the exact set a writer just inserted;
+// `window` re-derives them from (type, entity_id) for a fan-out too large to
+// carry a payload for.
+type DeliverySelector =
+  | { ids: string[] }
+  | { type: string; entityId: string; withinMinutes: number };
 
 export type SubscriptionStats = {
   subscriptions: number;
@@ -78,6 +126,24 @@ const fanOutClaimKey = (id: string) => `notifications:fan-out:${id}`;
 // including its retry_conf (3 retries, 10s apart, 60s timeout each).
 const FAN_OUT_CLAIM_TTL_SECONDS = 900;
 
+// The open bundling window for one player on one thread. Its presence is what
+// says "this player has already been buzzed about this recently"; its value is
+// the token that scopes the trailing job's id to this window and no other.
+const windowKey = (steamId: string, thread: string) =>
+  `notifications:push-window:${steamId}:${thread}`;
+
+// What arrived while that window was open and still owes a summary.
+const pendingKey = (steamId: string, thread: string) =>
+  `notifications:push-pending:${steamId}:${thread}`;
+
+// Outlives its window by a wide margin, so a worker that is briefly behind
+// still finds its payload. Nothing depends on the exact figure -- the window
+// key is what governs correctness -- but it has to scale with the window: a
+// quiet-hours hold runs for hours, and a fixed fifteen minutes would throw the
+// night away before anyone woke up.
+const pendingTtlFor = (windowSeconds: number) =>
+  Math.max(900, windowSeconds + 300);
+
 @Injectable()
 export class PushNotificationsService {
   private readonly appConfig: AppConfig;
@@ -90,6 +156,8 @@ export class PushNotificationsService {
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
     private readonly configService: ConfigService,
+    @InjectQueue(NotificationsQueues.PushDelivery)
+    private readonly pushDeliveryQueue: Queue,
     redisManager: RedisManagerService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
@@ -362,11 +430,11 @@ export class PushNotificationsService {
     );
   }
 
-  // Resolves recipients, role visibility and push preferences in one indexed
-  // statement. Note it joins back to `notifications` by id rather than reading
-  // steam_id from the event payload: Hasura builds that payload with
-  // row_to_json, and JSON.parse rounds anything past 2^53 -- which every steam
-  // id is, by about eight times.
+  // A single row, straight off the INSERT event trigger.
+  //
+  // Note the re-read by id rather than trusting the event payload: Hasura
+  // builds that payload with row_to_json, and JSON.parse rounds anything past
+  // 2^53 -- which every steam id is, by about eight times.
   public async sendForNotification(
     notification: Pick<NotificationRow, "id" | "type">,
   ): Promise<void> {
@@ -375,9 +443,7 @@ export class PushNotificationsService {
     }
 
     const [row] = await this.postgres.query<NotificationRow[]>(
-      `SELECT id::text AS id, type::text AS type, role::text AS role,
-              title, message, entity_id
-         FROM public.notifications
+      `${PushNotificationsService.SELECT_NOTIFICATION}
         WHERE id = $1::uuid`,
       [notification.id],
     );
@@ -386,40 +452,7 @@ export class PushNotificationsService {
       return;
     }
 
-    const category = pushCategoryForType(row.type);
-
-    if (!category) {
-      // Fail open: a type nobody has categorised yet still gets delivered.
-      // notification-categories.spec.ts is what stops this happening.
-      this.logger.warn(`no push category for notification type ${row.type}`);
-    }
-
-    const subscriptions = await this.postgres.query<SubscriptionRow[]>(
-      `SELECT ps.id::text AS id, ps.endpoint, ps.p256dh, ps.auth
-         FROM public.notifications n
-         JOIN public.players p
-           ON (n.steam_id IS NOT NULL AND p.steam_id = n.steam_id)
-           OR (n.steam_id IS NULL AND p.role::text = ANY($2::text[]))
-         JOIN public.push_subscriptions ps ON ps.steam_id = p.steam_id
-    LEFT JOIN public.notification_preferences np
-           ON np.steam_id = p.steam_id
-          AND np.channel = 'push'
-          AND np.key = $3
-        WHERE n.id = $1::uuid
-          AND COALESCE(np.enabled, $4::boolean) = true
-          -- Push only. The bell row is already written either way, so a quiet
-          -- window silences the buzz without losing the notification.
-          AND NOT public.is_quiet_hours(
-                p.quiet_hours_start, p.quiet_hours_end, p.notification_timezone)`,
-      [
-        row.id,
-        RECIPIENT_ROLES[row.role] ?? [],
-        category?.key ?? "",
-        category?.defaultEnabled ?? true,
-      ],
-    );
-
-    await this.deliver(subscriptions, row);
+    await this.send({ ids: [row.id] }, row);
   }
 
   // The counterpart for a fan-out whose recipients are known: one pass over the
@@ -431,39 +464,13 @@ export class PushNotificationsService {
       return;
     }
 
-    const [row] = await this.postgres.query<NotificationRow[]>(
-      `SELECT id::text AS id, type::text AS type, role::text AS role,
-              title, message, entity_id
-         FROM public.notifications
-        WHERE id = ANY($1::uuid[])
-        ORDER BY created_at DESC
-        LIMIT 1`,
-      [ids],
-    );
+    const row = await this.newestOf({ ids });
 
     if (!row) {
       return;
     }
 
-    const category = pushCategoryForType(row.type);
-
-    const subscriptions = await this.postgres.query<SubscriptionRow[]>(
-      `SELECT DISTINCT ps.id::text AS id, ps.endpoint, ps.p256dh, ps.auth
-         FROM public.notifications n
-         JOIN public.players p ON p.steam_id = n.steam_id
-         JOIN public.push_subscriptions ps ON ps.steam_id = n.steam_id
-    LEFT JOIN public.notification_preferences np
-           ON np.steam_id = n.steam_id
-          AND np.channel = 'push'
-          AND np.key = $2
-        WHERE n.id = ANY($1::uuid[])
-          AND COALESCE(np.enabled, $3::boolean) = true
-          AND NOT public.is_quiet_hours(
-                p.quiet_hours_start, p.quiet_hours_end, p.notification_timezone)`,
-      [ids, category?.key ?? "", category?.defaultEnabled ?? true],
-    );
-
-    await this.deliver(subscriptions, row);
+    await this.send({ ids }, row);
   }
 
   // The batched counterpart: one job per (type, entity_id) resolves every row
@@ -473,58 +480,547 @@ export class PushNotificationsService {
       return;
     }
 
-    const [row] = await this.postgres.query<NotificationRow[]>(
-      `SELECT id::text AS id, type::text AS type, role::text AS role,
-              title, message, entity_id
-         FROM public.notifications
-        WHERE type = $1 AND entity_id = $2
-        ORDER BY created_at DESC
-        LIMIT 1`,
-      [type, entityId],
-    );
+    const selector = { type, entityId, withinMinutes: 15 };
+    const row = await this.newestOf(selector);
 
     if (!row) {
       return;
     }
 
-    const category = pushCategoryForType(type);
+    await this.send(selector, row);
+  }
 
-    const subscriptions = await this.postgres.query<SubscriptionRow[]>(
-      `SELECT DISTINCT ps.id::text AS id, ps.endpoint, ps.p256dh, ps.auth
+  // The trailing edge of a bundling window: everything that arrived while one
+  // player was already being buzzed about this thread, collapsed into the one
+  // replacement notification the device shows in place of the first.
+  public async sendPending(steamId: string, thread: string): Promise<void> {
+    // Released before anything else can fail. A window left standing over a
+    // thread nobody is being told about would swallow the next burst's leading
+    // push too, and go on doing it until it expired.
+    const released = this.redis.del(windowKey(steamId, thread));
+
+    const drained = await this.redis
+      .multi()
+      .lrange(pendingKey(steamId, thread), 0, -1)
+      .del(pendingKey(steamId, thread))
+      .exec();
+
+    await released;
+
+    const ids = [...new Set((drained?.at(0)?.at(1) as string[]) ?? [])];
+
+    if (!this.configured || ids.length === 0) {
+      return;
+    }
+
+    const newest = await this.newestOf({ ids });
+
+    if (!newest) {
+      return;
+    }
+
+    const policy = deliveryPolicyForType(newest.type) ?? DEFAULT_DELIVERY_POLICY;
+
+    // Re-resolved rather than replayed: the whole point of holding these was
+    // that the player might read them in the meantime, and between the window
+    // opening and now is exactly when that happens.
+    const deliveries = (
+      await this.resolveDeliveries({ ids }, policy, newest)
+    ).filter((delivery) => delivery.steamId === steamId);
+
+    if (deliveries.length === 0) {
+      return;
+    }
+
+    const focused = await this.filterFocusedOn([steamId], thread);
+
+    if (focused.has(steamId)) {
+      return;
+    }
+
+    for (const delivery of deliveries) {
+      // Asleep by the time the window closed. A bundling window opened a few
+      // seconds before quiet hours began closes inside them, and delivering on
+      // that is exactly the buzz the hold exists to prevent -- so it is held
+      // again, now against the rest of the night.
+      if (delivery.quietSeconds > 0) {
+        const claim = await this.claimWindow(
+          steamId,
+          thread,
+          delivery.quietSeconds,
+        );
+
+        if (claim.leading) {
+          await this.resetPending(steamId, thread, ids, claim.ttl);
+        } else {
+          await this.appendPending(steamId, thread, ids, claim.ttl);
+        }
+
+        await this.scheduleTrailing(steamId, thread, claim.token, claim.ttl);
+        continue;
+      }
+
+      // Counted from the window rather than from the rows that survived it.
+      //
+      // collapseOlderUnread soft-deletes every superseded ChatMessage row so
+      // the bell shows one entry per conversation, and requireUnseen drops
+      // soft-deleted rows -- so resolving a burst of four finds one survivor.
+      // The window is what actually knows how many arrived; the surviving rows
+      // are only there to say whether it is still worth sending at all, and to
+      // supply the text.
+      await this.deliver(
+        delivery.subscriptions,
+        delivery.notifications,
+        ids.length,
+      );
+    }
+  }
+
+  private static readonly SELECT_NOTIFICATION = `SELECT id::text AS id, type::text AS type, role::text AS role,
+              title, message, entity_id, data
+         FROM public.notifications`;
+
+  // The row a bundle is described by: its thread, its policy, and the link the
+  // notification opens.
+  private async newestOf(
+    selector: DeliverySelector,
+  ): Promise<NotificationRow | undefined> {
+    const [row] =
+      "ids" in selector
+        ? await this.postgres.query<NotificationRow[]>(
+            `${PushNotificationsService.SELECT_NOTIFICATION}
+              WHERE id = ANY($1::uuid[])
+              ORDER BY created_at DESC
+              LIMIT 1`,
+            [selector.ids],
+          )
+        : await this.postgres.query<NotificationRow[]>(
+            `${PushNotificationsService.SELECT_NOTIFICATION}
+              WHERE type = $1 AND entity_id = $2
+              ORDER BY created_at DESC
+              LIMIT 1`,
+            [selector.type, selector.entityId],
+          );
+
+    return row;
+  }
+
+  private async send(
+    selector: DeliverySelector,
+    representative: NotificationRow,
+  ): Promise<void> {
+    const policy =
+      deliveryPolicyForType(representative.type) ?? DEFAULT_DELIVERY_POLICY;
+
+    await this.dispatch(
+      await this.resolveDeliveries(selector, policy, representative),
+      policy,
+    );
+  }
+
+  // Recipients, role visibility, push preference, quiet hours and the seen
+  // check, in one indexed statement, grouped by the player they are owed to.
+  //
+  // Grouping matters: bundling is per player, not per notification. A chat
+  // message writes one row per member of the lobby, and each of those members
+  // is on their own window.
+  private async resolveDeliveries(
+    selector: DeliverySelector,
+    policy: DeliveryPolicy,
+    representative: NotificationRow,
+  ): Promise<Delivery[]> {
+    const [selectorSql, selectorParams]: [string, Array<string | number | string[]>] =
+      "ids" in selector
+        ? [`n.id = ANY($1::uuid[])`, [selector.ids]]
+        : [
+            `n.type = $1
+              AND n.entity_id = $2
+              AND n.created_at > now() - make_interval(mins => $3::int)`,
+            [selector.type, selector.entityId, selector.withinMinutes],
+          ];
+
+    const category = pushCategoryForType(representative.type);
+
+    if (!category) {
+      // Fail open: a type nobody has categorised yet still gets delivered.
+      // notification-categories.spec.ts is what stops this happening.
+      this.logger.warn(
+        `no push category for notification type ${representative.type}`,
+      );
+    }
+
+    const next = selectorParams.length;
+
+    const rows = await this.postgres.query<DeliveryRow[]>(
+      `SELECT n.id::text AS id, n.type::text AS type, n.role::text AS role,
+              n.title, n.message, n.entity_id, n.data,
+              p.steam_id::text AS steam_id,
+              public.quiet_hours_seconds_remaining(
+                p.quiet_hours_start, p.quiet_hours_end, p.notification_timezone
+              ) AS quiet_seconds,
+              ps.id::text AS subscription_id, ps.endpoint, ps.p256dh, ps.auth
          FROM public.notifications n
-         JOIN public.push_subscriptions ps ON ps.steam_id = n.steam_id
-         JOIN public.players p ON p.steam_id = n.steam_id
+         JOIN public.players p
+           ON (n.steam_id IS NOT NULL AND p.steam_id = n.steam_id)
+           OR (n.steam_id IS NULL AND p.role::text = ANY($${next + 1}::text[]))
+         JOIN public.push_subscriptions ps ON ps.steam_id = p.steam_id
     LEFT JOIN public.notification_preferences np
-           ON np.steam_id = n.steam_id
+           ON np.steam_id = p.steam_id
           AND np.channel = 'push'
-          AND np.key = $3
-        WHERE n.type = $1
-          AND n.entity_id = $2
-          AND n.created_at > now() - interval '15 minutes'
-          AND COALESCE(np.enabled, $4::boolean) = true
-          AND NOT public.is_quiet_hours(
-                p.quiet_hours_start, p.quiet_hours_end, p.notification_timezone)`,
-      [type, entityId, category?.key ?? "", category?.defaultEnabled ?? true],
+          AND np.key = $${next + 2}
+    -- Only ever matches a row whose writer declared a thread, which today is
+    -- chat and nothing else. Anything without one joins to NULL and passes.
+    LEFT JOIN public.chat_read_state crs
+           ON crs.steam_id = p.steam_id
+          AND crs.thread = n.data->>'threadKey'
+        WHERE ${selectorSql}
+          AND COALESCE(np.enabled, $${next + 3}::boolean) = true
+          -- Dealt with in the bell between the insert and now.
+          AND ($${next + 4}::boolean = false
+               OR (n.is_read = false AND n.deleted_at IS NULL))
+          -- Or read in the conversation itself, which never touches the bell.
+          AND (crs.last_read_at IS NULL OR n.created_at > crs.last_read_at)
+        ORDER BY n.created_at ASC`,
+      [
+        ...selectorParams,
+        RECIPIENT_ROLES[representative.role] ?? [],
+        category?.key ?? "",
+        category?.defaultEnabled ?? true,
+        policy.requireUnseen,
+      ],
     );
 
-    await this.deliver(subscriptions, row);
+    const byRecipient = new Map<string, Delivery>();
+
+    for (const row of rows) {
+      let delivery = byRecipient.get(row.steam_id);
+
+      if (!delivery) {
+        delivery = {
+          steamId: row.steam_id,
+          notifications: [],
+          subscriptions: [],
+          quietSeconds: Number(row.quiet_seconds ?? 0),
+        };
+        byRecipient.set(row.steam_id, delivery);
+      }
+
+      if (!delivery.notifications.some(({ id }) => id === row.id)) {
+        delivery.notifications.push({
+          id: row.id,
+          type: row.type,
+          role: row.role,
+          title: row.title,
+          message: row.message,
+          entity_id: row.entity_id,
+          data: row.data,
+        });
+      }
+
+      if (!delivery.subscriptions.some(({ id }) => id === row.subscription_id)) {
+        delivery.subscriptions.push({
+          id: row.subscription_id,
+          endpoint: row.endpoint,
+          p256dh: row.p256dh,
+          auth: row.auth,
+        });
+      }
+    }
+
+    return [...byRecipient.values()];
+  }
+
+  // Buzz now, hold for a summary, or say nothing at all.
+  private async dispatch(
+    deliveries: Delivery[],
+    policy: DeliveryPolicy,
+  ): Promise<void> {
+    if (deliveries.length === 0) {
+      return;
+    }
+
+    // One dispatch only ever covers one notification type and entity, so every
+    // recipient here is on the same thread.
+    const thread = threadKeyFor(deliveries.at(0).notifications.at(0));
+
+    const focused = await this.filterFocusedOn(
+      deliveries.map(({ steamId }) => steamId),
+      thread,
+    );
+
+    for (const delivery of deliveries) {
+      // Reading it is the notification. Anything more is the app tapping the
+      // player on the shoulder to tell them what is already on their screen.
+      if (focused.has(delivery.steamId)) {
+        continue;
+      }
+
+      const ids = delivery.notifications.map(({ id }) => id);
+
+      // Asleep. Hold everything until the window closes and let the trailing
+      // job deliver it as one summary -- which is the same machinery bundling
+      // already uses, just with a much longer window.
+      if (delivery.quietSeconds > 0) {
+        const claim = await this.claimWindow(
+          delivery.steamId,
+          thread,
+          delivery.quietSeconds,
+        );
+
+        if (claim.leading) {
+          await this.resetPending(delivery.steamId, thread, ids, claim.ttl);
+        } else {
+          await this.appendPending(delivery.steamId, thread, ids, claim.ttl);
+        }
+
+        await this.scheduleTrailing(
+          delivery.steamId,
+          thread,
+          claim.token,
+          claim.ttl,
+        );
+        continue;
+      }
+
+      if (policy.bundleSeconds === 0) {
+        await this.deliver(delivery.subscriptions, delivery.notifications);
+        continue;
+      }
+
+      const claim = await this.claimWindow(
+        delivery.steamId,
+        thread,
+        policy.bundleSeconds,
+      );
+
+      if (claim.leading) {
+        await this.deliver(delivery.subscriptions, delivery.notifications);
+
+        // Held as well as sent. The summary replaces this notification on the
+        // device, so leaving it out would make a burst of four report three.
+        // The list is reset rather than appended to, so a window that closed
+        // without ever being drained cannot leak into the next one's count.
+        await this.resetPending(delivery.steamId, thread, ids, claim.ttl);
+        continue;
+      }
+
+      await this.appendPending(delivery.steamId, thread, ids, claim.ttl);
+      await this.scheduleTrailing(
+        delivery.steamId,
+        thread,
+        claim.token,
+        claim.ttl,
+      );
+    }
+  }
+
+  // Opens the bundling window for one player on one thread, or reports that
+  // somebody already has.
+  //
+  // SET NX EX settles it in a single round trip, which is what makes it safe
+  // across pods -- two of them handling the same burst cannot both decide they
+  // are the leading edge. The token scopes the trailing job's id to this window
+  // and no other; a static id would be blocked by its own completed job for as
+  // long as BullMQ kept the record.
+  private async claimWindow(
+    steamId: string,
+    thread: string,
+    bundleSeconds: number,
+  ): Promise<{ leading: boolean; token?: string; ttl?: number }> {
+    const key = windowKey(steamId, thread);
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const token = `${Date.now()}`;
+      const claimed = await this.redis.set(
+        key,
+        token,
+        "EX",
+        bundleSeconds,
+        "NX",
+      );
+
+      if (claimed) {
+        return { leading: true, token, ttl: bundleSeconds };
+      }
+
+      const [held, ttl] = await Promise.all([
+        this.redis.get(key),
+        this.redis.ttl(key),
+      ]);
+
+      // Expired between losing the race and reading it. Going round again
+      // takes the leading edge rather than scheduling a summary against a
+      // window that no longer exists.
+      if (held === null || ttl < 0) {
+        continue;
+      }
+
+      return { leading: false, token: held, ttl };
+    }
+
+    // Both attempts lost the race and both then found the key already gone.
+    // Claimed outright rather than merely reported: a leading edge with no
+    // window standing behind it opens a bundle nothing will ever drain, and
+    // the next message takes the leading edge again and delivers on its own.
+    const token = `${Date.now()}`;
+
+    await this.redis.set(key, token, "EX", bundleSeconds);
+
+    return { leading: true, token, ttl: bundleSeconds };
+  }
+
+  // Starts a window's tally at the notification that opened it.
+  private async resetPending(
+    steamId: string,
+    thread: string,
+    ids: string[],
+    windowSeconds: number,
+  ): Promise<void> {
+    const key = pendingKey(steamId, thread);
+
+    await this.redis
+      .multi()
+      .del(key)
+      .rpush(key, ...ids)
+      .expire(key, pendingTtlFor(windowSeconds))
+      .exec();
+  }
+
+  private async appendPending(
+    steamId: string,
+    thread: string,
+    ids: string[],
+    windowSeconds: number,
+  ): Promise<void> {
+    const key = pendingKey(steamId, thread);
+
+    await this.redis.rpush(key, ...ids);
+    await this.redis.expire(key, pendingTtlFor(windowSeconds));
+  }
+
+  private async scheduleTrailing(
+    steamId: string,
+    thread: string,
+    token: string,
+    ttl: number,
+  ): Promise<void> {
+    await this.pushDeliveryQueue.add(
+      // The class name, not the queue's: UseQueue registers handlers under it,
+      // and the generic processor looks the job up by the name it was added
+      // with. Spelled out rather than referenced, or importing the job here
+      // would close a cycle back through its own constructor.
+      "SendPushDelivery",
+      { steamId, thread },
+      {
+        jobId: `push-trail.${steamId}.${thread}.${token}`,
+        delay: Math.max(ttl, 1) * 1000,
+        // Not `{ age }`: a completed job holding its id would stop the next
+        // window with the same token from ever being scheduled.
+        removeOnComplete: true,
+        removeOnFail: { age: 3600 },
+      },
+    );
+  }
+
+  // Which of these players is looking at the thread right now. One pipeline for
+  // the whole recipient list -- a busy match lobby resolves nine of these per
+  // message.
+  private async filterFocusedOn(
+    steamIds: string[],
+    thread: string,
+  ): Promise<Set<string>> {
+    if (steamIds.length === 0) {
+      return new Set();
+    }
+
+    const pipeline = this.redis.pipeline();
+
+    for (const steamId of steamIds) {
+      pipeline.hvals(presenceFocusKey(steamId));
+    }
+
+    const results = await pipeline.exec();
+    const focused = new Set<string>();
+
+    for (const [index, steamId] of steamIds.entries()) {
+      const [error, values] = results?.at(index) ?? [];
+
+      if (error || !Array.isArray(values)) {
+        continue;
+      }
+
+      if ((values as string[]).includes(thread)) {
+        focused.add(steamId);
+      }
+    }
+
+    return focused;
+  }
+
+  // What a bundle says when it replaces the notification already on the device.
+  private static summarize(
+    notifications: NotificationRow[],
+    count: number,
+  ): {
+    title: string;
+    body: string;
+  } {
+    const newest = notifications.at(-1);
+    // Chat puts the sender in `title` and the room in `threadLabel`; every
+    // other type has one title for the whole thread and no label at all.
+    const names = [...new Set(notifications.map(({ title }) => title))];
+    const noun = newest.type.endsWith("ChatMessage")
+      ? "messages"
+      : "notifications";
+
+    if (names.length === 1) {
+      return { title: names[0], body: `${count} new ${noun}` };
+    }
+
+    const from =
+      names.length <= 2
+        ? names.join(" and ")
+        : `${names.slice(0, 2).join(", ")} and ${names.length - 2} others`;
+
+    return {
+      title: newest.data?.threadLabel ?? newest.title,
+      body: `${count} new ${noun} from ${from}`,
+    };
   }
 
   private async deliver(
     subscriptions: SubscriptionRow[],
-    notification: NotificationRow,
+    notifications: NotificationRow[],
+    // How many arrived, which is not always how many rows are left to describe
+    // them. See sendPending.
+    count = notifications.length,
   ): Promise<void> {
-    if (subscriptions.length === 0) {
+    if (subscriptions.length === 0 || notifications.length === 0) {
       return;
     }
 
+    const newest = notifications.at(-1);
+    const thread = threadKeyFor(newest);
+
+    const { title, body } =
+      count <= 1
+        ? { title: newest.title, body: stripHtml(newest.message) }
+        : PushNotificationsService.summarize(notifications, count);
+
     const payload = JSON.stringify({
-      title: notification.title,
-      body: stripHtml(notification.message),
-      url: notificationUrl(notification, this.appConfig.webDomain),
+      title,
+      body,
+      url: notificationUrl(newest, this.appConfig.webDomain),
+      icon: newest.data?.icon,
       // Lets a device collapse repeats of the same conversation or match
       // rather than stacking a separate notification for each.
-      tag: `${notification.type}:${notification.entity_id ?? notification.id}`,
+      tag: thread,
+      // A replacement under an existing tag is silent by default, which would
+      // make the summary that closes a burst arrive unannounced. Requires
+      // `tag`, which is always set above.
+      renotify: true,
+      threadKey: thread,
+      count,
     });
 
     const delivered: string[] = [];

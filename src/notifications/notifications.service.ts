@@ -14,7 +14,10 @@ import {
 import { DISCORD_COLORS } from "./utilities/constants";
 import { NotificationsQueues } from "./enums/NotificationsQueues";
 import { NotificationPreferencesService } from "./preferences/notification-preferences.service";
-import { PushNotificationsService } from "./push/push-notifications.service";
+import {
+  NotificationData,
+  PushNotificationsService,
+} from "./push/push-notifications.service";
 import { inAppKeyForType } from "./preferences/notification-categories";
 
 @Injectable()
@@ -34,7 +37,24 @@ export class NotificationsService {
     "FormTeamSuggestion",
     // Relaying every chat line to a Discord webhook would be unusable, and
     // the people in the lobby are already the ones being notified.
+    //
+    // This one is load-bearing beyond noise: a ChatMessage's body IS the
+    // message somebody typed, direct messages included. Anything that reaches
+    // the support webhook is posted verbatim into a staff channel.
     "ChatMessage",
+    "MatchChatMessage",
+    // Addressed to one player and about their own play ("you went 14/9"), so
+    // there is nothing in it for a staff channel. These two reached the bell
+    // through raw inserts until they were routed via notifyPlayers, which is
+    // where the webhook lives -- without them here that reroute would have
+    // started posting to Discord as a side effect.
+    "MatchImported",
+    "LeagueProposalReceived",
+    "LeagueProposalAccepted",
+    "LeagueProposalDeclined",
+    "LeagueMatchUnscheduled",
+    "LeagueRegistrationDecision",
+    "LeagueRosterUndersized",
   ]);
 
   // Nobody has seen a notification in six months who hasn't signed in, and a
@@ -326,7 +346,8 @@ export class NotificationsService {
       // then failing to queue would silence the push entirely; this order fails
       // the other way, into a duplicate the device collapses on its tag.
       await this.pushBroadcastQueue.add(
-        "PushBroadcast",
+        // The handler is registered under its class name, not the queue's.
+        "SendPushBroadcast",
         window ?? { ids },
         {
           ...(window
@@ -389,6 +410,10 @@ export class NotificationsService {
       entity_id?: string;
       steamIds: Array<string>;
       deletable?: boolean;
+      // Everything the push payload needs that the row cannot say: which
+      // thread this belongs to, what that thread is called, whose avatar to
+      // show. Read by the delivery gate, never by the bell.
+      data?: NotificationData;
     },
     actions?: Array<{
       label: string;
@@ -438,6 +463,7 @@ export class NotificationsService {
               entity_id: notification.entity_id,
               actions,
               in_app: inApp.has(steam_id),
+              ...(notification.data ? { data: notification.data } : {}),
               ...(notification.deletable === false
                 ? { deletable: false }
                 : {}),

@@ -74,6 +74,16 @@ export type VoiceParticipant = {
   // the call and being on camera are separate choices, and either can be true
   // without the other.
   video: boolean;
+  // Which device is carrying each half, for this player's own entry and nobody
+  // else's -- it is not information the rest of the channel needs, and it is the
+  // only thing here that is about a person's devices rather than the call.
+  //
+  // Set by whoever publishes, which makes the last publish the truth: a phone
+  // says `?device=remote` and a PC does not, so the flag flips on the request
+  // that takes the path rather than being inferred afterwards from a peer
+  // connection that was never told it had been displaced.
+  micRemote?: boolean;
+  camRemote?: boolean;
 };
 
 type VoiceMember = {
@@ -108,6 +118,41 @@ export class VoiceService {
 
   private static speakingKey(channelId: string, steamId: string) {
     return `voice:speaking:${channelId}:${steamId}`;
+  }
+
+  // No expiry: the flag is only ever true while a path is being published, and
+  // clearRemoteIfIdle wipes it the moment the monitor sees that path go quiet.
+  // A TTL would race that -- refreshed too slowly it lies, too quickly it is a
+  // heartbeat nobody asked for.
+  private static remoteKey(
+    channelId: string,
+    steamId: string,
+    kind: "mic" | "cam",
+  ) {
+    return `voice:remote:${kind}:${channelId}:${steamId}`;
+  }
+
+  // Answers with what the flag was, so a publish that never lands can put it
+  // back rather than leave the panel describing a device that did not arrive.
+  private async setRemote(
+    channelId: string,
+    steamId: string,
+    kind: "mic" | "cam",
+    remote: boolean,
+  ): Promise<boolean> {
+    const key = VoiceService.remoteKey(channelId, steamId, kind);
+
+    if (remote) {
+      const results = (await this.redis
+        .multi()
+        .exists(key)
+        .set(key, "1")
+        .exec()) as Array<[Error | null, unknown]>;
+
+      return results?.at(0)?.at(1) === 1;
+    }
+
+    return (await this.redis.del(key)) === 1;
   }
 
   private static membersKey(channelId: string) {
@@ -332,10 +377,32 @@ export class VoiceService {
     return { known: true, channelId: null, video: false };
   }
 
-  public async publish(lobbyId: string, user: User, sdp: string) {
+  public async publish(
+    lobbyId: string,
+    user: User,
+    sdp: string,
+    remote = false,
+  ) {
     await this.assertMember(lobbyId, user);
 
-    return this.publishAs(lobbyId, user.steam_id, sdp);
+    // Set before the proxy rather than after: the publish is what displaces the
+    // other device, and the other device is reading participants the whole time.
+    const previous = await this.setRemote(
+      lobbyId,
+      user.steam_id,
+      "mic",
+      remote,
+    );
+
+    try {
+      return await this.publishAs(lobbyId, user.steam_id, sdp);
+    } catch (error) {
+      // Nothing was displaced, so the flag would go on describing a publish
+      // that never happened -- and mislabel whichever device is really on the
+      // path as the remote one.
+      await this.setRemote(lobbyId, user.steam_id, "mic", previous);
+      throw error;
+    }
   }
 
   // Keyed on a steam id rather than a User so the token paths can reuse it --
@@ -417,10 +484,27 @@ export class VoiceService {
   // The camera half of publish/subscribe/leave above. Same membership gate, same
   // proxy, a different path -- see CAMERA_PATH_PATTERN for why it is not simply
   // a second track on the audio one.
-  public async publishVideo(lobbyId: string, user: User, sdp: string) {
+  public async publishVideo(
+    lobbyId: string,
+    user: User,
+    sdp: string,
+    remote = false,
+  ) {
     await this.assertVideoMember(lobbyId, user);
 
-    return this.publishVideoAs(lobbyId, user.steam_id, sdp);
+    const previous = await this.setRemote(
+      lobbyId,
+      user.steam_id,
+      "cam",
+      remote,
+    );
+
+    try {
+      return await this.publishVideoAs(lobbyId, user.steam_id, sdp);
+    } catch (error) {
+      await this.setRemote(lobbyId, user.steam_id, "cam", previous);
+      throw error;
+    }
   }
 
   private async publishVideoAs(lobbyId: string, steamId: string, sdp: string) {
@@ -460,8 +544,56 @@ export class VoiceService {
   public async stopVideo(lobbyId: string, user: User) {
     await this.assertMembership(lobbyId, user);
 
+    await this.setRemote(lobbyId, user.steam_id, "cam", false);
+
     await this.mediaMtx.kickSessions(
       VoiceService.pathForMemberCamera(lobbyId, user.steam_id),
+    );
+
+    this.pushParticipantsSoon(lobbyId);
+  }
+
+  // A second device saying which half of the call it is carrying, relayed to the
+  // rest of this player's own clients and nobody else's.
+  //
+  // Inferring it from the peer connection does not work. MediaMTX kicks the
+  // displaced publisher, but the browser it kicked is not told: an RTCPeerConnection
+  // whose media has stopped being consumed sits in "connected" until ICE consent
+  // freshness gives up, which is up to thirty seconds of a panel insisting the
+  // microphone is still on the PC. The device that knows is the one that took it,
+  // so it says so.
+  public async relayDeviceClaim(
+    channelId: string,
+    user: User,
+    kind: "mic" | "cam",
+    claimed: boolean,
+  ) {
+    await this.assertMember(channelId, user);
+
+    await this.redis.publish(
+      "send-message-to-steam-id",
+      JSON.stringify({
+        steamId: user.steam_id,
+        event: "voice:device-claim",
+        data: { channelId, kind, claimed },
+      }),
+    );
+  }
+
+  // Drops the microphone publish without leaving the channel, for a phone
+  // handing it back to the device it took it from.
+  //
+  // The monitor would find this on its own within ten seconds, and ten seconds
+  // is a long time to be inaudible in the middle of a round: the device waiting
+  // to take the path back cannot do it until the path is seen to be free, so
+  // this is what makes handing it back feel like handing it back.
+  public async stopAudio(lobbyId: string, user: User) {
+    await this.assertMembership(lobbyId, user);
+
+    await this.setRemote(lobbyId, user.steam_id, "mic", false);
+
+    await this.mediaMtx.kickSessions(
+      VoiceService.pathForMember(lobbyId, user.steam_id),
     );
 
     this.pushParticipantsSoon(lobbyId);
@@ -553,11 +685,24 @@ export class VoiceService {
 
     const paths = known ?? (await this.mediaMtx.listPaths());
 
-    const speaking = await this.redis.mget(
-      members.map((member) =>
+    // One round trip for all three flags. This runs on every monitor pass for
+    // every live channel, and three sequential reads of the same key count is
+    // three times the latency for nothing.
+    const flags = await this.redis.mget([
+      ...members.map((member) =>
         VoiceService.speakingKey(channelId, member.steam_id),
       ),
-    );
+      ...members.map((member) =>
+        VoiceService.remoteKey(channelId, member.steam_id, "mic"),
+      ),
+      ...members.map((member) =>
+        VoiceService.remoteKey(channelId, member.steam_id, "cam"),
+      ),
+    ]);
+
+    const speaking = flags.slice(0, members.length);
+    const remoteMic = flags.slice(members.length, members.length * 2);
+    const remoteCam = flags.slice(members.length * 2);
 
     return members.map((member, index) => {
       const path = paths?.get(
@@ -583,6 +728,11 @@ export class VoiceService {
         speaking: connected && speaking[index] !== null,
         coach: member.coach === true,
         video: camera?.ready === true,
+        // Only true while the path it describes is actually up: a flag left
+        // behind by a phone that closed without saying so would otherwise have
+        // the panel insisting the microphone was somewhere it is not.
+        micRemote: connected && remoteMic[index] !== null,
+        camRemote: camera?.ready === true && remoteCam[index] !== null,
       } satisfies VoiceParticipant;
     });
   }
@@ -662,7 +812,9 @@ export class VoiceService {
     // told apart from an empty one, and emptying every call on our own outage
     // is far worse than being a pass late on a drop.
     if (!paths) {
-      this.logger.warn("[voice] skipping monitor pass: mediamtx did not answer");
+      this.logger.warn(
+        "[voice] skipping monitor pass: mediamtx did not answer",
+      );
       return;
     }
 
@@ -756,9 +908,7 @@ export class VoiceService {
       cursor = next;
 
       for (const key of keys) {
-        const channelId = key.slice(
-          VoiceService.PUBLISHING_KEY_PREFIX.length,
-        );
+        const channelId = key.slice(VoiceService.PUBLISHING_KEY_PREFIX.length);
 
         if (!publishing.has(channelId)) {
           emptied.push(key);

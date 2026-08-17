@@ -7,6 +7,10 @@ import { load } from "cheerio";
 // than duplicating a type -> route map that would immediately drift. The map
 // below is only the fallback for messages authored without a link.
 const PATH_BY_TYPE: Record<string, (entityId: string) => string> = {
+  // entity_id is `${lobbyType}:${lobbyId}`, which is already the client's tab
+  // id -- see web/composables/useDirectMessages.ts directTabId.
+  ChatMessage: (id) => `/chat/${encodeURIComponent(id)}`,
+  MatchChatMessage: (id) => `/chat/${encodeURIComponent(id)}`,
   MatchStatusChange: (id) => `/matches/${id}`,
   MatchImported: (id) => `/matches/${id}`,
   MatchSupport: (id) => `/matches/${id}`,

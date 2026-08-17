@@ -12,6 +12,7 @@ import { getQueuesProcessors } from "src/utilities/QueueProcessors";
 import { NotificationsQueues } from "./enums/NotificationsQueues";
 import { SendSanctionNotifications } from "./jobs/SendSanctionNotifications";
 import { SendPushBroadcast } from "./jobs/SendPushBroadcast";
+import { SendPushDelivery } from "./jobs/SendPushDelivery";
 import { PushNotificationsService } from "./push/push-notifications.service";
 import { PushNotificationsController } from "./push/push-notifications.controller";
 import { NotificationPreferencesService } from "./preferences/notification-preferences.service";
@@ -37,6 +38,13 @@ import { NotificationPreferencesController } from "./preferences/notification-pr
       name: NotificationsQueues.PushBroadcast,
       adapter: BullMQAdapter,
     }),
+    BullModule.registerQueue({
+      name: NotificationsQueues.PushDelivery,
+    }),
+    BullBoardModule.forFeature({
+      name: NotificationsQueues.PushDelivery,
+      adapter: BullMQAdapter,
+    }),
   ],
   controllers: [PushNotificationsController, NotificationPreferencesController],
   providers: [
@@ -45,6 +53,7 @@ import { NotificationPreferencesController } from "./preferences/notification-pr
     NotificationPreferencesService,
     SendSanctionNotifications,
     SendPushBroadcast,
+    SendPushDelivery,
     ...getQueuesProcessors("Notifications"),
     loggerFactory(),
   ],

@@ -321,15 +321,19 @@ export class SystemController {
       await this.gameServerNodeService.updateDemoNetworkLimiters();
     }
 
-    if (
-      (data.new.name === SystemSettingName.ChatMessageTtl ||
-        data.old.name === SystemSettingName.ChatMessageTtl) &&
-      (data.op === "INSERT" ||
-        data.op === "DELETE" ||
-        data.new.value !== data.old.value)
-    ) {
-      const ttl = parseInt(data.new.value, 10);
-      await this.chatService.updateChatMessageTTL(isNaN(ttl) ? 60 * 60 : ttl);
+    for (const { setting, type, fallback } of ChatService.TTL_SETTINGS) {
+      if (
+        (data.new.name === setting || data.old.name === setting) &&
+        (data.op === "INSERT" ||
+          data.op === "DELETE" ||
+          data.new.value !== data.old.value)
+      ) {
+        const ttl = parseInt(data.new.value, 10);
+        this.chatService.updateChatMessageTTL(
+          type,
+          isNaN(ttl) ? fallback : ttl,
+        );
+      }
     }
 
     await this.system.updateDefaultOptions();

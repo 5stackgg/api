@@ -28,6 +28,14 @@ export class VoiceController {
     return sdp;
   }
 
+  // A publish coming from the phone rather than the machine the player is at.
+  // Declared by the caller because nothing about the request itself can tell
+  // them apart -- same session, same account, same endpoint -- and the answer
+  // decides which device the panel says is carrying the call.
+  private static isRemote(request: Request) {
+    return request.query.device === "remote";
+  }
+
   private requireUser(request: Request) {
     const user = request.user as User | undefined;
 
@@ -40,9 +48,15 @@ export class VoiceController {
 
   private async sendSdp(response: Response, answer: () => Promise<string>) {
     try {
-      response.status(200).type("application/sdp").send(await answer());
+      response
+        .status(200)
+        .type("application/sdp")
+        .send(await answer());
     } catch (error) {
-      response.status(400).type("text/plain").send((error as Error).message);
+      response
+        .status(400)
+        .type("text/plain")
+        .send((error as Error).message);
     }
   }
 
@@ -55,7 +69,9 @@ export class VoiceController {
     const user = this.requireUser(request);
     const sdp = this.readSdp(request);
 
-    await this.sendSdp(response, () => this.voice.publish(lobbyId, user, sdp));
+    await this.sendSdp(response, () =>
+      this.voice.publish(lobbyId, user, sdp, VoiceController.isRemote(request)),
+    );
   }
 
   // Declared ahead of the `:steamId` routes below so a literal `cam` segment is
@@ -70,7 +86,12 @@ export class VoiceController {
     const sdp = this.readSdp(request);
 
     await this.sendSdp(response, () =>
-      this.voice.publishVideo(lobbyId, user, sdp),
+      this.voice.publishVideo(
+        lobbyId,
+        user,
+        sdp,
+        VoiceController.isRemote(request),
+      ),
     );
   }
 
@@ -80,6 +101,16 @@ export class VoiceController {
     @Req() request: Request,
   ) {
     await this.voice.stopVideo(lobbyId, this.requireUser(request));
+
+    return { ok: true };
+  }
+
+  @Post(":lobbyId/mic/stop")
+  public async stopAudio(
+    @Param("lobbyId") lobbyId: string,
+    @Req() request: Request,
+  ) {
+    await this.voice.stopAudio(lobbyId, this.requireUser(request));
 
     return { ok: true };
   }
