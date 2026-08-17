@@ -136,10 +136,14 @@ export class BackfillDirectMessages extends WorkerHost {
 
     await this.postgres.query(
       `INSERT INTO public.direct_conversations (room_id, steam_id, last_message_at)
-            SELECT $1, steam_id, $3::timestamptz
-              FROM unnest($2::bigint[]) AS steam_id
+            SELECT $1, party.steam_id, $3::timestamptz
+              FROM unnest($2::bigint[]) AS party(steam_id)
+             -- Qualified: an unqualified steam_id binds to p's own column and
+             -- the guard is always true.
              WHERE EXISTS (
-               SELECT 1 FROM public.players p WHERE p.steam_id = steam_id
+               SELECT 1
+                 FROM public.players p
+                WHERE p.steam_id = party.steam_id
              )
        ON CONFLICT (room_id, steam_id) DO UPDATE
                SET last_message_at = GREATEST(

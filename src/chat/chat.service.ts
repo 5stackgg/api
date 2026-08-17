@@ -107,215 +107,8 @@ export class ChatService {
       return;
     }
 
-    switch (type) {
-      case ChatLobbyType.Match:
-        const { matches_by_pk } = await this.hasuraService.query(
-          {
-            matches_by_pk: {
-              __args: {
-                id,
-              },
-              is_coach: true,
-              is_organizer: true,
-              is_in_lineup: true,
-            },
-          },
-          user.steam_id,
-        );
-
-        if (!matches_by_pk) {
-          return;
-        }
-
-        if (
-          matches_by_pk.is_coach === false &&
-          matches_by_pk.is_in_lineup === false &&
-          matches_by_pk.is_organizer === false
-        ) {
-          return;
-        }
-
-        break;
-      case ChatLobbyType.MatchTeam: {
-        const [matchId, lineupId] = id.split(":");
-
-        if (!matchId || !lineupId) {
-          return;
-        }
-
-        const { match_lineups_by_pk } = await this.hasuraService.query(
-          {
-            match_lineups_by_pk: {
-              __args: {
-                id: lineupId,
-              },
-              match_id: true,
-              coach_steam_id: true,
-              is_on_lineup: true,
-            },
-          },
-          user.steam_id,
-        );
-
-        // The lineup has to actually be one side of this match, otherwise the
-        // room key could be pointed at any lineup in the system.
-        if (!match_lineups_by_pk || match_lineups_by_pk.match_id !== matchId) {
-          return;
-        }
-
-        if (
-          match_lineups_by_pk.is_on_lineup === false &&
-          match_lineups_by_pk.coach_steam_id !== user.steam_id
-        ) {
-          return;
-        }
-
-        break;
-      }
-      case ChatLobbyType.MatchMaking:
-        const { lobby_players_by_pk } = await this.hasuraService.query({
-          lobby_players_by_pk: {
-            __args: {
-              lobby_id: id,
-              steam_id: user.steam_id,
-            },
-            status: true,
-          },
-        });
-
-        if (lobby_players_by_pk?.status !== "Accepted") {
-          return;
-        }
-
-        break;
-      case ChatLobbyType.Tournament:
-        const { tournaments } = await this.hasuraService.query(
-          {
-            tournaments: {
-              __args: {
-                where: {
-                  id: {
-                    _eq: id,
-                  },
-                  _or: [
-                    {
-                      is_organizer: {
-                        _eq: true,
-                      },
-                    },
-                    {
-                      teams: {
-                        _or: [
-                          {
-                            owner_steam_id: {
-                              _eq: user.steam_id,
-                            },
-                          },
-                          {
-                            roster: {
-                              player_steam_id: {
-                                _eq: user.steam_id,
-                              },
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-              },
-              id: true,
-            },
-          },
-          user.steam_id,
-        );
-
-        if (tournaments.length === 0) {
-          return;
-        }
-        break;
-      case ChatLobbyType.Draft: {
-        if (isRoleAbove(user.role, "match_organizer")) {
-          break;
-        }
-
-        const { draft_games } = await this.hasuraService.query({
-          draft_games: {
-            __args: {
-              where: {
-                id: { _eq: id },
-                _or: [
-                  { access: { _eq: "Open" } },
-                  { host_steam_id: { _eq: user.steam_id } },
-                  { players: { steam_id: { _eq: user.steam_id } } },
-                ],
-              },
-            },
-            id: true,
-          },
-        });
-
-        if (draft_games.length === 0) {
-          return;
-        }
-
-        break;
-      }
-      case ChatLobbyType.Organizer:
-        if (!isRoleAbove(user.role, "match_organizer")) {
-          return;
-        }
-
-        break;
-      case ChatLobbyType.Direct: {
-        const parties = parseDirectRoomId(id);
-
-        if (!parties || !parties.includes(String(user.steam_id))) {
-          return;
-        }
-
-        // Being one of the two parties is not on its own an authorization:
-        // anyone can build the id for any pair of steam ids, since it is just
-        // their sorted pair. The friendship is the only thing standing between
-        // this and unsolicited messages from strangers.
-        //
-        // No administrator bypass, unlike Draft/Organizer above -- those are
-        // group rooms an organizer runs, this is a private conversation.
-        const otherSteamId = parties.find(
-          (party) => party !== String(user.steam_id),
-        );
-
-        const { friends } = await this.hasuraService.query({
-          friends: {
-            __args: {
-              where: {
-                status: { _eq: "Accepted" },
-                _or: [
-                  {
-                    player_steam_id: { _eq: user.steam_id },
-                    other_player_steam_id: { _eq: otherSteamId },
-                  },
-                  {
-                    player_steam_id: { _eq: otherSteamId },
-                    other_player_steam_id: { _eq: user.steam_id },
-                  },
-                ],
-              },
-              limit: 1,
-            },
-            status: true,
-          },
-        });
-
-        if (friends.length === 0) {
-          return;
-        }
-
-        break;
-      }
-      default:
-        this.logger.warn(`Unknown lobby type: ${type}`);
-        return;
+    if (!(await this.canAccessLobby(type, id, user))) {
+      return;
     }
 
     const userData = await this.addUserToLobby(type, id, user, false);
@@ -363,6 +156,231 @@ export class ChatService {
     client.on("close", () => {
       void this.removeFromLobby(type, id, client);
     });
+  }
+
+  // Who is allowed in a room at all.
+  //
+  // Its own method because joining is no longer the only way in: marking a
+  // thread read writes a row keyed on the room, and gating that on anything
+  // looser would let a client stamp read state for lobbies it was never part
+  // of -- one arbitrary row per call, unbounded.
+  private async canAccessLobby(
+    type: ChatLobbyType,
+    id: string,
+    user: User,
+  ): Promise<boolean> {
+    switch (type) {
+      case ChatLobbyType.Match:
+        const { matches_by_pk } = await this.hasuraService.query(
+          {
+            matches_by_pk: {
+              __args: {
+                id,
+              },
+              is_coach: true,
+              is_organizer: true,
+              is_in_lineup: true,
+            },
+          },
+          user.steam_id,
+        );
+
+        if (!matches_by_pk) {
+          return false;
+        }
+
+        if (
+          matches_by_pk.is_coach === false &&
+          matches_by_pk.is_in_lineup === false &&
+          matches_by_pk.is_organizer === false
+        ) {
+          return false;
+        }
+
+        break;
+      case ChatLobbyType.MatchTeam: {
+        const [matchId, lineupId] = id.split(":");
+
+        if (!matchId || !lineupId) {
+          return false;
+        }
+
+        const { match_lineups_by_pk } = await this.hasuraService.query(
+          {
+            match_lineups_by_pk: {
+              __args: {
+                id: lineupId,
+              },
+              match_id: true,
+              coach_steam_id: true,
+              is_on_lineup: true,
+            },
+          },
+          user.steam_id,
+        );
+
+        // The lineup has to actually be one side of this match, otherwise the
+        // room key could be pointed at any lineup in the system.
+        if (!match_lineups_by_pk || match_lineups_by_pk.match_id !== matchId) {
+          return false;
+        }
+
+        if (
+          match_lineups_by_pk.is_on_lineup === false &&
+          match_lineups_by_pk.coach_steam_id !== user.steam_id
+        ) {
+          return false;
+        }
+
+        break;
+      }
+      case ChatLobbyType.MatchMaking:
+        const { lobby_players_by_pk } = await this.hasuraService.query({
+          lobby_players_by_pk: {
+            __args: {
+              lobby_id: id,
+              steam_id: user.steam_id,
+            },
+            status: true,
+          },
+        });
+
+        if (lobby_players_by_pk?.status !== "Accepted") {
+          return false;
+        }
+
+        break;
+      case ChatLobbyType.Tournament:
+        const { tournaments } = await this.hasuraService.query(
+          {
+            tournaments: {
+              __args: {
+                where: {
+                  id: {
+                    _eq: id,
+                  },
+                  _or: [
+                    {
+                      is_organizer: {
+                        _eq: true,
+                      },
+                    },
+                    {
+                      teams: {
+                        _or: [
+                          {
+                            owner_steam_id: {
+                              _eq: user.steam_id,
+                            },
+                          },
+                          {
+                            roster: {
+                              player_steam_id: {
+                                _eq: user.steam_id,
+                              },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
+              id: true,
+            },
+          },
+          user.steam_id,
+        );
+
+        if (tournaments.length === 0) {
+          return false;
+        }
+        break;
+      case ChatLobbyType.Draft: {
+        if (isRoleAbove(user.role, "match_organizer")) {
+          break;
+        }
+
+        const { draft_games } = await this.hasuraService.query({
+          draft_games: {
+            __args: {
+              where: {
+                id: { _eq: id },
+                _or: [
+                  { access: { _eq: "Open" } },
+                  { host_steam_id: { _eq: user.steam_id } },
+                  { players: { steam_id: { _eq: user.steam_id } } },
+                ],
+              },
+            },
+            id: true,
+          },
+        });
+
+        if (draft_games.length === 0) {
+          return false;
+        }
+
+        break;
+      }
+      case ChatLobbyType.Organizer:
+        if (!isRoleAbove(user.role, "match_organizer")) {
+          return false;
+        }
+
+        break;
+      case ChatLobbyType.Direct: {
+        const parties = parseDirectRoomId(id);
+
+        if (!parties || !parties.includes(String(user.steam_id))) {
+          return false;
+        }
+
+        // Being one of the two parties is not on its own an authorization:
+        // anyone can build the id for any pair of steam ids, since it is just
+        // their sorted pair. The friendship is the only thing standing between
+        // this and unsolicited messages from strangers.
+        //
+        // No administrator bypass, unlike Draft/Organizer above -- those are
+        // group rooms an organizer runs, this is a private conversation.
+        const otherSteamId = parties.find(
+          (party) => party !== String(user.steam_id),
+        );
+
+        const { friends } = await this.hasuraService.query({
+          friends: {
+            __args: {
+              where: {
+                status: { _eq: "Accepted" },
+                _or: [
+                  {
+                    player_steam_id: { _eq: user.steam_id },
+                    other_player_steam_id: { _eq: otherSteamId },
+                  },
+                  {
+                    player_steam_id: { _eq: otherSteamId },
+                    other_player_steam_id: { _eq: user.steam_id },
+                  },
+                ],
+              },
+              limit: 1,
+            },
+            status: true,
+          },
+        });
+
+        if (friends.length === 0) {
+          return false;
+        }
+
+        break;
+      }
+      default:
+        this.logger.warn(`Unknown lobby type: ${type}`);
+        return false;
+    }
+
+    return true;
   }
 
   // A room's history, from whichever store holds it. DMs are durable and live
@@ -1113,20 +1131,29 @@ export class ChatService {
   // In postgres rather than redis: a flush would reset every cursor on the
   // platform at once, and the next message in every thread would then look
   // unread and push.
-  public async markThreadRead(type: ChatLobbyType, id: string, user: User) {
-    if (type === ChatLobbyType.Direct) {
-      const parties = parseDirectRoomId(id);
-
-      if (!parties || !parties.includes(String(user.steam_id))) {
-        return;
-      }
+  // Gated on the same answer as joining the room. `type` and `id` are whatever
+  // the socket sent, and without this a client can write a row per call for any
+  // id it can invent -- and mark read state for lobbies it was never in.
+  //
+  // Answers with the cursor postgres wrote, so the client can replace the one
+  // it stamped from its own clock.
+  public async markThreadRead(
+    type: ChatLobbyType,
+    id: string,
+    user: User,
+  ): Promise<{ thread: string; lastReadAt: string } | null> {
+    if (!(await this.canAccessLobby(type, id, user))) {
+      return null;
     }
 
-    await this.postgres.query(
+    const thread = chatThreadKey(type, id);
+
+    const [row] = await this.postgres.query<Array<{ last_read_at: Date }>>(
       `INSERT INTO public.chat_read_state (steam_id, thread, last_read_at)
             VALUES ($1::bigint, $2, now())
-       ON CONFLICT (steam_id, thread) DO UPDATE SET last_read_at = now()`,
-      [user.steam_id, chatThreadKey(type, id)],
+       ON CONFLICT (steam_id, thread) DO UPDATE SET last_read_at = now()
+         RETURNING last_read_at`,
+      [user.steam_id, thread],
     );
 
     await this.notifications.markConversationRead(
@@ -1134,6 +1161,15 @@ export class ChatService {
       `${type}:${id}`,
       user.steam_id,
     );
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      thread,
+      lastReadAt: new Date(row.last_read_at).toISOString(),
+    };
   }
 
   // Every conversation a player has, newest first, with the unread count each
@@ -1190,7 +1226,16 @@ export class ChatService {
       position: row.position,
       unread: Number(row.unread ?? 0),
       peer: {
-        steam_id: row.peer_steam_id,
+        // The join finds nobody when the counterpart's own row is missing --
+        // a deleted player takes theirs with it and leaves yours behind. The
+        // id is still in the room id, and without it the tab renders as the
+        // raw `steamid:steamid` pair with nobody to message.
+        steam_id:
+          row.peer_steam_id ??
+          parseDirectRoomId(row.room_id)?.find(
+            (party) => party !== String(user.steam_id),
+          ) ??
+          null,
         name: row.peer_name,
         avatar_url: row.peer_avatar_url,
         profile_url: row.peer_profile_url,

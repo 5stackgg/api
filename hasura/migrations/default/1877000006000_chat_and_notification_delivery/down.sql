@@ -1,3 +1,7 @@
+UPDATE public.notifications SET type = 'ChatMessage' WHERE type = 'MatchChatMessage';
+
+DELETE FROM public.e_notification_types WHERE value = 'MatchChatMessage';
+
 DELETE FROM public.settings
  WHERE name IN (
    'public.chat_ttl_match',

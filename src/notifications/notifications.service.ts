@@ -346,7 +346,8 @@ export class NotificationsService {
       // then failing to queue would silence the push entirely; this order fails
       // the other way, into a duplicate the device collapses on its tag.
       await this.pushBroadcastQueue.add(
-        "PushBroadcast",
+        // The handler is registered under its class name, not the queue's.
+        "SendPushBroadcast",
         window ?? { ids },
         {
           ...(window

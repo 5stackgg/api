@@ -2,8 +2,9 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
-// The chat/notification migration shipped once, gained columns, and had its
-// version bumped so stacks that already applied the first cut would re-run it.
+// The chat/notification migration shipped once, gained columns and a
+// notification type, and had its version bumped each time so stacks that
+// already applied an earlier cut would re-run it.
 // A bumped migration only helps if it is genuinely idempotent *and* reconciles
 // the older shape -- CREATE TABLE IF NOT EXISTS silently skips a table that is
 // already there, which is how a live stack ended up without direct_messages.seq
@@ -16,7 +17,7 @@ describe("chat migration re-apply", () => {
   const up = readFileSync(
     join(
       __dirname,
-      "../hasura/migrations/default/1877000004000_chat_and_notification_delivery/up.sql",
+      "../hasura/migrations/default/1877000006000_chat_and_notification_delivery/up.sql",
     ),
     "utf8",
   );
@@ -129,14 +130,6 @@ describe("chat migration re-apply", () => {
   // under the old type: markThreadRead clears a match thread by looking for
   // MatchChatMessage, so anything left behind sits unread in the bell forever.
   describe("match chat backfill", () => {
-    const matchChat = readFileSync(
-      join(
-        __dirname,
-        "../hasura/migrations/default/1877000005000_match_chat_notification_type/up.sql",
-      ),
-      "utf8",
-    );
-
     const typeOf = async (entityId: string) =>
       (
         await db.postgres.query<Array<{ type: string }>>(
@@ -161,7 +154,9 @@ describe("chat migration re-apply", () => {
         );
       }
 
-      await db.postgres.query(matchChat);
+      // The backfill is part of the same migration, so this re-applies it over
+      // rows written since -- which the file is built to survive.
+      await db.postgres.query(up);
     }, 600_000);
 
     it("moves a match room's rows to the new type", async () => {

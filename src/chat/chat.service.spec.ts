@@ -47,8 +47,23 @@ describe("ChatService direct messages", () => {
       on: jest.fn(),
     }) as any;
 
+  // Which matches this player belongs to, by id.
+  let myMatches: string[];
+
   const hasuraService = {
     query: jest.fn(async (query: any) => {
+      if (query.matches_by_pk) {
+        return myMatches.includes(query.matches_by_pk.__args.id)
+          ? {
+              matches_by_pk: {
+                is_coach: false,
+                is_organizer: false,
+                is_in_lineup: true,
+              },
+            }
+          : {};
+      }
+
       if (query.players_by_pk) {
         return {
           players_by_pk: {
@@ -85,6 +100,7 @@ describe("ChatService direct messages", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     acceptedFriendships = [[ME, FRIEND]];
+    myMatches = ["m-1"];
     role = "user";
     queries = [];
     service = new ChatService(
@@ -219,6 +235,16 @@ describe("ChatService direct messages", () => {
       } as any);
 
       expect(cursorWrites().at(0)?.bindings).toEqual([ME, "chat:match:m-1"]);
+    });
+
+    it("refuses a lobby the caller has no business in", async () => {
+      // `type` and `id` are unvalidated socket input, so without the same gate
+      // joining uses, a client can write a row per call for any id it invents.
+      await service.markThreadRead(ChatLobbyType.Match, "m-2", {
+        steam_id: ME,
+      } as any);
+
+      expect(cursorWrites()).toHaveLength(0);
     });
   });
 });

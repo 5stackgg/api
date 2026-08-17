@@ -39,7 +39,14 @@ describe("direct messages (SQL-driven)", () => {
     chat = new ChatService(
       logger as any,
       {} as any,
-      { query: jest.fn().mockResolvedValue({}) } as any,
+      // Reading a thread is gated on the same friendship joining is. Who is
+      // allowed in is chat.service.spec's subject; this one is about what the
+      // SQL does once they are.
+      {
+        query: jest
+          .fn()
+          .mockResolvedValue({ friends: [{ status: "Accepted" }] }),
+      } as any,
       postgres,
       { getConnection: () => redis } as any,
       { notifyPlayers: jest.fn(), markConversationRead: jest.fn() } as any,

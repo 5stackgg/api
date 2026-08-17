@@ -1,23 +1,17 @@
--- How long until this player's quiet window is over, in seconds. 0 when they
--- are not in one.
---
--- Quiet hours used to drop a push outright. Nothing was lost -- the bell row is
--- written either way -- but a night of messages arrived as nothing at all, and
--- the player woke up to a silent phone and a full bell. This is what lets the
--- push be held instead and delivered as one summary when the window closes.
+-- Seconds until this player's quiet window is over; 0 when they are not in one.
+-- Lets a push be held and delivered as one summary rather than dropped.
 CREATE OR REPLACE FUNCTION public.quiet_hours_seconds_remaining(
     _start time,
     _end time,
     _timezone text
 ) RETURNS integer
--- STABLE for the same reason is_quiet_hours is: the answer depends on now(),
--- and folding it at plan time would keep returning a stale figure.
+-- STABLE, like is_quiet_hours: the answer depends on now().
 LANGUAGE plpgsql
 STABLE
 AS $$
 DECLARE
     _local time;
-    _seconds integer;
+    _seconds numeric;
 BEGIN
     IF NOT public.is_quiet_hours(_start, _end, _timezone) THEN
         RETURN 0;
@@ -29,15 +23,16 @@ BEGIN
         _local := (now() AT TIME ZONE 'UTC')::time;
     END;
 
-    _seconds := EXTRACT(EPOCH FROM (_end - _local))::integer;
+    -- Unrounded: truncating turns the last fraction of a second before the
+    -- window closes into 0, which the wrap below then reads as a full day.
+    _seconds := EXTRACT(EPOCH FROM (_end - _local));
 
-    -- A window that wraps midnight (22:00 -> 07:00) puts the end earlier in the
-    -- day than now, so the difference comes back negative and the wait is
-    -- actually to that time tomorrow.
+    -- A window that wraps midnight (22:00 -> 07:00) ends earlier in the day
+    -- than now, so the wait is to that time tomorrow.
     IF _seconds <= 0 THEN
         _seconds := _seconds + 86400;
     END IF;
 
-    RETURN _seconds;
+    RETURN GREATEST(ceil(_seconds), 1)::integer;
 END;
 $$;

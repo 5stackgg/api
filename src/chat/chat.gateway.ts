@@ -63,7 +63,26 @@ export class ChatGateway {
     // Every lobby type, not just DMs: the read cursor is what stops a push
     // firing for a conversation the recipient is already caught up on, and a
     // match lobby is where that happens most.
-    await this.chat.markThreadRead(data.type, data.id, client.user);
+    const read = await this.chat.markThreadRead(
+      data.type,
+      data.id,
+      client.user,
+    );
+
+    if (!read) {
+      return;
+    }
+
+    // The client stamped its own cursor from the browser clock so the badge
+    // cleared at once. Message timestamps come from here, so a browser running
+    // slow would leave every message newer than its own cursor -- this is the
+    // value postgres actually wrote.
+    client.send(
+      JSON.stringify({
+        event: "chat:read",
+        data: read,
+      }),
+    );
   }
 
   @SubscribeMessage("lobby:chat")

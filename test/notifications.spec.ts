@@ -799,6 +799,23 @@ describe("notifications (SQL-driven)", () => {
       ).resolves.toBe(true);
     });
 
+    // Truncating the remainder to a whole second first turned the last fraction
+    // of a second before the window closed into 0, which reads as "the end is
+    // earlier in the day" -- and held the push, and everything after it in that
+    // thread, for a full 24 hours.
+    it("holds for seconds, not a day, when the window is about to close", async () => {
+      const [row] = await postgres.query<Array<{ seconds: number }>>(
+        `SELECT public.quiet_hours_seconds_remaining(
+                  (now() AT TIME ZONE 'UTC')::time - interval '1 hour',
+                  (now() AT TIME ZONE 'UTC')::time + interval '0.3 seconds',
+                  'UTC'
+                ) AS seconds`,
+      );
+
+      expect(row.seconds).toBeGreaterThan(0);
+      expect(row.seconds).toBeLessThanOrEqual(2);
+    });
+
     it("stores and reads back a window", async () => {
       const steamId = await fx.player();
       const service = preferences();

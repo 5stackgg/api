@@ -1,5 +1,8 @@
 import * as webPush from "web-push";
 import { PushNotificationsService } from "./push-notifications.service";
+// Asserted against rather than a string, because the generic queue processor
+// resolves the handler by exactly this name.
+import { SendPushDelivery } from "../jobs/SendPushDelivery";
 import { stripHtml } from "../utilities/stripHtml";
 import { notificationUrl } from "../utilities/notificationUrl";
 
@@ -476,7 +479,7 @@ describe("PushNotificationsService", () => {
 
       expect(webPush.sendNotification).not.toHaveBeenCalled();
       expect(pushDeliveryQueue.add).toHaveBeenCalledWith(
-        "PushDelivery",
+        SendPushDelivery.name,
         { steamId: "76561100000000001", thread: "chat:match:m-1" },
         expect.objectContaining({
           jobId: "push-trail.76561100000000001.chat:match:m-1.token-1",
@@ -524,6 +527,59 @@ describe("PushNotificationsService", () => {
 
       expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
       expect(pushDeliveryQueue.add).not.toHaveBeenCalled();
+    });
+
+    it("claims the window it reports taking after a double miss", async () => {
+      // Both attempts lost the race and both then found the key already gone.
+      // Reporting a leading edge without holding the key opens a bundle that
+      // nothing will ever drain, and the next message takes the edge as well.
+      notificationRow = chat();
+      recipients = ["76561100000000001"];
+      redis.set.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+      redis.get.mockResolvedValue(null);
+      redis.ttl.mockResolvedValue(-2);
+
+      await service.sendForNotification({
+        id: notificationRow.id,
+        type: "ChatMessage",
+      });
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+      // Plain SET, not SET NX: the two NX attempts above are what just failed.
+      expect(redis.set).toHaveBeenLastCalledWith(
+        "notifications:push-window:76561100000000001:chat:match:m-1",
+        expect.any(String),
+        "EX",
+        expect.any(Number),
+      );
+    });
+
+    it("holds again when quiet hours began while the window was open", async () => {
+      // A bundling window opened seconds before 22:00 closes inside quiet
+      // hours, and delivering its summary there is the buzz the hold exists to
+      // prevent.
+      const held = ["id-a", "id-b"];
+      redis.multi.mockReturnValueOnce(chainableMulti([[null, held]]));
+
+      notificationRow = chat();
+      bundled = held.map((id) => ({
+        ...chat({ id }),
+        steam_id: "76561100000000001",
+        quiet_seconds: 6 * 60 * 60,
+        subscription_id: "sub-1",
+        endpoint: subscription("sub-1").endpoint,
+        p256dh: "p256dh",
+        auth: "auth",
+      }));
+
+      await service.sendPending("76561100000000001", "chat:match:m-1");
+
+      expect(webPush.sendNotification).not.toHaveBeenCalled();
+      expect(pushDeliveryQueue.add).toHaveBeenCalledWith(
+        SendPushDelivery.name,
+        { steamId: "76561100000000001", thread: "chat:match:m-1" },
+        expect.objectContaining({ delay: 6 * 60 * 60 * 1000 }),
+      );
     });
 
     it("replaces the burst with one summary when the window closes", async () => {
@@ -588,7 +644,7 @@ describe("PushNotificationsService", () => {
 
       expect(webPush.sendNotification).not.toHaveBeenCalled();
       expect(pushDeliveryQueue.add).toHaveBeenCalledWith(
-        "PushDelivery",
+        SendPushDelivery.name,
         { steamId: "76561100000000001", thread: "chat:match:m-1" },
         // Woken when the window closes, not on the bundling window.
         expect.objectContaining({ delay: 6 * 60 * 60 * 1000 }),

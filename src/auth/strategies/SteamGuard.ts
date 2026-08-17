@@ -47,11 +47,11 @@ export class SteamGuard extends AuthGuard("steam") {
       const request = context.switchToHttp().getRequest();
 
       const { redirect } = request.query;
-      const cookieDomain = this.config.get<AppConfig>("app").authCookieDomain;
+      const { authCookieDomain, webDomain } = this.config.get<AppConfig>("app");
 
       if (
         typeof redirect === "string" &&
-        SteamGuard.isSafeRedirect(redirect, cookieDomain)
+        SteamGuard.isSafeRedirect(redirect, webDomain, authCookieDomain)
       ) {
         request.session.redirect = redirect;
       }
@@ -75,16 +75,22 @@ export class SteamGuard extends AuthGuard("steam") {
     }
   }
 
-  // Anywhere inside the session cookie's own scope, rather than the one exact
-  // web domain. The cookie is set on `.${WEB_DOMAIN}` (see getCookieOptions), so
-  // a sibling subdomain is already carrying this session by the time it is
+  // The panel itself, plus anywhere inside the session cookie's own scope. The
+  // cookie is set on `.${WEB_DOMAIN}` by default (see getCookieOptions), so a
+  // sibling subdomain is already carrying this session by the time it is
   // redirected to -- refusing to send someone back to the panel they started on
   // does not withhold anything from them. It is what lets a dev tunnel on
   // dev.5stack.gg finish a login rather than landing on production, and it is
   // still a closed list: an arbitrary URL is refused, which is the open-redirect
   // this guards against.
+  //
+  // webDomain is named separately rather than left to the cookie domain to
+  // cover: AUTH_COOKIE_DOMAIN is an override, and one set narrower than the
+  // panel's own host would otherwise stop a deployment honouring redirects back
+  // to itself.
   private static isSafeRedirect(
     redirect: string,
+    webDomain: string,
     cookieDomain: string,
   ): boolean {
     if (!redirect) {
@@ -97,7 +103,7 @@ export class SteamGuard extends AuthGuard("steam") {
       return true;
     }
     try {
-      return isAllowedOrigin({ origins: [], cookieDomain })(
+      return isAllowedOrigin({ origins: [webDomain], cookieDomain })(
         new URL(redirect).origin,
       );
     } catch {

@@ -132,20 +132,27 @@ export class VoiceService {
     return `voice:remote:${kind}:${channelId}:${steamId}`;
   }
 
+  // Answers with what the flag was, so a publish that never lands can put it
+  // back rather than leave the panel describing a device that did not arrive.
   private async setRemote(
     channelId: string,
     steamId: string,
     kind: "mic" | "cam",
     remote: boolean,
-  ) {
+  ): Promise<boolean> {
     const key = VoiceService.remoteKey(channelId, steamId, kind);
 
     if (remote) {
-      await this.redis.set(key, "1");
-      return;
+      const results = (await this.redis
+        .multi()
+        .exists(key)
+        .set(key, "1")
+        .exec()) as Array<[Error | null, unknown]>;
+
+      return results?.at(0)?.at(1) === 1;
     }
 
-    await this.redis.del(key);
+    return (await this.redis.del(key)) === 1;
   }
 
   private static membersKey(channelId: string) {
@@ -380,9 +387,22 @@ export class VoiceService {
 
     // Set before the proxy rather than after: the publish is what displaces the
     // other device, and the other device is reading participants the whole time.
-    await this.setRemote(lobbyId, user.steam_id, "mic", remote);
+    const previous = await this.setRemote(
+      lobbyId,
+      user.steam_id,
+      "mic",
+      remote,
+    );
 
-    return this.publishAs(lobbyId, user.steam_id, sdp);
+    try {
+      return await this.publishAs(lobbyId, user.steam_id, sdp);
+    } catch (error) {
+      // Nothing was displaced, so the flag would go on describing a publish
+      // that never happened -- and mislabel whichever device is really on the
+      // path as the remote one.
+      await this.setRemote(lobbyId, user.steam_id, "mic", previous);
+      throw error;
+    }
   }
 
   // Keyed on a steam id rather than a User so the token paths can reuse it --
@@ -472,9 +492,19 @@ export class VoiceService {
   ) {
     await this.assertVideoMember(lobbyId, user);
 
-    await this.setRemote(lobbyId, user.steam_id, "cam", remote);
+    const previous = await this.setRemote(
+      lobbyId,
+      user.steam_id,
+      "cam",
+      remote,
+    );
 
-    return this.publishVideoAs(lobbyId, user.steam_id, sdp);
+    try {
+      return await this.publishVideoAs(lobbyId, user.steam_id, sdp);
+    } catch (error) {
+      await this.setRemote(lobbyId, user.steam_id, "cam", previous);
+      throw error;
+    }
   }
 
   private async publishVideoAs(lobbyId: string, steamId: string, sdp: string) {
@@ -655,23 +685,24 @@ export class VoiceService {
 
     const paths = known ?? (await this.mediaMtx.listPaths());
 
-    const speaking = await this.redis.mget(
-      members.map((member) =>
+    // One round trip for all three flags. This runs on every monitor pass for
+    // every live channel, and three sequential reads of the same key count is
+    // three times the latency for nothing.
+    const flags = await this.redis.mget([
+      ...members.map((member) =>
         VoiceService.speakingKey(channelId, member.steam_id),
       ),
-    );
-
-    const remoteMic = await this.redis.mget(
-      members.map((member) =>
+      ...members.map((member) =>
         VoiceService.remoteKey(channelId, member.steam_id, "mic"),
       ),
-    );
-
-    const remoteCam = await this.redis.mget(
-      members.map((member) =>
+      ...members.map((member) =>
         VoiceService.remoteKey(channelId, member.steam_id, "cam"),
       ),
-    );
+    ]);
+
+    const speaking = flags.slice(0, members.length);
+    const remoteMic = flags.slice(members.length, members.length * 2);
+    const remoteCam = flags.slice(members.length * 2);
 
     return members.map((member, index) => {
       const path = paths?.get(

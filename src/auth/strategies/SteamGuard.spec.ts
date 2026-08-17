@@ -2,12 +2,20 @@ import { SteamGuard } from "./SteamGuard";
 
 // Reaching past `private` on purpose: this is the open-redirect guard, and the
 // cases below are the reason it exists rather than an implementation detail.
-const isSafeRedirect = (redirect: string, cookieDomain = ".5stack.gg") =>
+const isSafeRedirect = (
+  redirect: string,
+  cookieDomain = ".5stack.gg",
+  webDomain = "https://5stack.gg",
+) =>
   (
     SteamGuard as unknown as {
-      isSafeRedirect: (redirect: string, cookieDomain: string) => boolean;
+      isSafeRedirect: (
+        redirect: string,
+        webDomain: string,
+        cookieDomain: string,
+      ) => boolean;
     }
-  ).isSafeRedirect(redirect, cookieDomain);
+  ).isSafeRedirect(redirect, webDomain, cookieDomain);
 
 describe("SteamGuard.isSafeRedirect", () => {
   const dev = process.env.DEV;
@@ -44,6 +52,25 @@ describe("SteamGuard.isSafeRedirect", () => {
 
   it("refuses an unrelated origin", () => {
     expect(isSafeRedirect("https://evil.com/login")).toBe(false);
+  });
+
+  it("allows the panel itself when the cookie domain does not cover it", () => {
+    // AUTH_COOKIE_DOMAIN is an override, and one set narrower than the panel's
+    // own host used to leave a deployment refusing redirects back to itself.
+    expect(
+      isSafeRedirect(
+        "https://panel.5stack.gg/login",
+        ".auth.5stack.gg",
+        "https://panel.5stack.gg",
+      ),
+    ).toBe(true);
+    expect(
+      isSafeRedirect(
+        "https://other.5stack.gg/login",
+        ".auth.5stack.gg",
+        "https://panel.5stack.gg",
+      ),
+    ).toBe(false);
   });
 
   it("refuses a plaintext subdomain", () => {

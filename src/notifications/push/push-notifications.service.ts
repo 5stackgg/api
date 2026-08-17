@@ -539,6 +539,27 @@ export class PushNotificationsService {
     }
 
     for (const delivery of deliveries) {
+      // Asleep by the time the window closed. A bundling window opened a few
+      // seconds before quiet hours began closes inside them, and delivering on
+      // that is exactly the buzz the hold exists to prevent -- so it is held
+      // again, now against the rest of the night.
+      if (delivery.quietSeconds > 0) {
+        const claim = await this.claimWindow(
+          steamId,
+          thread,
+          delivery.quietSeconds,
+        );
+
+        if (claim.leading) {
+          await this.resetPending(steamId, thread, ids, claim.ttl);
+        } else {
+          await this.appendPending(steamId, thread, ids, claim.ttl);
+        }
+
+        await this.scheduleTrailing(steamId, thread, claim.token, claim.ttl);
+        continue;
+      }
+
       // Counted from the window rather than from the rows that survived it.
       //
       // collapseOlderUnread soft-deletes every superseded ChatMessage row so
@@ -837,7 +858,15 @@ export class PushNotificationsService {
       return { leading: false, token: held, ttl };
     }
 
-    return { leading: true, token: `${Date.now()}`, ttl: bundleSeconds };
+    // Both attempts lost the race and both then found the key already gone.
+    // Claimed outright rather than merely reported: a leading edge with no
+    // window standing behind it opens a bundle nothing will ever drain, and
+    // the next message takes the leading edge again and delivers on its own.
+    const token = `${Date.now()}`;
+
+    await this.redis.set(key, token, "EX", bundleSeconds);
+
+    return { leading: true, token, ttl: bundleSeconds };
   }
 
   // Starts a window's tally at the notification that opened it.
@@ -876,7 +905,11 @@ export class PushNotificationsService {
     ttl: number,
   ): Promise<void> {
     await this.pushDeliveryQueue.add(
-      "PushDelivery",
+      // The class name, not the queue's: UseQueue registers handlers under it,
+      // and the generic processor looks the job up by the name it was added
+      // with. Spelled out rather than referenced, or importing the job here
+      // would close a cycle back through its own constructor.
+      "SendPushDelivery",
       { steamId, thread },
       {
         jobId: `push-trail.${steamId}.${thread}.${token}`,

@@ -217,11 +217,8 @@ describe("VoiceService", () => {
         ],
       ]),
     );
-    // speaking, then remote mic, then remote cam
-    redis.mget
-      .mockResolvedValueOnce([null])
-      .mockResolvedValueOnce(["1"])
-      .mockResolvedValueOnce([null]);
+    // One read for all three flags: speaking, then remote mic, then remote cam.
+    redis.mget.mockResolvedValueOnce([null, "1", null]);
 
     const [me] = await service.participants(LOBBY_ID, ME);
 
@@ -240,10 +237,7 @@ describe("VoiceService", () => {
         { steam_id: ME.steam_id, name: "me", avatar_url: null },
       ]);
     mediaMtx.listPaths.mockResolvedValue(new Map());
-    redis.mget
-      .mockResolvedValueOnce([null])
-      .mockResolvedValueOnce(["1"])
-      .mockResolvedValueOnce(["1"]);
+    redis.mget.mockResolvedValueOnce([null, "1", "1"]);
 
     const [me] = await service.participants(LOBBY_ID, ME);
 
@@ -264,7 +258,7 @@ describe("VoiceService", () => {
     mediaMtx.listPaths.mockResolvedValue(
       new Map([[`voice-${LOBBY_ID}-${PEER}`, { ready: true }]]),
     );
-    redis.mget.mockResolvedValue(["1"]);
+    redis.mget.mockResolvedValue(["1", null, null]);
 
     const [participant] = await service.participants(LOBBY_ID, ME);
 
@@ -281,7 +275,7 @@ describe("VoiceService", () => {
         { steam_id: PEER, name: "peer", avatar_url: null },
       ]);
     mediaMtx.listPaths.mockResolvedValue(new Map());
-    redis.mget.mockResolvedValue(["1"]);
+    redis.mget.mockResolvedValue(["1", null, null]);
 
     const [participant] = await service.participants(LOBBY_ID, ME);
 
