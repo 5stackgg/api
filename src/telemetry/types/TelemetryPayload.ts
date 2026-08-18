@@ -1,4 +1,4 @@
-export const TELEMETRY_SCHEMA_VERSION = 2;
+export const TELEMETRY_SCHEMA_VERSION = 3;
 
 export type TelemetryFeature = {
   enabled: boolean | null;
@@ -38,6 +38,13 @@ export type TelemetryPayload = {
     month: number;
     year: number;
     maps_played: number;
+    // Outcomes of the matches counted in `total`, so they decompose it:
+    // abandoned counts a match that went live and never reached a result.
+    finished: number;
+    abandoned: number;
+    live: number;
+    // by_type decomposes `total`; by_source spans hosted and imported both,
+    // since naming the source is the only thing it is for.
     by_type: Record<string, number>;
     by_source: Record<string, number>;
     tournament: number;
