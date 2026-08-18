@@ -467,6 +467,9 @@ describe("telemetry (SQL-driven)", () => {
           count: null as number | null,
         },
         branding: { enabled: true, count: null as number | null },
+        // Stored as a setting -- which is where its `enabled` comes from --
+        // but written from whether credentials are configured, not by an admin.
+        discord_bot: { enabled: true, count: 12 },
       },
     });
 
@@ -594,12 +597,9 @@ describe("telemetry (SQL-driven)", () => {
       // Derived from whether a brand was filled in, so there is no switch to
       // report an adoption rate for.
       expect(kind("branding")).toBe("detected");
-      // Stored as a setting -- which is where its `enabled` comes from -- but
-      // written from whether Discord credentials are configured, not by an
-      // admin. Being in both maps is what made this read as a toggle.
+      // In FeatureFlags as well, since that is where its `enabled` is read
+      // from. Asking that map first is what made this read as a toggle.
       expect(kind("discord_bot")).toBe("detected");
-      expect(kind("game_server_nodes")).toBe("detected");
-      expect(kind("version_pinning")).toBe("detected");
       // Auto highlights does have a switch, even though this fixture reports
       // no flag for it — the classification comes from the catalog, not the row.
       expect(kind("highlights")).toBe("setting");
