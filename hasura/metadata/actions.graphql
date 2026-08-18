@@ -1237,9 +1237,22 @@ type TelemetryFleetTotals {
   playersKnown: Int!
   playersRegistered: Int!
   playersPlayed: Int!
+  appearancesReported: Int!
+  playerAppearances: Int!
   playersActive7d: Int!
   playersActive30d: Int!
   teams: Int!
+  competitionReported: Int!
+  tournaments: Int!
+  tournamentsFinished: Int!
+  tournamentTeams: Int!
+  leagueSeasons: Int!
+  leagueSeasonsFinished: Int!
+  leagueRegistrations: Int!
+  leagueTeams: Int!
+  scrimRequests: Int!
+  events: Int!
+  eventTeams: Int!
 }
 
 type TelemetryFeatureAdoption {
@@ -1267,6 +1280,8 @@ type TelemetryMatchSourceCount {
 
 type TelemetryVersionCount {
   version: String!
+  rank: Int!
+  since: String!
   installs: Int!
 }
 

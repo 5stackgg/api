@@ -185,12 +185,65 @@ describe("telemetry (SQL-driven)", () => {
       expect(payload.servers.dedicated).toBe(1);
     });
 
+    it("keeps a disabled node out of the online count", async () => {
+      await postgres.query(
+        `INSERT INTO game_server_nodes
+           (id, public_ip, start_port_range, end_port_range, region, status, enabled, label)
+         VALUES ('telemetry-node-off', '203.0.113.2', 27015, 27025, 'TelemetryRegion', 'Online', false, 'off')`,
+      );
+
+      const fresh = await service.collect();
+
+      // Two nodes, one of them switched off but still reporting itself up.
+      // Online has to stay inside enabled or the three counts stop describing
+      // one population and the fleet page cannot draw them as bands.
+      expect(fresh.nodes.total).toBe(2);
+      expect(fresh.nodes.enabled).toBe(1);
+      expect(fresh.nodes.online).toBe(1);
+      // Its region does not count as reach either -- nothing can be served
+      // from a node nobody has switched on.
+      expect(fresh.nodes.regions).toBe(1);
+
+      await postgres.query(
+        "DELETE FROM game_server_nodes WHERE id = 'telemetry-node-off'",
+      );
+    });
+
+    it("keeps a disabled GPU node out of the capacity it cannot provide", async () => {
+      await postgres.query(
+        `INSERT INTO game_server_nodes
+           (id, public_ip, start_port_range, end_port_range, region, status,
+            enabled, label, gpu, gpu_demos_enabled)
+         VALUES ('telemetry-gpu-off', '203.0.113.3', 27015, 27025, 'TelemetryRegion',
+                 'Online', false, 'gpu-off', true, true)`,
+      );
+
+      const fresh = await service.collect();
+
+      // The GPU lane on the fleet page is drawn as a slice of the enabled
+      // nodes, so a switched-off GPU node counted here would make the slice
+      // bigger than the bar it sits in.
+      expect(fresh.nodes.gpu).toBe(0);
+      expect(fresh.features.demo_playback.enabled).toBe(false);
+
+      await postgres.query(
+        "DELETE FROM game_server_nodes WHERE id = 'telemetry-gpu-off'",
+      );
+    });
+
     it("counts only players who have signed in as registered", () => {
       expect(payload.players.known).toBe(3);
       expect(payload.players.registered).toBe(1);
     });
 
     it("counts players with stats on at least one map as having played", () => {
+      expect(payload.players.played).toBe(2);
+    });
+
+    it("separates how many people played from how often they played", () => {
+      // Two players, one map each. The pair is the point: matches alone cannot
+      // tell a community apart from the same few people playing repeatedly.
+      expect(payload.players.appearances).toBe(2);
       expect(payload.players.played).toBe(2);
     });
 
@@ -254,6 +307,23 @@ describe("telemetry (SQL-driven)", () => {
       expect(payload.features.live_streaming.count).toBe(0);
     });
 
+    it("reports the competition each panel actually ran", () => {
+      // Nothing is seeded here, so this is the schema check: every table and
+      // column the competition block touches has to exist.
+      expect(payload.competition).toEqual({
+        tournaments: 0,
+        tournaments_finished: 0,
+        tournament_teams: 0,
+        league_seasons: 0,
+        league_seasons_finished: 0,
+        league_registrations: 0,
+        league_teams: 0,
+        scrim_requests: 0,
+        events: 0,
+        event_teams: 0,
+      });
+    });
+
     it("keeps the install id out of the guest-readable settings namespace", async () => {
       const rows = await postgres.query<Array<{ name: string }>>(
         "SELECT name FROM settings WHERE value = $1",
@@ -304,6 +374,7 @@ describe("telemetry (SQL-driven)", () => {
         known: 900,
         registered: 300,
         played: 210,
+        appearances: 4200,
         active_7d: 40,
         active_30d: 90,
         teams: 22,
@@ -452,9 +523,22 @@ describe("telemetry (SQL-driven)", () => {
         known: 200,
         registered: 50,
         played: 35,
+        appearances: 700,
         active_7d: 5,
         active_30d: 12,
         teams: 3,
+      },
+      competition: {
+        tournaments: 6,
+        tournaments_finished: 4,
+        tournament_teams: 48,
+        league_seasons: 2,
+        league_seasons_finished: 1,
+        league_registrations: 3,
+        league_teams: 12,
+        scrim_requests: 9,
+        events: 5,
+        event_teams: 15,
       },
       features: {
         events: { enabled: installId === installA, count: 3 },
@@ -489,6 +573,9 @@ describe("telemetry (SQL-driven)", () => {
       expect(stats.totals.playersKnown).toBe(400);
       expect(stats.totals.playersRegistered).toBe(100);
       expect(stats.totals.playersPlayed).toBe(70);
+      // 1,400 map appearances over 70 distinct players -- 20 maps each.
+      expect(stats.totals.playerAppearances).toBe(1400);
+      expect(stats.totals.appearancesReported).toBe(2);
       // Imported matches are summed apart from the ones the panels hosted.
       expect(stats.totals.matchesImported).toBe(35);
       expect(stats.totals.matchesImportedMonth).toBe(4);
@@ -502,6 +589,38 @@ describe("telemetry (SQL-driven)", () => {
       expect(stats.totals.playersActive7d).toBe(10);
       expect(stats.totals.matchesAbandoned).toBe(6);
       expect(stats.totals.matchesLive).toBe(4);
+    });
+
+    // A sha does not sort, so the only thing that says which build is current
+    // is when each one first turned up.
+    it("ranks builds by first appearance so the fleet's lag is readable", async () => {
+      await postgres.query(
+        `INSERT INTO telemetry_snapshots (install_id, day, payload)
+         VALUES ($1, current_date - 30, $2)`,
+        [
+          installA,
+          JSON.stringify({
+            ...report(installA, 100, 4),
+            panel_version: "0ldbui1d",
+          }),
+        ],
+      );
+
+      await service.record("203.0.113.1", "US", {
+        ...report(installA, 100, 4),
+        panel_version: "0ldbui1d",
+      });
+
+      const stats = await service.getFleetStats();
+
+      // cafebabe first showed up today, the other a month ago, so cafebabe is
+      // the current build and installA is one release behind.
+      expect(
+        stats.versions.map((v) => [v.version, v.rank, v.installs]),
+      ).toEqual([
+        ["cafebabe", 1, 1],
+        ["0ldbui1d", 2, 1],
+      ]);
     });
 
     it("says how many panels are old enough to report match outcomes", async () => {
@@ -528,6 +647,53 @@ describe("telemetry (SQL-driven)", () => {
       expect(row.payload.matches.finished).toBeNull();
     });
 
+    it("sums the competition each panel ran, and says who reported it", async () => {
+      const stats = await service.getFleetStats();
+
+      expect(stats.totals.competitionReported).toBe(2);
+      expect(stats.totals.tournaments).toBe(12);
+      expect(stats.totals.tournamentsFinished).toBe(8);
+      expect(stats.totals.tournamentTeams).toBe(96);
+      expect(stats.totals.leagueSeasons).toBe(4);
+      expect(stats.totals.leagueRegistrations).toBe(6);
+      expect(stats.totals.scrimRequests).toBe(18);
+      expect(stats.totals.events).toBe(10);
+      expect(stats.totals.eventTeams).toBe(30);
+    });
+
+    it("leaves a panel that never reported appearances out of that count", async () => {
+      const legacy = report(installA, 100, 4) as Record<string, any>;
+      delete legacy.players.appearances;
+
+      await service.record("203.0.113.1", "US", legacy);
+
+      const stats = await service.getFleetStats();
+
+      expect(stats.totals.appearancesReported).toBe(1);
+      expect(stats.totals.playerAppearances).toBe(700);
+    });
+
+    it("leaves a panel with no competition block out of that count", async () => {
+      const legacy = report(installA, 100, 4) as Record<string, any>;
+      delete legacy.competition;
+
+      await service.record("203.0.113.1", "US", legacy);
+
+      const stats = await service.getFleetStats();
+
+      // Only installB still reports it, and its numbers stand alone rather
+      // than being averaged down by a panel that reported nothing.
+      expect(stats.totals.competitionReported).toBe(1);
+      expect(stats.totals.tournaments).toBe(6);
+
+      const [row] = await postgres.query<Array<{ payload: any }>>(
+        "SELECT payload FROM telemetry_installs WHERE install_id = $1",
+        [installA],
+      );
+
+      expect(row.payload.competition).toBeNull();
+    });
+
     it("adds up the match type and source mixes across the fleet", async () => {
       const stats = await service.getFleetStats();
 
@@ -549,7 +715,14 @@ describe("telemetry (SQL-driven)", () => {
     it("breaks the fleet down by version, runtime and country", async () => {
       const stats = await service.getFleetStats();
 
-      expect(stats.versions).toEqual([{ version: "cafebabe", installs: 2 }]);
+      expect(stats.versions).toEqual([
+        {
+          version: "cafebabe",
+          rank: 1,
+          since: new Date().toISOString().slice(0, 10),
+          installs: 2,
+        },
+      ]);
       expect(stats.runtimes).toEqual([{ runtime: "css", installs: 2 }]);
       expect(stats.countries).toEqual([
         { country: "DE", installs: 1 },

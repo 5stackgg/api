@@ -7,6 +7,7 @@ import { PostgresService } from "src/postgres/postgres.service";
 import { SystemService } from "src/system/system.service";
 import { CacheService } from "src/cache/cache.service";
 import {
+  TelemetryCompetition,
   TelemetryFeature,
   TelemetryPayload,
   TELEMETRY_SCHEMA_VERSION,
@@ -236,9 +237,22 @@ export class TelemetryService {
         known: counts.players_known,
         registered: counts.players_registered,
         played: counts.players_played,
+        appearances: counts.player_appearances,
         active_7d: counts.players_active_7d,
         active_30d: counts.players_active_30d,
         teams: counts.teams_total,
+      },
+      competition: {
+        tournaments: counts.tournaments,
+        tournaments_finished: counts.tournaments_finished,
+        tournament_teams: counts.tournament_teams,
+        league_seasons: counts.league_seasons,
+        league_seasons_finished: counts.league_seasons_finished,
+        league_registrations: counts.league_registrations,
+        league_teams: counts.league_teams,
+        scrim_requests: counts.scrim_requests,
+        events: counts.events,
+        event_teams: counts.event_teams,
       },
       features: this.buildFeatures(settings, counts),
     };
@@ -397,9 +411,29 @@ export class TelemetryService {
          coalesce(sum((payload->'players'->>'known')::numeric), 0)            AS "playersKnown",
          coalesce(sum((payload->'players'->>'registered')::numeric), 0)       AS "playersRegistered",
          coalesce(sum((payload->'players'->>'played')::numeric), 0)           AS "playersPlayed",
+         count(*) FILTER (
+           WHERE payload->'players'->>'appearances' IS NOT NULL
+         )                                                                    AS "appearancesReported",
+         coalesce(sum((payload->'players'->>'appearances')::numeric), 0)      AS "playerAppearances",
          coalesce(sum((payload->'players'->>'active_7d')::numeric), 0)        AS "playersActive7d",
          coalesce(sum((payload->'players'->>'active_30d')::numeric), 0)       AS "playersActive30d",
-         coalesce(sum((payload->'players'->>'teams')::numeric), 0)            AS teams
+         coalesce(sum((payload->'players'->>'teams')::numeric), 0)            AS teams,
+
+         -- Same absent-vs-zero split as the match outcomes above: this whole
+         -- section postdates the builds most of the fleet is running.
+         count(*) FILTER (
+           WHERE jsonb_typeof(payload->'competition') = 'object'
+         )                                                                    AS "competitionReported",
+         coalesce(sum((payload->'competition'->>'tournaments')::numeric), 0)           AS tournaments,
+         coalesce(sum((payload->'competition'->>'tournaments_finished')::numeric), 0)  AS "tournamentsFinished",
+         coalesce(sum((payload->'competition'->>'tournament_teams')::numeric), 0)      AS "tournamentTeams",
+         coalesce(sum((payload->'competition'->>'league_seasons')::numeric), 0)        AS "leagueSeasons",
+         coalesce(sum((payload->'competition'->>'league_seasons_finished')::numeric), 0) AS "leagueSeasonsFinished",
+         coalesce(sum((payload->'competition'->>'league_registrations')::numeric), 0)  AS "leagueRegistrations",
+         coalesce(sum((payload->'competition'->>'league_teams')::numeric), 0)          AS "leagueTeams",
+         coalesce(sum((payload->'competition'->>'scrim_requests')::numeric), 0)        AS "scrimRequests",
+         coalesce(sum((payload->'competition'->>'events')::numeric), 0)                AS events,
+         coalesce(sum((payload->'competition'->>'event_teams')::numeric), 0)           AS "eventTeams"
        FROM public.telemetry_installs
        WHERE last_seen_at >= now() - interval '30 days'
          AND payload ? 'matches'`,
@@ -435,9 +469,22 @@ export class TelemetryService {
       "playersKnown",
       "playersRegistered",
       "playersPlayed",
+      "appearancesReported",
+      "playerAppearances",
       "playersActive7d",
       "playersActive30d",
       "teams",
+      "competitionReported",
+      "tournaments",
+      "tournamentsFinished",
+      "tournamentTeams",
+      "leagueSeasons",
+      "leagueSeasonsFinished",
+      "leagueRegistrations",
+      "leagueTeams",
+      "scrimRequests",
+      "events",
+      "eventTeams",
     ]);
   }
 
@@ -487,16 +534,13 @@ export class TelemetryService {
   // only ever lands in the payload, so it has to be read back out of the json.
   private async getFleetDistribution() {
     const [versions, runtimes, countries] = await Promise.all([
-      this.countInstallsBy("panel_version"),
+      this.getVersionAdoption(),
       this.countInstallsBy("payload->>'plugin_runtime'"),
       this.countInstallsBy("country"),
     ]);
 
     return {
-      versions: versions.map(({ name, installs }) => ({
-        version: name,
-        installs,
-      })),
+      versions,
       runtimes: runtimes.map(({ name, installs }) => ({
         runtime: name,
         installs,
@@ -506,6 +550,47 @@ export class TelemetryService {
         installs,
       })),
     };
+  }
+
+  // A commit sha does not sort, so "newest" is decided by when each build first
+  // showed up in anybody's report. Ranking that way turns a list of hashes --
+  // which says nothing on its own -- into how far behind the fleet is running.
+  private async getVersionAdoption() {
+    const rows = await this.postgres.query<Array<Record<string, string>>>(
+      `WITH seen AS (
+         SELECT
+           payload->>'panel_version'                       AS version,
+           min(day)                                        AS since
+         FROM public.telemetry_snapshots
+         WHERE coalesce(payload->>'panel_version', '') <> ''
+         GROUP BY 1
+       ),
+       ranked AS (
+         SELECT version, since,
+                row_number() OVER (ORDER BY since DESC, version ASC) AS rank
+         FROM seen
+       )
+       SELECT
+         r.version                              AS version,
+         r.rank                                 AS rank,
+         to_char(r.since, 'YYYY-MM-DD')         AS since,
+         count(i.install_id)                    AS installs
+       FROM ranked r
+       LEFT JOIN public.telemetry_installs i
+              ON i.panel_version = r.version
+             AND i.last_seen_at >= now() - interval '30 days'
+       GROUP BY 1, 2, 3
+       -- A build nobody is running any more is history, not fleet state.
+       HAVING count(i.install_id) > 0
+       ORDER BY r.rank ASC
+       LIMIT 25`,
+    );
+
+    return rows.map((row) => ({
+      version: row.version,
+      since: row.since,
+      ...TelemetryService.toIntegers(row, ["rank", "installs"]),
+    }));
   }
 
   private async countInstallsBy(expression: string) {
@@ -776,11 +861,39 @@ export class TelemetryService {
         known: int(players.known),
         registered: int(players.registered),
         played: int(players.played),
+        appearances: optionalInt(players.appearances),
         active_7d: int(players.active_7d),
         active_30d: int(players.active_30d),
         teams: int(players.teams),
       },
+      competition: TelemetryService.sanitizeCompetition(body.competition, int),
       features: TelemetryService.sanitizeFeatures(body.features, int),
+    };
+  }
+
+  // Null in, null out. Rebuilding an absent section as a block of zeroes would
+  // put every panel too old to report it into the fleet total as a zero.
+  private static sanitizeCompetition(
+    value: unknown,
+    int: (value: unknown) => number,
+  ): TelemetryCompetition | null {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      return null;
+    }
+
+    const competition = value as Record<string, any>;
+
+    return {
+      tournaments: int(competition.tournaments),
+      tournaments_finished: int(competition.tournaments_finished),
+      tournament_teams: int(competition.tournament_teams),
+      league_seasons: int(competition.league_seasons),
+      league_seasons_finished: int(competition.league_seasons_finished),
+      league_registrations: int(competition.league_registrations),
+      league_teams: int(competition.league_teams),
+      scrim_requests: int(competition.scrim_requests),
+      events: int(competition.events),
+      event_teams: int(competition.event_teams),
     };
   }
 
@@ -1070,22 +1183,33 @@ export class TelemetryService {
 
         (SELECT count(*) FROM public.game_server_nodes)                                  AS nodes_total,
         (SELECT count(*) FROM public.game_server_nodes WHERE enabled)                    AS nodes_enabled,
-        (SELECT count(*) FROM public.game_server_nodes WHERE status = 'Online')          AS nodes_online,
+        -- Enabled as well as up. A disabled node keeps reporting its status, so
+        -- counting status alone puts nodes that cannot take a match into the
+        -- online count and leaves online larger than enabled -- which stops the
+        -- three node counts describing one population.
+        (SELECT count(*) FROM public.game_server_nodes
+          WHERE enabled AND status = 'Online')                                           AS nodes_online,
         (SELECT count(DISTINCT region) FROM public.game_server_nodes
-          WHERE region IS NOT NULL)                                                      AS nodes_regions,
+          WHERE enabled AND region IS NOT NULL)                                          AS nodes_regions,
 
         -- Demo playback, clip rendering and live streaming are each switched
         -- per GPU node rather than by a setting, so "on" means at least one
         -- node is carrying that workload.
-        (SELECT count(*) FROM public.game_server_nodes WHERE gpu)                        AS gpu_nodes,
+        --
+        -- Every node count below is scoped to enabled. A node an operator has
+        -- switched off is not capacity and cannot carry a workload, and once
+        -- the disabled ones are counted the GPU total stops being a slice of
+        -- the same population as the online/offline split.
+        (SELECT count(*) FROM public.game_server_nodes
+          WHERE enabled AND gpu)                                                         AS gpu_nodes,
         (SELECT count(*) FROM public.game_server_nodes
           WHERE pin_build_id IS NOT NULL OR pin_plugin_version IS NOT NULL)              AS nodes_pinned,
         (SELECT count(*) FROM public.game_server_nodes
-          WHERE gpu AND gpu_demos_enabled)                                               AS gpu_demo_nodes,
+          WHERE enabled AND gpu AND gpu_demos_enabled)                                               AS gpu_demo_nodes,
         (SELECT count(*) FROM public.game_server_nodes
-          WHERE gpu AND gpu_rendering_enabled)                                           AS gpu_render_nodes,
+          WHERE enabled AND gpu AND gpu_rendering_enabled)                                           AS gpu_render_nodes,
         (SELECT count(*) FROM public.game_server_nodes
-          WHERE gpu AND gpu_streaming_enabled)                                           AS gpu_stream_nodes,
+          WHERE enabled AND gpu AND gpu_streaming_enabled)                                           AS gpu_stream_nodes,
 
         (SELECT count(*) FROM public.servers
           WHERE ${TelemetryService.RealServer})                                          AS servers_total,
@@ -1155,6 +1279,9 @@ export class TelemetryService {
         -- Stats land per map from live round events and from parsed demos, so
         -- this is everyone who played rather than everyone who was rostered.
         (SELECT count(DISTINCT steam_id) FROM public.player_match_map_stats)             AS players_played,
+        -- Rows, not distinct players: the pair is what separates a busy
+        -- community from a handful of people playing a lot.
+        (SELECT count(*) FROM public.player_match_map_stats)                             AS player_appearances,
         (SELECT count(*) FROM public.teams)                                              AS teams_total,
         -- An OR across both lineup columns cannot use an index and forces a
         -- join over every lineup row. Feeding the two sides in separately lets
@@ -1173,7 +1300,15 @@ export class TelemetryService {
             ))                                                                           AS players_active_30d,
 
         (SELECT count(*) FROM public.tournaments)                                        AS tournaments,
+        (SELECT count(*) FROM public.tournaments WHERE status = 'Finished')              AS tournaments_finished,
+        (SELECT count(*) FROM public.tournament_teams)                                   AS tournament_teams,
         (SELECT count(*) FROM public.league_seasons)                                     AS league_seasons,
+        (SELECT count(*) FROM public.league_seasons WHERE status = 'Finished')           AS league_seasons_finished,
+        -- Not league_divisions: the four tiers are seeded by migration, so
+        -- every install reports the same four whether or not it runs a league.
+        (SELECT count(*) FROM public.league_team_seasons)                                AS league_registrations,
+        (SELECT count(*) FROM public.league_teams)                                       AS league_teams,
+        (SELECT count(*) FROM public.event_teams)                                        AS event_teams,
         (SELECT count(*) FROM public.seasons)                                            AS seasons,
         (SELECT count(*) FROM public.events)                                             AS events,
         (SELECT count(*) FROM public.news_articles)                                      AS news_articles,
