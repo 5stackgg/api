@@ -165,7 +165,7 @@ export class NotificationsService {
     // months of team-mates is routinely hundreds of rows and the event trigger
     // fires per row, so every one of them resolved recipients and sent on its
     // own; notifyPlayers claims the burst so a single job covers it.
-    await this.notifyPlayers("PlayerSanctioned", {
+    const notified = await this.notifyPlayers("PlayerSanctioned", {
       title: "Player Sanctioned",
       message,
       role: "user",
@@ -174,7 +174,8 @@ export class NotificationsService {
     });
 
     this.logger.log(
-      `notified ${recipients.length} co-player(s) of sanction (${sanction.type}) on ${sanction.steamId}`,
+      `notified ${notified} of ${recipients.length} co-player(s) of sanction ` +
+        `(${sanction.type}) on ${sanction.steamId}`,
     );
   }
 
@@ -352,7 +353,12 @@ export class NotificationsService {
         window ?? { ids },
         {
           ...(window
-            ? { jobId: `push-broadcast.${window.type}.${window.entityId}` }
+            ? {
+                jobId: PushNotificationsService.batchJobId(
+                  window.type,
+                  window.entityId,
+                ),
+              }
             : {}),
           removeOnComplete: { age: 3600 },
           removeOnFail: { age: 3600 },
@@ -489,6 +495,12 @@ export class NotificationsService {
         color,
       });
     }
+
+    // How many rows were written, not how many recipients were offered. The
+    // two differ by everyone who muted the category and has no subscription to
+    // fall back on, and the caller logging the wrong one sends whoever is
+    // debugging "why was nobody told" after a delivery bug that is not there.
+    return steamIds.length;
   }
 
   // Retracts alerts that describe a condition rather than an event.

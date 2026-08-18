@@ -2573,7 +2573,19 @@ export default {
             ]
         },
         "TelemetryFleetTotals": {
+            "appearancesReported": [
+                40
+            ],
+            "competitionReported": [
+                40
+            ],
             "dedicatedServers": [
+                40
+            ],
+            "eventTeams": [
+                40
+            ],
+            "events": [
                 40
             ],
             "gameServerNodes": [
@@ -2586,6 +2598,18 @@ export default {
                 40
             ],
             "gpuNodes": [
+                40
+            ],
+            "leagueRegistrations": [
+                40
+            ],
+            "leagueSeasons": [
+                40
+            ],
+            "leagueSeasonsFinished": [
+                40
+            ],
+            "leagueTeams": [
                 40
             ],
             "mapsPlayed": [
@@ -2633,7 +2657,13 @@ export default {
             "matchesYear": [
                 40
             ],
+            "outcomesReported": [
+                40
+            ],
             "panels": [
+                40
+            ],
+            "playerAppearances": [
                 40
             ],
             "playersActive30d": [
@@ -2657,6 +2687,9 @@ export default {
             "regions": [
                 40
             ],
+            "scrimRequests": [
+                40
+            ],
             "servers": [
                 40
             ],
@@ -2664,6 +2697,15 @@ export default {
                 40
             ],
             "teams": [
+                40
+            ],
+            "tournamentTeams": [
+                40
+            ],
+            "tournaments": [
+                40
+            ],
+            "tournamentsFinished": [
                 40
             ],
             "__typename": [
@@ -2708,9 +2750,6 @@ export default {
             "matches": [
                 40
             ],
-            "panels": [
-                40
-            ],
             "source": [
                 80
             ],
@@ -2720,9 +2759,6 @@ export default {
         },
         "TelemetryMatchTypeCount": {
             "matches": [
-                40
-            ],
-            "panels": [
                 40
             ],
             "type": [
@@ -2784,6 +2820,12 @@ export default {
         "TelemetryVersionCount": {
             "installs": [
                 40
+            ],
+            "rank": [
+                40
+            ],
+            "since": [
+                80
             ],
             "version": [
                 80

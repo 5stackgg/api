@@ -1268,13 +1268,11 @@ type TelemetryFeatureAdoption {
 
 type TelemetryMatchTypeCount {
   type: String!
-  panels: Int!
   matches: Int!
 }
 
 type TelemetryMatchSourceCount {
   source: String!
-  panels: Int!
   matches: Int!
 }
 

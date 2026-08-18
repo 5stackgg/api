@@ -121,8 +121,9 @@ describe("telemetry (SQL-driven)", () => {
         [signedIn, ghost, ran.mapId, ran.matchId],
       );
 
-      // Two people watched a demo back; nobody uploaded one. Demo playback used
-      // to be reported as the stored-demo count, which made these one number.
+      // Two live playback sessions, so the assertion below proves demo_playback
+      // reports no count even while sessions exist -- these rows are deleted
+      // when the session ends and so can never be a usage total.
       await postgres.query(
         `INSERT INTO match_demo_sessions
            (match_map_id, match_id, watcher_steam_id, k8s_job_name)
@@ -301,10 +302,15 @@ describe("telemetry (SQL-driven)", () => {
       expect(payload.features.game_server_nodes.count).toBe(1);
       expect(payload.features.version_pinning.count).toBe(0);
 
-      // Playback sessions, not stored demos: the two used to be one number.
-      expect(payload.features.demo_playback.count).toBe(2);
       expect(payload.features.demos.count).toBe(0);
-      expect(payload.features.live_streaming.count).toBe(0);
+
+      // Not measured, not zero. match_demo_sessions and match_streams are torn
+      // down with the session, so any count read off them says how many people
+      // were watching during the collect. Adoption comes from `enabled`, which
+      // is a GPU node carrying the workload; two sessions are seeded above and
+      // the count is still null.
+      expect(payload.features.demo_playback.count).toBeNull();
+      expect(payload.features.live_streaming.count).toBeNull();
     });
 
     it("reports the competition each panel actually ran", () => {
@@ -709,7 +715,6 @@ describe("telemetry (SQL-driven)", () => {
 
       // Ordered by volume so the page can slice a top N off the front.
       expect(stats.matchTypes[0].type).toBe("Competitive");
-      expect(stats.matchTypes[0].panels).toBe(2);
     });
 
     it("breaks the fleet down by version, runtime and country", async () => {

@@ -171,6 +171,11 @@ const pendingTtlFor = (windowSeconds: number) =>
 
 @Injectable()
 export class PushNotificationsService {
+  // How far back a batched send resolves the rows of one burst, and so how wide
+  // the bucket in batchJobId is. The two have to agree: a job id that outlives
+  // the window it covers swallows a burst nothing will ever send.
+  public static readonly BATCH_WINDOW_MINUTES = 15;
+
   private readonly appConfig: AppConfig;
   private readonly webPushConfig: WebPushConfig;
   private readonly redis: Redis;
@@ -410,6 +415,26 @@ export class PushNotificationsService {
     return BATCHED_TYPES.has(type);
   }
 
+  // The id a burst collapses onto. Bucketed by time as well as by entity: the
+  // entity alone is stable for a type that can happen to the same entity twice.
+  // PlayerSanctioned keys on the sanctioned player's steam id, so muting a
+  // player at 10:00 and banning them at 10:20 produced the same jobId, and
+  // BullMQ rejected the second burst as a duplicate of the completed job it
+  // retains for an hour -- nobody was told about the ban. Worst case a burst
+  // straddles a bucket edge and sends twice, which the device collapses on its
+  // tag; that is the direction this code already prefers to fail in.
+  public static batchJobId(
+    type: string,
+    entityId: string | undefined,
+    at: number = Date.now(),
+  ): string {
+    const bucket = Math.floor(
+      at / (PushNotificationsService.BATCH_WINDOW_MINUTES * 60_000),
+    );
+
+    return `push-broadcast.${type}.${entityId}.${bucket}`;
+  }
+
   public async subscribe(
     steamId: string,
     subscription: PushSubscriptionPayload,
@@ -505,7 +530,11 @@ export class PushNotificationsService {
       return;
     }
 
-    const selector = { type, entityId, withinMinutes: 15 };
+    const selector = {
+      type,
+      entityId,
+      withinMinutes: PushNotificationsService.BATCH_WINDOW_MINUTES,
+    };
     const row = await this.newestOf(selector);
 
     if (!row) {

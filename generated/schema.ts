@@ -729,11 +729,19 @@ export interface TelemetryFeatureAdoption {
 }
 
 export interface TelemetryFleetTotals {
+    appearancesReported: Scalars['Int']
+    competitionReported: Scalars['Int']
     dedicatedServers: Scalars['Int']
+    eventTeams: Scalars['Int']
+    events: Scalars['Int']
     gameServerNodes: Scalars['Int']
     gameServerNodesEnabled: Scalars['Int']
     gameServerNodesOnline: Scalars['Int']
     gpuNodes: Scalars['Int']
+    leagueRegistrations: Scalars['Int']
+    leagueSeasons: Scalars['Int']
+    leagueSeasonsFinished: Scalars['Int']
+    leagueTeams: Scalars['Int']
     mapsPlayed: Scalars['Int']
     matches: Scalars['Int']
     matchesAbandoned: Scalars['Int']
@@ -749,7 +757,9 @@ export interface TelemetryFleetTotals {
     matchesTournament: Scalars['Int']
     matchesWeek: Scalars['Int']
     matchesYear: Scalars['Int']
+    outcomesReported: Scalars['Int']
     panels: Scalars['Int']
+    playerAppearances: Scalars['Int']
     playersActive30d: Scalars['Int']
     playersActive7d: Scalars['Int']
     playersKnown: Scalars['Int']
@@ -757,9 +767,13 @@ export interface TelemetryFleetTotals {
     playersRegistered: Scalars['Int']
     publicServers: Scalars['Int']
     regions: Scalars['Int']
+    scrimRequests: Scalars['Int']
     servers: Scalars['Int']
     serversEnabled: Scalars['Int']
     teams: Scalars['Int']
+    tournamentTeams: Scalars['Int']
+    tournaments: Scalars['Int']
+    tournamentsFinished: Scalars['Int']
     __typename: 'TelemetryFleetTotals'
 }
 
@@ -781,14 +795,12 @@ export interface TelemetryInstallCounts {
 
 export interface TelemetryMatchSourceCount {
     matches: Scalars['Int']
-    panels: Scalars['Int']
     source: Scalars['String']
     __typename: 'TelemetryMatchSourceCount'
 }
 
 export interface TelemetryMatchTypeCount {
     matches: Scalars['Int']
-    panels: Scalars['Int']
     type: Scalars['String']
     __typename: 'TelemetryMatchTypeCount'
 }
@@ -816,6 +828,8 @@ export interface TelemetryStats {
 
 export interface TelemetryVersionCount {
     installs: Scalars['Int']
+    rank: Scalars['Int']
+    since: Scalars['String']
     version: Scalars['String']
     __typename: 'TelemetryVersionCount'
 }
@@ -37655,11 +37669,19 @@ export interface TelemetryFeatureAdoptionGenqlSelection{
 }
 
 export interface TelemetryFleetTotalsGenqlSelection{
+    appearancesReported?: boolean | number
+    competitionReported?: boolean | number
     dedicatedServers?: boolean | number
+    eventTeams?: boolean | number
+    events?: boolean | number
     gameServerNodes?: boolean | number
     gameServerNodesEnabled?: boolean | number
     gameServerNodesOnline?: boolean | number
     gpuNodes?: boolean | number
+    leagueRegistrations?: boolean | number
+    leagueSeasons?: boolean | number
+    leagueSeasonsFinished?: boolean | number
+    leagueTeams?: boolean | number
     mapsPlayed?: boolean | number
     matches?: boolean | number
     matchesAbandoned?: boolean | number
@@ -37675,7 +37697,9 @@ export interface TelemetryFleetTotalsGenqlSelection{
     matchesTournament?: boolean | number
     matchesWeek?: boolean | number
     matchesYear?: boolean | number
+    outcomesReported?: boolean | number
     panels?: boolean | number
+    playerAppearances?: boolean | number
     playersActive30d?: boolean | number
     playersActive7d?: boolean | number
     playersKnown?: boolean | number
@@ -37683,9 +37707,13 @@ export interface TelemetryFleetTotalsGenqlSelection{
     playersRegistered?: boolean | number
     publicServers?: boolean | number
     regions?: boolean | number
+    scrimRequests?: boolean | number
     servers?: boolean | number
     serversEnabled?: boolean | number
     teams?: boolean | number
+    tournamentTeams?: boolean | number
+    tournaments?: boolean | number
+    tournamentsFinished?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -37710,7 +37738,6 @@ export interface TelemetryInstallCountsGenqlSelection{
 
 export interface TelemetryMatchSourceCountGenqlSelection{
     matches?: boolean | number
-    panels?: boolean | number
     source?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -37718,7 +37745,6 @@ export interface TelemetryMatchSourceCountGenqlSelection{
 
 export interface TelemetryMatchTypeCountGenqlSelection{
     matches?: boolean | number
-    panels?: boolean | number
     type?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -37749,6 +37775,8 @@ export interface TelemetryStatsGenqlSelection{
 
 export interface TelemetryVersionCountGenqlSelection{
     installs?: boolean | number
+    rank?: boolean | number
+    since?: boolean | number
     version?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number

@@ -761,6 +761,69 @@ describe("PushNotificationsService", () => {
   });
 });
 
+describe("batchJobId", () => {
+  const minutes = (n: number) => n * 60_000;
+
+  it("collapses one burst onto a single id", () => {
+    const at = Date.parse("2026-08-18T10:00:00.000Z");
+
+    // Every row of a fan-out lands within seconds of the others.
+    expect(
+      PushNotificationsService.batchJobId("PlayerSanctioned", "7656119", at),
+    ).toBe(
+      PushNotificationsService.batchJobId(
+        "PlayerSanctioned",
+        "7656119",
+        at + 4_000,
+      ),
+    );
+  });
+
+  it("lets the same entity through again in a later window", () => {
+    // The bug this exists for: a player muted at 10:00 and banned at 10:20 got
+    // one id, and BullMQ dropped the ban as a duplicate of the completed job it
+    // keeps for an hour. Nobody was told about the ban.
+    const muted = Date.parse("2026-08-18T10:00:00.000Z");
+
+    expect(
+      PushNotificationsService.batchJobId("PlayerSanctioned", "7656119", muted),
+    ).not.toBe(
+      PushNotificationsService.batchJobId(
+        "PlayerSanctioned",
+        "7656119",
+        muted + minutes(20),
+      ),
+    );
+  });
+
+  it("never collapses two entities onto one id", () => {
+    const at = Date.parse("2026-08-18T10:00:00.000Z");
+
+    expect(
+      PushNotificationsService.batchJobId("PlayerSanctioned", "7656119", at),
+    ).not.toBe(
+      PushNotificationsService.batchJobId("PlayerSanctioned", "7656120", at),
+    );
+  });
+
+  it("keeps the bucket no wider than the window a batch resolves over", () => {
+    // A bucket wider than the lookback would swallow a burst that the send it
+    // collapsed onto can no longer see.
+    const at = Date.parse("2026-08-18T10:00:00.000Z");
+    const window = PushNotificationsService.BATCH_WINDOW_MINUTES;
+
+    expect(
+      PushNotificationsService.batchJobId("NewsPublished", "n-1", at),
+    ).not.toBe(
+      PushNotificationsService.batchJobId(
+        "NewsPublished",
+        "n-1",
+        at + minutes(window),
+      ),
+    );
+  });
+});
+
 describe("stripHtml", () => {
   it("renders markup as the plain text the bell shows", () => {
     expect(stripHtml("<a href='/x'><b>Cool Team</b></a> won")).toBe(

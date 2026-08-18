@@ -512,7 +512,6 @@ export class TelemetryService {
     const rows = await this.postgres.query<Array<Record<string, string>>>(
       `SELECT
          e.key                                          AS name,
-         count(*)                                       AS panels,
          coalesce(sum((e.value#>>'{}')::numeric), 0)    AS matches
        FROM public.telemetry_installs i,
             LATERAL jsonb_each(
@@ -526,7 +525,7 @@ export class TelemetryService {
 
     return rows.map((row) => ({
       name: row.name,
-      ...TelemetryService.toIntegers(row, ["panels", "matches"]),
+      ...TelemetryService.toIntegers(row, ["matches"]),
     }));
   }
 
@@ -565,24 +564,27 @@ export class TelemetryService {
          WHERE coalesce(payload->>'panel_version', '') <> ''
          GROUP BY 1
        ),
-       ranked AS (
-         SELECT version, since,
-                row_number() OVER (ORDER BY since DESC, version ASC) AS rank
-         FROM seen
-       )
-       SELECT
-         r.version                              AS version,
-         r.rank                                 AS rank,
-         to_char(r.since, 'YYYY-MM-DD')         AS since,
-         count(i.install_id)                    AS installs
-       FROM ranked r
-       LEFT JOIN public.telemetry_installs i
-              ON i.panel_version = r.version
-             AND i.last_seen_at >= now() - interval '30 days'
-       GROUP BY 1, 2, 3
        -- A build nobody is running any more is history, not fleet state.
-       HAVING count(i.install_id) > 0
-       ORDER BY r.rank ASC
+       live AS (
+         SELECT s.version, s.since, count(i.install_id) AS installs
+         FROM seen s
+         JOIN public.telemetry_installs i
+           ON i.panel_version = s.version
+          AND i.last_seen_at >= now() - interval '30 days'
+         GROUP BY 1, 2
+       )
+       -- Ranked after the dead builds are dropped, not before. Ranking over
+       -- every version ever seen and filtering afterwards leaves the ranks
+       -- sparse and often starting above 1 -- one dev box that reported a
+       -- one-off build and went dark holds rank 1 for good -- and the page
+       -- reads rank 1 and 2 as the current and previous build.
+       SELECT
+         version                                AS version,
+         row_number() OVER (ORDER BY since DESC, version ASC) AS rank,
+         to_char(since, 'YYYY-MM-DD')           AS since,
+         installs                               AS installs
+       FROM live
+       ORDER BY rank ASC
        LIMIT 25`,
     );
 
@@ -1002,11 +1004,14 @@ export class TelemetryService {
       api_keys: counts.api_keys,
       gamedata_validations: counts.gamedata_validations,
       push_notifications: counts.push_subscriptions,
-      // Playback sessions, not stored demos: the two were the same number
-      // before, which made every panel holding a demo look like a panel
-      // watching one.
-      demo_playback: counts.demo_sessions,
-      live_streaming: counts.match_streams,
+      // demo_playback and live_streaming deliberately have no count. The only
+      // rows that record either -- match_demo_sessions, match_streams -- are
+      // deleted when the session ends, so counting them reports how many people
+      // happen to be watching during the collect, not how much the panel has
+      // ever used it. A panel that has served ten thousand playbacks would
+      // report zero. Both are in DetectedFeatures, so their adoption comes from
+      // `enabled` (a GPU node carrying the workload) and the null count reads as
+      // "not measured" rather than as "nobody uses it".
       game_server_nodes: counts.nodes_total,
       version_pinning: counts.nodes_pinned,
       discord_bot: counts.players_discord,
@@ -1191,6 +1196,12 @@ export class TelemetryService {
           WHERE enabled AND status = 'Online')                                           AS nodes_online,
         (SELECT count(DISTINCT region) FROM public.game_server_nodes
           WHERE enabled AND region IS NOT NULL)                                          AS nodes_regions,
+        -- Parenthesised: without it, AND binding tighter than OR reads as
+        -- (enabled AND pinned build) OR pinned plugin, and a disabled node
+        -- with a pinned plugin version counts anyway.
+        (SELECT count(*) FROM public.game_server_nodes
+          WHERE enabled
+            AND (pin_build_id IS NOT NULL OR pin_plugin_version IS NOT NULL))            AS nodes_pinned,
 
         -- Demo playback, clip rendering and live streaming are each switched
         -- per GPU node rather than by a setting, so "on" means at least one
@@ -1202,8 +1213,6 @@ export class TelemetryService {
         -- the same population as the online/offline split.
         (SELECT count(*) FROM public.game_server_nodes
           WHERE enabled AND gpu)                                                         AS gpu_nodes,
-        (SELECT count(*) FROM public.game_server_nodes
-          WHERE pin_build_id IS NOT NULL OR pin_plugin_version IS NOT NULL)              AS nodes_pinned,
         (SELECT count(*) FROM public.game_server_nodes
           WHERE enabled AND gpu AND gpu_demos_enabled)                                               AS gpu_demo_nodes,
         (SELECT count(*) FROM public.game_server_nodes
@@ -1324,8 +1333,6 @@ export class TelemetryService {
         (SELECT count(*) FROM public.player_sanctions)                                   AS sanctions,
         (SELECT count(*) FROM public.api_keys)                                           AS api_keys,
         (SELECT count(*) FROM public.gamedata_signature_validations)                     AS gamedata_validations,
-        (SELECT count(*) FROM public.match_demo_sessions)                                AS demo_sessions,
-        (SELECT count(*) FROM public.match_streams)                                      AS match_streams,
         (SELECT count(*) FROM public.push_subscriptions)                                 AS push_subscriptions,
         (SELECT count(*) FROM public.player_steam_bot_friend)                            AS steam_presence_friends
       `,

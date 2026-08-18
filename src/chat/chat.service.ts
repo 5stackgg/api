@@ -906,19 +906,8 @@ export class ChatService {
         // Not narrowed to recently active staff. The list is small, and
         // notifyPlayers already drops anyone with neither the bell nor a
         // subscription to deliver to.
-        const { players } = await this.hasuraService.query({
-          players: {
-            __args: {
-              where: {
-                role: { _in: rolesAtOrAbove("match_organizer") },
-              },
-            },
-            steam_id: true,
-          },
-        });
-
-        for (const player of players ?? []) {
-          add(player.steam_id);
+        for (const steamId of await this.organizerSteamIds()) {
+          add(steamId);
         }
 
         break;
@@ -929,6 +918,40 @@ export class ChatService {
     }
 
     return [...steamIds];
+  }
+
+  // Cached for the same reason threadLabel is: left uncached this is a
+  // role-filtered scan of `players` for every line typed in the organizers'
+  // room, and the staff roster changes even less often than the room's name.
+  //
+  // A much shorter TTL than the label's, though. This one is membership: a
+  // demoted organizer keeps being notified of staff-room traffic until the key
+  // expires, so the window is kept to a minute. That still collapses a busy
+  // conversation into one query a minute rather than one per message.
+  private async organizerSteamIds(): Promise<string[]> {
+    const cacheKey = "chat:organizers";
+    const cached = await this.redis.get(cacheKey);
+
+    if (cached !== null) {
+      return JSON.parse(cached) as string[];
+    }
+
+    const { players } = await this.hasuraService.query({
+      players: {
+        __args: {
+          where: {
+            role: { _in: rolesAtOrAbove("match_organizer") },
+          },
+        },
+        steam_id: true,
+      },
+    });
+
+    const steamIds = (players ?? []).map(({ steam_id }) => String(steam_id));
+
+    await this.redis.set(cacheKey, JSON.stringify(steamIds), "EX", 60);
+
+    return steamIds;
   }
 
   // `to()` only reaches steam ids currently sitting in the lobby hash, and the
