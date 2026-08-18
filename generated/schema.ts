@@ -710,11 +710,19 @@ export interface TelemetryActivityPoint {
     __typename: 'TelemetryActivityPoint'
 }
 
+export interface TelemetryCountryCount {
+    country: Scalars['String']
+    installs: Scalars['Int']
+    __typename: 'TelemetryCountryCount'
+}
+
 export interface TelemetryFeatureAdoption {
+    counted: Scalars['Int']
     enabled: Scalars['Int']
     flagged: Scalars['Int']
     installsUsing: Scalars['Int']
     key: Scalars['String']
+    kind: Scalars['String']
     reporting: Scalars['Int']
     total: Scalars['Int']
     __typename: 'TelemetryFeatureAdoption'
@@ -723,20 +731,34 @@ export interface TelemetryFeatureAdoption {
 export interface TelemetryFleetTotals {
     dedicatedServers: Scalars['Int']
     gameServerNodes: Scalars['Int']
+    gameServerNodesEnabled: Scalars['Int']
+    gameServerNodesOnline: Scalars['Int']
     gpuNodes: Scalars['Int']
     mapsPlayed: Scalars['Int']
     matches: Scalars['Int']
+    matchesAbandoned: Scalars['Int']
+    matchesCreated: Scalars['Int']
+    matchesFinished: Scalars['Int']
     matchesImported: Scalars['Int']
     matchesImportedMonth: Scalars['Int']
+    matchesImportedYear: Scalars['Int']
+    matchesLeague: Scalars['Int']
+    matchesLive: Scalars['Int']
     matchesMonth: Scalars['Int']
+    matchesScrim: Scalars['Int']
+    matchesTournament: Scalars['Int']
     matchesWeek: Scalars['Int']
     matchesYear: Scalars['Int']
+    panels: Scalars['Int']
     playersActive30d: Scalars['Int']
+    playersActive7d: Scalars['Int']
     playersKnown: Scalars['Int']
     playersPlayed: Scalars['Int']
     playersRegistered: Scalars['Int']
     publicServers: Scalars['Int']
+    regions: Scalars['Int']
     servers: Scalars['Int']
+    serversEnabled: Scalars['Int']
     teams: Scalars['Int']
     __typename: 'TelemetryFleetTotals'
 }
@@ -757,14 +779,45 @@ export interface TelemetryInstallCounts {
     __typename: 'TelemetryInstallCounts'
 }
 
+export interface TelemetryMatchSourceCount {
+    matches: Scalars['Int']
+    panels: Scalars['Int']
+    source: Scalars['String']
+    __typename: 'TelemetryMatchSourceCount'
+}
+
+export interface TelemetryMatchTypeCount {
+    matches: Scalars['Int']
+    panels: Scalars['Int']
+    type: Scalars['String']
+    __typename: 'TelemetryMatchTypeCount'
+}
+
+export interface TelemetryRuntimeCount {
+    installs: Scalars['Int']
+    runtime: Scalars['String']
+    __typename: 'TelemetryRuntimeCount'
+}
+
 export interface TelemetryStats {
     activity: TelemetryActivityPoint[]
+    countries: TelemetryCountryCount[]
     features: TelemetryFeatureAdoption[]
     growth: TelemetryGrowthPoint[]
     installs: TelemetryInstallCounts
+    matchSources: TelemetryMatchSourceCount[]
+    matchTypes: TelemetryMatchTypeCount[]
     online: Scalars['Int']
+    runtimes: TelemetryRuntimeCount[]
     totals: TelemetryFleetTotals
+    versions: TelemetryVersionCount[]
     __typename: 'TelemetryStats'
+}
+
+export interface TelemetryVersionCount {
+    installs: Scalars['Int']
+    version: Scalars['String']
+    __typename: 'TelemetryVersionCount'
 }
 
 export interface TestUploadResponse {
@@ -37581,11 +37634,20 @@ export interface TelemetryActivityPointGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface TelemetryCountryCountGenqlSelection{
+    country?: boolean | number
+    installs?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface TelemetryFeatureAdoptionGenqlSelection{
+    counted?: boolean | number
     enabled?: boolean | number
     flagged?: boolean | number
     installsUsing?: boolean | number
     key?: boolean | number
+    kind?: boolean | number
     reporting?: boolean | number
     total?: boolean | number
     __typename?: boolean | number
@@ -37595,20 +37657,34 @@ export interface TelemetryFeatureAdoptionGenqlSelection{
 export interface TelemetryFleetTotalsGenqlSelection{
     dedicatedServers?: boolean | number
     gameServerNodes?: boolean | number
+    gameServerNodesEnabled?: boolean | number
+    gameServerNodesOnline?: boolean | number
     gpuNodes?: boolean | number
     mapsPlayed?: boolean | number
     matches?: boolean | number
+    matchesAbandoned?: boolean | number
+    matchesCreated?: boolean | number
+    matchesFinished?: boolean | number
     matchesImported?: boolean | number
     matchesImportedMonth?: boolean | number
+    matchesImportedYear?: boolean | number
+    matchesLeague?: boolean | number
+    matchesLive?: boolean | number
     matchesMonth?: boolean | number
+    matchesScrim?: boolean | number
+    matchesTournament?: boolean | number
     matchesWeek?: boolean | number
     matchesYear?: boolean | number
+    panels?: boolean | number
     playersActive30d?: boolean | number
+    playersActive7d?: boolean | number
     playersKnown?: boolean | number
     playersPlayed?: boolean | number
     playersRegistered?: boolean | number
     publicServers?: boolean | number
+    regions?: boolean | number
     servers?: boolean | number
+    serversEnabled?: boolean | number
     teams?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -37632,13 +37708,48 @@ export interface TelemetryInstallCountsGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface TelemetryMatchSourceCountGenqlSelection{
+    matches?: boolean | number
+    panels?: boolean | number
+    source?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface TelemetryMatchTypeCountGenqlSelection{
+    matches?: boolean | number
+    panels?: boolean | number
+    type?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface TelemetryRuntimeCountGenqlSelection{
+    installs?: boolean | number
+    runtime?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface TelemetryStatsGenqlSelection{
     activity?: TelemetryActivityPointGenqlSelection
+    countries?: TelemetryCountryCountGenqlSelection
     features?: TelemetryFeatureAdoptionGenqlSelection
     growth?: TelemetryGrowthPointGenqlSelection
     installs?: TelemetryInstallCountsGenqlSelection
+    matchSources?: TelemetryMatchSourceCountGenqlSelection
+    matchTypes?: TelemetryMatchTypeCountGenqlSelection
     online?: boolean | number
+    runtimes?: TelemetryRuntimeCountGenqlSelection
     totals?: TelemetryFleetTotalsGenqlSelection
+    versions?: TelemetryVersionCountGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface TelemetryVersionCountGenqlSelection{
+    installs?: boolean | number
+    version?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -103263,6 +103374,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const TelemetryCountryCount_possibleTypes: string[] = ['TelemetryCountryCount']
+    export const isTelemetryCountryCount = (obj?: { __typename?: any } | null): obj is TelemetryCountryCount => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTelemetryCountryCount"')
+      return TelemetryCountryCount_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const TelemetryFeatureAdoption_possibleTypes: string[] = ['TelemetryFeatureAdoption']
     export const isTelemetryFeatureAdoption = (obj?: { __typename?: any } | null): obj is TelemetryFeatureAdoption => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isTelemetryFeatureAdoption"')
@@ -103295,10 +103414,42 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const TelemetryMatchSourceCount_possibleTypes: string[] = ['TelemetryMatchSourceCount']
+    export const isTelemetryMatchSourceCount = (obj?: { __typename?: any } | null): obj is TelemetryMatchSourceCount => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTelemetryMatchSourceCount"')
+      return TelemetryMatchSourceCount_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const TelemetryMatchTypeCount_possibleTypes: string[] = ['TelemetryMatchTypeCount']
+    export const isTelemetryMatchTypeCount = (obj?: { __typename?: any } | null): obj is TelemetryMatchTypeCount => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTelemetryMatchTypeCount"')
+      return TelemetryMatchTypeCount_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const TelemetryRuntimeCount_possibleTypes: string[] = ['TelemetryRuntimeCount']
+    export const isTelemetryRuntimeCount = (obj?: { __typename?: any } | null): obj is TelemetryRuntimeCount => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTelemetryRuntimeCount"')
+      return TelemetryRuntimeCount_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const TelemetryStats_possibleTypes: string[] = ['TelemetryStats']
     export const isTelemetryStats = (obj?: { __typename?: any } | null): obj is TelemetryStats => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isTelemetryStats"')
       return TelemetryStats_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const TelemetryVersionCount_possibleTypes: string[] = ['TelemetryVersionCount']
+    export const isTelemetryVersionCount = (obj?: { __typename?: any } | null): obj is TelemetryVersionCount => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTelemetryVersionCount"')
+      return TelemetryVersionCount_possibleTypes.includes(obj.__typename)
     }
     
 

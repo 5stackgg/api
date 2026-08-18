@@ -133,11 +133,14 @@ const RECIPIENT_ROLES: Record<string, e_player_roles_enum[]> =
 const BATCHED_TYPES = new Set<string>([
   "TournamentCreated",
   "NewsPublished",
-  // Every type notifyActivePlayers writes belongs here. It claims its own
-  // fan-out, so this only matters when that claim fails -- and the point of
-  // the claim failing is to degrade to one batched job, not to one send per
-  // player in the entire active player base.
+  // Every fan-out belongs here, whether notifyActivePlayers or notifyPlayers
+  // wrote it. Both claim their own burst, so this only matters when that claim
+  // fails -- and the point of the claim failing is to degrade to one batched
+  // job, not to one send per player.
   "SeasonEnded",
+  // Six months of the sanctioned player's team-mates, every row carrying their
+  // steam id as the entity, which is what the jobId collapses on.
+  "PlayerSanctioned",
 ]);
 
 const SEND_CHUNK_SIZE = 25;

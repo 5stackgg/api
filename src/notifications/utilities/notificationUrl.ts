@@ -82,5 +82,13 @@ export function notificationUrl(
 
   const path = PATH_BY_TYPE[notification.type];
 
-  return notification.entity_id && path ? path(notification.entity_id) : "/";
+  if (!path) {
+    return "/";
+  }
+
+  // Arity says whether the route needs the id, so the static ones still resolve
+  // for a type whose rows carry no entity_id -- GameUpdate is sent without one.
+  return path.length === 0 || notification.entity_id
+    ? path(notification.entity_id ?? "")
+    : "/";
 }

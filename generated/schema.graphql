@@ -786,11 +786,18 @@ type TelemetryActivityPoint {
   matches: Int!
 }
 
+type TelemetryCountryCount {
+  country: String!
+  installs: Int!
+}
+
 type TelemetryFeatureAdoption {
+  counted: Int!
   enabled: Int!
   flagged: Int!
   installsUsing: Int!
   key: String!
+  kind: String!
   reporting: Int!
   total: Int!
 }
@@ -798,20 +805,34 @@ type TelemetryFeatureAdoption {
 type TelemetryFleetTotals {
   dedicatedServers: Int!
   gameServerNodes: Int!
+  gameServerNodesEnabled: Int!
+  gameServerNodesOnline: Int!
   gpuNodes: Int!
   mapsPlayed: Int!
   matches: Int!
+  matchesAbandoned: Int!
+  matchesCreated: Int!
+  matchesFinished: Int!
   matchesImported: Int!
   matchesImportedMonth: Int!
+  matchesImportedYear: Int!
+  matchesLeague: Int!
+  matchesLive: Int!
   matchesMonth: Int!
+  matchesScrim: Int!
+  matchesTournament: Int!
   matchesWeek: Int!
   matchesYear: Int!
+  panels: Int!
   playersActive30d: Int!
+  playersActive7d: Int!
   playersKnown: Int!
   playersPlayed: Int!
   playersRegistered: Int!
   publicServers: Int!
+  regions: Int!
   servers: Int!
+  serversEnabled: Int!
   teams: Int!
 }
 
@@ -829,13 +850,40 @@ type TelemetryInstallCounts {
   total: Int!
 }
 
+type TelemetryMatchSourceCount {
+  matches: Int!
+  panels: Int!
+  source: String!
+}
+
+type TelemetryMatchTypeCount {
+  matches: Int!
+  panels: Int!
+  type: String!
+}
+
+type TelemetryRuntimeCount {
+  installs: Int!
+  runtime: String!
+}
+
 type TelemetryStats {
   activity: [TelemetryActivityPoint!]!
+  countries: [TelemetryCountryCount!]!
   features: [TelemetryFeatureAdoption!]!
   growth: [TelemetryGrowthPoint!]!
   installs: TelemetryInstallCounts!
+  matchSources: [TelemetryMatchSourceCount!]!
+  matchTypes: [TelemetryMatchTypeCount!]!
   online: Int!
+  runtimes: [TelemetryRuntimeCount!]!
   totals: TelemetryFleetTotals!
+  versions: [TelemetryVersionCount!]!
+}
+
+type TelemetryVersionCount {
+  installs: Int!
+  version: String!
 }
 
 type TestUploadResponse {

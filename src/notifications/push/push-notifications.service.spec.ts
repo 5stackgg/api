@@ -754,6 +754,9 @@ describe("PushNotificationsService", () => {
   it("batches the fan-out types", () => {
     expect(PushNotificationsService.isBatched("NewsPublished")).toBe(true);
     expect(PushNotificationsService.isBatched("TournamentCreated")).toBe(true);
+    // A notifyPlayers fan-out rather than a notifyActivePlayers one, and the
+    // largest of them: every co-player from six months of matches.
+    expect(PushNotificationsService.isBatched("PlayerSanctioned")).toBe(true);
     expect(PushNotificationsService.isBatched("MatchStatusChange")).toBe(false);
   });
 });
@@ -843,5 +846,22 @@ describe("notificationUrl", () => {
         webDomain,
       ),
     ).toBe("/game-server-nodes");
+  });
+
+  // GameUpdate is sent without one, so gating the fallback on entity_id left
+  // its route unreachable by the only rows that have it.
+  it("takes a route that needs no id without an entity_id", () => {
+    expect(
+      notificationUrl(
+        { type: "GameUpdate", message: "A CS2 Update has been detected." },
+        webDomain,
+      ),
+    ).toBe("/game-server-nodes");
+  });
+
+  it("still needs an entity_id for a route built from one", () => {
+    expect(
+      notificationUrl({ type: "MatchStatusChange", message: "" }, webDomain),
+    ).toBe("/");
   });
 });

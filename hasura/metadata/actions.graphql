@@ -1223,6 +1223,7 @@ type TelemetryFleetTotals {
   matchesWeek: Int!
   matchesMonth: Int!
   matchesYear: Int!
+  outcomesReported: Int!
   matchesFinished: Int!
   matchesAbandoned: Int!
   matchesLive: Int!

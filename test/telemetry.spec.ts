@@ -1,3 +1,6 @@
+import { readFileSync } from "fs";
+import { join } from "path";
+import { parse } from "graphql";
 import { Logger } from "@nestjs/common";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { Fixtures } from "./utils/fixtures";
@@ -8,6 +11,15 @@ import { TelemetryPayload } from "./../src/telemetry/types/TelemetryPayload";
 // Both halves of the telemetry loop run against a real migrated schema: the
 // sender's collect() query (every column name and join it touches) and the
 // receiver's sanitize -> persist -> aggregate path over the jsonb payloads.
+class TelemetryTest {
+  // Unwraps `[Foo!]!` down to `Foo`.
+  static namedType(node: any): string {
+    return node.kind === "NamedType"
+      ? node.name.value
+      : TelemetryTest.namedType(node.type);
+  }
+}
+
 describe("telemetry (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
@@ -65,8 +77,9 @@ describe("telemetry (SQL-driven)", () => {
 
       const ran = await fx.bareMatch(new Date().toISOString());
       await postgres.query(
-        "UPDATE matches SET started_at = now() WHERE id = $1",
-        [ran.matchId],
+        `UPDATE matches SET started_at = now(), status = 'Live', match_options_id = $2
+          WHERE id = $1`,
+        [ran.matchId, await fx.matchOptions({ type: "Wingman" })],
       );
 
       // Never started: must land in `created` but not in `total` or the windows.
@@ -76,9 +89,11 @@ describe("telemetry (SQL-driven)", () => {
       // the source split this reads as a match the panel hosted.
       const imported = await fx.bareMatch(new Date().toISOString());
       await postgres.query(
-        `UPDATE matches SET started_at = now(), source = 'faceit', external_id = $2
+        `UPDATE matches
+            SET started_at = now(), source = 'faceit', external_id = $2,
+                status = 'Finished', match_options_id = $3
           WHERE id = $1`,
-        [imported.matchId, "faceit-1"],
+        [imported.matchId, "faceit-1", await fx.matchOptions()],
       );
 
       // A demo played on a 5stack server and imported back in keeps
@@ -104,6 +119,15 @@ describe("telemetry (SQL-driven)", () => {
         `INSERT INTO player_match_map_stats (steam_id, match_map_id, match_id, kills)
          VALUES ($1, $3, $4, 10), ($2, $3, $4, 4)`,
         [signedIn, ghost, ran.mapId, ran.matchId],
+      );
+
+      // Two people watched a demo back; nobody uploaded one. Demo playback used
+      // to be reported as the stored-demo count, which made these one number.
+      await postgres.query(
+        `INSERT INTO match_demo_sessions
+           (match_map_id, match_id, watcher_steam_id, k8s_job_name)
+         VALUES ($1, $2, $3, 'demo-a'), ($1, $2, $4, 'demo-b')`,
+        [ran.mapId, ran.matchId, signedIn, ghost],
       );
 
       payload = await service.collect();
@@ -132,6 +156,21 @@ describe("telemetry (SQL-driven)", () => {
 
       // by_source stays whole-fleet so the origin mix is still visible.
       expect(payload.matches.by_source.faceit).toBe(1);
+    });
+
+    it("breaks the hosted matches down by type without folding imports in", () => {
+      // The hosted match is Wingman, the imported one Competitive. Counting
+      // every started match put the import in here as a match we ran.
+      expect(payload.matches.by_type).toEqual({ Wingman: 1 });
+      expect(payload.matches.by_source.faceit).toBe(1);
+    });
+
+    it("decomposes the matches it ran into an outcome", () => {
+      // The one match this panel ran is still live; the Finished one is the
+      // import, and an import is never an outcome the panel produced.
+      expect(payload.matches.live).toBe(1);
+      expect(payload.matches.finished).toBe(0);
+      expect(payload.matches.abandoned).toBe(0);
     });
 
     it("keeps a node's pre-provisioned port slots out of the server count", async () => {
@@ -182,6 +221,37 @@ describe("telemetry (SQL-driven)", () => {
       // GPU workloads are switched per node, not by a setting.
       expect(payload.features.demo_playback.enabled).toBe(false);
       expect(payload.features.clip_renders.enabled).toBe(false);
+    });
+
+    // Each of these ships on and an admin has to switch it off, so a panel that
+    // has never touched the setting has to report it enabled.
+    it("defaults a flag to whatever the app itself does with no settings row", () => {
+      expect(payload.features.matchmaking.enabled).toBe(true);
+      expect(payload.features.stream_login_protection.enabled).toBe(true);
+      expect(payload.features.steam_presence.enabled).toBe(true);
+      expect(payload.features.voice_chat.enabled).toBe(true);
+    });
+
+    it("separates a feature nothing counts from one counted at zero", () => {
+      // Nothing measures these, and reporting 0 would read as nobody using them.
+      expect(payload.features.stream_login_protection.count).toBeNull();
+      expect(payload.features.clip_branding.count).toBeNull();
+      expect(payload.features.branding.count).toBeNull();
+
+      // These do have a metric, and it happens to be zero here.
+      expect(payload.features.events.count).toBe(0);
+      expect(payload.features.sanctions.count).toBe(0);
+    });
+
+    it("counts the things a capability is measured by rather than nothing", () => {
+      // One node is seeded, and it is what "game server nodes" adoption means.
+      expect(payload.features.game_server_nodes.count).toBe(1);
+      expect(payload.features.version_pinning.count).toBe(0);
+
+      // Playback sessions, not stored demos: the two used to be one number.
+      expect(payload.features.demo_playback.count).toBe(2);
+      expect(payload.features.demos.count).toBe(0);
+      expect(payload.features.live_streaming.count).toBe(0);
     });
 
     it("keeps the install id out of the guest-readable settings namespace", async () => {
@@ -368,8 +438,11 @@ describe("telemetry (SQL-driven)", () => {
         month: 20,
         year: 100,
         maps_played: matches * 2,
-        by_type: { Competitive: matches },
-        by_source: { "5stack": matches },
+        finished: matches - 5,
+        abandoned: 3,
+        live: 2,
+        by_type: { Competitive: matches, Wingman: 10 },
+        by_source: { "5stack": matches, faceit: matches / 10 },
         tournament: 1,
         league: 0,
         scrim: 2,
@@ -386,6 +459,14 @@ describe("telemetry (SQL-driven)", () => {
       features: {
         events: { enabled: installId === installA, count: 3 },
         highlights: { enabled: null as boolean | null, count: 10 },
+        // Ships with every panel: no switch, usage only.
+        tournaments: { enabled: null as boolean | null, count: 7 },
+        // A switch nothing measures, and a capability read back rather than set.
+        stream_login_protection: {
+          enabled: true,
+          count: null as number | null,
+        },
+        branding: { enabled: true, count: null as number | null },
       },
     });
 
@@ -408,6 +489,69 @@ describe("telemetry (SQL-driven)", () => {
       // Imported matches are summed apart from the ones the panels hosted.
       expect(stats.totals.matchesImported).toBe(35);
       expect(stats.totals.matchesImportedMonth).toBe(4);
+
+      // The denominator every total above is over.
+      expect(stats.totals.panels).toBe(2);
+      expect(stats.totals.gameServerNodesOnline).toBe(2);
+      expect(stats.totals.serversEnabled).toBe(10);
+      expect(stats.totals.matchesTournament).toBe(2);
+      expect(stats.totals.matchesScrim).toBe(4);
+      expect(stats.totals.playersActive7d).toBe(10);
+      expect(stats.totals.matchesAbandoned).toBe(6);
+      expect(stats.totals.matchesLive).toBe(4);
+    });
+
+    it("says how many panels are old enough to report match outcomes", async () => {
+      // A panel on the previous payload sends no outcome fields at all.
+      const legacy = report(installA, 100, 4) as Record<string, any>;
+      delete legacy.matches.finished;
+      delete legacy.matches.abandoned;
+      delete legacy.matches.live;
+
+      await service.record("203.0.113.1", "US", legacy);
+
+      const stats = await service.getFleetStats();
+
+      // installB still reports them; installA no longer does. Counting the
+      // absent one as a zero would quietly halve the fleet's finished total.
+      expect(stats.totals.outcomesReported).toBe(1);
+      expect(stats.totals.matchesFinished).toBe(245);
+
+      const [row] = await postgres.query<Array<{ payload: any }>>(
+        "SELECT payload FROM telemetry_installs WHERE install_id = $1",
+        [installA],
+      );
+
+      expect(row.payload.matches.finished).toBeNull();
+    });
+
+    it("adds up the match type and source mixes across the fleet", async () => {
+      const stats = await service.getFleetStats();
+
+      const types = new Map(stats.matchTypes.map((r) => [r.type, r.matches]));
+      expect(types.get("Competitive")).toBe(350);
+      expect(types.get("Wingman")).toBe(20);
+
+      const sources = new Map(
+        stats.matchSources.map((r) => [r.source, r.matches]),
+      );
+      expect(sources.get("5stack")).toBe(350);
+      expect(sources.get("faceit")).toBe(35);
+
+      // Ordered by volume so the page can slice a top N off the front.
+      expect(stats.matchTypes[0].type).toBe("Competitive");
+      expect(stats.matchTypes[0].panels).toBe(2);
+    });
+
+    it("breaks the fleet down by version, runtime and country", async () => {
+      const stats = await service.getFleetStats();
+
+      expect(stats.versions).toEqual([{ version: "cafebabe", installs: 2 }]);
+      expect(stats.runtimes).toEqual([{ runtime: "css", installs: 2 }]);
+      expect(stats.countries).toEqual([
+        { country: "DE", installs: 1 },
+        { country: "US", installs: 1 },
+      ]);
     });
 
     it("reports feature adoption across installs", async () => {
@@ -422,7 +566,120 @@ describe("telemetry (SQL-driven)", () => {
       // No flag, so nothing is "enabled" — adoption is the count alone.
       expect(highlights.enabled).toBe(0);
       expect(highlights.installsUsing).toBe(2);
+      expect(highlights.counted).toBe(2);
       expect(highlights.total).toBe(20);
+    });
+
+    it("marks a feature nothing measures instead of reporting nobody uses it", async () => {
+      const stats = await service.getFleetStats();
+      const gated = stats.features.find(
+        (f) => f.key === "stream_login_protection",
+      );
+
+      // Both panels reported it on; neither reported a usage number. Without
+      // `counted` this is indistinguishable from "0 of 2 panels using it".
+      expect(gated.reporting).toBe(2);
+      expect(gated.enabled).toBe(2);
+      expect(gated.counted).toBe(0);
+      expect(gated.installsUsing).toBe(0);
+    });
+
+    it("says whether a feature is a setting, a capability, or always on", async () => {
+      const stats = await service.getFleetStats();
+      const kind = (key: string) =>
+        stats.features.find((f) => f.key === key)?.kind;
+
+      expect(kind("events")).toBe("setting");
+      expect(kind("stream_login_protection")).toBe("setting");
+      // Derived from whether a brand was filled in, so there is no switch to
+      // report an adoption rate for.
+      expect(kind("branding")).toBe("detected");
+      // Stored as a setting -- which is where its `enabled` comes from -- but
+      // written from whether Discord credentials are configured, not by an
+      // admin. Being in both maps is what made this read as a toggle.
+      expect(kind("discord_bot")).toBe("detected");
+      expect(kind("game_server_nodes")).toBe("detected");
+      expect(kind("version_pinning")).toBe("detected");
+      // Auto highlights does have a switch, even though this fixture reports
+      // no flag for it — the classification comes from the catalog, not the row.
+      expect(kind("highlights")).toBe("setting");
+      expect(kind("tournaments")).toBe("always");
+    });
+
+    // A field the page selects but the handler never returns comes back null and
+    // renders as an empty stat, which is indistinguishable from a real zero.
+    // Walk the action's declared shape against what actually comes out.
+    it("returns every field the telemetryStats action declares", async () => {
+      const sdl = parse(
+        readFileSync(
+          join(__dirname, "..", "hasura", "metadata", "actions.graphql"),
+          "utf8",
+        ),
+      );
+
+      const types = new Map<string, Map<string, string>>();
+
+      for (const definition of sdl.definitions) {
+        if (definition.kind !== "ObjectTypeDefinition") {
+          continue;
+        }
+
+        types.set(
+          definition.name.value,
+          new Map(
+            (definition.fields ?? []).map((field) => [
+              field.name.value,
+              TelemetryTest.namedType(field.type),
+            ]),
+          ),
+        );
+      }
+
+      const problems: Array<string> = [];
+
+      const walk = (typeName: string, value: unknown, path: string) => {
+        const fields = types.get(typeName);
+
+        if (!fields) {
+          return;
+        }
+
+        if (Array.isArray(value)) {
+          if (!value.length) {
+            problems.push(`${path} came back empty, so it proves nothing`);
+            return;
+          }
+
+          walk(typeName, value[0], `${path}[0]`);
+          return;
+        }
+
+        if (!value || typeof value !== "object") {
+          problems.push(`${path} is ${JSON.stringify(value)}`);
+          return;
+        }
+
+        const row = value as Record<string, unknown>;
+
+        for (const [field, fieldType] of fields) {
+          if (!(field in row)) {
+            problems.push(`${path}.${field} is missing`);
+            continue;
+          }
+
+          walk(fieldType, row[field], `${path}.${field}`);
+        }
+
+        for (const key of Object.keys(row)) {
+          if (!fields.has(key)) {
+            problems.push(`${path}.${key} is returned but not declared`);
+          }
+        }
+      };
+
+      walk("TelemetryStats", await service.getFleetStats(), "telemetryStats");
+
+      expect(problems).toEqual([]);
     });
 
     it("groups installs by first-seen month", async () => {

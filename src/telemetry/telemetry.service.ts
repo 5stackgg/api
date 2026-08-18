@@ -380,6 +380,10 @@ export class TelemetryService {
          coalesce(sum((payload->'matches'->>'week')::numeric), 0)             AS "matchesWeek",
          coalesce(sum((payload->'matches'->>'month')::numeric), 0)            AS "matchesMonth",
          coalesce(sum((payload->'matches'->>'year')::numeric), 0)             AS "matchesYear",
+         -- A field added after a panel's build reports nothing, and summing
+         -- that to zero reads as "no match ever finished". Count who actually
+         -- supplied it so the page can say "not reported yet" instead.
+         count(*) FILTER (WHERE payload->'matches'->>'finished' IS NOT NULL) AS "outcomesReported",
          coalesce(sum((payload->'matches'->>'finished')::numeric), 0)         AS "matchesFinished",
          coalesce(sum((payload->'matches'->>'abandoned')::numeric), 0)        AS "matchesAbandoned",
          coalesce(sum((payload->'matches'->>'live')::numeric), 0)             AS "matchesLive",
@@ -417,6 +421,7 @@ export class TelemetryService {
       "matchesWeek",
       "matchesMonth",
       "matchesYear",
+      "outcomesReported",
       "matchesFinished",
       "matchesAbandoned",
       "matchesLive",
@@ -440,14 +445,23 @@ export class TelemetryService {
   // the page could say how many matches ran but never what kind they were.
   private async getMatchComposition() {
     const [types, sources] = await Promise.all([
-      this.sumCountMap("by_type", "type"),
-      this.sumCountMap("by_source", "source"),
+      this.sumCountMap("by_type"),
+      this.sumCountMap("by_source"),
     ]);
 
-    return { matchTypes: types, matchSources: sources };
+    return {
+      matchTypes: types.map(({ name, ...counts }) => ({
+        type: name,
+        ...counts,
+      })),
+      matchSources: sources.map(({ name, ...counts }) => ({
+        source: name,
+        ...counts,
+      })),
+    };
   }
 
-  private async sumCountMap(field: string, label: string) {
+  private async sumCountMap(field: string) {
     const rows = await this.postgres.query<Array<Record<string, string>>>(
       `SELECT
          e.key                                          AS name,
@@ -464,7 +478,7 @@ export class TelemetryService {
     );
 
     return rows.map((row) => ({
-      [label]: row.name,
+      name: row.name,
       ...TelemetryService.toIntegers(row, ["panels", "matches"]),
     }));
   }
@@ -473,15 +487,28 @@ export class TelemetryService {
   // only ever lands in the payload, so it has to be read back out of the json.
   private async getFleetDistribution() {
     const [versions, runtimes, countries] = await Promise.all([
-      this.countInstallsBy("panel_version", "version"),
-      this.countInstallsBy("payload->>'plugin_runtime'", "runtime"),
-      this.countInstallsBy("country", "country"),
+      this.countInstallsBy("panel_version"),
+      this.countInstallsBy("payload->>'plugin_runtime'"),
+      this.countInstallsBy("country"),
     ]);
 
-    return { versions, runtimes, countries };
+    return {
+      versions: versions.map(({ name, installs }) => ({
+        version: name,
+        installs,
+      })),
+      runtimes: runtimes.map(({ name, installs }) => ({
+        runtime: name,
+        installs,
+      })),
+      countries: countries.map(({ name, installs }) => ({
+        country: name,
+        installs,
+      })),
+    };
   }
 
-  private async countInstallsBy(expression: string, label: string) {
+  private async countInstallsBy(expression: string) {
     const rows = await this.postgres.query<Array<Record<string, string>>>(
       `SELECT ${expression} AS name, count(*) AS installs
        FROM public.telemetry_installs
@@ -494,7 +521,7 @@ export class TelemetryService {
     );
 
     return rows.map((row) => ({
-      [label]: row.name,
+      name: row.name,
       ...TelemetryService.toIntegers(row, ["installs"]),
     }));
   }
@@ -539,16 +566,20 @@ export class TelemetryService {
     });
   }
 
+  // Detected first. The `supports_*` ones are stored as settings and so are in
+  // FeatureFlags too -- that is where their `enabled` comes from -- and asking
+  // that map first labelled every one of them a toggle an admin could flip.
+  //
   // Panels on other versions can report keys this one has never heard of, so
   // an unknown key falls back to what the reports themselves say: a boolean
   // means something switched it, the absence of one means it always ships on.
   private static featureKind(key: string, flagged: number) {
-    if (TelemetryService.FeatureFlags[key]) {
-      return "setting";
-    }
-
     if (TelemetryService.DetectedFeatures.has(key)) {
       return "detected";
+    }
+
+    if (TelemetryService.FeatureFlags[key]) {
+      return "setting";
     }
 
     return flagged > 0 ? "detected" : "always";
@@ -681,6 +712,9 @@ export class TelemetryService {
       return Math.min(number, TelemetryService.MaxCount);
     };
 
+    const optionalInt = (value: unknown) =>
+      value === null || value === undefined ? null : int(value);
+
     const section = (value: unknown): Record<string, any> => {
       if (!value || typeof value !== "object" || Array.isArray(value)) {
         return {};
@@ -720,9 +754,12 @@ export class TelemetryService {
         month: int(matches.month),
         year: int(matches.year),
         maps_played: int(matches.maps_played),
-        finished: int(matches.finished),
-        abandoned: int(matches.abandoned),
-        live: int(matches.live),
+        // Absent stays absent. Defaulting these to 0 like every other counter
+        // would make a panel that has never heard of them look like a panel
+        // reporting that no match has ever finished.
+        finished: optionalInt(matches.finished),
+        abandoned: optionalInt(matches.abandoned),
+        live: optionalInt(matches.live),
         by_type: TelemetryService.sanitizeCountMap(matches.by_type, int),
         by_source: TelemetryService.sanitizeCountMap(matches.by_source, int),
         tournament: int(matches.tournament),
@@ -831,10 +868,7 @@ export class TelemetryService {
     settings: Map<string, string>,
     counts: TelemetryCounts,
   ): Record<string, TelemetryFeature> {
-    // A null means this feature has no usage metric at all, which the fleet
-    // page has to render differently from a zero: "0 of 40 panels" for a switch
-    // nothing counts reads as nobody using it rather than as nothing measured.
-    const usage: Record<string, number | null> = {
+    const usage: Record<string, number> = {
       tournaments: counts.tournaments,
       leagues: counts.league_seasons,
       seasons: counts.seasons,
@@ -865,13 +899,6 @@ export class TelemetryService {
       discord_bot: counts.players_discord,
       steam_presence: counts.steam_presence_friends,
       player_name_registration: counts.players_name_registered,
-      branding: null,
-      voice_chat: null,
-      video_chat: null,
-      clip_branding: null,
-      highlights_imported: null,
-      stream_login_protection: null,
-      league_division_requests: null,
     };
 
     // Read back rather than switched. The GPU workloads are toggled per node,
@@ -900,10 +927,9 @@ export class TelemetryService {
               flag.defaultEnabled,
             )
           : (detected[key] ?? null),
-        // `?? null` would turn a deliberate null into a null anyway, but an
-        // absent key has to stay null too, so read the entry rather than the
-        // value.
-        count: key in usage ? usage[key] : null,
+        // Null rather than zero for a feature nothing counts: "0 of 40 panels
+        // using" reads as nobody using it rather than as nothing measured.
+        count: usage[key] ?? null,
       };
     }
 
