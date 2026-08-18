@@ -10,6 +10,7 @@ import { RedisManagerService } from "../../redis/redis-manager/redis-manager.ser
 import { AppConfig } from "src/configs/types/AppConfig";
 import { WebPushConfig } from "src/configs/types/WebPushConfig";
 import { e_player_roles_enum } from "generated/schema";
+import { rolesAtOrAbove } from "src/utilities/isRoleAbove";
 import { SystemSettingName } from "src/system/enums/SystemSettingName";
 import { pushCategoryForType } from "../preferences/notification-categories";
 import { stripHtml } from "../utilities/stripHtml";
@@ -95,28 +96,49 @@ export type SubscriptionStats = {
   platforms: Array<{ platform: string; devices: number }>;
 };
 
-// Which roles can actually see a role-broadcast notification, mirroring the
+// The roles a role-broadcast notification is addressed to, mirroring the
 // select_permissions in
 // hasura/metadata/databases/default/tables/public_notifications.yaml.
 //
-// This is deliberately NOT isRoleAbove(). Our notification permissions are a
-// hand-written per-role enumeration rather than a hierarchy -- an administrator
-// does not see a tournament_organizer broadcast today -- and pushing something
-// the player cannot then open in the bell is worse than not pushing at all.
-// Any role absent here (notably `user`) sees no broadcasts at all, so a
-// role-targeted row with no steam_id reaches nobody.
+// Only these three roles broadcast. Anything else -- `user` above all -- has
+// no select_permission that matches on role, so a row targeting one and
+// carrying no steam_id is invisible in the bell; pushing it would buzz a phone
+// about something the player cannot then open. Those fall through to the empty
+// list below and reach nobody, which is what notifyActivePlayers exists to
+// avoid by writing a row per player instead.
 //
-// Keep in lockstep with that yaml.
-const RECIPIENT_ROLES: Record<string, e_player_roles_enum[]> = {
-  administrator: ["administrator"],
-  tournament_organizer: ["tournament_organizer"],
-  match_organizer: ["match_organizer", "tournament_organizer"],
-};
+// Within the three, seniority carries: a match_organizer broadcast is for
+// everyone who could act on it, which includes the tournament organizers and
+// administrators above them. It did not used to -- "Tournament match requires
+// admin attention" was addressed to tournament_organizer and reached exactly
+// the role named, never an administrator.
+//
+// Widening this means widening BOTH permissions in that yaml. Widening select
+// alone is what once left admins staring at broadcasts they had no update
+// permission to dismiss.
+const BROADCAST_ROLES: e_player_roles_enum[] = [
+  "match_organizer",
+  "tournament_organizer",
+  "administrator",
+];
+
+const RECIPIENT_ROLES: Record<string, e_player_roles_enum[]> =
+  Object.fromEntries(
+    BROADCAST_ROLES.map((role) => [role, rolesAtOrAbove(role)]),
+  );
 
 // Types that fan out to one row per player. The trigger fires per row, so for
 // these the handler collapses into a single deduped job instead of doing a
 // query and a send for each of thousands of inserts.
-const BATCHED_TYPES = new Set<string>(["TournamentCreated", "NewsPublished"]);
+const BATCHED_TYPES = new Set<string>([
+  "TournamentCreated",
+  "NewsPublished",
+  // Every type notifyActivePlayers writes belongs here. It claims its own
+  // fan-out, so this only matters when that claim fails -- and the point of
+  // the claim failing is to degrade to one batched job, not to one send per
+  // player in the entire active player base.
+  "SeasonEnded",
+]);
 
 const SEND_CHUNK_SIZE = 25;
 

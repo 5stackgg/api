@@ -220,7 +220,7 @@ describe("PushNotificationsService", () => {
       expect(rolesQueriedFor()).toEqual([]);
     });
 
-    it("mirrors the bell's per-role enumeration rather than a hierarchy", async () => {
+    it("reaches everyone senior enough to act on a broadcast", async () => {
       notificationRow = notification({ role: "match_organizer" });
 
       await service.sendForNotification({
@@ -228,12 +228,27 @@ describe("PushNotificationsService", () => {
         type: "MatchStatusChange",
       });
 
-      // Excludes administrator, matching public_notifications.yaml. Widening
-      // this without also widening the *update* permission is what left admins
-      // staring at 100+ broadcasts they could not dismiss.
+      // Administrators included, matching public_notifications.yaml -- both
+      // permissions in it. Widening select alone is what left admins staring
+      // at 100+ broadcasts they could not dismiss.
       expect(rolesQueriedFor()).toEqual([
         "match_organizer",
         "tournament_organizer",
+        "administrator",
+      ]);
+    });
+
+    it("keeps a tournament_organizer broadcast off match organizers", async () => {
+      notificationRow = notification({ role: "tournament_organizer" });
+
+      await service.sendForNotification({
+        id: notificationRow.id,
+        type: "MatchStatusChange",
+      });
+
+      expect(rolesQueriedFor()).toEqual([
+        "tournament_organizer",
+        "administrator",
       ]);
     });
 
@@ -803,6 +818,21 @@ describe("notificationUrl", () => {
   });
 
   it("ignores an off-site link", () => {
+    // StorageScan has no route of its own, so nothing but the rejected href
+    // could produce anything other than "/".
+    expect(
+      notificationUrl(
+        {
+          type: "StorageScan",
+          message: '<a href="https://evil.example/x">click</a>',
+          entity_id: "s-1",
+        },
+        webDomain,
+      ),
+    ).toBe("/");
+  });
+
+  it("falls back to the type's route rather than an off-site link", () => {
     expect(
       notificationUrl(
         {
@@ -812,6 +842,6 @@ describe("notificationUrl", () => {
         },
         webDomain,
       ),
-    ).toBe("/");
+    ).toBe("/game-server-nodes");
   });
 });

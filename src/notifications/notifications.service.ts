@@ -49,6 +49,11 @@ export class NotificationsService {
     // where the webhook lives -- without them here that reroute would have
     // started posting to Discord as a side effect.
     "MatchImported",
+    // Names the sanctioned player and quotes the ban reason, to an audience of
+    // everyone who played with them. Reaching the bell through notifyPlayers
+    // is what put it in range of the webhook at all -- it was a raw insert
+    // before, and a staff channel is not where that belongs.
+    "PlayerSanctioned",
     "LeagueProposalReceived",
     "LeagueProposalAccepted",
     "LeagueProposalDeclined",
@@ -156,20 +161,16 @@ export class NotificationsService {
       `A player you recently played with, ` +
       `<a href="${profileUrl}">${safeName}</a>, was ${verb}.${reasonSuffix}`;
 
-    await this.hasura.mutation({
-      insert_notifications: {
-        __args: {
-          objects: recipients.map(({ steam_id }) => ({
-            type: "PlayerSanctioned" as e_notification_types_enum,
-            title: "Player Sanctioned",
-            message,
-            role: "user" as e_player_roles_enum,
-            steam_id,
-            entity_id: sanction.steamId,
-          })),
-        },
-        affected_rows: true,
-      },
+    // Through notifyPlayers rather than the raw insert this used to be. Six
+    // months of team-mates is routinely hundreds of rows and the event trigger
+    // fires per row, so every one of them resolved recipients and sent on its
+    // own; notifyPlayers claims the burst so a single job covers it.
+    await this.notifyPlayers("PlayerSanctioned", {
+      title: "Player Sanctioned",
+      message,
+      role: "user",
+      entity_id: sanction.steamId,
+      steamIds: recipients.map(({ steam_id }) => steam_id),
     });
 
     this.logger.log(
