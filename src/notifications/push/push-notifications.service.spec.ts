@@ -455,13 +455,32 @@ describe("PushNotificationsService", () => {
       });
 
       expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+      // Named room and all: a message on its own still has to say where it
+      // came from, which only the bundled summary used to do.
       expect(payloadOf(0)).toMatchObject({
-        title: "Luke",
+        title: "Luke · Ancients vs Ratz",
         body: "hey",
         tag: "chat:match:m-1",
         renotify: true,
         threadKey: "chat:match:m-1",
       });
+    });
+
+    it("does not repeat a direct message's sender as its room", async () => {
+      // A DM's label is whoever sent it, so naming the room would say the
+      // same name twice.
+      notificationRow = chat({
+        entity_id: "direct:1:2",
+        data: { threadKey: "chat:direct:1:2", threadLabel: "Luke" },
+      });
+      recipients = ["76561100000000001"];
+
+      await service.sendForNotification({
+        id: notificationRow.id,
+        type: "ChatMessage",
+      });
+
+      expect(payloadOf(0)).toMatchObject({ title: "Luke" });
     });
 
     it("holds a message that lands inside an open window", async () => {
@@ -600,7 +619,7 @@ describe("PushNotificationsService", () => {
 
       expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
       expect(payloadOf(0)).toMatchObject({
-        title: "Luke",
+        title: "Luke · Ancients vs Ratz",
         body: "3 new messages",
         tag: "chat:match:m-1",
         renotify: true,

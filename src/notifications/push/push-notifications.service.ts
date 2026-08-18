@@ -957,6 +957,19 @@ export class PushNotificationsService {
     return focused;
   }
 
+  // A lone message names its sender, but not which of a dozen rooms it came
+  // from -- the label was only ever reached once a bundle replaced it, so a
+  // single message pushed as "Luke" and left the player to open it to find
+  // out where from. A DM is labelled by its sender, so there the label would
+  // only repeat the title.
+  private static titleFor(notification: NotificationRow): string {
+    const label = notification.data?.threadLabel;
+
+    return label && label !== notification.title
+      ? `${notification.title} · ${label}`
+      : notification.title;
+  }
+
   // What a bundle says when it replaces the notification already on the device.
   private static summarize(
     notifications: NotificationRow[],
@@ -973,8 +986,13 @@ export class PushNotificationsService {
       ? "messages"
       : "notifications";
 
+    // One sender, so the title is still theirs -- and still needs the room
+    // said, for the same reason a single message does.
     if (names.length === 1) {
-      return { title: names[0], body: `${count} new ${noun}` };
+      return {
+        title: PushNotificationsService.titleFor(newest),
+        body: `${count} new ${noun}`,
+      };
     }
 
     const from =
@@ -1004,7 +1022,10 @@ export class PushNotificationsService {
 
     const { title, body } =
       count <= 1
-        ? { title: newest.title, body: stripHtml(newest.message) }
+        ? {
+            title: PushNotificationsService.titleFor(newest),
+            body: stripHtml(newest.message),
+          }
         : PushNotificationsService.summarize(notifications, count);
 
     const payload = JSON.stringify({

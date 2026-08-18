@@ -11,7 +11,7 @@ import {
   e_notification_types_enum,
   e_player_roles_enum,
 } from "generated/schema";
-import { isRoleAbove } from "src/utilities/isRoleAbove";
+import { isRoleAbove, rolesAtOrAbove } from "src/utilities/isRoleAbove";
 import { NotificationsService } from "src/notifications/notifications.service";
 import { PostgresService } from "src/postgres/postgres.service";
 import { chatThreadKey } from "src/notifications/push/notification-delivery";
@@ -896,9 +896,35 @@ export class ChatService {
 
         break;
       }
+      case ChatLobbyType.Organizer: {
+        // The one room with no roster to read: membership is the role gate in
+        // joinMatchLobby above, so it has to be resolved from the players
+        // table instead. Left to the default branch this returned nobody, and
+        // notifyLobbyMembers bailed on the empty list -- the organizers' room
+        // has never notified anyone in it.
+        //
+        // Not narrowed to recently active staff. The list is small, and
+        // notifyPlayers already drops anyone with neither the bell nor a
+        // subscription to deliver to.
+        const { players } = await this.hasuraService.query({
+          players: {
+            __args: {
+              where: {
+                role: { _in: rolesAtOrAbove("match_organizer") },
+              },
+            },
+            steam_id: true,
+          },
+        });
+
+        for (const player of players ?? []) {
+          add(player.steam_id);
+        }
+
+        break;
+      }
       default:
-        // Organizer membership is role-based rather than a fixed roster, and
-        // nothing ever opens a Team room. Neither has anyone to notify.
+        // Nothing ever opens a Team room, so it has nobody to notify.
         break;
     }
 
