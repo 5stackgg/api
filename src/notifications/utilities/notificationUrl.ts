@@ -22,10 +22,37 @@ const PATH_BY_TYPE: Record<string, (entityId: string) => string> = {
   ScrimRequestCountered: () => `/scrims`,
   ScrimRequestAccepted: () => `/scrims`,
   ScrimRequestDeclined: () => `/scrims`,
+  ScrimRequestExpired: () => `/scrims`,
   ScrimMatchScheduled: () => `/scrims`,
   ScrimMatchCanceled: () => `/scrims`,
   ScrimTimeChanged: () => `/scrims`,
   ScrimAlertMatch: () => `/scrims`,
+  // entity_id is the draft game itself, so this one lands on the lobby it is
+  // inviting you to. The other two invites are keyed by the invite row rather
+  // than the thing invited to, and both are accepted from the bell wherever
+  // you are, so they only have to put you somewhere they make sense from.
+  DraftInvite: (id) => `/draft-room/${id}`,
+  TeamInvite: () => `/teams`,
+  TournamentTeamInvite: () => `/tournaments`,
+  // entity_id is the grant, not the award, and there is no page for a grant.
+  AwardGranted: () => `/awards`,
+  // Where the name was requested, which is where the outcome belongs.
+  NameChangeApproved: () => `/settings`,
+  NameChangeDenied: () => `/settings`,
+  NameChangeRequest: (id) => `/players/${id}`,
+  // A league notification is keyed by a bracket or a team's season entry,
+  // neither of which is addressable on its own -- the season id that would
+  // build /league/seasons/:id is not on the row.
+  LeagueProposalReceived: () => `/league`,
+  LeagueProposalAccepted: () => `/league`,
+  LeagueProposalDeclined: () => `/league`,
+  LeagueMatchUnscheduled: () => `/league`,
+  LeagueRegistrationDecision: () => `/league`,
+  LeagueRosterUndersized: () => `/league`,
+  GameNodeStatus: () => `/game-server-nodes`,
+  GameUpdate: () => `/game-server-nodes`,
+  DedicatedServerStatus: () => `/dedicated-servers`,
+  DedicatedServerRconStatus: () => `/dedicated-servers`,
 };
 
 export function notificationUrl(
@@ -55,5 +82,13 @@ export function notificationUrl(
 
   const path = PATH_BY_TYPE[notification.type];
 
-  return notification.entity_id && path ? path(notification.entity_id) : "/";
+  if (!path) {
+    return "/";
+  }
+
+  // Arity says whether the route needs the id, so the static ones still resolve
+  // for a type whose rows carry no entity_id -- GameUpdate is sent without one.
+  return path.length === 0 || notification.entity_id
+    ? path(notification.entity_id ?? "")
+    : "/";
 }

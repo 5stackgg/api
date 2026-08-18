@@ -102,7 +102,10 @@ export class PushNotificationsController {
         "SendPushBroadcast",
         { type: data.new.type, entityId: data.new.entity_id },
         {
-          jobId: `push-broadcast.${data.new.type}.${data.new.entity_id}`,
+          jobId: PushNotificationsService.batchJobId(
+            data.new.type,
+            data.new.entity_id,
+          ),
           delay: 5000,
           removeOnComplete: { age: 3600 },
           removeOnFail: { age: 3600 },

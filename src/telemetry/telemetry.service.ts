@@ -7,6 +7,7 @@ import { PostgresService } from "src/postgres/postgres.service";
 import { SystemService } from "src/system/system.service";
 import { CacheService } from "src/cache/cache.service";
 import {
+  TelemetryCompetition,
   TelemetryFeature,
   TelemetryPayload,
   TELEMETRY_SCHEMA_VERSION,
@@ -41,7 +42,9 @@ export class TelemetryService {
     events: { setting: "public.events_enabled", defaultEnabled: false },
     news: { setting: "public.news_enabled", defaultEnabled: false },
     scrims: { setting: "public.scrim_finder_enabled", defaultEnabled: true },
-    matchmaking: { setting: "public.matchmaking", defaultEnabled: false },
+    matchmaking: { setting: "public.matchmaking", defaultEnabled: true },
+    voice_chat: { setting: "public.voice_chat_enabled", defaultEnabled: true },
+    video_chat: { setting: "public.video_chat_enabled", defaultEnabled: true },
     custom_pages: {
       setting: "public.custom_pages_enabled",
       defaultEnabled: false,
@@ -56,7 +59,7 @@ export class TelemetryService {
     },
     steam_presence: {
       setting: "public.steam_presence_enabled",
-      defaultEnabled: false,
+      defaultEnabled: true,
     },
     discord_bot: {
       setting: "public.supports_discord_bot",
@@ -72,7 +75,7 @@ export class TelemetryService {
     },
     stream_login_protection: {
       setting: "public.require_login_for_live_streams",
-      defaultEnabled: false,
+      defaultEnabled: true,
     },
     player_name_registration: {
       setting: "public.player_name_registration",
@@ -83,6 +86,21 @@ export class TelemetryService {
       defaultEnabled: false,
     },
   };
+
+  // Reported with an `enabled` flag, but nothing an admin can switch: these are
+  // read back from configured credentials, from the GPU workload switches on
+  // each node, or from whether a brand has been filled in. The fleet page has
+  // to tell them apart from settings or it offers an adoption rate for a
+  // toggle that does not exist.
+  private static readonly DetectedFeatures = new Set([
+    "discord_bot",
+    "game_server_nodes",
+    "version_pinning",
+    "demo_playback",
+    "clip_renders",
+    "live_streaming",
+    "branding",
+  ]);
 
   // A match this panel actually hosted. Imported demos are stamped with a
   // started_at (from demo metadata, or the import time when that is missing),
@@ -200,6 +218,9 @@ export class TelemetryService {
         month: counts.matches_month,
         year: counts.matches_year,
         maps_played: counts.maps_played,
+        finished: counts.matches_finished,
+        abandoned: counts.matches_abandoned,
+        live: counts.matches_live,
         by_type: byType,
         by_source: bySource,
         tournament: counts.matches_tournament,
@@ -216,9 +237,22 @@ export class TelemetryService {
         known: counts.players_known,
         registered: counts.players_registered,
         played: counts.players_played,
+        appearances: counts.player_appearances,
         active_7d: counts.players_active_7d,
         active_30d: counts.players_active_30d,
         teams: counts.teams_total,
+      },
+      competition: {
+        tournaments: counts.tournaments,
+        tournaments_finished: counts.tournaments_finished,
+        tournament_teams: counts.tournament_teams,
+        league_seasons: counts.league_seasons,
+        league_seasons_finished: counts.league_seasons_finished,
+        league_registrations: counts.league_registrations,
+        league_teams: counts.league_teams,
+        scrim_requests: counts.scrim_requests,
+        events: counts.events,
+        event_teams: counts.event_teams,
       },
       features: this.buildFeatures(settings, counts),
     };
@@ -272,18 +306,37 @@ export class TelemetryService {
   // Panels report hourly, so nothing here goes stale within the TTL.
   async getFleetStats() {
     const aggregates = await this.cache.remember(
-      "telemetry:fleet",
+      // Versioned: a cached blob from the previous shape would leave the page
+      // missing every field added since, for as long as the TTL lasts.
+      "telemetry:fleet:v2",
       async () => {
-        const [installs, totals, features, growth, activity] =
-          await Promise.all([
-            this.getInstallCounts(),
-            this.getFleetTotals(),
-            this.getFeatureAdoption(),
-            this.getInstallGrowth(),
-            this.getFleetActivity(),
-          ]);
+        const [
+          installs,
+          totals,
+          features,
+          growth,
+          activity,
+          composition,
+          distribution,
+        ] = await Promise.all([
+          this.getInstallCounts(),
+          this.getFleetTotals(),
+          this.getFeatureAdoption(),
+          this.getInstallGrowth(),
+          this.getFleetActivity(),
+          this.getMatchComposition(),
+          this.getFleetDistribution(),
+        ]);
 
-        return { installs, totals, features, growth, activity };
+        return {
+          installs,
+          totals,
+          features,
+          growth,
+          activity,
+          ...composition,
+          ...distribution,
+        };
       },
       300,
     );
@@ -319,51 +372,245 @@ export class TelemetryService {
 
   // Summed across the latest payload of every install seen in the last 30 days.
   // Installs that have gone dark are excluded so the fleet picture does not keep
-  // counting servers that were torn down a year ago.
+  // counting servers that were torn down a year ago. `panels` is that same set
+  // counted, so the page can say which denominator every total is over.
   private async getFleetTotals() {
     const [row] = await this.postgres.query<Array<Record<string, string>>>(
       `SELECT
+         count(*)                                                             AS panels,
          coalesce(sum((payload->'nodes'->>'total')::numeric), 0)              AS "gameServerNodes",
+         coalesce(sum((payload->'nodes'->>'enabled')::numeric), 0)            AS "gameServerNodesEnabled",
+         coalesce(sum((payload->'nodes'->>'online')::numeric), 0)             AS "gameServerNodesOnline",
+         -- Regions are named per panel, so this is how many each has stood up
+         -- rather than how many distinct regions the fleet covers.
+         coalesce(sum((payload->'nodes'->>'regions')::numeric), 0)            AS regions,
          coalesce(sum((payload->'nodes'->>'gpu')::numeric), 0)                AS "gpuNodes",
          coalesce(sum((payload->'servers'->>'total')::numeric), 0)            AS servers,
+         coalesce(sum((payload->'servers'->>'enabled')::numeric), 0)          AS "serversEnabled",
          coalesce(sum((payload->'servers'->>'dedicated')::numeric), 0)        AS "dedicatedServers",
          coalesce(sum((payload->'servers'->>'public')::numeric), 0)           AS "publicServers",
          coalesce(sum((payload->'matches'->>'total')::numeric), 0)            AS matches,
+         coalesce(sum((payload->'matches'->>'created')::numeric), 0)          AS "matchesCreated",
          coalesce(sum((payload->'matches'->>'week')::numeric), 0)             AS "matchesWeek",
          coalesce(sum((payload->'matches'->>'month')::numeric), 0)            AS "matchesMonth",
          coalesce(sum((payload->'matches'->>'year')::numeric), 0)             AS "matchesYear",
+         -- A field added after a panel's build reports nothing, and summing
+         -- that to zero reads as "no match ever finished". Count who actually
+         -- supplied it so the page can say "not reported yet" instead.
+         count(*) FILTER (WHERE payload->'matches'->>'finished' IS NOT NULL) AS "outcomesReported",
+         coalesce(sum((payload->'matches'->>'finished')::numeric), 0)         AS "matchesFinished",
+         coalesce(sum((payload->'matches'->>'abandoned')::numeric), 0)        AS "matchesAbandoned",
+         coalesce(sum((payload->'matches'->>'live')::numeric), 0)             AS "matchesLive",
+         coalesce(sum((payload->'matches'->>'tournament')::numeric), 0)       AS "matchesTournament",
+         coalesce(sum((payload->'matches'->>'league')::numeric), 0)           AS "matchesLeague",
+         coalesce(sum((payload->'matches'->>'scrim')::numeric), 0)            AS "matchesScrim",
          coalesce(sum((payload->'matches'->'external'->>'total')::numeric), 0) AS "matchesImported",
          coalesce(sum((payload->'matches'->'external'->>'month')::numeric), 0) AS "matchesImportedMonth",
+         coalesce(sum((payload->'matches'->'external'->>'year')::numeric), 0)  AS "matchesImportedYear",
          coalesce(sum((payload->'matches'->>'maps_played')::numeric), 0)      AS "mapsPlayed",
          coalesce(sum((payload->'players'->>'known')::numeric), 0)            AS "playersKnown",
          coalesce(sum((payload->'players'->>'registered')::numeric), 0)       AS "playersRegistered",
          coalesce(sum((payload->'players'->>'played')::numeric), 0)           AS "playersPlayed",
+         count(*) FILTER (
+           WHERE payload->'players'->>'appearances' IS NOT NULL
+         )                                                                    AS "appearancesReported",
+         coalesce(sum((payload->'players'->>'appearances')::numeric), 0)      AS "playerAppearances",
+         coalesce(sum((payload->'players'->>'active_7d')::numeric), 0)        AS "playersActive7d",
          coalesce(sum((payload->'players'->>'active_30d')::numeric), 0)       AS "playersActive30d",
-         coalesce(sum((payload->'players'->>'teams')::numeric), 0)            AS teams
+         coalesce(sum((payload->'players'->>'teams')::numeric), 0)            AS teams,
+
+         -- Same absent-vs-zero split as the match outcomes above: this whole
+         -- section postdates the builds most of the fleet is running.
+         count(*) FILTER (
+           WHERE jsonb_typeof(payload->'competition') = 'object'
+         )                                                                    AS "competitionReported",
+         coalesce(sum((payload->'competition'->>'tournaments')::numeric), 0)           AS tournaments,
+         coalesce(sum((payload->'competition'->>'tournaments_finished')::numeric), 0)  AS "tournamentsFinished",
+         coalesce(sum((payload->'competition'->>'tournament_teams')::numeric), 0)      AS "tournamentTeams",
+         coalesce(sum((payload->'competition'->>'league_seasons')::numeric), 0)        AS "leagueSeasons",
+         coalesce(sum((payload->'competition'->>'league_seasons_finished')::numeric), 0) AS "leagueSeasonsFinished",
+         coalesce(sum((payload->'competition'->>'league_registrations')::numeric), 0)  AS "leagueRegistrations",
+         coalesce(sum((payload->'competition'->>'league_teams')::numeric), 0)          AS "leagueTeams",
+         coalesce(sum((payload->'competition'->>'scrim_requests')::numeric), 0)        AS "scrimRequests",
+         coalesce(sum((payload->'competition'->>'events')::numeric), 0)                AS events,
+         coalesce(sum((payload->'competition'->>'event_teams')::numeric), 0)           AS "eventTeams"
        FROM public.telemetry_installs
        WHERE last_seen_at >= now() - interval '30 days'
          AND payload ? 'matches'`,
     );
 
     return TelemetryService.toIntegers(row, [
+      "panels",
       "gameServerNodes",
+      "gameServerNodesEnabled",
+      "gameServerNodesOnline",
+      "regions",
       "gpuNodes",
       "servers",
+      "serversEnabled",
       "dedicatedServers",
       "publicServers",
       "matches",
+      "matchesCreated",
       "matchesWeek",
       "matchesMonth",
       "matchesYear",
+      "outcomesReported",
+      "matchesFinished",
+      "matchesAbandoned",
+      "matchesLive",
+      "matchesTournament",
+      "matchesLeague",
+      "matchesScrim",
       "matchesImported",
       "matchesImportedMonth",
+      "matchesImportedYear",
       "mapsPlayed",
       "playersKnown",
       "playersRegistered",
       "playersPlayed",
+      "appearancesReported",
+      "playerAppearances",
+      "playersActive7d",
       "playersActive30d",
       "teams",
+      "competitionReported",
+      "tournaments",
+      "tournamentsFinished",
+      "tournamentTeams",
+      "leagueSeasons",
+      "leagueSeasonsFinished",
+      "leagueRegistrations",
+      "leagueTeams",
+      "scrimRequests",
+      "events",
+      "eventTeams",
     ]);
+  }
+
+  // Both breakdowns live in the payload already; nothing read them before, so
+  // the page could say how many matches ran but never what kind they were.
+  private async getMatchComposition() {
+    const [types, sources] = await Promise.all([
+      this.sumCountMap("by_type"),
+      this.sumCountMap("by_source"),
+    ]);
+
+    return {
+      matchTypes: types.map(({ name, ...counts }) => ({
+        type: name,
+        ...counts,
+      })),
+      matchSources: sources.map(({ name, ...counts }) => ({
+        source: name,
+        ...counts,
+      })),
+    };
+  }
+
+  private async sumCountMap(field: string) {
+    const rows = await this.postgres.query<Array<Record<string, string>>>(
+      `SELECT
+         e.key                                          AS name,
+         coalesce(sum((e.value#>>'{}')::numeric), 0)    AS matches
+       FROM public.telemetry_installs i,
+            LATERAL jsonb_each(
+              coalesce(i.payload->'matches'->'${field}', '{}'::jsonb)
+            ) e(key, value)
+       WHERE i.last_seen_at >= now() - interval '30 days'
+         AND jsonb_typeof(e.value) = 'number'
+       GROUP BY e.key
+       ORDER BY matches DESC, e.key ASC`,
+    );
+
+    return rows.map((row) => ({
+      name: row.name,
+      ...TelemetryService.toIntegers(row, ["matches"]),
+    }));
+  }
+
+  // Version and country are promoted to columns on arrival; the plugin runtime
+  // only ever lands in the payload, so it has to be read back out of the json.
+  private async getFleetDistribution() {
+    const [versions, runtimes, countries] = await Promise.all([
+      this.getVersionAdoption(),
+      this.countInstallsBy("payload->>'plugin_runtime'"),
+      this.countInstallsBy("country"),
+    ]);
+
+    return {
+      versions,
+      runtimes: runtimes.map(({ name, installs }) => ({
+        runtime: name,
+        installs,
+      })),
+      countries: countries.map(({ name, installs }) => ({
+        country: name,
+        installs,
+      })),
+    };
+  }
+
+  // A commit sha does not sort, so "newest" is decided by when each build first
+  // showed up in anybody's report. Ranking that way turns a list of hashes --
+  // which says nothing on its own -- into how far behind the fleet is running.
+  private async getVersionAdoption() {
+    const rows = await this.postgres.query<Array<Record<string, string>>>(
+      `WITH seen AS (
+         SELECT
+           payload->>'panel_version'                       AS version,
+           min(day)                                        AS since
+         FROM public.telemetry_snapshots
+         WHERE coalesce(payload->>'panel_version', '') <> ''
+         GROUP BY 1
+       ),
+       -- A build nobody is running any more is history, not fleet state.
+       live AS (
+         SELECT s.version, s.since, count(i.install_id) AS installs
+         FROM seen s
+         JOIN public.telemetry_installs i
+           ON i.panel_version = s.version
+          AND i.last_seen_at >= now() - interval '30 days'
+         GROUP BY 1, 2
+       )
+       -- Ranked after the dead builds are dropped, not before. Ranking over
+       -- every version ever seen and filtering afterwards leaves the ranks
+       -- sparse and often starting above 1 -- one dev box that reported a
+       -- one-off build and went dark holds rank 1 for good -- and the page
+       -- reads rank 1 and 2 as the current and previous build.
+       SELECT
+         version                                AS version,
+         row_number() OVER (ORDER BY since DESC, version ASC) AS rank,
+         to_char(since, 'YYYY-MM-DD')           AS since,
+         installs                               AS installs
+       FROM live
+       ORDER BY rank ASC
+       LIMIT 25`,
+    );
+
+    return rows.map((row) => ({
+      version: row.version,
+      since: row.since,
+      ...TelemetryService.toIntegers(row, ["rank", "installs"]),
+    }));
+  }
+
+  private async countInstallsBy(expression: string) {
+    const rows = await this.postgres.query<Array<Record<string, string>>>(
+      `SELECT ${expression} AS name, count(*) AS installs
+       FROM public.telemetry_installs
+       WHERE last_seen_at >= now() - interval '30 days'
+         AND ${expression} IS NOT NULL
+         AND ${expression} <> ''
+       GROUP BY 1
+       ORDER BY installs DESC, name ASC
+       LIMIT 25`,
+    );
+
+    return rows.map((row) => ({
+      name: row.name,
+      ...TelemetryService.toIntegers(row, ["installs"]),
+    }));
   }
 
   private async getFeatureAdoption() {
@@ -375,6 +622,10 @@ export class TelemetryService {
          -- a flagless feature reports a JSON null, which ->> yields as SQL NULL.
          count(*) FILTER (WHERE f.value->>'enabled' IS NOT NULL)              AS flagged,
          count(*)                                                             AS reporting,
+         -- The same distinction for usage. Without it a feature nothing counts
+         -- is indistinguishable from one every panel has left unused, and the
+         -- page reports "0 of 40 panels using" for both.
+         count(*) FILTER (WHERE f.value->>'count' IS NOT NULL)                AS counted,
          count(*) FILTER (WHERE (f.value->>'count')::numeric > 0)             AS "installsUsing",
          coalesce(sum((f.value->>'count')::numeric), 0)                       AS total
        FROM public.telemetry_installs i,
@@ -384,16 +635,41 @@ export class TelemetryService {
        ORDER BY total DESC, f.key ASC`,
     );
 
-    return rows.map((row) => ({
-      key: row.key,
-      ...TelemetryService.toIntegers(row, [
+    return rows.map((row) => {
+      const counts = TelemetryService.toIntegers(row, [
         "enabled",
         "flagged",
         "reporting",
+        "counted",
         "installsUsing",
         "total",
-      ]),
-    }));
+      ]);
+
+      return {
+        key: row.key,
+        kind: TelemetryService.featureKind(row.key, counts.flagged),
+        ...counts,
+      };
+    });
+  }
+
+  // Detected first. The `supports_*` ones are stored as settings and so are in
+  // FeatureFlags too -- that is where their `enabled` comes from -- and asking
+  // that map first labelled every one of them a toggle an admin could flip.
+  //
+  // Panels on other versions can report keys this one has never heard of, so
+  // an unknown key falls back to what the reports themselves say: a boolean
+  // means something switched it, the absence of one means it always ships on.
+  private static featureKind(key: string, flagged: number) {
+    if (TelemetryService.DetectedFeatures.has(key)) {
+      return "detected";
+    }
+
+    if (TelemetryService.FeatureFlags[key]) {
+      return "setting";
+    }
+
+    return flagged > 0 ? "detected" : "always";
   }
 
   private async getInstallGrowth() {
@@ -426,7 +702,10 @@ export class TelemetryService {
            lag((payload->'matches'->>'total')::numeric)
              OVER (PARTITION BY install_id ORDER BY day) AS previous
          FROM public.telemetry_snapshots
-         WHERE day >= current_date - 90
+         -- A week of lead-in that never gets plotted: the oldest day in the
+         -- window has no earlier report to subtract from, so charting it
+         -- directly pins the left edge of the line to zero every day.
+         WHERE day >= current_date - 97
            AND payload ? 'matches'
        )
        SELECT
@@ -434,6 +713,7 @@ export class TelemetryService {
          count(DISTINCT install_id)                                        AS installs,
          coalesce(sum(greatest(total - coalesce(previous, total), 0)), 0)  AS matches
        FROM daily
+       WHERE day >= current_date - 90
        GROUP BY day
        ORDER BY day ASC`,
     );
@@ -519,6 +799,9 @@ export class TelemetryService {
       return Math.min(number, TelemetryService.MaxCount);
     };
 
+    const optionalInt = (value: unknown) =>
+      value === null || value === undefined ? null : int(value);
+
     const section = (value: unknown): Record<string, any> => {
       if (!value || typeof value !== "object" || Array.isArray(value)) {
         return {};
@@ -558,6 +841,12 @@ export class TelemetryService {
         month: int(matches.month),
         year: int(matches.year),
         maps_played: int(matches.maps_played),
+        // Absent stays absent. Defaulting these to 0 like every other counter
+        // would make a panel that has never heard of them look like a panel
+        // reporting that no match has ever finished.
+        finished: optionalInt(matches.finished),
+        abandoned: optionalInt(matches.abandoned),
+        live: optionalInt(matches.live),
         by_type: TelemetryService.sanitizeCountMap(matches.by_type, int),
         by_source: TelemetryService.sanitizeCountMap(matches.by_source, int),
         tournament: int(matches.tournament),
@@ -574,11 +863,39 @@ export class TelemetryService {
         known: int(players.known),
         registered: int(players.registered),
         played: int(players.played),
+        appearances: optionalInt(players.appearances),
         active_7d: int(players.active_7d),
         active_30d: int(players.active_30d),
         teams: int(players.teams),
       },
+      competition: TelemetryService.sanitizeCompetition(body.competition, int),
       features: TelemetryService.sanitizeFeatures(body.features, int),
+    };
+  }
+
+  // Null in, null out. Rebuilding an absent section as a block of zeroes would
+  // put every panel too old to report it into the fleet total as a zero.
+  private static sanitizeCompetition(
+    value: unknown,
+    int: (value: unknown) => number,
+  ): TelemetryCompetition | null {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      return null;
+    }
+
+    const competition = value as Record<string, any>;
+
+    return {
+      tournaments: int(competition.tournaments),
+      tournaments_finished: int(competition.tournaments_finished),
+      tournament_teams: int(competition.tournament_teams),
+      league_seasons: int(competition.league_seasons),
+      league_seasons_finished: int(competition.league_seasons_finished),
+      league_registrations: int(competition.league_registrations),
+      league_teams: int(competition.league_teams),
+      scrim_requests: int(competition.scrim_requests),
+      events: int(competition.events),
+      event_teams: int(competition.event_teams),
     };
   }
 
@@ -666,7 +983,7 @@ export class TelemetryService {
     settings: Map<string, string>,
     counts: TelemetryCounts,
   ): Record<string, TelemetryFeature> {
-    const usage: Record<string, number | null> = {
+    const usage: Record<string, number> = {
       tournaments: counts.tournaments,
       leagues: counts.league_seasons,
       seasons: counts.seasons,
@@ -686,16 +1003,30 @@ export class TelemetryService {
       sanctions: counts.sanctions,
       api_keys: counts.api_keys,
       gamedata_validations: counts.gamedata_validations,
-      demo_playback: counts.demos,
-      live_streaming: null,
+      push_notifications: counts.push_subscriptions,
+      // demo_playback and live_streaming deliberately have no count. The only
+      // rows that record either -- match_demo_sessions, match_streams -- are
+      // deleted when the session ends, so counting them reports how many people
+      // happen to be watching during the collect, not how much the panel has
+      // ever used it. A panel that has served ten thousand playbacks would
+      // report zero. Both are in DetectedFeatures, so their adoption comes from
+      // `enabled` (a GPU node carrying the workload) and the null count reads as
+      // "not measured" rather than as "nobody uses it".
+      game_server_nodes: counts.nodes_total,
+      version_pinning: counts.nodes_pinned,
+      discord_bot: counts.players_discord,
+      steam_presence: counts.steam_presence_friends,
+      player_name_registration: counts.players_name_registered,
     };
 
-    // Switched per GPU node instead of by a setting: on means at least one node
-    // is currently carrying that workload.
-    const gpuWorkloads: Record<string, boolean> = {
+    // Read back rather than switched. The GPU workloads are toggled per node,
+    // so on means at least one node is carrying that work; branding is on once
+    // a name, logo or colour has been filled in.
+    const detected: Record<string, boolean> = {
       demo_playback: counts.gpu_demo_nodes > 0,
       clip_renders: counts.gpu_render_nodes > 0,
       live_streaming: counts.gpu_stream_nodes > 0,
+      branding: TelemetryService.hasBranding(settings),
     };
 
     const features: Record<string, TelemetryFeature> = {};
@@ -703,7 +1034,7 @@ export class TelemetryService {
     for (const key of new Set([
       ...Object.keys(TelemetryService.FeatureFlags),
       ...Object.keys(usage),
-      ...Object.keys(gpuWorkloads),
+      ...Object.keys(detected),
     ])) {
       const flag = TelemetryService.FeatureFlags[key];
 
@@ -713,15 +1044,12 @@ export class TelemetryService {
               settings.get(flag.setting),
               flag.defaultEnabled,
             )
-          : (gpuWorkloads[key] ?? null),
+          : (detected[key] ?? null),
+        // Null rather than zero for a feature nothing counts: "0 of 40 panels
+        // using" reads as nobody using it rather than as nothing measured.
         count: usage[key] ?? null,
       };
     }
-
-    features.branding = {
-      enabled: TelemetryService.hasBranding(settings),
-      count: null,
-    };
 
     return features;
   }
@@ -803,13 +1131,15 @@ export class TelemetryService {
   }
 
   private async getMatchesByType(): Promise<Record<string, number>> {
+    // Native only, so the breakdown adds up to the hosted match count rather
+    // than to hosted plus imported.
     const rows = await this.collectQuery<
       Array<{ type: string; count: string }>
     >(
       `SELECT o.type, count(*) AS count
          FROM public.matches m
          JOIN public.match_options o ON o.id = m.match_options_id
-        WHERE m.started_at IS NOT NULL
+        WHERE ${TelemetryService.nativeMatch("m")}
         GROUP BY o.type`,
     );
 
@@ -849,24 +1179,46 @@ export class TelemetryService {
   private async getCounts(): Promise<TelemetryCounts> {
     const [row] = await this.collectQuery<Array<TelemetryCounts>>(
       `SELECT
-        (SELECT min(created_at) FROM public.matches)                                     AS installed_at,
+        -- The panel keeps no record of its own install date, so the oldest row
+        -- it wrote stands in for one. least() skips nulls, which matters for a
+        -- panel that has players but has not run a match yet.
+        (SELECT least(
+           (SELECT min(created_at) FROM public.matches),
+           (SELECT min(created_at) FROM public.players)))                                AS installed_at,
 
         (SELECT count(*) FROM public.game_server_nodes)                                  AS nodes_total,
         (SELECT count(*) FROM public.game_server_nodes WHERE enabled)                    AS nodes_enabled,
-        (SELECT count(*) FROM public.game_server_nodes WHERE status = 'Online')          AS nodes_online,
+        -- Enabled as well as up. A disabled node keeps reporting its status, so
+        -- counting status alone puts nodes that cannot take a match into the
+        -- online count and leaves online larger than enabled -- which stops the
+        -- three node counts describing one population.
+        (SELECT count(*) FROM public.game_server_nodes
+          WHERE enabled AND status = 'Online')                                           AS nodes_online,
         (SELECT count(DISTINCT region) FROM public.game_server_nodes
-          WHERE region IS NOT NULL)                                                      AS nodes_regions,
+          WHERE enabled AND region IS NOT NULL)                                          AS nodes_regions,
+        -- Parenthesised: without it, AND binding tighter than OR reads as
+        -- (enabled AND pinned build) OR pinned plugin, and a disabled node
+        -- with a pinned plugin version counts anyway.
+        (SELECT count(*) FROM public.game_server_nodes
+          WHERE enabled
+            AND (pin_build_id IS NOT NULL OR pin_plugin_version IS NOT NULL))            AS nodes_pinned,
 
         -- Demo playback, clip rendering and live streaming are each switched
         -- per GPU node rather than by a setting, so "on" means at least one
         -- node is carrying that workload.
-        (SELECT count(*) FROM public.game_server_nodes WHERE gpu)                        AS gpu_nodes,
+        --
+        -- Every node count below is scoped to enabled. A node an operator has
+        -- switched off is not capacity and cannot carry a workload, and once
+        -- the disabled ones are counted the GPU total stops being a slice of
+        -- the same population as the online/offline split.
         (SELECT count(*) FROM public.game_server_nodes
-          WHERE gpu AND gpu_demos_enabled)                                               AS gpu_demo_nodes,
+          WHERE enabled AND gpu)                                                         AS gpu_nodes,
         (SELECT count(*) FROM public.game_server_nodes
-          WHERE gpu AND gpu_rendering_enabled)                                           AS gpu_render_nodes,
+          WHERE enabled AND gpu AND gpu_demos_enabled)                                               AS gpu_demo_nodes,
         (SELECT count(*) FROM public.game_server_nodes
-          WHERE gpu AND gpu_streaming_enabled)                                           AS gpu_stream_nodes,
+          WHERE enabled AND gpu AND gpu_rendering_enabled)                                           AS gpu_render_nodes,
+        (SELECT count(*) FROM public.game_server_nodes
+          WHERE enabled AND gpu AND gpu_streaming_enabled)                                           AS gpu_stream_nodes,
 
         (SELECT count(*) FROM public.servers
           WHERE ${TelemetryService.RealServer})                                          AS servers_total,
@@ -891,6 +1243,18 @@ export class TelemetryService {
            JOIN public.matches m ON m.id = mm.match_id
           WHERE mm.status = 'Finished'
             AND ${TelemetryService.nativeMatch("m")})                                     AS maps_played,
+
+        -- Decomposes matches_ran. A match only carries started_at once it has
+        -- gone live, so 'Canceled' here is a match abandoned mid-series rather
+        -- than one called off before it ever ran.
+        (SELECT count(*) FROM public.matches
+          WHERE ${TelemetryService.nativeMatch()}
+            AND status IN ('Finished', 'Forfeit', 'Tie', 'Surrendered'))                 AS matches_finished,
+        (SELECT count(*) FROM public.matches
+          WHERE ${TelemetryService.nativeMatch()}
+            AND status IN ('Canceled'))                                                  AS matches_abandoned,
+        (SELECT count(*) FROM public.matches
+          WHERE ${TelemetryService.nativeMatch()} AND status = 'Live')                    AS matches_live,
 
         (SELECT count(*) FROM public.matches WHERE ${TelemetryService.importedMatch()})     AS matches_external,
         (SELECT count(*) FROM public.matches
@@ -919,9 +1283,14 @@ export class TelemetryService {
         -- last_sign_in_at is only ever written by the Steam login callback.
         (SELECT count(*) FROM public.players)                                            AS players_known,
         (SELECT count(*) FROM public.players WHERE last_sign_in_at IS NOT NULL)          AS players_registered,
+        (SELECT count(*) FROM public.players WHERE discord_id IS NOT NULL)               AS players_discord,
+        (SELECT count(*) FROM public.players WHERE name_registered)                      AS players_name_registered,
         -- Stats land per map from live round events and from parsed demos, so
         -- this is everyone who played rather than everyone who was rostered.
         (SELECT count(DISTINCT steam_id) FROM public.player_match_map_stats)             AS players_played,
+        -- Rows, not distinct players: the pair is what separates a busy
+        -- community from a handful of people playing a lot.
+        (SELECT count(*) FROM public.player_match_map_stats)                             AS player_appearances,
         (SELECT count(*) FROM public.teams)                                              AS teams_total,
         -- An OR across both lineup columns cannot use an index and forces a
         -- join over every lineup row. Feeding the two sides in separately lets
@@ -940,7 +1309,15 @@ export class TelemetryService {
             ))                                                                           AS players_active_30d,
 
         (SELECT count(*) FROM public.tournaments)                                        AS tournaments,
+        (SELECT count(*) FROM public.tournaments WHERE status = 'Finished')              AS tournaments_finished,
+        (SELECT count(*) FROM public.tournament_teams)                                   AS tournament_teams,
         (SELECT count(*) FROM public.league_seasons)                                     AS league_seasons,
+        (SELECT count(*) FROM public.league_seasons WHERE status = 'Finished')           AS league_seasons_finished,
+        -- Not league_divisions: the four tiers are seeded by migration, so
+        -- every install reports the same four whether or not it runs a league.
+        (SELECT count(*) FROM public.league_team_seasons)                                AS league_registrations,
+        (SELECT count(*) FROM public.league_teams)                                       AS league_teams,
+        (SELECT count(*) FROM public.event_teams)                                        AS event_teams,
         (SELECT count(*) FROM public.seasons)                                            AS seasons,
         (SELECT count(*) FROM public.events)                                             AS events,
         (SELECT count(*) FROM public.news_articles)                                      AS news_articles,
@@ -955,7 +1332,9 @@ export class TelemetryService {
         (SELECT count(*) FROM public.match_map_demos)                                    AS demos,
         (SELECT count(*) FROM public.player_sanctions)                                   AS sanctions,
         (SELECT count(*) FROM public.api_keys)                                           AS api_keys,
-        (SELECT count(*) FROM public.gamedata_signature_validations)                     AS gamedata_validations
+        (SELECT count(*) FROM public.gamedata_signature_validations)                     AS gamedata_validations,
+        (SELECT count(*) FROM public.push_subscriptions)                                 AS push_subscriptions,
+        (SELECT count(*) FROM public.player_steam_bot_friend)                            AS steam_presence_friends
       `,
     );
 

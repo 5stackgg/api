@@ -1346,6 +1346,11 @@ custom_types:
     - name: TelemetryFeatureAdoption
     - name: TelemetryGrowthPoint
     - name: TelemetryActivityPoint
+    - name: TelemetryMatchTypeCount
+    - name: TelemetryMatchSourceCount
+    - name: TelemetryVersionCount
+    - name: TelemetryRuntimeCount
+    - name: TelemetryCountryCount
     - name: TelemetryStats
     - name: TestUploadResponse
     - name: GetTestUploadResponse

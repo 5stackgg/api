@@ -220,7 +220,7 @@ describe("PushNotificationsService", () => {
       expect(rolesQueriedFor()).toEqual([]);
     });
 
-    it("mirrors the bell's per-role enumeration rather than a hierarchy", async () => {
+    it("reaches everyone senior enough to act on a broadcast", async () => {
       notificationRow = notification({ role: "match_organizer" });
 
       await service.sendForNotification({
@@ -228,12 +228,27 @@ describe("PushNotificationsService", () => {
         type: "MatchStatusChange",
       });
 
-      // Excludes administrator, matching public_notifications.yaml. Widening
-      // this without also widening the *update* permission is what left admins
-      // staring at 100+ broadcasts they could not dismiss.
+      // Administrators included, matching public_notifications.yaml -- both
+      // permissions in it. Widening select alone is what left admins staring
+      // at 100+ broadcasts they could not dismiss.
       expect(rolesQueriedFor()).toEqual([
         "match_organizer",
         "tournament_organizer",
+        "administrator",
+      ]);
+    });
+
+    it("keeps a tournament_organizer broadcast off match organizers", async () => {
+      notificationRow = notification({ role: "tournament_organizer" });
+
+      await service.sendForNotification({
+        id: notificationRow.id,
+        type: "MatchStatusChange",
+      });
+
+      expect(rolesQueriedFor()).toEqual([
+        "tournament_organizer",
+        "administrator",
       ]);
     });
 
@@ -455,13 +470,32 @@ describe("PushNotificationsService", () => {
       });
 
       expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+      // Named room and all: a message on its own still has to say where it
+      // came from, which only the bundled summary used to do.
       expect(payloadOf(0)).toMatchObject({
-        title: "Luke",
+        title: "Luke · Ancients vs Ratz",
         body: "hey",
         tag: "chat:match:m-1",
         renotify: true,
         threadKey: "chat:match:m-1",
       });
+    });
+
+    it("does not repeat a direct message's sender as its room", async () => {
+      // A DM's label is whoever sent it, so naming the room would say the
+      // same name twice.
+      notificationRow = chat({
+        entity_id: "direct:1:2",
+        data: { threadKey: "chat:direct:1:2", threadLabel: "Luke" },
+      });
+      recipients = ["76561100000000001"];
+
+      await service.sendForNotification({
+        id: notificationRow.id,
+        type: "ChatMessage",
+      });
+
+      expect(payloadOf(0)).toMatchObject({ title: "Luke" });
     });
 
     it("holds a message that lands inside an open window", async () => {
@@ -600,7 +634,7 @@ describe("PushNotificationsService", () => {
 
       expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
       expect(payloadOf(0)).toMatchObject({
-        title: "Luke",
+        title: "Luke · Ancients vs Ratz",
         body: "3 new messages",
         tag: "chat:match:m-1",
         renotify: true,
@@ -720,7 +754,73 @@ describe("PushNotificationsService", () => {
   it("batches the fan-out types", () => {
     expect(PushNotificationsService.isBatched("NewsPublished")).toBe(true);
     expect(PushNotificationsService.isBatched("TournamentCreated")).toBe(true);
+    // A notifyPlayers fan-out rather than a notifyActivePlayers one, and the
+    // largest of them: every co-player from six months of matches.
+    expect(PushNotificationsService.isBatched("PlayerSanctioned")).toBe(true);
     expect(PushNotificationsService.isBatched("MatchStatusChange")).toBe(false);
+  });
+});
+
+describe("batchJobId", () => {
+  const minutes = (n: number) => n * 60_000;
+
+  it("collapses one burst onto a single id", () => {
+    const at = Date.parse("2026-08-18T10:00:00.000Z");
+
+    // Every row of a fan-out lands within seconds of the others.
+    expect(
+      PushNotificationsService.batchJobId("PlayerSanctioned", "7656119", at),
+    ).toBe(
+      PushNotificationsService.batchJobId(
+        "PlayerSanctioned",
+        "7656119",
+        at + 4_000,
+      ),
+    );
+  });
+
+  it("lets the same entity through again in a later window", () => {
+    // The bug this exists for: a player muted at 10:00 and banned at 10:20 got
+    // one id, and BullMQ dropped the ban as a duplicate of the completed job it
+    // keeps for an hour. Nobody was told about the ban.
+    const muted = Date.parse("2026-08-18T10:00:00.000Z");
+
+    expect(
+      PushNotificationsService.batchJobId("PlayerSanctioned", "7656119", muted),
+    ).not.toBe(
+      PushNotificationsService.batchJobId(
+        "PlayerSanctioned",
+        "7656119",
+        muted + minutes(20),
+      ),
+    );
+  });
+
+  it("never collapses two entities onto one id", () => {
+    const at = Date.parse("2026-08-18T10:00:00.000Z");
+
+    expect(
+      PushNotificationsService.batchJobId("PlayerSanctioned", "7656119", at),
+    ).not.toBe(
+      PushNotificationsService.batchJobId("PlayerSanctioned", "7656120", at),
+    );
+  });
+
+  it("keeps the bucket no wider than the window a batch resolves over", () => {
+    // A bucket wider than the lookback would swallow a burst that the send it
+    // collapsed onto can no longer see.
+    const at = Date.parse("2026-08-18T10:00:00.000Z");
+    const window = PushNotificationsService.BATCH_WINDOW_MINUTES;
+
+    expect(
+      PushNotificationsService.batchJobId("NewsPublished", "n-1", at),
+    ).not.toBe(
+      PushNotificationsService.batchJobId(
+        "NewsPublished",
+        "n-1",
+        at + minutes(window),
+      ),
+    );
   });
 });
 
@@ -784,6 +884,21 @@ describe("notificationUrl", () => {
   });
 
   it("ignores an off-site link", () => {
+    // StorageScan has no route of its own, so nothing but the rejected href
+    // could produce anything other than "/".
+    expect(
+      notificationUrl(
+        {
+          type: "StorageScan",
+          message: '<a href="https://evil.example/x">click</a>',
+          entity_id: "s-1",
+        },
+        webDomain,
+      ),
+    ).toBe("/");
+  });
+
+  it("falls back to the type's route rather than an off-site link", () => {
     expect(
       notificationUrl(
         {
@@ -793,6 +908,23 @@ describe("notificationUrl", () => {
         },
         webDomain,
       ),
+    ).toBe("/game-server-nodes");
+  });
+
+  // GameUpdate is sent without one, so gating the fallback on entity_id left
+  // its route unreachable by the only rows that have it.
+  it("takes a route that needs no id without an entity_id", () => {
+    expect(
+      notificationUrl(
+        { type: "GameUpdate", message: "A CS2 Update has been detected." },
+        webDomain,
+      ),
+    ).toBe("/game-server-nodes");
+  });
+
+  it("still needs an entity_id for a route built from one", () => {
+    expect(
+      notificationUrl({ type: "MatchStatusChange", message: "" }, webDomain),
     ).toBe("/");
   });
 });

@@ -1208,32 +1208,89 @@ type TelemetryInstallCounts {
 }
 
 type TelemetryFleetTotals {
+  panels: Int!
   gameServerNodes: Int!
+  gameServerNodesEnabled: Int!
+  gameServerNodesOnline: Int!
+  regions: Int!
   gpuNodes: Int!
   servers: Int!
+  serversEnabled: Int!
   dedicatedServers: Int!
   publicServers: Int!
   matches: Int!
+  matchesCreated: Int!
   matchesWeek: Int!
   matchesMonth: Int!
   matchesYear: Int!
+  outcomesReported: Int!
+  matchesFinished: Int!
+  matchesAbandoned: Int!
+  matchesLive: Int!
+  matchesTournament: Int!
+  matchesLeague: Int!
+  matchesScrim: Int!
   matchesImported: Int!
   matchesImportedMonth: Int!
+  matchesImportedYear: Int!
   mapsPlayed: Int!
   playersKnown: Int!
   playersRegistered: Int!
   playersPlayed: Int!
+  appearancesReported: Int!
+  playerAppearances: Int!
+  playersActive7d: Int!
   playersActive30d: Int!
   teams: Int!
+  competitionReported: Int!
+  tournaments: Int!
+  tournamentsFinished: Int!
+  tournamentTeams: Int!
+  leagueSeasons: Int!
+  leagueSeasonsFinished: Int!
+  leagueRegistrations: Int!
+  leagueTeams: Int!
+  scrimRequests: Int!
+  events: Int!
+  eventTeams: Int!
 }
 
 type TelemetryFeatureAdoption {
   key: String!
+  kind: String!
   enabled: Int!
   flagged: Int!
   reporting: Int!
+  counted: Int!
   installsUsing: Int!
   total: Int!
+}
+
+type TelemetryMatchTypeCount {
+  type: String!
+  matches: Int!
+}
+
+type TelemetryMatchSourceCount {
+  source: String!
+  matches: Int!
+}
+
+type TelemetryVersionCount {
+  version: String!
+  rank: Int!
+  since: String!
+  installs: Int!
+}
+
+type TelemetryRuntimeCount {
+  runtime: String!
+  installs: Int!
+}
+
+type TelemetryCountryCount {
+  country: String!
+  installs: Int!
 }
 
 type TelemetryGrowthPoint {
@@ -1254,6 +1311,11 @@ type TelemetryStats {
   features: [TelemetryFeatureAdoption!]!
   growth: [TelemetryGrowthPoint!]!
   activity: [TelemetryActivityPoint!]!
+  matchTypes: [TelemetryMatchTypeCount!]!
+  matchSources: [TelemetryMatchSourceCount!]!
+  versions: [TelemetryVersionCount!]!
+  runtimes: [TelemetryRuntimeCount!]!
+  countries: [TelemetryCountryCount!]!
 }
 
 type TestUploadResponse {

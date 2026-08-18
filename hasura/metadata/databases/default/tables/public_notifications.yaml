@@ -38,7 +38,10 @@ select_permissions:
               - steam_id:
                   _eq: X-Hasura-User-Id
               - role:
-                  _eq: administrator
+                  _in:
+                    - match_organizer
+                    - tournament_organizer
+                    - administrator
           - in_app:
               _eq: true
     comment: ""
@@ -127,14 +130,20 @@ update_permissions:
           - steam_id:
               _eq: X-Hasura-User-Id
           - role:
-              _eq: administrator
+              _in:
+                - match_organizer
+                - tournament_organizer
+                - administrator
       check:
         _and:
           - _or:
               - steam_id:
                   _eq: X-Hasura-User-Id
               - role:
-                  _eq: administrator
+                  _in:
+                    - match_organizer
+                    - tournament_organizer
+                    - administrator
           - _or:
               - deleted_at:
                   _is_null: true

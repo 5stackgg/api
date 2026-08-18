@@ -11,7 +11,7 @@ import {
   e_notification_types_enum,
   e_player_roles_enum,
 } from "generated/schema";
-import { isRoleAbove } from "src/utilities/isRoleAbove";
+import { isRoleAbove, rolesAtOrAbove } from "src/utilities/isRoleAbove";
 import { NotificationsService } from "src/notifications/notifications.service";
 import { PostgresService } from "src/postgres/postgres.service";
 import { chatThreadKey } from "src/notifications/push/notification-delivery";
@@ -896,13 +896,62 @@ export class ChatService {
 
         break;
       }
+      case ChatLobbyType.Organizer: {
+        // The one room with no roster to read: membership is the role gate in
+        // joinMatchLobby above, so it has to be resolved from the players
+        // table instead. Left to the default branch this returned nobody, and
+        // notifyLobbyMembers bailed on the empty list -- the organizers' room
+        // has never notified anyone in it.
+        //
+        // Not narrowed to recently active staff. The list is small, and
+        // notifyPlayers already drops anyone with neither the bell nor a
+        // subscription to deliver to.
+        for (const steamId of await this.organizerSteamIds()) {
+          add(steamId);
+        }
+
+        break;
+      }
       default:
-        // Organizer membership is role-based rather than a fixed roster, and
-        // nothing ever opens a Team room. Neither has anyone to notify.
+        // Nothing ever opens a Team room, so it has nobody to notify.
         break;
     }
 
     return [...steamIds];
+  }
+
+  // Cached for the same reason threadLabel is: left uncached this is a
+  // role-filtered scan of `players` for every line typed in the organizers'
+  // room, and the staff roster changes even less often than the room's name.
+  //
+  // A much shorter TTL than the label's, though. This one is membership: a
+  // demoted organizer keeps being notified of staff-room traffic until the key
+  // expires, so the window is kept to a minute. That still collapses a busy
+  // conversation into one query a minute rather than one per message.
+  private async organizerSteamIds(): Promise<string[]> {
+    const cacheKey = "chat:organizers";
+    const cached = await this.redis.get(cacheKey);
+
+    if (cached !== null) {
+      return JSON.parse(cached) as string[];
+    }
+
+    const { players } = await this.hasuraService.query({
+      players: {
+        __args: {
+          where: {
+            role: { _in: rolesAtOrAbove("match_organizer") },
+          },
+        },
+        steam_id: true,
+      },
+    });
+
+    const steamIds = (players ?? []).map(({ steam_id }) => String(steam_id));
+
+    await this.redis.set(cacheKey, JSON.stringify(steamIds), "EX", 60);
+
+    return steamIds;
   }
 
   // `to()` only reaches steam ids currently sitting in the lobby hash, and the

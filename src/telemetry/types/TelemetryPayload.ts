@@ -1,4 +1,4 @@
-export const TELEMETRY_SCHEMA_VERSION = 2;
+export const TELEMETRY_SCHEMA_VERSION = 3;
 
 export type TelemetryFeature = {
   enabled: boolean | null;
@@ -38,6 +38,15 @@ export type TelemetryPayload = {
     month: number;
     year: number;
     maps_played: number;
+    // Outcomes of the matches counted in `total`, so they decompose it:
+    // abandoned counts a match that went live and never reached a result.
+    // Null on the way in from a panel built before these existed, which is not
+    // the same as a panel reporting that nothing has ever finished.
+    finished: number | null;
+    abandoned: number | null;
+    live: number | null;
+    // by_type decomposes `total`; by_source spans hosted and imported both,
+    // since naming the source is the only thing it is for.
     by_type: Record<string, number>;
     by_source: Record<string, number>;
     tournament: number;
@@ -58,9 +67,33 @@ export type TelemetryPayload = {
     known: number;
     registered: number;
     played: number;
+    // Player-map rows, so `appearances / played` is how many maps the average
+    // player has actually turned up for. Without it a big match count says
+    // nothing about whether it is a community or the same ten people. Null
+    // from a panel built before it existed.
+    appearances: number | null;
     active_7d: number;
     active_30d: number;
     teams: number;
   };
+  // Absent on a panel built before this section existed, and left absent
+  // rather than zero-filled -- a fleet total that quietly counts non-reporters
+  // as zeroes is the same lie as reporting a feature nobody measures as unused.
+  competition: TelemetryCompetition | null;
   features: Record<string, TelemetryFeature>;
+};
+
+// Match counts for each of these live under `matches`; this is the shape of the
+// competition itself -- how many were run, how many finished, who entered.
+export type TelemetryCompetition = {
+  tournaments: number;
+  tournaments_finished: number;
+  tournament_teams: number;
+  league_seasons: number;
+  league_seasons_finished: number;
+  league_registrations: number;
+  league_teams: number;
+  scrim_requests: number;
+  events: number;
+  event_teams: number;
 };

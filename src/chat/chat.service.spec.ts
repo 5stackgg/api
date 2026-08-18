@@ -49,6 +49,8 @@ describe("ChatService direct messages", () => {
 
   // Which matches this player belongs to, by id.
   let myMatches: string[];
+  // Who the organizers' role gate admits.
+  let staff: string[];
 
   const hasuraService = {
     query: jest.fn(async (query: any) => {
@@ -62,6 +64,10 @@ describe("ChatService direct messages", () => {
               },
             }
           : {};
+      }
+
+      if (query.players) {
+        return { players: staff.map((steam_id) => ({ steam_id })) };
       }
 
       if (query.players_by_pk) {
@@ -101,6 +107,7 @@ describe("ChatService direct messages", () => {
     jest.clearAllMocks();
     acceptedFriendships = [[ME, FRIEND]];
     myMatches = ["m-1"];
+    staff = [];
     role = "user";
     queries = [];
     service = new ChatService(
@@ -190,10 +197,26 @@ describe("ChatService direct messages", () => {
       ).toEqual([ME, FRIEND]);
     });
 
-    it("has nobody to notify in role-based rooms", async () => {
+    // The organizers' room has no roster of its own, so an empty list here is
+    // indistinguishable from a room nobody can be notified about -- which is
+    // what it silently was.
+    it("resolves the organizers' room through its role gate", async () => {
+      staff = [ME, FRIEND];
+
       expect(
         await service.getLobbyMemberSteamIds(ChatLobbyType.Organizer, "x"),
-      ).toEqual([]);
+      ).toEqual([ME, FRIEND]);
+
+      const [{ players }] = hasuraService.query.mock.calls.at(-1);
+
+      expect(players.__args.where.role._in).toEqual([
+        "match_organizer",
+        "tournament_organizer",
+        "administrator",
+      ]);
+    });
+
+    it("has nobody to notify in a team room", async () => {
       expect(
         await service.getLobbyMemberSteamIds(ChatLobbyType.Team, "x"),
       ).toEqual([]);

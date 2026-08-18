@@ -10,6 +10,7 @@ import { RedisManagerService } from "../../redis/redis-manager/redis-manager.ser
 import { AppConfig } from "src/configs/types/AppConfig";
 import { WebPushConfig } from "src/configs/types/WebPushConfig";
 import { e_player_roles_enum } from "generated/schema";
+import { rolesAtOrAbove } from "src/utilities/isRoleAbove";
 import { SystemSettingName } from "src/system/enums/SystemSettingName";
 import { pushCategoryForType } from "../preferences/notification-categories";
 import { stripHtml } from "../utilities/stripHtml";
@@ -95,28 +96,52 @@ export type SubscriptionStats = {
   platforms: Array<{ platform: string; devices: number }>;
 };
 
-// Which roles can actually see a role-broadcast notification, mirroring the
+// The roles a role-broadcast notification is addressed to, mirroring the
 // select_permissions in
 // hasura/metadata/databases/default/tables/public_notifications.yaml.
 //
-// This is deliberately NOT isRoleAbove(). Our notification permissions are a
-// hand-written per-role enumeration rather than a hierarchy -- an administrator
-// does not see a tournament_organizer broadcast today -- and pushing something
-// the player cannot then open in the bell is worse than not pushing at all.
-// Any role absent here (notably `user`) sees no broadcasts at all, so a
-// role-targeted row with no steam_id reaches nobody.
+// Only these three roles broadcast. Anything else -- `user` above all -- has
+// no select_permission that matches on role, so a row targeting one and
+// carrying no steam_id is invisible in the bell; pushing it would buzz a phone
+// about something the player cannot then open. Those fall through to the empty
+// list below and reach nobody, which is what notifyActivePlayers exists to
+// avoid by writing a row per player instead.
 //
-// Keep in lockstep with that yaml.
-const RECIPIENT_ROLES: Record<string, e_player_roles_enum[]> = {
-  administrator: ["administrator"],
-  tournament_organizer: ["tournament_organizer"],
-  match_organizer: ["match_organizer", "tournament_organizer"],
-};
+// Within the three, seniority carries: a match_organizer broadcast is for
+// everyone who could act on it, which includes the tournament organizers and
+// administrators above them. It did not used to -- "Tournament match requires
+// admin attention" was addressed to tournament_organizer and reached exactly
+// the role named, never an administrator.
+//
+// Widening this means widening BOTH permissions in that yaml. Widening select
+// alone is what once left admins staring at broadcasts they had no update
+// permission to dismiss.
+const BROADCAST_ROLES: e_player_roles_enum[] = [
+  "match_organizer",
+  "tournament_organizer",
+  "administrator",
+];
+
+const RECIPIENT_ROLES: Record<string, e_player_roles_enum[]> =
+  Object.fromEntries(
+    BROADCAST_ROLES.map((role) => [role, rolesAtOrAbove(role)]),
+  );
 
 // Types that fan out to one row per player. The trigger fires per row, so for
 // these the handler collapses into a single deduped job instead of doing a
 // query and a send for each of thousands of inserts.
-const BATCHED_TYPES = new Set<string>(["TournamentCreated", "NewsPublished"]);
+const BATCHED_TYPES = new Set<string>([
+  "TournamentCreated",
+  "NewsPublished",
+  // Every fan-out belongs here, whether notifyActivePlayers or notifyPlayers
+  // wrote it. Both claim their own burst, so this only matters when that claim
+  // fails -- and the point of the claim failing is to degrade to one batched
+  // job, not to one send per player.
+  "SeasonEnded",
+  // Six months of the sanctioned player's team-mates, every row carrying their
+  // steam id as the entity, which is what the jobId collapses on.
+  "PlayerSanctioned",
+]);
 
 const SEND_CHUNK_SIZE = 25;
 
@@ -146,6 +171,11 @@ const pendingTtlFor = (windowSeconds: number) =>
 
 @Injectable()
 export class PushNotificationsService {
+  // How far back a batched send resolves the rows of one burst, and so how wide
+  // the bucket in batchJobId is. The two have to agree: a job id that outlives
+  // the window it covers swallows a burst nothing will ever send.
+  public static readonly BATCH_WINDOW_MINUTES = 15;
+
   private readonly appConfig: AppConfig;
   private readonly webPushConfig: WebPushConfig;
   private readonly redis: Redis;
@@ -385,6 +415,26 @@ export class PushNotificationsService {
     return BATCHED_TYPES.has(type);
   }
 
+  // The id a burst collapses onto. Bucketed by time as well as by entity: the
+  // entity alone is stable for a type that can happen to the same entity twice.
+  // PlayerSanctioned keys on the sanctioned player's steam id, so muting a
+  // player at 10:00 and banning them at 10:20 produced the same jobId, and
+  // BullMQ rejected the second burst as a duplicate of the completed job it
+  // retains for an hour -- nobody was told about the ban. Worst case a burst
+  // straddles a bucket edge and sends twice, which the device collapses on its
+  // tag; that is the direction this code already prefers to fail in.
+  public static batchJobId(
+    type: string,
+    entityId: string | undefined,
+    at: number = Date.now(),
+  ): string {
+    const bucket = Math.floor(
+      at / (PushNotificationsService.BATCH_WINDOW_MINUTES * 60_000),
+    );
+
+    return `push-broadcast.${type}.${entityId}.${bucket}`;
+  }
+
   public async subscribe(
     steamId: string,
     subscription: PushSubscriptionPayload,
@@ -480,7 +530,11 @@ export class PushNotificationsService {
       return;
     }
 
-    const selector = { type, entityId, withinMinutes: 15 };
+    const selector = {
+      type,
+      entityId,
+      withinMinutes: PushNotificationsService.BATCH_WINDOW_MINUTES,
+    };
     const row = await this.newestOf(selector);
 
     if (!row) {
@@ -957,6 +1011,19 @@ export class PushNotificationsService {
     return focused;
   }
 
+  // A lone message names its sender, but not which of a dozen rooms it came
+  // from -- the label was only ever reached once a bundle replaced it, so a
+  // single message pushed as "Luke" and left the player to open it to find
+  // out where from. A DM is labelled by its sender, so there the label would
+  // only repeat the title.
+  private static titleFor(notification: NotificationRow): string {
+    const label = notification.data?.threadLabel;
+
+    return label && label !== notification.title
+      ? `${notification.title} · ${label}`
+      : notification.title;
+  }
+
   // What a bundle says when it replaces the notification already on the device.
   private static summarize(
     notifications: NotificationRow[],
@@ -973,8 +1040,13 @@ export class PushNotificationsService {
       ? "messages"
       : "notifications";
 
+    // One sender, so the title is still theirs -- and still needs the room
+    // said, for the same reason a single message does.
     if (names.length === 1) {
-      return { title: names[0], body: `${count} new ${noun}` };
+      return {
+        title: PushNotificationsService.titleFor(newest),
+        body: `${count} new ${noun}`,
+      };
     }
 
     const from =
@@ -1004,7 +1076,10 @@ export class PushNotificationsService {
 
     const { title, body } =
       count <= 1
-        ? { title: newest.title, body: stripHtml(newest.message) }
+        ? {
+            title: PushNotificationsService.titleFor(newest),
+            body: stripHtml(newest.message),
+          }
         : PushNotificationsService.summarize(notifications, count);
 
     const payload = JSON.stringify({

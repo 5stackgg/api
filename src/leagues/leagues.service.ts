@@ -93,7 +93,7 @@ export class LeaguesService {
   }
 
   private seasonUrl(context: { league_season_id: string }): string {
-    return `${this.appConfig.webDomain}/leagues/seasons/${context.league_season_id}?tab=schedule`;
+    return `${this.appConfig.webDomain}/league/seasons/${context.league_season_id}?tab=schedule`;
   }
 
   public async notifyManagers(params: {
@@ -263,7 +263,7 @@ export class LeaguesService {
       return;
     }
 
-    const url = `${this.appConfig.webDomain}/leagues/seasons/${context.league_season_id}`;
+    const url = `${this.appConfig.webDomain}/league/seasons/${context.league_season_id}`;
     const team = NotificationsService.escapeHtml(context.team_name);
     const season = NotificationsService.escapeHtml(context.season_name);
 
@@ -348,7 +348,7 @@ export class LeaguesService {
       return;
     }
 
-    const url = `${this.appConfig.webDomain}/leagues/seasons/${context.league_season_id}`;
+    const url = `${this.appConfig.webDomain}/league/seasons/${context.league_season_id}`;
     const team = NotificationsService.escapeHtml(context.team_name);
     const season = NotificationsService.escapeHtml(context.season_name);
     const message = `${team} now has ${context.active_count} of the required ${context.min_roster} players for <a href="${url}">${season}</a>. Add players before the league starts or the team will be revoked at kickoff.`;
