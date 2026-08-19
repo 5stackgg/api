@@ -42,10 +42,16 @@ export class TournamentsController {
         (tournament.name as string) ?? "A tournament",
       );
 
+      const image = (tournament.banner ?? tournament.logo) as
+        | string
+        | null
+        | undefined;
+
       await this.notifications.notifyActivePlayers("TournamentCreated", {
         title: "New tournament",
         message: `<a href="/tournaments/${tournamentId}"><b>${name}</b></a> is open for signups.`,
         entity_id: tournamentId,
+        data: { image },
       });
     } catch (error) {
       this.logger.warn(

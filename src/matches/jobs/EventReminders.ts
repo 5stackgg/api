@@ -10,6 +10,7 @@ type DueEvent = {
   name: string;
   label: string;
   window: string;
+  banner_filename: string | null;
 };
 
 type EndedSeason = {
@@ -28,7 +29,9 @@ export class EventReminders extends WorkerHost {
   }
 
   async process(): Promise<number> {
-    return (await this.remindUpcomingEvents()) + (await this.announceEndedSeasons());
+    return (
+      (await this.remindUpcomingEvents()) + (await this.announceEndedSeasons())
+    );
   }
 
   // Same shape as TournamentReminders: two windows, each with a floor so an
@@ -40,8 +43,14 @@ export class EventReminders extends WorkerHost {
          VALUES ('1w', 'starts in about a week', interval '7 days', interval '1 day'),
                 ('1d', 'starts tomorrow', interval '1 day', interval '0')
        )
-       SELECT e.id::text AS id, e.name, w.label, w.window_key AS window
+       SELECT e.id::text AS id, e.name, w.label, w.window_key AS window,
+              -- The banner as an image: a video banner has its poster frame,
+              -- and a linked (external) one has nothing to show.
+              COALESCE(m.thumbnail_filename,
+                       CASE WHEN m.mime_type LIKE 'image/%' THEN m.filename END
+              ) AS banner_filename
          FROM public.events e
+    LEFT JOIN public.event_media m ON m.id = e.banner_media_id
          CROSS JOIN reminder_windows w
         WHERE e.starts_at IS NOT NULL
           AND e.starts_at > now() + w.floor_time
@@ -76,6 +85,13 @@ export class EventReminders extends WorkerHost {
         role: "user",
         entity_id: `${event.id}:${event.window}`,
         steamIds: attendees.map((attendee) => attendee.steam_id),
+        ...(event.banner_filename
+          ? {
+              data: {
+                image: `/events/media/${event.id}/${event.banner_filename}`,
+              },
+            }
+          : {}),
       });
 
       sent++;

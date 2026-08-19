@@ -608,16 +608,17 @@ export class GamePluginsService {
       version: string | null;
       runtime: string | null;
       source: "managed" | "manual";
+      path?: string | null;
     }>,
   ): Promise<void> {
     for (const plugin of reported) {
       await this.postgres.query(
         `INSERT INTO public.game_server_node_plugins
            (game_server_node_id, plugin_slug, runtime, version, detected_version,
-            source, detected, status, updated_at)
+            source, detected, status, path, updated_at)
          SELECT n.id, $2,
                 COALESCE($3::text, n.pin_plugin_runtime, active_plugin_runtime()),
-                $4, $4, $5, true, 'Installed', now()
+                $4, $4, $5, true, 'Installed', $6, now()
            FROM public.game_server_nodes n
           WHERE n.id = $1
          ON CONFLICT (game_server_node_id, plugin_slug) DO UPDATE SET
@@ -627,9 +628,17 @@ export class GamePluginsService {
            status = 'Installed',
            source = EXCLUDED.source,
            runtime = EXCLUDED.runtime,
+           path = EXCLUDED.path,
            last_error = null,
            updated_at = now()`,
-        [nodeId, plugin.slug, plugin.runtime, plugin.version, plugin.source],
+        [
+          nodeId,
+          plugin.slug,
+          plugin.runtime,
+          plugin.version,
+          plugin.source,
+          plugin.path ?? null,
+        ],
       );
     }
 

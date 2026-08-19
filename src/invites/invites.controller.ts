@@ -29,10 +29,16 @@ export class InvitesController {
     }
 
     const [invite] = await this.postgres.query<
-      Array<{ steam_id: string; team_name: string; invited_by: string }>
+      Array<{
+        steam_id: string;
+        team_name: string;
+        team_avatar: string | null;
+        invited_by: string;
+      }>
     >(
       `SELECT ti.steam_id::text AS steam_id,
               t.name AS team_name,
+              t.avatar_url AS team_avatar,
               COALESCE(p.name, 'Someone') AS invited_by
          FROM public.team_invites ti
          JOIN public.teams t ON t.id = ti.team_id
@@ -50,6 +56,7 @@ export class InvitesController {
       title: "Team Invite",
       body: `<b>${NotificationsService.escapeHtml(invite.invited_by)}</b> invited you to <b>${NotificationsService.escapeHtml(invite.team_name)}</b>.`,
       entityId: data.new.id,
+      icon: invite.team_avatar,
     });
   }
 
@@ -66,12 +73,14 @@ export class InvitesController {
         steam_id: string;
         team_name: string;
         tournament_name: string;
+        tournament_logo: string | null;
         invited_by: string;
       }>
     >(
       `SELECT tti.steam_id::text AS steam_id,
               tt.name AS team_name,
               tour.name AS tournament_name,
+              tour.logo AS tournament_logo,
               COALESCE(p.name, 'Someone') AS invited_by
          FROM public.tournament_team_invites tti
          JOIN public.tournament_teams tt ON tt.id = tti.tournament_team_id
@@ -90,6 +99,7 @@ export class InvitesController {
       title: "Tournament Invite",
       body: `<b>${NotificationsService.escapeHtml(invite.invited_by)}</b> invited you to play for <b>${NotificationsService.escapeHtml(invite.team_name)}</b> in <b>${NotificationsService.escapeHtml(invite.tournament_name)}</b>.`,
       entityId: data.new.id,
+      icon: invite.tournament_logo,
     });
   }
 
@@ -100,6 +110,8 @@ export class InvitesController {
       title: string;
       body: string;
       entityId: string;
+      // Whose crest the push shows: the team's or the tournament's.
+      icon?: string | null;
     },
   ) {
     try {
@@ -109,6 +121,7 @@ export class InvitesController {
         role: "user",
         entity_id: invite.entityId,
         steamIds: [invite.steamId],
+        data: { icon: invite.icon },
       });
     } catch (error) {
       // The invite itself is already written; losing its notification must not

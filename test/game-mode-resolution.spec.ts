@@ -36,6 +36,10 @@ describe("game mode resolution (SQL-driven)", () => {
   let serverId: string;
 
   beforeEach(async () => {
+    await postgres.query(
+      `DELETE FROM settings
+        WHERE name IN ('fivestack_ranks_matches', 'fivestack_ranks_tournaments')`,
+    );
     await postgres.query("DELETE FROM servers");
     await postgres.query("DELETE FROM game_server_node_plugins");
     await postgres.query("DELETE FROM game_plugin_installs");
@@ -212,6 +216,37 @@ describe("game mode resolution (SQL-driven)", () => {
       const resolved = await service.resolveForServer(serverId);
 
       expect(resolved?.enabledPlugins).toEqual("retakes@1.0.0");
+      expect(resolved?.disableServerGuidelines).toBe(false);
+    });
+
+    // Ranks flips the same framework setting to render ranks in-game, and the
+    // ban it risks is against the account rather than the server -- so once it
+    // is on, a plugin that needs the guidelines off already has them off.
+    it("comes off for ranks alone, with no per-plugin opt-in", async () => {
+      await postgres.query(
+        `INSERT INTO settings (name, value) VALUES ('fivestack_ranks_matches', 'true')
+         ON CONFLICT (name) DO UPDATE SET value = 'true'`,
+      );
+
+      await installed("inventory-simulator");
+      await modeWith("inventory-simulator");
+
+      const resolved = await service.resolveForServer(serverId);
+
+      expect(resolved?.disableServerGuidelines).toBe(true);
+    });
+
+    it("stays on while ranks is off and nobody opted in", async () => {
+      await postgres.query(
+        `INSERT INTO settings (name, value) VALUES ('fivestack_ranks_matches', 'false')
+         ON CONFLICT (name) DO UPDATE SET value = 'false'`,
+      );
+
+      await installed("inventory-simulator");
+      await modeWith("inventory-simulator");
+
+      const resolved = await service.resolveForServer(serverId);
+
       expect(resolved?.disableServerGuidelines).toBe(false);
     });
 

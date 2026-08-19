@@ -1,5 +1,8 @@
 import * as webPush from "web-push";
-import { PushNotificationsService } from "./push-notifications.service";
+import {
+  PushAction,
+  PushNotificationsService,
+} from "./push-notifications.service";
 // Asserted against rather than a string, because the generic queue processor
 // resolves the handler by exactly this name.
 import { SendPushDelivery } from "../jobs/SendPushDelivery";
@@ -89,7 +92,10 @@ describe("PushNotificationsService", () => {
   const withEnvKeys = () =>
     configService.get.mockImplementation((key) =>
       key === "app"
-        ? { webDomain: "https://example.com" }
+        ? {
+            webDomain: "https://example.com",
+            apiDomain: "https://api.example.com",
+          }
         : {
             publicKey: "public-key",
             privateKey: "private-key",
@@ -106,6 +112,8 @@ describe("PushNotificationsService", () => {
   let quietSeconds: number;
   let bundled: Array<Record<string, any>>;
   let updates: Array<{ sql: string; bindings: any[] }>;
+  // What the badge-count query answers with.
+  let unread: number;
 
   // Keys are resolved from settings (with env taking precedence), so they are
   // not known until loadKeys() runs.
@@ -149,8 +157,12 @@ describe("PushNotificationsService", () => {
     pipelined = [];
     updates = [];
     settings = {};
+    unread = 4;
 
     postgres.query.mockImplementation(async (sql: string, bindings: any[]) => {
+      if (sql.includes("AS unread")) {
+        return [{ unread: String(unread) }];
+      }
       if (sql.includes("FROM public.notifications\n")) {
         return notificationRow ? [notificationRow] : [];
       }
@@ -316,7 +328,10 @@ describe("PushNotificationsService", () => {
     const withoutEnvKeys = () =>
       configService.get.mockImplementation((key: string) =>
         key === "app"
-          ? { webDomain: "https://example.com" }
+          ? {
+              webDomain: "https://example.com",
+              apiDomain: "https://api.example.com",
+            }
           : { subject: "https://example.com" },
       );
 
@@ -749,6 +764,244 @@ describe("PushNotificationsService", () => {
       await service.sendPending("76561100000000001", "chat:match:m-1");
 
       expect(webPush.sendNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("rich payload", () => {
+    const payloadOf = (call: number) =>
+      JSON.parse((webPush.sendNotification as jest.Mock).mock.calls[call][1]);
+
+    const send = async () => {
+      await service.sendForNotification({
+        id: notificationRow.id,
+        type: notificationRow.type,
+      });
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+      return payloadOf(0);
+    };
+
+    it("qualifies API-served images and leaves full URLs alone", async () => {
+      // Stored avatar paths have no leading slash (avatars.service buildPath);
+      // writers that hand over a path of their own may well add one.
+      notificationRow = notification({
+        data: {
+          icon: "https://avatars.steamstatic.com/abc_full.jpg",
+          image: "avatars/awards/gold.png",
+        },
+      });
+
+      expect(await send()).toMatchObject({
+        icon: "https://avatars.steamstatic.com/abc_full.jpg",
+        image: "https://api.example.com/avatars/awards/gold.png",
+      });
+
+      (webPush.sendNotification as jest.Mock).mockClear();
+      notificationRow = notification({ data: { image: "/news/image/a.png" } });
+
+      expect(await send()).toMatchObject({
+        image: "https://api.example.com/news/image/a.png",
+      });
+    });
+
+    it("drops an image that is neither", async () => {
+      // `//evil.test/x` is a fully qualified URL, and the browser would fetch
+      // it as one.
+      notificationRow = notification({ data: { image: "//evil.test/x.png" } });
+
+      expect(await send()).not.toHaveProperty("image");
+    });
+
+    it("tells the device how many the bell has waiting", async () => {
+      unread = 7;
+
+      expect(await send()).toMatchObject({
+        unread: 7,
+        graphqlUrl: "https://api.example.com/v1/graphql",
+      });
+    });
+
+    it("still sends when the count cannot be taken", async () => {
+      const base = postgres.query.getMockImplementation();
+      postgres.query.mockImplementation(async (sql: string, bindings: any[]) =>
+        sql.includes("AS unread")
+          ? Promise.reject(new Error("db away"))
+          : base(sql, bindings),
+      );
+
+      const payload = await send();
+
+      expect(payload).not.toHaveProperty("unread");
+      expect(payload.title).toBe("Match ready");
+    });
+
+    it("offers Dismiss on a plain notification", async () => {
+      const payload = await send();
+
+      expect(payload.actions).toHaveLength(1);
+      expect(payload.actions[0]).toMatchObject({
+        action: "dismiss",
+        title: "Dismiss",
+      });
+      expect(payload.actions[0].operation.query).toContain(
+        "update_notifications(where:$v1,_set:$v2){affected_rows}",
+      );
+      expect(payload.actions[0].operation.variables).toEqual({
+        v1: { id: { _in: [notificationRow.id] } },
+        v2: { is_read: true },
+      });
+    });
+
+    it("dismisses a bundle by its thread rather than by listing every id", async () => {
+      // The pending list has no cap -- a flapping node over a night of quiet
+      // hours leaves dozens of ids -- and a push payload has ~4 KB.
+      const held = Array.from({ length: 90 }, (_, i) => `id-${i}`);
+      redis.multi.mockReturnValueOnce(chainableMulti([[null, held]]));
+
+      notificationRow = notification({
+        type: "GameNodeStatus",
+        entity_id: "n-1",
+      });
+      bundled = held.map((id) => ({
+        ...notification({ id, type: "GameNodeStatus", entity_id: "n-1" }),
+        steam_id: "76561100000000001",
+        subscription_id: "sub-1",
+        endpoint: subscription("sub-1").endpoint,
+        p256dh: "p256dh",
+        auth: "auth",
+      }));
+
+      await service.sendPending("76561100000000001", "GameNodeStatus:n-1");
+
+      const payload = payloadOf(0);
+      expect(payload.actions).toHaveLength(1);
+      expect(payload.actions[0].operation.variables).toEqual({
+        v1: {
+          type: { _eq: "GameNodeStatus" },
+          entity_id: { _eq: "n-1" },
+          is_read: { _eq: false },
+        },
+        v2: { is_read: true },
+      });
+      expect(JSON.stringify(payload).length).toBeLessThan(2048);
+    });
+
+    it("turns the bell's buttons into notification buttons", async () => {
+      notificationRow = notification({
+        type: "ScrimRequestReceived",
+        entity_id: "req-1",
+        actions: [
+          {
+            label: "Accept",
+            graphql: {
+              type: "mutation",
+              action: "respondToScrimRequest",
+              selection: { success: true },
+              variables: { request_id: "req-1", accept: true },
+            },
+          },
+          {
+            label: "Decline",
+            graphql: {
+              type: "mutation",
+              action: "respondToScrimRequest",
+              selection: { success: true },
+              variables: { request_id: "req-1", accept: false },
+            },
+          },
+        ],
+      });
+
+      const { actions } = await send();
+
+      expect(actions.map(({ title }: PushAction) => title)).toEqual([
+        "Accept",
+        "Decline",
+      ]);
+      // The button runs the mutation, then removes the row -- the bell does
+      // the same two things when one of its buttons is pressed.
+      expect(actions[0].operation.query).toMatch(
+        /respondToScrimRequest\(request_id:\$v1,accept:\$v2\)\{success\},update_notifications\(/,
+      );
+      expect(actions[0].operation.variables).toMatchObject({
+        v1: "req-1",
+        v2: true,
+        v4: { is_read: true, deleted_at: "now()" },
+      });
+      expect(actions[1].operation.variables).toMatchObject({ v2: false });
+    });
+
+    it("lets a team invite be answered from the notification", async () => {
+      notificationRow = notification({
+        type: "TeamInvite",
+        entity_id: "11111111-1111-1111-1111-111111111111",
+        message: "Ancients invited you",
+      });
+
+      const { actions } = await send();
+
+      expect(actions.map(({ action }: PushAction) => action)).toEqual([
+        "accept",
+        "decline",
+      ]);
+      expect(actions[0].operation.query).toContain("acceptInvite(");
+      expect(actions[1].operation.query).toContain("denyInvite(");
+      expect(actions[0].operation.variables).toMatchObject({
+        v1: "team",
+        v2: "11111111-1111-1111-1111-111111111111",
+      });
+    });
+
+    it("lets a draft invite be answered from the notification", async () => {
+      notificationRow = notification({
+        type: "DraftInvite",
+        entity_id: "22222222-2222-2222-2222-222222222222",
+        message: "Luke invited you to a draft",
+      });
+
+      const { actions } = await send();
+
+      expect(actions[0].operation.query).toContain("respondDraftInvite(");
+      expect(actions[0].operation.variables).toMatchObject({
+        v1: "22222222-2222-2222-2222-222222222222",
+        v2: true,
+      });
+      expect(actions[1].operation.variables).toMatchObject({ v2: false });
+    });
+
+    it("gives chat no buttons", async () => {
+      // Reading the bell row would leave the conversation's own cursor where
+      // it was, so a Dismiss here would lie.
+      notificationRow = notification({
+        type: "ChatMessage",
+        title: "Luke",
+        message: "hey",
+        entity_id: "match:m-1",
+        data: { threadKey: "chat:match:m-1", threadLabel: "Ancients vs Ratz" },
+      });
+      recipients = ["76561100000000001"];
+
+      expect((await send()).actions).toEqual([]);
+    });
+
+    it("keeps a broken stored action from blocking the push", async () => {
+      notificationRow = notification({
+        actions: [
+          {
+            label: "Boom",
+            graphql: {
+              type: "mutation",
+              action: "noSuchMutation",
+              selection: { success: true },
+              variables: { x: 1 },
+            },
+          },
+        ],
+      });
+
+      const payload = await send();
+
+      expect(payload.title).toBe("Match ready");
+      expect(payload.actions).toEqual([]);
     });
   });
 

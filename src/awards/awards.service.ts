@@ -260,10 +260,11 @@ export class AwardsService {
     }
 
     try {
-      const [award] = await this.postgres.query<Array<{ name: string }>>(
-        `SELECT name FROM public.awards WHERE id = $1::uuid`,
-        [awardId],
-      );
+      const [award] = await this.postgres.query<
+        Array<{ name: string; image_url: string | null }>
+      >(`SELECT name, image_url FROM public.awards WHERE id = $1::uuid`, [
+        awardId,
+      ]);
 
       await this.notifications.notifyPlayers("AwardGranted", {
         title: "Award Received",
@@ -273,6 +274,7 @@ export class AwardsService {
         role: "user",
         entity_id: recipientId,
         steamIds,
+        data: { image: AwardsService.imagePath(award?.image_url) },
       });
     } catch (error) {
       this.logger.warn(
@@ -662,6 +664,18 @@ export class AwardsService {
       return true;
     }
     return Number.isInteger(silhouette) && silhouette >= 0 && silhouette <= 4;
+  }
+
+  // image_url is the S3 key (`awards/<file>`, or `trophies/<file>` from before
+  // the rename); the file is only served at `/avatars/awards/<file>`.
+  public static imagePath(imageUrl?: string | null): string | null {
+    if (!imageUrl) {
+      return null;
+    }
+    if (/^https?:\/\//i.test(imageUrl)) {
+      return imageUrl;
+    }
+    return `/avatars/awards/${imageUrl.replace(/^(awards|trophies)\//, "")}`;
   }
 
   private buildPath(slug: string, mimetype: string): string {

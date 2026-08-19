@@ -332,12 +332,15 @@ export class DemosController {
         return;
       }
 
+      const image = await this.notifications.mapPosterImage({ matchId });
+
       await this.notifications.notifyPlayers("MatchStatsReady", {
         title: "Match Stats Ready",
         message: `Your match stats are ready. <a href="/matches/${matchId}">View Match</a>`,
         role: "user",
         entity_id: matchId,
         steamIds: players.map((player) => player.steam_id),
+        data: { image },
       });
     } catch (error) {
       this.logger.warn(

@@ -31757,6 +31757,9 @@ export default {
             "last_error": [
                 84
             ],
+            "path": [
+                84
+            ],
             "plugin": [
                 2003
             ],
@@ -31943,6 +31946,9 @@ export default {
             "last_error": [
                 86
             ],
+            "path": [
+                86
+            ],
             "plugin": [
                 2008
             ],
@@ -31997,6 +32003,9 @@ export default {
             "last_error": [
                 84
             ],
+            "path": [
+                84
+            ],
             "plugin": [
                 2017
             ],
@@ -32041,6 +32050,9 @@ export default {
             "last_error": [
                 84
             ],
+            "path": [
+                84
+            ],
             "plugin_slug": [
                 84
             ],
@@ -32074,6 +32086,9 @@ export default {
                 3373
             ],
             "last_error": [
+                3373
+            ],
+            "path": [
                 3373
             ],
             "plugin_slug": [
@@ -32111,6 +32126,9 @@ export default {
             "last_error": [
                 84
             ],
+            "path": [
+                84
+            ],
             "plugin_slug": [
                 84
             ],
@@ -32144,6 +32162,9 @@ export default {
                 3373
             ],
             "last_error": [
+                3373
+            ],
+            "path": [
                 3373
             ],
             "plugin_slug": [
@@ -32215,6 +32236,9 @@ export default {
             "last_error": [
                 3373
             ],
+            "path": [
+                3373
+            ],
             "plugin": [
                 2019
             ],
@@ -32276,6 +32300,9 @@ export default {
             "last_error": [
                 84
             ],
+            "path": [
+                84
+            ],
             "plugin_slug": [
                 84
             ],
@@ -32332,6 +32359,9 @@ export default {
                 4954
             ],
             "last_error": [
+                84
+            ],
+            "path": [
                 84
             ],
             "plugin_slug": [
@@ -45281,6 +45311,9 @@ export default {
             "active_pool": [
                 6
             ],
+            "deleted_at": [
+                4954
+            ],
             "e_match_type": [
                 1177
             ],
@@ -45537,6 +45570,9 @@ export default {
             "active_pool": [
                 7
             ],
+            "deleted_at": [
+                4955
+            ],
             "e_match_type": [
                 1180
             ],
@@ -45585,6 +45621,9 @@ export default {
             "active_pool": [
                 6
             ],
+            "deleted_at": [
+                4954
+            ],
             "e_match_type": [
                 1188
             ],
@@ -45623,6 +45662,9 @@ export default {
             ]
         },
         "maps_max_fields": {
+            "deleted_at": [
+                4954
+            ],
             "id": [
                 5454
             ],
@@ -45646,6 +45688,9 @@ export default {
             ]
         },
         "maps_max_order_by": {
+            "deleted_at": [
+                3373
+            ],
             "id": [
                 3373
             ],
@@ -45669,6 +45714,9 @@ export default {
             ]
         },
         "maps_min_fields": {
+            "deleted_at": [
+                4954
+            ],
             "id": [
                 5454
             ],
@@ -45692,6 +45740,9 @@ export default {
             ]
         },
         "maps_min_order_by": {
+            "deleted_at": [
+                3373
+            ],
             "id": [
                 3373
             ],
@@ -45754,6 +45805,9 @@ export default {
             "active_pool": [
                 3373
             ],
+            "deleted_at": [
+                3373
+            ],
             "e_match_type": [
                 1190
             ],
@@ -45806,6 +45860,9 @@ export default {
             "active_pool": [
                 6
             ],
+            "deleted_at": [
+                4954
+            ],
             "enabled": [
                 6
             ],
@@ -45848,6 +45905,9 @@ export default {
         "maps_stream_cursor_value_input": {
             "active_pool": [
                 6
+            ],
+            "deleted_at": [
+                4954
             ],
             "enabled": [
                 6

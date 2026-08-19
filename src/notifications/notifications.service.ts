@@ -148,7 +148,8 @@ export class NotificationsService {
     });
     const name = players_by_pk?.name ?? `Player ${sanction.steamId}`;
 
-    const verb = NotificationsService.SANCTION_VERBS[sanction.type] ?? "sanctioned";
+    const verb =
+      NotificationsService.SANCTION_VERBS[sanction.type] ?? "sanctioned";
     const safeName = NotificationsService.escapeHtml(name);
     const profileUrl = `${this.appConfig.webDomain}/players/${encodeURIComponent(
       sanction.steamId,
@@ -189,14 +190,21 @@ export class NotificationsService {
       return;
     }
 
-    const played = await this.postgres.query<Array<{ exists: boolean }>>(
+    // A brand-new registrant with a pre-existing VAC ban is exactly what admins
+    // want to hear about, so signing in counts as much as having played; only a
+    // steam id that never touched the platform (looked up via search) stays quiet.
+    const known = await this.postgres.query<Array<{ exists: boolean }>>(
       `SELECT EXISTS (
+         SELECT 1 FROM public.players
+          WHERE steam_id = $1::bigint
+            AND last_sign_in_at IS NOT NULL
+       ) OR EXISTS (
          SELECT 1 FROM public.match_lineup_players
           WHERE steam_id = $1::bigint
        ) AS exists`,
       [sanction.steamId],
     );
-    if (!played.at(0)?.exists) {
+    if (!known.at(0)?.exists) {
       return;
     }
 
@@ -369,7 +377,10 @@ export class NotificationsService {
     } catch (error) {
       // The per-row events are still queued behind this, so a failure here
       // degrades to the unbatched path rather than losing the push.
-      this.logger.warn("unable to batch push for a fan-out notification", error);
+      this.logger.warn(
+        "unable to batch push for a fan-out notification",
+        error,
+      );
     }
   }
 
@@ -406,6 +417,20 @@ export class NotificationsService {
     } catch (error) {
       this.logger.error("Error sending discord notification", error);
     }
+  }
+
+  // Writers hand over `{ image: maybeUndefined }` as is; a row only carries
+  // `data` when something in it is set.
+  private static compactData(
+    data?: NotificationData,
+  ): NotificationData | undefined {
+    if (!data) {
+      return undefined;
+    }
+    const entries = Object.entries(data).filter(
+      ([, value]) => value !== undefined && value !== null && value !== "",
+    );
+    return entries.length > 0 ? Object.fromEntries(entries) : undefined;
   }
 
   async notifyPlayers(
@@ -457,6 +482,8 @@ export class NotificationsService {
       (steamId) => inApp.has(steamId) || pushable.has(steamId),
     );
 
+    const data = NotificationsService.compactData(notification.data);
+
     if (steamIds.length > 0) {
       const { insert_notifications } = await this.hasura.mutation({
         insert_notifications: {
@@ -470,10 +497,8 @@ export class NotificationsService {
               entity_id: notification.entity_id,
               actions,
               in_app: inApp.has(steam_id),
-              ...(notification.data ? { data: notification.data } : {}),
-              ...(notification.deletable === false
-                ? { deletable: false }
-                : {}),
+              ...(data ? { data } : {}),
+              ...(notification.deletable === false ? { deletable: false } : {}),
             })),
           },
           returning: {
@@ -576,6 +601,50 @@ export class NotificationsService {
     );
   }
 
+  // The poster for a map, as a push notification image. Posters live in the
+  // web bundle (`/img/maps/screenshots/...`), not behind the API, so they are
+  // qualified here rather than by the push service's API-relative rule.
+  public async mapPosterImage(
+    by: { mapName: string | null } | { matchId: string },
+  ): Promise<string | undefined> {
+    try {
+      const [row] =
+        "matchId" in by
+          ? await this.postgres.query<Array<{ poster: string | null }>>(
+              `SELECT m.poster
+                 FROM public.match_maps mm
+                 JOIN public.maps m ON m.id = mm.map_id
+                WHERE mm.match_id = $1::uuid
+                ORDER BY mm."order" ASC
+                LIMIT 1`,
+              [by.matchId],
+            )
+          : by.mapName
+            ? await this.postgres.query<Array<{ poster: string | null }>>(
+                `SELECT poster FROM public.maps WHERE name = $1 LIMIT 1`,
+                [by.mapName],
+              )
+            : [];
+
+      const poster = row?.poster;
+
+      if (!poster) {
+        return undefined;
+      }
+
+      if (/^https?:\/\//i.test(poster)) {
+        return poster;
+      }
+
+      return poster.startsWith("/") && !poster.startsWith("//")
+        ? `${this.appConfig.webDomain}${poster}`
+        : undefined;
+    } catch (error) {
+      this.logger.warn("unable to resolve map poster for notification", error);
+      return undefined;
+    }
+  }
+
   // Announce something to the whole player base.
   //
   // This deliberately writes one row per player rather than a single
@@ -593,14 +662,16 @@ export class NotificationsService {
       title: string;
       message: string;
       entity_id?: string;
+      data?: NotificationData;
     },
   ) {
     const key = inAppKeyForType(type);
+    const data = NotificationsService.compactData(notification.data);
 
     const inserted = await this.postgres.query<Array<{ id: string }>>(
-      `INSERT INTO public.notifications (type, title, message, role, steam_id, entity_id, in_app)
+      `INSERT INTO public.notifications (type, title, message, role, steam_id, entity_id, in_app, data)
             SELECT $1, $2, $3, 'user', p.steam_id, $4,
-                   COALESCE(np.enabled, $7::boolean)
+                   COALESCE(np.enabled, $7::boolean), $8::jsonb
               FROM public.players p
          LEFT JOIN public.notification_preferences np
                 ON np.steam_id = p.steam_id
@@ -620,6 +691,7 @@ export class NotificationsService {
         key?.key ?? "",
         NotificationsService.ACTIVE_PLAYER_WINDOW,
         key?.defaultEnabled ?? true,
+        data ? JSON.stringify(data) : null,
       ],
     );
 

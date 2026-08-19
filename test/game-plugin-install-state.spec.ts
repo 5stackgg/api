@@ -1,4 +1,5 @@
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { GamePluginsService } from "./../src/game-plugins/game-plugins.service";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
 // Installing states intent and nodes converge to it, so "installed" is a count
@@ -179,5 +180,50 @@ describe("game plugin install state (SQL-driven)", () => {
 
     expect(Number(row.installed)).toEqual(1);
     expect(Number(row.target)).toEqual(2);
+  });
+
+  // The catalog cannot say where a csgo-layout release lands, so the node
+  // reports it and the panel opens that rather than a guessed configs folder.
+  it("records where the node says the plugin lives", async () => {
+    const service = new GamePluginsService(
+      { warn: jest.fn(), log: jest.fn() } as never,
+      {} as never,
+      postgres,
+      {} as never,
+      {} as never,
+    );
+    await addNode("node-1");
+    await request();
+
+    await service.recordNodeState("node-1", [
+      {
+        slug: "retakes",
+        version: "1.0.0",
+        runtime: "swiftlys2",
+        source: "managed",
+        path: "addons/swiftlys2/plugins/Retakes",
+      },
+    ]);
+
+    const read = async () => {
+      const [row] = await postgres.query<Array<{ path: string | null }>>(
+        `SELECT path FROM game_server_node_plugins WHERE game_server_node_id = 'node-1'`,
+      );
+      return row.path;
+    };
+
+    expect(await read()).toEqual("addons/swiftlys2/plugins/Retakes");
+
+    await service.recordNodeState("node-1", [
+      {
+        slug: "retakes",
+        version: "1.0.0",
+        runtime: "swiftlys2",
+        source: "managed",
+        path: null,
+      },
+    ]);
+
+    expect(await read()).toBeNull();
   });
 });

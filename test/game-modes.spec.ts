@@ -368,9 +368,10 @@ describe("game modes (SQL-driven)", () => {
   });
 });
 
-// A mode that is not competitive_safe still plays a real match on a real
-// server: stats, demos and rounds are all recorded. It simply does not move
-// anybody's rating, and it is kept off the stats leaderboards.
+// A match under any custom mode still plays for real on a real server: stats,
+// demos and rounds are all recorded. It simply moves nobody's rating and stays
+// off the stats leaderboards -- only a plain competitive match counts, and
+// competitive_safe gates draft-lobby selection rather than ranking.
 describe("unranked game modes (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
@@ -463,14 +464,14 @@ describe("unranked game modes (SQL-driven)", () => {
     expect(row.counts_toward_ranking).toBe(false);
   });
 
-  it("still counts a match under a competitive-safe mode", async () => {
+  it("marks a match under a draft-eligible mode as not counting either", async () => {
     const match = await playedMatch(await mode(true));
 
     const [row] = await postgres.query<
       Array<{ counts_toward_ranking: boolean }>
     >("SELECT counts_toward_ranking FROM matches WHERE id = $1", [match.id]);
 
-    expect(row.counts_toward_ranking).toBe(true);
+    expect(row.counts_toward_ranking).toBe(false);
   });
 
   it("counts a match with no mode at all", async () => {
@@ -490,31 +491,35 @@ describe("unranked game modes (SQL-driven)", () => {
     expect(await eloRowCount(match.id)).toEqual(0);
   });
 
-  it("writes ELO for the same match under a safe mode", async () => {
-    const match = await playedMatch(await mode(true));
+  it("writes ELO for the same match with no mode", async () => {
+    const match = await playedMatch();
 
     expect(await generate(match.id)).toBeGreaterThan(0);
     expect(await eloRowCount(match.id)).toBeGreaterThan(0);
   });
 
-  it("follows the mode when it is swapped before the match is played", async () => {
+  it("follows the mode when it is cleared before the match is played", async () => {
     const optionsId = await fx.matchOptions({
       type: "Duel",
       gameModeId: await mode(true),
     });
     const match = await fx.match(optionsId);
-    const funMode = await mode(false);
+
+    const before = await postgres.query<
+      Array<{ counts_toward_ranking: boolean }>
+    >("SELECT counts_toward_ranking FROM matches WHERE id = $1", [match.id]);
+    expect(before[0].counts_toward_ranking).toBe(false);
 
     await postgres.query(
-      "UPDATE match_options SET game_mode_id = $1 WHERE id = $2",
-      [funMode, optionsId],
+      "UPDATE match_options SET game_mode_id = NULL WHERE id = $1",
+      [optionsId],
     );
 
     const [row] = await postgres.query<
       Array<{ counts_toward_ranking: boolean }>
     >("SELECT counts_toward_ranking FROM matches WHERE id = $1", [match.id]);
 
-    expect(row.counts_toward_ranking).toBe(false);
+    expect(row.counts_toward_ranking).toBe(true);
   });
 
   // The decision is stored, not derived, so history cannot be rewritten by
@@ -529,7 +534,7 @@ describe("unranked game modes (SQL-driven)", () => {
     const alice = await fx.player();
     const bob = await fx.player();
 
-    const play = async (gameModeId: string) => {
+    const play = async (gameModeId?: string) => {
       const optionsId = await fx.matchOptions({ type: "Duel", gameModeId });
       const match = await fx.match(optionsId);
       await fx.lineupPlayer(match.lineup_1_id, alice);
@@ -556,16 +561,19 @@ describe("unranked game modes (SQL-driven)", () => {
       return row ? Number(row.current) : null;
     };
 
-    await play(safe);
+    await play();
     const afterRanked = await ratingOf(alice);
     expect(afterRanked).not.toBeNull();
 
+    // Neither flavor of mode moves the rating -- draft-eligible or not.
     await play(unsafe);
     expect(await ratingOf(alice)).toEqual(afterRanked);
-
-    // And the engine still works afterwards -- the unranked match in between
-    // did not leave the chain in a state the next one refuses to build on.
     await play(safe);
+    expect(await ratingOf(alice)).toEqual(afterRanked);
+
+    // And the engine still works afterwards -- the unranked matches in between
+    // did not leave the chain in a state the next one refuses to build on.
+    await play();
     expect(await ratingOf(alice)).not.toEqual(afterRanked);
   });
 
@@ -595,8 +603,8 @@ describe("unranked game modes (SQL-driven)", () => {
   });
 
   it("keeps an unranked match off the leaderboard", async () => {
-    const build = async (competitiveSafe: boolean) => {
-      const match = await playedMatch(await mode(competitiveSafe));
+    const build = async (gameModeId?: string) => {
+      const match = await playedMatch(gameModeId);
       const [map] = await postgres.query<Array<{ id: string }>>(
         `INSERT INTO match_maps (match_id, map_id, "order")
          SELECT $1, id, 1 FROM maps ORDER BY name LIMIT 1 RETURNING id`,
@@ -607,7 +615,7 @@ describe("unranked game modes (SQL-driven)", () => {
       return attacker;
     };
 
-    const unrankedPlayer = await build(false);
+    const unrankedPlayer = await build(await mode(true));
 
     const onBoard = async () => {
       const rows = await postgres.query<Array<{ player_steam_id: string }>>(
@@ -618,9 +626,9 @@ describe("unranked game modes (SQL-driven)", () => {
 
     expect(await onBoard()).not.toContain(String(unrankedPlayer));
 
-    // The same shape under a safe mode does appear, so the assertion above is
+    // The same shape with no mode does appear, so the assertion above is
     // about the ranking flag and not about the fixture being incomplete.
-    const rankedPlayer = await build(true);
+    const rankedPlayer = await build();
     expect(await onBoard()).toContain(String(rankedPlayer));
   });
 
@@ -675,7 +683,7 @@ describe("starter game modes (SQL-driven)", () => {
     expect(modes.map((mode) => mode.slug)).toEqual(["deathmatch", "retakes"]);
   });
 
-  it("marks them unranked, so they never quietly move ELO", async () => {
+  it("keeps them out of draft lobbies by default", async () => {
     const modes = await seeded();
     expect(modes.every((mode) => mode.competitive_safe === false)).toBe(true);
   });

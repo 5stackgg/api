@@ -174,6 +174,13 @@ export class GameModesService {
   // saying the plugin cannot work without it, and the operator having said yes
   // for that plugin. Decided from the plugins that are actually going to load,
   // so a mode that does not select the plugin leaves the server compliant.
+  //
+  // 5stack Ranks stands in for the operator's half, because it already turns
+  // the same setting off to render ranks in-game. The ban it risks is against
+  // the Steam account, not the server, so once ranks is on that risk is taken
+  // deployment-wide and asking a second time per plugin would be asking about
+  // nothing. It does not stand in for the catalog's half: a plugin that works
+  // fine under the guidelines still leaves them on.
   private async withServerGuidelines(
     mode: ResolvedGameMode | null,
   ): Promise<ResolvedGameMode | null> {
@@ -192,8 +199,16 @@ export class GameModesService {
                   FROM game_plugin_installs i
                   INNER JOIN game_plugins p ON p.slug = i.plugin_slug
                  WHERE i.plugin_slug = ANY($1::text[])
-                   AND i.disable_server_guidelines = true
                    AND p.requires_server_guidelines_disabled = true
+                   AND (
+                     i.disable_server_guidelines = true
+                     OR EXISTS (
+                       SELECT 1 FROM settings
+                        WHERE name IN ('fivestack_ranks_matches',
+                                       'fivestack_ranks_tournaments')
+                          AND value = 'true'
+                     )
+                   )
               ) AS disable`,
       [slugs],
     );

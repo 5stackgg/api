@@ -47,6 +47,7 @@ select_permissions:
         - type
         - workshop_map_id
         - id
+        - deleted_at
       filter: {}
     comment: ""
 update_permissions:
@@ -61,11 +62,7 @@ update_permissions:
         - poster
         - type
         - workshop_map_id
+        - deleted_at
       filter: {}
       check: {}
-    comment: ""
-delete_permissions:
-  - role: administrator
-    permission:
-      filter: {}
     comment: ""

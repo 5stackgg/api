@@ -10,6 +10,7 @@ import { RedisManagerService } from "../../redis/redis-manager/redis-manager.ser
 import { AppConfig } from "src/configs/types/AppConfig";
 import { WebPushConfig } from "src/configs/types/WebPushConfig";
 import { e_player_roles_enum } from "generated/schema";
+import { generateMutationOp } from "../../../generated";
 import { rolesAtOrAbove } from "src/utilities/isRoleAbove";
 import { SystemSettingName } from "src/system/enums/SystemSettingName";
 import { pushCategoryForType } from "../preferences/notification-categories";
@@ -32,11 +33,25 @@ export type PushSubscriptionPayload = {
   };
 };
 
+// Image paths are either absolute or API-served (`/avatars/...`,
+// `/news/image/...`); a writer whose asset lives elsewhere sends the full URL.
 export type NotificationData = {
   threadKey?: string;
   threadLabel?: string;
-  icon?: string;
+  icon?: string | null;
+  image?: string | null;
   senderSteamId?: string;
+};
+
+// The bell's buttons, as written by NotificationsService.send / notifyPlayers.
+export type NotificationAction = {
+  label: string;
+  graphql: {
+    type: string;
+    action: string;
+    selection: Record<string, unknown>;
+    variables?: Record<string, unknown>;
+  };
 };
 
 export type NotificationRow = {
@@ -47,6 +62,16 @@ export type NotificationRow = {
   message: string;
   entity_id?: string | null;
   data?: NotificationData | null;
+  actions?: NotificationAction[] | null;
+};
+
+// A notification button as the service worker sees it: an id to match the
+// click against and a ready-to-POST GraphQL operation, so the worker never
+// has to know how to build one.
+export type PushAction = {
+  action: string;
+  title: string;
+  operation: { query: string; variables?: Record<string, unknown> };
 };
 
 type SubscriptionRow = {
@@ -126,6 +151,16 @@ const RECIPIENT_ROLES: Record<string, e_player_roles_enum[]> =
   Object.fromEntries(
     BROADCAST_ROLES.map((role) => [role, rolesAtOrAbove(role)]),
   );
+
+// The same table flattened to (broadcast role, recipient role) pairs, for SQL
+// that has to ask "can this player see that broadcast" without a round trip.
+const AUDIENCE_PAIRS: Array<[string, string]> = BROADCAST_ROLES.flatMap(
+  (role) =>
+    RECIPIENT_ROLES[role].map((recipient): [string, string] => [
+      role,
+      recipient,
+    ]),
+);
 
 // Types that fan out to one row per player. The trigger fires per row, so for
 // these the handler collapses into a single deduped job instead of doing a
@@ -264,7 +299,6 @@ export class PushNotificationsService {
     this.configured = true;
     this.publicKey = publicKey;
   }
-
 
   // Which of these players could receive a push at all. Callers use it to
   // decide whether a recipient who muted the bell still needs a notifications
@@ -573,7 +607,8 @@ export class PushNotificationsService {
       return;
     }
 
-    const policy = deliveryPolicyForType(newest.type) ?? DEFAULT_DELIVERY_POLICY;
+    const policy =
+      deliveryPolicyForType(newest.type) ?? DEFAULT_DELIVERY_POLICY;
 
     // Re-resolved rather than replayed: the whole point of holding these was
     // that the player might read them in the meantime, and between the window
@@ -623,6 +658,7 @@ export class PushNotificationsService {
       // are only there to say whether it is still worth sending at all, and to
       // supply the text.
       await this.deliver(
+        delivery.steamId,
         delivery.subscriptions,
         delivery.notifications,
         ids.length,
@@ -631,7 +667,7 @@ export class PushNotificationsService {
   }
 
   private static readonly SELECT_NOTIFICATION = `SELECT id::text AS id, type::text AS type, role::text AS role,
-              title, message, entity_id, data
+              title, message, entity_id, data, actions
          FROM public.notifications`;
 
   // The row a bundle is described by: its thread, its policy, and the link the
@@ -683,7 +719,10 @@ export class PushNotificationsService {
     policy: DeliveryPolicy,
     representative: NotificationRow,
   ): Promise<Delivery[]> {
-    const [selectorSql, selectorParams]: [string, Array<string | number | string[]>] =
+    const [selectorSql, selectorParams]: [
+      string,
+      Array<string | number | string[]>,
+    ] =
       "ids" in selector
         ? [`n.id = ANY($1::uuid[])`, [selector.ids]]
         : [
@@ -707,7 +746,7 @@ export class PushNotificationsService {
 
     const rows = await this.postgres.query<DeliveryRow[]>(
       `SELECT n.id::text AS id, n.type::text AS type, n.role::text AS role,
-              n.title, n.message, n.entity_id, n.data,
+              n.title, n.message, n.entity_id, n.data, n.actions,
               p.steam_id::text AS steam_id,
               public.quiet_hours_seconds_remaining(
                 p.quiet_hours_start, p.quiet_hours_end, p.notification_timezone
@@ -768,10 +807,13 @@ export class PushNotificationsService {
           message: row.message,
           entity_id: row.entity_id,
           data: row.data,
+          actions: row.actions,
         });
       }
 
-      if (!delivery.subscriptions.some(({ id }) => id === row.subscription_id)) {
+      if (
+        !delivery.subscriptions.some(({ id }) => id === row.subscription_id)
+      ) {
         delivery.subscriptions.push({
           id: row.subscription_id,
           endpoint: row.endpoint,
@@ -837,7 +879,11 @@ export class PushNotificationsService {
       }
 
       if (policy.bundleSeconds === 0) {
-        await this.deliver(delivery.subscriptions, delivery.notifications);
+        await this.deliver(
+          delivery.steamId,
+          delivery.subscriptions,
+          delivery.notifications,
+        );
         continue;
       }
 
@@ -848,7 +894,11 @@ export class PushNotificationsService {
       );
 
       if (claim.leading) {
-        await this.deliver(delivery.subscriptions, delivery.notifications);
+        await this.deliver(
+          delivery.steamId,
+          delivery.subscriptions,
+          delivery.notifications,
+        );
 
         // Held as well as sent. The summary replaces this notification on the
         // device, so leaving it out would make a burst of four report three.
@@ -1064,7 +1114,243 @@ export class PushNotificationsService {
     };
   }
 
+  // Same rule as web/utilities/avatarUrl.ts: a stored `avatars/...` path (with
+  // or without its leading slash) is served by the API; anything with a scheme
+  // is left alone. The browser fetches a notification image from the push
+  // service's context, not the page's, so it has to be a full URL.
+  private assetUrl(path: string | undefined | null): string | undefined {
+    if (!path) {
+      return undefined;
+    }
+
+    if (/^https?:\/\//i.test(path)) {
+      return path;
+    }
+
+    // `//evil.test/x` is a fully qualified URL to somewhere else; any other
+    // scheme the browser would refuse anyway.
+    if (path.startsWith("//") || /^[a-z][a-z\d+\-.]*:/i.test(path)) {
+      return undefined;
+    }
+
+    return `${this.appConfig.apiDomain}/${path.replace(/^\/+/, "")}`;
+  }
+
+  // One button: the mutation the bell would run for it, followed by what the
+  // bell does to the row afterwards -- Dismiss marks it read
+  // (NotificationsPanel.vue dismissNotification); a button that answers the
+  // notification removes it (handleAction -> deleteNotification), otherwise
+  // the same row would come back in the bell still offering the same buttons.
+  private static pushAction(
+    action: string,
+    title: string,
+    mutation: Record<string, unknown>,
+    where: Record<string, unknown>,
+  ): PushAction {
+    const answered = Object.keys(mutation).length > 0;
+
+    return {
+      action,
+      title,
+      operation: generateMutationOp({
+        ...mutation,
+        update_notifications: {
+          __args: {
+            // A row the writer marked undeletable (a scheduled scrim, until it
+            // is played) stays: the update permission's check rejects a
+            // deleted_at on it, and one rejected row would roll back the
+            // answer with it.
+            where: answered ? { ...where, deletable: { _neq: false } } : where,
+            _set: answered
+              ? { is_read: true, deleted_at: "now()" }
+              : { is_read: true },
+          },
+          affected_rows: true,
+        },
+      } as Parameters<typeof generateMutationOp>[0]),
+    };
+  }
+
+  // What the device can offer besides opening the app. Every operation runs
+  // from the service worker with the player's own cookie, so it is exactly as
+  // privileged as the same button in the bell.
+  private static pushActionsFor(
+    notifications: NotificationRow[],
+    count: number,
+  ): PushAction[] {
+    const newest = notifications.at(-1);
+    const byId = { id: { _in: notifications.map(({ id }) => id) } };
+
+    // Marking a bell row read says nothing about the conversation's own read
+    // cursor, and a "Dismiss" that leaves the thread unread would mislead.
+    if (newest.type.endsWith("ChatMessage")) {
+      return [];
+    }
+
+    // A bundle describes several things at once; the only honest button is
+    // the one that applies to all of them. Selected by thread rather than by
+    // id: a bundle is every row in one thread (see threadKeyFor), and the id
+    // list is unbounded -- a night of quiet hours over a flapping node is
+    // enough to push the payload past the ~4 KB a push service accepts, and
+    // the summary would be refused outright.
+    if (count > 1 || notifications.length > 1) {
+      return [
+        PushNotificationsService.pushAction(
+          "dismiss",
+          "Dismiss",
+          {},
+          {
+            type: { _eq: newest.type },
+            entity_id: newest.entity_id
+              ? { _eq: newest.entity_id }
+              : { _is_null: true },
+            is_read: { _eq: false },
+          },
+        ),
+      ];
+    }
+
+    const dismiss = [
+      PushNotificationsService.pushAction("dismiss", "Dismiss", {}, byId),
+    ];
+
+    if (newest.actions?.length) {
+      return newest.actions.map(({ label, graphql }, index) =>
+        PushNotificationsService.pushAction(
+          String(index),
+          label,
+          {
+            [graphql.action]: {
+              __args: graphql.variables ?? {},
+              ...graphql.selection,
+            },
+          },
+          byId,
+        ),
+      );
+    }
+
+    // The invites are answered from the bell by components of their own rather
+    // than through `actions` (ActionToasts.vue, DraftInviteNotification.vue),
+    // so their buttons are spelled out here with the same mutations.
+    const inviteType =
+      newest.type === "TeamInvite"
+        ? "team"
+        : newest.type === "TournamentTeamInvite"
+          ? "tournament"
+          : null;
+
+    if (inviteType && newest.entity_id) {
+      const variables = { type: inviteType, invite_id: newest.entity_id };
+
+      return [
+        PushNotificationsService.pushAction(
+          "accept",
+          "Accept",
+          { acceptInvite: { __args: variables, success: true } },
+          byId,
+        ),
+        PushNotificationsService.pushAction(
+          "decline",
+          "Decline",
+          { denyInvite: { __args: variables, success: true } },
+          byId,
+        ),
+      ];
+    }
+
+    if (newest.type === "DraftInvite" && newest.entity_id) {
+      return [true, false].map((accept) =>
+        PushNotificationsService.pushAction(
+          accept ? "accept" : "decline",
+          accept ? "Accept" : "Decline",
+          {
+            respondDraftInvite: {
+              __args: { draftGameId: newest.entity_id, accept },
+              success: true,
+            },
+          },
+          byId,
+        ),
+      );
+    }
+
+    return dismiss;
+  }
+
+  // What the app icon should say once this push lands: the bell's number
+  // (NotificationStore.unreadNotificationCount), so the badge the push sets
+  // and the badge the page sets agree. The bell counts its own rows -- the
+  // player's, and the role broadcasts their role can see -- plus pending
+  // invites and an unread news article. League schedule tasks are the one
+  // thing left out; they are derived client-side from the whole season tree.
+  private async unreadCount(steamId: string): Promise<number | undefined> {
+    try {
+      const rows = await this.postgres.query<Array<{ unread: string }>>(
+        `WITH viewer AS (
+           SELECT role::text AS role, last_read_news_at
+             FROM public.players
+            WHERE steam_id = $1
+         ),
+         audience AS (
+           SELECT * FROM unnest($2::text[], $3::text[])
+                       AS pairs(broadcast_role, recipient_role)
+         )
+         SELECT (
+           (SELECT count(*)
+              FROM public.notifications n, viewer
+             WHERE n.in_app = true
+               AND n.is_read = false
+               AND n.deleted_at IS NULL
+               AND (n.steam_id = $1
+                    OR (n.steam_id IS NULL
+                        AND EXISTS (SELECT 1 FROM audience a
+                                     WHERE a.broadcast_role = n.role::text
+                                       AND a.recipient_role = viewer.role))))
+           + (SELECT count(*) FROM public.team_invites WHERE steam_id = $1)
+           + (SELECT count(*) FROM public.tournament_team_invites
+               WHERE steam_id = $1)
+           + (SELECT count(*)
+                FROM public.draft_game_players dgp
+                JOIN public.draft_games dg ON dg.id = dgp.draft_game_id
+               WHERE dgp.steam_id = $1
+                 AND dgp.status = 'Invited'
+                 AND dg.match_id IS NULL
+                 AND dg.status NOT IN ('Completed', 'Canceled'))
+           + (SELECT count(*)
+                FROM (SELECT published_at
+                        FROM public.news_articles
+                       WHERE status = 'published'
+                       ORDER BY published_at DESC NULLS LAST
+                       LIMIT 1) latest, viewer
+               WHERE EXISTS (SELECT 1 FROM public.settings
+                              WHERE name = 'public.news_enabled'
+                                AND value = 'true')
+                 AND (viewer.last_read_news_at IS NULL
+                      OR latest.published_at IS NULL
+                      OR latest.published_at > viewer.last_read_news_at))
+         )::text AS unread`,
+        [
+          steamId,
+          AUDIENCE_PAIRS.map(([broadcastRole]) => broadcastRole),
+          AUDIENCE_PAIRS.map(([, recipientRole]) => recipientRole),
+        ],
+      );
+
+      const unread = Number(rows.at(0)?.unread);
+
+      return Number.isInteger(unread) ? unread : undefined;
+    } catch (error) {
+      this.logger.warn(
+        `unable to count unread notifications for ${steamId}`,
+        error,
+      );
+      return undefined;
+    }
+  }
+
   private async deliver(
+    steamId: string,
     subscriptions: SubscriptionRow[],
     notifications: NotificationRow[],
     // How many arrived, which is not always how many rows are left to describe
@@ -1086,11 +1372,22 @@ export class PushNotificationsService {
           }
         : PushNotificationsService.summarize(notifications, count);
 
+    // A row whose stored action no longer matches the schema must not take
+    // the notification down with it; it just loses its buttons.
+    let actions: PushAction[] = [];
+
+    try {
+      actions = PushNotificationsService.pushActionsFor(notifications, count);
+    } catch (error) {
+      this.logger.warn(`unable to build push actions for ${newest.id}`, error);
+    }
+
     const payload = JSON.stringify({
       title,
       body,
       url: notificationUrl(newest, this.appConfig.webDomain),
-      icon: newest.data?.icon,
+      icon: this.assetUrl(newest.data?.icon),
+      image: this.assetUrl(newest.data?.image),
       // Lets a device collapse repeats of the same conversation or match
       // rather than stacking a separate notification for each.
       tag: thread,
@@ -1100,6 +1397,9 @@ export class PushNotificationsService {
       renotify: true,
       threadKey: thread,
       count,
+      unread: await this.unreadCount(steamId),
+      actions,
+      graphqlUrl: `${this.appConfig.apiDomain}/v1/graphql`,
     });
 
     const delivered: string[] = [];

@@ -54,6 +54,7 @@ export class NewsService {
         article.title,
       )}</b></a> was just published.`,
       entity_id: article.id,
+      data: { image: article.cover_image_url },
     });
   }
 

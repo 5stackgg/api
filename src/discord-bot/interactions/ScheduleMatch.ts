@@ -489,6 +489,9 @@ export default class ScheduleMatch extends DiscordInteraction {
             type: {
               _eq: type,
             },
+            deleted_at: {
+              _is_null: true,
+            },
           },
         },
         id: true,
