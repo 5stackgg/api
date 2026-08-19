@@ -318,11 +318,6 @@ export class DedicatedServersService {
                         name: `dedicated-server-data-${server.id}`,
                         mountPath: `/opt/custom-plugins`,
                       },
-                      {
-                        name: `plugin-store-${sanitizedGameServerNodeId}`,
-                        mountPath: `/opt/plugin-store`,
-                        readOnly: true,
-                      },
                     ],
                   },
                 ],
@@ -350,13 +345,6 @@ export class DedicatedServersService {
                     hostPath: {
                       type: "DirectoryOrCreate",
                       path: `/opt/5stack/servers/${server.id}`,
-                    },
-                  },
-                  {
-                    name: `plugin-store-${sanitizedGameServerNodeId}`,
-                    hostPath: {
-                      type: "DirectoryOrCreate",
-                      path: `/opt/5stack/plugin-store`,
                     },
                   },
                 ],

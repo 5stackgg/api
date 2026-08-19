@@ -549,7 +549,6 @@ export class GameServerNodeController {
         mkdir -p /opt/5stack/serverfiles
         mkdir -p /opt/5stack/serverfiles-csgo
         mkdir -p /opt/5stack/custom-plugins
-        mkdir -p /opt/5stack/plugin-store
         ok "ready"
 
         step "Installing tailscale"

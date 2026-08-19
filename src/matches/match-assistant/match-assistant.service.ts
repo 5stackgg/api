@@ -942,11 +942,6 @@ export class MatchAssistantService {
                             name: `custom-plugins-${sanitizedGameServerNodeId}`,
                             mountPath: "/opt/custom-plugins",
                           },
-                          {
-                            name: `plugin-store-${sanitizedGameServerNodeId}`,
-                            mountPath: "/opt/plugin-store",
-                            readOnly: true,
-                          },
                         ],
                       },
                     ],
@@ -974,13 +969,6 @@ export class MatchAssistantService {
                         name: `custom-plugins-${sanitizedGameServerNodeId}`,
                         hostPath: {
                           path: `/opt/5stack/custom-plugins`,
-                        },
-                      },
-                      {
-                        name: `plugin-store-${sanitizedGameServerNodeId}`,
-                        hostPath: {
-                          path: `/opt/5stack/plugin-store`,
-                          type: "DirectoryOrCreate",
                         },
                       },
                     ],
