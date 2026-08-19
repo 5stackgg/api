@@ -31757,6 +31757,9 @@ export default {
             "last_error": [
                 84
             ],
+            "path": [
+                84
+            ],
             "plugin": [
                 2003
             ],
@@ -31943,6 +31946,9 @@ export default {
             "last_error": [
                 86
             ],
+            "path": [
+                86
+            ],
             "plugin": [
                 2008
             ],
@@ -31997,6 +32003,9 @@ export default {
             "last_error": [
                 84
             ],
+            "path": [
+                84
+            ],
             "plugin": [
                 2017
             ],
@@ -32041,6 +32050,9 @@ export default {
             "last_error": [
                 84
             ],
+            "path": [
+                84
+            ],
             "plugin_slug": [
                 84
             ],
@@ -32074,6 +32086,9 @@ export default {
                 3373
             ],
             "last_error": [
+                3373
+            ],
+            "path": [
                 3373
             ],
             "plugin_slug": [
@@ -32111,6 +32126,9 @@ export default {
             "last_error": [
                 84
             ],
+            "path": [
+                84
+            ],
             "plugin_slug": [
                 84
             ],
@@ -32144,6 +32162,9 @@ export default {
                 3373
             ],
             "last_error": [
+                3373
+            ],
+            "path": [
                 3373
             ],
             "plugin_slug": [
@@ -32215,6 +32236,9 @@ export default {
             "last_error": [
                 3373
             ],
+            "path": [
+                3373
+            ],
             "plugin": [
                 2019
             ],
@@ -32276,6 +32300,9 @@ export default {
             "last_error": [
                 84
             ],
+            "path": [
+                84
+            ],
             "plugin_slug": [
                 84
             ],
@@ -32332,6 +32359,9 @@ export default {
                 4954
             ],
             "last_error": [
+                84
+            ],
+            "path": [
                 84
             ],
             "plugin_slug": [

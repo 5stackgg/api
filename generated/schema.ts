@@ -8199,6 +8199,7 @@ export interface game_server_node_plugins {
     id: Scalars['uuid']
     installed_at: (Scalars['timestamptz'] | null)
     last_error: (Scalars['String'] | null)
+    path: (Scalars['String'] | null)
     /** An object relationship */
     plugin: (game_plugins | null)
     plugin_slug: Scalars['String']
@@ -8240,6 +8241,7 @@ export interface game_server_node_plugins_max_fields {
     id: (Scalars['uuid'] | null)
     installed_at: (Scalars['timestamptz'] | null)
     last_error: (Scalars['String'] | null)
+    path: (Scalars['String'] | null)
     plugin_slug: (Scalars['String'] | null)
     source: (Scalars['String'] | null)
     updated_at: (Scalars['timestamptz'] | null)
@@ -8256,6 +8258,7 @@ export interface game_server_node_plugins_min_fields {
     id: (Scalars['uuid'] | null)
     installed_at: (Scalars['timestamptz'] | null)
     last_error: (Scalars['String'] | null)
+    path: (Scalars['String'] | null)
     plugin_slug: (Scalars['String'] | null)
     source: (Scalars['String'] | null)
     updated_at: (Scalars['timestamptz'] | null)
@@ -8275,7 +8278,7 @@ export interface game_server_node_plugins_mutation_response {
 
 
 /** select columns of table "game_server_node_plugins" */
-export type game_server_node_plugins_select_column = 'channel' | 'created_at' | 'detected' | 'detected_version' | 'game_server_node_id' | 'id' | 'installed_at' | 'last_error' | 'plugin_slug' | 'runtime' | 'source' | 'status' | 'updated_at' | 'version'
+export type game_server_node_plugins_select_column = 'channel' | 'created_at' | 'detected' | 'detected_version' | 'game_server_node_id' | 'id' | 'installed_at' | 'last_error' | 'path' | 'plugin_slug' | 'runtime' | 'source' | 'status' | 'updated_at' | 'version'
 
 
 /** select "game_server_node_plugins_aggregate_bool_exp_bool_and_arguments_columns" columns of table "game_server_node_plugins" */
@@ -8287,7 +8290,7 @@ export type game_server_node_plugins_select_column_game_server_node_plugins_aggr
 
 
 /** update columns of table "game_server_node_plugins" */
-export type game_server_node_plugins_update_column = 'channel' | 'created_at' | 'detected' | 'detected_version' | 'game_server_node_id' | 'id' | 'installed_at' | 'last_error' | 'plugin_slug' | 'runtime' | 'source' | 'status' | 'updated_at' | 'version'
+export type game_server_node_plugins_update_column = 'channel' | 'created_at' | 'detected' | 'detected_version' | 'game_server_node_id' | 'id' | 'installed_at' | 'last_error' | 'path' | 'plugin_slug' | 'runtime' | 'source' | 'status' | 'updated_at' | 'version'
 
 
 /** columns and relationships of "game_server_nodes" */
@@ -51308,6 +51311,7 @@ export interface game_server_node_pluginsGenqlSelection{
     id?: boolean | number
     installed_at?: boolean | number
     last_error?: boolean | number
+    path?: boolean | number
     /** An object relationship */
     plugin?: game_pluginsGenqlSelection
     plugin_slug?: boolean | number
@@ -51359,11 +51363,11 @@ on_conflict?: (game_server_node_plugins_on_conflict | null)}
 
 
 /** Boolean expression to filter rows from the table "game_server_node_plugins". All fields are combined with a logical 'AND'. */
-export interface game_server_node_plugins_bool_exp {_and?: (game_server_node_plugins_bool_exp[] | null),_not?: (game_server_node_plugins_bool_exp | null),_or?: (game_server_node_plugins_bool_exp[] | null),channel?: (e_game_plugin_channels_enum_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),detected?: (Boolean_comparison_exp | null),detected_version?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),installed_at?: (timestamptz_comparison_exp | null),last_error?: (String_comparison_exp | null),plugin?: (game_plugins_bool_exp | null),plugin_slug?: (String_comparison_exp | null),runtime?: (e_plugin_runtimes_enum_comparison_exp | null),source?: (String_comparison_exp | null),status?: (e_game_plugin_install_statuses_enum_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),version?: (String_comparison_exp | null)}
+export interface game_server_node_plugins_bool_exp {_and?: (game_server_node_plugins_bool_exp[] | null),_not?: (game_server_node_plugins_bool_exp | null),_or?: (game_server_node_plugins_bool_exp[] | null),channel?: (e_game_plugin_channels_enum_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),detected?: (Boolean_comparison_exp | null),detected_version?: (String_comparison_exp | null),game_server_node?: (game_server_nodes_bool_exp | null),game_server_node_id?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),installed_at?: (timestamptz_comparison_exp | null),last_error?: (String_comparison_exp | null),path?: (String_comparison_exp | null),plugin?: (game_plugins_bool_exp | null),plugin_slug?: (String_comparison_exp | null),runtime?: (e_plugin_runtimes_enum_comparison_exp | null),source?: (String_comparison_exp | null),status?: (e_game_plugin_install_statuses_enum_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),version?: (String_comparison_exp | null)}
 
 
 /** input type for inserting data into table "game_server_node_plugins" */
-export interface game_server_node_plugins_insert_input {channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),detected?: (Scalars['Boolean'] | null),detected_version?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),installed_at?: (Scalars['timestamptz'] | null),last_error?: (Scalars['String'] | null),plugin?: (game_plugins_obj_rel_insert_input | null),plugin_slug?: (Scalars['String'] | null),runtime?: (e_plugin_runtimes_enum | null),source?: (Scalars['String'] | null),status?: (e_game_plugin_install_statuses_enum | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
+export interface game_server_node_plugins_insert_input {channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),detected?: (Scalars['Boolean'] | null),detected_version?: (Scalars['String'] | null),game_server_node?: (game_server_nodes_obj_rel_insert_input | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),installed_at?: (Scalars['timestamptz'] | null),last_error?: (Scalars['String'] | null),path?: (Scalars['String'] | null),plugin?: (game_plugins_obj_rel_insert_input | null),plugin_slug?: (Scalars['String'] | null),runtime?: (e_plugin_runtimes_enum | null),source?: (Scalars['String'] | null),status?: (e_game_plugin_install_statuses_enum | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -51374,6 +51378,7 @@ export interface game_server_node_plugins_max_fieldsGenqlSelection{
     id?: boolean | number
     installed_at?: boolean | number
     last_error?: boolean | number
+    path?: boolean | number
     plugin_slug?: boolean | number
     source?: boolean | number
     updated_at?: boolean | number
@@ -51384,7 +51389,7 @@ export interface game_server_node_plugins_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "game_server_node_plugins" */
-export interface game_server_node_plugins_max_order_by {created_at?: (order_by | null),detected_version?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),installed_at?: (order_by | null),last_error?: (order_by | null),plugin_slug?: (order_by | null),source?: (order_by | null),updated_at?: (order_by | null),version?: (order_by | null)}
+export interface game_server_node_plugins_max_order_by {created_at?: (order_by | null),detected_version?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),installed_at?: (order_by | null),last_error?: (order_by | null),path?: (order_by | null),plugin_slug?: (order_by | null),source?: (order_by | null),updated_at?: (order_by | null),version?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -51395,6 +51400,7 @@ export interface game_server_node_plugins_min_fieldsGenqlSelection{
     id?: boolean | number
     installed_at?: boolean | number
     last_error?: boolean | number
+    path?: boolean | number
     plugin_slug?: boolean | number
     source?: boolean | number
     updated_at?: boolean | number
@@ -51405,7 +51411,7 @@ export interface game_server_node_plugins_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "game_server_node_plugins" */
-export interface game_server_node_plugins_min_order_by {created_at?: (order_by | null),detected_version?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),installed_at?: (order_by | null),last_error?: (order_by | null),plugin_slug?: (order_by | null),source?: (order_by | null),updated_at?: (order_by | null),version?: (order_by | null)}
+export interface game_server_node_plugins_min_order_by {created_at?: (order_by | null),detected_version?: (order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),installed_at?: (order_by | null),last_error?: (order_by | null),path?: (order_by | null),plugin_slug?: (order_by | null),source?: (order_by | null),updated_at?: (order_by | null),version?: (order_by | null)}
 
 
 /** response of any mutation on the table "game_server_node_plugins" */
@@ -51424,7 +51430,7 @@ export interface game_server_node_plugins_on_conflict {constraint: game_server_n
 
 
 /** Ordering options when selecting data from "game_server_node_plugins". */
-export interface game_server_node_plugins_order_by {channel?: (order_by | null),created_at?: (order_by | null),detected?: (order_by | null),detected_version?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),installed_at?: (order_by | null),last_error?: (order_by | null),plugin?: (game_plugins_order_by | null),plugin_slug?: (order_by | null),runtime?: (order_by | null),source?: (order_by | null),status?: (order_by | null),updated_at?: (order_by | null),version?: (order_by | null)}
+export interface game_server_node_plugins_order_by {channel?: (order_by | null),created_at?: (order_by | null),detected?: (order_by | null),detected_version?: (order_by | null),game_server_node?: (game_server_nodes_order_by | null),game_server_node_id?: (order_by | null),id?: (order_by | null),installed_at?: (order_by | null),last_error?: (order_by | null),path?: (order_by | null),plugin?: (game_plugins_order_by | null),plugin_slug?: (order_by | null),runtime?: (order_by | null),source?: (order_by | null),status?: (order_by | null),updated_at?: (order_by | null),version?: (order_by | null)}
 
 
 /** primary key columns input for table: game_server_node_plugins */
@@ -51432,7 +51438,7 @@ export interface game_server_node_plugins_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "game_server_node_plugins" */
-export interface game_server_node_plugins_set_input {channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),detected?: (Scalars['Boolean'] | null),detected_version?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),installed_at?: (Scalars['timestamptz'] | null),last_error?: (Scalars['String'] | null),plugin_slug?: (Scalars['String'] | null),runtime?: (e_plugin_runtimes_enum | null),source?: (Scalars['String'] | null),status?: (e_game_plugin_install_statuses_enum | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
+export interface game_server_node_plugins_set_input {channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),detected?: (Scalars['Boolean'] | null),detected_version?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),installed_at?: (Scalars['timestamptz'] | null),last_error?: (Scalars['String'] | null),path?: (Scalars['String'] | null),plugin_slug?: (Scalars['String'] | null),runtime?: (e_plugin_runtimes_enum | null),source?: (Scalars['String'] | null),status?: (e_game_plugin_install_statuses_enum | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
 
 
 /** Streaming cursor of the table "game_server_node_plugins" */
@@ -51444,7 +51450,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface game_server_node_plugins_stream_cursor_value_input {channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),detected?: (Scalars['Boolean'] | null),detected_version?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),installed_at?: (Scalars['timestamptz'] | null),last_error?: (Scalars['String'] | null),plugin_slug?: (Scalars['String'] | null),runtime?: (e_plugin_runtimes_enum | null),source?: (Scalars['String'] | null),status?: (e_game_plugin_install_statuses_enum | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
+export interface game_server_node_plugins_stream_cursor_value_input {channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),detected?: (Scalars['Boolean'] | null),detected_version?: (Scalars['String'] | null),game_server_node_id?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),installed_at?: (Scalars['timestamptz'] | null),last_error?: (Scalars['String'] | null),path?: (Scalars['String'] | null),plugin_slug?: (Scalars['String'] | null),runtime?: (e_plugin_runtimes_enum | null),source?: (Scalars['String'] | null),status?: (e_game_plugin_install_statuses_enum | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
 
 export interface game_server_node_plugins_updates {
 /** sets the columns of the filtered rows to the given values */
@@ -127712,6 +127718,7 @@ export const enumGameServerNodePluginsSelectColumn = {
    id: 'id' as const,
    installed_at: 'installed_at' as const,
    last_error: 'last_error' as const,
+   path: 'path' as const,
    plugin_slug: 'plugin_slug' as const,
    runtime: 'runtime' as const,
    source: 'source' as const,
@@ -127737,6 +127744,7 @@ export const enumGameServerNodePluginsUpdateColumn = {
    id: 'id' as const,
    installed_at: 'installed_at' as const,
    last_error: 'last_error' as const,
+   path: 'path' as const,
    plugin_slug: 'plugin_slug' as const,
    runtime: 'runtime' as const,
    source: 'source' as const,
