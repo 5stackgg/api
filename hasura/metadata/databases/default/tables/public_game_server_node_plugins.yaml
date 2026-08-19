@@ -29,6 +29,7 @@ select_permissions:
         - source
         - detected
         - last_error
+        - path
         - installed_at
         - created_at
         - updated_at

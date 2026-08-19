@@ -69,6 +69,7 @@ export class GamePluginsController {
         version: string | null;
         runtime: string | null;
         source: "managed" | "manual";
+        path?: string | null;
       }>;
     },
   ) {
