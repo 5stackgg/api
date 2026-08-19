@@ -48,6 +48,14 @@ export interface ActiveQuery {
     __typename: 'ActiveQuery'
 }
 
+export interface AddCustomGamePluginOutput {
+    name: Scalars['String']
+    runtime: Scalars['String']
+    slug: Scalars['String']
+    version: Scalars['String']
+    __typename: 'AddCustomGamePluginOutput'
+}
+
 export interface ApiKeyResponse {
     key: Scalars['String']
     __typename: 'ApiKeyResponse'
@@ -7639,10 +7647,6 @@ export interface game_modes {
     extra_game_params: (Scalars['String'] | null)
     icon: (Scalars['String'] | null)
     id: Scalars['uuid']
-    /** An object relationship */
-    map_pool: (map_pools | null)
-    map_pool_id: (Scalars['uuid'] | null)
-    match_option_defaults: Scalars['jsonb']
     /** An array relationship */
     match_options: match_options[]
     /** An aggregate relationship */
@@ -7692,7 +7696,6 @@ export interface game_modes_max_fields {
     extra_game_params: (Scalars['String'] | null)
     icon: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
-    map_pool_id: (Scalars['uuid'] | null)
     name: (Scalars['String'] | null)
     slug: (Scalars['String'] | null)
     updated_at: (Scalars['timestamptz'] | null)
@@ -7709,7 +7712,6 @@ export interface game_modes_min_fields {
     extra_game_params: (Scalars['String'] | null)
     icon: (Scalars['String'] | null)
     id: (Scalars['uuid'] | null)
-    map_pool_id: (Scalars['uuid'] | null)
     name: (Scalars['String'] | null)
     slug: (Scalars['String'] | null)
     updated_at: (Scalars['timestamptz'] | null)
@@ -7728,11 +7730,11 @@ export interface game_modes_mutation_response {
 
 
 /** select columns of table "game_modes" */
-export type game_modes_select_column = 'archived_at' | 'cfg' | 'competitive_safe' | 'created_at' | 'description' | 'enabled' | 'extra_game_params' | 'icon' | 'id' | 'map_pool_id' | 'match_option_defaults' | 'name' | 'slug' | 'updated_at'
+export type game_modes_select_column = 'archived_at' | 'cfg' | 'competitive_safe' | 'created_at' | 'description' | 'enabled' | 'extra_game_params' | 'icon' | 'id' | 'name' | 'slug' | 'updated_at'
 
 
 /** update columns of table "game_modes" */
-export type game_modes_update_column = 'archived_at' | 'cfg' | 'competitive_safe' | 'created_at' | 'description' | 'enabled' | 'extra_game_params' | 'icon' | 'id' | 'map_pool_id' | 'match_option_defaults' | 'name' | 'slug' | 'updated_at'
+export type game_modes_update_column = 'archived_at' | 'cfg' | 'competitive_safe' | 'created_at' | 'description' | 'enabled' | 'extra_game_params' | 'icon' | 'id' | 'name' | 'slug' | 'updated_at'
 
 
 /** columns and relationships of "game_plugin_installs" */
@@ -7740,6 +7742,7 @@ export interface game_plugin_installs {
     always_load: Scalars['Boolean']
     channel: e_game_plugin_channels_enum
     created_at: Scalars['timestamptz']
+    disable_server_guidelines: Scalars['Boolean']
     enabled: Scalars['Boolean']
     /** An object relationship */
     plugin: game_plugins
@@ -7802,11 +7805,11 @@ export interface game_plugin_installs_mutation_response {
 
 
 /** select columns of table "game_plugin_installs" */
-export type game_plugin_installs_select_column = 'always_load' | 'channel' | 'created_at' | 'enabled' | 'plugin_slug' | 'updated_at' | 'version'
+export type game_plugin_installs_select_column = 'always_load' | 'channel' | 'created_at' | 'disable_server_guidelines' | 'enabled' | 'plugin_slug' | 'updated_at' | 'version'
 
 
 /** update columns of table "game_plugin_installs" */
-export type game_plugin_installs_update_column = 'always_load' | 'channel' | 'created_at' | 'enabled' | 'plugin_slug' | 'updated_at' | 'version'
+export type game_plugin_installs_update_column = 'always_load' | 'channel' | 'created_at' | 'disable_server_guidelines' | 'enabled' | 'plugin_slug' | 'updated_at' | 'version'
 
 
 /** columns and relationships of "game_plugin_versions" */
@@ -7991,8 +7994,10 @@ export interface game_plugins {
     node_installs_aggregate: game_server_node_plugins_aggregate
     pairs_with: Scalars['String'][]
     panel: (Scalars['jsonb'] | null)
+    requires_server_guidelines_disabled: Scalars['Boolean']
     requires_service: (Scalars['String'] | null)
     slug: Scalars['String']
+    source: Scalars['String']
     synced_at: Scalars['timestamptz']
     tags: Scalars['String'][]
     /** A computed field, executes function "game_plugin_target_node_count" */
@@ -8061,6 +8066,7 @@ export interface game_plugins_max_fields {
     pairs_with: (Scalars['String'][] | null)
     requires_service: (Scalars['String'] | null)
     slug: (Scalars['String'] | null)
+    source: (Scalars['String'] | null)
     synced_at: (Scalars['timestamptz'] | null)
     tags: (Scalars['String'][] | null)
     /** A computed field, executes function "game_plugin_target_node_count" */
@@ -8084,6 +8090,7 @@ export interface game_plugins_min_fields {
     pairs_with: (Scalars['String'][] | null)
     requires_service: (Scalars['String'] | null)
     slug: (Scalars['String'] | null)
+    source: (Scalars['String'] | null)
     synced_at: (Scalars['timestamptz'] | null)
     tags: (Scalars['String'][] | null)
     /** A computed field, executes function "game_plugin_target_node_count" */
@@ -8103,7 +8110,7 @@ export interface game_plugins_mutation_response {
 
 
 /** select columns of table "game_plugins" */
-export type game_plugins_select_column = 'author' | 'config_path' | 'config_schema' | 'cvars' | 'description' | 'homepage' | 'hot_swappable' | 'kind' | 'name' | 'pairs_with' | 'panel' | 'requires_service' | 'slug' | 'synced_at' | 'tags' | 'verified' | 'wiring'
+export type game_plugins_select_column = 'author' | 'config_path' | 'config_schema' | 'cvars' | 'description' | 'homepage' | 'hot_swappable' | 'kind' | 'name' | 'pairs_with' | 'panel' | 'requires_server_guidelines_disabled' | 'requires_service' | 'slug' | 'source' | 'synced_at' | 'tags' | 'verified' | 'wiring'
 
 
 /** aggregate stddev on columns */
@@ -8147,7 +8154,7 @@ export interface game_plugins_sum_fields {
 
 
 /** update columns of table "game_plugins" */
-export type game_plugins_update_column = 'author' | 'config_path' | 'config_schema' | 'cvars' | 'description' | 'homepage' | 'hot_swappable' | 'kind' | 'name' | 'pairs_with' | 'panel' | 'requires_service' | 'slug' | 'synced_at' | 'tags' | 'verified' | 'wiring'
+export type game_plugins_update_column = 'author' | 'config_path' | 'config_schema' | 'cvars' | 'description' | 'homepage' | 'hot_swappable' | 'kind' | 'name' | 'pairs_with' | 'panel' | 'requires_server_guidelines_disabled' | 'requires_service' | 'slug' | 'source' | 'synced_at' | 'tags' | 'verified' | 'wiring'
 
 
 /** aggregate var_pop on columns */
@@ -13776,6 +13783,8 @@ export interface mutation_root {
     ResetTournamentMatch: (SuccessOutput | null)
     /** accept team invite */
     acceptInvite: (SuccessOutput | null)
+    /** Add a game plugin the registry does not carry, from a release URL */
+    addCustomGamePlugin: (AddCustomGamePluginOutput | null)
     /** addDraftPlayer */
     addDraftPlayer: (SuccessOutput | null)
     /** Add a friends-role presence bot account to the pool */
@@ -38190,6 +38199,15 @@ export interface ActiveQueryGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface AddCustomGamePluginOutputGenqlSelection{
+    name?: boolean | number
+    runtime?: boolean | number
+    slug?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface ApiKeyResponseGenqlSelection{
     key?: boolean | number
     __typename?: boolean | number
@@ -50367,12 +50385,6 @@ export interface game_modesGenqlSelection{
     extra_game_params?: boolean | number
     icon?: boolean | number
     id?: boolean | number
-    /** An object relationship */
-    map_pool?: map_poolsGenqlSelection
-    map_pool_id?: boolean | number
-    match_option_defaults?: { __args: {
-    /** JSON select path */
-    path?: (Scalars['String'] | null)} } | boolean | number
     /** An array relationship */
     match_options?: (match_optionsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -50456,28 +50468,12 @@ export interface game_modes_aggregate_fieldsGenqlSelection{
 }
 
 
-/** append existing jsonb value of filtered columns with new jsonb value */
-export interface game_modes_append_input {match_option_defaults?: (Scalars['jsonb'] | null)}
-
-
 /** Boolean expression to filter rows from the table "game_modes". All fields are combined with a logical 'AND'. */
-export interface game_modes_bool_exp {_and?: (game_modes_bool_exp[] | null),_not?: (game_modes_bool_exp | null),_or?: (game_modes_bool_exp[] | null),archived_at?: (timestamptz_comparison_exp | null),cfg?: (String_comparison_exp | null),competitive_safe?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),enabled?: (Boolean_comparison_exp | null),extra_game_params?: (String_comparison_exp | null),icon?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),match_option_defaults?: (jsonb_comparison_exp | null),match_options?: (match_options_bool_exp | null),match_options_aggregate?: (match_options_aggregate_bool_exp | null),name?: (String_comparison_exp | null),plugins?: (game_mode_plugins_bool_exp | null),plugins_aggregate?: (game_mode_plugins_aggregate_bool_exp | null),runtime_conflicts?: (jsonb_comparison_exp | null),slug?: (String_comparison_exp | null),supported_runtimes?: (jsonb_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
-
-
-/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
-export interface game_modes_delete_at_path_input {match_option_defaults?: (Scalars['String'][] | null)}
-
-
-/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
-export interface game_modes_delete_elem_input {match_option_defaults?: (Scalars['Int'] | null)}
-
-
-/** delete key/value pair or string element. key/value pairs are matched based on their key value */
-export interface game_modes_delete_key_input {match_option_defaults?: (Scalars['String'] | null)}
+export interface game_modes_bool_exp {_and?: (game_modes_bool_exp[] | null),_not?: (game_modes_bool_exp | null),_or?: (game_modes_bool_exp[] | null),archived_at?: (timestamptz_comparison_exp | null),cfg?: (String_comparison_exp | null),competitive_safe?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),enabled?: (Boolean_comparison_exp | null),extra_game_params?: (String_comparison_exp | null),icon?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),match_options?: (match_options_bool_exp | null),match_options_aggregate?: (match_options_aggregate_bool_exp | null),name?: (String_comparison_exp | null),plugins?: (game_mode_plugins_bool_exp | null),plugins_aggregate?: (game_mode_plugins_aggregate_bool_exp | null),runtime_conflicts?: (jsonb_comparison_exp | null),slug?: (String_comparison_exp | null),supported_runtimes?: (jsonb_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
 
 
 /** input type for inserting data into table "game_modes" */
-export interface game_modes_insert_input {archived_at?: (Scalars['timestamptz'] | null),cfg?: (Scalars['String'] | null),competitive_safe?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),extra_game_params?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),match_option_defaults?: (Scalars['jsonb'] | null),match_options?: (match_options_arr_rel_insert_input | null),name?: (Scalars['String'] | null),plugins?: (game_mode_plugins_arr_rel_insert_input | null),slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface game_modes_insert_input {archived_at?: (Scalars['timestamptz'] | null),cfg?: (Scalars['String'] | null),competitive_safe?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),extra_game_params?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_options?: (match_options_arr_rel_insert_input | null),name?: (Scalars['String'] | null),plugins?: (game_mode_plugins_arr_rel_insert_input | null),slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate max on columns */
@@ -50489,7 +50485,6 @@ export interface game_modes_max_fieldsGenqlSelection{
     extra_game_params?: boolean | number
     icon?: boolean | number
     id?: boolean | number
-    map_pool_id?: boolean | number
     name?: boolean | number
     slug?: boolean | number
     updated_at?: boolean | number
@@ -50507,7 +50502,6 @@ export interface game_modes_min_fieldsGenqlSelection{
     extra_game_params?: boolean | number
     icon?: boolean | number
     id?: boolean | number
-    map_pool_id?: boolean | number
     name?: boolean | number
     slug?: boolean | number
     updated_at?: boolean | number
@@ -50538,19 +50532,15 @@ export interface game_modes_on_conflict {constraint: game_modes_constraint,updat
 
 
 /** Ordering options when selecting data from "game_modes". */
-export interface game_modes_order_by {archived_at?: (order_by | null),cfg?: (order_by | null),competitive_safe?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),enabled?: (order_by | null),extra_game_params?: (order_by | null),icon?: (order_by | null),id?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),match_option_defaults?: (order_by | null),match_options_aggregate?: (match_options_aggregate_order_by | null),name?: (order_by | null),plugins_aggregate?: (game_mode_plugins_aggregate_order_by | null),runtime_conflicts?: (order_by | null),slug?: (order_by | null),supported_runtimes?: (order_by | null),updated_at?: (order_by | null)}
+export interface game_modes_order_by {archived_at?: (order_by | null),cfg?: (order_by | null),competitive_safe?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),enabled?: (order_by | null),extra_game_params?: (order_by | null),icon?: (order_by | null),id?: (order_by | null),match_options_aggregate?: (match_options_aggregate_order_by | null),name?: (order_by | null),plugins_aggregate?: (game_mode_plugins_aggregate_order_by | null),runtime_conflicts?: (order_by | null),slug?: (order_by | null),supported_runtimes?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** primary key columns input for table: game_modes */
 export interface game_modes_pk_columns_input {id: Scalars['uuid']}
 
 
-/** prepend existing jsonb value of filtered columns with new jsonb value */
-export interface game_modes_prepend_input {match_option_defaults?: (Scalars['jsonb'] | null)}
-
-
 /** input type for updating data in table "game_modes" */
-export interface game_modes_set_input {archived_at?: (Scalars['timestamptz'] | null),cfg?: (Scalars['String'] | null),competitive_safe?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),extra_game_params?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),map_pool_id?: (Scalars['uuid'] | null),match_option_defaults?: (Scalars['jsonb'] | null),name?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface game_modes_set_input {archived_at?: (Scalars['timestamptz'] | null),cfg?: (Scalars['String'] | null),competitive_safe?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),extra_game_params?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** Streaming cursor of the table "game_modes" */
@@ -50562,19 +50552,9 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface game_modes_stream_cursor_value_input {archived_at?: (Scalars['timestamptz'] | null),cfg?: (Scalars['String'] | null),competitive_safe?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),extra_game_params?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),map_pool_id?: (Scalars['uuid'] | null),match_option_defaults?: (Scalars['jsonb'] | null),name?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface game_modes_stream_cursor_value_input {archived_at?: (Scalars['timestamptz'] | null),cfg?: (Scalars['String'] | null),competitive_safe?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),extra_game_params?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 export interface game_modes_updates {
-/** append existing jsonb value of filtered columns with new jsonb value */
-_append?: (game_modes_append_input | null),
-/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
-_delete_at_path?: (game_modes_delete_at_path_input | null),
-/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
-_delete_elem?: (game_modes_delete_elem_input | null),
-/** delete key/value pair or string element. key/value pairs are matched based on their key value */
-_delete_key?: (game_modes_delete_key_input | null),
-/** prepend existing jsonb value of filtered columns with new jsonb value */
-_prepend?: (game_modes_prepend_input | null),
 /** sets the columns of the filtered rows to the given values */
 _set?: (game_modes_set_input | null),
 /** filter the rows which have to be updated */
@@ -50586,6 +50566,7 @@ export interface game_plugin_installsGenqlSelection{
     always_load?: boolean | number
     channel?: boolean | number
     created_at?: boolean | number
+    disable_server_guidelines?: boolean | number
     enabled?: boolean | number
     /** An object relationship */
     plugin?: game_pluginsGenqlSelection
@@ -50617,11 +50598,11 @@ export interface game_plugin_installs_aggregate_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "game_plugin_installs". All fields are combined with a logical 'AND'. */
-export interface game_plugin_installs_bool_exp {_and?: (game_plugin_installs_bool_exp[] | null),_not?: (game_plugin_installs_bool_exp | null),_or?: (game_plugin_installs_bool_exp[] | null),always_load?: (Boolean_comparison_exp | null),channel?: (e_game_plugin_channels_enum_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),enabled?: (Boolean_comparison_exp | null),plugin?: (game_plugins_bool_exp | null),plugin_slug?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),version?: (String_comparison_exp | null)}
+export interface game_plugin_installs_bool_exp {_and?: (game_plugin_installs_bool_exp[] | null),_not?: (game_plugin_installs_bool_exp | null),_or?: (game_plugin_installs_bool_exp[] | null),always_load?: (Boolean_comparison_exp | null),channel?: (e_game_plugin_channels_enum_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),disable_server_guidelines?: (Boolean_comparison_exp | null),enabled?: (Boolean_comparison_exp | null),plugin?: (game_plugins_bool_exp | null),plugin_slug?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),version?: (String_comparison_exp | null)}
 
 
 /** input type for inserting data into table "game_plugin_installs" */
-export interface game_plugin_installs_insert_input {always_load?: (Scalars['Boolean'] | null),channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),enabled?: (Scalars['Boolean'] | null),plugin?: (game_plugins_obj_rel_insert_input | null),plugin_slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
+export interface game_plugin_installs_insert_input {always_load?: (Scalars['Boolean'] | null),channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),disable_server_guidelines?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),plugin?: (game_plugins_obj_rel_insert_input | null),plugin_slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -50662,7 +50643,7 @@ export interface game_plugin_installs_on_conflict {constraint: game_plugin_insta
 
 
 /** Ordering options when selecting data from "game_plugin_installs". */
-export interface game_plugin_installs_order_by {always_load?: (order_by | null),channel?: (order_by | null),created_at?: (order_by | null),enabled?: (order_by | null),plugin?: (game_plugins_order_by | null),plugin_slug?: (order_by | null),updated_at?: (order_by | null),version?: (order_by | null)}
+export interface game_plugin_installs_order_by {always_load?: (order_by | null),channel?: (order_by | null),created_at?: (order_by | null),disable_server_guidelines?: (order_by | null),enabled?: (order_by | null),plugin?: (game_plugins_order_by | null),plugin_slug?: (order_by | null),updated_at?: (order_by | null),version?: (order_by | null)}
 
 
 /** primary key columns input for table: game_plugin_installs */
@@ -50670,7 +50651,7 @@ export interface game_plugin_installs_pk_columns_input {plugin_slug: Scalars['St
 
 
 /** input type for updating data in table "game_plugin_installs" */
-export interface game_plugin_installs_set_input {always_load?: (Scalars['Boolean'] | null),channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),enabled?: (Scalars['Boolean'] | null),plugin_slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
+export interface game_plugin_installs_set_input {always_load?: (Scalars['Boolean'] | null),channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),disable_server_guidelines?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),plugin_slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
 
 
 /** Streaming cursor of the table "game_plugin_installs" */
@@ -50682,7 +50663,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface game_plugin_installs_stream_cursor_value_input {always_load?: (Scalars['Boolean'] | null),channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),enabled?: (Scalars['Boolean'] | null),plugin_slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
+export interface game_plugin_installs_stream_cursor_value_input {always_load?: (Scalars['Boolean'] | null),channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),disable_server_guidelines?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),plugin_slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
 
 export interface game_plugin_installs_updates {
 /** sets the columns of the filtered rows to the given values */
@@ -51017,8 +50998,10 @@ export interface game_pluginsGenqlSelection{
     panel?: { __args: {
     /** JSON select path */
     path?: (Scalars['String'] | null)} } | boolean | number
+    requires_server_guidelines_disabled?: boolean | number
     requires_service?: boolean | number
     slug?: boolean | number
+    source?: boolean | number
     synced_at?: boolean | number
     tags?: boolean | number
     /** A computed field, executes function "game_plugin_target_node_count" */
@@ -51099,7 +51082,7 @@ export interface game_plugins_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "game_plugins". All fields are combined with a logical 'AND'. */
-export interface game_plugins_bool_exp {_and?: (game_plugins_bool_exp[] | null),_not?: (game_plugins_bool_exp | null),_or?: (game_plugins_bool_exp[] | null),author?: (String_comparison_exp | null),config_path?: (String_comparison_exp | null),config_schema?: (jsonb_comparison_exp | null),cvars?: (String_array_comparison_exp | null),description?: (String_comparison_exp | null),game_modes?: (game_mode_plugins_bool_exp | null),game_modes_aggregate?: (game_mode_plugins_aggregate_bool_exp | null),homepage?: (String_comparison_exp | null),hot_swappable?: (Boolean_comparison_exp | null),install_state?: (String_comparison_exp | null),installed_node_count?: (Int_comparison_exp | null),kind?: (e_game_plugin_kinds_enum_comparison_exp | null),name?: (String_comparison_exp | null),node_installs?: (game_server_node_plugins_bool_exp | null),node_installs_aggregate?: (game_server_node_plugins_aggregate_bool_exp | null),pairs_with?: (String_array_comparison_exp | null),panel?: (jsonb_comparison_exp | null),requires_service?: (String_comparison_exp | null),slug?: (String_comparison_exp | null),synced_at?: (timestamptz_comparison_exp | null),tags?: (String_array_comparison_exp | null),target_node_count?: (Int_comparison_exp | null),verified?: (Boolean_comparison_exp | null),versions?: (game_plugin_versions_bool_exp | null),versions_aggregate?: (game_plugin_versions_aggregate_bool_exp | null),wiring?: (jsonb_comparison_exp | null)}
+export interface game_plugins_bool_exp {_and?: (game_plugins_bool_exp[] | null),_not?: (game_plugins_bool_exp | null),_or?: (game_plugins_bool_exp[] | null),author?: (String_comparison_exp | null),config_path?: (String_comparison_exp | null),config_schema?: (jsonb_comparison_exp | null),cvars?: (String_array_comparison_exp | null),description?: (String_comparison_exp | null),game_modes?: (game_mode_plugins_bool_exp | null),game_modes_aggregate?: (game_mode_plugins_aggregate_bool_exp | null),homepage?: (String_comparison_exp | null),hot_swappable?: (Boolean_comparison_exp | null),install_state?: (String_comparison_exp | null),installed_node_count?: (Int_comparison_exp | null),kind?: (e_game_plugin_kinds_enum_comparison_exp | null),name?: (String_comparison_exp | null),node_installs?: (game_server_node_plugins_bool_exp | null),node_installs_aggregate?: (game_server_node_plugins_aggregate_bool_exp | null),pairs_with?: (String_array_comparison_exp | null),panel?: (jsonb_comparison_exp | null),requires_server_guidelines_disabled?: (Boolean_comparison_exp | null),requires_service?: (String_comparison_exp | null),slug?: (String_comparison_exp | null),source?: (String_comparison_exp | null),synced_at?: (timestamptz_comparison_exp | null),tags?: (String_array_comparison_exp | null),target_node_count?: (Int_comparison_exp | null),verified?: (Boolean_comparison_exp | null),versions?: (game_plugin_versions_bool_exp | null),versions_aggregate?: (game_plugin_versions_aggregate_bool_exp | null),wiring?: (jsonb_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -51115,7 +51098,7 @@ export interface game_plugins_delete_key_input {config_schema?: (Scalars['String
 
 
 /** input type for inserting data into table "game_plugins" */
-export interface game_plugins_insert_input {author?: (Scalars['String'] | null),config_path?: (Scalars['String'] | null),config_schema?: (Scalars['jsonb'] | null),cvars?: (Scalars['String'][] | null),description?: (Scalars['String'] | null),game_modes?: (game_mode_plugins_arr_rel_insert_input | null),homepage?: (Scalars['String'] | null),hot_swappable?: (Scalars['Boolean'] | null),kind?: (e_game_plugin_kinds_enum | null),name?: (Scalars['String'] | null),node_installs?: (game_server_node_plugins_arr_rel_insert_input | null),pairs_with?: (Scalars['String'][] | null),panel?: (Scalars['jsonb'] | null),requires_service?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),synced_at?: (Scalars['timestamptz'] | null),tags?: (Scalars['String'][] | null),verified?: (Scalars['Boolean'] | null),versions?: (game_plugin_versions_arr_rel_insert_input | null),wiring?: (Scalars['jsonb'] | null)}
+export interface game_plugins_insert_input {author?: (Scalars['String'] | null),config_path?: (Scalars['String'] | null),config_schema?: (Scalars['jsonb'] | null),cvars?: (Scalars['String'][] | null),description?: (Scalars['String'] | null),game_modes?: (game_mode_plugins_arr_rel_insert_input | null),homepage?: (Scalars['String'] | null),hot_swappable?: (Scalars['Boolean'] | null),kind?: (e_game_plugin_kinds_enum | null),name?: (Scalars['String'] | null),node_installs?: (game_server_node_plugins_arr_rel_insert_input | null),pairs_with?: (Scalars['String'][] | null),panel?: (Scalars['jsonb'] | null),requires_server_guidelines_disabled?: (Scalars['Boolean'] | null),requires_service?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),synced_at?: (Scalars['timestamptz'] | null),tags?: (Scalars['String'][] | null),verified?: (Scalars['Boolean'] | null),versions?: (game_plugin_versions_arr_rel_insert_input | null),wiring?: (Scalars['jsonb'] | null)}
 
 
 /** aggregate max on columns */
@@ -51133,6 +51116,7 @@ export interface game_plugins_max_fieldsGenqlSelection{
     pairs_with?: boolean | number
     requires_service?: boolean | number
     slug?: boolean | number
+    source?: boolean | number
     synced_at?: boolean | number
     tags?: boolean | number
     /** A computed field, executes function "game_plugin_target_node_count" */
@@ -51157,6 +51141,7 @@ export interface game_plugins_min_fieldsGenqlSelection{
     pairs_with?: boolean | number
     requires_service?: boolean | number
     slug?: boolean | number
+    source?: boolean | number
     synced_at?: boolean | number
     tags?: boolean | number
     /** A computed field, executes function "game_plugin_target_node_count" */
@@ -51188,7 +51173,7 @@ export interface game_plugins_on_conflict {constraint: game_plugins_constraint,u
 
 
 /** Ordering options when selecting data from "game_plugins". */
-export interface game_plugins_order_by {author?: (order_by | null),config_path?: (order_by | null),config_schema?: (order_by | null),cvars?: (order_by | null),description?: (order_by | null),game_modes_aggregate?: (game_mode_plugins_aggregate_order_by | null),homepage?: (order_by | null),hot_swappable?: (order_by | null),install_state?: (order_by | null),installed_node_count?: (order_by | null),kind?: (order_by | null),name?: (order_by | null),node_installs_aggregate?: (game_server_node_plugins_aggregate_order_by | null),pairs_with?: (order_by | null),panel?: (order_by | null),requires_service?: (order_by | null),slug?: (order_by | null),synced_at?: (order_by | null),tags?: (order_by | null),target_node_count?: (order_by | null),verified?: (order_by | null),versions_aggregate?: (game_plugin_versions_aggregate_order_by | null),wiring?: (order_by | null)}
+export interface game_plugins_order_by {author?: (order_by | null),config_path?: (order_by | null),config_schema?: (order_by | null),cvars?: (order_by | null),description?: (order_by | null),game_modes_aggregate?: (game_mode_plugins_aggregate_order_by | null),homepage?: (order_by | null),hot_swappable?: (order_by | null),install_state?: (order_by | null),installed_node_count?: (order_by | null),kind?: (order_by | null),name?: (order_by | null),node_installs_aggregate?: (game_server_node_plugins_aggregate_order_by | null),pairs_with?: (order_by | null),panel?: (order_by | null),requires_server_guidelines_disabled?: (order_by | null),requires_service?: (order_by | null),slug?: (order_by | null),source?: (order_by | null),synced_at?: (order_by | null),tags?: (order_by | null),target_node_count?: (order_by | null),verified?: (order_by | null),versions_aggregate?: (game_plugin_versions_aggregate_order_by | null),wiring?: (order_by | null)}
 
 
 /** primary key columns input for table: game_plugins */
@@ -51200,7 +51185,7 @@ export interface game_plugins_prepend_input {config_schema?: (Scalars['jsonb'] |
 
 
 /** input type for updating data in table "game_plugins" */
-export interface game_plugins_set_input {author?: (Scalars['String'] | null),config_path?: (Scalars['String'] | null),config_schema?: (Scalars['jsonb'] | null),cvars?: (Scalars['String'][] | null),description?: (Scalars['String'] | null),homepage?: (Scalars['String'] | null),hot_swappable?: (Scalars['Boolean'] | null),kind?: (e_game_plugin_kinds_enum | null),name?: (Scalars['String'] | null),pairs_with?: (Scalars['String'][] | null),panel?: (Scalars['jsonb'] | null),requires_service?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),synced_at?: (Scalars['timestamptz'] | null),tags?: (Scalars['String'][] | null),verified?: (Scalars['Boolean'] | null),wiring?: (Scalars['jsonb'] | null)}
+export interface game_plugins_set_input {author?: (Scalars['String'] | null),config_path?: (Scalars['String'] | null),config_schema?: (Scalars['jsonb'] | null),cvars?: (Scalars['String'][] | null),description?: (Scalars['String'] | null),homepage?: (Scalars['String'] | null),hot_swappable?: (Scalars['Boolean'] | null),kind?: (e_game_plugin_kinds_enum | null),name?: (Scalars['String'] | null),pairs_with?: (Scalars['String'][] | null),panel?: (Scalars['jsonb'] | null),requires_server_guidelines_disabled?: (Scalars['Boolean'] | null),requires_service?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),synced_at?: (Scalars['timestamptz'] | null),tags?: (Scalars['String'][] | null),verified?: (Scalars['Boolean'] | null),wiring?: (Scalars['jsonb'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -51245,7 +51230,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface game_plugins_stream_cursor_value_input {author?: (Scalars['String'] | null),config_path?: (Scalars['String'] | null),config_schema?: (Scalars['jsonb'] | null),cvars?: (Scalars['String'][] | null),description?: (Scalars['String'] | null),homepage?: (Scalars['String'] | null),hot_swappable?: (Scalars['Boolean'] | null),kind?: (e_game_plugin_kinds_enum | null),name?: (Scalars['String'] | null),pairs_with?: (Scalars['String'][] | null),panel?: (Scalars['jsonb'] | null),requires_service?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),synced_at?: (Scalars['timestamptz'] | null),tags?: (Scalars['String'][] | null),verified?: (Scalars['Boolean'] | null),wiring?: (Scalars['jsonb'] | null)}
+export interface game_plugins_stream_cursor_value_input {author?: (Scalars['String'] | null),config_path?: (Scalars['String'] | null),config_schema?: (Scalars['jsonb'] | null),cvars?: (Scalars['String'][] | null),description?: (Scalars['String'] | null),homepage?: (Scalars['String'] | null),hot_swappable?: (Scalars['Boolean'] | null),kind?: (e_game_plugin_kinds_enum | null),name?: (Scalars['String'] | null),pairs_with?: (Scalars['String'][] | null),panel?: (Scalars['jsonb'] | null),requires_server_guidelines_disabled?: (Scalars['Boolean'] | null),requires_service?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),synced_at?: (Scalars['timestamptz'] | null),tags?: (Scalars['String'][] | null),verified?: (Scalars['Boolean'] | null),wiring?: (Scalars['jsonb'] | null)}
 
 
 /** aggregate sum on columns */
@@ -60968,6 +60953,8 @@ export interface mutation_rootGenqlSelection{
     ResetTournamentMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], reset_status?: (Scalars['String'] | null), scheduled_at?: (Scalars['timestamptz'] | null), winning_lineup_id?: (Scalars['uuid'] | null)} })
     /** accept team invite */
     acceptInvite?: (SuccessOutputGenqlSelection & { __args: {invite_id: Scalars['uuid'], type: Scalars['String']} })
+    /** Add a game plugin the registry does not carry, from a release URL */
+    addCustomGamePlugin?: (AddCustomGamePluginOutputGenqlSelection & { __args: {description?: (Scalars['String'] | null), installPath?: (Scalars['String'] | null), layout?: (Scalars['String'] | null), name?: (Scalars['String'] | null), runtime: Scalars['String'], slug?: (Scalars['String'] | null), url: Scalars['String'], version?: (Scalars['String'] | null)} })
     /** addDraftPlayer */
     addDraftPlayer?: (SuccessOutputGenqlSelection & { __args: {draftGameId: Scalars['uuid'], lineup?: (Scalars['Int'] | null), steamId: Scalars['String']} })
     /** Add a friends-role presence bot account to the pool */
@@ -65464,32 +65451,12 @@ export interface mutation_rootGenqlSelection{
     updates: game_mode_plugins_updates[]} })
     /** update data of the table: "game_modes" */
     update_game_modes?: (game_modes_mutation_responseGenqlSelection & { __args: {
-    /** append existing jsonb value of filtered columns with new jsonb value */
-    _append?: (game_modes_append_input | null), 
-    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
-    _delete_at_path?: (game_modes_delete_at_path_input | null), 
-    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
-    _delete_elem?: (game_modes_delete_elem_input | null), 
-    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
-    _delete_key?: (game_modes_delete_key_input | null), 
-    /** prepend existing jsonb value of filtered columns with new jsonb value */
-    _prepend?: (game_modes_prepend_input | null), 
     /** sets the columns of the filtered rows to the given values */
     _set?: (game_modes_set_input | null), 
     /** filter the rows which have to be updated */
     where: game_modes_bool_exp} })
     /** update single row of the table: "game_modes" */
     update_game_modes_by_pk?: (game_modesGenqlSelection & { __args: {
-    /** append existing jsonb value of filtered columns with new jsonb value */
-    _append?: (game_modes_append_input | null), 
-    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
-    _delete_at_path?: (game_modes_delete_at_path_input | null), 
-    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
-    _delete_elem?: (game_modes_delete_elem_input | null), 
-    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
-    _delete_key?: (game_modes_delete_key_input | null), 
-    /** prepend existing jsonb value of filtered columns with new jsonb value */
-    _prepend?: (game_modes_prepend_input | null), 
     /** sets the columns of the filtered rows to the given values */
     _set?: (game_modes_set_input | null), pk_columns: game_modes_pk_columns_input} })
     /** update multiples rows of table: "game_modes" */
@@ -106956,6 +106923,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const AddCustomGamePluginOutput_possibleTypes: string[] = ['AddCustomGamePluginOutput']
+    export const isAddCustomGamePluginOutput = (obj?: { __typename?: any } | null): obj is AddCustomGamePluginOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isAddCustomGamePluginOutput"')
+      return AddCustomGamePluginOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const ApiKeyResponse_possibleTypes: string[] = ['ApiKeyResponse']
     export const isApiKeyResponse = (obj?: { __typename?: any } | null): obj is ApiKeyResponse => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isApiKeyResponse"')
@@ -127585,8 +127560,6 @@ export const enumGameModesSelectColumn = {
    extra_game_params: 'extra_game_params' as const,
    icon: 'icon' as const,
    id: 'id' as const,
-   map_pool_id: 'map_pool_id' as const,
-   match_option_defaults: 'match_option_defaults' as const,
    name: 'name' as const,
    slug: 'slug' as const,
    updated_at: 'updated_at' as const
@@ -127602,8 +127575,6 @@ export const enumGameModesUpdateColumn = {
    extra_game_params: 'extra_game_params' as const,
    icon: 'icon' as const,
    id: 'id' as const,
-   map_pool_id: 'map_pool_id' as const,
-   match_option_defaults: 'match_option_defaults' as const,
    name: 'name' as const,
    slug: 'slug' as const,
    updated_at: 'updated_at' as const
@@ -127617,6 +127588,7 @@ export const enumGamePluginInstallsSelectColumn = {
    always_load: 'always_load' as const,
    channel: 'channel' as const,
    created_at: 'created_at' as const,
+   disable_server_guidelines: 'disable_server_guidelines' as const,
    enabled: 'enabled' as const,
    plugin_slug: 'plugin_slug' as const,
    updated_at: 'updated_at' as const,
@@ -127627,6 +127599,7 @@ export const enumGamePluginInstallsUpdateColumn = {
    always_load: 'always_load' as const,
    channel: 'channel' as const,
    created_at: 'created_at' as const,
+   disable_server_guidelines: 'disable_server_guidelines' as const,
    enabled: 'enabled' as const,
    plugin_slug: 'plugin_slug' as const,
    updated_at: 'updated_at' as const,
@@ -127687,8 +127660,10 @@ export const enumGamePluginsSelectColumn = {
    name: 'name' as const,
    pairs_with: 'pairs_with' as const,
    panel: 'panel' as const,
+   requires_server_guidelines_disabled: 'requires_server_guidelines_disabled' as const,
    requires_service: 'requires_service' as const,
    slug: 'slug' as const,
+   source: 'source' as const,
    synced_at: 'synced_at' as const,
    tags: 'tags' as const,
    verified: 'verified' as const,
@@ -127707,8 +127682,10 @@ export const enumGamePluginsUpdateColumn = {
    name: 'name' as const,
    pairs_with: 'pairs_with' as const,
    panel: 'panel' as const,
+   requires_server_guidelines_disabled: 'requires_server_guidelines_disabled' as const,
    requires_service: 'requires_service' as const,
    slug: 'slug' as const,
+   source: 'source' as const,
    synced_at: 'synced_at' as const,
    tags: 'tags' as const,
    verified: 'verified' as const,

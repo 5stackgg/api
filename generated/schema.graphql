@@ -36,6 +36,13 @@ type ActiveQuery {
   wait_event_type: String
 }
 
+type AddCustomGamePluginOutput {
+  name: String!
+  runtime: String!
+  slug: String!
+  version: String!
+}
+
 type ApiKeyResponse {
   key: String!
 }
@@ -20324,14 +20331,6 @@ type game_modes {
   icon: String
   id: uuid!
 
-  """An object relationship"""
-  map_pool: map_pools
-  map_pool_id: uuid
-  match_option_defaults(
-    """JSON select path"""
-    path: String
-  ): jsonb!
-
   """An array relationship"""
   match_options(
     """distinct select on columns"""
@@ -20439,11 +20438,6 @@ type game_modes_aggregate_fields {
   min: game_modes_min_fields
 }
 
-"""append existing jsonb value of filtered columns with new jsonb value"""
-input game_modes_append_input {
-  match_option_defaults: jsonb
-}
-
 """
 Boolean expression to filter rows from the table "game_modes". All fields are combined with a logical 'AND'.
 """
@@ -20460,9 +20454,6 @@ input game_modes_bool_exp {
   extra_game_params: String_comparison_exp
   icon: String_comparison_exp
   id: uuid_comparison_exp
-  map_pool: map_pools_bool_exp
-  map_pool_id: uuid_comparison_exp
-  match_option_defaults: jsonb_comparison_exp
   match_options: match_options_bool_exp
   match_options_aggregate: match_options_aggregate_bool_exp
   name: String_comparison_exp
@@ -20490,27 +20481,6 @@ enum game_modes_constraint {
 }
 
 """
-delete the field or element with specified path (for JSON arrays, negative integers count from the end)
-"""
-input game_modes_delete_at_path_input {
-  match_option_defaults: [String!]
-}
-
-"""
-delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
-"""
-input game_modes_delete_elem_input {
-  match_option_defaults: Int
-}
-
-"""
-delete key/value pair or string element. key/value pairs are matched based on their key value
-"""
-input game_modes_delete_key_input {
-  match_option_defaults: String
-}
-
-"""
 input type for inserting data into table "game_modes"
 """
 input game_modes_insert_input {
@@ -20523,9 +20493,6 @@ input game_modes_insert_input {
   extra_game_params: String
   icon: String
   id: uuid
-  map_pool: map_pools_obj_rel_insert_input
-  map_pool_id: uuid
-  match_option_defaults: jsonb
   match_options: match_options_arr_rel_insert_input
   name: String
   plugins: game_mode_plugins_arr_rel_insert_input
@@ -20542,7 +20509,6 @@ type game_modes_max_fields {
   extra_game_params: String
   icon: String
   id: uuid
-  map_pool_id: uuid
   name: String
   slug: String
   updated_at: timestamptz
@@ -20557,7 +20523,6 @@ type game_modes_min_fields {
   extra_game_params: String
   icon: String
   id: uuid
-  map_pool_id: uuid
   name: String
   slug: String
   updated_at: timestamptz
@@ -20604,9 +20569,6 @@ input game_modes_order_by {
   extra_game_params: order_by
   icon: order_by
   id: order_by
-  map_pool: map_pools_order_by
-  map_pool_id: order_by
-  match_option_defaults: order_by
   match_options_aggregate: match_options_aggregate_order_by
   name: order_by
   plugins_aggregate: game_mode_plugins_aggregate_order_by
@@ -20619,11 +20581,6 @@ input game_modes_order_by {
 """primary key columns input for table: game_modes"""
 input game_modes_pk_columns_input {
   id: uuid!
-}
-
-"""prepend existing jsonb value of filtered columns with new jsonb value"""
-input game_modes_prepend_input {
-  match_option_defaults: jsonb
 }
 
 """
@@ -20658,12 +20615,6 @@ enum game_modes_select_column {
   id
 
   """column name"""
-  map_pool_id
-
-  """column name"""
-  match_option_defaults
-
-  """column name"""
   name
 
   """column name"""
@@ -20686,8 +20637,6 @@ input game_modes_set_input {
   extra_game_params: String
   icon: String
   id: uuid
-  map_pool_id: uuid
-  match_option_defaults: jsonb
   name: String
   slug: String
   updated_at: timestamptz
@@ -20715,8 +20664,6 @@ input game_modes_stream_cursor_value_input {
   extra_game_params: String
   icon: String
   id: uuid
-  map_pool_id: uuid
-  match_option_defaults: jsonb
   name: String
   slug: String
   updated_at: timestamptz
@@ -20754,12 +20701,6 @@ enum game_modes_update_column {
   id
 
   """column name"""
-  map_pool_id
-
-  """column name"""
-  match_option_defaults
-
-  """column name"""
   name
 
   """column name"""
@@ -20770,27 +20711,6 @@ enum game_modes_update_column {
 }
 
 input game_modes_updates {
-  """append existing jsonb value of filtered columns with new jsonb value"""
-  _append: game_modes_append_input
-
-  """
-  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
-  """
-  _delete_at_path: game_modes_delete_at_path_input
-
-  """
-  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
-  """
-  _delete_elem: game_modes_delete_elem_input
-
-  """
-  delete key/value pair or string element. key/value pairs are matched based on their key value
-  """
-  _delete_key: game_modes_delete_key_input
-
-  """prepend existing jsonb value of filtered columns with new jsonb value"""
-  _prepend: game_modes_prepend_input
-
   """sets the columns of the filtered rows to the given values"""
   _set: game_modes_set_input
 
@@ -20805,6 +20725,7 @@ type game_plugin_installs {
   always_load: Boolean!
   channel: e_game_plugin_channels_enum!
   created_at: timestamptz!
+  disable_server_guidelines: Boolean!
   enabled: Boolean!
 
   """An object relationship"""
@@ -20841,6 +20762,7 @@ input game_plugin_installs_bool_exp {
   always_load: Boolean_comparison_exp
   channel: e_game_plugin_channels_enum_comparison_exp
   created_at: timestamptz_comparison_exp
+  disable_server_guidelines: Boolean_comparison_exp
   enabled: Boolean_comparison_exp
   plugin: game_plugins_bool_exp
   plugin_slug: String_comparison_exp
@@ -20865,6 +20787,7 @@ input game_plugin_installs_insert_input {
   always_load: Boolean
   channel: e_game_plugin_channels_enum
   created_at: timestamptz
+  disable_server_guidelines: Boolean
   enabled: Boolean
   plugin: game_plugins_obj_rel_insert_input
   plugin_slug: String
@@ -20913,6 +20836,7 @@ input game_plugin_installs_order_by {
   always_load: order_by
   channel: order_by
   created_at: order_by
+  disable_server_guidelines: order_by
   enabled: order_by
   plugin: game_plugins_order_by
   plugin_slug: order_by
@@ -20939,6 +20863,9 @@ enum game_plugin_installs_select_column {
   created_at
 
   """column name"""
+  disable_server_guidelines
+
+  """column name"""
   enabled
 
   """column name"""
@@ -20958,6 +20885,7 @@ input game_plugin_installs_set_input {
   always_load: Boolean
   channel: e_game_plugin_channels_enum
   created_at: timestamptz
+  disable_server_guidelines: Boolean
   enabled: Boolean
   plugin_slug: String
   updated_at: timestamptz
@@ -20980,6 +20908,7 @@ input game_plugin_installs_stream_cursor_value_input {
   always_load: Boolean
   channel: e_game_plugin_channels_enum
   created_at: timestamptz
+  disable_server_guidelines: Boolean
   enabled: Boolean
   plugin_slug: String
   updated_at: timestamptz
@@ -20998,6 +20927,9 @@ enum game_plugin_installs_update_column {
 
   """column name"""
   created_at
+
+  """column name"""
+  disable_server_guidelines
 
   """column name"""
   enabled
@@ -21601,8 +21533,10 @@ type game_plugins {
     """JSON select path"""
     path: String
   ): jsonb
+  requires_server_guidelines_disabled: Boolean!
   requires_service: String
   slug: String!
+  source: String!
   synced_at: timestamptz!
   tags: [String!]!
 
@@ -21722,8 +21656,10 @@ input game_plugins_bool_exp {
   node_installs_aggregate: game_server_node_plugins_aggregate_bool_exp
   pairs_with: String_array_comparison_exp
   panel: jsonb_comparison_exp
+  requires_server_guidelines_disabled: Boolean_comparison_exp
   requires_service: String_comparison_exp
   slug: String_comparison_exp
+  source: String_comparison_exp
   synced_at: timestamptz_comparison_exp
   tags: String_array_comparison_exp
   target_node_count: Int_comparison_exp
@@ -21787,8 +21723,10 @@ input game_plugins_insert_input {
   node_installs: game_server_node_plugins_arr_rel_insert_input
   pairs_with: [String!]
   panel: jsonb
+  requires_server_guidelines_disabled: Boolean
   requires_service: String
   slug: String
+  source: String
   synced_at: timestamptz
   tags: [String!]
   verified: Boolean
@@ -21815,6 +21753,7 @@ type game_plugins_max_fields {
   pairs_with: [String!]
   requires_service: String
   slug: String
+  source: String
   synced_at: timestamptz
   tags: [String!]
 
@@ -21843,6 +21782,7 @@ type game_plugins_min_fields {
   pairs_with: [String!]
   requires_service: String
   slug: String
+  source: String
   synced_at: timestamptz
   tags: [String!]
 
@@ -21899,8 +21839,10 @@ input game_plugins_order_by {
   node_installs_aggregate: game_server_node_plugins_aggregate_order_by
   pairs_with: order_by
   panel: order_by
+  requires_server_guidelines_disabled: order_by
   requires_service: order_by
   slug: order_by
+  source: order_by
   synced_at: order_by
   tags: order_by
   target_node_count: order_by
@@ -21959,10 +21901,16 @@ enum game_plugins_select_column {
   panel
 
   """column name"""
+  requires_server_guidelines_disabled
+
+  """column name"""
   requires_service
 
   """column name"""
   slug
+
+  """column name"""
+  source
 
   """column name"""
   synced_at
@@ -21992,8 +21940,10 @@ input game_plugins_set_input {
   name: String
   pairs_with: [String!]
   panel: jsonb
+  requires_server_guidelines_disabled: Boolean
   requires_service: String
   slug: String
+  source: String
   synced_at: timestamptz
   tags: [String!]
   verified: Boolean
@@ -22063,8 +22013,10 @@ input game_plugins_stream_cursor_value_input {
   name: String
   pairs_with: [String!]
   panel: jsonb
+  requires_server_guidelines_disabled: Boolean
   requires_service: String
   slug: String
+  source: String
   synced_at: timestamptz
   tags: [String!]
   verified: Boolean
@@ -22122,10 +22074,16 @@ enum game_plugins_update_column {
   panel
 
   """column name"""
+  requires_server_guidelines_disabled
+
+  """column name"""
   requires_service
 
   """column name"""
   slug
+
+  """column name"""
+  source
 
   """column name"""
   synced_at
@@ -41246,6 +41204,9 @@ type mutation_root {
   """accept team invite"""
   acceptInvite(invite_id: uuid!, type: String!): SuccessOutput
 
+  """Add a game plugin the registry does not carry, from a release URL"""
+  addCustomGamePlugin(description: String, installPath: String, layout: String, name: String, runtime: String!, slug: String, url: String!, version: String): AddCustomGamePluginOutput
+
   """addDraftPlayer"""
   addDraftPlayer(draftGameId: uuid!, lineup: Int, steamId: String!): SuccessOutput
 
@@ -49936,27 +49897,6 @@ type mutation_root {
   update data of the table: "game_modes"
   """
   update_game_modes(
-    """append existing jsonb value of filtered columns with new jsonb value"""
-    _append: game_modes_append_input
-
-    """
-    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
-    """
-    _delete_at_path: game_modes_delete_at_path_input
-
-    """
-    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
-    """
-    _delete_elem: game_modes_delete_elem_input
-
-    """
-    delete key/value pair or string element. key/value pairs are matched based on their key value
-    """
-    _delete_key: game_modes_delete_key_input
-
-    """prepend existing jsonb value of filtered columns with new jsonb value"""
-    _prepend: game_modes_prepend_input
-
     """sets the columns of the filtered rows to the given values"""
     _set: game_modes_set_input
 
@@ -49968,27 +49908,6 @@ type mutation_root {
   update single row of the table: "game_modes"
   """
   update_game_modes_by_pk(
-    """append existing jsonb value of filtered columns with new jsonb value"""
-    _append: game_modes_append_input
-
-    """
-    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
-    """
-    _delete_at_path: game_modes_delete_at_path_input
-
-    """
-    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
-    """
-    _delete_elem: game_modes_delete_elem_input
-
-    """
-    delete key/value pair or string element. key/value pairs are matched based on their key value
-    """
-    _delete_key: game_modes_delete_key_input
-
-    """prepend existing jsonb value of filtered columns with new jsonb value"""
-    _prepend: game_modes_prepend_input
-
     """sets the columns of the filtered rows to the given values"""
     _set: game_modes_set_input
     pk_columns: game_modes_pk_columns_input!
