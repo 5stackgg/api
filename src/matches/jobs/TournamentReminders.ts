@@ -9,6 +9,8 @@ type DueTournament = {
   id: string;
   name: string;
   start: string;
+  banner: string | null;
+  logo: string | null;
   label: string;
   window: string;
 };
@@ -35,7 +37,8 @@ export class TournamentReminders extends WorkerHost {
          VALUES ('1d', 'starts in about a day', interval '24 hours', interval '2 hours'),
                 ('2h', 'starts in about 2 hours', interval '2 hours', interval '0')
        )
-       SELECT t.id::text AS id, t.name, t."start", w.label, w.window_key AS window
+       SELECT t.id::text AS id, t.name, t."start", t.banner, t.logo,
+              w.label, w.window_key AS window
          FROM tournaments t
          CROSS JOIN reminder_windows w
         WHERE t.status IN ('RegistrationOpen', 'RegistrationClosed')
@@ -50,9 +53,7 @@ export class TournamentReminders extends WorkerHost {
 
     let sent = 0;
     for (const tournament of due) {
-      const recipients = await this.postgres.query<
-        Array<{ steam_id: string }>
-      >(
+      const recipients = await this.postgres.query<Array<{ steam_id: string }>>(
         `SELECT DISTINCT steam_id::text AS steam_id FROM (
                  SELECT tt.owner_steam_id AS steam_id
                    FROM tournament_teams tt
@@ -79,6 +80,9 @@ export class TournamentReminders extends WorkerHost {
         role: "user",
         entity_id: `${tournament.id}:${tournament.window}`,
         steamIds: recipients.map((recipient) => recipient.steam_id),
+        ...((tournament.banner ?? tournament.logo)
+          ? { data: { image: tournament.banner ?? tournament.logo } }
+          : {}),
       });
 
       sent++;

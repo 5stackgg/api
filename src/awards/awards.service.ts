@@ -260,10 +260,11 @@ export class AwardsService {
     }
 
     try {
-      const [award] = await this.postgres.query<Array<{ name: string }>>(
-        `SELECT name FROM public.awards WHERE id = $1::uuid`,
-        [awardId],
-      );
+      const [award] = await this.postgres.query<
+        Array<{ name: string; image_url: string | null }>
+      >(`SELECT name, image_url FROM public.awards WHERE id = $1::uuid`, [
+        awardId,
+      ]);
 
       await this.notifications.notifyPlayers("AwardGranted", {
         title: "Award Received",
@@ -273,6 +274,7 @@ export class AwardsService {
         role: "user",
         entity_id: recipientId,
         steamIds,
+        ...(award?.image_url ? { data: { image: award.image_url } } : {}),
       });
     } catch (error) {
       this.logger.warn(

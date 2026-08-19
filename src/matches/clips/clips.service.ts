@@ -1541,12 +1541,22 @@ export class ClipsService {
   private async notifyClipReady(jobId: string) {
     try {
       const [job] = await this.postgres.query<
-        Array<{ user_steam_id: string; match_id: string | null }>
+        Array<{
+          user_steam_id: string;
+          match_id: string | null;
+          thumbnail_clip_id: string | null;
+        }>
       >(
         `SELECT crj.user_steam_id::text AS user_steam_id,
-                mm.match_id::text AS match_id
+                mm.match_id::text AS match_id,
+                -- Only once the upload has landed a clip row with a poster
+                -- frame behind it; a render that reports before then simply
+                -- has no picture to show.
+                CASE WHEN mc.thumbnail_url IS NOT NULL THEN mc.id::text END
+                  AS thumbnail_clip_id
            FROM public.clip_render_jobs crj
       LEFT JOIN public.match_maps mm ON mm.id = crj.match_map_id
+      LEFT JOIN public.match_clips mc ON mc.id = crj.clip_id
           WHERE crj.id = $1::uuid`,
         [jobId],
       );
@@ -1563,6 +1573,9 @@ export class ClipsService {
         role: "user",
         entity_id: jobId,
         steamIds: [job.user_steam_id],
+        ...(job.thumbnail_clip_id
+          ? { data: { image: `/clips/${job.thumbnail_clip_id}/thumbnail` } }
+          : {}),
       });
     } catch (error) {
       this.logger.warn(`unable to notify of finished clip ${jobId}`, error);
@@ -2834,7 +2847,10 @@ export class ClipsService {
     return raw === "true" || raw === "1";
   }
 
-  private async readIntSetting(name: string, fallback: number): Promise<number> {
+  private async readIntSetting(
+    name: string,
+    fallback: number,
+  ): Promise<number> {
     const raw = await this.readSetting(name, String(fallback));
     const n = parseInt(raw, 10);
     return Number.isFinite(n) ? n : fallback;

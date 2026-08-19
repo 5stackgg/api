@@ -148,7 +148,8 @@ export class NotificationsService {
     });
     const name = players_by_pk?.name ?? `Player ${sanction.steamId}`;
 
-    const verb = NotificationsService.SANCTION_VERBS[sanction.type] ?? "sanctioned";
+    const verb =
+      NotificationsService.SANCTION_VERBS[sanction.type] ?? "sanctioned";
     const safeName = NotificationsService.escapeHtml(name);
     const profileUrl = `${this.appConfig.webDomain}/players/${encodeURIComponent(
       sanction.steamId,
@@ -189,14 +190,21 @@ export class NotificationsService {
       return;
     }
 
-    const played = await this.postgres.query<Array<{ exists: boolean }>>(
+    // A brand-new registrant with a pre-existing VAC ban is exactly what admins
+    // want to hear about, so signing in counts as much as having played; only a
+    // steam id that never touched the platform (looked up via search) stays quiet.
+    const known = await this.postgres.query<Array<{ exists: boolean }>>(
       `SELECT EXISTS (
+         SELECT 1 FROM public.players
+          WHERE steam_id = $1::bigint
+            AND last_sign_in_at IS NOT NULL
+       ) OR EXISTS (
          SELECT 1 FROM public.match_lineup_players
           WHERE steam_id = $1::bigint
        ) AS exists`,
       [sanction.steamId],
     );
-    if (!played.at(0)?.exists) {
+    if (!known.at(0)?.exists) {
       return;
     }
 
@@ -369,7 +377,10 @@ export class NotificationsService {
     } catch (error) {
       // The per-row events are still queued behind this, so a failure here
       // degrades to the unbatched path rather than losing the push.
-      this.logger.warn("unable to batch push for a fan-out notification", error);
+      this.logger.warn(
+        "unable to batch push for a fan-out notification",
+        error,
+      );
     }
   }
 
@@ -471,9 +482,7 @@ export class NotificationsService {
               actions,
               in_app: inApp.has(steam_id),
               ...(notification.data ? { data: notification.data } : {}),
-              ...(notification.deletable === false
-                ? { deletable: false }
-                : {}),
+              ...(notification.deletable === false ? { deletable: false } : {}),
             })),
           },
           returning: {
@@ -587,6 +596,50 @@ export class NotificationsService {
   // players table, and the in-app preference is resolved inline for the same
   // reason. See notifyPlayers for why a player who muted the bell still gets a
   // row when they have somewhere to be pushed.
+  // The poster for a map, as a push notification image. Posters live in the
+  // web bundle (`/img/maps/screenshots/...`), not behind the API, so they are
+  // qualified here rather than by the push service's API-relative rule.
+  public async mapPosterImage(
+    by: { mapName: string | null } | { matchId: string },
+  ): Promise<string | undefined> {
+    try {
+      const [row] =
+        "matchId" in by
+          ? await this.postgres.query<Array<{ poster: string | null }>>(
+              `SELECT m.poster
+                 FROM public.match_maps mm
+                 JOIN public.maps m ON m.id = mm.map_id
+                WHERE mm.match_id = $1::uuid
+                ORDER BY mm."order" ASC
+                LIMIT 1`,
+              [by.matchId],
+            )
+          : by.mapName
+            ? await this.postgres.query<Array<{ poster: string | null }>>(
+                `SELECT poster FROM public.maps WHERE name = $1 LIMIT 1`,
+                [by.mapName],
+              )
+            : [];
+
+      const poster = row?.poster;
+
+      if (!poster) {
+        return undefined;
+      }
+
+      if (/^https?:\/\//i.test(poster)) {
+        return poster;
+      }
+
+      return poster.startsWith("/") && !poster.startsWith("//")
+        ? `${this.appConfig.webDomain}${poster}`
+        : undefined;
+    } catch (error) {
+      this.logger.warn("unable to resolve map poster for notification", error);
+      return undefined;
+    }
+  }
+
   async notifyActivePlayers(
     type: e_notification_types_enum,
     notification: {

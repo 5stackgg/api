@@ -277,7 +277,9 @@ export class SteamPresenceService
   // ---- per-account steam client ------------------------------------------
 
   private connectAccount(account: FriendsAccount): void {
-    this.logger.log(`steam-presence connecting bot account ${account.username}`);
+    this.logger.log(
+      `steam-presence connecting bot account ${account.username}`,
+    );
     const client = new SteamUser({
       enablePicsCache: false,
       autoRelogin: true,
@@ -323,7 +325,12 @@ export class SteamPresenceService
       this.pendingGuards.delete(account.id);
       void this.redis.del(GUARD_PREFIX + account.id).catch(() => {});
       void this.redis
-        .set(ONLINE_PREFIX + account.id, this.instanceId, "EX", LOCK_TTL_SECONDS)
+        .set(
+          ONLINE_PREFIX + account.id,
+          this.instanceId,
+          "EX",
+          LOCK_TTL_SECONDS,
+        )
         .catch(() => {});
       if (steamId) {
         void this.postgres
@@ -351,7 +358,10 @@ export class SteamPresenceService
         LOGIN_BACKOFF_MAX_MS,
         LOGIN_BACKOFF_BASE_MS * 2 ** (attempts - 1),
       );
-      this.loginBackoff.set(account.id, { until: Date.now() + delay, attempts });
+      this.loginBackoff.set(account.id, {
+        until: Date.now() + delay,
+        attempts,
+      });
       this.logger.warn(
         `steam-presence ${account.username} reconnect backoff ${Math.round(delay / 1000)}s (attempt ${attempts})`,
       );
@@ -420,8 +430,13 @@ export class SteamPresenceService
     void this.logOn(client, account);
   }
 
-  private async logOn(client: SteamUser, account: FriendsAccount): Promise<void> {
-    const refreshToken = await this.cache.get(REFRESH_TOKEN_PREFIX + account.id);
+  private async logOn(
+    client: SteamUser,
+    account: FriendsAccount,
+  ): Promise<void> {
+    const refreshToken = await this.cache.get(
+      REFRESH_TOKEN_PREFIX + account.id,
+    );
     if (this.clients.get(account.id) !== client) {
       return;
     }
@@ -457,12 +472,7 @@ export class SteamPresenceService
     if (releaseLock) {
       this.owned.delete(accountId);
       await this.redis
-        ?.eval(
-          RELEASE_LUA,
-          1,
-          ACCOUNT_LOCK_PREFIX + accountId,
-          this.instanceId,
-        )
+        ?.eval(RELEASE_LUA, 1, ACCOUNT_LOCK_PREFIX + accountId, this.instanceId)
         .catch(() => {});
     }
   }
@@ -539,7 +549,9 @@ export class SteamPresenceService
     steamId: string,
     input: {
       gameid?: string | number | null;
-      richPresence: Record<string, string> | Array<{ key?: string; value?: string }>;
+      richPresence:
+        | Record<string, string>
+        | Array<{ key?: string; value?: string }>;
       display?: string | null;
     },
   ): Promise<void> {
@@ -550,7 +562,9 @@ export class SteamPresenceService
     });
 
     const stateKey = STATE_PREFIX + steamId;
-    const previous = (await this.cache.get(stateKey)) as Cs2PresenceState | null;
+    const previous = (await this.cache.get(
+      stateKey,
+    )) as Cs2PresenceState | null;
 
     // Skip no-op writes: the push `user` event fires often, but we only keep the
     // latest state, so writing unchanged state just churns Postgres dead tuples.
@@ -707,6 +721,9 @@ export class SteamPresenceService
       return;
     }
     const byPlayer = new Map(notice.players.map((p) => [p.steamId, p]));
+    const image = await this.notifications.mapPosterImage({
+      mapName: notice.mapName,
+    });
 
     for (const friend of friends) {
       const stats = byPlayer.get(friend.steam_id);
@@ -729,6 +746,7 @@ export class SteamPresenceService
           role: "user",
           entity_id: notice.matchId,
           steamIds: [friend.steam_id],
+          ...(image ? { data: { image } } : {}),
         })
         .catch((err) =>
           this.logger.warn(
@@ -881,10 +899,7 @@ export class SteamPresenceService
         bots: botRows.length,
         online: botRows.filter((b) => b.online).length,
         watching: botRows.reduce((sum, b) => sum + b.watching, 0),
-        pending: botRows.reduce(
-          (sum, b) => sum + (b.assigned - b.watching),
-          0,
-        ),
+        pending: botRows.reduce((sum, b) => sum + (b.assigned - b.watching), 0),
         capacity: botRows.reduce((sum, b) => sum + b.capacity, 0),
       },
       bots: botRows,
