@@ -1253,6 +1253,13 @@ type TelemetryFleetTotals {
   scrimRequests: Int!
   events: Int!
   eventTeams: Int!
+  pluginsReported: Int!
+  pluginsRequested: Int!
+  pluginsManual: Int!
+  gameModes: Int!
+  gameModesEnabled: Int!
+  gameModesUnranked: Int!
+  pluginsBySlug: jsonb
 }
 
 type TelemetryFeatureAdoption {
@@ -1822,4 +1829,63 @@ type TournamentAward {
   custom_name: String
   silhouette: Int
   image_url: String
+}
+
+type SyncPluginRegistryOutput {
+  plugins: Int!
+  versions: Int!
+}
+
+type ReconcileNodePluginsOutput {
+  detected: Int!
+}
+
+type PreviewGameModeOutput {
+  enabledPlugins: String!
+  cfg: String
+  extraGameParams: String
+}
+
+type Mutation {
+  syncPluginRegistry: SyncPluginRegistryOutput
+}
+
+type Mutation {
+  installGamePlugin(
+    slug: String!
+    version: String
+  ): SuccessOutput
+}
+
+type Mutation {
+  uninstallGamePlugin(
+    slug: String!
+    force: Boolean
+  ): SuccessOutput
+}
+
+type Mutation {
+  reconcileNodePlugins(
+    nodeId: String!
+  ): ReconcileNodePluginsOutput
+}
+
+type Mutation {
+  previewGameMode(
+    gameModeId: uuid!
+  ): PreviewGameModeOutput
+}
+
+type PluginReadmeOutput {
+  repo: String
+  content: String
+  format: String
+  url: String
+}
+
+type Mutation {
+  getPluginReadme(
+    slug: String!
+    runtime: String
+  ): PluginReadmeOutput
 }

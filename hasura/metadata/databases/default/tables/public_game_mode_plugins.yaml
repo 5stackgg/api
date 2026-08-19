@@ -1,0 +1,127 @@
+table:
+  name: game_mode_plugins
+  schema: public
+object_relationships:
+  - name: game_mode
+    using:
+      foreign_key_constraint_on: game_mode_id
+  - name: plugin
+    using:
+      foreign_key_constraint_on: plugin_slug
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - game_mode_id
+        - plugin_slug
+        - load_order
+        - config
+        - required
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: guest
+    permission:
+      columns:
+        - game_mode_id
+        - plugin_slug
+        - load_order
+        - config
+        - required
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - game_mode_id
+        - plugin_slug
+        - load_order
+        - config
+        - required
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: verified_user
+    permission:
+      columns:
+        - game_mode_id
+        - plugin_slug
+        - load_order
+        - config
+        - required
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: streamer
+    permission:
+      columns:
+        - game_mode_id
+        - plugin_slug
+        - load_order
+        - config
+        - required
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: moderator
+    permission:
+      columns:
+        - game_mode_id
+        - plugin_slug
+        - load_order
+        - config
+        - required
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - game_mode_id
+        - plugin_slug
+        - load_order
+        - config
+        - required
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - game_mode_id
+        - plugin_slug
+        - load_order
+        - config
+        - required
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - game_mode_id
+        - plugin_slug
+        - load_order
+        - config
+        - required
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - game_mode_id
+        - plugin_slug
+        - load_order
+        - config
+        - required
+      filter: {}
+      check: {}
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""

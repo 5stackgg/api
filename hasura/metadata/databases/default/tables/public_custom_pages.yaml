@@ -18,6 +18,7 @@ insert_permissions:
         - nav_group
         - nav_order
         - profile_tab_label
+        - plugin_slug
         - deployments
         - manifest_url
     comment: ""
@@ -38,6 +39,7 @@ select_permissions:
         - nav_group
         - nav_order
         - profile_tab_label
+        - plugin_slug
         - deployments
         - manifest_url
         - created_at
@@ -61,6 +63,7 @@ select_permissions:
         - nav_group
         - nav_order
         - profile_tab_label
+        - plugin_slug
       filter:
         _and:
           - enabled:
@@ -84,6 +87,7 @@ select_permissions:
         - nav_group
         - nav_order
         - profile_tab_label
+        - plugin_slug
       filter:
         _and:
           - enabled:
@@ -111,6 +115,7 @@ select_permissions:
         - nav_group
         - nav_order
         - profile_tab_label
+        - plugin_slug
       filter:
         _and:
           - enabled:
@@ -139,6 +144,7 @@ select_permissions:
         - nav_group
         - nav_order
         - profile_tab_label
+        - plugin_slug
       filter:
         _and:
           - enabled:
@@ -168,6 +174,7 @@ select_permissions:
         - nav_group
         - nav_order
         - profile_tab_label
+        - plugin_slug
       filter:
         _and:
           - enabled:
@@ -198,6 +205,7 @@ select_permissions:
         - nav_group
         - nav_order
         - profile_tab_label
+        - plugin_slug
       filter:
         _and:
           - enabled:
@@ -229,6 +237,7 @@ select_permissions:
         - nav_group
         - nav_order
         - profile_tab_label
+        - plugin_slug
       filter:
         _and:
           - enabled:
@@ -261,6 +270,7 @@ update_permissions:
         - nav_group
         - nav_order
         - profile_tab_label
+        - plugin_slug
         - deployments
         - manifest_url
       filter: {}

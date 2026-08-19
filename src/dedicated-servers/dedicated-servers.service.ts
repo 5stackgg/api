@@ -11,6 +11,7 @@ import { RedisManagerService } from "src/redis/redis-manager/redis-manager.servi
 import { Redis } from "ioredis";
 import { SystemService } from "src/system/system.service";
 import { PluginRuntimeService } from "src/plugin-runtime/plugin-runtime.service";
+import { GameModesService } from "../game-plugins/game-modes.service";
 
 @Injectable()
 export class DedicatedServersService {
@@ -32,6 +33,7 @@ export class DedicatedServersService {
     private readonly redisManager: RedisManagerService,
     private readonly systemService: SystemService,
     private readonly pluginRuntimeService: PluginRuntimeService,
+    private readonly gameModesService: GameModesService,
   ) {
     this.redis = this.redisManager.getConnection();
 
@@ -156,6 +158,19 @@ export class DedicatedServersService {
         },
       });
 
+      // A Ranked server resolves to no mode by design, so matchmaking capacity
+      // always comes up on a clean plugin set.
+      const gameMode = await this.gameModesService.resolveForServer(serverId);
+
+      const gameModeEnvironment = gameMode
+        ? [
+            { name: "ENABLED_PLUGINS", value: gameMode.enabledPlugins },
+            ...(gameMode.pluginConfigs
+              ? [{ name: "PLUGIN_CONFIGS", value: gameMode.pluginConfigs }]
+              : []),
+          ]
+        : [];
+
       const dedicatedServerDeploymentName =
         this.getDedicatedServerDeploymentName(serverId);
 
@@ -257,7 +272,7 @@ export class DedicatedServersService {
                       // TODO - number of players
                       {
                         name: "EXTRA_GAME_PARAMS",
-                        value: `-maxplayers ${server.type === "Ranked" ? 16 : server.max_players} +map de_dust2 +game_type ${this.getGameType(server.type)} +game_mode ${this.getGameMode(server.type)} +sv_skirmish_id ${this.getWarGameType(server.type)} ${server.connect_password ? ` +sv_password ${server.connect_password}` : ""}`,
+                        value: `-maxplayers ${server.type === "Ranked" ? 16 : server.max_players} +map de_dust2 +game_type ${this.getGameType(server.type)} +game_mode ${this.getGameMode(server.type)} +sv_skirmish_id ${this.getWarGameType(server.type)} ${server.connect_password ? ` +sv_password ${server.connect_password}` : ""}${gameMode?.extraGameParams ? ` ${gameMode.extraGameParams}` : ""}`,
                       },
                       { name: "SERVER_ID", value: server.id },
                       {
@@ -284,6 +299,7 @@ export class DedicatedServersService {
                         name: "STEAM_RELAY",
                         value: steamRelay ? "true" : "false",
                       },
+                      ...gameModeEnvironment,
                     ],
                     volumeMounts: [
                       {
@@ -301,6 +317,11 @@ export class DedicatedServersService {
                       {
                         name: `dedicated-server-data-${server.id}`,
                         mountPath: `/opt/custom-plugins`,
+                      },
+                      {
+                        name: `plugin-store-${sanitizedGameServerNodeId}`,
+                        mountPath: `/opt/plugin-store`,
+                        readOnly: true,
                       },
                     ],
                   },
@@ -325,16 +346,17 @@ export class DedicatedServersService {
                     },
                   },
                   {
-                    name: `custom-plugins-${sanitizedGameServerNodeId}`,
-                    hostPath: {
-                      path: `/opt/5stack/custom-plugins`,
-                    },
-                  },
-                  {
                     name: `dedicated-server-data-${server.id}`,
                     hostPath: {
                       type: "DirectoryOrCreate",
                       path: `/opt/5stack/servers/${server.id}`,
+                    },
+                  },
+                  {
+                    name: `plugin-store-${sanitizedGameServerNodeId}`,
+                    hostPath: {
+                      type: "DirectoryOrCreate",
+                      path: `/opt/5stack/plugin-store`,
                     },
                   },
                 ],

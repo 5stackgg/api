@@ -1,0 +1,174 @@
+table:
+  name: game_plugin_versions
+  schema: public
+object_relationships:
+  - name: plugin
+    using:
+      foreign_key_constraint_on: plugin_slug
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - plugin_slug
+        - runtime
+        - version
+        - url
+        - sha256
+        - size
+        - published_at
+        - prerelease
+        - layout
+        - install_path
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: guest
+    permission:
+      columns:
+        - plugin_slug
+        - runtime
+        - version
+        - url
+        - sha256
+        - size
+        - published_at
+        - prerelease
+        - layout
+        - install_path
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - plugin_slug
+        - runtime
+        - version
+        - url
+        - sha256
+        - size
+        - published_at
+        - prerelease
+        - layout
+        - install_path
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: verified_user
+    permission:
+      columns:
+        - plugin_slug
+        - runtime
+        - version
+        - url
+        - sha256
+        - size
+        - published_at
+        - prerelease
+        - layout
+        - install_path
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: streamer
+    permission:
+      columns:
+        - plugin_slug
+        - runtime
+        - version
+        - url
+        - sha256
+        - size
+        - published_at
+        - prerelease
+        - layout
+        - install_path
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: moderator
+    permission:
+      columns:
+        - plugin_slug
+        - runtime
+        - version
+        - url
+        - sha256
+        - size
+        - published_at
+        - prerelease
+        - layout
+        - install_path
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - plugin_slug
+        - runtime
+        - version
+        - url
+        - sha256
+        - size
+        - published_at
+        - prerelease
+        - layout
+        - install_path
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - plugin_slug
+        - runtime
+        - version
+        - url
+        - sha256
+        - size
+        - published_at
+        - prerelease
+        - layout
+        - install_path
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - plugin_slug
+        - runtime
+        - version
+        - url
+        - sha256
+        - size
+        - published_at
+        - prerelease
+        - layout
+        - install_path
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - plugin_slug
+        - runtime
+        - version
+        - url
+        - sha256
+        - size
+        - published_at
+        - prerelease
+        - layout
+        - install_path
+      filter: {}
+      check: {}
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""

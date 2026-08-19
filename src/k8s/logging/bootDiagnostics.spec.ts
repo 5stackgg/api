@@ -39,7 +39,7 @@ describe("bootDiagnostics", () => {
       events: [
         {
           reason: "Pulling",
-          message: 'Pulling image "ghcr.io/5stackgg/game-server:latest"',
+          message: 'Pulling image "ghcr.io/5stackgg/game-server-sw:latest"',
           lastTimestamp: "2026-04-23T12:01:00.000Z",
         },
       ],

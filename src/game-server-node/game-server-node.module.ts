@@ -30,6 +30,7 @@ import { GetPluginVersions } from "./jobs/GetPluginVersions";
 import { K8sModule } from "src/k8s/k8s.module";
 import { GameStreamerModule } from "../matches/game-streamer/game-streamer.module";
 import { PluginRuntimeModule } from "src/plugin-runtime/plugin-runtime.module";
+import { GamePluginsModule } from "src/game-plugins/game-plugins.module";
 import { BakeShaders } from "./jobs/BakeShaders";
 import { ValidateGamedata } from "./jobs/ValidateGamedata";
 
@@ -57,6 +58,7 @@ import { ValidateGamedata } from "./jobs/ValidateGamedata";
     K8sModule,
     GameStreamerModule,
     PluginRuntimeModule,
+    GamePluginsModule,
     BullModule.registerQueue(
       {
         name: GameServerQueues.GameUpdate,

@@ -421,6 +421,8 @@ export class GameServerNodeService {
           downloads: true,
         },
         update_status: true,
+        pin_plugin_version: true,
+        pin_plugin_runtime: true,
       },
     });
 
@@ -478,6 +480,13 @@ export class GameServerNodeService {
         ? `serverfiles-csgo-${sanitizedGameServerNodeId}`
         : `serverfiles-${sanitizedGameServerNodeId}`;
 
+    // /opt/scripts/update.sh ships in both runtime images; resolving the node's own
+    // image keeps the update job on something already pulled onto that node.
+    const updateImage =
+      await this.pluginRuntimeService.resolveGameServerPluginImage(
+        game_server_nodes_by_pk,
+      );
+
     try {
       await this.batchApi.createNamespacedJob({
         namespace: this.namespace,
@@ -525,7 +534,7 @@ export class GameServerNodeService {
                 containers: [
                   {
                     name: "update-cs-server",
-                    image: "ghcr.io/5stackgg/game-server:latest",
+                    image: updateImage,
                     command: ["/opt/scripts/update.sh"],
                     env: [
                       {

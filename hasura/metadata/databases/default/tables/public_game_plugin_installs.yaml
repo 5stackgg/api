@@ -1,0 +1,49 @@
+table:
+  name: game_plugin_installs
+  schema: public
+object_relationships:
+  - name: plugin
+    using:
+      foreign_key_constraint_on: plugin_slug
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - plugin_slug
+        - version
+        - channel
+        - enabled
+        - always_load
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - plugin_slug
+        - version
+        - channel
+        - enabled
+        - always_load
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - plugin_slug
+        - version
+        - channel
+        - enabled
+        - always_load
+      filter: {}
+      check: {}
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""

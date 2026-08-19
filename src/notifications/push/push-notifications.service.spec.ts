@@ -516,7 +516,8 @@ describe("PushNotificationsService", () => {
         SendPushDelivery.name,
         { steamId: "76561100000000001", thread: "chat:match:m-1" },
         expect.objectContaining({
-          jobId: "push-trail.76561100000000001.chat:match:m-1.token-1",
+          // Colons encoded: BullMQ rejects a custom job id containing one.
+          jobId: "push-trail.76561100000000001.chat%3Amatch%3Am-1.token-1",
           delay: 12000,
           // A completed job holding a static id would stop the next window
           // with the same token from ever being scheduled.

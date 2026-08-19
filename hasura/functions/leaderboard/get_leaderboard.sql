@@ -300,6 +300,7 @@ BEGIN
         JOIN match_options mo ON mo.id = m.match_options_id
         WHERE m.status = 'Finished'
           AND m.source = '5stack'
+      AND m.counts_toward_ranking = true
           AND mlp.steam_id IS NOT NULL
           AND m.winning_lineup_id IS NOT NULL
           AND ((_from IS NULL OR m.ended_at >= _from) AND (_to IS NULL OR m.ended_at < _to))
@@ -424,6 +425,7 @@ BEGIN
         JOIN match_options mo ON mo.id = m.match_options_id
         WHERE m.status = 'Finished'
           AND m.source = '5stack'
+      AND m.counts_toward_ranking = true
           AND mlp.steam_id IS NOT NULL
           AND m.winning_lineup_id IS NOT NULL
           AND ((_from IS NULL OR m.ended_at >= _from) AND (_to IS NULL OR m.ended_at < _to))
@@ -534,6 +536,7 @@ BEGIN
         JOIN match_options mo ON mo.id = m.match_options_id
         WHERE m.status = 'Finished'
           AND m.source = '5stack'
+      AND m.counts_toward_ranking = true
           AND mlp.steam_id IS NOT NULL
           AND m.winning_lineup_id IS NOT NULL
           AND ((_from IS NULL OR m.ended_at >= _from) AND (_to IS NULL OR m.ended_at < _to))
@@ -619,6 +622,7 @@ BEGIN
     WHERE pk.attacker_steam_id IS NOT NULL
       AND pk.attacker_steam_id != pk.attacked_steam_id
       AND m.source = '5stack'
+      AND m.counts_toward_ranking = true
       AND ((_from IS NULL OR pk.time >= _from) AND (_to IS NULL OR pk.time < _to))
       AND (_match_type IS NULL OR mo.type = _match_type)
       AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pk.match_id))
@@ -634,6 +638,7 @@ BEGIN
     JOIN match_options mo2 ON mo2.id = m2.match_options_id
     WHERE 1=1
       AND m2.source = '5stack'
+      AND m2.counts_toward_ranking = true
       AND ((_from IS NULL OR dk.time >= _from) AND (_to IS NULL OR dk.time < _to))
       AND (_match_type IS NULL OR mo2.type = _match_type)
       AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = dk.match_id))
@@ -703,6 +708,7 @@ BEGIN
     JOIN match_options mo ON mo.id = m.match_options_id
     WHERE m.status = 'Finished'
       AND m.source = '5stack'
+      AND m.counts_toward_ranking = true
       AND mlp.steam_id IS NOT NULL
       AND m.winning_lineup_id IS NOT NULL
       AND ((_from IS NULL OR m.ended_at >= _from) AND (_to IS NULL OR m.ended_at < _to))
@@ -776,6 +782,7 @@ BEGIN
   WHERE pk.attacker_steam_id IS NOT NULL
     AND pk.attacker_steam_id != pk.attacked_steam_id
     AND m.source = '5stack'
+      AND m.counts_toward_ranking = true
     AND ((_from IS NULL OR pk.time >= _from) AND (_to IS NULL OR pk.time < _to))
     AND (_match_type IS NULL OR mo.type = _match_type)
     AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = pk.match_id))
@@ -1002,6 +1009,7 @@ BEGIN
      AND r.match_map_id = h.match_map_id
      AND r.steam_id = h.steam_id
     WHERE m.source = '5stack'
+      AND m.counts_toward_ranking = true
       AND ((_from IS NULL OR m.created_at >= _from) AND (_to IS NULL OR m.created_at < _to))
       AND (_match_type IS NULL OR mo.type = _match_type)
       AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = h.match_id))
@@ -1084,6 +1092,7 @@ BEGIN
      AND r.match_map_id = s.match_map_id
      AND r.steam_id = s.steam_id
     WHERE m.source = '5stack'
+      AND m.counts_toward_ranking = true
       AND ((_from IS NULL OR m.created_at >= _from) AND (_to IS NULL OR m.created_at < _to))
       AND (_match_type IS NULL OR mo.type = _match_type)
       AND (NOT _exclude_tournaments OR NOT EXISTS (SELECT 1 FROM tournament_brackets tb WHERE tb.match_id = s.match_id))

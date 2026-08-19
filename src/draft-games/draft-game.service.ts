@@ -1084,6 +1084,7 @@ export class DraftGameService {
       object.veto_pick_timeout = source.veto_pick_timeout;
       object.camera_required = source.camera_required ?? false;
       object.camera_allow_teammates = source.camera_allow_teammates ?? false;
+      object.game_mode_id = source.game_mode_id || null;
     }
 
     if (isRoleAbove(user.role, "tournament_organizer")) {

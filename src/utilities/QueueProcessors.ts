@@ -18,6 +18,7 @@ type Modules =
   | "Clips"
   | "Hasura"
   | "GameServerNode"
+  | "GamePlugins"
   | "DiscordBot"
   | "Postgres"
   | "System"

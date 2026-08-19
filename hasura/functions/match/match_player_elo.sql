@@ -444,6 +444,14 @@ BEGIN
         RETURN 0;
     END IF;
 
+    -- Played under a game mode that is not marked safe for competitive play.
+    -- The match is real -- stats, demos and rounds are all recorded -- it just
+    -- does not move anybody's rating. Decided when the match was created, so
+    -- editing the mode later cannot rewrite history.
+    IF match_record.counts_toward_ranking = false THEN
+        RETURN 0;
+    END IF;
+
     -- Skip matches without a winning_lineup_id
     IF match_record.winning_lineup_id IS NULL THEN
         RAISE NOTICE 'Skipping match % as it has no winning_lineup_id', _match_id;
