@@ -149,6 +149,24 @@ export class NadeImportService {
   ): Promise<NadeImportOutput> {
     await this.assertOperator(user);
 
+    return await this.runImport(user.steam_id, input);
+  }
+
+  // The bundled default library. Not an operator import: it carries no
+  // nade_import_enabled gate and no administrator, because nobody asked for it
+  // -- it is the library an install starts with. Idempotent through the same
+  // (origin_source, external_id) upsert, so a restart re-seeds nothing.
+  public async seedLineups(
+    steamId: string,
+    payload: unknown,
+  ): Promise<NadeImportOutput> {
+    return await this.runImport(steamId, { payload, dry_run: false });
+  }
+
+  private async runImport(
+    steamId: string,
+    input: { payload: unknown; dry_run?: boolean | null },
+  ): Promise<NadeImportOutput> {
     const dryRun = input.dry_run === true;
     const envelope = NadeImportService.envelope(input.payload);
     const visibility = NadeImportService.visibility(envelope.visibility);
@@ -209,7 +227,9 @@ export class NadeImportService {
           continue;
         }
 
-        const inserted = await this.write(lineup, user.steam_id, visibility);
+        const inserted = await this.write(
+          lineup,
+          steamId, visibility);
 
         if (inserted) {
           output.imported += 1;
@@ -228,7 +248,7 @@ export class NadeImportService {
     }
 
     this.logger.log(
-      `[nade-import] ${user.steam_id} ${dryRun ? "previewed" : "seeded"} ` +
+      `[nade-import] ${steamId} ${dryRun ? "previewed" : "seeded"} ` +
         `${output.imported} new, ${output.updated} updated, ${output.failed} failed`,
     );
 

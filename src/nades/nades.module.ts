@@ -22,6 +22,7 @@ import { NadeAnalysisService } from "./nade-analysis.service";
 import { NadeArtifactsService } from "./nade-artifacts.service";
 import { NadeDriftService } from "./nade-drift.service";
 import { NadeImportService } from "./nade-import.service";
+import { NadeSeedService } from "./nade-seed.service";
 import { NadeInsightsController } from "./nade-insights.controller";
 import { NadeInsightsService } from "./nade-insights.service";
 import { NadeRepairService } from "./nade-repair.service";
@@ -90,6 +91,7 @@ import { RunNadeDriftScan } from "./jobs/RunNadeDriftScan";
     NadePlaybooksService,
     NadePracticeModeService,
     NadePracticeService,
+    NadeSeedService,
     NadePluginKeyGuard,
     ReapIdleNadePracticeSessions,
     MineNadeMeta,
