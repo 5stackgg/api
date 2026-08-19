@@ -794,6 +794,10 @@ export class UtilityPracticeService {
     );
 
     if (!session.match_id) {
+      // No match means nothing to cancel -- and nothing to release the server
+      // this session may already have claimed. Sweep it here rather than wait
+      // for the reaper.
+      await this.releaseOrphanedServers();
       return;
     }
 
@@ -1127,26 +1131,68 @@ export class UtilityPracticeService {
   // An explicitly chosen server. Anything that is not a free, connected
   // practice server is rejected by name rather than silently falling back to a
   // pod, because the caller picked this one on purpose.
+  // Sessions are reaped by their own status, but the claim on a dedicated
+  // server outlives them: a crash between reserving one and linking its match
+  // leaves a server nobody can book and nothing can free, because end() has no
+  // match to cancel. A practice server is only ever held by a live practice
+  // session, so anything else holding one is a leak by definition.
+  public async releaseOrphanedServers(): Promise<number> {
+    const released = await this.postgres.query<Array<{ id: string }>>(
+      `UPDATE public.servers srv
+          SET reserved_by_match_id = NULL
+        WHERE srv.type = 'Practice'
+          AND srv.reserved_by_match_id IS NOT NULL
+          AND NOT EXISTS (
+                SELECT 1
+                  FROM public.utility_practice_sessions s
+                 WHERE s.match_id = srv.reserved_by_match_id
+                   AND s.status IN ('Starting', 'Ready')
+              )
+      RETURNING srv.id::text AS id`,
+    );
+
+    if (released.length > 0) {
+      this.logger.warn(
+        `[utility-practice] released ${released.length} orphaned practice server(s)`,
+      );
+    }
+
+    return released.length;
+  }
+
   // The picker's list. Practice servers are invisible to the servers table for
   // an ordinary player -- get_server_connection_string returns null for them,
   // which is what the table's own filter keys on -- so the choice is offered
   // here, without the connect details that gate is protecting.
-  public async practiceServers(
-    user: User,
-  ): Promise<Array<{ id: string; label: string; region: string }>> {
+  public async practiceServers(user: User): Promise<
+    Array<{
+      id: string;
+      label: string;
+      region: string;
+      in_use: boolean;
+      held_by: string | null;
+    }>
+  > {
     await this.assertRole(user);
 
-    return await this.postgres.query<
-      Array<{ id: string; label: string; region: string }>
-    >(
+    // Busy servers are listed too, named by whoever holds them. Filtering them
+    // out makes a claimed server and a missing one look identical, which is the
+    // hardest state to explain to somebody staring at an empty picker.
+    return await this.postgres.query(
       `SELECT s.id::text AS id,
               COALESCE(NULLIF(s.label, ''), s.host::text) AS label,
-              s.region
+              s.region,
+              s.reserved_by_match_id IS NOT NULL AS in_use,
+              host.name AS held_by
          FROM public.servers s
+         LEFT JOIN public.utility_practice_sessions ps
+                ON ps.match_id = s.reserved_by_match_id
+               AND ps.status IN ('Starting', 'Ready')
+         LEFT JOIN public.players host
+                ON host.steam_id = ps.host_steam_id
         WHERE s.type = 'Practice'
           AND s.enabled = true
           AND s.connected = true
-          AND s.reserved_by_match_id IS NULL
         ORDER BY s.region, label`,
     );
   }
