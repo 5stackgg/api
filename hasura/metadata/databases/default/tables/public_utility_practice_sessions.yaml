@@ -1,0 +1,280 @@
+table:
+  name: utility_practice_sessions
+  schema: public
+object_relationships:
+  - name: match
+    using:
+      foreign_key_constraint_on: match_id
+  - name: host
+    using:
+      foreign_key_constraint_on: host_steam_id
+  - name: team
+    using:
+      foreign_key_constraint_on: team_id
+  - name: collection
+    using:
+      foreign_key_constraint_on: collection_id
+  - name: playbook
+    using:
+      foreign_key_constraint_on: playbook_id
+  - name: e_utility_practice_status
+    using:
+      foreign_key_constraint_on: status
+array_relationships:
+  - name: invites
+    using:
+      foreign_key_constraint_on:
+        column: utility_practice_session_id
+        table:
+          name: utility_practice_invites
+          schema: public
+computed_fields:
+  - name: can_view
+    definition:
+      function:
+        name: can_view_utility_practice_session
+        schema: public
+      session_argument: hasura_session
+  - name: can_manage
+    definition:
+      function:
+        name: can_manage_utility_practice_session
+        schema: public
+      session_argument: hasura_session
+  - name: is_member
+    definition:
+      function:
+        name: is_utility_practice_member
+        schema: public
+      session_argument: hasura_session
+  - name: connection_link
+    definition:
+      function:
+        name: utility_practice_connection_link
+        schema: public
+      session_argument: hasura_session
+  - name: connection_string
+    definition:
+      function:
+        name: utility_practice_connection_string
+        schema: public
+      session_argument: hasura_session
+insert_permissions: []
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - match_id
+        - host_steam_id
+        - team_id
+        - map_name
+        - region
+        - collection_id
+        - playbook_id
+        - status
+        - invite_code
+        - is_open
+        - last_occupied_at
+        - empty_since
+        - expires_at
+        - failure_reason
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_manage
+        - is_member
+        - connection_link
+        - connection_string
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: verified_user
+    permission:
+      columns:
+        - id
+        - match_id
+        - host_steam_id
+        - team_id
+        - map_name
+        - region
+        - collection_id
+        - playbook_id
+        - status
+        - invite_code
+        - is_open
+        - last_occupied_at
+        - empty_since
+        - expires_at
+        - failure_reason
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_manage
+        - is_member
+        - connection_link
+        - connection_string
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: streamer
+    permission:
+      columns:
+        - id
+        - match_id
+        - host_steam_id
+        - team_id
+        - map_name
+        - region
+        - collection_id
+        - playbook_id
+        - status
+        - invite_code
+        - is_open
+        - last_occupied_at
+        - empty_since
+        - expires_at
+        - failure_reason
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_manage
+        - is_member
+        - connection_link
+        - connection_string
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - id
+        - match_id
+        - host_steam_id
+        - team_id
+        - map_name
+        - region
+        - collection_id
+        - playbook_id
+        - status
+        - invite_code
+        - is_open
+        - last_occupied_at
+        - empty_since
+        - expires_at
+        - failure_reason
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_manage
+        - is_member
+        - connection_link
+        - connection_string
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - id
+        - match_id
+        - host_steam_id
+        - team_id
+        - map_name
+        - region
+        - collection_id
+        - playbook_id
+        - status
+        - invite_code
+        - is_open
+        - last_occupied_at
+        - empty_since
+        - expires_at
+        - failure_reason
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_manage
+        - is_member
+        - connection_link
+        - connection_string
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: moderator
+    permission:
+      columns:
+        - id
+        - match_id
+        - host_steam_id
+        - team_id
+        - map_name
+        - region
+        - collection_id
+        - playbook_id
+        - status
+        - invite_code
+        - is_open
+        - last_occupied_at
+        - empty_since
+        - expires_at
+        - failure_reason
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_manage
+        - is_member
+        - connection_link
+        - connection_string
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - match_id
+        - host_steam_id
+        - team_id
+        - map_name
+        - region
+        - collection_id
+        - playbook_id
+        - status
+        - invite_code
+        - is_open
+        - last_occupied_at
+        - empty_since
+        - expires_at
+        - failure_reason
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_manage
+        - is_member
+        - connection_link
+        - connection_string
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions: []
+delete_permissions: []

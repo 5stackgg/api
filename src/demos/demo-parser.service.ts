@@ -293,12 +293,12 @@ export type ParsedOneWayResponse = {
   caveats?: Array<string>;
 };
 
-// One stored lineup as /drift wants it. `nade_type` uses the parser's own
+// One stored lineup as /drift wants it. `utility_type` uses the parser's own
 // spellings, which are not this database's -- translate it with
 // DemoParserService.parserUtilityType() rather than passing the column through.
 export type ParsedDriftLineup = {
   id: string;
-  nade_type: string;
+  utility_type: string;
   initial_position?: ParsedGeometryPoint;
   initial_velocity?: ParsedGeometryPoint;
 };

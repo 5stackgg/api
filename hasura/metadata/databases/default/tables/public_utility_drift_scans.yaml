@@ -1,0 +1,43 @@
+table:
+  name: utility_drift_scans
+  schema: public
+object_relationships:
+  - name: requested_by
+    using:
+      foreign_key_constraint_on: requested_by_steam_id
+array_relationships:
+  - name: results
+    using:
+      foreign_key_constraint_on:
+        column: utility_drift_scan_id
+        table:
+          name: utility_drift_results
+          schema: public
+insert_permissions: []
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - map_name
+        - from_revision
+        - to_revision
+        - status
+        - failure_reason
+        - lineups
+        - scanned
+        - unchanged
+        - moved
+        - broken
+        - unsimulatable
+        - max_distance
+        - requested_by_steam_id
+        - started_at
+        - finished_at
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+    comment: 'A drift scan is an operator tool: it names every lineup on a map, including private ones.'
+update_permissions: []
+delete_permissions: []

@@ -62,7 +62,7 @@ import { ClipsService } from "./clips/clips.service";
 import { CameraService } from "./camera/camera.service";
 import { CameraMonitorService } from "./camera/camera-monitor.service";
 import { ClipSpec } from "./clips/types/ClipSpec";
-import { NadePracticeService } from "../nades/nade-practice.service";
+import { UtilityPracticeService } from "../utility/utility-practice.service";
 
 @Controller("matches")
 export class MatchesController {
@@ -126,8 +126,8 @@ export class MatchesController {
     private readonly matchImport: MatchImportService,
     private readonly camera: CameraService,
     private readonly cameraMonitor: CameraMonitorService,
-    @Inject(forwardRef(() => NadePracticeService))
-    private readonly nadePractice: NadePracticeService,
+    @Inject(forwardRef(() => UtilityPracticeService))
+    private readonly utilityPractice: UtilityPracticeService,
     private readonly gameModesService: GameModesService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
@@ -646,14 +646,14 @@ export class MatchesController {
 
     const source = (data.new.source ?? data.old?.source) as string | undefined;
 
-    // A nade practice session is a real match row, so it needs a server and it
+    // A utility practice session is a real match row, so it needs a server and it
     // needs that server released again. It needs nothing else -- no Discord, no
     // matchmaking, no ELO, no game streamer, no chat lobby -- which is what this
     // early branch buys. It has to sit above the imported-match guard below,
     // because that guard would otherwise leave a practice match without a
     // server forever.
     if (source === "practice") {
-      await this.nadePracticeMatchEvents(data, matchId);
+      await this.utilityPracticeMatchEvents(data, matchId);
       return;
     }
 
@@ -904,7 +904,7 @@ export class MatchesController {
     await this.discordMatchOverview.updateMatchOverview(matchId);
   }
 
-  private async nadePracticeMatchEvents(
+  private async utilityPracticeMatchEvents(
     data: HasuraEventData<matches_set_input>,
     matchId: string,
   ) {
@@ -914,7 +914,7 @@ export class MatchesController {
       data.op === "DELETE" ||
       MatchesController.TERMINAL_STATUSES.includes(status)
     ) {
-      await this.nadePractice.markEndedForMatch(matchId);
+      await this.utilityPractice.markEndedForMatch(matchId);
 
       const serverId = (data.new.server_id ?? data.old.server_id) as
         | string
@@ -944,7 +944,7 @@ export class MatchesController {
     }
 
     if (status === "WaitingForServer" && data.old.status === "Live") {
-      await this.nadePractice.markFailedForMatch(
+      await this.utilityPractice.markFailedForMatch(
         matchId,
         "no practice server was available",
       );

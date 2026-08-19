@@ -66,11 +66,11 @@ const DELIVERY_POLICIES: Record<string, e_notification_types_enum[]> = {
     "LeagueMatchUnscheduled",
     "LeagueRegistrationDecision",
     "LeagueRosterUndersized",
-    "NadePracticeInvite",
+    "UtilityPracticeInvite",
     // A practice server is up for as long as somebody is on it and the reaper
     // stops it when nobody is: a late buzz sends a player to a session that has
     // already been torn down, so this one is worth nothing bundled.
-    "NadePracticeReady",
+    "UtilityPracticeReady",
   ],
 
   // Fan-outs to the whole player base. Already collapsed into one job by
@@ -94,7 +94,7 @@ const DELIVERY_POLICIES: Record<string, e_notification_types_enum[]> = {
     "StorageScan",
     "EloRecompute",
     "PlayerReindex",
-    "NadeDriftScanFinished",
+    "UtilityDriftScanFinished",
   ],
 };
 
