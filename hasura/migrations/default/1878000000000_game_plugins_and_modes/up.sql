@@ -29,6 +29,11 @@ CREATE TABLE IF NOT EXISTS "public"."game_plugins" (
     "verified" boolean NOT NULL DEFAULT false,
     "hot_swappable" boolean NOT NULL DEFAULT false,
     "requires_service" text,
+    -- Where the entry came from. A registry sync owns every 'registry' row and
+    -- prunes the ones that stopped being published; a 'custom' row is the
+    -- operator's own and is never touched by a sync, or the plugin they added
+    -- because it is not in the catalog would be deleted by the next one.
+    "source" text NOT NULL DEFAULT 'registry',
     -- Both frameworks ship FollowCS2ServerGuidelines = true, which blocks the
     -- calls a plugin needs to change what a player sees. A plugin that cannot
     -- work without them says so here; it is a fact about the plugin, never
@@ -48,6 +53,7 @@ CREATE TABLE IF NOT EXISTS "public"."game_plugins" (
     -- The slug also names a directory inside the node's plugin directory, so a
     -- value that is not path-safe would let a registry entry escape it.
     CONSTRAINT "game_plugins_slug_check" CHECK ("slug" ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'),
+    CONSTRAINT "game_plugins_source_check" CHECK ("source" IN ('registry', 'custom')),
     CONSTRAINT "game_plugins_kind_fkey" FOREIGN KEY ("kind")
         REFERENCES "public"."e_game_plugin_kinds" ("value") ON UPDATE CASCADE ON DELETE RESTRICT
 );

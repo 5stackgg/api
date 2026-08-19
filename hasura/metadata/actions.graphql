@@ -1870,6 +1870,26 @@ type Mutation {
   ): ReconcileNodePluginsOutput
 }
 
+type AddCustomGamePluginOutput {
+  slug: String!
+  name: String!
+  version: String!
+  runtime: String!
+}
+
+type Mutation {
+  addCustomGamePlugin(
+    url: String!
+    runtime: String!
+    slug: String
+    name: String
+    description: String
+    version: String
+    layout: String
+    installPath: String
+  ): AddCustomGamePluginOutput
+}
+
 type Mutation {
   previewGameMode(
     gameModeId: uuid!

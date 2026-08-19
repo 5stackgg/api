@@ -121,6 +121,36 @@ export class GamePluginsController {
     return { success: true };
   }
 
+  // A plugin the registry does not carry. Administrator-only for the same
+  // reason installing is: it decides which third-party code runs on the
+  // deployment's servers, and here the operator is also vouching for where it
+  // came from.
+  @HasuraAction()
+  public async addCustomGamePlugin(data: {
+    user: User;
+    url: string;
+    runtime: string;
+    slug?: string;
+    name?: string;
+    description?: string;
+    version?: string;
+    layout?: string;
+    installPath?: string;
+  }) {
+    this.assertAdministrator(data.user);
+
+    return await this.gamePlugins.addCustomPlugin({
+      url: data.url,
+      runtime: data.runtime,
+      slug: data.slug,
+      name: data.name,
+      description: data.description,
+      version: data.version,
+      layout: data.layout,
+      installPath: data.installPath,
+    });
+  }
+
   @HasuraAction()
   public async reconcileNodePlugins(data: { user: User; nodeId: string }) {
     this.assertAdministrator(data.user);

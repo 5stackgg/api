@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   BadRequestException,
   Injectable,
@@ -15,6 +16,13 @@ import { RegistryIndex, RegistryPlugin } from "./types/Registry";
 export class GamePluginsService {
   private static readonly DEFAULT_REGISTRY_URL =
     "https://registry.5stack.gg/";
+
+  // Big enough for anything a CS2 plugin ships and small enough that a wrong
+  // URL -- a disk image, a game build -- fails instead of filling the pod.
+  private static readonly MAX_ARCHIVE_BYTES = 250 * 1024 * 1024;
+
+  private static readonly SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+  private static readonly VERSION = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
   constructor(
     private readonly logger: Logger,
@@ -57,9 +65,27 @@ export class GamePluginsService {
       return { plugins: 0, versions: 0 };
     }
 
+    // A slug an operator added themselves is theirs. Overwriting it because the
+    // catalog later publishes the same name would replace their download URL and
+    // prune their versions out from under an install that is already running.
+    const custom = new Set(
+      (
+        await this.postgres.query<Array<{ slug: string }>>(
+          `SELECT slug FROM public.game_plugins WHERE source = 'custom'`,
+        )
+      ).map((row) => row.slug),
+    );
+
     let versions = 0;
 
     for (const plugin of index.plugins) {
+      if (custom.has(plugin.slug)) {
+        this.logger.warn(
+          `${plugin.slug} is now in the registry, but this deployment added its own; keeping theirs`,
+        );
+        continue;
+      }
+
       versions += await this.upsertPlugin(plugin);
     }
 
@@ -68,7 +94,8 @@ export class GamePluginsService {
     // would abort the whole sync and leave the catalog half-applied.
     await this.postgres.query(
       `DELETE FROM public.game_plugins p
-        WHERE p.slug <> ALL($1::text[])
+        WHERE p.source = 'registry'
+          AND p.slug <> ALL($1::text[])
           AND NOT EXISTS (
             SELECT 1 FROM public.game_mode_plugins m WHERE m.plugin_slug = p.slug
           )
@@ -176,6 +203,333 @@ export class GamePluginsService {
     );
 
     return versions.length;
+  }
+
+  // A plugin the catalog does not carry. The operator points at a release and
+  // this becomes an entry like any other -- installable, versioned, and
+  // verified on the node against a digest, because the archive is hashed here
+  // rather than trusted at download time.
+  //
+  // Kept in the same tables as the registry's own entries so nothing
+  // downstream -- modes, node convergence, install state -- has to know the
+  // difference. `source` is what keeps a sync from touching it.
+  public async addCustomPlugin(input: {
+    url: string;
+    runtime: string;
+    slug?: string;
+    name?: string;
+    description?: string;
+    version?: string;
+    layout?: string;
+    installPath?: string;
+  }): Promise<{
+    slug: string;
+    name: string;
+    version: string;
+    runtime: string;
+  }> {
+    const runtime = await this.assertRuntime(input.runtime);
+    const layout = input.layout ?? "csgo";
+
+    if (layout !== "csgo" && layout !== "plugin") {
+      throw new BadRequestException(`unknown archive layout "${layout}"`);
+    }
+
+    if (layout === "plugin" && !input.installPath) {
+      throw new BadRequestException(
+        "an archive whose root is the plugin folder needs an install path",
+      );
+    }
+
+    const resolved = await this.resolveCustomSource(input.url);
+
+    const slug = (input.slug ?? resolved.slug ?? "").trim().toLowerCase();
+    const version = (input.version ?? resolved.version ?? "").trim();
+
+    if (!GamePluginsService.SLUG.test(slug)) {
+      throw new BadRequestException(
+        slug
+          ? `"${slug}" is not a valid slug: lowercase letters, numbers and dashes`
+          : "could not work out a slug from that URL; name the plugin yourself",
+      );
+    }
+
+    if (!GamePluginsService.VERSION.test(version)) {
+      throw new BadRequestException(
+        version
+          ? `"${version}" is not a valid version`
+          : "could not work out a version from that URL; give it one yourself",
+      );
+    }
+
+    const [existing] = await this.postgres.query<Array<{ source: string }>>(
+      `SELECT source FROM public.game_plugins WHERE slug = $1`,
+      [slug],
+    );
+
+    // Shadowing a catalog entry would leave two different downloads under one
+    // name, and the sync would keep fighting over the row.
+    if (existing && existing.source !== "custom") {
+      throw new BadRequestException(
+        `${slug} is already in the registry catalog; install it from there`,
+      );
+    }
+
+    const { sha256, size } = await this.digestOf(resolved.download);
+
+    await this.postgres.query(
+      `INSERT INTO public.game_plugins
+         (slug, kind, name, author, description, homepage, source, verified,
+          synced_at)
+       VALUES ($1, 'game', $2, $3, $4, $5, 'custom', false, now())
+       ON CONFLICT (slug) DO UPDATE SET
+         name = EXCLUDED.name,
+         author = EXCLUDED.author,
+         description = EXCLUDED.description,
+         homepage = COALESCE(EXCLUDED.homepage, game_plugins.homepage),
+         synced_at = now()`,
+      [
+        slug,
+        input.name?.trim() || resolved.name || slug,
+        resolved.author || "unknown",
+        input.description?.trim() ||
+          `Added by an administrator from ${resolved.homepage ?? resolved.download}`,
+        resolved.homepage ?? null,
+      ],
+    );
+
+    await this.postgres.query(
+      `INSERT INTO public.game_plugin_versions
+         (plugin_slug, runtime, version, url, sha256, size, published_at,
+          prerelease, layout, install_path)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,false,$8,$9)
+       ON CONFLICT (plugin_slug, runtime, version) DO UPDATE SET
+         url = EXCLUDED.url,
+         sha256 = EXCLUDED.sha256,
+         size = EXCLUDED.size,
+         published_at = EXCLUDED.published_at,
+         layout = EXCLUDED.layout,
+         install_path = EXCLUDED.install_path`,
+      [
+        slug,
+        runtime,
+        version,
+        resolved.download,
+        sha256,
+        size,
+        resolved.publishedAt ?? new Date().toISOString(),
+        layout,
+        input.installPath?.trim() || null,
+      ],
+    );
+
+    this.logger.log(`custom plugin ${slug}@${version} added for ${runtime}`);
+
+    return {
+      slug,
+      name: input.name?.trim() || resolved.name || slug,
+      version,
+      runtime,
+    };
+  }
+
+  private async assertRuntime(runtime: string): Promise<string> {
+    const [row] = await this.postgres.query<Array<{ value: string }>>(
+      `SELECT value FROM public.e_plugin_runtimes WHERE value = $1`,
+      [runtime],
+    );
+
+    if (!row) {
+      throw new BadRequestException(`unknown plugin runtime "${runtime}"`);
+    }
+
+    return row.value;
+  }
+
+  // Accepts what an operator actually has to hand: the repository, a release,
+  // or the asset itself. A repository is worth resolving rather than refusing,
+  // because "the newest Linux zip of the latest release" is the same choice the
+  // registry build makes, and getting it wrong by hand is a silent failure to
+  // load rather than an error.
+  private async resolveCustomSource(url: string): Promise<{
+    download: string;
+    slug?: string;
+    name?: string;
+    author?: string;
+    version?: string;
+    homepage?: string;
+    publishedAt?: string;
+  }> {
+    let parsed: URL;
+
+    try {
+      parsed = new URL(url.trim());
+    } catch {
+      throw new BadRequestException(`"${url}" is not a URL`);
+    }
+
+    // http:// would put the archive, and the digest that vouches for it, on the
+    // wire in the clear.
+    if (parsed.protocol !== "https:") {
+      throw new BadRequestException("the URL has to be https");
+    }
+
+    const repo =
+      parsed.hostname === "github.com"
+        ? parsed.pathname.match(/^\/([^/]+)\/([^/]+?)(?:\.git)?(?:\/|$)/)
+        : null;
+
+    // A direct link to an asset, on GitHub or anywhere else.
+    if (!repo || /\.(zip|tar\.gz|tgz)$/i.test(parsed.pathname)) {
+      const file = parsed.pathname.split("/").pop() ?? "";
+      const stem = file.replace(/\.(zip|tar\.gz|tgz)$/i, "");
+
+      // A GitHub download URL carries the release tag, which is what the
+      // release is actually called; the filename only sometimes agrees.
+      const tag = parsed.pathname.match(/\/releases\/download\/([^/]+)\//)?.[1];
+
+      return {
+        download: parsed.toString(),
+        slug: GamePluginsService.slugFrom(stem),
+        name: stem || undefined,
+        author: repo ? repo[1] : parsed.hostname,
+        version:
+          tag?.replace(/^v/, "") ??
+          stem.match(/[-_v](\d+\.\d+(?:\.\d+)?)$/i)?.[1],
+        homepage: repo ? `https://github.com/${repo[1]}/${repo[2]}` : undefined,
+      };
+    }
+
+    const [, owner, name] = repo;
+    const tag = parsed.pathname.match(/\/releases\/tag\/([^/]+)/)?.[1];
+
+    const release = await this.githubRelease(`${owner}/${name}`, tag);
+    const asset = GamePluginsService.selectReleaseAsset(release.assets ?? []);
+
+    if (!asset) {
+      throw new BadRequestException(
+        `${owner}/${name} ${release.tag_name} publishes no Linux archive to install`,
+      );
+    }
+
+    return {
+      download: asset.browser_download_url,
+      slug: GamePluginsService.slugFrom(name),
+      name,
+      author: owner,
+      version: release.tag_name?.replace(/^v/, ""),
+      homepage: `https://github.com/${owner}/${name}`,
+      publishedAt: release.published_at,
+    };
+  }
+
+  private async githubRelease(
+    repo: string,
+    tag?: string,
+  ): Promise<{
+    tag_name?: string;
+    published_at?: string;
+    assets?: Array<{ name: string; browser_download_url: string }>;
+  }> {
+    const response = await fetch(
+      `https://api.github.com/repos/${repo}/releases/${tag ? `tags/${encodeURIComponent(tag)}` : "latest"}`,
+      {
+        headers: {
+          Accept: "application/vnd.github+json",
+          "User-Agent": "5stack-panel",
+          ...(process.env.GITHUB_TOKEN
+            ? { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }
+            : {}),
+        },
+        signal: AbortSignal.timeout(30_000),
+      },
+    );
+
+    if (!response.ok) {
+      throw new BadRequestException(
+        response.status === 404
+          ? `${repo} has no ${tag ? `release tagged ${tag}` : "published release"}`
+          : `GitHub returned ${response.status} for ${repo}`,
+      );
+    }
+
+    return await response.json();
+  }
+
+  // 5Stack game servers are Linux containers, and an asset built for another
+  // platform unpacks perfectly well and then never loads. Same rule the registry
+  // build applies, so a hand-added plugin behaves like a catalogued one.
+  public static selectReleaseAsset(
+    assets: Array<{ name: string; browser_download_url: string }>,
+  ): { name: string; browser_download_url: string } | null {
+    const archives = assets.filter((asset) => /\.zip$/i.test(asset.name));
+    const portable = archives.filter(
+      (asset) =>
+        !/(^|[-_.])(win|win32|win64|windows|osx|macos|darwin)([-_.]|$)/i.test(
+          asset.name,
+        ),
+    );
+
+    return (
+      portable.find((asset) =>
+        /(^|[-_.])(linux|linuxsteamrt64)([-_.]|$)/i.test(asset.name),
+      ) ??
+      portable[0] ??
+      null
+    );
+  }
+
+  // A slug identifies the plugin, not the release, so the version has to come
+  // off first -- otherwise every release installs as a different plugin.
+  public static slugFrom(value: string): string | undefined {
+    const slug = value
+      .replace(/\.(zip|tar\.gz|tgz)$/i, "")
+      .replace(/[-_.]?v?\d+(?:\.\d+)*$/i, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    return GamePluginsService.SLUG.test(slug) ? slug : undefined;
+  }
+
+  // Hashed here, once, rather than trusted on each node: the digest is what
+  // every node checks its download against, so it has to be established by
+  // something that saw the bytes.
+  private async digestOf(
+    url: string,
+  ): Promise<{ sha256: string; size: number }> {
+    const response = await fetch(url, {
+      headers: { "User-Agent": "5stack-panel" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(10 * 60 * 1000),
+    });
+
+    if (!response.ok || !response.body) {
+      throw new BadRequestException(
+        `could not download ${url} (${response.status})`,
+      );
+    }
+
+    const hash = createHash("sha256");
+    let size = 0;
+
+    for await (const chunk of response.body as unknown as AsyncIterable<Uint8Array>) {
+      size += chunk.length;
+
+      if (size > GamePluginsService.MAX_ARCHIVE_BYTES) {
+        throw new BadRequestException(
+          `${url} is larger than ${Math.round(GamePluginsService.MAX_ARCHIVE_BYTES / 1024 / 1024)}MB; that is not a plugin`,
+        );
+      }
+
+      hash.update(chunk);
+    }
+
+    if (size === 0) {
+      throw new BadRequestException(`${url} returned an empty file`);
+    }
+
+    return { sha256: hash.digest("hex"), size };
   }
 
   // Everything a node should have on disk, already resolved to concrete
