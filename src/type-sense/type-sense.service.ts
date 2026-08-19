@@ -5,12 +5,14 @@ import { ConfigService } from "@nestjs/config";
 import { TypeSenseConfig } from "../configs/types/TypeSenseConfig";
 import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
 import { CollectionFieldSchema } from "typesense/lib/Typesense/Collection";
-import { TypesenseQueues } from "./enums/TypesenseQueues";
+import {
+  NADE_LINEUP_REINDEX_JOB,
+  TypesenseQueues,
+} from "./enums/TypesenseQueues";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { PostgresService } from "../postgres/postgres.service";
 import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
-import { RefreshAllNadeLineupsJob } from "./jobs/RefreshAllNadeLineups";
 
 // One publicly visible lineup, as the global search bar needs it. Only ever
 // produced by searchableNadeLineups, which is the one place the visibility
@@ -307,10 +309,10 @@ export class TypeSenseService {
     } as never);
 
     await this.nadeReindexQueue.add(
-      RefreshAllNadeLineupsJob.name,
+      NADE_LINEUP_REINDEX_JOB,
       {},
       {
-        jobId: RefreshAllNadeLineupsJob.name,
+        jobId: NADE_LINEUP_REINDEX_JOB,
         removeOnComplete: true,
         removeOnFail: true,
       },
