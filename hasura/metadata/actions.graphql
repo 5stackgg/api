@@ -2231,6 +2231,8 @@ type UtilityPracticeServer {
   id: uuid!
   label: String!
   region: String!
+  in_use: Boolean!
+  held_by: String
 }
 
 type Query {

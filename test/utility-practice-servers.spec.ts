@@ -186,6 +186,112 @@ describe("utility practice servers (SQL-driven)", () => {
     });
   });
 
+  describe("claims and releases", () => {
+    it("frees a server whose session is over", async () => {
+      const id = await practiceServer();
+      const host = await fx.player();
+      const matchId = await someMatch(host);
+      await claim(id, matchId);
+      await session(host, matchId, "Ended");
+
+      expect(await makeService().releaseOrphanedServers()).toBe(1);
+      expect(await heldBy(id)).toBeNull();
+    });
+
+    it("frees a server whose session never linked a match", async () => {
+      const id = await practiceServer();
+      const matchId = await someMatch(await fx.player());
+      await claim(id, matchId);
+
+      expect(await makeService().releaseOrphanedServers()).toBe(1);
+      expect(await heldBy(id)).toBeNull();
+    });
+
+    it("leaves a server held by a live session alone", async () => {
+      const id = await practiceServer();
+      const host = await fx.player();
+      const matchId = await someMatch(host);
+      await claim(id, matchId);
+      await session(host, matchId, "Ready");
+
+      expect(await makeService().releaseOrphanedServers()).toBe(0);
+      expect(await heldBy(id)).toBe(matchId);
+    });
+
+    it("never touches a reserved server that is not a practice server", async () => {
+      const [ranked] = await postgres.query<Array<{ id: string }>>(
+        "SELECT id::text AS id FROM servers WHERE type = 'Ranked' LIMIT 1",
+      );
+      const matchId = await someMatch(await fx.player());
+      await claim(ranked.id, matchId);
+
+      expect(await makeService().releaseOrphanedServers()).toBe(0);
+      expect(await heldBy(ranked.id)).toBe(matchId);
+    });
+  });
+
+  describe("who holds what", () => {
+    it("lists a busy server, named by its holder", async () => {
+      const id = await practiceServer();
+      const host = await fx.player("Holder");
+      const matchId = await someMatch(host);
+      await claim(id, matchId);
+      await session(host, matchId, "Ready");
+
+      const [row] = await makeService().practiceServers({
+        steam_id: host,
+        role: "user",
+      } as never);
+
+      expect(row.id).toBe(id);
+      expect(row.in_use).toBe(true);
+      expect(row.held_by).toBe("Holder");
+    });
+
+    it("reports a free server as free, with no holder", async () => {
+      const id = await practiceServer();
+
+      const [row] = await makeService().practiceServers({
+        steam_id: await fx.player(),
+        role: "user",
+      } as never);
+
+      expect(row.id).toBe(id);
+      expect(row.in_use).toBe(false);
+      expect(row.held_by).toBeNull();
+    });
+  });
+
+  async function claim(serverId: string, matchId: string): Promise<void> {
+    await postgres.query(
+      "UPDATE servers SET reserved_by_match_id = $2::uuid WHERE id = $1::uuid",
+      [serverId, matchId],
+    );
+  }
+
+  async function heldBy(serverId: string): Promise<string | null> {
+    const [row] = await postgres.query<
+      Array<{ reserved_by_match_id: string | null }>
+    >(
+      "SELECT reserved_by_match_id::text FROM servers WHERE id = $1::uuid",
+      [serverId],
+    );
+    return row.reserved_by_match_id;
+  }
+
+  async function session(
+    hostSteamId: string,
+    matchId: string,
+    status: string,
+  ): Promise<void> {
+    await postgres.query(
+      `INSERT INTO utility_practice_sessions
+         (host_steam_id, map_name, region, status, match_id)
+       VALUES ($1, 'de_mirage', 'TestA', $3, $2::uuid)`,
+      [hostSteamId, matchId, status],
+    );
+  }
+
   async function availableInRegion(region: string): Promise<number> {
     const [row] = await postgres.query<Array<{ count: string }>>(
       `SELECT available_region_server_count(sr.*) AS count
