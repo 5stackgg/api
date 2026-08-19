@@ -36,6 +36,13 @@ type ActiveQuery {
   wait_event_type: String
 }
 
+type AddCustomGamePluginOutput {
+  name: String!
+  runtime: String!
+  slug: String!
+  version: String!
+}
+
 type ApiKeyResponse {
   key: String!
 }
@@ -479,11 +486,24 @@ type PendingMatchImportActionOutput {
   success: Boolean!
 }
 
+type PluginReadmeOutput {
+  content: String
+  format: String
+  repo: String
+  url: String
+}
+
 type PodStats {
   cpu: CpuStat
   memory: MemoryStat
   name: String!
   node: String!
+}
+
+type PreviewGameModeOutput {
+  cfg: String
+  enabledPlugins: String!
+  extraGameParams: String
 }
 
 type PreviewTournamentMatchResetOutput {
@@ -529,6 +549,10 @@ type RecomputeEloStatusOutput {
   running: Boolean!
   started_at: String
   total: Int!
+}
+
+type ReconcileNodePluginsOutput {
+  detected: Int!
 }
 
 type ReindexStartedOutput {
@@ -736,6 +760,11 @@ type SuccessOutput {
   success: Boolean!
 }
 
+type SyncPluginRegistryOutput {
+  plugins: Int!
+  versions: Int!
+}
+
 type TableIOStat {
   cache_hit_ratio: Float
   heap_blks_hit: Int!
@@ -808,6 +837,9 @@ type TelemetryFleetTotals {
   dedicatedServers: Int!
   eventTeams: Int!
   events: Int!
+  gameModes: Int!
+  gameModesEnabled: Int!
+  gameModesUnranked: Int!
   gameServerNodes: Int!
   gameServerNodesEnabled: Int!
   gameServerNodesOnline: Int!
@@ -839,6 +871,10 @@ type TelemetryFleetTotals {
   playersKnown: Int!
   playersPlayed: Int!
   playersRegistered: Int!
+  pluginsBySlug: jsonb
+  pluginsManual: Int!
+  pluginsReported: Int!
+  pluginsRequested: Int!
   publicServers: Int!
   regions: Int!
   scrimRequests: Int!
@@ -3903,6 +3939,7 @@ type custom_pages {
   manifest_url: String
   nav_group: String
   nav_order: Int!
+  plugin_slug: String
   profile_tab_label: String
   remote_entry_url: String!
   remote_scope: String!
@@ -3964,6 +4001,7 @@ input custom_pages_bool_exp {
   manifest_url: String_comparison_exp
   nav_group: String_comparison_exp
   nav_order: Int_comparison_exp
+  plugin_slug: String_comparison_exp
   profile_tab_label: String_comparison_exp
   remote_entry_url: String_comparison_exp
   remote_scope: String_comparison_exp
@@ -3981,6 +4019,11 @@ enum custom_pages_constraint {
   unique or primary key constraint on columns "id"
   """
   custom_pages_pkey
+
+  """
+  unique or primary key constraint on columns "plugin_slug"
+  """
+  custom_pages_plugin_slug_idx
 
   """
   unique or primary key constraint on columns "is_default"
@@ -4035,6 +4078,7 @@ input custom_pages_insert_input {
   manifest_url: String
   nav_group: String
   nav_order: Int
+  plugin_slug: String
   profile_tab_label: String
   remote_entry_url: String
   remote_scope: String
@@ -4053,6 +4097,7 @@ type custom_pages_max_fields {
   manifest_url: String
   nav_group: String
   nav_order: Int
+  plugin_slug: String
   profile_tab_label: String
   remote_entry_url: String
   remote_scope: String
@@ -4070,6 +4115,7 @@ type custom_pages_min_fields {
   manifest_url: String
   nav_group: String
   nav_order: Int
+  plugin_slug: String
   profile_tab_label: String
   remote_entry_url: String
   remote_scope: String
@@ -4110,6 +4156,7 @@ input custom_pages_order_by {
   manifest_url: order_by
   nav_group: order_by
   nav_order: order_by
+  plugin_slug: order_by
   profile_tab_label: order_by
   remote_entry_url: order_by
   remote_scope: order_by
@@ -4164,6 +4211,9 @@ enum custom_pages_select_column {
   nav_order
 
   """column name"""
+  plugin_slug
+
+  """column name"""
   profile_tab_label
 
   """column name"""
@@ -4199,6 +4249,7 @@ input custom_pages_set_input {
   manifest_url: String
   nav_group: String
   nav_order: Int
+  plugin_slug: String
   profile_tab_label: String
   remote_entry_url: String
   remote_scope: String
@@ -4246,6 +4297,7 @@ input custom_pages_stream_cursor_value_input {
   manifest_url: String
   nav_group: String
   nav_order: Int
+  plugin_slug: String
   profile_tab_label: String
   remote_entry_url: String
   remote_scope: String
@@ -4293,6 +4345,9 @@ enum custom_pages_update_column {
 
   """column name"""
   nav_order
+
+  """column name"""
+  plugin_slug
 
   """column name"""
   profile_tab_label
@@ -9256,6 +9311,535 @@ input e_game_cfg_types_updates {
 
   """filter the rows which have to be updated"""
   where: e_game_cfg_types_bool_exp!
+}
+
+"""
+columns and relationships of "e_game_plugin_channels"
+"""
+type e_game_plugin_channels {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_game_plugin_channels"
+"""
+type e_game_plugin_channels_aggregate {
+  aggregate: e_game_plugin_channels_aggregate_fields
+  nodes: [e_game_plugin_channels!]!
+}
+
+"""
+aggregate fields of "e_game_plugin_channels"
+"""
+type e_game_plugin_channels_aggregate_fields {
+  count(columns: [e_game_plugin_channels_select_column!], distinct: Boolean): Int!
+  max: e_game_plugin_channels_max_fields
+  min: e_game_plugin_channels_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_game_plugin_channels". All fields are combined with a logical 'AND'.
+"""
+input e_game_plugin_channels_bool_exp {
+  _and: [e_game_plugin_channels_bool_exp!]
+  _not: e_game_plugin_channels_bool_exp
+  _or: [e_game_plugin_channels_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_game_plugin_channels"
+"""
+enum e_game_plugin_channels_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_game_plugin_channels_pkey
+}
+
+enum e_game_plugin_channels_enum {
+  """Install new upstream releases automatically"""
+  Auto
+
+  """
+  Stay on the installed version; a newer release only raises a notification
+  """
+  Pinned
+}
+
+"""
+Boolean expression to compare columns of type "e_game_plugin_channels_enum". All fields are combined with logical 'AND'.
+"""
+input e_game_plugin_channels_enum_comparison_exp {
+  _eq: e_game_plugin_channels_enum
+  _in: [e_game_plugin_channels_enum!]
+  _is_null: Boolean
+  _neq: e_game_plugin_channels_enum
+  _nin: [e_game_plugin_channels_enum!]
+}
+
+"""
+input type for inserting data into table "e_game_plugin_channels"
+"""
+input e_game_plugin_channels_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_game_plugin_channels_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_game_plugin_channels_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_game_plugin_channels"
+"""
+type e_game_plugin_channels_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_game_plugin_channels!]!
+}
+
+"""
+on_conflict condition type for table "e_game_plugin_channels"
+"""
+input e_game_plugin_channels_on_conflict {
+  constraint: e_game_plugin_channels_constraint!
+  update_columns: [e_game_plugin_channels_update_column!]! = []
+  where: e_game_plugin_channels_bool_exp
+}
+
+"""Ordering options when selecting data from "e_game_plugin_channels"."""
+input e_game_plugin_channels_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_game_plugin_channels"""
+input e_game_plugin_channels_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_game_plugin_channels"
+"""
+enum e_game_plugin_channels_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_game_plugin_channels"
+"""
+input e_game_plugin_channels_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_game_plugin_channels"
+"""
+input e_game_plugin_channels_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_game_plugin_channels_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_game_plugin_channels_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_game_plugin_channels"
+"""
+enum e_game_plugin_channels_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_game_plugin_channels_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_game_plugin_channels_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_game_plugin_channels_bool_exp!
+}
+
+"""
+columns and relationships of "e_game_plugin_install_statuses"
+"""
+type e_game_plugin_install_statuses {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_game_plugin_install_statuses"
+"""
+type e_game_plugin_install_statuses_aggregate {
+  aggregate: e_game_plugin_install_statuses_aggregate_fields
+  nodes: [e_game_plugin_install_statuses!]!
+}
+
+"""
+aggregate fields of "e_game_plugin_install_statuses"
+"""
+type e_game_plugin_install_statuses_aggregate_fields {
+  count(columns: [e_game_plugin_install_statuses_select_column!], distinct: Boolean): Int!
+  max: e_game_plugin_install_statuses_max_fields
+  min: e_game_plugin_install_statuses_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_game_plugin_install_statuses". All fields are combined with a logical 'AND'.
+"""
+input e_game_plugin_install_statuses_bool_exp {
+  _and: [e_game_plugin_install_statuses_bool_exp!]
+  _not: e_game_plugin_install_statuses_bool_exp
+  _or: [e_game_plugin_install_statuses_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_game_plugin_install_statuses"
+"""
+enum e_game_plugin_install_statuses_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_game_plugin_install_statuses_pkey
+}
+
+enum e_game_plugin_install_statuses_enum {
+  """Install did not complete; see the recorded error"""
+  Failed
+
+  """Present in the node plugin store and ready to be selected by a mode"""
+  Installed
+
+  """Downloading and unpacking into the node plugin store"""
+  Installing
+
+  """Queued for install on the node"""
+  Pending
+
+  """Being deleted from the node plugin store"""
+  Removing
+}
+
+"""
+Boolean expression to compare columns of type "e_game_plugin_install_statuses_enum". All fields are combined with logical 'AND'.
+"""
+input e_game_plugin_install_statuses_enum_comparison_exp {
+  _eq: e_game_plugin_install_statuses_enum
+  _in: [e_game_plugin_install_statuses_enum!]
+  _is_null: Boolean
+  _neq: e_game_plugin_install_statuses_enum
+  _nin: [e_game_plugin_install_statuses_enum!]
+}
+
+"""
+input type for inserting data into table "e_game_plugin_install_statuses"
+"""
+input e_game_plugin_install_statuses_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_game_plugin_install_statuses_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_game_plugin_install_statuses_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_game_plugin_install_statuses"
+"""
+type e_game_plugin_install_statuses_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_game_plugin_install_statuses!]!
+}
+
+"""
+on_conflict condition type for table "e_game_plugin_install_statuses"
+"""
+input e_game_plugin_install_statuses_on_conflict {
+  constraint: e_game_plugin_install_statuses_constraint!
+  update_columns: [e_game_plugin_install_statuses_update_column!]! = []
+  where: e_game_plugin_install_statuses_bool_exp
+}
+
+"""
+Ordering options when selecting data from "e_game_plugin_install_statuses".
+"""
+input e_game_plugin_install_statuses_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_game_plugin_install_statuses"""
+input e_game_plugin_install_statuses_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_game_plugin_install_statuses"
+"""
+enum e_game_plugin_install_statuses_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_game_plugin_install_statuses"
+"""
+input e_game_plugin_install_statuses_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_game_plugin_install_statuses"
+"""
+input e_game_plugin_install_statuses_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_game_plugin_install_statuses_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_game_plugin_install_statuses_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_game_plugin_install_statuses"
+"""
+enum e_game_plugin_install_statuses_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_game_plugin_install_statuses_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_game_plugin_install_statuses_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_game_plugin_install_statuses_bool_exp!
+}
+
+"""
+columns and relationships of "e_game_plugin_kinds"
+"""
+type e_game_plugin_kinds {
+  description: String!
+  value: String!
+}
+
+"""
+aggregated selection of "e_game_plugin_kinds"
+"""
+type e_game_plugin_kinds_aggregate {
+  aggregate: e_game_plugin_kinds_aggregate_fields
+  nodes: [e_game_plugin_kinds!]!
+}
+
+"""
+aggregate fields of "e_game_plugin_kinds"
+"""
+type e_game_plugin_kinds_aggregate_fields {
+  count(columns: [e_game_plugin_kinds_select_column!], distinct: Boolean): Int!
+  max: e_game_plugin_kinds_max_fields
+  min: e_game_plugin_kinds_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_game_plugin_kinds". All fields are combined with a logical 'AND'.
+"""
+input e_game_plugin_kinds_bool_exp {
+  _and: [e_game_plugin_kinds_bool_exp!]
+  _not: e_game_plugin_kinds_bool_exp
+  _or: [e_game_plugin_kinds_bool_exp!]
+  description: String_comparison_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_game_plugin_kinds"
+"""
+enum e_game_plugin_kinds_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_game_plugin_kinds_pkey
+}
+
+enum e_game_plugin_kinds_enum {
+  """A panel plugin and a game plugin installed and wired together"""
+  bundle
+
+  """A CS2 server plugin that loads into the game server"""
+  game
+
+  """A web app that mounts as a page inside the panel"""
+  panel
+}
+
+"""
+Boolean expression to compare columns of type "e_game_plugin_kinds_enum". All fields are combined with logical 'AND'.
+"""
+input e_game_plugin_kinds_enum_comparison_exp {
+  _eq: e_game_plugin_kinds_enum
+  _in: [e_game_plugin_kinds_enum!]
+  _is_null: Boolean
+  _neq: e_game_plugin_kinds_enum
+  _nin: [e_game_plugin_kinds_enum!]
+}
+
+"""
+input type for inserting data into table "e_game_plugin_kinds"
+"""
+input e_game_plugin_kinds_insert_input {
+  description: String
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_game_plugin_kinds_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_game_plugin_kinds_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_game_plugin_kinds"
+"""
+type e_game_plugin_kinds_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_game_plugin_kinds!]!
+}
+
+"""
+on_conflict condition type for table "e_game_plugin_kinds"
+"""
+input e_game_plugin_kinds_on_conflict {
+  constraint: e_game_plugin_kinds_constraint!
+  update_columns: [e_game_plugin_kinds_update_column!]! = []
+  where: e_game_plugin_kinds_bool_exp
+}
+
+"""Ordering options when selecting data from "e_game_plugin_kinds"."""
+input e_game_plugin_kinds_order_by {
+  description: order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_game_plugin_kinds"""
+input e_game_plugin_kinds_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_game_plugin_kinds"
+"""
+enum e_game_plugin_kinds_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_game_plugin_kinds"
+"""
+input e_game_plugin_kinds_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_game_plugin_kinds"
+"""
+input e_game_plugin_kinds_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_game_plugin_kinds_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_game_plugin_kinds_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_game_plugin_kinds"
+"""
+enum e_game_plugin_kinds_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_game_plugin_kinds_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_game_plugin_kinds_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_game_plugin_kinds_bool_exp!
 }
 
 """
@@ -19274,6 +19858,2738 @@ type friends_variance_fields {
 }
 
 """
+columns and relationships of "game_mode_plugins"
+"""
+type game_mode_plugins {
+  config(
+    """JSON select path"""
+    path: String
+  ): jsonb
+
+  """An object relationship"""
+  game_mode: game_modes!
+  game_mode_id: uuid!
+  load_order: Int!
+
+  """An object relationship"""
+  plugin: game_plugins!
+  plugin_slug: String!
+  required: Boolean!
+}
+
+"""
+aggregated selection of "game_mode_plugins"
+"""
+type game_mode_plugins_aggregate {
+  aggregate: game_mode_plugins_aggregate_fields
+  nodes: [game_mode_plugins!]!
+}
+
+input game_mode_plugins_aggregate_bool_exp {
+  bool_and: game_mode_plugins_aggregate_bool_exp_bool_and
+  bool_or: game_mode_plugins_aggregate_bool_exp_bool_or
+  count: game_mode_plugins_aggregate_bool_exp_count
+}
+
+input game_mode_plugins_aggregate_bool_exp_bool_and {
+  arguments: game_mode_plugins_select_column_game_mode_plugins_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: game_mode_plugins_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input game_mode_plugins_aggregate_bool_exp_bool_or {
+  arguments: game_mode_plugins_select_column_game_mode_plugins_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: game_mode_plugins_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input game_mode_plugins_aggregate_bool_exp_count {
+  arguments: [game_mode_plugins_select_column!]
+  distinct: Boolean
+  filter: game_mode_plugins_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "game_mode_plugins"
+"""
+type game_mode_plugins_aggregate_fields {
+  avg: game_mode_plugins_avg_fields
+  count(columns: [game_mode_plugins_select_column!], distinct: Boolean): Int!
+  max: game_mode_plugins_max_fields
+  min: game_mode_plugins_min_fields
+  stddev: game_mode_plugins_stddev_fields
+  stddev_pop: game_mode_plugins_stddev_pop_fields
+  stddev_samp: game_mode_plugins_stddev_samp_fields
+  sum: game_mode_plugins_sum_fields
+  var_pop: game_mode_plugins_var_pop_fields
+  var_samp: game_mode_plugins_var_samp_fields
+  variance: game_mode_plugins_variance_fields
+}
+
+"""
+order by aggregate values of table "game_mode_plugins"
+"""
+input game_mode_plugins_aggregate_order_by {
+  avg: game_mode_plugins_avg_order_by
+  count: order_by
+  max: game_mode_plugins_max_order_by
+  min: game_mode_plugins_min_order_by
+  stddev: game_mode_plugins_stddev_order_by
+  stddev_pop: game_mode_plugins_stddev_pop_order_by
+  stddev_samp: game_mode_plugins_stddev_samp_order_by
+  sum: game_mode_plugins_sum_order_by
+  var_pop: game_mode_plugins_var_pop_order_by
+  var_samp: game_mode_plugins_var_samp_order_by
+  variance: game_mode_plugins_variance_order_by
+}
+
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input game_mode_plugins_append_input {
+  config: jsonb
+}
+
+"""
+input type for inserting array relation for remote table "game_mode_plugins"
+"""
+input game_mode_plugins_arr_rel_insert_input {
+  data: [game_mode_plugins_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: game_mode_plugins_on_conflict
+}
+
+"""aggregate avg on columns"""
+type game_mode_plugins_avg_fields {
+  load_order: Float
+}
+
+"""
+order by avg() on columns of table "game_mode_plugins"
+"""
+input game_mode_plugins_avg_order_by {
+  load_order: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "game_mode_plugins". All fields are combined with a logical 'AND'.
+"""
+input game_mode_plugins_bool_exp {
+  _and: [game_mode_plugins_bool_exp!]
+  _not: game_mode_plugins_bool_exp
+  _or: [game_mode_plugins_bool_exp!]
+  config: jsonb_comparison_exp
+  game_mode: game_modes_bool_exp
+  game_mode_id: uuid_comparison_exp
+  load_order: Int_comparison_exp
+  plugin: game_plugins_bool_exp
+  plugin_slug: String_comparison_exp
+  required: Boolean_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "game_mode_plugins"
+"""
+enum game_mode_plugins_constraint {
+  """
+  unique or primary key constraint on columns "game_mode_id", "plugin_slug"
+  """
+  game_mode_plugins_pkey
+}
+
+"""
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input game_mode_plugins_delete_at_path_input {
+  config: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input game_mode_plugins_delete_elem_input {
+  config: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input game_mode_plugins_delete_key_input {
+  config: String
+}
+
+"""
+input type for incrementing numeric columns in table "game_mode_plugins"
+"""
+input game_mode_plugins_inc_input {
+  load_order: Int
+}
+
+"""
+input type for inserting data into table "game_mode_plugins"
+"""
+input game_mode_plugins_insert_input {
+  config: jsonb
+  game_mode: game_modes_obj_rel_insert_input
+  game_mode_id: uuid
+  load_order: Int
+  plugin: game_plugins_obj_rel_insert_input
+  plugin_slug: String
+  required: Boolean
+}
+
+"""aggregate max on columns"""
+type game_mode_plugins_max_fields {
+  game_mode_id: uuid
+  load_order: Int
+  plugin_slug: String
+}
+
+"""
+order by max() on columns of table "game_mode_plugins"
+"""
+input game_mode_plugins_max_order_by {
+  game_mode_id: order_by
+  load_order: order_by
+  plugin_slug: order_by
+}
+
+"""aggregate min on columns"""
+type game_mode_plugins_min_fields {
+  game_mode_id: uuid
+  load_order: Int
+  plugin_slug: String
+}
+
+"""
+order by min() on columns of table "game_mode_plugins"
+"""
+input game_mode_plugins_min_order_by {
+  game_mode_id: order_by
+  load_order: order_by
+  plugin_slug: order_by
+}
+
+"""
+response of any mutation on the table "game_mode_plugins"
+"""
+type game_mode_plugins_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [game_mode_plugins!]!
+}
+
+"""
+on_conflict condition type for table "game_mode_plugins"
+"""
+input game_mode_plugins_on_conflict {
+  constraint: game_mode_plugins_constraint!
+  update_columns: [game_mode_plugins_update_column!]! = []
+  where: game_mode_plugins_bool_exp
+}
+
+"""Ordering options when selecting data from "game_mode_plugins"."""
+input game_mode_plugins_order_by {
+  config: order_by
+  game_mode: game_modes_order_by
+  game_mode_id: order_by
+  load_order: order_by
+  plugin: game_plugins_order_by
+  plugin_slug: order_by
+  required: order_by
+}
+
+"""primary key columns input for table: game_mode_plugins"""
+input game_mode_plugins_pk_columns_input {
+  game_mode_id: uuid!
+  plugin_slug: String!
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input game_mode_plugins_prepend_input {
+  config: jsonb
+}
+
+"""
+select columns of table "game_mode_plugins"
+"""
+enum game_mode_plugins_select_column {
+  """column name"""
+  config
+
+  """column name"""
+  game_mode_id
+
+  """column name"""
+  load_order
+
+  """column name"""
+  plugin_slug
+
+  """column name"""
+  required
+}
+
+"""
+select "game_mode_plugins_aggregate_bool_exp_bool_and_arguments_columns" columns of table "game_mode_plugins"
+"""
+enum game_mode_plugins_select_column_game_mode_plugins_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  required
+}
+
+"""
+select "game_mode_plugins_aggregate_bool_exp_bool_or_arguments_columns" columns of table "game_mode_plugins"
+"""
+enum game_mode_plugins_select_column_game_mode_plugins_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  required
+}
+
+"""
+input type for updating data in table "game_mode_plugins"
+"""
+input game_mode_plugins_set_input {
+  config: jsonb
+  game_mode_id: uuid
+  load_order: Int
+  plugin_slug: String
+  required: Boolean
+}
+
+"""aggregate stddev on columns"""
+type game_mode_plugins_stddev_fields {
+  load_order: Float
+}
+
+"""
+order by stddev() on columns of table "game_mode_plugins"
+"""
+input game_mode_plugins_stddev_order_by {
+  load_order: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type game_mode_plugins_stddev_pop_fields {
+  load_order: Float
+}
+
+"""
+order by stddev_pop() on columns of table "game_mode_plugins"
+"""
+input game_mode_plugins_stddev_pop_order_by {
+  load_order: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type game_mode_plugins_stddev_samp_fields {
+  load_order: Float
+}
+
+"""
+order by stddev_samp() on columns of table "game_mode_plugins"
+"""
+input game_mode_plugins_stddev_samp_order_by {
+  load_order: order_by
+}
+
+"""
+Streaming cursor of the table "game_mode_plugins"
+"""
+input game_mode_plugins_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: game_mode_plugins_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input game_mode_plugins_stream_cursor_value_input {
+  config: jsonb
+  game_mode_id: uuid
+  load_order: Int
+  plugin_slug: String
+  required: Boolean
+}
+
+"""aggregate sum on columns"""
+type game_mode_plugins_sum_fields {
+  load_order: Int
+}
+
+"""
+order by sum() on columns of table "game_mode_plugins"
+"""
+input game_mode_plugins_sum_order_by {
+  load_order: order_by
+}
+
+"""
+update columns of table "game_mode_plugins"
+"""
+enum game_mode_plugins_update_column {
+  """column name"""
+  config
+
+  """column name"""
+  game_mode_id
+
+  """column name"""
+  load_order
+
+  """column name"""
+  plugin_slug
+
+  """column name"""
+  required
+}
+
+input game_mode_plugins_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: game_mode_plugins_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: game_mode_plugins_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: game_mode_plugins_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: game_mode_plugins_delete_key_input
+
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: game_mode_plugins_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: game_mode_plugins_prepend_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: game_mode_plugins_set_input
+
+  """filter the rows which have to be updated"""
+  where: game_mode_plugins_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type game_mode_plugins_var_pop_fields {
+  load_order: Float
+}
+
+"""
+order by var_pop() on columns of table "game_mode_plugins"
+"""
+input game_mode_plugins_var_pop_order_by {
+  load_order: order_by
+}
+
+"""aggregate var_samp on columns"""
+type game_mode_plugins_var_samp_fields {
+  load_order: Float
+}
+
+"""
+order by var_samp() on columns of table "game_mode_plugins"
+"""
+input game_mode_plugins_var_samp_order_by {
+  load_order: order_by
+}
+
+"""aggregate variance on columns"""
+type game_mode_plugins_variance_fields {
+  load_order: Float
+}
+
+"""
+order by variance() on columns of table "game_mode_plugins"
+"""
+input game_mode_plugins_variance_order_by {
+  load_order: order_by
+}
+
+"""
+columns and relationships of "game_modes"
+"""
+type game_modes {
+  archived_at: timestamptz
+  cfg: String
+  competitive_safe: Boolean!
+  created_at: timestamptz!
+  description: String
+  enabled: Boolean!
+  extra_game_params: String
+  icon: String
+  id: uuid!
+
+  """An array relationship"""
+  match_options(
+    """distinct select on columns"""
+    distinct_on: [match_options_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_options_order_by!]
+
+    """filter the rows returned"""
+    where: match_options_bool_exp
+  ): [match_options!]!
+
+  """An aggregate relationship"""
+  match_options_aggregate(
+    """distinct select on columns"""
+    distinct_on: [match_options_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [match_options_order_by!]
+
+    """filter the rows returned"""
+    where: match_options_bool_exp
+  ): match_options_aggregate!
+  name: String!
+
+  """An array relationship"""
+  plugins(
+    """distinct select on columns"""
+    distinct_on: [game_mode_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_mode_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_mode_plugins_bool_exp
+  ): [game_mode_plugins!]!
+
+  """An aggregate relationship"""
+  plugins_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_mode_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_mode_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_mode_plugins_bool_exp
+  ): game_mode_plugins_aggregate!
+
+  """Plugins in this mode with no build for the deployment's runtime"""
+  runtime_conflicts(
+    """JSON select path"""
+    path: String
+  ): jsonb
+  slug: String!
+
+  """
+  Frameworks every plugin in this mode publishes for; empty means the selection cannot run
+  """
+  supported_runtimes(
+    """JSON select path"""
+    path: String
+  ): jsonb
+  updated_at: timestamptz!
+}
+
+"""
+aggregated selection of "game_modes"
+"""
+type game_modes_aggregate {
+  aggregate: game_modes_aggregate_fields
+  nodes: [game_modes!]!
+}
+
+"""
+aggregate fields of "game_modes"
+"""
+type game_modes_aggregate_fields {
+  count(columns: [game_modes_select_column!], distinct: Boolean): Int!
+  max: game_modes_max_fields
+  min: game_modes_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "game_modes". All fields are combined with a logical 'AND'.
+"""
+input game_modes_bool_exp {
+  _and: [game_modes_bool_exp!]
+  _not: game_modes_bool_exp
+  _or: [game_modes_bool_exp!]
+  archived_at: timestamptz_comparison_exp
+  cfg: String_comparison_exp
+  competitive_safe: Boolean_comparison_exp
+  created_at: timestamptz_comparison_exp
+  description: String_comparison_exp
+  enabled: Boolean_comparison_exp
+  extra_game_params: String_comparison_exp
+  icon: String_comparison_exp
+  id: uuid_comparison_exp
+  match_options: match_options_bool_exp
+  match_options_aggregate: match_options_aggregate_bool_exp
+  name: String_comparison_exp
+  plugins: game_mode_plugins_bool_exp
+  plugins_aggregate: game_mode_plugins_aggregate_bool_exp
+  runtime_conflicts: jsonb_comparison_exp
+  slug: String_comparison_exp
+  supported_runtimes: jsonb_comparison_exp
+  updated_at: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "game_modes"
+"""
+enum game_modes_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  game_modes_pkey
+
+  """
+  unique or primary key constraint on columns "slug"
+  """
+  game_modes_slug_key
+}
+
+"""
+input type for inserting data into table "game_modes"
+"""
+input game_modes_insert_input {
+  archived_at: timestamptz
+  cfg: String
+  competitive_safe: Boolean
+  created_at: timestamptz
+  description: String
+  enabled: Boolean
+  extra_game_params: String
+  icon: String
+  id: uuid
+  match_options: match_options_arr_rel_insert_input
+  name: String
+  plugins: game_mode_plugins_arr_rel_insert_input
+  slug: String
+  updated_at: timestamptz
+}
+
+"""aggregate max on columns"""
+type game_modes_max_fields {
+  archived_at: timestamptz
+  cfg: String
+  created_at: timestamptz
+  description: String
+  extra_game_params: String
+  icon: String
+  id: uuid
+  name: String
+  slug: String
+  updated_at: timestamptz
+}
+
+"""aggregate min on columns"""
+type game_modes_min_fields {
+  archived_at: timestamptz
+  cfg: String
+  created_at: timestamptz
+  description: String
+  extra_game_params: String
+  icon: String
+  id: uuid
+  name: String
+  slug: String
+  updated_at: timestamptz
+}
+
+"""
+response of any mutation on the table "game_modes"
+"""
+type game_modes_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [game_modes!]!
+}
+
+"""
+input type for inserting object relation for remote table "game_modes"
+"""
+input game_modes_obj_rel_insert_input {
+  data: game_modes_insert_input!
+
+  """upsert condition"""
+  on_conflict: game_modes_on_conflict
+}
+
+"""
+on_conflict condition type for table "game_modes"
+"""
+input game_modes_on_conflict {
+  constraint: game_modes_constraint!
+  update_columns: [game_modes_update_column!]! = []
+  where: game_modes_bool_exp
+}
+
+"""Ordering options when selecting data from "game_modes"."""
+input game_modes_order_by {
+  archived_at: order_by
+  cfg: order_by
+  competitive_safe: order_by
+  created_at: order_by
+  description: order_by
+  enabled: order_by
+  extra_game_params: order_by
+  icon: order_by
+  id: order_by
+  match_options_aggregate: match_options_aggregate_order_by
+  name: order_by
+  plugins_aggregate: game_mode_plugins_aggregate_order_by
+  runtime_conflicts: order_by
+  slug: order_by
+  supported_runtimes: order_by
+  updated_at: order_by
+}
+
+"""primary key columns input for table: game_modes"""
+input game_modes_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "game_modes"
+"""
+enum game_modes_select_column {
+  """column name"""
+  archived_at
+
+  """column name"""
+  cfg
+
+  """column name"""
+  competitive_safe
+
+  """column name"""
+  created_at
+
+  """column name"""
+  description
+
+  """column name"""
+  enabled
+
+  """column name"""
+  extra_game_params
+
+  """column name"""
+  icon
+
+  """column name"""
+  id
+
+  """column name"""
+  name
+
+  """column name"""
+  slug
+
+  """column name"""
+  updated_at
+}
+
+"""
+input type for updating data in table "game_modes"
+"""
+input game_modes_set_input {
+  archived_at: timestamptz
+  cfg: String
+  competitive_safe: Boolean
+  created_at: timestamptz
+  description: String
+  enabled: Boolean
+  extra_game_params: String
+  icon: String
+  id: uuid
+  name: String
+  slug: String
+  updated_at: timestamptz
+}
+
+"""
+Streaming cursor of the table "game_modes"
+"""
+input game_modes_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: game_modes_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input game_modes_stream_cursor_value_input {
+  archived_at: timestamptz
+  cfg: String
+  competitive_safe: Boolean
+  created_at: timestamptz
+  description: String
+  enabled: Boolean
+  extra_game_params: String
+  icon: String
+  id: uuid
+  name: String
+  slug: String
+  updated_at: timestamptz
+}
+
+"""
+update columns of table "game_modes"
+"""
+enum game_modes_update_column {
+  """column name"""
+  archived_at
+
+  """column name"""
+  cfg
+
+  """column name"""
+  competitive_safe
+
+  """column name"""
+  created_at
+
+  """column name"""
+  description
+
+  """column name"""
+  enabled
+
+  """column name"""
+  extra_game_params
+
+  """column name"""
+  icon
+
+  """column name"""
+  id
+
+  """column name"""
+  name
+
+  """column name"""
+  slug
+
+  """column name"""
+  updated_at
+}
+
+input game_modes_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: game_modes_set_input
+
+  """filter the rows which have to be updated"""
+  where: game_modes_bool_exp!
+}
+
+"""
+columns and relationships of "game_plugin_installs"
+"""
+type game_plugin_installs {
+  always_load: Boolean!
+  channel: e_game_plugin_channels_enum!
+  created_at: timestamptz!
+  disable_server_guidelines: Boolean!
+  enabled: Boolean!
+
+  """An object relationship"""
+  plugin: game_plugins!
+  plugin_slug: String!
+  updated_at: timestamptz!
+  version: String
+}
+
+"""
+aggregated selection of "game_plugin_installs"
+"""
+type game_plugin_installs_aggregate {
+  aggregate: game_plugin_installs_aggregate_fields
+  nodes: [game_plugin_installs!]!
+}
+
+"""
+aggregate fields of "game_plugin_installs"
+"""
+type game_plugin_installs_aggregate_fields {
+  count(columns: [game_plugin_installs_select_column!], distinct: Boolean): Int!
+  max: game_plugin_installs_max_fields
+  min: game_plugin_installs_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "game_plugin_installs". All fields are combined with a logical 'AND'.
+"""
+input game_plugin_installs_bool_exp {
+  _and: [game_plugin_installs_bool_exp!]
+  _not: game_plugin_installs_bool_exp
+  _or: [game_plugin_installs_bool_exp!]
+  always_load: Boolean_comparison_exp
+  channel: e_game_plugin_channels_enum_comparison_exp
+  created_at: timestamptz_comparison_exp
+  disable_server_guidelines: Boolean_comparison_exp
+  enabled: Boolean_comparison_exp
+  plugin: game_plugins_bool_exp
+  plugin_slug: String_comparison_exp
+  updated_at: timestamptz_comparison_exp
+  version: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "game_plugin_installs"
+"""
+enum game_plugin_installs_constraint {
+  """
+  unique or primary key constraint on columns "plugin_slug"
+  """
+  game_plugin_installs_pkey
+}
+
+"""
+input type for inserting data into table "game_plugin_installs"
+"""
+input game_plugin_installs_insert_input {
+  always_load: Boolean
+  channel: e_game_plugin_channels_enum
+  created_at: timestamptz
+  disable_server_guidelines: Boolean
+  enabled: Boolean
+  plugin: game_plugins_obj_rel_insert_input
+  plugin_slug: String
+  updated_at: timestamptz
+  version: String
+}
+
+"""aggregate max on columns"""
+type game_plugin_installs_max_fields {
+  created_at: timestamptz
+  plugin_slug: String
+  updated_at: timestamptz
+  version: String
+}
+
+"""aggregate min on columns"""
+type game_plugin_installs_min_fields {
+  created_at: timestamptz
+  plugin_slug: String
+  updated_at: timestamptz
+  version: String
+}
+
+"""
+response of any mutation on the table "game_plugin_installs"
+"""
+type game_plugin_installs_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [game_plugin_installs!]!
+}
+
+"""
+on_conflict condition type for table "game_plugin_installs"
+"""
+input game_plugin_installs_on_conflict {
+  constraint: game_plugin_installs_constraint!
+  update_columns: [game_plugin_installs_update_column!]! = []
+  where: game_plugin_installs_bool_exp
+}
+
+"""Ordering options when selecting data from "game_plugin_installs"."""
+input game_plugin_installs_order_by {
+  always_load: order_by
+  channel: order_by
+  created_at: order_by
+  disable_server_guidelines: order_by
+  enabled: order_by
+  plugin: game_plugins_order_by
+  plugin_slug: order_by
+  updated_at: order_by
+  version: order_by
+}
+
+"""primary key columns input for table: game_plugin_installs"""
+input game_plugin_installs_pk_columns_input {
+  plugin_slug: String!
+}
+
+"""
+select columns of table "game_plugin_installs"
+"""
+enum game_plugin_installs_select_column {
+  """column name"""
+  always_load
+
+  """column name"""
+  channel
+
+  """column name"""
+  created_at
+
+  """column name"""
+  disable_server_guidelines
+
+  """column name"""
+  enabled
+
+  """column name"""
+  plugin_slug
+
+  """column name"""
+  updated_at
+
+  """column name"""
+  version
+}
+
+"""
+input type for updating data in table "game_plugin_installs"
+"""
+input game_plugin_installs_set_input {
+  always_load: Boolean
+  channel: e_game_plugin_channels_enum
+  created_at: timestamptz
+  disable_server_guidelines: Boolean
+  enabled: Boolean
+  plugin_slug: String
+  updated_at: timestamptz
+  version: String
+}
+
+"""
+Streaming cursor of the table "game_plugin_installs"
+"""
+input game_plugin_installs_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: game_plugin_installs_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input game_plugin_installs_stream_cursor_value_input {
+  always_load: Boolean
+  channel: e_game_plugin_channels_enum
+  created_at: timestamptz
+  disable_server_guidelines: Boolean
+  enabled: Boolean
+  plugin_slug: String
+  updated_at: timestamptz
+  version: String
+}
+
+"""
+update columns of table "game_plugin_installs"
+"""
+enum game_plugin_installs_update_column {
+  """column name"""
+  always_load
+
+  """column name"""
+  channel
+
+  """column name"""
+  created_at
+
+  """column name"""
+  disable_server_guidelines
+
+  """column name"""
+  enabled
+
+  """column name"""
+  plugin_slug
+
+  """column name"""
+  updated_at
+
+  """column name"""
+  version
+}
+
+input game_plugin_installs_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: game_plugin_installs_set_input
+
+  """filter the rows which have to be updated"""
+  where: game_plugin_installs_bool_exp!
+}
+
+"""
+columns and relationships of "game_plugin_versions"
+"""
+type game_plugin_versions {
+  install_path: String
+  layout: String!
+
+  """An object relationship"""
+  plugin: game_plugins!
+  plugin_slug: String!
+  prerelease: Boolean!
+  published_at: timestamptz!
+  runtime: e_plugin_runtimes_enum!
+  sha256: String!
+  size: Int
+  url: String!
+  version: String!
+}
+
+"""
+aggregated selection of "game_plugin_versions"
+"""
+type game_plugin_versions_aggregate {
+  aggregate: game_plugin_versions_aggregate_fields
+  nodes: [game_plugin_versions!]!
+}
+
+input game_plugin_versions_aggregate_bool_exp {
+  bool_and: game_plugin_versions_aggregate_bool_exp_bool_and
+  bool_or: game_plugin_versions_aggregate_bool_exp_bool_or
+  count: game_plugin_versions_aggregate_bool_exp_count
+}
+
+input game_plugin_versions_aggregate_bool_exp_bool_and {
+  arguments: game_plugin_versions_select_column_game_plugin_versions_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: game_plugin_versions_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input game_plugin_versions_aggregate_bool_exp_bool_or {
+  arguments: game_plugin_versions_select_column_game_plugin_versions_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: game_plugin_versions_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input game_plugin_versions_aggregate_bool_exp_count {
+  arguments: [game_plugin_versions_select_column!]
+  distinct: Boolean
+  filter: game_plugin_versions_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "game_plugin_versions"
+"""
+type game_plugin_versions_aggregate_fields {
+  avg: game_plugin_versions_avg_fields
+  count(columns: [game_plugin_versions_select_column!], distinct: Boolean): Int!
+  max: game_plugin_versions_max_fields
+  min: game_plugin_versions_min_fields
+  stddev: game_plugin_versions_stddev_fields
+  stddev_pop: game_plugin_versions_stddev_pop_fields
+  stddev_samp: game_plugin_versions_stddev_samp_fields
+  sum: game_plugin_versions_sum_fields
+  var_pop: game_plugin_versions_var_pop_fields
+  var_samp: game_plugin_versions_var_samp_fields
+  variance: game_plugin_versions_variance_fields
+}
+
+"""
+order by aggregate values of table "game_plugin_versions"
+"""
+input game_plugin_versions_aggregate_order_by {
+  avg: game_plugin_versions_avg_order_by
+  count: order_by
+  max: game_plugin_versions_max_order_by
+  min: game_plugin_versions_min_order_by
+  stddev: game_plugin_versions_stddev_order_by
+  stddev_pop: game_plugin_versions_stddev_pop_order_by
+  stddev_samp: game_plugin_versions_stddev_samp_order_by
+  sum: game_plugin_versions_sum_order_by
+  var_pop: game_plugin_versions_var_pop_order_by
+  var_samp: game_plugin_versions_var_samp_order_by
+  variance: game_plugin_versions_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "game_plugin_versions"
+"""
+input game_plugin_versions_arr_rel_insert_input {
+  data: [game_plugin_versions_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: game_plugin_versions_on_conflict
+}
+
+"""aggregate avg on columns"""
+type game_plugin_versions_avg_fields {
+  size: Float
+}
+
+"""
+order by avg() on columns of table "game_plugin_versions"
+"""
+input game_plugin_versions_avg_order_by {
+  size: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "game_plugin_versions". All fields are combined with a logical 'AND'.
+"""
+input game_plugin_versions_bool_exp {
+  _and: [game_plugin_versions_bool_exp!]
+  _not: game_plugin_versions_bool_exp
+  _or: [game_plugin_versions_bool_exp!]
+  install_path: String_comparison_exp
+  layout: String_comparison_exp
+  plugin: game_plugins_bool_exp
+  plugin_slug: String_comparison_exp
+  prerelease: Boolean_comparison_exp
+  published_at: timestamptz_comparison_exp
+  runtime: e_plugin_runtimes_enum_comparison_exp
+  sha256: String_comparison_exp
+  size: Int_comparison_exp
+  url: String_comparison_exp
+  version: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "game_plugin_versions"
+"""
+enum game_plugin_versions_constraint {
+  """
+  unique or primary key constraint on columns "plugin_slug", "version", "runtime"
+  """
+  game_plugin_versions_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "game_plugin_versions"
+"""
+input game_plugin_versions_inc_input {
+  size: Int
+}
+
+"""
+input type for inserting data into table "game_plugin_versions"
+"""
+input game_plugin_versions_insert_input {
+  install_path: String
+  layout: String
+  plugin: game_plugins_obj_rel_insert_input
+  plugin_slug: String
+  prerelease: Boolean
+  published_at: timestamptz
+  runtime: e_plugin_runtimes_enum
+  sha256: String
+  size: Int
+  url: String
+  version: String
+}
+
+"""aggregate max on columns"""
+type game_plugin_versions_max_fields {
+  install_path: String
+  layout: String
+  plugin_slug: String
+  published_at: timestamptz
+  sha256: String
+  size: Int
+  url: String
+  version: String
+}
+
+"""
+order by max() on columns of table "game_plugin_versions"
+"""
+input game_plugin_versions_max_order_by {
+  install_path: order_by
+  layout: order_by
+  plugin_slug: order_by
+  published_at: order_by
+  sha256: order_by
+  size: order_by
+  url: order_by
+  version: order_by
+}
+
+"""aggregate min on columns"""
+type game_plugin_versions_min_fields {
+  install_path: String
+  layout: String
+  plugin_slug: String
+  published_at: timestamptz
+  sha256: String
+  size: Int
+  url: String
+  version: String
+}
+
+"""
+order by min() on columns of table "game_plugin_versions"
+"""
+input game_plugin_versions_min_order_by {
+  install_path: order_by
+  layout: order_by
+  plugin_slug: order_by
+  published_at: order_by
+  sha256: order_by
+  size: order_by
+  url: order_by
+  version: order_by
+}
+
+"""
+response of any mutation on the table "game_plugin_versions"
+"""
+type game_plugin_versions_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [game_plugin_versions!]!
+}
+
+"""
+on_conflict condition type for table "game_plugin_versions"
+"""
+input game_plugin_versions_on_conflict {
+  constraint: game_plugin_versions_constraint!
+  update_columns: [game_plugin_versions_update_column!]! = []
+  where: game_plugin_versions_bool_exp
+}
+
+"""Ordering options when selecting data from "game_plugin_versions"."""
+input game_plugin_versions_order_by {
+  install_path: order_by
+  layout: order_by
+  plugin: game_plugins_order_by
+  plugin_slug: order_by
+  prerelease: order_by
+  published_at: order_by
+  runtime: order_by
+  sha256: order_by
+  size: order_by
+  url: order_by
+  version: order_by
+}
+
+"""primary key columns input for table: game_plugin_versions"""
+input game_plugin_versions_pk_columns_input {
+  plugin_slug: String!
+  runtime: e_plugin_runtimes_enum!
+  version: String!
+}
+
+"""
+select columns of table "game_plugin_versions"
+"""
+enum game_plugin_versions_select_column {
+  """column name"""
+  install_path
+
+  """column name"""
+  layout
+
+  """column name"""
+  plugin_slug
+
+  """column name"""
+  prerelease
+
+  """column name"""
+  published_at
+
+  """column name"""
+  runtime
+
+  """column name"""
+  sha256
+
+  """column name"""
+  size
+
+  """column name"""
+  url
+
+  """column name"""
+  version
+}
+
+"""
+select "game_plugin_versions_aggregate_bool_exp_bool_and_arguments_columns" columns of table "game_plugin_versions"
+"""
+enum game_plugin_versions_select_column_game_plugin_versions_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  prerelease
+}
+
+"""
+select "game_plugin_versions_aggregate_bool_exp_bool_or_arguments_columns" columns of table "game_plugin_versions"
+"""
+enum game_plugin_versions_select_column_game_plugin_versions_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  prerelease
+}
+
+"""
+input type for updating data in table "game_plugin_versions"
+"""
+input game_plugin_versions_set_input {
+  install_path: String
+  layout: String
+  plugin_slug: String
+  prerelease: Boolean
+  published_at: timestamptz
+  runtime: e_plugin_runtimes_enum
+  sha256: String
+  size: Int
+  url: String
+  version: String
+}
+
+"""aggregate stddev on columns"""
+type game_plugin_versions_stddev_fields {
+  size: Float
+}
+
+"""
+order by stddev() on columns of table "game_plugin_versions"
+"""
+input game_plugin_versions_stddev_order_by {
+  size: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type game_plugin_versions_stddev_pop_fields {
+  size: Float
+}
+
+"""
+order by stddev_pop() on columns of table "game_plugin_versions"
+"""
+input game_plugin_versions_stddev_pop_order_by {
+  size: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type game_plugin_versions_stddev_samp_fields {
+  size: Float
+}
+
+"""
+order by stddev_samp() on columns of table "game_plugin_versions"
+"""
+input game_plugin_versions_stddev_samp_order_by {
+  size: order_by
+}
+
+"""
+Streaming cursor of the table "game_plugin_versions"
+"""
+input game_plugin_versions_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: game_plugin_versions_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input game_plugin_versions_stream_cursor_value_input {
+  install_path: String
+  layout: String
+  plugin_slug: String
+  prerelease: Boolean
+  published_at: timestamptz
+  runtime: e_plugin_runtimes_enum
+  sha256: String
+  size: Int
+  url: String
+  version: String
+}
+
+"""aggregate sum on columns"""
+type game_plugin_versions_sum_fields {
+  size: Int
+}
+
+"""
+order by sum() on columns of table "game_plugin_versions"
+"""
+input game_plugin_versions_sum_order_by {
+  size: order_by
+}
+
+"""
+update columns of table "game_plugin_versions"
+"""
+enum game_plugin_versions_update_column {
+  """column name"""
+  install_path
+
+  """column name"""
+  layout
+
+  """column name"""
+  plugin_slug
+
+  """column name"""
+  prerelease
+
+  """column name"""
+  published_at
+
+  """column name"""
+  runtime
+
+  """column name"""
+  sha256
+
+  """column name"""
+  size
+
+  """column name"""
+  url
+
+  """column name"""
+  version
+}
+
+input game_plugin_versions_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: game_plugin_versions_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: game_plugin_versions_set_input
+
+  """filter the rows which have to be updated"""
+  where: game_plugin_versions_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type game_plugin_versions_var_pop_fields {
+  size: Float
+}
+
+"""
+order by var_pop() on columns of table "game_plugin_versions"
+"""
+input game_plugin_versions_var_pop_order_by {
+  size: order_by
+}
+
+"""aggregate var_samp on columns"""
+type game_plugin_versions_var_samp_fields {
+  size: Float
+}
+
+"""
+order by var_samp() on columns of table "game_plugin_versions"
+"""
+input game_plugin_versions_var_samp_order_by {
+  size: order_by
+}
+
+"""aggregate variance on columns"""
+type game_plugin_versions_variance_fields {
+  size: Float
+}
+
+"""
+order by variance() on columns of table "game_plugin_versions"
+"""
+input game_plugin_versions_variance_order_by {
+  size: order_by
+}
+
+"""
+columns and relationships of "game_plugins"
+"""
+type game_plugins {
+  author: String!
+  config_path: String
+  config_schema(
+    """JSON select path"""
+    path: String
+  ): jsonb
+  cvars: [String!]!
+  description: String!
+
+  """An array relationship"""
+  game_modes(
+    """distinct select on columns"""
+    distinct_on: [game_mode_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_mode_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_mode_plugins_bool_exp
+  ): [game_mode_plugins!]!
+
+  """An aggregate relationship"""
+  game_modes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_mode_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_mode_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_mode_plugins_bool_exp
+  ): game_mode_plugins_aggregate!
+  homepage: String
+  hot_swappable: Boolean!
+
+  """Installed | Partial | Pending | Failed | Manual | NotInstalled"""
+  install_state: String
+
+  """
+  A computed field, executes function "game_plugin_installed_node_count"
+  """
+  installed_node_count: Int
+  kind: e_game_plugin_kinds_enum!
+  name: String!
+
+  """An array relationship"""
+  node_installs(
+    """distinct select on columns"""
+    distinct_on: [game_server_node_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_server_node_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_server_node_plugins_bool_exp
+  ): [game_server_node_plugins!]!
+
+  """An aggregate relationship"""
+  node_installs_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_server_node_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_server_node_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_server_node_plugins_bool_exp
+  ): game_server_node_plugins_aggregate!
+  pairs_with: [String!]!
+  panel(
+    """JSON select path"""
+    path: String
+  ): jsonb
+  requires_server_guidelines_disabled: Boolean!
+  requires_service: String
+  slug: String!
+  source: String!
+  synced_at: timestamptz!
+  tags: [String!]!
+
+  """
+  A computed field, executes function "game_plugin_target_node_count"
+  """
+  target_node_count: Int
+  verified: Boolean!
+
+  """An array relationship"""
+  versions(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_versions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_versions_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_versions_bool_exp
+  ): [game_plugin_versions!]!
+
+  """An aggregate relationship"""
+  versions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_versions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_versions_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_versions_bool_exp
+  ): game_plugin_versions_aggregate!
+  wiring(
+    """JSON select path"""
+    path: String
+  ): jsonb
+}
+
+"""
+aggregated selection of "game_plugins"
+"""
+type game_plugins_aggregate {
+  aggregate: game_plugins_aggregate_fields
+  nodes: [game_plugins!]!
+}
+
+"""
+aggregate fields of "game_plugins"
+"""
+type game_plugins_aggregate_fields {
+  avg: game_plugins_avg_fields
+  count(columns: [game_plugins_select_column!], distinct: Boolean): Int!
+  max: game_plugins_max_fields
+  min: game_plugins_min_fields
+  stddev: game_plugins_stddev_fields
+  stddev_pop: game_plugins_stddev_pop_fields
+  stddev_samp: game_plugins_stddev_samp_fields
+  sum: game_plugins_sum_fields
+  var_pop: game_plugins_var_pop_fields
+  var_samp: game_plugins_var_samp_fields
+  variance: game_plugins_variance_fields
+}
+
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input game_plugins_append_input {
+  config_schema: jsonb
+  panel: jsonb
+  wiring: jsonb
+}
+
+"""aggregate avg on columns"""
+type game_plugins_avg_fields {
+  """
+  A computed field, executes function "game_plugin_installed_node_count"
+  """
+  installed_node_count: Int
+
+  """
+  A computed field, executes function "game_plugin_target_node_count"
+  """
+  target_node_count: Int
+}
+
+"""
+Boolean expression to filter rows from the table "game_plugins". All fields are combined with a logical 'AND'.
+"""
+input game_plugins_bool_exp {
+  _and: [game_plugins_bool_exp!]
+  _not: game_plugins_bool_exp
+  _or: [game_plugins_bool_exp!]
+  author: String_comparison_exp
+  config_path: String_comparison_exp
+  config_schema: jsonb_comparison_exp
+  cvars: String_array_comparison_exp
+  description: String_comparison_exp
+  game_modes: game_mode_plugins_bool_exp
+  game_modes_aggregate: game_mode_plugins_aggregate_bool_exp
+  homepage: String_comparison_exp
+  hot_swappable: Boolean_comparison_exp
+  install_state: String_comparison_exp
+  installed_node_count: Int_comparison_exp
+  kind: e_game_plugin_kinds_enum_comparison_exp
+  name: String_comparison_exp
+  node_installs: game_server_node_plugins_bool_exp
+  node_installs_aggregate: game_server_node_plugins_aggregate_bool_exp
+  pairs_with: String_array_comparison_exp
+  panel: jsonb_comparison_exp
+  requires_server_guidelines_disabled: Boolean_comparison_exp
+  requires_service: String_comparison_exp
+  slug: String_comparison_exp
+  source: String_comparison_exp
+  synced_at: timestamptz_comparison_exp
+  tags: String_array_comparison_exp
+  target_node_count: Int_comparison_exp
+  verified: Boolean_comparison_exp
+  versions: game_plugin_versions_bool_exp
+  versions_aggregate: game_plugin_versions_aggregate_bool_exp
+  wiring: jsonb_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "game_plugins"
+"""
+enum game_plugins_constraint {
+  """
+  unique or primary key constraint on columns "slug"
+  """
+  game_plugins_pkey
+}
+
+"""
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input game_plugins_delete_at_path_input {
+  config_schema: [String!]
+  panel: [String!]
+  wiring: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input game_plugins_delete_elem_input {
+  config_schema: Int
+  panel: Int
+  wiring: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input game_plugins_delete_key_input {
+  config_schema: String
+  panel: String
+  wiring: String
+}
+
+"""
+input type for inserting data into table "game_plugins"
+"""
+input game_plugins_insert_input {
+  author: String
+  config_path: String
+  config_schema: jsonb
+  cvars: [String!]
+  description: String
+  game_modes: game_mode_plugins_arr_rel_insert_input
+  homepage: String
+  hot_swappable: Boolean
+  kind: e_game_plugin_kinds_enum
+  name: String
+  node_installs: game_server_node_plugins_arr_rel_insert_input
+  pairs_with: [String!]
+  panel: jsonb
+  requires_server_guidelines_disabled: Boolean
+  requires_service: String
+  slug: String
+  source: String
+  synced_at: timestamptz
+  tags: [String!]
+  verified: Boolean
+  versions: game_plugin_versions_arr_rel_insert_input
+  wiring: jsonb
+}
+
+"""aggregate max on columns"""
+type game_plugins_max_fields {
+  author: String
+  config_path: String
+  cvars: [String!]
+  description: String
+  homepage: String
+
+  """Installed | Partial | Pending | Failed | Manual | NotInstalled"""
+  install_state: String
+
+  """
+  A computed field, executes function "game_plugin_installed_node_count"
+  """
+  installed_node_count: Int
+  name: String
+  pairs_with: [String!]
+  requires_service: String
+  slug: String
+  source: String
+  synced_at: timestamptz
+  tags: [String!]
+
+  """
+  A computed field, executes function "game_plugin_target_node_count"
+  """
+  target_node_count: Int
+}
+
+"""aggregate min on columns"""
+type game_plugins_min_fields {
+  author: String
+  config_path: String
+  cvars: [String!]
+  description: String
+  homepage: String
+
+  """Installed | Partial | Pending | Failed | Manual | NotInstalled"""
+  install_state: String
+
+  """
+  A computed field, executes function "game_plugin_installed_node_count"
+  """
+  installed_node_count: Int
+  name: String
+  pairs_with: [String!]
+  requires_service: String
+  slug: String
+  source: String
+  synced_at: timestamptz
+  tags: [String!]
+
+  """
+  A computed field, executes function "game_plugin_target_node_count"
+  """
+  target_node_count: Int
+}
+
+"""
+response of any mutation on the table "game_plugins"
+"""
+type game_plugins_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [game_plugins!]!
+}
+
+"""
+input type for inserting object relation for remote table "game_plugins"
+"""
+input game_plugins_obj_rel_insert_input {
+  data: game_plugins_insert_input!
+
+  """upsert condition"""
+  on_conflict: game_plugins_on_conflict
+}
+
+"""
+on_conflict condition type for table "game_plugins"
+"""
+input game_plugins_on_conflict {
+  constraint: game_plugins_constraint!
+  update_columns: [game_plugins_update_column!]! = []
+  where: game_plugins_bool_exp
+}
+
+"""Ordering options when selecting data from "game_plugins"."""
+input game_plugins_order_by {
+  author: order_by
+  config_path: order_by
+  config_schema: order_by
+  cvars: order_by
+  description: order_by
+  game_modes_aggregate: game_mode_plugins_aggregate_order_by
+  homepage: order_by
+  hot_swappable: order_by
+  install_state: order_by
+  installed_node_count: order_by
+  kind: order_by
+  name: order_by
+  node_installs_aggregate: game_server_node_plugins_aggregate_order_by
+  pairs_with: order_by
+  panel: order_by
+  requires_server_guidelines_disabled: order_by
+  requires_service: order_by
+  slug: order_by
+  source: order_by
+  synced_at: order_by
+  tags: order_by
+  target_node_count: order_by
+  verified: order_by
+  versions_aggregate: game_plugin_versions_aggregate_order_by
+  wiring: order_by
+}
+
+"""primary key columns input for table: game_plugins"""
+input game_plugins_pk_columns_input {
+  slug: String!
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input game_plugins_prepend_input {
+  config_schema: jsonb
+  panel: jsonb
+  wiring: jsonb
+}
+
+"""
+select columns of table "game_plugins"
+"""
+enum game_plugins_select_column {
+  """column name"""
+  author
+
+  """column name"""
+  config_path
+
+  """column name"""
+  config_schema
+
+  """column name"""
+  cvars
+
+  """column name"""
+  description
+
+  """column name"""
+  homepage
+
+  """column name"""
+  hot_swappable
+
+  """column name"""
+  kind
+
+  """column name"""
+  name
+
+  """column name"""
+  pairs_with
+
+  """column name"""
+  panel
+
+  """column name"""
+  requires_server_guidelines_disabled
+
+  """column name"""
+  requires_service
+
+  """column name"""
+  slug
+
+  """column name"""
+  source
+
+  """column name"""
+  synced_at
+
+  """column name"""
+  tags
+
+  """column name"""
+  verified
+
+  """column name"""
+  wiring
+}
+
+"""
+input type for updating data in table "game_plugins"
+"""
+input game_plugins_set_input {
+  author: String
+  config_path: String
+  config_schema: jsonb
+  cvars: [String!]
+  description: String
+  homepage: String
+  hot_swappable: Boolean
+  kind: e_game_plugin_kinds_enum
+  name: String
+  pairs_with: [String!]
+  panel: jsonb
+  requires_server_guidelines_disabled: Boolean
+  requires_service: String
+  slug: String
+  source: String
+  synced_at: timestamptz
+  tags: [String!]
+  verified: Boolean
+  wiring: jsonb
+}
+
+"""aggregate stddev on columns"""
+type game_plugins_stddev_fields {
+  """
+  A computed field, executes function "game_plugin_installed_node_count"
+  """
+  installed_node_count: Int
+
+  """
+  A computed field, executes function "game_plugin_target_node_count"
+  """
+  target_node_count: Int
+}
+
+"""aggregate stddev_pop on columns"""
+type game_plugins_stddev_pop_fields {
+  """
+  A computed field, executes function "game_plugin_installed_node_count"
+  """
+  installed_node_count: Int
+
+  """
+  A computed field, executes function "game_plugin_target_node_count"
+  """
+  target_node_count: Int
+}
+
+"""aggregate stddev_samp on columns"""
+type game_plugins_stddev_samp_fields {
+  """
+  A computed field, executes function "game_plugin_installed_node_count"
+  """
+  installed_node_count: Int
+
+  """
+  A computed field, executes function "game_plugin_target_node_count"
+  """
+  target_node_count: Int
+}
+
+"""
+Streaming cursor of the table "game_plugins"
+"""
+input game_plugins_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: game_plugins_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input game_plugins_stream_cursor_value_input {
+  author: String
+  config_path: String
+  config_schema: jsonb
+  cvars: [String!]
+  description: String
+  homepage: String
+  hot_swappable: Boolean
+  kind: e_game_plugin_kinds_enum
+  name: String
+  pairs_with: [String!]
+  panel: jsonb
+  requires_server_guidelines_disabled: Boolean
+  requires_service: String
+  slug: String
+  source: String
+  synced_at: timestamptz
+  tags: [String!]
+  verified: Boolean
+  wiring: jsonb
+}
+
+"""aggregate sum on columns"""
+type game_plugins_sum_fields {
+  """
+  A computed field, executes function "game_plugin_installed_node_count"
+  """
+  installed_node_count: Int
+
+  """
+  A computed field, executes function "game_plugin_target_node_count"
+  """
+  target_node_count: Int
+}
+
+"""
+update columns of table "game_plugins"
+"""
+enum game_plugins_update_column {
+  """column name"""
+  author
+
+  """column name"""
+  config_path
+
+  """column name"""
+  config_schema
+
+  """column name"""
+  cvars
+
+  """column name"""
+  description
+
+  """column name"""
+  homepage
+
+  """column name"""
+  hot_swappable
+
+  """column name"""
+  kind
+
+  """column name"""
+  name
+
+  """column name"""
+  pairs_with
+
+  """column name"""
+  panel
+
+  """column name"""
+  requires_server_guidelines_disabled
+
+  """column name"""
+  requires_service
+
+  """column name"""
+  slug
+
+  """column name"""
+  source
+
+  """column name"""
+  synced_at
+
+  """column name"""
+  tags
+
+  """column name"""
+  verified
+
+  """column name"""
+  wiring
+}
+
+input game_plugins_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: game_plugins_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: game_plugins_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: game_plugins_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: game_plugins_delete_key_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: game_plugins_prepend_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: game_plugins_set_input
+
+  """filter the rows which have to be updated"""
+  where: game_plugins_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type game_plugins_var_pop_fields {
+  """
+  A computed field, executes function "game_plugin_installed_node_count"
+  """
+  installed_node_count: Int
+
+  """
+  A computed field, executes function "game_plugin_target_node_count"
+  """
+  target_node_count: Int
+}
+
+"""aggregate var_samp on columns"""
+type game_plugins_var_samp_fields {
+  """
+  A computed field, executes function "game_plugin_installed_node_count"
+  """
+  installed_node_count: Int
+
+  """
+  A computed field, executes function "game_plugin_target_node_count"
+  """
+  target_node_count: Int
+}
+
+"""aggregate variance on columns"""
+type game_plugins_variance_fields {
+  """
+  A computed field, executes function "game_plugin_installed_node_count"
+  """
+  installed_node_count: Int
+
+  """
+  A computed field, executes function "game_plugin_target_node_count"
+  """
+  target_node_count: Int
+}
+
+"""
+columns and relationships of "game_server_node_plugins"
+"""
+type game_server_node_plugins {
+  channel: e_game_plugin_channels_enum!
+  created_at: timestamptz!
+  detected: Boolean!
+  detected_version: String
+
+  """An object relationship"""
+  game_server_node: game_server_nodes!
+  game_server_node_id: String!
+  id: uuid!
+  installed_at: timestamptz
+  last_error: String
+
+  """An object relationship"""
+  plugin: game_plugins
+  plugin_slug: String!
+  runtime: e_plugin_runtimes_enum!
+  source: String!
+  status: e_game_plugin_install_statuses_enum!
+  updated_at: timestamptz!
+  version: String
+}
+
+"""
+aggregated selection of "game_server_node_plugins"
+"""
+type game_server_node_plugins_aggregate {
+  aggregate: game_server_node_plugins_aggregate_fields
+  nodes: [game_server_node_plugins!]!
+}
+
+input game_server_node_plugins_aggregate_bool_exp {
+  bool_and: game_server_node_plugins_aggregate_bool_exp_bool_and
+  bool_or: game_server_node_plugins_aggregate_bool_exp_bool_or
+  count: game_server_node_plugins_aggregate_bool_exp_count
+}
+
+input game_server_node_plugins_aggregate_bool_exp_bool_and {
+  arguments: game_server_node_plugins_select_column_game_server_node_plugins_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: game_server_node_plugins_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input game_server_node_plugins_aggregate_bool_exp_bool_or {
+  arguments: game_server_node_plugins_select_column_game_server_node_plugins_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: game_server_node_plugins_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input game_server_node_plugins_aggregate_bool_exp_count {
+  arguments: [game_server_node_plugins_select_column!]
+  distinct: Boolean
+  filter: game_server_node_plugins_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "game_server_node_plugins"
+"""
+type game_server_node_plugins_aggregate_fields {
+  count(columns: [game_server_node_plugins_select_column!], distinct: Boolean): Int!
+  max: game_server_node_plugins_max_fields
+  min: game_server_node_plugins_min_fields
+}
+
+"""
+order by aggregate values of table "game_server_node_plugins"
+"""
+input game_server_node_plugins_aggregate_order_by {
+  count: order_by
+  max: game_server_node_plugins_max_order_by
+  min: game_server_node_plugins_min_order_by
+}
+
+"""
+input type for inserting array relation for remote table "game_server_node_plugins"
+"""
+input game_server_node_plugins_arr_rel_insert_input {
+  data: [game_server_node_plugins_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: game_server_node_plugins_on_conflict
+}
+
+"""
+Boolean expression to filter rows from the table "game_server_node_plugins". All fields are combined with a logical 'AND'.
+"""
+input game_server_node_plugins_bool_exp {
+  _and: [game_server_node_plugins_bool_exp!]
+  _not: game_server_node_plugins_bool_exp
+  _or: [game_server_node_plugins_bool_exp!]
+  channel: e_game_plugin_channels_enum_comparison_exp
+  created_at: timestamptz_comparison_exp
+  detected: Boolean_comparison_exp
+  detected_version: String_comparison_exp
+  game_server_node: game_server_nodes_bool_exp
+  game_server_node_id: String_comparison_exp
+  id: uuid_comparison_exp
+  installed_at: timestamptz_comparison_exp
+  last_error: String_comparison_exp
+  plugin: game_plugins_bool_exp
+  plugin_slug: String_comparison_exp
+  runtime: e_plugin_runtimes_enum_comparison_exp
+  source: String_comparison_exp
+  status: e_game_plugin_install_statuses_enum_comparison_exp
+  updated_at: timestamptz_comparison_exp
+  version: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "game_server_node_plugins"
+"""
+enum game_server_node_plugins_constraint {
+  """
+  unique or primary key constraint on columns "game_server_node_id", "plugin_slug"
+  """
+  game_server_node_plugins_node_plugin_key
+
+  """
+  unique or primary key constraint on columns "id"
+  """
+  game_server_node_plugins_pkey
+}
+
+"""
+input type for inserting data into table "game_server_node_plugins"
+"""
+input game_server_node_plugins_insert_input {
+  channel: e_game_plugin_channels_enum
+  created_at: timestamptz
+  detected: Boolean
+  detected_version: String
+  game_server_node: game_server_nodes_obj_rel_insert_input
+  game_server_node_id: String
+  id: uuid
+  installed_at: timestamptz
+  last_error: String
+  plugin: game_plugins_obj_rel_insert_input
+  plugin_slug: String
+  runtime: e_plugin_runtimes_enum
+  source: String
+  status: e_game_plugin_install_statuses_enum
+  updated_at: timestamptz
+  version: String
+}
+
+"""aggregate max on columns"""
+type game_server_node_plugins_max_fields {
+  created_at: timestamptz
+  detected_version: String
+  game_server_node_id: String
+  id: uuid
+  installed_at: timestamptz
+  last_error: String
+  plugin_slug: String
+  source: String
+  updated_at: timestamptz
+  version: String
+}
+
+"""
+order by max() on columns of table "game_server_node_plugins"
+"""
+input game_server_node_plugins_max_order_by {
+  created_at: order_by
+  detected_version: order_by
+  game_server_node_id: order_by
+  id: order_by
+  installed_at: order_by
+  last_error: order_by
+  plugin_slug: order_by
+  source: order_by
+  updated_at: order_by
+  version: order_by
+}
+
+"""aggregate min on columns"""
+type game_server_node_plugins_min_fields {
+  created_at: timestamptz
+  detected_version: String
+  game_server_node_id: String
+  id: uuid
+  installed_at: timestamptz
+  last_error: String
+  plugin_slug: String
+  source: String
+  updated_at: timestamptz
+  version: String
+}
+
+"""
+order by min() on columns of table "game_server_node_plugins"
+"""
+input game_server_node_plugins_min_order_by {
+  created_at: order_by
+  detected_version: order_by
+  game_server_node_id: order_by
+  id: order_by
+  installed_at: order_by
+  last_error: order_by
+  plugin_slug: order_by
+  source: order_by
+  updated_at: order_by
+  version: order_by
+}
+
+"""
+response of any mutation on the table "game_server_node_plugins"
+"""
+type game_server_node_plugins_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [game_server_node_plugins!]!
+}
+
+"""
+on_conflict condition type for table "game_server_node_plugins"
+"""
+input game_server_node_plugins_on_conflict {
+  constraint: game_server_node_plugins_constraint!
+  update_columns: [game_server_node_plugins_update_column!]! = []
+  where: game_server_node_plugins_bool_exp
+}
+
+"""Ordering options when selecting data from "game_server_node_plugins"."""
+input game_server_node_plugins_order_by {
+  channel: order_by
+  created_at: order_by
+  detected: order_by
+  detected_version: order_by
+  game_server_node: game_server_nodes_order_by
+  game_server_node_id: order_by
+  id: order_by
+  installed_at: order_by
+  last_error: order_by
+  plugin: game_plugins_order_by
+  plugin_slug: order_by
+  runtime: order_by
+  source: order_by
+  status: order_by
+  updated_at: order_by
+  version: order_by
+}
+
+"""primary key columns input for table: game_server_node_plugins"""
+input game_server_node_plugins_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "game_server_node_plugins"
+"""
+enum game_server_node_plugins_select_column {
+  """column name"""
+  channel
+
+  """column name"""
+  created_at
+
+  """column name"""
+  detected
+
+  """column name"""
+  detected_version
+
+  """column name"""
+  game_server_node_id
+
+  """column name"""
+  id
+
+  """column name"""
+  installed_at
+
+  """column name"""
+  last_error
+
+  """column name"""
+  plugin_slug
+
+  """column name"""
+  runtime
+
+  """column name"""
+  source
+
+  """column name"""
+  status
+
+  """column name"""
+  updated_at
+
+  """column name"""
+  version
+}
+
+"""
+select "game_server_node_plugins_aggregate_bool_exp_bool_and_arguments_columns" columns of table "game_server_node_plugins"
+"""
+enum game_server_node_plugins_select_column_game_server_node_plugins_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  detected
+}
+
+"""
+select "game_server_node_plugins_aggregate_bool_exp_bool_or_arguments_columns" columns of table "game_server_node_plugins"
+"""
+enum game_server_node_plugins_select_column_game_server_node_plugins_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  detected
+}
+
+"""
+input type for updating data in table "game_server_node_plugins"
+"""
+input game_server_node_plugins_set_input {
+  channel: e_game_plugin_channels_enum
+  created_at: timestamptz
+  detected: Boolean
+  detected_version: String
+  game_server_node_id: String
+  id: uuid
+  installed_at: timestamptz
+  last_error: String
+  plugin_slug: String
+  runtime: e_plugin_runtimes_enum
+  source: String
+  status: e_game_plugin_install_statuses_enum
+  updated_at: timestamptz
+  version: String
+}
+
+"""
+Streaming cursor of the table "game_server_node_plugins"
+"""
+input game_server_node_plugins_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: game_server_node_plugins_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input game_server_node_plugins_stream_cursor_value_input {
+  channel: e_game_plugin_channels_enum
+  created_at: timestamptz
+  detected: Boolean
+  detected_version: String
+  game_server_node_id: String
+  id: uuid
+  installed_at: timestamptz
+  last_error: String
+  plugin_slug: String
+  runtime: e_plugin_runtimes_enum
+  source: String
+  status: e_game_plugin_install_statuses_enum
+  updated_at: timestamptz
+  version: String
+}
+
+"""
+update columns of table "game_server_node_plugins"
+"""
+enum game_server_node_plugins_update_column {
+  """column name"""
+  channel
+
+  """column name"""
+  created_at
+
+  """column name"""
+  detected
+
+  """column name"""
+  detected_version
+
+  """column name"""
+  game_server_node_id
+
+  """column name"""
+  id
+
+  """column name"""
+  installed_at
+
+  """column name"""
+  last_error
+
+  """column name"""
+  plugin_slug
+
+  """column name"""
+  runtime
+
+  """column name"""
+  source
+
+  """column name"""
+  status
+
+  """column name"""
+  updated_at
+
+  """column name"""
+  version
+}
+
+input game_server_node_plugins_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: game_server_node_plugins_set_input
+
+  """filter the rows which have to be updated"""
+  where: game_server_node_plugins_bool_exp!
+}
+
+"""
 columns and relationships of "game_server_nodes"
 """
 type game_server_nodes {
@@ -19342,6 +22658,43 @@ type game_server_nodes {
   A computed field, executes function "game_server_node_plugin_supported"
   """
   plugin_supported: Boolean
+
+  """An array relationship"""
+  plugins(
+    """distinct select on columns"""
+    distinct_on: [game_server_node_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_server_node_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_server_node_plugins_bool_exp
+  ): [game_server_node_plugins!]!
+
+  """An aggregate relationship"""
+  plugins_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_server_node_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_server_node_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_server_node_plugins_bool_exp
+  ): game_server_node_plugins_aggregate!
+  plugins_synced_at: timestamptz
   public_ip: inet
   region: String
 
@@ -19577,6 +22930,9 @@ input game_server_nodes_bool_exp {
   pin_plugin_version: String_comparison_exp
   pinned_version: game_versions_bool_exp
   plugin_supported: Boolean_comparison_exp
+  plugins: game_server_node_plugins_bool_exp
+  plugins_aggregate: game_server_node_plugins_aggregate_bool_exp
+  plugins_synced_at: timestamptz_comparison_exp
   public_ip: inet_comparison_exp
   region: String_comparison_exp
   servers: servers_bool_exp
@@ -19698,6 +23054,8 @@ input game_server_nodes_insert_input {
   pin_plugin_runtime: String
   pin_plugin_version: String
   pinned_version: game_versions_obj_rel_insert_input
+  plugins: game_server_node_plugins_arr_rel_insert_input
+  plugins_synced_at: timestamptz
   public_ip: inet
   region: String
   servers: servers_arr_rel_insert_input
@@ -19735,6 +23093,7 @@ type game_server_nodes_max_fields {
   pin_build_id: Int
   pin_plugin_runtime: String
   pin_plugin_version: String
+  plugins_synced_at: timestamptz
   region: String
   shader_bake_progress: numeric
   shader_bake_progress_stage: String
@@ -19768,6 +23127,7 @@ input game_server_nodes_max_order_by {
   pin_build_id: order_by
   pin_plugin_runtime: order_by
   pin_plugin_version: order_by
+  plugins_synced_at: order_by
   region: order_by
   shader_bake_progress: order_by
   shader_bake_progress_stage: order_by
@@ -19798,6 +23158,7 @@ type game_server_nodes_min_fields {
   pin_build_id: Int
   pin_plugin_runtime: String
   pin_plugin_version: String
+  plugins_synced_at: timestamptz
   region: String
   shader_bake_progress: numeric
   shader_bake_progress_stage: String
@@ -19831,6 +23192,7 @@ input game_server_nodes_min_order_by {
   pin_build_id: order_by
   pin_plugin_runtime: order_by
   pin_plugin_version: order_by
+  plugins_synced_at: order_by
   region: order_by
   shader_bake_progress: order_by
   shader_bake_progress_stage: order_by
@@ -19906,6 +23268,8 @@ input game_server_nodes_order_by {
   pin_plugin_version: order_by
   pinned_version: game_versions_order_by
   plugin_supported: order_by
+  plugins_aggregate: game_server_node_plugins_aggregate_order_by
+  plugins_synced_at: order_by
   public_ip: order_by
   region: order_by
   servers_aggregate: servers_aggregate_order_by
@@ -20029,6 +23393,9 @@ enum game_server_nodes_select_column {
 
   """column name"""
   pin_plugin_version
+
+  """column name"""
+  plugins_synced_at
 
   """column name"""
   public_ip
@@ -20158,6 +23525,7 @@ input game_server_nodes_set_input {
   pin_build_id: Int
   pin_plugin_runtime: String
   pin_plugin_version: String
+  plugins_synced_at: timestamptz
   public_ip: inet
   region: String
   shader_bake_progress: numeric
@@ -20343,6 +23711,7 @@ input game_server_nodes_stream_cursor_value_input {
   pin_build_id: Int
   pin_plugin_runtime: String
   pin_plugin_version: String
+  plugins_synced_at: timestamptz
   public_ip: inet
   region: String
   shader_bake_progress: numeric
@@ -20490,6 +23859,9 @@ enum game_server_nodes_update_column {
 
   """column name"""
   pin_plugin_version
+
+  """column name"""
+  plugins_synced_at
 
   """column name"""
   public_ip
@@ -33702,6 +37074,10 @@ type match_options {
   check_in_setting: e_check_in_settings_enum!
   coaches: Boolean!
   default_models: Boolean
+
+  """An object relationship"""
+  game_mode: game_modes
+  game_mode_id: uuid
   halftime_pausematch: Boolean!
 
   """
@@ -33786,6 +37162,33 @@ type match_options_aggregate {
   nodes: [match_options!]!
 }
 
+input match_options_aggregate_bool_exp {
+  bool_and: match_options_aggregate_bool_exp_bool_and
+  bool_or: match_options_aggregate_bool_exp_bool_or
+  count: match_options_aggregate_bool_exp_count
+}
+
+input match_options_aggregate_bool_exp_bool_and {
+  arguments: match_options_select_column_match_options_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: match_options_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input match_options_aggregate_bool_exp_bool_or {
+  arguments: match_options_select_column_match_options_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: match_options_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input match_options_aggregate_bool_exp_count {
+  arguments: [match_options_select_column!]
+  distinct: Boolean
+  filter: match_options_bool_exp
+  predicate: Int_comparison_exp!
+}
+
 """
 aggregate fields of "match_options"
 """
@@ -33803,6 +37206,33 @@ type match_options_aggregate_fields {
   variance: match_options_variance_fields
 }
 
+"""
+order by aggregate values of table "match_options"
+"""
+input match_options_aggregate_order_by {
+  avg: match_options_avg_order_by
+  count: order_by
+  max: match_options_max_order_by
+  min: match_options_min_order_by
+  stddev: match_options_stddev_order_by
+  stddev_pop: match_options_stddev_pop_order_by
+  stddev_samp: match_options_stddev_samp_order_by
+  sum: match_options_sum_order_by
+  var_pop: match_options_var_pop_order_by
+  var_samp: match_options_var_samp_order_by
+  variance: match_options_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "match_options"
+"""
+input match_options_arr_rel_insert_input {
+  data: [match_options_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: match_options_on_conflict
+}
+
 """aggregate avg on columns"""
 type match_options_avg_fields {
   auto_cancel_duration: Float
@@ -33813,6 +37243,20 @@ type match_options_avg_fields {
   round_restart_delay: Float
   tv_delay: Float
   veto_pick_timeout: Float
+}
+
+"""
+order by avg() on columns of table "match_options"
+"""
+input match_options_avg_order_by {
+  auto_cancel_duration: order_by
+  best_of: order_by
+  live_match_timeout: order_by
+  mr: order_by
+  number_of_substitutes: order_by
+  round_restart_delay: order_by
+  tv_delay: order_by
+  veto_pick_timeout: order_by
 }
 
 """
@@ -33830,6 +37274,8 @@ input match_options_bool_exp {
   check_in_setting: e_check_in_settings_enum_comparison_exp
   coaches: Boolean_comparison_exp
   default_models: Boolean_comparison_exp
+  game_mode: game_modes_bool_exp
+  game_mode_id: uuid_comparison_exp
   halftime_pausematch: Boolean_comparison_exp
   has_active_matches: Boolean_comparison_exp
   id: uuid_comparison_exp
@@ -33896,6 +37342,8 @@ input match_options_insert_input {
   check_in_setting: e_check_in_settings_enum
   coaches: Boolean
   default_models: Boolean
+  game_mode: game_modes_obj_rel_insert_input
+  game_mode_id: uuid
   halftime_pausematch: Boolean
   id: uuid
   invite_code: String
@@ -33928,6 +37376,7 @@ input match_options_insert_input {
 type match_options_max_fields {
   auto_cancel_duration: Int
   best_of: Int
+  game_mode_id: uuid
   id: uuid
   invite_code: String
   live_match_timeout: Int
@@ -33940,10 +37389,30 @@ type match_options_max_fields {
   veto_pick_timeout: Int
 }
 
+"""
+order by max() on columns of table "match_options"
+"""
+input match_options_max_order_by {
+  auto_cancel_duration: order_by
+  best_of: order_by
+  game_mode_id: order_by
+  id: order_by
+  invite_code: order_by
+  live_match_timeout: order_by
+  map_pool_id: order_by
+  mr: order_by
+  number_of_substitutes: order_by
+  regions: order_by
+  round_restart_delay: order_by
+  tv_delay: order_by
+  veto_pick_timeout: order_by
+}
+
 """aggregate min on columns"""
 type match_options_min_fields {
   auto_cancel_duration: Int
   best_of: Int
+  game_mode_id: uuid
   id: uuid
   invite_code: String
   live_match_timeout: Int
@@ -33954,6 +37423,25 @@ type match_options_min_fields {
   round_restart_delay: Int
   tv_delay: Int
   veto_pick_timeout: Int
+}
+
+"""
+order by min() on columns of table "match_options"
+"""
+input match_options_min_order_by {
+  auto_cancel_duration: order_by
+  best_of: order_by
+  game_mode_id: order_by
+  id: order_by
+  invite_code: order_by
+  live_match_timeout: order_by
+  map_pool_id: order_by
+  mr: order_by
+  number_of_substitutes: order_by
+  regions: order_by
+  round_restart_delay: order_by
+  tv_delay: order_by
+  veto_pick_timeout: order_by
 }
 
 """
@@ -33996,6 +37484,8 @@ input match_options_order_by {
   check_in_setting: order_by
   coaches: order_by
   default_models: order_by
+  game_mode: game_modes_order_by
+  game_mode_id: order_by
   halftime_pausematch: order_by
   has_active_matches: order_by
   id: order_by
@@ -34057,6 +37547,9 @@ enum match_options_select_column {
 
   """column name"""
   default_models
+
+  """column name"""
+  game_mode_id
 
   """column name"""
   halftime_pausematch
@@ -34123,6 +37616,82 @@ enum match_options_select_column {
 }
 
 """
+select "match_options_aggregate_bool_exp_bool_and_arguments_columns" columns of table "match_options"
+"""
+enum match_options_select_column_match_options_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  auto_cancellation
+
+  """column name"""
+  camera_allow_teammates
+
+  """column name"""
+  camera_required
+
+  """column name"""
+  coaches
+
+  """column name"""
+  default_models
+
+  """column name"""
+  halftime_pausematch
+
+  """column name"""
+  knife_round
+
+  """column name"""
+  map_veto
+
+  """column name"""
+  overtime
+
+  """column name"""
+  prefer_dedicated_server
+
+  """column name"""
+  region_veto
+}
+
+"""
+select "match_options_aggregate_bool_exp_bool_or_arguments_columns" columns of table "match_options"
+"""
+enum match_options_select_column_match_options_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  auto_cancellation
+
+  """column name"""
+  camera_allow_teammates
+
+  """column name"""
+  camera_required
+
+  """column name"""
+  coaches
+
+  """column name"""
+  default_models
+
+  """column name"""
+  halftime_pausematch
+
+  """column name"""
+  knife_round
+
+  """column name"""
+  map_veto
+
+  """column name"""
+  overtime
+
+  """column name"""
+  prefer_dedicated_server
+
+  """column name"""
+  region_veto
+}
+
+"""
 input type for updating data in table "match_options"
 """
 input match_options_set_input {
@@ -34134,6 +37703,7 @@ input match_options_set_input {
   check_in_setting: e_check_in_settings_enum
   coaches: Boolean
   default_models: Boolean
+  game_mode_id: uuid
   halftime_pausematch: Boolean
   id: uuid
   invite_code: String
@@ -34169,6 +37739,20 @@ type match_options_stddev_fields {
   veto_pick_timeout: Float
 }
 
+"""
+order by stddev() on columns of table "match_options"
+"""
+input match_options_stddev_order_by {
+  auto_cancel_duration: order_by
+  best_of: order_by
+  live_match_timeout: order_by
+  mr: order_by
+  number_of_substitutes: order_by
+  round_restart_delay: order_by
+  tv_delay: order_by
+  veto_pick_timeout: order_by
+}
+
 """aggregate stddev_pop on columns"""
 type match_options_stddev_pop_fields {
   auto_cancel_duration: Float
@@ -34181,6 +37765,20 @@ type match_options_stddev_pop_fields {
   veto_pick_timeout: Float
 }
 
+"""
+order by stddev_pop() on columns of table "match_options"
+"""
+input match_options_stddev_pop_order_by {
+  auto_cancel_duration: order_by
+  best_of: order_by
+  live_match_timeout: order_by
+  mr: order_by
+  number_of_substitutes: order_by
+  round_restart_delay: order_by
+  tv_delay: order_by
+  veto_pick_timeout: order_by
+}
+
 """aggregate stddev_samp on columns"""
 type match_options_stddev_samp_fields {
   auto_cancel_duration: Float
@@ -34191,6 +37789,20 @@ type match_options_stddev_samp_fields {
   round_restart_delay: Float
   tv_delay: Float
   veto_pick_timeout: Float
+}
+
+"""
+order by stddev_samp() on columns of table "match_options"
+"""
+input match_options_stddev_samp_order_by {
+  auto_cancel_duration: order_by
+  best_of: order_by
+  live_match_timeout: order_by
+  mr: order_by
+  number_of_substitutes: order_by
+  round_restart_delay: order_by
+  tv_delay: order_by
+  veto_pick_timeout: order_by
 }
 
 """
@@ -34214,6 +37826,7 @@ input match_options_stream_cursor_value_input {
   check_in_setting: e_check_in_settings_enum
   coaches: Boolean
   default_models: Boolean
+  game_mode_id: uuid
   halftime_pausematch: Boolean
   id: uuid
   invite_code: String
@@ -34250,6 +37863,20 @@ type match_options_sum_fields {
 }
 
 """
+order by sum() on columns of table "match_options"
+"""
+input match_options_sum_order_by {
+  auto_cancel_duration: order_by
+  best_of: order_by
+  live_match_timeout: order_by
+  mr: order_by
+  number_of_substitutes: order_by
+  round_restart_delay: order_by
+  tv_delay: order_by
+  veto_pick_timeout: order_by
+}
+
+"""
 update columns of table "match_options"
 """
 enum match_options_update_column {
@@ -34276,6 +37903,9 @@ enum match_options_update_column {
 
   """column name"""
   default_models
+
+  """column name"""
+  game_mode_id
 
   """column name"""
   halftime_pausematch
@@ -34364,6 +37994,20 @@ type match_options_var_pop_fields {
   veto_pick_timeout: Float
 }
 
+"""
+order by var_pop() on columns of table "match_options"
+"""
+input match_options_var_pop_order_by {
+  auto_cancel_duration: order_by
+  best_of: order_by
+  live_match_timeout: order_by
+  mr: order_by
+  number_of_substitutes: order_by
+  round_restart_delay: order_by
+  tv_delay: order_by
+  veto_pick_timeout: order_by
+}
+
 """aggregate var_samp on columns"""
 type match_options_var_samp_fields {
   auto_cancel_duration: Float
@@ -34376,6 +38020,20 @@ type match_options_var_samp_fields {
   veto_pick_timeout: Float
 }
 
+"""
+order by var_samp() on columns of table "match_options"
+"""
+input match_options_var_samp_order_by {
+  auto_cancel_duration: order_by
+  best_of: order_by
+  live_match_timeout: order_by
+  mr: order_by
+  number_of_substitutes: order_by
+  round_restart_delay: order_by
+  tv_delay: order_by
+  veto_pick_timeout: order_by
+}
+
 """aggregate variance on columns"""
 type match_options_variance_fields {
   auto_cancel_duration: Float
@@ -34386,6 +38044,20 @@ type match_options_variance_fields {
   round_restart_delay: Float
   tv_delay: Float
   veto_pick_timeout: Float
+}
+
+"""
+order by variance() on columns of table "match_options"
+"""
+input match_options_variance_order_by {
+  auto_cancel_duration: order_by
+  best_of: order_by
+  live_match_timeout: order_by
+  mr: order_by
+  number_of_substitutes: order_by
+  round_restart_delay: order_by
+  tv_delay: order_by
+  veto_pick_timeout: order_by
 }
 
 """
@@ -35586,6 +39258,7 @@ type matches {
   A computed field, executes function "get_match_connection_string"
   """
   connection_string: String
+  counts_toward_ranking: Boolean!
   created_at: timestamptz!
 
   """
@@ -36346,7 +40019,23 @@ type matches_aggregate {
 }
 
 input matches_aggregate_bool_exp {
+  bool_and: matches_aggregate_bool_exp_bool_and
+  bool_or: matches_aggregate_bool_exp_bool_or
   count: matches_aggregate_bool_exp_count
+}
+
+input matches_aggregate_bool_exp_bool_and {
+  arguments: matches_select_column_matches_aggregate_bool_exp_bool_and_arguments_columns!
+  distinct: Boolean
+  filter: matches_bool_exp
+  predicate: Boolean_comparison_exp!
+}
+
+input matches_aggregate_bool_exp_bool_or {
+  arguments: matches_select_column_matches_aggregate_bool_exp_bool_or_arguments_columns!
+  distinct: Boolean
+  filter: matches_bool_exp
+  predicate: Boolean_comparison_exp!
 }
 
 input matches_aggregate_bool_exp_count {
@@ -36441,6 +40130,7 @@ input matches_bool_exp {
   clutches_aggregate: v_match_clutches_aggregate_bool_exp
   connection_link: String_comparison_exp
   connection_string: String_comparison_exp
+  counts_toward_ranking: Boolean_comparison_exp
   created_at: timestamptz_comparison_exp
   current_match_map_id: uuid_comparison_exp
   demos: match_map_demos_bool_exp
@@ -36569,6 +40259,7 @@ input type for inserting data into table "matches"
 input matches_insert_input {
   cancels_at: timestamptz
   clutches: v_match_clutches_arr_rel_insert_input
+  counts_toward_ranking: Boolean
   created_at: timestamptz
   demos: match_map_demos_arr_rel_insert_input
   draft_games: draft_games_arr_rel_insert_input
@@ -36893,6 +40584,7 @@ input matches_order_by {
   clutches_aggregate: v_match_clutches_aggregate_order_by
   connection_link: order_by
   connection_string: order_by
+  counts_toward_ranking: order_by
   created_at: order_by
   current_match_map_id: order_by
   demos_aggregate: match_map_demos_aggregate_order_by
@@ -36975,6 +40667,9 @@ enum matches_select_column {
   cancels_at
 
   """column name"""
+  counts_toward_ranking
+
+  """column name"""
   created_at
 
   """column name"""
@@ -37039,10 +40734,27 @@ enum matches_select_column {
 }
 
 """
+select "matches_aggregate_bool_exp_bool_and_arguments_columns" columns of table "matches"
+"""
+enum matches_select_column_matches_aggregate_bool_exp_bool_and_arguments_columns {
+  """column name"""
+  counts_toward_ranking
+}
+
+"""
+select "matches_aggregate_bool_exp_bool_or_arguments_columns" columns of table "matches"
+"""
+enum matches_select_column_matches_aggregate_bool_exp_bool_or_arguments_columns {
+  """column name"""
+  counts_toward_ranking
+}
+
+"""
 input type for updating data in table "matches"
 """
 input matches_set_input {
   cancels_at: timestamptz
+  counts_toward_ranking: Boolean
   created_at: timestamptz
   ended_at: timestamptz
   external_id: String
@@ -37142,6 +40854,7 @@ input matches_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input matches_stream_cursor_value_input {
   cancels_at: timestamptz
+  counts_toward_ranking: Boolean
   created_at: timestamptz
   effective_at: timestamptz
   ended_at: timestamptz
@@ -37192,6 +40905,9 @@ update columns of table "matches"
 enum matches_update_column {
   """column name"""
   cancels_at
+
+  """column name"""
+  counts_toward_ranking
 
   """column name"""
   created_at
@@ -37487,6 +41203,9 @@ type mutation_root {
 
   """accept team invite"""
   acceptInvite(invite_id: uuid!, type: String!): SuccessOutput
+
+  """Add a game plugin the registry does not carry, from a release URL"""
+  addCustomGamePlugin(description: String, installPath: String, layout: String, name: String, runtime: String!, slug: String, url: String!, version: String): AddCustomGamePluginOutput
 
   """addDraftPlayer"""
   addDraftPlayer(draftGameId: uuid!, lineup: Int, steamId: String!): SuccessOutput
@@ -38000,6 +41719,45 @@ type mutation_root {
   delete single row from the table: "e_game_cfg_types"
   """
   delete_e_game_cfg_types_by_pk(value: String!): e_game_cfg_types
+
+  """
+  delete data from the table: "e_game_plugin_channels"
+  """
+  delete_e_game_plugin_channels(
+    """filter the rows which have to be deleted"""
+    where: e_game_plugin_channels_bool_exp!
+  ): e_game_plugin_channels_mutation_response
+
+  """
+  delete single row from the table: "e_game_plugin_channels"
+  """
+  delete_e_game_plugin_channels_by_pk(value: String!): e_game_plugin_channels
+
+  """
+  delete data from the table: "e_game_plugin_install_statuses"
+  """
+  delete_e_game_plugin_install_statuses(
+    """filter the rows which have to be deleted"""
+    where: e_game_plugin_install_statuses_bool_exp!
+  ): e_game_plugin_install_statuses_mutation_response
+
+  """
+  delete single row from the table: "e_game_plugin_install_statuses"
+  """
+  delete_e_game_plugin_install_statuses_by_pk(value: String!): e_game_plugin_install_statuses
+
+  """
+  delete data from the table: "e_game_plugin_kinds"
+  """
+  delete_e_game_plugin_kinds(
+    """filter the rows which have to be deleted"""
+    where: e_game_plugin_kinds_bool_exp!
+  ): e_game_plugin_kinds_mutation_response
+
+  """
+  delete single row from the table: "e_game_plugin_kinds"
+  """
+  delete_e_game_plugin_kinds_by_pk(value: String!): e_game_plugin_kinds
 
   """
   delete data from the table: "e_game_server_node_statuses"
@@ -38546,6 +42304,84 @@ type mutation_root {
   delete single row from the table: "friends"
   """
   delete_friends_by_pk(other_player_steam_id: bigint!, player_steam_id: bigint!): friends
+
+  """
+  delete data from the table: "game_mode_plugins"
+  """
+  delete_game_mode_plugins(
+    """filter the rows which have to be deleted"""
+    where: game_mode_plugins_bool_exp!
+  ): game_mode_plugins_mutation_response
+
+  """
+  delete single row from the table: "game_mode_plugins"
+  """
+  delete_game_mode_plugins_by_pk(game_mode_id: uuid!, plugin_slug: String!): game_mode_plugins
+
+  """
+  delete data from the table: "game_modes"
+  """
+  delete_game_modes(
+    """filter the rows which have to be deleted"""
+    where: game_modes_bool_exp!
+  ): game_modes_mutation_response
+
+  """
+  delete single row from the table: "game_modes"
+  """
+  delete_game_modes_by_pk(id: uuid!): game_modes
+
+  """
+  delete data from the table: "game_plugin_installs"
+  """
+  delete_game_plugin_installs(
+    """filter the rows which have to be deleted"""
+    where: game_plugin_installs_bool_exp!
+  ): game_plugin_installs_mutation_response
+
+  """
+  delete single row from the table: "game_plugin_installs"
+  """
+  delete_game_plugin_installs_by_pk(plugin_slug: String!): game_plugin_installs
+
+  """
+  delete data from the table: "game_plugin_versions"
+  """
+  delete_game_plugin_versions(
+    """filter the rows which have to be deleted"""
+    where: game_plugin_versions_bool_exp!
+  ): game_plugin_versions_mutation_response
+
+  """
+  delete single row from the table: "game_plugin_versions"
+  """
+  delete_game_plugin_versions_by_pk(plugin_slug: String!, runtime: e_plugin_runtimes_enum!, version: String!): game_plugin_versions
+
+  """
+  delete data from the table: "game_plugins"
+  """
+  delete_game_plugins(
+    """filter the rows which have to be deleted"""
+    where: game_plugins_bool_exp!
+  ): game_plugins_mutation_response
+
+  """
+  delete single row from the table: "game_plugins"
+  """
+  delete_game_plugins_by_pk(slug: String!): game_plugins
+
+  """
+  delete data from the table: "game_server_node_plugins"
+  """
+  delete_game_server_node_plugins(
+    """filter the rows which have to be deleted"""
+    where: game_server_node_plugins_bool_exp!
+  ): game_server_node_plugins_mutation_response
+
+  """
+  delete single row from the table: "game_server_node_plugins"
+  """
+  delete_game_server_node_plugins_by_pk(id: uuid!): game_server_node_plugins
 
   """
   delete data from the table: "game_server_nodes"
@@ -39741,6 +43577,9 @@ type mutation_root {
   Live pod GSI snapshot — slots, sides, alive/dead. Drives the stream-deck.
   """
   getLiveStreamSpecState(match_id: uuid!): LiveStreamSpecState
+
+  """Fetch a plugin's README from its repository"""
+  getPluginReadme(runtime: String, slug: String!): PluginReadmeOutput
   getTestUploadLink: GetTestUploadResponse!
 
   """Grant an award to a player or team"""
@@ -40317,6 +44156,72 @@ type mutation_root {
     """upsert condition"""
     on_conflict: e_game_cfg_types_on_conflict
   ): e_game_cfg_types
+
+  """
+  insert data into the table: "e_game_plugin_channels"
+  """
+  insert_e_game_plugin_channels(
+    """the rows to be inserted"""
+    objects: [e_game_plugin_channels_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_game_plugin_channels_on_conflict
+  ): e_game_plugin_channels_mutation_response
+
+  """
+  insert a single row into the table: "e_game_plugin_channels"
+  """
+  insert_e_game_plugin_channels_one(
+    """the row to be inserted"""
+    object: e_game_plugin_channels_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_game_plugin_channels_on_conflict
+  ): e_game_plugin_channels
+
+  """
+  insert data into the table: "e_game_plugin_install_statuses"
+  """
+  insert_e_game_plugin_install_statuses(
+    """the rows to be inserted"""
+    objects: [e_game_plugin_install_statuses_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_game_plugin_install_statuses_on_conflict
+  ): e_game_plugin_install_statuses_mutation_response
+
+  """
+  insert a single row into the table: "e_game_plugin_install_statuses"
+  """
+  insert_e_game_plugin_install_statuses_one(
+    """the row to be inserted"""
+    object: e_game_plugin_install_statuses_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_game_plugin_install_statuses_on_conflict
+  ): e_game_plugin_install_statuses
+
+  """
+  insert data into the table: "e_game_plugin_kinds"
+  """
+  insert_e_game_plugin_kinds(
+    """the rows to be inserted"""
+    objects: [e_game_plugin_kinds_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_game_plugin_kinds_on_conflict
+  ): e_game_plugin_kinds_mutation_response
+
+  """
+  insert a single row into the table: "e_game_plugin_kinds"
+  """
+  insert_e_game_plugin_kinds_one(
+    """the row to be inserted"""
+    object: e_game_plugin_kinds_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_game_plugin_kinds_on_conflict
+  ): e_game_plugin_kinds
 
   """
   insert data into the table: "e_game_server_node_statuses"
@@ -41241,6 +45146,138 @@ type mutation_root {
     """upsert condition"""
     on_conflict: friends_on_conflict
   ): friends
+
+  """
+  insert data into the table: "game_mode_plugins"
+  """
+  insert_game_mode_plugins(
+    """the rows to be inserted"""
+    objects: [game_mode_plugins_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: game_mode_plugins_on_conflict
+  ): game_mode_plugins_mutation_response
+
+  """
+  insert a single row into the table: "game_mode_plugins"
+  """
+  insert_game_mode_plugins_one(
+    """the row to be inserted"""
+    object: game_mode_plugins_insert_input!
+
+    """upsert condition"""
+    on_conflict: game_mode_plugins_on_conflict
+  ): game_mode_plugins
+
+  """
+  insert data into the table: "game_modes"
+  """
+  insert_game_modes(
+    """the rows to be inserted"""
+    objects: [game_modes_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: game_modes_on_conflict
+  ): game_modes_mutation_response
+
+  """
+  insert a single row into the table: "game_modes"
+  """
+  insert_game_modes_one(
+    """the row to be inserted"""
+    object: game_modes_insert_input!
+
+    """upsert condition"""
+    on_conflict: game_modes_on_conflict
+  ): game_modes
+
+  """
+  insert data into the table: "game_plugin_installs"
+  """
+  insert_game_plugin_installs(
+    """the rows to be inserted"""
+    objects: [game_plugin_installs_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: game_plugin_installs_on_conflict
+  ): game_plugin_installs_mutation_response
+
+  """
+  insert a single row into the table: "game_plugin_installs"
+  """
+  insert_game_plugin_installs_one(
+    """the row to be inserted"""
+    object: game_plugin_installs_insert_input!
+
+    """upsert condition"""
+    on_conflict: game_plugin_installs_on_conflict
+  ): game_plugin_installs
+
+  """
+  insert data into the table: "game_plugin_versions"
+  """
+  insert_game_plugin_versions(
+    """the rows to be inserted"""
+    objects: [game_plugin_versions_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: game_plugin_versions_on_conflict
+  ): game_plugin_versions_mutation_response
+
+  """
+  insert a single row into the table: "game_plugin_versions"
+  """
+  insert_game_plugin_versions_one(
+    """the row to be inserted"""
+    object: game_plugin_versions_insert_input!
+
+    """upsert condition"""
+    on_conflict: game_plugin_versions_on_conflict
+  ): game_plugin_versions
+
+  """
+  insert data into the table: "game_plugins"
+  """
+  insert_game_plugins(
+    """the rows to be inserted"""
+    objects: [game_plugins_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: game_plugins_on_conflict
+  ): game_plugins_mutation_response
+
+  """
+  insert a single row into the table: "game_plugins"
+  """
+  insert_game_plugins_one(
+    """the row to be inserted"""
+    object: game_plugins_insert_input!
+
+    """upsert condition"""
+    on_conflict: game_plugins_on_conflict
+  ): game_plugins
+
+  """
+  insert data into the table: "game_server_node_plugins"
+  """
+  insert_game_server_node_plugins(
+    """the rows to be inserted"""
+    objects: [game_server_node_plugins_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: game_server_node_plugins_on_conflict
+  ): game_server_node_plugins_mutation_response
+
+  """
+  insert a single row into the table: "game_server_node_plugins"
+  """
+  insert_game_server_node_plugins_one(
+    """the row to be inserted"""
+    object: game_server_node_plugins_insert_input!
+
+    """upsert condition"""
+    on_conflict: game_server_node_plugins_on_conflict
+  ): game_server_node_plugins
 
   """
   insert data into the table: "game_server_nodes"
@@ -43268,6 +47305,9 @@ type mutation_root {
     on_conflict: v_team_stage_results_on_conflict
   ): v_team_stage_results
 
+  """Install a game plugin into a node's plugin store"""
+  installGamePlugin(slug: String!, version: String): SuccessOutput
+
   """joinDraftGame"""
   joinDraftGame(draftGameId: uuid!, inviteCode: String): SuccessOutput
 
@@ -43323,6 +47363,9 @@ type mutation_root {
   """previewDraftGame"""
   previewDraftGame(draftGameId: uuid!, inviteCode: String): DraftGamePreviewOutput
 
+  """Resolve a game mode into the plugins and cfg a server would load"""
+  previewGameMode(gameModeId: uuid!): PreviewGameModeOutput
+
   """
   Build a multi-segment ClipSpec from a player+preset and queue it via the batch render path (no live demo session required)
   """
@@ -43362,6 +47405,9 @@ type mutation_root {
 
   """Return the progress of the ELO recompute run (admin only)."""
   recomputePlayerEloStatus: RecomputeEloStatusOutput
+
+  """Re-read which plugins are actually on a node"""
+  reconcileNodePlugins(nodeId: String!): ReconcileNodePluginsOutput
   reconnectLive(match_id: uuid!): SuccessOutput
 
   """
@@ -43562,11 +47608,17 @@ type mutation_root {
   swapLineups(match_id: uuid!): SuccessOutput
   switchLineup(match_id: String!): SuccessOutput
   switchLiveMatch(from_match_id: uuid!, mode: String!, to_match_id: uuid!): SuccessOutput
+
+  """Pull the game plugin registry into this panel's catalog"""
+  syncPluginRegistry: SyncPluginRegistryOutput
   syncSteamFriends: SuccessOutput
 
   """Test FACEIT Data + Downloads API connectivity for the current admin"""
   testFaceitIntegration: FaceitTestOutput
   testUpload: TestUploadResponse
+
+  """Remove a game plugin from a node's plugin store"""
+  uninstallGamePlugin(force: Boolean, slug: String!): SuccessOutput
   unlinkDiscord: SuccessOutput
   unlinkSteamMatchHistory: SuccessOutput
   unsanctionServerPlayer(serverId: String, steam_id: String!, type: String!): SanctionResult!
@@ -44468,6 +48520,90 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_game_cfg_types_updates!]!
   ): [e_game_cfg_types_mutation_response]
+
+  """
+  update data of the table: "e_game_plugin_channels"
+  """
+  update_e_game_plugin_channels(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_game_plugin_channels_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_game_plugin_channels_bool_exp!
+  ): e_game_plugin_channels_mutation_response
+
+  """
+  update single row of the table: "e_game_plugin_channels"
+  """
+  update_e_game_plugin_channels_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_game_plugin_channels_set_input
+    pk_columns: e_game_plugin_channels_pk_columns_input!
+  ): e_game_plugin_channels
+
+  """
+  update multiples rows of table: "e_game_plugin_channels"
+  """
+  update_e_game_plugin_channels_many(
+    """updates to execute, in order"""
+    updates: [e_game_plugin_channels_updates!]!
+  ): [e_game_plugin_channels_mutation_response]
+
+  """
+  update data of the table: "e_game_plugin_install_statuses"
+  """
+  update_e_game_plugin_install_statuses(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_game_plugin_install_statuses_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_game_plugin_install_statuses_bool_exp!
+  ): e_game_plugin_install_statuses_mutation_response
+
+  """
+  update single row of the table: "e_game_plugin_install_statuses"
+  """
+  update_e_game_plugin_install_statuses_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_game_plugin_install_statuses_set_input
+    pk_columns: e_game_plugin_install_statuses_pk_columns_input!
+  ): e_game_plugin_install_statuses
+
+  """
+  update multiples rows of table: "e_game_plugin_install_statuses"
+  """
+  update_e_game_plugin_install_statuses_many(
+    """updates to execute, in order"""
+    updates: [e_game_plugin_install_statuses_updates!]!
+  ): [e_game_plugin_install_statuses_mutation_response]
+
+  """
+  update data of the table: "e_game_plugin_kinds"
+  """
+  update_e_game_plugin_kinds(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_game_plugin_kinds_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_game_plugin_kinds_bool_exp!
+  ): e_game_plugin_kinds_mutation_response
+
+  """
+  update single row of the table: "e_game_plugin_kinds"
+  """
+  update_e_game_plugin_kinds_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_game_plugin_kinds_set_input
+    pk_columns: e_game_plugin_kinds_pk_columns_input!
+  ): e_game_plugin_kinds
+
+  """
+  update multiples rows of table: "e_game_plugin_kinds"
+  """
+  update_e_game_plugin_kinds_many(
+    """updates to execute, in order"""
+    updates: [e_game_plugin_kinds_updates!]!
+  ): [e_game_plugin_kinds_mutation_response]
 
   """
   update data of the table: "e_game_server_node_statuses"
@@ -45680,6 +49816,270 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [friends_updates!]!
   ): [friends_mutation_response]
+
+  """
+  update data of the table: "game_mode_plugins"
+  """
+  update_game_mode_plugins(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: game_mode_plugins_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: game_mode_plugins_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: game_mode_plugins_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: game_mode_plugins_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: game_mode_plugins_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: game_mode_plugins_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_mode_plugins_set_input
+
+    """filter the rows which have to be updated"""
+    where: game_mode_plugins_bool_exp!
+  ): game_mode_plugins_mutation_response
+
+  """
+  update single row of the table: "game_mode_plugins"
+  """
+  update_game_mode_plugins_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: game_mode_plugins_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: game_mode_plugins_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: game_mode_plugins_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: game_mode_plugins_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: game_mode_plugins_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: game_mode_plugins_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_mode_plugins_set_input
+    pk_columns: game_mode_plugins_pk_columns_input!
+  ): game_mode_plugins
+
+  """
+  update multiples rows of table: "game_mode_plugins"
+  """
+  update_game_mode_plugins_many(
+    """updates to execute, in order"""
+    updates: [game_mode_plugins_updates!]!
+  ): [game_mode_plugins_mutation_response]
+
+  """
+  update data of the table: "game_modes"
+  """
+  update_game_modes(
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_modes_set_input
+
+    """filter the rows which have to be updated"""
+    where: game_modes_bool_exp!
+  ): game_modes_mutation_response
+
+  """
+  update single row of the table: "game_modes"
+  """
+  update_game_modes_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_modes_set_input
+    pk_columns: game_modes_pk_columns_input!
+  ): game_modes
+
+  """
+  update multiples rows of table: "game_modes"
+  """
+  update_game_modes_many(
+    """updates to execute, in order"""
+    updates: [game_modes_updates!]!
+  ): [game_modes_mutation_response]
+
+  """
+  update data of the table: "game_plugin_installs"
+  """
+  update_game_plugin_installs(
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_plugin_installs_set_input
+
+    """filter the rows which have to be updated"""
+    where: game_plugin_installs_bool_exp!
+  ): game_plugin_installs_mutation_response
+
+  """
+  update single row of the table: "game_plugin_installs"
+  """
+  update_game_plugin_installs_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_plugin_installs_set_input
+    pk_columns: game_plugin_installs_pk_columns_input!
+  ): game_plugin_installs
+
+  """
+  update multiples rows of table: "game_plugin_installs"
+  """
+  update_game_plugin_installs_many(
+    """updates to execute, in order"""
+    updates: [game_plugin_installs_updates!]!
+  ): [game_plugin_installs_mutation_response]
+
+  """
+  update data of the table: "game_plugin_versions"
+  """
+  update_game_plugin_versions(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: game_plugin_versions_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_plugin_versions_set_input
+
+    """filter the rows which have to be updated"""
+    where: game_plugin_versions_bool_exp!
+  ): game_plugin_versions_mutation_response
+
+  """
+  update single row of the table: "game_plugin_versions"
+  """
+  update_game_plugin_versions_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: game_plugin_versions_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_plugin_versions_set_input
+    pk_columns: game_plugin_versions_pk_columns_input!
+  ): game_plugin_versions
+
+  """
+  update multiples rows of table: "game_plugin_versions"
+  """
+  update_game_plugin_versions_many(
+    """updates to execute, in order"""
+    updates: [game_plugin_versions_updates!]!
+  ): [game_plugin_versions_mutation_response]
+
+  """
+  update data of the table: "game_plugins"
+  """
+  update_game_plugins(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: game_plugins_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: game_plugins_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: game_plugins_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: game_plugins_delete_key_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: game_plugins_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_plugins_set_input
+
+    """filter the rows which have to be updated"""
+    where: game_plugins_bool_exp!
+  ): game_plugins_mutation_response
+
+  """
+  update single row of the table: "game_plugins"
+  """
+  update_game_plugins_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: game_plugins_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: game_plugins_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: game_plugins_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: game_plugins_delete_key_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: game_plugins_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_plugins_set_input
+    pk_columns: game_plugins_pk_columns_input!
+  ): game_plugins
+
+  """
+  update multiples rows of table: "game_plugins"
+  """
+  update_game_plugins_many(
+    """updates to execute, in order"""
+    updates: [game_plugins_updates!]!
+  ): [game_plugins_mutation_response]
+
+  """
+  update data of the table: "game_server_node_plugins"
+  """
+  update_game_server_node_plugins(
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_server_node_plugins_set_input
+
+    """filter the rows which have to be updated"""
+    where: game_server_node_plugins_bool_exp!
+  ): game_server_node_plugins_mutation_response
+
+  """
+  update single row of the table: "game_server_node_plugins"
+  """
+  update_game_server_node_plugins_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: game_server_node_plugins_set_input
+    pk_columns: game_server_node_plugins_pk_columns_input!
+  ): game_server_node_plugins
+
+  """
+  update multiples rows of table: "game_server_node_plugins"
+  """
+  update_game_server_node_plugins_many(
+    """updates to execute, in order"""
+    updates: [game_server_node_plugins_updates!]!
+  ): [game_server_node_plugins_mutation_response]
 
   """
   update data of the table: "game_server_nodes"
@@ -48130,8 +52530,29 @@ type mutation_root {
   update data of the table: "servers"
   """
   update_servers(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: servers_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: servers_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: servers_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: servers_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: servers_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: servers_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: servers_set_input
@@ -48144,8 +52565,29 @@ type mutation_root {
   update single row of the table: "servers"
   """
   update_servers_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: servers_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: servers_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: servers_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: servers_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: servers_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: servers_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: servers_set_input
@@ -72522,6 +76964,141 @@ type query_root {
   e_game_cfg_types_by_pk(value: String!): e_game_cfg_types
 
   """
+  fetch data from the table: "e_game_plugin_channels"
+  """
+  e_game_plugin_channels(
+    """distinct select on columns"""
+    distinct_on: [e_game_plugin_channels_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_plugin_channels_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_plugin_channels_bool_exp
+  ): [e_game_plugin_channels!]!
+
+  """
+  fetch aggregated fields from the table: "e_game_plugin_channels"
+  """
+  e_game_plugin_channels_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_game_plugin_channels_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_plugin_channels_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_plugin_channels_bool_exp
+  ): e_game_plugin_channels_aggregate!
+
+  """
+  fetch data from the table: "e_game_plugin_channels" using primary key columns
+  """
+  e_game_plugin_channels_by_pk(value: String!): e_game_plugin_channels
+
+  """
+  fetch data from the table: "e_game_plugin_install_statuses"
+  """
+  e_game_plugin_install_statuses(
+    """distinct select on columns"""
+    distinct_on: [e_game_plugin_install_statuses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_plugin_install_statuses_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_plugin_install_statuses_bool_exp
+  ): [e_game_plugin_install_statuses!]!
+
+  """
+  fetch aggregated fields from the table: "e_game_plugin_install_statuses"
+  """
+  e_game_plugin_install_statuses_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_game_plugin_install_statuses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_plugin_install_statuses_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_plugin_install_statuses_bool_exp
+  ): e_game_plugin_install_statuses_aggregate!
+
+  """
+  fetch data from the table: "e_game_plugin_install_statuses" using primary key columns
+  """
+  e_game_plugin_install_statuses_by_pk(value: String!): e_game_plugin_install_statuses
+
+  """
+  fetch data from the table: "e_game_plugin_kinds"
+  """
+  e_game_plugin_kinds(
+    """distinct select on columns"""
+    distinct_on: [e_game_plugin_kinds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_plugin_kinds_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_plugin_kinds_bool_exp
+  ): [e_game_plugin_kinds!]!
+
+  """
+  fetch aggregated fields from the table: "e_game_plugin_kinds"
+  """
+  e_game_plugin_kinds_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_game_plugin_kinds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_plugin_kinds_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_plugin_kinds_bool_exp
+  ): e_game_plugin_kinds_aggregate!
+
+  """
+  fetch data from the table: "e_game_plugin_kinds" using primary key columns
+  """
+  e_game_plugin_kinds_by_pk(value: String!): e_game_plugin_kinds
+
+  """
   fetch data from the table: "e_game_server_node_statuses"
   """
   e_game_server_node_statuses(
@@ -74383,6 +78960,272 @@ type query_root {
   """fetch data from the table: "friends" using primary key columns"""
   friends_by_pk(other_player_steam_id: bigint!, player_steam_id: bigint!): friends
 
+  """
+  fetch data from the table: "game_mode_plugins"
+  """
+  game_mode_plugins(
+    """distinct select on columns"""
+    distinct_on: [game_mode_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_mode_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_mode_plugins_bool_exp
+  ): [game_mode_plugins!]!
+
+  """
+  fetch aggregated fields from the table: "game_mode_plugins"
+  """
+  game_mode_plugins_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_mode_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_mode_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_mode_plugins_bool_exp
+  ): game_mode_plugins_aggregate!
+
+  """
+  fetch data from the table: "game_mode_plugins" using primary key columns
+  """
+  game_mode_plugins_by_pk(game_mode_id: uuid!, plugin_slug: String!): game_mode_plugins
+
+  """
+  fetch data from the table: "game_modes"
+  """
+  game_modes(
+    """distinct select on columns"""
+    distinct_on: [game_modes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_modes_order_by!]
+
+    """filter the rows returned"""
+    where: game_modes_bool_exp
+  ): [game_modes!]!
+
+  """
+  fetch aggregated fields from the table: "game_modes"
+  """
+  game_modes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_modes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_modes_order_by!]
+
+    """filter the rows returned"""
+    where: game_modes_bool_exp
+  ): game_modes_aggregate!
+
+  """fetch data from the table: "game_modes" using primary key columns"""
+  game_modes_by_pk(id: uuid!): game_modes
+
+  """
+  fetch data from the table: "game_plugin_installs"
+  """
+  game_plugin_installs(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_installs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_installs_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_installs_bool_exp
+  ): [game_plugin_installs!]!
+
+  """
+  fetch aggregated fields from the table: "game_plugin_installs"
+  """
+  game_plugin_installs_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_installs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_installs_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_installs_bool_exp
+  ): game_plugin_installs_aggregate!
+
+  """
+  fetch data from the table: "game_plugin_installs" using primary key columns
+  """
+  game_plugin_installs_by_pk(plugin_slug: String!): game_plugin_installs
+
+  """
+  fetch data from the table: "game_plugin_versions"
+  """
+  game_plugin_versions(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_versions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_versions_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_versions_bool_exp
+  ): [game_plugin_versions!]!
+
+  """
+  fetch aggregated fields from the table: "game_plugin_versions"
+  """
+  game_plugin_versions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_versions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_versions_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_versions_bool_exp
+  ): game_plugin_versions_aggregate!
+
+  """
+  fetch data from the table: "game_plugin_versions" using primary key columns
+  """
+  game_plugin_versions_by_pk(plugin_slug: String!, runtime: e_plugin_runtimes_enum!, version: String!): game_plugin_versions
+
+  """
+  fetch data from the table: "game_plugins"
+  """
+  game_plugins(
+    """distinct select on columns"""
+    distinct_on: [game_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugins_bool_exp
+  ): [game_plugins!]!
+
+  """
+  fetch aggregated fields from the table: "game_plugins"
+  """
+  game_plugins_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugins_bool_exp
+  ): game_plugins_aggregate!
+
+  """fetch data from the table: "game_plugins" using primary key columns"""
+  game_plugins_by_pk(slug: String!): game_plugins
+
+  """
+  fetch data from the table: "game_server_node_plugins"
+  """
+  game_server_node_plugins(
+    """distinct select on columns"""
+    distinct_on: [game_server_node_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_server_node_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_server_node_plugins_bool_exp
+  ): [game_server_node_plugins!]!
+
+  """
+  fetch aggregated fields from the table: "game_server_node_plugins"
+  """
+  game_server_node_plugins_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_server_node_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_server_node_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_server_node_plugins_bool_exp
+  ): game_server_node_plugins_aggregate!
+
+  """
+  fetch data from the table: "game_server_node_plugins" using primary key columns
+  """
+  game_server_node_plugins_by_pk(id: uuid!): game_server_node_plugins
+
   """An array relationship"""
   game_server_nodes(
     """distinct select on columns"""
@@ -75750,9 +80593,7 @@ type query_root {
   """fetch data from the table: "match_maps" using primary key columns"""
   match_maps_by_pk(id: uuid!): match_maps
 
-  """
-  fetch data from the table: "match_options"
-  """
+  """An array relationship"""
   match_options(
     """distinct select on columns"""
     distinct_on: [match_options_select_column!]
@@ -75770,9 +80611,7 @@ type query_root {
     where: match_options_bool_exp
   ): [match_options!]!
 
-  """
-  fetch aggregated fields from the table: "match_options"
-  """
+  """An aggregate relationship"""
   match_options_aggregate(
     """distinct select on columns"""
     distinct_on: [match_options_select_column!]
@@ -80813,12 +85652,20 @@ type servers {
   game: String
 
   """An object relationship"""
+  game_mode: game_modes
+  game_mode_id: uuid
+
+  """An object relationship"""
   game_server_node: game_server_nodes
   game_server_node_id: String
   host: String!
   id: uuid!
   is_dedicated: Boolean!
   label: String!
+  loaded_plugins(
+    """JSON select path"""
+    path: String
+  ): jsonb
 
   """An array relationship"""
   matches(
@@ -80859,6 +85706,7 @@ type servers {
   offline_at: timestamptz
   plugin_runtime: e_plugin_runtimes_enum
   plugin_version: String
+  plugins_checked_at: timestamptz
   port: Int!
   rcon_password: bytea!
   rcon_status: Boolean
@@ -80942,6 +85790,11 @@ input servers_aggregate_order_by {
   variance: servers_variance_order_by
 }
 
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input servers_append_input {
+  loaded_plugins: jsonb
+}
+
 """
 input type for inserting array relation for remote table "servers"
 """
@@ -80985,18 +85838,22 @@ input servers_bool_exp {
   current_match: matches_bool_exp
   enabled: Boolean_comparison_exp
   game: String_comparison_exp
+  game_mode: game_modes_bool_exp
+  game_mode_id: uuid_comparison_exp
   game_server_node: game_server_nodes_bool_exp
   game_server_node_id: String_comparison_exp
   host: String_comparison_exp
   id: uuid_comparison_exp
   is_dedicated: Boolean_comparison_exp
   label: String_comparison_exp
+  loaded_plugins: jsonb_comparison_exp
   matches: matches_bool_exp
   matches_aggregate: matches_aggregate_bool_exp
   max_players: Int_comparison_exp
   offline_at: timestamptz_comparison_exp
   plugin_runtime: e_plugin_runtimes_enum_comparison_exp
   plugin_version: String_comparison_exp
+  plugins_checked_at: timestamptz_comparison_exp
   port: Int_comparison_exp
   rcon_password: bytea_comparison_exp
   rcon_status: Boolean_comparison_exp
@@ -81025,6 +85882,27 @@ enum servers_constraint {
 }
 
 """
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input servers_delete_at_path_input {
+  loaded_plugins: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input servers_delete_elem_input {
+  loaded_plugins: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input servers_delete_key_input {
+  loaded_plugins: String
+}
+
+"""
 input type for incrementing numeric columns in table "servers"
 """
 input servers_inc_input {
@@ -81045,17 +85923,21 @@ input servers_insert_input {
   current_match: matches_obj_rel_insert_input
   enabled: Boolean
   game: String
+  game_mode: game_modes_obj_rel_insert_input
+  game_mode_id: uuid
   game_server_node: game_server_nodes_obj_rel_insert_input
   game_server_node_id: String
   host: String
   id: uuid
   is_dedicated: Boolean
   label: String
+  loaded_plugins: jsonb
   matches: matches_arr_rel_insert_input
   max_players: Int
   offline_at: timestamptz
   plugin_runtime: e_plugin_runtimes_enum
   plugin_version: String
+  plugins_checked_at: timestamptz
   port: Int
   rcon_password: bytea
   rcon_status: Boolean
@@ -81085,6 +85967,7 @@ type servers_max_fields {
   """
   connection_string: String
   game: String
+  game_mode_id: uuid
   game_server_node_id: String
   host: String
   id: uuid
@@ -81092,6 +85975,7 @@ type servers_max_fields {
   max_players: Int
   offline_at: timestamptz
   plugin_version: String
+  plugins_checked_at: timestamptz
   port: Int
   region: String
   reserved_by_match_id: uuid
@@ -81109,6 +85993,7 @@ input servers_max_order_by {
   boot_status_detail: order_by
   connect_password: order_by
   game: order_by
+  game_mode_id: order_by
   game_server_node_id: order_by
   host: order_by
   id: order_by
@@ -81116,6 +86001,7 @@ input servers_max_order_by {
   max_players: order_by
   offline_at: order_by
   plugin_version: order_by
+  plugins_checked_at: order_by
   port: order_by
   region: order_by
   reserved_by_match_id: order_by
@@ -81141,6 +86027,7 @@ type servers_min_fields {
   """
   connection_string: String
   game: String
+  game_mode_id: uuid
   game_server_node_id: String
   host: String
   id: uuid
@@ -81148,6 +86035,7 @@ type servers_min_fields {
   max_players: Int
   offline_at: timestamptz
   plugin_version: String
+  plugins_checked_at: timestamptz
   port: Int
   region: String
   reserved_by_match_id: uuid
@@ -81165,6 +86053,7 @@ input servers_min_order_by {
   boot_status_detail: order_by
   connect_password: order_by
   game: order_by
+  game_mode_id: order_by
   game_server_node_id: order_by
   host: order_by
   id: order_by
@@ -81172,6 +86061,7 @@ input servers_min_order_by {
   max_players: order_by
   offline_at: order_by
   plugin_version: order_by
+  plugins_checked_at: order_by
   port: order_by
   region: order_by
   reserved_by_match_id: order_by
@@ -81222,17 +86112,21 @@ input servers_order_by {
   current_match: matches_order_by
   enabled: order_by
   game: order_by
+  game_mode: game_modes_order_by
+  game_mode_id: order_by
   game_server_node: game_server_nodes_order_by
   game_server_node_id: order_by
   host: order_by
   id: order_by
   is_dedicated: order_by
   label: order_by
+  loaded_plugins: order_by
   matches_aggregate: matches_aggregate_order_by
   max_players: order_by
   offline_at: order_by
   plugin_runtime: order_by
   plugin_version: order_by
+  plugins_checked_at: order_by
   port: order_by
   rcon_password: order_by
   rcon_status: order_by
@@ -81248,6 +86142,11 @@ input servers_order_by {
 """primary key columns input for table: servers"""
 input servers_pk_columns_input {
   id: uuid!
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input servers_prepend_input {
+  loaded_plugins: jsonb
 }
 
 """
@@ -81276,6 +86175,9 @@ enum servers_select_column {
   game
 
   """column name"""
+  game_mode_id
+
+  """column name"""
   game_server_node_id
 
   """column name"""
@@ -81291,6 +86193,9 @@ enum servers_select_column {
   label
 
   """column name"""
+  loaded_plugins
+
+  """column name"""
   max_players
 
   """column name"""
@@ -81301,6 +86206,9 @@ enum servers_select_column {
 
   """column name"""
   plugin_version
+
+  """column name"""
+  plugins_checked_at
 
   """column name"""
   port
@@ -81375,15 +86283,18 @@ input servers_set_input {
   connected: Boolean
   enabled: Boolean
   game: String
+  game_mode_id: uuid
   game_server_node_id: String
   host: String
   id: uuid
   is_dedicated: Boolean
   label: String
+  loaded_plugins: jsonb
   max_players: Int
   offline_at: timestamptz
   plugin_runtime: e_plugin_runtimes_enum
   plugin_version: String
+  plugins_checked_at: timestamptz
   port: Int
   rcon_password: bytea
   rcon_status: Boolean
@@ -81463,15 +86374,18 @@ input servers_stream_cursor_value_input {
   connected: Boolean
   enabled: Boolean
   game: String
+  game_mode_id: uuid
   game_server_node_id: String
   host: String
   id: uuid
   is_dedicated: Boolean
   label: String
+  loaded_plugins: jsonb
   max_players: Int
   offline_at: timestamptz
   plugin_runtime: e_plugin_runtimes_enum
   plugin_version: String
+  plugins_checked_at: timestamptz
   port: Int
   rcon_password: bytea
   rcon_status: Boolean
@@ -81525,6 +86439,9 @@ enum servers_update_column {
   game
 
   """column name"""
+  game_mode_id
+
+  """column name"""
   game_server_node_id
 
   """column name"""
@@ -81540,6 +86457,9 @@ enum servers_update_column {
   label
 
   """column name"""
+  loaded_plugins
+
+  """column name"""
   max_players
 
   """column name"""
@@ -81550,6 +86470,9 @@ enum servers_update_column {
 
   """column name"""
   plugin_version
+
+  """column name"""
+  plugins_checked_at
 
   """column name"""
   port
@@ -81580,8 +86503,29 @@ enum servers_update_column {
 }
 
 input servers_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: servers_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: servers_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: servers_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: servers_delete_key_input
+
   """increments the numeric columns with given value of the filtered values"""
   _inc: servers_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: servers_prepend_input
 
   """sets the columns of the filtered rows to the given values"""
   _set: servers_set_input
@@ -83982,6 +88926,183 @@ type subscription_root {
     """filter the rows returned"""
     where: e_game_cfg_types_bool_exp
   ): [e_game_cfg_types!]!
+
+  """
+  fetch data from the table: "e_game_plugin_channels"
+  """
+  e_game_plugin_channels(
+    """distinct select on columns"""
+    distinct_on: [e_game_plugin_channels_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_plugin_channels_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_plugin_channels_bool_exp
+  ): [e_game_plugin_channels!]!
+
+  """
+  fetch aggregated fields from the table: "e_game_plugin_channels"
+  """
+  e_game_plugin_channels_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_game_plugin_channels_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_plugin_channels_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_plugin_channels_bool_exp
+  ): e_game_plugin_channels_aggregate!
+
+  """
+  fetch data from the table: "e_game_plugin_channels" using primary key columns
+  """
+  e_game_plugin_channels_by_pk(value: String!): e_game_plugin_channels
+
+  """
+  fetch data from the table in a streaming manner: "e_game_plugin_channels"
+  """
+  e_game_plugin_channels_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_game_plugin_channels_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_game_plugin_channels_bool_exp
+  ): [e_game_plugin_channels!]!
+
+  """
+  fetch data from the table: "e_game_plugin_install_statuses"
+  """
+  e_game_plugin_install_statuses(
+    """distinct select on columns"""
+    distinct_on: [e_game_plugin_install_statuses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_plugin_install_statuses_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_plugin_install_statuses_bool_exp
+  ): [e_game_plugin_install_statuses!]!
+
+  """
+  fetch aggregated fields from the table: "e_game_plugin_install_statuses"
+  """
+  e_game_plugin_install_statuses_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_game_plugin_install_statuses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_plugin_install_statuses_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_plugin_install_statuses_bool_exp
+  ): e_game_plugin_install_statuses_aggregate!
+
+  """
+  fetch data from the table: "e_game_plugin_install_statuses" using primary key columns
+  """
+  e_game_plugin_install_statuses_by_pk(value: String!): e_game_plugin_install_statuses
+
+  """
+  fetch data from the table in a streaming manner: "e_game_plugin_install_statuses"
+  """
+  e_game_plugin_install_statuses_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_game_plugin_install_statuses_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_game_plugin_install_statuses_bool_exp
+  ): [e_game_plugin_install_statuses!]!
+
+  """
+  fetch data from the table: "e_game_plugin_kinds"
+  """
+  e_game_plugin_kinds(
+    """distinct select on columns"""
+    distinct_on: [e_game_plugin_kinds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_plugin_kinds_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_plugin_kinds_bool_exp
+  ): [e_game_plugin_kinds!]!
+
+  """
+  fetch aggregated fields from the table: "e_game_plugin_kinds"
+  """
+  e_game_plugin_kinds_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_game_plugin_kinds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_game_plugin_kinds_order_by!]
+
+    """filter the rows returned"""
+    where: e_game_plugin_kinds_bool_exp
+  ): e_game_plugin_kinds_aggregate!
+
+  """
+  fetch data from the table: "e_game_plugin_kinds" using primary key columns
+  """
+  e_game_plugin_kinds_by_pk(value: String!): e_game_plugin_kinds
+
+  """
+  fetch data from the table in a streaming manner: "e_game_plugin_kinds"
+  """
+  e_game_plugin_kinds_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_game_plugin_kinds_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_game_plugin_kinds_bool_exp
+  ): [e_game_plugin_kinds!]!
 
   """
   fetch data from the table: "e_game_server_node_statuses"
@@ -86433,6 +91554,356 @@ type subscription_root {
     where: friends_bool_exp
   ): [friends!]!
 
+  """
+  fetch data from the table: "game_mode_plugins"
+  """
+  game_mode_plugins(
+    """distinct select on columns"""
+    distinct_on: [game_mode_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_mode_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_mode_plugins_bool_exp
+  ): [game_mode_plugins!]!
+
+  """
+  fetch aggregated fields from the table: "game_mode_plugins"
+  """
+  game_mode_plugins_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_mode_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_mode_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_mode_plugins_bool_exp
+  ): game_mode_plugins_aggregate!
+
+  """
+  fetch data from the table: "game_mode_plugins" using primary key columns
+  """
+  game_mode_plugins_by_pk(game_mode_id: uuid!, plugin_slug: String!): game_mode_plugins
+
+  """
+  fetch data from the table in a streaming manner: "game_mode_plugins"
+  """
+  game_mode_plugins_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [game_mode_plugins_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: game_mode_plugins_bool_exp
+  ): [game_mode_plugins!]!
+
+  """
+  fetch data from the table: "game_modes"
+  """
+  game_modes(
+    """distinct select on columns"""
+    distinct_on: [game_modes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_modes_order_by!]
+
+    """filter the rows returned"""
+    where: game_modes_bool_exp
+  ): [game_modes!]!
+
+  """
+  fetch aggregated fields from the table: "game_modes"
+  """
+  game_modes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_modes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_modes_order_by!]
+
+    """filter the rows returned"""
+    where: game_modes_bool_exp
+  ): game_modes_aggregate!
+
+  """fetch data from the table: "game_modes" using primary key columns"""
+  game_modes_by_pk(id: uuid!): game_modes
+
+  """
+  fetch data from the table in a streaming manner: "game_modes"
+  """
+  game_modes_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [game_modes_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: game_modes_bool_exp
+  ): [game_modes!]!
+
+  """
+  fetch data from the table: "game_plugin_installs"
+  """
+  game_plugin_installs(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_installs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_installs_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_installs_bool_exp
+  ): [game_plugin_installs!]!
+
+  """
+  fetch aggregated fields from the table: "game_plugin_installs"
+  """
+  game_plugin_installs_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_installs_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_installs_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_installs_bool_exp
+  ): game_plugin_installs_aggregate!
+
+  """
+  fetch data from the table: "game_plugin_installs" using primary key columns
+  """
+  game_plugin_installs_by_pk(plugin_slug: String!): game_plugin_installs
+
+  """
+  fetch data from the table in a streaming manner: "game_plugin_installs"
+  """
+  game_plugin_installs_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [game_plugin_installs_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: game_plugin_installs_bool_exp
+  ): [game_plugin_installs!]!
+
+  """
+  fetch data from the table: "game_plugin_versions"
+  """
+  game_plugin_versions(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_versions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_versions_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_versions_bool_exp
+  ): [game_plugin_versions!]!
+
+  """
+  fetch aggregated fields from the table: "game_plugin_versions"
+  """
+  game_plugin_versions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_plugin_versions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugin_versions_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugin_versions_bool_exp
+  ): game_plugin_versions_aggregate!
+
+  """
+  fetch data from the table: "game_plugin_versions" using primary key columns
+  """
+  game_plugin_versions_by_pk(plugin_slug: String!, runtime: e_plugin_runtimes_enum!, version: String!): game_plugin_versions
+
+  """
+  fetch data from the table in a streaming manner: "game_plugin_versions"
+  """
+  game_plugin_versions_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [game_plugin_versions_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: game_plugin_versions_bool_exp
+  ): [game_plugin_versions!]!
+
+  """
+  fetch data from the table: "game_plugins"
+  """
+  game_plugins(
+    """distinct select on columns"""
+    distinct_on: [game_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugins_bool_exp
+  ): [game_plugins!]!
+
+  """
+  fetch aggregated fields from the table: "game_plugins"
+  """
+  game_plugins_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_plugins_bool_exp
+  ): game_plugins_aggregate!
+
+  """fetch data from the table: "game_plugins" using primary key columns"""
+  game_plugins_by_pk(slug: String!): game_plugins
+
+  """
+  fetch data from the table in a streaming manner: "game_plugins"
+  """
+  game_plugins_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [game_plugins_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: game_plugins_bool_exp
+  ): [game_plugins!]!
+
+  """
+  fetch data from the table: "game_server_node_plugins"
+  """
+  game_server_node_plugins(
+    """distinct select on columns"""
+    distinct_on: [game_server_node_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_server_node_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_server_node_plugins_bool_exp
+  ): [game_server_node_plugins!]!
+
+  """
+  fetch aggregated fields from the table: "game_server_node_plugins"
+  """
+  game_server_node_plugins_aggregate(
+    """distinct select on columns"""
+    distinct_on: [game_server_node_plugins_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [game_server_node_plugins_order_by!]
+
+    """filter the rows returned"""
+    where: game_server_node_plugins_bool_exp
+  ): game_server_node_plugins_aggregate!
+
+  """
+  fetch data from the table: "game_server_node_plugins" using primary key columns
+  """
+  game_server_node_plugins_by_pk(id: uuid!): game_server_node_plugins
+
+  """
+  fetch data from the table in a streaming manner: "game_server_node_plugins"
+  """
+  game_server_node_plugins_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [game_server_node_plugins_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: game_server_node_plugins_bool_exp
+  ): [game_server_node_plugins!]!
+
   """An array relationship"""
   game_server_nodes(
     """distinct select on columns"""
@@ -88112,9 +93583,7 @@ type subscription_root {
     where: match_maps_bool_exp
   ): [match_maps!]!
 
-  """
-  fetch data from the table: "match_options"
-  """
+  """An array relationship"""
   match_options(
     """distinct select on columns"""
     distinct_on: [match_options_select_column!]
@@ -88132,9 +93601,7 @@ type subscription_root {
     where: match_options_bool_exp
   ): [match_options!]!
 
-  """
-  fetch aggregated fields from the table: "match_options"
-  """
+  """An aggregate relationship"""
   match_options_aggregate(
     """distinct select on columns"""
     distinct_on: [match_options_select_column!]

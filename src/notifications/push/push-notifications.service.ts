@@ -966,7 +966,11 @@ export class PushNotificationsService {
       "SendPushDelivery",
       { steamId, thread },
       {
-        jobId: `push-trail.${steamId}.${thread}.${token}`,
+        // Encoded, not interpolated raw: BullMQ rejects a custom id
+        // containing ":", and every thread key is colon-joined
+        // (`chat:match:m-1`). Encoding keeps threads that differ only in a
+        // colon on separate jobs, which stripping would not.
+        jobId: `push-trail.${steamId}.${encodeURIComponent(thread)}.${token}`,
         delay: Math.max(ttl, 1) * 1000,
         // Not `{ age }`: a completed job holding its id would stop the next
         // window with the same token from ever being scheduled.

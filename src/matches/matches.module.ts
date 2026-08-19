@@ -11,6 +11,7 @@ import { MatchAssistantService } from "./match-assistant/match-assistant.service
 import { HasuraModule } from "../hasura/hasura.module";
 import { RconModule } from "../rcon/rcon.module";
 import { PluginRuntimeModule } from "../plugin-runtime/plugin-runtime.module";
+import { GamePluginsModule } from "../game-plugins/game-plugins.module";
 import { CacheModule } from "../cache/cache.module";
 import { RedisModule } from "../redis/redis.module";
 import { S3Module } from "../s3/s3.module";
@@ -99,6 +100,7 @@ import { CameraMonitorService } from "./camera/camera-monitor.service";
     ChatModule,
     LeaguesModule,
     PluginRuntimeModule,
+    GamePluginsModule,
     BullModule.registerQueue(
       {
         name: MatchQueues.MatchServers,

@@ -27,6 +27,13 @@ object_relationships:
           name: game_versions
           schema: public
 array_relationships:
+  - name: plugins
+    using:
+      foreign_key_constraint_on:
+        column: game_server_node_id
+        table:
+          name: game_server_node_plugins
+          schema: public
   - name: servers
     using:
       foreign_key_constraint_on:
@@ -82,6 +89,7 @@ select_permissions:
         - pin_build_id
         - pin_plugin_runtime
         - pin_plugin_version
+        - plugins_synced_at
         - public_ip
         - region
         - shader_bake_progress

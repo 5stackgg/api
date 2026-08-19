@@ -71,6 +71,9 @@ describe("MatchAssistantService", () => {
         ),
         resolvePluginRuntime: jest.fn(async () => "swiftlys2"),
       } as any,
+      {
+        resolveForServer: jest.fn(async (): Promise<null> => null),
+      } as any,
       queue as any,
       scheduledMatchesQueue as any,
     );

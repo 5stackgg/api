@@ -1155,6 +1155,62 @@ actions:
       forward_client_headers: true
     permissions:
       - role: administrator
+  - name: syncPluginRegistry
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Pull the game plugin registry into this panel's catalog
+  - name: getPluginReadme
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Fetch a plugin's README from its repository
+  - name: installGamePlugin
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Install a game plugin into a node's plugin store
+  - name: uninstallGamePlugin
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Remove a game plugin from a node's plugin store
+  - name: reconcileNodePlugins
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Re-read which plugins are actually on a node
+  - name: addCustomGamePlugin
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Add a game plugin the registry does not carry, from a release URL
+  - name: previewGameMode
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Resolve a game mode into the plugins and cfg a server would load
   - name: validateGamedata
     definition:
       kind: synchronous

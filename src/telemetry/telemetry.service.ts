@@ -8,6 +8,7 @@ import { SystemService } from "src/system/system.service";
 import { CacheService } from "src/cache/cache.service";
 import {
   TelemetryCompetition,
+  TelemetryPlugins,
   TelemetryFeature,
   TelemetryPayload,
   TELEMETRY_SCHEMA_VERSION,
@@ -254,8 +255,38 @@ export class TelemetryService {
         events: counts.events,
         event_teams: counts.event_teams,
       },
+      plugins: {
+        requested: counts.plugins_requested,
+        by_slug: await this.pluginInstallsBySlug(),
+        manual: counts.plugins_manual,
+        modes: counts.game_modes,
+        modes_enabled: counts.game_modes_enabled,
+        modes_unranked: counts.game_modes_unranked,
+      },
       features: this.buildFeatures(settings, counts),
     };
+  }
+
+  // Named counts, unlike everything else in the payload. Ranking the catalog by
+  // what operators actually run is the only reason this section exists, and a
+  // total without slugs cannot do it. Only catalog plugins appear: a hand-placed
+  // folder is counted under `manual` instead, since its name means nothing to
+  // anyone else.
+  private async pluginInstallsBySlug(): Promise<Record<string, number>> {
+    const rows = await this.postgres.query<
+      Array<{ plugin_slug: string; nodes: number }>
+    >(
+      `SELECT n.plugin_slug, count(DISTINCT n.game_server_node_id)::int AS nodes
+         FROM public.game_server_node_plugins n
+        WHERE n.source = 'managed'
+          AND n.detected = true
+          AND EXISTS (
+            SELECT 1 FROM public.game_plugins p WHERE p.slug = n.plugin_slug
+          )
+        GROUP BY n.plugin_slug`,
+    );
+
+    return Object.fromEntries(rows.map((row) => [row.plugin_slug, row.nodes]));
   }
 
   async record(ip: string, country: string, data: unknown) {
@@ -433,13 +464,41 @@ export class TelemetryService {
          coalesce(sum((payload->'competition'->>'league_teams')::numeric), 0)          AS "leagueTeams",
          coalesce(sum((payload->'competition'->>'scrim_requests')::numeric), 0)        AS "scrimRequests",
          coalesce(sum((payload->'competition'->>'events')::numeric), 0)                AS events,
-         coalesce(sum((payload->'competition'->>'event_teams')::numeric), 0)           AS "eventTeams"
+         coalesce(sum((payload->'competition'->>'event_teams')::numeric), 0)           AS "eventTeams",
+
+         -- Same "reported vs zero" split the match outcomes use: a panel too old
+         -- to send this section is not a panel running no plugins.
+         count(*) FILTER (WHERE jsonb_typeof(payload->'plugins') = 'object')           AS "pluginsReported",
+         coalesce(sum((payload->'plugins'->>'requested')::numeric), 0)                 AS "pluginsRequested",
+         coalesce(sum((payload->'plugins'->>'manual')::numeric), 0)                    AS "pluginsManual",
+         coalesce(sum((payload->'plugins'->>'modes')::numeric), 0)                     AS "gameModes",
+         coalesce(sum((payload->'plugins'->>'modes_enabled')::numeric), 0)             AS "gameModesEnabled",
+         coalesce(sum((payload->'plugins'->>'modes_unranked')::numeric), 0)            AS "gameModesUnranked",
+         -- Installs per plugin across the fleet, and how many separate panels
+         -- run each. The panel count is the honest popularity signal: one
+         -- operator with forty nodes is not forty operators.
+         (
+           SELECT coalesce(jsonb_object_agg(slug, counts), '{}'::jsonb)
+             FROM (
+               SELECT entry.key AS slug,
+                      jsonb_build_object(
+                        'nodes', sum((entry.value)::numeric),
+                        'panels', count(*)
+                      ) AS counts
+                 FROM public.telemetry_installs i
+                 CROSS JOIN LATERAL jsonb_each_text(
+                   coalesce(i.payload->'plugins'->'by_slug', '{}'::jsonb)
+                 ) AS entry
+                WHERE i.last_seen_at >= now() - interval '30 days'
+                GROUP BY entry.key
+             ) ranked
+         )                                                                             AS "pluginsBySlug"
        FROM public.telemetry_installs
        WHERE last_seen_at >= now() - interval '30 days'
          AND payload ? 'matches'`,
     );
 
-    return TelemetryService.toIntegers(row, [
+    const totals = TelemetryService.toIntegers(row, [
       "panels",
       "gameServerNodes",
       "gameServerNodesEnabled",
@@ -485,7 +544,20 @@ export class TelemetryService {
       "scrimRequests",
       "events",
       "eventTeams",
+      "pluginsReported",
+      "pluginsRequested",
+      "pluginsManual",
+      "gameModes",
+      "gameModesEnabled",
+      "gameModesUnranked",
     ]);
+
+    return {
+      ...totals,
+      // jsonb rather than a count, so it is not one of the coerced keys above
+      // and toIntegers would otherwise drop it.
+      pluginsBySlug: (row?.pluginsBySlug ?? {}) as Record<string, unknown>,
+    };
   }
 
   // Both breakdowns live in the payload already; nothing read them before, so
@@ -869,6 +941,7 @@ export class TelemetryService {
         teams: int(players.teams),
       },
       competition: TelemetryService.sanitizeCompetition(body.competition, int),
+      plugins: TelemetryService.sanitizePlugins(body.plugins, int),
       features: TelemetryService.sanitizeFeatures(body.features, int),
     };
   }
@@ -896,6 +969,41 @@ export class TelemetryService {
       scrim_requests: int(competition.scrim_requests),
       events: int(competition.events),
       event_teams: int(competition.event_teams),
+    };
+  }
+
+  // Same null-in-null-out rule as competition. by_slug is capped and its keys
+  // are shape-checked: this is the one section where a panel sends free-form
+  // strings, and they end up rendered on the fleet page.
+  private static sanitizePlugins(
+    value: unknown,
+    int: (value: unknown) => number,
+  ): TelemetryPlugins | null {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      return null;
+    }
+
+    const plugins = value as Record<string, any>;
+    const bySlug: Record<string, number> = {};
+    const source = plugins.by_slug;
+
+    if (source && typeof source === "object" && !Array.isArray(source)) {
+      for (const [slug, count] of Object.entries(source).slice(0, 200)) {
+        if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+          continue;
+        }
+
+        bySlug[slug] = int(count);
+      }
+    }
+
+    return {
+      requested: int(plugins.requested),
+      by_slug: bySlug,
+      manual: int(plugins.manual),
+      modes: int(plugins.modes),
+      modes_enabled: int(plugins.modes_enabled),
+      modes_unranked: int(plugins.modes_unranked),
     };
   }
 
@@ -1334,7 +1442,17 @@ export class TelemetryService {
         (SELECT count(*) FROM public.api_keys)                                           AS api_keys,
         (SELECT count(*) FROM public.gamedata_signature_validations)                     AS gamedata_validations,
         (SELECT count(*) FROM public.push_subscriptions)                                 AS push_subscriptions,
-        (SELECT count(*) FROM public.player_steam_bot_friend)                            AS steam_presence_friends
+        (SELECT count(*) FROM public.player_steam_bot_friend)                            AS steam_presence_friends,
+
+        (SELECT count(*) FROM public.game_plugin_installs WHERE enabled)                 AS plugins_requested,
+        -- source = 'manual' is a folder somebody dropped on a node by hand. It
+        -- has no catalog slug, so it can only ever be a count.
+        (SELECT count(*) FROM public.game_server_node_plugins WHERE source = 'manual')   AS plugins_manual,
+        (SELECT count(*) FROM public.game_modes WHERE archived_at IS NULL)               AS game_modes,
+        (SELECT count(*) FROM public.game_modes
+          WHERE archived_at IS NULL AND enabled)                                         AS game_modes_enabled,
+        (SELECT count(*) FROM public.game_modes
+          WHERE archived_at IS NULL AND competitive_safe = false)                        AS game_modes_unranked
       `,
     );
 

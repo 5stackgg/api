@@ -37,6 +37,8 @@ BEGIN
         NEW.regions = (SELECT array_agg(region) FROM servers where enabled = true);
     END IF;
 
+    PERFORM assert_game_mode_selectable(NEW.game_mode_id);
+
 	RETURN NEW;
 END;
 $$;
@@ -91,6 +93,13 @@ BEGIN
         IF (NEW.mr IS DISTINCT FROM OLD.mr AND _match_status = 'Live') THEN
             RAISE EXCEPTION 'Cannot modify mr during Live' USING ERRCODE = '22000';
         END IF;
+        IF (NEW.game_mode_id IS DISTINCT FROM OLD.game_mode_id) THEN
+            RAISE EXCEPTION 'Cannot modify game mode during Live/Veto' USING ERRCODE = '22000';
+        END IF;
+    END IF;
+
+    IF (NEW.game_mode_id IS DISTINCT FROM OLD.game_mode_id) THEN
+        PERFORM assert_game_mode_selectable(NEW.game_mode_id);
     END IF;
 
     RETURN NEW;

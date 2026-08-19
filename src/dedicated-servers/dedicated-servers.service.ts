@@ -11,6 +11,7 @@ import { RedisManagerService } from "src/redis/redis-manager/redis-manager.servi
 import { Redis } from "ioredis";
 import { SystemService } from "src/system/system.service";
 import { PluginRuntimeService } from "src/plugin-runtime/plugin-runtime.service";
+import { GameModesService } from "../game-plugins/game-modes.service";
 
 @Injectable()
 export class DedicatedServersService {
@@ -32,6 +33,7 @@ export class DedicatedServersService {
     private readonly redisManager: RedisManagerService,
     private readonly systemService: SystemService,
     private readonly pluginRuntimeService: PluginRuntimeService,
+    private readonly gameModesService: GameModesService,
   ) {
     this.redis = this.redisManager.getConnection();
 
@@ -156,6 +158,13 @@ export class DedicatedServersService {
         },
       });
 
+      // A Ranked server resolves to no mode by design, so matchmaking capacity
+      // always comes up on a clean plugin set.
+      const gameMode = await this.gameModesService.resolveForServer(serverId);
+
+      const gameModeEnvironment =
+        this.gameModesService.environmentFor(gameMode);
+
       const dedicatedServerDeploymentName =
         this.getDedicatedServerDeploymentName(serverId);
 
@@ -257,7 +266,7 @@ export class DedicatedServersService {
                       // TODO - number of players
                       {
                         name: "EXTRA_GAME_PARAMS",
-                        value: `-maxplayers ${server.type === "Ranked" ? 16 : server.max_players} +map de_dust2 +game_type ${this.getGameType(server.type)} +game_mode ${this.getGameMode(server.type)} +sv_skirmish_id ${this.getWarGameType(server.type)} ${server.connect_password ? ` +sv_password ${server.connect_password}` : ""}`,
+                        value: `-maxplayers ${server.type === "Ranked" ? 16 : server.max_players} +map de_dust2 +game_type ${this.getGameType(server.type)} +game_mode ${this.getGameMode(server.type)} +sv_skirmish_id ${this.getWarGameType(server.type)} ${server.connect_password ? ` +sv_password ${server.connect_password}` : ""}${gameMode?.extraGameParams ? ` ${gameMode.extraGameParams}` : ""}`,
                       },
                       { name: "SERVER_ID", value: server.id },
                       {
@@ -284,6 +293,7 @@ export class DedicatedServersService {
                         name: "STEAM_RELAY",
                         value: steamRelay ? "true" : "false",
                       },
+                      ...gameModeEnvironment,
                     ],
                     volumeMounts: [
                       {
@@ -301,6 +311,15 @@ export class DedicatedServersService {
                       {
                         name: `dedicated-server-data-${server.id}`,
                         mountPath: `/opt/custom-plugins`,
+                      },
+                      // A dedicated server only ever saw its own directory, so
+                      // a plugin installed on the node reached every on-demand
+                      // match server and none of these. Mounted read-write
+                      // because a plugin writes its config on first load and
+                      // that has to survive the pod.
+                      {
+                        name: `custom-plugins-${sanitizedGameServerNodeId}`,
+                        mountPath: `/opt/node-plugins`,
                       },
                     ],
                   },
@@ -325,16 +344,17 @@ export class DedicatedServersService {
                     },
                   },
                   {
-                    name: `custom-plugins-${sanitizedGameServerNodeId}`,
-                    hostPath: {
-                      path: `/opt/5stack/custom-plugins`,
-                    },
-                  },
-                  {
                     name: `dedicated-server-data-${server.id}`,
                     hostPath: {
                       type: "DirectoryOrCreate",
                       path: `/opt/5stack/servers/${server.id}`,
+                    },
+                  },
+                  {
+                    name: `custom-plugins-${sanitizedGameServerNodeId}`,
+                    hostPath: {
+                      type: "DirectoryOrCreate",
+                      path: `/opt/5stack/custom-plugins`,
                     },
                   },
                 ],

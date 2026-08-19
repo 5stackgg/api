@@ -1,4 +1,4 @@
-export const TELEMETRY_SCHEMA_VERSION = 3;
+export const TELEMETRY_SCHEMA_VERSION = 4;
 
 export type TelemetryFeature = {
   enabled: boolean | null;
@@ -80,7 +80,33 @@ export type TelemetryPayload = {
   // rather than zero-filled -- a fleet total that quietly counts non-reporters
   // as zeroes is the same lie as reporting a feature nobody measures as unused.
   competition: TelemetryCompetition | null;
+  // Which catalog plugins operators actually run. The registry says what
+  // exists; only this says what anybody chose, which is the one trust signal a
+  // directory can offer beyond a single maintainer's `verified` flag.
+  //
+  // Absent from a panel built before this section existed, rather than
+  // zero-filled: a panel running no plugins and a panel that cannot report them
+  // are different facts, and averaging the second in as zero understates every
+  // plugin in the catalog.
+  plugins: TelemetryPlugins | null;
   features: Record<string, TelemetryFeature>;
+};
+
+export type TelemetryPlugins = {
+  // Catalog plugins this panel has asked to be installed.
+  requested: number;
+  // slug -> how many of this panel's nodes actually have it on disk. Named
+  // rather than counted, because ranking the catalog is the whole point.
+  by_slug: Record<string, number>;
+  // Plugin folders found on nodes that the catalog does not know about --
+  // hand-placed, so unnameable. Counted only so the fleet view does not read
+  // as if managed installs were the whole story.
+  manual: number;
+  modes: number;
+  modes_enabled: number;
+  // Modes that are not competitive_safe, i.e. matches that deliberately do not
+  // count toward ranking.
+  modes_unranked: number;
 };
 
 // Match counts for each of these live under `matches`; this is the shape of the

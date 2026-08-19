@@ -29,6 +29,7 @@ import { game_server_nodes_set_input } from "generated/schema";
 import { NotificationsService } from "../notifications/notifications.service";
 import { DISCORD_COLORS } from "../notifications/utilities/constants";
 import { GameStreamerService } from "../matches/game-streamer/game-streamer.service";
+import { GamePluginsService } from "../game-plugins/game-plugins.service";
 
 @Controller("game-server-node")
 export class GameServerNodeController {
@@ -50,6 +51,7 @@ export class GameServerNodeController {
     @InjectQueue(GameServerQueues.GameUpdate) private gameUpdateQueue: Queue,
     @InjectQueue(GameServerQueues.NodeOffline)
     private readonly nodeOfflineQueue: Queue,
+    protected readonly gamePlugins: GamePluginsService,
     @InjectQueue(GameServerQueues.BakeShaders)
     private readonly bakeShadersQueue: Queue,
     @InjectQueue(GameServerQueues.ValidateGamedata)
@@ -937,6 +939,20 @@ UNIT
           __typename: true,
         },
       });
+
+      // Only on the transition into connected. Files on disk say nothing about
+      // whether a plugin loaded -- a CS2 update breaking signatures looks
+      // identical on the filesystem -- so ask the server itself, once, as it
+      // comes up.
+      if (!server.connected) {
+        void this.recordLoadedPlugins(String(serverId), pluginRuntime).catch(
+          (error: Error) => {
+            this.logger.warn(
+              `could not read loaded plugins from ${serverId}: ${error.message}`,
+            );
+          },
+        );
+      }
     }
 
     const jobId = `server-offline.${serverId}`;
@@ -954,6 +970,33 @@ UNIT
         removeOnComplete: true,
         jobId,
       },
+    );
+  }
+
+  // SwiftlyS2 routes `sw plugins list` to its own log sink and answers RCON with
+  // an empty body, so there is nothing to read back. Recorded as null -- not an
+  // empty list -- because reporting every plugin as failed to load would send an
+  // operator chasing something that is running perfectly well.
+  private async recordLoadedPlugins(
+    serverId: string,
+    runtime: PluginRuntime | null,
+  ): Promise<void> {
+    if (runtime !== "counterstrikesharp") {
+      await this.gamePlugins.recordLoadedPlugins(serverId, null);
+      return;
+    }
+
+    const connection = await this.rcon.connect(serverId);
+
+    if (!connection) {
+      return;
+    }
+
+    const output = await connection.send("css_plugins list");
+
+    await this.gamePlugins.recordLoadedPlugins(
+      serverId,
+      GamePluginsService.parseCssPluginList(output ?? ""),
     );
   }
 }

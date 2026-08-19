@@ -5,6 +5,7 @@ import { User } from "../auth/types/User";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import { safeJsonStringify } from "../utilities/safeJsonStringify";
 import { HasuraService } from "../hasura/hasura.service";
+import { GameModesService } from "../game-plugins/game-modes.service";
 import { MatchAssistantService } from "./match-assistant/match-assistant.service";
 import { DiscordBotOverviewService } from "../discord-bot/discord-bot-overview/discord-bot-overview.service";
 import { DiscordBotMessagingService } from "../discord-bot/discord-bot-messaging/discord-bot-messaging.service";
@@ -112,6 +113,7 @@ export class MatchesController {
     private readonly matchImport: MatchImportService,
     private readonly camera: CameraService,
     private readonly cameraMonitor: CameraMonitorService,
+    private readonly gameModesService: GameModesService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
   }
@@ -201,6 +203,7 @@ export class MatchesController {
           round_restart_delay: true,
           halftime_pausematch: true,
           camera_required: true,
+          game_mode_id: true,
         },
         match_maps: {
           id: true,
@@ -314,6 +317,7 @@ export class MatchesController {
         use_playcast: boolean;
         show_elo_ranks: boolean;
         cfg_overrides: Record<string, string>;
+        game_mode: { slug: string; name: string } | null;
       };
       lineup_1: typeof matches_by_pk.lineup_1 & {
         tag: string;
@@ -392,6 +396,24 @@ export class MatchesController {
         match.options.cfg_overrides[cfg.type] = cfg.cfg;
       }
     }
+
+    // The mode's cvars ride the same channel as the type cfgs: the plugin
+    // writes each override to 5stack.<key>.cfg and execs it after the type cfg,
+    // so a mode's settings land last and win.
+    const gameMode = match.options.game_mode_id
+      ? await this.gameModesService.resolve(
+          match.options.game_mode_id as string,
+        )
+      : null;
+
+    if (gameMode?.cfg) {
+      match.options.cfg_overrides = match.options.cfg_overrides ?? {};
+      match.options.cfg_overrides.Mode = gameMode.cfg;
+    }
+
+    match.options.game_mode = gameMode
+      ? { slug: gameMode.slug, name: gameMode.name }
+      : null;
 
     const tournamentBracket = match.tournament_brackets?.at(0);
     const lineup1TournamentTag: string | undefined =

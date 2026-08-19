@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { HasuraService } from "../../hasura/hasura.service";
 import { PluginRuntimeService } from "src/plugin-runtime/plugin-runtime.service";
+import { GameModesService } from "src/game-plugins/game-modes.service";
 import {
   BatchV1Api,
   CoreV1Api,
@@ -59,6 +60,7 @@ export class MatchAssistantService {
     private readonly encryption: EncryptionService,
     private readonly loggingService: LoggingService,
     private readonly pluginRuntimeService: PluginRuntimeService,
+    private readonly gameModesService: GameModesService,
     @InjectQueue(MatchQueues.MatchServers) private queue: Queue,
     @InjectQueue(MatchQueues.ScheduledMatches)
     private scheduledMatchesQueue: Queue,
@@ -796,6 +798,14 @@ export class MatchAssistantService {
 
           const showEloRanks = fivestackRanksSetting?.value === "true";
 
+          const gameMode = await this.gameModesService.resolveForServer(
+            server.id,
+            matchId,
+          );
+
+          const gameModeEnvironment =
+            this.gameModesService.environmentFor(gameMode);
+
           await batch.createNamespacedJob({
             namespace: this.namespace,
             body: {
@@ -877,7 +887,7 @@ export class MatchAssistantService {
                           },
                           {
                             name: "EXTRA_GAME_PARAMS",
-                            value: `-maxplayers ${match.max_players_per_lineup * 2 + 3} ${map.workshop_map_id ? `+map de_inferno` : `+map ${map.name}`} +game_type 0 +game_mode ${MatchAssistantService.getGameMode(match.options?.type)} +sv_password ${match.password}`,
+                            value: `-maxplayers ${match.max_players_per_lineup * 2 + 3} ${map.workshop_map_id ? `+map de_inferno` : `+map ${map.name}`} +game_type 0 +game_mode ${MatchAssistantService.getGameMode(match.options?.type)} +sv_password ${match.password}${gameMode?.extraGameParams ? ` ${gameMode.extraGameParams}` : ""}`,
                           },
                           { name: "SERVER_ID", value: server.id },
                           {
@@ -907,6 +917,7 @@ export class MatchAssistantService {
                           ...(showEloRanks
                             ? [{ name: "SHOW_ELO_RANKS", value: "true" }]
                             : []),
+                          ...gameModeEnvironment,
                         ],
                         volumeMounts: [
                           {

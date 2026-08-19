@@ -11,6 +11,9 @@ object_relationships:
         remote_table:
           name: matches
           schema: public
+  - name: game_mode
+    using:
+      foreign_key_constraint_on: game_mode_id
   - name: game_server_node
     using:
       foreign_key_constraint_on: game_server_node_id
@@ -63,6 +66,7 @@ insert_permissions:
         - region
         - tv_port
         - type
+        - game_mode_id
     comment: ""
 select_permissions:
   - role: administrator
@@ -90,6 +94,7 @@ select_permissions:
         - reserved_by_match_id
         - tv_port
         - type
+        - game_mode_id
       computed_fields:
         - connection_link
         - connection_string
@@ -116,6 +121,7 @@ select_permissions:
         - reserved_by_match_id
         - tv_port
         - type
+        - game_mode_id
       computed_fields:
         - connection_link
         - connection_string
@@ -147,6 +153,7 @@ select_permissions:
         - reserved_by_match_id
         - tv_port
         - type
+        - game_mode_id
       computed_fields:
         - connection_link
         - connection_string
@@ -176,6 +183,7 @@ select_permissions:
         - reserved_by_match_id
         - tv_port
         - type
+        - game_mode_id
       computed_fields:
         - connection_link
         - connection_string
@@ -201,6 +209,7 @@ update_permissions:
         - region
         - tv_port
         - type
+        - game_mode_id
       filter:
         is_dedicated:
           _eq: true
@@ -251,6 +260,7 @@ event_triggers:
           - label
           - game_server_node_id
           - type
+          - game_mode_id
     retry_conf:
       interval_sec: 10
       num_retries: 6

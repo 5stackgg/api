@@ -1,0 +1,256 @@
+table:
+  name: game_modes
+  schema: public
+computed_fields:
+  - name: supported_runtimes
+    definition:
+      function:
+        name: game_mode_supported_runtimes
+        schema: public
+    comment: Frameworks every plugin in this mode publishes for; empty means the selection cannot run
+  - name: runtime_conflicts
+    definition:
+      function:
+        name: game_mode_runtime_conflicts
+        schema: public
+    comment: Plugins in this mode with no build for the deployment's runtime
+array_relationships:
+  - name: plugins
+    using:
+      foreign_key_constraint_on:
+        column: game_mode_id
+        table:
+          name: game_mode_plugins
+          schema: public
+  - name: match_options
+    using:
+      foreign_key_constraint_on:
+        column: game_mode_id
+        table:
+          name: match_options
+          schema: public
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - slug
+        - name
+        - description
+        - icon
+        - enabled
+        - archived_at
+        - competitive_safe
+        - cfg
+        - extra_game_params
+        - created_at
+        - updated_at
+      computed_fields:
+        - supported_runtimes
+        - runtime_conflicts
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+  - role: guest
+    permission:
+      columns:
+        - id
+        - slug
+        - name
+        - description
+        - icon
+        - enabled
+        - archived_at
+        - competitive_safe
+        - cfg
+        - extra_game_params
+        - created_at
+        - updated_at
+      computed_fields:
+        - supported_runtimes
+        - runtime_conflicts
+      filter:
+        archived_at:
+          _is_null: true
+      allow_aggregations: true
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - id
+        - slug
+        - name
+        - description
+        - icon
+        - enabled
+        - archived_at
+        - competitive_safe
+        - cfg
+        - extra_game_params
+        - created_at
+        - updated_at
+      computed_fields:
+        - supported_runtimes
+        - runtime_conflicts
+      filter:
+        archived_at:
+          _is_null: true
+      allow_aggregations: true
+    comment: ""
+  - role: verified_user
+    permission:
+      columns:
+        - id
+        - slug
+        - name
+        - description
+        - icon
+        - enabled
+        - archived_at
+        - competitive_safe
+        - cfg
+        - extra_game_params
+        - created_at
+        - updated_at
+      computed_fields:
+        - supported_runtimes
+        - runtime_conflicts
+      filter:
+        archived_at:
+          _is_null: true
+      allow_aggregations: true
+    comment: ""
+  - role: streamer
+    permission:
+      columns:
+        - id
+        - slug
+        - name
+        - description
+        - icon
+        - enabled
+        - archived_at
+        - competitive_safe
+        - cfg
+        - extra_game_params
+        - created_at
+        - updated_at
+      computed_fields:
+        - supported_runtimes
+        - runtime_conflicts
+      filter:
+        archived_at:
+          _is_null: true
+      allow_aggregations: true
+    comment: ""
+  - role: moderator
+    permission:
+      columns:
+        - id
+        - slug
+        - name
+        - description
+        - icon
+        - enabled
+        - archived_at
+        - competitive_safe
+        - cfg
+        - extra_game_params
+        - created_at
+        - updated_at
+      computed_fields:
+        - supported_runtimes
+        - runtime_conflicts
+      filter:
+        archived_at:
+          _is_null: true
+      allow_aggregations: true
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - id
+        - slug
+        - name
+        - description
+        - icon
+        - enabled
+        - archived_at
+        - competitive_safe
+        - cfg
+        - extra_game_params
+        - created_at
+        - updated_at
+      computed_fields:
+        - supported_runtimes
+        - runtime_conflicts
+      filter:
+        archived_at:
+          _is_null: true
+      allow_aggregations: true
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - id
+        - slug
+        - name
+        - description
+        - icon
+        - enabled
+        - archived_at
+        - competitive_safe
+        - cfg
+        - extra_game_params
+        - created_at
+        - updated_at
+      computed_fields:
+        - supported_runtimes
+        - runtime_conflicts
+      filter:
+        archived_at:
+          _is_null: true
+      allow_aggregations: true
+    comment: ""
+insert_permissions:
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - slug
+        - name
+        - description
+        - icon
+        - enabled
+        - archived_at
+        - competitive_safe
+        - cfg
+        - extra_game_params
+      computed_fields:
+        - supported_runtimes
+        - runtime_conflicts
+    comment: ""
+update_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - slug
+        - name
+        - description
+        - icon
+        - enabled
+        - archived_at
+        - competitive_safe
+        - cfg
+        - extra_game_params
+      computed_fields:
+        - supported_runtimes
+        - runtime_conflicts
+      filter: {}
+      check: {}
+    comment: ""
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ""

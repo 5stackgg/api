@@ -15,6 +15,7 @@ import { RconModule } from "src/rcon/rcon.module";
 import { RedisModule } from "src/redis/redis.module";
 import { SystemModule } from "src/system/system.module";
 import { PluginRuntimeModule } from "src/plugin-runtime/plugin-runtime.module";
+import { GamePluginsModule } from "../game-plugins/game-plugins.module";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { PluginRuntimeModule } from "src/plugin-runtime/plugin-runtime.module";
     RedisModule,
     SystemModule,
     PluginRuntimeModule,
+    GamePluginsModule,
   ],
   providers: [
     DedicatedServersService,

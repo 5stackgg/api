@@ -26,6 +26,7 @@ import { loggerFactory } from "./utilities/LoggerFactory";
 import { SocketsModule } from "./sockets/sockets.module";
 import { TailscaleModule } from "./tailscale/tailscale.module";
 import { GameServerNodeModule } from "./game-server-node/game-server-node.module";
+import { GamePluginsModule } from "./game-plugins/game-plugins.module";
 import { MatchMaking } from "./matchmaking/matchmaking.module";
 import { DraftGamesModule } from "./draft-games/draft-games.module";
 import { SystemModule } from "./system/system.module";
@@ -130,6 +131,7 @@ import { PluginsModule } from "./plugins/plugins.module";
       ],
     }),
     GameServerNodeModule,
+    GamePluginsModule,
     SystemModule,
     NotificationsModule,
     ChatModule,
