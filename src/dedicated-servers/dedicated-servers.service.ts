@@ -318,6 +318,15 @@ export class DedicatedServersService {
                         name: `dedicated-server-data-${server.id}`,
                         mountPath: `/opt/custom-plugins`,
                       },
+                      // A dedicated server only ever saw its own directory, so
+                      // a plugin installed on the node reached every on-demand
+                      // match server and none of these. Mounted read-write
+                      // because a plugin writes its config on first load and
+                      // that has to survive the pod.
+                      {
+                        name: `custom-plugins-${sanitizedGameServerNodeId}`,
+                        mountPath: `/opt/node-plugins`,
+                      },
                     ],
                   },
                 ],
@@ -345,6 +354,13 @@ export class DedicatedServersService {
                     hostPath: {
                       type: "DirectoryOrCreate",
                       path: `/opt/5stack/servers/${server.id}`,
+                    },
+                  },
+                  {
+                    name: `custom-plugins-${sanitizedGameServerNodeId}`,
+                    hostPath: {
+                      type: "DirectoryOrCreate",
+                      path: `/opt/5stack/custom-plugins`,
                     },
                   },
                 ],
