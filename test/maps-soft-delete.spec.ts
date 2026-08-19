@@ -55,14 +55,10 @@ describe("maps soft delete (SQL-driven)", () => {
   };
 
   const softDelete = (mapId: string) =>
-    postgres.query("UPDATE maps SET deleted_at = now() WHERE id = $1", [
-      mapId,
-    ]);
+    postgres.query("UPDATE maps SET deleted_at = now() WHERE id = $1", [mapId]);
 
   const restore = (mapId: string) =>
-    postgres.query("UPDATE maps SET deleted_at = NULL WHERE id = $1", [
-      mapId,
-    ]);
+    postgres.query("UPDATE maps SET deleted_at = NULL WHERE id = $1", [mapId]);
 
   it("drops a soft-deleted map out of every pool it was in", async () => {
     const mapId = await createMap();
