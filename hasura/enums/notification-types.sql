@@ -41,6 +41,9 @@ INSERT INTO e_notification_types ("value", "description") VALUES
     ('ClipReady', 'A clip you requested finished rendering'),
     ('AwardGranted', 'You received an award'),
     ('EventReminder', 'An event you are attending starts soon'),
-    ('SeasonEnded', 'A season has ended')
+    ('SeasonEnded', 'A season has ended'),
+    ('NadePracticeInvite', 'You were invited to a nade practice session'),
+    ('NadePracticeReady', 'Your nade practice server is ready'),
+    ('NadeDriftScanFinished', 'A nade drift scan finished')
 ON CONFLICT("value") DO UPDATE
     SET "description" = EXCLUDED."description";

@@ -48,6 +48,7 @@ export const PUSH_CATEGORIES: Record<string, e_notification_types_enum[]> = {
   ],
   teams: ["FormTeamSuggestion"],
   invites: ["TeamInvite", "TournamentTeamInvite", "DraftInvite"],
+  nades: ["NadePracticeInvite", "NadePracticeReady"],
   account: ["NameChangeApproved", "NameChangeDenied", "PlayerSanctioned", "AwardGranted"],
   news: ["NewsPublished"],
   staff_moderation: ["MatchSupport", "MatchAbandoned", "NameChangeRequest"],
@@ -59,6 +60,7 @@ export const PUSH_CATEGORIES: Record<string, e_notification_types_enum[]> = {
     "StorageScan",
     "EloRecompute",
     "PlayerReindex",
+    "NadeDriftScanFinished",
   ],
 };
 
@@ -76,6 +78,7 @@ export const PUSH_KEYS: PreferenceKey[] = [
   { key: "leagues", defaultEnabled: true },
   { key: "teams", defaultEnabled: true },
   { key: "invites", defaultEnabled: true },
+  { key: "nades", defaultEnabled: true },
   { key: "account", defaultEnabled: true },
   { key: "news", defaultEnabled: true },
   { key: "staff_moderation", defaultEnabled: true, adminOnly: true },
@@ -107,6 +110,8 @@ export const IN_APP_KEYS: PreferenceKey[] = [
   { key: "FormTeamSuggestion", defaultEnabled: true },
   { key: "ScrimAlertMatch", defaultEnabled: true },
   { key: "LeagueMatchUnscheduled", defaultEnabled: true },
+  { key: "NadePracticeInvite", defaultEnabled: true },
+  { key: "NadePracticeReady", defaultEnabled: true },
 ];
 
 const PUSH_CATEGORY_BY_TYPE: Record<string, string> = Object.fromEntries(

@@ -12807,6 +12807,15 @@ enum e_notification_types_enum {
   """MatchSupport"""
   MatchSupport
 
+  """A nade drift scan finished"""
+  NadeDriftScanFinished
+
+  """You were invited to a nade practice session"""
+  NadePracticeInvite
+
+  """Your nade practice server is ready"""
+  NadePracticeReady
+
   """Your name change request was approved"""
   NameChangeApproved
 

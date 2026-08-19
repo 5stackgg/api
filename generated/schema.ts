@@ -5134,7 +5134,7 @@ export interface e_notification_types_aggregate_fields {
 /** unique or primary key constraints on table "e_notification_types" */
 export type e_notification_types_constraint = 'e_notification_types_pkey'
 
-export type e_notification_types_enum = 'AwardGranted' | 'ChatMessage' | 'ClipReady' | 'DedicatedServerRconStatus' | 'DedicatedServerStatus' | 'DraftInvite' | 'EloRecompute' | 'EventReminder' | 'FormTeamSuggestion' | 'GameNodeStatus' | 'GameUpdate' | 'LeagueMatchUnscheduled' | 'LeagueProposalAccepted' | 'LeagueProposalDeclined' | 'LeagueProposalReceived' | 'LeagueRegistrationDecision' | 'LeagueRosterUndersized' | 'MatchAbandoned' | 'MatchChatMessage' | 'MatchImported' | 'MatchStatsReady' | 'MatchStatusChange' | 'MatchSupport' | 'NameChangeApproved' | 'NameChangeDenied' | 'NameChangeRequest' | 'NewsPublished' | 'PlayerReindex' | 'PlayerSanctioned' | 'ScrimAlertMatch' | 'ScrimMatchCanceled' | 'ScrimMatchScheduled' | 'ScrimRequestAccepted' | 'ScrimRequestCountered' | 'ScrimRequestDeclined' | 'ScrimRequestExpired' | 'ScrimRequestReceived' | 'ScrimTimeChanged' | 'SeasonEnded' | 'StorageScan' | 'TeamInvite' | 'TournamentCreated' | 'TournamentReminder' | 'TournamentTeamInvite'
+export type e_notification_types_enum = 'AwardGranted' | 'ChatMessage' | 'ClipReady' | 'DedicatedServerRconStatus' | 'DedicatedServerStatus' | 'DraftInvite' | 'EloRecompute' | 'EventReminder' | 'FormTeamSuggestion' | 'GameNodeStatus' | 'GameUpdate' | 'LeagueMatchUnscheduled' | 'LeagueProposalAccepted' | 'LeagueProposalDeclined' | 'LeagueProposalReceived' | 'LeagueRegistrationDecision' | 'LeagueRosterUndersized' | 'MatchAbandoned' | 'MatchChatMessage' | 'MatchImported' | 'MatchStatsReady' | 'MatchStatusChange' | 'MatchSupport' | 'NadeDriftScanFinished' | 'NadePracticeInvite' | 'NadePracticeReady' | 'NameChangeApproved' | 'NameChangeDenied' | 'NameChangeRequest' | 'NewsPublished' | 'PlayerReindex' | 'PlayerSanctioned' | 'ScrimAlertMatch' | 'ScrimMatchCanceled' | 'ScrimMatchScheduled' | 'ScrimRequestAccepted' | 'ScrimRequestCountered' | 'ScrimRequestDeclined' | 'ScrimRequestExpired' | 'ScrimRequestReceived' | 'ScrimTimeChanged' | 'SeasonEnded' | 'StorageScan' | 'TeamInvite' | 'TournamentCreated' | 'TournamentReminder' | 'TournamentTeamInvite'
 
 
 /** aggregate max on columns */
@@ -126937,6 +126937,9 @@ export const enumENotificationTypesEnum = {
    MatchStatsReady: 'MatchStatsReady' as const,
    MatchStatusChange: 'MatchStatusChange' as const,
    MatchSupport: 'MatchSupport' as const,
+   NadeDriftScanFinished: 'NadeDriftScanFinished' as const,
+   NadePracticeInvite: 'NadePracticeInvite' as const,
+   NadePracticeReady: 'NadePracticeReady' as const,
    NameChangeApproved: 'NameChangeApproved' as const,
    NameChangeDenied: 'NameChangeDenied' as const,
    NameChangeRequest: 'NameChangeRequest' as const,

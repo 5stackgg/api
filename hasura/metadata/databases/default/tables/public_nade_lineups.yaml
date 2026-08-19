@@ -1,0 +1,1156 @@
+table:
+  name: nade_lineups
+  schema: public
+object_relationships:
+  - name: author
+    using:
+      foreign_key_constraint_on: author_steam_id
+  - name: team
+    using:
+      foreign_key_constraint_on: team_id
+  - name: source_match
+    using:
+      foreign_key_constraint_on: source_match_id
+  - name: source_match_map
+    using:
+      foreign_key_constraint_on: source_match_map_id
+  - name: forked_from
+    using:
+      foreign_key_constraint_on: forked_from_nade_lineup_id
+array_relationships:
+  - name: votes
+    using:
+      foreign_key_constraint_on:
+        column: nade_lineup_id
+        table:
+          name: nade_lineup_votes
+          schema: public
+  - name: favorited_by
+    using:
+      foreign_key_constraint_on:
+        column: nade_lineup_id
+        table:
+          name: nade_lineup_favorites
+          schema: public
+  - name: progress
+    using:
+      foreign_key_constraint_on:
+        column: nade_lineup_id
+        table:
+          name: nade_lineup_progress
+          schema: public
+  - name: collection_items
+    using:
+      foreign_key_constraint_on:
+        column: nade_lineup_id
+        table:
+          name: nade_collection_items
+          schema: public
+  - name: repairs
+    using:
+      foreign_key_constraint_on:
+        column: nade_lineup_id
+        table:
+          name: nade_lineup_repairs
+          schema: public
+computed_fields:
+  - name: can_view
+    definition:
+      function:
+        name: can_view_nade_lineup
+        schema: public
+      session_argument: hasura_session
+  - name: can_edit
+    definition:
+      function:
+        name: can_edit_nade_lineup
+        schema: public
+      session_argument: hasura_session
+  - name: my_vote
+    definition:
+      function:
+        name: nade_lineup_my_vote
+        schema: public
+      session_argument: hasura_session
+  - name: is_favorited
+    definition:
+      function:
+        name: nade_lineup_is_favorited
+        schema: public
+      session_argument: hasura_session
+  - name: difficulty
+    definition:
+      function:
+        name: nade_lineup_difficulty
+        schema: public
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        author_steam_id:
+          _eq: X-Hasura-User-Id
+      set:
+        author_steam_id: x-hasura-user-id
+      columns:
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - land_x
+        - land_y
+        - land_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - trajectory_preview
+    comment: 'origin_source, confidence, verified_at, the counters and the S3 keys are deliberately absent: only the API writes provenance and artifacts.'
+  - role: verified_user
+    permission:
+      check:
+        author_steam_id:
+          _eq: X-Hasura-User-Id
+      set:
+        author_steam_id: x-hasura-user-id
+      columns:
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - land_x
+        - land_y
+        - land_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - trajectory_preview
+    comment: 'origin_source, confidence, verified_at, the counters and the S3 keys are deliberately absent: only the API writes provenance and artifacts.'
+  - role: streamer
+    permission:
+      check:
+        author_steam_id:
+          _eq: X-Hasura-User-Id
+      set:
+        author_steam_id: x-hasura-user-id
+      columns:
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - land_x
+        - land_y
+        - land_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - trajectory_preview
+    comment: 'origin_source, confidence, verified_at, the counters and the S3 keys are deliberately absent: only the API writes provenance and artifacts.'
+  - role: match_organizer
+    permission:
+      check:
+        author_steam_id:
+          _eq: X-Hasura-User-Id
+      set:
+        author_steam_id: x-hasura-user-id
+      columns:
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - land_x
+        - land_y
+        - land_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - trajectory_preview
+    comment: 'origin_source, confidence, verified_at, the counters and the S3 keys are deliberately absent: only the API writes provenance and artifacts.'
+  - role: tournament_organizer
+    permission:
+      check:
+        author_steam_id:
+          _eq: X-Hasura-User-Id
+      set:
+        author_steam_id: x-hasura-user-id
+      columns:
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - land_x
+        - land_y
+        - land_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - trajectory_preview
+    comment: 'origin_source, confidence, verified_at, the counters and the S3 keys are deliberately absent: only the API writes provenance and artifacts.'
+  - role: moderator
+    permission:
+      check:
+        author_steam_id:
+          _eq: X-Hasura-User-Id
+      set:
+        author_steam_id: x-hasura-user-id
+      columns:
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - land_x
+        - land_y
+        - land_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - trajectory_preview
+    comment: 'origin_source, confidence, verified_at, the counters and the S3 keys are deliberately absent: only the API writes provenance and artifacts.'
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - view_yaw_delta
+        - view_pitch_delta
+        - land_x
+        - land_y
+        - land_z
+        - initial_pos_x
+        - initial_pos_y
+        - initial_pos_z
+        - initial_vel_x
+        - initial_vel_y
+        - initial_vel_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - trajectory_preview
+        - author_steam_id
+        - origin_source
+        - source_match_id
+        - source_match_map_id
+        - source_grenade_id
+        - source_url
+        - forked_from_nade_lineup_id
+        - external_id
+        - confidence
+        - trajectory_file
+        - trajectory_size
+        - verified_at
+        - archived_at
+    comment: ''
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - view_yaw_delta
+        - view_pitch_delta
+        - land_x
+        - land_y
+        - land_z
+        - initial_pos_x
+        - initial_pos_y
+        - initial_pos_z
+        - initial_vel_x
+        - initial_vel_y
+        - initial_vel_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - author_steam_id
+        - origin_source
+        - source_match_id
+        - source_match_map_id
+        - source_grenade_id
+        - source_url
+        - forked_from_nade_lineup_id
+        - confidence
+        - lineup_bucket
+        - trajectory_preview
+        - trajectory_size
+        - upvotes
+        - downvotes
+        - favorites
+        - verified_at
+        - archived_at
+        - practice_players
+        - practice_attempts
+        - practice_successes
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+        - my_vote
+        - is_favorited
+        - difficulty
+      filter:
+        _and:
+          - visibility:
+              _eq: Public
+          - archived_at:
+              _is_null: true
+      allow_aggregations: true
+    comment: ''
+  - role: user
+    permission:
+      columns:
+        - id
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - view_yaw_delta
+        - view_pitch_delta
+        - land_x
+        - land_y
+        - land_z
+        - initial_pos_x
+        - initial_pos_y
+        - initial_pos_z
+        - initial_vel_x
+        - initial_vel_y
+        - initial_vel_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - author_steam_id
+        - origin_source
+        - source_match_id
+        - source_match_map_id
+        - source_grenade_id
+        - source_url
+        - forked_from_nade_lineup_id
+        - confidence
+        - lineup_bucket
+        - trajectory_preview
+        - trajectory_size
+        - upvotes
+        - downvotes
+        - favorites
+        - verified_at
+        - archived_at
+        - practice_players
+        - practice_attempts
+        - practice_successes
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+        - my_vote
+        - is_favorited
+        - difficulty
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: verified_user
+    permission:
+      columns:
+        - id
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - view_yaw_delta
+        - view_pitch_delta
+        - land_x
+        - land_y
+        - land_z
+        - initial_pos_x
+        - initial_pos_y
+        - initial_pos_z
+        - initial_vel_x
+        - initial_vel_y
+        - initial_vel_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - author_steam_id
+        - origin_source
+        - source_match_id
+        - source_match_map_id
+        - source_grenade_id
+        - source_url
+        - forked_from_nade_lineup_id
+        - confidence
+        - lineup_bucket
+        - trajectory_preview
+        - trajectory_size
+        - upvotes
+        - downvotes
+        - favorites
+        - verified_at
+        - archived_at
+        - practice_players
+        - practice_attempts
+        - practice_successes
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+        - my_vote
+        - is_favorited
+        - difficulty
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: streamer
+    permission:
+      columns:
+        - id
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - view_yaw_delta
+        - view_pitch_delta
+        - land_x
+        - land_y
+        - land_z
+        - initial_pos_x
+        - initial_pos_y
+        - initial_pos_z
+        - initial_vel_x
+        - initial_vel_y
+        - initial_vel_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - author_steam_id
+        - origin_source
+        - source_match_id
+        - source_match_map_id
+        - source_grenade_id
+        - source_url
+        - forked_from_nade_lineup_id
+        - confidence
+        - lineup_bucket
+        - trajectory_preview
+        - trajectory_size
+        - upvotes
+        - downvotes
+        - favorites
+        - verified_at
+        - archived_at
+        - practice_players
+        - practice_attempts
+        - practice_successes
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+        - my_vote
+        - is_favorited
+        - difficulty
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: match_organizer
+    permission:
+      columns:
+        - id
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - view_yaw_delta
+        - view_pitch_delta
+        - land_x
+        - land_y
+        - land_z
+        - initial_pos_x
+        - initial_pos_y
+        - initial_pos_z
+        - initial_vel_x
+        - initial_vel_y
+        - initial_vel_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - author_steam_id
+        - origin_source
+        - source_match_id
+        - source_match_map_id
+        - source_grenade_id
+        - source_url
+        - forked_from_nade_lineup_id
+        - confidence
+        - lineup_bucket
+        - trajectory_preview
+        - trajectory_size
+        - upvotes
+        - downvotes
+        - favorites
+        - verified_at
+        - archived_at
+        - practice_players
+        - practice_attempts
+        - practice_successes
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+        - my_vote
+        - is_favorited
+        - difficulty
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: tournament_organizer
+    permission:
+      columns:
+        - id
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - view_yaw_delta
+        - view_pitch_delta
+        - land_x
+        - land_y
+        - land_z
+        - initial_pos_x
+        - initial_pos_y
+        - initial_pos_z
+        - initial_vel_x
+        - initial_vel_y
+        - initial_vel_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - author_steam_id
+        - origin_source
+        - source_match_id
+        - source_match_map_id
+        - source_grenade_id
+        - source_url
+        - forked_from_nade_lineup_id
+        - confidence
+        - lineup_bucket
+        - trajectory_preview
+        - trajectory_size
+        - upvotes
+        - downvotes
+        - favorites
+        - verified_at
+        - archived_at
+        - practice_players
+        - practice_attempts
+        - practice_successes
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+        - my_vote
+        - is_favorited
+        - difficulty
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: moderator
+    permission:
+      columns:
+        - id
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - view_yaw_delta
+        - view_pitch_delta
+        - land_x
+        - land_y
+        - land_z
+        - initial_pos_x
+        - initial_pos_y
+        - initial_pos_z
+        - initial_vel_x
+        - initial_vel_y
+        - initial_vel_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - author_steam_id
+        - origin_source
+        - source_match_id
+        - source_match_map_id
+        - source_grenade_id
+        - source_url
+        - forked_from_nade_lineup_id
+        - confidence
+        - lineup_bucket
+        - trajectory_preview
+        - trajectory_size
+        - upvotes
+        - downvotes
+        - favorites
+        - verified_at
+        - archived_at
+        - practice_players
+        - practice_attempts
+        - practice_successes
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+        - my_vote
+        - is_favorited
+        - difficulty
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - view_yaw_delta
+        - view_pitch_delta
+        - land_x
+        - land_y
+        - land_z
+        - initial_pos_x
+        - initial_pos_y
+        - initial_pos_z
+        - initial_vel_x
+        - initial_vel_y
+        - initial_vel_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - author_steam_id
+        - origin_source
+        - source_match_id
+        - source_match_map_id
+        - source_grenade_id
+        - source_url
+        - forked_from_nade_lineup_id
+        - confidence
+        - lineup_bucket
+        - trajectory_preview
+        - trajectory_size
+        - upvotes
+        - downvotes
+        - favorites
+        - verified_at
+        - archived_at
+        - practice_players
+        - practice_attempts
+        - practice_successes
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+        - my_vote
+        - is_favorited
+        - difficulty
+      filter: {}
+      allow_aggregations: true
+    comment: ''
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - land_x
+        - land_y
+        - land_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - trajectory_preview
+      filter:
+        can_edit:
+          _eq: true
+      check:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: verified_user
+    permission:
+      columns:
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - land_x
+        - land_y
+        - land_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - trajectory_preview
+      filter:
+        can_edit:
+          _eq: true
+      check:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: streamer
+    permission:
+      columns:
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - land_x
+        - land_y
+        - land_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - trajectory_preview
+      filter:
+        can_edit:
+          _eq: true
+      check:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: match_organizer
+    permission:
+      columns:
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - land_x
+        - land_y
+        - land_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - trajectory_preview
+      filter:
+        can_edit:
+          _eq: true
+      check:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: tournament_organizer
+    permission:
+      columns:
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - land_x
+        - land_y
+        - land_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - trajectory_preview
+      filter:
+        can_edit:
+          _eq: true
+      check:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: moderator
+    permission:
+      columns:
+        - map_name
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - name
+        - description
+        - tags
+        - visibility
+        - verified_at
+        - archived_at
+      filter: {}
+      check: {}
+    comment: 'Moderation reach: verify, archive and correct classification, not rewrite the geometry.'
+  - role: administrator
+    permission:
+      columns:
+        - map_name
+        - workshop_map_id
+        - nade_type
+        - side
+        - technique
+        - throw_strength
+        - jump_throw_bind
+        - origin_x
+        - origin_y
+        - origin_z
+        - eye_z
+        - view_yaw
+        - view_pitch
+        - view_yaw_delta
+        - view_pitch_delta
+        - land_x
+        - land_y
+        - land_z
+        - initial_pos_x
+        - initial_pos_y
+        - initial_pos_z
+        - initial_vel_x
+        - initial_vel_y
+        - initial_vel_z
+        - flight_time_ms
+        - name
+        - description
+        - tags
+        - visibility
+        - team_id
+        - trajectory_preview
+        - author_steam_id
+        - origin_source
+        - source_match_id
+        - source_match_map_id
+        - source_grenade_id
+        - source_url
+        - forked_from_nade_lineup_id
+        - external_id
+        - confidence
+        - trajectory_file
+        - trajectory_size
+        - verified_at
+        - archived_at
+      filter: {}
+      check: {}
+    comment: ''
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        author_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: verified_user
+    permission:
+      filter:
+        author_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: streamer
+    permission:
+      filter:
+        author_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: match_organizer
+    permission:
+      filter:
+        author_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: tournament_organizer
+    permission:
+      filter:
+        author_steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: moderator
+    permission:
+      filter: {}
+    comment: ''
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ''
+event_triggers:
+  - name: nade_lineups_events
+    definition:
+      delete:
+        columns: '*'
+      enable_manual: true
+      insert:
+        columns: '*'
+      update:
+        columns:
+          - name
+          - map_name
+          - nade_type
+          - side
+          - technique
+          - tags
+          - visibility
+          - archived_at
+          - author_steam_id
+          - upvotes
+          - favorites
+    retry_conf:
+      interval_sec: 10
+      num_retries: 6
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'

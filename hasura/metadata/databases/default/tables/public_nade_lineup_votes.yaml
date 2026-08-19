@@ -1,0 +1,319 @@
+table:
+  name: nade_lineup_votes
+  schema: public
+object_relationships:
+  - name: nade_lineup
+    using:
+      foreign_key_constraint_on: nade_lineup_id
+  - name: player
+    using:
+      foreign_key_constraint_on: steam_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        _and:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - nade_lineup:
+              can_view:
+                _eq: true
+      set:
+        steam_id: x-hasura-user-id
+      columns:
+        - nade_lineup_id
+        - steam_id
+        - vote
+    comment: ''
+  - role: verified_user
+    permission:
+      check:
+        _and:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - nade_lineup:
+              can_view:
+                _eq: true
+      set:
+        steam_id: x-hasura-user-id
+      columns:
+        - nade_lineup_id
+        - steam_id
+        - vote
+    comment: ''
+  - role: streamer
+    permission:
+      check:
+        _and:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - nade_lineup:
+              can_view:
+                _eq: true
+      set:
+        steam_id: x-hasura-user-id
+      columns:
+        - nade_lineup_id
+        - steam_id
+        - vote
+    comment: ''
+  - role: match_organizer
+    permission:
+      check:
+        _and:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - nade_lineup:
+              can_view:
+                _eq: true
+      set:
+        steam_id: x-hasura-user-id
+      columns:
+        - nade_lineup_id
+        - steam_id
+        - vote
+    comment: ''
+  - role: tournament_organizer
+    permission:
+      check:
+        _and:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - nade_lineup:
+              can_view:
+                _eq: true
+      set:
+        steam_id: x-hasura-user-id
+      columns:
+        - nade_lineup_id
+        - steam_id
+        - vote
+    comment: ''
+  - role: moderator
+    permission:
+      check:
+        _and:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - nade_lineup:
+              can_view:
+                _eq: true
+      set:
+        steam_id: x-hasura-user-id
+      columns:
+        - nade_lineup_id
+        - steam_id
+        - vote
+    comment: ''
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - nade_lineup_id
+        - steam_id
+        - vote
+    comment: ''
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - nade_lineup_id
+        - steam_id
+        - vote
+        - created_at
+      filter:
+        nade_lineup:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: verified_user
+    permission:
+      columns:
+        - nade_lineup_id
+        - steam_id
+        - vote
+        - created_at
+      filter:
+        nade_lineup:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: streamer
+    permission:
+      columns:
+        - nade_lineup_id
+        - steam_id
+        - vote
+        - created_at
+      filter:
+        nade_lineup:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: match_organizer
+    permission:
+      columns:
+        - nade_lineup_id
+        - steam_id
+        - vote
+        - created_at
+      filter:
+        nade_lineup:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: tournament_organizer
+    permission:
+      columns:
+        - nade_lineup_id
+        - steam_id
+        - vote
+        - created_at
+      filter:
+        nade_lineup:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: moderator
+    permission:
+      columns:
+        - nade_lineup_id
+        - steam_id
+        - vote
+        - created_at
+      filter:
+        nade_lineup:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: administrator
+    permission:
+      columns:
+        - nade_lineup_id
+        - steam_id
+        - vote
+        - created_at
+      filter: {}
+      allow_aggregations: true
+    comment: ''
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - vote
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+      check:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: verified_user
+    permission:
+      columns:
+        - vote
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+      check:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: streamer
+    permission:
+      columns:
+        - vote
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+      check:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: match_organizer
+    permission:
+      columns:
+        - vote
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+      check:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: tournament_organizer
+    permission:
+      columns:
+        - vote
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+      check:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: moderator
+    permission:
+      columns:
+        - vote
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+      check:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: administrator
+    permission:
+      columns:
+        - vote
+      filter: {}
+      check: {}
+    comment: ''
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: verified_user
+    permission:
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: streamer
+    permission:
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: match_organizer
+    permission:
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: tournament_organizer
+    permission:
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: moderator
+    permission:
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ''

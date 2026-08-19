@@ -4,9 +4,14 @@ import { ConfigService } from "@nestjs/config";
 import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { S3Service } from "../s3/s3.service";
+import { CacheService } from "../cache/cache.service";
 import { DemoParserService, ParsedDemo } from "./demo-parser.service";
 
-export const DEMO_METADATA_VERSION = 9;
+// The PLAYBACK BLOB's shape, not the parser's (ParsedDemo.schema_version).
+// v10 adds `ducked` to positions and carries the parser's own version through.
+// Both additions are additive, so a reader that tolerates unknown fields keeps
+// working; a reader that pins `schema_version === 9` will reject every new blob.
+export const DEMO_METADATA_VERSION = 10;
 
 export type DemoRow = {
   id: string;
@@ -22,9 +27,29 @@ export type DemoRow = {
   metadata_parsed_at: string | null;
 };
 
+// What lands in S3 and what readPlaybackBlob hands back. Derived from the
+// builder so the two directions cannot drift apart.
+export type PlaybackBlob = ReturnType<typeof buildPlaybackBlob>;
+
 @Injectable()
 export class DemoMetadataService {
   private readonly inFlight = new Map<string, Promise<DemoRow>>();
+  private readonly blobsInFlight = new Map<string, Promise<PlaybackBlob>>();
+
+  // A blob is multi-MB gzipped and several times that parsed, and gunzipSync
+  // holds the whole thing in memory twice while it runs. Two at a time is the
+  // difference between a slow read and an OOM on a pod that is also parsing.
+  private static readonly MAX_CONCURRENT_INFLATE = 2;
+  private static inflateInFlight = 0;
+  private static readonly inflateWaiting: Array<() => void> = [];
+
+  // Redis holds the parsed blob only long enough to cover a burst of reads
+  // against one replay -- three lineups saved off one demo must not inflate it
+  // three times -- not as a store.
+  private static readonly PLAYBACK_BLOB_TTL_SECONDS = 60;
+  // Past this the memo is worse than the work it saves: it would evict half of
+  // Redis to hold something read a handful of times a minute.
+  private static readonly PLAYBACK_BLOB_MAX_CACHE_BYTES = 48 * 1024 * 1024;
 
   constructor(
     private readonly logger: Logger,
@@ -33,6 +58,7 @@ export class DemoMetadataService {
     private readonly s3: S3Service,
     private readonly demoParser: DemoParserService,
     private readonly config: ConfigService,
+    private readonly cache: CacheService,
   ) {}
 
   public static isExternalDemoUrl(file: string | null | undefined): boolean {
@@ -722,6 +748,91 @@ export class DemoMetadataService {
     );
     return key;
   }
+
+  public static playbackBlobCacheKey(playbackFile: string): string {
+    return `playback-blob:${playbackFile}`;
+  }
+
+  // The other half of uploadPlaybackBlob: same key, same shape, read back.
+  // Anything that wants the events behind a replay -- mining a lineup, scoring
+  // a clip -- goes through here rather than reaching into S3, so the version
+  // and the compression live in one place.
+  public async readPlaybackBlob(playbackFile: string): Promise<PlaybackBlob> {
+    const cacheKey = DemoMetadataService.playbackBlobCacheKey(playbackFile);
+    const cached = (await this.cache.get(cacheKey)) as PlaybackBlob | undefined;
+
+    if (cached) {
+      return cached;
+    }
+
+    const existing = this.blobsInFlight.get(playbackFile);
+
+    if (existing) {
+      return await existing;
+    }
+
+    const loading = this.loadPlaybackBlob(playbackFile, cacheKey);
+    this.blobsInFlight.set(playbackFile, loading);
+
+    try {
+      return await loading;
+    } finally {
+      this.blobsInFlight.delete(playbackFile);
+    }
+  }
+
+  private async loadPlaybackBlob(
+    playbackFile: string,
+    cacheKey: string,
+  ): Promise<PlaybackBlob> {
+    const stream = await this.s3.get(playbackFile);
+    const chunks: Array<Buffer> = [];
+
+    for await (const chunk of stream) {
+      chunks.push(chunk as Buffer);
+    }
+
+    const gz = Buffer.concat(chunks);
+
+    await DemoMetadataService.acquireInflateSlot();
+
+    let json: string;
+    try {
+      json = zlib.gunzipSync(gz).toString("utf8");
+    } finally {
+      DemoMetadataService.releaseInflateSlot();
+    }
+
+    const blob = JSON.parse(json) as PlaybackBlob;
+
+    if (json.length <= DemoMetadataService.PLAYBACK_BLOB_MAX_CACHE_BYTES) {
+      await this.cache.put(
+        cacheKey,
+        blob,
+        DemoMetadataService.PLAYBACK_BLOB_TTL_SECONDS,
+      );
+    }
+
+    return blob;
+  }
+
+  private static async acquireInflateSlot(): Promise<void> {
+    while (
+      DemoMetadataService.inflateInFlight >=
+      DemoMetadataService.MAX_CONCURRENT_INFLATE
+    ) {
+      await new Promise<void>((resolve) => {
+        DemoMetadataService.inflateWaiting.push(resolve);
+      });
+    }
+
+    DemoMetadataService.inflateInFlight++;
+  }
+
+  private static releaseInflateSlot(): void {
+    DemoMetadataService.inflateInFlight--;
+    DemoMetadataService.inflateWaiting.shift()?.();
+  }
 }
 
 function isDemoFresh(demo: DemoRow): boolean {
@@ -763,6 +874,7 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
     has_bomb: p.has_bomb ?? false,
     has_defuser: p.has_defuser ?? false,
     active_weapon: (p as { active_weapon?: string }).active_weapon ?? null,
+    ducked: p.ducked ?? false,
   }));
 
   const shots_fired = (parsed.shots_fired ?? []).map((s) => ({
@@ -841,6 +953,11 @@ function buildPlaybackBlob(matchMapId: string, parsed: ParsedDemo) {
 
   return {
     schema_version: DEMO_METADATA_VERSION,
+    // Which parser produced the events below. Positions are ~4Hz except for a
+    // full-rate burst around every grenade throw, and that burst only exists
+    // from parser schema 2 -- a consumer deriving a lineup's standing spot has
+    // to know whether it is looking at a 125ms-stale sample or a live one.
+    parser_schema_version: parsed.schema_version ?? null,
     match_map_id: matchMapId,
     tick_rate: parsed.tick_rate,
     total_ticks: parsed.total_ticks,

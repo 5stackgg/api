@@ -270,6 +270,37 @@ export class TypeSenseController {
     await this.typeSense.updatePlayer(data.new.player_steam_id as string);
   }
 
+  // A lineup leaves the index for more reasons than it enters it: going
+  // private, being archived and being deleted all mean the same thing to a
+  // global search bar. updateNadeLineup re-asks the visibility filter and
+  // deletes when the answer is no, so every one of those is handled by the
+  // same call rather than by guessing from the event payload.
+  @HasuraEvent()
+  public async nade_lineups_events(
+    data: HasuraEventData<{ id?: string | null; visibility?: string | null }>,
+  ) {
+    const lineupId = String(data.new?.id ?? data.old?.id ?? "");
+
+    if (!lineupId) {
+      return;
+    }
+
+    if (data.op === "DELETE") {
+      await this.typeSense.removeNadeLineup(lineupId);
+      return;
+    }
+
+    // Every plugin-recorded throw inserts a Private row, so this is the hot
+    // path. A row that has just been created cannot already be in the index,
+    // which is the only reason it is safe to answer from the payload here
+    // rather than from the visibility filter.
+    if (data.op === "INSERT" && data.new?.visibility !== "Public") {
+      return;
+    }
+
+    await this.typeSense.updateNadeLineup(lineupId);
+  }
+
   @HasuraEvent()
   public async team_roster_events(
     data: HasuraEventData<team_roster_set_input>,

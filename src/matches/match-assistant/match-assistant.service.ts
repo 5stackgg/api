@@ -29,6 +29,7 @@ import { AppConfig } from "src/configs/types/AppConfig";
 import { FailedToCreateOnDemandServer } from "../errors/FailedToCreateOnDemandServer";
 import { LoggingService } from "src/k8s/logging/logging.service";
 import type { MatchServerBootDiagnostic } from "src/k8s/logging/bootDiagnostics";
+import { SystemSettingName } from "src/system/enums/SystemSettingName";
 
 @Injectable()
 export class MatchAssistantService {
@@ -114,6 +115,77 @@ export class MatchAssistantService {
         error.message,
       );
     }
+  }
+
+  // A practice server runs the nade practice plugin instead of the match
+  // plugin, so `get_match` is not a command it knows. This is the equivalent:
+  // re-read the roster that decides who is allowed to connect.
+  public async sendNadePracticeRefresh(matchId: string) {
+    try {
+      await this.command(matchId, `nade_practice_refresh`);
+    } catch (error) {
+      this.logger.warn(
+        `[${matchId}] unable to refresh the nade practice roster`,
+        error.message,
+      );
+    }
+  }
+
+  // The same set assignOnDemandServer picks from, counted rather than taken.
+  // Anything that wants to know whether there is room to boot another server
+  // has to ask with this exact predicate, or it will promise a slot that the
+  // assignment then cannot find.
+  public async countFreeOnDemandServers(region?: string | null) {
+    const { servers_aggregate } = await this.hasura.query({
+      servers_aggregate: {
+        __args: {
+          where: {
+            type: {
+              _eq: "Ranked",
+            },
+            enabled: {
+              _eq: true,
+            },
+            is_dedicated: {
+              _eq: false,
+            },
+            reserved_by_match_id: {
+              _is_null: true,
+            },
+            ...MatchAssistantService.pendingDemoUploadExclusion(),
+            game_server_node: {
+              _and: [
+                {
+                  enabled: {
+                    _eq: true,
+                  },
+                  enabled_for_match_making: {
+                    _eq: true,
+                  },
+                  status: {
+                    _eq: "Online",
+                  },
+                },
+                ...(region
+                  ? [
+                      {
+                        region: {
+                          _eq: region,
+                        },
+                      },
+                    ]
+                  : []),
+              ],
+            },
+          },
+        },
+        aggregate: {
+          count: true,
+        },
+      },
+    });
+
+    return servers_aggregate?.aggregate?.count ?? 0;
   }
 
   public async getMatchLineups(matchId: string) {
@@ -427,7 +499,7 @@ export class MatchAssistantService {
   // Exclude servers still uploading demos for a recently-ended match, so a new
   // match doesn't reset the server mid-upload. Bounded so a stuck upload can't
   // take a server out of rotation forever.
-  private static pendingDemoUploadExclusion() {
+  public static pendingDemoUploadExclusion() {
     const recentlyEnded = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     return {
       _not: {
@@ -551,6 +623,7 @@ export class MatchAssistantService {
         region: true,
         password: true,
         server_id: true,
+        source: true,
         max_players_per_lineup: true,
         is_tournament_match: true,
         options: {
@@ -798,6 +871,10 @@ export class MatchAssistantService {
 
           const showEloRanks = fivestackRanksSetting?.value === "true";
 
+          const nadePracticeEnv =
+            match.source === "practice"
+              ? await this.nadePracticeServerEnv()
+              : [];
           const gameMode = await this.gameModesService.resolveForServer(
             server.id,
             matchId,
@@ -917,6 +994,7 @@ export class MatchAssistantService {
                           ...(showEloRanks
                             ? [{ name: "SHOW_ELO_RANKS", value: "true" }]
                             : []),
+                          ...nadePracticeEnv,
                           ...gameModeEnvironment,
                         ],
                         volumeMounts: [
@@ -1007,6 +1085,33 @@ export class MatchAssistantService {
       },
       10,
     );
+  }
+
+  // A practice pod runs the nade practice plugin *instead of* the match plugin.
+  // The image ships both and symlinks whichever INSTALL_ flag is set, so this is
+  // what decides which one the server comes up with. source='practice' is the
+  // marker for the nade-practice game mode: it is already what match_events
+  // branches on, and it is a plain column rather than a join through the
+  // game_modes feature.
+  private async nadePracticeServerEnv() {
+    const { settings_by_pk } = await this.hasura.query({
+      settings_by_pk: {
+        __args: {
+          name: SystemSettingName.NadePluginApiKey,
+        },
+        value: true,
+      },
+    });
+
+    return [
+      { name: "INSTALL_5STACK_PLUGIN", value: "false" },
+      { name: "INSTALL_NADE_PRACTICE_PLUGIN", value: "true" },
+      {
+        name: "NADES_URL",
+        value: `https://${this.appConfig.apiDomain}/nades`,
+      },
+      { name: "NADES_API_KEY", value: settings_by_pk?.value ?? "" },
+    ];
   }
 
   public async monitorOnDemandServerBoot(
@@ -1584,7 +1689,9 @@ export class MatchAssistantService {
     });
 
     const isOn = (name: string) => {
-      return settings.find((setting) => setting.name === name)?.value === "true";
+      return (
+        settings.find((setting) => setting.name === name)?.value === "true"
+      );
     };
 
     const camera_required = isOn("public.camera_required_default");

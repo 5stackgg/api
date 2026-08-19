@@ -576,10 +576,13 @@ select_permissions:
         - server_type
         - tv_connection_string
       filter:
-        status:
-          _nin:
-            - PickingPlayers
-            - Canceled
+        _and:
+          - status:
+              _nin:
+                - PickingPlayers
+                - Canceled
+          - source:
+              _neq: practice
       allow_aggregations: true
     comment: ""
   - role: user
@@ -638,17 +641,20 @@ select_permissions:
         - server_type
         - tv_connection_string
       filter:
-        _or:
-          - status:
-              _nin:
-                - PickingPlayers
-                - Canceled
-          - is_organizer:
-              _eq: true
-          - is_in_lineup:
-              _eq: true
-          - is_friend_in_match_lineup:
-              _eq: true
+        _and:
+          - _or:
+              - status:
+                  _nin:
+                    - PickingPlayers
+                    - Canceled
+              - is_organizer:
+                  _eq: true
+              - is_in_lineup:
+                  _eq: true
+              - is_friend_in_match_lineup:
+                  _eq: true
+          - source:
+              _neq: practice
       allow_aggregations: true
     comment: ""
 update_permissions:
