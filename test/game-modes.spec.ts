@@ -430,6 +430,21 @@ describe("unranked game modes (SQL-driven)", () => {
     return Number(row.generate_player_elo_for_match);
   };
 
+  const lineupSteamIds = async (match: {
+    lineup_1_id: string;
+    lineup_2_id: string;
+  }): Promise<[string, string]> => {
+    const pick = async (lineupId: string) => {
+      const [row] = await postgres.query<Array<{ steam_id: string }>>(
+        "SELECT steam_id FROM match_lineup_players WHERE match_lineup_id = $1 LIMIT 1",
+        [lineupId],
+      );
+      return String(row.steam_id);
+    };
+
+    return [await pick(match.lineup_1_id), await pick(match.lineup_2_id)];
+  };
+
   const eloRowCount = async (matchId: string): Promise<number> => {
     const rows = await postgres.query<Array<unknown>>(
       "SELECT 1 FROM player_elo WHERE match_id = $1",
@@ -504,6 +519,61 @@ describe("unranked game modes (SQL-driven)", () => {
 
   // The decision is stored, not derived, so history cannot be rewritten by
   // editing a mode long after the matches were played.
+  // The point of an unranked mode is that everything else about the match is
+  // real. If this ever stops being true, fun modes stop being playable rather
+  // than just unranked.
+  it("still records kills for an unranked match", async () => {
+    const gameModeId = await mode(false);
+    const match = await playedMatch(gameModeId);
+
+    const [map] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO match_maps (match_id, map_id, "order")
+       SELECT $1, id, 1 FROM maps ORDER BY name LIMIT 1 RETURNING id`,
+      [match.id],
+    );
+
+    const [attacker, victim] = await lineupSteamIds(match);
+    await fx.kill({ matchId: match.id, mapId: map.id }, attacker, victim);
+
+    const kills = await postgres.query<Array<unknown>>(
+      "SELECT 1 FROM player_kills WHERE match_id = $1",
+      [match.id],
+    );
+
+    expect(kills).toHaveLength(1);
+    expect(await eloRowCount(match.id)).toBe(0);
+  });
+
+  it("keeps an unranked match off the leaderboard", async () => {
+    const build = async (competitiveSafe: boolean) => {
+      const match = await playedMatch(await mode(competitiveSafe));
+      const [map] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO match_maps (match_id, map_id, "order")
+         SELECT $1, id, 1 FROM maps ORDER BY name LIMIT 1 RETURNING id`,
+        [match.id],
+      );
+      const [attacker, victim] = await lineupSteamIds(match);
+      await fx.kill({ matchId: match.id, mapId: map.id }, attacker, victim);
+      return attacker;
+    };
+
+    const unrankedPlayer = await build(false);
+
+    const onBoard = async () => {
+      const rows = await postgres.query<Array<{ player_steam_id: string }>>(
+        "SELECT player_steam_id FROM get_leaderboard('best_kdr', 0)",
+      );
+      return rows.map((row) => String(row.player_steam_id));
+    };
+
+    expect(await onBoard()).not.toContain(String(unrankedPlayer));
+
+    // The same shape under a safe mode does appear, so the assertion above is
+    // about the ranking flag and not about the fixture being incomplete.
+    const rankedPlayer = await build(true);
+    expect(await onBoard()).toContain(String(rankedPlayer));
+  });
+
   it("does not change a played match when the mode's flag is flipped later", async () => {
     const funMode = await mode(false);
     const match = await playedMatch(funMode);
