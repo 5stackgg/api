@@ -803,14 +803,8 @@ export class MatchAssistantService {
             matchId,
           );
 
-          const gameModeEnvironment = gameMode
-            ? [
-                { name: "ENABLED_PLUGINS", value: gameMode.enabledPlugins },
-                ...(gameMode.pluginConfigs
-                  ? [{ name: "PLUGIN_CONFIGS", value: gameMode.pluginConfigs }]
-                  : []),
-              ]
-            : [];
+          const gameModeEnvironment =
+            this.gameModesService.environmentFor(gameMode);
 
           await batch.createNamespacedJob({
             namespace: this.namespace,

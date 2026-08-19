@@ -150,7 +150,7 @@ export class GamePluginsController {
   public async previewGameMode(data: { user: User; gameModeId: string }) {
     this.assertAdministrator(data.user);
 
-    const mode = await this.gameModes.resolve(data.gameModeId);
+    const mode = await this.gameModes.previewForMode(data.gameModeId);
 
     if (!mode) {
       return { enabledPlugins: "", cfg: null, extraGameParams: null };

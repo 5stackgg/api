@@ -38,8 +38,6 @@ export enum SystemSettingName {
   GameServerPluginRuntime = "public.game_server_plugin_runtime",
   GameServerPluginRuntimeLocked = "game_server_plugin_runtime_locked",
   GamePluginRegistryUrl = "game_plugin_registry_url",
-  GamePluginsEnabled = "public.game_plugins_enabled",
-  PluginDirectoryEnabled = "public.plugin_directory_enabled",
   // VAPID identifies this panel to the browser push services. The keypair is
   // self-generated -- there is no vendor to register with -- so it is stored
   // here rather than demanding an env var of every operator. The private half

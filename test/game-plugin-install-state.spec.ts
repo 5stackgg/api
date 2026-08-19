@@ -122,6 +122,47 @@ describe("game plugin install state (SQL-driven)", () => {
     expect(await state()).toEqual("Installed");
   });
 
+  // Disabling a node does not delete what it reported, so the rows outlive the
+  // node's membership of the fleet.
+  it("does not report Installed off the back of a node that is no longer in the fleet", async () => {
+    await addNode("node-1");
+    await addNode("node-2", "Online", false);
+    await request();
+    await observe("node-2");
+
+    // node-2 is disabled: nothing that can run a match has the plugin.
+    expect(await state()).toEqual("Pending");
+  });
+
+  it("does not stay Failed because of a decommissioned node", async () => {
+    await addNode("node-1");
+    await addNode("node-2", "Online", false);
+    await request();
+    await observe("node-1");
+    await observe("node-2", { detected: false, status: "Failed" });
+
+    expect(await state()).toEqual("Installed");
+  });
+
+  it("never counts more installed nodes than there are nodes to install on", async () => {
+    await addNode("node-1");
+    await addNode("node-2", "Offline");
+    await request();
+    await observe("node-1");
+    await observe("node-2");
+
+    const [row] = await postgres.query<
+      Array<{ installed: number; target: number }>
+    >(
+      `SELECT game_plugin_installed_node_count(p.*) AS installed,
+              game_plugin_target_node_count(p.*) AS target
+         FROM game_plugins p WHERE slug = 'retakes'`,
+    );
+
+    expect(Number(row.installed)).toEqual(1);
+    expect(Number(row.target)).toEqual(1);
+  });
+
   it("counts installed and target nodes for the panel", async () => {
     await addNode("node-1");
     await addNode("node-2");

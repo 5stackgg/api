@@ -9,11 +9,7 @@ import { PostgresService } from "../postgres/postgres.service";
 import { PluginRuntimeService } from "../plugin-runtime/plugin-runtime.service";
 import { CacheService } from "../cache/cache.service";
 import { SystemSettingName } from "../system/enums/SystemSettingName";
-import {
-  NodeInventoryPlugin,
-  RegistryIndex,
-  RegistryPlugin,
-} from "./types/Registry";
+import { RegistryIndex, RegistryPlugin } from "./types/Registry";
 
 @Injectable()
 export class GamePluginsService {
@@ -93,9 +89,9 @@ export class GamePluginsService {
     await this.postgres.query(
       `INSERT INTO public.game_plugins
          (slug, kind, name, author, description, homepage, tags, verified,
-          hot_swappable, requires_service, config_schema, config_path, cvars,
-          panel, wiring, pairs_with, synced_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16, now())
+          hot_swappable, requires_service, requires_server_guidelines_disabled,
+          config_schema, config_path, cvars, panel, wiring, pairs_with, synced_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17, now())
        ON CONFLICT (slug) DO UPDATE SET
          kind = EXCLUDED.kind,
          name = EXCLUDED.name,
@@ -106,6 +102,7 @@ export class GamePluginsService {
          verified = EXCLUDED.verified,
          hot_swappable = EXCLUDED.hot_swappable,
          requires_service = EXCLUDED.requires_service,
+         requires_server_guidelines_disabled = EXCLUDED.requires_server_guidelines_disabled,
          config_schema = EXCLUDED.config_schema,
          config_path = EXCLUDED.config_path,
          cvars = EXCLUDED.cvars,
@@ -124,6 +121,7 @@ export class GamePluginsService {
         plugin.verified ?? false,
         plugin.hot_swappable ?? false,
         plugin.requires_service ?? null,
+        plugin.requires_server_guidelines_disabled ?? false,
         plugin.config_schema ? JSON.stringify(plugin.config_schema) : null,
         plugin.config_path ?? null,
         plugin.cvars ?? [],
@@ -258,30 +256,26 @@ export class GamePluginsService {
       source: "managed" | "manual";
     }>,
   ): Promise<void> {
-    const runtime = await this.pluginRuntime.getPluginRuntime();
-
     for (const plugin of reported) {
       await this.postgres.query(
         `INSERT INTO public.game_server_node_plugins
            (game_server_node_id, plugin_slug, runtime, version, detected_version,
             source, detected, status, updated_at)
-         VALUES ($1, $2, $3, $4, $4, $5, true, 'Installed', now())
+         SELECT n.id, $2,
+                COALESCE($3::text, n.pin_plugin_runtime, active_plugin_runtime()),
+                $4, $4, $5, true, 'Installed', now()
+           FROM public.game_server_nodes n
+          WHERE n.id = $1
          ON CONFLICT (game_server_node_id, plugin_slug) DO UPDATE SET
            version = EXCLUDED.version,
            detected_version = EXCLUDED.detected_version,
            detected = true,
            status = 'Installed',
            source = EXCLUDED.source,
-           runtime = COALESCE(EXCLUDED.runtime, game_server_node_plugins.runtime),
+           runtime = EXCLUDED.runtime,
            last_error = null,
            updated_at = now()`,
-        [
-          nodeId,
-          plugin.slug,
-          plugin.runtime ?? runtime,
-          plugin.version,
-          plugin.source,
-        ],
+        [nodeId, plugin.slug, plugin.runtime, plugin.version, plugin.source],
       );
     }
 
@@ -539,6 +533,11 @@ export class GamePluginsService {
         WHERE plugin_slug = $1
           AND runtime = $2
           AND ($3::text IS NULL OR version = $3)
+          -- Only when resolving the newest. Naming a version is an explicit
+          -- choice and may well be a release candidate; tracking the newest is
+          -- not, and a published rc would otherwise roll every node onto it on
+          -- the next poll -- a release the update check does not even count.
+          AND ($3::text IS NOT NULL OR prerelease = false)
         ORDER BY published_at DESC
         LIMIT 1`,
       [slug, runtime, version ?? null],
@@ -553,50 +552,6 @@ export class GamePluginsService {
     }
 
     return row;
-  }
-
-  public async install(
-    nodeId: string,
-    slug: string,
-    version?: string,
-  ): Promise<void> {
-    const runtime = await this.pluginRuntime.getPluginRuntime();
-    const resolved = await this.resolveVersion(slug, runtime, version);
-
-    await this.recordInstall(nodeId, slug, runtime, {
-      version: resolved.version,
-      status: "Installing",
-      last_error: null,
-    });
-
-    try {
-      await this.callNode(nodeId, "install", {
-        method: "POST",
-        body: JSON.stringify({
-          slug,
-          version: resolved.version,
-          url: resolved.url,
-          sha256: resolved.sha256,
-          layout: resolved.layout,
-          installPath: resolved.install_path ?? undefined,
-        }),
-      });
-
-      await this.recordInstall(nodeId, slug, runtime, {
-        version: resolved.version,
-        status: "Installed",
-        last_error: null,
-        installed_at: new Date().toISOString(),
-      });
-    } catch (error) {
-      await this.recordInstall(nodeId, slug, runtime, {
-        version: resolved.version,
-        status: "Failed",
-        last_error: error.message ?? String(error),
-      });
-
-      throw error;
-    }
   }
 
   // Named rather than counted: the confirmation is only useful if it says which
@@ -674,34 +629,6 @@ export class GamePluginsService {
     this.nudgeNodes();
   }
 
-  public async uninstall(nodeId: string, slug: string): Promise<void> {
-    const [inUse] = await this.postgres.query<Array<{ name: string }>>(
-      `SELECT m.name
-         FROM public.game_mode_plugins p
-         INNER JOIN public.game_modes m ON m.id = p.game_mode_id
-        WHERE p.plugin_slug = $1 AND m.archived_at IS NULL
-        LIMIT 1`,
-      [slug],
-    );
-
-    if (inUse) {
-      throw new BadRequestException(
-        `${slug} is used by the "${inUse.name}" mode; remove it from the mode first`,
-      );
-    }
-
-    await this.callNode(nodeId, "remove", {
-      method: "DELETE",
-      body: JSON.stringify({ slug }),
-    });
-
-    await this.postgres.query(
-      `DELETE FROM public.game_server_node_plugins
-        WHERE game_server_node_id = $1 AND plugin_slug = $2`,
-      [nodeId, slug],
-    );
-  }
-
   // Asks a node to converge now and report back. The node owns its own state,
   // so the API nudges rather than reaching in and writing the same rows -- two
   // writers doing wholesale replaces on one table is a race, not a safety net.
@@ -719,16 +646,15 @@ export class GamePluginsService {
   // panel could only guess, and it guessed "Installing" for a node that had not
   // even been told yet.
   private async seedPending(slug: string): Promise<void> {
-    const runtime = await this.pluginRuntime.getPluginRuntime();
-
     await this.postgres.query(
       `INSERT INTO public.game_server_node_plugins
          (game_server_node_id, plugin_slug, runtime, status, source, detected)
-       SELECT id, $1, $2, 'Pending', 'managed', false
-         FROM public.game_server_nodes
-        WHERE enabled = true
+       SELECT n.id, $1, COALESCE(n.pin_plugin_runtime, active_plugin_runtime()),
+              'Pending', 'managed', false
+         FROM public.game_server_nodes n
+        WHERE n.enabled = true
        ON CONFLICT (game_server_node_id, plugin_slug) DO NOTHING`,
-      [slug, runtime],
+      [slug],
     );
   }
 
@@ -743,61 +669,26 @@ export class GamePluginsService {
       error?: string | null;
     },
   ): Promise<void> {
-    const runtime = await this.pluginRuntime.getPluginRuntime();
-
     await this.postgres.query(
       `INSERT INTO public.game_server_node_plugins
          (game_server_node_id, plugin_slug, runtime, version, status, last_error,
           source, detected, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'managed', false, now())
+       SELECT n.id, $2, COALESCE(n.pin_plugin_runtime, active_plugin_runtime()),
+              $3, $4, $5, 'managed', false, now()
+         FROM public.game_server_nodes n
+        WHERE n.id = $1
        ON CONFLICT (game_server_node_id, plugin_slug) DO UPDATE SET
          status = EXCLUDED.status,
          version = COALESCE(EXCLUDED.version, game_server_node_plugins.version),
+         runtime = EXCLUDED.runtime,
          last_error = EXCLUDED.last_error,
          updated_at = now()`,
       [
         nodeId,
         progress.slug,
-        runtime,
         progress.version ?? null,
         progress.status,
         progress.error ?? null,
-      ],
-    );
-  }
-
-  private async recordInstall(
-    nodeId: string,
-    slug: string,
-    runtime: string,
-    fields: {
-      version: string;
-      status: string;
-      last_error: string | null;
-      installed_at?: string;
-    },
-  ): Promise<void> {
-    await this.postgres.query(
-      `INSERT INTO public.game_server_node_plugins
-         (game_server_node_id, plugin_slug, runtime, version, status, last_error,
-          installed_at, source, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'managed', now())
-       ON CONFLICT (game_server_node_id, plugin_slug) DO UPDATE SET
-         runtime = EXCLUDED.runtime,
-         version = EXCLUDED.version,
-         status = EXCLUDED.status,
-         last_error = EXCLUDED.last_error,
-         installed_at = COALESCE(EXCLUDED.installed_at, game_server_node_plugins.installed_at),
-         source = 'managed',
-         updated_at = now()`,
-      [
-        nodeId,
-        slug,
-        runtime,
-        fields.version,
-        fields.status,
-        fields.last_error,
-        fields.installed_at ?? null,
       ],
     );
   }

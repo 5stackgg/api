@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PostgresService } from "../postgres/postgres.service";
 import { PluginRuntimeService } from "../plugin-runtime/plugin-runtime.service";
+import { PluginRuntime } from "../configs/types/GameServersConfig";
 
 export type ResolvedGameMode = {
   id: string;
@@ -10,6 +11,16 @@ export type ResolvedGameMode = {
   extraGameParams: string | null;
   enabledPlugins: string;
   pluginConfigs: string | null;
+  missingRequired: Array<string>;
+  disableServerGuidelines: boolean;
+};
+
+// Which node's disk decides the answer, and which framework it is running.
+// A null node means "any node has it", which is only ever right when nothing is
+// about to boot -- a preview.
+type PluginScope = {
+  nodeId: string | null;
+  runtime: PluginRuntime;
 };
 
 type ModeRow = {
@@ -28,6 +39,16 @@ type ModePluginRow = {
   version: string | null;
 };
 
+export class RequiredPluginMissing extends Error {
+  constructor(mode: string, plugins: Array<string>, where: string) {
+    super(
+      `"${mode}" requires ${plugins.join(", ")}, which ${
+        plugins.length === 1 ? "is" : "are"
+      } not installed on ${where}`,
+    );
+  }
+}
+
 @Injectable()
 export class GameModesService {
   constructor(
@@ -43,23 +64,63 @@ export class GameModesService {
     serverId: string,
     matchId?: string,
   ): Promise<ResolvedGameMode | null> {
-    const [row] = await this.postgres.query<Array<{ game_mode_id: string | null }>>(
+    const [row] = await this.postgres.query<
+      Array<{
+        game_mode_id: string | null;
+        game_server_node_id: string | null;
+        pin_plugin_runtime: string | null;
+      }>
+    >(
       `SELECT COALESCE(
                 (SELECT mo.game_mode_id
                    FROM matches m
                    INNER JOIN match_options mo ON mo.id = m.match_options_id
                   WHERE m.id = $2),
-                (SELECT s.game_mode_id FROM servers s
-                  WHERE s.id = $1 AND s.type IS DISTINCT FROM 'Ranked')
-              ) AS game_mode_id`,
+                CASE WHEN s.type IS DISTINCT FROM 'Ranked'
+                     THEN s.game_mode_id
+                END
+              ) AS game_mode_id,
+              s.game_server_node_id,
+              n.pin_plugin_runtime
+         FROM servers s
+         LEFT JOIN game_server_nodes n ON n.id = s.game_server_node_id
+        WHERE s.id = $1`,
       [serverId, matchId ?? null],
     );
 
+    // Scoped to the node this server is about to run on. link_plugins gates a
+    // plugin's files on the exact slug@version pair being on that node's disk,
+    // so naming a version another node happens to have newer boots the mode
+    // with none of its plugins and nothing to say so.
+    const scope: PluginScope = {
+      nodeId: row?.game_server_node_id ?? null,
+      runtime: await this.pluginRuntime.resolvePluginRuntime({
+        pin_plugin_runtime: row?.pin_plugin_runtime ?? null,
+      }),
+    };
+
     const mode = row?.game_mode_id
-      ? await this.resolve(row.game_mode_id)
+      ? await this.resolve(row.game_mode_id, scope)
       : null;
 
-    return await this.withAlwaysLoad(mode);
+    if (mode?.missingRequired.length) {
+      throw new RequiredPluginMissing(
+        mode.name,
+        mode.missingRequired,
+        scope.nodeId ?? `any node for ${scope.runtime}`,
+      );
+    }
+
+    return await this.withAlwaysLoad(mode, scope);
+  }
+
+  // What a server would boot with if it ran this mode right now. Always-load
+  // plugins belong in the answer even though they are not part of the mode:
+  // leaving them out is the one thing a preview exists to prevent.
+  public async previewForMode(
+    gameModeId: string,
+  ): Promise<ResolvedGameMode | null> {
+    return await this.withAlwaysLoad(await this.resolve(gameModeId));
   }
 
   // Always-load plugins are merged in here rather than at the call sites,
@@ -67,11 +128,12 @@ export class GameModesService {
   // mode at all still has to load them, which is the entire point of the flag.
   private async withAlwaysLoad(
     mode: ResolvedGameMode | null,
+    scope?: PluginScope,
   ): Promise<ResolvedGameMode | null> {
-    const always = await this.alwaysLoadPlugins();
+    const always = await this.alwaysLoadPlugins(scope);
 
     if (always.length === 0) {
-      return mode;
+      return await this.withServerGuidelines(mode);
     }
 
     const fromMode = (mode?.enabledPlugins ?? "").split(",").filter(Boolean);
@@ -85,12 +147,15 @@ export class GameModesService {
     ];
 
     if (mode) {
-      return { ...mode, enabledPlugins: enabled.join(",") };
+      return await this.withServerGuidelines({
+        ...mode,
+        enabledPlugins: enabled.join(","),
+      });
     }
 
     // No mode, but plugins that load regardless. Everything else is empty so
     // the server gets the plugins and none of a mode's cfg or launch params.
-    return {
+    return await this.withServerGuidelines({
       id: "",
       slug: "",
       name: "",
@@ -98,10 +163,48 @@ export class GameModesService {
       extraGameParams: null,
       enabledPlugins: enabled.join(","),
       pluginConfigs: null,
-    };
+      missingRequired: [],
+      disableServerGuidelines: false,
+    });
   }
 
-  public async resolve(gameModeId: string): Promise<ResolvedGameMode | null> {
+  // Both frameworks refuse the calls a HUD or scoreboard plugin needs while
+  // FollowCS2ServerGuidelines is true, and Valve's position is that turning it
+  // off can ban every GSLT on the account. So it takes both halves: the catalog
+  // saying the plugin cannot work without it, and the operator having said yes
+  // for that plugin. Decided from the plugins that are actually going to load,
+  // so a mode that does not select the plugin leaves the server compliant.
+  private async withServerGuidelines(
+    mode: ResolvedGameMode | null,
+  ): Promise<ResolvedGameMode | null> {
+    if (!mode?.enabledPlugins) {
+      return mode;
+    }
+
+    const slugs = mode.enabledPlugins
+      .split(",")
+      .filter(Boolean)
+      .map((entry) => entry.split("@")[0]);
+
+    const [row] = await this.postgres.query<Array<{ disable: boolean }>>(
+      `SELECT EXISTS (
+                SELECT 1
+                  FROM game_plugin_installs i
+                  INNER JOIN game_plugins p ON p.slug = i.plugin_slug
+                 WHERE i.plugin_slug = ANY($1::text[])
+                   AND i.disable_server_guidelines = true
+                   AND p.requires_server_guidelines_disabled = true
+              ) AS disable`,
+      [slugs],
+    );
+
+    return { ...mode, disableServerGuidelines: row?.disable ?? false };
+  }
+
+  public async resolve(
+    gameModeId: string,
+    scope?: PluginScope,
+  ): Promise<ResolvedGameMode | null> {
     const [mode] = await this.postgres.query<Array<ModeRow>>(
       `SELECT id, slug, name, cfg, extra_game_params
          FROM game_modes
@@ -113,7 +216,9 @@ export class GameModesService {
       return null;
     }
 
-    const runtime = await this.pluginRuntime.getPluginRuntime();
+    const runtime =
+      scope?.runtime ?? (await this.pluginRuntime.getPluginRuntime());
+    const nodeId = scope?.nodeId ?? null;
 
     // The version a node actually has installed is what gets linked. Selecting
     // by the registry's newest instead would name a version that is not on disk,
@@ -129,23 +234,32 @@ export class GameModesService {
                   AND n.runtime = $2
                   AND n.status = 'Installed'
                   AND n.version IS NOT NULL
+                  AND ($3::text IS NULL OR n.game_server_node_id = $3)
                 ORDER BY n.updated_at DESC
                 LIMIT 1) AS version
          FROM game_mode_plugins mp
          INNER JOIN game_plugins p ON p.slug = mp.plugin_slug
         WHERE mp.game_mode_id = $1
         ORDER BY mp.load_order ASC, mp.plugin_slug ASC`,
-      [gameModeId, runtime],
+      [gameModeId, runtime, nodeId],
     );
 
     const enabled: Array<string> = [];
     const configs: Record<string, string> = {};
+    const missingRequired: Array<string> = [];
 
     for (const plugin of plugins) {
       if (!plugin.version) {
-        this.logger.warn(
-          `mode ${mode.slug}: ${plugin.plugin_slug} is not installed on any node for ${runtime}`,
-        );
+        if (plugin.required) {
+          missingRequired.push(plugin.plugin_slug);
+        } else {
+          this.logger.warn(
+            `mode ${mode.slug}: ${plugin.plugin_slug} is not installed on ${
+              nodeId ?? `any node for ${runtime}`
+            }`,
+          );
+        }
+
         continue;
       }
 
@@ -168,14 +282,20 @@ export class GameModesService {
         Object.keys(configs).length > 0
           ? Buffer.from(JSON.stringify(configs)).toString("base64")
           : null,
+      missingRequired,
+      // Set once the whole plugin list is known; a mode's own plugins are only
+      // half of what a server loads.
+      disableServerGuidelines: false,
     };
   }
 
   // Plugins marked always_load are loaded by every server regardless of mode,
   // ranked included. That is the point of the flag: a stats collector is not a
   // game mode, and hand-placing it in custom-plugins is what this replaces.
-  public async alwaysLoadPlugins(): Promise<Array<string>> {
-    const runtime = await this.pluginRuntime.getPluginRuntime();
+  public async alwaysLoadPlugins(scope?: PluginScope): Promise<Array<string>> {
+    const runtime =
+      scope?.runtime ?? (await this.pluginRuntime.getPluginRuntime());
+    const nodeId = scope?.nodeId ?? null;
 
     const rows = await this.postgres.query<
       Array<{ plugin_slug: string; version: string | null }>
@@ -187,12 +307,13 @@ export class GameModesService {
                   AND n.runtime = $1
                   AND n.status = 'Installed'
                   AND n.version IS NOT NULL
+                  AND ($2::text IS NULL OR n.game_server_node_id = $2)
                 ORDER BY n.updated_at DESC
                 LIMIT 1) AS version
          FROM game_plugin_installs i
         WHERE i.enabled = true AND i.always_load = true
         ORDER BY i.plugin_slug`,
-      [runtime],
+      [runtime, nodeId],
     );
 
     return rows
@@ -200,14 +321,12 @@ export class GameModesService {
       .map((row) => `${row.plugin_slug}@${row.version}`);
   }
 
-  // The env a game server pod needs, for callers that want it prepared rather
-  // than assembling it themselves.
-  public async environmentFor(
-    serverId: string,
-    matchId?: string,
-  ): Promise<Array<{ name: string; value: string }>> {
-    const mode = await this.resolveForServer(serverId, matchId);
-
+  // The env a game server pod needs. Every pod builder resolves the mode itself
+  // -- it needs extraGameParams as well -- so this maps rather than resolves,
+  // and there is one place that knows what the container reads.
+  public environmentFor(
+    mode: ResolvedGameMode | null,
+  ): Array<{ name: string; value: string }> {
     if (!mode?.enabledPlugins) {
       return [];
     }
@@ -218,6 +337,13 @@ export class GameModesService {
 
     if (mode.pluginConfigs) {
       environment.push({ name: "PLUGIN_CONFIGS", value: mode.pluginConfigs });
+    }
+
+    // setup.sh patches FollowCS2ServerGuidelines in the framework's own config
+    // before the server starts; there is no way to change it from inside a
+    // running server.
+    if (mode.disableServerGuidelines) {
+      environment.push({ name: "DISABLE_SERVER_GUIDELINES", value: "true" });
     }
 
     return environment;

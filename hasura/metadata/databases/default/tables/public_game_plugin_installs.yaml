@@ -14,6 +14,7 @@ select_permissions:
         - channel
         - enabled
         - always_load
+        - disable_server_guidelines
         - created_at
         - updated_at
       filter: {}
@@ -29,6 +30,7 @@ insert_permissions:
         - channel
         - enabled
         - always_load
+        - disable_server_guidelines
     comment: ""
 update_permissions:
   - role: administrator
@@ -39,6 +41,7 @@ update_permissions:
         - channel
         - enabled
         - always_load
+        - disable_server_guidelines
       filter: {}
       check: {}
     comment: ""

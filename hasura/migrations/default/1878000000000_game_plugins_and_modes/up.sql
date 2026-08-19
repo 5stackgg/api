@@ -29,6 +29,11 @@ CREATE TABLE IF NOT EXISTS "public"."game_plugins" (
     "verified" boolean NOT NULL DEFAULT false,
     "hot_swappable" boolean NOT NULL DEFAULT false,
     "requires_service" text,
+    -- Both frameworks ship FollowCS2ServerGuidelines = true, which blocks the
+    -- calls a plugin needs to change what a player sees. A plugin that cannot
+    -- work without them says so here; it is a fact about the plugin, never
+    -- consent to turn them off -- that lives on the install below.
+    "requires_server_guidelines_disabled" boolean NOT NULL DEFAULT false,
     "config_schema" jsonb,
     "config_path" text,
     "cvars" text[] NOT NULL DEFAULT '{}',
@@ -80,6 +85,11 @@ CREATE TABLE IF NOT EXISTS "public"."game_plugin_installs" (
     -- Some plugins are not part of a "fun mode" at all -- stats collectors,
     -- admin tooling -- and belong on every server including ranked.
     "always_load" boolean NOT NULL DEFAULT false,
+    -- The operator accepting, for this plugin, that servers loading it boot with
+    -- Valve's server guidelines off. Valve's position is that this can ban every
+    -- GSLT on the account, so it defaults to false and is only ever offered for
+    -- a plugin whose catalog entry says it cannot work without it.
+    "disable_server_guidelines" boolean NOT NULL DEFAULT false,
     "created_at" timestamptz NOT NULL DEFAULT now(),
     "updated_at" timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY ("plugin_slug"),

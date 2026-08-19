@@ -162,14 +162,8 @@ export class DedicatedServersService {
       // always comes up on a clean plugin set.
       const gameMode = await this.gameModesService.resolveForServer(serverId);
 
-      const gameModeEnvironment = gameMode
-        ? [
-            { name: "ENABLED_PLUGINS", value: gameMode.enabledPlugins },
-            ...(gameMode.pluginConfigs
-              ? [{ name: "PLUGIN_CONFIGS", value: gameMode.pluginConfigs }]
-              : []),
-          ]
-        : [];
+      const gameModeEnvironment =
+        this.gameModesService.environmentFor(gameMode);
 
       const dedicatedServerDeploymentName =
         this.getDedicatedServerDeploymentName(serverId);
