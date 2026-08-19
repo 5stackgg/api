@@ -215,6 +215,54 @@ export class HasuraService {
     await this.postgresService.query(
       "insert into settings (name, value) values ('public.video_chat_matches_enabled', 'true') on conflict (name) do nothing",
     );
+
+    // The nade library is inert without a server, so it ships on. Practice
+    // sessions consume a real game server slot, so that half ships off and is
+    // an operator's deliberate choice.
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.nade_library_enabled', 'true') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.nade_practice_enabled', 'false') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.nade_practice_idle_minutes', '10') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.nade_practice_reserved_servers', '2') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.nade_practice_daily_limit', '10') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.nade_lineup_daily_limit', '200') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.nade_success_radius', '96') on conflict (name) do nothing",
+    );
+
+    // Three distinct players clearing five consecutive throws is a much harder
+    // claim than one moderator's opinion, and it is the one the library can
+    // actually collect at scale.
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.nade_verify_masteries', '3') on conflict (name) do nothing",
+    );
+
+    // A solve costs up to 300 grenades and two minutes of a practice pod, so it
+    // is capped per caller like every other expensive path in the module.
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.nade_solves_per_hour', '6') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.nade_import_enabled', 'false') on conflict (name) do nothing",
+    );
   }
 
   private async applyMigrations(path: string): Promise<number> {

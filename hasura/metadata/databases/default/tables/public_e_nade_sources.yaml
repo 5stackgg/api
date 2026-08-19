@@ -1,0 +1,20 @@
+table:
+  name: e_nade_sources
+  schema: public
+is_enum: true
+array_relationships:
+  - name: nade_lineups
+    using:
+      foreign_key_constraint_on:
+        column: origin_source
+        table:
+          name: nade_lineups
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ''

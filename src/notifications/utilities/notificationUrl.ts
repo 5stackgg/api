@@ -49,6 +49,16 @@ const PATH_BY_TYPE: Record<string, (entityId: string) => string> = {
   LeagueMatchUnscheduled: () => `/league`,
   LeagueRegistrationDecision: () => `/league`,
   LeagueRosterUndersized: () => `/league`,
+  // A practice session is a dialog on the map board, not a page, so there is no
+  // route an id can be turned into. Both of these carry the real target
+  // (/nades/<map>?practice=<code>) in the message, which is read first; this is
+  // only the fallback for a row authored without one, and the library index is
+  // the closest honest place to land.
+  NadePracticeInvite: () => `/nades`,
+  NadePracticeReady: () => `/nades`,
+  // The admin drift review, which lists scans with their verdict counts. It
+  // does not read a scan id today, so the id on the row stays off the path.
+  NadeDriftScanFinished: () => `/nades/drift`,
   GameNodeStatus: () => `/game-server-nodes`,
   GameUpdate: () => `/game-server-nodes`,
   DedicatedServerStatus: () => `/dedicated-servers`,

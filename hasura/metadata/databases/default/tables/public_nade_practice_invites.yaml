@@ -1,0 +1,105 @@
+table:
+  name: nade_practice_invites
+  schema: public
+object_relationships:
+  - name: session
+    using:
+      foreign_key_constraint_on: nade_practice_session_id
+  - name: player
+    using:
+      foreign_key_constraint_on: steam_id
+  - name: invited_by
+    using:
+      foreign_key_constraint_on: invited_by_steam_id
+insert_permissions: []
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - nade_practice_session_id
+        - steam_id
+        - invited_by_steam_id
+        - created_at
+      filter:
+        session:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: verified_user
+    permission:
+      columns:
+        - nade_practice_session_id
+        - steam_id
+        - invited_by_steam_id
+        - created_at
+      filter:
+        session:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: streamer
+    permission:
+      columns:
+        - nade_practice_session_id
+        - steam_id
+        - invited_by_steam_id
+        - created_at
+      filter:
+        session:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - nade_practice_session_id
+        - steam_id
+        - invited_by_steam_id
+        - created_at
+      filter:
+        session:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - nade_practice_session_id
+        - steam_id
+        - invited_by_steam_id
+        - created_at
+      filter:
+        session:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: moderator
+    permission:
+      columns:
+        - nade_practice_session_id
+        - steam_id
+        - invited_by_steam_id
+        - created_at
+      filter:
+        session:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ""
+  - role: administrator
+    permission:
+      columns:
+        - nade_practice_session_id
+        - steam_id
+        - invited_by_steam_id
+        - created_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions: []
+delete_permissions: []
