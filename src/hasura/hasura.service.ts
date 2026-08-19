@@ -224,7 +224,7 @@ export class HasuraService {
     );
 
     await this.postgresService.query(
-      "insert into settings (name, value) values ('public.nade_practice_enabled', 'false') on conflict (name) do nothing",
+      "insert into settings (name, value) values ('public.nade_practice_enabled', 'true') on conflict (name) do nothing",
     );
 
     await this.postgresService.query(

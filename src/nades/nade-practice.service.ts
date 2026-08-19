@@ -81,7 +81,7 @@ export class NadePracticeService {
 
   public async isEnabled(): Promise<boolean> {
     return (
-      (await this.setting(SystemSettingName.NadePracticeEnabled)) === "true"
+      (await this.setting(SystemSettingName.NadePracticeEnabled)) !== "false"
     );
   }
 
