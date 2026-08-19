@@ -103,6 +103,7 @@ select_permissions:
         collection:
           visibility:
             _eq: Public
+      allow_aggregations: true
     comment: ''
   - role: user
     permission:
@@ -116,6 +117,7 @@ select_permissions:
         collection:
           can_view:
             _eq: true
+      allow_aggregations: true
     comment: ''
   - role: verified_user
     permission:
@@ -129,6 +131,7 @@ select_permissions:
         collection:
           can_view:
             _eq: true
+      allow_aggregations: true
     comment: ''
   - role: streamer
     permission:
@@ -142,6 +145,7 @@ select_permissions:
         collection:
           can_view:
             _eq: true
+      allow_aggregations: true
     comment: ''
   - role: match_organizer
     permission:
@@ -155,6 +159,7 @@ select_permissions:
         collection:
           can_view:
             _eq: true
+      allow_aggregations: true
     comment: ''
   - role: tournament_organizer
     permission:
@@ -168,6 +173,7 @@ select_permissions:
         collection:
           can_view:
             _eq: true
+      allow_aggregations: true
     comment: ''
   - role: moderator
     permission:
@@ -181,6 +187,7 @@ select_permissions:
         collection:
           can_view:
             _eq: true
+      allow_aggregations: true
     comment: ''
   - role: administrator
     permission:
@@ -191,6 +198,7 @@ select_permissions:
         - note
         - created_at
       filter: {}
+      allow_aggregations: true
     comment: ''
 update_permissions:
   - role: user
