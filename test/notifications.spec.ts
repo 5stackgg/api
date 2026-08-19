@@ -238,6 +238,36 @@ describe("notifications (SQL-driven)", () => {
 
       expect(rows).toEqual([{ steam_id: active, in_app: false }]);
     });
+
+    it("carries the image the writer hands over, and no data when there is none", async () => {
+      const active = await activePlayer();
+
+      await notifications().notifyActivePlayers("NewsPublished", {
+        title: "New article",
+        message: "something happened",
+        entity_id: "article-4",
+        data: { image: "/news/image/cover.png" },
+      });
+      await notifications().notifyActivePlayers("NewsPublished", {
+        title: "Plain article",
+        message: "nothing to show",
+        entity_id: "article-5",
+        data: { image: null },
+      });
+
+      const rows = await postgres.query<
+        Array<{ entity_id: string; data: Record<string, unknown> | null }>
+      >(
+        `SELECT entity_id, data FROM notifications WHERE steam_id = $1::bigint
+          ORDER BY entity_id`,
+        [active],
+      );
+
+      expect(rows).toEqual([
+        { entity_id: "article-4", data: { image: "/news/image/cover.png" } },
+        { entity_id: "article-5", data: null },
+      ]);
+    });
   });
 
   describe("collapseOlderUnread", () => {
@@ -567,6 +597,46 @@ describe("notifications (SQL-driven)", () => {
       });
 
       expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+    });
+
+    it("badges what the bell would count, not just the player's own rows", async () => {
+      // NotificationStore.unreadNotificationCount: own unread rows, the role
+      // broadcasts the player can see, pending invites. An admin whose only
+      // unread item is a role broadcast must not have the badge cleared by
+      // the very push that announces it.
+      const admin = await fx.player();
+      await postgres.query(
+        `UPDATE players SET role = 'administrator' WHERE steam_id = $1::bigint`,
+        [admin],
+      );
+      await subscribe(admin);
+      const team = await fx.team();
+      await postgres.query(
+        `INSERT INTO team_invites (team_id, steam_id, invited_by_player_steam_id)
+              VALUES ($1::uuid, $2::bigint, $3::bigint)`,
+        [team.id, admin, team.owner],
+      );
+      await postgres.query(
+        `INSERT INTO notifications (type, title, message, role, steam_id, entity_id)
+              VALUES ('GameNodeStatus', 'Node', 'offline', 'match_organizer', NULL, 'n-1')`,
+      );
+      const [row] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO notifications (type, title, message, role, steam_id, entity_id)
+              VALUES ('PlayerSanctioned', 'Ban', 'x', 'administrator', NULL, 'p-1')
+           RETURNING id::text AS id`,
+      );
+
+      await (await configuredService()).sendForNotification({
+        id: row.id,
+        type: "PlayerSanctioned",
+      });
+
+      expect(webPush.sendNotification).toHaveBeenCalledTimes(1);
+      const payload = JSON.parse(
+        (webPush.sendNotification as jest.Mock).mock.calls[0][1],
+      );
+      // Two visible broadcasts plus one team invite.
+      expect(payload.unread).toBe(3);
     });
 
     it("drops a row already dealt with in the bell", async () => {

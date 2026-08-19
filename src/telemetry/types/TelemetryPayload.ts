@@ -105,7 +105,8 @@ export type TelemetryPlugins = {
   modes: number;
   modes_enabled: number;
   // Modes that are not competitive_safe, i.e. not offered in draft lobbies.
-  // (Every custom mode is unranked regardless; the flag only gates drafts.)
+  // Every custom mode is unranked regardless; the key predates that rule and
+  // stays so already-recorded payloads keep summing.
   modes_unranked: number;
 };
 

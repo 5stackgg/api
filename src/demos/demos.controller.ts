@@ -340,7 +340,7 @@ export class DemosController {
         role: "user",
         entity_id: matchId,
         steamIds: players.map((player) => player.steam_id),
-        ...(image ? { data: { image } } : {}),
+        data: { image },
       });
     } catch (error) {
       this.logger.warn(

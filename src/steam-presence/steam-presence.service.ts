@@ -746,7 +746,7 @@ export class SteamPresenceService
           role: "user",
           entity_id: notice.matchId,
           steamIds: [friend.steam_id],
-          ...(image ? { data: { image } } : {}),
+          data: { image },
         })
         .catch((err) =>
           this.logger.warn(

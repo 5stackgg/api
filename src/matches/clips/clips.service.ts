@@ -1520,7 +1520,7 @@ export class ClipsService {
     if (body.error) {
       set.error_message = body.error;
     }
-    if (!isBoot && ["completed", "error", "cancelled"].includes(body.status)) {
+    if (!isBoot && ["done", "error", "cancelled"].includes(body.status)) {
       // The steam account is held by the batch pod, freed on pod teardown.
       set.game_server_node_id = null;
     }
@@ -1531,9 +1531,11 @@ export class ClipsService {
       },
     });
 
-    if (!isBoot && body.status === "completed") {
-      // Renders take minutes and people navigate away, so the finish is the
-      // whole reason to notify at all.
+    // The pod posts `done` only after the upload has landed the clip row and
+    // its poster frame (inline-clip-render.sh), so the notification can carry
+    // the thumbnail. Renders take minutes and people navigate away, so the
+    // finish is the whole reason to notify at all.
+    if (!isBoot && body.status === "done") {
       void this.notifyClipReady(jobId);
     }
   }
@@ -1573,9 +1575,11 @@ export class ClipsService {
         role: "user",
         entity_id: jobId,
         steamIds: [job.user_steam_id],
-        ...(job.thumbnail_clip_id
-          ? { data: { image: `/clips/${job.thumbnail_clip_id}/thumbnail` } }
-          : {}),
+        data: {
+          image: job.thumbnail_clip_id
+            ? `/clips/${job.thumbnail_clip_id}/thumbnail`
+            : null,
+        },
       });
     } catch (error) {
       this.logger.warn(`unable to notify of finished clip ${jobId}`, error);

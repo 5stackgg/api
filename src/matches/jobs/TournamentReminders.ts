@@ -80,9 +80,7 @@ export class TournamentReminders extends WorkerHost {
         role: "user",
         entity_id: `${tournament.id}:${tournament.window}`,
         steamIds: recipients.map((recipient) => recipient.steam_id),
-        ...((tournament.banner ?? tournament.logo)
-          ? { data: { image: tournament.banner ?? tournament.logo } }
-          : {}),
+        data: { image: tournament.banner ?? tournament.logo },
       });
 
       sent++;

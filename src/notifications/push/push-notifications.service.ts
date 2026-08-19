@@ -38,8 +38,8 @@ export type PushSubscriptionPayload = {
 export type NotificationData = {
   threadKey?: string;
   threadLabel?: string;
-  icon?: string;
-  image?: string;
+  icon?: string | null;
+  image?: string | null;
   senderSteamId?: string;
 };
 
@@ -151,6 +151,16 @@ const RECIPIENT_ROLES: Record<string, e_player_roles_enum[]> =
   Object.fromEntries(
     BROADCAST_ROLES.map((role) => [role, rolesAtOrAbove(role)]),
   );
+
+// The same table flattened to (broadcast role, recipient role) pairs, for SQL
+// that has to ask "can this player see that broadcast" without a round trip.
+const AUDIENCE_PAIRS: Array<[string, string]> = BROADCAST_ROLES.flatMap(
+  (role) =>
+    RECIPIENT_ROLES[role].map((recipient): [string, string] => [
+      role,
+      recipient,
+    ]),
+);
 
 // Types that fan out to one row per player. The trigger fires per row, so for
 // these the handler collapses into a single deduped job instead of doing a
@@ -1126,33 +1136,37 @@ export class PushNotificationsService {
     return `${this.appConfig.apiDomain}/${path.replace(/^\/+/, "")}`;
   }
 
-  private static markReadSelection(ids: string[]) {
-    return {
-      update_notifications: {
-        __args: {
-          where: { id: { _in: ids } },
-          _set: { is_read: true },
-        },
-        affected_rows: true,
-      },
-    };
-  }
-
-  // One button: the mutation the bell would run for it, followed by marking
-  // the rows read -- which is what the bell does after any of its buttons
-  // (AppNotifications.vue handleAction), so the push stays in step.
+  // One button: the mutation the bell would run for it, followed by what the
+  // bell does to the row afterwards -- Dismiss marks it read
+  // (NotificationsPanel.vue dismissNotification); a button that answers the
+  // notification removes it (handleAction -> deleteNotification), otherwise
+  // the same row would come back in the bell still offering the same buttons.
   private static pushAction(
     action: string,
     title: string,
     mutation: Record<string, unknown>,
-    ids: string[],
+    where: Record<string, unknown>,
   ): PushAction {
+    const answered = Object.keys(mutation).length > 0;
+
     return {
       action,
       title,
       operation: generateMutationOp({
         ...mutation,
-        ...PushNotificationsService.markReadSelection(ids),
+        update_notifications: {
+          __args: {
+            // A row the writer marked undeletable (a scheduled scrim, until it
+            // is played) stays: the update permission's check rejects a
+            // deleted_at on it, and one rejected row would roll back the
+            // answer with it.
+            where: answered ? { ...where, deletable: { _neq: false } } : where,
+            _set: answered
+              ? { is_read: true, deleted_at: "now()" }
+              : { is_read: true },
+          },
+          affected_rows: true,
+        },
       } as Parameters<typeof generateMutationOp>[0]),
     };
   }
@@ -1165,7 +1179,7 @@ export class PushNotificationsService {
     count: number,
   ): PushAction[] {
     const newest = notifications.at(-1);
-    const ids = notifications.map(({ id }) => id);
+    const byId = { id: { _in: notifications.map(({ id }) => id) } };
 
     // Marking a bell row read says nothing about the conversation's own read
     // cursor, and a "Dismiss" that leaves the thread unread would mislead.
@@ -1173,15 +1187,32 @@ export class PushNotificationsService {
       return [];
     }
 
-    const dismiss = [
-      PushNotificationsService.pushAction("dismiss", "Dismiss", {}, ids),
-    ];
-
     // A bundle describes several things at once; the only honest button is
-    // the one that applies to all of them.
+    // the one that applies to all of them. Selected by thread rather than by
+    // id: a bundle is every row in one thread (see threadKeyFor), and the id
+    // list is unbounded -- a night of quiet hours over a flapping node is
+    // enough to push the payload past the ~4 KB a push service accepts, and
+    // the summary would be refused outright.
     if (count > 1 || notifications.length > 1) {
-      return dismiss;
+      return [
+        PushNotificationsService.pushAction(
+          "dismiss",
+          "Dismiss",
+          {},
+          {
+            type: { _eq: newest.type },
+            entity_id: newest.entity_id
+              ? { _eq: newest.entity_id }
+              : { _is_null: true },
+            is_read: { _eq: false },
+          },
+        ),
+      ];
     }
+
+    const dismiss = [
+      PushNotificationsService.pushAction("dismiss", "Dismiss", {}, byId),
+    ];
 
     if (newest.actions?.length) {
       return newest.actions.map(({ label, graphql }, index) =>
@@ -1194,7 +1225,7 @@ export class PushNotificationsService {
               ...graphql.selection,
             },
           },
-          ids,
+          byId,
         ),
       );
     }
@@ -1217,13 +1248,13 @@ export class PushNotificationsService {
           "accept",
           "Accept",
           { acceptInvite: { __args: variables, success: true } },
-          ids,
+          byId,
         ),
         PushNotificationsService.pushAction(
           "decline",
           "Decline",
           { denyInvite: { __args: variables, success: true } },
-          ids,
+          byId,
         ),
       ];
     }
@@ -1239,7 +1270,7 @@ export class PushNotificationsService {
               success: true,
             },
           },
-          ids,
+          byId,
         ),
       );
     }
@@ -1247,19 +1278,63 @@ export class PushNotificationsService {
     return dismiss;
   }
 
-  // What the app icon should say once this push lands. Only rows the bell
-  // would show this player; the bell's own number also counts invites and the
-  // like, and the page re-syncs the badge from that the moment it is open.
+  // What the app icon should say once this push lands: the bell's number
+  // (NotificationStore.unreadNotificationCount), so the badge the push sets
+  // and the badge the page sets agree. The bell counts its own rows -- the
+  // player's, and the role broadcasts their role can see -- plus pending
+  // invites and an unread news article. League schedule tasks are the one
+  // thing left out; they are derived client-side from the whole season tree.
   private async unreadCount(steamId: string): Promise<number | undefined> {
     try {
       const rows = await this.postgres.query<Array<{ unread: string }>>(
-        `SELECT count(*)::text AS unread
-           FROM public.notifications
-          WHERE steam_id = $1
-            AND in_app = true
-            AND is_read = false
-            AND deleted_at IS NULL`,
-        [steamId],
+        `WITH viewer AS (
+           SELECT role::text AS role, last_read_news_at
+             FROM public.players
+            WHERE steam_id = $1
+         ),
+         audience AS (
+           SELECT * FROM unnest($2::text[], $3::text[])
+                       AS pairs(broadcast_role, recipient_role)
+         )
+         SELECT (
+           (SELECT count(*)
+              FROM public.notifications n, viewer
+             WHERE n.in_app = true
+               AND n.is_read = false
+               AND n.deleted_at IS NULL
+               AND (n.steam_id = $1
+                    OR (n.steam_id IS NULL
+                        AND EXISTS (SELECT 1 FROM audience a
+                                     WHERE a.broadcast_role = n.role::text
+                                       AND a.recipient_role = viewer.role))))
+           + (SELECT count(*) FROM public.team_invites WHERE steam_id = $1)
+           + (SELECT count(*) FROM public.tournament_team_invites
+               WHERE steam_id = $1)
+           + (SELECT count(*)
+                FROM public.draft_game_players dgp
+                JOIN public.draft_games dg ON dg.id = dgp.draft_game_id
+               WHERE dgp.steam_id = $1
+                 AND dgp.status = 'Invited'
+                 AND dg.match_id IS NULL
+                 AND dg.status NOT IN ('Completed', 'Canceled'))
+           + (SELECT count(*)
+                FROM (SELECT published_at
+                        FROM public.news_articles
+                       WHERE status = 'published'
+                       ORDER BY published_at DESC NULLS LAST
+                       LIMIT 1) latest, viewer
+               WHERE EXISTS (SELECT 1 FROM public.settings
+                              WHERE name = 'public.news_enabled'
+                                AND value = 'true')
+                 AND (viewer.last_read_news_at IS NULL
+                      OR latest.published_at IS NULL
+                      OR latest.published_at > viewer.last_read_news_at))
+         )::text AS unread`,
+        [
+          steamId,
+          AUDIENCE_PAIRS.map(([broadcastRole]) => broadcastRole),
+          AUDIENCE_PAIRS.map(([, recipientRole]) => recipientRole),
+        ],
       );
 
       const unread = Number(rows.at(0)?.unread);

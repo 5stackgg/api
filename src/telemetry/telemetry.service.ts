@@ -1451,6 +1451,9 @@ export class TelemetryService {
         (SELECT count(*) FROM public.game_modes WHERE archived_at IS NULL)               AS game_modes,
         (SELECT count(*) FROM public.game_modes
           WHERE archived_at IS NULL AND enabled)                                         AS game_modes_enabled,
+        -- Every custom mode is unranked (match_ranking_for_options), so this
+        -- is the modes draft lobbies will not offer. The key keeps its old name
+        -- because payloads already recorded across the fleet sum under it.
         (SELECT count(*) FROM public.game_modes
           WHERE archived_at IS NULL AND competitive_safe = false)                        AS game_modes_unranked
       `,

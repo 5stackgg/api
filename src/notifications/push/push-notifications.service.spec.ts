@@ -160,7 +160,7 @@ describe("PushNotificationsService", () => {
     unread = 4;
 
     postgres.query.mockImplementation(async (sql: string, bindings: any[]) => {
-      if (sql.includes("count(*)::text AS unread")) {
+      if (sql.includes("AS unread")) {
         return [{ unread: String(unread) }];
       }
       if (sql.includes("FROM public.notifications\n")) {
@@ -823,7 +823,7 @@ describe("PushNotificationsService", () => {
     it("still sends when the count cannot be taken", async () => {
       const base = postgres.query.getMockImplementation();
       postgres.query.mockImplementation(async (sql: string, bindings: any[]) =>
-        sql.includes("count(*)::text AS unread")
+        sql.includes("AS unread")
           ? Promise.reject(new Error("db away"))
           : base(sql, bindings),
       );
@@ -849,6 +849,40 @@ describe("PushNotificationsService", () => {
         v1: { id: { _in: [notificationRow.id] } },
         v2: { is_read: true },
       });
+    });
+
+    it("dismisses a bundle by its thread rather than by listing every id", async () => {
+      // The pending list has no cap -- a flapping node over a night of quiet
+      // hours leaves dozens of ids -- and a push payload has ~4 KB.
+      const held = Array.from({ length: 90 }, (_, i) => `id-${i}`);
+      redis.multi.mockReturnValueOnce(chainableMulti([[null, held]]));
+
+      notificationRow = notification({
+        type: "GameNodeStatus",
+        entity_id: "n-1",
+      });
+      bundled = held.map((id) => ({
+        ...notification({ id, type: "GameNodeStatus", entity_id: "n-1" }),
+        steam_id: "76561100000000001",
+        subscription_id: "sub-1",
+        endpoint: subscription("sub-1").endpoint,
+        p256dh: "p256dh",
+        auth: "auth",
+      }));
+
+      await service.sendPending("76561100000000001", "GameNodeStatus:n-1");
+
+      const payload = payloadOf(0);
+      expect(payload.actions).toHaveLength(1);
+      expect(payload.actions[0].operation.variables).toEqual({
+        v1: {
+          type: { _eq: "GameNodeStatus" },
+          entity_id: { _eq: "n-1" },
+          is_read: { _eq: false },
+        },
+        v2: { is_read: true },
+      });
+      expect(JSON.stringify(payload).length).toBeLessThan(2048);
     });
 
     it("turns the bell's buttons into notification buttons", async () => {
@@ -883,14 +917,15 @@ describe("PushNotificationsService", () => {
         "Accept",
         "Decline",
       ]);
-      // The button runs the mutation, then reads the row -- the bell does the
-      // same two things when one of its buttons is pressed.
+      // The button runs the mutation, then removes the row -- the bell does
+      // the same two things when one of its buttons is pressed.
       expect(actions[0].operation.query).toMatch(
         /respondToScrimRequest\(request_id:\$v1,accept:\$v2\)\{success\},update_notifications\(/,
       );
       expect(actions[0].operation.variables).toMatchObject({
         v1: "req-1",
         v2: true,
+        v4: { is_read: true, deleted_at: "now()" },
       });
       expect(actions[1].operation.variables).toMatchObject({ v2: false });
     });

@@ -3,7 +3,7 @@ CREATE OR REPLACE FUNCTION public.ti_v_pool_maps() RETURNS trigger
     AS $$
 BEGIN
     IF EXISTS (SELECT 1 FROM maps WHERE id = NEW.id AND deleted_at IS NOT NULL) THEN
-        RAISE EXCEPTION 'Map % has been deleted and cannot be added to a map pool', NEW.id;
+        RAISE EXCEPTION 'Map % has been deleted and cannot be added to a map pool', NEW.id USING ERRCODE = '22000';
     END IF;
 
  	INSERT INTO _map_pool (map_id, map_pool_id)

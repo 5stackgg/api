@@ -121,7 +121,7 @@ export class InvitesController {
         role: "user",
         entity_id: invite.entityId,
         steamIds: [invite.steamId],
-        ...(invite.icon ? { data: { icon: invite.icon } } : {}),
+        data: { icon: invite.icon },
       });
     } catch (error) {
       // The invite itself is already written; losing its notification must not

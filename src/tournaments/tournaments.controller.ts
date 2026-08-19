@@ -51,7 +51,7 @@ export class TournamentsController {
         title: "New tournament",
         message: `<a href="/tournaments/${tournamentId}"><b>${name}</b></a> is open for signups.`,
         entity_id: tournamentId,
-        ...(image ? { data: { image } } : {}),
+        data: { image },
       });
     } catch (error) {
       this.logger.warn(

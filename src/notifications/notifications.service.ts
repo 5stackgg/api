@@ -419,6 +419,20 @@ export class NotificationsService {
     }
   }
 
+  // Writers hand over `{ image: maybeUndefined }` as is; a row only carries
+  // `data` when something in it is set.
+  private static compactData(
+    data?: NotificationData,
+  ): NotificationData | undefined {
+    if (!data) {
+      return undefined;
+    }
+    const entries = Object.entries(data).filter(
+      ([, value]) => value !== undefined && value !== null && value !== "",
+    );
+    return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+  }
+
   async notifyPlayers(
     type: e_notification_types_enum,
     notification: {
@@ -468,6 +482,8 @@ export class NotificationsService {
       (steamId) => inApp.has(steamId) || pushable.has(steamId),
     );
 
+    const data = NotificationsService.compactData(notification.data);
+
     if (steamIds.length > 0) {
       const { insert_notifications } = await this.hasura.mutation({
         insert_notifications: {
@@ -481,7 +497,7 @@ export class NotificationsService {
               entity_id: notification.entity_id,
               actions,
               in_app: inApp.has(steam_id),
-              ...(notification.data ? { data: notification.data } : {}),
+              ...(data ? { data } : {}),
               ...(notification.deletable === false ? { deletable: false } : {}),
             })),
           },
@@ -585,17 +601,6 @@ export class NotificationsService {
     );
   }
 
-  // Announce something to the whole player base.
-  //
-  // This deliberately writes one row per player rather than a single
-  // role-targeted row: our notifications select_permissions are a per-role
-  // enumeration, and `user` only ever matches on steam_id -- so a
-  // `role: 'user'` broadcast with a null steam_id is visible to nobody.
-  //
-  // Written as one INSERT..SELECT because the recipient list is the whole
-  // players table, and the in-app preference is resolved inline for the same
-  // reason. See notifyPlayers for why a player who muted the bell still gets a
-  // row when they have somewhere to be pushed.
   // The poster for a map, as a push notification image. Posters live in the
   // web bundle (`/img/maps/screenshots/...`), not behind the API, so they are
   // qualified here rather than by the push service's API-relative rule.
@@ -640,20 +645,33 @@ export class NotificationsService {
     }
   }
 
+  // Announce something to the whole player base.
+  //
+  // This deliberately writes one row per player rather than a single
+  // role-targeted row: our notifications select_permissions are a per-role
+  // enumeration, and `user` only ever matches on steam_id -- so a
+  // `role: 'user'` broadcast with a null steam_id is visible to nobody.
+  //
+  // Written as one INSERT..SELECT because the recipient list is the whole
+  // players table, and the in-app preference is resolved inline for the same
+  // reason. See notifyPlayers for why a player who muted the bell still gets a
+  // row when they have somewhere to be pushed.
   async notifyActivePlayers(
     type: e_notification_types_enum,
     notification: {
       title: string;
       message: string;
       entity_id?: string;
+      data?: NotificationData;
     },
   ) {
     const key = inAppKeyForType(type);
+    const data = NotificationsService.compactData(notification.data);
 
     const inserted = await this.postgres.query<Array<{ id: string }>>(
-      `INSERT INTO public.notifications (type, title, message, role, steam_id, entity_id, in_app)
+      `INSERT INTO public.notifications (type, title, message, role, steam_id, entity_id, in_app, data)
             SELECT $1, $2, $3, 'user', p.steam_id, $4,
-                   COALESCE(np.enabled, $7::boolean)
+                   COALESCE(np.enabled, $7::boolean), $8::jsonb
               FROM public.players p
          LEFT JOIN public.notification_preferences np
                 ON np.steam_id = p.steam_id
@@ -673,6 +691,7 @@ export class NotificationsService {
         key?.key ?? "",
         NotificationsService.ACTIVE_PLAYER_WINDOW,
         key?.defaultEnabled ?? true,
+        data ? JSON.stringify(data) : null,
       ],
     );
 
