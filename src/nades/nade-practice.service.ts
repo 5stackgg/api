@@ -43,6 +43,7 @@ export type StartNadePracticeInput = {
   collection_id?: string | null;
   team_id?: string | null;
   is_open?: boolean;
+  server_id?: string | null;
 };
 
 @Injectable()
@@ -108,11 +109,24 @@ export class NadePracticeService {
 
     try {
       const mapName = await this.resolveMap(input.map_name);
-      const region = await this.resolveRegion(input.region);
 
-      // Before anything is created, not after: a practice session that takes
-      // the last free slot is a scheduled tournament match that cannot boot.
-      await this.assertServerHeadroom(region);
+      // A practice server is a pool of its own -- matchmaking never sees
+      // type = 'Practice' -- so booking one costs matchmaking nothing and
+      // skips both the region search and the headroom reserve.
+      const server = input.server_id
+        ? await this.practiceServer(input.server_id)
+        : await this.freePracticeServer(input.region);
+
+      const region = server
+        ? server.region
+        : await this.resolveRegion(input.region);
+
+      if (!server) {
+        // Before anything is created, not after: a practice session that takes
+        // the last free slot is a scheduled tournament match that cannot boot.
+        await this.assertServerHeadroom(region);
+      }
+
       await this.assertDailyLimit(user.steam_id);
 
       const session = await this.insertSession(user.steam_id, {
@@ -128,6 +142,7 @@ export class NadePracticeService {
           hostSteamId: user.steam_id,
           mapName,
           region,
+          serverId: server?.id ?? null,
         });
 
         await this.postgres.query(
@@ -854,6 +869,7 @@ export class NadePracticeService {
     hostSteamId: string;
     mapName: string;
     region: string;
+    serverId?: string | null;
   }): Promise<string> {
     const mapId = await this.mapId(options.mapName);
 
@@ -926,6 +942,28 @@ export class NadePracticeService {
         __typename: true,
       },
     });
+
+    if (options.serverId) {
+      // Claim it here rather than leaving it to assignServer: that searches the
+      // Ranked pool, which by design can never return a practice server.
+      const reserved = await this.postgres.query<Array<{ id: string }>>(
+        `UPDATE public.servers
+            SET reserved_by_match_id = $2::uuid
+          WHERE id = $1::uuid
+            AND reserved_by_match_id IS NULL
+        RETURNING id::text AS id`,
+        [options.serverId, match.id],
+      );
+
+      if (reserved.length === 0) {
+        throw Error("that practice server is already in use");
+      }
+
+      await this.postgres.query(
+        "UPDATE public.matches SET server_id = $2::uuid WHERE id = $1::uuid",
+        [match.id, options.serverId],
+      );
+    }
 
     const [maps] = await this.postgres.query<Array<{ count: string }>>(
       "SELECT COUNT(*) AS count FROM public.match_maps WHERE match_id = $1::uuid",
@@ -1084,6 +1122,58 @@ export class NadePracticeService {
     if (!isRoleAbove(user.role, minRole)) {
       throw Error("you are not allowed to start a practice session");
     }
+  }
+
+  // An explicitly chosen server. Anything that is not a free, connected
+  // practice server is rejected by name rather than silently falling back to a
+  // pod, because the caller picked this one on purpose.
+  private async practiceServer(
+    serverId: string,
+  ): Promise<{ id: string; region: string } | null> {
+    const [row] = await this.postgres.query<
+      Array<{ id: string; region: string; reserved: boolean }>
+    >(
+      `SELECT s.id::text AS id,
+              s.region,
+              s.reserved_by_match_id IS NOT NULL AS reserved
+         FROM public.servers s
+        WHERE s.id = $1::uuid
+          AND s.type = 'Practice'
+          AND s.enabled = true
+          AND s.connected = true`,
+      [serverId],
+    );
+
+    if (!row) {
+      throw Error("that practice server is not available");
+    }
+
+    if (row.reserved) {
+      throw Error("that practice server is already in use");
+    }
+
+    return { id: row.id, region: row.region };
+  }
+
+  private async freePracticeServer(
+    region?: string | null,
+  ): Promise<{ id: string; region: string } | null> {
+    const [row] = await this.postgres.query<
+      Array<{ id: string; region: string }>
+    >(
+      `SELECT s.id::text AS id, s.region
+         FROM public.servers s
+        WHERE s.type = 'Practice'
+          AND s.enabled = true
+          AND s.connected = true
+          AND s.reserved_by_match_id IS NULL
+          AND ($1::text IS NULL OR s.region = $1::text)
+        ORDER BY s.region
+        LIMIT 1`,
+      [region ?? null],
+    );
+
+    return row ? { id: row.id, region: row.region } : null;
   }
 
   private async assertServerHeadroom(region: string): Promise<void> {

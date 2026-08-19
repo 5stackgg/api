@@ -1923,6 +1923,7 @@ type Mutation {
     collection_id: uuid
     team_id: uuid
     is_open: Boolean
+    server_id: uuid
   ): NadePracticeSessionOutput
 }
 
