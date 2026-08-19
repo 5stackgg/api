@@ -519,6 +519,56 @@ describe("unranked game modes (SQL-driven)", () => {
 
   // The decision is stored, not derived, so history cannot be rewritten by
   // editing a mode long after the matches were played.
+  // Not just "no rows written": the rating the player carries must be the same
+  // number afterwards, and the next ranked match has to pick up from there. An
+  // unranked match that left a trace in the chain would move ratings without
+  // ever appearing to.
+  it("leaves a rating untouched and does not poison the next ranked match", async () => {
+    const safe = await mode(true);
+    const unsafe = await mode(false);
+    const alice = await fx.player();
+    const bob = await fx.player();
+
+    const play = async (gameModeId: string) => {
+      const optionsId = await fx.matchOptions({ type: "Duel", gameModeId });
+      const match = await fx.match(optionsId);
+      await fx.lineupPlayer(match.lineup_1_id, alice);
+      await fx.lineupPlayer(match.lineup_2_id, bob);
+      await postgres.query(
+        `UPDATE matches
+            SET winning_lineup_id = lineup_1_id,
+                ended_at = now() - interval '1 day',
+                status = 'Finished'
+          WHERE id = $1`,
+        [match.id],
+      );
+      await generate(match.id);
+      return match;
+    };
+
+    const ratingOf = async (steamId: string): Promise<number | null> => {
+      const [row] = await postgres.query<Array<{ current: string }>>(
+        `SELECT current FROM player_elo
+          WHERE steam_id = $1
+          ORDER BY created_at DESC LIMIT 1`,
+        [steamId],
+      );
+      return row ? Number(row.current) : null;
+    };
+
+    await play(safe);
+    const afterRanked = await ratingOf(alice);
+    expect(afterRanked).not.toBeNull();
+
+    await play(unsafe);
+    expect(await ratingOf(alice)).toEqual(afterRanked);
+
+    // And the engine still works afterwards -- the unranked match in between
+    // did not leave the chain in a state the next one refuses to build on.
+    await play(safe);
+    expect(await ratingOf(alice)).not.toEqual(afterRanked);
+  });
+
   // The point of an unranked mode is that everything else about the match is
   // real. If this ever stops being true, fun modes stop being playable rather
   // than just unranked.
