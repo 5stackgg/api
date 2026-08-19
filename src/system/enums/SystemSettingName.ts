@@ -35,33 +35,32 @@ export enum SystemSettingName {
   // id belongs to, and assertMember is deliberately built not to care.
   VideoChatEnabled = "public.video_chat_enabled",
   LeaguesEnabled = "public.leagues_enabled",
-  NadeLibraryEnabled = "public.nade_library_enabled",
-  NadePracticeEnabled = "public.nade_practice_enabled",
+  UtilityLibraryEnabled = "public.utility_library_enabled",
+  UtilityPracticeEnabled = "public.utility_practice_enabled",
   // Minutes an empty practice server is kept alive before the reaper stops it.
-  NadePracticeIdleMinutes = "public.nade_practice_idle_minutes",
+  UtilityPracticeIdleMinutes = "public.utility_practice_idle_minutes",
   // On-demand server slots a practice session will never take. Without it a
   // player idly practising can consume the last slot a scheduled tournament
   // match was going to boot into.
-  NadePracticeReservedServers = "public.nade_practice_reserved_servers",
-  NadePracticeDailyLimit = "public.nade_practice_daily_limit",
-  NadeLineupDailyLimit = "public.nade_lineup_daily_limit",
+  UtilityPracticeReservedServers = "public.utility_practice_reserved_servers",
+  UtilityPracticeDailyLimit = "public.utility_practice_daily_limit",
+  UtilityLineupDailyLimit = "public.utility_lineup_daily_limit",
   // Source units a throw may miss the lineup's landing point by and still
   // count. A CS2 smoke's radius is about 144 units, so the default of 96 is
   // "the cloud still covers what the lineup was for", not "close enough".
-  NadeSuccessRadius = "public.nade_success_radius",
+  UtilitySuccessRadius = "public.utility_success_radius",
   // Distinct players who must have mastered a lineup before it verifies itself.
-  // Read by taiu_nade_lineup_progress_verify, not by any TypeScript: the
+  // Read by taiu_utility_lineup_progress_verify, not by any TypeScript: the
   // derivation is a trigger, so this name exists here only to be discoverable
   // alongside the rest.
-  NadeVerifyMasteries = "public.nade_verify_masteries",
-  NadeSolvesPerHour = "public.nade_solves_per_hour",
+  UtilityVerifyMasteries = "public.utility_verify_masteries",
+  UtilitySolvesPerHour = "public.utility_solves_per_hour",
   // Off by default. The seeder writes lineups nobody threw on this platform, so
   // it is an operator's deliberate act rather than a door that is always open.
-  NadeImportEnabled = "public.nade_import_enabled",
-  // Shared secret the in-image nade practice plugin authenticates with. Never
+  UtilityImportEnabled = "public.utility_import_enabled",
+  // Shared secret the in-image utility practice plugin authenticates with. Never
   // `public.`-prefixed and excluded from the settings select permissions, so it
   // is only ever readable through the admin secret.
-  NadePluginApiKey = "nade_plugin_api_key",
   GameServerPluginRuntime = "public.game_server_plugin_runtime",
   GameServerPluginRuntimeLocked = "game_server_plugin_runtime_locked",
   GamePluginRegistryUrl = "game_plugin_registry_url",

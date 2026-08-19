@@ -1917,68 +1917,68 @@ type Mutation {
 }
 
 type Mutation {
-  startNadePractice(
+  startUtilityPractice(
     map_name: String!
     region: String
     collection_id: uuid
     team_id: uuid
     is_open: Boolean
     server_id: uuid
-  ): NadePracticeSessionOutput
+  ): UtilityPracticeSessionOutput
 }
 
 type Mutation {
-  joinNadePractice(
+  joinUtilityPractice(
     session_id: uuid
     invite_code: String
-  ): NadePracticeSessionOutput
+  ): UtilityPracticeSessionOutput
 }
 
 type Mutation {
-  leaveNadePractice(
+  leaveUtilityPractice(
     session_id: uuid!
   ): SuccessOutput
 }
 
 type Mutation {
-  stopNadePractice(
+  stopUtilityPractice(
     session_id: uuid!
   ): SuccessOutput
 }
 
 type Mutation {
-  inviteToNadePractice(
+  inviteToUtilityPractice(
     session_id: uuid!
     steam_ids: [String!]!
   ): SuccessOutput
 }
 
 type Mutation {
-  saveNadeLineupFromPractice(
+  saveUtilityLineupFromPractice(
     session_id: uuid!
-    nade_lineup_id: uuid!
+    utility_lineup_id: uuid!
     name: String!
     description: String
     visibility: String
     team_id: uuid
     tags: [String!]
     collection_id: uuid
-  ): NadeLineupOutput
+  ): UtilityLineupOutput
 }
 
-type NadePracticeSessionOutput {
+type UtilityPracticeSessionOutput {
   id: uuid!
   match_id: uuid
   status: String
   invite_code: String
 }
 
-type NadeLineupOutput {
+type UtilityLineupOutput {
   id: uuid!
 }
 
 type Mutation {
-  saveNadeLineupFromDemo(
+  saveUtilityLineupFromDemo(
     match_id: uuid!
     match_map_id: uuid!
     grenade_id: Int!
@@ -1988,11 +1988,11 @@ type Mutation {
     team_id: uuid
     tags: [String!]
     collection_id: uuid
-  ): NadeLineupOutput
+  ): UtilityLineupOutput
 }
 
 type Mutation {
-  saveNadePlaybook(
+  saveUtilityPlaybook(
     playbook_id: uuid
     name: String!
     description: String
@@ -2000,35 +2000,35 @@ type Mutation {
     side: String!
     team_id: uuid
     visibility: String
-    steps: [NadePlaybookStepInput!]
-  ): NadePlaybookOutput
+    steps: [UtilityPlaybookStepInput!]
+  ): UtilityPlaybookOutput
 }
 
 type Mutation {
-  deleteNadePlaybook(
+  deleteUtilityPlaybook(
     playbook_id: uuid!
   ): SuccessOutput
 }
 
 type Mutation {
-  loadNadePlaybookIntoSession(
+  loadUtilityPlaybookIntoSession(
     session_id: uuid!
     playbook_id: uuid
   ): SuccessOutput
 }
 
-input NadePlaybookStepInput {
-  nade_lineup_id: uuid!
+input UtilityPlaybookStepInput {
+  utility_lineup_id: uuid!
   offset_ms: Int
   assigned_steam_id: String
   note: String
 }
 
-type NadePlaybookOutput {
+type UtilityPlaybookOutput {
   id: uuid!
 }
 
-input NadeSightlinePairInput {
+input UtilitySightlinePairInput {
   from_x: Float!
   from_y: Float!
   from_z: Float!
@@ -2038,21 +2038,21 @@ input NadeSightlinePairInput {
 }
 
 type Query {
-  checkNadeSightlines(
+  checkUtilitySightlines(
     lineup_id: uuid!
-    pairs: [NadeSightlinePairInput!]!
+    pairs: [UtilitySightlinePairInput!]!
     threshold: Float
-  ): NadeSightlineOutput
+  ): UtilitySightlineOutput
 }
 
-type NadeSightlineOutput {
+type UtilitySightlineOutput {
   threshold: Float!
-  results: [NadeSightlineResult!]!
+  results: [UtilitySightlineResult!]!
   degraded: Boolean
   message: String
 }
 
-type NadeSightlineResult {
+type UtilitySightlineResult {
   index: Int!
   blocked: Boolean!
   blocked_by: String
@@ -2062,19 +2062,19 @@ type NadeSightlineResult {
 }
 
 type Query {
-  checkNadeOneWay(
+  checkUtilityOneWay(
     lineup_id: uuid!
-    pairs: [NadeSightlinePairInput!]!
-  ): NadeOneWayOutput
+    pairs: [UtilitySightlinePairInput!]!
+  ): UtilityOneWayOutput
 }
 
-type NadeOneWayOutput {
-  results: [NadeOneWayResult!]!
+type UtilityOneWayOutput {
+  results: [UtilityOneWayResult!]!
   degraded: Boolean
   message: String
 }
 
-type NadeOneWayResult {
+type UtilityOneWayResult {
   index: Int!
   one_way: Boolean!
   favors: String
@@ -2084,7 +2084,7 @@ type NadeOneWayResult {
 }
 
 type Query {
-  findNadeLineupsBlocking(
+  findUtilityLineupsBlocking(
     map_name: String!
     from_x: Float!
     from_y: Float!
@@ -2094,24 +2094,24 @@ type Query {
     to_z: Float!
     side: String
     limit: Int
-  ): NadeBlockingOutput
+  ): UtilityBlockingOutput
 }
 
-type NadeBlockingOutput {
-  results: [NadeBlockingResult!]!
+type UtilityBlockingOutput {
+  results: [UtilityBlockingResult!]!
   degraded: Boolean
   message: String
 }
 
-type NadeBlockingResult {
-  nade_lineup_id: uuid!
+type UtilityBlockingResult {
+  utility_lineup_id: uuid!
   depth: Float!
   transmittance: Float!
   blocked: Boolean!
 }
 
 type Mutation {
-  solveNadeLineup(
+  solveUtilityLineup(
     session_id: uuid!
     target_x: Float!
     target_y: Float!
@@ -2122,62 +2122,62 @@ type Mutation {
     utility_type: String
     name: String
     tolerance: Float
-  ): NadeSolveOutput
+  ): UtilitySolveOutput
 }
 
-type NadeSolveOutput {
+type UtilitySolveOutput {
   accepted: Boolean!
   status: String!
   message: String
 }
 
 type Query {
-  nadeSolverCalibration(
+  utilitySolverCalibration(
     session_id: uuid!
-  ): NadeCalibrationOutput
+  ): UtilityCalibrationOutput
 }
 
-type NadeCalibrationOutput {
+type UtilityCalibrationOutput {
   status: String!
   ready: Boolean!
   detail: String
 }
 
 type Mutation {
-  startNadeDriftScan(
+  startUtilityDriftScan(
     map_name: String!
     from_revision: String
     to_revision: String
-  ): NadeDriftScanOutput
+  ): UtilityDriftScanOutput
 }
 
-type NadeDriftScanOutput {
+type UtilityDriftScanOutput {
   scan_id: uuid!
   lineups: Int!
 }
 
 type Mutation {
-  forkNadeLineup(
-    nade_lineup_id: uuid!
+  forkUtilityLineup(
+    utility_lineup_id: uuid!
     name: String
     collection_id: uuid
-  ): NadeLineupOutput
+  ): UtilityLineupOutput
 }
 
 type Query {
-  analyseNadePlaybookCoverage(
+  analyseUtilityPlaybookCoverage(
     playbook_id: uuid!
-    pairs: [NadeSightlinePairInput!]!
-  ): NadePlaybookCoverageOutput
+    pairs: [UtilitySightlinePairInput!]!
+  ): UtilityPlaybookCoverageOutput
 }
 
-type NadePlaybookCoverageOutput {
-  results: [NadePlaybookCoverageResult!]!
+type UtilityPlaybookCoverageOutput {
+  results: [UtilityPlaybookCoverageResult!]!
   degraded: Boolean
   message: String
 }
 
-type NadePlaybookCoverageResult {
+type UtilityPlaybookCoverageResult {
   index: Int!
   covered: Boolean!
   by_step: Int
@@ -2186,13 +2186,13 @@ type NadePlaybookCoverageResult {
 }
 
 type Query {
-  nadeMatchUtilityReport(
+  utilityMatchUtilityReport(
     match_id: uuid!
     steam_id: String
-  ): NadeUtilityReportOutput
+  ): UtilityUtilityReportOutput
 }
 
-type NadeUtilityReportOutput {
+type UtilityUtilityReportOutput {
   analysed: Boolean!
   message: String
   steam_id: String!
@@ -2201,11 +2201,11 @@ type NadeUtilityReportOutput {
   matched_meta: Int!
   landed: Int!
   radius: Float!
-  by_type: [NadeUtilityTypeReport!]!
+  by_type: [UtilityUtilityTypeReport!]!
 }
 
-type NadeUtilityTypeReport {
-  nade_type: String!
+type UtilityUtilityTypeReport {
+  utility_type: String!
   throws: Int!
   matched_lineups: Int!
   matched_meta: Int!
@@ -2213,43 +2213,43 @@ type NadeUtilityTypeReport {
 }
 
 type Mutation {
-  repairNadeLineup(
-    nade_lineup_id: uuid!
+  repairUtilityLineup(
+    utility_lineup_id: uuid!
     session_id: uuid!
-  ): NadeSolveOutput
+  ): UtilitySolveOutput
 }
 
 type Query {
-  nadePracticeServers: NadePracticeServersOutput
+  utilityPracticeServers: UtilityPracticeServersOutput
 }
 
-type NadePracticeServersOutput {
-  servers: [NadePracticeServer!]!
+type UtilityPracticeServersOutput {
+  servers: [UtilityPracticeServer!]!
 }
 
-type NadePracticeServer {
+type UtilityPracticeServer {
   id: uuid!
   label: String!
   region: String!
 }
 
 type Query {
-  nadePracticePlan(
+  utilityPracticePlan(
     map_name: String!
     side: String
     limit: Int
     order: String
-  ): NadePracticePlanOutput
+  ): UtilityPracticePlanOutput
 }
 
-type NadePracticePlanOutput {
+type UtilityPracticePlanOutput {
   analysed: Boolean!
   message: String
-  entries: [NadePracticePlanEntry!]!
+  entries: [UtilityPracticePlanEntry!]!
 }
 
-type NadePracticePlanEntry {
-  nade_lineup_id: uuid!
+type UtilityPracticePlanEntry {
+  utility_lineup_id: uuid!
   priority: Float!
   meta_throwers: Int!
   attempts: Int!
@@ -2263,12 +2263,12 @@ type NadePracticePlanEntry {
 }
 
 type Query {
-  nadeLineupMissPattern(
-    nade_lineup_id: uuid!
-  ): NadeMissPatternOutput
+  utilityLineupMissPattern(
+    utility_lineup_id: uuid!
+  ): UtilityMissPatternOutput
 }
 
-type NadeMissPatternOutput {
+type UtilityMissPatternOutput {
   analysed: Boolean!
   message: String
   samples: Int!
@@ -2280,56 +2280,56 @@ type NadeMissPatternOutput {
 }
 
 type Query {
-  nadeTeamUtilityReport(
+  utilityTeamUtilityReport(
     team_id: uuid!
     map_name: String
     limit: Int
-  ): NadeTeamUtilityOutput
+  ): UtilityTeamUtilityOutput
 }
 
-type NadeTeamUtilityOutput {
+type UtilityTeamUtilityOutput {
   analysed: Boolean!
   message: String
-  entries: [NadeTeamUtilityEntry!]!
+  entries: [UtilityTeamUtilityEntry!]!
 }
 
-type NadeTeamUtilityEntry {
-  nade_lineup_id: uuid!
+type UtilityTeamUtilityEntry {
+  utility_lineup_id: uuid!
   thrown: Int!
   landed: Int!
   players: Int!
 }
 
 type Mutation {
-  importNadeLineups(
+  importUtilityLineups(
     payload: jsonb!
     dry_run: Boolean
-  ): NadeImportOutput
+  ): UtilityImportOutput
 }
 
-type NadeImportOutput {
+type UtilityImportOutput {
   dry_run: Boolean!
   total: Int!
   imported: Int!
   updated: Int!
   failed: Int!
-  errors: [NadeImportError!]!
+  errors: [UtilityImportError!]!
 }
 
-type NadeImportError {
+type UtilityImportError {
   index: Int!
   external_id: String
   reason: String!
 }
 
 type Mutation {
-  purgeNadeLineupSource(
+  purgeUtilityLineupSource(
     origin_source: String!
     dry_run: Boolean
-  ): NadePurgeOutput
+  ): UtilityPurgeOutput
 }
 
-type NadePurgeOutput {
+type UtilityPurgeOutput {
   dry_run: Boolean!
   origin_source: String!
   lineups: Int!

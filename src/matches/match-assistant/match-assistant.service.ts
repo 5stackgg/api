@@ -117,15 +117,15 @@ export class MatchAssistantService {
     }
   }
 
-  // A practice server runs the nade practice plugin instead of the match
+  // A practice server runs the utility practice plugin instead of the match
   // plugin, so `get_match` is not a command it knows. This is the equivalent:
   // re-read the roster that decides who is allowed to connect.
-  public async sendNadePracticeRefresh(matchId: string) {
+  public async sendUtilityPracticeRefresh(matchId: string) {
     try {
-      await this.command(matchId, `nade_practice_refresh`);
+      await this.command(matchId, `utility_practice_refresh`);
     } catch (error) {
       this.logger.warn(
-        `[${matchId}] unable to refresh the nade practice roster`,
+        `[${matchId}] unable to refresh the utility practice roster`,
         error.message,
       );
     }
@@ -871,9 +871,9 @@ export class MatchAssistantService {
 
           const showEloRanks = fivestackRanksSetting?.value === "true";
 
-          const nadePracticeEnv =
+          const utilityPracticeEnv =
             match.source === "practice"
-              ? await this.nadePracticeServerEnv()
+              ? await this.utilityPracticeServerEnv()
               : [];
           const gameMode = await this.gameModesService.resolveForServer(
             server.id,
@@ -994,7 +994,7 @@ export class MatchAssistantService {
                           ...(showEloRanks
                             ? [{ name: "SHOW_ELO_RANKS", value: "true" }]
                             : []),
-                          ...nadePracticeEnv,
+                          ...utilityPracticeEnv,
                           ...gameModeEnvironment,
                         ],
                         volumeMounts: [
@@ -1087,30 +1087,22 @@ export class MatchAssistantService {
     );
   }
 
-  // A practice pod runs the nade practice plugin *instead of* the match plugin.
+  // A practice pod runs the utility practice plugin *instead of* the match plugin.
   // The image ships both and symlinks whichever INSTALL_ flag is set, so this is
   // what decides which one the server comes up with. source='practice' is the
-  // marker for the nade-practice game mode: it is already what match_events
+  // marker for the utility-practice game mode: it is already what match_events
   // branches on, and it is a plain column rather than a join through the
   // game_modes feature.
-  private async nadePracticeServerEnv() {
-    const { settings_by_pk } = await this.hasura.query({
-      settings_by_pk: {
-        __args: {
-          name: SystemSettingName.NadePluginApiKey,
-        },
-        value: true,
-      },
-    });
-
+  private async utilityPracticeServerEnv() {
     return [
       { name: "INSTALL_5STACK_PLUGIN", value: "false" },
-      { name: "INSTALL_NADE_PRACTICE_PLUGIN", value: "true" },
+      { name: "INSTALL_UTILITY_PRACTICE_PLUGIN", value: "true" },
+      // The api root, not the /utility prefix: every path the plugin builds
+      // already starts with it.
       {
-        name: "NADES_URL",
-        value: `https://${this.appConfig.apiDomain}/nades`,
+        name: "UTILITY_URL",
+        value: `https://${this.appConfig.apiDomain}`,
       },
-      { name: "NADES_API_KEY", value: settings_by_pk?.value ?? "" },
     ];
   }
 

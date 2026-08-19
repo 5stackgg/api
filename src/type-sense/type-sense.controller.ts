@@ -272,11 +272,11 @@ export class TypeSenseController {
 
   // A lineup leaves the index for more reasons than it enters it: going
   // private, being archived and being deleted all mean the same thing to a
-  // global search bar. updateNadeLineup re-asks the visibility filter and
+  // global search bar. updateUtilityLineup re-asks the visibility filter and
   // deletes when the answer is no, so every one of those is handled by the
   // same call rather than by guessing from the event payload.
   @HasuraEvent()
-  public async nade_lineups_events(
+  public async utility_lineups_events(
     data: HasuraEventData<{ id?: string | null; visibility?: string | null }>,
   ) {
     const lineupId = String(data.new?.id ?? data.old?.id ?? "");
@@ -286,7 +286,7 @@ export class TypeSenseController {
     }
 
     if (data.op === "DELETE") {
-      await this.typeSense.removeNadeLineup(lineupId);
+      await this.typeSense.removeUtilityLineup(lineupId);
       return;
     }
 
@@ -298,7 +298,7 @@ export class TypeSenseController {
       return;
     }
 
-    await this.typeSense.updateNadeLineup(lineupId);
+    await this.typeSense.updateUtilityLineup(lineupId);
   }
 
   @HasuraEvent()

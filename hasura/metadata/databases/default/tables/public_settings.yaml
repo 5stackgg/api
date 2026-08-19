@@ -19,7 +19,6 @@ select_permissions:
         name:
           _nin:
             - web_push_private_key
-            - nade_plugin_api_key
     comment: ""
   - role: guest
     permission:
