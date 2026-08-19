@@ -388,6 +388,205 @@ export interface MemoryStat {
     __typename: 'MemoryStat'
 }
 
+export interface NadeBlockingOutput {
+    degraded: (Scalars['Boolean'] | null)
+    message: (Scalars['String'] | null)
+    results: NadeBlockingResult[]
+    __typename: 'NadeBlockingOutput'
+}
+
+export interface NadeBlockingResult {
+    blocked: Scalars['Boolean']
+    depth: Scalars['Float']
+    nade_lineup_id: Scalars['uuid']
+    transmittance: Scalars['Float']
+    __typename: 'NadeBlockingResult'
+}
+
+export interface NadeCalibrationOutput {
+    detail: (Scalars['String'] | null)
+    ready: Scalars['Boolean']
+    status: Scalars['String']
+    __typename: 'NadeCalibrationOutput'
+}
+
+export interface NadeDriftScanOutput {
+    lineups: Scalars['Int']
+    scan_id: Scalars['uuid']
+    __typename: 'NadeDriftScanOutput'
+}
+
+export interface NadeImportError {
+    external_id: (Scalars['String'] | null)
+    index: Scalars['Int']
+    reason: Scalars['String']
+    __typename: 'NadeImportError'
+}
+
+export interface NadeImportOutput {
+    dry_run: Scalars['Boolean']
+    errors: NadeImportError[]
+    failed: Scalars['Int']
+    imported: Scalars['Int']
+    total: Scalars['Int']
+    updated: Scalars['Int']
+    __typename: 'NadeImportOutput'
+}
+
+export interface NadeLineupOutput {
+    id: Scalars['uuid']
+    __typename: 'NadeLineupOutput'
+}
+
+export interface NadeMissPatternOutput {
+    analysed: Scalars['Boolean']
+    bias: (Scalars['String'] | null)
+    mean_along: (Scalars['Float'] | null)
+    mean_lateral: (Scalars['Float'] | null)
+    mean_vertical: (Scalars['Float'] | null)
+    message: (Scalars['String'] | null)
+    players: Scalars['Int']
+    samples: Scalars['Int']
+    __typename: 'NadeMissPatternOutput'
+}
+
+export interface NadeOneWayOutput {
+    degraded: (Scalars['Boolean'] | null)
+    message: (Scalars['String'] | null)
+    results: NadeOneWayResult[]
+    __typename: 'NadeOneWayOutput'
+}
+
+export interface NadeOneWayResult {
+    cause: (Scalars['String'] | null)
+    confidence: Scalars['String']
+    contested: Scalars['Boolean']
+    favors: (Scalars['String'] | null)
+    index: Scalars['Int']
+    one_way: Scalars['Boolean']
+    __typename: 'NadeOneWayResult'
+}
+
+export interface NadePlaybookCoverageOutput {
+    degraded: (Scalars['Boolean'] | null)
+    message: (Scalars['String'] | null)
+    results: NadePlaybookCoverageResult[]
+    __typename: 'NadePlaybookCoverageOutput'
+}
+
+export interface NadePlaybookCoverageResult {
+    by_step: (Scalars['Int'] | null)
+    covered: Scalars['Boolean']
+    depth: (Scalars['Float'] | null)
+    index: Scalars['Int']
+    transmittance: (Scalars['Float'] | null)
+    __typename: 'NadePlaybookCoverageResult'
+}
+
+export interface NadePlaybookOutput {
+    id: Scalars['uuid']
+    __typename: 'NadePlaybookOutput'
+}
+
+export interface NadePracticePlanEntry {
+    attempts: Scalars['Int']
+    difficulty: Scalars['String']
+    global_attempts: Scalars['Int']
+    global_landing_rate: (Scalars['Float'] | null)
+    global_players: Scalars['Int']
+    mastered: Scalars['Boolean']
+    meta_throwers: Scalars['Int']
+    nade_lineup_id: Scalars['uuid']
+    priority: Scalars['Float']
+    reason: Scalars['String']
+    successes: Scalars['Int']
+    __typename: 'NadePracticePlanEntry'
+}
+
+export interface NadePracticePlanOutput {
+    analysed: Scalars['Boolean']
+    entries: NadePracticePlanEntry[]
+    message: (Scalars['String'] | null)
+    __typename: 'NadePracticePlanOutput'
+}
+
+export interface NadePracticeSessionOutput {
+    id: Scalars['uuid']
+    invite_code: (Scalars['String'] | null)
+    match_id: (Scalars['uuid'] | null)
+    status: (Scalars['String'] | null)
+    __typename: 'NadePracticeSessionOutput'
+}
+
+export interface NadePurgeOutput {
+    dry_run: Scalars['Boolean']
+    lineups: Scalars['Int']
+    origin_source: Scalars['String']
+    __typename: 'NadePurgeOutput'
+}
+
+export interface NadeSightlineOutput {
+    degraded: (Scalars['Boolean'] | null)
+    message: (Scalars['String'] | null)
+    results: NadeSightlineResult[]
+    threshold: Scalars['Float']
+    __typename: 'NadeSightlineOutput'
+}
+
+export interface NadeSightlineResult {
+    blocked: Scalars['Boolean']
+    blocked_by: (Scalars['String'] | null)
+    depth: Scalars['Float']
+    index: Scalars['Int']
+    transmittance: Scalars['Float']
+    world_blocked: Scalars['Boolean']
+    __typename: 'NadeSightlineResult'
+}
+
+export interface NadeSolveOutput {
+    accepted: Scalars['Boolean']
+    message: (Scalars['String'] | null)
+    status: Scalars['String']
+    __typename: 'NadeSolveOutput'
+}
+
+export interface NadeTeamUtilityEntry {
+    landed: Scalars['Int']
+    nade_lineup_id: Scalars['uuid']
+    players: Scalars['Int']
+    thrown: Scalars['Int']
+    __typename: 'NadeTeamUtilityEntry'
+}
+
+export interface NadeTeamUtilityOutput {
+    analysed: Scalars['Boolean']
+    entries: NadeTeamUtilityEntry[]
+    message: (Scalars['String'] | null)
+    __typename: 'NadeTeamUtilityOutput'
+}
+
+export interface NadeUtilityReportOutput {
+    analysed: Scalars['Boolean']
+    by_type: NadeUtilityTypeReport[]
+    landed: Scalars['Int']
+    matched_lineups: Scalars['Int']
+    matched_meta: Scalars['Int']
+    message: (Scalars['String'] | null)
+    radius: Scalars['Float']
+    steam_id: Scalars['String']
+    throws: Scalars['Int']
+    __typename: 'NadeUtilityReportOutput'
+}
+
+export interface NadeUtilityTypeReport {
+    landed: Scalars['Int']
+    matched_lineups: Scalars['Int']
+    matched_meta: Scalars['Int']
+    nade_type: Scalars['String']
+    throws: Scalars['Int']
+    __typename: 'NadeUtilityTypeReport'
+}
+
 export interface NetworkStats {
     nics: ((NicStat | null)[] | null)
     time: (Scalars['timestamp'] | null)
@@ -5104,6 +5303,351 @@ export type e_match_types_select_column = 'description' | 'value'
 
 /** update columns of table "e_match_types" */
 export type e_match_types_update_column = 'description' | 'value'
+
+
+/** columns and relationships of "e_nade_practice_statuses" */
+export interface e_nade_practice_statuses {
+    description: Scalars['String']
+    /** An array relationship */
+    nade_practice_sessions: nade_practice_sessions[]
+    /** An aggregate relationship */
+    nade_practice_sessions_aggregate: nade_practice_sessions_aggregate
+    value: Scalars['String']
+    __typename: 'e_nade_practice_statuses'
+}
+
+
+/** aggregated selection of "e_nade_practice_statuses" */
+export interface e_nade_practice_statuses_aggregate {
+    aggregate: (e_nade_practice_statuses_aggregate_fields | null)
+    nodes: e_nade_practice_statuses[]
+    __typename: 'e_nade_practice_statuses_aggregate'
+}
+
+
+/** aggregate fields of "e_nade_practice_statuses" */
+export interface e_nade_practice_statuses_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_nade_practice_statuses_max_fields | null)
+    min: (e_nade_practice_statuses_min_fields | null)
+    __typename: 'e_nade_practice_statuses_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_nade_practice_statuses" */
+export type e_nade_practice_statuses_constraint = 'e_nade_practice_statuses_pkey'
+
+export type e_nade_practice_statuses_enum = 'Ended' | 'Failed' | 'Ready' | 'Starting'
+
+
+/** aggregate max on columns */
+export interface e_nade_practice_statuses_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_nade_practice_statuses_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_nade_practice_statuses_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_nade_practice_statuses_min_fields'
+}
+
+
+/** response of any mutation on the table "e_nade_practice_statuses" */
+export interface e_nade_practice_statuses_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_nade_practice_statuses[]
+    __typename: 'e_nade_practice_statuses_mutation_response'
+}
+
+
+/** select columns of table "e_nade_practice_statuses" */
+export type e_nade_practice_statuses_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_nade_practice_statuses" */
+export type e_nade_practice_statuses_update_column = 'description' | 'value'
+
+
+/** columns and relationships of "e_nade_sources" */
+export interface e_nade_sources {
+    description: Scalars['String']
+    /** An array relationship */
+    nade_lineups: nade_lineups[]
+    /** An aggregate relationship */
+    nade_lineups_aggregate: nade_lineups_aggregate
+    value: Scalars['String']
+    __typename: 'e_nade_sources'
+}
+
+
+/** aggregated selection of "e_nade_sources" */
+export interface e_nade_sources_aggregate {
+    aggregate: (e_nade_sources_aggregate_fields | null)
+    nodes: e_nade_sources[]
+    __typename: 'e_nade_sources_aggregate'
+}
+
+
+/** aggregate fields of "e_nade_sources" */
+export interface e_nade_sources_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_nade_sources_max_fields | null)
+    min: (e_nade_sources_min_fields | null)
+    __typename: 'e_nade_sources_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_nade_sources" */
+export type e_nade_sources_constraint = 'e_nade_sources_pkey'
+
+export type e_nade_sources_enum = 'demo' | 'editor' | 'fork' | 'import' | 'plugin'
+
+
+/** aggregate max on columns */
+export interface e_nade_sources_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_nade_sources_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_nade_sources_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_nade_sources_min_fields'
+}
+
+
+/** response of any mutation on the table "e_nade_sources" */
+export interface e_nade_sources_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_nade_sources[]
+    __typename: 'e_nade_sources_mutation_response'
+}
+
+
+/** select columns of table "e_nade_sources" */
+export type e_nade_sources_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_nade_sources" */
+export type e_nade_sources_update_column = 'description' | 'value'
+
+
+/** columns and relationships of "e_nade_techniques" */
+export interface e_nade_techniques {
+    description: Scalars['String']
+    /** An array relationship */
+    nade_lineups: nade_lineups[]
+    /** An aggregate relationship */
+    nade_lineups_aggregate: nade_lineups_aggregate
+    value: Scalars['String']
+    __typename: 'e_nade_techniques'
+}
+
+
+/** aggregated selection of "e_nade_techniques" */
+export interface e_nade_techniques_aggregate {
+    aggregate: (e_nade_techniques_aggregate_fields | null)
+    nodes: e_nade_techniques[]
+    __typename: 'e_nade_techniques_aggregate'
+}
+
+
+/** aggregate fields of "e_nade_techniques" */
+export interface e_nade_techniques_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_nade_techniques_max_fields | null)
+    min: (e_nade_techniques_min_fields | null)
+    __typename: 'e_nade_techniques_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_nade_techniques" */
+export type e_nade_techniques_constraint = 'e_nade_techniques_pkey'
+
+export type e_nade_techniques_enum = 'Crouch' | 'CrouchJump' | 'Jump' | 'RunJump' | 'Running' | 'Stationary' | 'WalkJump' | 'Walking'
+
+
+/** aggregate max on columns */
+export interface e_nade_techniques_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_nade_techniques_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_nade_techniques_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_nade_techniques_min_fields'
+}
+
+
+/** response of any mutation on the table "e_nade_techniques" */
+export interface e_nade_techniques_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_nade_techniques[]
+    __typename: 'e_nade_techniques_mutation_response'
+}
+
+
+/** select columns of table "e_nade_techniques" */
+export type e_nade_techniques_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_nade_techniques" */
+export type e_nade_techniques_update_column = 'description' | 'value'
+
+
+/** columns and relationships of "e_nade_throw_strengths" */
+export interface e_nade_throw_strengths {
+    description: Scalars['String']
+    /** An array relationship */
+    nade_lineups: nade_lineups[]
+    /** An aggregate relationship */
+    nade_lineups_aggregate: nade_lineups_aggregate
+    value: Scalars['String']
+    __typename: 'e_nade_throw_strengths'
+}
+
+
+/** aggregated selection of "e_nade_throw_strengths" */
+export interface e_nade_throw_strengths_aggregate {
+    aggregate: (e_nade_throw_strengths_aggregate_fields | null)
+    nodes: e_nade_throw_strengths[]
+    __typename: 'e_nade_throw_strengths_aggregate'
+}
+
+
+/** aggregate fields of "e_nade_throw_strengths" */
+export interface e_nade_throw_strengths_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_nade_throw_strengths_max_fields | null)
+    min: (e_nade_throw_strengths_min_fields | null)
+    __typename: 'e_nade_throw_strengths_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_nade_throw_strengths" */
+export type e_nade_throw_strengths_constraint = 'e_nade_throw_strengths_pkey'
+
+export type e_nade_throw_strengths_enum = 'Drop' | 'Full' | 'Half'
+
+
+/** aggregate max on columns */
+export interface e_nade_throw_strengths_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_nade_throw_strengths_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_nade_throw_strengths_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_nade_throw_strengths_min_fields'
+}
+
+
+/** response of any mutation on the table "e_nade_throw_strengths" */
+export interface e_nade_throw_strengths_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_nade_throw_strengths[]
+    __typename: 'e_nade_throw_strengths_mutation_response'
+}
+
+
+/** select columns of table "e_nade_throw_strengths" */
+export type e_nade_throw_strengths_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_nade_throw_strengths" */
+export type e_nade_throw_strengths_update_column = 'description' | 'value'
+
+
+/** columns and relationships of "e_nade_visibility" */
+export interface e_nade_visibility {
+    description: Scalars['String']
+    /** An array relationship */
+    nade_lineups: nade_lineups[]
+    /** An aggregate relationship */
+    nade_lineups_aggregate: nade_lineups_aggregate
+    value: Scalars['String']
+    __typename: 'e_nade_visibility'
+}
+
+
+/** aggregated selection of "e_nade_visibility" */
+export interface e_nade_visibility_aggregate {
+    aggregate: (e_nade_visibility_aggregate_fields | null)
+    nodes: e_nade_visibility[]
+    __typename: 'e_nade_visibility_aggregate'
+}
+
+
+/** aggregate fields of "e_nade_visibility" */
+export interface e_nade_visibility_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_nade_visibility_max_fields | null)
+    min: (e_nade_visibility_min_fields | null)
+    __typename: 'e_nade_visibility_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_nade_visibility" */
+export type e_nade_visibility_constraint = 'e_nade_visibility_pkey'
+
+export type e_nade_visibility_enum = 'Private' | 'Public' | 'Team'
+
+
+/** aggregate max on columns */
+export interface e_nade_visibility_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_nade_visibility_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_nade_visibility_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_nade_visibility_min_fields'
+}
+
+
+/** response of any mutation on the table "e_nade_visibility" */
+export interface e_nade_visibility_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_nade_visibility[]
+    __typename: 'e_nade_visibility_mutation_response'
+}
+
+
+/** select columns of table "e_nade_visibility" */
+export type e_nade_visibility_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_nade_visibility" */
+export type e_nade_visibility_update_column = 'description' | 'value'
 
 
 /** columns and relationships of "e_notification_types" */
@@ -13859,6 +14403,8 @@ export interface mutation_root {
     /** Delete a saved clip and its underlying S3 object */
     deleteClip: (SuccessOutput | null)
     deleteMatch: (SuccessOutput | null)
+    /** Delete a nade playbook */
+    deleteNadePlaybook: (SuccessOutput | null)
     /** Delete a news post. Caller role is verified against public.post_news_role. */
     deleteNewsPost: (SuccessOutput | null)
     /** Delete orphaned S3 objects found by the last scan (admin only). Each key is re-verified against the database before removal. */
@@ -14039,6 +14585,26 @@ export interface mutation_root {
     delete_e_match_types: (e_match_types_mutation_response | null)
     /** delete single row from the table: "e_match_types" */
     delete_e_match_types_by_pk: (e_match_types | null)
+    /** delete data from the table: "e_nade_practice_statuses" */
+    delete_e_nade_practice_statuses: (e_nade_practice_statuses_mutation_response | null)
+    /** delete single row from the table: "e_nade_practice_statuses" */
+    delete_e_nade_practice_statuses_by_pk: (e_nade_practice_statuses | null)
+    /** delete data from the table: "e_nade_sources" */
+    delete_e_nade_sources: (e_nade_sources_mutation_response | null)
+    /** delete single row from the table: "e_nade_sources" */
+    delete_e_nade_sources_by_pk: (e_nade_sources | null)
+    /** delete data from the table: "e_nade_techniques" */
+    delete_e_nade_techniques: (e_nade_techniques_mutation_response | null)
+    /** delete single row from the table: "e_nade_techniques" */
+    delete_e_nade_techniques_by_pk: (e_nade_techniques | null)
+    /** delete data from the table: "e_nade_throw_strengths" */
+    delete_e_nade_throw_strengths: (e_nade_throw_strengths_mutation_response | null)
+    /** delete single row from the table: "e_nade_throw_strengths" */
+    delete_e_nade_throw_strengths_by_pk: (e_nade_throw_strengths | null)
+    /** delete data from the table: "e_nade_visibility" */
+    delete_e_nade_visibility: (e_nade_visibility_mutation_response | null)
+    /** delete single row from the table: "e_nade_visibility" */
+    delete_e_nade_visibility_by_pk: (e_nade_visibility | null)
     /** delete data from the table: "e_notification_types" */
     delete_e_notification_types: (e_notification_types_mutation_response | null)
     /** delete single row from the table: "e_notification_types" */
@@ -14303,6 +14869,70 @@ export interface mutation_root {
     delete_migration_hashes_hashes_by_pk: (migration_hashes_hashes | null)
     /** delete data from the table: "v_my_friends" */
     delete_my_friends: (my_friends_mutation_response | null)
+    /** delete data from the table: "nade_collection_items" */
+    delete_nade_collection_items: (nade_collection_items_mutation_response | null)
+    /** delete single row from the table: "nade_collection_items" */
+    delete_nade_collection_items_by_pk: (nade_collection_items | null)
+    /** delete data from the table: "nade_collections" */
+    delete_nade_collections: (nade_collections_mutation_response | null)
+    /** delete single row from the table: "nade_collections" */
+    delete_nade_collections_by_pk: (nade_collections | null)
+    /** delete data from the table: "nade_demo_mines" */
+    delete_nade_demo_mines: (nade_demo_mines_mutation_response | null)
+    /** delete single row from the table: "nade_demo_mines" */
+    delete_nade_demo_mines_by_pk: (nade_demo_mines | null)
+    /** delete data from the table: "nade_demo_throws" */
+    delete_nade_demo_throws: (nade_demo_throws_mutation_response | null)
+    /** delete single row from the table: "nade_demo_throws" */
+    delete_nade_demo_throws_by_pk: (nade_demo_throws | null)
+    /** delete data from the table: "nade_drift_results" */
+    delete_nade_drift_results: (nade_drift_results_mutation_response | null)
+    /** delete single row from the table: "nade_drift_results" */
+    delete_nade_drift_results_by_pk: (nade_drift_results | null)
+    /** delete data from the table: "nade_drift_scans" */
+    delete_nade_drift_scans: (nade_drift_scans_mutation_response | null)
+    /** delete single row from the table: "nade_drift_scans" */
+    delete_nade_drift_scans_by_pk: (nade_drift_scans | null)
+    /** delete data from the table: "nade_lineup_favorites" */
+    delete_nade_lineup_favorites: (nade_lineup_favorites_mutation_response | null)
+    /** delete single row from the table: "nade_lineup_favorites" */
+    delete_nade_lineup_favorites_by_pk: (nade_lineup_favorites | null)
+    /** delete data from the table: "nade_lineup_progress" */
+    delete_nade_lineup_progress: (nade_lineup_progress_mutation_response | null)
+    /** delete single row from the table: "nade_lineup_progress" */
+    delete_nade_lineup_progress_by_pk: (nade_lineup_progress | null)
+    /** delete data from the table: "nade_lineup_repairs" */
+    delete_nade_lineup_repairs: (nade_lineup_repairs_mutation_response | null)
+    /** delete single row from the table: "nade_lineup_repairs" */
+    delete_nade_lineup_repairs_by_pk: (nade_lineup_repairs | null)
+    /** delete data from the table: "nade_lineup_votes" */
+    delete_nade_lineup_votes: (nade_lineup_votes_mutation_response | null)
+    /** delete single row from the table: "nade_lineup_votes" */
+    delete_nade_lineup_votes_by_pk: (nade_lineup_votes | null)
+    /** delete data from the table: "nade_lineups" */
+    delete_nade_lineups: (nade_lineups_mutation_response | null)
+    /** delete single row from the table: "nade_lineups" */
+    delete_nade_lineups_by_pk: (nade_lineups | null)
+    /** delete data from the table: "nade_meta_lineups" */
+    delete_nade_meta_lineups: (nade_meta_lineups_mutation_response | null)
+    /** delete single row from the table: "nade_meta_lineups" */
+    delete_nade_meta_lineups_by_pk: (nade_meta_lineups | null)
+    /** delete data from the table: "nade_playbook_steps" */
+    delete_nade_playbook_steps: (nade_playbook_steps_mutation_response | null)
+    /** delete single row from the table: "nade_playbook_steps" */
+    delete_nade_playbook_steps_by_pk: (nade_playbook_steps | null)
+    /** delete data from the table: "nade_playbooks" */
+    delete_nade_playbooks: (nade_playbooks_mutation_response | null)
+    /** delete single row from the table: "nade_playbooks" */
+    delete_nade_playbooks_by_pk: (nade_playbooks | null)
+    /** delete data from the table: "nade_practice_invites" */
+    delete_nade_practice_invites: (nade_practice_invites_mutation_response | null)
+    /** delete single row from the table: "nade_practice_invites" */
+    delete_nade_practice_invites_by_pk: (nade_practice_invites | null)
+    /** delete data from the table: "nade_practice_sessions" */
+    delete_nade_practice_sessions: (nade_practice_sessions_mutation_response | null)
+    /** delete single row from the table: "nade_practice_sessions" */
+    delete_nade_practice_sessions_by_pk: (nade_practice_sessions | null)
     /** delete data from the table: "news_articles" */
     delete_news_articles: (news_articles_mutation_response | null)
     /** delete single row from the table: "news_articles" */
@@ -14540,6 +15170,8 @@ export interface mutation_root {
     denyInvite: (SuccessOutput | null)
     denyNameChange: (SuccessOutput | null)
     forfeitMatch: (SuccessOutput | null)
+    /** Copy a lineup you can see into your own library */
+    forkNadeLineup: (NadeLineupOutput | null)
     /** Live pod GSI snapshot — slots, sides, alive/dead. Drives the stream-deck. */
     getLiveStreamSpecState: (LiveStreamSpecState | null)
     /** Fetch a plugin's README from its repository */
@@ -14547,6 +15179,8 @@ export interface mutation_root {
     getTestUploadLink: GetTestUploadResponse
     /** Grant an award to a player or team */
     grantAward: (AwardRecipient | null)
+    /** Seed the nade library from an operator-supplied payload */
+    importNadeLineups: (NadeImportOutput | null)
     /** insert data into the table: "_map_pool" */
     insert__map_pool: (_map_pool_mutation_response | null)
     /** insert a single row into the table: "_map_pool" */
@@ -14719,6 +15353,26 @@ export interface mutation_root {
     insert_e_match_types: (e_match_types_mutation_response | null)
     /** insert a single row into the table: "e_match_types" */
     insert_e_match_types_one: (e_match_types | null)
+    /** insert data into the table: "e_nade_practice_statuses" */
+    insert_e_nade_practice_statuses: (e_nade_practice_statuses_mutation_response | null)
+    /** insert a single row into the table: "e_nade_practice_statuses" */
+    insert_e_nade_practice_statuses_one: (e_nade_practice_statuses | null)
+    /** insert data into the table: "e_nade_sources" */
+    insert_e_nade_sources: (e_nade_sources_mutation_response | null)
+    /** insert a single row into the table: "e_nade_sources" */
+    insert_e_nade_sources_one: (e_nade_sources | null)
+    /** insert data into the table: "e_nade_techniques" */
+    insert_e_nade_techniques: (e_nade_techniques_mutation_response | null)
+    /** insert a single row into the table: "e_nade_techniques" */
+    insert_e_nade_techniques_one: (e_nade_techniques | null)
+    /** insert data into the table: "e_nade_throw_strengths" */
+    insert_e_nade_throw_strengths: (e_nade_throw_strengths_mutation_response | null)
+    /** insert a single row into the table: "e_nade_throw_strengths" */
+    insert_e_nade_throw_strengths_one: (e_nade_throw_strengths | null)
+    /** insert data into the table: "e_nade_visibility" */
+    insert_e_nade_visibility: (e_nade_visibility_mutation_response | null)
+    /** insert a single row into the table: "e_nade_visibility" */
+    insert_e_nade_visibility_one: (e_nade_visibility | null)
     /** insert data into the table: "e_notification_types" */
     insert_e_notification_types: (e_notification_types_mutation_response | null)
     /** insert a single row into the table: "e_notification_types" */
@@ -14987,6 +15641,70 @@ export interface mutation_root {
     insert_my_friends: (my_friends_mutation_response | null)
     /** insert a single row into the table: "v_my_friends" */
     insert_my_friends_one: (my_friends | null)
+    /** insert data into the table: "nade_collection_items" */
+    insert_nade_collection_items: (nade_collection_items_mutation_response | null)
+    /** insert a single row into the table: "nade_collection_items" */
+    insert_nade_collection_items_one: (nade_collection_items | null)
+    /** insert data into the table: "nade_collections" */
+    insert_nade_collections: (nade_collections_mutation_response | null)
+    /** insert a single row into the table: "nade_collections" */
+    insert_nade_collections_one: (nade_collections | null)
+    /** insert data into the table: "nade_demo_mines" */
+    insert_nade_demo_mines: (nade_demo_mines_mutation_response | null)
+    /** insert a single row into the table: "nade_demo_mines" */
+    insert_nade_demo_mines_one: (nade_demo_mines | null)
+    /** insert data into the table: "nade_demo_throws" */
+    insert_nade_demo_throws: (nade_demo_throws_mutation_response | null)
+    /** insert a single row into the table: "nade_demo_throws" */
+    insert_nade_demo_throws_one: (nade_demo_throws | null)
+    /** insert data into the table: "nade_drift_results" */
+    insert_nade_drift_results: (nade_drift_results_mutation_response | null)
+    /** insert a single row into the table: "nade_drift_results" */
+    insert_nade_drift_results_one: (nade_drift_results | null)
+    /** insert data into the table: "nade_drift_scans" */
+    insert_nade_drift_scans: (nade_drift_scans_mutation_response | null)
+    /** insert a single row into the table: "nade_drift_scans" */
+    insert_nade_drift_scans_one: (nade_drift_scans | null)
+    /** insert data into the table: "nade_lineup_favorites" */
+    insert_nade_lineup_favorites: (nade_lineup_favorites_mutation_response | null)
+    /** insert a single row into the table: "nade_lineup_favorites" */
+    insert_nade_lineup_favorites_one: (nade_lineup_favorites | null)
+    /** insert data into the table: "nade_lineup_progress" */
+    insert_nade_lineup_progress: (nade_lineup_progress_mutation_response | null)
+    /** insert a single row into the table: "nade_lineup_progress" */
+    insert_nade_lineup_progress_one: (nade_lineup_progress | null)
+    /** insert data into the table: "nade_lineup_repairs" */
+    insert_nade_lineup_repairs: (nade_lineup_repairs_mutation_response | null)
+    /** insert a single row into the table: "nade_lineup_repairs" */
+    insert_nade_lineup_repairs_one: (nade_lineup_repairs | null)
+    /** insert data into the table: "nade_lineup_votes" */
+    insert_nade_lineup_votes: (nade_lineup_votes_mutation_response | null)
+    /** insert a single row into the table: "nade_lineup_votes" */
+    insert_nade_lineup_votes_one: (nade_lineup_votes | null)
+    /** insert data into the table: "nade_lineups" */
+    insert_nade_lineups: (nade_lineups_mutation_response | null)
+    /** insert a single row into the table: "nade_lineups" */
+    insert_nade_lineups_one: (nade_lineups | null)
+    /** insert data into the table: "nade_meta_lineups" */
+    insert_nade_meta_lineups: (nade_meta_lineups_mutation_response | null)
+    /** insert a single row into the table: "nade_meta_lineups" */
+    insert_nade_meta_lineups_one: (nade_meta_lineups | null)
+    /** insert data into the table: "nade_playbook_steps" */
+    insert_nade_playbook_steps: (nade_playbook_steps_mutation_response | null)
+    /** insert a single row into the table: "nade_playbook_steps" */
+    insert_nade_playbook_steps_one: (nade_playbook_steps | null)
+    /** insert data into the table: "nade_playbooks" */
+    insert_nade_playbooks: (nade_playbooks_mutation_response | null)
+    /** insert a single row into the table: "nade_playbooks" */
+    insert_nade_playbooks_one: (nade_playbooks | null)
+    /** insert data into the table: "nade_practice_invites" */
+    insert_nade_practice_invites: (nade_practice_invites_mutation_response | null)
+    /** insert a single row into the table: "nade_practice_invites" */
+    insert_nade_practice_invites_one: (nade_practice_invites | null)
+    /** insert data into the table: "nade_practice_sessions" */
+    insert_nade_practice_sessions: (nade_practice_sessions_mutation_response | null)
+    /** insert a single row into the table: "nade_practice_sessions" */
+    insert_nade_practice_sessions_one: (nade_practice_sessions | null)
     /** insert data into the table: "news_articles" */
     insert_news_articles: (news_articles_mutation_response | null)
     /** insert a single row into the table: "news_articles" */
@@ -15233,17 +15951,25 @@ export interface mutation_root {
     insert_v_team_stage_results_one: (v_team_stage_results | null)
     /** Install a game plugin into a node's plugin store */
     installGamePlugin: (SuccessOutput | null)
+    /** Invite players to a nade practice session */
+    inviteToNadePractice: (SuccessOutput | null)
     /** joinDraftGame */
     joinDraftGame: (SuccessOutput | null)
     /** joinDraftGameAsParty */
     joinDraftGameAsParty: (SuccessOutput | null)
+    /** Join a nade practice session */
+    joinNadePractice: (NadePracticeSessionOutput | null)
     kickServerPlayer: KickResult
     /** execute VOLATILE function "league_award_forfeit" which returns "matches" */
     league_award_forfeit: matches[]
     leaveLineup: (SuccessOutput | null)
+    /** Leave a nade practice session */
+    leaveNadePractice: (SuccessOutput | null)
     linkSteamMatchHistory: (SteamMatchHistoryLinkOutput | null)
     /** Load dev fixture data (dev only) */
     loadFixtures: (SuccessOutput | null)
+    /** Load a nade playbook into a running practice session */
+    loadNadePlaybookIntoSession: (SuccessOutput | null)
     /** logout */
     logout: (SuccessOutput | null)
     /** Move file or directory on game server */
@@ -15257,6 +15983,8 @@ export interface mutation_root {
     previewDraftGame: (DraftGamePreviewOutput | null)
     /** Resolve a game mode into the plugins and cfg a server would load */
     previewGameMode: (PreviewGameModeOutput | null)
+    /** Delete every lineup that came from one origin source */
+    purgeNadeLineupSource: (NadePurgeOutput | null)
     /** Build a multi-segment ClipSpec from a player+preset and queue it via the batch render path (no live demo session required) */
     queueClipFromPreset: (CreateClipRenderOutput | null)
     randomizeTeams: (SuccessOutput | null)
@@ -15287,6 +16015,8 @@ export interface mutation_root {
     renameServerItem: (SuccessOutput | null)
     /** execute VOLATILE function "reorder_league_divisions" which returns "league_divisions" */
     reorder_league_divisions: league_divisions[]
+    /** Re-solve a lineup a drift scan says the map moved */
+    repairNadeLineup: (NadeSolveOutput | null)
     /** Re-parse every demo in the system (admin only). Runs one demo at a time in the background; this can take a very long time. Track via reparseAllDemosStatus. */
     reparseAllDemos: (ReparseAllStartedOutput | null)
     /** Return the progress of the reparse-all-demos run (admin only). */
@@ -15315,6 +16045,12 @@ export interface mutation_root {
     sanctionServerPlayer: SanctionResult
     /** Create or update a catalog award */
     saveAward: (Award | null)
+    /** Mine a lineup out of a parsed demo */
+    saveNadeLineupFromDemo: (NadeLineupOutput | null)
+    /** Save a lineup recorded in a practice session */
+    saveNadeLineupFromPractice: (NadeLineupOutput | null)
+    /** Create or update a nade playbook and its steps */
+    saveNadePlaybook: (NadePlaybookOutput | null)
     /** Create or update a first-party news post. Caller role is verified against public.post_news_role. */
     saveNewsPost: (NewsPost | null)
     /** Scan S3 for objects not referenced in the database (admin only). Runs in the background; results land in the logs and orphanedDemosScanResult. */
@@ -15337,6 +16073,8 @@ export interface mutation_root {
     setTournamentAward: (TournamentAward | null)
     setupGameServer: (SetupGameServeOutput | null)
     skipShaders: (SuccessOutput | null)
+    /** Ask a practice server to solve a throw onto a point */
+    solveNadeLineup: (NadeSolveOutput | null)
     specAutodirector: (SuccessOutput | null)
     specClick: (SuccessOutput | null)
     specHud: (SuccessOutput | null)
@@ -15349,8 +16087,14 @@ export interface mutation_root {
     startLive: (SuccessOutput | null)
     /** startMatch */
     startMatch: (SuccessOutput | null)
+    /** Re-fly a map's lineups against two collision meshes */
+    startNadeDriftScan: (NadeDriftScanOutput | null)
+    /** Start a nade practice session */
+    startNadePractice: (NadePracticeSessionOutput | null)
     stopGpuSession: (SuccessOutput | null)
     stopLive: (SuccessOutput | null)
+    /** Stop a nade practice session */
+    stopNadePractice: (SuccessOutput | null)
     stopWatchDemo: (SuccessOutput | null)
     /** Submit a Steam Guard code for a presence bot account */
     submitSteamPresenceSteamGuard: (SuccessOutput | null)
@@ -15632,6 +16376,36 @@ export interface mutation_root {
     update_e_match_types_by_pk: (e_match_types | null)
     /** update multiples rows of table: "e_match_types" */
     update_e_match_types_many: ((e_match_types_mutation_response | null)[] | null)
+    /** update data of the table: "e_nade_practice_statuses" */
+    update_e_nade_practice_statuses: (e_nade_practice_statuses_mutation_response | null)
+    /** update single row of the table: "e_nade_practice_statuses" */
+    update_e_nade_practice_statuses_by_pk: (e_nade_practice_statuses | null)
+    /** update multiples rows of table: "e_nade_practice_statuses" */
+    update_e_nade_practice_statuses_many: ((e_nade_practice_statuses_mutation_response | null)[] | null)
+    /** update data of the table: "e_nade_sources" */
+    update_e_nade_sources: (e_nade_sources_mutation_response | null)
+    /** update single row of the table: "e_nade_sources" */
+    update_e_nade_sources_by_pk: (e_nade_sources | null)
+    /** update multiples rows of table: "e_nade_sources" */
+    update_e_nade_sources_many: ((e_nade_sources_mutation_response | null)[] | null)
+    /** update data of the table: "e_nade_techniques" */
+    update_e_nade_techniques: (e_nade_techniques_mutation_response | null)
+    /** update single row of the table: "e_nade_techniques" */
+    update_e_nade_techniques_by_pk: (e_nade_techniques | null)
+    /** update multiples rows of table: "e_nade_techniques" */
+    update_e_nade_techniques_many: ((e_nade_techniques_mutation_response | null)[] | null)
+    /** update data of the table: "e_nade_throw_strengths" */
+    update_e_nade_throw_strengths: (e_nade_throw_strengths_mutation_response | null)
+    /** update single row of the table: "e_nade_throw_strengths" */
+    update_e_nade_throw_strengths_by_pk: (e_nade_throw_strengths | null)
+    /** update multiples rows of table: "e_nade_throw_strengths" */
+    update_e_nade_throw_strengths_many: ((e_nade_throw_strengths_mutation_response | null)[] | null)
+    /** update data of the table: "e_nade_visibility" */
+    update_e_nade_visibility: (e_nade_visibility_mutation_response | null)
+    /** update single row of the table: "e_nade_visibility" */
+    update_e_nade_visibility_by_pk: (e_nade_visibility | null)
+    /** update multiples rows of table: "e_nade_visibility" */
+    update_e_nade_visibility_many: ((e_nade_visibility_mutation_response | null)[] | null)
     /** update data of the table: "e_notification_types" */
     update_e_notification_types: (e_notification_types_mutation_response | null)
     /** update single row of the table: "e_notification_types" */
@@ -16030,6 +16804,102 @@ export interface mutation_root {
     update_my_friends: (my_friends_mutation_response | null)
     /** update multiples rows of table: "v_my_friends" */
     update_my_friends_many: ((my_friends_mutation_response | null)[] | null)
+    /** update data of the table: "nade_collection_items" */
+    update_nade_collection_items: (nade_collection_items_mutation_response | null)
+    /** update single row of the table: "nade_collection_items" */
+    update_nade_collection_items_by_pk: (nade_collection_items | null)
+    /** update multiples rows of table: "nade_collection_items" */
+    update_nade_collection_items_many: ((nade_collection_items_mutation_response | null)[] | null)
+    /** update data of the table: "nade_collections" */
+    update_nade_collections: (nade_collections_mutation_response | null)
+    /** update single row of the table: "nade_collections" */
+    update_nade_collections_by_pk: (nade_collections | null)
+    /** update multiples rows of table: "nade_collections" */
+    update_nade_collections_many: ((nade_collections_mutation_response | null)[] | null)
+    /** update data of the table: "nade_demo_mines" */
+    update_nade_demo_mines: (nade_demo_mines_mutation_response | null)
+    /** update single row of the table: "nade_demo_mines" */
+    update_nade_demo_mines_by_pk: (nade_demo_mines | null)
+    /** update multiples rows of table: "nade_demo_mines" */
+    update_nade_demo_mines_many: ((nade_demo_mines_mutation_response | null)[] | null)
+    /** update data of the table: "nade_demo_throws" */
+    update_nade_demo_throws: (nade_demo_throws_mutation_response | null)
+    /** update single row of the table: "nade_demo_throws" */
+    update_nade_demo_throws_by_pk: (nade_demo_throws | null)
+    /** update multiples rows of table: "nade_demo_throws" */
+    update_nade_demo_throws_many: ((nade_demo_throws_mutation_response | null)[] | null)
+    /** update data of the table: "nade_drift_results" */
+    update_nade_drift_results: (nade_drift_results_mutation_response | null)
+    /** update single row of the table: "nade_drift_results" */
+    update_nade_drift_results_by_pk: (nade_drift_results | null)
+    /** update multiples rows of table: "nade_drift_results" */
+    update_nade_drift_results_many: ((nade_drift_results_mutation_response | null)[] | null)
+    /** update data of the table: "nade_drift_scans" */
+    update_nade_drift_scans: (nade_drift_scans_mutation_response | null)
+    /** update single row of the table: "nade_drift_scans" */
+    update_nade_drift_scans_by_pk: (nade_drift_scans | null)
+    /** update multiples rows of table: "nade_drift_scans" */
+    update_nade_drift_scans_many: ((nade_drift_scans_mutation_response | null)[] | null)
+    /** update data of the table: "nade_lineup_favorites" */
+    update_nade_lineup_favorites: (nade_lineup_favorites_mutation_response | null)
+    /** update single row of the table: "nade_lineup_favorites" */
+    update_nade_lineup_favorites_by_pk: (nade_lineup_favorites | null)
+    /** update multiples rows of table: "nade_lineup_favorites" */
+    update_nade_lineup_favorites_many: ((nade_lineup_favorites_mutation_response | null)[] | null)
+    /** update data of the table: "nade_lineup_progress" */
+    update_nade_lineup_progress: (nade_lineup_progress_mutation_response | null)
+    /** update single row of the table: "nade_lineup_progress" */
+    update_nade_lineup_progress_by_pk: (nade_lineup_progress | null)
+    /** update multiples rows of table: "nade_lineup_progress" */
+    update_nade_lineup_progress_many: ((nade_lineup_progress_mutation_response | null)[] | null)
+    /** update data of the table: "nade_lineup_repairs" */
+    update_nade_lineup_repairs: (nade_lineup_repairs_mutation_response | null)
+    /** update single row of the table: "nade_lineup_repairs" */
+    update_nade_lineup_repairs_by_pk: (nade_lineup_repairs | null)
+    /** update multiples rows of table: "nade_lineup_repairs" */
+    update_nade_lineup_repairs_many: ((nade_lineup_repairs_mutation_response | null)[] | null)
+    /** update data of the table: "nade_lineup_votes" */
+    update_nade_lineup_votes: (nade_lineup_votes_mutation_response | null)
+    /** update single row of the table: "nade_lineup_votes" */
+    update_nade_lineup_votes_by_pk: (nade_lineup_votes | null)
+    /** update multiples rows of table: "nade_lineup_votes" */
+    update_nade_lineup_votes_many: ((nade_lineup_votes_mutation_response | null)[] | null)
+    /** update data of the table: "nade_lineups" */
+    update_nade_lineups: (nade_lineups_mutation_response | null)
+    /** update single row of the table: "nade_lineups" */
+    update_nade_lineups_by_pk: (nade_lineups | null)
+    /** update multiples rows of table: "nade_lineups" */
+    update_nade_lineups_many: ((nade_lineups_mutation_response | null)[] | null)
+    /** update data of the table: "nade_meta_lineups" */
+    update_nade_meta_lineups: (nade_meta_lineups_mutation_response | null)
+    /** update single row of the table: "nade_meta_lineups" */
+    update_nade_meta_lineups_by_pk: (nade_meta_lineups | null)
+    /** update multiples rows of table: "nade_meta_lineups" */
+    update_nade_meta_lineups_many: ((nade_meta_lineups_mutation_response | null)[] | null)
+    /** update data of the table: "nade_playbook_steps" */
+    update_nade_playbook_steps: (nade_playbook_steps_mutation_response | null)
+    /** update single row of the table: "nade_playbook_steps" */
+    update_nade_playbook_steps_by_pk: (nade_playbook_steps | null)
+    /** update multiples rows of table: "nade_playbook_steps" */
+    update_nade_playbook_steps_many: ((nade_playbook_steps_mutation_response | null)[] | null)
+    /** update data of the table: "nade_playbooks" */
+    update_nade_playbooks: (nade_playbooks_mutation_response | null)
+    /** update single row of the table: "nade_playbooks" */
+    update_nade_playbooks_by_pk: (nade_playbooks | null)
+    /** update multiples rows of table: "nade_playbooks" */
+    update_nade_playbooks_many: ((nade_playbooks_mutation_response | null)[] | null)
+    /** update data of the table: "nade_practice_invites" */
+    update_nade_practice_invites: (nade_practice_invites_mutation_response | null)
+    /** update single row of the table: "nade_practice_invites" */
+    update_nade_practice_invites_by_pk: (nade_practice_invites | null)
+    /** update multiples rows of table: "nade_practice_invites" */
+    update_nade_practice_invites_many: ((nade_practice_invites_mutation_response | null)[] | null)
+    /** update data of the table: "nade_practice_sessions" */
+    update_nade_practice_sessions: (nade_practice_sessions_mutation_response | null)
+    /** update single row of the table: "nade_practice_sessions" */
+    update_nade_practice_sessions_by_pk: (nade_practice_sessions | null)
+    /** update multiples rows of table: "nade_practice_sessions" */
+    update_nade_practice_sessions_many: ((nade_practice_sessions_mutation_response | null)[] | null)
     /** update data of the table: "news_articles" */
     update_news_articles: (news_articles_mutation_response | null)
     /** update single row of the table: "news_articles" */
@@ -16672,6 +17542,3438 @@ export interface my_friends_variance_fields {
     steam_id: (Scalars['Float'] | null)
     vac_ban_count: (Scalars['Float'] | null)
     __typename: 'my_friends_variance_fields'
+}
+
+
+/** columns and relationships of "nade_collection_items" */
+export interface nade_collection_items {
+    /** An object relationship */
+    collection: nade_collections
+    collection_id: Scalars['uuid']
+    created_at: Scalars['timestamptz']
+    /** An object relationship */
+    nade_lineup: nade_lineups
+    nade_lineup_id: Scalars['uuid']
+    note: (Scalars['String'] | null)
+    position: Scalars['Int']
+    __typename: 'nade_collection_items'
+}
+
+
+/** aggregated selection of "nade_collection_items" */
+export interface nade_collection_items_aggregate {
+    aggregate: (nade_collection_items_aggregate_fields | null)
+    nodes: nade_collection_items[]
+    __typename: 'nade_collection_items_aggregate'
+}
+
+
+/** aggregate fields of "nade_collection_items" */
+export interface nade_collection_items_aggregate_fields {
+    avg: (nade_collection_items_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_collection_items_max_fields | null)
+    min: (nade_collection_items_min_fields | null)
+    stddev: (nade_collection_items_stddev_fields | null)
+    stddev_pop: (nade_collection_items_stddev_pop_fields | null)
+    stddev_samp: (nade_collection_items_stddev_samp_fields | null)
+    sum: (nade_collection_items_sum_fields | null)
+    var_pop: (nade_collection_items_var_pop_fields | null)
+    var_samp: (nade_collection_items_var_samp_fields | null)
+    variance: (nade_collection_items_variance_fields | null)
+    __typename: 'nade_collection_items_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_collection_items_avg_fields {
+    position: (Scalars['Float'] | null)
+    __typename: 'nade_collection_items_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_collection_items" */
+export type nade_collection_items_constraint = 'nade_collection_items_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_collection_items_max_fields {
+    collection_id: (Scalars['uuid'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    nade_lineup_id: (Scalars['uuid'] | null)
+    note: (Scalars['String'] | null)
+    position: (Scalars['Int'] | null)
+    __typename: 'nade_collection_items_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_collection_items_min_fields {
+    collection_id: (Scalars['uuid'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    nade_lineup_id: (Scalars['uuid'] | null)
+    note: (Scalars['String'] | null)
+    position: (Scalars['Int'] | null)
+    __typename: 'nade_collection_items_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_collection_items" */
+export interface nade_collection_items_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_collection_items[]
+    __typename: 'nade_collection_items_mutation_response'
+}
+
+
+/** select columns of table "nade_collection_items" */
+export type nade_collection_items_select_column = 'collection_id' | 'created_at' | 'nade_lineup_id' | 'note' | 'position'
+
+
+/** aggregate stddev on columns */
+export interface nade_collection_items_stddev_fields {
+    position: (Scalars['Float'] | null)
+    __typename: 'nade_collection_items_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_collection_items_stddev_pop_fields {
+    position: (Scalars['Float'] | null)
+    __typename: 'nade_collection_items_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_collection_items_stddev_samp_fields {
+    position: (Scalars['Float'] | null)
+    __typename: 'nade_collection_items_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_collection_items_sum_fields {
+    position: (Scalars['Int'] | null)
+    __typename: 'nade_collection_items_sum_fields'
+}
+
+
+/** update columns of table "nade_collection_items" */
+export type nade_collection_items_update_column = 'collection_id' | 'created_at' | 'nade_lineup_id' | 'note' | 'position'
+
+
+/** aggregate var_pop on columns */
+export interface nade_collection_items_var_pop_fields {
+    position: (Scalars['Float'] | null)
+    __typename: 'nade_collection_items_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_collection_items_var_samp_fields {
+    position: (Scalars['Float'] | null)
+    __typename: 'nade_collection_items_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_collection_items_variance_fields {
+    position: (Scalars['Float'] | null)
+    __typename: 'nade_collection_items_variance_fields'
+}
+
+
+/** columns and relationships of "nade_collections" */
+export interface nade_collections {
+    /** A computed field, executes function "can_edit_nade_collection" */
+    can_edit: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "can_view_nade_collection" */
+    can_view: (Scalars['Boolean'] | null)
+    created_at: Scalars['timestamptz']
+    description: (Scalars['String'] | null)
+    id: Scalars['uuid']
+    /** An array relationship */
+    items: nade_collection_items[]
+    /** An aggregate relationship */
+    items_aggregate: nade_collection_items_aggregate
+    map_name: (Scalars['String'] | null)
+    name: Scalars['String']
+    /** An object relationship */
+    owner: players
+    owner_steam_id: Scalars['bigint']
+    /** An object relationship */
+    team: (teams | null)
+    team_id: (Scalars['uuid'] | null)
+    updated_at: Scalars['timestamptz']
+    visibility: e_nade_visibility_enum
+    __typename: 'nade_collections'
+}
+
+
+/** aggregated selection of "nade_collections" */
+export interface nade_collections_aggregate {
+    aggregate: (nade_collections_aggregate_fields | null)
+    nodes: nade_collections[]
+    __typename: 'nade_collections_aggregate'
+}
+
+
+/** aggregate fields of "nade_collections" */
+export interface nade_collections_aggregate_fields {
+    avg: (nade_collections_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_collections_max_fields | null)
+    min: (nade_collections_min_fields | null)
+    stddev: (nade_collections_stddev_fields | null)
+    stddev_pop: (nade_collections_stddev_pop_fields | null)
+    stddev_samp: (nade_collections_stddev_samp_fields | null)
+    sum: (nade_collections_sum_fields | null)
+    var_pop: (nade_collections_var_pop_fields | null)
+    var_samp: (nade_collections_var_samp_fields | null)
+    variance: (nade_collections_variance_fields | null)
+    __typename: 'nade_collections_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_collections_avg_fields {
+    owner_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_collections_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_collections" */
+export type nade_collections_constraint = 'nade_collections_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_collections_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    description: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    map_name: (Scalars['String'] | null)
+    name: (Scalars['String'] | null)
+    owner_steam_id: (Scalars['bigint'] | null)
+    team_id: (Scalars['uuid'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'nade_collections_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_collections_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    description: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    map_name: (Scalars['String'] | null)
+    name: (Scalars['String'] | null)
+    owner_steam_id: (Scalars['bigint'] | null)
+    team_id: (Scalars['uuid'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'nade_collections_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_collections" */
+export interface nade_collections_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_collections[]
+    __typename: 'nade_collections_mutation_response'
+}
+
+
+/** select columns of table "nade_collections" */
+export type nade_collections_select_column = 'created_at' | 'description' | 'id' | 'map_name' | 'name' | 'owner_steam_id' | 'team_id' | 'updated_at' | 'visibility'
+
+
+/** aggregate stddev on columns */
+export interface nade_collections_stddev_fields {
+    owner_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_collections_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_collections_stddev_pop_fields {
+    owner_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_collections_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_collections_stddev_samp_fields {
+    owner_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_collections_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_collections_sum_fields {
+    owner_steam_id: (Scalars['bigint'] | null)
+    __typename: 'nade_collections_sum_fields'
+}
+
+
+/** update columns of table "nade_collections" */
+export type nade_collections_update_column = 'created_at' | 'description' | 'id' | 'map_name' | 'name' | 'owner_steam_id' | 'team_id' | 'updated_at' | 'visibility'
+
+
+/** aggregate var_pop on columns */
+export interface nade_collections_var_pop_fields {
+    owner_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_collections_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_collections_var_samp_fields {
+    owner_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_collections_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_collections_variance_fields {
+    owner_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_collections_variance_fields'
+}
+
+
+/** columns and relationships of "nade_demo_mines" */
+export interface nade_demo_mines {
+    failed_reason: (Scalars['String'] | null)
+    match_map_demo_id: Scalars['uuid']
+    mined_at: Scalars['timestamptz']
+    throws: Scalars['Int']
+    version: Scalars['Int']
+    __typename: 'nade_demo_mines'
+}
+
+
+/** aggregated selection of "nade_demo_mines" */
+export interface nade_demo_mines_aggregate {
+    aggregate: (nade_demo_mines_aggregate_fields | null)
+    nodes: nade_demo_mines[]
+    __typename: 'nade_demo_mines_aggregate'
+}
+
+
+/** aggregate fields of "nade_demo_mines" */
+export interface nade_demo_mines_aggregate_fields {
+    avg: (nade_demo_mines_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_demo_mines_max_fields | null)
+    min: (nade_demo_mines_min_fields | null)
+    stddev: (nade_demo_mines_stddev_fields | null)
+    stddev_pop: (nade_demo_mines_stddev_pop_fields | null)
+    stddev_samp: (nade_demo_mines_stddev_samp_fields | null)
+    sum: (nade_demo_mines_sum_fields | null)
+    var_pop: (nade_demo_mines_var_pop_fields | null)
+    var_samp: (nade_demo_mines_var_samp_fields | null)
+    variance: (nade_demo_mines_variance_fields | null)
+    __typename: 'nade_demo_mines_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_demo_mines_avg_fields {
+    throws: (Scalars['Float'] | null)
+    version: (Scalars['Float'] | null)
+    __typename: 'nade_demo_mines_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_demo_mines" */
+export type nade_demo_mines_constraint = 'nade_demo_mines_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_demo_mines_max_fields {
+    failed_reason: (Scalars['String'] | null)
+    match_map_demo_id: (Scalars['uuid'] | null)
+    mined_at: (Scalars['timestamptz'] | null)
+    throws: (Scalars['Int'] | null)
+    version: (Scalars['Int'] | null)
+    __typename: 'nade_demo_mines_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_demo_mines_min_fields {
+    failed_reason: (Scalars['String'] | null)
+    match_map_demo_id: (Scalars['uuid'] | null)
+    mined_at: (Scalars['timestamptz'] | null)
+    throws: (Scalars['Int'] | null)
+    version: (Scalars['Int'] | null)
+    __typename: 'nade_demo_mines_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_demo_mines" */
+export interface nade_demo_mines_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_demo_mines[]
+    __typename: 'nade_demo_mines_mutation_response'
+}
+
+
+/** select columns of table "nade_demo_mines" */
+export type nade_demo_mines_select_column = 'failed_reason' | 'match_map_demo_id' | 'mined_at' | 'throws' | 'version'
+
+
+/** aggregate stddev on columns */
+export interface nade_demo_mines_stddev_fields {
+    throws: (Scalars['Float'] | null)
+    version: (Scalars['Float'] | null)
+    __typename: 'nade_demo_mines_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_demo_mines_stddev_pop_fields {
+    throws: (Scalars['Float'] | null)
+    version: (Scalars['Float'] | null)
+    __typename: 'nade_demo_mines_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_demo_mines_stddev_samp_fields {
+    throws: (Scalars['Float'] | null)
+    version: (Scalars['Float'] | null)
+    __typename: 'nade_demo_mines_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_demo_mines_sum_fields {
+    throws: (Scalars['Int'] | null)
+    version: (Scalars['Int'] | null)
+    __typename: 'nade_demo_mines_sum_fields'
+}
+
+
+/** update columns of table "nade_demo_mines" */
+export type nade_demo_mines_update_column = 'failed_reason' | 'match_map_demo_id' | 'mined_at' | 'throws' | 'version'
+
+
+/** aggregate var_pop on columns */
+export interface nade_demo_mines_var_pop_fields {
+    throws: (Scalars['Float'] | null)
+    version: (Scalars['Float'] | null)
+    __typename: 'nade_demo_mines_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_demo_mines_var_samp_fields {
+    throws: (Scalars['Float'] | null)
+    version: (Scalars['Float'] | null)
+    __typename: 'nade_demo_mines_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_demo_mines_variance_fields {
+    throws: (Scalars['Float'] | null)
+    version: (Scalars['Float'] | null)
+    __typename: 'nade_demo_mines_variance_fields'
+}
+
+
+/** columns and relationships of "nade_demo_throws" */
+export interface nade_demo_throws {
+    created_at: Scalars['timestamptz']
+    flight_time_ms: (Scalars['Int'] | null)
+    grenade_id: Scalars['Int']
+    land_x: Scalars['float8']
+    land_y: Scalars['float8']
+    land_z: Scalars['float8']
+    lineup_bucket: (Scalars['String'] | null)
+    map_name: Scalars['String']
+    /** An object relationship */
+    match: (matches | null)
+    match_id: (Scalars['uuid'] | null)
+    /** An object relationship */
+    match_map: (match_maps | null)
+    match_map_demo_id: Scalars['uuid']
+    match_map_id: (Scalars['uuid'] | null)
+    nade_type: e_utility_types_enum
+    origin_x: Scalars['float8']
+    origin_y: Scalars['float8']
+    origin_z: Scalars['float8']
+    round: (Scalars['Int'] | null)
+    side: e_sides_enum
+    technique: e_nade_techniques_enum
+    throw_strength: (e_nade_throw_strengths_enum | null)
+    thrower_steam_id: (Scalars['bigint'] | null)
+    thrown_at: (Scalars['timestamptz'] | null)
+    tick: (Scalars['Int'] | null)
+    view_pitch: (Scalars['float8'] | null)
+    view_yaw: (Scalars['float8'] | null)
+    __typename: 'nade_demo_throws'
+}
+
+
+/** aggregated selection of "nade_demo_throws" */
+export interface nade_demo_throws_aggregate {
+    aggregate: (nade_demo_throws_aggregate_fields | null)
+    nodes: nade_demo_throws[]
+    __typename: 'nade_demo_throws_aggregate'
+}
+
+
+/** aggregate fields of "nade_demo_throws" */
+export interface nade_demo_throws_aggregate_fields {
+    avg: (nade_demo_throws_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_demo_throws_max_fields | null)
+    min: (nade_demo_throws_min_fields | null)
+    stddev: (nade_demo_throws_stddev_fields | null)
+    stddev_pop: (nade_demo_throws_stddev_pop_fields | null)
+    stddev_samp: (nade_demo_throws_stddev_samp_fields | null)
+    sum: (nade_demo_throws_sum_fields | null)
+    var_pop: (nade_demo_throws_var_pop_fields | null)
+    var_samp: (nade_demo_throws_var_samp_fields | null)
+    variance: (nade_demo_throws_variance_fields | null)
+    __typename: 'nade_demo_throws_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_demo_throws_avg_fields {
+    flight_time_ms: (Scalars['Float'] | null)
+    grenade_id: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    round: (Scalars['Float'] | null)
+    thrower_steam_id: (Scalars['Float'] | null)
+    tick: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    __typename: 'nade_demo_throws_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_demo_throws" */
+export type nade_demo_throws_constraint = 'nade_demo_throws_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_demo_throws_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    flight_time_ms: (Scalars['Int'] | null)
+    grenade_id: (Scalars['Int'] | null)
+    land_x: (Scalars['float8'] | null)
+    land_y: (Scalars['float8'] | null)
+    land_z: (Scalars['float8'] | null)
+    lineup_bucket: (Scalars['String'] | null)
+    map_name: (Scalars['String'] | null)
+    match_id: (Scalars['uuid'] | null)
+    match_map_demo_id: (Scalars['uuid'] | null)
+    match_map_id: (Scalars['uuid'] | null)
+    origin_x: (Scalars['float8'] | null)
+    origin_y: (Scalars['float8'] | null)
+    origin_z: (Scalars['float8'] | null)
+    round: (Scalars['Int'] | null)
+    thrower_steam_id: (Scalars['bigint'] | null)
+    thrown_at: (Scalars['timestamptz'] | null)
+    tick: (Scalars['Int'] | null)
+    view_pitch: (Scalars['float8'] | null)
+    view_yaw: (Scalars['float8'] | null)
+    __typename: 'nade_demo_throws_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_demo_throws_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    flight_time_ms: (Scalars['Int'] | null)
+    grenade_id: (Scalars['Int'] | null)
+    land_x: (Scalars['float8'] | null)
+    land_y: (Scalars['float8'] | null)
+    land_z: (Scalars['float8'] | null)
+    lineup_bucket: (Scalars['String'] | null)
+    map_name: (Scalars['String'] | null)
+    match_id: (Scalars['uuid'] | null)
+    match_map_demo_id: (Scalars['uuid'] | null)
+    match_map_id: (Scalars['uuid'] | null)
+    origin_x: (Scalars['float8'] | null)
+    origin_y: (Scalars['float8'] | null)
+    origin_z: (Scalars['float8'] | null)
+    round: (Scalars['Int'] | null)
+    thrower_steam_id: (Scalars['bigint'] | null)
+    thrown_at: (Scalars['timestamptz'] | null)
+    tick: (Scalars['Int'] | null)
+    view_pitch: (Scalars['float8'] | null)
+    view_yaw: (Scalars['float8'] | null)
+    __typename: 'nade_demo_throws_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_demo_throws" */
+export interface nade_demo_throws_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_demo_throws[]
+    __typename: 'nade_demo_throws_mutation_response'
+}
+
+
+/** select columns of table "nade_demo_throws" */
+export type nade_demo_throws_select_column = 'created_at' | 'flight_time_ms' | 'grenade_id' | 'land_x' | 'land_y' | 'land_z' | 'lineup_bucket' | 'map_name' | 'match_id' | 'match_map_demo_id' | 'match_map_id' | 'nade_type' | 'origin_x' | 'origin_y' | 'origin_z' | 'round' | 'side' | 'technique' | 'throw_strength' | 'thrower_steam_id' | 'thrown_at' | 'tick' | 'view_pitch' | 'view_yaw'
+
+
+/** aggregate stddev on columns */
+export interface nade_demo_throws_stddev_fields {
+    flight_time_ms: (Scalars['Float'] | null)
+    grenade_id: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    round: (Scalars['Float'] | null)
+    thrower_steam_id: (Scalars['Float'] | null)
+    tick: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    __typename: 'nade_demo_throws_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_demo_throws_stddev_pop_fields {
+    flight_time_ms: (Scalars['Float'] | null)
+    grenade_id: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    round: (Scalars['Float'] | null)
+    thrower_steam_id: (Scalars['Float'] | null)
+    tick: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    __typename: 'nade_demo_throws_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_demo_throws_stddev_samp_fields {
+    flight_time_ms: (Scalars['Float'] | null)
+    grenade_id: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    round: (Scalars['Float'] | null)
+    thrower_steam_id: (Scalars['Float'] | null)
+    tick: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    __typename: 'nade_demo_throws_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_demo_throws_sum_fields {
+    flight_time_ms: (Scalars['Int'] | null)
+    grenade_id: (Scalars['Int'] | null)
+    land_x: (Scalars['float8'] | null)
+    land_y: (Scalars['float8'] | null)
+    land_z: (Scalars['float8'] | null)
+    origin_x: (Scalars['float8'] | null)
+    origin_y: (Scalars['float8'] | null)
+    origin_z: (Scalars['float8'] | null)
+    round: (Scalars['Int'] | null)
+    thrower_steam_id: (Scalars['bigint'] | null)
+    tick: (Scalars['Int'] | null)
+    view_pitch: (Scalars['float8'] | null)
+    view_yaw: (Scalars['float8'] | null)
+    __typename: 'nade_demo_throws_sum_fields'
+}
+
+
+/** update columns of table "nade_demo_throws" */
+export type nade_demo_throws_update_column = 'created_at' | 'flight_time_ms' | 'grenade_id' | 'land_x' | 'land_y' | 'land_z' | 'map_name' | 'match_id' | 'match_map_demo_id' | 'match_map_id' | 'nade_type' | 'origin_x' | 'origin_y' | 'origin_z' | 'round' | 'side' | 'technique' | 'throw_strength' | 'thrower_steam_id' | 'thrown_at' | 'tick' | 'view_pitch' | 'view_yaw'
+
+
+/** aggregate var_pop on columns */
+export interface nade_demo_throws_var_pop_fields {
+    flight_time_ms: (Scalars['Float'] | null)
+    grenade_id: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    round: (Scalars['Float'] | null)
+    thrower_steam_id: (Scalars['Float'] | null)
+    tick: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    __typename: 'nade_demo_throws_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_demo_throws_var_samp_fields {
+    flight_time_ms: (Scalars['Float'] | null)
+    grenade_id: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    round: (Scalars['Float'] | null)
+    thrower_steam_id: (Scalars['Float'] | null)
+    tick: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    __typename: 'nade_demo_throws_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_demo_throws_variance_fields {
+    flight_time_ms: (Scalars['Float'] | null)
+    grenade_id: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    round: (Scalars['Float'] | null)
+    thrower_steam_id: (Scalars['Float'] | null)
+    tick: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    __typename: 'nade_demo_throws_variance_fields'
+}
+
+
+/** columns and relationships of "nade_drift_results" */
+export interface nade_drift_results {
+    created_at: Scalars['timestamptz']
+    distance: (Scalars['float8'] | null)
+    distance_xy: (Scalars['float8'] | null)
+    distance_z: (Scalars['float8'] | null)
+    nade_drift_scan_id: Scalars['uuid']
+    /** An object relationship */
+    nade_lineup: nade_lineups
+    nade_lineup_id: Scalars['uuid']
+    reason: (Scalars['String'] | null)
+    /** An object relationship */
+    scan: nade_drift_scans
+    severity: (Scalars['String'] | null)
+    verdict: Scalars['String']
+    __typename: 'nade_drift_results'
+}
+
+
+/** aggregated selection of "nade_drift_results" */
+export interface nade_drift_results_aggregate {
+    aggregate: (nade_drift_results_aggregate_fields | null)
+    nodes: nade_drift_results[]
+    __typename: 'nade_drift_results_aggregate'
+}
+
+
+/** aggregate fields of "nade_drift_results" */
+export interface nade_drift_results_aggregate_fields {
+    avg: (nade_drift_results_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_drift_results_max_fields | null)
+    min: (nade_drift_results_min_fields | null)
+    stddev: (nade_drift_results_stddev_fields | null)
+    stddev_pop: (nade_drift_results_stddev_pop_fields | null)
+    stddev_samp: (nade_drift_results_stddev_samp_fields | null)
+    sum: (nade_drift_results_sum_fields | null)
+    var_pop: (nade_drift_results_var_pop_fields | null)
+    var_samp: (nade_drift_results_var_samp_fields | null)
+    variance: (nade_drift_results_variance_fields | null)
+    __typename: 'nade_drift_results_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_drift_results_avg_fields {
+    distance: (Scalars['Float'] | null)
+    distance_xy: (Scalars['Float'] | null)
+    distance_z: (Scalars['Float'] | null)
+    __typename: 'nade_drift_results_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_drift_results" */
+export type nade_drift_results_constraint = 'nade_drift_results_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_drift_results_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    distance: (Scalars['float8'] | null)
+    distance_xy: (Scalars['float8'] | null)
+    distance_z: (Scalars['float8'] | null)
+    nade_drift_scan_id: (Scalars['uuid'] | null)
+    nade_lineup_id: (Scalars['uuid'] | null)
+    reason: (Scalars['String'] | null)
+    severity: (Scalars['String'] | null)
+    verdict: (Scalars['String'] | null)
+    __typename: 'nade_drift_results_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_drift_results_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    distance: (Scalars['float8'] | null)
+    distance_xy: (Scalars['float8'] | null)
+    distance_z: (Scalars['float8'] | null)
+    nade_drift_scan_id: (Scalars['uuid'] | null)
+    nade_lineup_id: (Scalars['uuid'] | null)
+    reason: (Scalars['String'] | null)
+    severity: (Scalars['String'] | null)
+    verdict: (Scalars['String'] | null)
+    __typename: 'nade_drift_results_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_drift_results" */
+export interface nade_drift_results_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_drift_results[]
+    __typename: 'nade_drift_results_mutation_response'
+}
+
+
+/** select columns of table "nade_drift_results" */
+export type nade_drift_results_select_column = 'created_at' | 'distance' | 'distance_xy' | 'distance_z' | 'nade_drift_scan_id' | 'nade_lineup_id' | 'reason' | 'severity' | 'verdict'
+
+
+/** select "nade_drift_results_aggregate_bool_exp_avg_arguments_columns" columns of table "nade_drift_results" */
+export type nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_avg_arguments_columns = 'distance' | 'distance_xy' | 'distance_z'
+
+
+/** select "nade_drift_results_aggregate_bool_exp_corr_arguments_columns" columns of table "nade_drift_results" */
+export type nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_corr_arguments_columns = 'distance' | 'distance_xy' | 'distance_z'
+
+
+/** select "nade_drift_results_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "nade_drift_results" */
+export type nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_covar_samp_arguments_columns = 'distance' | 'distance_xy' | 'distance_z'
+
+
+/** select "nade_drift_results_aggregate_bool_exp_max_arguments_columns" columns of table "nade_drift_results" */
+export type nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_max_arguments_columns = 'distance' | 'distance_xy' | 'distance_z'
+
+
+/** select "nade_drift_results_aggregate_bool_exp_min_arguments_columns" columns of table "nade_drift_results" */
+export type nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_min_arguments_columns = 'distance' | 'distance_xy' | 'distance_z'
+
+
+/** select "nade_drift_results_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "nade_drift_results" */
+export type nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_stddev_samp_arguments_columns = 'distance' | 'distance_xy' | 'distance_z'
+
+
+/** select "nade_drift_results_aggregate_bool_exp_sum_arguments_columns" columns of table "nade_drift_results" */
+export type nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_sum_arguments_columns = 'distance' | 'distance_xy' | 'distance_z'
+
+
+/** select "nade_drift_results_aggregate_bool_exp_var_samp_arguments_columns" columns of table "nade_drift_results" */
+export type nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_var_samp_arguments_columns = 'distance' | 'distance_xy' | 'distance_z'
+
+
+/** aggregate stddev on columns */
+export interface nade_drift_results_stddev_fields {
+    distance: (Scalars['Float'] | null)
+    distance_xy: (Scalars['Float'] | null)
+    distance_z: (Scalars['Float'] | null)
+    __typename: 'nade_drift_results_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_drift_results_stddev_pop_fields {
+    distance: (Scalars['Float'] | null)
+    distance_xy: (Scalars['Float'] | null)
+    distance_z: (Scalars['Float'] | null)
+    __typename: 'nade_drift_results_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_drift_results_stddev_samp_fields {
+    distance: (Scalars['Float'] | null)
+    distance_xy: (Scalars['Float'] | null)
+    distance_z: (Scalars['Float'] | null)
+    __typename: 'nade_drift_results_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_drift_results_sum_fields {
+    distance: (Scalars['float8'] | null)
+    distance_xy: (Scalars['float8'] | null)
+    distance_z: (Scalars['float8'] | null)
+    __typename: 'nade_drift_results_sum_fields'
+}
+
+
+/** update columns of table "nade_drift_results" */
+export type nade_drift_results_update_column = 'created_at' | 'distance' | 'distance_xy' | 'distance_z' | 'nade_drift_scan_id' | 'nade_lineup_id' | 'reason' | 'severity' | 'verdict'
+
+
+/** aggregate var_pop on columns */
+export interface nade_drift_results_var_pop_fields {
+    distance: (Scalars['Float'] | null)
+    distance_xy: (Scalars['Float'] | null)
+    distance_z: (Scalars['Float'] | null)
+    __typename: 'nade_drift_results_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_drift_results_var_samp_fields {
+    distance: (Scalars['Float'] | null)
+    distance_xy: (Scalars['Float'] | null)
+    distance_z: (Scalars['Float'] | null)
+    __typename: 'nade_drift_results_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_drift_results_variance_fields {
+    distance: (Scalars['Float'] | null)
+    distance_xy: (Scalars['Float'] | null)
+    distance_z: (Scalars['Float'] | null)
+    __typename: 'nade_drift_results_variance_fields'
+}
+
+
+/** columns and relationships of "nade_drift_scans" */
+export interface nade_drift_scans {
+    broken: Scalars['Int']
+    created_at: Scalars['timestamptz']
+    failure_reason: (Scalars['String'] | null)
+    finished_at: (Scalars['timestamptz'] | null)
+    from_revision: (Scalars['String'] | null)
+    id: Scalars['uuid']
+    lineups: Scalars['Int']
+    map_name: Scalars['String']
+    max_distance: (Scalars['float8'] | null)
+    moved: Scalars['Int']
+    /** An object relationship */
+    requested_by: (players | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
+    /** An array relationship */
+    results: nade_drift_results[]
+    /** An aggregate relationship */
+    results_aggregate: nade_drift_results_aggregate
+    scanned: Scalars['Int']
+    started_at: (Scalars['timestamptz'] | null)
+    status: Scalars['String']
+    to_revision: (Scalars['String'] | null)
+    unchanged: Scalars['Int']
+    unsimulatable: Scalars['Int']
+    updated_at: Scalars['timestamptz']
+    __typename: 'nade_drift_scans'
+}
+
+
+/** aggregated selection of "nade_drift_scans" */
+export interface nade_drift_scans_aggregate {
+    aggregate: (nade_drift_scans_aggregate_fields | null)
+    nodes: nade_drift_scans[]
+    __typename: 'nade_drift_scans_aggregate'
+}
+
+
+/** aggregate fields of "nade_drift_scans" */
+export interface nade_drift_scans_aggregate_fields {
+    avg: (nade_drift_scans_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_drift_scans_max_fields | null)
+    min: (nade_drift_scans_min_fields | null)
+    stddev: (nade_drift_scans_stddev_fields | null)
+    stddev_pop: (nade_drift_scans_stddev_pop_fields | null)
+    stddev_samp: (nade_drift_scans_stddev_samp_fields | null)
+    sum: (nade_drift_scans_sum_fields | null)
+    var_pop: (nade_drift_scans_var_pop_fields | null)
+    var_samp: (nade_drift_scans_var_samp_fields | null)
+    variance: (nade_drift_scans_variance_fields | null)
+    __typename: 'nade_drift_scans_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_drift_scans_avg_fields {
+    broken: (Scalars['Float'] | null)
+    lineups: (Scalars['Float'] | null)
+    max_distance: (Scalars['Float'] | null)
+    moved: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    scanned: (Scalars['Float'] | null)
+    unchanged: (Scalars['Float'] | null)
+    unsimulatable: (Scalars['Float'] | null)
+    __typename: 'nade_drift_scans_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_drift_scans" */
+export type nade_drift_scans_constraint = 'nade_drift_scans_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_drift_scans_max_fields {
+    broken: (Scalars['Int'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    failure_reason: (Scalars['String'] | null)
+    finished_at: (Scalars['timestamptz'] | null)
+    from_revision: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    lineups: (Scalars['Int'] | null)
+    map_name: (Scalars['String'] | null)
+    max_distance: (Scalars['float8'] | null)
+    moved: (Scalars['Int'] | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
+    scanned: (Scalars['Int'] | null)
+    started_at: (Scalars['timestamptz'] | null)
+    status: (Scalars['String'] | null)
+    to_revision: (Scalars['String'] | null)
+    unchanged: (Scalars['Int'] | null)
+    unsimulatable: (Scalars['Int'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'nade_drift_scans_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_drift_scans_min_fields {
+    broken: (Scalars['Int'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    failure_reason: (Scalars['String'] | null)
+    finished_at: (Scalars['timestamptz'] | null)
+    from_revision: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    lineups: (Scalars['Int'] | null)
+    map_name: (Scalars['String'] | null)
+    max_distance: (Scalars['float8'] | null)
+    moved: (Scalars['Int'] | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
+    scanned: (Scalars['Int'] | null)
+    started_at: (Scalars['timestamptz'] | null)
+    status: (Scalars['String'] | null)
+    to_revision: (Scalars['String'] | null)
+    unchanged: (Scalars['Int'] | null)
+    unsimulatable: (Scalars['Int'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'nade_drift_scans_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_drift_scans" */
+export interface nade_drift_scans_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_drift_scans[]
+    __typename: 'nade_drift_scans_mutation_response'
+}
+
+
+/** select columns of table "nade_drift_scans" */
+export type nade_drift_scans_select_column = 'broken' | 'created_at' | 'failure_reason' | 'finished_at' | 'from_revision' | 'id' | 'lineups' | 'map_name' | 'max_distance' | 'moved' | 'requested_by_steam_id' | 'scanned' | 'started_at' | 'status' | 'to_revision' | 'unchanged' | 'unsimulatable' | 'updated_at'
+
+
+/** aggregate stddev on columns */
+export interface nade_drift_scans_stddev_fields {
+    broken: (Scalars['Float'] | null)
+    lineups: (Scalars['Float'] | null)
+    max_distance: (Scalars['Float'] | null)
+    moved: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    scanned: (Scalars['Float'] | null)
+    unchanged: (Scalars['Float'] | null)
+    unsimulatable: (Scalars['Float'] | null)
+    __typename: 'nade_drift_scans_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_drift_scans_stddev_pop_fields {
+    broken: (Scalars['Float'] | null)
+    lineups: (Scalars['Float'] | null)
+    max_distance: (Scalars['Float'] | null)
+    moved: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    scanned: (Scalars['Float'] | null)
+    unchanged: (Scalars['Float'] | null)
+    unsimulatable: (Scalars['Float'] | null)
+    __typename: 'nade_drift_scans_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_drift_scans_stddev_samp_fields {
+    broken: (Scalars['Float'] | null)
+    lineups: (Scalars['Float'] | null)
+    max_distance: (Scalars['Float'] | null)
+    moved: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    scanned: (Scalars['Float'] | null)
+    unchanged: (Scalars['Float'] | null)
+    unsimulatable: (Scalars['Float'] | null)
+    __typename: 'nade_drift_scans_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_drift_scans_sum_fields {
+    broken: (Scalars['Int'] | null)
+    lineups: (Scalars['Int'] | null)
+    max_distance: (Scalars['float8'] | null)
+    moved: (Scalars['Int'] | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
+    scanned: (Scalars['Int'] | null)
+    unchanged: (Scalars['Int'] | null)
+    unsimulatable: (Scalars['Int'] | null)
+    __typename: 'nade_drift_scans_sum_fields'
+}
+
+
+/** update columns of table "nade_drift_scans" */
+export type nade_drift_scans_update_column = 'broken' | 'created_at' | 'failure_reason' | 'finished_at' | 'from_revision' | 'id' | 'lineups' | 'map_name' | 'max_distance' | 'moved' | 'requested_by_steam_id' | 'scanned' | 'started_at' | 'status' | 'to_revision' | 'unchanged' | 'unsimulatable' | 'updated_at'
+
+
+/** aggregate var_pop on columns */
+export interface nade_drift_scans_var_pop_fields {
+    broken: (Scalars['Float'] | null)
+    lineups: (Scalars['Float'] | null)
+    max_distance: (Scalars['Float'] | null)
+    moved: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    scanned: (Scalars['Float'] | null)
+    unchanged: (Scalars['Float'] | null)
+    unsimulatable: (Scalars['Float'] | null)
+    __typename: 'nade_drift_scans_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_drift_scans_var_samp_fields {
+    broken: (Scalars['Float'] | null)
+    lineups: (Scalars['Float'] | null)
+    max_distance: (Scalars['Float'] | null)
+    moved: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    scanned: (Scalars['Float'] | null)
+    unchanged: (Scalars['Float'] | null)
+    unsimulatable: (Scalars['Float'] | null)
+    __typename: 'nade_drift_scans_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_drift_scans_variance_fields {
+    broken: (Scalars['Float'] | null)
+    lineups: (Scalars['Float'] | null)
+    max_distance: (Scalars['Float'] | null)
+    moved: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    scanned: (Scalars['Float'] | null)
+    unchanged: (Scalars['Float'] | null)
+    unsimulatable: (Scalars['Float'] | null)
+    __typename: 'nade_drift_scans_variance_fields'
+}
+
+
+/** columns and relationships of "nade_lineup_favorites" */
+export interface nade_lineup_favorites {
+    created_at: Scalars['timestamptz']
+    /** An object relationship */
+    nade_lineup: nade_lineups
+    nade_lineup_id: Scalars['uuid']
+    /** An object relationship */
+    player: players
+    steam_id: Scalars['bigint']
+    __typename: 'nade_lineup_favorites'
+}
+
+
+/** aggregated selection of "nade_lineup_favorites" */
+export interface nade_lineup_favorites_aggregate {
+    aggregate: (nade_lineup_favorites_aggregate_fields | null)
+    nodes: nade_lineup_favorites[]
+    __typename: 'nade_lineup_favorites_aggregate'
+}
+
+
+/** aggregate fields of "nade_lineup_favorites" */
+export interface nade_lineup_favorites_aggregate_fields {
+    avg: (nade_lineup_favorites_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_lineup_favorites_max_fields | null)
+    min: (nade_lineup_favorites_min_fields | null)
+    stddev: (nade_lineup_favorites_stddev_fields | null)
+    stddev_pop: (nade_lineup_favorites_stddev_pop_fields | null)
+    stddev_samp: (nade_lineup_favorites_stddev_samp_fields | null)
+    sum: (nade_lineup_favorites_sum_fields | null)
+    var_pop: (nade_lineup_favorites_var_pop_fields | null)
+    var_samp: (nade_lineup_favorites_var_samp_fields | null)
+    variance: (nade_lineup_favorites_variance_fields | null)
+    __typename: 'nade_lineup_favorites_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_lineup_favorites_avg_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_favorites_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_lineup_favorites" */
+export type nade_lineup_favorites_constraint = 'nade_lineup_favorites_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_lineup_favorites_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    nade_lineup_id: (Scalars['uuid'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'nade_lineup_favorites_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_lineup_favorites_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    nade_lineup_id: (Scalars['uuid'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'nade_lineup_favorites_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_lineup_favorites[]
+    __typename: 'nade_lineup_favorites_mutation_response'
+}
+
+
+/** select columns of table "nade_lineup_favorites" */
+export type nade_lineup_favorites_select_column = 'created_at' | 'nade_lineup_id' | 'steam_id'
+
+
+/** aggregate stddev on columns */
+export interface nade_lineup_favorites_stddev_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_favorites_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_lineup_favorites_stddev_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_favorites_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_lineup_favorites_stddev_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_favorites_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_lineup_favorites_sum_fields {
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'nade_lineup_favorites_sum_fields'
+}
+
+
+/** update columns of table "nade_lineup_favorites" */
+export type nade_lineup_favorites_update_column = 'created_at' | 'nade_lineup_id' | 'steam_id'
+
+
+/** aggregate var_pop on columns */
+export interface nade_lineup_favorites_var_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_favorites_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_lineup_favorites_var_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_favorites_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_lineup_favorites_variance_fields {
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_favorites_variance_fields'
+}
+
+
+/** columns and relationships of "nade_lineup_progress" */
+export interface nade_lineup_progress {
+    attempts: Scalars['Int']
+    best_streak: Scalars['Int']
+    current_streak: Scalars['Int']
+    last_practiced_at: (Scalars['timestamptz'] | null)
+    mastered_at: (Scalars['timestamptz'] | null)
+    miss_along_sum: Scalars['float8']
+    miss_lateral_sum: Scalars['float8']
+    miss_samples: Scalars['Int']
+    miss_vertical_sum: Scalars['float8']
+    /** An object relationship */
+    nade_lineup: nade_lineups
+    nade_lineup_id: Scalars['uuid']
+    /** An object relationship */
+    player: players
+    steam_id: Scalars['bigint']
+    successes: Scalars['Int']
+    __typename: 'nade_lineup_progress'
+}
+
+
+/** aggregated selection of "nade_lineup_progress" */
+export interface nade_lineup_progress_aggregate {
+    aggregate: (nade_lineup_progress_aggregate_fields | null)
+    nodes: nade_lineup_progress[]
+    __typename: 'nade_lineup_progress_aggregate'
+}
+
+
+/** aggregate fields of "nade_lineup_progress" */
+export interface nade_lineup_progress_aggregate_fields {
+    avg: (nade_lineup_progress_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_lineup_progress_max_fields | null)
+    min: (nade_lineup_progress_min_fields | null)
+    stddev: (nade_lineup_progress_stddev_fields | null)
+    stddev_pop: (nade_lineup_progress_stddev_pop_fields | null)
+    stddev_samp: (nade_lineup_progress_stddev_samp_fields | null)
+    sum: (nade_lineup_progress_sum_fields | null)
+    var_pop: (nade_lineup_progress_var_pop_fields | null)
+    var_samp: (nade_lineup_progress_var_samp_fields | null)
+    variance: (nade_lineup_progress_variance_fields | null)
+    __typename: 'nade_lineup_progress_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_lineup_progress_avg_fields {
+    attempts: (Scalars['Float'] | null)
+    best_streak: (Scalars['Float'] | null)
+    current_streak: (Scalars['Float'] | null)
+    miss_along_sum: (Scalars['Float'] | null)
+    miss_lateral_sum: (Scalars['Float'] | null)
+    miss_samples: (Scalars['Float'] | null)
+    miss_vertical_sum: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    successes: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_progress_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_lineup_progress" */
+export type nade_lineup_progress_constraint = 'nade_lineup_progress_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_lineup_progress_max_fields {
+    attempts: (Scalars['Int'] | null)
+    best_streak: (Scalars['Int'] | null)
+    current_streak: (Scalars['Int'] | null)
+    last_practiced_at: (Scalars['timestamptz'] | null)
+    mastered_at: (Scalars['timestamptz'] | null)
+    miss_along_sum: (Scalars['float8'] | null)
+    miss_lateral_sum: (Scalars['float8'] | null)
+    miss_samples: (Scalars['Int'] | null)
+    miss_vertical_sum: (Scalars['float8'] | null)
+    nade_lineup_id: (Scalars['uuid'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    successes: (Scalars['Int'] | null)
+    __typename: 'nade_lineup_progress_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_lineup_progress_min_fields {
+    attempts: (Scalars['Int'] | null)
+    best_streak: (Scalars['Int'] | null)
+    current_streak: (Scalars['Int'] | null)
+    last_practiced_at: (Scalars['timestamptz'] | null)
+    mastered_at: (Scalars['timestamptz'] | null)
+    miss_along_sum: (Scalars['float8'] | null)
+    miss_lateral_sum: (Scalars['float8'] | null)
+    miss_samples: (Scalars['Int'] | null)
+    miss_vertical_sum: (Scalars['float8'] | null)
+    nade_lineup_id: (Scalars['uuid'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    successes: (Scalars['Int'] | null)
+    __typename: 'nade_lineup_progress_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_lineup_progress" */
+export interface nade_lineup_progress_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_lineup_progress[]
+    __typename: 'nade_lineup_progress_mutation_response'
+}
+
+
+/** select columns of table "nade_lineup_progress" */
+export type nade_lineup_progress_select_column = 'attempts' | 'best_streak' | 'current_streak' | 'last_practiced_at' | 'mastered_at' | 'miss_along_sum' | 'miss_lateral_sum' | 'miss_samples' | 'miss_vertical_sum' | 'nade_lineup_id' | 'steam_id' | 'successes'
+
+
+/** select "nade_lineup_progress_aggregate_bool_exp_avg_arguments_columns" columns of table "nade_lineup_progress" */
+export type nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_avg_arguments_columns = 'miss_along_sum' | 'miss_lateral_sum' | 'miss_vertical_sum'
+
+
+/** select "nade_lineup_progress_aggregate_bool_exp_corr_arguments_columns" columns of table "nade_lineup_progress" */
+export type nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_corr_arguments_columns = 'miss_along_sum' | 'miss_lateral_sum' | 'miss_vertical_sum'
+
+
+/** select "nade_lineup_progress_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "nade_lineup_progress" */
+export type nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_covar_samp_arguments_columns = 'miss_along_sum' | 'miss_lateral_sum' | 'miss_vertical_sum'
+
+
+/** select "nade_lineup_progress_aggregate_bool_exp_max_arguments_columns" columns of table "nade_lineup_progress" */
+export type nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_max_arguments_columns = 'miss_along_sum' | 'miss_lateral_sum' | 'miss_vertical_sum'
+
+
+/** select "nade_lineup_progress_aggregate_bool_exp_min_arguments_columns" columns of table "nade_lineup_progress" */
+export type nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_min_arguments_columns = 'miss_along_sum' | 'miss_lateral_sum' | 'miss_vertical_sum'
+
+
+/** select "nade_lineup_progress_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "nade_lineup_progress" */
+export type nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_stddev_samp_arguments_columns = 'miss_along_sum' | 'miss_lateral_sum' | 'miss_vertical_sum'
+
+
+/** select "nade_lineup_progress_aggregate_bool_exp_sum_arguments_columns" columns of table "nade_lineup_progress" */
+export type nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_sum_arguments_columns = 'miss_along_sum' | 'miss_lateral_sum' | 'miss_vertical_sum'
+
+
+/** select "nade_lineup_progress_aggregate_bool_exp_var_samp_arguments_columns" columns of table "nade_lineup_progress" */
+export type nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_var_samp_arguments_columns = 'miss_along_sum' | 'miss_lateral_sum' | 'miss_vertical_sum'
+
+
+/** aggregate stddev on columns */
+export interface nade_lineup_progress_stddev_fields {
+    attempts: (Scalars['Float'] | null)
+    best_streak: (Scalars['Float'] | null)
+    current_streak: (Scalars['Float'] | null)
+    miss_along_sum: (Scalars['Float'] | null)
+    miss_lateral_sum: (Scalars['Float'] | null)
+    miss_samples: (Scalars['Float'] | null)
+    miss_vertical_sum: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    successes: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_progress_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_lineup_progress_stddev_pop_fields {
+    attempts: (Scalars['Float'] | null)
+    best_streak: (Scalars['Float'] | null)
+    current_streak: (Scalars['Float'] | null)
+    miss_along_sum: (Scalars['Float'] | null)
+    miss_lateral_sum: (Scalars['Float'] | null)
+    miss_samples: (Scalars['Float'] | null)
+    miss_vertical_sum: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    successes: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_progress_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_lineup_progress_stddev_samp_fields {
+    attempts: (Scalars['Float'] | null)
+    best_streak: (Scalars['Float'] | null)
+    current_streak: (Scalars['Float'] | null)
+    miss_along_sum: (Scalars['Float'] | null)
+    miss_lateral_sum: (Scalars['Float'] | null)
+    miss_samples: (Scalars['Float'] | null)
+    miss_vertical_sum: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    successes: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_progress_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_lineup_progress_sum_fields {
+    attempts: (Scalars['Int'] | null)
+    best_streak: (Scalars['Int'] | null)
+    current_streak: (Scalars['Int'] | null)
+    miss_along_sum: (Scalars['float8'] | null)
+    miss_lateral_sum: (Scalars['float8'] | null)
+    miss_samples: (Scalars['Int'] | null)
+    miss_vertical_sum: (Scalars['float8'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    successes: (Scalars['Int'] | null)
+    __typename: 'nade_lineup_progress_sum_fields'
+}
+
+
+/** update columns of table "nade_lineup_progress" */
+export type nade_lineup_progress_update_column = 'attempts' | 'best_streak' | 'current_streak' | 'last_practiced_at' | 'mastered_at' | 'miss_along_sum' | 'miss_lateral_sum' | 'miss_samples' | 'miss_vertical_sum' | 'nade_lineup_id' | 'steam_id' | 'successes'
+
+
+/** aggregate var_pop on columns */
+export interface nade_lineup_progress_var_pop_fields {
+    attempts: (Scalars['Float'] | null)
+    best_streak: (Scalars['Float'] | null)
+    current_streak: (Scalars['Float'] | null)
+    miss_along_sum: (Scalars['Float'] | null)
+    miss_lateral_sum: (Scalars['Float'] | null)
+    miss_samples: (Scalars['Float'] | null)
+    miss_vertical_sum: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    successes: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_progress_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_lineup_progress_var_samp_fields {
+    attempts: (Scalars['Float'] | null)
+    best_streak: (Scalars['Float'] | null)
+    current_streak: (Scalars['Float'] | null)
+    miss_along_sum: (Scalars['Float'] | null)
+    miss_lateral_sum: (Scalars['Float'] | null)
+    miss_samples: (Scalars['Float'] | null)
+    miss_vertical_sum: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    successes: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_progress_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_lineup_progress_variance_fields {
+    attempts: (Scalars['Float'] | null)
+    best_streak: (Scalars['Float'] | null)
+    current_streak: (Scalars['Float'] | null)
+    miss_along_sum: (Scalars['Float'] | null)
+    miss_lateral_sum: (Scalars['Float'] | null)
+    miss_samples: (Scalars['Float'] | null)
+    miss_vertical_sum: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    successes: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_progress_variance_fields'
+}
+
+
+/** columns and relationships of "nade_lineup_repairs" */
+export interface nade_lineup_repairs {
+    created_at: Scalars['timestamptz']
+    drift_distance: (Scalars['float8'] | null)
+    expires_at: Scalars['timestamptz']
+    id: Scalars['uuid']
+    /** An object relationship */
+    nade_drift_scan: (nade_drift_scans | null)
+    nade_drift_scan_id: (Scalars['uuid'] | null)
+    /** An object relationship */
+    nade_lineup: nade_lineups
+    nade_lineup_id: Scalars['uuid']
+    /** An object relationship */
+    nade_practice_session: (nade_practice_sessions | null)
+    nade_practice_session_id: (Scalars['uuid'] | null)
+    repaired_at: (Scalars['timestamptz'] | null)
+    /** An object relationship */
+    repaired_nade_lineup: (nade_lineups | null)
+    repaired_nade_lineup_id: (Scalars['uuid'] | null)
+    /** An object relationship */
+    requested_by: players
+    requested_by_steam_id: Scalars['bigint']
+    status: Scalars['String']
+    __typename: 'nade_lineup_repairs'
+}
+
+
+/** aggregated selection of "nade_lineup_repairs" */
+export interface nade_lineup_repairs_aggregate {
+    aggregate: (nade_lineup_repairs_aggregate_fields | null)
+    nodes: nade_lineup_repairs[]
+    __typename: 'nade_lineup_repairs_aggregate'
+}
+
+
+/** aggregate fields of "nade_lineup_repairs" */
+export interface nade_lineup_repairs_aggregate_fields {
+    avg: (nade_lineup_repairs_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_lineup_repairs_max_fields | null)
+    min: (nade_lineup_repairs_min_fields | null)
+    stddev: (nade_lineup_repairs_stddev_fields | null)
+    stddev_pop: (nade_lineup_repairs_stddev_pop_fields | null)
+    stddev_samp: (nade_lineup_repairs_stddev_samp_fields | null)
+    sum: (nade_lineup_repairs_sum_fields | null)
+    var_pop: (nade_lineup_repairs_var_pop_fields | null)
+    var_samp: (nade_lineup_repairs_var_samp_fields | null)
+    variance: (nade_lineup_repairs_variance_fields | null)
+    __typename: 'nade_lineup_repairs_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_lineup_repairs_avg_fields {
+    drift_distance: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_repairs_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_lineup_repairs" */
+export type nade_lineup_repairs_constraint = 'nade_lineup_repairs_open_idx' | 'nade_lineup_repairs_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_lineup_repairs_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    drift_distance: (Scalars['float8'] | null)
+    expires_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    nade_drift_scan_id: (Scalars['uuid'] | null)
+    nade_lineup_id: (Scalars['uuid'] | null)
+    nade_practice_session_id: (Scalars['uuid'] | null)
+    repaired_at: (Scalars['timestamptz'] | null)
+    repaired_nade_lineup_id: (Scalars['uuid'] | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
+    status: (Scalars['String'] | null)
+    __typename: 'nade_lineup_repairs_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_lineup_repairs_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    drift_distance: (Scalars['float8'] | null)
+    expires_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    nade_drift_scan_id: (Scalars['uuid'] | null)
+    nade_lineup_id: (Scalars['uuid'] | null)
+    nade_practice_session_id: (Scalars['uuid'] | null)
+    repaired_at: (Scalars['timestamptz'] | null)
+    repaired_nade_lineup_id: (Scalars['uuid'] | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
+    status: (Scalars['String'] | null)
+    __typename: 'nade_lineup_repairs_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_lineup_repairs[]
+    __typename: 'nade_lineup_repairs_mutation_response'
+}
+
+
+/** select columns of table "nade_lineup_repairs" */
+export type nade_lineup_repairs_select_column = 'created_at' | 'drift_distance' | 'expires_at' | 'id' | 'nade_drift_scan_id' | 'nade_lineup_id' | 'nade_practice_session_id' | 'repaired_at' | 'repaired_nade_lineup_id' | 'requested_by_steam_id' | 'status'
+
+
+/** select "nade_lineup_repairs_aggregate_bool_exp_avg_arguments_columns" columns of table "nade_lineup_repairs" */
+export type nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_avg_arguments_columns = 'drift_distance'
+
+
+/** select "nade_lineup_repairs_aggregate_bool_exp_corr_arguments_columns" columns of table "nade_lineup_repairs" */
+export type nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_corr_arguments_columns = 'drift_distance'
+
+
+/** select "nade_lineup_repairs_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "nade_lineup_repairs" */
+export type nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_covar_samp_arguments_columns = 'drift_distance'
+
+
+/** select "nade_lineup_repairs_aggregate_bool_exp_max_arguments_columns" columns of table "nade_lineup_repairs" */
+export type nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_max_arguments_columns = 'drift_distance'
+
+
+/** select "nade_lineup_repairs_aggregate_bool_exp_min_arguments_columns" columns of table "nade_lineup_repairs" */
+export type nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_min_arguments_columns = 'drift_distance'
+
+
+/** select "nade_lineup_repairs_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "nade_lineup_repairs" */
+export type nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_stddev_samp_arguments_columns = 'drift_distance'
+
+
+/** select "nade_lineup_repairs_aggregate_bool_exp_sum_arguments_columns" columns of table "nade_lineup_repairs" */
+export type nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_sum_arguments_columns = 'drift_distance'
+
+
+/** select "nade_lineup_repairs_aggregate_bool_exp_var_samp_arguments_columns" columns of table "nade_lineup_repairs" */
+export type nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_var_samp_arguments_columns = 'drift_distance'
+
+
+/** aggregate stddev on columns */
+export interface nade_lineup_repairs_stddev_fields {
+    drift_distance: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_repairs_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_lineup_repairs_stddev_pop_fields {
+    drift_distance: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_repairs_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_lineup_repairs_stddev_samp_fields {
+    drift_distance: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_repairs_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_lineup_repairs_sum_fields {
+    drift_distance: (Scalars['float8'] | null)
+    requested_by_steam_id: (Scalars['bigint'] | null)
+    __typename: 'nade_lineup_repairs_sum_fields'
+}
+
+
+/** update columns of table "nade_lineup_repairs" */
+export type nade_lineup_repairs_update_column = 'created_at' | 'drift_distance' | 'expires_at' | 'id' | 'nade_drift_scan_id' | 'nade_lineup_id' | 'nade_practice_session_id' | 'repaired_at' | 'repaired_nade_lineup_id' | 'requested_by_steam_id' | 'status'
+
+
+/** aggregate var_pop on columns */
+export interface nade_lineup_repairs_var_pop_fields {
+    drift_distance: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_repairs_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_lineup_repairs_var_samp_fields {
+    drift_distance: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_repairs_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_lineup_repairs_variance_fields {
+    drift_distance: (Scalars['Float'] | null)
+    requested_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_repairs_variance_fields'
+}
+
+
+/** columns and relationships of "nade_lineup_votes" */
+export interface nade_lineup_votes {
+    created_at: Scalars['timestamptz']
+    /** An object relationship */
+    nade_lineup: nade_lineups
+    nade_lineup_id: Scalars['uuid']
+    /** An object relationship */
+    player: players
+    steam_id: Scalars['bigint']
+    vote: Scalars['smallint']
+    __typename: 'nade_lineup_votes'
+}
+
+
+/** aggregated selection of "nade_lineup_votes" */
+export interface nade_lineup_votes_aggregate {
+    aggregate: (nade_lineup_votes_aggregate_fields | null)
+    nodes: nade_lineup_votes[]
+    __typename: 'nade_lineup_votes_aggregate'
+}
+
+
+/** aggregate fields of "nade_lineup_votes" */
+export interface nade_lineup_votes_aggregate_fields {
+    avg: (nade_lineup_votes_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_lineup_votes_max_fields | null)
+    min: (nade_lineup_votes_min_fields | null)
+    stddev: (nade_lineup_votes_stddev_fields | null)
+    stddev_pop: (nade_lineup_votes_stddev_pop_fields | null)
+    stddev_samp: (nade_lineup_votes_stddev_samp_fields | null)
+    sum: (nade_lineup_votes_sum_fields | null)
+    var_pop: (nade_lineup_votes_var_pop_fields | null)
+    var_samp: (nade_lineup_votes_var_samp_fields | null)
+    variance: (nade_lineup_votes_variance_fields | null)
+    __typename: 'nade_lineup_votes_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_lineup_votes_avg_fields {
+    steam_id: (Scalars['Float'] | null)
+    vote: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_votes_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_lineup_votes" */
+export type nade_lineup_votes_constraint = 'nade_lineup_votes_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_lineup_votes_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    nade_lineup_id: (Scalars['uuid'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    vote: (Scalars['smallint'] | null)
+    __typename: 'nade_lineup_votes_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_lineup_votes_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    nade_lineup_id: (Scalars['uuid'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    vote: (Scalars['smallint'] | null)
+    __typename: 'nade_lineup_votes_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_lineup_votes" */
+export interface nade_lineup_votes_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_lineup_votes[]
+    __typename: 'nade_lineup_votes_mutation_response'
+}
+
+
+/** select columns of table "nade_lineup_votes" */
+export type nade_lineup_votes_select_column = 'created_at' | 'nade_lineup_id' | 'steam_id' | 'vote'
+
+
+/** aggregate stddev on columns */
+export interface nade_lineup_votes_stddev_fields {
+    steam_id: (Scalars['Float'] | null)
+    vote: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_votes_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_lineup_votes_stddev_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    vote: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_votes_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_lineup_votes_stddev_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    vote: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_votes_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_lineup_votes_sum_fields {
+    steam_id: (Scalars['bigint'] | null)
+    vote: (Scalars['smallint'] | null)
+    __typename: 'nade_lineup_votes_sum_fields'
+}
+
+
+/** update columns of table "nade_lineup_votes" */
+export type nade_lineup_votes_update_column = 'created_at' | 'nade_lineup_id' | 'steam_id' | 'vote'
+
+
+/** aggregate var_pop on columns */
+export interface nade_lineup_votes_var_pop_fields {
+    steam_id: (Scalars['Float'] | null)
+    vote: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_votes_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_lineup_votes_var_samp_fields {
+    steam_id: (Scalars['Float'] | null)
+    vote: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_votes_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_lineup_votes_variance_fields {
+    steam_id: (Scalars['Float'] | null)
+    vote: (Scalars['Float'] | null)
+    __typename: 'nade_lineup_votes_variance_fields'
+}
+
+
+/** columns and relationships of "nade_lineups" */
+export interface nade_lineups {
+    archived_at: (Scalars['timestamptz'] | null)
+    /** An object relationship */
+    author: players
+    author_steam_id: Scalars['bigint']
+    /** A computed field, executes function "can_edit_nade_lineup" */
+    can_edit: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "can_view_nade_lineup" */
+    can_view: (Scalars['Boolean'] | null)
+    /** An array relationship */
+    collection_items: nade_collection_items[]
+    /** An aggregate relationship */
+    collection_items_aggregate: nade_collection_items_aggregate
+    confidence: Scalars['String']
+    created_at: Scalars['timestamptz']
+    description: (Scalars['String'] | null)
+    /** A computed field, executes function "nade_lineup_difficulty" */
+    difficulty: (Scalars['String'] | null)
+    downvotes: Scalars['Int']
+    external_id: (Scalars['String'] | null)
+    eye_z: (Scalars['float8'] | null)
+    /** An array relationship */
+    favorited_by: nade_lineup_favorites[]
+    /** An aggregate relationship */
+    favorited_by_aggregate: nade_lineup_favorites_aggregate
+    favorites: Scalars['Int']
+    flight_time_ms: (Scalars['Int'] | null)
+    /** An object relationship */
+    forked_from: (nade_lineups | null)
+    forked_from_nade_lineup_id: (Scalars['uuid'] | null)
+    id: Scalars['uuid']
+    initial_pos_x: (Scalars['float8'] | null)
+    initial_pos_y: (Scalars['float8'] | null)
+    initial_pos_z: (Scalars['float8'] | null)
+    initial_vel_x: (Scalars['float8'] | null)
+    initial_vel_y: (Scalars['float8'] | null)
+    initial_vel_z: (Scalars['float8'] | null)
+    /** A computed field, executes function "nade_lineup_is_favorited" */
+    is_favorited: (Scalars['Boolean'] | null)
+    jump_throw_bind: Scalars['Boolean']
+    land_x: Scalars['float8']
+    land_y: Scalars['float8']
+    land_z: Scalars['float8']
+    lineup_bucket: (Scalars['String'] | null)
+    map_name: Scalars['String']
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote: (Scalars['smallint'] | null)
+    nade_type: e_utility_types_enum
+    name: Scalars['String']
+    origin_source: e_nade_sources_enum
+    origin_x: Scalars['float8']
+    origin_y: Scalars['float8']
+    origin_z: Scalars['float8']
+    practice_attempts: Scalars['Int']
+    practice_players: Scalars['Int']
+    practice_successes: Scalars['Int']
+    /** An array relationship */
+    progress: nade_lineup_progress[]
+    /** An aggregate relationship */
+    progress_aggregate: nade_lineup_progress_aggregate
+    /** An array relationship */
+    repairs: nade_lineup_repairs[]
+    /** An aggregate relationship */
+    repairs_aggregate: nade_lineup_repairs_aggregate
+    side: e_sides_enum
+    source_grenade_id: (Scalars['Int'] | null)
+    /** An object relationship */
+    source_match: (matches | null)
+    source_match_id: (Scalars['uuid'] | null)
+    /** An object relationship */
+    source_match_map: (match_maps | null)
+    source_match_map_id: (Scalars['uuid'] | null)
+    source_url: (Scalars['String'] | null)
+    tags: Scalars['String'][]
+    /** An object relationship */
+    team: (teams | null)
+    team_id: (Scalars['uuid'] | null)
+    technique: e_nade_techniques_enum
+    throw_strength: (e_nade_throw_strengths_enum | null)
+    trajectory_file: (Scalars['String'] | null)
+    trajectory_preview: (Scalars['jsonb'] | null)
+    trajectory_size: (Scalars['Int'] | null)
+    updated_at: Scalars['timestamptz']
+    upvotes: Scalars['Int']
+    verified_at: (Scalars['timestamptz'] | null)
+    view_pitch: Scalars['float8']
+    view_pitch_delta: (Scalars['float8'] | null)
+    view_yaw: Scalars['float8']
+    view_yaw_delta: (Scalars['float8'] | null)
+    visibility: e_nade_visibility_enum
+    /** An array relationship */
+    votes: nade_lineup_votes[]
+    /** An aggregate relationship */
+    votes_aggregate: nade_lineup_votes_aggregate
+    workshop_map_id: (Scalars['String'] | null)
+    __typename: 'nade_lineups'
+}
+
+
+/** aggregated selection of "nade_lineups" */
+export interface nade_lineups_aggregate {
+    aggregate: (nade_lineups_aggregate_fields | null)
+    nodes: nade_lineups[]
+    __typename: 'nade_lineups_aggregate'
+}
+
+
+/** aggregate fields of "nade_lineups" */
+export interface nade_lineups_aggregate_fields {
+    avg: (nade_lineups_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_lineups_max_fields | null)
+    min: (nade_lineups_min_fields | null)
+    stddev: (nade_lineups_stddev_fields | null)
+    stddev_pop: (nade_lineups_stddev_pop_fields | null)
+    stddev_samp: (nade_lineups_stddev_samp_fields | null)
+    sum: (nade_lineups_sum_fields | null)
+    var_pop: (nade_lineups_var_pop_fields | null)
+    var_samp: (nade_lineups_var_samp_fields | null)
+    variance: (nade_lineups_variance_fields | null)
+    __typename: 'nade_lineups_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_lineups_avg_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    downvotes: (Scalars['Float'] | null)
+    eye_z: (Scalars['Float'] | null)
+    favorites: (Scalars['Float'] | null)
+    flight_time_ms: (Scalars['Float'] | null)
+    initial_pos_x: (Scalars['Float'] | null)
+    initial_pos_y: (Scalars['Float'] | null)
+    initial_pos_z: (Scalars['Float'] | null)
+    initial_vel_x: (Scalars['Float'] | null)
+    initial_vel_y: (Scalars['Float'] | null)
+    initial_vel_z: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote: (Scalars['smallint'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    practice_attempts: (Scalars['Float'] | null)
+    practice_players: (Scalars['Float'] | null)
+    practice_successes: (Scalars['Float'] | null)
+    source_grenade_id: (Scalars['Float'] | null)
+    trajectory_size: (Scalars['Float'] | null)
+    upvotes: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_pitch_delta: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    view_yaw_delta: (Scalars['Float'] | null)
+    __typename: 'nade_lineups_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_lineups" */
+export type nade_lineups_constraint = 'nade_lineups_external_idx' | 'nade_lineups_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_lineups_max_fields {
+    archived_at: (Scalars['timestamptz'] | null)
+    author_steam_id: (Scalars['bigint'] | null)
+    confidence: (Scalars['String'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    description: (Scalars['String'] | null)
+    /** A computed field, executes function "nade_lineup_difficulty" */
+    difficulty: (Scalars['String'] | null)
+    downvotes: (Scalars['Int'] | null)
+    external_id: (Scalars['String'] | null)
+    eye_z: (Scalars['float8'] | null)
+    favorites: (Scalars['Int'] | null)
+    flight_time_ms: (Scalars['Int'] | null)
+    forked_from_nade_lineup_id: (Scalars['uuid'] | null)
+    id: (Scalars['uuid'] | null)
+    initial_pos_x: (Scalars['float8'] | null)
+    initial_pos_y: (Scalars['float8'] | null)
+    initial_pos_z: (Scalars['float8'] | null)
+    initial_vel_x: (Scalars['float8'] | null)
+    initial_vel_y: (Scalars['float8'] | null)
+    initial_vel_z: (Scalars['float8'] | null)
+    land_x: (Scalars['float8'] | null)
+    land_y: (Scalars['float8'] | null)
+    land_z: (Scalars['float8'] | null)
+    lineup_bucket: (Scalars['String'] | null)
+    map_name: (Scalars['String'] | null)
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote: (Scalars['smallint'] | null)
+    name: (Scalars['String'] | null)
+    origin_x: (Scalars['float8'] | null)
+    origin_y: (Scalars['float8'] | null)
+    origin_z: (Scalars['float8'] | null)
+    practice_attempts: (Scalars['Int'] | null)
+    practice_players: (Scalars['Int'] | null)
+    practice_successes: (Scalars['Int'] | null)
+    source_grenade_id: (Scalars['Int'] | null)
+    source_match_id: (Scalars['uuid'] | null)
+    source_match_map_id: (Scalars['uuid'] | null)
+    source_url: (Scalars['String'] | null)
+    tags: (Scalars['String'][] | null)
+    team_id: (Scalars['uuid'] | null)
+    trajectory_file: (Scalars['String'] | null)
+    trajectory_size: (Scalars['Int'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    upvotes: (Scalars['Int'] | null)
+    verified_at: (Scalars['timestamptz'] | null)
+    view_pitch: (Scalars['float8'] | null)
+    view_pitch_delta: (Scalars['float8'] | null)
+    view_yaw: (Scalars['float8'] | null)
+    view_yaw_delta: (Scalars['float8'] | null)
+    workshop_map_id: (Scalars['String'] | null)
+    __typename: 'nade_lineups_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_lineups_min_fields {
+    archived_at: (Scalars['timestamptz'] | null)
+    author_steam_id: (Scalars['bigint'] | null)
+    confidence: (Scalars['String'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    description: (Scalars['String'] | null)
+    /** A computed field, executes function "nade_lineup_difficulty" */
+    difficulty: (Scalars['String'] | null)
+    downvotes: (Scalars['Int'] | null)
+    external_id: (Scalars['String'] | null)
+    eye_z: (Scalars['float8'] | null)
+    favorites: (Scalars['Int'] | null)
+    flight_time_ms: (Scalars['Int'] | null)
+    forked_from_nade_lineup_id: (Scalars['uuid'] | null)
+    id: (Scalars['uuid'] | null)
+    initial_pos_x: (Scalars['float8'] | null)
+    initial_pos_y: (Scalars['float8'] | null)
+    initial_pos_z: (Scalars['float8'] | null)
+    initial_vel_x: (Scalars['float8'] | null)
+    initial_vel_y: (Scalars['float8'] | null)
+    initial_vel_z: (Scalars['float8'] | null)
+    land_x: (Scalars['float8'] | null)
+    land_y: (Scalars['float8'] | null)
+    land_z: (Scalars['float8'] | null)
+    lineup_bucket: (Scalars['String'] | null)
+    map_name: (Scalars['String'] | null)
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote: (Scalars['smallint'] | null)
+    name: (Scalars['String'] | null)
+    origin_x: (Scalars['float8'] | null)
+    origin_y: (Scalars['float8'] | null)
+    origin_z: (Scalars['float8'] | null)
+    practice_attempts: (Scalars['Int'] | null)
+    practice_players: (Scalars['Int'] | null)
+    practice_successes: (Scalars['Int'] | null)
+    source_grenade_id: (Scalars['Int'] | null)
+    source_match_id: (Scalars['uuid'] | null)
+    source_match_map_id: (Scalars['uuid'] | null)
+    source_url: (Scalars['String'] | null)
+    tags: (Scalars['String'][] | null)
+    team_id: (Scalars['uuid'] | null)
+    trajectory_file: (Scalars['String'] | null)
+    trajectory_size: (Scalars['Int'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    upvotes: (Scalars['Int'] | null)
+    verified_at: (Scalars['timestamptz'] | null)
+    view_pitch: (Scalars['float8'] | null)
+    view_pitch_delta: (Scalars['float8'] | null)
+    view_yaw: (Scalars['float8'] | null)
+    view_yaw_delta: (Scalars['float8'] | null)
+    workshop_map_id: (Scalars['String'] | null)
+    __typename: 'nade_lineups_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_lineups" */
+export interface nade_lineups_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_lineups[]
+    __typename: 'nade_lineups_mutation_response'
+}
+
+
+/** select columns of table "nade_lineups" */
+export type nade_lineups_select_column = 'archived_at' | 'author_steam_id' | 'confidence' | 'created_at' | 'description' | 'downvotes' | 'external_id' | 'eye_z' | 'favorites' | 'flight_time_ms' | 'forked_from_nade_lineup_id' | 'id' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'jump_throw_bind' | 'land_x' | 'land_y' | 'land_z' | 'lineup_bucket' | 'map_name' | 'nade_type' | 'name' | 'origin_source' | 'origin_x' | 'origin_y' | 'origin_z' | 'practice_attempts' | 'practice_players' | 'practice_successes' | 'side' | 'source_grenade_id' | 'source_match_id' | 'source_match_map_id' | 'source_url' | 'tags' | 'team_id' | 'technique' | 'throw_strength' | 'trajectory_file' | 'trajectory_preview' | 'trajectory_size' | 'updated_at' | 'upvotes' | 'verified_at' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta' | 'visibility' | 'workshop_map_id'
+
+
+/** select "nade_lineups_aggregate_bool_exp_avg_arguments_columns" columns of table "nade_lineups" */
+export type nade_lineups_select_column_nade_lineups_aggregate_bool_exp_avg_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'origin_x' | 'origin_y' | 'origin_z' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta'
+
+
+/** select "nade_lineups_aggregate_bool_exp_bool_and_arguments_columns" columns of table "nade_lineups" */
+export type nade_lineups_select_column_nade_lineups_aggregate_bool_exp_bool_and_arguments_columns = 'jump_throw_bind'
+
+
+/** select "nade_lineups_aggregate_bool_exp_bool_or_arguments_columns" columns of table "nade_lineups" */
+export type nade_lineups_select_column_nade_lineups_aggregate_bool_exp_bool_or_arguments_columns = 'jump_throw_bind'
+
+
+/** select "nade_lineups_aggregate_bool_exp_corr_arguments_columns" columns of table "nade_lineups" */
+export type nade_lineups_select_column_nade_lineups_aggregate_bool_exp_corr_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'origin_x' | 'origin_y' | 'origin_z' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta'
+
+
+/** select "nade_lineups_aggregate_bool_exp_covar_samp_arguments_columns" columns of table "nade_lineups" */
+export type nade_lineups_select_column_nade_lineups_aggregate_bool_exp_covar_samp_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'origin_x' | 'origin_y' | 'origin_z' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta'
+
+
+/** select "nade_lineups_aggregate_bool_exp_max_arguments_columns" columns of table "nade_lineups" */
+export type nade_lineups_select_column_nade_lineups_aggregate_bool_exp_max_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'origin_x' | 'origin_y' | 'origin_z' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta'
+
+
+/** select "nade_lineups_aggregate_bool_exp_min_arguments_columns" columns of table "nade_lineups" */
+export type nade_lineups_select_column_nade_lineups_aggregate_bool_exp_min_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'origin_x' | 'origin_y' | 'origin_z' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta'
+
+
+/** select "nade_lineups_aggregate_bool_exp_stddev_samp_arguments_columns" columns of table "nade_lineups" */
+export type nade_lineups_select_column_nade_lineups_aggregate_bool_exp_stddev_samp_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'origin_x' | 'origin_y' | 'origin_z' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta'
+
+
+/** select "nade_lineups_aggregate_bool_exp_sum_arguments_columns" columns of table "nade_lineups" */
+export type nade_lineups_select_column_nade_lineups_aggregate_bool_exp_sum_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'origin_x' | 'origin_y' | 'origin_z' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta'
+
+
+/** select "nade_lineups_aggregate_bool_exp_var_samp_arguments_columns" columns of table "nade_lineups" */
+export type nade_lineups_select_column_nade_lineups_aggregate_bool_exp_var_samp_arguments_columns = 'eye_z' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'land_x' | 'land_y' | 'land_z' | 'origin_x' | 'origin_y' | 'origin_z' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta'
+
+
+/** aggregate stddev on columns */
+export interface nade_lineups_stddev_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    downvotes: (Scalars['Float'] | null)
+    eye_z: (Scalars['Float'] | null)
+    favorites: (Scalars['Float'] | null)
+    flight_time_ms: (Scalars['Float'] | null)
+    initial_pos_x: (Scalars['Float'] | null)
+    initial_pos_y: (Scalars['Float'] | null)
+    initial_pos_z: (Scalars['Float'] | null)
+    initial_vel_x: (Scalars['Float'] | null)
+    initial_vel_y: (Scalars['Float'] | null)
+    initial_vel_z: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote: (Scalars['smallint'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    practice_attempts: (Scalars['Float'] | null)
+    practice_players: (Scalars['Float'] | null)
+    practice_successes: (Scalars['Float'] | null)
+    source_grenade_id: (Scalars['Float'] | null)
+    trajectory_size: (Scalars['Float'] | null)
+    upvotes: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_pitch_delta: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    view_yaw_delta: (Scalars['Float'] | null)
+    __typename: 'nade_lineups_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_lineups_stddev_pop_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    downvotes: (Scalars['Float'] | null)
+    eye_z: (Scalars['Float'] | null)
+    favorites: (Scalars['Float'] | null)
+    flight_time_ms: (Scalars['Float'] | null)
+    initial_pos_x: (Scalars['Float'] | null)
+    initial_pos_y: (Scalars['Float'] | null)
+    initial_pos_z: (Scalars['Float'] | null)
+    initial_vel_x: (Scalars['Float'] | null)
+    initial_vel_y: (Scalars['Float'] | null)
+    initial_vel_z: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote: (Scalars['smallint'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    practice_attempts: (Scalars['Float'] | null)
+    practice_players: (Scalars['Float'] | null)
+    practice_successes: (Scalars['Float'] | null)
+    source_grenade_id: (Scalars['Float'] | null)
+    trajectory_size: (Scalars['Float'] | null)
+    upvotes: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_pitch_delta: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    view_yaw_delta: (Scalars['Float'] | null)
+    __typename: 'nade_lineups_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_lineups_stddev_samp_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    downvotes: (Scalars['Float'] | null)
+    eye_z: (Scalars['Float'] | null)
+    favorites: (Scalars['Float'] | null)
+    flight_time_ms: (Scalars['Float'] | null)
+    initial_pos_x: (Scalars['Float'] | null)
+    initial_pos_y: (Scalars['Float'] | null)
+    initial_pos_z: (Scalars['Float'] | null)
+    initial_vel_x: (Scalars['Float'] | null)
+    initial_vel_y: (Scalars['Float'] | null)
+    initial_vel_z: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote: (Scalars['smallint'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    practice_attempts: (Scalars['Float'] | null)
+    practice_players: (Scalars['Float'] | null)
+    practice_successes: (Scalars['Float'] | null)
+    source_grenade_id: (Scalars['Float'] | null)
+    trajectory_size: (Scalars['Float'] | null)
+    upvotes: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_pitch_delta: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    view_yaw_delta: (Scalars['Float'] | null)
+    __typename: 'nade_lineups_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_lineups_sum_fields {
+    author_steam_id: (Scalars['bigint'] | null)
+    downvotes: (Scalars['Int'] | null)
+    eye_z: (Scalars['float8'] | null)
+    favorites: (Scalars['Int'] | null)
+    flight_time_ms: (Scalars['Int'] | null)
+    initial_pos_x: (Scalars['float8'] | null)
+    initial_pos_y: (Scalars['float8'] | null)
+    initial_pos_z: (Scalars['float8'] | null)
+    initial_vel_x: (Scalars['float8'] | null)
+    initial_vel_y: (Scalars['float8'] | null)
+    initial_vel_z: (Scalars['float8'] | null)
+    land_x: (Scalars['float8'] | null)
+    land_y: (Scalars['float8'] | null)
+    land_z: (Scalars['float8'] | null)
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote: (Scalars['smallint'] | null)
+    origin_x: (Scalars['float8'] | null)
+    origin_y: (Scalars['float8'] | null)
+    origin_z: (Scalars['float8'] | null)
+    practice_attempts: (Scalars['Int'] | null)
+    practice_players: (Scalars['Int'] | null)
+    practice_successes: (Scalars['Int'] | null)
+    source_grenade_id: (Scalars['Int'] | null)
+    trajectory_size: (Scalars['Int'] | null)
+    upvotes: (Scalars['Int'] | null)
+    view_pitch: (Scalars['float8'] | null)
+    view_pitch_delta: (Scalars['float8'] | null)
+    view_yaw: (Scalars['float8'] | null)
+    view_yaw_delta: (Scalars['float8'] | null)
+    __typename: 'nade_lineups_sum_fields'
+}
+
+
+/** update columns of table "nade_lineups" */
+export type nade_lineups_update_column = 'archived_at' | 'author_steam_id' | 'confidence' | 'created_at' | 'description' | 'downvotes' | 'external_id' | 'eye_z' | 'favorites' | 'flight_time_ms' | 'forked_from_nade_lineup_id' | 'id' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'jump_throw_bind' | 'land_x' | 'land_y' | 'land_z' | 'map_name' | 'nade_type' | 'name' | 'origin_source' | 'origin_x' | 'origin_y' | 'origin_z' | 'practice_attempts' | 'practice_players' | 'practice_successes' | 'side' | 'source_grenade_id' | 'source_match_id' | 'source_match_map_id' | 'source_url' | 'tags' | 'team_id' | 'technique' | 'throw_strength' | 'trajectory_file' | 'trajectory_preview' | 'trajectory_size' | 'updated_at' | 'upvotes' | 'verified_at' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta' | 'visibility' | 'workshop_map_id'
+
+
+/** aggregate var_pop on columns */
+export interface nade_lineups_var_pop_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    downvotes: (Scalars['Float'] | null)
+    eye_z: (Scalars['Float'] | null)
+    favorites: (Scalars['Float'] | null)
+    flight_time_ms: (Scalars['Float'] | null)
+    initial_pos_x: (Scalars['Float'] | null)
+    initial_pos_y: (Scalars['Float'] | null)
+    initial_pos_z: (Scalars['Float'] | null)
+    initial_vel_x: (Scalars['Float'] | null)
+    initial_vel_y: (Scalars['Float'] | null)
+    initial_vel_z: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote: (Scalars['smallint'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    practice_attempts: (Scalars['Float'] | null)
+    practice_players: (Scalars['Float'] | null)
+    practice_successes: (Scalars['Float'] | null)
+    source_grenade_id: (Scalars['Float'] | null)
+    trajectory_size: (Scalars['Float'] | null)
+    upvotes: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_pitch_delta: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    view_yaw_delta: (Scalars['Float'] | null)
+    __typename: 'nade_lineups_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_lineups_var_samp_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    downvotes: (Scalars['Float'] | null)
+    eye_z: (Scalars['Float'] | null)
+    favorites: (Scalars['Float'] | null)
+    flight_time_ms: (Scalars['Float'] | null)
+    initial_pos_x: (Scalars['Float'] | null)
+    initial_pos_y: (Scalars['Float'] | null)
+    initial_pos_z: (Scalars['Float'] | null)
+    initial_vel_x: (Scalars['Float'] | null)
+    initial_vel_y: (Scalars['Float'] | null)
+    initial_vel_z: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote: (Scalars['smallint'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    practice_attempts: (Scalars['Float'] | null)
+    practice_players: (Scalars['Float'] | null)
+    practice_successes: (Scalars['Float'] | null)
+    source_grenade_id: (Scalars['Float'] | null)
+    trajectory_size: (Scalars['Float'] | null)
+    upvotes: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_pitch_delta: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    view_yaw_delta: (Scalars['Float'] | null)
+    __typename: 'nade_lineups_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_lineups_variance_fields {
+    author_steam_id: (Scalars['Float'] | null)
+    downvotes: (Scalars['Float'] | null)
+    eye_z: (Scalars['Float'] | null)
+    favorites: (Scalars['Float'] | null)
+    flight_time_ms: (Scalars['Float'] | null)
+    initial_pos_x: (Scalars['Float'] | null)
+    initial_pos_y: (Scalars['Float'] | null)
+    initial_pos_z: (Scalars['Float'] | null)
+    initial_vel_x: (Scalars['Float'] | null)
+    initial_vel_y: (Scalars['Float'] | null)
+    initial_vel_z: (Scalars['Float'] | null)
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote: (Scalars['smallint'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    practice_attempts: (Scalars['Float'] | null)
+    practice_players: (Scalars['Float'] | null)
+    practice_successes: (Scalars['Float'] | null)
+    source_grenade_id: (Scalars['Float'] | null)
+    trajectory_size: (Scalars['Float'] | null)
+    upvotes: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_pitch_delta: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    view_yaw_delta: (Scalars['Float'] | null)
+    __typename: 'nade_lineups_variance_fields'
+}
+
+
+/** columns and relationships of "nade_meta_lineups" */
+export interface nade_meta_lineups {
+    first_seen_at: (Scalars['timestamptz'] | null)
+    land_x: Scalars['float8']
+    land_y: Scalars['float8']
+    land_z: Scalars['float8']
+    last_seen_at: (Scalars['timestamptz'] | null)
+    lineup_bucket: Scalars['String']
+    lineups: Scalars['Int']
+    map_name: Scalars['String']
+    matches: Scalars['Int']
+    nade_type: e_utility_types_enum
+    origin_x: Scalars['float8']
+    origin_y: Scalars['float8']
+    origin_z: Scalars['float8']
+    refreshed_at: Scalars['timestamptz']
+    side: e_sides_enum
+    technique: e_nade_techniques_enum
+    throw_strength: (Scalars['String'] | null)
+    throwers: Scalars['Int']
+    throws: Scalars['Int']
+    view_pitch: (Scalars['float8'] | null)
+    view_yaw: (Scalars['float8'] | null)
+    __typename: 'nade_meta_lineups'
+}
+
+
+/** aggregated selection of "nade_meta_lineups" */
+export interface nade_meta_lineups_aggregate {
+    aggregate: (nade_meta_lineups_aggregate_fields | null)
+    nodes: nade_meta_lineups[]
+    __typename: 'nade_meta_lineups_aggregate'
+}
+
+
+/** aggregate fields of "nade_meta_lineups" */
+export interface nade_meta_lineups_aggregate_fields {
+    avg: (nade_meta_lineups_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_meta_lineups_max_fields | null)
+    min: (nade_meta_lineups_min_fields | null)
+    stddev: (nade_meta_lineups_stddev_fields | null)
+    stddev_pop: (nade_meta_lineups_stddev_pop_fields | null)
+    stddev_samp: (nade_meta_lineups_stddev_samp_fields | null)
+    sum: (nade_meta_lineups_sum_fields | null)
+    var_pop: (nade_meta_lineups_var_pop_fields | null)
+    var_samp: (nade_meta_lineups_var_samp_fields | null)
+    variance: (nade_meta_lineups_variance_fields | null)
+    __typename: 'nade_meta_lineups_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_meta_lineups_avg_fields {
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    lineups: (Scalars['Float'] | null)
+    matches: (Scalars['Float'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    throwers: (Scalars['Float'] | null)
+    throws: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    __typename: 'nade_meta_lineups_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_meta_lineups" */
+export type nade_meta_lineups_constraint = 'nade_meta_lineups_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_meta_lineups_max_fields {
+    first_seen_at: (Scalars['timestamptz'] | null)
+    land_x: (Scalars['float8'] | null)
+    land_y: (Scalars['float8'] | null)
+    land_z: (Scalars['float8'] | null)
+    last_seen_at: (Scalars['timestamptz'] | null)
+    lineup_bucket: (Scalars['String'] | null)
+    lineups: (Scalars['Int'] | null)
+    map_name: (Scalars['String'] | null)
+    matches: (Scalars['Int'] | null)
+    origin_x: (Scalars['float8'] | null)
+    origin_y: (Scalars['float8'] | null)
+    origin_z: (Scalars['float8'] | null)
+    refreshed_at: (Scalars['timestamptz'] | null)
+    throw_strength: (Scalars['String'] | null)
+    throwers: (Scalars['Int'] | null)
+    throws: (Scalars['Int'] | null)
+    view_pitch: (Scalars['float8'] | null)
+    view_yaw: (Scalars['float8'] | null)
+    __typename: 'nade_meta_lineups_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_meta_lineups_min_fields {
+    first_seen_at: (Scalars['timestamptz'] | null)
+    land_x: (Scalars['float8'] | null)
+    land_y: (Scalars['float8'] | null)
+    land_z: (Scalars['float8'] | null)
+    last_seen_at: (Scalars['timestamptz'] | null)
+    lineup_bucket: (Scalars['String'] | null)
+    lineups: (Scalars['Int'] | null)
+    map_name: (Scalars['String'] | null)
+    matches: (Scalars['Int'] | null)
+    origin_x: (Scalars['float8'] | null)
+    origin_y: (Scalars['float8'] | null)
+    origin_z: (Scalars['float8'] | null)
+    refreshed_at: (Scalars['timestamptz'] | null)
+    throw_strength: (Scalars['String'] | null)
+    throwers: (Scalars['Int'] | null)
+    throws: (Scalars['Int'] | null)
+    view_pitch: (Scalars['float8'] | null)
+    view_yaw: (Scalars['float8'] | null)
+    __typename: 'nade_meta_lineups_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_meta_lineups" */
+export interface nade_meta_lineups_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_meta_lineups[]
+    __typename: 'nade_meta_lineups_mutation_response'
+}
+
+
+/** select columns of table "nade_meta_lineups" */
+export type nade_meta_lineups_select_column = 'first_seen_at' | 'land_x' | 'land_y' | 'land_z' | 'last_seen_at' | 'lineup_bucket' | 'lineups' | 'map_name' | 'matches' | 'nade_type' | 'origin_x' | 'origin_y' | 'origin_z' | 'refreshed_at' | 'side' | 'technique' | 'throw_strength' | 'throwers' | 'throws' | 'view_pitch' | 'view_yaw'
+
+
+/** aggregate stddev on columns */
+export interface nade_meta_lineups_stddev_fields {
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    lineups: (Scalars['Float'] | null)
+    matches: (Scalars['Float'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    throwers: (Scalars['Float'] | null)
+    throws: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    __typename: 'nade_meta_lineups_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_meta_lineups_stddev_pop_fields {
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    lineups: (Scalars['Float'] | null)
+    matches: (Scalars['Float'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    throwers: (Scalars['Float'] | null)
+    throws: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    __typename: 'nade_meta_lineups_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_meta_lineups_stddev_samp_fields {
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    lineups: (Scalars['Float'] | null)
+    matches: (Scalars['Float'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    throwers: (Scalars['Float'] | null)
+    throws: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    __typename: 'nade_meta_lineups_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_meta_lineups_sum_fields {
+    land_x: (Scalars['float8'] | null)
+    land_y: (Scalars['float8'] | null)
+    land_z: (Scalars['float8'] | null)
+    lineups: (Scalars['Int'] | null)
+    matches: (Scalars['Int'] | null)
+    origin_x: (Scalars['float8'] | null)
+    origin_y: (Scalars['float8'] | null)
+    origin_z: (Scalars['float8'] | null)
+    throwers: (Scalars['Int'] | null)
+    throws: (Scalars['Int'] | null)
+    view_pitch: (Scalars['float8'] | null)
+    view_yaw: (Scalars['float8'] | null)
+    __typename: 'nade_meta_lineups_sum_fields'
+}
+
+
+/** update columns of table "nade_meta_lineups" */
+export type nade_meta_lineups_update_column = 'first_seen_at' | 'land_x' | 'land_y' | 'land_z' | 'last_seen_at' | 'lineup_bucket' | 'lineups' | 'map_name' | 'matches' | 'nade_type' | 'origin_x' | 'origin_y' | 'origin_z' | 'refreshed_at' | 'side' | 'technique' | 'throw_strength' | 'throwers' | 'throws' | 'view_pitch' | 'view_yaw'
+
+
+/** aggregate var_pop on columns */
+export interface nade_meta_lineups_var_pop_fields {
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    lineups: (Scalars['Float'] | null)
+    matches: (Scalars['Float'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    throwers: (Scalars['Float'] | null)
+    throws: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    __typename: 'nade_meta_lineups_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_meta_lineups_var_samp_fields {
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    lineups: (Scalars['Float'] | null)
+    matches: (Scalars['Float'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    throwers: (Scalars['Float'] | null)
+    throws: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    __typename: 'nade_meta_lineups_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_meta_lineups_variance_fields {
+    land_x: (Scalars['Float'] | null)
+    land_y: (Scalars['Float'] | null)
+    land_z: (Scalars['Float'] | null)
+    lineups: (Scalars['Float'] | null)
+    matches: (Scalars['Float'] | null)
+    origin_x: (Scalars['Float'] | null)
+    origin_y: (Scalars['Float'] | null)
+    origin_z: (Scalars['Float'] | null)
+    throwers: (Scalars['Float'] | null)
+    throws: (Scalars['Float'] | null)
+    view_pitch: (Scalars['Float'] | null)
+    view_yaw: (Scalars['Float'] | null)
+    __typename: 'nade_meta_lineups_variance_fields'
+}
+
+
+/** columns and relationships of "nade_playbook_steps" */
+export interface nade_playbook_steps {
+    /** An object relationship */
+    assigned_player: (players | null)
+    assigned_steam_id: (Scalars['bigint'] | null)
+    created_at: Scalars['timestamptz']
+    id: Scalars['uuid']
+    /** An object relationship */
+    nade_lineup: nade_lineups
+    nade_lineup_id: Scalars['uuid']
+    note: (Scalars['String'] | null)
+    offset_ms: Scalars['Int']
+    /** An object relationship */
+    playbook: nade_playbooks
+    playbook_id: Scalars['uuid']
+    step_order: Scalars['Int']
+    __typename: 'nade_playbook_steps'
+}
+
+
+/** aggregated selection of "nade_playbook_steps" */
+export interface nade_playbook_steps_aggregate {
+    aggregate: (nade_playbook_steps_aggregate_fields | null)
+    nodes: nade_playbook_steps[]
+    __typename: 'nade_playbook_steps_aggregate'
+}
+
+
+/** aggregate fields of "nade_playbook_steps" */
+export interface nade_playbook_steps_aggregate_fields {
+    avg: (nade_playbook_steps_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_playbook_steps_max_fields | null)
+    min: (nade_playbook_steps_min_fields | null)
+    stddev: (nade_playbook_steps_stddev_fields | null)
+    stddev_pop: (nade_playbook_steps_stddev_pop_fields | null)
+    stddev_samp: (nade_playbook_steps_stddev_samp_fields | null)
+    sum: (nade_playbook_steps_sum_fields | null)
+    var_pop: (nade_playbook_steps_var_pop_fields | null)
+    var_samp: (nade_playbook_steps_var_samp_fields | null)
+    variance: (nade_playbook_steps_variance_fields | null)
+    __typename: 'nade_playbook_steps_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_playbook_steps_avg_fields {
+    assigned_steam_id: (Scalars['Float'] | null)
+    offset_ms: (Scalars['Float'] | null)
+    step_order: (Scalars['Float'] | null)
+    __typename: 'nade_playbook_steps_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_playbook_steps" */
+export type nade_playbook_steps_constraint = 'nade_playbook_steps_order_key' | 'nade_playbook_steps_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_playbook_steps_max_fields {
+    assigned_steam_id: (Scalars['bigint'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    nade_lineup_id: (Scalars['uuid'] | null)
+    note: (Scalars['String'] | null)
+    offset_ms: (Scalars['Int'] | null)
+    playbook_id: (Scalars['uuid'] | null)
+    step_order: (Scalars['Int'] | null)
+    __typename: 'nade_playbook_steps_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_playbook_steps_min_fields {
+    assigned_steam_id: (Scalars['bigint'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    nade_lineup_id: (Scalars['uuid'] | null)
+    note: (Scalars['String'] | null)
+    offset_ms: (Scalars['Int'] | null)
+    playbook_id: (Scalars['uuid'] | null)
+    step_order: (Scalars['Int'] | null)
+    __typename: 'nade_playbook_steps_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_playbook_steps" */
+export interface nade_playbook_steps_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_playbook_steps[]
+    __typename: 'nade_playbook_steps_mutation_response'
+}
+
+
+/** select columns of table "nade_playbook_steps" */
+export type nade_playbook_steps_select_column = 'assigned_steam_id' | 'created_at' | 'id' | 'nade_lineup_id' | 'note' | 'offset_ms' | 'playbook_id' | 'step_order'
+
+
+/** aggregate stddev on columns */
+export interface nade_playbook_steps_stddev_fields {
+    assigned_steam_id: (Scalars['Float'] | null)
+    offset_ms: (Scalars['Float'] | null)
+    step_order: (Scalars['Float'] | null)
+    __typename: 'nade_playbook_steps_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_playbook_steps_stddev_pop_fields {
+    assigned_steam_id: (Scalars['Float'] | null)
+    offset_ms: (Scalars['Float'] | null)
+    step_order: (Scalars['Float'] | null)
+    __typename: 'nade_playbook_steps_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_playbook_steps_stddev_samp_fields {
+    assigned_steam_id: (Scalars['Float'] | null)
+    offset_ms: (Scalars['Float'] | null)
+    step_order: (Scalars['Float'] | null)
+    __typename: 'nade_playbook_steps_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_playbook_steps_sum_fields {
+    assigned_steam_id: (Scalars['bigint'] | null)
+    offset_ms: (Scalars['Int'] | null)
+    step_order: (Scalars['Int'] | null)
+    __typename: 'nade_playbook_steps_sum_fields'
+}
+
+
+/** update columns of table "nade_playbook_steps" */
+export type nade_playbook_steps_update_column = 'assigned_steam_id' | 'created_at' | 'id' | 'nade_lineup_id' | 'note' | 'offset_ms' | 'playbook_id' | 'step_order'
+
+
+/** aggregate var_pop on columns */
+export interface nade_playbook_steps_var_pop_fields {
+    assigned_steam_id: (Scalars['Float'] | null)
+    offset_ms: (Scalars['Float'] | null)
+    step_order: (Scalars['Float'] | null)
+    __typename: 'nade_playbook_steps_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_playbook_steps_var_samp_fields {
+    assigned_steam_id: (Scalars['Float'] | null)
+    offset_ms: (Scalars['Float'] | null)
+    step_order: (Scalars['Float'] | null)
+    __typename: 'nade_playbook_steps_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_playbook_steps_variance_fields {
+    assigned_steam_id: (Scalars['Float'] | null)
+    offset_ms: (Scalars['Float'] | null)
+    step_order: (Scalars['Float'] | null)
+    __typename: 'nade_playbook_steps_variance_fields'
+}
+
+
+/** columns and relationships of "nade_playbooks" */
+export interface nade_playbooks {
+    /** A computed field, executes function "can_edit_nade_playbook" */
+    can_edit: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "can_view_nade_playbook" */
+    can_view: (Scalars['Boolean'] | null)
+    created_at: Scalars['timestamptz']
+    description: (Scalars['String'] | null)
+    id: Scalars['uuid']
+    map_name: Scalars['String']
+    name: Scalars['String']
+    /** An object relationship */
+    owner: players
+    owner_steam_id: Scalars['bigint']
+    side: e_sides_enum
+    /** An array relationship */
+    steps: nade_playbook_steps[]
+    /** An aggregate relationship */
+    steps_aggregate: nade_playbook_steps_aggregate
+    /** An object relationship */
+    team: (teams | null)
+    team_id: (Scalars['uuid'] | null)
+    updated_at: Scalars['timestamptz']
+    visibility: e_nade_visibility_enum
+    __typename: 'nade_playbooks'
+}
+
+
+/** aggregated selection of "nade_playbooks" */
+export interface nade_playbooks_aggregate {
+    aggregate: (nade_playbooks_aggregate_fields | null)
+    nodes: nade_playbooks[]
+    __typename: 'nade_playbooks_aggregate'
+}
+
+
+/** aggregate fields of "nade_playbooks" */
+export interface nade_playbooks_aggregate_fields {
+    avg: (nade_playbooks_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_playbooks_max_fields | null)
+    min: (nade_playbooks_min_fields | null)
+    stddev: (nade_playbooks_stddev_fields | null)
+    stddev_pop: (nade_playbooks_stddev_pop_fields | null)
+    stddev_samp: (nade_playbooks_stddev_samp_fields | null)
+    sum: (nade_playbooks_sum_fields | null)
+    var_pop: (nade_playbooks_var_pop_fields | null)
+    var_samp: (nade_playbooks_var_samp_fields | null)
+    variance: (nade_playbooks_variance_fields | null)
+    __typename: 'nade_playbooks_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_playbooks_avg_fields {
+    owner_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_playbooks_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_playbooks" */
+export type nade_playbooks_constraint = 'nade_playbooks_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_playbooks_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    description: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    map_name: (Scalars['String'] | null)
+    name: (Scalars['String'] | null)
+    owner_steam_id: (Scalars['bigint'] | null)
+    team_id: (Scalars['uuid'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'nade_playbooks_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_playbooks_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    description: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    map_name: (Scalars['String'] | null)
+    name: (Scalars['String'] | null)
+    owner_steam_id: (Scalars['bigint'] | null)
+    team_id: (Scalars['uuid'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'nade_playbooks_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_playbooks" */
+export interface nade_playbooks_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_playbooks[]
+    __typename: 'nade_playbooks_mutation_response'
+}
+
+
+/** select columns of table "nade_playbooks" */
+export type nade_playbooks_select_column = 'created_at' | 'description' | 'id' | 'map_name' | 'name' | 'owner_steam_id' | 'side' | 'team_id' | 'updated_at' | 'visibility'
+
+
+/** aggregate stddev on columns */
+export interface nade_playbooks_stddev_fields {
+    owner_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_playbooks_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_playbooks_stddev_pop_fields {
+    owner_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_playbooks_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_playbooks_stddev_samp_fields {
+    owner_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_playbooks_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_playbooks_sum_fields {
+    owner_steam_id: (Scalars['bigint'] | null)
+    __typename: 'nade_playbooks_sum_fields'
+}
+
+
+/** update columns of table "nade_playbooks" */
+export type nade_playbooks_update_column = 'created_at' | 'description' | 'id' | 'map_name' | 'name' | 'owner_steam_id' | 'side' | 'team_id' | 'updated_at' | 'visibility'
+
+
+/** aggregate var_pop on columns */
+export interface nade_playbooks_var_pop_fields {
+    owner_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_playbooks_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_playbooks_var_samp_fields {
+    owner_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_playbooks_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_playbooks_variance_fields {
+    owner_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_playbooks_variance_fields'
+}
+
+
+/** columns and relationships of "nade_practice_invites" */
+export interface nade_practice_invites {
+    created_at: Scalars['timestamptz']
+    /** An object relationship */
+    invited_by: (players | null)
+    invited_by_steam_id: (Scalars['bigint'] | null)
+    nade_practice_session_id: Scalars['uuid']
+    /** An object relationship */
+    player: players
+    /** An object relationship */
+    session: nade_practice_sessions
+    steam_id: Scalars['bigint']
+    __typename: 'nade_practice_invites'
+}
+
+
+/** aggregated selection of "nade_practice_invites" */
+export interface nade_practice_invites_aggregate {
+    aggregate: (nade_practice_invites_aggregate_fields | null)
+    nodes: nade_practice_invites[]
+    __typename: 'nade_practice_invites_aggregate'
+}
+
+
+/** aggregate fields of "nade_practice_invites" */
+export interface nade_practice_invites_aggregate_fields {
+    avg: (nade_practice_invites_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_practice_invites_max_fields | null)
+    min: (nade_practice_invites_min_fields | null)
+    stddev: (nade_practice_invites_stddev_fields | null)
+    stddev_pop: (nade_practice_invites_stddev_pop_fields | null)
+    stddev_samp: (nade_practice_invites_stddev_samp_fields | null)
+    sum: (nade_practice_invites_sum_fields | null)
+    var_pop: (nade_practice_invites_var_pop_fields | null)
+    var_samp: (nade_practice_invites_var_samp_fields | null)
+    variance: (nade_practice_invites_variance_fields | null)
+    __typename: 'nade_practice_invites_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_practice_invites_avg_fields {
+    invited_by_steam_id: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_practice_invites_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_practice_invites" */
+export type nade_practice_invites_constraint = 'nade_practice_invites_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_practice_invites_max_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    invited_by_steam_id: (Scalars['bigint'] | null)
+    nade_practice_session_id: (Scalars['uuid'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'nade_practice_invites_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_practice_invites_min_fields {
+    created_at: (Scalars['timestamptz'] | null)
+    invited_by_steam_id: (Scalars['bigint'] | null)
+    nade_practice_session_id: (Scalars['uuid'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'nade_practice_invites_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_practice_invites" */
+export interface nade_practice_invites_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_practice_invites[]
+    __typename: 'nade_practice_invites_mutation_response'
+}
+
+
+/** select columns of table "nade_practice_invites" */
+export type nade_practice_invites_select_column = 'created_at' | 'invited_by_steam_id' | 'nade_practice_session_id' | 'steam_id'
+
+
+/** aggregate stddev on columns */
+export interface nade_practice_invites_stddev_fields {
+    invited_by_steam_id: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_practice_invites_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_practice_invites_stddev_pop_fields {
+    invited_by_steam_id: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_practice_invites_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_practice_invites_stddev_samp_fields {
+    invited_by_steam_id: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_practice_invites_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_practice_invites_sum_fields {
+    invited_by_steam_id: (Scalars['bigint'] | null)
+    steam_id: (Scalars['bigint'] | null)
+    __typename: 'nade_practice_invites_sum_fields'
+}
+
+
+/** update columns of table "nade_practice_invites" */
+export type nade_practice_invites_update_column = 'created_at' | 'invited_by_steam_id' | 'nade_practice_session_id' | 'steam_id'
+
+
+/** aggregate var_pop on columns */
+export interface nade_practice_invites_var_pop_fields {
+    invited_by_steam_id: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_practice_invites_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_practice_invites_var_samp_fields {
+    invited_by_steam_id: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_practice_invites_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_practice_invites_variance_fields {
+    invited_by_steam_id: (Scalars['Float'] | null)
+    steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_practice_invites_variance_fields'
+}
+
+
+/** columns and relationships of "nade_practice_sessions" */
+export interface nade_practice_sessions {
+    /** A computed field, executes function "can_manage_nade_practice_session" */
+    can_manage: (Scalars['Boolean'] | null)
+    /** A computed field, executes function "can_view_nade_practice_session" */
+    can_view: (Scalars['Boolean'] | null)
+    /** An object relationship */
+    collection: (nade_collections | null)
+    collection_id: (Scalars['uuid'] | null)
+    /** A computed field, executes function "nade_practice_connection_link" */
+    connection_link: (Scalars['String'] | null)
+    /** A computed field, executes function "nade_practice_connection_string" */
+    connection_string: (Scalars['String'] | null)
+    created_at: Scalars['timestamptz']
+    /** An object relationship */
+    e_nade_practice_status: e_nade_practice_statuses
+    empty_since: (Scalars['timestamptz'] | null)
+    expires_at: (Scalars['timestamptz'] | null)
+    failure_reason: (Scalars['String'] | null)
+    /** An object relationship */
+    host: players
+    host_steam_id: Scalars['bigint']
+    id: Scalars['uuid']
+    invite_code: Scalars['String']
+    /** An array relationship */
+    invites: nade_practice_invites[]
+    /** An aggregate relationship */
+    invites_aggregate: nade_practice_invites_aggregate
+    /** A computed field, executes function "is_nade_practice_member" */
+    is_member: (Scalars['Boolean'] | null)
+    is_open: Scalars['Boolean']
+    last_occupied_at: (Scalars['timestamptz'] | null)
+    map_name: Scalars['String']
+    /** An object relationship */
+    match: (matches | null)
+    match_id: (Scalars['uuid'] | null)
+    /** An object relationship */
+    playbook: (nade_playbooks | null)
+    playbook_id: (Scalars['uuid'] | null)
+    region: (Scalars['String'] | null)
+    status: e_nade_practice_statuses_enum
+    /** An object relationship */
+    team: (teams | null)
+    team_id: (Scalars['uuid'] | null)
+    updated_at: Scalars['timestamptz']
+    __typename: 'nade_practice_sessions'
+}
+
+
+/** aggregated selection of "nade_practice_sessions" */
+export interface nade_practice_sessions_aggregate {
+    aggregate: (nade_practice_sessions_aggregate_fields | null)
+    nodes: nade_practice_sessions[]
+    __typename: 'nade_practice_sessions_aggregate'
+}
+
+
+/** aggregate fields of "nade_practice_sessions" */
+export interface nade_practice_sessions_aggregate_fields {
+    avg: (nade_practice_sessions_avg_fields | null)
+    count: Scalars['Int']
+    max: (nade_practice_sessions_max_fields | null)
+    min: (nade_practice_sessions_min_fields | null)
+    stddev: (nade_practice_sessions_stddev_fields | null)
+    stddev_pop: (nade_practice_sessions_stddev_pop_fields | null)
+    stddev_samp: (nade_practice_sessions_stddev_samp_fields | null)
+    sum: (nade_practice_sessions_sum_fields | null)
+    var_pop: (nade_practice_sessions_var_pop_fields | null)
+    var_samp: (nade_practice_sessions_var_samp_fields | null)
+    variance: (nade_practice_sessions_variance_fields | null)
+    __typename: 'nade_practice_sessions_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface nade_practice_sessions_avg_fields {
+    host_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_practice_sessions_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "nade_practice_sessions" */
+export type nade_practice_sessions_constraint = 'nade_practice_sessions_invite_code_idx' | 'nade_practice_sessions_match_key' | 'nade_practice_sessions_one_live_per_host_idx' | 'nade_practice_sessions_pkey'
+
+
+/** aggregate max on columns */
+export interface nade_practice_sessions_max_fields {
+    collection_id: (Scalars['uuid'] | null)
+    /** A computed field, executes function "nade_practice_connection_link" */
+    connection_link: (Scalars['String'] | null)
+    /** A computed field, executes function "nade_practice_connection_string" */
+    connection_string: (Scalars['String'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    empty_since: (Scalars['timestamptz'] | null)
+    expires_at: (Scalars['timestamptz'] | null)
+    failure_reason: (Scalars['String'] | null)
+    host_steam_id: (Scalars['bigint'] | null)
+    id: (Scalars['uuid'] | null)
+    invite_code: (Scalars['String'] | null)
+    last_occupied_at: (Scalars['timestamptz'] | null)
+    map_name: (Scalars['String'] | null)
+    match_id: (Scalars['uuid'] | null)
+    playbook_id: (Scalars['uuid'] | null)
+    region: (Scalars['String'] | null)
+    team_id: (Scalars['uuid'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'nade_practice_sessions_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface nade_practice_sessions_min_fields {
+    collection_id: (Scalars['uuid'] | null)
+    /** A computed field, executes function "nade_practice_connection_link" */
+    connection_link: (Scalars['String'] | null)
+    /** A computed field, executes function "nade_practice_connection_string" */
+    connection_string: (Scalars['String'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    empty_since: (Scalars['timestamptz'] | null)
+    expires_at: (Scalars['timestamptz'] | null)
+    failure_reason: (Scalars['String'] | null)
+    host_steam_id: (Scalars['bigint'] | null)
+    id: (Scalars['uuid'] | null)
+    invite_code: (Scalars['String'] | null)
+    last_occupied_at: (Scalars['timestamptz'] | null)
+    map_name: (Scalars['String'] | null)
+    match_id: (Scalars['uuid'] | null)
+    playbook_id: (Scalars['uuid'] | null)
+    region: (Scalars['String'] | null)
+    team_id: (Scalars['uuid'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'nade_practice_sessions_min_fields'
+}
+
+
+/** response of any mutation on the table "nade_practice_sessions" */
+export interface nade_practice_sessions_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: nade_practice_sessions[]
+    __typename: 'nade_practice_sessions_mutation_response'
+}
+
+
+/** select columns of table "nade_practice_sessions" */
+export type nade_practice_sessions_select_column = 'collection_id' | 'created_at' | 'empty_since' | 'expires_at' | 'failure_reason' | 'host_steam_id' | 'id' | 'invite_code' | 'is_open' | 'last_occupied_at' | 'map_name' | 'match_id' | 'playbook_id' | 'region' | 'status' | 'team_id' | 'updated_at'
+
+
+/** select "nade_practice_sessions_aggregate_bool_exp_bool_and_arguments_columns" columns of table "nade_practice_sessions" */
+export type nade_practice_sessions_select_column_nade_practice_sessions_aggregate_bool_exp_bool_and_arguments_columns = 'is_open'
+
+
+/** select "nade_practice_sessions_aggregate_bool_exp_bool_or_arguments_columns" columns of table "nade_practice_sessions" */
+export type nade_practice_sessions_select_column_nade_practice_sessions_aggregate_bool_exp_bool_or_arguments_columns = 'is_open'
+
+
+/** aggregate stddev on columns */
+export interface nade_practice_sessions_stddev_fields {
+    host_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_practice_sessions_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_practice_sessions_stddev_pop_fields {
+    host_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_practice_sessions_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_practice_sessions_stddev_samp_fields {
+    host_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_practice_sessions_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface nade_practice_sessions_sum_fields {
+    host_steam_id: (Scalars['bigint'] | null)
+    __typename: 'nade_practice_sessions_sum_fields'
+}
+
+
+/** update columns of table "nade_practice_sessions" */
+export type nade_practice_sessions_update_column = 'collection_id' | 'created_at' | 'empty_since' | 'expires_at' | 'failure_reason' | 'host_steam_id' | 'id' | 'invite_code' | 'is_open' | 'last_occupied_at' | 'map_name' | 'match_id' | 'playbook_id' | 'region' | 'status' | 'team_id' | 'updated_at'
+
+
+/** aggregate var_pop on columns */
+export interface nade_practice_sessions_var_pop_fields {
+    host_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_practice_sessions_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_practice_sessions_var_samp_fields {
+    host_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_practice_sessions_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface nade_practice_sessions_variance_fields {
+    host_steam_id: (Scalars['Float'] | null)
+    __typename: 'nade_practice_sessions_variance_fields'
 }
 
 
@@ -24833,6 +29135,8 @@ export interface query_root {
     abandoned_matches_aggregate: abandoned_matches_aggregate
     /** fetch data from the table: "abandoned_matches" using primary key columns */
     abandoned_matches_by_pk: (abandoned_matches | null)
+    /** Ask which sightlines a playbook's smokes leave open */
+    analyseNadePlaybookCoverage: (NadePlaybookCoverageOutput | null)
     /** fetch data from the table: "api_keys" */
     api_keys: api_keys[]
     /** fetch aggregated fields from the table: "api_keys" */
@@ -24857,6 +29161,10 @@ export interface query_root {
     chat_read_state_aggregate: chat_read_state_aggregate
     /** fetch data from the table: "chat_read_state" using primary key columns */
     chat_read_state_by_pk: (chat_read_state | null)
+    /** Ask whether a lineup's smoke makes an angle one-way */
+    checkNadeOneWay: (NadeOneWayOutput | null)
+    /** Ask whether a lineup's smoke blocks a set of sightlines */
+    checkNadeSightlines: (NadeSightlineOutput | null)
     /** An array relationship */
     clip_render_jobs: clip_render_jobs[]
     /** An aggregate relationship */
@@ -25080,6 +29388,36 @@ export interface query_root {
     e_match_types_aggregate: e_match_types_aggregate
     /** fetch data from the table: "e_match_types" using primary key columns */
     e_match_types_by_pk: (e_match_types | null)
+    /** fetch data from the table: "e_nade_practice_statuses" */
+    e_nade_practice_statuses: e_nade_practice_statuses[]
+    /** fetch aggregated fields from the table: "e_nade_practice_statuses" */
+    e_nade_practice_statuses_aggregate: e_nade_practice_statuses_aggregate
+    /** fetch data from the table: "e_nade_practice_statuses" using primary key columns */
+    e_nade_practice_statuses_by_pk: (e_nade_practice_statuses | null)
+    /** fetch data from the table: "e_nade_sources" */
+    e_nade_sources: e_nade_sources[]
+    /** fetch aggregated fields from the table: "e_nade_sources" */
+    e_nade_sources_aggregate: e_nade_sources_aggregate
+    /** fetch data from the table: "e_nade_sources" using primary key columns */
+    e_nade_sources_by_pk: (e_nade_sources | null)
+    /** fetch data from the table: "e_nade_techniques" */
+    e_nade_techniques: e_nade_techniques[]
+    /** fetch aggregated fields from the table: "e_nade_techniques" */
+    e_nade_techniques_aggregate: e_nade_techniques_aggregate
+    /** fetch data from the table: "e_nade_techniques" using primary key columns */
+    e_nade_techniques_by_pk: (e_nade_techniques | null)
+    /** fetch data from the table: "e_nade_throw_strengths" */
+    e_nade_throw_strengths: e_nade_throw_strengths[]
+    /** fetch aggregated fields from the table: "e_nade_throw_strengths" */
+    e_nade_throw_strengths_aggregate: e_nade_throw_strengths_aggregate
+    /** fetch data from the table: "e_nade_throw_strengths" using primary key columns */
+    e_nade_throw_strengths_by_pk: (e_nade_throw_strengths | null)
+    /** fetch data from the table: "e_nade_visibility" */
+    e_nade_visibility: e_nade_visibility[]
+    /** fetch aggregated fields from the table: "e_nade_visibility" */
+    e_nade_visibility_aggregate: e_nade_visibility_aggregate
+    /** fetch data from the table: "e_nade_visibility" using primary key columns */
+    e_nade_visibility_by_pk: (e_nade_visibility | null)
     /** fetch data from the table: "e_notification_types" */
     e_notification_types: e_notification_types[]
     /** fetch aggregated fields from the table: "e_notification_types" */
@@ -25242,6 +29580,8 @@ export interface query_root {
     events_aggregate: events_aggregate
     /** fetch data from the table: "events" using primary key columns */
     events_by_pk: (events | null)
+    /** Find the saved smokes that close a given sightline */
+    findNadeLineupsBlocking: (NadeBlockingOutput | null)
     /** fetch data from the table: "friends" */
     friends: friends[]
     /** fetch aggregated fields from the table: "friends" */
@@ -25532,6 +29872,112 @@ export interface query_root {
     my_friends: my_friends[]
     /** fetch aggregated fields from the table: "v_my_friends" */
     my_friends_aggregate: my_friends_aggregate
+    /** Which way everybody misses one lineup, from their practice throws */
+    nadeLineupMissPattern: (NadeMissPatternOutput | null)
+    /** Report a player's mined utility throws for a match */
+    nadeMatchUtilityReport: (NadeUtilityReportOutput | null)
+    /** Rank what to practise next on a map from the mined meta */
+    nadePracticePlan: (NadePracticePlanOutput | null)
+    /** Read the practice server solver's calibration gate */
+    nadeSolverCalibration: (NadeCalibrationOutput | null)
+    /** Aggregate a team's mined utility throws against its saved lineups */
+    nadeTeamUtilityReport: (NadeTeamUtilityOutput | null)
+    /** fetch data from the table: "nade_collection_items" */
+    nade_collection_items: nade_collection_items[]
+    /** fetch aggregated fields from the table: "nade_collection_items" */
+    nade_collection_items_aggregate: nade_collection_items_aggregate
+    /** fetch data from the table: "nade_collection_items" using primary key columns */
+    nade_collection_items_by_pk: (nade_collection_items | null)
+    /** fetch data from the table: "nade_collections" */
+    nade_collections: nade_collections[]
+    /** fetch aggregated fields from the table: "nade_collections" */
+    nade_collections_aggregate: nade_collections_aggregate
+    /** fetch data from the table: "nade_collections" using primary key columns */
+    nade_collections_by_pk: (nade_collections | null)
+    /** fetch data from the table: "nade_demo_mines" */
+    nade_demo_mines: nade_demo_mines[]
+    /** fetch aggregated fields from the table: "nade_demo_mines" */
+    nade_demo_mines_aggregate: nade_demo_mines_aggregate
+    /** fetch data from the table: "nade_demo_mines" using primary key columns */
+    nade_demo_mines_by_pk: (nade_demo_mines | null)
+    /** fetch data from the table: "nade_demo_throws" */
+    nade_demo_throws: nade_demo_throws[]
+    /** fetch aggregated fields from the table: "nade_demo_throws" */
+    nade_demo_throws_aggregate: nade_demo_throws_aggregate
+    /** fetch data from the table: "nade_demo_throws" using primary key columns */
+    nade_demo_throws_by_pk: (nade_demo_throws | null)
+    /** fetch data from the table: "nade_drift_results" */
+    nade_drift_results: nade_drift_results[]
+    /** fetch aggregated fields from the table: "nade_drift_results" */
+    nade_drift_results_aggregate: nade_drift_results_aggregate
+    /** fetch data from the table: "nade_drift_results" using primary key columns */
+    nade_drift_results_by_pk: (nade_drift_results | null)
+    /** fetch data from the table: "nade_drift_scans" */
+    nade_drift_scans: nade_drift_scans[]
+    /** fetch aggregated fields from the table: "nade_drift_scans" */
+    nade_drift_scans_aggregate: nade_drift_scans_aggregate
+    /** fetch data from the table: "nade_drift_scans" using primary key columns */
+    nade_drift_scans_by_pk: (nade_drift_scans | null)
+    /** fetch data from the table: "nade_lineup_favorites" */
+    nade_lineup_favorites: nade_lineup_favorites[]
+    /** fetch aggregated fields from the table: "nade_lineup_favorites" */
+    nade_lineup_favorites_aggregate: nade_lineup_favorites_aggregate
+    /** fetch data from the table: "nade_lineup_favorites" using primary key columns */
+    nade_lineup_favorites_by_pk: (nade_lineup_favorites | null)
+    /** fetch data from the table: "nade_lineup_progress" */
+    nade_lineup_progress: nade_lineup_progress[]
+    /** fetch aggregated fields from the table: "nade_lineup_progress" */
+    nade_lineup_progress_aggregate: nade_lineup_progress_aggregate
+    /** fetch data from the table: "nade_lineup_progress" using primary key columns */
+    nade_lineup_progress_by_pk: (nade_lineup_progress | null)
+    /** fetch data from the table: "nade_lineup_repairs" */
+    nade_lineup_repairs: nade_lineup_repairs[]
+    /** fetch aggregated fields from the table: "nade_lineup_repairs" */
+    nade_lineup_repairs_aggregate: nade_lineup_repairs_aggregate
+    /** fetch data from the table: "nade_lineup_repairs" using primary key columns */
+    nade_lineup_repairs_by_pk: (nade_lineup_repairs | null)
+    /** fetch data from the table: "nade_lineup_votes" */
+    nade_lineup_votes: nade_lineup_votes[]
+    /** fetch aggregated fields from the table: "nade_lineup_votes" */
+    nade_lineup_votes_aggregate: nade_lineup_votes_aggregate
+    /** fetch data from the table: "nade_lineup_votes" using primary key columns */
+    nade_lineup_votes_by_pk: (nade_lineup_votes | null)
+    /** An array relationship */
+    nade_lineups: nade_lineups[]
+    /** An aggregate relationship */
+    nade_lineups_aggregate: nade_lineups_aggregate
+    /** fetch data from the table: "nade_lineups" using primary key columns */
+    nade_lineups_by_pk: (nade_lineups | null)
+    /** fetch data from the table: "nade_meta_lineups" */
+    nade_meta_lineups: nade_meta_lineups[]
+    /** fetch aggregated fields from the table: "nade_meta_lineups" */
+    nade_meta_lineups_aggregate: nade_meta_lineups_aggregate
+    /** fetch data from the table: "nade_meta_lineups" using primary key columns */
+    nade_meta_lineups_by_pk: (nade_meta_lineups | null)
+    /** fetch data from the table: "nade_playbook_steps" */
+    nade_playbook_steps: nade_playbook_steps[]
+    /** fetch aggregated fields from the table: "nade_playbook_steps" */
+    nade_playbook_steps_aggregate: nade_playbook_steps_aggregate
+    /** fetch data from the table: "nade_playbook_steps" using primary key columns */
+    nade_playbook_steps_by_pk: (nade_playbook_steps | null)
+    /** fetch data from the table: "nade_playbooks" */
+    nade_playbooks: nade_playbooks[]
+    /** fetch aggregated fields from the table: "nade_playbooks" */
+    nade_playbooks_aggregate: nade_playbooks_aggregate
+    /** fetch data from the table: "nade_playbooks" using primary key columns */
+    nade_playbooks_by_pk: (nade_playbooks | null)
+    /** fetch data from the table: "nade_practice_invites" */
+    nade_practice_invites: nade_practice_invites[]
+    /** fetch aggregated fields from the table: "nade_practice_invites" */
+    nade_practice_invites_aggregate: nade_practice_invites_aggregate
+    /** fetch data from the table: "nade_practice_invites" using primary key columns */
+    nade_practice_invites_by_pk: (nade_practice_invites | null)
+    /** An array relationship */
+    nade_practice_sessions: nade_practice_sessions[]
+    /** An aggregate relationship */
+    nade_practice_sessions_aggregate: nade_practice_sessions_aggregate
+    /** fetch data from the table: "nade_practice_sessions" using primary key columns */
+    nade_practice_sessions_by_pk: (nade_practice_sessions | null)
     /** Fetch a single news post including draft content for editing. Caller role is verified against public.post_news_role. */
     newsPostAdmin: (NewsPost | null)
     /** List all news posts including drafts for the management area. Caller role is verified against public.post_news_role. */
@@ -27258,6 +31704,46 @@ export interface subscription_root {
     e_match_types_by_pk: (e_match_types | null)
     /** fetch data from the table in a streaming manner: "e_match_types" */
     e_match_types_stream: e_match_types[]
+    /** fetch data from the table: "e_nade_practice_statuses" */
+    e_nade_practice_statuses: e_nade_practice_statuses[]
+    /** fetch aggregated fields from the table: "e_nade_practice_statuses" */
+    e_nade_practice_statuses_aggregate: e_nade_practice_statuses_aggregate
+    /** fetch data from the table: "e_nade_practice_statuses" using primary key columns */
+    e_nade_practice_statuses_by_pk: (e_nade_practice_statuses | null)
+    /** fetch data from the table in a streaming manner: "e_nade_practice_statuses" */
+    e_nade_practice_statuses_stream: e_nade_practice_statuses[]
+    /** fetch data from the table: "e_nade_sources" */
+    e_nade_sources: e_nade_sources[]
+    /** fetch aggregated fields from the table: "e_nade_sources" */
+    e_nade_sources_aggregate: e_nade_sources_aggregate
+    /** fetch data from the table: "e_nade_sources" using primary key columns */
+    e_nade_sources_by_pk: (e_nade_sources | null)
+    /** fetch data from the table in a streaming manner: "e_nade_sources" */
+    e_nade_sources_stream: e_nade_sources[]
+    /** fetch data from the table: "e_nade_techniques" */
+    e_nade_techniques: e_nade_techniques[]
+    /** fetch aggregated fields from the table: "e_nade_techniques" */
+    e_nade_techniques_aggregate: e_nade_techniques_aggregate
+    /** fetch data from the table: "e_nade_techniques" using primary key columns */
+    e_nade_techniques_by_pk: (e_nade_techniques | null)
+    /** fetch data from the table in a streaming manner: "e_nade_techniques" */
+    e_nade_techniques_stream: e_nade_techniques[]
+    /** fetch data from the table: "e_nade_throw_strengths" */
+    e_nade_throw_strengths: e_nade_throw_strengths[]
+    /** fetch aggregated fields from the table: "e_nade_throw_strengths" */
+    e_nade_throw_strengths_aggregate: e_nade_throw_strengths_aggregate
+    /** fetch data from the table: "e_nade_throw_strengths" using primary key columns */
+    e_nade_throw_strengths_by_pk: (e_nade_throw_strengths | null)
+    /** fetch data from the table in a streaming manner: "e_nade_throw_strengths" */
+    e_nade_throw_strengths_stream: e_nade_throw_strengths[]
+    /** fetch data from the table: "e_nade_visibility" */
+    e_nade_visibility: e_nade_visibility[]
+    /** fetch aggregated fields from the table: "e_nade_visibility" */
+    e_nade_visibility_aggregate: e_nade_visibility_aggregate
+    /** fetch data from the table: "e_nade_visibility" using primary key columns */
+    e_nade_visibility_by_pk: (e_nade_visibility | null)
+    /** fetch data from the table in a streaming manner: "e_nade_visibility" */
+    e_nade_visibility_stream: e_nade_visibility[]
     /** fetch data from the table: "e_notification_types" */
     e_notification_types: e_notification_types[]
     /** fetch aggregated fields from the table: "e_notification_types" */
@@ -27806,6 +32292,134 @@ export interface subscription_root {
     my_friends_aggregate: my_friends_aggregate
     /** fetch data from the table in a streaming manner: "v_my_friends" */
     my_friends_stream: my_friends[]
+    /** fetch data from the table: "nade_collection_items" */
+    nade_collection_items: nade_collection_items[]
+    /** fetch aggregated fields from the table: "nade_collection_items" */
+    nade_collection_items_aggregate: nade_collection_items_aggregate
+    /** fetch data from the table: "nade_collection_items" using primary key columns */
+    nade_collection_items_by_pk: (nade_collection_items | null)
+    /** fetch data from the table in a streaming manner: "nade_collection_items" */
+    nade_collection_items_stream: nade_collection_items[]
+    /** fetch data from the table: "nade_collections" */
+    nade_collections: nade_collections[]
+    /** fetch aggregated fields from the table: "nade_collections" */
+    nade_collections_aggregate: nade_collections_aggregate
+    /** fetch data from the table: "nade_collections" using primary key columns */
+    nade_collections_by_pk: (nade_collections | null)
+    /** fetch data from the table in a streaming manner: "nade_collections" */
+    nade_collections_stream: nade_collections[]
+    /** fetch data from the table: "nade_demo_mines" */
+    nade_demo_mines: nade_demo_mines[]
+    /** fetch aggregated fields from the table: "nade_demo_mines" */
+    nade_demo_mines_aggregate: nade_demo_mines_aggregate
+    /** fetch data from the table: "nade_demo_mines" using primary key columns */
+    nade_demo_mines_by_pk: (nade_demo_mines | null)
+    /** fetch data from the table in a streaming manner: "nade_demo_mines" */
+    nade_demo_mines_stream: nade_demo_mines[]
+    /** fetch data from the table: "nade_demo_throws" */
+    nade_demo_throws: nade_demo_throws[]
+    /** fetch aggregated fields from the table: "nade_demo_throws" */
+    nade_demo_throws_aggregate: nade_demo_throws_aggregate
+    /** fetch data from the table: "nade_demo_throws" using primary key columns */
+    nade_demo_throws_by_pk: (nade_demo_throws | null)
+    /** fetch data from the table in a streaming manner: "nade_demo_throws" */
+    nade_demo_throws_stream: nade_demo_throws[]
+    /** fetch data from the table: "nade_drift_results" */
+    nade_drift_results: nade_drift_results[]
+    /** fetch aggregated fields from the table: "nade_drift_results" */
+    nade_drift_results_aggregate: nade_drift_results_aggregate
+    /** fetch data from the table: "nade_drift_results" using primary key columns */
+    nade_drift_results_by_pk: (nade_drift_results | null)
+    /** fetch data from the table in a streaming manner: "nade_drift_results" */
+    nade_drift_results_stream: nade_drift_results[]
+    /** fetch data from the table: "nade_drift_scans" */
+    nade_drift_scans: nade_drift_scans[]
+    /** fetch aggregated fields from the table: "nade_drift_scans" */
+    nade_drift_scans_aggregate: nade_drift_scans_aggregate
+    /** fetch data from the table: "nade_drift_scans" using primary key columns */
+    nade_drift_scans_by_pk: (nade_drift_scans | null)
+    /** fetch data from the table in a streaming manner: "nade_drift_scans" */
+    nade_drift_scans_stream: nade_drift_scans[]
+    /** fetch data from the table: "nade_lineup_favorites" */
+    nade_lineup_favorites: nade_lineup_favorites[]
+    /** fetch aggregated fields from the table: "nade_lineup_favorites" */
+    nade_lineup_favorites_aggregate: nade_lineup_favorites_aggregate
+    /** fetch data from the table: "nade_lineup_favorites" using primary key columns */
+    nade_lineup_favorites_by_pk: (nade_lineup_favorites | null)
+    /** fetch data from the table in a streaming manner: "nade_lineup_favorites" */
+    nade_lineup_favorites_stream: nade_lineup_favorites[]
+    /** fetch data from the table: "nade_lineup_progress" */
+    nade_lineup_progress: nade_lineup_progress[]
+    /** fetch aggregated fields from the table: "nade_lineup_progress" */
+    nade_lineup_progress_aggregate: nade_lineup_progress_aggregate
+    /** fetch data from the table: "nade_lineup_progress" using primary key columns */
+    nade_lineup_progress_by_pk: (nade_lineup_progress | null)
+    /** fetch data from the table in a streaming manner: "nade_lineup_progress" */
+    nade_lineup_progress_stream: nade_lineup_progress[]
+    /** fetch data from the table: "nade_lineup_repairs" */
+    nade_lineup_repairs: nade_lineup_repairs[]
+    /** fetch aggregated fields from the table: "nade_lineup_repairs" */
+    nade_lineup_repairs_aggregate: nade_lineup_repairs_aggregate
+    /** fetch data from the table: "nade_lineup_repairs" using primary key columns */
+    nade_lineup_repairs_by_pk: (nade_lineup_repairs | null)
+    /** fetch data from the table in a streaming manner: "nade_lineup_repairs" */
+    nade_lineup_repairs_stream: nade_lineup_repairs[]
+    /** fetch data from the table: "nade_lineup_votes" */
+    nade_lineup_votes: nade_lineup_votes[]
+    /** fetch aggregated fields from the table: "nade_lineup_votes" */
+    nade_lineup_votes_aggregate: nade_lineup_votes_aggregate
+    /** fetch data from the table: "nade_lineup_votes" using primary key columns */
+    nade_lineup_votes_by_pk: (nade_lineup_votes | null)
+    /** fetch data from the table in a streaming manner: "nade_lineup_votes" */
+    nade_lineup_votes_stream: nade_lineup_votes[]
+    /** An array relationship */
+    nade_lineups: nade_lineups[]
+    /** An aggregate relationship */
+    nade_lineups_aggregate: nade_lineups_aggregate
+    /** fetch data from the table: "nade_lineups" using primary key columns */
+    nade_lineups_by_pk: (nade_lineups | null)
+    /** fetch data from the table in a streaming manner: "nade_lineups" */
+    nade_lineups_stream: nade_lineups[]
+    /** fetch data from the table: "nade_meta_lineups" */
+    nade_meta_lineups: nade_meta_lineups[]
+    /** fetch aggregated fields from the table: "nade_meta_lineups" */
+    nade_meta_lineups_aggregate: nade_meta_lineups_aggregate
+    /** fetch data from the table: "nade_meta_lineups" using primary key columns */
+    nade_meta_lineups_by_pk: (nade_meta_lineups | null)
+    /** fetch data from the table in a streaming manner: "nade_meta_lineups" */
+    nade_meta_lineups_stream: nade_meta_lineups[]
+    /** fetch data from the table: "nade_playbook_steps" */
+    nade_playbook_steps: nade_playbook_steps[]
+    /** fetch aggregated fields from the table: "nade_playbook_steps" */
+    nade_playbook_steps_aggregate: nade_playbook_steps_aggregate
+    /** fetch data from the table: "nade_playbook_steps" using primary key columns */
+    nade_playbook_steps_by_pk: (nade_playbook_steps | null)
+    /** fetch data from the table in a streaming manner: "nade_playbook_steps" */
+    nade_playbook_steps_stream: nade_playbook_steps[]
+    /** fetch data from the table: "nade_playbooks" */
+    nade_playbooks: nade_playbooks[]
+    /** fetch aggregated fields from the table: "nade_playbooks" */
+    nade_playbooks_aggregate: nade_playbooks_aggregate
+    /** fetch data from the table: "nade_playbooks" using primary key columns */
+    nade_playbooks_by_pk: (nade_playbooks | null)
+    /** fetch data from the table in a streaming manner: "nade_playbooks" */
+    nade_playbooks_stream: nade_playbooks[]
+    /** fetch data from the table: "nade_practice_invites" */
+    nade_practice_invites: nade_practice_invites[]
+    /** fetch aggregated fields from the table: "nade_practice_invites" */
+    nade_practice_invites_aggregate: nade_practice_invites_aggregate
+    /** fetch data from the table: "nade_practice_invites" using primary key columns */
+    nade_practice_invites_by_pk: (nade_practice_invites | null)
+    /** fetch data from the table in a streaming manner: "nade_practice_invites" */
+    nade_practice_invites_stream: nade_practice_invites[]
+    /** An array relationship */
+    nade_practice_sessions: nade_practice_sessions[]
+    /** An aggregate relationship */
+    nade_practice_sessions_aggregate: nade_practice_sessions_aggregate
+    /** fetch data from the table: "nade_practice_sessions" using primary key columns */
+    nade_practice_sessions_by_pk: (nade_practice_sessions | null)
+    /** fetch data from the table in a streaming manner: "nade_practice_sessions" */
+    nade_practice_sessions_stream: nade_practice_sessions[]
     /** fetch data from the table: "news_articles" */
     news_articles: news_articles[]
     /** fetch aggregated fields from the table: "news_articles" */
@@ -38607,6 +43221,233 @@ export interface MemoryStatGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface NadeBlockingOutputGenqlSelection{
+    degraded?: boolean | number
+    message?: boolean | number
+    results?: NadeBlockingResultGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeBlockingResultGenqlSelection{
+    blocked?: boolean | number
+    depth?: boolean | number
+    nade_lineup_id?: boolean | number
+    transmittance?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeCalibrationOutputGenqlSelection{
+    detail?: boolean | number
+    ready?: boolean | number
+    status?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeDriftScanOutputGenqlSelection{
+    lineups?: boolean | number
+    scan_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeImportErrorGenqlSelection{
+    external_id?: boolean | number
+    index?: boolean | number
+    reason?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeImportOutputGenqlSelection{
+    dry_run?: boolean | number
+    errors?: NadeImportErrorGenqlSelection
+    failed?: boolean | number
+    imported?: boolean | number
+    total?: boolean | number
+    updated?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeLineupOutputGenqlSelection{
+    id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeMissPatternOutputGenqlSelection{
+    analysed?: boolean | number
+    bias?: boolean | number
+    mean_along?: boolean | number
+    mean_lateral?: boolean | number
+    mean_vertical?: boolean | number
+    message?: boolean | number
+    players?: boolean | number
+    samples?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeOneWayOutputGenqlSelection{
+    degraded?: boolean | number
+    message?: boolean | number
+    results?: NadeOneWayResultGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeOneWayResultGenqlSelection{
+    cause?: boolean | number
+    confidence?: boolean | number
+    contested?: boolean | number
+    favors?: boolean | number
+    index?: boolean | number
+    one_way?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadePlaybookCoverageOutputGenqlSelection{
+    degraded?: boolean | number
+    message?: boolean | number
+    results?: NadePlaybookCoverageResultGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadePlaybookCoverageResultGenqlSelection{
+    by_step?: boolean | number
+    covered?: boolean | number
+    depth?: boolean | number
+    index?: boolean | number
+    transmittance?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadePlaybookOutputGenqlSelection{
+    id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadePlaybookStepInput {assigned_steam_id?: (Scalars['String'] | null),nade_lineup_id: Scalars['uuid'],note?: (Scalars['String'] | null),offset_ms?: (Scalars['Int'] | null)}
+
+export interface NadePracticePlanEntryGenqlSelection{
+    attempts?: boolean | number
+    difficulty?: boolean | number
+    global_attempts?: boolean | number
+    global_landing_rate?: boolean | number
+    global_players?: boolean | number
+    mastered?: boolean | number
+    meta_throwers?: boolean | number
+    nade_lineup_id?: boolean | number
+    priority?: boolean | number
+    reason?: boolean | number
+    successes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadePracticePlanOutputGenqlSelection{
+    analysed?: boolean | number
+    entries?: NadePracticePlanEntryGenqlSelection
+    message?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadePracticeSessionOutputGenqlSelection{
+    id?: boolean | number
+    invite_code?: boolean | number
+    match_id?: boolean | number
+    status?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadePurgeOutputGenqlSelection{
+    dry_run?: boolean | number
+    lineups?: boolean | number
+    origin_source?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeSightlineOutputGenqlSelection{
+    degraded?: boolean | number
+    message?: boolean | number
+    results?: NadeSightlineResultGenqlSelection
+    threshold?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeSightlinePairInput {from_x: Scalars['Float'],from_y: Scalars['Float'],from_z: Scalars['Float'],to_x: Scalars['Float'],to_y: Scalars['Float'],to_z: Scalars['Float']}
+
+export interface NadeSightlineResultGenqlSelection{
+    blocked?: boolean | number
+    blocked_by?: boolean | number
+    depth?: boolean | number
+    index?: boolean | number
+    transmittance?: boolean | number
+    world_blocked?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeSolveOutputGenqlSelection{
+    accepted?: boolean | number
+    message?: boolean | number
+    status?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeTeamUtilityEntryGenqlSelection{
+    landed?: boolean | number
+    nade_lineup_id?: boolean | number
+    players?: boolean | number
+    thrown?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeTeamUtilityOutputGenqlSelection{
+    analysed?: boolean | number
+    entries?: NadeTeamUtilityEntryGenqlSelection
+    message?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeUtilityReportOutputGenqlSelection{
+    analysed?: boolean | number
+    by_type?: NadeUtilityTypeReportGenqlSelection
+    landed?: boolean | number
+    matched_lineups?: boolean | number
+    matched_meta?: boolean | number
+    message?: boolean | number
+    radius?: boolean | number
+    steam_id?: boolean | number
+    throws?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface NadeUtilityTypeReportGenqlSelection{
+    landed?: boolean | number
+    matched_lineups?: boolean | number
+    matched_meta?: boolean | number
+    nade_type?: boolean | number
+    throws?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface NetworkStatsGenqlSelection{
     nics?: NicStatGenqlSelection
     time?: boolean | number
@@ -45883,6 +50724,647 @@ export interface e_match_types_updates {
 _set?: (e_match_types_set_input | null),
 /** filter the rows which have to be updated */
 where: e_match_types_bool_exp}
+
+
+/** columns and relationships of "e_nade_practice_statuses" */
+export interface e_nade_practice_statusesGenqlSelection{
+    description?: boolean | number
+    /** An array relationship */
+    nade_practice_sessions?: (nade_practice_sessionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_practice_sessions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_practice_sessions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_practice_sessions_bool_exp | null)} })
+    /** An aggregate relationship */
+    nade_practice_sessions_aggregate?: (nade_practice_sessions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_practice_sessions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_practice_sessions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_practice_sessions_bool_exp | null)} })
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_nade_practice_statuses" */
+export interface e_nade_practice_statuses_aggregateGenqlSelection{
+    aggregate?: e_nade_practice_statuses_aggregate_fieldsGenqlSelection
+    nodes?: e_nade_practice_statusesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_nade_practice_statuses" */
+export interface e_nade_practice_statuses_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_nade_practice_statuses_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_nade_practice_statuses_max_fieldsGenqlSelection
+    min?: e_nade_practice_statuses_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_nade_practice_statuses". All fields are combined with a logical 'AND'. */
+export interface e_nade_practice_statuses_bool_exp {_and?: (e_nade_practice_statuses_bool_exp[] | null),_not?: (e_nade_practice_statuses_bool_exp | null),_or?: (e_nade_practice_statuses_bool_exp[] | null),description?: (String_comparison_exp | null),nade_practice_sessions?: (nade_practice_sessions_bool_exp | null),nade_practice_sessions_aggregate?: (nade_practice_sessions_aggregate_bool_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_nade_practice_statuses_enum". All fields are combined with logical 'AND'. */
+export interface e_nade_practice_statuses_enum_comparison_exp {_eq?: (e_nade_practice_statuses_enum | null),_in?: (e_nade_practice_statuses_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_nade_practice_statuses_enum | null),_nin?: (e_nade_practice_statuses_enum[] | null)}
+
+
+/** input type for inserting data into table "e_nade_practice_statuses" */
+export interface e_nade_practice_statuses_insert_input {description?: (Scalars['String'] | null),nade_practice_sessions?: (nade_practice_sessions_arr_rel_insert_input | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_nade_practice_statuses_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_nade_practice_statuses_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_nade_practice_statuses" */
+export interface e_nade_practice_statuses_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_nade_practice_statusesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** input type for inserting object relation for remote table "e_nade_practice_statuses" */
+export interface e_nade_practice_statuses_obj_rel_insert_input {data: e_nade_practice_statuses_insert_input,
+/** upsert condition */
+on_conflict?: (e_nade_practice_statuses_on_conflict | null)}
+
+
+/** on_conflict condition type for table "e_nade_practice_statuses" */
+export interface e_nade_practice_statuses_on_conflict {constraint: e_nade_practice_statuses_constraint,update_columns?: e_nade_practice_statuses_update_column[],where?: (e_nade_practice_statuses_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_nade_practice_statuses". */
+export interface e_nade_practice_statuses_order_by {description?: (order_by | null),nade_practice_sessions_aggregate?: (nade_practice_sessions_aggregate_order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_nade_practice_statuses */
+export interface e_nade_practice_statuses_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_nade_practice_statuses" */
+export interface e_nade_practice_statuses_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_nade_practice_statuses" */
+export interface e_nade_practice_statuses_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_nade_practice_statuses_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_nade_practice_statuses_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_nade_practice_statuses_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_nade_practice_statuses_set_input | null),
+/** filter the rows which have to be updated */
+where: e_nade_practice_statuses_bool_exp}
+
+
+/** columns and relationships of "e_nade_sources" */
+export interface e_nade_sourcesGenqlSelection{
+    description?: boolean | number
+    /** An array relationship */
+    nade_lineups?: (nade_lineupsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineups_bool_exp | null)} })
+    /** An aggregate relationship */
+    nade_lineups_aggregate?: (nade_lineups_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineups_bool_exp | null)} })
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_nade_sources" */
+export interface e_nade_sources_aggregateGenqlSelection{
+    aggregate?: e_nade_sources_aggregate_fieldsGenqlSelection
+    nodes?: e_nade_sourcesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_nade_sources" */
+export interface e_nade_sources_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_nade_sources_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_nade_sources_max_fieldsGenqlSelection
+    min?: e_nade_sources_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_nade_sources". All fields are combined with a logical 'AND'. */
+export interface e_nade_sources_bool_exp {_and?: (e_nade_sources_bool_exp[] | null),_not?: (e_nade_sources_bool_exp | null),_or?: (e_nade_sources_bool_exp[] | null),description?: (String_comparison_exp | null),nade_lineups?: (nade_lineups_bool_exp | null),nade_lineups_aggregate?: (nade_lineups_aggregate_bool_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_nade_sources_enum". All fields are combined with logical 'AND'. */
+export interface e_nade_sources_enum_comparison_exp {_eq?: (e_nade_sources_enum | null),_in?: (e_nade_sources_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_nade_sources_enum | null),_nin?: (e_nade_sources_enum[] | null)}
+
+
+/** input type for inserting data into table "e_nade_sources" */
+export interface e_nade_sources_insert_input {description?: (Scalars['String'] | null),nade_lineups?: (nade_lineups_arr_rel_insert_input | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_nade_sources_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_nade_sources_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_nade_sources" */
+export interface e_nade_sources_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_nade_sourcesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_nade_sources" */
+export interface e_nade_sources_on_conflict {constraint: e_nade_sources_constraint,update_columns?: e_nade_sources_update_column[],where?: (e_nade_sources_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_nade_sources". */
+export interface e_nade_sources_order_by {description?: (order_by | null),nade_lineups_aggregate?: (nade_lineups_aggregate_order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_nade_sources */
+export interface e_nade_sources_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_nade_sources" */
+export interface e_nade_sources_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_nade_sources" */
+export interface e_nade_sources_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_nade_sources_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_nade_sources_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_nade_sources_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_nade_sources_set_input | null),
+/** filter the rows which have to be updated */
+where: e_nade_sources_bool_exp}
+
+
+/** columns and relationships of "e_nade_techniques" */
+export interface e_nade_techniquesGenqlSelection{
+    description?: boolean | number
+    /** An array relationship */
+    nade_lineups?: (nade_lineupsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineups_bool_exp | null)} })
+    /** An aggregate relationship */
+    nade_lineups_aggregate?: (nade_lineups_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineups_bool_exp | null)} })
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_nade_techniques" */
+export interface e_nade_techniques_aggregateGenqlSelection{
+    aggregate?: e_nade_techniques_aggregate_fieldsGenqlSelection
+    nodes?: e_nade_techniquesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_nade_techniques" */
+export interface e_nade_techniques_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_nade_techniques_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_nade_techniques_max_fieldsGenqlSelection
+    min?: e_nade_techniques_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_nade_techniques". All fields are combined with a logical 'AND'. */
+export interface e_nade_techniques_bool_exp {_and?: (e_nade_techniques_bool_exp[] | null),_not?: (e_nade_techniques_bool_exp | null),_or?: (e_nade_techniques_bool_exp[] | null),description?: (String_comparison_exp | null),nade_lineups?: (nade_lineups_bool_exp | null),nade_lineups_aggregate?: (nade_lineups_aggregate_bool_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_nade_techniques_enum". All fields are combined with logical 'AND'. */
+export interface e_nade_techniques_enum_comparison_exp {_eq?: (e_nade_techniques_enum | null),_in?: (e_nade_techniques_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_nade_techniques_enum | null),_nin?: (e_nade_techniques_enum[] | null)}
+
+
+/** input type for inserting data into table "e_nade_techniques" */
+export interface e_nade_techniques_insert_input {description?: (Scalars['String'] | null),nade_lineups?: (nade_lineups_arr_rel_insert_input | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_nade_techniques_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_nade_techniques_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_nade_techniques" */
+export interface e_nade_techniques_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_nade_techniquesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_nade_techniques" */
+export interface e_nade_techniques_on_conflict {constraint: e_nade_techniques_constraint,update_columns?: e_nade_techniques_update_column[],where?: (e_nade_techniques_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_nade_techniques". */
+export interface e_nade_techniques_order_by {description?: (order_by | null),nade_lineups_aggregate?: (nade_lineups_aggregate_order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_nade_techniques */
+export interface e_nade_techniques_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_nade_techniques" */
+export interface e_nade_techniques_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_nade_techniques" */
+export interface e_nade_techniques_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_nade_techniques_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_nade_techniques_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_nade_techniques_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_nade_techniques_set_input | null),
+/** filter the rows which have to be updated */
+where: e_nade_techniques_bool_exp}
+
+
+/** columns and relationships of "e_nade_throw_strengths" */
+export interface e_nade_throw_strengthsGenqlSelection{
+    description?: boolean | number
+    /** An array relationship */
+    nade_lineups?: (nade_lineupsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineups_bool_exp | null)} })
+    /** An aggregate relationship */
+    nade_lineups_aggregate?: (nade_lineups_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineups_bool_exp | null)} })
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_nade_throw_strengths" */
+export interface e_nade_throw_strengths_aggregateGenqlSelection{
+    aggregate?: e_nade_throw_strengths_aggregate_fieldsGenqlSelection
+    nodes?: e_nade_throw_strengthsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_nade_throw_strengths" */
+export interface e_nade_throw_strengths_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_nade_throw_strengths_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_nade_throw_strengths_max_fieldsGenqlSelection
+    min?: e_nade_throw_strengths_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_nade_throw_strengths". All fields are combined with a logical 'AND'. */
+export interface e_nade_throw_strengths_bool_exp {_and?: (e_nade_throw_strengths_bool_exp[] | null),_not?: (e_nade_throw_strengths_bool_exp | null),_or?: (e_nade_throw_strengths_bool_exp[] | null),description?: (String_comparison_exp | null),nade_lineups?: (nade_lineups_bool_exp | null),nade_lineups_aggregate?: (nade_lineups_aggregate_bool_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_nade_throw_strengths_enum". All fields are combined with logical 'AND'. */
+export interface e_nade_throw_strengths_enum_comparison_exp {_eq?: (e_nade_throw_strengths_enum | null),_in?: (e_nade_throw_strengths_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_nade_throw_strengths_enum | null),_nin?: (e_nade_throw_strengths_enum[] | null)}
+
+
+/** input type for inserting data into table "e_nade_throw_strengths" */
+export interface e_nade_throw_strengths_insert_input {description?: (Scalars['String'] | null),nade_lineups?: (nade_lineups_arr_rel_insert_input | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_nade_throw_strengths_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_nade_throw_strengths_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_nade_throw_strengths" */
+export interface e_nade_throw_strengths_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_nade_throw_strengthsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_nade_throw_strengths" */
+export interface e_nade_throw_strengths_on_conflict {constraint: e_nade_throw_strengths_constraint,update_columns?: e_nade_throw_strengths_update_column[],where?: (e_nade_throw_strengths_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_nade_throw_strengths". */
+export interface e_nade_throw_strengths_order_by {description?: (order_by | null),nade_lineups_aggregate?: (nade_lineups_aggregate_order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_nade_throw_strengths */
+export interface e_nade_throw_strengths_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_nade_throw_strengths" */
+export interface e_nade_throw_strengths_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_nade_throw_strengths" */
+export interface e_nade_throw_strengths_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_nade_throw_strengths_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_nade_throw_strengths_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_nade_throw_strengths_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_nade_throw_strengths_set_input | null),
+/** filter the rows which have to be updated */
+where: e_nade_throw_strengths_bool_exp}
+
+
+/** columns and relationships of "e_nade_visibility" */
+export interface e_nade_visibilityGenqlSelection{
+    description?: boolean | number
+    /** An array relationship */
+    nade_lineups?: (nade_lineupsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineups_bool_exp | null)} })
+    /** An aggregate relationship */
+    nade_lineups_aggregate?: (nade_lineups_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineups_bool_exp | null)} })
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_nade_visibility" */
+export interface e_nade_visibility_aggregateGenqlSelection{
+    aggregate?: e_nade_visibility_aggregate_fieldsGenqlSelection
+    nodes?: e_nade_visibilityGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_nade_visibility" */
+export interface e_nade_visibility_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_nade_visibility_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_nade_visibility_max_fieldsGenqlSelection
+    min?: e_nade_visibility_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_nade_visibility". All fields are combined with a logical 'AND'. */
+export interface e_nade_visibility_bool_exp {_and?: (e_nade_visibility_bool_exp[] | null),_not?: (e_nade_visibility_bool_exp | null),_or?: (e_nade_visibility_bool_exp[] | null),description?: (String_comparison_exp | null),nade_lineups?: (nade_lineups_bool_exp | null),nade_lineups_aggregate?: (nade_lineups_aggregate_bool_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_nade_visibility_enum". All fields are combined with logical 'AND'. */
+export interface e_nade_visibility_enum_comparison_exp {_eq?: (e_nade_visibility_enum | null),_in?: (e_nade_visibility_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_nade_visibility_enum | null),_nin?: (e_nade_visibility_enum[] | null)}
+
+
+/** input type for inserting data into table "e_nade_visibility" */
+export interface e_nade_visibility_insert_input {description?: (Scalars['String'] | null),nade_lineups?: (nade_lineups_arr_rel_insert_input | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_nade_visibility_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_nade_visibility_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_nade_visibility" */
+export interface e_nade_visibility_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_nade_visibilityGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_nade_visibility" */
+export interface e_nade_visibility_on_conflict {constraint: e_nade_visibility_constraint,update_columns?: e_nade_visibility_update_column[],where?: (e_nade_visibility_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_nade_visibility". */
+export interface e_nade_visibility_order_by {description?: (order_by | null),nade_lineups_aggregate?: (nade_lineups_aggregate_order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_nade_visibility */
+export interface e_nade_visibility_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_nade_visibility" */
+export interface e_nade_visibility_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_nade_visibility" */
+export interface e_nade_visibility_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_nade_visibility_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_nade_visibility_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_nade_visibility_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_nade_visibility_set_input | null),
+/** filter the rows which have to be updated */
+where: e_nade_visibility_bool_exp}
 
 
 /** columns and relationships of "e_notification_types" */
@@ -61062,6 +66544,8 @@ export interface mutation_rootGenqlSelection{
     /** Delete a saved clip and its underlying S3 object */
     deleteClip?: (SuccessOutputGenqlSelection & { __args: {clip_id: Scalars['uuid']} })
     deleteMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
+    /** Delete a nade playbook */
+    deleteNadePlaybook?: (SuccessOutputGenqlSelection & { __args: {playbook_id: Scalars['uuid']} })
     /** Delete a news post. Caller role is verified against public.post_news_role. */
     deleteNewsPost?: (SuccessOutputGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** Delete orphaned S3 objects found by the last scan (admin only). Each key is re-verified against the database before removal. */
@@ -61328,6 +66812,36 @@ export interface mutation_rootGenqlSelection{
     where: e_match_types_bool_exp} })
     /** delete single row from the table: "e_match_types" */
     delete_e_match_types_by_pk?: (e_match_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_nade_practice_statuses" */
+    delete_e_nade_practice_statuses?: (e_nade_practice_statuses_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_nade_practice_statuses_bool_exp} })
+    /** delete single row from the table: "e_nade_practice_statuses" */
+    delete_e_nade_practice_statuses_by_pk?: (e_nade_practice_statusesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_nade_sources" */
+    delete_e_nade_sources?: (e_nade_sources_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_nade_sources_bool_exp} })
+    /** delete single row from the table: "e_nade_sources" */
+    delete_e_nade_sources_by_pk?: (e_nade_sourcesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_nade_techniques" */
+    delete_e_nade_techniques?: (e_nade_techniques_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_nade_techniques_bool_exp} })
+    /** delete single row from the table: "e_nade_techniques" */
+    delete_e_nade_techniques_by_pk?: (e_nade_techniquesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_nade_throw_strengths" */
+    delete_e_nade_throw_strengths?: (e_nade_throw_strengths_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_nade_throw_strengths_bool_exp} })
+    /** delete single row from the table: "e_nade_throw_strengths" */
+    delete_e_nade_throw_strengths_by_pk?: (e_nade_throw_strengthsGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_nade_visibility" */
+    delete_e_nade_visibility?: (e_nade_visibility_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_nade_visibility_bool_exp} })
+    /** delete single row from the table: "e_nade_visibility" */
+    delete_e_nade_visibility_by_pk?: (e_nade_visibilityGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_notification_types" */
     delete_e_notification_types?: (e_notification_types_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -61726,6 +67240,102 @@ export interface mutation_rootGenqlSelection{
     delete_my_friends?: (my_friends_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
     where: my_friends_bool_exp} })
+    /** delete data from the table: "nade_collection_items" */
+    delete_nade_collection_items?: (nade_collection_items_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_collection_items_bool_exp} })
+    /** delete single row from the table: "nade_collection_items" */
+    delete_nade_collection_items_by_pk?: (nade_collection_itemsGenqlSelection & { __args: {collection_id: Scalars['uuid'], nade_lineup_id: Scalars['uuid']} })
+    /** delete data from the table: "nade_collections" */
+    delete_nade_collections?: (nade_collections_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_collections_bool_exp} })
+    /** delete single row from the table: "nade_collections" */
+    delete_nade_collections_by_pk?: (nade_collectionsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "nade_demo_mines" */
+    delete_nade_demo_mines?: (nade_demo_mines_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_demo_mines_bool_exp} })
+    /** delete single row from the table: "nade_demo_mines" */
+    delete_nade_demo_mines_by_pk?: (nade_demo_minesGenqlSelection & { __args: {match_map_demo_id: Scalars['uuid']} })
+    /** delete data from the table: "nade_demo_throws" */
+    delete_nade_demo_throws?: (nade_demo_throws_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_demo_throws_bool_exp} })
+    /** delete single row from the table: "nade_demo_throws" */
+    delete_nade_demo_throws_by_pk?: (nade_demo_throwsGenqlSelection & { __args: {grenade_id: Scalars['Int'], match_map_demo_id: Scalars['uuid']} })
+    /** delete data from the table: "nade_drift_results" */
+    delete_nade_drift_results?: (nade_drift_results_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_drift_results_bool_exp} })
+    /** delete single row from the table: "nade_drift_results" */
+    delete_nade_drift_results_by_pk?: (nade_drift_resultsGenqlSelection & { __args: {nade_drift_scan_id: Scalars['uuid'], nade_lineup_id: Scalars['uuid']} })
+    /** delete data from the table: "nade_drift_scans" */
+    delete_nade_drift_scans?: (nade_drift_scans_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_drift_scans_bool_exp} })
+    /** delete single row from the table: "nade_drift_scans" */
+    delete_nade_drift_scans_by_pk?: (nade_drift_scansGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "nade_lineup_favorites" */
+    delete_nade_lineup_favorites?: (nade_lineup_favorites_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_lineup_favorites_bool_exp} })
+    /** delete single row from the table: "nade_lineup_favorites" */
+    delete_nade_lineup_favorites_by_pk?: (nade_lineup_favoritesGenqlSelection & { __args: {nade_lineup_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** delete data from the table: "nade_lineup_progress" */
+    delete_nade_lineup_progress?: (nade_lineup_progress_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_lineup_progress_bool_exp} })
+    /** delete single row from the table: "nade_lineup_progress" */
+    delete_nade_lineup_progress_by_pk?: (nade_lineup_progressGenqlSelection & { __args: {nade_lineup_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** delete data from the table: "nade_lineup_repairs" */
+    delete_nade_lineup_repairs?: (nade_lineup_repairs_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_lineup_repairs_bool_exp} })
+    /** delete single row from the table: "nade_lineup_repairs" */
+    delete_nade_lineup_repairs_by_pk?: (nade_lineup_repairsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "nade_lineup_votes" */
+    delete_nade_lineup_votes?: (nade_lineup_votes_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_lineup_votes_bool_exp} })
+    /** delete single row from the table: "nade_lineup_votes" */
+    delete_nade_lineup_votes_by_pk?: (nade_lineup_votesGenqlSelection & { __args: {nade_lineup_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** delete data from the table: "nade_lineups" */
+    delete_nade_lineups?: (nade_lineups_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_lineups_bool_exp} })
+    /** delete single row from the table: "nade_lineups" */
+    delete_nade_lineups_by_pk?: (nade_lineupsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "nade_meta_lineups" */
+    delete_nade_meta_lineups?: (nade_meta_lineups_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_meta_lineups_bool_exp} })
+    /** delete single row from the table: "nade_meta_lineups" */
+    delete_nade_meta_lineups_by_pk?: (nade_meta_lineupsGenqlSelection & { __args: {lineup_bucket: Scalars['String']} })
+    /** delete data from the table: "nade_playbook_steps" */
+    delete_nade_playbook_steps?: (nade_playbook_steps_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_playbook_steps_bool_exp} })
+    /** delete single row from the table: "nade_playbook_steps" */
+    delete_nade_playbook_steps_by_pk?: (nade_playbook_stepsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "nade_playbooks" */
+    delete_nade_playbooks?: (nade_playbooks_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_playbooks_bool_exp} })
+    /** delete single row from the table: "nade_playbooks" */
+    delete_nade_playbooks_by_pk?: (nade_playbooksGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "nade_practice_invites" */
+    delete_nade_practice_invites?: (nade_practice_invites_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_practice_invites_bool_exp} })
+    /** delete single row from the table: "nade_practice_invites" */
+    delete_nade_practice_invites_by_pk?: (nade_practice_invitesGenqlSelection & { __args: {nade_practice_session_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** delete data from the table: "nade_practice_sessions" */
+    delete_nade_practice_sessions?: (nade_practice_sessions_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: nade_practice_sessions_bool_exp} })
+    /** delete single row from the table: "nade_practice_sessions" */
+    delete_nade_practice_sessions_by_pk?: (nade_practice_sessionsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "news_articles" */
     delete_news_articles?: (news_articles_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -62085,6 +67695,8 @@ export interface mutation_rootGenqlSelection{
     denyInvite?: (SuccessOutputGenqlSelection & { __args: {invite_id: Scalars['uuid'], type: Scalars['String']} })
     denyNameChange?: (SuccessOutputGenqlSelection & { __args: {name: Scalars['String'], steam_id: Scalars['bigint']} })
     forfeitMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], winning_lineup_id: Scalars['uuid']} })
+    /** Copy a lineup you can see into your own library */
+    forkNadeLineup?: (NadeLineupOutputGenqlSelection & { __args: {collection_id?: (Scalars['uuid'] | null), nade_lineup_id: Scalars['uuid'], name?: (Scalars['String'] | null)} })
     /** Live pod GSI snapshot — slots, sides, alive/dead. Drives the stream-deck. */
     getLiveStreamSpecState?: (LiveStreamSpecStateGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     /** Fetch a plugin's README from its repository */
@@ -62092,6 +67704,8 @@ export interface mutation_rootGenqlSelection{
     getTestUploadLink?: GetTestUploadResponseGenqlSelection
     /** Grant an award to a player or team */
     grantAward?: (AwardRecipientGenqlSelection & { __args: {award_id: Scalars['uuid'], event_id?: (Scalars['uuid'] | null), league_season_id?: (Scalars['uuid'] | null), note?: (Scalars['String'] | null), player_steam_id?: (Scalars['String'] | null), season_id?: (Scalars['uuid'] | null), team_id?: (Scalars['uuid'] | null), tournament_id?: (Scalars['uuid'] | null)} })
+    /** Seed the nade library from an operator-supplied payload */
+    importNadeLineups?: (NadeImportOutputGenqlSelection & { __args: {dry_run?: (Scalars['Boolean'] | null), payload: Scalars['jsonb']} })
     /** insert data into the table: "_map_pool" */
     insert__map_pool?: (_map_pool_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -62608,6 +68222,66 @@ export interface mutation_rootGenqlSelection{
     object: e_match_types_insert_input, 
     /** upsert condition */
     on_conflict?: (e_match_types_on_conflict | null)} })
+    /** insert data into the table: "e_nade_practice_statuses" */
+    insert_e_nade_practice_statuses?: (e_nade_practice_statuses_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_nade_practice_statuses_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_nade_practice_statuses_on_conflict | null)} })
+    /** insert a single row into the table: "e_nade_practice_statuses" */
+    insert_e_nade_practice_statuses_one?: (e_nade_practice_statusesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_nade_practice_statuses_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_nade_practice_statuses_on_conflict | null)} })
+    /** insert data into the table: "e_nade_sources" */
+    insert_e_nade_sources?: (e_nade_sources_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_nade_sources_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_nade_sources_on_conflict | null)} })
+    /** insert a single row into the table: "e_nade_sources" */
+    insert_e_nade_sources_one?: (e_nade_sourcesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_nade_sources_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_nade_sources_on_conflict | null)} })
+    /** insert data into the table: "e_nade_techniques" */
+    insert_e_nade_techniques?: (e_nade_techniques_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_nade_techniques_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_nade_techniques_on_conflict | null)} })
+    /** insert a single row into the table: "e_nade_techniques" */
+    insert_e_nade_techniques_one?: (e_nade_techniquesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_nade_techniques_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_nade_techniques_on_conflict | null)} })
+    /** insert data into the table: "e_nade_throw_strengths" */
+    insert_e_nade_throw_strengths?: (e_nade_throw_strengths_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_nade_throw_strengths_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_nade_throw_strengths_on_conflict | null)} })
+    /** insert a single row into the table: "e_nade_throw_strengths" */
+    insert_e_nade_throw_strengths_one?: (e_nade_throw_strengthsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_nade_throw_strengths_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_nade_throw_strengths_on_conflict | null)} })
+    /** insert data into the table: "e_nade_visibility" */
+    insert_e_nade_visibility?: (e_nade_visibility_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_nade_visibility_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_nade_visibility_on_conflict | null)} })
+    /** insert a single row into the table: "e_nade_visibility" */
+    insert_e_nade_visibility_one?: (e_nade_visibilityGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_nade_visibility_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_nade_visibility_on_conflict | null)} })
     /** insert data into the table: "e_notification_types" */
     insert_e_notification_types?: (e_notification_types_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -63404,6 +69078,198 @@ export interface mutation_rootGenqlSelection{
     insert_my_friends_one?: (my_friendsGenqlSelection & { __args: {
     /** the row to be inserted */
     object: my_friends_insert_input} })
+    /** insert data into the table: "nade_collection_items" */
+    insert_nade_collection_items?: (nade_collection_items_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_collection_items_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_collection_items_on_conflict | null)} })
+    /** insert a single row into the table: "nade_collection_items" */
+    insert_nade_collection_items_one?: (nade_collection_itemsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_collection_items_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_collection_items_on_conflict | null)} })
+    /** insert data into the table: "nade_collections" */
+    insert_nade_collections?: (nade_collections_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_collections_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_collections_on_conflict | null)} })
+    /** insert a single row into the table: "nade_collections" */
+    insert_nade_collections_one?: (nade_collectionsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_collections_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_collections_on_conflict | null)} })
+    /** insert data into the table: "nade_demo_mines" */
+    insert_nade_demo_mines?: (nade_demo_mines_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_demo_mines_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_demo_mines_on_conflict | null)} })
+    /** insert a single row into the table: "nade_demo_mines" */
+    insert_nade_demo_mines_one?: (nade_demo_minesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_demo_mines_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_demo_mines_on_conflict | null)} })
+    /** insert data into the table: "nade_demo_throws" */
+    insert_nade_demo_throws?: (nade_demo_throws_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_demo_throws_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_demo_throws_on_conflict | null)} })
+    /** insert a single row into the table: "nade_demo_throws" */
+    insert_nade_demo_throws_one?: (nade_demo_throwsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_demo_throws_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_demo_throws_on_conflict | null)} })
+    /** insert data into the table: "nade_drift_results" */
+    insert_nade_drift_results?: (nade_drift_results_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_drift_results_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_drift_results_on_conflict | null)} })
+    /** insert a single row into the table: "nade_drift_results" */
+    insert_nade_drift_results_one?: (nade_drift_resultsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_drift_results_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_drift_results_on_conflict | null)} })
+    /** insert data into the table: "nade_drift_scans" */
+    insert_nade_drift_scans?: (nade_drift_scans_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_drift_scans_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_drift_scans_on_conflict | null)} })
+    /** insert a single row into the table: "nade_drift_scans" */
+    insert_nade_drift_scans_one?: (nade_drift_scansGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_drift_scans_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_drift_scans_on_conflict | null)} })
+    /** insert data into the table: "nade_lineup_favorites" */
+    insert_nade_lineup_favorites?: (nade_lineup_favorites_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_lineup_favorites_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_lineup_favorites_on_conflict | null)} })
+    /** insert a single row into the table: "nade_lineup_favorites" */
+    insert_nade_lineup_favorites_one?: (nade_lineup_favoritesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_lineup_favorites_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_lineup_favorites_on_conflict | null)} })
+    /** insert data into the table: "nade_lineup_progress" */
+    insert_nade_lineup_progress?: (nade_lineup_progress_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_lineup_progress_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_lineup_progress_on_conflict | null)} })
+    /** insert a single row into the table: "nade_lineup_progress" */
+    insert_nade_lineup_progress_one?: (nade_lineup_progressGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_lineup_progress_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_lineup_progress_on_conflict | null)} })
+    /** insert data into the table: "nade_lineup_repairs" */
+    insert_nade_lineup_repairs?: (nade_lineup_repairs_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_lineup_repairs_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_lineup_repairs_on_conflict | null)} })
+    /** insert a single row into the table: "nade_lineup_repairs" */
+    insert_nade_lineup_repairs_one?: (nade_lineup_repairsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_lineup_repairs_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_lineup_repairs_on_conflict | null)} })
+    /** insert data into the table: "nade_lineup_votes" */
+    insert_nade_lineup_votes?: (nade_lineup_votes_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_lineup_votes_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_lineup_votes_on_conflict | null)} })
+    /** insert a single row into the table: "nade_lineup_votes" */
+    insert_nade_lineup_votes_one?: (nade_lineup_votesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_lineup_votes_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_lineup_votes_on_conflict | null)} })
+    /** insert data into the table: "nade_lineups" */
+    insert_nade_lineups?: (nade_lineups_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_lineups_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_lineups_on_conflict | null)} })
+    /** insert a single row into the table: "nade_lineups" */
+    insert_nade_lineups_one?: (nade_lineupsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_lineups_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_lineups_on_conflict | null)} })
+    /** insert data into the table: "nade_meta_lineups" */
+    insert_nade_meta_lineups?: (nade_meta_lineups_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_meta_lineups_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_meta_lineups_on_conflict | null)} })
+    /** insert a single row into the table: "nade_meta_lineups" */
+    insert_nade_meta_lineups_one?: (nade_meta_lineupsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_meta_lineups_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_meta_lineups_on_conflict | null)} })
+    /** insert data into the table: "nade_playbook_steps" */
+    insert_nade_playbook_steps?: (nade_playbook_steps_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_playbook_steps_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_playbook_steps_on_conflict | null)} })
+    /** insert a single row into the table: "nade_playbook_steps" */
+    insert_nade_playbook_steps_one?: (nade_playbook_stepsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_playbook_steps_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_playbook_steps_on_conflict | null)} })
+    /** insert data into the table: "nade_playbooks" */
+    insert_nade_playbooks?: (nade_playbooks_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_playbooks_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_playbooks_on_conflict | null)} })
+    /** insert a single row into the table: "nade_playbooks" */
+    insert_nade_playbooks_one?: (nade_playbooksGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_playbooks_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_playbooks_on_conflict | null)} })
+    /** insert data into the table: "nade_practice_invites" */
+    insert_nade_practice_invites?: (nade_practice_invites_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_practice_invites_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_practice_invites_on_conflict | null)} })
+    /** insert a single row into the table: "nade_practice_invites" */
+    insert_nade_practice_invites_one?: (nade_practice_invitesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_practice_invites_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_practice_invites_on_conflict | null)} })
+    /** insert data into the table: "nade_practice_sessions" */
+    insert_nade_practice_sessions?: (nade_practice_sessions_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: nade_practice_sessions_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (nade_practice_sessions_on_conflict | null)} })
+    /** insert a single row into the table: "nade_practice_sessions" */
+    insert_nade_practice_sessions_one?: (nade_practice_sessionsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: nade_practice_sessions_insert_input, 
+    /** upsert condition */
+    on_conflict?: (nade_practice_sessions_on_conflict | null)} })
     /** insert data into the table: "news_articles" */
     insert_news_articles?: (news_articles_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -64118,10 +69984,14 @@ export interface mutation_rootGenqlSelection{
     on_conflict?: (v_team_stage_results_on_conflict | null)} })
     /** Install a game plugin into a node's plugin store */
     installGamePlugin?: (SuccessOutputGenqlSelection & { __args: {slug: Scalars['String'], version?: (Scalars['String'] | null)} })
+    /** Invite players to a nade practice session */
+    inviteToNadePractice?: (SuccessOutputGenqlSelection & { __args: {session_id: Scalars['uuid'], steam_ids: Scalars['String'][]} })
     /** joinDraftGame */
     joinDraftGame?: (SuccessOutputGenqlSelection & { __args: {draftGameId: Scalars['uuid'], inviteCode?: (Scalars['String'] | null)} })
     /** joinDraftGameAsParty */
     joinDraftGameAsParty?: (SuccessOutputGenqlSelection & { __args: {draftGameId: Scalars['uuid'], inviteCode?: (Scalars['String'] | null)} })
+    /** Join a nade practice session */
+    joinNadePractice?: (NadePracticeSessionOutputGenqlSelection & { __args?: {invite_code?: (Scalars['String'] | null), session_id?: (Scalars['uuid'] | null)} })
     kickServerPlayer?: (KickResultGenqlSelection & { __args: {reason?: (Scalars['String'] | null), serverId: Scalars['String'], steam_id: Scalars['String']} })
     /** execute VOLATILE function "league_award_forfeit" which returns "matches" */
     league_award_forfeit?: (matchesGenqlSelection & { __args: {
@@ -64138,9 +70008,13 @@ export interface mutation_rootGenqlSelection{
     /** filter the rows returned */
     where?: (matches_bool_exp | null)} })
     leaveLineup?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
+    /** Leave a nade practice session */
+    leaveNadePractice?: (SuccessOutputGenqlSelection & { __args: {session_id: Scalars['uuid']} })
     linkSteamMatchHistory?: (SteamMatchHistoryLinkOutputGenqlSelection & { __args: {auth_code: Scalars['String'], share_code: Scalars['String']} })
     /** Load dev fixture data (dev only) */
     loadFixtures?: SuccessOutputGenqlSelection
+    /** Load a nade playbook into a running practice session */
+    loadNadePlaybookIntoSession?: (SuccessOutputGenqlSelection & { __args: {playbook_id?: (Scalars['uuid'] | null), session_id: Scalars['uuid']} })
     /** logout */
     logout?: SuccessOutputGenqlSelection
     /** Move file or directory on game server */
@@ -64154,6 +70028,8 @@ export interface mutation_rootGenqlSelection{
     previewDraftGame?: (DraftGamePreviewOutputGenqlSelection & { __args: {draftGameId: Scalars['uuid'], inviteCode?: (Scalars['String'] | null)} })
     /** Resolve a game mode into the plugins and cfg a server would load */
     previewGameMode?: (PreviewGameModeOutputGenqlSelection & { __args: {gameModeId: Scalars['uuid']} })
+    /** Delete every lineup that came from one origin source */
+    purgeNadeLineupSource?: (NadePurgeOutputGenqlSelection & { __args: {dry_run?: (Scalars['Boolean'] | null), origin_source: Scalars['String']} })
     /** Build a multi-segment ClipSpec from a player+preset and queue it via the batch render path (no live demo session required) */
     queueClipFromPreset?: (CreateClipRenderOutputGenqlSelection & { __args: {fps?: (Scalars['Int'] | null), match_map_id: Scalars['uuid'], preset: Scalars['String'], resolution?: (Scalars['String'] | null), target_name?: (Scalars['String'] | null), target_steam_id: Scalars['String'], title?: (Scalars['String'] | null)} })
     randomizeTeams?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
@@ -64220,6 +70096,8 @@ export interface mutation_rootGenqlSelection{
     order_by?: (league_divisions_order_by[] | null), 
     /** filter the rows returned */
     where?: (league_divisions_bool_exp | null)} })
+    /** Re-solve a lineup a drift scan says the map moved */
+    repairNadeLineup?: (NadeSolveOutputGenqlSelection & { __args: {nade_lineup_id: Scalars['uuid'], session_id: Scalars['uuid']} })
     /** Re-parse every demo in the system (admin only). Runs one demo at a time in the background; this can take a very long time. Track via reparseAllDemosStatus. */
     reparseAllDemos?: ReparseAllStartedOutputGenqlSelection
     /** Return the progress of the reparse-all-demos run (admin only). */
@@ -64260,6 +70138,12 @@ export interface mutation_rootGenqlSelection{
     sanctionServerPlayer?: (SanctionResultGenqlSelection & { __args: {duration?: (Scalars['Float'] | null), reason?: (Scalars['String'] | null), serverId?: (Scalars['String'] | null), steam_id: Scalars['String'], type: Scalars['String']} })
     /** Create or update a catalog award */
     saveAward?: (AwardGenqlSelection & { __args: {allow_multiple?: (Scalars['Boolean'] | null), description?: (Scalars['String'] | null), event_id?: (Scalars['uuid'] | null), id?: (Scalars['uuid'] | null), league_season_id?: (Scalars['uuid'] | null), name: Scalars['String'], season_id?: (Scalars['uuid'] | null), silhouette?: (Scalars['Int'] | null), tier: Scalars['String'], tournament_id?: (Scalars['uuid'] | null)} })
+    /** Mine a lineup out of a parsed demo */
+    saveNadeLineupFromDemo?: (NadeLineupOutputGenqlSelection & { __args: {collection_id?: (Scalars['uuid'] | null), description?: (Scalars['String'] | null), grenade_id: Scalars['Int'], match_id: Scalars['uuid'], match_map_id: Scalars['uuid'], name: Scalars['String'], tags?: (Scalars['String'][] | null), team_id?: (Scalars['uuid'] | null), visibility?: (Scalars['String'] | null)} })
+    /** Save a lineup recorded in a practice session */
+    saveNadeLineupFromPractice?: (NadeLineupOutputGenqlSelection & { __args: {collection_id?: (Scalars['uuid'] | null), description?: (Scalars['String'] | null), nade_lineup_id: Scalars['uuid'], name: Scalars['String'], session_id: Scalars['uuid'], tags?: (Scalars['String'][] | null), team_id?: (Scalars['uuid'] | null), visibility?: (Scalars['String'] | null)} })
+    /** Create or update a nade playbook and its steps */
+    saveNadePlaybook?: (NadePlaybookOutputGenqlSelection & { __args: {description?: (Scalars['String'] | null), map_name: Scalars['String'], name: Scalars['String'], playbook_id?: (Scalars['uuid'] | null), side: Scalars['String'], steps?: (NadePlaybookStepInput[] | null), team_id?: (Scalars['uuid'] | null), visibility?: (Scalars['String'] | null)} })
     /** Create or update a first-party news post. Caller role is verified against public.post_news_role. */
     saveNewsPost?: (NewsPostGenqlSelection & { __args: {content_markdown: Scalars['String'], cover_image_url?: (Scalars['String'] | null), id?: (Scalars['uuid'] | null), teaser?: (Scalars['String'] | null), title: Scalars['String']} })
     /** Scan S3 for objects not referenced in the database (admin only). Runs in the background; results land in the logs and orphanedDemosScanResult. */
@@ -64282,6 +70166,8 @@ export interface mutation_rootGenqlSelection{
     setTournamentAward?: (TournamentAwardGenqlSelection & { __args: {award_id?: (Scalars['uuid'] | null), custom_name?: (Scalars['String'] | null), placement: Scalars['Int'], silhouette?: (Scalars['Int'] | null), tournament_id: Scalars['uuid']} })
     setupGameServer?: SetupGameServeOutputGenqlSelection
     skipShaders?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
+    /** Ask a practice server to solve a throw onto a point */
+    solveNadeLineup?: (NadeSolveOutputGenqlSelection & { __args: {from_x?: (Scalars['Float'] | null), from_y?: (Scalars['Float'] | null), from_z?: (Scalars['Float'] | null), name?: (Scalars['String'] | null), session_id: Scalars['uuid'], target_x: Scalars['Float'], target_y: Scalars['Float'], target_z: Scalars['Float'], tolerance?: (Scalars['Float'] | null), utility_type?: (Scalars['String'] | null)} })
     specAutodirector?: (SuccessOutputGenqlSelection & { __args: {enabled: Scalars['Boolean'], match_id: Scalars['uuid']} })
     specClick?: (SuccessOutputGenqlSelection & { __args: {button: Scalars['String'], match_id: Scalars['uuid']} })
     specHud?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], visible: Scalars['Boolean']} })
@@ -64294,8 +70180,14 @@ export interface mutation_rootGenqlSelection{
     startLive?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], mode: Scalars['String']} })
     /** startMatch */
     startMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], server_id?: (Scalars['uuid'] | null)} })
+    /** Re-fly a map's lineups against two collision meshes */
+    startNadeDriftScan?: (NadeDriftScanOutputGenqlSelection & { __args: {from_revision?: (Scalars['String'] | null), map_name: Scalars['String'], to_revision?: (Scalars['String'] | null)} })
+    /** Start a nade practice session */
+    startNadePractice?: (NadePracticeSessionOutputGenqlSelection & { __args: {collection_id?: (Scalars['uuid'] | null), is_open?: (Scalars['Boolean'] | null), map_name: Scalars['String'], region?: (Scalars['String'] | null), team_id?: (Scalars['uuid'] | null)} })
     stopGpuSession?: (SuccessOutputGenqlSelection & { __args: {game_server_node_id: Scalars['uuid']} })
     stopLive?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
+    /** Stop a nade practice session */
+    stopNadePractice?: (SuccessOutputGenqlSelection & { __args: {session_id: Scalars['uuid']} })
     stopWatchDemo?: (SuccessOutputGenqlSelection & { __args: {match_map_id: Scalars['uuid']} })
     /** Submit a Steam Guard code for a presence bot account */
     submitSteamPresenceSteamGuard?: (SuccessOutputGenqlSelection & { __args: {account_id: Scalars['String'], code: Scalars['String']} })
@@ -65013,6 +70905,76 @@ export interface mutation_rootGenqlSelection{
     update_e_match_types_many?: (e_match_types_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_match_types_updates[]} })
+    /** update data of the table: "e_nade_practice_statuses" */
+    update_e_nade_practice_statuses?: (e_nade_practice_statuses_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_nade_practice_statuses_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_nade_practice_statuses_bool_exp} })
+    /** update single row of the table: "e_nade_practice_statuses" */
+    update_e_nade_practice_statuses_by_pk?: (e_nade_practice_statusesGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_nade_practice_statuses_set_input | null), pk_columns: e_nade_practice_statuses_pk_columns_input} })
+    /** update multiples rows of table: "e_nade_practice_statuses" */
+    update_e_nade_practice_statuses_many?: (e_nade_practice_statuses_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_nade_practice_statuses_updates[]} })
+    /** update data of the table: "e_nade_sources" */
+    update_e_nade_sources?: (e_nade_sources_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_nade_sources_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_nade_sources_bool_exp} })
+    /** update single row of the table: "e_nade_sources" */
+    update_e_nade_sources_by_pk?: (e_nade_sourcesGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_nade_sources_set_input | null), pk_columns: e_nade_sources_pk_columns_input} })
+    /** update multiples rows of table: "e_nade_sources" */
+    update_e_nade_sources_many?: (e_nade_sources_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_nade_sources_updates[]} })
+    /** update data of the table: "e_nade_techniques" */
+    update_e_nade_techniques?: (e_nade_techniques_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_nade_techniques_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_nade_techniques_bool_exp} })
+    /** update single row of the table: "e_nade_techniques" */
+    update_e_nade_techniques_by_pk?: (e_nade_techniquesGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_nade_techniques_set_input | null), pk_columns: e_nade_techniques_pk_columns_input} })
+    /** update multiples rows of table: "e_nade_techniques" */
+    update_e_nade_techniques_many?: (e_nade_techniques_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_nade_techniques_updates[]} })
+    /** update data of the table: "e_nade_throw_strengths" */
+    update_e_nade_throw_strengths?: (e_nade_throw_strengths_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_nade_throw_strengths_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_nade_throw_strengths_bool_exp} })
+    /** update single row of the table: "e_nade_throw_strengths" */
+    update_e_nade_throw_strengths_by_pk?: (e_nade_throw_strengthsGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_nade_throw_strengths_set_input | null), pk_columns: e_nade_throw_strengths_pk_columns_input} })
+    /** update multiples rows of table: "e_nade_throw_strengths" */
+    update_e_nade_throw_strengths_many?: (e_nade_throw_strengths_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_nade_throw_strengths_updates[]} })
+    /** update data of the table: "e_nade_visibility" */
+    update_e_nade_visibility?: (e_nade_visibility_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_nade_visibility_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_nade_visibility_bool_exp} })
+    /** update single row of the table: "e_nade_visibility" */
+    update_e_nade_visibility_by_pk?: (e_nade_visibilityGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_nade_visibility_set_input | null), pk_columns: e_nade_visibility_pk_columns_input} })
+    /** update multiples rows of table: "e_nade_visibility" */
+    update_e_nade_visibility_many?: (e_nade_visibility_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_nade_visibility_updates[]} })
     /** update data of the table: "e_notification_types" */
     update_e_notification_types?: (e_notification_types_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -66257,6 +72219,314 @@ export interface mutation_rootGenqlSelection{
     update_my_friends_many?: (my_friends_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: my_friends_updates[]} })
+    /** update data of the table: "nade_collection_items" */
+    update_nade_collection_items?: (nade_collection_items_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_collection_items_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_collection_items_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_collection_items_bool_exp} })
+    /** update single row of the table: "nade_collection_items" */
+    update_nade_collection_items_by_pk?: (nade_collection_itemsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_collection_items_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_collection_items_set_input | null), pk_columns: nade_collection_items_pk_columns_input} })
+    /** update multiples rows of table: "nade_collection_items" */
+    update_nade_collection_items_many?: (nade_collection_items_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_collection_items_updates[]} })
+    /** update data of the table: "nade_collections" */
+    update_nade_collections?: (nade_collections_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_collections_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_collections_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_collections_bool_exp} })
+    /** update single row of the table: "nade_collections" */
+    update_nade_collections_by_pk?: (nade_collectionsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_collections_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_collections_set_input | null), pk_columns: nade_collections_pk_columns_input} })
+    /** update multiples rows of table: "nade_collections" */
+    update_nade_collections_many?: (nade_collections_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_collections_updates[]} })
+    /** update data of the table: "nade_demo_mines" */
+    update_nade_demo_mines?: (nade_demo_mines_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_demo_mines_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_demo_mines_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_demo_mines_bool_exp} })
+    /** update single row of the table: "nade_demo_mines" */
+    update_nade_demo_mines_by_pk?: (nade_demo_minesGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_demo_mines_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_demo_mines_set_input | null), pk_columns: nade_demo_mines_pk_columns_input} })
+    /** update multiples rows of table: "nade_demo_mines" */
+    update_nade_demo_mines_many?: (nade_demo_mines_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_demo_mines_updates[]} })
+    /** update data of the table: "nade_demo_throws" */
+    update_nade_demo_throws?: (nade_demo_throws_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_demo_throws_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_demo_throws_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_demo_throws_bool_exp} })
+    /** update single row of the table: "nade_demo_throws" */
+    update_nade_demo_throws_by_pk?: (nade_demo_throwsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_demo_throws_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_demo_throws_set_input | null), pk_columns: nade_demo_throws_pk_columns_input} })
+    /** update multiples rows of table: "nade_demo_throws" */
+    update_nade_demo_throws_many?: (nade_demo_throws_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_demo_throws_updates[]} })
+    /** update data of the table: "nade_drift_results" */
+    update_nade_drift_results?: (nade_drift_results_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_drift_results_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_drift_results_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_drift_results_bool_exp} })
+    /** update single row of the table: "nade_drift_results" */
+    update_nade_drift_results_by_pk?: (nade_drift_resultsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_drift_results_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_drift_results_set_input | null), pk_columns: nade_drift_results_pk_columns_input} })
+    /** update multiples rows of table: "nade_drift_results" */
+    update_nade_drift_results_many?: (nade_drift_results_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_drift_results_updates[]} })
+    /** update data of the table: "nade_drift_scans" */
+    update_nade_drift_scans?: (nade_drift_scans_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_drift_scans_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_drift_scans_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_drift_scans_bool_exp} })
+    /** update single row of the table: "nade_drift_scans" */
+    update_nade_drift_scans_by_pk?: (nade_drift_scansGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_drift_scans_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_drift_scans_set_input | null), pk_columns: nade_drift_scans_pk_columns_input} })
+    /** update multiples rows of table: "nade_drift_scans" */
+    update_nade_drift_scans_many?: (nade_drift_scans_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_drift_scans_updates[]} })
+    /** update data of the table: "nade_lineup_favorites" */
+    update_nade_lineup_favorites?: (nade_lineup_favorites_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_lineup_favorites_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_lineup_favorites_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_lineup_favorites_bool_exp} })
+    /** update single row of the table: "nade_lineup_favorites" */
+    update_nade_lineup_favorites_by_pk?: (nade_lineup_favoritesGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_lineup_favorites_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_lineup_favorites_set_input | null), pk_columns: nade_lineup_favorites_pk_columns_input} })
+    /** update multiples rows of table: "nade_lineup_favorites" */
+    update_nade_lineup_favorites_many?: (nade_lineup_favorites_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_lineup_favorites_updates[]} })
+    /** update data of the table: "nade_lineup_progress" */
+    update_nade_lineup_progress?: (nade_lineup_progress_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_lineup_progress_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_lineup_progress_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_lineup_progress_bool_exp} })
+    /** update single row of the table: "nade_lineup_progress" */
+    update_nade_lineup_progress_by_pk?: (nade_lineup_progressGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_lineup_progress_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_lineup_progress_set_input | null), pk_columns: nade_lineup_progress_pk_columns_input} })
+    /** update multiples rows of table: "nade_lineup_progress" */
+    update_nade_lineup_progress_many?: (nade_lineup_progress_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_lineup_progress_updates[]} })
+    /** update data of the table: "nade_lineup_repairs" */
+    update_nade_lineup_repairs?: (nade_lineup_repairs_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_lineup_repairs_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_lineup_repairs_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_lineup_repairs_bool_exp} })
+    /** update single row of the table: "nade_lineup_repairs" */
+    update_nade_lineup_repairs_by_pk?: (nade_lineup_repairsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_lineup_repairs_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_lineup_repairs_set_input | null), pk_columns: nade_lineup_repairs_pk_columns_input} })
+    /** update multiples rows of table: "nade_lineup_repairs" */
+    update_nade_lineup_repairs_many?: (nade_lineup_repairs_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_lineup_repairs_updates[]} })
+    /** update data of the table: "nade_lineup_votes" */
+    update_nade_lineup_votes?: (nade_lineup_votes_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_lineup_votes_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_lineup_votes_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_lineup_votes_bool_exp} })
+    /** update single row of the table: "nade_lineup_votes" */
+    update_nade_lineup_votes_by_pk?: (nade_lineup_votesGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_lineup_votes_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_lineup_votes_set_input | null), pk_columns: nade_lineup_votes_pk_columns_input} })
+    /** update multiples rows of table: "nade_lineup_votes" */
+    update_nade_lineup_votes_many?: (nade_lineup_votes_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_lineup_votes_updates[]} })
+    /** update data of the table: "nade_lineups" */
+    update_nade_lineups?: (nade_lineups_mutation_responseGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (nade_lineups_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (nade_lineups_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (nade_lineups_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (nade_lineups_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_lineups_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (nade_lineups_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_lineups_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_lineups_bool_exp} })
+    /** update single row of the table: "nade_lineups" */
+    update_nade_lineups_by_pk?: (nade_lineupsGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (nade_lineups_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (nade_lineups_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (nade_lineups_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (nade_lineups_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_lineups_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (nade_lineups_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_lineups_set_input | null), pk_columns: nade_lineups_pk_columns_input} })
+    /** update multiples rows of table: "nade_lineups" */
+    update_nade_lineups_many?: (nade_lineups_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_lineups_updates[]} })
+    /** update data of the table: "nade_meta_lineups" */
+    update_nade_meta_lineups?: (nade_meta_lineups_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_meta_lineups_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_meta_lineups_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_meta_lineups_bool_exp} })
+    /** update single row of the table: "nade_meta_lineups" */
+    update_nade_meta_lineups_by_pk?: (nade_meta_lineupsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_meta_lineups_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_meta_lineups_set_input | null), pk_columns: nade_meta_lineups_pk_columns_input} })
+    /** update multiples rows of table: "nade_meta_lineups" */
+    update_nade_meta_lineups_many?: (nade_meta_lineups_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_meta_lineups_updates[]} })
+    /** update data of the table: "nade_playbook_steps" */
+    update_nade_playbook_steps?: (nade_playbook_steps_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_playbook_steps_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_playbook_steps_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_playbook_steps_bool_exp} })
+    /** update single row of the table: "nade_playbook_steps" */
+    update_nade_playbook_steps_by_pk?: (nade_playbook_stepsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_playbook_steps_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_playbook_steps_set_input | null), pk_columns: nade_playbook_steps_pk_columns_input} })
+    /** update multiples rows of table: "nade_playbook_steps" */
+    update_nade_playbook_steps_many?: (nade_playbook_steps_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_playbook_steps_updates[]} })
+    /** update data of the table: "nade_playbooks" */
+    update_nade_playbooks?: (nade_playbooks_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_playbooks_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_playbooks_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_playbooks_bool_exp} })
+    /** update single row of the table: "nade_playbooks" */
+    update_nade_playbooks_by_pk?: (nade_playbooksGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_playbooks_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_playbooks_set_input | null), pk_columns: nade_playbooks_pk_columns_input} })
+    /** update multiples rows of table: "nade_playbooks" */
+    update_nade_playbooks_many?: (nade_playbooks_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_playbooks_updates[]} })
+    /** update data of the table: "nade_practice_invites" */
+    update_nade_practice_invites?: (nade_practice_invites_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_practice_invites_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_practice_invites_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_practice_invites_bool_exp} })
+    /** update single row of the table: "nade_practice_invites" */
+    update_nade_practice_invites_by_pk?: (nade_practice_invitesGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_practice_invites_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_practice_invites_set_input | null), pk_columns: nade_practice_invites_pk_columns_input} })
+    /** update multiples rows of table: "nade_practice_invites" */
+    update_nade_practice_invites_many?: (nade_practice_invites_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_practice_invites_updates[]} })
+    /** update data of the table: "nade_practice_sessions" */
+    update_nade_practice_sessions?: (nade_practice_sessions_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_practice_sessions_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_practice_sessions_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: nade_practice_sessions_bool_exp} })
+    /** update single row of the table: "nade_practice_sessions" */
+    update_nade_practice_sessions_by_pk?: (nade_practice_sessionsGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (nade_practice_sessions_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (nade_practice_sessions_set_input | null), pk_columns: nade_practice_sessions_pk_columns_input} })
+    /** update multiples rows of table: "nade_practice_sessions" */
+    update_nade_practice_sessions_many?: (nade_practice_sessions_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: nade_practice_sessions_updates[]} })
     /** update data of the table: "news_articles" */
     update_news_articles?: (news_articles_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -67799,6 +74069,4964 @@ export interface my_friends_variance_fieldsGenqlSelection{
 
 /** order by variance() on columns of table "v_my_friends" */
 export interface my_friends_variance_order_by {days_since_last_ban?: (order_by | null),faceit_elo?: (order_by | null),faceit_skill_level?: (order_by | null),friend_steam_id?: (order_by | null),game_ban_count?: (order_by | null),invited_by_steam_id?: (order_by | null),premier_rank?: (order_by | null),steam_id?: (order_by | null),vac_ban_count?: (order_by | null)}
+
+
+/** columns and relationships of "nade_collection_items" */
+export interface nade_collection_itemsGenqlSelection{
+    /** An object relationship */
+    collection?: nade_collectionsGenqlSelection
+    collection_id?: boolean | number
+    created_at?: boolean | number
+    /** An object relationship */
+    nade_lineup?: nade_lineupsGenqlSelection
+    nade_lineup_id?: boolean | number
+    note?: boolean | number
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_collection_items" */
+export interface nade_collection_items_aggregateGenqlSelection{
+    aggregate?: nade_collection_items_aggregate_fieldsGenqlSelection
+    nodes?: nade_collection_itemsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_collection_items_aggregate_bool_exp {count?: (nade_collection_items_aggregate_bool_exp_count | null)}
+
+export interface nade_collection_items_aggregate_bool_exp_count {arguments?: (nade_collection_items_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (nade_collection_items_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "nade_collection_items" */
+export interface nade_collection_items_aggregate_fieldsGenqlSelection{
+    avg?: nade_collection_items_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_collection_items_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_collection_items_max_fieldsGenqlSelection
+    min?: nade_collection_items_min_fieldsGenqlSelection
+    stddev?: nade_collection_items_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_collection_items_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_collection_items_stddev_samp_fieldsGenqlSelection
+    sum?: nade_collection_items_sum_fieldsGenqlSelection
+    var_pop?: nade_collection_items_var_pop_fieldsGenqlSelection
+    var_samp?: nade_collection_items_var_samp_fieldsGenqlSelection
+    variance?: nade_collection_items_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "nade_collection_items" */
+export interface nade_collection_items_aggregate_order_by {avg?: (nade_collection_items_avg_order_by | null),count?: (order_by | null),max?: (nade_collection_items_max_order_by | null),min?: (nade_collection_items_min_order_by | null),stddev?: (nade_collection_items_stddev_order_by | null),stddev_pop?: (nade_collection_items_stddev_pop_order_by | null),stddev_samp?: (nade_collection_items_stddev_samp_order_by | null),sum?: (nade_collection_items_sum_order_by | null),var_pop?: (nade_collection_items_var_pop_order_by | null),var_samp?: (nade_collection_items_var_samp_order_by | null),variance?: (nade_collection_items_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "nade_collection_items" */
+export interface nade_collection_items_arr_rel_insert_input {data: nade_collection_items_insert_input[],
+/** upsert condition */
+on_conflict?: (nade_collection_items_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface nade_collection_items_avg_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "nade_collection_items" */
+export interface nade_collection_items_avg_order_by {position?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "nade_collection_items". All fields are combined with a logical 'AND'. */
+export interface nade_collection_items_bool_exp {_and?: (nade_collection_items_bool_exp[] | null),_not?: (nade_collection_items_bool_exp | null),_or?: (nade_collection_items_bool_exp[] | null),collection?: (nade_collections_bool_exp | null),collection_id?: (uuid_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),nade_lineup?: (nade_lineups_bool_exp | null),nade_lineup_id?: (uuid_comparison_exp | null),note?: (String_comparison_exp | null),position?: (Int_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_collection_items" */
+export interface nade_collection_items_inc_input {position?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "nade_collection_items" */
+export interface nade_collection_items_insert_input {collection?: (nade_collections_obj_rel_insert_input | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),nade_lineup?: (nade_lineups_obj_rel_insert_input | null),nade_lineup_id?: (Scalars['uuid'] | null),note?: (Scalars['String'] | null),position?: (Scalars['Int'] | null)}
+
+
+/** aggregate max on columns */
+export interface nade_collection_items_max_fieldsGenqlSelection{
+    collection_id?: boolean | number
+    created_at?: boolean | number
+    nade_lineup_id?: boolean | number
+    note?: boolean | number
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "nade_collection_items" */
+export interface nade_collection_items_max_order_by {collection_id?: (order_by | null),created_at?: (order_by | null),nade_lineup_id?: (order_by | null),note?: (order_by | null),position?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface nade_collection_items_min_fieldsGenqlSelection{
+    collection_id?: boolean | number
+    created_at?: boolean | number
+    nade_lineup_id?: boolean | number
+    note?: boolean | number
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "nade_collection_items" */
+export interface nade_collection_items_min_order_by {collection_id?: (order_by | null),created_at?: (order_by | null),nade_lineup_id?: (order_by | null),note?: (order_by | null),position?: (order_by | null)}
+
+
+/** response of any mutation on the table "nade_collection_items" */
+export interface nade_collection_items_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_collection_itemsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "nade_collection_items" */
+export interface nade_collection_items_on_conflict {constraint: nade_collection_items_constraint,update_columns?: nade_collection_items_update_column[],where?: (nade_collection_items_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_collection_items". */
+export interface nade_collection_items_order_by {collection?: (nade_collections_order_by | null),collection_id?: (order_by | null),created_at?: (order_by | null),nade_lineup?: (nade_lineups_order_by | null),nade_lineup_id?: (order_by | null),note?: (order_by | null),position?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_collection_items */
+export interface nade_collection_items_pk_columns_input {collection_id: Scalars['uuid'],nade_lineup_id: Scalars['uuid']}
+
+
+/** input type for updating data in table "nade_collection_items" */
+export interface nade_collection_items_set_input {collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),nade_lineup_id?: (Scalars['uuid'] | null),note?: (Scalars['String'] | null),position?: (Scalars['Int'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_collection_items_stddev_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "nade_collection_items" */
+export interface nade_collection_items_stddev_order_by {position?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_collection_items_stddev_pop_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "nade_collection_items" */
+export interface nade_collection_items_stddev_pop_order_by {position?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_collection_items_stddev_samp_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "nade_collection_items" */
+export interface nade_collection_items_stddev_samp_order_by {position?: (order_by | null)}
+
+
+/** Streaming cursor of the table "nade_collection_items" */
+export interface nade_collection_items_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_collection_items_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_collection_items_stream_cursor_value_input {collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),nade_lineup_id?: (Scalars['uuid'] | null),note?: (Scalars['String'] | null),position?: (Scalars['Int'] | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_collection_items_sum_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "nade_collection_items" */
+export interface nade_collection_items_sum_order_by {position?: (order_by | null)}
+
+export interface nade_collection_items_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_collection_items_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_collection_items_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_collection_items_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_collection_items_var_pop_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "nade_collection_items" */
+export interface nade_collection_items_var_pop_order_by {position?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface nade_collection_items_var_samp_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "nade_collection_items" */
+export interface nade_collection_items_var_samp_order_by {position?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface nade_collection_items_variance_fieldsGenqlSelection{
+    position?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "nade_collection_items" */
+export interface nade_collection_items_variance_order_by {position?: (order_by | null)}
+
+
+/** columns and relationships of "nade_collections" */
+export interface nade_collectionsGenqlSelection{
+    /** A computed field, executes function "can_edit_nade_collection" */
+    can_edit?: boolean | number
+    /** A computed field, executes function "can_view_nade_collection" */
+    can_view?: boolean | number
+    created_at?: boolean | number
+    description?: boolean | number
+    id?: boolean | number
+    /** An array relationship */
+    items?: (nade_collection_itemsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_collection_items_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_collection_items_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_collection_items_bool_exp | null)} })
+    /** An aggregate relationship */
+    items_aggregate?: (nade_collection_items_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_collection_items_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_collection_items_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_collection_items_bool_exp | null)} })
+    map_name?: boolean | number
+    name?: boolean | number
+    /** An object relationship */
+    owner?: playersGenqlSelection
+    owner_steam_id?: boolean | number
+    /** An object relationship */
+    team?: teamsGenqlSelection
+    team_id?: boolean | number
+    updated_at?: boolean | number
+    visibility?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_collections" */
+export interface nade_collections_aggregateGenqlSelection{
+    aggregate?: nade_collections_aggregate_fieldsGenqlSelection
+    nodes?: nade_collectionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "nade_collections" */
+export interface nade_collections_aggregate_fieldsGenqlSelection{
+    avg?: nade_collections_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_collections_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_collections_max_fieldsGenqlSelection
+    min?: nade_collections_min_fieldsGenqlSelection
+    stddev?: nade_collections_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_collections_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_collections_stddev_samp_fieldsGenqlSelection
+    sum?: nade_collections_sum_fieldsGenqlSelection
+    var_pop?: nade_collections_var_pop_fieldsGenqlSelection
+    var_samp?: nade_collections_var_samp_fieldsGenqlSelection
+    variance?: nade_collections_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface nade_collections_avg_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "nade_collections". All fields are combined with a logical 'AND'. */
+export interface nade_collections_bool_exp {_and?: (nade_collections_bool_exp[] | null),_not?: (nade_collections_bool_exp | null),_or?: (nade_collections_bool_exp[] | null),can_edit?: (Boolean_comparison_exp | null),can_view?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),items?: (nade_collection_items_bool_exp | null),items_aggregate?: (nade_collection_items_aggregate_bool_exp | null),map_name?: (String_comparison_exp | null),name?: (String_comparison_exp | null),owner?: (players_bool_exp | null),owner_steam_id?: (bigint_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),visibility?: (e_nade_visibility_enum_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_collections" */
+export interface nade_collections_inc_input {owner_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "nade_collections" */
+export interface nade_collections_insert_input {created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),items?: (nade_collection_items_arr_rel_insert_input | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),owner?: (players_obj_rel_insert_input | null),owner_steam_id?: (Scalars['bigint'] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null),visibility?: (e_nade_visibility_enum | null)}
+
+
+/** aggregate max on columns */
+export interface nade_collections_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    description?: boolean | number
+    id?: boolean | number
+    map_name?: boolean | number
+    name?: boolean | number
+    owner_steam_id?: boolean | number
+    team_id?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface nade_collections_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    description?: boolean | number
+    id?: boolean | number
+    map_name?: boolean | number
+    name?: boolean | number
+    owner_steam_id?: boolean | number
+    team_id?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "nade_collections" */
+export interface nade_collections_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_collectionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** input type for inserting object relation for remote table "nade_collections" */
+export interface nade_collections_obj_rel_insert_input {data: nade_collections_insert_input,
+/** upsert condition */
+on_conflict?: (nade_collections_on_conflict | null)}
+
+
+/** on_conflict condition type for table "nade_collections" */
+export interface nade_collections_on_conflict {constraint: nade_collections_constraint,update_columns?: nade_collections_update_column[],where?: (nade_collections_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_collections". */
+export interface nade_collections_order_by {can_edit?: (order_by | null),can_view?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),id?: (order_by | null),items_aggregate?: (nade_collection_items_aggregate_order_by | null),map_name?: (order_by | null),name?: (order_by | null),owner?: (players_order_by | null),owner_steam_id?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null),visibility?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_collections */
+export interface nade_collections_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "nade_collections" */
+export interface nade_collections_set_input {created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null),visibility?: (e_nade_visibility_enum | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_collections_stddev_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_collections_stddev_pop_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_collections_stddev_samp_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "nade_collections" */
+export interface nade_collections_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_collections_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_collections_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null),visibility?: (e_nade_visibility_enum | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_collections_sum_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_collections_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_collections_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_collections_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_collections_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_collections_var_pop_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_collections_var_samp_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface nade_collections_variance_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** columns and relationships of "nade_demo_mines" */
+export interface nade_demo_minesGenqlSelection{
+    failed_reason?: boolean | number
+    match_map_demo_id?: boolean | number
+    mined_at?: boolean | number
+    throws?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_demo_mines" */
+export interface nade_demo_mines_aggregateGenqlSelection{
+    aggregate?: nade_demo_mines_aggregate_fieldsGenqlSelection
+    nodes?: nade_demo_minesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "nade_demo_mines" */
+export interface nade_demo_mines_aggregate_fieldsGenqlSelection{
+    avg?: nade_demo_mines_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_demo_mines_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_demo_mines_max_fieldsGenqlSelection
+    min?: nade_demo_mines_min_fieldsGenqlSelection
+    stddev?: nade_demo_mines_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_demo_mines_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_demo_mines_stddev_samp_fieldsGenqlSelection
+    sum?: nade_demo_mines_sum_fieldsGenqlSelection
+    var_pop?: nade_demo_mines_var_pop_fieldsGenqlSelection
+    var_samp?: nade_demo_mines_var_samp_fieldsGenqlSelection
+    variance?: nade_demo_mines_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface nade_demo_mines_avg_fieldsGenqlSelection{
+    throws?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "nade_demo_mines". All fields are combined with a logical 'AND'. */
+export interface nade_demo_mines_bool_exp {_and?: (nade_demo_mines_bool_exp[] | null),_not?: (nade_demo_mines_bool_exp | null),_or?: (nade_demo_mines_bool_exp[] | null),failed_reason?: (String_comparison_exp | null),match_map_demo_id?: (uuid_comparison_exp | null),mined_at?: (timestamptz_comparison_exp | null),throws?: (Int_comparison_exp | null),version?: (Int_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_demo_mines" */
+export interface nade_demo_mines_inc_input {throws?: (Scalars['Int'] | null),version?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "nade_demo_mines" */
+export interface nade_demo_mines_insert_input {failed_reason?: (Scalars['String'] | null),match_map_demo_id?: (Scalars['uuid'] | null),mined_at?: (Scalars['timestamptz'] | null),throws?: (Scalars['Int'] | null),version?: (Scalars['Int'] | null)}
+
+
+/** aggregate max on columns */
+export interface nade_demo_mines_max_fieldsGenqlSelection{
+    failed_reason?: boolean | number
+    match_map_demo_id?: boolean | number
+    mined_at?: boolean | number
+    throws?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface nade_demo_mines_min_fieldsGenqlSelection{
+    failed_reason?: boolean | number
+    match_map_demo_id?: boolean | number
+    mined_at?: boolean | number
+    throws?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "nade_demo_mines" */
+export interface nade_demo_mines_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_demo_minesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "nade_demo_mines" */
+export interface nade_demo_mines_on_conflict {constraint: nade_demo_mines_constraint,update_columns?: nade_demo_mines_update_column[],where?: (nade_demo_mines_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_demo_mines". */
+export interface nade_demo_mines_order_by {failed_reason?: (order_by | null),match_map_demo_id?: (order_by | null),mined_at?: (order_by | null),throws?: (order_by | null),version?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_demo_mines */
+export interface nade_demo_mines_pk_columns_input {match_map_demo_id: Scalars['uuid']}
+
+
+/** input type for updating data in table "nade_demo_mines" */
+export interface nade_demo_mines_set_input {failed_reason?: (Scalars['String'] | null),match_map_demo_id?: (Scalars['uuid'] | null),mined_at?: (Scalars['timestamptz'] | null),throws?: (Scalars['Int'] | null),version?: (Scalars['Int'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_demo_mines_stddev_fieldsGenqlSelection{
+    throws?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_demo_mines_stddev_pop_fieldsGenqlSelection{
+    throws?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_demo_mines_stddev_samp_fieldsGenqlSelection{
+    throws?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "nade_demo_mines" */
+export interface nade_demo_mines_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_demo_mines_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_demo_mines_stream_cursor_value_input {failed_reason?: (Scalars['String'] | null),match_map_demo_id?: (Scalars['uuid'] | null),mined_at?: (Scalars['timestamptz'] | null),throws?: (Scalars['Int'] | null),version?: (Scalars['Int'] | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_demo_mines_sum_fieldsGenqlSelection{
+    throws?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_demo_mines_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_demo_mines_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_demo_mines_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_demo_mines_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_demo_mines_var_pop_fieldsGenqlSelection{
+    throws?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_demo_mines_var_samp_fieldsGenqlSelection{
+    throws?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface nade_demo_mines_variance_fieldsGenqlSelection{
+    throws?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** columns and relationships of "nade_demo_throws" */
+export interface nade_demo_throwsGenqlSelection{
+    created_at?: boolean | number
+    flight_time_ms?: boolean | number
+    grenade_id?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    lineup_bucket?: boolean | number
+    map_name?: boolean | number
+    /** An object relationship */
+    match?: matchesGenqlSelection
+    match_id?: boolean | number
+    /** An object relationship */
+    match_map?: match_mapsGenqlSelection
+    match_map_demo_id?: boolean | number
+    match_map_id?: boolean | number
+    nade_type?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    round?: boolean | number
+    side?: boolean | number
+    technique?: boolean | number
+    throw_strength?: boolean | number
+    thrower_steam_id?: boolean | number
+    thrown_at?: boolean | number
+    tick?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_demo_throws" */
+export interface nade_demo_throws_aggregateGenqlSelection{
+    aggregate?: nade_demo_throws_aggregate_fieldsGenqlSelection
+    nodes?: nade_demo_throwsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "nade_demo_throws" */
+export interface nade_demo_throws_aggregate_fieldsGenqlSelection{
+    avg?: nade_demo_throws_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_demo_throws_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_demo_throws_max_fieldsGenqlSelection
+    min?: nade_demo_throws_min_fieldsGenqlSelection
+    stddev?: nade_demo_throws_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_demo_throws_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_demo_throws_stddev_samp_fieldsGenqlSelection
+    sum?: nade_demo_throws_sum_fieldsGenqlSelection
+    var_pop?: nade_demo_throws_var_pop_fieldsGenqlSelection
+    var_samp?: nade_demo_throws_var_samp_fieldsGenqlSelection
+    variance?: nade_demo_throws_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface nade_demo_throws_avg_fieldsGenqlSelection{
+    flight_time_ms?: boolean | number
+    grenade_id?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    round?: boolean | number
+    thrower_steam_id?: boolean | number
+    tick?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "nade_demo_throws". All fields are combined with a logical 'AND'. */
+export interface nade_demo_throws_bool_exp {_and?: (nade_demo_throws_bool_exp[] | null),_not?: (nade_demo_throws_bool_exp | null),_or?: (nade_demo_throws_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),flight_time_ms?: (Int_comparison_exp | null),grenade_id?: (Int_comparison_exp | null),land_x?: (float8_comparison_exp | null),land_y?: (float8_comparison_exp | null),land_z?: (float8_comparison_exp | null),lineup_bucket?: (String_comparison_exp | null),map_name?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),match_map?: (match_maps_bool_exp | null),match_map_demo_id?: (uuid_comparison_exp | null),match_map_id?: (uuid_comparison_exp | null),nade_type?: (e_utility_types_enum_comparison_exp | null),origin_x?: (float8_comparison_exp | null),origin_y?: (float8_comparison_exp | null),origin_z?: (float8_comparison_exp | null),round?: (Int_comparison_exp | null),side?: (e_sides_enum_comparison_exp | null),technique?: (e_nade_techniques_enum_comparison_exp | null),throw_strength?: (e_nade_throw_strengths_enum_comparison_exp | null),thrower_steam_id?: (bigint_comparison_exp | null),thrown_at?: (timestamptz_comparison_exp | null),tick?: (Int_comparison_exp | null),view_pitch?: (float8_comparison_exp | null),view_yaw?: (float8_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_demo_throws" */
+export interface nade_demo_throws_inc_input {flight_time_ms?: (Scalars['Int'] | null),grenade_id?: (Scalars['Int'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),round?: (Scalars['Int'] | null),thrower_steam_id?: (Scalars['bigint'] | null),tick?: (Scalars['Int'] | null),view_pitch?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null)}
+
+
+/** input type for inserting data into table "nade_demo_throws" */
+export interface nade_demo_throws_insert_input {created_at?: (Scalars['timestamptz'] | null),flight_time_ms?: (Scalars['Int'] | null),grenade_id?: (Scalars['Int'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),map_name?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),match_map?: (match_maps_obj_rel_insert_input | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),nade_type?: (e_utility_types_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),round?: (Scalars['Int'] | null),side?: (e_sides_enum | null),technique?: (e_nade_techniques_enum | null),throw_strength?: (e_nade_throw_strengths_enum | null),thrower_steam_id?: (Scalars['bigint'] | null),thrown_at?: (Scalars['timestamptz'] | null),tick?: (Scalars['Int'] | null),view_pitch?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null)}
+
+
+/** aggregate max on columns */
+export interface nade_demo_throws_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    flight_time_ms?: boolean | number
+    grenade_id?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    lineup_bucket?: boolean | number
+    map_name?: boolean | number
+    match_id?: boolean | number
+    match_map_demo_id?: boolean | number
+    match_map_id?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    round?: boolean | number
+    thrower_steam_id?: boolean | number
+    thrown_at?: boolean | number
+    tick?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface nade_demo_throws_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    flight_time_ms?: boolean | number
+    grenade_id?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    lineup_bucket?: boolean | number
+    map_name?: boolean | number
+    match_id?: boolean | number
+    match_map_demo_id?: boolean | number
+    match_map_id?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    round?: boolean | number
+    thrower_steam_id?: boolean | number
+    thrown_at?: boolean | number
+    tick?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "nade_demo_throws" */
+export interface nade_demo_throws_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_demo_throwsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "nade_demo_throws" */
+export interface nade_demo_throws_on_conflict {constraint: nade_demo_throws_constraint,update_columns?: nade_demo_throws_update_column[],where?: (nade_demo_throws_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_demo_throws". */
+export interface nade_demo_throws_order_by {created_at?: (order_by | null),flight_time_ms?: (order_by | null),grenade_id?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),match_map?: (match_maps_order_by | null),match_map_demo_id?: (order_by | null),match_map_id?: (order_by | null),nade_type?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),round?: (order_by | null),side?: (order_by | null),technique?: (order_by | null),throw_strength?: (order_by | null),thrower_steam_id?: (order_by | null),thrown_at?: (order_by | null),tick?: (order_by | null),view_pitch?: (order_by | null),view_yaw?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_demo_throws */
+export interface nade_demo_throws_pk_columns_input {grenade_id: Scalars['Int'],match_map_demo_id: Scalars['uuid']}
+
+
+/** input type for updating data in table "nade_demo_throws" */
+export interface nade_demo_throws_set_input {created_at?: (Scalars['timestamptz'] | null),flight_time_ms?: (Scalars['Int'] | null),grenade_id?: (Scalars['Int'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),nade_type?: (e_utility_types_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),round?: (Scalars['Int'] | null),side?: (e_sides_enum | null),technique?: (e_nade_techniques_enum | null),throw_strength?: (e_nade_throw_strengths_enum | null),thrower_steam_id?: (Scalars['bigint'] | null),thrown_at?: (Scalars['timestamptz'] | null),tick?: (Scalars['Int'] | null),view_pitch?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_demo_throws_stddev_fieldsGenqlSelection{
+    flight_time_ms?: boolean | number
+    grenade_id?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    round?: boolean | number
+    thrower_steam_id?: boolean | number
+    tick?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_demo_throws_stddev_pop_fieldsGenqlSelection{
+    flight_time_ms?: boolean | number
+    grenade_id?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    round?: boolean | number
+    thrower_steam_id?: boolean | number
+    tick?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_demo_throws_stddev_samp_fieldsGenqlSelection{
+    flight_time_ms?: boolean | number
+    grenade_id?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    round?: boolean | number
+    thrower_steam_id?: boolean | number
+    tick?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "nade_demo_throws" */
+export interface nade_demo_throws_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_demo_throws_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_demo_throws_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),flight_time_ms?: (Scalars['Int'] | null),grenade_id?: (Scalars['Int'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),lineup_bucket?: (Scalars['String'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),match_map_demo_id?: (Scalars['uuid'] | null),match_map_id?: (Scalars['uuid'] | null),nade_type?: (e_utility_types_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),round?: (Scalars['Int'] | null),side?: (e_sides_enum | null),technique?: (e_nade_techniques_enum | null),throw_strength?: (e_nade_throw_strengths_enum | null),thrower_steam_id?: (Scalars['bigint'] | null),thrown_at?: (Scalars['timestamptz'] | null),tick?: (Scalars['Int'] | null),view_pitch?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_demo_throws_sum_fieldsGenqlSelection{
+    flight_time_ms?: boolean | number
+    grenade_id?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    round?: boolean | number
+    thrower_steam_id?: boolean | number
+    tick?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_demo_throws_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_demo_throws_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_demo_throws_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_demo_throws_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_demo_throws_var_pop_fieldsGenqlSelection{
+    flight_time_ms?: boolean | number
+    grenade_id?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    round?: boolean | number
+    thrower_steam_id?: boolean | number
+    tick?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_demo_throws_var_samp_fieldsGenqlSelection{
+    flight_time_ms?: boolean | number
+    grenade_id?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    round?: boolean | number
+    thrower_steam_id?: boolean | number
+    tick?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface nade_demo_throws_variance_fieldsGenqlSelection{
+    flight_time_ms?: boolean | number
+    grenade_id?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    round?: boolean | number
+    thrower_steam_id?: boolean | number
+    tick?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** columns and relationships of "nade_drift_results" */
+export interface nade_drift_resultsGenqlSelection{
+    created_at?: boolean | number
+    distance?: boolean | number
+    distance_xy?: boolean | number
+    distance_z?: boolean | number
+    nade_drift_scan_id?: boolean | number
+    /** An object relationship */
+    nade_lineup?: nade_lineupsGenqlSelection
+    nade_lineup_id?: boolean | number
+    reason?: boolean | number
+    /** An object relationship */
+    scan?: nade_drift_scansGenqlSelection
+    severity?: boolean | number
+    verdict?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_drift_results" */
+export interface nade_drift_results_aggregateGenqlSelection{
+    aggregate?: nade_drift_results_aggregate_fieldsGenqlSelection
+    nodes?: nade_drift_resultsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_drift_results_aggregate_bool_exp {avg?: (nade_drift_results_aggregate_bool_exp_avg | null),corr?: (nade_drift_results_aggregate_bool_exp_corr | null),count?: (nade_drift_results_aggregate_bool_exp_count | null),covar_samp?: (nade_drift_results_aggregate_bool_exp_covar_samp | null),max?: (nade_drift_results_aggregate_bool_exp_max | null),min?: (nade_drift_results_aggregate_bool_exp_min | null),stddev_samp?: (nade_drift_results_aggregate_bool_exp_stddev_samp | null),sum?: (nade_drift_results_aggregate_bool_exp_sum | null),var_samp?: (nade_drift_results_aggregate_bool_exp_var_samp | null)}
+
+export interface nade_drift_results_aggregate_bool_exp_avg {arguments: nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_avg_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_drift_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_drift_results_aggregate_bool_exp_corr {arguments: nade_drift_results_aggregate_bool_exp_corr_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (nade_drift_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_drift_results_aggregate_bool_exp_corr_arguments {X: nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_corr_arguments_columns,Y: nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_corr_arguments_columns}
+
+export interface nade_drift_results_aggregate_bool_exp_count {arguments?: (nade_drift_results_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (nade_drift_results_bool_exp | null),predicate: Int_comparison_exp}
+
+export interface nade_drift_results_aggregate_bool_exp_covar_samp {arguments: nade_drift_results_aggregate_bool_exp_covar_samp_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (nade_drift_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_drift_results_aggregate_bool_exp_covar_samp_arguments {X: nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_covar_samp_arguments_columns,Y: nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_covar_samp_arguments_columns}
+
+export interface nade_drift_results_aggregate_bool_exp_max {arguments: nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_max_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_drift_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_drift_results_aggregate_bool_exp_min {arguments: nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_min_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_drift_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_drift_results_aggregate_bool_exp_stddev_samp {arguments: nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_stddev_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_drift_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_drift_results_aggregate_bool_exp_sum {arguments: nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_sum_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_drift_results_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_drift_results_aggregate_bool_exp_var_samp {arguments: nade_drift_results_select_column_nade_drift_results_aggregate_bool_exp_var_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_drift_results_bool_exp | null),predicate: float8_comparison_exp}
+
+
+/** aggregate fields of "nade_drift_results" */
+export interface nade_drift_results_aggregate_fieldsGenqlSelection{
+    avg?: nade_drift_results_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_drift_results_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_drift_results_max_fieldsGenqlSelection
+    min?: nade_drift_results_min_fieldsGenqlSelection
+    stddev?: nade_drift_results_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_drift_results_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_drift_results_stddev_samp_fieldsGenqlSelection
+    sum?: nade_drift_results_sum_fieldsGenqlSelection
+    var_pop?: nade_drift_results_var_pop_fieldsGenqlSelection
+    var_samp?: nade_drift_results_var_samp_fieldsGenqlSelection
+    variance?: nade_drift_results_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "nade_drift_results" */
+export interface nade_drift_results_aggregate_order_by {avg?: (nade_drift_results_avg_order_by | null),count?: (order_by | null),max?: (nade_drift_results_max_order_by | null),min?: (nade_drift_results_min_order_by | null),stddev?: (nade_drift_results_stddev_order_by | null),stddev_pop?: (nade_drift_results_stddev_pop_order_by | null),stddev_samp?: (nade_drift_results_stddev_samp_order_by | null),sum?: (nade_drift_results_sum_order_by | null),var_pop?: (nade_drift_results_var_pop_order_by | null),var_samp?: (nade_drift_results_var_samp_order_by | null),variance?: (nade_drift_results_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "nade_drift_results" */
+export interface nade_drift_results_arr_rel_insert_input {data: nade_drift_results_insert_input[],
+/** upsert condition */
+on_conflict?: (nade_drift_results_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface nade_drift_results_avg_fieldsGenqlSelection{
+    distance?: boolean | number
+    distance_xy?: boolean | number
+    distance_z?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "nade_drift_results" */
+export interface nade_drift_results_avg_order_by {distance?: (order_by | null),distance_xy?: (order_by | null),distance_z?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "nade_drift_results". All fields are combined with a logical 'AND'. */
+export interface nade_drift_results_bool_exp {_and?: (nade_drift_results_bool_exp[] | null),_not?: (nade_drift_results_bool_exp | null),_or?: (nade_drift_results_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),distance?: (float8_comparison_exp | null),distance_xy?: (float8_comparison_exp | null),distance_z?: (float8_comparison_exp | null),nade_drift_scan_id?: (uuid_comparison_exp | null),nade_lineup?: (nade_lineups_bool_exp | null),nade_lineup_id?: (uuid_comparison_exp | null),reason?: (String_comparison_exp | null),scan?: (nade_drift_scans_bool_exp | null),severity?: (String_comparison_exp | null),verdict?: (String_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_drift_results" */
+export interface nade_drift_results_inc_input {distance?: (Scalars['float8'] | null),distance_xy?: (Scalars['float8'] | null),distance_z?: (Scalars['float8'] | null)}
+
+
+/** input type for inserting data into table "nade_drift_results" */
+export interface nade_drift_results_insert_input {created_at?: (Scalars['timestamptz'] | null),distance?: (Scalars['float8'] | null),distance_xy?: (Scalars['float8'] | null),distance_z?: (Scalars['float8'] | null),nade_drift_scan_id?: (Scalars['uuid'] | null),nade_lineup?: (nade_lineups_obj_rel_insert_input | null),nade_lineup_id?: (Scalars['uuid'] | null),reason?: (Scalars['String'] | null),scan?: (nade_drift_scans_obj_rel_insert_input | null),severity?: (Scalars['String'] | null),verdict?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface nade_drift_results_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    distance?: boolean | number
+    distance_xy?: boolean | number
+    distance_z?: boolean | number
+    nade_drift_scan_id?: boolean | number
+    nade_lineup_id?: boolean | number
+    reason?: boolean | number
+    severity?: boolean | number
+    verdict?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "nade_drift_results" */
+export interface nade_drift_results_max_order_by {created_at?: (order_by | null),distance?: (order_by | null),distance_xy?: (order_by | null),distance_z?: (order_by | null),nade_drift_scan_id?: (order_by | null),nade_lineup_id?: (order_by | null),reason?: (order_by | null),severity?: (order_by | null),verdict?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface nade_drift_results_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    distance?: boolean | number
+    distance_xy?: boolean | number
+    distance_z?: boolean | number
+    nade_drift_scan_id?: boolean | number
+    nade_lineup_id?: boolean | number
+    reason?: boolean | number
+    severity?: boolean | number
+    verdict?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "nade_drift_results" */
+export interface nade_drift_results_min_order_by {created_at?: (order_by | null),distance?: (order_by | null),distance_xy?: (order_by | null),distance_z?: (order_by | null),nade_drift_scan_id?: (order_by | null),nade_lineup_id?: (order_by | null),reason?: (order_by | null),severity?: (order_by | null),verdict?: (order_by | null)}
+
+
+/** response of any mutation on the table "nade_drift_results" */
+export interface nade_drift_results_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_drift_resultsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "nade_drift_results" */
+export interface nade_drift_results_on_conflict {constraint: nade_drift_results_constraint,update_columns?: nade_drift_results_update_column[],where?: (nade_drift_results_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_drift_results". */
+export interface nade_drift_results_order_by {created_at?: (order_by | null),distance?: (order_by | null),distance_xy?: (order_by | null),distance_z?: (order_by | null),nade_drift_scan_id?: (order_by | null),nade_lineup?: (nade_lineups_order_by | null),nade_lineup_id?: (order_by | null),reason?: (order_by | null),scan?: (nade_drift_scans_order_by | null),severity?: (order_by | null),verdict?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_drift_results */
+export interface nade_drift_results_pk_columns_input {nade_drift_scan_id: Scalars['uuid'],nade_lineup_id: Scalars['uuid']}
+
+
+/** input type for updating data in table "nade_drift_results" */
+export interface nade_drift_results_set_input {created_at?: (Scalars['timestamptz'] | null),distance?: (Scalars['float8'] | null),distance_xy?: (Scalars['float8'] | null),distance_z?: (Scalars['float8'] | null),nade_drift_scan_id?: (Scalars['uuid'] | null),nade_lineup_id?: (Scalars['uuid'] | null),reason?: (Scalars['String'] | null),severity?: (Scalars['String'] | null),verdict?: (Scalars['String'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_drift_results_stddev_fieldsGenqlSelection{
+    distance?: boolean | number
+    distance_xy?: boolean | number
+    distance_z?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "nade_drift_results" */
+export interface nade_drift_results_stddev_order_by {distance?: (order_by | null),distance_xy?: (order_by | null),distance_z?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_drift_results_stddev_pop_fieldsGenqlSelection{
+    distance?: boolean | number
+    distance_xy?: boolean | number
+    distance_z?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "nade_drift_results" */
+export interface nade_drift_results_stddev_pop_order_by {distance?: (order_by | null),distance_xy?: (order_by | null),distance_z?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_drift_results_stddev_samp_fieldsGenqlSelection{
+    distance?: boolean | number
+    distance_xy?: boolean | number
+    distance_z?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "nade_drift_results" */
+export interface nade_drift_results_stddev_samp_order_by {distance?: (order_by | null),distance_xy?: (order_by | null),distance_z?: (order_by | null)}
+
+
+/** Streaming cursor of the table "nade_drift_results" */
+export interface nade_drift_results_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_drift_results_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_drift_results_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),distance?: (Scalars['float8'] | null),distance_xy?: (Scalars['float8'] | null),distance_z?: (Scalars['float8'] | null),nade_drift_scan_id?: (Scalars['uuid'] | null),nade_lineup_id?: (Scalars['uuid'] | null),reason?: (Scalars['String'] | null),severity?: (Scalars['String'] | null),verdict?: (Scalars['String'] | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_drift_results_sum_fieldsGenqlSelection{
+    distance?: boolean | number
+    distance_xy?: boolean | number
+    distance_z?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "nade_drift_results" */
+export interface nade_drift_results_sum_order_by {distance?: (order_by | null),distance_xy?: (order_by | null),distance_z?: (order_by | null)}
+
+export interface nade_drift_results_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_drift_results_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_drift_results_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_drift_results_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_drift_results_var_pop_fieldsGenqlSelection{
+    distance?: boolean | number
+    distance_xy?: boolean | number
+    distance_z?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "nade_drift_results" */
+export interface nade_drift_results_var_pop_order_by {distance?: (order_by | null),distance_xy?: (order_by | null),distance_z?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface nade_drift_results_var_samp_fieldsGenqlSelection{
+    distance?: boolean | number
+    distance_xy?: boolean | number
+    distance_z?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "nade_drift_results" */
+export interface nade_drift_results_var_samp_order_by {distance?: (order_by | null),distance_xy?: (order_by | null),distance_z?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface nade_drift_results_variance_fieldsGenqlSelection{
+    distance?: boolean | number
+    distance_xy?: boolean | number
+    distance_z?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "nade_drift_results" */
+export interface nade_drift_results_variance_order_by {distance?: (order_by | null),distance_xy?: (order_by | null),distance_z?: (order_by | null)}
+
+
+/** columns and relationships of "nade_drift_scans" */
+export interface nade_drift_scansGenqlSelection{
+    broken?: boolean | number
+    created_at?: boolean | number
+    failure_reason?: boolean | number
+    finished_at?: boolean | number
+    from_revision?: boolean | number
+    id?: boolean | number
+    lineups?: boolean | number
+    map_name?: boolean | number
+    max_distance?: boolean | number
+    moved?: boolean | number
+    /** An object relationship */
+    requested_by?: playersGenqlSelection
+    requested_by_steam_id?: boolean | number
+    /** An array relationship */
+    results?: (nade_drift_resultsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_drift_results_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_drift_results_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_drift_results_bool_exp | null)} })
+    /** An aggregate relationship */
+    results_aggregate?: (nade_drift_results_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_drift_results_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_drift_results_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_drift_results_bool_exp | null)} })
+    scanned?: boolean | number
+    started_at?: boolean | number
+    status?: boolean | number
+    to_revision?: boolean | number
+    unchanged?: boolean | number
+    unsimulatable?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_drift_scans" */
+export interface nade_drift_scans_aggregateGenqlSelection{
+    aggregate?: nade_drift_scans_aggregate_fieldsGenqlSelection
+    nodes?: nade_drift_scansGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "nade_drift_scans" */
+export interface nade_drift_scans_aggregate_fieldsGenqlSelection{
+    avg?: nade_drift_scans_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_drift_scans_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_drift_scans_max_fieldsGenqlSelection
+    min?: nade_drift_scans_min_fieldsGenqlSelection
+    stddev?: nade_drift_scans_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_drift_scans_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_drift_scans_stddev_samp_fieldsGenqlSelection
+    sum?: nade_drift_scans_sum_fieldsGenqlSelection
+    var_pop?: nade_drift_scans_var_pop_fieldsGenqlSelection
+    var_samp?: nade_drift_scans_var_samp_fieldsGenqlSelection
+    variance?: nade_drift_scans_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface nade_drift_scans_avg_fieldsGenqlSelection{
+    broken?: boolean | number
+    lineups?: boolean | number
+    max_distance?: boolean | number
+    moved?: boolean | number
+    requested_by_steam_id?: boolean | number
+    scanned?: boolean | number
+    unchanged?: boolean | number
+    unsimulatable?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "nade_drift_scans". All fields are combined with a logical 'AND'. */
+export interface nade_drift_scans_bool_exp {_and?: (nade_drift_scans_bool_exp[] | null),_not?: (nade_drift_scans_bool_exp | null),_or?: (nade_drift_scans_bool_exp[] | null),broken?: (Int_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),failure_reason?: (String_comparison_exp | null),finished_at?: (timestamptz_comparison_exp | null),from_revision?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),lineups?: (Int_comparison_exp | null),map_name?: (String_comparison_exp | null),max_distance?: (float8_comparison_exp | null),moved?: (Int_comparison_exp | null),requested_by?: (players_bool_exp | null),requested_by_steam_id?: (bigint_comparison_exp | null),results?: (nade_drift_results_bool_exp | null),results_aggregate?: (nade_drift_results_aggregate_bool_exp | null),scanned?: (Int_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (String_comparison_exp | null),to_revision?: (String_comparison_exp | null),unchanged?: (Int_comparison_exp | null),unsimulatable?: (Int_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_drift_scans" */
+export interface nade_drift_scans_inc_input {broken?: (Scalars['Int'] | null),lineups?: (Scalars['Int'] | null),max_distance?: (Scalars['float8'] | null),moved?: (Scalars['Int'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),scanned?: (Scalars['Int'] | null),unchanged?: (Scalars['Int'] | null),unsimulatable?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "nade_drift_scans" */
+export interface nade_drift_scans_insert_input {broken?: (Scalars['Int'] | null),created_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),from_revision?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),lineups?: (Scalars['Int'] | null),map_name?: (Scalars['String'] | null),max_distance?: (Scalars['float8'] | null),moved?: (Scalars['Int'] | null),requested_by?: (players_obj_rel_insert_input | null),requested_by_steam_id?: (Scalars['bigint'] | null),results?: (nade_drift_results_arr_rel_insert_input | null),scanned?: (Scalars['Int'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),to_revision?: (Scalars['String'] | null),unchanged?: (Scalars['Int'] | null),unsimulatable?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate max on columns */
+export interface nade_drift_scans_max_fieldsGenqlSelection{
+    broken?: boolean | number
+    created_at?: boolean | number
+    failure_reason?: boolean | number
+    finished_at?: boolean | number
+    from_revision?: boolean | number
+    id?: boolean | number
+    lineups?: boolean | number
+    map_name?: boolean | number
+    max_distance?: boolean | number
+    moved?: boolean | number
+    requested_by_steam_id?: boolean | number
+    scanned?: boolean | number
+    started_at?: boolean | number
+    status?: boolean | number
+    to_revision?: boolean | number
+    unchanged?: boolean | number
+    unsimulatable?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface nade_drift_scans_min_fieldsGenqlSelection{
+    broken?: boolean | number
+    created_at?: boolean | number
+    failure_reason?: boolean | number
+    finished_at?: boolean | number
+    from_revision?: boolean | number
+    id?: boolean | number
+    lineups?: boolean | number
+    map_name?: boolean | number
+    max_distance?: boolean | number
+    moved?: boolean | number
+    requested_by_steam_id?: boolean | number
+    scanned?: boolean | number
+    started_at?: boolean | number
+    status?: boolean | number
+    to_revision?: boolean | number
+    unchanged?: boolean | number
+    unsimulatable?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "nade_drift_scans" */
+export interface nade_drift_scans_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_drift_scansGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** input type for inserting object relation for remote table "nade_drift_scans" */
+export interface nade_drift_scans_obj_rel_insert_input {data: nade_drift_scans_insert_input,
+/** upsert condition */
+on_conflict?: (nade_drift_scans_on_conflict | null)}
+
+
+/** on_conflict condition type for table "nade_drift_scans" */
+export interface nade_drift_scans_on_conflict {constraint: nade_drift_scans_constraint,update_columns?: nade_drift_scans_update_column[],where?: (nade_drift_scans_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_drift_scans". */
+export interface nade_drift_scans_order_by {broken?: (order_by | null),created_at?: (order_by | null),failure_reason?: (order_by | null),finished_at?: (order_by | null),from_revision?: (order_by | null),id?: (order_by | null),lineups?: (order_by | null),map_name?: (order_by | null),max_distance?: (order_by | null),moved?: (order_by | null),requested_by?: (players_order_by | null),requested_by_steam_id?: (order_by | null),results_aggregate?: (nade_drift_results_aggregate_order_by | null),scanned?: (order_by | null),started_at?: (order_by | null),status?: (order_by | null),to_revision?: (order_by | null),unchanged?: (order_by | null),unsimulatable?: (order_by | null),updated_at?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_drift_scans */
+export interface nade_drift_scans_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "nade_drift_scans" */
+export interface nade_drift_scans_set_input {broken?: (Scalars['Int'] | null),created_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),from_revision?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),lineups?: (Scalars['Int'] | null),map_name?: (Scalars['String'] | null),max_distance?: (Scalars['float8'] | null),moved?: (Scalars['Int'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),scanned?: (Scalars['Int'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),to_revision?: (Scalars['String'] | null),unchanged?: (Scalars['Int'] | null),unsimulatable?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_drift_scans_stddev_fieldsGenqlSelection{
+    broken?: boolean | number
+    lineups?: boolean | number
+    max_distance?: boolean | number
+    moved?: boolean | number
+    requested_by_steam_id?: boolean | number
+    scanned?: boolean | number
+    unchanged?: boolean | number
+    unsimulatable?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_drift_scans_stddev_pop_fieldsGenqlSelection{
+    broken?: boolean | number
+    lineups?: boolean | number
+    max_distance?: boolean | number
+    moved?: boolean | number
+    requested_by_steam_id?: boolean | number
+    scanned?: boolean | number
+    unchanged?: boolean | number
+    unsimulatable?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_drift_scans_stddev_samp_fieldsGenqlSelection{
+    broken?: boolean | number
+    lineups?: boolean | number
+    max_distance?: boolean | number
+    moved?: boolean | number
+    requested_by_steam_id?: boolean | number
+    scanned?: boolean | number
+    unchanged?: boolean | number
+    unsimulatable?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "nade_drift_scans" */
+export interface nade_drift_scans_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_drift_scans_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_drift_scans_stream_cursor_value_input {broken?: (Scalars['Int'] | null),created_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),from_revision?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),lineups?: (Scalars['Int'] | null),map_name?: (Scalars['String'] | null),max_distance?: (Scalars['float8'] | null),moved?: (Scalars['Int'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),scanned?: (Scalars['Int'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),to_revision?: (Scalars['String'] | null),unchanged?: (Scalars['Int'] | null),unsimulatable?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_drift_scans_sum_fieldsGenqlSelection{
+    broken?: boolean | number
+    lineups?: boolean | number
+    max_distance?: boolean | number
+    moved?: boolean | number
+    requested_by_steam_id?: boolean | number
+    scanned?: boolean | number
+    unchanged?: boolean | number
+    unsimulatable?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_drift_scans_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_drift_scans_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_drift_scans_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_drift_scans_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_drift_scans_var_pop_fieldsGenqlSelection{
+    broken?: boolean | number
+    lineups?: boolean | number
+    max_distance?: boolean | number
+    moved?: boolean | number
+    requested_by_steam_id?: boolean | number
+    scanned?: boolean | number
+    unchanged?: boolean | number
+    unsimulatable?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_drift_scans_var_samp_fieldsGenqlSelection{
+    broken?: boolean | number
+    lineups?: boolean | number
+    max_distance?: boolean | number
+    moved?: boolean | number
+    requested_by_steam_id?: boolean | number
+    scanned?: boolean | number
+    unchanged?: boolean | number
+    unsimulatable?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface nade_drift_scans_variance_fieldsGenqlSelection{
+    broken?: boolean | number
+    lineups?: boolean | number
+    max_distance?: boolean | number
+    moved?: boolean | number
+    requested_by_steam_id?: boolean | number
+    scanned?: boolean | number
+    unchanged?: boolean | number
+    unsimulatable?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** columns and relationships of "nade_lineup_favorites" */
+export interface nade_lineup_favoritesGenqlSelection{
+    created_at?: boolean | number
+    /** An object relationship */
+    nade_lineup?: nade_lineupsGenqlSelection
+    nade_lineup_id?: boolean | number
+    /** An object relationship */
+    player?: playersGenqlSelection
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_lineup_favorites" */
+export interface nade_lineup_favorites_aggregateGenqlSelection{
+    aggregate?: nade_lineup_favorites_aggregate_fieldsGenqlSelection
+    nodes?: nade_lineup_favoritesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_lineup_favorites_aggregate_bool_exp {count?: (nade_lineup_favorites_aggregate_bool_exp_count | null)}
+
+export interface nade_lineup_favorites_aggregate_bool_exp_count {arguments?: (nade_lineup_favorites_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_favorites_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "nade_lineup_favorites" */
+export interface nade_lineup_favorites_aggregate_fieldsGenqlSelection{
+    avg?: nade_lineup_favorites_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_lineup_favorites_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_lineup_favorites_max_fieldsGenqlSelection
+    min?: nade_lineup_favorites_min_fieldsGenqlSelection
+    stddev?: nade_lineup_favorites_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_lineup_favorites_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_lineup_favorites_stddev_samp_fieldsGenqlSelection
+    sum?: nade_lineup_favorites_sum_fieldsGenqlSelection
+    var_pop?: nade_lineup_favorites_var_pop_fieldsGenqlSelection
+    var_samp?: nade_lineup_favorites_var_samp_fieldsGenqlSelection
+    variance?: nade_lineup_favorites_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_aggregate_order_by {avg?: (nade_lineup_favorites_avg_order_by | null),count?: (order_by | null),max?: (nade_lineup_favorites_max_order_by | null),min?: (nade_lineup_favorites_min_order_by | null),stddev?: (nade_lineup_favorites_stddev_order_by | null),stddev_pop?: (nade_lineup_favorites_stddev_pop_order_by | null),stddev_samp?: (nade_lineup_favorites_stddev_samp_order_by | null),sum?: (nade_lineup_favorites_sum_order_by | null),var_pop?: (nade_lineup_favorites_var_pop_order_by | null),var_samp?: (nade_lineup_favorites_var_samp_order_by | null),variance?: (nade_lineup_favorites_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_arr_rel_insert_input {data: nade_lineup_favorites_insert_input[],
+/** upsert condition */
+on_conflict?: (nade_lineup_favorites_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface nade_lineup_favorites_avg_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_avg_order_by {steam_id?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "nade_lineup_favorites". All fields are combined with a logical 'AND'. */
+export interface nade_lineup_favorites_bool_exp {_and?: (nade_lineup_favorites_bool_exp[] | null),_not?: (nade_lineup_favorites_bool_exp | null),_or?: (nade_lineup_favorites_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),nade_lineup?: (nade_lineups_bool_exp | null),nade_lineup_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),steam_id?: (bigint_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_inc_input {steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_insert_input {created_at?: (Scalars['timestamptz'] | null),nade_lineup?: (nade_lineups_obj_rel_insert_input | null),nade_lineup_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate max on columns */
+export interface nade_lineup_favorites_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    nade_lineup_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_max_order_by {created_at?: (order_by | null),nade_lineup_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface nade_lineup_favorites_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    nade_lineup_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_min_order_by {created_at?: (order_by | null),nade_lineup_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** response of any mutation on the table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_lineup_favoritesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_on_conflict {constraint: nade_lineup_favorites_constraint,update_columns?: nade_lineup_favorites_update_column[],where?: (nade_lineup_favorites_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_lineup_favorites". */
+export interface nade_lineup_favorites_order_by {created_at?: (order_by | null),nade_lineup?: (nade_lineups_order_by | null),nade_lineup_id?: (order_by | null),player?: (players_order_by | null),steam_id?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_lineup_favorites */
+export interface nade_lineup_favorites_pk_columns_input {nade_lineup_id: Scalars['uuid'],steam_id: Scalars['bigint']}
+
+
+/** input type for updating data in table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_set_input {created_at?: (Scalars['timestamptz'] | null),nade_lineup_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_lineup_favorites_stddev_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_stddev_order_by {steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_lineup_favorites_stddev_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_stddev_pop_order_by {steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_lineup_favorites_stddev_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_stddev_samp_order_by {steam_id?: (order_by | null)}
+
+
+/** Streaming cursor of the table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_lineup_favorites_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_lineup_favorites_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),nade_lineup_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_lineup_favorites_sum_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_sum_order_by {steam_id?: (order_by | null)}
+
+export interface nade_lineup_favorites_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_lineup_favorites_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_lineup_favorites_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_lineup_favorites_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_lineup_favorites_var_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_var_pop_order_by {steam_id?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface nade_lineup_favorites_var_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_var_samp_order_by {steam_id?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface nade_lineup_favorites_variance_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "nade_lineup_favorites" */
+export interface nade_lineup_favorites_variance_order_by {steam_id?: (order_by | null)}
+
+
+/** columns and relationships of "nade_lineup_progress" */
+export interface nade_lineup_progressGenqlSelection{
+    attempts?: boolean | number
+    best_streak?: boolean | number
+    current_streak?: boolean | number
+    last_practiced_at?: boolean | number
+    mastered_at?: boolean | number
+    miss_along_sum?: boolean | number
+    miss_lateral_sum?: boolean | number
+    miss_samples?: boolean | number
+    miss_vertical_sum?: boolean | number
+    /** An object relationship */
+    nade_lineup?: nade_lineupsGenqlSelection
+    nade_lineup_id?: boolean | number
+    /** An object relationship */
+    player?: playersGenqlSelection
+    steam_id?: boolean | number
+    successes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_lineup_progress" */
+export interface nade_lineup_progress_aggregateGenqlSelection{
+    aggregate?: nade_lineup_progress_aggregate_fieldsGenqlSelection
+    nodes?: nade_lineup_progressGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_lineup_progress_aggregate_bool_exp {avg?: (nade_lineup_progress_aggregate_bool_exp_avg | null),corr?: (nade_lineup_progress_aggregate_bool_exp_corr | null),count?: (nade_lineup_progress_aggregate_bool_exp_count | null),covar_samp?: (nade_lineup_progress_aggregate_bool_exp_covar_samp | null),max?: (nade_lineup_progress_aggregate_bool_exp_max | null),min?: (nade_lineup_progress_aggregate_bool_exp_min | null),stddev_samp?: (nade_lineup_progress_aggregate_bool_exp_stddev_samp | null),sum?: (nade_lineup_progress_aggregate_bool_exp_sum | null),var_samp?: (nade_lineup_progress_aggregate_bool_exp_var_samp | null)}
+
+export interface nade_lineup_progress_aggregate_bool_exp_avg {arguments: nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_avg_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_progress_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineup_progress_aggregate_bool_exp_corr {arguments: nade_lineup_progress_aggregate_bool_exp_corr_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_progress_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineup_progress_aggregate_bool_exp_corr_arguments {X: nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_corr_arguments_columns,Y: nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_corr_arguments_columns}
+
+export interface nade_lineup_progress_aggregate_bool_exp_count {arguments?: (nade_lineup_progress_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_progress_bool_exp | null),predicate: Int_comparison_exp}
+
+export interface nade_lineup_progress_aggregate_bool_exp_covar_samp {arguments: nade_lineup_progress_aggregate_bool_exp_covar_samp_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_progress_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineup_progress_aggregate_bool_exp_covar_samp_arguments {X: nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_covar_samp_arguments_columns,Y: nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_covar_samp_arguments_columns}
+
+export interface nade_lineup_progress_aggregate_bool_exp_max {arguments: nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_max_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_progress_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineup_progress_aggregate_bool_exp_min {arguments: nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_min_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_progress_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineup_progress_aggregate_bool_exp_stddev_samp {arguments: nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_stddev_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_progress_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineup_progress_aggregate_bool_exp_sum {arguments: nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_sum_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_progress_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineup_progress_aggregate_bool_exp_var_samp {arguments: nade_lineup_progress_select_column_nade_lineup_progress_aggregate_bool_exp_var_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_progress_bool_exp | null),predicate: float8_comparison_exp}
+
+
+/** aggregate fields of "nade_lineup_progress" */
+export interface nade_lineup_progress_aggregate_fieldsGenqlSelection{
+    avg?: nade_lineup_progress_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_lineup_progress_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_lineup_progress_max_fieldsGenqlSelection
+    min?: nade_lineup_progress_min_fieldsGenqlSelection
+    stddev?: nade_lineup_progress_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_lineup_progress_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_lineup_progress_stddev_samp_fieldsGenqlSelection
+    sum?: nade_lineup_progress_sum_fieldsGenqlSelection
+    var_pop?: nade_lineup_progress_var_pop_fieldsGenqlSelection
+    var_samp?: nade_lineup_progress_var_samp_fieldsGenqlSelection
+    variance?: nade_lineup_progress_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "nade_lineup_progress" */
+export interface nade_lineup_progress_aggregate_order_by {avg?: (nade_lineup_progress_avg_order_by | null),count?: (order_by | null),max?: (nade_lineup_progress_max_order_by | null),min?: (nade_lineup_progress_min_order_by | null),stddev?: (nade_lineup_progress_stddev_order_by | null),stddev_pop?: (nade_lineup_progress_stddev_pop_order_by | null),stddev_samp?: (nade_lineup_progress_stddev_samp_order_by | null),sum?: (nade_lineup_progress_sum_order_by | null),var_pop?: (nade_lineup_progress_var_pop_order_by | null),var_samp?: (nade_lineup_progress_var_samp_order_by | null),variance?: (nade_lineup_progress_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "nade_lineup_progress" */
+export interface nade_lineup_progress_arr_rel_insert_input {data: nade_lineup_progress_insert_input[],
+/** upsert condition */
+on_conflict?: (nade_lineup_progress_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface nade_lineup_progress_avg_fieldsGenqlSelection{
+    attempts?: boolean | number
+    best_streak?: boolean | number
+    current_streak?: boolean | number
+    miss_along_sum?: boolean | number
+    miss_lateral_sum?: boolean | number
+    miss_samples?: boolean | number
+    miss_vertical_sum?: boolean | number
+    steam_id?: boolean | number
+    successes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "nade_lineup_progress" */
+export interface nade_lineup_progress_avg_order_by {attempts?: (order_by | null),best_streak?: (order_by | null),current_streak?: (order_by | null),miss_along_sum?: (order_by | null),miss_lateral_sum?: (order_by | null),miss_samples?: (order_by | null),miss_vertical_sum?: (order_by | null),steam_id?: (order_by | null),successes?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "nade_lineup_progress". All fields are combined with a logical 'AND'. */
+export interface nade_lineup_progress_bool_exp {_and?: (nade_lineup_progress_bool_exp[] | null),_not?: (nade_lineup_progress_bool_exp | null),_or?: (nade_lineup_progress_bool_exp[] | null),attempts?: (Int_comparison_exp | null),best_streak?: (Int_comparison_exp | null),current_streak?: (Int_comparison_exp | null),last_practiced_at?: (timestamptz_comparison_exp | null),mastered_at?: (timestamptz_comparison_exp | null),miss_along_sum?: (float8_comparison_exp | null),miss_lateral_sum?: (float8_comparison_exp | null),miss_samples?: (Int_comparison_exp | null),miss_vertical_sum?: (float8_comparison_exp | null),nade_lineup?: (nade_lineups_bool_exp | null),nade_lineup_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),steam_id?: (bigint_comparison_exp | null),successes?: (Int_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_lineup_progress" */
+export interface nade_lineup_progress_inc_input {attempts?: (Scalars['Int'] | null),best_streak?: (Scalars['Int'] | null),current_streak?: (Scalars['Int'] | null),miss_along_sum?: (Scalars['float8'] | null),miss_lateral_sum?: (Scalars['float8'] | null),miss_samples?: (Scalars['Int'] | null),miss_vertical_sum?: (Scalars['float8'] | null),steam_id?: (Scalars['bigint'] | null),successes?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "nade_lineup_progress" */
+export interface nade_lineup_progress_insert_input {attempts?: (Scalars['Int'] | null),best_streak?: (Scalars['Int'] | null),current_streak?: (Scalars['Int'] | null),last_practiced_at?: (Scalars['timestamptz'] | null),mastered_at?: (Scalars['timestamptz'] | null),miss_along_sum?: (Scalars['float8'] | null),miss_lateral_sum?: (Scalars['float8'] | null),miss_samples?: (Scalars['Int'] | null),miss_vertical_sum?: (Scalars['float8'] | null),nade_lineup?: (nade_lineups_obj_rel_insert_input | null),nade_lineup_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),successes?: (Scalars['Int'] | null)}
+
+
+/** aggregate max on columns */
+export interface nade_lineup_progress_max_fieldsGenqlSelection{
+    attempts?: boolean | number
+    best_streak?: boolean | number
+    current_streak?: boolean | number
+    last_practiced_at?: boolean | number
+    mastered_at?: boolean | number
+    miss_along_sum?: boolean | number
+    miss_lateral_sum?: boolean | number
+    miss_samples?: boolean | number
+    miss_vertical_sum?: boolean | number
+    nade_lineup_id?: boolean | number
+    steam_id?: boolean | number
+    successes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "nade_lineup_progress" */
+export interface nade_lineup_progress_max_order_by {attempts?: (order_by | null),best_streak?: (order_by | null),current_streak?: (order_by | null),last_practiced_at?: (order_by | null),mastered_at?: (order_by | null),miss_along_sum?: (order_by | null),miss_lateral_sum?: (order_by | null),miss_samples?: (order_by | null),miss_vertical_sum?: (order_by | null),nade_lineup_id?: (order_by | null),steam_id?: (order_by | null),successes?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface nade_lineup_progress_min_fieldsGenqlSelection{
+    attempts?: boolean | number
+    best_streak?: boolean | number
+    current_streak?: boolean | number
+    last_practiced_at?: boolean | number
+    mastered_at?: boolean | number
+    miss_along_sum?: boolean | number
+    miss_lateral_sum?: boolean | number
+    miss_samples?: boolean | number
+    miss_vertical_sum?: boolean | number
+    nade_lineup_id?: boolean | number
+    steam_id?: boolean | number
+    successes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "nade_lineup_progress" */
+export interface nade_lineup_progress_min_order_by {attempts?: (order_by | null),best_streak?: (order_by | null),current_streak?: (order_by | null),last_practiced_at?: (order_by | null),mastered_at?: (order_by | null),miss_along_sum?: (order_by | null),miss_lateral_sum?: (order_by | null),miss_samples?: (order_by | null),miss_vertical_sum?: (order_by | null),nade_lineup_id?: (order_by | null),steam_id?: (order_by | null),successes?: (order_by | null)}
+
+
+/** response of any mutation on the table "nade_lineup_progress" */
+export interface nade_lineup_progress_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_lineup_progressGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "nade_lineup_progress" */
+export interface nade_lineup_progress_on_conflict {constraint: nade_lineup_progress_constraint,update_columns?: nade_lineup_progress_update_column[],where?: (nade_lineup_progress_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_lineup_progress". */
+export interface nade_lineup_progress_order_by {attempts?: (order_by | null),best_streak?: (order_by | null),current_streak?: (order_by | null),last_practiced_at?: (order_by | null),mastered_at?: (order_by | null),miss_along_sum?: (order_by | null),miss_lateral_sum?: (order_by | null),miss_samples?: (order_by | null),miss_vertical_sum?: (order_by | null),nade_lineup?: (nade_lineups_order_by | null),nade_lineup_id?: (order_by | null),player?: (players_order_by | null),steam_id?: (order_by | null),successes?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_lineup_progress */
+export interface nade_lineup_progress_pk_columns_input {nade_lineup_id: Scalars['uuid'],steam_id: Scalars['bigint']}
+
+
+/** input type for updating data in table "nade_lineup_progress" */
+export interface nade_lineup_progress_set_input {attempts?: (Scalars['Int'] | null),best_streak?: (Scalars['Int'] | null),current_streak?: (Scalars['Int'] | null),last_practiced_at?: (Scalars['timestamptz'] | null),mastered_at?: (Scalars['timestamptz'] | null),miss_along_sum?: (Scalars['float8'] | null),miss_lateral_sum?: (Scalars['float8'] | null),miss_samples?: (Scalars['Int'] | null),miss_vertical_sum?: (Scalars['float8'] | null),nade_lineup_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),successes?: (Scalars['Int'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_lineup_progress_stddev_fieldsGenqlSelection{
+    attempts?: boolean | number
+    best_streak?: boolean | number
+    current_streak?: boolean | number
+    miss_along_sum?: boolean | number
+    miss_lateral_sum?: boolean | number
+    miss_samples?: boolean | number
+    miss_vertical_sum?: boolean | number
+    steam_id?: boolean | number
+    successes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "nade_lineup_progress" */
+export interface nade_lineup_progress_stddev_order_by {attempts?: (order_by | null),best_streak?: (order_by | null),current_streak?: (order_by | null),miss_along_sum?: (order_by | null),miss_lateral_sum?: (order_by | null),miss_samples?: (order_by | null),miss_vertical_sum?: (order_by | null),steam_id?: (order_by | null),successes?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_lineup_progress_stddev_pop_fieldsGenqlSelection{
+    attempts?: boolean | number
+    best_streak?: boolean | number
+    current_streak?: boolean | number
+    miss_along_sum?: boolean | number
+    miss_lateral_sum?: boolean | number
+    miss_samples?: boolean | number
+    miss_vertical_sum?: boolean | number
+    steam_id?: boolean | number
+    successes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "nade_lineup_progress" */
+export interface nade_lineup_progress_stddev_pop_order_by {attempts?: (order_by | null),best_streak?: (order_by | null),current_streak?: (order_by | null),miss_along_sum?: (order_by | null),miss_lateral_sum?: (order_by | null),miss_samples?: (order_by | null),miss_vertical_sum?: (order_by | null),steam_id?: (order_by | null),successes?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_lineup_progress_stddev_samp_fieldsGenqlSelection{
+    attempts?: boolean | number
+    best_streak?: boolean | number
+    current_streak?: boolean | number
+    miss_along_sum?: boolean | number
+    miss_lateral_sum?: boolean | number
+    miss_samples?: boolean | number
+    miss_vertical_sum?: boolean | number
+    steam_id?: boolean | number
+    successes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "nade_lineup_progress" */
+export interface nade_lineup_progress_stddev_samp_order_by {attempts?: (order_by | null),best_streak?: (order_by | null),current_streak?: (order_by | null),miss_along_sum?: (order_by | null),miss_lateral_sum?: (order_by | null),miss_samples?: (order_by | null),miss_vertical_sum?: (order_by | null),steam_id?: (order_by | null),successes?: (order_by | null)}
+
+
+/** Streaming cursor of the table "nade_lineup_progress" */
+export interface nade_lineup_progress_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_lineup_progress_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_lineup_progress_stream_cursor_value_input {attempts?: (Scalars['Int'] | null),best_streak?: (Scalars['Int'] | null),current_streak?: (Scalars['Int'] | null),last_practiced_at?: (Scalars['timestamptz'] | null),mastered_at?: (Scalars['timestamptz'] | null),miss_along_sum?: (Scalars['float8'] | null),miss_lateral_sum?: (Scalars['float8'] | null),miss_samples?: (Scalars['Int'] | null),miss_vertical_sum?: (Scalars['float8'] | null),nade_lineup_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),successes?: (Scalars['Int'] | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_lineup_progress_sum_fieldsGenqlSelection{
+    attempts?: boolean | number
+    best_streak?: boolean | number
+    current_streak?: boolean | number
+    miss_along_sum?: boolean | number
+    miss_lateral_sum?: boolean | number
+    miss_samples?: boolean | number
+    miss_vertical_sum?: boolean | number
+    steam_id?: boolean | number
+    successes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "nade_lineup_progress" */
+export interface nade_lineup_progress_sum_order_by {attempts?: (order_by | null),best_streak?: (order_by | null),current_streak?: (order_by | null),miss_along_sum?: (order_by | null),miss_lateral_sum?: (order_by | null),miss_samples?: (order_by | null),miss_vertical_sum?: (order_by | null),steam_id?: (order_by | null),successes?: (order_by | null)}
+
+export interface nade_lineup_progress_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_lineup_progress_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_lineup_progress_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_lineup_progress_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_lineup_progress_var_pop_fieldsGenqlSelection{
+    attempts?: boolean | number
+    best_streak?: boolean | number
+    current_streak?: boolean | number
+    miss_along_sum?: boolean | number
+    miss_lateral_sum?: boolean | number
+    miss_samples?: boolean | number
+    miss_vertical_sum?: boolean | number
+    steam_id?: boolean | number
+    successes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "nade_lineup_progress" */
+export interface nade_lineup_progress_var_pop_order_by {attempts?: (order_by | null),best_streak?: (order_by | null),current_streak?: (order_by | null),miss_along_sum?: (order_by | null),miss_lateral_sum?: (order_by | null),miss_samples?: (order_by | null),miss_vertical_sum?: (order_by | null),steam_id?: (order_by | null),successes?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface nade_lineup_progress_var_samp_fieldsGenqlSelection{
+    attempts?: boolean | number
+    best_streak?: boolean | number
+    current_streak?: boolean | number
+    miss_along_sum?: boolean | number
+    miss_lateral_sum?: boolean | number
+    miss_samples?: boolean | number
+    miss_vertical_sum?: boolean | number
+    steam_id?: boolean | number
+    successes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "nade_lineup_progress" */
+export interface nade_lineup_progress_var_samp_order_by {attempts?: (order_by | null),best_streak?: (order_by | null),current_streak?: (order_by | null),miss_along_sum?: (order_by | null),miss_lateral_sum?: (order_by | null),miss_samples?: (order_by | null),miss_vertical_sum?: (order_by | null),steam_id?: (order_by | null),successes?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface nade_lineup_progress_variance_fieldsGenqlSelection{
+    attempts?: boolean | number
+    best_streak?: boolean | number
+    current_streak?: boolean | number
+    miss_along_sum?: boolean | number
+    miss_lateral_sum?: boolean | number
+    miss_samples?: boolean | number
+    miss_vertical_sum?: boolean | number
+    steam_id?: boolean | number
+    successes?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "nade_lineup_progress" */
+export interface nade_lineup_progress_variance_order_by {attempts?: (order_by | null),best_streak?: (order_by | null),current_streak?: (order_by | null),miss_along_sum?: (order_by | null),miss_lateral_sum?: (order_by | null),miss_samples?: (order_by | null),miss_vertical_sum?: (order_by | null),steam_id?: (order_by | null),successes?: (order_by | null)}
+
+
+/** columns and relationships of "nade_lineup_repairs" */
+export interface nade_lineup_repairsGenqlSelection{
+    created_at?: boolean | number
+    drift_distance?: boolean | number
+    expires_at?: boolean | number
+    id?: boolean | number
+    /** An object relationship */
+    nade_drift_scan?: nade_drift_scansGenqlSelection
+    nade_drift_scan_id?: boolean | number
+    /** An object relationship */
+    nade_lineup?: nade_lineupsGenqlSelection
+    nade_lineup_id?: boolean | number
+    /** An object relationship */
+    nade_practice_session?: nade_practice_sessionsGenqlSelection
+    nade_practice_session_id?: boolean | number
+    repaired_at?: boolean | number
+    /** An object relationship */
+    repaired_nade_lineup?: nade_lineupsGenqlSelection
+    repaired_nade_lineup_id?: boolean | number
+    /** An object relationship */
+    requested_by?: playersGenqlSelection
+    requested_by_steam_id?: boolean | number
+    status?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_lineup_repairs" */
+export interface nade_lineup_repairs_aggregateGenqlSelection{
+    aggregate?: nade_lineup_repairs_aggregate_fieldsGenqlSelection
+    nodes?: nade_lineup_repairsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_lineup_repairs_aggregate_bool_exp {avg?: (nade_lineup_repairs_aggregate_bool_exp_avg | null),corr?: (nade_lineup_repairs_aggregate_bool_exp_corr | null),count?: (nade_lineup_repairs_aggregate_bool_exp_count | null),covar_samp?: (nade_lineup_repairs_aggregate_bool_exp_covar_samp | null),max?: (nade_lineup_repairs_aggregate_bool_exp_max | null),min?: (nade_lineup_repairs_aggregate_bool_exp_min | null),stddev_samp?: (nade_lineup_repairs_aggregate_bool_exp_stddev_samp | null),sum?: (nade_lineup_repairs_aggregate_bool_exp_sum | null),var_samp?: (nade_lineup_repairs_aggregate_bool_exp_var_samp | null)}
+
+export interface nade_lineup_repairs_aggregate_bool_exp_avg {arguments: nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_avg_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_repairs_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineup_repairs_aggregate_bool_exp_corr {arguments: nade_lineup_repairs_aggregate_bool_exp_corr_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_repairs_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineup_repairs_aggregate_bool_exp_corr_arguments {X: nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_corr_arguments_columns,Y: nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_corr_arguments_columns}
+
+export interface nade_lineup_repairs_aggregate_bool_exp_count {arguments?: (nade_lineup_repairs_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_repairs_bool_exp | null),predicate: Int_comparison_exp}
+
+export interface nade_lineup_repairs_aggregate_bool_exp_covar_samp {arguments: nade_lineup_repairs_aggregate_bool_exp_covar_samp_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_repairs_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineup_repairs_aggregate_bool_exp_covar_samp_arguments {X: nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_covar_samp_arguments_columns,Y: nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_covar_samp_arguments_columns}
+
+export interface nade_lineup_repairs_aggregate_bool_exp_max {arguments: nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_max_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_repairs_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineup_repairs_aggregate_bool_exp_min {arguments: nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_min_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_repairs_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineup_repairs_aggregate_bool_exp_stddev_samp {arguments: nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_stddev_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_repairs_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineup_repairs_aggregate_bool_exp_sum {arguments: nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_sum_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_repairs_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineup_repairs_aggregate_bool_exp_var_samp {arguments: nade_lineup_repairs_select_column_nade_lineup_repairs_aggregate_bool_exp_var_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_repairs_bool_exp | null),predicate: float8_comparison_exp}
+
+
+/** aggregate fields of "nade_lineup_repairs" */
+export interface nade_lineup_repairs_aggregate_fieldsGenqlSelection{
+    avg?: nade_lineup_repairs_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_lineup_repairs_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_lineup_repairs_max_fieldsGenqlSelection
+    min?: nade_lineup_repairs_min_fieldsGenqlSelection
+    stddev?: nade_lineup_repairs_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_lineup_repairs_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_lineup_repairs_stddev_samp_fieldsGenqlSelection
+    sum?: nade_lineup_repairs_sum_fieldsGenqlSelection
+    var_pop?: nade_lineup_repairs_var_pop_fieldsGenqlSelection
+    var_samp?: nade_lineup_repairs_var_samp_fieldsGenqlSelection
+    variance?: nade_lineup_repairs_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_aggregate_order_by {avg?: (nade_lineup_repairs_avg_order_by | null),count?: (order_by | null),max?: (nade_lineup_repairs_max_order_by | null),min?: (nade_lineup_repairs_min_order_by | null),stddev?: (nade_lineup_repairs_stddev_order_by | null),stddev_pop?: (nade_lineup_repairs_stddev_pop_order_by | null),stddev_samp?: (nade_lineup_repairs_stddev_samp_order_by | null),sum?: (nade_lineup_repairs_sum_order_by | null),var_pop?: (nade_lineup_repairs_var_pop_order_by | null),var_samp?: (nade_lineup_repairs_var_samp_order_by | null),variance?: (nade_lineup_repairs_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_arr_rel_insert_input {data: nade_lineup_repairs_insert_input[],
+/** upsert condition */
+on_conflict?: (nade_lineup_repairs_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface nade_lineup_repairs_avg_fieldsGenqlSelection{
+    drift_distance?: boolean | number
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_avg_order_by {drift_distance?: (order_by | null),requested_by_steam_id?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "nade_lineup_repairs". All fields are combined with a logical 'AND'. */
+export interface nade_lineup_repairs_bool_exp {_and?: (nade_lineup_repairs_bool_exp[] | null),_not?: (nade_lineup_repairs_bool_exp | null),_or?: (nade_lineup_repairs_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),drift_distance?: (float8_comparison_exp | null),expires_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),nade_drift_scan?: (nade_drift_scans_bool_exp | null),nade_drift_scan_id?: (uuid_comparison_exp | null),nade_lineup?: (nade_lineups_bool_exp | null),nade_lineup_id?: (uuid_comparison_exp | null),nade_practice_session?: (nade_practice_sessions_bool_exp | null),nade_practice_session_id?: (uuid_comparison_exp | null),repaired_at?: (timestamptz_comparison_exp | null),repaired_nade_lineup?: (nade_lineups_bool_exp | null),repaired_nade_lineup_id?: (uuid_comparison_exp | null),requested_by?: (players_bool_exp | null),requested_by_steam_id?: (bigint_comparison_exp | null),status?: (String_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_inc_input {drift_distance?: (Scalars['float8'] | null),requested_by_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_insert_input {created_at?: (Scalars['timestamptz'] | null),drift_distance?: (Scalars['float8'] | null),expires_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),nade_drift_scan?: (nade_drift_scans_obj_rel_insert_input | null),nade_drift_scan_id?: (Scalars['uuid'] | null),nade_lineup?: (nade_lineups_obj_rel_insert_input | null),nade_lineup_id?: (Scalars['uuid'] | null),nade_practice_session?: (nade_practice_sessions_obj_rel_insert_input | null),nade_practice_session_id?: (Scalars['uuid'] | null),repaired_at?: (Scalars['timestamptz'] | null),repaired_nade_lineup?: (nade_lineups_obj_rel_insert_input | null),repaired_nade_lineup_id?: (Scalars['uuid'] | null),requested_by?: (players_obj_rel_insert_input | null),requested_by_steam_id?: (Scalars['bigint'] | null),status?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface nade_lineup_repairs_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    drift_distance?: boolean | number
+    expires_at?: boolean | number
+    id?: boolean | number
+    nade_drift_scan_id?: boolean | number
+    nade_lineup_id?: boolean | number
+    nade_practice_session_id?: boolean | number
+    repaired_at?: boolean | number
+    repaired_nade_lineup_id?: boolean | number
+    requested_by_steam_id?: boolean | number
+    status?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_max_order_by {created_at?: (order_by | null),drift_distance?: (order_by | null),expires_at?: (order_by | null),id?: (order_by | null),nade_drift_scan_id?: (order_by | null),nade_lineup_id?: (order_by | null),nade_practice_session_id?: (order_by | null),repaired_at?: (order_by | null),repaired_nade_lineup_id?: (order_by | null),requested_by_steam_id?: (order_by | null),status?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface nade_lineup_repairs_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    drift_distance?: boolean | number
+    expires_at?: boolean | number
+    id?: boolean | number
+    nade_drift_scan_id?: boolean | number
+    nade_lineup_id?: boolean | number
+    nade_practice_session_id?: boolean | number
+    repaired_at?: boolean | number
+    repaired_nade_lineup_id?: boolean | number
+    requested_by_steam_id?: boolean | number
+    status?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_min_order_by {created_at?: (order_by | null),drift_distance?: (order_by | null),expires_at?: (order_by | null),id?: (order_by | null),nade_drift_scan_id?: (order_by | null),nade_lineup_id?: (order_by | null),nade_practice_session_id?: (order_by | null),repaired_at?: (order_by | null),repaired_nade_lineup_id?: (order_by | null),requested_by_steam_id?: (order_by | null),status?: (order_by | null)}
+
+
+/** response of any mutation on the table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_lineup_repairsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_on_conflict {constraint: nade_lineup_repairs_constraint,update_columns?: nade_lineup_repairs_update_column[],where?: (nade_lineup_repairs_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_lineup_repairs". */
+export interface nade_lineup_repairs_order_by {created_at?: (order_by | null),drift_distance?: (order_by | null),expires_at?: (order_by | null),id?: (order_by | null),nade_drift_scan?: (nade_drift_scans_order_by | null),nade_drift_scan_id?: (order_by | null),nade_lineup?: (nade_lineups_order_by | null),nade_lineup_id?: (order_by | null),nade_practice_session?: (nade_practice_sessions_order_by | null),nade_practice_session_id?: (order_by | null),repaired_at?: (order_by | null),repaired_nade_lineup?: (nade_lineups_order_by | null),repaired_nade_lineup_id?: (order_by | null),requested_by?: (players_order_by | null),requested_by_steam_id?: (order_by | null),status?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_lineup_repairs */
+export interface nade_lineup_repairs_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_set_input {created_at?: (Scalars['timestamptz'] | null),drift_distance?: (Scalars['float8'] | null),expires_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),nade_drift_scan_id?: (Scalars['uuid'] | null),nade_lineup_id?: (Scalars['uuid'] | null),nade_practice_session_id?: (Scalars['uuid'] | null),repaired_at?: (Scalars['timestamptz'] | null),repaired_nade_lineup_id?: (Scalars['uuid'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),status?: (Scalars['String'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_lineup_repairs_stddev_fieldsGenqlSelection{
+    drift_distance?: boolean | number
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_stddev_order_by {drift_distance?: (order_by | null),requested_by_steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_lineup_repairs_stddev_pop_fieldsGenqlSelection{
+    drift_distance?: boolean | number
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_stddev_pop_order_by {drift_distance?: (order_by | null),requested_by_steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_lineup_repairs_stddev_samp_fieldsGenqlSelection{
+    drift_distance?: boolean | number
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_stddev_samp_order_by {drift_distance?: (order_by | null),requested_by_steam_id?: (order_by | null)}
+
+
+/** Streaming cursor of the table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_lineup_repairs_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_lineup_repairs_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),drift_distance?: (Scalars['float8'] | null),expires_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),nade_drift_scan_id?: (Scalars['uuid'] | null),nade_lineup_id?: (Scalars['uuid'] | null),nade_practice_session_id?: (Scalars['uuid'] | null),repaired_at?: (Scalars['timestamptz'] | null),repaired_nade_lineup_id?: (Scalars['uuid'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),status?: (Scalars['String'] | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_lineup_repairs_sum_fieldsGenqlSelection{
+    drift_distance?: boolean | number
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_sum_order_by {drift_distance?: (order_by | null),requested_by_steam_id?: (order_by | null)}
+
+export interface nade_lineup_repairs_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_lineup_repairs_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_lineup_repairs_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_lineup_repairs_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_lineup_repairs_var_pop_fieldsGenqlSelection{
+    drift_distance?: boolean | number
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_var_pop_order_by {drift_distance?: (order_by | null),requested_by_steam_id?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface nade_lineup_repairs_var_samp_fieldsGenqlSelection{
+    drift_distance?: boolean | number
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_var_samp_order_by {drift_distance?: (order_by | null),requested_by_steam_id?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface nade_lineup_repairs_variance_fieldsGenqlSelection{
+    drift_distance?: boolean | number
+    requested_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "nade_lineup_repairs" */
+export interface nade_lineup_repairs_variance_order_by {drift_distance?: (order_by | null),requested_by_steam_id?: (order_by | null)}
+
+
+/** columns and relationships of "nade_lineup_votes" */
+export interface nade_lineup_votesGenqlSelection{
+    created_at?: boolean | number
+    /** An object relationship */
+    nade_lineup?: nade_lineupsGenqlSelection
+    nade_lineup_id?: boolean | number
+    /** An object relationship */
+    player?: playersGenqlSelection
+    steam_id?: boolean | number
+    vote?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_lineup_votes" */
+export interface nade_lineup_votes_aggregateGenqlSelection{
+    aggregate?: nade_lineup_votes_aggregate_fieldsGenqlSelection
+    nodes?: nade_lineup_votesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_lineup_votes_aggregate_bool_exp {count?: (nade_lineup_votes_aggregate_bool_exp_count | null)}
+
+export interface nade_lineup_votes_aggregate_bool_exp_count {arguments?: (nade_lineup_votes_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineup_votes_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "nade_lineup_votes" */
+export interface nade_lineup_votes_aggregate_fieldsGenqlSelection{
+    avg?: nade_lineup_votes_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_lineup_votes_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_lineup_votes_max_fieldsGenqlSelection
+    min?: nade_lineup_votes_min_fieldsGenqlSelection
+    stddev?: nade_lineup_votes_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_lineup_votes_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_lineup_votes_stddev_samp_fieldsGenqlSelection
+    sum?: nade_lineup_votes_sum_fieldsGenqlSelection
+    var_pop?: nade_lineup_votes_var_pop_fieldsGenqlSelection
+    var_samp?: nade_lineup_votes_var_samp_fieldsGenqlSelection
+    variance?: nade_lineup_votes_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "nade_lineup_votes" */
+export interface nade_lineup_votes_aggregate_order_by {avg?: (nade_lineup_votes_avg_order_by | null),count?: (order_by | null),max?: (nade_lineup_votes_max_order_by | null),min?: (nade_lineup_votes_min_order_by | null),stddev?: (nade_lineup_votes_stddev_order_by | null),stddev_pop?: (nade_lineup_votes_stddev_pop_order_by | null),stddev_samp?: (nade_lineup_votes_stddev_samp_order_by | null),sum?: (nade_lineup_votes_sum_order_by | null),var_pop?: (nade_lineup_votes_var_pop_order_by | null),var_samp?: (nade_lineup_votes_var_samp_order_by | null),variance?: (nade_lineup_votes_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "nade_lineup_votes" */
+export interface nade_lineup_votes_arr_rel_insert_input {data: nade_lineup_votes_insert_input[],
+/** upsert condition */
+on_conflict?: (nade_lineup_votes_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface nade_lineup_votes_avg_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    vote?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "nade_lineup_votes" */
+export interface nade_lineup_votes_avg_order_by {steam_id?: (order_by | null),vote?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "nade_lineup_votes". All fields are combined with a logical 'AND'. */
+export interface nade_lineup_votes_bool_exp {_and?: (nade_lineup_votes_bool_exp[] | null),_not?: (nade_lineup_votes_bool_exp | null),_or?: (nade_lineup_votes_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),nade_lineup?: (nade_lineups_bool_exp | null),nade_lineup_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),steam_id?: (bigint_comparison_exp | null),vote?: (smallint_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_lineup_votes" */
+export interface nade_lineup_votes_inc_input {steam_id?: (Scalars['bigint'] | null),vote?: (Scalars['smallint'] | null)}
+
+
+/** input type for inserting data into table "nade_lineup_votes" */
+export interface nade_lineup_votes_insert_input {created_at?: (Scalars['timestamptz'] | null),nade_lineup?: (nade_lineups_obj_rel_insert_input | null),nade_lineup_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),vote?: (Scalars['smallint'] | null)}
+
+
+/** aggregate max on columns */
+export interface nade_lineup_votes_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    nade_lineup_id?: boolean | number
+    steam_id?: boolean | number
+    vote?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "nade_lineup_votes" */
+export interface nade_lineup_votes_max_order_by {created_at?: (order_by | null),nade_lineup_id?: (order_by | null),steam_id?: (order_by | null),vote?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface nade_lineup_votes_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    nade_lineup_id?: boolean | number
+    steam_id?: boolean | number
+    vote?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "nade_lineup_votes" */
+export interface nade_lineup_votes_min_order_by {created_at?: (order_by | null),nade_lineup_id?: (order_by | null),steam_id?: (order_by | null),vote?: (order_by | null)}
+
+
+/** response of any mutation on the table "nade_lineup_votes" */
+export interface nade_lineup_votes_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_lineup_votesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "nade_lineup_votes" */
+export interface nade_lineup_votes_on_conflict {constraint: nade_lineup_votes_constraint,update_columns?: nade_lineup_votes_update_column[],where?: (nade_lineup_votes_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_lineup_votes". */
+export interface nade_lineup_votes_order_by {created_at?: (order_by | null),nade_lineup?: (nade_lineups_order_by | null),nade_lineup_id?: (order_by | null),player?: (players_order_by | null),steam_id?: (order_by | null),vote?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_lineup_votes */
+export interface nade_lineup_votes_pk_columns_input {nade_lineup_id: Scalars['uuid'],steam_id: Scalars['bigint']}
+
+
+/** input type for updating data in table "nade_lineup_votes" */
+export interface nade_lineup_votes_set_input {created_at?: (Scalars['timestamptz'] | null),nade_lineup_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),vote?: (Scalars['smallint'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_lineup_votes_stddev_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    vote?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "nade_lineup_votes" */
+export interface nade_lineup_votes_stddev_order_by {steam_id?: (order_by | null),vote?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_lineup_votes_stddev_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    vote?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "nade_lineup_votes" */
+export interface nade_lineup_votes_stddev_pop_order_by {steam_id?: (order_by | null),vote?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_lineup_votes_stddev_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    vote?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "nade_lineup_votes" */
+export interface nade_lineup_votes_stddev_samp_order_by {steam_id?: (order_by | null),vote?: (order_by | null)}
+
+
+/** Streaming cursor of the table "nade_lineup_votes" */
+export interface nade_lineup_votes_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_lineup_votes_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_lineup_votes_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),nade_lineup_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null),vote?: (Scalars['smallint'] | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_lineup_votes_sum_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    vote?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "nade_lineup_votes" */
+export interface nade_lineup_votes_sum_order_by {steam_id?: (order_by | null),vote?: (order_by | null)}
+
+export interface nade_lineup_votes_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_lineup_votes_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_lineup_votes_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_lineup_votes_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_lineup_votes_var_pop_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    vote?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "nade_lineup_votes" */
+export interface nade_lineup_votes_var_pop_order_by {steam_id?: (order_by | null),vote?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface nade_lineup_votes_var_samp_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    vote?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "nade_lineup_votes" */
+export interface nade_lineup_votes_var_samp_order_by {steam_id?: (order_by | null),vote?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface nade_lineup_votes_variance_fieldsGenqlSelection{
+    steam_id?: boolean | number
+    vote?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "nade_lineup_votes" */
+export interface nade_lineup_votes_variance_order_by {steam_id?: (order_by | null),vote?: (order_by | null)}
+
+
+/** columns and relationships of "nade_lineups" */
+export interface nade_lineupsGenqlSelection{
+    archived_at?: boolean | number
+    /** An object relationship */
+    author?: playersGenqlSelection
+    author_steam_id?: boolean | number
+    /** A computed field, executes function "can_edit_nade_lineup" */
+    can_edit?: boolean | number
+    /** A computed field, executes function "can_view_nade_lineup" */
+    can_view?: boolean | number
+    /** An array relationship */
+    collection_items?: (nade_collection_itemsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_collection_items_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_collection_items_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_collection_items_bool_exp | null)} })
+    /** An aggregate relationship */
+    collection_items_aggregate?: (nade_collection_items_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_collection_items_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_collection_items_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_collection_items_bool_exp | null)} })
+    confidence?: boolean | number
+    created_at?: boolean | number
+    description?: boolean | number
+    /** A computed field, executes function "nade_lineup_difficulty" */
+    difficulty?: boolean | number
+    downvotes?: boolean | number
+    external_id?: boolean | number
+    eye_z?: boolean | number
+    /** An array relationship */
+    favorited_by?: (nade_lineup_favoritesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_favorites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_favorites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_favorites_bool_exp | null)} })
+    /** An aggregate relationship */
+    favorited_by_aggregate?: (nade_lineup_favorites_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_favorites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_favorites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_favorites_bool_exp | null)} })
+    favorites?: boolean | number
+    flight_time_ms?: boolean | number
+    /** An object relationship */
+    forked_from?: nade_lineupsGenqlSelection
+    forked_from_nade_lineup_id?: boolean | number
+    id?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    /** A computed field, executes function "nade_lineup_is_favorited" */
+    is_favorited?: boolean | number
+    jump_throw_bind?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    lineup_bucket?: boolean | number
+    map_name?: boolean | number
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote?: boolean | number
+    nade_type?: boolean | number
+    name?: boolean | number
+    origin_source?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    practice_attempts?: boolean | number
+    practice_players?: boolean | number
+    practice_successes?: boolean | number
+    /** An array relationship */
+    progress?: (nade_lineup_progressGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_progress_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_progress_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_progress_bool_exp | null)} })
+    /** An aggregate relationship */
+    progress_aggregate?: (nade_lineup_progress_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_progress_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_progress_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_progress_bool_exp | null)} })
+    /** An array relationship */
+    repairs?: (nade_lineup_repairsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_repairs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_repairs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_repairs_bool_exp | null)} })
+    /** An aggregate relationship */
+    repairs_aggregate?: (nade_lineup_repairs_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_repairs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_repairs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_repairs_bool_exp | null)} })
+    side?: boolean | number
+    source_grenade_id?: boolean | number
+    /** An object relationship */
+    source_match?: matchesGenqlSelection
+    source_match_id?: boolean | number
+    /** An object relationship */
+    source_match_map?: match_mapsGenqlSelection
+    source_match_map_id?: boolean | number
+    source_url?: boolean | number
+    tags?: boolean | number
+    /** An object relationship */
+    team?: teamsGenqlSelection
+    team_id?: boolean | number
+    technique?: boolean | number
+    throw_strength?: boolean | number
+    trajectory_file?: boolean | number
+    trajectory_preview?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    trajectory_size?: boolean | number
+    updated_at?: boolean | number
+    upvotes?: boolean | number
+    verified_at?: boolean | number
+    view_pitch?: boolean | number
+    view_pitch_delta?: boolean | number
+    view_yaw?: boolean | number
+    view_yaw_delta?: boolean | number
+    visibility?: boolean | number
+    /** An array relationship */
+    votes?: (nade_lineup_votesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_votes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_votes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_votes_bool_exp | null)} })
+    /** An aggregate relationship */
+    votes_aggregate?: (nade_lineup_votes_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_votes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_votes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_votes_bool_exp | null)} })
+    workshop_map_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_lineups" */
+export interface nade_lineups_aggregateGenqlSelection{
+    aggregate?: nade_lineups_aggregate_fieldsGenqlSelection
+    nodes?: nade_lineupsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_lineups_aggregate_bool_exp {avg?: (nade_lineups_aggregate_bool_exp_avg | null),bool_and?: (nade_lineups_aggregate_bool_exp_bool_and | null),bool_or?: (nade_lineups_aggregate_bool_exp_bool_or | null),corr?: (nade_lineups_aggregate_bool_exp_corr | null),count?: (nade_lineups_aggregate_bool_exp_count | null),covar_samp?: (nade_lineups_aggregate_bool_exp_covar_samp | null),max?: (nade_lineups_aggregate_bool_exp_max | null),min?: (nade_lineups_aggregate_bool_exp_min | null),stddev_samp?: (nade_lineups_aggregate_bool_exp_stddev_samp | null),sum?: (nade_lineups_aggregate_bool_exp_sum | null),var_samp?: (nade_lineups_aggregate_bool_exp_var_samp | null)}
+
+export interface nade_lineups_aggregate_bool_exp_avg {arguments: nade_lineups_select_column_nade_lineups_aggregate_bool_exp_avg_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineups_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineups_aggregate_bool_exp_bool_and {arguments: nade_lineups_select_column_nade_lineups_aggregate_bool_exp_bool_and_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineups_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface nade_lineups_aggregate_bool_exp_bool_or {arguments: nade_lineups_select_column_nade_lineups_aggregate_bool_exp_bool_or_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineups_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface nade_lineups_aggregate_bool_exp_corr {arguments: nade_lineups_aggregate_bool_exp_corr_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineups_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineups_aggregate_bool_exp_corr_arguments {X: nade_lineups_select_column_nade_lineups_aggregate_bool_exp_corr_arguments_columns,Y: nade_lineups_select_column_nade_lineups_aggregate_bool_exp_corr_arguments_columns}
+
+export interface nade_lineups_aggregate_bool_exp_count {arguments?: (nade_lineups_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineups_bool_exp | null),predicate: Int_comparison_exp}
+
+export interface nade_lineups_aggregate_bool_exp_covar_samp {arguments: nade_lineups_aggregate_bool_exp_covar_samp_arguments,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineups_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineups_aggregate_bool_exp_covar_samp_arguments {X: nade_lineups_select_column_nade_lineups_aggregate_bool_exp_covar_samp_arguments_columns,Y: nade_lineups_select_column_nade_lineups_aggregate_bool_exp_covar_samp_arguments_columns}
+
+export interface nade_lineups_aggregate_bool_exp_max {arguments: nade_lineups_select_column_nade_lineups_aggregate_bool_exp_max_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineups_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineups_aggregate_bool_exp_min {arguments: nade_lineups_select_column_nade_lineups_aggregate_bool_exp_min_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineups_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineups_aggregate_bool_exp_stddev_samp {arguments: nade_lineups_select_column_nade_lineups_aggregate_bool_exp_stddev_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineups_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineups_aggregate_bool_exp_sum {arguments: nade_lineups_select_column_nade_lineups_aggregate_bool_exp_sum_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineups_bool_exp | null),predicate: float8_comparison_exp}
+
+export interface nade_lineups_aggregate_bool_exp_var_samp {arguments: nade_lineups_select_column_nade_lineups_aggregate_bool_exp_var_samp_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_lineups_bool_exp | null),predicate: float8_comparison_exp}
+
+
+/** aggregate fields of "nade_lineups" */
+export interface nade_lineups_aggregate_fieldsGenqlSelection{
+    avg?: nade_lineups_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_lineups_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_lineups_max_fieldsGenqlSelection
+    min?: nade_lineups_min_fieldsGenqlSelection
+    stddev?: nade_lineups_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_lineups_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_lineups_stddev_samp_fieldsGenqlSelection
+    sum?: nade_lineups_sum_fieldsGenqlSelection
+    var_pop?: nade_lineups_var_pop_fieldsGenqlSelection
+    var_samp?: nade_lineups_var_samp_fieldsGenqlSelection
+    variance?: nade_lineups_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "nade_lineups" */
+export interface nade_lineups_aggregate_order_by {avg?: (nade_lineups_avg_order_by | null),count?: (order_by | null),max?: (nade_lineups_max_order_by | null),min?: (nade_lineups_min_order_by | null),stddev?: (nade_lineups_stddev_order_by | null),stddev_pop?: (nade_lineups_stddev_pop_order_by | null),stddev_samp?: (nade_lineups_stddev_samp_order_by | null),sum?: (nade_lineups_sum_order_by | null),var_pop?: (nade_lineups_var_pop_order_by | null),var_samp?: (nade_lineups_var_samp_order_by | null),variance?: (nade_lineups_variance_order_by | null)}
+
+
+/** append existing jsonb value of filtered columns with new jsonb value */
+export interface nade_lineups_append_input {trajectory_preview?: (Scalars['jsonb'] | null)}
+
+
+/** input type for inserting array relation for remote table "nade_lineups" */
+export interface nade_lineups_arr_rel_insert_input {data: nade_lineups_insert_input[],
+/** upsert condition */
+on_conflict?: (nade_lineups_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface nade_lineups_avg_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    downvotes?: boolean | number
+    eye_z?: boolean | number
+    favorites?: boolean | number
+    flight_time_ms?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    practice_attempts?: boolean | number
+    practice_players?: boolean | number
+    practice_successes?: boolean | number
+    source_grenade_id?: boolean | number
+    trajectory_size?: boolean | number
+    upvotes?: boolean | number
+    view_pitch?: boolean | number
+    view_pitch_delta?: boolean | number
+    view_yaw?: boolean | number
+    view_yaw_delta?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "nade_lineups" */
+export interface nade_lineups_avg_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "nade_lineups". All fields are combined with a logical 'AND'. */
+export interface nade_lineups_bool_exp {_and?: (nade_lineups_bool_exp[] | null),_not?: (nade_lineups_bool_exp | null),_or?: (nade_lineups_bool_exp[] | null),archived_at?: (timestamptz_comparison_exp | null),author?: (players_bool_exp | null),author_steam_id?: (bigint_comparison_exp | null),can_edit?: (Boolean_comparison_exp | null),can_view?: (Boolean_comparison_exp | null),collection_items?: (nade_collection_items_bool_exp | null),collection_items_aggregate?: (nade_collection_items_aggregate_bool_exp | null),confidence?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),difficulty?: (String_comparison_exp | null),downvotes?: (Int_comparison_exp | null),external_id?: (String_comparison_exp | null),eye_z?: (float8_comparison_exp | null),favorited_by?: (nade_lineup_favorites_bool_exp | null),favorited_by_aggregate?: (nade_lineup_favorites_aggregate_bool_exp | null),favorites?: (Int_comparison_exp | null),flight_time_ms?: (Int_comparison_exp | null),forked_from?: (nade_lineups_bool_exp | null),forked_from_nade_lineup_id?: (uuid_comparison_exp | null),id?: (uuid_comparison_exp | null),initial_pos_x?: (float8_comparison_exp | null),initial_pos_y?: (float8_comparison_exp | null),initial_pos_z?: (float8_comparison_exp | null),initial_vel_x?: (float8_comparison_exp | null),initial_vel_y?: (float8_comparison_exp | null),initial_vel_z?: (float8_comparison_exp | null),is_favorited?: (Boolean_comparison_exp | null),jump_throw_bind?: (Boolean_comparison_exp | null),land_x?: (float8_comparison_exp | null),land_y?: (float8_comparison_exp | null),land_z?: (float8_comparison_exp | null),lineup_bucket?: (String_comparison_exp | null),map_name?: (String_comparison_exp | null),my_vote?: (smallint_comparison_exp | null),nade_type?: (e_utility_types_enum_comparison_exp | null),name?: (String_comparison_exp | null),origin_source?: (e_nade_sources_enum_comparison_exp | null),origin_x?: (float8_comparison_exp | null),origin_y?: (float8_comparison_exp | null),origin_z?: (float8_comparison_exp | null),practice_attempts?: (Int_comparison_exp | null),practice_players?: (Int_comparison_exp | null),practice_successes?: (Int_comparison_exp | null),progress?: (nade_lineup_progress_bool_exp | null),progress_aggregate?: (nade_lineup_progress_aggregate_bool_exp | null),repairs?: (nade_lineup_repairs_bool_exp | null),repairs_aggregate?: (nade_lineup_repairs_aggregate_bool_exp | null),side?: (e_sides_enum_comparison_exp | null),source_grenade_id?: (Int_comparison_exp | null),source_match?: (matches_bool_exp | null),source_match_id?: (uuid_comparison_exp | null),source_match_map?: (match_maps_bool_exp | null),source_match_map_id?: (uuid_comparison_exp | null),source_url?: (String_comparison_exp | null),tags?: (String_array_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),technique?: (e_nade_techniques_enum_comparison_exp | null),throw_strength?: (e_nade_throw_strengths_enum_comparison_exp | null),trajectory_file?: (String_comparison_exp | null),trajectory_preview?: (jsonb_comparison_exp | null),trajectory_size?: (Int_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),upvotes?: (Int_comparison_exp | null),verified_at?: (timestamptz_comparison_exp | null),view_pitch?: (float8_comparison_exp | null),view_pitch_delta?: (float8_comparison_exp | null),view_yaw?: (float8_comparison_exp | null),view_yaw_delta?: (float8_comparison_exp | null),visibility?: (e_nade_visibility_enum_comparison_exp | null),votes?: (nade_lineup_votes_bool_exp | null),votes_aggregate?: (nade_lineup_votes_aggregate_bool_exp | null),workshop_map_id?: (String_comparison_exp | null)}
+
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export interface nade_lineups_delete_at_path_input {trajectory_preview?: (Scalars['String'][] | null)}
+
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export interface nade_lineups_delete_elem_input {trajectory_preview?: (Scalars['Int'] | null)}
+
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export interface nade_lineups_delete_key_input {trajectory_preview?: (Scalars['String'] | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_lineups" */
+export interface nade_lineups_inc_input {author_steam_id?: (Scalars['bigint'] | null),downvotes?: (Scalars['Int'] | null),eye_z?: (Scalars['float8'] | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),source_grenade_id?: (Scalars['Int'] | null),trajectory_size?: (Scalars['Int'] | null),upvotes?: (Scalars['Int'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null)}
+
+
+/** input type for inserting data into table "nade_lineups" */
+export interface nade_lineups_insert_input {archived_at?: (Scalars['timestamptz'] | null),author?: (players_obj_rel_insert_input | null),author_steam_id?: (Scalars['bigint'] | null),collection_items?: (nade_collection_items_arr_rel_insert_input | null),confidence?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),downvotes?: (Scalars['Int'] | null),external_id?: (Scalars['String'] | null),eye_z?: (Scalars['float8'] | null),favorited_by?: (nade_lineup_favorites_arr_rel_insert_input | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),forked_from?: (nade_lineups_obj_rel_insert_input | null),forked_from_nade_lineup_id?: (Scalars['uuid'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),jump_throw_bind?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),map_name?: (Scalars['String'] | null),nade_type?: (e_utility_types_enum | null),name?: (Scalars['String'] | null),origin_source?: (e_nade_sources_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),progress?: (nade_lineup_progress_arr_rel_insert_input | null),repairs?: (nade_lineup_repairs_arr_rel_insert_input | null),side?: (e_sides_enum | null),source_grenade_id?: (Scalars['Int'] | null),source_match?: (matches_obj_rel_insert_input | null),source_match_id?: (Scalars['uuid'] | null),source_match_map?: (match_maps_obj_rel_insert_input | null),source_match_map_id?: (Scalars['uuid'] | null),source_url?: (Scalars['String'] | null),tags?: (Scalars['String'][] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),technique?: (e_nade_techniques_enum | null),throw_strength?: (e_nade_throw_strengths_enum | null),trajectory_file?: (Scalars['String'] | null),trajectory_preview?: (Scalars['jsonb'] | null),trajectory_size?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),upvotes?: (Scalars['Int'] | null),verified_at?: (Scalars['timestamptz'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null),visibility?: (e_nade_visibility_enum | null),votes?: (nade_lineup_votes_arr_rel_insert_input | null),workshop_map_id?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface nade_lineups_max_fieldsGenqlSelection{
+    archived_at?: boolean | number
+    author_steam_id?: boolean | number
+    confidence?: boolean | number
+    created_at?: boolean | number
+    description?: boolean | number
+    /** A computed field, executes function "nade_lineup_difficulty" */
+    difficulty?: boolean | number
+    downvotes?: boolean | number
+    external_id?: boolean | number
+    eye_z?: boolean | number
+    favorites?: boolean | number
+    flight_time_ms?: boolean | number
+    forked_from_nade_lineup_id?: boolean | number
+    id?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    lineup_bucket?: boolean | number
+    map_name?: boolean | number
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote?: boolean | number
+    name?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    practice_attempts?: boolean | number
+    practice_players?: boolean | number
+    practice_successes?: boolean | number
+    source_grenade_id?: boolean | number
+    source_match_id?: boolean | number
+    source_match_map_id?: boolean | number
+    source_url?: boolean | number
+    tags?: boolean | number
+    team_id?: boolean | number
+    trajectory_file?: boolean | number
+    trajectory_size?: boolean | number
+    updated_at?: boolean | number
+    upvotes?: boolean | number
+    verified_at?: boolean | number
+    view_pitch?: boolean | number
+    view_pitch_delta?: boolean | number
+    view_yaw?: boolean | number
+    view_yaw_delta?: boolean | number
+    workshop_map_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "nade_lineups" */
+export interface nade_lineups_max_order_by {archived_at?: (order_by | null),author_steam_id?: (order_by | null),confidence?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),downvotes?: (order_by | null),external_id?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),forked_from_nade_lineup_id?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),name?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),source_match_id?: (order_by | null),source_match_map_id?: (order_by | null),source_url?: (order_by | null),tags?: (order_by | null),team_id?: (order_by | null),trajectory_file?: (order_by | null),trajectory_size?: (order_by | null),updated_at?: (order_by | null),upvotes?: (order_by | null),verified_at?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null),workshop_map_id?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface nade_lineups_min_fieldsGenqlSelection{
+    archived_at?: boolean | number
+    author_steam_id?: boolean | number
+    confidence?: boolean | number
+    created_at?: boolean | number
+    description?: boolean | number
+    /** A computed field, executes function "nade_lineup_difficulty" */
+    difficulty?: boolean | number
+    downvotes?: boolean | number
+    external_id?: boolean | number
+    eye_z?: boolean | number
+    favorites?: boolean | number
+    flight_time_ms?: boolean | number
+    forked_from_nade_lineup_id?: boolean | number
+    id?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    lineup_bucket?: boolean | number
+    map_name?: boolean | number
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote?: boolean | number
+    name?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    practice_attempts?: boolean | number
+    practice_players?: boolean | number
+    practice_successes?: boolean | number
+    source_grenade_id?: boolean | number
+    source_match_id?: boolean | number
+    source_match_map_id?: boolean | number
+    source_url?: boolean | number
+    tags?: boolean | number
+    team_id?: boolean | number
+    trajectory_file?: boolean | number
+    trajectory_size?: boolean | number
+    updated_at?: boolean | number
+    upvotes?: boolean | number
+    verified_at?: boolean | number
+    view_pitch?: boolean | number
+    view_pitch_delta?: boolean | number
+    view_yaw?: boolean | number
+    view_yaw_delta?: boolean | number
+    workshop_map_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "nade_lineups" */
+export interface nade_lineups_min_order_by {archived_at?: (order_by | null),author_steam_id?: (order_by | null),confidence?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),downvotes?: (order_by | null),external_id?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),forked_from_nade_lineup_id?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),name?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),source_match_id?: (order_by | null),source_match_map_id?: (order_by | null),source_url?: (order_by | null),tags?: (order_by | null),team_id?: (order_by | null),trajectory_file?: (order_by | null),trajectory_size?: (order_by | null),updated_at?: (order_by | null),upvotes?: (order_by | null),verified_at?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null),workshop_map_id?: (order_by | null)}
+
+
+/** response of any mutation on the table "nade_lineups" */
+export interface nade_lineups_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_lineupsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** input type for inserting object relation for remote table "nade_lineups" */
+export interface nade_lineups_obj_rel_insert_input {data: nade_lineups_insert_input,
+/** upsert condition */
+on_conflict?: (nade_lineups_on_conflict | null)}
+
+
+/** on_conflict condition type for table "nade_lineups" */
+export interface nade_lineups_on_conflict {constraint: nade_lineups_constraint,update_columns?: nade_lineups_update_column[],where?: (nade_lineups_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_lineups". */
+export interface nade_lineups_order_by {archived_at?: (order_by | null),author?: (players_order_by | null),author_steam_id?: (order_by | null),can_edit?: (order_by | null),can_view?: (order_by | null),collection_items_aggregate?: (nade_collection_items_aggregate_order_by | null),confidence?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),difficulty?: (order_by | null),downvotes?: (order_by | null),external_id?: (order_by | null),eye_z?: (order_by | null),favorited_by_aggregate?: (nade_lineup_favorites_aggregate_order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),forked_from?: (nade_lineups_order_by | null),forked_from_nade_lineup_id?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),is_favorited?: (order_by | null),jump_throw_bind?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),my_vote?: (order_by | null),nade_type?: (order_by | null),name?: (order_by | null),origin_source?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),progress_aggregate?: (nade_lineup_progress_aggregate_order_by | null),repairs_aggregate?: (nade_lineup_repairs_aggregate_order_by | null),side?: (order_by | null),source_grenade_id?: (order_by | null),source_match?: (matches_order_by | null),source_match_id?: (order_by | null),source_match_map?: (match_maps_order_by | null),source_match_map_id?: (order_by | null),source_url?: (order_by | null),tags?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),technique?: (order_by | null),throw_strength?: (order_by | null),trajectory_file?: (order_by | null),trajectory_preview?: (order_by | null),trajectory_size?: (order_by | null),updated_at?: (order_by | null),upvotes?: (order_by | null),verified_at?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null),visibility?: (order_by | null),votes_aggregate?: (nade_lineup_votes_aggregate_order_by | null),workshop_map_id?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_lineups */
+export interface nade_lineups_pk_columns_input {id: Scalars['uuid']}
+
+
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export interface nade_lineups_prepend_input {trajectory_preview?: (Scalars['jsonb'] | null)}
+
+
+/** input type for updating data in table "nade_lineups" */
+export interface nade_lineups_set_input {archived_at?: (Scalars['timestamptz'] | null),author_steam_id?: (Scalars['bigint'] | null),confidence?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),downvotes?: (Scalars['Int'] | null),external_id?: (Scalars['String'] | null),eye_z?: (Scalars['float8'] | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),forked_from_nade_lineup_id?: (Scalars['uuid'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),jump_throw_bind?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),map_name?: (Scalars['String'] | null),nade_type?: (e_utility_types_enum | null),name?: (Scalars['String'] | null),origin_source?: (e_nade_sources_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),side?: (e_sides_enum | null),source_grenade_id?: (Scalars['Int'] | null),source_match_id?: (Scalars['uuid'] | null),source_match_map_id?: (Scalars['uuid'] | null),source_url?: (Scalars['String'] | null),tags?: (Scalars['String'][] | null),team_id?: (Scalars['uuid'] | null),technique?: (e_nade_techniques_enum | null),throw_strength?: (e_nade_throw_strengths_enum | null),trajectory_file?: (Scalars['String'] | null),trajectory_preview?: (Scalars['jsonb'] | null),trajectory_size?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),upvotes?: (Scalars['Int'] | null),verified_at?: (Scalars['timestamptz'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null),visibility?: (e_nade_visibility_enum | null),workshop_map_id?: (Scalars['String'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_lineups_stddev_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    downvotes?: boolean | number
+    eye_z?: boolean | number
+    favorites?: boolean | number
+    flight_time_ms?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    practice_attempts?: boolean | number
+    practice_players?: boolean | number
+    practice_successes?: boolean | number
+    source_grenade_id?: boolean | number
+    trajectory_size?: boolean | number
+    upvotes?: boolean | number
+    view_pitch?: boolean | number
+    view_pitch_delta?: boolean | number
+    view_yaw?: boolean | number
+    view_yaw_delta?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "nade_lineups" */
+export interface nade_lineups_stddev_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_lineups_stddev_pop_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    downvotes?: boolean | number
+    eye_z?: boolean | number
+    favorites?: boolean | number
+    flight_time_ms?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    practice_attempts?: boolean | number
+    practice_players?: boolean | number
+    practice_successes?: boolean | number
+    source_grenade_id?: boolean | number
+    trajectory_size?: boolean | number
+    upvotes?: boolean | number
+    view_pitch?: boolean | number
+    view_pitch_delta?: boolean | number
+    view_yaw?: boolean | number
+    view_yaw_delta?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "nade_lineups" */
+export interface nade_lineups_stddev_pop_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_lineups_stddev_samp_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    downvotes?: boolean | number
+    eye_z?: boolean | number
+    favorites?: boolean | number
+    flight_time_ms?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    practice_attempts?: boolean | number
+    practice_players?: boolean | number
+    practice_successes?: boolean | number
+    source_grenade_id?: boolean | number
+    trajectory_size?: boolean | number
+    upvotes?: boolean | number
+    view_pitch?: boolean | number
+    view_pitch_delta?: boolean | number
+    view_yaw?: boolean | number
+    view_yaw_delta?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "nade_lineups" */
+export interface nade_lineups_stddev_samp_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+
+
+/** Streaming cursor of the table "nade_lineups" */
+export interface nade_lineups_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_lineups_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_lineups_stream_cursor_value_input {archived_at?: (Scalars['timestamptz'] | null),author_steam_id?: (Scalars['bigint'] | null),confidence?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),downvotes?: (Scalars['Int'] | null),external_id?: (Scalars['String'] | null),eye_z?: (Scalars['float8'] | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),forked_from_nade_lineup_id?: (Scalars['uuid'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),jump_throw_bind?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),lineup_bucket?: (Scalars['String'] | null),map_name?: (Scalars['String'] | null),nade_type?: (e_utility_types_enum | null),name?: (Scalars['String'] | null),origin_source?: (e_nade_sources_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),side?: (e_sides_enum | null),source_grenade_id?: (Scalars['Int'] | null),source_match_id?: (Scalars['uuid'] | null),source_match_map_id?: (Scalars['uuid'] | null),source_url?: (Scalars['String'] | null),tags?: (Scalars['String'][] | null),team_id?: (Scalars['uuid'] | null),technique?: (e_nade_techniques_enum | null),throw_strength?: (e_nade_throw_strengths_enum | null),trajectory_file?: (Scalars['String'] | null),trajectory_preview?: (Scalars['jsonb'] | null),trajectory_size?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),upvotes?: (Scalars['Int'] | null),verified_at?: (Scalars['timestamptz'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null),visibility?: (e_nade_visibility_enum | null),workshop_map_id?: (Scalars['String'] | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_lineups_sum_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    downvotes?: boolean | number
+    eye_z?: boolean | number
+    favorites?: boolean | number
+    flight_time_ms?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    practice_attempts?: boolean | number
+    practice_players?: boolean | number
+    practice_successes?: boolean | number
+    source_grenade_id?: boolean | number
+    trajectory_size?: boolean | number
+    upvotes?: boolean | number
+    view_pitch?: boolean | number
+    view_pitch_delta?: boolean | number
+    view_yaw?: boolean | number
+    view_yaw_delta?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "nade_lineups" */
+export interface nade_lineups_sum_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+
+export interface nade_lineups_updates {
+/** append existing jsonb value of filtered columns with new jsonb value */
+_append?: (nade_lineups_append_input | null),
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+_delete_at_path?: (nade_lineups_delete_at_path_input | null),
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+_delete_elem?: (nade_lineups_delete_elem_input | null),
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+_delete_key?: (nade_lineups_delete_key_input | null),
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_lineups_inc_input | null),
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+_prepend?: (nade_lineups_prepend_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_lineups_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_lineups_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_lineups_var_pop_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    downvotes?: boolean | number
+    eye_z?: boolean | number
+    favorites?: boolean | number
+    flight_time_ms?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    practice_attempts?: boolean | number
+    practice_players?: boolean | number
+    practice_successes?: boolean | number
+    source_grenade_id?: boolean | number
+    trajectory_size?: boolean | number
+    upvotes?: boolean | number
+    view_pitch?: boolean | number
+    view_pitch_delta?: boolean | number
+    view_yaw?: boolean | number
+    view_yaw_delta?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "nade_lineups" */
+export interface nade_lineups_var_pop_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface nade_lineups_var_samp_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    downvotes?: boolean | number
+    eye_z?: boolean | number
+    favorites?: boolean | number
+    flight_time_ms?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    practice_attempts?: boolean | number
+    practice_players?: boolean | number
+    practice_successes?: boolean | number
+    source_grenade_id?: boolean | number
+    trajectory_size?: boolean | number
+    upvotes?: boolean | number
+    view_pitch?: boolean | number
+    view_pitch_delta?: boolean | number
+    view_yaw?: boolean | number
+    view_yaw_delta?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "nade_lineups" */
+export interface nade_lineups_var_samp_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface nade_lineups_variance_fieldsGenqlSelection{
+    author_steam_id?: boolean | number
+    downvotes?: boolean | number
+    eye_z?: boolean | number
+    favorites?: boolean | number
+    flight_time_ms?: boolean | number
+    initial_pos_x?: boolean | number
+    initial_pos_y?: boolean | number
+    initial_pos_z?: boolean | number
+    initial_vel_x?: boolean | number
+    initial_vel_y?: boolean | number
+    initial_vel_z?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    /** A computed field, executes function "nade_lineup_my_vote" */
+    my_vote?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    practice_attempts?: boolean | number
+    practice_players?: boolean | number
+    practice_successes?: boolean | number
+    source_grenade_id?: boolean | number
+    trajectory_size?: boolean | number
+    upvotes?: boolean | number
+    view_pitch?: boolean | number
+    view_pitch_delta?: boolean | number
+    view_yaw?: boolean | number
+    view_yaw_delta?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "nade_lineups" */
+export interface nade_lineups_variance_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+
+
+/** columns and relationships of "nade_meta_lineups" */
+export interface nade_meta_lineupsGenqlSelection{
+    first_seen_at?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    last_seen_at?: boolean | number
+    lineup_bucket?: boolean | number
+    lineups?: boolean | number
+    map_name?: boolean | number
+    matches?: boolean | number
+    nade_type?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    refreshed_at?: boolean | number
+    side?: boolean | number
+    technique?: boolean | number
+    throw_strength?: boolean | number
+    throwers?: boolean | number
+    throws?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_meta_lineups" */
+export interface nade_meta_lineups_aggregateGenqlSelection{
+    aggregate?: nade_meta_lineups_aggregate_fieldsGenqlSelection
+    nodes?: nade_meta_lineupsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "nade_meta_lineups" */
+export interface nade_meta_lineups_aggregate_fieldsGenqlSelection{
+    avg?: nade_meta_lineups_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_meta_lineups_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_meta_lineups_max_fieldsGenqlSelection
+    min?: nade_meta_lineups_min_fieldsGenqlSelection
+    stddev?: nade_meta_lineups_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_meta_lineups_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_meta_lineups_stddev_samp_fieldsGenqlSelection
+    sum?: nade_meta_lineups_sum_fieldsGenqlSelection
+    var_pop?: nade_meta_lineups_var_pop_fieldsGenqlSelection
+    var_samp?: nade_meta_lineups_var_samp_fieldsGenqlSelection
+    variance?: nade_meta_lineups_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface nade_meta_lineups_avg_fieldsGenqlSelection{
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    lineups?: boolean | number
+    matches?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    throwers?: boolean | number
+    throws?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "nade_meta_lineups". All fields are combined with a logical 'AND'. */
+export interface nade_meta_lineups_bool_exp {_and?: (nade_meta_lineups_bool_exp[] | null),_not?: (nade_meta_lineups_bool_exp | null),_or?: (nade_meta_lineups_bool_exp[] | null),first_seen_at?: (timestamptz_comparison_exp | null),land_x?: (float8_comparison_exp | null),land_y?: (float8_comparison_exp | null),land_z?: (float8_comparison_exp | null),last_seen_at?: (timestamptz_comparison_exp | null),lineup_bucket?: (String_comparison_exp | null),lineups?: (Int_comparison_exp | null),map_name?: (String_comparison_exp | null),matches?: (Int_comparison_exp | null),nade_type?: (e_utility_types_enum_comparison_exp | null),origin_x?: (float8_comparison_exp | null),origin_y?: (float8_comparison_exp | null),origin_z?: (float8_comparison_exp | null),refreshed_at?: (timestamptz_comparison_exp | null),side?: (e_sides_enum_comparison_exp | null),technique?: (e_nade_techniques_enum_comparison_exp | null),throw_strength?: (String_comparison_exp | null),throwers?: (Int_comparison_exp | null),throws?: (Int_comparison_exp | null),view_pitch?: (float8_comparison_exp | null),view_yaw?: (float8_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_meta_lineups" */
+export interface nade_meta_lineups_inc_input {land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),lineups?: (Scalars['Int'] | null),matches?: (Scalars['Int'] | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),throwers?: (Scalars['Int'] | null),throws?: (Scalars['Int'] | null),view_pitch?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null)}
+
+
+/** input type for inserting data into table "nade_meta_lineups" */
+export interface nade_meta_lineups_insert_input {first_seen_at?: (Scalars['timestamptz'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),last_seen_at?: (Scalars['timestamptz'] | null),lineup_bucket?: (Scalars['String'] | null),lineups?: (Scalars['Int'] | null),map_name?: (Scalars['String'] | null),matches?: (Scalars['Int'] | null),nade_type?: (e_utility_types_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),refreshed_at?: (Scalars['timestamptz'] | null),side?: (e_sides_enum | null),technique?: (e_nade_techniques_enum | null),throw_strength?: (Scalars['String'] | null),throwers?: (Scalars['Int'] | null),throws?: (Scalars['Int'] | null),view_pitch?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null)}
+
+
+/** aggregate max on columns */
+export interface nade_meta_lineups_max_fieldsGenqlSelection{
+    first_seen_at?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    last_seen_at?: boolean | number
+    lineup_bucket?: boolean | number
+    lineups?: boolean | number
+    map_name?: boolean | number
+    matches?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    refreshed_at?: boolean | number
+    throw_strength?: boolean | number
+    throwers?: boolean | number
+    throws?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface nade_meta_lineups_min_fieldsGenqlSelection{
+    first_seen_at?: boolean | number
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    last_seen_at?: boolean | number
+    lineup_bucket?: boolean | number
+    lineups?: boolean | number
+    map_name?: boolean | number
+    matches?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    refreshed_at?: boolean | number
+    throw_strength?: boolean | number
+    throwers?: boolean | number
+    throws?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "nade_meta_lineups" */
+export interface nade_meta_lineups_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_meta_lineupsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "nade_meta_lineups" */
+export interface nade_meta_lineups_on_conflict {constraint: nade_meta_lineups_constraint,update_columns?: nade_meta_lineups_update_column[],where?: (nade_meta_lineups_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_meta_lineups". */
+export interface nade_meta_lineups_order_by {first_seen_at?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),last_seen_at?: (order_by | null),lineup_bucket?: (order_by | null),lineups?: (order_by | null),map_name?: (order_by | null),matches?: (order_by | null),nade_type?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),refreshed_at?: (order_by | null),side?: (order_by | null),technique?: (order_by | null),throw_strength?: (order_by | null),throwers?: (order_by | null),throws?: (order_by | null),view_pitch?: (order_by | null),view_yaw?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_meta_lineups */
+export interface nade_meta_lineups_pk_columns_input {lineup_bucket: Scalars['String']}
+
+
+/** input type for updating data in table "nade_meta_lineups" */
+export interface nade_meta_lineups_set_input {first_seen_at?: (Scalars['timestamptz'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),last_seen_at?: (Scalars['timestamptz'] | null),lineup_bucket?: (Scalars['String'] | null),lineups?: (Scalars['Int'] | null),map_name?: (Scalars['String'] | null),matches?: (Scalars['Int'] | null),nade_type?: (e_utility_types_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),refreshed_at?: (Scalars['timestamptz'] | null),side?: (e_sides_enum | null),technique?: (e_nade_techniques_enum | null),throw_strength?: (Scalars['String'] | null),throwers?: (Scalars['Int'] | null),throws?: (Scalars['Int'] | null),view_pitch?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_meta_lineups_stddev_fieldsGenqlSelection{
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    lineups?: boolean | number
+    matches?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    throwers?: boolean | number
+    throws?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_meta_lineups_stddev_pop_fieldsGenqlSelection{
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    lineups?: boolean | number
+    matches?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    throwers?: boolean | number
+    throws?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_meta_lineups_stddev_samp_fieldsGenqlSelection{
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    lineups?: boolean | number
+    matches?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    throwers?: boolean | number
+    throws?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "nade_meta_lineups" */
+export interface nade_meta_lineups_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_meta_lineups_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_meta_lineups_stream_cursor_value_input {first_seen_at?: (Scalars['timestamptz'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),last_seen_at?: (Scalars['timestamptz'] | null),lineup_bucket?: (Scalars['String'] | null),lineups?: (Scalars['Int'] | null),map_name?: (Scalars['String'] | null),matches?: (Scalars['Int'] | null),nade_type?: (e_utility_types_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),refreshed_at?: (Scalars['timestamptz'] | null),side?: (e_sides_enum | null),technique?: (e_nade_techniques_enum | null),throw_strength?: (Scalars['String'] | null),throwers?: (Scalars['Int'] | null),throws?: (Scalars['Int'] | null),view_pitch?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_meta_lineups_sum_fieldsGenqlSelection{
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    lineups?: boolean | number
+    matches?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    throwers?: boolean | number
+    throws?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_meta_lineups_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_meta_lineups_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_meta_lineups_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_meta_lineups_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_meta_lineups_var_pop_fieldsGenqlSelection{
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    lineups?: boolean | number
+    matches?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    throwers?: boolean | number
+    throws?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_meta_lineups_var_samp_fieldsGenqlSelection{
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    lineups?: boolean | number
+    matches?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    throwers?: boolean | number
+    throws?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface nade_meta_lineups_variance_fieldsGenqlSelection{
+    land_x?: boolean | number
+    land_y?: boolean | number
+    land_z?: boolean | number
+    lineups?: boolean | number
+    matches?: boolean | number
+    origin_x?: boolean | number
+    origin_y?: boolean | number
+    origin_z?: boolean | number
+    throwers?: boolean | number
+    throws?: boolean | number
+    view_pitch?: boolean | number
+    view_yaw?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** columns and relationships of "nade_playbook_steps" */
+export interface nade_playbook_stepsGenqlSelection{
+    /** An object relationship */
+    assigned_player?: playersGenqlSelection
+    assigned_steam_id?: boolean | number
+    created_at?: boolean | number
+    id?: boolean | number
+    /** An object relationship */
+    nade_lineup?: nade_lineupsGenqlSelection
+    nade_lineup_id?: boolean | number
+    note?: boolean | number
+    offset_ms?: boolean | number
+    /** An object relationship */
+    playbook?: nade_playbooksGenqlSelection
+    playbook_id?: boolean | number
+    step_order?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_playbook_steps" */
+export interface nade_playbook_steps_aggregateGenqlSelection{
+    aggregate?: nade_playbook_steps_aggregate_fieldsGenqlSelection
+    nodes?: nade_playbook_stepsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_playbook_steps_aggregate_bool_exp {count?: (nade_playbook_steps_aggregate_bool_exp_count | null)}
+
+export interface nade_playbook_steps_aggregate_bool_exp_count {arguments?: (nade_playbook_steps_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (nade_playbook_steps_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "nade_playbook_steps" */
+export interface nade_playbook_steps_aggregate_fieldsGenqlSelection{
+    avg?: nade_playbook_steps_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_playbook_steps_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_playbook_steps_max_fieldsGenqlSelection
+    min?: nade_playbook_steps_min_fieldsGenqlSelection
+    stddev?: nade_playbook_steps_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_playbook_steps_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_playbook_steps_stddev_samp_fieldsGenqlSelection
+    sum?: nade_playbook_steps_sum_fieldsGenqlSelection
+    var_pop?: nade_playbook_steps_var_pop_fieldsGenqlSelection
+    var_samp?: nade_playbook_steps_var_samp_fieldsGenqlSelection
+    variance?: nade_playbook_steps_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "nade_playbook_steps" */
+export interface nade_playbook_steps_aggregate_order_by {avg?: (nade_playbook_steps_avg_order_by | null),count?: (order_by | null),max?: (nade_playbook_steps_max_order_by | null),min?: (nade_playbook_steps_min_order_by | null),stddev?: (nade_playbook_steps_stddev_order_by | null),stddev_pop?: (nade_playbook_steps_stddev_pop_order_by | null),stddev_samp?: (nade_playbook_steps_stddev_samp_order_by | null),sum?: (nade_playbook_steps_sum_order_by | null),var_pop?: (nade_playbook_steps_var_pop_order_by | null),var_samp?: (nade_playbook_steps_var_samp_order_by | null),variance?: (nade_playbook_steps_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "nade_playbook_steps" */
+export interface nade_playbook_steps_arr_rel_insert_input {data: nade_playbook_steps_insert_input[],
+/** upsert condition */
+on_conflict?: (nade_playbook_steps_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface nade_playbook_steps_avg_fieldsGenqlSelection{
+    assigned_steam_id?: boolean | number
+    offset_ms?: boolean | number
+    step_order?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "nade_playbook_steps" */
+export interface nade_playbook_steps_avg_order_by {assigned_steam_id?: (order_by | null),offset_ms?: (order_by | null),step_order?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "nade_playbook_steps". All fields are combined with a logical 'AND'. */
+export interface nade_playbook_steps_bool_exp {_and?: (nade_playbook_steps_bool_exp[] | null),_not?: (nade_playbook_steps_bool_exp | null),_or?: (nade_playbook_steps_bool_exp[] | null),assigned_player?: (players_bool_exp | null),assigned_steam_id?: (bigint_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),nade_lineup?: (nade_lineups_bool_exp | null),nade_lineup_id?: (uuid_comparison_exp | null),note?: (String_comparison_exp | null),offset_ms?: (Int_comparison_exp | null),playbook?: (nade_playbooks_bool_exp | null),playbook_id?: (uuid_comparison_exp | null),step_order?: (Int_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_playbook_steps" */
+export interface nade_playbook_steps_inc_input {assigned_steam_id?: (Scalars['bigint'] | null),offset_ms?: (Scalars['Int'] | null),step_order?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "nade_playbook_steps" */
+export interface nade_playbook_steps_insert_input {assigned_player?: (players_obj_rel_insert_input | null),assigned_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),nade_lineup?: (nade_lineups_obj_rel_insert_input | null),nade_lineup_id?: (Scalars['uuid'] | null),note?: (Scalars['String'] | null),offset_ms?: (Scalars['Int'] | null),playbook?: (nade_playbooks_obj_rel_insert_input | null),playbook_id?: (Scalars['uuid'] | null),step_order?: (Scalars['Int'] | null)}
+
+
+/** aggregate max on columns */
+export interface nade_playbook_steps_max_fieldsGenqlSelection{
+    assigned_steam_id?: boolean | number
+    created_at?: boolean | number
+    id?: boolean | number
+    nade_lineup_id?: boolean | number
+    note?: boolean | number
+    offset_ms?: boolean | number
+    playbook_id?: boolean | number
+    step_order?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "nade_playbook_steps" */
+export interface nade_playbook_steps_max_order_by {assigned_steam_id?: (order_by | null),created_at?: (order_by | null),id?: (order_by | null),nade_lineup_id?: (order_by | null),note?: (order_by | null),offset_ms?: (order_by | null),playbook_id?: (order_by | null),step_order?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface nade_playbook_steps_min_fieldsGenqlSelection{
+    assigned_steam_id?: boolean | number
+    created_at?: boolean | number
+    id?: boolean | number
+    nade_lineup_id?: boolean | number
+    note?: boolean | number
+    offset_ms?: boolean | number
+    playbook_id?: boolean | number
+    step_order?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "nade_playbook_steps" */
+export interface nade_playbook_steps_min_order_by {assigned_steam_id?: (order_by | null),created_at?: (order_by | null),id?: (order_by | null),nade_lineup_id?: (order_by | null),note?: (order_by | null),offset_ms?: (order_by | null),playbook_id?: (order_by | null),step_order?: (order_by | null)}
+
+
+/** response of any mutation on the table "nade_playbook_steps" */
+export interface nade_playbook_steps_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_playbook_stepsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "nade_playbook_steps" */
+export interface nade_playbook_steps_on_conflict {constraint: nade_playbook_steps_constraint,update_columns?: nade_playbook_steps_update_column[],where?: (nade_playbook_steps_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_playbook_steps". */
+export interface nade_playbook_steps_order_by {assigned_player?: (players_order_by | null),assigned_steam_id?: (order_by | null),created_at?: (order_by | null),id?: (order_by | null),nade_lineup?: (nade_lineups_order_by | null),nade_lineup_id?: (order_by | null),note?: (order_by | null),offset_ms?: (order_by | null),playbook?: (nade_playbooks_order_by | null),playbook_id?: (order_by | null),step_order?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_playbook_steps */
+export interface nade_playbook_steps_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "nade_playbook_steps" */
+export interface nade_playbook_steps_set_input {assigned_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),nade_lineup_id?: (Scalars['uuid'] | null),note?: (Scalars['String'] | null),offset_ms?: (Scalars['Int'] | null),playbook_id?: (Scalars['uuid'] | null),step_order?: (Scalars['Int'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_playbook_steps_stddev_fieldsGenqlSelection{
+    assigned_steam_id?: boolean | number
+    offset_ms?: boolean | number
+    step_order?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "nade_playbook_steps" */
+export interface nade_playbook_steps_stddev_order_by {assigned_steam_id?: (order_by | null),offset_ms?: (order_by | null),step_order?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_playbook_steps_stddev_pop_fieldsGenqlSelection{
+    assigned_steam_id?: boolean | number
+    offset_ms?: boolean | number
+    step_order?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "nade_playbook_steps" */
+export interface nade_playbook_steps_stddev_pop_order_by {assigned_steam_id?: (order_by | null),offset_ms?: (order_by | null),step_order?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_playbook_steps_stddev_samp_fieldsGenqlSelection{
+    assigned_steam_id?: boolean | number
+    offset_ms?: boolean | number
+    step_order?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "nade_playbook_steps" */
+export interface nade_playbook_steps_stddev_samp_order_by {assigned_steam_id?: (order_by | null),offset_ms?: (order_by | null),step_order?: (order_by | null)}
+
+
+/** Streaming cursor of the table "nade_playbook_steps" */
+export interface nade_playbook_steps_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_playbook_steps_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_playbook_steps_stream_cursor_value_input {assigned_steam_id?: (Scalars['bigint'] | null),created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),nade_lineup_id?: (Scalars['uuid'] | null),note?: (Scalars['String'] | null),offset_ms?: (Scalars['Int'] | null),playbook_id?: (Scalars['uuid'] | null),step_order?: (Scalars['Int'] | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_playbook_steps_sum_fieldsGenqlSelection{
+    assigned_steam_id?: boolean | number
+    offset_ms?: boolean | number
+    step_order?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "nade_playbook_steps" */
+export interface nade_playbook_steps_sum_order_by {assigned_steam_id?: (order_by | null),offset_ms?: (order_by | null),step_order?: (order_by | null)}
+
+export interface nade_playbook_steps_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_playbook_steps_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_playbook_steps_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_playbook_steps_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_playbook_steps_var_pop_fieldsGenqlSelection{
+    assigned_steam_id?: boolean | number
+    offset_ms?: boolean | number
+    step_order?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "nade_playbook_steps" */
+export interface nade_playbook_steps_var_pop_order_by {assigned_steam_id?: (order_by | null),offset_ms?: (order_by | null),step_order?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface nade_playbook_steps_var_samp_fieldsGenqlSelection{
+    assigned_steam_id?: boolean | number
+    offset_ms?: boolean | number
+    step_order?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "nade_playbook_steps" */
+export interface nade_playbook_steps_var_samp_order_by {assigned_steam_id?: (order_by | null),offset_ms?: (order_by | null),step_order?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface nade_playbook_steps_variance_fieldsGenqlSelection{
+    assigned_steam_id?: boolean | number
+    offset_ms?: boolean | number
+    step_order?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "nade_playbook_steps" */
+export interface nade_playbook_steps_variance_order_by {assigned_steam_id?: (order_by | null),offset_ms?: (order_by | null),step_order?: (order_by | null)}
+
+
+/** columns and relationships of "nade_playbooks" */
+export interface nade_playbooksGenqlSelection{
+    /** A computed field, executes function "can_edit_nade_playbook" */
+    can_edit?: boolean | number
+    /** A computed field, executes function "can_view_nade_playbook" */
+    can_view?: boolean | number
+    created_at?: boolean | number
+    description?: boolean | number
+    id?: boolean | number
+    map_name?: boolean | number
+    name?: boolean | number
+    /** An object relationship */
+    owner?: playersGenqlSelection
+    owner_steam_id?: boolean | number
+    side?: boolean | number
+    /** An array relationship */
+    steps?: (nade_playbook_stepsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_playbook_steps_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_playbook_steps_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_playbook_steps_bool_exp | null)} })
+    /** An aggregate relationship */
+    steps_aggregate?: (nade_playbook_steps_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_playbook_steps_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_playbook_steps_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_playbook_steps_bool_exp | null)} })
+    /** An object relationship */
+    team?: teamsGenqlSelection
+    team_id?: boolean | number
+    updated_at?: boolean | number
+    visibility?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_playbooks" */
+export interface nade_playbooks_aggregateGenqlSelection{
+    aggregate?: nade_playbooks_aggregate_fieldsGenqlSelection
+    nodes?: nade_playbooksGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "nade_playbooks" */
+export interface nade_playbooks_aggregate_fieldsGenqlSelection{
+    avg?: nade_playbooks_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_playbooks_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_playbooks_max_fieldsGenqlSelection
+    min?: nade_playbooks_min_fieldsGenqlSelection
+    stddev?: nade_playbooks_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_playbooks_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_playbooks_stddev_samp_fieldsGenqlSelection
+    sum?: nade_playbooks_sum_fieldsGenqlSelection
+    var_pop?: nade_playbooks_var_pop_fieldsGenqlSelection
+    var_samp?: nade_playbooks_var_samp_fieldsGenqlSelection
+    variance?: nade_playbooks_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface nade_playbooks_avg_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "nade_playbooks". All fields are combined with a logical 'AND'. */
+export interface nade_playbooks_bool_exp {_and?: (nade_playbooks_bool_exp[] | null),_not?: (nade_playbooks_bool_exp | null),_or?: (nade_playbooks_bool_exp[] | null),can_edit?: (Boolean_comparison_exp | null),can_view?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),map_name?: (String_comparison_exp | null),name?: (String_comparison_exp | null),owner?: (players_bool_exp | null),owner_steam_id?: (bigint_comparison_exp | null),side?: (e_sides_enum_comparison_exp | null),steps?: (nade_playbook_steps_bool_exp | null),steps_aggregate?: (nade_playbook_steps_aggregate_bool_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),visibility?: (e_nade_visibility_enum_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_playbooks" */
+export interface nade_playbooks_inc_input {owner_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "nade_playbooks" */
+export interface nade_playbooks_insert_input {created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),owner?: (players_obj_rel_insert_input | null),owner_steam_id?: (Scalars['bigint'] | null),side?: (e_sides_enum | null),steps?: (nade_playbook_steps_arr_rel_insert_input | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null),visibility?: (e_nade_visibility_enum | null)}
+
+
+/** aggregate max on columns */
+export interface nade_playbooks_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    description?: boolean | number
+    id?: boolean | number
+    map_name?: boolean | number
+    name?: boolean | number
+    owner_steam_id?: boolean | number
+    team_id?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface nade_playbooks_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    description?: boolean | number
+    id?: boolean | number
+    map_name?: boolean | number
+    name?: boolean | number
+    owner_steam_id?: boolean | number
+    team_id?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "nade_playbooks" */
+export interface nade_playbooks_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_playbooksGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** input type for inserting object relation for remote table "nade_playbooks" */
+export interface nade_playbooks_obj_rel_insert_input {data: nade_playbooks_insert_input,
+/** upsert condition */
+on_conflict?: (nade_playbooks_on_conflict | null)}
+
+
+/** on_conflict condition type for table "nade_playbooks" */
+export interface nade_playbooks_on_conflict {constraint: nade_playbooks_constraint,update_columns?: nade_playbooks_update_column[],where?: (nade_playbooks_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_playbooks". */
+export interface nade_playbooks_order_by {can_edit?: (order_by | null),can_view?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),id?: (order_by | null),map_name?: (order_by | null),name?: (order_by | null),owner?: (players_order_by | null),owner_steam_id?: (order_by | null),side?: (order_by | null),steps_aggregate?: (nade_playbook_steps_aggregate_order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null),visibility?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_playbooks */
+export interface nade_playbooks_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "nade_playbooks" */
+export interface nade_playbooks_set_input {created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),side?: (e_sides_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null),visibility?: (e_nade_visibility_enum | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_playbooks_stddev_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_playbooks_stddev_pop_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_playbooks_stddev_samp_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "nade_playbooks" */
+export interface nade_playbooks_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_playbooks_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_playbooks_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),owner_steam_id?: (Scalars['bigint'] | null),side?: (e_sides_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null),visibility?: (e_nade_visibility_enum | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_playbooks_sum_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_playbooks_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_playbooks_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_playbooks_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_playbooks_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_playbooks_var_pop_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface nade_playbooks_var_samp_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface nade_playbooks_variance_fieldsGenqlSelection{
+    owner_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** columns and relationships of "nade_practice_invites" */
+export interface nade_practice_invitesGenqlSelection{
+    created_at?: boolean | number
+    /** An object relationship */
+    invited_by?: playersGenqlSelection
+    invited_by_steam_id?: boolean | number
+    nade_practice_session_id?: boolean | number
+    /** An object relationship */
+    player?: playersGenqlSelection
+    /** An object relationship */
+    session?: nade_practice_sessionsGenqlSelection
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_practice_invites" */
+export interface nade_practice_invites_aggregateGenqlSelection{
+    aggregate?: nade_practice_invites_aggregate_fieldsGenqlSelection
+    nodes?: nade_practice_invitesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_practice_invites_aggregate_bool_exp {count?: (nade_practice_invites_aggregate_bool_exp_count | null)}
+
+export interface nade_practice_invites_aggregate_bool_exp_count {arguments?: (nade_practice_invites_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (nade_practice_invites_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "nade_practice_invites" */
+export interface nade_practice_invites_aggregate_fieldsGenqlSelection{
+    avg?: nade_practice_invites_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_practice_invites_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_practice_invites_max_fieldsGenqlSelection
+    min?: nade_practice_invites_min_fieldsGenqlSelection
+    stddev?: nade_practice_invites_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_practice_invites_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_practice_invites_stddev_samp_fieldsGenqlSelection
+    sum?: nade_practice_invites_sum_fieldsGenqlSelection
+    var_pop?: nade_practice_invites_var_pop_fieldsGenqlSelection
+    var_samp?: nade_practice_invites_var_samp_fieldsGenqlSelection
+    variance?: nade_practice_invites_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "nade_practice_invites" */
+export interface nade_practice_invites_aggregate_order_by {avg?: (nade_practice_invites_avg_order_by | null),count?: (order_by | null),max?: (nade_practice_invites_max_order_by | null),min?: (nade_practice_invites_min_order_by | null),stddev?: (nade_practice_invites_stddev_order_by | null),stddev_pop?: (nade_practice_invites_stddev_pop_order_by | null),stddev_samp?: (nade_practice_invites_stddev_samp_order_by | null),sum?: (nade_practice_invites_sum_order_by | null),var_pop?: (nade_practice_invites_var_pop_order_by | null),var_samp?: (nade_practice_invites_var_samp_order_by | null),variance?: (nade_practice_invites_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "nade_practice_invites" */
+export interface nade_practice_invites_arr_rel_insert_input {data: nade_practice_invites_insert_input[],
+/** upsert condition */
+on_conflict?: (nade_practice_invites_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface nade_practice_invites_avg_fieldsGenqlSelection{
+    invited_by_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "nade_practice_invites" */
+export interface nade_practice_invites_avg_order_by {invited_by_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "nade_practice_invites". All fields are combined with a logical 'AND'. */
+export interface nade_practice_invites_bool_exp {_and?: (nade_practice_invites_bool_exp[] | null),_not?: (nade_practice_invites_bool_exp | null),_or?: (nade_practice_invites_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),invited_by?: (players_bool_exp | null),invited_by_steam_id?: (bigint_comparison_exp | null),nade_practice_session_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),session?: (nade_practice_sessions_bool_exp | null),steam_id?: (bigint_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_practice_invites" */
+export interface nade_practice_invites_inc_input {invited_by_steam_id?: (Scalars['bigint'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "nade_practice_invites" */
+export interface nade_practice_invites_insert_input {created_at?: (Scalars['timestamptz'] | null),invited_by?: (players_obj_rel_insert_input | null),invited_by_steam_id?: (Scalars['bigint'] | null),nade_practice_session_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),session?: (nade_practice_sessions_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate max on columns */
+export interface nade_practice_invites_max_fieldsGenqlSelection{
+    created_at?: boolean | number
+    invited_by_steam_id?: boolean | number
+    nade_practice_session_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "nade_practice_invites" */
+export interface nade_practice_invites_max_order_by {created_at?: (order_by | null),invited_by_steam_id?: (order_by | null),nade_practice_session_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface nade_practice_invites_min_fieldsGenqlSelection{
+    created_at?: boolean | number
+    invited_by_steam_id?: boolean | number
+    nade_practice_session_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "nade_practice_invites" */
+export interface nade_practice_invites_min_order_by {created_at?: (order_by | null),invited_by_steam_id?: (order_by | null),nade_practice_session_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** response of any mutation on the table "nade_practice_invites" */
+export interface nade_practice_invites_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_practice_invitesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "nade_practice_invites" */
+export interface nade_practice_invites_on_conflict {constraint: nade_practice_invites_constraint,update_columns?: nade_practice_invites_update_column[],where?: (nade_practice_invites_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_practice_invites". */
+export interface nade_practice_invites_order_by {created_at?: (order_by | null),invited_by?: (players_order_by | null),invited_by_steam_id?: (order_by | null),nade_practice_session_id?: (order_by | null),player?: (players_order_by | null),session?: (nade_practice_sessions_order_by | null),steam_id?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_practice_invites */
+export interface nade_practice_invites_pk_columns_input {nade_practice_session_id: Scalars['uuid'],steam_id: Scalars['bigint']}
+
+
+/** input type for updating data in table "nade_practice_invites" */
+export interface nade_practice_invites_set_input {created_at?: (Scalars['timestamptz'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),nade_practice_session_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_practice_invites_stddev_fieldsGenqlSelection{
+    invited_by_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "nade_practice_invites" */
+export interface nade_practice_invites_stddev_order_by {invited_by_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_practice_invites_stddev_pop_fieldsGenqlSelection{
+    invited_by_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "nade_practice_invites" */
+export interface nade_practice_invites_stddev_pop_order_by {invited_by_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_practice_invites_stddev_samp_fieldsGenqlSelection{
+    invited_by_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "nade_practice_invites" */
+export interface nade_practice_invites_stddev_samp_order_by {invited_by_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** Streaming cursor of the table "nade_practice_invites" */
+export interface nade_practice_invites_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_practice_invites_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_practice_invites_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),invited_by_steam_id?: (Scalars['bigint'] | null),nade_practice_session_id?: (Scalars['uuid'] | null),steam_id?: (Scalars['bigint'] | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_practice_invites_sum_fieldsGenqlSelection{
+    invited_by_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "nade_practice_invites" */
+export interface nade_practice_invites_sum_order_by {invited_by_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+export interface nade_practice_invites_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_practice_invites_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_practice_invites_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_practice_invites_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_practice_invites_var_pop_fieldsGenqlSelection{
+    invited_by_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "nade_practice_invites" */
+export interface nade_practice_invites_var_pop_order_by {invited_by_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface nade_practice_invites_var_samp_fieldsGenqlSelection{
+    invited_by_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "nade_practice_invites" */
+export interface nade_practice_invites_var_samp_order_by {invited_by_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface nade_practice_invites_variance_fieldsGenqlSelection{
+    invited_by_steam_id?: boolean | number
+    steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "nade_practice_invites" */
+export interface nade_practice_invites_variance_order_by {invited_by_steam_id?: (order_by | null),steam_id?: (order_by | null)}
+
+
+/** columns and relationships of "nade_practice_sessions" */
+export interface nade_practice_sessionsGenqlSelection{
+    /** A computed field, executes function "can_manage_nade_practice_session" */
+    can_manage?: boolean | number
+    /** A computed field, executes function "can_view_nade_practice_session" */
+    can_view?: boolean | number
+    /** An object relationship */
+    collection?: nade_collectionsGenqlSelection
+    collection_id?: boolean | number
+    /** A computed field, executes function "nade_practice_connection_link" */
+    connection_link?: boolean | number
+    /** A computed field, executes function "nade_practice_connection_string" */
+    connection_string?: boolean | number
+    created_at?: boolean | number
+    /** An object relationship */
+    e_nade_practice_status?: e_nade_practice_statusesGenqlSelection
+    empty_since?: boolean | number
+    expires_at?: boolean | number
+    failure_reason?: boolean | number
+    /** An object relationship */
+    host?: playersGenqlSelection
+    host_steam_id?: boolean | number
+    id?: boolean | number
+    invite_code?: boolean | number
+    /** An array relationship */
+    invites?: (nade_practice_invitesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_practice_invites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_practice_invites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_practice_invites_bool_exp | null)} })
+    /** An aggregate relationship */
+    invites_aggregate?: (nade_practice_invites_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_practice_invites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_practice_invites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_practice_invites_bool_exp | null)} })
+    /** A computed field, executes function "is_nade_practice_member" */
+    is_member?: boolean | number
+    is_open?: boolean | number
+    last_occupied_at?: boolean | number
+    map_name?: boolean | number
+    /** An object relationship */
+    match?: matchesGenqlSelection
+    match_id?: boolean | number
+    /** An object relationship */
+    playbook?: nade_playbooksGenqlSelection
+    playbook_id?: boolean | number
+    region?: boolean | number
+    status?: boolean | number
+    /** An object relationship */
+    team?: teamsGenqlSelection
+    team_id?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "nade_practice_sessions" */
+export interface nade_practice_sessions_aggregateGenqlSelection{
+    aggregate?: nade_practice_sessions_aggregate_fieldsGenqlSelection
+    nodes?: nade_practice_sessionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface nade_practice_sessions_aggregate_bool_exp {bool_and?: (nade_practice_sessions_aggregate_bool_exp_bool_and | null),bool_or?: (nade_practice_sessions_aggregate_bool_exp_bool_or | null),count?: (nade_practice_sessions_aggregate_bool_exp_count | null)}
+
+export interface nade_practice_sessions_aggregate_bool_exp_bool_and {arguments: nade_practice_sessions_select_column_nade_practice_sessions_aggregate_bool_exp_bool_and_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_practice_sessions_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface nade_practice_sessions_aggregate_bool_exp_bool_or {arguments: nade_practice_sessions_select_column_nade_practice_sessions_aggregate_bool_exp_bool_or_arguments_columns,distinct?: (Scalars['Boolean'] | null),filter?: (nade_practice_sessions_bool_exp | null),predicate: Boolean_comparison_exp}
+
+export interface nade_practice_sessions_aggregate_bool_exp_count {arguments?: (nade_practice_sessions_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (nade_practice_sessions_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "nade_practice_sessions" */
+export interface nade_practice_sessions_aggregate_fieldsGenqlSelection{
+    avg?: nade_practice_sessions_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (nade_practice_sessions_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: nade_practice_sessions_max_fieldsGenqlSelection
+    min?: nade_practice_sessions_min_fieldsGenqlSelection
+    stddev?: nade_practice_sessions_stddev_fieldsGenqlSelection
+    stddev_pop?: nade_practice_sessions_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: nade_practice_sessions_stddev_samp_fieldsGenqlSelection
+    sum?: nade_practice_sessions_sum_fieldsGenqlSelection
+    var_pop?: nade_practice_sessions_var_pop_fieldsGenqlSelection
+    var_samp?: nade_practice_sessions_var_samp_fieldsGenqlSelection
+    variance?: nade_practice_sessions_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "nade_practice_sessions" */
+export interface nade_practice_sessions_aggregate_order_by {avg?: (nade_practice_sessions_avg_order_by | null),count?: (order_by | null),max?: (nade_practice_sessions_max_order_by | null),min?: (nade_practice_sessions_min_order_by | null),stddev?: (nade_practice_sessions_stddev_order_by | null),stddev_pop?: (nade_practice_sessions_stddev_pop_order_by | null),stddev_samp?: (nade_practice_sessions_stddev_samp_order_by | null),sum?: (nade_practice_sessions_sum_order_by | null),var_pop?: (nade_practice_sessions_var_pop_order_by | null),var_samp?: (nade_practice_sessions_var_samp_order_by | null),variance?: (nade_practice_sessions_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "nade_practice_sessions" */
+export interface nade_practice_sessions_arr_rel_insert_input {data: nade_practice_sessions_insert_input[],
+/** upsert condition */
+on_conflict?: (nade_practice_sessions_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface nade_practice_sessions_avg_fieldsGenqlSelection{
+    host_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "nade_practice_sessions" */
+export interface nade_practice_sessions_avg_order_by {host_steam_id?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "nade_practice_sessions". All fields are combined with a logical 'AND'. */
+export interface nade_practice_sessions_bool_exp {_and?: (nade_practice_sessions_bool_exp[] | null),_not?: (nade_practice_sessions_bool_exp | null),_or?: (nade_practice_sessions_bool_exp[] | null),can_manage?: (Boolean_comparison_exp | null),can_view?: (Boolean_comparison_exp | null),collection?: (nade_collections_bool_exp | null),collection_id?: (uuid_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),e_nade_practice_status?: (e_nade_practice_statuses_bool_exp | null),empty_since?: (timestamptz_comparison_exp | null),expires_at?: (timestamptz_comparison_exp | null),failure_reason?: (String_comparison_exp | null),host?: (players_bool_exp | null),host_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),invites?: (nade_practice_invites_bool_exp | null),invites_aggregate?: (nade_practice_invites_aggregate_bool_exp | null),is_member?: (Boolean_comparison_exp | null),is_open?: (Boolean_comparison_exp | null),last_occupied_at?: (timestamptz_comparison_exp | null),map_name?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),playbook?: (nade_playbooks_bool_exp | null),playbook_id?: (uuid_comparison_exp | null),region?: (String_comparison_exp | null),status?: (e_nade_practice_statuses_enum_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "nade_practice_sessions" */
+export interface nade_practice_sessions_inc_input {host_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "nade_practice_sessions" */
+export interface nade_practice_sessions_insert_input {collection?: (nade_collections_obj_rel_insert_input | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),e_nade_practice_status?: (e_nade_practice_statuses_obj_rel_insert_input | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),host?: (players_obj_rel_insert_input | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),invites?: (nade_practice_invites_arr_rel_insert_input | null),is_open?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),playbook?: (nade_playbooks_obj_rel_insert_input | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_nade_practice_statuses_enum | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate max on columns */
+export interface nade_practice_sessions_max_fieldsGenqlSelection{
+    collection_id?: boolean | number
+    /** A computed field, executes function "nade_practice_connection_link" */
+    connection_link?: boolean | number
+    /** A computed field, executes function "nade_practice_connection_string" */
+    connection_string?: boolean | number
+    created_at?: boolean | number
+    empty_since?: boolean | number
+    expires_at?: boolean | number
+    failure_reason?: boolean | number
+    host_steam_id?: boolean | number
+    id?: boolean | number
+    invite_code?: boolean | number
+    last_occupied_at?: boolean | number
+    map_name?: boolean | number
+    match_id?: boolean | number
+    playbook_id?: boolean | number
+    region?: boolean | number
+    team_id?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "nade_practice_sessions" */
+export interface nade_practice_sessions_max_order_by {collection_id?: (order_by | null),created_at?: (order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),last_occupied_at?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface nade_practice_sessions_min_fieldsGenqlSelection{
+    collection_id?: boolean | number
+    /** A computed field, executes function "nade_practice_connection_link" */
+    connection_link?: boolean | number
+    /** A computed field, executes function "nade_practice_connection_string" */
+    connection_string?: boolean | number
+    created_at?: boolean | number
+    empty_since?: boolean | number
+    expires_at?: boolean | number
+    failure_reason?: boolean | number
+    host_steam_id?: boolean | number
+    id?: boolean | number
+    invite_code?: boolean | number
+    last_occupied_at?: boolean | number
+    map_name?: boolean | number
+    match_id?: boolean | number
+    playbook_id?: boolean | number
+    region?: boolean | number
+    team_id?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "nade_practice_sessions" */
+export interface nade_practice_sessions_min_order_by {collection_id?: (order_by | null),created_at?: (order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),last_occupied_at?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
+
+
+/** response of any mutation on the table "nade_practice_sessions" */
+export interface nade_practice_sessions_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: nade_practice_sessionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** input type for inserting object relation for remote table "nade_practice_sessions" */
+export interface nade_practice_sessions_obj_rel_insert_input {data: nade_practice_sessions_insert_input,
+/** upsert condition */
+on_conflict?: (nade_practice_sessions_on_conflict | null)}
+
+
+/** on_conflict condition type for table "nade_practice_sessions" */
+export interface nade_practice_sessions_on_conflict {constraint: nade_practice_sessions_constraint,update_columns?: nade_practice_sessions_update_column[],where?: (nade_practice_sessions_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "nade_practice_sessions". */
+export interface nade_practice_sessions_order_by {can_manage?: (order_by | null),can_view?: (order_by | null),collection?: (nade_collections_order_by | null),collection_id?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),created_at?: (order_by | null),e_nade_practice_status?: (e_nade_practice_statuses_order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),host?: (players_order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),invites_aggregate?: (nade_practice_invites_aggregate_order_by | null),is_member?: (order_by | null),is_open?: (order_by | null),last_occupied_at?: (order_by | null),map_name?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),playbook?: (nade_playbooks_order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),status?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
+
+
+/** primary key columns input for table: nade_practice_sessions */
+export interface nade_practice_sessions_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "nade_practice_sessions" */
+export interface nade_practice_sessions_set_input {collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),is_open?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_nade_practice_statuses_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface nade_practice_sessions_stddev_fieldsGenqlSelection{
+    host_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "nade_practice_sessions" */
+export interface nade_practice_sessions_stddev_order_by {host_steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface nade_practice_sessions_stddev_pop_fieldsGenqlSelection{
+    host_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "nade_practice_sessions" */
+export interface nade_practice_sessions_stddev_pop_order_by {host_steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface nade_practice_sessions_stddev_samp_fieldsGenqlSelection{
+    host_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "nade_practice_sessions" */
+export interface nade_practice_sessions_stddev_samp_order_by {host_steam_id?: (order_by | null)}
+
+
+/** Streaming cursor of the table "nade_practice_sessions" */
+export interface nade_practice_sessions_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: nade_practice_sessions_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface nade_practice_sessions_stream_cursor_value_input {collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),is_open?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_nade_practice_statuses_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate sum on columns */
+export interface nade_practice_sessions_sum_fieldsGenqlSelection{
+    host_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "nade_practice_sessions" */
+export interface nade_practice_sessions_sum_order_by {host_steam_id?: (order_by | null)}
+
+export interface nade_practice_sessions_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (nade_practice_sessions_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (nade_practice_sessions_set_input | null),
+/** filter the rows which have to be updated */
+where: nade_practice_sessions_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface nade_practice_sessions_var_pop_fieldsGenqlSelection{
+    host_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "nade_practice_sessions" */
+export interface nade_practice_sessions_var_pop_order_by {host_steam_id?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface nade_practice_sessions_var_samp_fieldsGenqlSelection{
+    host_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "nade_practice_sessions" */
+export interface nade_practice_sessions_var_samp_order_by {host_steam_id?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface nade_practice_sessions_variance_fieldsGenqlSelection{
+    host_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "nade_practice_sessions" */
+export interface nade_practice_sessions_variance_order_by {host_steam_id?: (order_by | null)}
 
 
 /** columns and relationships of "news_articles" */
@@ -79400,6 +90628,8 @@ export interface query_rootGenqlSelection{
     where?: (abandoned_matches_bool_exp | null)} })
     /** fetch data from the table: "abandoned_matches" using primary key columns */
     abandoned_matches_by_pk?: (abandoned_matchesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** Ask which sightlines a playbook's smokes leave open */
+    analyseNadePlaybookCoverage?: (NadePlaybookCoverageOutputGenqlSelection & { __args: {pairs: NadeSightlinePairInput[], playbook_id: Scalars['uuid']} })
     /** fetch data from the table: "api_keys" */
     api_keys?: (api_keysGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -79504,6 +90734,10 @@ export interface query_rootGenqlSelection{
     where?: (chat_read_state_bool_exp | null)} })
     /** fetch data from the table: "chat_read_state" using primary key columns */
     chat_read_state_by_pk?: (chat_read_stateGenqlSelection & { __args: {steam_id: Scalars['bigint'], thread: Scalars['String']} })
+    /** Ask whether a lineup's smoke makes an angle one-way */
+    checkNadeOneWay?: (NadeOneWayOutputGenqlSelection & { __args: {lineup_id: Scalars['uuid'], pairs: NadeSightlinePairInput[]} })
+    /** Ask whether a lineup's smoke blocks a set of sightlines */
+    checkNadeSightlines?: (NadeSightlineOutputGenqlSelection & { __args: {lineup_id: Scalars['uuid'], pairs: NadeSightlinePairInput[], threshold?: (Scalars['Float'] | null)} })
     /** An array relationship */
     clip_render_jobs?: (clip_render_jobsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -80467,6 +91701,136 @@ export interface query_rootGenqlSelection{
     where?: (e_match_types_bool_exp | null)} })
     /** fetch data from the table: "e_match_types" using primary key columns */
     e_match_types_by_pk?: (e_match_typesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_nade_practice_statuses" */
+    e_nade_practice_statuses?: (e_nade_practice_statusesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_practice_statuses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_practice_statuses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_practice_statuses_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_nade_practice_statuses" */
+    e_nade_practice_statuses_aggregate?: (e_nade_practice_statuses_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_practice_statuses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_practice_statuses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_practice_statuses_bool_exp | null)} })
+    /** fetch data from the table: "e_nade_practice_statuses" using primary key columns */
+    e_nade_practice_statuses_by_pk?: (e_nade_practice_statusesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_nade_sources" */
+    e_nade_sources?: (e_nade_sourcesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_sources_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_sources_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_sources_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_nade_sources" */
+    e_nade_sources_aggregate?: (e_nade_sources_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_sources_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_sources_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_sources_bool_exp | null)} })
+    /** fetch data from the table: "e_nade_sources" using primary key columns */
+    e_nade_sources_by_pk?: (e_nade_sourcesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_nade_techniques" */
+    e_nade_techniques?: (e_nade_techniquesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_techniques_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_techniques_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_techniques_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_nade_techniques" */
+    e_nade_techniques_aggregate?: (e_nade_techniques_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_techniques_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_techniques_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_techniques_bool_exp | null)} })
+    /** fetch data from the table: "e_nade_techniques" using primary key columns */
+    e_nade_techniques_by_pk?: (e_nade_techniquesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_nade_throw_strengths" */
+    e_nade_throw_strengths?: (e_nade_throw_strengthsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_throw_strengths_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_throw_strengths_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_throw_strengths_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_nade_throw_strengths" */
+    e_nade_throw_strengths_aggregate?: (e_nade_throw_strengths_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_throw_strengths_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_throw_strengths_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_throw_strengths_bool_exp | null)} })
+    /** fetch data from the table: "e_nade_throw_strengths" using primary key columns */
+    e_nade_throw_strengths_by_pk?: (e_nade_throw_strengthsGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_nade_visibility" */
+    e_nade_visibility?: (e_nade_visibilityGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_visibility_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_visibility_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_visibility_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_nade_visibility" */
+    e_nade_visibility_aggregate?: (e_nade_visibility_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_visibility_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_visibility_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_visibility_bool_exp | null)} })
+    /** fetch data from the table: "e_nade_visibility" using primary key columns */
+    e_nade_visibility_by_pk?: (e_nade_visibilityGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_notification_types" */
     e_notification_types?: (e_notification_typesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -81169,6 +92533,8 @@ export interface query_rootGenqlSelection{
     where?: (events_bool_exp | null)} })
     /** fetch data from the table: "events" using primary key columns */
     events_by_pk?: (eventsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** Find the saved smokes that close a given sightline */
+    findNadeLineupsBlocking?: (NadeBlockingOutputGenqlSelection & { __args: {from_x: Scalars['Float'], from_y: Scalars['Float'], from_z: Scalars['Float'], limit?: (Scalars['Int'] | null), map_name: Scalars['String'], side?: (Scalars['String'] | null), to_x: Scalars['Float'], to_y: Scalars['Float'], to_z: Scalars['Float']} })
     /** fetch data from the table: "friends" */
     friends?: (friendsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -82355,6 +93721,432 @@ export interface query_rootGenqlSelection{
     order_by?: (my_friends_order_by[] | null), 
     /** filter the rows returned */
     where?: (my_friends_bool_exp | null)} })
+    /** Which way everybody misses one lineup, from their practice throws */
+    nadeLineupMissPattern?: (NadeMissPatternOutputGenqlSelection & { __args: {nade_lineup_id: Scalars['uuid']} })
+    /** Report a player's mined utility throws for a match */
+    nadeMatchUtilityReport?: (NadeUtilityReportOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], steam_id?: (Scalars['String'] | null)} })
+    /** Rank what to practise next on a map from the mined meta */
+    nadePracticePlan?: (NadePracticePlanOutputGenqlSelection & { __args: {limit?: (Scalars['Int'] | null), map_name: Scalars['String'], order?: (Scalars['String'] | null), side?: (Scalars['String'] | null)} })
+    /** Read the practice server solver's calibration gate */
+    nadeSolverCalibration?: (NadeCalibrationOutputGenqlSelection & { __args: {session_id: Scalars['uuid']} })
+    /** Aggregate a team's mined utility throws against its saved lineups */
+    nadeTeamUtilityReport?: (NadeTeamUtilityOutputGenqlSelection & { __args: {limit?: (Scalars['Int'] | null), map_name?: (Scalars['String'] | null), team_id: Scalars['uuid']} })
+    /** fetch data from the table: "nade_collection_items" */
+    nade_collection_items?: (nade_collection_itemsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_collection_items_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_collection_items_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_collection_items_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_collection_items" */
+    nade_collection_items_aggregate?: (nade_collection_items_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_collection_items_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_collection_items_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_collection_items_bool_exp | null)} })
+    /** fetch data from the table: "nade_collection_items" using primary key columns */
+    nade_collection_items_by_pk?: (nade_collection_itemsGenqlSelection & { __args: {collection_id: Scalars['uuid'], nade_lineup_id: Scalars['uuid']} })
+    /** fetch data from the table: "nade_collections" */
+    nade_collections?: (nade_collectionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_collections_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_collections_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_collections_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_collections" */
+    nade_collections_aggregate?: (nade_collections_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_collections_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_collections_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_collections_bool_exp | null)} })
+    /** fetch data from the table: "nade_collections" using primary key columns */
+    nade_collections_by_pk?: (nade_collectionsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "nade_demo_mines" */
+    nade_demo_mines?: (nade_demo_minesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_demo_mines_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_demo_mines_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_demo_mines_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_demo_mines" */
+    nade_demo_mines_aggregate?: (nade_demo_mines_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_demo_mines_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_demo_mines_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_demo_mines_bool_exp | null)} })
+    /** fetch data from the table: "nade_demo_mines" using primary key columns */
+    nade_demo_mines_by_pk?: (nade_demo_minesGenqlSelection & { __args: {match_map_demo_id: Scalars['uuid']} })
+    /** fetch data from the table: "nade_demo_throws" */
+    nade_demo_throws?: (nade_demo_throwsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_demo_throws_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_demo_throws_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_demo_throws_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_demo_throws" */
+    nade_demo_throws_aggregate?: (nade_demo_throws_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_demo_throws_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_demo_throws_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_demo_throws_bool_exp | null)} })
+    /** fetch data from the table: "nade_demo_throws" using primary key columns */
+    nade_demo_throws_by_pk?: (nade_demo_throwsGenqlSelection & { __args: {grenade_id: Scalars['Int'], match_map_demo_id: Scalars['uuid']} })
+    /** fetch data from the table: "nade_drift_results" */
+    nade_drift_results?: (nade_drift_resultsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_drift_results_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_drift_results_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_drift_results_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_drift_results" */
+    nade_drift_results_aggregate?: (nade_drift_results_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_drift_results_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_drift_results_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_drift_results_bool_exp | null)} })
+    /** fetch data from the table: "nade_drift_results" using primary key columns */
+    nade_drift_results_by_pk?: (nade_drift_resultsGenqlSelection & { __args: {nade_drift_scan_id: Scalars['uuid'], nade_lineup_id: Scalars['uuid']} })
+    /** fetch data from the table: "nade_drift_scans" */
+    nade_drift_scans?: (nade_drift_scansGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_drift_scans_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_drift_scans_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_drift_scans_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_drift_scans" */
+    nade_drift_scans_aggregate?: (nade_drift_scans_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_drift_scans_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_drift_scans_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_drift_scans_bool_exp | null)} })
+    /** fetch data from the table: "nade_drift_scans" using primary key columns */
+    nade_drift_scans_by_pk?: (nade_drift_scansGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "nade_lineup_favorites" */
+    nade_lineup_favorites?: (nade_lineup_favoritesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_favorites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_favorites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_favorites_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_lineup_favorites" */
+    nade_lineup_favorites_aggregate?: (nade_lineup_favorites_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_favorites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_favorites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_favorites_bool_exp | null)} })
+    /** fetch data from the table: "nade_lineup_favorites" using primary key columns */
+    nade_lineup_favorites_by_pk?: (nade_lineup_favoritesGenqlSelection & { __args: {nade_lineup_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** fetch data from the table: "nade_lineup_progress" */
+    nade_lineup_progress?: (nade_lineup_progressGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_progress_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_progress_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_progress_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_lineup_progress" */
+    nade_lineup_progress_aggregate?: (nade_lineup_progress_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_progress_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_progress_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_progress_bool_exp | null)} })
+    /** fetch data from the table: "nade_lineup_progress" using primary key columns */
+    nade_lineup_progress_by_pk?: (nade_lineup_progressGenqlSelection & { __args: {nade_lineup_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** fetch data from the table: "nade_lineup_repairs" */
+    nade_lineup_repairs?: (nade_lineup_repairsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_repairs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_repairs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_repairs_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_lineup_repairs" */
+    nade_lineup_repairs_aggregate?: (nade_lineup_repairs_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_repairs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_repairs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_repairs_bool_exp | null)} })
+    /** fetch data from the table: "nade_lineup_repairs" using primary key columns */
+    nade_lineup_repairs_by_pk?: (nade_lineup_repairsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "nade_lineup_votes" */
+    nade_lineup_votes?: (nade_lineup_votesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_votes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_votes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_votes_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_lineup_votes" */
+    nade_lineup_votes_aggregate?: (nade_lineup_votes_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_votes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_votes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_votes_bool_exp | null)} })
+    /** fetch data from the table: "nade_lineup_votes" using primary key columns */
+    nade_lineup_votes_by_pk?: (nade_lineup_votesGenqlSelection & { __args: {nade_lineup_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** An array relationship */
+    nade_lineups?: (nade_lineupsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineups_bool_exp | null)} })
+    /** An aggregate relationship */
+    nade_lineups_aggregate?: (nade_lineups_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineups_bool_exp | null)} })
+    /** fetch data from the table: "nade_lineups" using primary key columns */
+    nade_lineups_by_pk?: (nade_lineupsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "nade_meta_lineups" */
+    nade_meta_lineups?: (nade_meta_lineupsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_meta_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_meta_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_meta_lineups_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_meta_lineups" */
+    nade_meta_lineups_aggregate?: (nade_meta_lineups_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_meta_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_meta_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_meta_lineups_bool_exp | null)} })
+    /** fetch data from the table: "nade_meta_lineups" using primary key columns */
+    nade_meta_lineups_by_pk?: (nade_meta_lineupsGenqlSelection & { __args: {lineup_bucket: Scalars['String']} })
+    /** fetch data from the table: "nade_playbook_steps" */
+    nade_playbook_steps?: (nade_playbook_stepsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_playbook_steps_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_playbook_steps_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_playbook_steps_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_playbook_steps" */
+    nade_playbook_steps_aggregate?: (nade_playbook_steps_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_playbook_steps_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_playbook_steps_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_playbook_steps_bool_exp | null)} })
+    /** fetch data from the table: "nade_playbook_steps" using primary key columns */
+    nade_playbook_steps_by_pk?: (nade_playbook_stepsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "nade_playbooks" */
+    nade_playbooks?: (nade_playbooksGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_playbooks_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_playbooks_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_playbooks_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_playbooks" */
+    nade_playbooks_aggregate?: (nade_playbooks_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_playbooks_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_playbooks_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_playbooks_bool_exp | null)} })
+    /** fetch data from the table: "nade_playbooks" using primary key columns */
+    nade_playbooks_by_pk?: (nade_playbooksGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "nade_practice_invites" */
+    nade_practice_invites?: (nade_practice_invitesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_practice_invites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_practice_invites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_practice_invites_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_practice_invites" */
+    nade_practice_invites_aggregate?: (nade_practice_invites_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_practice_invites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_practice_invites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_practice_invites_bool_exp | null)} })
+    /** fetch data from the table: "nade_practice_invites" using primary key columns */
+    nade_practice_invites_by_pk?: (nade_practice_invitesGenqlSelection & { __args: {nade_practice_session_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** An array relationship */
+    nade_practice_sessions?: (nade_practice_sessionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_practice_sessions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_practice_sessions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_practice_sessions_bool_exp | null)} })
+    /** An aggregate relationship */
+    nade_practice_sessions_aggregate?: (nade_practice_sessions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_practice_sessions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_practice_sessions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_practice_sessions_bool_exp | null)} })
+    /** fetch data from the table: "nade_practice_sessions" using primary key columns */
+    nade_practice_sessions_by_pk?: (nade_practice_sessionsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** Fetch a single news post including draft content for editing. Caller role is verified against public.post_news_role. */
     newsPostAdmin?: (NewsPostGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** List all news posts including drafts for the management area. Caller role is verified against public.post_news_role. */
@@ -87586,6 +99378,176 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_match_types_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_match_types_bool_exp | null)} })
+    /** fetch data from the table: "e_nade_practice_statuses" */
+    e_nade_practice_statuses?: (e_nade_practice_statusesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_practice_statuses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_practice_statuses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_practice_statuses_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_nade_practice_statuses" */
+    e_nade_practice_statuses_aggregate?: (e_nade_practice_statuses_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_practice_statuses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_practice_statuses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_practice_statuses_bool_exp | null)} })
+    /** fetch data from the table: "e_nade_practice_statuses" using primary key columns */
+    e_nade_practice_statuses_by_pk?: (e_nade_practice_statusesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_nade_practice_statuses" */
+    e_nade_practice_statuses_stream?: (e_nade_practice_statusesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_nade_practice_statuses_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_nade_practice_statuses_bool_exp | null)} })
+    /** fetch data from the table: "e_nade_sources" */
+    e_nade_sources?: (e_nade_sourcesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_sources_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_sources_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_sources_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_nade_sources" */
+    e_nade_sources_aggregate?: (e_nade_sources_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_sources_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_sources_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_sources_bool_exp | null)} })
+    /** fetch data from the table: "e_nade_sources" using primary key columns */
+    e_nade_sources_by_pk?: (e_nade_sourcesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_nade_sources" */
+    e_nade_sources_stream?: (e_nade_sourcesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_nade_sources_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_nade_sources_bool_exp | null)} })
+    /** fetch data from the table: "e_nade_techniques" */
+    e_nade_techniques?: (e_nade_techniquesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_techniques_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_techniques_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_techniques_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_nade_techniques" */
+    e_nade_techniques_aggregate?: (e_nade_techniques_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_techniques_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_techniques_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_techniques_bool_exp | null)} })
+    /** fetch data from the table: "e_nade_techniques" using primary key columns */
+    e_nade_techniques_by_pk?: (e_nade_techniquesGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_nade_techniques" */
+    e_nade_techniques_stream?: (e_nade_techniquesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_nade_techniques_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_nade_techniques_bool_exp | null)} })
+    /** fetch data from the table: "e_nade_throw_strengths" */
+    e_nade_throw_strengths?: (e_nade_throw_strengthsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_throw_strengths_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_throw_strengths_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_throw_strengths_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_nade_throw_strengths" */
+    e_nade_throw_strengths_aggregate?: (e_nade_throw_strengths_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_throw_strengths_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_throw_strengths_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_throw_strengths_bool_exp | null)} })
+    /** fetch data from the table: "e_nade_throw_strengths" using primary key columns */
+    e_nade_throw_strengths_by_pk?: (e_nade_throw_strengthsGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_nade_throw_strengths" */
+    e_nade_throw_strengths_stream?: (e_nade_throw_strengthsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_nade_throw_strengths_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_nade_throw_strengths_bool_exp | null)} })
+    /** fetch data from the table: "e_nade_visibility" */
+    e_nade_visibility?: (e_nade_visibilityGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_visibility_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_visibility_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_visibility_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_nade_visibility" */
+    e_nade_visibility_aggregate?: (e_nade_visibility_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_nade_visibility_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_nade_visibility_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_nade_visibility_bool_exp | null)} })
+    /** fetch data from the table: "e_nade_visibility" using primary key columns */
+    e_nade_visibility_by_pk?: (e_nade_visibilityGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_nade_visibility" */
+    e_nade_visibility_stream?: (e_nade_visibilityGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_nade_visibility_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_nade_visibility_bool_exp | null)} })
     /** fetch data from the table: "e_notification_types" */
     e_notification_types?: (e_notification_typesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -89972,6 +101934,550 @@ export interface subscription_rootGenqlSelection{
     cursor: (my_friends_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (my_friends_bool_exp | null)} })
+    /** fetch data from the table: "nade_collection_items" */
+    nade_collection_items?: (nade_collection_itemsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_collection_items_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_collection_items_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_collection_items_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_collection_items" */
+    nade_collection_items_aggregate?: (nade_collection_items_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_collection_items_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_collection_items_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_collection_items_bool_exp | null)} })
+    /** fetch data from the table: "nade_collection_items" using primary key columns */
+    nade_collection_items_by_pk?: (nade_collection_itemsGenqlSelection & { __args: {collection_id: Scalars['uuid'], nade_lineup_id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "nade_collection_items" */
+    nade_collection_items_stream?: (nade_collection_itemsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_collection_items_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_collection_items_bool_exp | null)} })
+    /** fetch data from the table: "nade_collections" */
+    nade_collections?: (nade_collectionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_collections_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_collections_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_collections_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_collections" */
+    nade_collections_aggregate?: (nade_collections_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_collections_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_collections_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_collections_bool_exp | null)} })
+    /** fetch data from the table: "nade_collections" using primary key columns */
+    nade_collections_by_pk?: (nade_collectionsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "nade_collections" */
+    nade_collections_stream?: (nade_collectionsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_collections_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_collections_bool_exp | null)} })
+    /** fetch data from the table: "nade_demo_mines" */
+    nade_demo_mines?: (nade_demo_minesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_demo_mines_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_demo_mines_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_demo_mines_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_demo_mines" */
+    nade_demo_mines_aggregate?: (nade_demo_mines_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_demo_mines_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_demo_mines_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_demo_mines_bool_exp | null)} })
+    /** fetch data from the table: "nade_demo_mines" using primary key columns */
+    nade_demo_mines_by_pk?: (nade_demo_minesGenqlSelection & { __args: {match_map_demo_id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "nade_demo_mines" */
+    nade_demo_mines_stream?: (nade_demo_minesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_demo_mines_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_demo_mines_bool_exp | null)} })
+    /** fetch data from the table: "nade_demo_throws" */
+    nade_demo_throws?: (nade_demo_throwsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_demo_throws_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_demo_throws_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_demo_throws_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_demo_throws" */
+    nade_demo_throws_aggregate?: (nade_demo_throws_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_demo_throws_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_demo_throws_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_demo_throws_bool_exp | null)} })
+    /** fetch data from the table: "nade_demo_throws" using primary key columns */
+    nade_demo_throws_by_pk?: (nade_demo_throwsGenqlSelection & { __args: {grenade_id: Scalars['Int'], match_map_demo_id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "nade_demo_throws" */
+    nade_demo_throws_stream?: (nade_demo_throwsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_demo_throws_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_demo_throws_bool_exp | null)} })
+    /** fetch data from the table: "nade_drift_results" */
+    nade_drift_results?: (nade_drift_resultsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_drift_results_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_drift_results_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_drift_results_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_drift_results" */
+    nade_drift_results_aggregate?: (nade_drift_results_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_drift_results_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_drift_results_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_drift_results_bool_exp | null)} })
+    /** fetch data from the table: "nade_drift_results" using primary key columns */
+    nade_drift_results_by_pk?: (nade_drift_resultsGenqlSelection & { __args: {nade_drift_scan_id: Scalars['uuid'], nade_lineup_id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "nade_drift_results" */
+    nade_drift_results_stream?: (nade_drift_resultsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_drift_results_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_drift_results_bool_exp | null)} })
+    /** fetch data from the table: "nade_drift_scans" */
+    nade_drift_scans?: (nade_drift_scansGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_drift_scans_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_drift_scans_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_drift_scans_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_drift_scans" */
+    nade_drift_scans_aggregate?: (nade_drift_scans_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_drift_scans_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_drift_scans_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_drift_scans_bool_exp | null)} })
+    /** fetch data from the table: "nade_drift_scans" using primary key columns */
+    nade_drift_scans_by_pk?: (nade_drift_scansGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "nade_drift_scans" */
+    nade_drift_scans_stream?: (nade_drift_scansGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_drift_scans_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_drift_scans_bool_exp | null)} })
+    /** fetch data from the table: "nade_lineup_favorites" */
+    nade_lineup_favorites?: (nade_lineup_favoritesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_favorites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_favorites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_favorites_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_lineup_favorites" */
+    nade_lineup_favorites_aggregate?: (nade_lineup_favorites_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_favorites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_favorites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_favorites_bool_exp | null)} })
+    /** fetch data from the table: "nade_lineup_favorites" using primary key columns */
+    nade_lineup_favorites_by_pk?: (nade_lineup_favoritesGenqlSelection & { __args: {nade_lineup_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** fetch data from the table in a streaming manner: "nade_lineup_favorites" */
+    nade_lineup_favorites_stream?: (nade_lineup_favoritesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_lineup_favorites_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_lineup_favorites_bool_exp | null)} })
+    /** fetch data from the table: "nade_lineup_progress" */
+    nade_lineup_progress?: (nade_lineup_progressGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_progress_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_progress_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_progress_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_lineup_progress" */
+    nade_lineup_progress_aggregate?: (nade_lineup_progress_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_progress_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_progress_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_progress_bool_exp | null)} })
+    /** fetch data from the table: "nade_lineup_progress" using primary key columns */
+    nade_lineup_progress_by_pk?: (nade_lineup_progressGenqlSelection & { __args: {nade_lineup_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** fetch data from the table in a streaming manner: "nade_lineup_progress" */
+    nade_lineup_progress_stream?: (nade_lineup_progressGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_lineup_progress_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_lineup_progress_bool_exp | null)} })
+    /** fetch data from the table: "nade_lineup_repairs" */
+    nade_lineup_repairs?: (nade_lineup_repairsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_repairs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_repairs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_repairs_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_lineup_repairs" */
+    nade_lineup_repairs_aggregate?: (nade_lineup_repairs_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_repairs_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_repairs_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_repairs_bool_exp | null)} })
+    /** fetch data from the table: "nade_lineup_repairs" using primary key columns */
+    nade_lineup_repairs_by_pk?: (nade_lineup_repairsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "nade_lineup_repairs" */
+    nade_lineup_repairs_stream?: (nade_lineup_repairsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_lineup_repairs_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_lineup_repairs_bool_exp | null)} })
+    /** fetch data from the table: "nade_lineup_votes" */
+    nade_lineup_votes?: (nade_lineup_votesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_votes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_votes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_votes_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_lineup_votes" */
+    nade_lineup_votes_aggregate?: (nade_lineup_votes_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineup_votes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineup_votes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineup_votes_bool_exp | null)} })
+    /** fetch data from the table: "nade_lineup_votes" using primary key columns */
+    nade_lineup_votes_by_pk?: (nade_lineup_votesGenqlSelection & { __args: {nade_lineup_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** fetch data from the table in a streaming manner: "nade_lineup_votes" */
+    nade_lineup_votes_stream?: (nade_lineup_votesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_lineup_votes_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_lineup_votes_bool_exp | null)} })
+    /** An array relationship */
+    nade_lineups?: (nade_lineupsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineups_bool_exp | null)} })
+    /** An aggregate relationship */
+    nade_lineups_aggregate?: (nade_lineups_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_lineups_bool_exp | null)} })
+    /** fetch data from the table: "nade_lineups" using primary key columns */
+    nade_lineups_by_pk?: (nade_lineupsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "nade_lineups" */
+    nade_lineups_stream?: (nade_lineupsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_lineups_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_lineups_bool_exp | null)} })
+    /** fetch data from the table: "nade_meta_lineups" */
+    nade_meta_lineups?: (nade_meta_lineupsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_meta_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_meta_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_meta_lineups_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_meta_lineups" */
+    nade_meta_lineups_aggregate?: (nade_meta_lineups_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_meta_lineups_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_meta_lineups_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_meta_lineups_bool_exp | null)} })
+    /** fetch data from the table: "nade_meta_lineups" using primary key columns */
+    nade_meta_lineups_by_pk?: (nade_meta_lineupsGenqlSelection & { __args: {lineup_bucket: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "nade_meta_lineups" */
+    nade_meta_lineups_stream?: (nade_meta_lineupsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_meta_lineups_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_meta_lineups_bool_exp | null)} })
+    /** fetch data from the table: "nade_playbook_steps" */
+    nade_playbook_steps?: (nade_playbook_stepsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_playbook_steps_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_playbook_steps_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_playbook_steps_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_playbook_steps" */
+    nade_playbook_steps_aggregate?: (nade_playbook_steps_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_playbook_steps_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_playbook_steps_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_playbook_steps_bool_exp | null)} })
+    /** fetch data from the table: "nade_playbook_steps" using primary key columns */
+    nade_playbook_steps_by_pk?: (nade_playbook_stepsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "nade_playbook_steps" */
+    nade_playbook_steps_stream?: (nade_playbook_stepsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_playbook_steps_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_playbook_steps_bool_exp | null)} })
+    /** fetch data from the table: "nade_playbooks" */
+    nade_playbooks?: (nade_playbooksGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_playbooks_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_playbooks_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_playbooks_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_playbooks" */
+    nade_playbooks_aggregate?: (nade_playbooks_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_playbooks_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_playbooks_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_playbooks_bool_exp | null)} })
+    /** fetch data from the table: "nade_playbooks" using primary key columns */
+    nade_playbooks_by_pk?: (nade_playbooksGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "nade_playbooks" */
+    nade_playbooks_stream?: (nade_playbooksGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_playbooks_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_playbooks_bool_exp | null)} })
+    /** fetch data from the table: "nade_practice_invites" */
+    nade_practice_invites?: (nade_practice_invitesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_practice_invites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_practice_invites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_practice_invites_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "nade_practice_invites" */
+    nade_practice_invites_aggregate?: (nade_practice_invites_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_practice_invites_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_practice_invites_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_practice_invites_bool_exp | null)} })
+    /** fetch data from the table: "nade_practice_invites" using primary key columns */
+    nade_practice_invites_by_pk?: (nade_practice_invitesGenqlSelection & { __args: {nade_practice_session_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** fetch data from the table in a streaming manner: "nade_practice_invites" */
+    nade_practice_invites_stream?: (nade_practice_invitesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_practice_invites_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_practice_invites_bool_exp | null)} })
+    /** An array relationship */
+    nade_practice_sessions?: (nade_practice_sessionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_practice_sessions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_practice_sessions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_practice_sessions_bool_exp | null)} })
+    /** An aggregate relationship */
+    nade_practice_sessions_aggregate?: (nade_practice_sessions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (nade_practice_sessions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (nade_practice_sessions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (nade_practice_sessions_bool_exp | null)} })
+    /** fetch data from the table: "nade_practice_sessions" using primary key columns */
+    nade_practice_sessions_by_pk?: (nade_practice_sessionsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "nade_practice_sessions" */
+    nade_practice_sessions_stream?: (nade_practice_sessionsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (nade_practice_sessions_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (nade_practice_sessions_bool_exp | null)} })
     /** fetch data from the table: "news_articles" */
     news_articles?: (news_articlesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -107237,6 +119743,198 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const NadeBlockingOutput_possibleTypes: string[] = ['NadeBlockingOutput']
+    export const isNadeBlockingOutput = (obj?: { __typename?: any } | null): obj is NadeBlockingOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeBlockingOutput"')
+      return NadeBlockingOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeBlockingResult_possibleTypes: string[] = ['NadeBlockingResult']
+    export const isNadeBlockingResult = (obj?: { __typename?: any } | null): obj is NadeBlockingResult => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeBlockingResult"')
+      return NadeBlockingResult_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeCalibrationOutput_possibleTypes: string[] = ['NadeCalibrationOutput']
+    export const isNadeCalibrationOutput = (obj?: { __typename?: any } | null): obj is NadeCalibrationOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeCalibrationOutput"')
+      return NadeCalibrationOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeDriftScanOutput_possibleTypes: string[] = ['NadeDriftScanOutput']
+    export const isNadeDriftScanOutput = (obj?: { __typename?: any } | null): obj is NadeDriftScanOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeDriftScanOutput"')
+      return NadeDriftScanOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeImportError_possibleTypes: string[] = ['NadeImportError']
+    export const isNadeImportError = (obj?: { __typename?: any } | null): obj is NadeImportError => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeImportError"')
+      return NadeImportError_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeImportOutput_possibleTypes: string[] = ['NadeImportOutput']
+    export const isNadeImportOutput = (obj?: { __typename?: any } | null): obj is NadeImportOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeImportOutput"')
+      return NadeImportOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeLineupOutput_possibleTypes: string[] = ['NadeLineupOutput']
+    export const isNadeLineupOutput = (obj?: { __typename?: any } | null): obj is NadeLineupOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeLineupOutput"')
+      return NadeLineupOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeMissPatternOutput_possibleTypes: string[] = ['NadeMissPatternOutput']
+    export const isNadeMissPatternOutput = (obj?: { __typename?: any } | null): obj is NadeMissPatternOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeMissPatternOutput"')
+      return NadeMissPatternOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeOneWayOutput_possibleTypes: string[] = ['NadeOneWayOutput']
+    export const isNadeOneWayOutput = (obj?: { __typename?: any } | null): obj is NadeOneWayOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeOneWayOutput"')
+      return NadeOneWayOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeOneWayResult_possibleTypes: string[] = ['NadeOneWayResult']
+    export const isNadeOneWayResult = (obj?: { __typename?: any } | null): obj is NadeOneWayResult => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeOneWayResult"')
+      return NadeOneWayResult_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadePlaybookCoverageOutput_possibleTypes: string[] = ['NadePlaybookCoverageOutput']
+    export const isNadePlaybookCoverageOutput = (obj?: { __typename?: any } | null): obj is NadePlaybookCoverageOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadePlaybookCoverageOutput"')
+      return NadePlaybookCoverageOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadePlaybookCoverageResult_possibleTypes: string[] = ['NadePlaybookCoverageResult']
+    export const isNadePlaybookCoverageResult = (obj?: { __typename?: any } | null): obj is NadePlaybookCoverageResult => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadePlaybookCoverageResult"')
+      return NadePlaybookCoverageResult_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadePlaybookOutput_possibleTypes: string[] = ['NadePlaybookOutput']
+    export const isNadePlaybookOutput = (obj?: { __typename?: any } | null): obj is NadePlaybookOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadePlaybookOutput"')
+      return NadePlaybookOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadePracticePlanEntry_possibleTypes: string[] = ['NadePracticePlanEntry']
+    export const isNadePracticePlanEntry = (obj?: { __typename?: any } | null): obj is NadePracticePlanEntry => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadePracticePlanEntry"')
+      return NadePracticePlanEntry_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadePracticePlanOutput_possibleTypes: string[] = ['NadePracticePlanOutput']
+    export const isNadePracticePlanOutput = (obj?: { __typename?: any } | null): obj is NadePracticePlanOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadePracticePlanOutput"')
+      return NadePracticePlanOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadePracticeSessionOutput_possibleTypes: string[] = ['NadePracticeSessionOutput']
+    export const isNadePracticeSessionOutput = (obj?: { __typename?: any } | null): obj is NadePracticeSessionOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadePracticeSessionOutput"')
+      return NadePracticeSessionOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadePurgeOutput_possibleTypes: string[] = ['NadePurgeOutput']
+    export const isNadePurgeOutput = (obj?: { __typename?: any } | null): obj is NadePurgeOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadePurgeOutput"')
+      return NadePurgeOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeSightlineOutput_possibleTypes: string[] = ['NadeSightlineOutput']
+    export const isNadeSightlineOutput = (obj?: { __typename?: any } | null): obj is NadeSightlineOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeSightlineOutput"')
+      return NadeSightlineOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeSightlineResult_possibleTypes: string[] = ['NadeSightlineResult']
+    export const isNadeSightlineResult = (obj?: { __typename?: any } | null): obj is NadeSightlineResult => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeSightlineResult"')
+      return NadeSightlineResult_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeSolveOutput_possibleTypes: string[] = ['NadeSolveOutput']
+    export const isNadeSolveOutput = (obj?: { __typename?: any } | null): obj is NadeSolveOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeSolveOutput"')
+      return NadeSolveOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeTeamUtilityEntry_possibleTypes: string[] = ['NadeTeamUtilityEntry']
+    export const isNadeTeamUtilityEntry = (obj?: { __typename?: any } | null): obj is NadeTeamUtilityEntry => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeTeamUtilityEntry"')
+      return NadeTeamUtilityEntry_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeTeamUtilityOutput_possibleTypes: string[] = ['NadeTeamUtilityOutput']
+    export const isNadeTeamUtilityOutput = (obj?: { __typename?: any } | null): obj is NadeTeamUtilityOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeTeamUtilityOutput"')
+      return NadeTeamUtilityOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeUtilityReportOutput_possibleTypes: string[] = ['NadeUtilityReportOutput']
+    export const isNadeUtilityReportOutput = (obj?: { __typename?: any } | null): obj is NadeUtilityReportOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeUtilityReportOutput"')
+      return NadeUtilityReportOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const NadeUtilityTypeReport_possibleTypes: string[] = ['NadeUtilityTypeReport']
+    export const isNadeUtilityTypeReport = (obj?: { __typename?: any } | null): obj is NadeUtilityTypeReport => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isNadeUtilityTypeReport"')
+      return NadeUtilityTypeReport_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const NetworkStats_possibleTypes: string[] = ['NetworkStats']
     export const isNetworkStats = (obj?: { __typename?: any } | null): obj is NetworkStats => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isNetworkStats"')
@@ -110593,6 +123291,246 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const ise_match_types_mutation_response = (obj?: { __typename?: any } | null): obj is e_match_types_mutation_response => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_match_types_mutation_response"')
       return e_match_types_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_practice_statuses_possibleTypes: string[] = ['e_nade_practice_statuses']
+    export const ise_nade_practice_statuses = (obj?: { __typename?: any } | null): obj is e_nade_practice_statuses => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_practice_statuses"')
+      return e_nade_practice_statuses_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_practice_statuses_aggregate_possibleTypes: string[] = ['e_nade_practice_statuses_aggregate']
+    export const ise_nade_practice_statuses_aggregate = (obj?: { __typename?: any } | null): obj is e_nade_practice_statuses_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_practice_statuses_aggregate"')
+      return e_nade_practice_statuses_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_practice_statuses_aggregate_fields_possibleTypes: string[] = ['e_nade_practice_statuses_aggregate_fields']
+    export const ise_nade_practice_statuses_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_nade_practice_statuses_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_practice_statuses_aggregate_fields"')
+      return e_nade_practice_statuses_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_practice_statuses_max_fields_possibleTypes: string[] = ['e_nade_practice_statuses_max_fields']
+    export const ise_nade_practice_statuses_max_fields = (obj?: { __typename?: any } | null): obj is e_nade_practice_statuses_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_practice_statuses_max_fields"')
+      return e_nade_practice_statuses_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_practice_statuses_min_fields_possibleTypes: string[] = ['e_nade_practice_statuses_min_fields']
+    export const ise_nade_practice_statuses_min_fields = (obj?: { __typename?: any } | null): obj is e_nade_practice_statuses_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_practice_statuses_min_fields"')
+      return e_nade_practice_statuses_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_practice_statuses_mutation_response_possibleTypes: string[] = ['e_nade_practice_statuses_mutation_response']
+    export const ise_nade_practice_statuses_mutation_response = (obj?: { __typename?: any } | null): obj is e_nade_practice_statuses_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_practice_statuses_mutation_response"')
+      return e_nade_practice_statuses_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_sources_possibleTypes: string[] = ['e_nade_sources']
+    export const ise_nade_sources = (obj?: { __typename?: any } | null): obj is e_nade_sources => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_sources"')
+      return e_nade_sources_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_sources_aggregate_possibleTypes: string[] = ['e_nade_sources_aggregate']
+    export const ise_nade_sources_aggregate = (obj?: { __typename?: any } | null): obj is e_nade_sources_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_sources_aggregate"')
+      return e_nade_sources_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_sources_aggregate_fields_possibleTypes: string[] = ['e_nade_sources_aggregate_fields']
+    export const ise_nade_sources_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_nade_sources_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_sources_aggregate_fields"')
+      return e_nade_sources_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_sources_max_fields_possibleTypes: string[] = ['e_nade_sources_max_fields']
+    export const ise_nade_sources_max_fields = (obj?: { __typename?: any } | null): obj is e_nade_sources_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_sources_max_fields"')
+      return e_nade_sources_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_sources_min_fields_possibleTypes: string[] = ['e_nade_sources_min_fields']
+    export const ise_nade_sources_min_fields = (obj?: { __typename?: any } | null): obj is e_nade_sources_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_sources_min_fields"')
+      return e_nade_sources_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_sources_mutation_response_possibleTypes: string[] = ['e_nade_sources_mutation_response']
+    export const ise_nade_sources_mutation_response = (obj?: { __typename?: any } | null): obj is e_nade_sources_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_sources_mutation_response"')
+      return e_nade_sources_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_techniques_possibleTypes: string[] = ['e_nade_techniques']
+    export const ise_nade_techniques = (obj?: { __typename?: any } | null): obj is e_nade_techniques => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_techniques"')
+      return e_nade_techniques_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_techniques_aggregate_possibleTypes: string[] = ['e_nade_techniques_aggregate']
+    export const ise_nade_techniques_aggregate = (obj?: { __typename?: any } | null): obj is e_nade_techniques_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_techniques_aggregate"')
+      return e_nade_techniques_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_techniques_aggregate_fields_possibleTypes: string[] = ['e_nade_techniques_aggregate_fields']
+    export const ise_nade_techniques_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_nade_techniques_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_techniques_aggregate_fields"')
+      return e_nade_techniques_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_techniques_max_fields_possibleTypes: string[] = ['e_nade_techniques_max_fields']
+    export const ise_nade_techniques_max_fields = (obj?: { __typename?: any } | null): obj is e_nade_techniques_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_techniques_max_fields"')
+      return e_nade_techniques_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_techniques_min_fields_possibleTypes: string[] = ['e_nade_techniques_min_fields']
+    export const ise_nade_techniques_min_fields = (obj?: { __typename?: any } | null): obj is e_nade_techniques_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_techniques_min_fields"')
+      return e_nade_techniques_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_techniques_mutation_response_possibleTypes: string[] = ['e_nade_techniques_mutation_response']
+    export const ise_nade_techniques_mutation_response = (obj?: { __typename?: any } | null): obj is e_nade_techniques_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_techniques_mutation_response"')
+      return e_nade_techniques_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_throw_strengths_possibleTypes: string[] = ['e_nade_throw_strengths']
+    export const ise_nade_throw_strengths = (obj?: { __typename?: any } | null): obj is e_nade_throw_strengths => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_throw_strengths"')
+      return e_nade_throw_strengths_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_throw_strengths_aggregate_possibleTypes: string[] = ['e_nade_throw_strengths_aggregate']
+    export const ise_nade_throw_strengths_aggregate = (obj?: { __typename?: any } | null): obj is e_nade_throw_strengths_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_throw_strengths_aggregate"')
+      return e_nade_throw_strengths_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_throw_strengths_aggregate_fields_possibleTypes: string[] = ['e_nade_throw_strengths_aggregate_fields']
+    export const ise_nade_throw_strengths_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_nade_throw_strengths_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_throw_strengths_aggregate_fields"')
+      return e_nade_throw_strengths_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_throw_strengths_max_fields_possibleTypes: string[] = ['e_nade_throw_strengths_max_fields']
+    export const ise_nade_throw_strengths_max_fields = (obj?: { __typename?: any } | null): obj is e_nade_throw_strengths_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_throw_strengths_max_fields"')
+      return e_nade_throw_strengths_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_throw_strengths_min_fields_possibleTypes: string[] = ['e_nade_throw_strengths_min_fields']
+    export const ise_nade_throw_strengths_min_fields = (obj?: { __typename?: any } | null): obj is e_nade_throw_strengths_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_throw_strengths_min_fields"')
+      return e_nade_throw_strengths_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_throw_strengths_mutation_response_possibleTypes: string[] = ['e_nade_throw_strengths_mutation_response']
+    export const ise_nade_throw_strengths_mutation_response = (obj?: { __typename?: any } | null): obj is e_nade_throw_strengths_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_throw_strengths_mutation_response"')
+      return e_nade_throw_strengths_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_visibility_possibleTypes: string[] = ['e_nade_visibility']
+    export const ise_nade_visibility = (obj?: { __typename?: any } | null): obj is e_nade_visibility => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_visibility"')
+      return e_nade_visibility_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_visibility_aggregate_possibleTypes: string[] = ['e_nade_visibility_aggregate']
+    export const ise_nade_visibility_aggregate = (obj?: { __typename?: any } | null): obj is e_nade_visibility_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_visibility_aggregate"')
+      return e_nade_visibility_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_visibility_aggregate_fields_possibleTypes: string[] = ['e_nade_visibility_aggregate_fields']
+    export const ise_nade_visibility_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_nade_visibility_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_visibility_aggregate_fields"')
+      return e_nade_visibility_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_visibility_max_fields_possibleTypes: string[] = ['e_nade_visibility_max_fields']
+    export const ise_nade_visibility_max_fields = (obj?: { __typename?: any } | null): obj is e_nade_visibility_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_visibility_max_fields"')
+      return e_nade_visibility_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_visibility_min_fields_possibleTypes: string[] = ['e_nade_visibility_min_fields']
+    export const ise_nade_visibility_min_fields = (obj?: { __typename?: any } | null): obj is e_nade_visibility_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_visibility_min_fields"')
+      return e_nade_visibility_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_nade_visibility_mutation_response_possibleTypes: string[] = ['e_nade_visibility_mutation_response']
+    export const ise_nade_visibility_mutation_response = (obj?: { __typename?: any } | null): obj is e_nade_visibility_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_nade_visibility_mutation_response"')
+      return e_nade_visibility_mutation_response_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -115929,6 +128867,1798 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const ismy_friends_variance_fields = (obj?: { __typename?: any } | null): obj is my_friends_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ismy_friends_variance_fields"')
       return my_friends_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collection_items_possibleTypes: string[] = ['nade_collection_items']
+    export const isnade_collection_items = (obj?: { __typename?: any } | null): obj is nade_collection_items => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collection_items"')
+      return nade_collection_items_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collection_items_aggregate_possibleTypes: string[] = ['nade_collection_items_aggregate']
+    export const isnade_collection_items_aggregate = (obj?: { __typename?: any } | null): obj is nade_collection_items_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collection_items_aggregate"')
+      return nade_collection_items_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collection_items_aggregate_fields_possibleTypes: string[] = ['nade_collection_items_aggregate_fields']
+    export const isnade_collection_items_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_collection_items_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collection_items_aggregate_fields"')
+      return nade_collection_items_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collection_items_avg_fields_possibleTypes: string[] = ['nade_collection_items_avg_fields']
+    export const isnade_collection_items_avg_fields = (obj?: { __typename?: any } | null): obj is nade_collection_items_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collection_items_avg_fields"')
+      return nade_collection_items_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collection_items_max_fields_possibleTypes: string[] = ['nade_collection_items_max_fields']
+    export const isnade_collection_items_max_fields = (obj?: { __typename?: any } | null): obj is nade_collection_items_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collection_items_max_fields"')
+      return nade_collection_items_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collection_items_min_fields_possibleTypes: string[] = ['nade_collection_items_min_fields']
+    export const isnade_collection_items_min_fields = (obj?: { __typename?: any } | null): obj is nade_collection_items_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collection_items_min_fields"')
+      return nade_collection_items_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collection_items_mutation_response_possibleTypes: string[] = ['nade_collection_items_mutation_response']
+    export const isnade_collection_items_mutation_response = (obj?: { __typename?: any } | null): obj is nade_collection_items_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collection_items_mutation_response"')
+      return nade_collection_items_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collection_items_stddev_fields_possibleTypes: string[] = ['nade_collection_items_stddev_fields']
+    export const isnade_collection_items_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_collection_items_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collection_items_stddev_fields"')
+      return nade_collection_items_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collection_items_stddev_pop_fields_possibleTypes: string[] = ['nade_collection_items_stddev_pop_fields']
+    export const isnade_collection_items_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_collection_items_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collection_items_stddev_pop_fields"')
+      return nade_collection_items_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collection_items_stddev_samp_fields_possibleTypes: string[] = ['nade_collection_items_stddev_samp_fields']
+    export const isnade_collection_items_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_collection_items_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collection_items_stddev_samp_fields"')
+      return nade_collection_items_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collection_items_sum_fields_possibleTypes: string[] = ['nade_collection_items_sum_fields']
+    export const isnade_collection_items_sum_fields = (obj?: { __typename?: any } | null): obj is nade_collection_items_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collection_items_sum_fields"')
+      return nade_collection_items_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collection_items_var_pop_fields_possibleTypes: string[] = ['nade_collection_items_var_pop_fields']
+    export const isnade_collection_items_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_collection_items_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collection_items_var_pop_fields"')
+      return nade_collection_items_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collection_items_var_samp_fields_possibleTypes: string[] = ['nade_collection_items_var_samp_fields']
+    export const isnade_collection_items_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_collection_items_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collection_items_var_samp_fields"')
+      return nade_collection_items_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collection_items_variance_fields_possibleTypes: string[] = ['nade_collection_items_variance_fields']
+    export const isnade_collection_items_variance_fields = (obj?: { __typename?: any } | null): obj is nade_collection_items_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collection_items_variance_fields"')
+      return nade_collection_items_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collections_possibleTypes: string[] = ['nade_collections']
+    export const isnade_collections = (obj?: { __typename?: any } | null): obj is nade_collections => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collections"')
+      return nade_collections_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collections_aggregate_possibleTypes: string[] = ['nade_collections_aggregate']
+    export const isnade_collections_aggregate = (obj?: { __typename?: any } | null): obj is nade_collections_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collections_aggregate"')
+      return nade_collections_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collections_aggregate_fields_possibleTypes: string[] = ['nade_collections_aggregate_fields']
+    export const isnade_collections_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_collections_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collections_aggregate_fields"')
+      return nade_collections_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collections_avg_fields_possibleTypes: string[] = ['nade_collections_avg_fields']
+    export const isnade_collections_avg_fields = (obj?: { __typename?: any } | null): obj is nade_collections_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collections_avg_fields"')
+      return nade_collections_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collections_max_fields_possibleTypes: string[] = ['nade_collections_max_fields']
+    export const isnade_collections_max_fields = (obj?: { __typename?: any } | null): obj is nade_collections_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collections_max_fields"')
+      return nade_collections_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collections_min_fields_possibleTypes: string[] = ['nade_collections_min_fields']
+    export const isnade_collections_min_fields = (obj?: { __typename?: any } | null): obj is nade_collections_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collections_min_fields"')
+      return nade_collections_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collections_mutation_response_possibleTypes: string[] = ['nade_collections_mutation_response']
+    export const isnade_collections_mutation_response = (obj?: { __typename?: any } | null): obj is nade_collections_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collections_mutation_response"')
+      return nade_collections_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collections_stddev_fields_possibleTypes: string[] = ['nade_collections_stddev_fields']
+    export const isnade_collections_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_collections_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collections_stddev_fields"')
+      return nade_collections_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collections_stddev_pop_fields_possibleTypes: string[] = ['nade_collections_stddev_pop_fields']
+    export const isnade_collections_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_collections_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collections_stddev_pop_fields"')
+      return nade_collections_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collections_stddev_samp_fields_possibleTypes: string[] = ['nade_collections_stddev_samp_fields']
+    export const isnade_collections_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_collections_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collections_stddev_samp_fields"')
+      return nade_collections_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collections_sum_fields_possibleTypes: string[] = ['nade_collections_sum_fields']
+    export const isnade_collections_sum_fields = (obj?: { __typename?: any } | null): obj is nade_collections_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collections_sum_fields"')
+      return nade_collections_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collections_var_pop_fields_possibleTypes: string[] = ['nade_collections_var_pop_fields']
+    export const isnade_collections_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_collections_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collections_var_pop_fields"')
+      return nade_collections_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collections_var_samp_fields_possibleTypes: string[] = ['nade_collections_var_samp_fields']
+    export const isnade_collections_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_collections_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collections_var_samp_fields"')
+      return nade_collections_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_collections_variance_fields_possibleTypes: string[] = ['nade_collections_variance_fields']
+    export const isnade_collections_variance_fields = (obj?: { __typename?: any } | null): obj is nade_collections_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_collections_variance_fields"')
+      return nade_collections_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_mines_possibleTypes: string[] = ['nade_demo_mines']
+    export const isnade_demo_mines = (obj?: { __typename?: any } | null): obj is nade_demo_mines => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_mines"')
+      return nade_demo_mines_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_mines_aggregate_possibleTypes: string[] = ['nade_demo_mines_aggregate']
+    export const isnade_demo_mines_aggregate = (obj?: { __typename?: any } | null): obj is nade_demo_mines_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_mines_aggregate"')
+      return nade_demo_mines_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_mines_aggregate_fields_possibleTypes: string[] = ['nade_demo_mines_aggregate_fields']
+    export const isnade_demo_mines_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_demo_mines_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_mines_aggregate_fields"')
+      return nade_demo_mines_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_mines_avg_fields_possibleTypes: string[] = ['nade_demo_mines_avg_fields']
+    export const isnade_demo_mines_avg_fields = (obj?: { __typename?: any } | null): obj is nade_demo_mines_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_mines_avg_fields"')
+      return nade_demo_mines_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_mines_max_fields_possibleTypes: string[] = ['nade_demo_mines_max_fields']
+    export const isnade_demo_mines_max_fields = (obj?: { __typename?: any } | null): obj is nade_demo_mines_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_mines_max_fields"')
+      return nade_demo_mines_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_mines_min_fields_possibleTypes: string[] = ['nade_demo_mines_min_fields']
+    export const isnade_demo_mines_min_fields = (obj?: { __typename?: any } | null): obj is nade_demo_mines_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_mines_min_fields"')
+      return nade_demo_mines_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_mines_mutation_response_possibleTypes: string[] = ['nade_demo_mines_mutation_response']
+    export const isnade_demo_mines_mutation_response = (obj?: { __typename?: any } | null): obj is nade_demo_mines_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_mines_mutation_response"')
+      return nade_demo_mines_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_mines_stddev_fields_possibleTypes: string[] = ['nade_demo_mines_stddev_fields']
+    export const isnade_demo_mines_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_demo_mines_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_mines_stddev_fields"')
+      return nade_demo_mines_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_mines_stddev_pop_fields_possibleTypes: string[] = ['nade_demo_mines_stddev_pop_fields']
+    export const isnade_demo_mines_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_demo_mines_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_mines_stddev_pop_fields"')
+      return nade_demo_mines_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_mines_stddev_samp_fields_possibleTypes: string[] = ['nade_demo_mines_stddev_samp_fields']
+    export const isnade_demo_mines_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_demo_mines_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_mines_stddev_samp_fields"')
+      return nade_demo_mines_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_mines_sum_fields_possibleTypes: string[] = ['nade_demo_mines_sum_fields']
+    export const isnade_demo_mines_sum_fields = (obj?: { __typename?: any } | null): obj is nade_demo_mines_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_mines_sum_fields"')
+      return nade_demo_mines_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_mines_var_pop_fields_possibleTypes: string[] = ['nade_demo_mines_var_pop_fields']
+    export const isnade_demo_mines_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_demo_mines_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_mines_var_pop_fields"')
+      return nade_demo_mines_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_mines_var_samp_fields_possibleTypes: string[] = ['nade_demo_mines_var_samp_fields']
+    export const isnade_demo_mines_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_demo_mines_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_mines_var_samp_fields"')
+      return nade_demo_mines_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_mines_variance_fields_possibleTypes: string[] = ['nade_demo_mines_variance_fields']
+    export const isnade_demo_mines_variance_fields = (obj?: { __typename?: any } | null): obj is nade_demo_mines_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_mines_variance_fields"')
+      return nade_demo_mines_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_throws_possibleTypes: string[] = ['nade_demo_throws']
+    export const isnade_demo_throws = (obj?: { __typename?: any } | null): obj is nade_demo_throws => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_throws"')
+      return nade_demo_throws_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_throws_aggregate_possibleTypes: string[] = ['nade_demo_throws_aggregate']
+    export const isnade_demo_throws_aggregate = (obj?: { __typename?: any } | null): obj is nade_demo_throws_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_throws_aggregate"')
+      return nade_demo_throws_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_throws_aggregate_fields_possibleTypes: string[] = ['nade_demo_throws_aggregate_fields']
+    export const isnade_demo_throws_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_demo_throws_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_throws_aggregate_fields"')
+      return nade_demo_throws_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_throws_avg_fields_possibleTypes: string[] = ['nade_demo_throws_avg_fields']
+    export const isnade_demo_throws_avg_fields = (obj?: { __typename?: any } | null): obj is nade_demo_throws_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_throws_avg_fields"')
+      return nade_demo_throws_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_throws_max_fields_possibleTypes: string[] = ['nade_demo_throws_max_fields']
+    export const isnade_demo_throws_max_fields = (obj?: { __typename?: any } | null): obj is nade_demo_throws_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_throws_max_fields"')
+      return nade_demo_throws_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_throws_min_fields_possibleTypes: string[] = ['nade_demo_throws_min_fields']
+    export const isnade_demo_throws_min_fields = (obj?: { __typename?: any } | null): obj is nade_demo_throws_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_throws_min_fields"')
+      return nade_demo_throws_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_throws_mutation_response_possibleTypes: string[] = ['nade_demo_throws_mutation_response']
+    export const isnade_demo_throws_mutation_response = (obj?: { __typename?: any } | null): obj is nade_demo_throws_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_throws_mutation_response"')
+      return nade_demo_throws_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_throws_stddev_fields_possibleTypes: string[] = ['nade_demo_throws_stddev_fields']
+    export const isnade_demo_throws_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_demo_throws_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_throws_stddev_fields"')
+      return nade_demo_throws_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_throws_stddev_pop_fields_possibleTypes: string[] = ['nade_demo_throws_stddev_pop_fields']
+    export const isnade_demo_throws_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_demo_throws_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_throws_stddev_pop_fields"')
+      return nade_demo_throws_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_throws_stddev_samp_fields_possibleTypes: string[] = ['nade_demo_throws_stddev_samp_fields']
+    export const isnade_demo_throws_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_demo_throws_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_throws_stddev_samp_fields"')
+      return nade_demo_throws_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_throws_sum_fields_possibleTypes: string[] = ['nade_demo_throws_sum_fields']
+    export const isnade_demo_throws_sum_fields = (obj?: { __typename?: any } | null): obj is nade_demo_throws_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_throws_sum_fields"')
+      return nade_demo_throws_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_throws_var_pop_fields_possibleTypes: string[] = ['nade_demo_throws_var_pop_fields']
+    export const isnade_demo_throws_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_demo_throws_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_throws_var_pop_fields"')
+      return nade_demo_throws_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_throws_var_samp_fields_possibleTypes: string[] = ['nade_demo_throws_var_samp_fields']
+    export const isnade_demo_throws_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_demo_throws_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_throws_var_samp_fields"')
+      return nade_demo_throws_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_demo_throws_variance_fields_possibleTypes: string[] = ['nade_demo_throws_variance_fields']
+    export const isnade_demo_throws_variance_fields = (obj?: { __typename?: any } | null): obj is nade_demo_throws_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_demo_throws_variance_fields"')
+      return nade_demo_throws_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_results_possibleTypes: string[] = ['nade_drift_results']
+    export const isnade_drift_results = (obj?: { __typename?: any } | null): obj is nade_drift_results => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_results"')
+      return nade_drift_results_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_results_aggregate_possibleTypes: string[] = ['nade_drift_results_aggregate']
+    export const isnade_drift_results_aggregate = (obj?: { __typename?: any } | null): obj is nade_drift_results_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_results_aggregate"')
+      return nade_drift_results_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_results_aggregate_fields_possibleTypes: string[] = ['nade_drift_results_aggregate_fields']
+    export const isnade_drift_results_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_drift_results_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_results_aggregate_fields"')
+      return nade_drift_results_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_results_avg_fields_possibleTypes: string[] = ['nade_drift_results_avg_fields']
+    export const isnade_drift_results_avg_fields = (obj?: { __typename?: any } | null): obj is nade_drift_results_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_results_avg_fields"')
+      return nade_drift_results_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_results_max_fields_possibleTypes: string[] = ['nade_drift_results_max_fields']
+    export const isnade_drift_results_max_fields = (obj?: { __typename?: any } | null): obj is nade_drift_results_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_results_max_fields"')
+      return nade_drift_results_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_results_min_fields_possibleTypes: string[] = ['nade_drift_results_min_fields']
+    export const isnade_drift_results_min_fields = (obj?: { __typename?: any } | null): obj is nade_drift_results_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_results_min_fields"')
+      return nade_drift_results_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_results_mutation_response_possibleTypes: string[] = ['nade_drift_results_mutation_response']
+    export const isnade_drift_results_mutation_response = (obj?: { __typename?: any } | null): obj is nade_drift_results_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_results_mutation_response"')
+      return nade_drift_results_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_results_stddev_fields_possibleTypes: string[] = ['nade_drift_results_stddev_fields']
+    export const isnade_drift_results_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_drift_results_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_results_stddev_fields"')
+      return nade_drift_results_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_results_stddev_pop_fields_possibleTypes: string[] = ['nade_drift_results_stddev_pop_fields']
+    export const isnade_drift_results_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_drift_results_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_results_stddev_pop_fields"')
+      return nade_drift_results_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_results_stddev_samp_fields_possibleTypes: string[] = ['nade_drift_results_stddev_samp_fields']
+    export const isnade_drift_results_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_drift_results_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_results_stddev_samp_fields"')
+      return nade_drift_results_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_results_sum_fields_possibleTypes: string[] = ['nade_drift_results_sum_fields']
+    export const isnade_drift_results_sum_fields = (obj?: { __typename?: any } | null): obj is nade_drift_results_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_results_sum_fields"')
+      return nade_drift_results_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_results_var_pop_fields_possibleTypes: string[] = ['nade_drift_results_var_pop_fields']
+    export const isnade_drift_results_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_drift_results_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_results_var_pop_fields"')
+      return nade_drift_results_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_results_var_samp_fields_possibleTypes: string[] = ['nade_drift_results_var_samp_fields']
+    export const isnade_drift_results_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_drift_results_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_results_var_samp_fields"')
+      return nade_drift_results_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_results_variance_fields_possibleTypes: string[] = ['nade_drift_results_variance_fields']
+    export const isnade_drift_results_variance_fields = (obj?: { __typename?: any } | null): obj is nade_drift_results_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_results_variance_fields"')
+      return nade_drift_results_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_scans_possibleTypes: string[] = ['nade_drift_scans']
+    export const isnade_drift_scans = (obj?: { __typename?: any } | null): obj is nade_drift_scans => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_scans"')
+      return nade_drift_scans_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_scans_aggregate_possibleTypes: string[] = ['nade_drift_scans_aggregate']
+    export const isnade_drift_scans_aggregate = (obj?: { __typename?: any } | null): obj is nade_drift_scans_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_scans_aggregate"')
+      return nade_drift_scans_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_scans_aggregate_fields_possibleTypes: string[] = ['nade_drift_scans_aggregate_fields']
+    export const isnade_drift_scans_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_drift_scans_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_scans_aggregate_fields"')
+      return nade_drift_scans_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_scans_avg_fields_possibleTypes: string[] = ['nade_drift_scans_avg_fields']
+    export const isnade_drift_scans_avg_fields = (obj?: { __typename?: any } | null): obj is nade_drift_scans_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_scans_avg_fields"')
+      return nade_drift_scans_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_scans_max_fields_possibleTypes: string[] = ['nade_drift_scans_max_fields']
+    export const isnade_drift_scans_max_fields = (obj?: { __typename?: any } | null): obj is nade_drift_scans_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_scans_max_fields"')
+      return nade_drift_scans_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_scans_min_fields_possibleTypes: string[] = ['nade_drift_scans_min_fields']
+    export const isnade_drift_scans_min_fields = (obj?: { __typename?: any } | null): obj is nade_drift_scans_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_scans_min_fields"')
+      return nade_drift_scans_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_scans_mutation_response_possibleTypes: string[] = ['nade_drift_scans_mutation_response']
+    export const isnade_drift_scans_mutation_response = (obj?: { __typename?: any } | null): obj is nade_drift_scans_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_scans_mutation_response"')
+      return nade_drift_scans_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_scans_stddev_fields_possibleTypes: string[] = ['nade_drift_scans_stddev_fields']
+    export const isnade_drift_scans_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_drift_scans_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_scans_stddev_fields"')
+      return nade_drift_scans_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_scans_stddev_pop_fields_possibleTypes: string[] = ['nade_drift_scans_stddev_pop_fields']
+    export const isnade_drift_scans_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_drift_scans_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_scans_stddev_pop_fields"')
+      return nade_drift_scans_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_scans_stddev_samp_fields_possibleTypes: string[] = ['nade_drift_scans_stddev_samp_fields']
+    export const isnade_drift_scans_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_drift_scans_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_scans_stddev_samp_fields"')
+      return nade_drift_scans_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_scans_sum_fields_possibleTypes: string[] = ['nade_drift_scans_sum_fields']
+    export const isnade_drift_scans_sum_fields = (obj?: { __typename?: any } | null): obj is nade_drift_scans_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_scans_sum_fields"')
+      return nade_drift_scans_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_scans_var_pop_fields_possibleTypes: string[] = ['nade_drift_scans_var_pop_fields']
+    export const isnade_drift_scans_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_drift_scans_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_scans_var_pop_fields"')
+      return nade_drift_scans_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_scans_var_samp_fields_possibleTypes: string[] = ['nade_drift_scans_var_samp_fields']
+    export const isnade_drift_scans_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_drift_scans_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_scans_var_samp_fields"')
+      return nade_drift_scans_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_drift_scans_variance_fields_possibleTypes: string[] = ['nade_drift_scans_variance_fields']
+    export const isnade_drift_scans_variance_fields = (obj?: { __typename?: any } | null): obj is nade_drift_scans_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_drift_scans_variance_fields"')
+      return nade_drift_scans_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_favorites_possibleTypes: string[] = ['nade_lineup_favorites']
+    export const isnade_lineup_favorites = (obj?: { __typename?: any } | null): obj is nade_lineup_favorites => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_favorites"')
+      return nade_lineup_favorites_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_favorites_aggregate_possibleTypes: string[] = ['nade_lineup_favorites_aggregate']
+    export const isnade_lineup_favorites_aggregate = (obj?: { __typename?: any } | null): obj is nade_lineup_favorites_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_favorites_aggregate"')
+      return nade_lineup_favorites_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_favorites_aggregate_fields_possibleTypes: string[] = ['nade_lineup_favorites_aggregate_fields']
+    export const isnade_lineup_favorites_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_favorites_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_favorites_aggregate_fields"')
+      return nade_lineup_favorites_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_favorites_avg_fields_possibleTypes: string[] = ['nade_lineup_favorites_avg_fields']
+    export const isnade_lineup_favorites_avg_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_favorites_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_favorites_avg_fields"')
+      return nade_lineup_favorites_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_favorites_max_fields_possibleTypes: string[] = ['nade_lineup_favorites_max_fields']
+    export const isnade_lineup_favorites_max_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_favorites_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_favorites_max_fields"')
+      return nade_lineup_favorites_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_favorites_min_fields_possibleTypes: string[] = ['nade_lineup_favorites_min_fields']
+    export const isnade_lineup_favorites_min_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_favorites_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_favorites_min_fields"')
+      return nade_lineup_favorites_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_favorites_mutation_response_possibleTypes: string[] = ['nade_lineup_favorites_mutation_response']
+    export const isnade_lineup_favorites_mutation_response = (obj?: { __typename?: any } | null): obj is nade_lineup_favorites_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_favorites_mutation_response"')
+      return nade_lineup_favorites_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_favorites_stddev_fields_possibleTypes: string[] = ['nade_lineup_favorites_stddev_fields']
+    export const isnade_lineup_favorites_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_favorites_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_favorites_stddev_fields"')
+      return nade_lineup_favorites_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_favorites_stddev_pop_fields_possibleTypes: string[] = ['nade_lineup_favorites_stddev_pop_fields']
+    export const isnade_lineup_favorites_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_favorites_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_favorites_stddev_pop_fields"')
+      return nade_lineup_favorites_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_favorites_stddev_samp_fields_possibleTypes: string[] = ['nade_lineup_favorites_stddev_samp_fields']
+    export const isnade_lineup_favorites_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_favorites_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_favorites_stddev_samp_fields"')
+      return nade_lineup_favorites_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_favorites_sum_fields_possibleTypes: string[] = ['nade_lineup_favorites_sum_fields']
+    export const isnade_lineup_favorites_sum_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_favorites_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_favorites_sum_fields"')
+      return nade_lineup_favorites_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_favorites_var_pop_fields_possibleTypes: string[] = ['nade_lineup_favorites_var_pop_fields']
+    export const isnade_lineup_favorites_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_favorites_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_favorites_var_pop_fields"')
+      return nade_lineup_favorites_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_favorites_var_samp_fields_possibleTypes: string[] = ['nade_lineup_favorites_var_samp_fields']
+    export const isnade_lineup_favorites_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_favorites_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_favorites_var_samp_fields"')
+      return nade_lineup_favorites_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_favorites_variance_fields_possibleTypes: string[] = ['nade_lineup_favorites_variance_fields']
+    export const isnade_lineup_favorites_variance_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_favorites_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_favorites_variance_fields"')
+      return nade_lineup_favorites_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_progress_possibleTypes: string[] = ['nade_lineup_progress']
+    export const isnade_lineup_progress = (obj?: { __typename?: any } | null): obj is nade_lineup_progress => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_progress"')
+      return nade_lineup_progress_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_progress_aggregate_possibleTypes: string[] = ['nade_lineup_progress_aggregate']
+    export const isnade_lineup_progress_aggregate = (obj?: { __typename?: any } | null): obj is nade_lineup_progress_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_progress_aggregate"')
+      return nade_lineup_progress_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_progress_aggregate_fields_possibleTypes: string[] = ['nade_lineup_progress_aggregate_fields']
+    export const isnade_lineup_progress_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_progress_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_progress_aggregate_fields"')
+      return nade_lineup_progress_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_progress_avg_fields_possibleTypes: string[] = ['nade_lineup_progress_avg_fields']
+    export const isnade_lineup_progress_avg_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_progress_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_progress_avg_fields"')
+      return nade_lineup_progress_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_progress_max_fields_possibleTypes: string[] = ['nade_lineup_progress_max_fields']
+    export const isnade_lineup_progress_max_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_progress_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_progress_max_fields"')
+      return nade_lineup_progress_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_progress_min_fields_possibleTypes: string[] = ['nade_lineup_progress_min_fields']
+    export const isnade_lineup_progress_min_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_progress_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_progress_min_fields"')
+      return nade_lineup_progress_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_progress_mutation_response_possibleTypes: string[] = ['nade_lineup_progress_mutation_response']
+    export const isnade_lineup_progress_mutation_response = (obj?: { __typename?: any } | null): obj is nade_lineup_progress_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_progress_mutation_response"')
+      return nade_lineup_progress_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_progress_stddev_fields_possibleTypes: string[] = ['nade_lineup_progress_stddev_fields']
+    export const isnade_lineup_progress_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_progress_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_progress_stddev_fields"')
+      return nade_lineup_progress_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_progress_stddev_pop_fields_possibleTypes: string[] = ['nade_lineup_progress_stddev_pop_fields']
+    export const isnade_lineup_progress_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_progress_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_progress_stddev_pop_fields"')
+      return nade_lineup_progress_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_progress_stddev_samp_fields_possibleTypes: string[] = ['nade_lineup_progress_stddev_samp_fields']
+    export const isnade_lineup_progress_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_progress_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_progress_stddev_samp_fields"')
+      return nade_lineup_progress_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_progress_sum_fields_possibleTypes: string[] = ['nade_lineup_progress_sum_fields']
+    export const isnade_lineup_progress_sum_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_progress_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_progress_sum_fields"')
+      return nade_lineup_progress_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_progress_var_pop_fields_possibleTypes: string[] = ['nade_lineup_progress_var_pop_fields']
+    export const isnade_lineup_progress_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_progress_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_progress_var_pop_fields"')
+      return nade_lineup_progress_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_progress_var_samp_fields_possibleTypes: string[] = ['nade_lineup_progress_var_samp_fields']
+    export const isnade_lineup_progress_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_progress_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_progress_var_samp_fields"')
+      return nade_lineup_progress_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_progress_variance_fields_possibleTypes: string[] = ['nade_lineup_progress_variance_fields']
+    export const isnade_lineup_progress_variance_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_progress_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_progress_variance_fields"')
+      return nade_lineup_progress_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_repairs_possibleTypes: string[] = ['nade_lineup_repairs']
+    export const isnade_lineup_repairs = (obj?: { __typename?: any } | null): obj is nade_lineup_repairs => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_repairs"')
+      return nade_lineup_repairs_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_repairs_aggregate_possibleTypes: string[] = ['nade_lineup_repairs_aggregate']
+    export const isnade_lineup_repairs_aggregate = (obj?: { __typename?: any } | null): obj is nade_lineup_repairs_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_repairs_aggregate"')
+      return nade_lineup_repairs_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_repairs_aggregate_fields_possibleTypes: string[] = ['nade_lineup_repairs_aggregate_fields']
+    export const isnade_lineup_repairs_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_repairs_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_repairs_aggregate_fields"')
+      return nade_lineup_repairs_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_repairs_avg_fields_possibleTypes: string[] = ['nade_lineup_repairs_avg_fields']
+    export const isnade_lineup_repairs_avg_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_repairs_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_repairs_avg_fields"')
+      return nade_lineup_repairs_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_repairs_max_fields_possibleTypes: string[] = ['nade_lineup_repairs_max_fields']
+    export const isnade_lineup_repairs_max_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_repairs_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_repairs_max_fields"')
+      return nade_lineup_repairs_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_repairs_min_fields_possibleTypes: string[] = ['nade_lineup_repairs_min_fields']
+    export const isnade_lineup_repairs_min_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_repairs_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_repairs_min_fields"')
+      return nade_lineup_repairs_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_repairs_mutation_response_possibleTypes: string[] = ['nade_lineup_repairs_mutation_response']
+    export const isnade_lineup_repairs_mutation_response = (obj?: { __typename?: any } | null): obj is nade_lineup_repairs_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_repairs_mutation_response"')
+      return nade_lineup_repairs_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_repairs_stddev_fields_possibleTypes: string[] = ['nade_lineup_repairs_stddev_fields']
+    export const isnade_lineup_repairs_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_repairs_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_repairs_stddev_fields"')
+      return nade_lineup_repairs_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_repairs_stddev_pop_fields_possibleTypes: string[] = ['nade_lineup_repairs_stddev_pop_fields']
+    export const isnade_lineup_repairs_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_repairs_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_repairs_stddev_pop_fields"')
+      return nade_lineup_repairs_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_repairs_stddev_samp_fields_possibleTypes: string[] = ['nade_lineup_repairs_stddev_samp_fields']
+    export const isnade_lineup_repairs_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_repairs_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_repairs_stddev_samp_fields"')
+      return nade_lineup_repairs_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_repairs_sum_fields_possibleTypes: string[] = ['nade_lineup_repairs_sum_fields']
+    export const isnade_lineup_repairs_sum_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_repairs_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_repairs_sum_fields"')
+      return nade_lineup_repairs_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_repairs_var_pop_fields_possibleTypes: string[] = ['nade_lineup_repairs_var_pop_fields']
+    export const isnade_lineup_repairs_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_repairs_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_repairs_var_pop_fields"')
+      return nade_lineup_repairs_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_repairs_var_samp_fields_possibleTypes: string[] = ['nade_lineup_repairs_var_samp_fields']
+    export const isnade_lineup_repairs_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_repairs_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_repairs_var_samp_fields"')
+      return nade_lineup_repairs_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_repairs_variance_fields_possibleTypes: string[] = ['nade_lineup_repairs_variance_fields']
+    export const isnade_lineup_repairs_variance_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_repairs_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_repairs_variance_fields"')
+      return nade_lineup_repairs_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_votes_possibleTypes: string[] = ['nade_lineup_votes']
+    export const isnade_lineup_votes = (obj?: { __typename?: any } | null): obj is nade_lineup_votes => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_votes"')
+      return nade_lineup_votes_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_votes_aggregate_possibleTypes: string[] = ['nade_lineup_votes_aggregate']
+    export const isnade_lineup_votes_aggregate = (obj?: { __typename?: any } | null): obj is nade_lineup_votes_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_votes_aggregate"')
+      return nade_lineup_votes_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_votes_aggregate_fields_possibleTypes: string[] = ['nade_lineup_votes_aggregate_fields']
+    export const isnade_lineup_votes_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_votes_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_votes_aggregate_fields"')
+      return nade_lineup_votes_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_votes_avg_fields_possibleTypes: string[] = ['nade_lineup_votes_avg_fields']
+    export const isnade_lineup_votes_avg_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_votes_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_votes_avg_fields"')
+      return nade_lineup_votes_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_votes_max_fields_possibleTypes: string[] = ['nade_lineup_votes_max_fields']
+    export const isnade_lineup_votes_max_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_votes_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_votes_max_fields"')
+      return nade_lineup_votes_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_votes_min_fields_possibleTypes: string[] = ['nade_lineup_votes_min_fields']
+    export const isnade_lineup_votes_min_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_votes_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_votes_min_fields"')
+      return nade_lineup_votes_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_votes_mutation_response_possibleTypes: string[] = ['nade_lineup_votes_mutation_response']
+    export const isnade_lineup_votes_mutation_response = (obj?: { __typename?: any } | null): obj is nade_lineup_votes_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_votes_mutation_response"')
+      return nade_lineup_votes_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_votes_stddev_fields_possibleTypes: string[] = ['nade_lineup_votes_stddev_fields']
+    export const isnade_lineup_votes_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_votes_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_votes_stddev_fields"')
+      return nade_lineup_votes_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_votes_stddev_pop_fields_possibleTypes: string[] = ['nade_lineup_votes_stddev_pop_fields']
+    export const isnade_lineup_votes_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_votes_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_votes_stddev_pop_fields"')
+      return nade_lineup_votes_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_votes_stddev_samp_fields_possibleTypes: string[] = ['nade_lineup_votes_stddev_samp_fields']
+    export const isnade_lineup_votes_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_votes_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_votes_stddev_samp_fields"')
+      return nade_lineup_votes_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_votes_sum_fields_possibleTypes: string[] = ['nade_lineup_votes_sum_fields']
+    export const isnade_lineup_votes_sum_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_votes_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_votes_sum_fields"')
+      return nade_lineup_votes_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_votes_var_pop_fields_possibleTypes: string[] = ['nade_lineup_votes_var_pop_fields']
+    export const isnade_lineup_votes_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_votes_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_votes_var_pop_fields"')
+      return nade_lineup_votes_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_votes_var_samp_fields_possibleTypes: string[] = ['nade_lineup_votes_var_samp_fields']
+    export const isnade_lineup_votes_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_votes_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_votes_var_samp_fields"')
+      return nade_lineup_votes_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineup_votes_variance_fields_possibleTypes: string[] = ['nade_lineup_votes_variance_fields']
+    export const isnade_lineup_votes_variance_fields = (obj?: { __typename?: any } | null): obj is nade_lineup_votes_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineup_votes_variance_fields"')
+      return nade_lineup_votes_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineups_possibleTypes: string[] = ['nade_lineups']
+    export const isnade_lineups = (obj?: { __typename?: any } | null): obj is nade_lineups => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineups"')
+      return nade_lineups_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineups_aggregate_possibleTypes: string[] = ['nade_lineups_aggregate']
+    export const isnade_lineups_aggregate = (obj?: { __typename?: any } | null): obj is nade_lineups_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineups_aggregate"')
+      return nade_lineups_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineups_aggregate_fields_possibleTypes: string[] = ['nade_lineups_aggregate_fields']
+    export const isnade_lineups_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_lineups_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineups_aggregate_fields"')
+      return nade_lineups_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineups_avg_fields_possibleTypes: string[] = ['nade_lineups_avg_fields']
+    export const isnade_lineups_avg_fields = (obj?: { __typename?: any } | null): obj is nade_lineups_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineups_avg_fields"')
+      return nade_lineups_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineups_max_fields_possibleTypes: string[] = ['nade_lineups_max_fields']
+    export const isnade_lineups_max_fields = (obj?: { __typename?: any } | null): obj is nade_lineups_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineups_max_fields"')
+      return nade_lineups_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineups_min_fields_possibleTypes: string[] = ['nade_lineups_min_fields']
+    export const isnade_lineups_min_fields = (obj?: { __typename?: any } | null): obj is nade_lineups_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineups_min_fields"')
+      return nade_lineups_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineups_mutation_response_possibleTypes: string[] = ['nade_lineups_mutation_response']
+    export const isnade_lineups_mutation_response = (obj?: { __typename?: any } | null): obj is nade_lineups_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineups_mutation_response"')
+      return nade_lineups_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineups_stddev_fields_possibleTypes: string[] = ['nade_lineups_stddev_fields']
+    export const isnade_lineups_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_lineups_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineups_stddev_fields"')
+      return nade_lineups_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineups_stddev_pop_fields_possibleTypes: string[] = ['nade_lineups_stddev_pop_fields']
+    export const isnade_lineups_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_lineups_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineups_stddev_pop_fields"')
+      return nade_lineups_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineups_stddev_samp_fields_possibleTypes: string[] = ['nade_lineups_stddev_samp_fields']
+    export const isnade_lineups_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_lineups_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineups_stddev_samp_fields"')
+      return nade_lineups_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineups_sum_fields_possibleTypes: string[] = ['nade_lineups_sum_fields']
+    export const isnade_lineups_sum_fields = (obj?: { __typename?: any } | null): obj is nade_lineups_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineups_sum_fields"')
+      return nade_lineups_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineups_var_pop_fields_possibleTypes: string[] = ['nade_lineups_var_pop_fields']
+    export const isnade_lineups_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_lineups_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineups_var_pop_fields"')
+      return nade_lineups_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineups_var_samp_fields_possibleTypes: string[] = ['nade_lineups_var_samp_fields']
+    export const isnade_lineups_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_lineups_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineups_var_samp_fields"')
+      return nade_lineups_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_lineups_variance_fields_possibleTypes: string[] = ['nade_lineups_variance_fields']
+    export const isnade_lineups_variance_fields = (obj?: { __typename?: any } | null): obj is nade_lineups_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_lineups_variance_fields"')
+      return nade_lineups_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_meta_lineups_possibleTypes: string[] = ['nade_meta_lineups']
+    export const isnade_meta_lineups = (obj?: { __typename?: any } | null): obj is nade_meta_lineups => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_meta_lineups"')
+      return nade_meta_lineups_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_meta_lineups_aggregate_possibleTypes: string[] = ['nade_meta_lineups_aggregate']
+    export const isnade_meta_lineups_aggregate = (obj?: { __typename?: any } | null): obj is nade_meta_lineups_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_meta_lineups_aggregate"')
+      return nade_meta_lineups_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_meta_lineups_aggregate_fields_possibleTypes: string[] = ['nade_meta_lineups_aggregate_fields']
+    export const isnade_meta_lineups_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_meta_lineups_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_meta_lineups_aggregate_fields"')
+      return nade_meta_lineups_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_meta_lineups_avg_fields_possibleTypes: string[] = ['nade_meta_lineups_avg_fields']
+    export const isnade_meta_lineups_avg_fields = (obj?: { __typename?: any } | null): obj is nade_meta_lineups_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_meta_lineups_avg_fields"')
+      return nade_meta_lineups_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_meta_lineups_max_fields_possibleTypes: string[] = ['nade_meta_lineups_max_fields']
+    export const isnade_meta_lineups_max_fields = (obj?: { __typename?: any } | null): obj is nade_meta_lineups_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_meta_lineups_max_fields"')
+      return nade_meta_lineups_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_meta_lineups_min_fields_possibleTypes: string[] = ['nade_meta_lineups_min_fields']
+    export const isnade_meta_lineups_min_fields = (obj?: { __typename?: any } | null): obj is nade_meta_lineups_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_meta_lineups_min_fields"')
+      return nade_meta_lineups_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_meta_lineups_mutation_response_possibleTypes: string[] = ['nade_meta_lineups_mutation_response']
+    export const isnade_meta_lineups_mutation_response = (obj?: { __typename?: any } | null): obj is nade_meta_lineups_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_meta_lineups_mutation_response"')
+      return nade_meta_lineups_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_meta_lineups_stddev_fields_possibleTypes: string[] = ['nade_meta_lineups_stddev_fields']
+    export const isnade_meta_lineups_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_meta_lineups_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_meta_lineups_stddev_fields"')
+      return nade_meta_lineups_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_meta_lineups_stddev_pop_fields_possibleTypes: string[] = ['nade_meta_lineups_stddev_pop_fields']
+    export const isnade_meta_lineups_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_meta_lineups_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_meta_lineups_stddev_pop_fields"')
+      return nade_meta_lineups_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_meta_lineups_stddev_samp_fields_possibleTypes: string[] = ['nade_meta_lineups_stddev_samp_fields']
+    export const isnade_meta_lineups_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_meta_lineups_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_meta_lineups_stddev_samp_fields"')
+      return nade_meta_lineups_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_meta_lineups_sum_fields_possibleTypes: string[] = ['nade_meta_lineups_sum_fields']
+    export const isnade_meta_lineups_sum_fields = (obj?: { __typename?: any } | null): obj is nade_meta_lineups_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_meta_lineups_sum_fields"')
+      return nade_meta_lineups_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_meta_lineups_var_pop_fields_possibleTypes: string[] = ['nade_meta_lineups_var_pop_fields']
+    export const isnade_meta_lineups_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_meta_lineups_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_meta_lineups_var_pop_fields"')
+      return nade_meta_lineups_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_meta_lineups_var_samp_fields_possibleTypes: string[] = ['nade_meta_lineups_var_samp_fields']
+    export const isnade_meta_lineups_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_meta_lineups_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_meta_lineups_var_samp_fields"')
+      return nade_meta_lineups_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_meta_lineups_variance_fields_possibleTypes: string[] = ['nade_meta_lineups_variance_fields']
+    export const isnade_meta_lineups_variance_fields = (obj?: { __typename?: any } | null): obj is nade_meta_lineups_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_meta_lineups_variance_fields"')
+      return nade_meta_lineups_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbook_steps_possibleTypes: string[] = ['nade_playbook_steps']
+    export const isnade_playbook_steps = (obj?: { __typename?: any } | null): obj is nade_playbook_steps => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbook_steps"')
+      return nade_playbook_steps_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbook_steps_aggregate_possibleTypes: string[] = ['nade_playbook_steps_aggregate']
+    export const isnade_playbook_steps_aggregate = (obj?: { __typename?: any } | null): obj is nade_playbook_steps_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbook_steps_aggregate"')
+      return nade_playbook_steps_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbook_steps_aggregate_fields_possibleTypes: string[] = ['nade_playbook_steps_aggregate_fields']
+    export const isnade_playbook_steps_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_playbook_steps_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbook_steps_aggregate_fields"')
+      return nade_playbook_steps_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbook_steps_avg_fields_possibleTypes: string[] = ['nade_playbook_steps_avg_fields']
+    export const isnade_playbook_steps_avg_fields = (obj?: { __typename?: any } | null): obj is nade_playbook_steps_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbook_steps_avg_fields"')
+      return nade_playbook_steps_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbook_steps_max_fields_possibleTypes: string[] = ['nade_playbook_steps_max_fields']
+    export const isnade_playbook_steps_max_fields = (obj?: { __typename?: any } | null): obj is nade_playbook_steps_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbook_steps_max_fields"')
+      return nade_playbook_steps_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbook_steps_min_fields_possibleTypes: string[] = ['nade_playbook_steps_min_fields']
+    export const isnade_playbook_steps_min_fields = (obj?: { __typename?: any } | null): obj is nade_playbook_steps_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbook_steps_min_fields"')
+      return nade_playbook_steps_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbook_steps_mutation_response_possibleTypes: string[] = ['nade_playbook_steps_mutation_response']
+    export const isnade_playbook_steps_mutation_response = (obj?: { __typename?: any } | null): obj is nade_playbook_steps_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbook_steps_mutation_response"')
+      return nade_playbook_steps_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbook_steps_stddev_fields_possibleTypes: string[] = ['nade_playbook_steps_stddev_fields']
+    export const isnade_playbook_steps_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_playbook_steps_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbook_steps_stddev_fields"')
+      return nade_playbook_steps_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbook_steps_stddev_pop_fields_possibleTypes: string[] = ['nade_playbook_steps_stddev_pop_fields']
+    export const isnade_playbook_steps_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_playbook_steps_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbook_steps_stddev_pop_fields"')
+      return nade_playbook_steps_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbook_steps_stddev_samp_fields_possibleTypes: string[] = ['nade_playbook_steps_stddev_samp_fields']
+    export const isnade_playbook_steps_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_playbook_steps_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbook_steps_stddev_samp_fields"')
+      return nade_playbook_steps_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbook_steps_sum_fields_possibleTypes: string[] = ['nade_playbook_steps_sum_fields']
+    export const isnade_playbook_steps_sum_fields = (obj?: { __typename?: any } | null): obj is nade_playbook_steps_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbook_steps_sum_fields"')
+      return nade_playbook_steps_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbook_steps_var_pop_fields_possibleTypes: string[] = ['nade_playbook_steps_var_pop_fields']
+    export const isnade_playbook_steps_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_playbook_steps_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbook_steps_var_pop_fields"')
+      return nade_playbook_steps_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbook_steps_var_samp_fields_possibleTypes: string[] = ['nade_playbook_steps_var_samp_fields']
+    export const isnade_playbook_steps_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_playbook_steps_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbook_steps_var_samp_fields"')
+      return nade_playbook_steps_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbook_steps_variance_fields_possibleTypes: string[] = ['nade_playbook_steps_variance_fields']
+    export const isnade_playbook_steps_variance_fields = (obj?: { __typename?: any } | null): obj is nade_playbook_steps_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbook_steps_variance_fields"')
+      return nade_playbook_steps_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbooks_possibleTypes: string[] = ['nade_playbooks']
+    export const isnade_playbooks = (obj?: { __typename?: any } | null): obj is nade_playbooks => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbooks"')
+      return nade_playbooks_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbooks_aggregate_possibleTypes: string[] = ['nade_playbooks_aggregate']
+    export const isnade_playbooks_aggregate = (obj?: { __typename?: any } | null): obj is nade_playbooks_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbooks_aggregate"')
+      return nade_playbooks_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbooks_aggregate_fields_possibleTypes: string[] = ['nade_playbooks_aggregate_fields']
+    export const isnade_playbooks_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_playbooks_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbooks_aggregate_fields"')
+      return nade_playbooks_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbooks_avg_fields_possibleTypes: string[] = ['nade_playbooks_avg_fields']
+    export const isnade_playbooks_avg_fields = (obj?: { __typename?: any } | null): obj is nade_playbooks_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbooks_avg_fields"')
+      return nade_playbooks_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbooks_max_fields_possibleTypes: string[] = ['nade_playbooks_max_fields']
+    export const isnade_playbooks_max_fields = (obj?: { __typename?: any } | null): obj is nade_playbooks_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbooks_max_fields"')
+      return nade_playbooks_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbooks_min_fields_possibleTypes: string[] = ['nade_playbooks_min_fields']
+    export const isnade_playbooks_min_fields = (obj?: { __typename?: any } | null): obj is nade_playbooks_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbooks_min_fields"')
+      return nade_playbooks_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbooks_mutation_response_possibleTypes: string[] = ['nade_playbooks_mutation_response']
+    export const isnade_playbooks_mutation_response = (obj?: { __typename?: any } | null): obj is nade_playbooks_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbooks_mutation_response"')
+      return nade_playbooks_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbooks_stddev_fields_possibleTypes: string[] = ['nade_playbooks_stddev_fields']
+    export const isnade_playbooks_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_playbooks_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbooks_stddev_fields"')
+      return nade_playbooks_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbooks_stddev_pop_fields_possibleTypes: string[] = ['nade_playbooks_stddev_pop_fields']
+    export const isnade_playbooks_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_playbooks_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbooks_stddev_pop_fields"')
+      return nade_playbooks_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbooks_stddev_samp_fields_possibleTypes: string[] = ['nade_playbooks_stddev_samp_fields']
+    export const isnade_playbooks_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_playbooks_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbooks_stddev_samp_fields"')
+      return nade_playbooks_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbooks_sum_fields_possibleTypes: string[] = ['nade_playbooks_sum_fields']
+    export const isnade_playbooks_sum_fields = (obj?: { __typename?: any } | null): obj is nade_playbooks_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbooks_sum_fields"')
+      return nade_playbooks_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbooks_var_pop_fields_possibleTypes: string[] = ['nade_playbooks_var_pop_fields']
+    export const isnade_playbooks_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_playbooks_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbooks_var_pop_fields"')
+      return nade_playbooks_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbooks_var_samp_fields_possibleTypes: string[] = ['nade_playbooks_var_samp_fields']
+    export const isnade_playbooks_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_playbooks_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbooks_var_samp_fields"')
+      return nade_playbooks_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_playbooks_variance_fields_possibleTypes: string[] = ['nade_playbooks_variance_fields']
+    export const isnade_playbooks_variance_fields = (obj?: { __typename?: any } | null): obj is nade_playbooks_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_playbooks_variance_fields"')
+      return nade_playbooks_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_invites_possibleTypes: string[] = ['nade_practice_invites']
+    export const isnade_practice_invites = (obj?: { __typename?: any } | null): obj is nade_practice_invites => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_invites"')
+      return nade_practice_invites_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_invites_aggregate_possibleTypes: string[] = ['nade_practice_invites_aggregate']
+    export const isnade_practice_invites_aggregate = (obj?: { __typename?: any } | null): obj is nade_practice_invites_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_invites_aggregate"')
+      return nade_practice_invites_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_invites_aggregate_fields_possibleTypes: string[] = ['nade_practice_invites_aggregate_fields']
+    export const isnade_practice_invites_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_practice_invites_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_invites_aggregate_fields"')
+      return nade_practice_invites_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_invites_avg_fields_possibleTypes: string[] = ['nade_practice_invites_avg_fields']
+    export const isnade_practice_invites_avg_fields = (obj?: { __typename?: any } | null): obj is nade_practice_invites_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_invites_avg_fields"')
+      return nade_practice_invites_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_invites_max_fields_possibleTypes: string[] = ['nade_practice_invites_max_fields']
+    export const isnade_practice_invites_max_fields = (obj?: { __typename?: any } | null): obj is nade_practice_invites_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_invites_max_fields"')
+      return nade_practice_invites_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_invites_min_fields_possibleTypes: string[] = ['nade_practice_invites_min_fields']
+    export const isnade_practice_invites_min_fields = (obj?: { __typename?: any } | null): obj is nade_practice_invites_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_invites_min_fields"')
+      return nade_practice_invites_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_invites_mutation_response_possibleTypes: string[] = ['nade_practice_invites_mutation_response']
+    export const isnade_practice_invites_mutation_response = (obj?: { __typename?: any } | null): obj is nade_practice_invites_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_invites_mutation_response"')
+      return nade_practice_invites_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_invites_stddev_fields_possibleTypes: string[] = ['nade_practice_invites_stddev_fields']
+    export const isnade_practice_invites_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_practice_invites_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_invites_stddev_fields"')
+      return nade_practice_invites_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_invites_stddev_pop_fields_possibleTypes: string[] = ['nade_practice_invites_stddev_pop_fields']
+    export const isnade_practice_invites_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_practice_invites_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_invites_stddev_pop_fields"')
+      return nade_practice_invites_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_invites_stddev_samp_fields_possibleTypes: string[] = ['nade_practice_invites_stddev_samp_fields']
+    export const isnade_practice_invites_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_practice_invites_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_invites_stddev_samp_fields"')
+      return nade_practice_invites_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_invites_sum_fields_possibleTypes: string[] = ['nade_practice_invites_sum_fields']
+    export const isnade_practice_invites_sum_fields = (obj?: { __typename?: any } | null): obj is nade_practice_invites_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_invites_sum_fields"')
+      return nade_practice_invites_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_invites_var_pop_fields_possibleTypes: string[] = ['nade_practice_invites_var_pop_fields']
+    export const isnade_practice_invites_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_practice_invites_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_invites_var_pop_fields"')
+      return nade_practice_invites_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_invites_var_samp_fields_possibleTypes: string[] = ['nade_practice_invites_var_samp_fields']
+    export const isnade_practice_invites_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_practice_invites_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_invites_var_samp_fields"')
+      return nade_practice_invites_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_invites_variance_fields_possibleTypes: string[] = ['nade_practice_invites_variance_fields']
+    export const isnade_practice_invites_variance_fields = (obj?: { __typename?: any } | null): obj is nade_practice_invites_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_invites_variance_fields"')
+      return nade_practice_invites_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_sessions_possibleTypes: string[] = ['nade_practice_sessions']
+    export const isnade_practice_sessions = (obj?: { __typename?: any } | null): obj is nade_practice_sessions => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_sessions"')
+      return nade_practice_sessions_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_sessions_aggregate_possibleTypes: string[] = ['nade_practice_sessions_aggregate']
+    export const isnade_practice_sessions_aggregate = (obj?: { __typename?: any } | null): obj is nade_practice_sessions_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_sessions_aggregate"')
+      return nade_practice_sessions_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_sessions_aggregate_fields_possibleTypes: string[] = ['nade_practice_sessions_aggregate_fields']
+    export const isnade_practice_sessions_aggregate_fields = (obj?: { __typename?: any } | null): obj is nade_practice_sessions_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_sessions_aggregate_fields"')
+      return nade_practice_sessions_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_sessions_avg_fields_possibleTypes: string[] = ['nade_practice_sessions_avg_fields']
+    export const isnade_practice_sessions_avg_fields = (obj?: { __typename?: any } | null): obj is nade_practice_sessions_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_sessions_avg_fields"')
+      return nade_practice_sessions_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_sessions_max_fields_possibleTypes: string[] = ['nade_practice_sessions_max_fields']
+    export const isnade_practice_sessions_max_fields = (obj?: { __typename?: any } | null): obj is nade_practice_sessions_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_sessions_max_fields"')
+      return nade_practice_sessions_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_sessions_min_fields_possibleTypes: string[] = ['nade_practice_sessions_min_fields']
+    export const isnade_practice_sessions_min_fields = (obj?: { __typename?: any } | null): obj is nade_practice_sessions_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_sessions_min_fields"')
+      return nade_practice_sessions_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_sessions_mutation_response_possibleTypes: string[] = ['nade_practice_sessions_mutation_response']
+    export const isnade_practice_sessions_mutation_response = (obj?: { __typename?: any } | null): obj is nade_practice_sessions_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_sessions_mutation_response"')
+      return nade_practice_sessions_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_sessions_stddev_fields_possibleTypes: string[] = ['nade_practice_sessions_stddev_fields']
+    export const isnade_practice_sessions_stddev_fields = (obj?: { __typename?: any } | null): obj is nade_practice_sessions_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_sessions_stddev_fields"')
+      return nade_practice_sessions_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_sessions_stddev_pop_fields_possibleTypes: string[] = ['nade_practice_sessions_stddev_pop_fields']
+    export const isnade_practice_sessions_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is nade_practice_sessions_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_sessions_stddev_pop_fields"')
+      return nade_practice_sessions_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_sessions_stddev_samp_fields_possibleTypes: string[] = ['nade_practice_sessions_stddev_samp_fields']
+    export const isnade_practice_sessions_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is nade_practice_sessions_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_sessions_stddev_samp_fields"')
+      return nade_practice_sessions_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_sessions_sum_fields_possibleTypes: string[] = ['nade_practice_sessions_sum_fields']
+    export const isnade_practice_sessions_sum_fields = (obj?: { __typename?: any } | null): obj is nade_practice_sessions_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_sessions_sum_fields"')
+      return nade_practice_sessions_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_sessions_var_pop_fields_possibleTypes: string[] = ['nade_practice_sessions_var_pop_fields']
+    export const isnade_practice_sessions_var_pop_fields = (obj?: { __typename?: any } | null): obj is nade_practice_sessions_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_sessions_var_pop_fields"')
+      return nade_practice_sessions_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_sessions_var_samp_fields_possibleTypes: string[] = ['nade_practice_sessions_var_samp_fields']
+    export const isnade_practice_sessions_var_samp_fields = (obj?: { __typename?: any } | null): obj is nade_practice_sessions_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_sessions_var_samp_fields"')
+      return nade_practice_sessions_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const nade_practice_sessions_variance_fields_possibleTypes: string[] = ['nade_practice_sessions_variance_fields']
+    export const isnade_practice_sessions_variance_fields = (obj?: { __typename?: any } | null): obj is nade_practice_sessions_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isnade_practice_sessions_variance_fields"')
+      return nade_practice_sessions_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -126909,6 +141639,114 @@ export const enumEMatchTypesUpdateColumn = {
    value: 'value' as const
 }
 
+export const enumENadePracticeStatusesConstraint = {
+   e_nade_practice_statuses_pkey: 'e_nade_practice_statuses_pkey' as const
+}
+
+export const enumENadePracticeStatusesEnum = {
+   Ended: 'Ended' as const,
+   Failed: 'Failed' as const,
+   Ready: 'Ready' as const,
+   Starting: 'Starting' as const
+}
+
+export const enumENadePracticeStatusesSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumENadePracticeStatusesUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumENadeSourcesConstraint = {
+   e_nade_sources_pkey: 'e_nade_sources_pkey' as const
+}
+
+export const enumENadeSourcesEnum = {
+   demo: 'demo' as const,
+   editor: 'editor' as const,
+   fork: 'fork' as const,
+   import: 'import' as const,
+   plugin: 'plugin' as const
+}
+
+export const enumENadeSourcesSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumENadeSourcesUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumENadeTechniquesConstraint = {
+   e_nade_techniques_pkey: 'e_nade_techniques_pkey' as const
+}
+
+export const enumENadeTechniquesEnum = {
+   Crouch: 'Crouch' as const,
+   CrouchJump: 'CrouchJump' as const,
+   Jump: 'Jump' as const,
+   RunJump: 'RunJump' as const,
+   Running: 'Running' as const,
+   Stationary: 'Stationary' as const,
+   WalkJump: 'WalkJump' as const,
+   Walking: 'Walking' as const
+}
+
+export const enumENadeTechniquesSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumENadeTechniquesUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumENadeThrowStrengthsConstraint = {
+   e_nade_throw_strengths_pkey: 'e_nade_throw_strengths_pkey' as const
+}
+
+export const enumENadeThrowStrengthsEnum = {
+   Drop: 'Drop' as const,
+   Full: 'Full' as const,
+   Half: 'Half' as const
+}
+
+export const enumENadeThrowStrengthsSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumENadeThrowStrengthsUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumENadeVisibilityConstraint = {
+   e_nade_visibility_pkey: 'e_nade_visibility_pkey' as const
+}
+
+export const enumENadeVisibilityEnum = {
+   Private: 'Private' as const,
+   Public: 'Public' as const,
+   Team: 'Team' as const
+}
+
+export const enumENadeVisibilitySelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumENadeVisibilityUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
 export const enumENotificationTypesConstraint = {
    e_notification_types_pkey: 'e_notification_types_pkey' as const
 }
@@ -129004,6 +143842,902 @@ export const enumMyFriendsSelectColumnMyFriendsAggregateBoolExpBoolOrArgumentsCo
    name_registered: 'name_registered' as const,
    show_match_ready_modal: 'show_match_ready_modal' as const,
    vac_banned: 'vac_banned' as const
+}
+
+export const enumNadeCollectionItemsConstraint = {
+   nade_collection_items_pkey: 'nade_collection_items_pkey' as const
+}
+
+export const enumNadeCollectionItemsSelectColumn = {
+   collection_id: 'collection_id' as const,
+   created_at: 'created_at' as const,
+   nade_lineup_id: 'nade_lineup_id' as const,
+   note: 'note' as const,
+   position: 'position' as const
+}
+
+export const enumNadeCollectionItemsUpdateColumn = {
+   collection_id: 'collection_id' as const,
+   created_at: 'created_at' as const,
+   nade_lineup_id: 'nade_lineup_id' as const,
+   note: 'note' as const,
+   position: 'position' as const
+}
+
+export const enumNadeCollectionsConstraint = {
+   nade_collections_pkey: 'nade_collections_pkey' as const
+}
+
+export const enumNadeCollectionsSelectColumn = {
+   created_at: 'created_at' as const,
+   description: 'description' as const,
+   id: 'id' as const,
+   map_name: 'map_name' as const,
+   name: 'name' as const,
+   owner_steam_id: 'owner_steam_id' as const,
+   team_id: 'team_id' as const,
+   updated_at: 'updated_at' as const,
+   visibility: 'visibility' as const
+}
+
+export const enumNadeCollectionsUpdateColumn = {
+   created_at: 'created_at' as const,
+   description: 'description' as const,
+   id: 'id' as const,
+   map_name: 'map_name' as const,
+   name: 'name' as const,
+   owner_steam_id: 'owner_steam_id' as const,
+   team_id: 'team_id' as const,
+   updated_at: 'updated_at' as const,
+   visibility: 'visibility' as const
+}
+
+export const enumNadeDemoMinesConstraint = {
+   nade_demo_mines_pkey: 'nade_demo_mines_pkey' as const
+}
+
+export const enumNadeDemoMinesSelectColumn = {
+   failed_reason: 'failed_reason' as const,
+   match_map_demo_id: 'match_map_demo_id' as const,
+   mined_at: 'mined_at' as const,
+   throws: 'throws' as const,
+   version: 'version' as const
+}
+
+export const enumNadeDemoMinesUpdateColumn = {
+   failed_reason: 'failed_reason' as const,
+   match_map_demo_id: 'match_map_demo_id' as const,
+   mined_at: 'mined_at' as const,
+   throws: 'throws' as const,
+   version: 'version' as const
+}
+
+export const enumNadeDemoThrowsConstraint = {
+   nade_demo_throws_pkey: 'nade_demo_throws_pkey' as const
+}
+
+export const enumNadeDemoThrowsSelectColumn = {
+   created_at: 'created_at' as const,
+   flight_time_ms: 'flight_time_ms' as const,
+   grenade_id: 'grenade_id' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   lineup_bucket: 'lineup_bucket' as const,
+   map_name: 'map_name' as const,
+   match_id: 'match_id' as const,
+   match_map_demo_id: 'match_map_demo_id' as const,
+   match_map_id: 'match_map_id' as const,
+   nade_type: 'nade_type' as const,
+   origin_x: 'origin_x' as const,
+   origin_y: 'origin_y' as const,
+   origin_z: 'origin_z' as const,
+   round: 'round' as const,
+   side: 'side' as const,
+   technique: 'technique' as const,
+   throw_strength: 'throw_strength' as const,
+   thrower_steam_id: 'thrower_steam_id' as const,
+   thrown_at: 'thrown_at' as const,
+   tick: 'tick' as const,
+   view_pitch: 'view_pitch' as const,
+   view_yaw: 'view_yaw' as const
+}
+
+export const enumNadeDemoThrowsUpdateColumn = {
+   created_at: 'created_at' as const,
+   flight_time_ms: 'flight_time_ms' as const,
+   grenade_id: 'grenade_id' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   map_name: 'map_name' as const,
+   match_id: 'match_id' as const,
+   match_map_demo_id: 'match_map_demo_id' as const,
+   match_map_id: 'match_map_id' as const,
+   nade_type: 'nade_type' as const,
+   origin_x: 'origin_x' as const,
+   origin_y: 'origin_y' as const,
+   origin_z: 'origin_z' as const,
+   round: 'round' as const,
+   side: 'side' as const,
+   technique: 'technique' as const,
+   throw_strength: 'throw_strength' as const,
+   thrower_steam_id: 'thrower_steam_id' as const,
+   thrown_at: 'thrown_at' as const,
+   tick: 'tick' as const,
+   view_pitch: 'view_pitch' as const,
+   view_yaw: 'view_yaw' as const
+}
+
+export const enumNadeDriftResultsConstraint = {
+   nade_drift_results_pkey: 'nade_drift_results_pkey' as const
+}
+
+export const enumNadeDriftResultsSelectColumn = {
+   created_at: 'created_at' as const,
+   distance: 'distance' as const,
+   distance_xy: 'distance_xy' as const,
+   distance_z: 'distance_z' as const,
+   nade_drift_scan_id: 'nade_drift_scan_id' as const,
+   nade_lineup_id: 'nade_lineup_id' as const,
+   reason: 'reason' as const,
+   severity: 'severity' as const,
+   verdict: 'verdict' as const
+}
+
+export const enumNadeDriftResultsSelectColumnNadeDriftResultsAggregateBoolExpAvgArgumentsColumns = {
+   distance: 'distance' as const,
+   distance_xy: 'distance_xy' as const,
+   distance_z: 'distance_z' as const
+}
+
+export const enumNadeDriftResultsSelectColumnNadeDriftResultsAggregateBoolExpCorrArgumentsColumns = {
+   distance: 'distance' as const,
+   distance_xy: 'distance_xy' as const,
+   distance_z: 'distance_z' as const
+}
+
+export const enumNadeDriftResultsSelectColumnNadeDriftResultsAggregateBoolExpCovarSampArgumentsColumns = {
+   distance: 'distance' as const,
+   distance_xy: 'distance_xy' as const,
+   distance_z: 'distance_z' as const
+}
+
+export const enumNadeDriftResultsSelectColumnNadeDriftResultsAggregateBoolExpMaxArgumentsColumns = {
+   distance: 'distance' as const,
+   distance_xy: 'distance_xy' as const,
+   distance_z: 'distance_z' as const
+}
+
+export const enumNadeDriftResultsSelectColumnNadeDriftResultsAggregateBoolExpMinArgumentsColumns = {
+   distance: 'distance' as const,
+   distance_xy: 'distance_xy' as const,
+   distance_z: 'distance_z' as const
+}
+
+export const enumNadeDriftResultsSelectColumnNadeDriftResultsAggregateBoolExpStddevSampArgumentsColumns = {
+   distance: 'distance' as const,
+   distance_xy: 'distance_xy' as const,
+   distance_z: 'distance_z' as const
+}
+
+export const enumNadeDriftResultsSelectColumnNadeDriftResultsAggregateBoolExpSumArgumentsColumns = {
+   distance: 'distance' as const,
+   distance_xy: 'distance_xy' as const,
+   distance_z: 'distance_z' as const
+}
+
+export const enumNadeDriftResultsSelectColumnNadeDriftResultsAggregateBoolExpVarSampArgumentsColumns = {
+   distance: 'distance' as const,
+   distance_xy: 'distance_xy' as const,
+   distance_z: 'distance_z' as const
+}
+
+export const enumNadeDriftResultsUpdateColumn = {
+   created_at: 'created_at' as const,
+   distance: 'distance' as const,
+   distance_xy: 'distance_xy' as const,
+   distance_z: 'distance_z' as const,
+   nade_drift_scan_id: 'nade_drift_scan_id' as const,
+   nade_lineup_id: 'nade_lineup_id' as const,
+   reason: 'reason' as const,
+   severity: 'severity' as const,
+   verdict: 'verdict' as const
+}
+
+export const enumNadeDriftScansConstraint = {
+   nade_drift_scans_pkey: 'nade_drift_scans_pkey' as const
+}
+
+export const enumNadeDriftScansSelectColumn = {
+   broken: 'broken' as const,
+   created_at: 'created_at' as const,
+   failure_reason: 'failure_reason' as const,
+   finished_at: 'finished_at' as const,
+   from_revision: 'from_revision' as const,
+   id: 'id' as const,
+   lineups: 'lineups' as const,
+   map_name: 'map_name' as const,
+   max_distance: 'max_distance' as const,
+   moved: 'moved' as const,
+   requested_by_steam_id: 'requested_by_steam_id' as const,
+   scanned: 'scanned' as const,
+   started_at: 'started_at' as const,
+   status: 'status' as const,
+   to_revision: 'to_revision' as const,
+   unchanged: 'unchanged' as const,
+   unsimulatable: 'unsimulatable' as const,
+   updated_at: 'updated_at' as const
+}
+
+export const enumNadeDriftScansUpdateColumn = {
+   broken: 'broken' as const,
+   created_at: 'created_at' as const,
+   failure_reason: 'failure_reason' as const,
+   finished_at: 'finished_at' as const,
+   from_revision: 'from_revision' as const,
+   id: 'id' as const,
+   lineups: 'lineups' as const,
+   map_name: 'map_name' as const,
+   max_distance: 'max_distance' as const,
+   moved: 'moved' as const,
+   requested_by_steam_id: 'requested_by_steam_id' as const,
+   scanned: 'scanned' as const,
+   started_at: 'started_at' as const,
+   status: 'status' as const,
+   to_revision: 'to_revision' as const,
+   unchanged: 'unchanged' as const,
+   unsimulatable: 'unsimulatable' as const,
+   updated_at: 'updated_at' as const
+}
+
+export const enumNadeLineupFavoritesConstraint = {
+   nade_lineup_favorites_pkey: 'nade_lineup_favorites_pkey' as const
+}
+
+export const enumNadeLineupFavoritesSelectColumn = {
+   created_at: 'created_at' as const,
+   nade_lineup_id: 'nade_lineup_id' as const,
+   steam_id: 'steam_id' as const
+}
+
+export const enumNadeLineupFavoritesUpdateColumn = {
+   created_at: 'created_at' as const,
+   nade_lineup_id: 'nade_lineup_id' as const,
+   steam_id: 'steam_id' as const
+}
+
+export const enumNadeLineupProgressConstraint = {
+   nade_lineup_progress_pkey: 'nade_lineup_progress_pkey' as const
+}
+
+export const enumNadeLineupProgressSelectColumn = {
+   attempts: 'attempts' as const,
+   best_streak: 'best_streak' as const,
+   current_streak: 'current_streak' as const,
+   last_practiced_at: 'last_practiced_at' as const,
+   mastered_at: 'mastered_at' as const,
+   miss_along_sum: 'miss_along_sum' as const,
+   miss_lateral_sum: 'miss_lateral_sum' as const,
+   miss_samples: 'miss_samples' as const,
+   miss_vertical_sum: 'miss_vertical_sum' as const,
+   nade_lineup_id: 'nade_lineup_id' as const,
+   steam_id: 'steam_id' as const,
+   successes: 'successes' as const
+}
+
+export const enumNadeLineupProgressSelectColumnNadeLineupProgressAggregateBoolExpAvgArgumentsColumns = {
+   miss_along_sum: 'miss_along_sum' as const,
+   miss_lateral_sum: 'miss_lateral_sum' as const,
+   miss_vertical_sum: 'miss_vertical_sum' as const
+}
+
+export const enumNadeLineupProgressSelectColumnNadeLineupProgressAggregateBoolExpCorrArgumentsColumns = {
+   miss_along_sum: 'miss_along_sum' as const,
+   miss_lateral_sum: 'miss_lateral_sum' as const,
+   miss_vertical_sum: 'miss_vertical_sum' as const
+}
+
+export const enumNadeLineupProgressSelectColumnNadeLineupProgressAggregateBoolExpCovarSampArgumentsColumns = {
+   miss_along_sum: 'miss_along_sum' as const,
+   miss_lateral_sum: 'miss_lateral_sum' as const,
+   miss_vertical_sum: 'miss_vertical_sum' as const
+}
+
+export const enumNadeLineupProgressSelectColumnNadeLineupProgressAggregateBoolExpMaxArgumentsColumns = {
+   miss_along_sum: 'miss_along_sum' as const,
+   miss_lateral_sum: 'miss_lateral_sum' as const,
+   miss_vertical_sum: 'miss_vertical_sum' as const
+}
+
+export const enumNadeLineupProgressSelectColumnNadeLineupProgressAggregateBoolExpMinArgumentsColumns = {
+   miss_along_sum: 'miss_along_sum' as const,
+   miss_lateral_sum: 'miss_lateral_sum' as const,
+   miss_vertical_sum: 'miss_vertical_sum' as const
+}
+
+export const enumNadeLineupProgressSelectColumnNadeLineupProgressAggregateBoolExpStddevSampArgumentsColumns = {
+   miss_along_sum: 'miss_along_sum' as const,
+   miss_lateral_sum: 'miss_lateral_sum' as const,
+   miss_vertical_sum: 'miss_vertical_sum' as const
+}
+
+export const enumNadeLineupProgressSelectColumnNadeLineupProgressAggregateBoolExpSumArgumentsColumns = {
+   miss_along_sum: 'miss_along_sum' as const,
+   miss_lateral_sum: 'miss_lateral_sum' as const,
+   miss_vertical_sum: 'miss_vertical_sum' as const
+}
+
+export const enumNadeLineupProgressSelectColumnNadeLineupProgressAggregateBoolExpVarSampArgumentsColumns = {
+   miss_along_sum: 'miss_along_sum' as const,
+   miss_lateral_sum: 'miss_lateral_sum' as const,
+   miss_vertical_sum: 'miss_vertical_sum' as const
+}
+
+export const enumNadeLineupProgressUpdateColumn = {
+   attempts: 'attempts' as const,
+   best_streak: 'best_streak' as const,
+   current_streak: 'current_streak' as const,
+   last_practiced_at: 'last_practiced_at' as const,
+   mastered_at: 'mastered_at' as const,
+   miss_along_sum: 'miss_along_sum' as const,
+   miss_lateral_sum: 'miss_lateral_sum' as const,
+   miss_samples: 'miss_samples' as const,
+   miss_vertical_sum: 'miss_vertical_sum' as const,
+   nade_lineup_id: 'nade_lineup_id' as const,
+   steam_id: 'steam_id' as const,
+   successes: 'successes' as const
+}
+
+export const enumNadeLineupRepairsConstraint = {
+   nade_lineup_repairs_open_idx: 'nade_lineup_repairs_open_idx' as const,
+   nade_lineup_repairs_pkey: 'nade_lineup_repairs_pkey' as const
+}
+
+export const enumNadeLineupRepairsSelectColumn = {
+   created_at: 'created_at' as const,
+   drift_distance: 'drift_distance' as const,
+   expires_at: 'expires_at' as const,
+   id: 'id' as const,
+   nade_drift_scan_id: 'nade_drift_scan_id' as const,
+   nade_lineup_id: 'nade_lineup_id' as const,
+   nade_practice_session_id: 'nade_practice_session_id' as const,
+   repaired_at: 'repaired_at' as const,
+   repaired_nade_lineup_id: 'repaired_nade_lineup_id' as const,
+   requested_by_steam_id: 'requested_by_steam_id' as const,
+   status: 'status' as const
+}
+
+export const enumNadeLineupRepairsSelectColumnNadeLineupRepairsAggregateBoolExpAvgArgumentsColumns = {
+   drift_distance: 'drift_distance' as const
+}
+
+export const enumNadeLineupRepairsSelectColumnNadeLineupRepairsAggregateBoolExpCorrArgumentsColumns = {
+   drift_distance: 'drift_distance' as const
+}
+
+export const enumNadeLineupRepairsSelectColumnNadeLineupRepairsAggregateBoolExpCovarSampArgumentsColumns = {
+   drift_distance: 'drift_distance' as const
+}
+
+export const enumNadeLineupRepairsSelectColumnNadeLineupRepairsAggregateBoolExpMaxArgumentsColumns = {
+   drift_distance: 'drift_distance' as const
+}
+
+export const enumNadeLineupRepairsSelectColumnNadeLineupRepairsAggregateBoolExpMinArgumentsColumns = {
+   drift_distance: 'drift_distance' as const
+}
+
+export const enumNadeLineupRepairsSelectColumnNadeLineupRepairsAggregateBoolExpStddevSampArgumentsColumns = {
+   drift_distance: 'drift_distance' as const
+}
+
+export const enumNadeLineupRepairsSelectColumnNadeLineupRepairsAggregateBoolExpSumArgumentsColumns = {
+   drift_distance: 'drift_distance' as const
+}
+
+export const enumNadeLineupRepairsSelectColumnNadeLineupRepairsAggregateBoolExpVarSampArgumentsColumns = {
+   drift_distance: 'drift_distance' as const
+}
+
+export const enumNadeLineupRepairsUpdateColumn = {
+   created_at: 'created_at' as const,
+   drift_distance: 'drift_distance' as const,
+   expires_at: 'expires_at' as const,
+   id: 'id' as const,
+   nade_drift_scan_id: 'nade_drift_scan_id' as const,
+   nade_lineup_id: 'nade_lineup_id' as const,
+   nade_practice_session_id: 'nade_practice_session_id' as const,
+   repaired_at: 'repaired_at' as const,
+   repaired_nade_lineup_id: 'repaired_nade_lineup_id' as const,
+   requested_by_steam_id: 'requested_by_steam_id' as const,
+   status: 'status' as const
+}
+
+export const enumNadeLineupVotesConstraint = {
+   nade_lineup_votes_pkey: 'nade_lineup_votes_pkey' as const
+}
+
+export const enumNadeLineupVotesSelectColumn = {
+   created_at: 'created_at' as const,
+   nade_lineup_id: 'nade_lineup_id' as const,
+   steam_id: 'steam_id' as const,
+   vote: 'vote' as const
+}
+
+export const enumNadeLineupVotesUpdateColumn = {
+   created_at: 'created_at' as const,
+   nade_lineup_id: 'nade_lineup_id' as const,
+   steam_id: 'steam_id' as const,
+   vote: 'vote' as const
+}
+
+export const enumNadeLineupsConstraint = {
+   nade_lineups_external_idx: 'nade_lineups_external_idx' as const,
+   nade_lineups_pkey: 'nade_lineups_pkey' as const
+}
+
+export const enumNadeLineupsSelectColumn = {
+   archived_at: 'archived_at' as const,
+   author_steam_id: 'author_steam_id' as const,
+   confidence: 'confidence' as const,
+   created_at: 'created_at' as const,
+   description: 'description' as const,
+   downvotes: 'downvotes' as const,
+   external_id: 'external_id' as const,
+   eye_z: 'eye_z' as const,
+   favorites: 'favorites' as const,
+   flight_time_ms: 'flight_time_ms' as const,
+   forked_from_nade_lineup_id: 'forked_from_nade_lineup_id' as const,
+   id: 'id' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   jump_throw_bind: 'jump_throw_bind' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   lineup_bucket: 'lineup_bucket' as const,
+   map_name: 'map_name' as const,
+   nade_type: 'nade_type' as const,
+   name: 'name' as const,
+   origin_source: 'origin_source' as const,
+   origin_x: 'origin_x' as const,
+   origin_y: 'origin_y' as const,
+   origin_z: 'origin_z' as const,
+   practice_attempts: 'practice_attempts' as const,
+   practice_players: 'practice_players' as const,
+   practice_successes: 'practice_successes' as const,
+   side: 'side' as const,
+   source_grenade_id: 'source_grenade_id' as const,
+   source_match_id: 'source_match_id' as const,
+   source_match_map_id: 'source_match_map_id' as const,
+   source_url: 'source_url' as const,
+   tags: 'tags' as const,
+   team_id: 'team_id' as const,
+   technique: 'technique' as const,
+   throw_strength: 'throw_strength' as const,
+   trajectory_file: 'trajectory_file' as const,
+   trajectory_preview: 'trajectory_preview' as const,
+   trajectory_size: 'trajectory_size' as const,
+   updated_at: 'updated_at' as const,
+   upvotes: 'upvotes' as const,
+   verified_at: 'verified_at' as const,
+   view_pitch: 'view_pitch' as const,
+   view_pitch_delta: 'view_pitch_delta' as const,
+   view_yaw: 'view_yaw' as const,
+   view_yaw_delta: 'view_yaw_delta' as const,
+   visibility: 'visibility' as const,
+   workshop_map_id: 'workshop_map_id' as const
+}
+
+export const enumNadeLineupsSelectColumnNadeLineupsAggregateBoolExpAvgArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   origin_x: 'origin_x' as const,
+   origin_y: 'origin_y' as const,
+   origin_z: 'origin_z' as const,
+   view_pitch: 'view_pitch' as const,
+   view_pitch_delta: 'view_pitch_delta' as const,
+   view_yaw: 'view_yaw' as const,
+   view_yaw_delta: 'view_yaw_delta' as const
+}
+
+export const enumNadeLineupsSelectColumnNadeLineupsAggregateBoolExpBoolAndArgumentsColumns = {
+   jump_throw_bind: 'jump_throw_bind' as const
+}
+
+export const enumNadeLineupsSelectColumnNadeLineupsAggregateBoolExpBoolOrArgumentsColumns = {
+   jump_throw_bind: 'jump_throw_bind' as const
+}
+
+export const enumNadeLineupsSelectColumnNadeLineupsAggregateBoolExpCorrArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   origin_x: 'origin_x' as const,
+   origin_y: 'origin_y' as const,
+   origin_z: 'origin_z' as const,
+   view_pitch: 'view_pitch' as const,
+   view_pitch_delta: 'view_pitch_delta' as const,
+   view_yaw: 'view_yaw' as const,
+   view_yaw_delta: 'view_yaw_delta' as const
+}
+
+export const enumNadeLineupsSelectColumnNadeLineupsAggregateBoolExpCovarSampArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   origin_x: 'origin_x' as const,
+   origin_y: 'origin_y' as const,
+   origin_z: 'origin_z' as const,
+   view_pitch: 'view_pitch' as const,
+   view_pitch_delta: 'view_pitch_delta' as const,
+   view_yaw: 'view_yaw' as const,
+   view_yaw_delta: 'view_yaw_delta' as const
+}
+
+export const enumNadeLineupsSelectColumnNadeLineupsAggregateBoolExpMaxArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   origin_x: 'origin_x' as const,
+   origin_y: 'origin_y' as const,
+   origin_z: 'origin_z' as const,
+   view_pitch: 'view_pitch' as const,
+   view_pitch_delta: 'view_pitch_delta' as const,
+   view_yaw: 'view_yaw' as const,
+   view_yaw_delta: 'view_yaw_delta' as const
+}
+
+export const enumNadeLineupsSelectColumnNadeLineupsAggregateBoolExpMinArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   origin_x: 'origin_x' as const,
+   origin_y: 'origin_y' as const,
+   origin_z: 'origin_z' as const,
+   view_pitch: 'view_pitch' as const,
+   view_pitch_delta: 'view_pitch_delta' as const,
+   view_yaw: 'view_yaw' as const,
+   view_yaw_delta: 'view_yaw_delta' as const
+}
+
+export const enumNadeLineupsSelectColumnNadeLineupsAggregateBoolExpStddevSampArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   origin_x: 'origin_x' as const,
+   origin_y: 'origin_y' as const,
+   origin_z: 'origin_z' as const,
+   view_pitch: 'view_pitch' as const,
+   view_pitch_delta: 'view_pitch_delta' as const,
+   view_yaw: 'view_yaw' as const,
+   view_yaw_delta: 'view_yaw_delta' as const
+}
+
+export const enumNadeLineupsSelectColumnNadeLineupsAggregateBoolExpSumArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   origin_x: 'origin_x' as const,
+   origin_y: 'origin_y' as const,
+   origin_z: 'origin_z' as const,
+   view_pitch: 'view_pitch' as const,
+   view_pitch_delta: 'view_pitch_delta' as const,
+   view_yaw: 'view_yaw' as const,
+   view_yaw_delta: 'view_yaw_delta' as const
+}
+
+export const enumNadeLineupsSelectColumnNadeLineupsAggregateBoolExpVarSampArgumentsColumns = {
+   eye_z: 'eye_z' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   origin_x: 'origin_x' as const,
+   origin_y: 'origin_y' as const,
+   origin_z: 'origin_z' as const,
+   view_pitch: 'view_pitch' as const,
+   view_pitch_delta: 'view_pitch_delta' as const,
+   view_yaw: 'view_yaw' as const,
+   view_yaw_delta: 'view_yaw_delta' as const
+}
+
+export const enumNadeLineupsUpdateColumn = {
+   archived_at: 'archived_at' as const,
+   author_steam_id: 'author_steam_id' as const,
+   confidence: 'confidence' as const,
+   created_at: 'created_at' as const,
+   description: 'description' as const,
+   downvotes: 'downvotes' as const,
+   external_id: 'external_id' as const,
+   eye_z: 'eye_z' as const,
+   favorites: 'favorites' as const,
+   flight_time_ms: 'flight_time_ms' as const,
+   forked_from_nade_lineup_id: 'forked_from_nade_lineup_id' as const,
+   id: 'id' as const,
+   initial_pos_x: 'initial_pos_x' as const,
+   initial_pos_y: 'initial_pos_y' as const,
+   initial_pos_z: 'initial_pos_z' as const,
+   initial_vel_x: 'initial_vel_x' as const,
+   initial_vel_y: 'initial_vel_y' as const,
+   initial_vel_z: 'initial_vel_z' as const,
+   jump_throw_bind: 'jump_throw_bind' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   map_name: 'map_name' as const,
+   nade_type: 'nade_type' as const,
+   name: 'name' as const,
+   origin_source: 'origin_source' as const,
+   origin_x: 'origin_x' as const,
+   origin_y: 'origin_y' as const,
+   origin_z: 'origin_z' as const,
+   practice_attempts: 'practice_attempts' as const,
+   practice_players: 'practice_players' as const,
+   practice_successes: 'practice_successes' as const,
+   side: 'side' as const,
+   source_grenade_id: 'source_grenade_id' as const,
+   source_match_id: 'source_match_id' as const,
+   source_match_map_id: 'source_match_map_id' as const,
+   source_url: 'source_url' as const,
+   tags: 'tags' as const,
+   team_id: 'team_id' as const,
+   technique: 'technique' as const,
+   throw_strength: 'throw_strength' as const,
+   trajectory_file: 'trajectory_file' as const,
+   trajectory_preview: 'trajectory_preview' as const,
+   trajectory_size: 'trajectory_size' as const,
+   updated_at: 'updated_at' as const,
+   upvotes: 'upvotes' as const,
+   verified_at: 'verified_at' as const,
+   view_pitch: 'view_pitch' as const,
+   view_pitch_delta: 'view_pitch_delta' as const,
+   view_yaw: 'view_yaw' as const,
+   view_yaw_delta: 'view_yaw_delta' as const,
+   visibility: 'visibility' as const,
+   workshop_map_id: 'workshop_map_id' as const
+}
+
+export const enumNadeMetaLineupsConstraint = {
+   nade_meta_lineups_pkey: 'nade_meta_lineups_pkey' as const
+}
+
+export const enumNadeMetaLineupsSelectColumn = {
+   first_seen_at: 'first_seen_at' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   last_seen_at: 'last_seen_at' as const,
+   lineup_bucket: 'lineup_bucket' as const,
+   lineups: 'lineups' as const,
+   map_name: 'map_name' as const,
+   matches: 'matches' as const,
+   nade_type: 'nade_type' as const,
+   origin_x: 'origin_x' as const,
+   origin_y: 'origin_y' as const,
+   origin_z: 'origin_z' as const,
+   refreshed_at: 'refreshed_at' as const,
+   side: 'side' as const,
+   technique: 'technique' as const,
+   throw_strength: 'throw_strength' as const,
+   throwers: 'throwers' as const,
+   throws: 'throws' as const,
+   view_pitch: 'view_pitch' as const,
+   view_yaw: 'view_yaw' as const
+}
+
+export const enumNadeMetaLineupsUpdateColumn = {
+   first_seen_at: 'first_seen_at' as const,
+   land_x: 'land_x' as const,
+   land_y: 'land_y' as const,
+   land_z: 'land_z' as const,
+   last_seen_at: 'last_seen_at' as const,
+   lineup_bucket: 'lineup_bucket' as const,
+   lineups: 'lineups' as const,
+   map_name: 'map_name' as const,
+   matches: 'matches' as const,
+   nade_type: 'nade_type' as const,
+   origin_x: 'origin_x' as const,
+   origin_y: 'origin_y' as const,
+   origin_z: 'origin_z' as const,
+   refreshed_at: 'refreshed_at' as const,
+   side: 'side' as const,
+   technique: 'technique' as const,
+   throw_strength: 'throw_strength' as const,
+   throwers: 'throwers' as const,
+   throws: 'throws' as const,
+   view_pitch: 'view_pitch' as const,
+   view_yaw: 'view_yaw' as const
+}
+
+export const enumNadePlaybookStepsConstraint = {
+   nade_playbook_steps_order_key: 'nade_playbook_steps_order_key' as const,
+   nade_playbook_steps_pkey: 'nade_playbook_steps_pkey' as const
+}
+
+export const enumNadePlaybookStepsSelectColumn = {
+   assigned_steam_id: 'assigned_steam_id' as const,
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   nade_lineup_id: 'nade_lineup_id' as const,
+   note: 'note' as const,
+   offset_ms: 'offset_ms' as const,
+   playbook_id: 'playbook_id' as const,
+   step_order: 'step_order' as const
+}
+
+export const enumNadePlaybookStepsUpdateColumn = {
+   assigned_steam_id: 'assigned_steam_id' as const,
+   created_at: 'created_at' as const,
+   id: 'id' as const,
+   nade_lineup_id: 'nade_lineup_id' as const,
+   note: 'note' as const,
+   offset_ms: 'offset_ms' as const,
+   playbook_id: 'playbook_id' as const,
+   step_order: 'step_order' as const
+}
+
+export const enumNadePlaybooksConstraint = {
+   nade_playbooks_pkey: 'nade_playbooks_pkey' as const
+}
+
+export const enumNadePlaybooksSelectColumn = {
+   created_at: 'created_at' as const,
+   description: 'description' as const,
+   id: 'id' as const,
+   map_name: 'map_name' as const,
+   name: 'name' as const,
+   owner_steam_id: 'owner_steam_id' as const,
+   side: 'side' as const,
+   team_id: 'team_id' as const,
+   updated_at: 'updated_at' as const,
+   visibility: 'visibility' as const
+}
+
+export const enumNadePlaybooksUpdateColumn = {
+   created_at: 'created_at' as const,
+   description: 'description' as const,
+   id: 'id' as const,
+   map_name: 'map_name' as const,
+   name: 'name' as const,
+   owner_steam_id: 'owner_steam_id' as const,
+   side: 'side' as const,
+   team_id: 'team_id' as const,
+   updated_at: 'updated_at' as const,
+   visibility: 'visibility' as const
+}
+
+export const enumNadePracticeInvitesConstraint = {
+   nade_practice_invites_pkey: 'nade_practice_invites_pkey' as const
+}
+
+export const enumNadePracticeInvitesSelectColumn = {
+   created_at: 'created_at' as const,
+   invited_by_steam_id: 'invited_by_steam_id' as const,
+   nade_practice_session_id: 'nade_practice_session_id' as const,
+   steam_id: 'steam_id' as const
+}
+
+export const enumNadePracticeInvitesUpdateColumn = {
+   created_at: 'created_at' as const,
+   invited_by_steam_id: 'invited_by_steam_id' as const,
+   nade_practice_session_id: 'nade_practice_session_id' as const,
+   steam_id: 'steam_id' as const
+}
+
+export const enumNadePracticeSessionsConstraint = {
+   nade_practice_sessions_invite_code_idx: 'nade_practice_sessions_invite_code_idx' as const,
+   nade_practice_sessions_match_key: 'nade_practice_sessions_match_key' as const,
+   nade_practice_sessions_one_live_per_host_idx: 'nade_practice_sessions_one_live_per_host_idx' as const,
+   nade_practice_sessions_pkey: 'nade_practice_sessions_pkey' as const
+}
+
+export const enumNadePracticeSessionsSelectColumn = {
+   collection_id: 'collection_id' as const,
+   created_at: 'created_at' as const,
+   empty_since: 'empty_since' as const,
+   expires_at: 'expires_at' as const,
+   failure_reason: 'failure_reason' as const,
+   host_steam_id: 'host_steam_id' as const,
+   id: 'id' as const,
+   invite_code: 'invite_code' as const,
+   is_open: 'is_open' as const,
+   last_occupied_at: 'last_occupied_at' as const,
+   map_name: 'map_name' as const,
+   match_id: 'match_id' as const,
+   playbook_id: 'playbook_id' as const,
+   region: 'region' as const,
+   status: 'status' as const,
+   team_id: 'team_id' as const,
+   updated_at: 'updated_at' as const
+}
+
+export const enumNadePracticeSessionsSelectColumnNadePracticeSessionsAggregateBoolExpBoolAndArgumentsColumns = {
+   is_open: 'is_open' as const
+}
+
+export const enumNadePracticeSessionsSelectColumnNadePracticeSessionsAggregateBoolExpBoolOrArgumentsColumns = {
+   is_open: 'is_open' as const
+}
+
+export const enumNadePracticeSessionsUpdateColumn = {
+   collection_id: 'collection_id' as const,
+   created_at: 'created_at' as const,
+   empty_since: 'empty_since' as const,
+   expires_at: 'expires_at' as const,
+   failure_reason: 'failure_reason' as const,
+   host_steam_id: 'host_steam_id' as const,
+   id: 'id' as const,
+   invite_code: 'invite_code' as const,
+   is_open: 'is_open' as const,
+   last_occupied_at: 'last_occupied_at' as const,
+   map_name: 'map_name' as const,
+   match_id: 'match_id' as const,
+   playbook_id: 'playbook_id' as const,
+   region: 'region' as const,
+   status: 'status' as const,
+   team_id: 'team_id' as const,
+   updated_at: 'updated_at' as const
 }
 
 export const enumNewsArticlesConstraint = {
