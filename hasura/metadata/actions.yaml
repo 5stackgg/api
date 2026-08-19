@@ -1627,6 +1627,20 @@ actions:
       - role: verified_user
       - role: user
     comment: Re-solve a lineup a drift scan says the map moved
+  - name: nadePracticeServers
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Dedicated practice servers free to book right now
   - name: nadePracticePlan
     definition:
       kind: synchronous

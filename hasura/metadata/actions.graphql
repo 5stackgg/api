@@ -2220,6 +2220,20 @@ type Mutation {
 }
 
 type Query {
+  nadePracticeServers: NadePracticeServersOutput
+}
+
+type NadePracticeServersOutput {
+  servers: [NadePracticeServer!]!
+}
+
+type NadePracticeServer {
+  id: uuid!
+  label: String!
+  region: String!
+}
+
+type Query {
   nadePracticePlan(
     map_name: String!
     side: String

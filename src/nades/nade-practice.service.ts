@@ -1127,6 +1127,30 @@ export class NadePracticeService {
   // An explicitly chosen server. Anything that is not a free, connected
   // practice server is rejected by name rather than silently falling back to a
   // pod, because the caller picked this one on purpose.
+  // The picker's list. Practice servers are invisible to the servers table for
+  // an ordinary player -- get_server_connection_string returns null for them,
+  // which is what the table's own filter keys on -- so the choice is offered
+  // here, without the connect details that gate is protecting.
+  public async practiceServers(
+    user: User,
+  ): Promise<Array<{ id: string; label: string; region: string }>> {
+    await this.assertRole(user);
+
+    return await this.postgres.query<
+      Array<{ id: string; label: string; region: string }>
+    >(
+      `SELECT s.id::text AS id,
+              COALESCE(NULLIF(s.label, ''), s.host::text) AS label,
+              s.region
+         FROM public.servers s
+        WHERE s.type = 'Practice'
+          AND s.enabled = true
+          AND s.connected = true
+          AND s.reserved_by_match_id IS NULL
+        ORDER BY s.region, label`,
+    );
+  }
+
   private async practiceServer(
     serverId: string,
   ): Promise<{ id: string; region: string } | null> {

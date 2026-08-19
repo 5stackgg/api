@@ -16,6 +16,11 @@ export class NadePracticeController {
   ) {}
 
   @HasuraAction()
+  public async nadePracticeServers(data: { user: User }) {
+    return { servers: await this.practice.practiceServers(data.user) };
+  }
+
+  @HasuraAction()
   public async startNadePractice(data: {
     user: User;
     map_name: string;
