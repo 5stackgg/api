@@ -104,8 +104,8 @@ export type TelemetryPlugins = {
   manual: number;
   modes: number;
   modes_enabled: number;
-  // Modes that are not competitive_safe, i.e. matches that deliberately do not
-  // count toward ranking.
+  // Modes that are not competitive_safe, i.e. not offered in draft lobbies.
+  // (Every custom mode is unranked regardless; the flag only gates drafts.)
   modes_unranked: number;
 };
 

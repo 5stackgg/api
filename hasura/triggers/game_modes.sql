@@ -3,15 +3,14 @@ CREATE OR REPLACE FUNCTION public.match_ranking_for_options(_match_options_id uu
     LANGUAGE sql
     STABLE
     AS $$
-    -- No mode is ranked. A mode counts only when it is explicitly marked safe
-    -- for competitive play, so a newly created mode can never quietly start
-    -- affecting ELO.
+    -- Only a plain competitive match counts. Any custom mode plays under
+    -- third-party plugins, so it never moves ELO -- unconditionally, whatever
+    -- the mode's flags say. competitive_safe gates draft-lobby selection only.
     SELECT NOT EXISTS (
         SELECT 1
           FROM match_options mo
-          INNER JOIN game_modes gm ON gm.id = mo.game_mode_id
          WHERE mo.id = _match_options_id
-           AND gm.competitive_safe = false
+           AND mo.game_mode_id IS NOT NULL
     );
 $$;
 
