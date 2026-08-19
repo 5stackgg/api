@@ -11003,6 +11003,7 @@ export type map_pools_update_column = 'enabled' | 'id' | 'seed' | 'type'
 /** columns and relationships of "maps" */
 export interface maps {
     active_pool: Scalars['Boolean']
+    deleted_at: (Scalars['timestamptz'] | null)
     /** An object relationship */
     e_match_type: e_match_types
     enabled: Scalars['Boolean']
@@ -11048,6 +11049,7 @@ export type maps_constraint = 'maps_name_type_key' | 'maps_pkey'
 
 /** aggregate max on columns */
 export interface maps_max_fields {
+    deleted_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
     label: (Scalars['String'] | null)
     name: (Scalars['String'] | null)
@@ -11060,6 +11062,7 @@ export interface maps_max_fields {
 
 /** aggregate min on columns */
 export interface maps_min_fields {
+    deleted_at: (Scalars['timestamptz'] | null)
     id: (Scalars['uuid'] | null)
     label: (Scalars['String'] | null)
     name: (Scalars['String'] | null)
@@ -11081,7 +11084,7 @@ export interface maps_mutation_response {
 
 
 /** select columns of table "maps" */
-export type maps_select_column = 'active_pool' | 'enabled' | 'id' | 'label' | 'name' | 'patch' | 'poster' | 'type' | 'workshop_map_id'
+export type maps_select_column = 'active_pool' | 'deleted_at' | 'enabled' | 'id' | 'label' | 'name' | 'patch' | 'poster' | 'type' | 'workshop_map_id'
 
 
 /** select "maps_aggregate_bool_exp_bool_and_arguments_columns" columns of table "maps" */
@@ -11093,7 +11096,7 @@ export type maps_select_column_maps_aggregate_bool_exp_bool_or_arguments_columns
 
 
 /** update columns of table "maps" */
-export type maps_update_column = 'active_pool' | 'enabled' | 'id' | 'label' | 'name' | 'patch' | 'poster' | 'type' | 'workshop_map_id'
+export type maps_update_column = 'active_pool' | 'deleted_at' | 'enabled' | 'id' | 'label' | 'name' | 'patch' | 'poster' | 'type' | 'workshop_map_id'
 
 
 /** columns and relationships of "match_clips" */
@@ -55983,6 +55986,7 @@ where: map_pools_bool_exp}
 /** columns and relationships of "maps" */
 export interface mapsGenqlSelection{
     active_pool?: boolean | number
+    deleted_at?: boolean | number
     /** An object relationship */
     e_match_type?: e_match_typesGenqlSelection
     enabled?: boolean | number
@@ -56084,15 +56088,16 @@ on_conflict?: (maps_on_conflict | null)}
 
 
 /** Boolean expression to filter rows from the table "maps". All fields are combined with a logical 'AND'. */
-export interface maps_bool_exp {_and?: (maps_bool_exp[] | null),_not?: (maps_bool_exp | null),_or?: (maps_bool_exp[] | null),active_pool?: (Boolean_comparison_exp | null),e_match_type?: (e_match_types_bool_exp | null),enabled?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),label?: (String_comparison_exp | null),match_maps?: (match_maps_bool_exp | null),match_maps_aggregate?: (match_maps_aggregate_bool_exp | null),match_veto_picks?: (match_map_veto_picks_bool_exp | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),name?: (String_comparison_exp | null),patch?: (String_comparison_exp | null),poster?: (String_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null),workshop_map_id?: (String_comparison_exp | null)}
+export interface maps_bool_exp {_and?: (maps_bool_exp[] | null),_not?: (maps_bool_exp | null),_or?: (maps_bool_exp[] | null),active_pool?: (Boolean_comparison_exp | null),deleted_at?: (timestamptz_comparison_exp | null),e_match_type?: (e_match_types_bool_exp | null),enabled?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),label?: (String_comparison_exp | null),match_maps?: (match_maps_bool_exp | null),match_maps_aggregate?: (match_maps_aggregate_bool_exp | null),match_veto_picks?: (match_map_veto_picks_bool_exp | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_bool_exp | null),name?: (String_comparison_exp | null),patch?: (String_comparison_exp | null),poster?: (String_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null),workshop_map_id?: (String_comparison_exp | null)}
 
 
 /** input type for inserting data into table "maps" */
-export interface maps_insert_input {active_pool?: (Scalars['Boolean'] | null),e_match_type?: (e_match_types_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),match_maps?: (match_maps_arr_rel_insert_input | null),match_veto_picks?: (match_map_veto_picks_arr_rel_insert_input | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface maps_insert_input {active_pool?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),e_match_type?: (e_match_types_obj_rel_insert_input | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),match_maps?: (match_maps_arr_rel_insert_input | null),match_veto_picks?: (match_map_veto_picks_arr_rel_insert_input | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
 export interface maps_max_fieldsGenqlSelection{
+    deleted_at?: boolean | number
     id?: boolean | number
     label?: boolean | number
     name?: boolean | number
@@ -56105,11 +56110,12 @@ export interface maps_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "maps" */
-export interface maps_max_order_by {id?: (order_by | null),label?: (order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),workshop_map_id?: (order_by | null)}
+export interface maps_max_order_by {deleted_at?: (order_by | null),id?: (order_by | null),label?: (order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),workshop_map_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface maps_min_fieldsGenqlSelection{
+    deleted_at?: boolean | number
     id?: boolean | number
     label?: boolean | number
     name?: boolean | number
@@ -56122,7 +56128,7 @@ export interface maps_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "maps" */
-export interface maps_min_order_by {id?: (order_by | null),label?: (order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),workshop_map_id?: (order_by | null)}
+export interface maps_min_order_by {deleted_at?: (order_by | null),id?: (order_by | null),label?: (order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),workshop_map_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "maps" */
@@ -56147,7 +56153,7 @@ export interface maps_on_conflict {constraint: maps_constraint,update_columns?: 
 
 
 /** Ordering options when selecting data from "maps". */
-export interface maps_order_by {active_pool?: (order_by | null),e_match_type?: (e_match_types_order_by | null),enabled?: (order_by | null),id?: (order_by | null),label?: (order_by | null),match_maps_aggregate?: (match_maps_aggregate_order_by | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),type?: (order_by | null),workshop_map_id?: (order_by | null)}
+export interface maps_order_by {active_pool?: (order_by | null),deleted_at?: (order_by | null),e_match_type?: (e_match_types_order_by | null),enabled?: (order_by | null),id?: (order_by | null),label?: (order_by | null),match_maps_aggregate?: (match_maps_aggregate_order_by | null),match_veto_picks_aggregate?: (match_map_veto_picks_aggregate_order_by | null),name?: (order_by | null),patch?: (order_by | null),poster?: (order_by | null),type?: (order_by | null),workshop_map_id?: (order_by | null)}
 
 
 /** primary key columns input for table: maps */
@@ -56155,7 +56161,7 @@ export interface maps_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "maps" */
-export interface maps_set_input {active_pool?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface maps_set_input {active_pool?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
 
 
 /** Streaming cursor of the table "maps" */
@@ -56167,7 +56173,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface maps_stream_cursor_value_input {active_pool?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface maps_stream_cursor_value_input {active_pool?: (Scalars['Boolean'] | null),deleted_at?: (Scalars['timestamptz'] | null),enabled?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),label?: (Scalars['String'] | null),name?: (Scalars['String'] | null),patch?: (Scalars['String'] | null),poster?: (Scalars['String'] | null),type?: (e_match_types_enum | null),workshop_map_id?: (Scalars['String'] | null)}
 
 export interface maps_updates {
 /** sets the columns of the filtered rows to the given values */
@@ -128285,6 +128291,7 @@ export const enumMapsConstraint = {
 
 export const enumMapsSelectColumn = {
    active_pool: 'active_pool' as const,
+   deleted_at: 'deleted_at' as const,
    enabled: 'enabled' as const,
    id: 'id' as const,
    label: 'label' as const,
@@ -128307,6 +128314,7 @@ export const enumMapsSelectColumnMapsAggregateBoolExpBoolOrArgumentsColumns = {
 
 export const enumMapsUpdateColumn = {
    active_pool: 'active_pool' as const,
+   deleted_at: 'deleted_at' as const,
    enabled: 'enabled' as const,
    id: 'id' as const,
    label: 'label' as const,

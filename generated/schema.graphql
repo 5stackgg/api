@@ -30922,6 +30922,7 @@ columns and relationships of "maps"
 """
 type maps {
   active_pool: Boolean!
+  deleted_at: timestamptz
 
   """An object relationship"""
   e_match_type: e_match_types!
@@ -31078,6 +31079,7 @@ input maps_bool_exp {
   _not: maps_bool_exp
   _or: [maps_bool_exp!]
   active_pool: Boolean_comparison_exp
+  deleted_at: timestamptz_comparison_exp
   e_match_type: e_match_types_bool_exp
   enabled: Boolean_comparison_exp
   id: uuid_comparison_exp
@@ -31113,6 +31115,7 @@ input type for inserting data into table "maps"
 """
 input maps_insert_input {
   active_pool: Boolean
+  deleted_at: timestamptz
   e_match_type: e_match_types_obj_rel_insert_input
   enabled: Boolean
   id: uuid
@@ -31128,6 +31131,7 @@ input maps_insert_input {
 
 """aggregate max on columns"""
 type maps_max_fields {
+  deleted_at: timestamptz
   id: uuid
   label: String
   name: String
@@ -31140,6 +31144,7 @@ type maps_max_fields {
 order by max() on columns of table "maps"
 """
 input maps_max_order_by {
+  deleted_at: order_by
   id: order_by
   label: order_by
   name: order_by
@@ -31150,6 +31155,7 @@ input maps_max_order_by {
 
 """aggregate min on columns"""
 type maps_min_fields {
+  deleted_at: timestamptz
   id: uuid
   label: String
   name: String
@@ -31162,6 +31168,7 @@ type maps_min_fields {
 order by min() on columns of table "maps"
 """
 input maps_min_order_by {
+  deleted_at: order_by
   id: order_by
   label: order_by
   name: order_by
@@ -31203,6 +31210,7 @@ input maps_on_conflict {
 """Ordering options when selecting data from "maps"."""
 input maps_order_by {
   active_pool: order_by
+  deleted_at: order_by
   e_match_type: e_match_types_order_by
   enabled: order_by
   id: order_by
@@ -31227,6 +31235,9 @@ select columns of table "maps"
 enum maps_select_column {
   """column name"""
   active_pool
+
+  """column name"""
+  deleted_at
 
   """column name"""
   enabled
@@ -31280,6 +31291,7 @@ input type for updating data in table "maps"
 """
 input maps_set_input {
   active_pool: Boolean
+  deleted_at: timestamptz
   enabled: Boolean
   id: uuid
   label: String
@@ -31304,6 +31316,7 @@ input maps_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input maps_stream_cursor_value_input {
   active_pool: Boolean
+  deleted_at: timestamptz
   enabled: Boolean
   id: uuid
   label: String
@@ -31320,6 +31333,9 @@ update columns of table "maps"
 enum maps_update_column {
   """column name"""
   active_pool
+
+  """column name"""
+  deleted_at
 
   """column name"""
   enabled

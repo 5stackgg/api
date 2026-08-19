@@ -45278,6 +45278,9 @@ export default {
             ]
         },
         "maps": {
+            "deleted_at": [
+                4954
+            ],
             "active_pool": [
                 6
             ],
@@ -45525,6 +45528,9 @@ export default {
             ]
         },
         "maps_bool_exp": {
+            "deleted_at": [
+                4955
+            ],
             "_and": [
                 2658
             ],
@@ -45582,6 +45588,9 @@ export default {
         },
         "maps_constraint": {},
         "maps_insert_input": {
+            "deleted_at": [
+                4954
+            ],
             "active_pool": [
                 6
             ],
@@ -45623,6 +45632,9 @@ export default {
             ]
         },
         "maps_max_fields": {
+            "deleted_at": [
+                4954
+            ],
             "id": [
                 5454
             ],
@@ -45646,6 +45658,9 @@ export default {
             ]
         },
         "maps_max_order_by": {
+            "deleted_at": [
+                3373
+            ],
             "id": [
                 3373
             ],
@@ -45669,6 +45684,9 @@ export default {
             ]
         },
         "maps_min_fields": {
+            "deleted_at": [
+                4954
+            ],
             "id": [
                 5454
             ],
@@ -45692,6 +45710,9 @@ export default {
             ]
         },
         "maps_min_order_by": {
+            "deleted_at": [
+                3373
+            ],
             "id": [
                 3373
             ],
@@ -45751,6 +45772,9 @@ export default {
             ]
         },
         "maps_order_by": {
+            "deleted_at": [
+                3373
+            ],
             "active_pool": [
                 3373
             ],
@@ -45803,6 +45827,9 @@ export default {
         "maps_select_column_maps_aggregate_bool_exp_bool_and_arguments_columns": {},
         "maps_select_column_maps_aggregate_bool_exp_bool_or_arguments_columns": {},
         "maps_set_input": {
+            "deleted_at": [
+                4954
+            ],
             "active_pool": [
                 6
             ],
@@ -45846,6 +45873,9 @@ export default {
             ]
         },
         "maps_stream_cursor_value_input": {
+            "deleted_at": [
+                4954
+            ],
             "active_pool": [
                 6
             ],

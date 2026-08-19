@@ -182,7 +182,7 @@ WITH expected_maps AS (
     type,
     array_agg(name ORDER BY name) as expected_map_names
   FROM maps
-  WHERE active_pool = true
+  WHERE active_pool = true AND deleted_at IS NULL
   GROUP BY type
 ),
 existing_pools AS (
@@ -258,6 +258,7 @@ begin
             (p.type = 'Wingman' AND m.type = 'Wingman' AND m.active_pool = 'true') OR
             (p.type = 'Duel' AND m.type = 'Duel' AND m.active_pool = 'true')
         )
+        WHERE m.deleted_at IS NULL
         ON CONFLICT DO NOTHING;
         
         return true;

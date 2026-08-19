@@ -266,6 +266,9 @@ export class DiscordBotService {
             type: {
               _eq: type,
             },
+            deleted_at: {
+              _is_null: true,
+            },
           },
         },
         id: true,
