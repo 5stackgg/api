@@ -3944,7 +3944,7 @@ export interface e_game_cfg_types_aggregate_fields {
 /** unique or primary key constraints on table "e_game_cfg_types" */
 export type e_game_cfg_types_constraint = 'e_game_cfg_types_pkey'
 
-export type e_game_cfg_types_enum = 'Base' | 'Competitive' | 'Duel' | 'Lan' | 'Live' | 'Wingman'
+export type e_game_cfg_types_enum = 'Base' | 'Competitive' | 'Duel' | 'Global' | 'Lan' | 'Live' | 'Wingman'
 
 
 /** aggregate max on columns */
@@ -7739,7 +7739,10 @@ export type game_modes_update_column = 'archived_at' | 'cfg' | 'competitive_safe
 
 /** columns and relationships of "game_plugin_installs" */
 export interface game_plugin_installs {
-    always_load: Scalars['Boolean']
+    cfg: Scalars['String'],
+    load_custom: Scalars['Boolean'],
+    load_ranked: Scalars['Boolean'],
+    load_tournaments: Scalars['Boolean']
     channel: e_game_plugin_channels_enum
     created_at: Scalars['timestamptz']
     disable_server_guidelines: Scalars['Boolean']
@@ -7805,11 +7808,11 @@ export interface game_plugin_installs_mutation_response {
 
 
 /** select columns of table "game_plugin_installs" */
-export type game_plugin_installs_select_column = 'always_load' | 'channel' | 'created_at' | 'disable_server_guidelines' | 'enabled' | 'plugin_slug' | 'updated_at' | 'version'
+export type game_plugin_installs_select_column = 'cfg' | 'load_custom' | 'load_ranked' | 'load_tournaments' | 'channel' | 'created_at' | 'disable_server_guidelines' | 'enabled' | 'plugin_slug' | 'updated_at' | 'version'
 
 
 /** update columns of table "game_plugin_installs" */
-export type game_plugin_installs_update_column = 'always_load' | 'channel' | 'created_at' | 'disable_server_guidelines' | 'enabled' | 'plugin_slug' | 'updated_at' | 'version'
+export type game_plugin_installs_update_column = 'cfg' | 'load_custom' | 'load_ranked' | 'load_tournaments' | 'channel' | 'created_at' | 'disable_server_guidelines' | 'enabled' | 'plugin_slug' | 'updated_at' | 'version'
 
 
 /** columns and relationships of "game_plugin_versions" */
@@ -50569,7 +50572,10 @@ where: game_modes_bool_exp}
 
 /** columns and relationships of "game_plugin_installs" */
 export interface game_plugin_installsGenqlSelection{
-    always_load?: boolean | number
+    cfg?: string | number,
+    load_custom?: boolean | number,
+    load_ranked?: boolean | number,
+    load_tournaments?: boolean | number
     channel?: boolean | number
     created_at?: boolean | number
     disable_server_guidelines?: boolean | number
@@ -50604,11 +50610,11 @@ export interface game_plugin_installs_aggregate_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "game_plugin_installs". All fields are combined with a logical 'AND'. */
-export interface game_plugin_installs_bool_exp {_and?: (game_plugin_installs_bool_exp[] | null),_not?: (game_plugin_installs_bool_exp | null),_or?: (game_plugin_installs_bool_exp[] | null),always_load?: (Boolean_comparison_exp | null),channel?: (e_game_plugin_channels_enum_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),disable_server_guidelines?: (Boolean_comparison_exp | null),enabled?: (Boolean_comparison_exp | null),plugin?: (game_plugins_bool_exp | null),plugin_slug?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),version?: (String_comparison_exp | null)}
+export interface game_plugin_installs_bool_exp {_and?: (game_plugin_installs_bool_exp[] | null),_not?: (game_plugin_installs_bool_exp | null),_or?: (game_plugin_installs_bool_exp[] | null),cfg?: (String_comparison_exp | null),load_custom?: (Boolean_comparison_exp | null),load_ranked?: (Boolean_comparison_exp | null),load_tournaments?: (Boolean_comparison_exp | null),channel?: (e_game_plugin_channels_enum_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),disable_server_guidelines?: (Boolean_comparison_exp | null),enabled?: (Boolean_comparison_exp | null),plugin?: (game_plugins_bool_exp | null),plugin_slug?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),version?: (String_comparison_exp | null)}
 
 
 /** input type for inserting data into table "game_plugin_installs" */
-export interface game_plugin_installs_insert_input {always_load?: (Scalars['Boolean'] | null),channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),disable_server_guidelines?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),plugin?: (game_plugins_obj_rel_insert_input | null),plugin_slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
+export interface game_plugin_installs_insert_input {cfg?: (Scalars['String'] | null),load_custom?: (Scalars['Boolean'] | null),load_ranked?: (Scalars['Boolean'] | null),load_tournaments?: (Scalars['Boolean'] | null),channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),disable_server_guidelines?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),plugin?: (game_plugins_obj_rel_insert_input | null),plugin_slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -50649,7 +50655,7 @@ export interface game_plugin_installs_on_conflict {constraint: game_plugin_insta
 
 
 /** Ordering options when selecting data from "game_plugin_installs". */
-export interface game_plugin_installs_order_by {always_load?: (order_by | null),channel?: (order_by | null),created_at?: (order_by | null),disable_server_guidelines?: (order_by | null),enabled?: (order_by | null),plugin?: (game_plugins_order_by | null),plugin_slug?: (order_by | null),updated_at?: (order_by | null),version?: (order_by | null)}
+export interface game_plugin_installs_order_by {cfg?: (order_by | null),load_custom?: (order_by | null),load_ranked?: (order_by | null),load_tournaments?: (order_by | null),channel?: (order_by | null),created_at?: (order_by | null),disable_server_guidelines?: (order_by | null),enabled?: (order_by | null),plugin?: (game_plugins_order_by | null),plugin_slug?: (order_by | null),updated_at?: (order_by | null),version?: (order_by | null)}
 
 
 /** primary key columns input for table: game_plugin_installs */
@@ -50657,7 +50663,7 @@ export interface game_plugin_installs_pk_columns_input {plugin_slug: Scalars['St
 
 
 /** input type for updating data in table "game_plugin_installs" */
-export interface game_plugin_installs_set_input {always_load?: (Scalars['Boolean'] | null),channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),disable_server_guidelines?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),plugin_slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
+export interface game_plugin_installs_set_input {cfg?: (Scalars['String'] | null),load_custom?: (Scalars['Boolean'] | null),load_ranked?: (Scalars['Boolean'] | null),load_tournaments?: (Scalars['Boolean'] | null),channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),disable_server_guidelines?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),plugin_slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
 
 
 /** Streaming cursor of the table "game_plugin_installs" */
@@ -50669,7 +50675,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface game_plugin_installs_stream_cursor_value_input {always_load?: (Scalars['Boolean'] | null),channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),disable_server_guidelines?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),plugin_slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
+export interface game_plugin_installs_stream_cursor_value_input {cfg?: (Scalars['String'] | null),load_custom?: (Scalars['Boolean'] | null),load_ranked?: (Scalars['Boolean'] | null),load_tournaments?: (Scalars['Boolean'] | null),channel?: (e_game_plugin_channels_enum | null),created_at?: (Scalars['timestamptz'] | null),disable_server_guidelines?: (Scalars['Boolean'] | null),enabled?: (Scalars['Boolean'] | null),plugin_slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),version?: (Scalars['String'] | null)}
 
 export interface game_plugin_installs_updates {
 /** sets the columns of the filtered rows to the given values */
@@ -127597,7 +127603,10 @@ export const enumGamePluginInstallsConstraint = {
 }
 
 export const enumGamePluginInstallsSelectColumn = {
-   always_load: 'always_load' as const,
+   cfg: 'cfg' | 'load_custom' | 'load_ranked' | 'load_tournaments' as const,
+   load_custom: 'cfg' | 'load_custom' | 'load_ranked' | 'load_tournaments' as const,
+   load_ranked: 'cfg' | 'load_custom' | 'load_ranked' | 'load_tournaments' as const,
+   load_tournaments: 'cfg' | 'load_custom' | 'load_ranked' | 'load_tournaments' as const,
    channel: 'channel' as const,
    created_at: 'created_at' as const,
    disable_server_guidelines: 'disable_server_guidelines' as const,
@@ -127608,7 +127617,10 @@ export const enumGamePluginInstallsSelectColumn = {
 }
 
 export const enumGamePluginInstallsUpdateColumn = {
-   always_load: 'always_load' as const,
+   cfg: 'cfg' | 'load_custom' | 'load_ranked' | 'load_tournaments' as const,
+   load_custom: 'cfg' | 'load_custom' | 'load_ranked' | 'load_tournaments' as const,
+   load_ranked: 'cfg' | 'load_custom' | 'load_ranked' | 'load_tournaments' as const,
+   load_tournaments: 'cfg' | 'load_custom' | 'load_ranked' | 'load_tournaments' as const,
    channel: 'channel' as const,
    created_at: 'created_at' as const,
    disable_server_guidelines: 'disable_server_guidelines' as const,

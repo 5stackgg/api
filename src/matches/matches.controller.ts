@@ -5,7 +5,10 @@ import { User } from "../auth/types/User";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import { safeJsonStringify } from "../utilities/safeJsonStringify";
 import { HasuraService } from "../hasura/hasura.service";
-import { GameModesService } from "../game-plugins/game-modes.service";
+import {
+  GameModesService,
+  RequiredPluginMissing,
+} from "../game-plugins/game-modes.service";
 import { MatchAssistantService } from "./match-assistant/match-assistant.service";
 import { DiscordBotOverviewService } from "../discord-bot/discord-bot-overview/discord-bot-overview.service";
 import { DiscordBotMessagingService } from "../discord-bot/discord-bot-messaging/discord-bot-messaging.service";
@@ -317,6 +320,10 @@ export class MatchesController {
         use_playcast: boolean;
         show_elo_ranks: boolean;
         cfg_overrides: Record<string, string>;
+        // The layers to exec after the type cfg, in order. Ordered separately
+        // from cfg_overrides because the map only says which files to write,
+        // and last-exec-wins is the whole contract.
+        cfg_execs: Array<string>;
         game_mode: { slug: string; name: string } | null;
       };
       lineup_1: typeof matches_by_pk.lineup_1 & {
@@ -375,7 +382,7 @@ export class MatchesController {
         __args: {
           where: {
             type: {
-              _in: ["Lan", cfgType],
+              _in: ["Lan", "Global", cfgType],
             },
           },
         },
@@ -384,34 +391,55 @@ export class MatchesController {
       },
     });
 
-    if (match_type_cfgs) {
-      match.options.cfg_overrides = {
-        Lan: "",
-        Competitive: "",
-        Duel: "",
-        Wingman: "",
-      };
+    match.options.cfg_overrides = {
+      Lan: "",
+      Competitive: "",
+      Duel: "",
+      Wingman: "",
+    };
+    match.options.cfg_execs = [];
 
-      for (const cfg of match_type_cfgs) {
-        match.options.cfg_overrides[cfg.type] = cfg.cfg;
+    for (const cfg of match_type_cfgs ?? []) {
+      // Global is a layer of its own rather than a type, so it is exec'd on
+      // top of whichever type config this match already got.
+      if (cfg.type === "Global") {
+        if (cfg.cfg?.trim()) {
+          match.options.cfg_overrides.Global = cfg.cfg;
+          match.options.cfg_execs.push("global");
+        }
+
+        continue;
       }
+
+      match.options.cfg_overrides[cfg.type] = cfg.cfg;
     }
 
-    // The mode's cvars ride the same channel as the type cfgs: the plugin
-    // writes each override to 5stack.<key>.cfg and execs it after the type cfg,
-    // so a mode's settings land last and win.
-    const gameMode = match.options.game_mode_id
-      ? await this.gameModesService.resolve(
-          match.options.game_mode_id as string,
-        )
-      : null;
+    // Resolved against the server rather than the mode id alone, because the
+    // answer has to include always-load plugins to know whose cvars apply.
+    const gameMode = await this.resolveMatchGameMode(
+      serverId as string,
+      match.id,
+      match.options.game_mode_id as string | null,
+    );
+
+    // A loading plugin's own cvars, then the mode's. The plugin writes each
+    // override to 5stack.<key>.cfg and execs the keys named in cfg_execs in
+    // order, so the more specific layer lands last and wins.
+    for (const layer of await this.gameModesService.pluginCfgLayers(gameMode)) {
+      const key = `Plugin.${layer.slug}`;
+
+      match.options.cfg_overrides[key] = layer.cfg;
+      match.options.cfg_execs.push(key.toLowerCase());
+    }
 
     if (gameMode?.cfg) {
-      match.options.cfg_overrides = match.options.cfg_overrides ?? {};
       match.options.cfg_overrides.Mode = gameMode.cfg;
+      match.options.cfg_execs.push("mode");
     }
 
-    match.options.game_mode = gameMode
+    // withAlwaysLoad answers with a nameless mode when the only thing to load
+    // is an always-load plugin; that is not a mode the match is playing under.
+    match.options.game_mode = gameMode?.id
       ? { slug: gameMode.slug, name: gameMode.name }
       : null;
 
@@ -499,6 +527,32 @@ export class MatchesController {
     const data = JSON.parse(safeJsonStringify(match));
 
     response.status(200).json(data);
+  }
+
+  // A mode whose required plugin is missing is fatal when a server is being
+  // built, but not here: the server is already up, and refusing to answer its
+  // match poll over a plugin it may well have would strand a live match. Fall
+  // back to the mode's own cvars and let the boot-time path own the complaint.
+  private async resolveMatchGameMode(
+    serverId: string,
+    matchId: string,
+    gameModeId: string | null,
+  ) {
+    try {
+      return await this.gameModesService.resolveForServer(serverId, matchId);
+    } catch (error) {
+      if (!(error instanceof RequiredPluginMissing)) {
+        throw error;
+      }
+
+      this.logger.warn(
+        `unable to resolve plugins for match ${matchId}: ${error.message}`,
+      );
+
+      return gameModeId
+        ? await this.gameModesService.resolve(gameModeId)
+        : null;
+    }
   }
 
   // Per-player camera health is read straight from Redis: it is the monitor's

@@ -1,9 +1,9 @@
 import { GameModesService, RequiredPluginMissing } from "./game-modes.service";
 
-// always_load shipped broken: the merge lived in environmentFor(), which nothing
-// called, so a plugin marked "load on every match" never reached a server.
-// These pin the merge to resolveForServer, which is what the pod specs use.
-describe("GameModesService always-load plugins", () => {
+// Auto-loading shipped broken: the merge lived in environmentFor(), which
+// nothing called, so a plugin set to load without a mode never reached a
+// server. These pin the merge to resolveForServer, which the pod specs use.
+describe("GameModesService auto-load plugins", () => {
   const build = (rows: Record<string, Array<Record<string, unknown>>>) => {
     const postgres = {
       query: jest.fn(async (sql: string) => {
@@ -20,7 +20,7 @@ describe("GameModesService always-load plugins", () => {
           return rows.guidelines ?? [{ disable: false }];
         }
         if (sql.includes("FROM game_plugin_installs")) {
-          return rows.alwaysLoad ?? [];
+          return rows.autoLoad ?? [];
         }
         return [];
       }),
@@ -41,10 +41,10 @@ describe("GameModesService always-load plugins", () => {
     return { service, postgres };
   };
 
-  it("loads an always-load plugin on a server with no mode at all", async () => {
+  it("loads an auto-load plugin on a server with no mode at all", async () => {
     const { service } = build({
       serverMode: [{ game_mode_id: null }],
-      alwaysLoad: [{ plugin_slug: "stats", version: "1.0.0" }],
+      autoLoad: [{ plugin_slug: "stats", version: "1.0.0" }],
     });
 
     const resolved = await service.resolveForServer("server-1");
@@ -55,13 +55,13 @@ describe("GameModesService always-load plugins", () => {
     expect(resolved?.extraGameParams).toBeNull();
   });
 
-  it("returns nothing when there is neither a mode nor an always-load plugin", async () => {
+  it("returns nothing when there is neither a mode nor an auto-load plugin", async () => {
     const { service } = build({ serverMode: [{ game_mode_id: null }] });
 
     await expect(service.resolveForServer("server-1")).resolves.toBeNull();
   });
 
-  it("appends always-load plugins to a mode's own set", async () => {
+  it("appends auto-load plugins to a mode's own set", async () => {
     const { service } = build({
       serverMode: [{ game_mode_id: "mode-1" }],
       mode: [
@@ -81,7 +81,7 @@ describe("GameModesService always-load plugins", () => {
           version: "2.0.0",
         },
       ],
-      alwaysLoad: [{ plugin_slug: "stats", version: "1.0.0" }],
+      autoLoad: [{ plugin_slug: "stats", version: "1.0.0" }],
     });
 
     const resolved = await service.resolveForServer("server-1");
@@ -110,7 +110,7 @@ describe("GameModesService always-load plugins", () => {
           version: "2.0.0",
         },
       ],
-      alwaysLoad: [{ plugin_slug: "stats", version: "1.0.0" }],
+      autoLoad: [{ plugin_slug: "stats", version: "1.0.0" }],
     });
 
     const resolved = await service.resolveForServer("server-1");
@@ -118,16 +118,16 @@ describe("GameModesService always-load plugins", () => {
     expect(resolved?.enabledPlugins).toEqual("stats@2.0.0");
   });
 
-  it("skips an always-load plugin no node has installed", async () => {
+  it("skips an auto-load plugin no node has installed", async () => {
     const { service } = build({
       serverMode: [{ game_mode_id: null }],
-      alwaysLoad: [{ plugin_slug: "stats", version: null }],
+      autoLoad: [{ plugin_slug: "stats", version: null }],
     });
 
     await expect(service.resolveForServer("server-1")).resolves.toBeNull();
   });
 
-  it("preview merges always-load plugins, which is the whole point of it", async () => {
+  it("preview merges auto-load plugins, which is the whole point of it", async () => {
     const { service } = build({
       mode: [
         {
@@ -146,7 +146,7 @@ describe("GameModesService always-load plugins", () => {
           version: "2.0.0",
         },
       ],
-      alwaysLoad: [{ plugin_slug: "stats", version: "1.0.0" }],
+      autoLoad: [{ plugin_slug: "stats", version: "1.0.0" }],
     });
 
     const preview = await service.previewForMode("mode-1");
@@ -351,7 +351,7 @@ describe("GameModesService server guidelines", () => {
           return rows.modePlugins ?? [];
         }
         if (sql.includes("FROM game_plugin_installs")) {
-          return rows.alwaysLoad ?? [];
+          return rows.autoLoad ?? [];
         }
         return [];
       }),
