@@ -22,6 +22,7 @@ describe("game plugin registry sync (SQL-driven)", () => {
       postgres,
       {} as never,
       {} as never,
+      { add: jest.fn(), getJob: jest.fn() } as never,
     );
 
     global.fetch = (async () => ({

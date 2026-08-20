@@ -1865,6 +1865,13 @@ type Mutation {
 }
 
 type Mutation {
+  setGamePluginAutoUpdate(
+    slug: String!
+    enabled: Boolean!
+  ): SuccessOutput
+}
+
+type Mutation {
   reconcileNodePlugins(
     nodeId: String!
   ): ReconcileNodePluginsOutput

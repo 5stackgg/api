@@ -182,6 +182,282 @@ describe("game plugin install state (SQL-driven)", () => {
     expect(Number(row.target)).toEqual(2);
   });
 
+  // An auto update overwrites the version the moment the node says it is
+  // downloading, so the version it came from has to be carried on the report
+  // or it is gone.
+  describe("recorded progress", () => {
+    const service = () =>
+      new GamePluginsService(
+        { warn: jest.fn(), log: jest.fn() } as never,
+        {} as never,
+        postgres,
+        {} as never,
+        {} as never,
+        { add: jest.fn(), getJob: jest.fn() } as never,
+      );
+
+    const row = async () => {
+      const [record] = await postgres.query<Array<Record<string, any>>>(
+        `SELECT version, previous_version, status, installed_at
+           FROM game_server_node_plugins
+          WHERE game_server_node_id = 'node-1' AND plugin_slug = 'retakes'`,
+      );
+      return record;
+    };
+
+    it("keeps the version an update replaced", async () => {
+      await addNode("node-1");
+      await request();
+
+      await service().recordNodeProgress("node-1", {
+        slug: "retakes",
+        status: "Installed",
+        version: "1.2.0",
+        previousVersion: "1.1.0",
+      });
+
+      expect(await row()).toEqual(
+        expect.objectContaining({
+          version: "1.2.0",
+          previous_version: "1.1.0",
+        }),
+      );
+    });
+
+    it("dates the install only once it lands", async () => {
+      await addNode("node-1");
+      await request();
+
+      await service().recordNodeProgress("node-1", {
+        slug: "retakes",
+        status: "Installing",
+        version: "1.2.0",
+        previousVersion: "1.1.0",
+      });
+
+      expect((await row()).installed_at).toBeNull();
+
+      await service().recordNodeProgress("node-1", {
+        slug: "retakes",
+        status: "Installed",
+        version: "1.2.0",
+        previousVersion: "1.1.0",
+      });
+
+      expect((await row()).installed_at).not.toBeNull();
+    });
+
+    // A plugin uninstalled and then installed again replaced nothing, and a
+    // previous version left sticky from the last time round would have the
+    // notice claim an update that never happened.
+    it("clears the previous version when a new attempt replaces nothing", async () => {
+      await addNode("node-1");
+      await request();
+
+      await service().recordNodeProgress("node-1", {
+        slug: "retakes",
+        status: "Installed",
+        version: "1.2.0",
+        previousVersion: "1.1.0",
+      });
+
+      await service().recordNodeProgress("node-1", {
+        slug: "retakes",
+        status: "Installing",
+        version: "1.3.0",
+        previousVersion: null,
+      });
+
+      expect((await row()).previous_version).toBeNull();
+    });
+
+    // A connector too old to send it still says what it is installing, and the
+    // row still holds what it is replacing.
+    it("reads the replaced version off the row when it is not reported", async () => {
+      await addNode("node-1");
+      await request();
+      await observe("node-1");
+
+      await service().recordNodeProgress("node-1", {
+        slug: "retakes",
+        status: "Installing",
+        version: "1.2.0",
+      });
+
+      expect((await row()).previous_version).toEqual("1.0.0");
+    });
+
+    // Reported once at the start of the install and not again on the failure,
+    // which is the report that has to survive for the notice to say what the
+    // node is still running.
+    it("does not lose the previous version to a later report", async () => {
+      await addNode("node-1");
+      await request();
+
+      await service().recordNodeProgress("node-1", {
+        slug: "retakes",
+        status: "Installing",
+        version: "1.2.0",
+        previousVersion: "1.1.0",
+      });
+
+      await service().recordNodeProgress("node-1", {
+        slug: "retakes",
+        status: "Failed",
+        version: "1.2.0",
+        error: "digest mismatch",
+      });
+
+      expect(await row()).toEqual(
+        expect.objectContaining({
+          status: "Failed",
+          previous_version: "1.1.0",
+        }),
+      );
+    });
+  });
+
+  // Pinning to a version a runtime never published is not a cosmetic mistake:
+  // desiredForNode cannot resolve it, so the plugin drops off that node's
+  // manifest and converge() uninstalls it.
+  describe("the version auto updates are turned off onto", () => {
+    const service = () =>
+      new GamePluginsService(
+        { warn: jest.fn(), log: jest.fn() } as never,
+        {} as never,
+        postgres,
+        {
+          getPluginRuntime: async () => "swiftlys2",
+        } as never,
+        {} as never,
+        { add: jest.fn(), getJob: jest.fn() } as never,
+      );
+
+    const publish = async (version: string, runtime = "swiftlys2") => {
+      await postgres.query(
+        `INSERT INTO game_plugin_versions
+           (plugin_slug, runtime, version, url, sha256, layout, published_at)
+         VALUES ('retakes', $2, $1, 'https://e.test/a.zip', repeat('a', 64), 'csgo', now())`,
+        [version, runtime],
+      );
+    };
+
+    // A node pinning its own runtime has to pin the framework build with it,
+    // and that build has to exist.
+    const pinRuntime = async (nodeId: string, runtime: string) => {
+      await postgres.query(
+        `INSERT INTO plugin_versions (version, runtime, published_at)
+         VALUES ('0.0.1', $1, now()) ON CONFLICT DO NOTHING`,
+        [runtime],
+      );
+      await postgres.query(
+        `UPDATE game_server_nodes
+            SET pin_plugin_runtime = $2, pin_plugin_version = '0.0.1'
+          WHERE id = $1`,
+        [nodeId, runtime],
+      );
+    };
+
+    const pinned = async () => {
+      const [row] = await postgres.query<Array<{ version: string }>>(
+        `SELECT version FROM game_plugin_installs WHERE plugin_slug = 'retakes'`,
+      );
+      return row.version;
+    };
+
+    beforeEach(async () => {
+      await postgres.query("DELETE FROM game_plugin_versions");
+    });
+
+    it("freezes on what the fleet reports running", async () => {
+      await addNode("node-1");
+      await request();
+      await publish("1.0.0");
+      await publish("2.0.0");
+      await observe("node-1");
+
+      await service().setAutoUpdate("retakes", false);
+
+      expect(await pinned()).toEqual("1.0.0");
+    });
+
+    // It is whatever an admin dropped on one node by hand, and it was never a
+    // candidate the panel could hand out.
+    it("ignores a hand-placed copy", async () => {
+      await addNode("node-1");
+      await addNode("node-2");
+      await request();
+      await publish("1.0.0");
+      await observe("node-1");
+      await postgres.query(
+        `UPDATE game_server_node_plugins SET source = 'manual', version = '9.9.9'
+          WHERE game_server_node_id = 'node-1'`,
+      );
+      await observe("node-2");
+
+      await service().setAutoUpdate("retakes", false);
+
+      expect(await pinned()).toEqual("1.0.0");
+    });
+
+    // That node has never had the plugin: desiredForNode cannot resolve it for
+    // a runtime with no build either, so nothing is being stranded. Counting it
+    // meant a single-runtime plugin could not be pinned at all once one node
+    // ran the other framework.
+    it("ignores a runtime that has no build of the plugin at all", async () => {
+      await addNode("node-1");
+      await pinRuntime("node-1", "counterstrikesharp");
+      await addNode("node-2");
+      await request();
+      await publish("1.0.0");
+      await observe("node-2");
+
+      await service().setAutoUpdate("retakes", false);
+
+      expect(await pinned()).toEqual("1.0.0");
+    });
+
+    // Both runtimes run this plugin, so both have to be able to install what it
+    // is pinned to -- desiredForNode drops what it cannot resolve and converge()
+    // uninstalls whatever it is not sent.
+    it("refuses when no one release covers the runtimes running it", async () => {
+      await addNode("node-1");
+      await pinRuntime("node-1", "counterstrikesharp");
+      await addNode("node-2");
+      await request();
+      await publish("1.0.0");
+      await publish("2.0.0", "counterstrikesharp");
+      await observe("node-2");
+
+      await expect(service().setAutoUpdate("retakes", false)).rejects.toThrow(
+        "every runtime running it",
+      );
+    });
+
+    it("pins a version every runtime running it published", async () => {
+      await addNode("node-1");
+      await pinRuntime("node-1", "counterstrikesharp");
+      await addNode("node-2");
+      await request();
+      await publish("1.0.0");
+      await publish("1.0.0", "counterstrikesharp");
+      await observe("node-2");
+
+      await service().setAutoUpdate("retakes", false);
+
+      expect(await pinned()).toEqual("1.0.0");
+    });
+
+    it("turns back on by clearing the pin", async () => {
+      await addNode("node-1");
+      await request("1.0.0");
+
+      await service().setAutoUpdate("retakes", true);
+
+      expect(await pinned()).toBeNull();
+    });
+  });
+
   // The catalog cannot say where a csgo-layout release lands, so the node
   // reports it and the panel opens that rather than a guessed configs folder.
   it("records where the node says the plugin lives", async () => {
@@ -191,6 +467,7 @@ describe("game plugin install state (SQL-driven)", () => {
       postgres,
       {} as never,
       {} as never,
+      { add: jest.fn() } as never,
     );
     await addNode("node-1");
     await request();
