@@ -882,6 +882,7 @@ update_permissions:
         - visibility
         - team_id
         - trajectory_preview
+        - archived_at
       filter:
         can_edit:
           _eq: true
@@ -915,6 +916,7 @@ update_permissions:
         - visibility
         - team_id
         - trajectory_preview
+        - archived_at
       filter:
         can_edit:
           _eq: true
@@ -948,6 +950,7 @@ update_permissions:
         - visibility
         - team_id
         - trajectory_preview
+        - archived_at
       filter:
         can_edit:
           _eq: true
@@ -981,6 +984,7 @@ update_permissions:
         - visibility
         - team_id
         - trajectory_preview
+        - archived_at
       filter:
         can_edit:
           _eq: true
@@ -1014,6 +1018,7 @@ update_permissions:
         - visibility
         - team_id
         - trajectory_preview
+        - archived_at
       filter:
         can_edit:
           _eq: true
@@ -1073,6 +1078,7 @@ update_permissions:
         - visibility
         - team_id
         - trajectory_preview
+        - archived_at
         - author_steam_id
         - origin_source
         - source_match_id
