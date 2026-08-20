@@ -1917,6 +1917,16 @@ type Mutation {
 }
 
 type Mutation {
+  remineUtilityMeta: UtilityRemineOutput
+}
+
+type UtilityRemineOutput {
+  demos: Int!
+  throws: Int!
+  done: Boolean!
+}
+
+type Mutation {
   startUtilityPractice(
     map_name: String!
     region: String

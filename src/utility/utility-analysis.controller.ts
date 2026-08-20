@@ -5,6 +5,8 @@ import { HasuraAction } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
 import { UtilityQueues } from "./enums/UtilityQueues";
 import { UtilityJobs } from "./enums/UtilityJobs";
+import { isRoleAbove } from "../utilities/isRoleAbove";
+import { UtilityMetaService } from "./utility-meta.service";
 import {
   UtilityAnalysisService,
   UtilitySightlinePairInput,
@@ -16,8 +18,28 @@ export class UtilityAnalysisController {
   constructor(
     private readonly analysis: UtilityAnalysisService,
     private readonly drift: UtilityDriftService,
+    private readonly meta: UtilityMetaService,
     @InjectQueue(UtilityQueues.UtilityDrift) private readonly driftQueue: Queue,
   ) {}
+
+  // Re-mining is normally the hourly job's business, but a miner-version bump
+  // changes what every stored throw MEANS, and waiting up to an hour per batch
+  // of 25 demos to see corrected data is not a workable loop.
+  @HasuraAction()
+  public async remineUtilityMeta(data: { user: User }) {
+    if (!data.user || !isRoleAbove(data.user.role, "administrator")) {
+      throw new Error("only an administrator can re-mine demos");
+    }
+
+    const result = await this.meta.mine(UtilityMetaService.DEMOS_PER_RUN);
+
+    return {
+      demos: result.demos,
+      throws: result.throws,
+      // Each call takes one batch; the caller repeats until demos comes back 0.
+      done: result.demos === 0,
+    };
+  }
 
   @HasuraAction()
   public async checkUtilitySightlines(data: {
