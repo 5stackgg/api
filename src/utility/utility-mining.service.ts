@@ -152,6 +152,20 @@ export class UtilityMiningService {
   // older blob falls back to the 4Hz timeline and lands outside this window.
   private static readonly MAX_SAMPLE_LAG_TICKS = 12;
 
+  // How far back to look for the standstill a throw was set up from. A run-up
+  // into a jump throw is over in well under a second; two seconds is generous
+  // and still inside the same engagement.
+  private static readonly SETUP_LOOKBACK_SECONDS = 2;
+
+  // Horizontal units/sec that still counts as standing still, matching the
+  // in-game recorder so a demo-mined lineup and a recorded one agree.
+  private static readonly SETUP_STATIONARY_SPEED = 12;
+
+  // How far above the lowest point in the lookback a sample may sit and still
+  // count as grounded. Without this the apex of a straight-up jump qualifies:
+  // horizontal speed there is zero too.
+  private static readonly SETUP_GROUND_TOLERANCE = 6;
+
   // How far apart the two samples either side of the release may sit before the
   // velocity they imply is an average rather than an instant. The burst puts
   // them one tick apart; without it they are sixteen.
@@ -672,13 +686,25 @@ export class UtilityMiningService {
     const aim = UtilityMiningService.anglesOf(impulse);
     const recorded = stance?.sample;
 
-    const origin = stance?.position ?? {
-      x: thrown.x,
-      y: thrown.y,
-      // Without a position sample the only height we have is the projectile's
-      // spawn, which sits at eye level rather than at the player's feet.
-      z: thrown.z - UtilityMiningService.STANDING_EYE_HEIGHT,
-    };
+    // The origin is where you STAND, so it comes from the standstill the throw
+    // was set up from rather than the release tick. The aim above is untouched
+    // by this: it is derived from the impulse velocity, not from the origin.
+    const setup = UtilityMiningService.setupPosition(
+      samples,
+      thrown.tick,
+      tickRate,
+    );
+
+    const origin = setup
+      ? { x: setup.x, y: setup.y, z: setup.z }
+      : (stance?.position ?? {
+          x: thrown.x,
+          y: thrown.y,
+          // Without a position sample the only height we have is the
+          // projectile's spawn, which sits at eye level rather than at the
+          // player's feet.
+          z: thrown.z - UtilityMiningService.STANDING_EYE_HEIGHT,
+        });
 
     const flightTicks = detonated.tick - thrown.tick;
 
@@ -698,9 +724,11 @@ export class UtilityMiningService {
           ? UtilityMiningService.magnitude(impulse)
           : null,
       origin,
+      // Measured from the setup stance too, and from whether they were crouched
+      // THERE -- a jump throw releases standing even if it was set up ducked.
       eyeZ:
         origin.z +
-        (stance?.ducked
+        ((setup ? setup.ducked === true : stance?.ducked)
           ? UtilityMiningService.DUCKED_EYE_HEIGHT
           : UtilityMiningService.STANDING_EYE_HEIGHT),
       viewYaw: aim.yaw,
@@ -881,6 +909,56 @@ export class UtilityMiningService {
   // meaningful because the parser bursts positions to full rate around a throw
   // -- at the 4Hz baseline the nearest sample can be 125ms and thirty units of
   // running out of date.
+  // Where the thrower was STANDING when they set the throw up, which is not
+  // where they were when it left their hand. A jump throw releases at the apex
+  // and a run throw releases a run-up away, so the release tick answers "where
+  // was the grenade born", never "where do I stand to do this".
+  private static setupPosition(
+    samples: Array<BlobPosition>,
+    tick: number,
+    tickRate: number,
+  ): BlobPosition | null {
+    const lookback =
+      UtilityMiningService.SETUP_LOOKBACK_SECONDS * Math.max(tickRate, 1);
+
+    const window = samples
+      .filter((sample) => sample.tick <= tick && sample.tick >= tick - lookback)
+      .sort((a, b) => a.tick - b.tick);
+
+    if (window.length < 2) {
+      return null;
+    }
+
+    const floor = Math.min(...window.map((sample) => sample.z));
+
+    // Backwards from the release: the LAST standstill before the throw is the
+    // one the player was lining up from.
+    for (let index = window.length - 1; index > 0; index--) {
+      const sample = window[index];
+      const previous = window[index - 1];
+      const seconds = (sample.tick - previous.tick) / Math.max(tickRate, 1);
+
+      if (seconds <= 0) {
+        continue;
+      }
+
+      const speed =
+        Math.hypot(sample.x - previous.x, sample.y - previous.y) / seconds;
+
+      if (speed > UtilityMiningService.SETUP_STATIONARY_SPEED) {
+        continue;
+      }
+
+      if (sample.z > floor + UtilityMiningService.SETUP_GROUND_TOLERANCE) {
+        continue;
+      }
+
+      return sample;
+    }
+
+    return null;
+  }
+
   private static stanceAt(
     samples: Array<BlobPosition>,
     tick: number,
