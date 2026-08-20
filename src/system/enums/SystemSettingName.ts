@@ -45,7 +45,6 @@ export enum SystemSettingName {
   // player idly practising can consume the last slot a scheduled tournament
   // match was going to boot into.
   UtilityPracticeReservedServers = "public.utility_practice_reserved_servers",
-  UtilityPracticeDailyLimit = "public.utility_practice_daily_limit",
   UtilityLineupDailyLimit = "public.utility_lineup_daily_limit",
   // Source units a throw may miss the lineup's landing point by and still
   // count. A CS2 smoke's radius is about 144 units, so the default of 96 is

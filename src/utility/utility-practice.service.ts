@@ -147,7 +147,6 @@ export class UtilityPracticeService {
       // Got one -- stop counting against the people still waiting.
       await this.leaveWaitlist(user.steam_id);
 
-      await this.assertDailyLimit(user.steam_id);
 
       const session = await this.insertSession(user.steam_id, {
         mapName,
@@ -1517,27 +1516,6 @@ export class UtilityPracticeService {
 
     if (free <= headroom) {
       throw Error("no practice servers are free right now");
-    }
-  }
-
-  private async assertDailyLimit(steamId: string): Promise<void> {
-    const limit = Number(
-      (await this.setting(SystemSettingName.UtilityPracticeDailyLimit)) ?? "10",
-    );
-
-    if (!Number.isFinite(limit) || limit <= 0) {
-      return;
-    }
-
-    const [row] = await this.postgres.query<Array<{ count: string }>>(
-      `SELECT COUNT(*) AS count FROM public.utility_practice_sessions
-        WHERE host_steam_id = $1::bigint
-          AND created_at > now() - interval '1 day'`,
-      [steamId],
-    );
-
-    if (Number(row.count) >= limit) {
-      throw Error("you have started too many practice sessions today");
     }
   }
 
