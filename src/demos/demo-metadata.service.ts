@@ -723,9 +723,19 @@ export class DemoMetadataService {
     await this.postgres.query(
       `UPDATE public.match_map_demos
          SET playback_file = $1,
-             playback_size = $2::int
-       WHERE id = $3::uuid`,
-      [key, gz.byteLength, matchMapDemoId],
+             playback_size = $2::int,
+             playback_version = $3::int,
+             parser_version = $4::int
+       WHERE id = $5::uuid`,
+      [
+        key,
+        gz.byteLength,
+        DEMO_METADATA_VERSION,
+        // Null when the parser did not report one, which is itself the answer:
+        // it predates the schema being carried through at all.
+        parsed.schema_version ?? null,
+        matchMapDemoId,
+      ],
     );
     if (prevPlaybackFile && prevPlaybackFile !== key) {
       try {
