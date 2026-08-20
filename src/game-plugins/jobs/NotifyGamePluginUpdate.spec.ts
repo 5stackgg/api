@@ -11,13 +11,19 @@ describe("NotifyGamePluginUpdate", () => {
 
   const updated = {
     slug: "retakes",
+    name: "Retakes",
     version: "1.2.0",
     previousVersion: "1.1.0",
+    error: null as string | null,
     outcome: "updated",
-    nodeId: "node-1",
+    nodes: ["node-1"],
   };
 
-  const failed = { ...updated, outcome: "failed" };
+  const failed = {
+    ...updated,
+    outcome: "failed",
+    error: "digest mismatch",
+  };
 
   beforeEach(() => {
     postgres = { query: jest.fn(async (): Promise<Array<any>> => []) };
@@ -31,9 +37,7 @@ describe("NotifyGamePluginUpdate", () => {
   });
 
   it("names both versions and how far the update reached", async () => {
-    postgres.query
-      .mockResolvedValueOnce([{ name: "Retakes", channel: "Auto" }])
-      .mockResolvedValueOnce([{ count: "3" }]);
+    postgres.query.mockResolvedValue([{ count: "3" }]);
 
     await run(updated);
 
@@ -43,66 +47,64 @@ describe("NotifyGamePluginUpdate", () => {
     expect(sent().message).toContain("3 nodes");
   });
 
-  // Changing a pinned version is somebody typing it in. Reporting it back to
-  // them is noise, and it is the case the toggle exists to make explicit.
-  it("stays quiet about a pinned plugin moving", async () => {
-    postgres.query.mockResolvedValueOnce([
-      { name: "Retakes", channel: "Pinned" },
-    ]);
-
+  // A node installing the plugin for the first time is also on the new
+  // version, and it did not update -- counting it says four nodes updated when
+  // three did.
+  it("counts only the nodes that replaced a version", async () => {
     await run(updated);
 
-    expect(notifications.send).not.toHaveBeenCalled();
+    const [sql] = postgres.query.mock.calls[0];
+
+    expect(sql).toContain("previous_version IS NOT NULL");
+    expect(sql).toContain("previous_version <> version");
   });
 
-  it("says nothing about a plugin that was uninstalled since", async () => {
+  // The failed row is gone by now: the inventory report at the end of the same
+  // pass writes it back to Installed at the version that is still on disk. If
+  // this asked the table anything it would find nothing and say nothing.
+  it("reports a failure the inventory report has already overwritten", async () => {
     postgres.query.mockResolvedValue([]);
-
-    await run(updated);
-
-    expect(notifications.send).not.toHaveBeenCalled();
-  });
-
-  // Which nodes failed, and what they are still running, are the two things an
-  // admin needs before deciding whether it can wait.
-  it("names the nodes that failed and the version they kept", async () => {
-    postgres.query
-      .mockResolvedValueOnce([{ name: "Retakes", channel: "Auto" }])
-      .mockResolvedValueOnce([
-        { game_server_node_id: "node-1", last_error: "digest mismatch" },
-        { game_server_node_id: "node-2", last_error: null },
-      ]);
-
-    await run(failed);
-
-    expect(sent().message).toContain("node-1, node-2");
-    expect(sent().message).toContain("digest mismatch");
-    expect(sent().message).toContain("still running 1.1.0");
-  });
-
-  // A pinned install failing is just as silent as an auto one, so the channel
-  // filter deliberately does not apply here.
-  it("reports a pinned install failing too", async () => {
-    postgres.query
-      .mockResolvedValueOnce([{ name: "Retakes", channel: "Pinned" }])
-      .mockResolvedValueOnce([
-        { game_server_node_id: "node-1", last_error: "404" },
-      ]);
 
     await run(failed);
 
     expect(notifications.send).toHaveBeenCalled();
+    expect(sent().message).toContain("could not install 1.2.0");
+    expect(sent().message).toContain("digest mismatch");
+    expect(sent().message).toContain("still running 1.1.0");
   });
 
-  // converge() retries every five minutes, so by the time this runs the thing
-  // it is about to report may have already fixed itself.
-  it("drops a failure that recovered while the notice waited", async () => {
-    postgres.query
-      .mockResolvedValueOnce([{ name: "Retakes", channel: "Auto" }])
-      .mockResolvedValueOnce([]);
+  it("names nodes by the label the panel shows", async () => {
+    postgres.query.mockResolvedValue([
+      { label: "rack-a" },
+      { label: "rack-b" },
+    ]);
 
+    await run({ ...failed, nodes: ["7f3a", "9c1b"] });
+
+    expect(sent().message).toContain("rack-a, rack-b");
+    expect(sent().message).not.toContain("7f3a");
+  });
+
+  it("falls back to the id for a node with no label", async () => {
+    postgres.query.mockResolvedValue([]);
+
+    await run({ ...failed, nodes: ["node-1"] });
+
+    expect(sent().message).toContain("node-1");
+  });
+
+  // Both notices are per release rather than per type, so the bell and the
+  // device thread one release's news together instead of collapsing it onto
+  // an unrelated node alert.
+  it("keys each notice to the release it is about", async () => {
+    await run(updated);
+
+    expect(sent().entity_id).toEqual("game_plugin_updated:retakes:1.2.0");
+  });
+
+  it("keeps a failure in its own thread", async () => {
     await run(failed);
 
-    expect(notifications.send).not.toHaveBeenCalled();
+    expect(sent().entity_id).toEqual("game_plugin_update_failed:retakes:1.2.0");
   });
 });

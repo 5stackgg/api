@@ -9,12 +9,18 @@ import { DISCORD_COLORS } from "../../notifications/utilities/constants";
 
 type UpdateNotice = {
   slug: string;
+  name: string;
   version: string;
   previousVersion: string | null;
+  error: string | null;
   outcome: "updated" | "failed";
-  nodeId: string;
+  nodes: Array<string>;
 };
 
+// Whether to notify at all was decided before this was queued. What is left is
+// wording it, so there is deliberately no path through here that returns
+// without sending: a completed job holds its id for the dedup window, and a
+// silent completion would take every later notice for the release with it.
 @UseQueue("GamePlugins", GamePluginQueues.Registry)
 export class NotifyGamePluginUpdate extends WorkerHost {
   constructor(
@@ -28,55 +34,40 @@ export class NotifyGamePluginUpdate extends WorkerHost {
   async process(job: Job<UpdateNotice>): Promise<void> {
     const notice = job.data;
 
-    const [install] = await this.postgres.query<
-      Array<{ name: string; channel: string }>
-    >(
-      `SELECT p.name, i.channel
-         FROM public.game_plugin_installs i
-         INNER JOIN public.game_plugins p ON p.slug = i.plugin_slug
-        WHERE i.plugin_slug = $1 AND i.enabled = true`,
-      [notice.slug],
-    );
-
-    // Uninstalled between the report and this running, thirty seconds later.
-    if (!install) {
-      return;
-    }
-
     if (notice.outcome === "failed") {
-      await this.notifyFailed(notice, install.name);
+      await this.notifyFailed(notice);
       return;
     }
 
-    // A pinned install only changes version because an admin changed it, and
-    // they do not need telling what they just did. The whole point of the
-    // notice is the version that moved on its own.
-    if (install.channel !== "Auto") {
-      return;
-    }
-
-    await this.notifyUpdated(notice, install.name);
+    await this.notifyUpdated(notice);
   }
 
-  private async notifyUpdated(
-    notice: UpdateNotice,
-    name: string,
-  ): Promise<void> {
-    const [{ count }] = await this.postgres.query<Array<{ count: string }>>(
+  private async notifyUpdated(notice: UpdateNotice): Promise<void> {
+    // Counted off previous_version rather than off who is on the new build: a
+    // node installing the plugin for the first time is also on it, and it did
+    // not update. previous_version is the one column the end of pass inventory
+    // report leaves alone, so it still says so by the time this runs.
+    const [counted] = await this.postgres.query<Array<{ count: string }>>(
       `SELECT count(*) AS count
          FROM public.game_server_node_plugins
-        WHERE plugin_slug = $1 AND version = $2 AND status = 'Installed'`,
+        WHERE plugin_slug = $1
+          AND version = $2
+          AND previous_version IS NOT NULL
+          AND previous_version <> version`,
       [notice.slug, notice.version],
     );
 
-    const nodes = Number(count);
+    // Never below what the payload already knows: the nodes that booked this
+    // notice reported the update themselves.
+    const nodes = Math.max(Number(counted?.count ?? 0), notice.nodes.length);
 
     await this.notifications.send(
       "GameNodeStatus",
       {
+        entity_id: `game_plugin_updated:${notice.slug}:${notice.version}`,
         title: "Game Plugin Auto-Updated",
         message:
-          `${NotificationsService.escapeHtml(name)} auto-updated from ` +
+          `${NotificationsService.escapeHtml(notice.name)} auto-updated from ` +
           `${NotificationsService.escapeHtml(notice.previousVersion)} to ` +
           `${NotificationsService.escapeHtml(notice.version)} on ` +
           `${nodes === 1 ? "1 node" : `${nodes} nodes`}. ` +
@@ -88,45 +79,28 @@ export class NotifyGamePluginUpdate extends WorkerHost {
     );
   }
 
-  private async notifyFailed(
-    notice: UpdateNotice,
-    name: string,
-  ): Promise<void> {
-    const failed = await this.postgres.query<
-      Array<{ game_server_node_id: string; last_error: string | null }>
-    >(
-      `SELECT game_server_node_id, last_error
-         FROM public.game_server_node_plugins
-        WHERE plugin_slug = $1 AND version = $2 AND status = 'Failed'
-        ORDER BY game_server_node_id`,
-      [notice.slug, notice.version],
-    );
+  // Read off the payload, not off the plugin's rows. A failed update leaves
+  // the previous version sitting on disk, so the inventory report at the end
+  // of the same pass writes the row back to Installed at that version with no
+  // error -- seconds before this runs. The row cannot be asked what failed;
+  // only the node that failed it can say, and it already did.
+  private async notifyFailed(notice: UpdateNotice): Promise<void> {
+    const nodes = await this.labelled(notice.nodes);
 
-    // It recovered on a retry while this sat in its delay -- converge() runs
-    // every five minutes, so that is a real outcome rather than a race.
-    if (failed.length === 0) {
-      return;
-    }
-
-    const error = failed.find((node) => node.last_error)?.last_error;
-
-    const nodes =
-      failed.length > 3
-        ? `${failed.length} nodes`
-        : failed
-            .map((node) =>
-              NotificationsService.escapeHtml(node.game_server_node_id),
-            )
-            .join(", ");
+    const named =
+      nodes.length > 3
+        ? `${nodes.length} nodes`
+        : nodes.map((node) => NotificationsService.escapeHtml(node)).join(", ");
 
     await this.notifications.send(
       "GameNodeStatus",
       {
+        entity_id: `game_plugin_update_failed:${notice.slug}:${notice.version}`,
         title: "Game Plugin Update Failed",
         message:
-          `${NotificationsService.escapeHtml(name)} could not install ` +
-          `${NotificationsService.escapeHtml(notice.version)} on ${nodes}` +
-          `${error ? `: ${NotificationsService.escapeHtml(error)}` : ""}. ` +
+          `${NotificationsService.escapeHtml(notice.name)} could not install ` +
+          `${NotificationsService.escapeHtml(notice.version)} on ${named}` +
+          `${notice.error ? `: ${NotificationsService.escapeHtml(notice.error)}` : ""}. ` +
           (notice.previousVersion
             ? `They are still running ${NotificationsService.escapeHtml(notice.previousVersion)}. `
             : "") +
@@ -136,5 +110,23 @@ export class NotifyGamePluginUpdate extends WorkerHost {
       undefined,
       DISCORD_COLORS.RED,
     );
+  }
+
+  // The id is a hostname nobody named; the label is what the panel puts on the
+  // node everywhere else, so it is what an admin can match to a machine.
+  private async labelled(nodeIds: Array<string>): Promise<Array<string>> {
+    if (nodeIds.length === 0) {
+      return [];
+    }
+
+    const rows = await this.postgres.query<Array<{ label: string }>>(
+      `SELECT COALESCE(label, id) AS label
+         FROM public.game_server_nodes
+        WHERE id = ANY($1::text[])
+        ORDER BY COALESCE(label, id)`,
+      [nodeIds],
+    );
+
+    return rows.length > 0 ? rows.map((row) => row.label) : nodeIds;
   }
 }

@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { InjectQueue } from "@nestjs/bullmq";
-import { Queue } from "bullmq";
+import { Job, Queue } from "bullmq";
 import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { PluginRuntimeService } from "../plugin-runtime/plugin-runtime.service";
@@ -1038,6 +1038,8 @@ export class GamePluginsService {
       error?: string | null;
     },
   ): Promise<void> {
+    const previousVersion = await this.previousVersionFor(nodeId, progress);
+
     await this.postgres.query(
       `INSERT INTO public.game_server_node_plugins
          (game_server_node_id, plugin_slug, runtime, version, previous_version,
@@ -1050,8 +1052,16 @@ export class GamePluginsService {
        ON CONFLICT (game_server_node_id, plugin_slug) DO UPDATE SET
          status = EXCLUDED.status,
          version = COALESCE(EXCLUDED.version, game_server_node_plugins.version),
-         previous_version = COALESCE(
-           EXCLUDED.previous_version, game_server_node_plugins.previous_version),
+         -- Installing opens an attempt and settles what it is replacing, so it
+         -- overwrites -- including back to null, which is what a reinstall
+         -- after an uninstall is. Every later report in the same attempt only
+         -- fills the gap, so a Failed that names no previous version cannot
+         -- erase the one the attempt started with.
+         previous_version = CASE
+           WHEN EXCLUDED.status = 'Installing' THEN EXCLUDED.previous_version
+           ELSE COALESCE(
+             EXCLUDED.previous_version, game_server_node_plugins.previous_version)
+         END,
          runtime = EXCLUDED.runtime,
          last_error = EXCLUDED.last_error,
          installed_at = COALESCE(
@@ -1063,11 +1073,50 @@ export class GamePluginsService {
         progress.version ?? null,
         progress.status,
         progress.error ?? null,
-        progress.previousVersion ?? null,
+        previousVersion,
       ],
     );
 
-    await this.queueUpdateNotice(nodeId, progress);
+    await this.queueUpdateNotice(nodeId, { ...progress, previousVersion });
+  }
+
+  // A connector old enough not to send it still reports the version it is
+  // moving to, and the row still holds the one it is moving from until this
+  // statement overwrites it -- so the answer is here to be read. Without this
+  // the whole feature is inert until every node in the fleet is upgraded.
+  private async previousVersionFor(
+    nodeId: string,
+    progress: {
+      slug: string;
+      status: string;
+      previousVersion?: string | null;
+    },
+  ): Promise<string | null> {
+    if (progress.previousVersion !== undefined) {
+      return progress.previousVersion;
+    }
+
+    if (progress.status !== "Installing" && progress.status !== "Failed") {
+      return null;
+    }
+
+    const [row] = await this.postgres.query<
+      Array<{ version: string | null; previous_version: string | null }>
+    >(
+      `SELECT version, previous_version FROM public.game_server_node_plugins
+        WHERE game_server_node_id = $1 AND plugin_slug = $2`,
+      [nodeId, progress.slug],
+    );
+
+    // Installing is the report that opens the attempt, so what the row still
+    // holds is what is being replaced. By the time the attempt fails that has
+    // already moved into previous_version and `version` is the build that did
+    // not land.
+    return (
+      (progress.status === "Installing"
+        ? row?.version
+        : row?.previous_version) ?? null
+    );
   }
 
   // Both outcomes of a version change are silent otherwise: an Auto install
@@ -1075,10 +1124,11 @@ export class GamePluginsService {
   // build it already had while the panel says Failed to whoever happens to
   // open the page.
   //
-  // The job id is the throttle, not a nicety. converge() retries a failing
-  // install every five minutes forever, and every node reports the same
-  // release separately -- keyed this way a whole fleet moving at once, or one
-  // plugin failing all week, is a single notification either way.
+  // Everything that decides *whether* to notify happens here rather than in
+  // the job. A job that starts and then returns without sending still counts
+  // as completed, and a completed job holds its id for the whole dedup window
+  // -- so a decision made in there does not skip one notice, it suppresses
+  // every later one for that release too.
   private async queueUpdateNotice(
     nodeId: string,
     progress: {
@@ -1086,6 +1136,7 @@ export class GamePluginsService {
       status: string;
       version?: string | null;
       previousVersion?: string | null;
+      error?: string | null;
     },
   ): Promise<void> {
     if (!progress.version) {
@@ -1101,24 +1152,60 @@ export class GamePluginsService {
       return;
     }
 
-    const outcome = updated ? "updated" : "failed";
-
     try {
+      const [install] = await this.postgres.query<
+        Array<{ name: string; channel: string }>
+      >(
+        `SELECT p.name, i.channel
+           FROM public.game_plugin_installs i
+           INNER JOIN public.game_plugins p ON p.slug = i.plugin_slug
+          WHERE i.plugin_slug = $1 AND i.enabled = true`,
+        [progress.slug],
+      );
+
+      if (!install) {
+        return;
+      }
+
+      // A pinned version only ever moves because an admin typed it, and they
+      // do not need telling what they just did. A pinned install *failing* is
+      // exactly as silent as an auto one, so that half is not filtered.
+      if (updated && install.channel !== "Auto") {
+        return;
+      }
+
+      const outcome = updated ? "updated" : "failed";
+      const jobId = `plugin-${outcome}.${progress.slug}.${progress.version}`;
+
+      // Every node reports the same release separately. The first one to get
+      // here books the notice; the rest add themselves to it while it sits in
+      // its delay, which is what makes one notification cover a fleet.
+      const booked = await this.registryQueue.getJob(jobId);
+
+      if (booked) {
+        await this.addNodeToNotice(booked, nodeId);
+        return;
+      }
+
       await this.registryQueue.add(
         NotifyGamePluginUpdate.name,
         {
           slug: progress.slug,
+          name: install.name,
           version: progress.version,
           previousVersion: progress.previousVersion ?? null,
+          error: progress.error ?? null,
           outcome,
-          nodeId,
+          nodes: [nodeId],
         },
         {
-          jobId: `plugin-${outcome}.${progress.slug}.${progress.version}`,
-          // Long enough for the rest of the fleet to report the same release,
-          // so the notice can count nodes instead of naming whichever one was
-          // quickest.
+          jobId,
+          // Long enough for the rest of the fleet to report the same release
+          // and be added to the notice above.
           delay: 30 * 1000,
+          // converge() retries a failing install every five minutes forever,
+          // so without a window this long a bad release is a notification
+          // every five minutes until somebody fixes it.
           removeOnComplete: { age: 7 * 24 * 60 * 60 },
           // A job that threw must not hold its id for the week: the id is what
           // suppresses the retry, and suppressing a notice nobody ever got is
@@ -1131,6 +1218,19 @@ export class GamePluginsService {
         `could not queue the ${progress.slug} update notice: ${error.message ?? error}`,
       );
     }
+  }
+
+  // Racy by nature -- two nodes can read the same job before either writes --
+  // and deliberately left that way. Losing a node off the end of a list is a
+  // worse notification; taking a lock to prevent it is a worse system.
+  private async addNodeToNotice(job: Job, nodeId: string): Promise<void> {
+    const nodes: Array<string> = job.data?.nodes ?? [];
+
+    if (nodes.includes(nodeId)) {
+      return;
+    }
+
+    await job.updateData({ ...job.data, nodes: [...nodes, nodeId] });
   }
 
   // Auto follows the newest release; Pinned stays where it is. Both columns
@@ -1156,43 +1256,59 @@ export class GamePluginsService {
           WHERE plugin_slug = $1`,
         [slug],
       );
-
-      this.nudgeNodes();
-
-      return;
+    } else {
+      await this.postgres.query(
+        `UPDATE public.game_plugin_installs
+            SET channel = 'Pinned', version = $2, updated_at = now()
+          WHERE plugin_slug = $1`,
+        [slug, await this.versionToPin(slug)],
+      );
     }
 
-    await this.postgres.query(
-      `UPDATE public.game_plugin_installs
-          SET channel = 'Pinned', version = $2, updated_at = now()
-        WHERE plugin_slug = $1`,
-      [slug, await this.versionToPin(slug)],
-    );
+    // Both directions, not just the one that rolls forward. Pinning down to an
+    // older build is just as much a change for a node to converge to, and
+    // without the nudge it sits there looking like the toggle did nothing
+    // until the five minute poll comes round.
+    this.nudgeNodes();
   }
 
   // What the fleet is on, preferring the version the most nodes report having
-  // installed. A version no build was ever published for cannot be pinned to:
-  // desiredForNode would resolve nothing and drop the plugin off the manifest
-  // entirely.
+  // installed.
+  //
+  // The candidate has to have a build for every runtime in play, not just the
+  // deployment default. desiredForNode drops a plugin it cannot resolve for a
+  // node's runtime, and converge() uninstalls anything missing from what it is
+  // sent -- so pinning to a version one runtime never published does not leave
+  // those nodes behind, it wipes the plugin off them.
   private async versionToPin(slug: string): Promise<string> {
-    const runtime = await this.pluginRuntime.getPluginRuntime();
+    const runtimes = await this.runtimesInPlay();
 
     const [running] = await this.postgres.query<Array<{ version: string }>>(
       `SELECT p.version
          FROM public.game_server_node_plugins p
         WHERE p.plugin_slug = $1
-          AND p.detected = true
-          AND p.status = 'Installed'
+          -- A hand-placed copy is not a version the panel can pin to: it is
+          -- whatever an admin dropped on that one node, and it would win a
+          -- vote it was never a candidate in.
+          AND p.source = 'managed'
           AND p.version IS NOT NULL
-          AND EXISTS (
-                SELECT 1 FROM public.game_plugin_versions v
-                 WHERE v.plugin_slug = p.plugin_slug
-                   AND v.runtime = $2
-                   AND v.version = p.version)
+          -- needed(runtime), not a bare alias: an unqualified runtime inside
+          -- the inner query binds to the joined table's own column first, so
+          -- the check compared a row to itself and passed for everything.
+          AND NOT EXISTS (
+                SELECT 1 FROM unnest($2::text[]) AS needed(runtime)
+                 WHERE NOT EXISTS (
+                       SELECT 1 FROM public.game_plugin_versions v
+                        WHERE v.plugin_slug = p.plugin_slug
+                          AND v.runtime = needed.runtime
+                          AND v.version = p.version))
         GROUP BY p.version
-        ORDER BY count(*) DESC, max(p.updated_at) DESC
+        ORDER BY count(*) FILTER (
+                   WHERE p.detected AND p.status = 'Installed') DESC,
+                 count(*) DESC,
+                 max(p.updated_at) DESC
         LIMIT 1`,
-      [slug, runtime],
+      [slug, runtimes],
     );
 
     if (running) {
@@ -1200,11 +1316,52 @@ export class GamePluginsService {
     }
 
     // Nothing has reported in yet -- a plugin requested minutes ago, or a
-    // fleet that is entirely offline. The version Auto would hand out right
-    // now is the honest answer to "where are we".
-    const resolved = await this.resolveVersion(slug, runtime);
+    // fleet that is entirely offline. The newest release every runtime in play
+    // can actually install is the honest answer to "where are we".
+    const [publishable] = await this.postgres.query<Array<{ version: string }>>(
+      `SELECT v.version
+         FROM public.game_plugin_versions v
+        WHERE v.plugin_slug = $1
+          AND NOT EXISTS (
+                SELECT 1 FROM unnest($2::text[]) AS needed(runtime)
+                 WHERE NOT EXISTS (
+                       SELECT 1 FROM public.game_plugin_versions o
+                        WHERE o.plugin_slug = v.plugin_slug
+                          AND o.runtime = needed.runtime
+                          AND o.version = v.version))
+        GROUP BY v.version
+        ORDER BY bool_or(v.prerelease) ASC, max(v.published_at) DESC
+        LIMIT 1`,
+      [slug, runtimes],
+    );
 
-    return resolved.version;
+    if (!publishable) {
+      // Refusing is the correct answer rather than a failure to find one:
+      // there is no version that would survive on every node, so there is
+      // nothing to pin to that would not uninstall the plugin somewhere.
+      throw new BadRequestException(
+        `${slug} has no release published for every runtime in use (${runtimes.join(", ")}), so it cannot be pinned`,
+      );
+    }
+
+    return publishable.version;
+  }
+
+  // Every runtime a node could ask for a build of, which is not the same as
+  // the deployment default: a node can pin its own.
+  private async runtimesInPlay(): Promise<Array<string>> {
+    const rows = await this.postgres.query<Array<{ runtime: string }>>(
+      `SELECT DISTINCT COALESCE(pin_plugin_runtime, active_plugin_runtime())
+                AS runtime
+         FROM public.game_server_nodes
+        WHERE enabled = true`,
+    );
+
+    if (rows.length === 0) {
+      return [await this.pluginRuntime.getPluginRuntime()];
+    }
+
+    return rows.map((row) => row.runtime);
   }
 
   private async getNodeIP(nodeId: string): Promise<string> {
