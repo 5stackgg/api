@@ -50,13 +50,15 @@ describe("NotifyGamePluginUpdate", () => {
   // A node installing the plugin for the first time is also on the new
   // version, and it did not update -- counting it says four nodes updated when
   // three did.
-  it("counts only the nodes that replaced a version", async () => {
+  it("counts only the nodes that made the jump it names", async () => {
     await run(updated);
 
-    const [sql] = postgres.query.mock.calls[0];
+    const [sql, bindings] = postgres.query.mock.calls[0];
 
-    expect(sql).toContain("previous_version IS NOT NULL");
-    expect(sql).toContain("previous_version <> version");
+    // A fresh install is on the new version without having updated, and a node
+    // that came off a different build made a different jump.
+    expect(sql).toContain("previous_version = $3");
+    expect(bindings).toEqual(["retakes", "1.2.0", "1.1.0"]);
   });
 
   // The failed row is gone by now: the inventory report at the end of the same

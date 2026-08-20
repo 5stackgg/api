@@ -400,7 +400,11 @@ describe("game plugin install state (SQL-driven)", () => {
       expect(await pinned()).toEqual("1.0.0");
     });
 
-    it("refuses a version one runtime in play never published", async () => {
+    // That node has never had the plugin: desiredForNode cannot resolve it for
+    // a runtime with no build either, so nothing is being stranded. Counting it
+    // meant a single-runtime plugin could not be pinned at all once one node
+    // ran the other framework.
+    it("ignores a runtime that has no build of the plugin at all", async () => {
       await addNode("node-1");
       await pinRuntime("node-1", "counterstrikesharp");
       await addNode("node-2");
@@ -408,12 +412,29 @@ describe("game plugin install state (SQL-driven)", () => {
       await publish("1.0.0");
       await observe("node-2");
 
+      await service().setAutoUpdate("retakes", false);
+
+      expect(await pinned()).toEqual("1.0.0");
+    });
+
+    // Both runtimes run this plugin, so both have to be able to install what it
+    // is pinned to -- desiredForNode drops what it cannot resolve and converge()
+    // uninstalls whatever it is not sent.
+    it("refuses when no one release covers the runtimes running it", async () => {
+      await addNode("node-1");
+      await pinRuntime("node-1", "counterstrikesharp");
+      await addNode("node-2");
+      await request();
+      await publish("1.0.0");
+      await publish("2.0.0", "counterstrikesharp");
+      await observe("node-2");
+
       await expect(service().setAutoUpdate("retakes", false)).rejects.toThrow(
-        "every runtime in use",
+        "every runtime running it",
       );
     });
 
-    it("pins a version every runtime in play published", async () => {
+    it("pins a version every runtime running it published", async () => {
       await addNode("node-1");
       await pinRuntime("node-1", "counterstrikesharp");
       await addNode("node-2");

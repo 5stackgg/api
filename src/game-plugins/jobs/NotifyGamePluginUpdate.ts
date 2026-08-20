@@ -47,14 +47,18 @@ export class NotifyGamePluginUpdate extends WorkerHost {
     // node installing the plugin for the first time is also on it, and it did
     // not update. previous_version is the one column the end of pass inventory
     // report leaves alone, so it still says so by the time this runs.
+    //
+    // Matched against the version this notice names, too. A fleet does not have
+    // to move in step -- some nodes can come off 1.0.0 while others come off
+    // 1.1.0 -- and counting both makes the notice claim ten nodes made a jump
+    // that four of them did not.
     const [counted] = await this.postgres.query<Array<{ count: string }>>(
       `SELECT count(*) AS count
          FROM public.game_server_node_plugins
         WHERE plugin_slug = $1
           AND version = $2
-          AND previous_version IS NOT NULL
-          AND previous_version <> version`,
-      [notice.slug, notice.version],
+          AND previous_version = $3`,
+      [notice.slug, notice.version, notice.previousVersion],
     );
 
     // Never below what the payload already knows: the nodes that booked this

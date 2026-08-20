@@ -240,6 +240,7 @@ describe("GamePluginsService update notices", () => {
   it("adds later nodes to the notice already waiting", async () => {
     const booked = {
       data: { nodes: ["node-1"] },
+      getState: jest.fn(async (): Promise<string> => "delayed"),
       updateData: jest.fn(async (): Promise<void> => undefined),
     };
     queue.getJob.mockResolvedValue(booked);
@@ -260,6 +261,7 @@ describe("GamePluginsService update notices", () => {
   it("does not list the same node twice", async () => {
     const booked = {
       data: { nodes: ["node-1"] },
+      getState: jest.fn(async (): Promise<string> => "delayed"),
       updateData: jest.fn(async (): Promise<void> => undefined),
     };
     queue.getJob.mockResolvedValue(booked);
@@ -272,6 +274,63 @@ describe("GamePluginsService update notices", () => {
     });
 
     expect(booked.updateData).not.toHaveBeenCalled();
+  });
+
+  // updateData succeeds against a completed job, so appending to one edits a
+  // notice that was sent minutes ago and nothing fires. converge() retries
+  // forever, so this is the node that stays broken -- and it would never be
+  // named.
+  it("gives a node that failed after the notice went out its own", async () => {
+    const sent = {
+      data: { nodes: ["node-1"] },
+      getState: jest.fn(async (): Promise<string> => "completed"),
+      updateData: jest.fn(async (): Promise<void> => undefined),
+    };
+    queue.getJob.mockResolvedValue(sent);
+
+    await service.recordNodeProgress("node-2", {
+      slug: "retakes",
+      status: "Failed",
+      version: "1.2.0",
+      error: "digest mismatch",
+    } as any);
+
+    expect(sent.updateData).not.toHaveBeenCalled();
+    expect(options().jobId).toEqual("plugin-failed.retakes.1.2.0.node-2");
+  });
+
+  // The same node retrying every five minutes is exactly what the window is
+  // there to swallow.
+  it("stays quiet for a node already named in a notice that went out", async () => {
+    const sent = {
+      data: { nodes: ["node-1"] },
+      getState: jest.fn(async (): Promise<string> => "completed"),
+      updateData: jest.fn(async (): Promise<void> => undefined),
+    };
+    queue.getJob.mockResolvedValue(sent);
+
+    await report({
+      slug: "retakes",
+      status: "Failed",
+      version: "1.2.0",
+      error: "digest mismatch",
+    });
+
+    expect(queue.add).not.toHaveBeenCalled();
+    expect(sent.updateData).not.toHaveBeenCalled();
+  });
+
+  // Nodes poll on their own timers, so a bad release breaks a fleet over a five
+  // minute spread. Gathering for less names whichever node was quickest.
+  it("gathers for longer than a convergence interval", async () => {
+    await report({
+      slug: "retakes",
+      status: "Failed",
+      version: "1.2.0",
+      error: "digest mismatch",
+    });
+
+    expect(options().delay).toBeGreaterThan(5 * 60 * 1000);
   });
 
   it("records the progress even when the notice cannot be queued", async () => {
@@ -322,10 +381,13 @@ describe("GamePluginsService.setAutoUpdate", () => {
   // Order matters: the pin candidate query unnests its runtimes, so it also
   // mentions "runtime" and would otherwise answer as the runtime lookup.
   const match = (sql: string) => {
+    if (sql.includes("DISTINCT COALESCE(n.pin_plugin_runtime")) {
+      return "runtimes";
+    }
     if (sql.includes("FROM public.game_server_node_plugins p")) {
       return "running";
     }
-    if (sql.includes("DISTINCT COALESCE(pin_plugin_runtime")) {
+    if (sql.includes("DISTINCT COALESCE(n.pin_plugin_runtime")) {
       return "runtimes";
     }
     if (sql.includes("SELECT channel FROM public.game_plugin_installs")) {
@@ -393,7 +455,7 @@ describe("GamePluginsService.setAutoUpdate", () => {
   // the plugin for those nodes, and converge() uninstalls whatever it is not
   // sent -- so the wrong pin does not leave a node behind, it wipes the plugin
   // off it.
-  it("refuses when no version covers every runtime in play", async () => {
+  it("refuses when no one release covers the runtimes running it", async () => {
     responses.running = [];
     responses.publishable = [];
     responses.runtimes = [
@@ -402,7 +464,7 @@ describe("GamePluginsService.setAutoUpdate", () => {
     ];
 
     await expect(service.setAutoUpdate("retakes", false)).rejects.toThrow(
-      "every runtime in use",
+      "every runtime running it",
     );
   });
 

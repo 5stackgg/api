@@ -24,6 +24,10 @@ export class GamePluginsService {
   // URL -- a disk image, a game build -- fails instead of filling the pod.
   private static readonly MAX_ARCHIVE_BYTES = 250 * 1024 * 1024;
 
+  // One convergence interval plus room for a node that was mid-download when
+  // the first report landed. PluginSyncService polls every five minutes.
+  private static readonly NOTICE_GATHER_MS = 6 * 60 * 1000;
+
   private static readonly SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
   private static readonly VERSION = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
@@ -1175,15 +1179,14 @@ export class GamePluginsService {
       }
 
       const outcome = updated ? "updated" : "failed";
-      const jobId = `plugin-${outcome}.${progress.slug}.${progress.version}`;
+      const notice = `plugin-${outcome}.${progress.slug}.${progress.version}`;
 
       // Every node reports the same release separately. The first one to get
       // here books the notice; the rest add themselves to it while it sits in
       // its delay, which is what makes one notification cover a fleet.
-      const booked = await this.registryQueue.getJob(jobId);
+      const jobId = await this.claim(notice, nodeId);
 
-      if (booked) {
-        await this.addNodeToNotice(booked, nodeId);
+      if (!jobId) {
         return;
       }
 
@@ -1200,9 +1203,11 @@ export class GamePluginsService {
         },
         {
           jobId,
-          // Long enough for the rest of the fleet to report the same release
-          // and be added to the notice above.
-          delay: 30 * 1000,
+          // Longer than a node's convergence interval on purpose. Nodes poll on
+          // their own timers, so a release that breaks the fleet breaks it over
+          // a five minute spread -- gathering for less than that names whichever
+          // node was quickest and calls it the whole story.
+          delay: GamePluginsService.NOTICE_GATHER_MS,
           // converge() retries a failing install every five minutes forever,
           // so without a window this long a bad release is a notification
           // every five minutes until somebody fixes it.
@@ -1218,6 +1223,40 @@ export class GamePluginsService {
         `could not queue the ${progress.slug} update notice: ${error.message ?? error}`,
       );
     }
+  }
+
+  // Which id this node should book the notice under, or null if it has nothing
+  // new to say.
+  //
+  // getJob finds a completed job as readily as a waiting one, and updateData
+  // succeeds against it -- so appending without checking edits a notice that
+  // was sent minutes ago and nothing fires. That is the case that matters:
+  // converge() retries forever, so a node that stays broken past the gathering
+  // window would never be named at all, and the notice that did go out would
+  // say one node while the fleet was down.
+  private async claim(notice: string, nodeId: string): Promise<string | null> {
+    const booked = await this.registryQueue.getJob(notice);
+
+    if (!booked) {
+      return notice;
+    }
+
+    const gathering = ["delayed", "waiting", "waiting-children", "paused"];
+
+    if (gathering.includes(await booked.getState())) {
+      await this.addNodeToNotice(booked, nodeId);
+      return null;
+    }
+
+    // Already sent. A node that was in it has said all it has to say -- this is
+    // the five minute retry, and swallowing it is the whole point of the
+    // window. A node that was not is news, and gets a notice of its own on the
+    // same throttle: add() is a no-op while that id is still held.
+    if ((booked.data?.nodes ?? []).includes(nodeId)) {
+      return null;
+    }
+
+    return `${notice}.${nodeId}`;
   }
 
   // Racy by nature -- two nodes can read the same job before either writes --
@@ -1281,7 +1320,7 @@ export class GamePluginsService {
   // sent -- so pinning to a version one runtime never published does not leave
   // those nodes behind, it wipes the plugin off them.
   private async versionToPin(slug: string): Promise<string> {
-    const runtimes = await this.runtimesInPlay();
+    const runtimes = await this.runtimesInPlay(slug);
 
     const [running] = await this.postgres.query<Array<{ version: string }>>(
       `SELECT p.version
@@ -1340,26 +1379,40 @@ export class GamePluginsService {
       // there is no version that would survive on every node, so there is
       // nothing to pin to that would not uninstall the plugin somewhere.
       throw new BadRequestException(
-        `${slug} has no release published for every runtime in use (${runtimes.join(", ")}), so it cannot be pinned`,
+        runtimes.length > 1
+          ? `${slug} has no single release published for every runtime running it (${runtimes.join(", ")}), so it cannot be pinned`
+          : `${slug} has no release to pin to`,
       );
     }
 
     return publishable.version;
   }
 
-  // Every runtime a node could ask for a build of, which is not the same as
-  // the deployment default: a node can pin its own.
-  private async runtimesInPlay(): Promise<Array<string>> {
+  // Every runtime a node could ask this plugin for a build of, which is not the
+  // same as the deployment default: a node can pin its own.
+  //
+  // Only the runtimes that already resolve the plugin count. One that has no
+  // build of it at all is not a node the pin could strand -- desiredForNode
+  // omits the plugin for it under Auto too, so those nodes have never had it
+  // and nothing changes by pinning. Counting them anyway meant a single-runtime
+  // plugin could not have auto updates turned off at all on a fleet where one
+  // node runs the other framework.
+  //
+  // An empty list means nothing to satisfy, and the coverage clauses below
+  // fall through rather than special-casing it.
+  private async runtimesInPlay(slug: string): Promise<Array<string>> {
     const rows = await this.postgres.query<Array<{ runtime: string }>>(
-      `SELECT DISTINCT COALESCE(pin_plugin_runtime, active_plugin_runtime())
+      `SELECT DISTINCT COALESCE(n.pin_plugin_runtime, active_plugin_runtime())
                 AS runtime
-         FROM public.game_server_nodes
-        WHERE enabled = true`,
+         FROM public.game_server_nodes n
+        WHERE n.enabled = true
+          AND EXISTS (
+                SELECT 1 FROM public.game_plugin_versions v
+                 WHERE v.plugin_slug = $1
+                   AND v.runtime = COALESCE(
+                         n.pin_plugin_runtime, active_plugin_runtime()))`,
+      [slug],
     );
-
-    if (rows.length === 0) {
-      return [await this.pluginRuntime.getPluginRuntime()];
-    }
 
     return rows.map((row) => row.runtime);
   }
