@@ -7,7 +7,12 @@ import { MinedLineup, UtilityMiningService } from "./utility-mining.service";
 // Bumping this re-mines every demo. Raise it whenever the derivation changes
 // what it recovers -- a new technique, a corrected angle -- otherwise the fact
 // table is a mix of two different readings of the same throws.
-export const UTILITY_META_MINER_VERSION = 1;
+// 2: the origin is the standstill a throw was set up from rather than the
+// thrower's position at the release tick, which for a jump throw is the apex of
+// the jump and for a run throw is a run-up away from where you stand. Bumping
+// this re-mines every demo already on disk -- the playback blobs already carry
+// the position samples, so nothing needs reparsing.
+export const UTILITY_META_MINER_VERSION = 2;
 
 type PendingDemo = {
   id: string;
