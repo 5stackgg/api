@@ -430,6 +430,66 @@ describe("utility lineups mined from demos (SQL-driven)", () => {
     });
   });
 
+  describe("where the throw is set up from", () => {
+    // A jump throw releases at the apex, so the release tick answers "where was
+    // the grenade born" and never "where do I stand to do this". The origin has
+    // to come from the standstill before the jump.
+    function jumpThrow(groundZ: number, apexZ: number): PlaybackBlob {
+      const blob = blobWith({ throwTick: 1000, origin: { x: -1912, y: 922, z: apexZ } });
+
+      const rows: Array<Record<string, unknown>> = [];
+
+      // Eight ticks standing still on the floor, then a jump peaking exactly at
+      // the release tick.
+      for (let tick = 984; tick <= 1000; tick++) {
+        const airborne = tick > 992;
+        const climb = airborne ? ((tick - 992) / 8) * (apexZ - groundZ) : 0;
+
+        rows.push({
+          round: 3,
+          tick,
+          attacker_steam_id: "76561198000000001",
+          attacker_team: "t",
+          alive: true,
+          x: -1912,
+          y: 922,
+          z: groundZ + climb,
+          yaw: 133.7,
+          pitch: -12.4,
+          health: 100,
+          armor: 100,
+        });
+      }
+
+      (blob as unknown as { positions: unknown }).positions = rows;
+
+      return blob;
+    }
+
+    it("takes the origin from the standstill, not the apex of the jump", () => {
+      const mined = UtilityMiningService.mine(jumpThrow(-167, -113), 7, "de_mirage");
+
+      expect(mined.origin.z).toBeCloseTo(-167, 0);
+    });
+
+    it("measures eye height from that standstill", () => {
+      const mined = UtilityMiningService.mine(jumpThrow(-167, -113), 7, "de_mirage");
+
+      expect(mined.eyeZ).toBeCloseTo(-167 + 64, 0);
+    });
+
+    it("leaves a standing throw exactly where it was thrown", () => {
+      const mined = UtilityMiningService.mine(
+        blobWith({ origin: { x: -1912, y: 922, z: -167 } }),
+        7,
+        "de_mirage",
+      );
+
+      expect(mined.origin.z).toBeCloseTo(-167, 0);
+      expect(mined.origin.x).toBeCloseTo(-1912, 0);
+    });
+  });
+
   describe("classifying the throw", () => {
     it("buckets a full, a half and a drop, and names nothing in between", () => {
       expect(UtilityMiningService.strengthOf(750)).toBe("Full");
