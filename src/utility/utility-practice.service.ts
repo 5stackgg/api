@@ -1184,6 +1184,45 @@ export class UtilityPracticeService {
     return row?.connected === true;
   }
 
+  // Who is actually standing on the practice server. A match server reports
+  // this over the match-events socket, which a practice server has no channel
+  // to -- so without this every session reads as empty and the reaper ends it
+  // while somebody is mid-throw.
+  public async reportOccupancy(
+    serverId: string,
+    steamIds: Array<string>,
+  ): Promise<void> {
+    const session = await this.liveSessionForServer(serverId);
+
+    if (!session) {
+      return;
+    }
+
+    const present = steamIds
+      .map((steamId) => String(steamId ?? "").trim())
+      .filter((steamId) => /^\d{5,20}$/.test(steamId));
+
+    await this.postgres.query(
+      `UPDATE public.match_lineup_players mlp
+          SET is_connected = (mlp.steam_id::text = ANY ($2::text[]))
+         FROM public.match_lineups ml
+        WHERE ml.id = mlp.match_lineup_id
+          AND ml.match_id = $1::uuid
+          AND mlp.is_connected IS DISTINCT FROM (mlp.steam_id::text = ANY ($2::text[]))`,
+      [session.match_id, present],
+    );
+
+    if (present.length > 0) {
+      await this.postgres.query(
+        `UPDATE public.utility_practice_sessions
+            SET first_joined_at = COALESCE(first_joined_at, now())
+          WHERE id = $1::uuid`,
+        [session.session_id],
+      );
+      await this.touch(session.session_id);
+    }
+  }
+
   private async connectedPlayers(matchId: string): Promise<number> {
     const [row] = await this.postgres.query<Array<{ count: string }>>(
       `SELECT COUNT(*) AS count

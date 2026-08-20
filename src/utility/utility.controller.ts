@@ -67,6 +67,22 @@ export class UtilityController {
     }
   }
 
+  // The practice server's heartbeat. It is the only thing that can say who is
+  // on it: no match plugin means no match-events socket to report connects on.
+  @Post("occupancy")
+  @UseGuards(UtilityPluginKeyGuard)
+  public async occupancy(
+    @Req() request: Request,
+    @Body() body: { steam_ids?: Array<string> },
+  ) {
+    await this.practice.reportOccupancy(
+      UtilityController.serverId(request),
+      Array.isArray(body?.steam_ids) ? body.steam_ids : [],
+    );
+
+    return { ok: true };
+  }
+
   @Get("library")
   @UseGuards(UtilityPluginKeyGuard)
   public async library(
