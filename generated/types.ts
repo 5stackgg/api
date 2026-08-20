@@ -29694,7 +29694,16 @@ export default {
             ]
         },
         "game_plugin_installs": {
-            "always_load": [
+            "cfg": [
+                84
+            ],
+            "load_custom": [
+                6
+            ],
+            "load_ranked": [
+                6
+            ],
+            "load_tournaments": [
                 6
             ],
             "channel": [
@@ -29769,7 +29778,16 @@ export default {
             "_or": [
                 1943
             ],
-            "always_load": [
+            "cfg": [
+                86
+            ],
+            "load_custom": [
+                7
+            ],
+            "load_ranked": [
+                7
+            ],
+            "load_tournaments": [
                 7
             ],
             "channel": [
@@ -29802,7 +29820,16 @@ export default {
         },
         "game_plugin_installs_constraint": {},
         "game_plugin_installs_insert_input": {
-            "always_load": [
+            "cfg": [
+                84
+            ],
+            "load_custom": [
+                6
+            ],
+            "load_ranked": [
+                6
+            ],
+            "load_tournaments": [
                 6
             ],
             "channel": [
@@ -29893,7 +29920,16 @@ export default {
             ]
         },
         "game_plugin_installs_order_by": {
-            "always_load": [
+            "cfg": [
+                3373
+            ],
+            "load_custom": [
+                3373
+            ],
+            "load_ranked": [
+                3373
+            ],
+            "load_tournaments": [
                 3373
             ],
             "channel": [
@@ -29934,7 +29970,16 @@ export default {
         },
         "game_plugin_installs_select_column": {},
         "game_plugin_installs_set_input": {
-            "always_load": [
+            "cfg": [
+                84
+            ],
+            "load_custom": [
+                6
+            ],
+            "load_ranked": [
+                6
+            ],
+            "load_tournaments": [
                 6
             ],
             "channel": [
@@ -29974,7 +30019,16 @@ export default {
             ]
         },
         "game_plugin_installs_stream_cursor_value_input": {
-            "always_load": [
+            "cfg": [
+                84
+            ],
+            "load_custom": [
+                6
+            ],
+            "load_ranked": [
+                6
+            ],
+            "load_tournaments": [
                 6
             ],
             "channel": [

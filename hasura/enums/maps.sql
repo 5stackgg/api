@@ -12,7 +12,8 @@ insert into e_game_cfg_types ("value", "description") values
     ('Live', 'Live game configuration'),
     ('Competitive', 'Competitive game configuration'),
     ('Wingman', 'Wingman game configuration'),
-    ('Duel', 'Duel game configuration')
+    ('Duel', 'Duel game configuration'),
+    ('Global', 'Applies to every match, on top of the type configuration')
 on conflict(value) do update set "description" = EXCLUDED."description";
 
 WITH map_data AS (

@@ -13,8 +13,11 @@ select_permissions:
         - version
         - channel
         - enabled
-        - always_load
         - disable_server_guidelines
+        - cfg
+        - load_ranked
+        - load_tournaments
+        - load_custom
         - created_at
         - updated_at
       filter: {}
@@ -29,8 +32,11 @@ insert_permissions:
         - version
         - channel
         - enabled
-        - always_load
         - disable_server_guidelines
+        - cfg
+        - load_ranked
+        - load_tournaments
+        - load_custom
     comment: ""
 update_permissions:
   - role: administrator
@@ -40,8 +46,11 @@ update_permissions:
         - version
         - channel
         - enabled
-        - always_load
         - disable_server_guidelines
+        - cfg
+        - load_ranked
+        - load_tournaments
+        - load_custom
       filter: {}
       check: {}
     comment: ""
