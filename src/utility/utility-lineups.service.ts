@@ -474,6 +474,38 @@ export class UtilityLineupsService {
     return rows;
   }
 
+  // The flight path of one lineup the library already handed this player. The
+  // roster check and the visibility clause are the library's, not a weaker
+  // pair: a practice server may only read a path on behalf of somebody it is
+  // actually hosting, and only for a lineup that player can already see.
+  public async trajectoryFile(
+    context: UtilityServerContext,
+    steamId: string,
+    lineupId: string,
+  ): Promise<string | null> {
+    if (!context.lineupSteamIds.includes(steamId)) {
+      throw Error("player is not in this match lineup");
+    }
+
+    const [row] = await this.postgres.query<
+      Array<{ trajectory_file: string | null }>
+    >(
+      `SELECT l.trajectory_file
+         FROM public.utility_lineups l
+        WHERE l.id = $1::uuid
+          AND public.can_view_utility_lineup(
+                l,
+                json_build_object(
+                  'x-hasura-role', 'user',
+                  'x-hasura-user-id', $2::text
+                )
+              )`,
+      [lineupId, steamId],
+    );
+
+    return row?.trajectory_file ?? null;
+  }
+
   // Scores one throw against the lineup that was loaded. The plugin's own
   // verdict is never what moves the counters: the distance is recomputed from
   // the stored landing point, so a compromised server can at worst report a
