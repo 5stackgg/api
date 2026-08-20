@@ -16,7 +16,6 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { Request } from "express";
-import { ApiKeyGuard } from "../auth/strategies/ApiKeyGuard";
 import { PostgresService } from "../postgres/postgres.service";
 import { SystemSettingName } from "../system/enums/SystemSettingName";
 import { isRoleAbove } from "../utilities/isRoleAbove";
@@ -169,44 +168,41 @@ export class UtilityController {
     }
   }
 
+  // Guarded by the server's own key like every other route here, not by a user
+  // JWT: the practice plugin is the only caller and it authenticates as a
+  // server. The steam id says who on that server is asking, which is what the
+  // visibility check needs -- without it every lookup ran as a guest and no
+  // private lineup ever resolved.
   @Get(":lineupId/trajectory")
-  @UseGuards(ApiKeyGuard)
+  @UseGuards(UtilityPluginKeyGuard)
   public async trajectory(
     @Req() request: Request,
     @Param("lineupId") lineupId: string,
+    @Query("steam_id") steamId: string,
   ): Promise<StreamableFile> {
-    const steamId = request.user?.steam_id ?? null;
+    await this.assertLibraryEnabled();
 
-    const [row] = await this.postgres.query<
-      Array<{ visible: boolean; trajectory_file: string | null }>
-    >(
-      `SELECT public.can_view_utility_lineup(l, $2::json) AS visible,
-              l.trajectory_file
-         FROM public.utility_lineups l
-        WHERE l.id = $1::uuid`,
-      [
+    const context = await this.context(request);
+
+    let file: string | null;
+
+    try {
+      file = await this.lineups.trajectoryFile(
+        context,
+        String(steamId ?? ""),
         lineupId,
-        JSON.stringify({
-          "x-hasura-role": request.user?.role ?? "guest",
-          ...(steamId ? { "x-hasura-user-id": steamId } : {}),
-        }),
-      ],
-    );
-
-    if (!row || !row.visible) {
-      throw new NotFoundException("lineup not found");
+      );
+    } catch (error) {
+      throw new ForbiddenException(
+        (error as Error)?.message ?? "invalid request",
+      );
     }
 
-    if (
-      !row.trajectory_file ||
-      !(await this.artifacts.hasTrajectory(row.trajectory_file))
-    ) {
+    if (!file || !(await this.artifacts.hasTrajectory(file))) {
       throw new NotFoundException("trajectory missing");
     }
 
-    return new StreamableFile(
-      await this.artifacts.readTrajectory(row.trajectory_file),
-    );
+    return new StreamableFile(await this.artifacts.readTrajectory(file));
   }
 
   @Delete(":id")
