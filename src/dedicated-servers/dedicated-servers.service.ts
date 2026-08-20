@@ -251,6 +251,12 @@ export class DedicatedServersService {
                         name: "INSTALL_5STACK_PLUGIN",
                         value: server.type === "Ranked" ? "true" : "false",
                       },
+                      // A practice server runs the utility plugin in the match
+                      // plugin's place -- never both, and never neither.
+                      {
+                        name: "INSTALL_UTILITY_PRACTICE_PLUGIN",
+                        value: server.type === "Practice" ? "true" : "false",
+                      },
                       {
                         name: "GAME_NODE_SERVER",
                         value: "true",
