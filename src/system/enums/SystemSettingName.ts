@@ -39,6 +39,8 @@ export enum SystemSettingName {
   UtilityPracticeEnabled = "public.utility_practice_enabled",
   // Minutes an empty practice server is kept alive before the reaper stops it.
   UtilityPracticeIdleMinutes = "public.utility_practice_idle_minutes",
+  UtilityPracticeConnectMinutes = "public.utility_practice_connect_minutes",
+  UtilityPracticeMaxMinutes = "public.utility_practice_max_minutes",
   // On-demand server slots a practice session will never take. Without it a
   // player idly practising can consume the last slot a scheduled tournament
   // match was going to boot into.
