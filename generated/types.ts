@@ -132151,6 +132151,18 @@ export default {
                     ]
                 }
             ],
+            "public_requested_at": [
+                5083
+            ],
+            "public_review_note": [
+                84
+            ],
+            "public_reviewed_at": [
+                5083
+            ],
+            "public_reviewed_by": [
+                297
+            ],
             "repairs": [
                 5893,
                 {
@@ -132749,6 +132761,9 @@ export default {
             "practice_successes": [
                 32
             ],
+            "public_reviewed_by": [
+                32
+            ],
             "source_grenade_id": [
                 32
             ],
@@ -132833,6 +132848,9 @@ export default {
                 3502
             ],
             "practice_successes": [
+                3502
+            ],
+            "public_reviewed_by": [
                 3502
             ],
             "source_grenade_id": [
@@ -133004,6 +133022,18 @@ export default {
             ],
             "progress_aggregate": [
                 5836
+            ],
+            "public_requested_at": [
+                5084
+            ],
+            "public_review_note": [
+                86
+            ],
+            "public_reviewed_at": [
+                5084
+            ],
+            "public_reviewed_by": [
+                299
             ],
             "repairs": [
                 5912
@@ -133182,6 +133212,9 @@ export default {
             "practice_successes": [
                 41
             ],
+            "public_reviewed_by": [
+                297
+            ],
             "source_grenade_id": [
                 41
             ],
@@ -133315,6 +133348,18 @@ export default {
             ],
             "progress": [
                 5850
+            ],
+            "public_requested_at": [
+                5083
+            ],
+            "public_review_note": [
+                84
+            ],
+            "public_reviewed_at": [
+                5083
+            ],
+            "public_reviewed_by": [
+                297
             ],
             "repairs": [
                 5909
@@ -133498,6 +133543,18 @@ export default {
             "practice_successes": [
                 41
             ],
+            "public_requested_at": [
+                5083
+            ],
+            "public_review_note": [
+                84
+            ],
+            "public_reviewed_at": [
+                5083
+            ],
+            "public_reviewed_by": [
+                297
+            ],
             "source_grenade_id": [
                 41
             ],
@@ -133639,6 +133696,18 @@ export default {
                 3502
             ],
             "practice_successes": [
+                3502
+            ],
+            "public_requested_at": [
+                3502
+            ],
+            "public_review_note": [
+                3502
+            ],
+            "public_reviewed_at": [
+                3502
+            ],
+            "public_reviewed_by": [
                 3502
             ],
             "source_grenade_id": [
@@ -133790,6 +133859,18 @@ export default {
             "practice_successes": [
                 41
             ],
+            "public_requested_at": [
+                5083
+            ],
+            "public_review_note": [
+                84
+            ],
+            "public_reviewed_at": [
+                5083
+            ],
+            "public_reviewed_by": [
+                297
+            ],
             "source_grenade_id": [
                 41
             ],
@@ -133931,6 +134012,18 @@ export default {
                 3502
             ],
             "practice_successes": [
+                3502
+            ],
+            "public_requested_at": [
+                3502
+            ],
+            "public_review_note": [
+                3502
+            ],
+            "public_reviewed_at": [
+                3502
+            ],
+            "public_reviewed_by": [
                 3502
             ],
             "source_grenade_id": [
@@ -134148,6 +134241,18 @@ export default {
             "progress_aggregate": [
                 5849
             ],
+            "public_requested_at": [
+                3502
+            ],
+            "public_review_note": [
+                3502
+            ],
+            "public_reviewed_at": [
+                3502
+            ],
+            "public_reviewed_by": [
+                3502
+            ],
             "repairs_aggregate": [
                 5908
             ],
@@ -134354,6 +134459,18 @@ export default {
             "practice_successes": [
                 41
             ],
+            "public_requested_at": [
+                5083
+            ],
+            "public_review_note": [
+                84
+            ],
+            "public_reviewed_at": [
+                5083
+            ],
+            "public_reviewed_by": [
+                297
+            ],
             "side": [
                 1392
             ],
@@ -134488,6 +134605,9 @@ export default {
             "practice_successes": [
                 32
             ],
+            "public_reviewed_by": [
+                32
+            ],
             "source_grenade_id": [
                 32
             ],
@@ -134572,6 +134692,9 @@ export default {
                 3502
             ],
             "practice_successes": [
+                3502
+            ],
+            "public_reviewed_by": [
                 3502
             ],
             "source_grenade_id": [
@@ -134663,6 +134786,9 @@ export default {
             "practice_successes": [
                 32
             ],
+            "public_reviewed_by": [
+                32
+            ],
             "source_grenade_id": [
                 32
             ],
@@ -134747,6 +134873,9 @@ export default {
                 3502
             ],
             "practice_successes": [
+                3502
+            ],
+            "public_reviewed_by": [
                 3502
             ],
             "source_grenade_id": [
@@ -134838,6 +134967,9 @@ export default {
             "practice_successes": [
                 32
             ],
+            "public_reviewed_by": [
+                32
+            ],
             "source_grenade_id": [
                 32
             ],
@@ -134922,6 +135054,9 @@ export default {
                 3502
             ],
             "practice_successes": [
+                3502
+            ],
+            "public_reviewed_by": [
                 3502
             ],
             "source_grenade_id": [
@@ -135057,6 +135192,18 @@ export default {
             "practice_successes": [
                 41
             ],
+            "public_requested_at": [
+                5083
+            ],
+            "public_review_note": [
+                84
+            ],
+            "public_reviewed_at": [
+                5083
+            ],
+            "public_reviewed_by": [
+                297
+            ],
             "side": [
                 1392
             ],
@@ -135191,6 +135338,9 @@ export default {
             "practice_successes": [
                 41
             ],
+            "public_reviewed_by": [
+                297
+            ],
             "source_grenade_id": [
                 41
             ],
@@ -135275,6 +135425,9 @@ export default {
                 3502
             ],
             "practice_successes": [
+                3502
+            ],
+            "public_reviewed_by": [
                 3502
             ],
             "source_grenade_id": [
@@ -135396,6 +135549,9 @@ export default {
             "practice_successes": [
                 32
             ],
+            "public_reviewed_by": [
+                32
+            ],
             "source_grenade_id": [
                 32
             ],
@@ -135480,6 +135636,9 @@ export default {
                 3502
             ],
             "practice_successes": [
+                3502
+            ],
+            "public_reviewed_by": [
                 3502
             ],
             "source_grenade_id": [
@@ -135571,6 +135730,9 @@ export default {
             "practice_successes": [
                 32
             ],
+            "public_reviewed_by": [
+                32
+            ],
             "source_grenade_id": [
                 32
             ],
@@ -135655,6 +135817,9 @@ export default {
                 3502
             ],
             "practice_successes": [
+                3502
+            ],
+            "public_reviewed_by": [
                 3502
             ],
             "source_grenade_id": [
@@ -135746,6 +135911,9 @@ export default {
             "practice_successes": [
                 32
             ],
+            "public_reviewed_by": [
+                32
+            ],
             "source_grenade_id": [
                 32
             ],
@@ -135830,6 +135998,9 @@ export default {
                 3502
             ],
             "practice_successes": [
+                3502
+            ],
+            "public_reviewed_by": [
                 3502
             ],
             "source_grenade_id": [

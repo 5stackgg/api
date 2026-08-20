@@ -35209,6 +35209,10 @@ export interface utility_lineups {
     progress: utility_lineup_progress[]
     /** An aggregate relationship */
     progress_aggregate: utility_lineup_progress_aggregate
+    public_requested_at: (Scalars['timestamptz'] | null)
+    public_review_note: (Scalars['String'] | null)
+    public_reviewed_at: (Scalars['timestamptz'] | null)
+    public_reviewed_by: (Scalars['bigint'] | null)
     /** An array relationship */
     repairs: utility_lineup_repairs[]
     /** An aggregate relationship */
@@ -35298,6 +35302,7 @@ export interface utility_lineups_avg_fields {
     practice_attempts: (Scalars['Float'] | null)
     practice_players: (Scalars['Float'] | null)
     practice_successes: (Scalars['Float'] | null)
+    public_reviewed_by: (Scalars['Float'] | null)
     source_grenade_id: (Scalars['Float'] | null)
     trajectory_size: (Scalars['Float'] | null)
     upvotes: (Scalars['Float'] | null)
@@ -35349,6 +35354,10 @@ export interface utility_lineups_max_fields {
     practice_attempts: (Scalars['Int'] | null)
     practice_players: (Scalars['Int'] | null)
     practice_successes: (Scalars['Int'] | null)
+    public_requested_at: (Scalars['timestamptz'] | null)
+    public_review_note: (Scalars['String'] | null)
+    public_reviewed_at: (Scalars['timestamptz'] | null)
+    public_reviewed_by: (Scalars['bigint'] | null)
     source_grenade_id: (Scalars['Int'] | null)
     source_match_id: (Scalars['uuid'] | null)
     source_match_map_id: (Scalars['uuid'] | null)
@@ -35405,6 +35414,10 @@ export interface utility_lineups_min_fields {
     practice_attempts: (Scalars['Int'] | null)
     practice_players: (Scalars['Int'] | null)
     practice_successes: (Scalars['Int'] | null)
+    public_requested_at: (Scalars['timestamptz'] | null)
+    public_review_note: (Scalars['String'] | null)
+    public_reviewed_at: (Scalars['timestamptz'] | null)
+    public_reviewed_by: (Scalars['bigint'] | null)
     source_grenade_id: (Scalars['Int'] | null)
     source_match_id: (Scalars['uuid'] | null)
     source_match_map_id: (Scalars['uuid'] | null)
@@ -35436,7 +35449,7 @@ export interface utility_lineups_mutation_response {
 
 
 /** select columns of table "utility_lineups" */
-export type utility_lineups_select_column = 'archived_at' | 'author_steam_id' | 'confidence' | 'created_at' | 'description' | 'downvotes' | 'external_id' | 'eye_z' | 'favorites' | 'flight_time_ms' | 'forked_from_utility_lineup_id' | 'id' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'jump_throw_bind' | 'land_x' | 'land_y' | 'land_z' | 'lineup_bucket' | 'map_name' | 'name' | 'origin_source' | 'origin_x' | 'origin_y' | 'origin_z' | 'practice_attempts' | 'practice_players' | 'practice_successes' | 'side' | 'source_grenade_id' | 'source_match_id' | 'source_match_map_id' | 'source_url' | 'tags' | 'team_id' | 'technique' | 'throw_strength' | 'trajectory_file' | 'trajectory_preview' | 'trajectory_size' | 'updated_at' | 'upvotes' | 'utility_type' | 'verified_at' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta' | 'visibility' | 'workshop_map_id'
+export type utility_lineups_select_column = 'archived_at' | 'author_steam_id' | 'confidence' | 'created_at' | 'description' | 'downvotes' | 'external_id' | 'eye_z' | 'favorites' | 'flight_time_ms' | 'forked_from_utility_lineup_id' | 'id' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'jump_throw_bind' | 'land_x' | 'land_y' | 'land_z' | 'lineup_bucket' | 'map_name' | 'name' | 'origin_source' | 'origin_x' | 'origin_y' | 'origin_z' | 'practice_attempts' | 'practice_players' | 'practice_successes' | 'public_requested_at' | 'public_review_note' | 'public_reviewed_at' | 'public_reviewed_by' | 'side' | 'source_grenade_id' | 'source_match_id' | 'source_match_map_id' | 'source_url' | 'tags' | 'team_id' | 'technique' | 'throw_strength' | 'trajectory_file' | 'trajectory_preview' | 'trajectory_size' | 'updated_at' | 'upvotes' | 'utility_type' | 'verified_at' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta' | 'visibility' | 'workshop_map_id'
 
 
 /** select "utility_lineups_aggregate_bool_exp_avg_arguments_columns" columns of table "utility_lineups" */
@@ -35503,6 +35516,7 @@ export interface utility_lineups_stddev_fields {
     practice_attempts: (Scalars['Float'] | null)
     practice_players: (Scalars['Float'] | null)
     practice_successes: (Scalars['Float'] | null)
+    public_reviewed_by: (Scalars['Float'] | null)
     source_grenade_id: (Scalars['Float'] | null)
     trajectory_size: (Scalars['Float'] | null)
     upvotes: (Scalars['Float'] | null)
@@ -35538,6 +35552,7 @@ export interface utility_lineups_stddev_pop_fields {
     practice_attempts: (Scalars['Float'] | null)
     practice_players: (Scalars['Float'] | null)
     practice_successes: (Scalars['Float'] | null)
+    public_reviewed_by: (Scalars['Float'] | null)
     source_grenade_id: (Scalars['Float'] | null)
     trajectory_size: (Scalars['Float'] | null)
     upvotes: (Scalars['Float'] | null)
@@ -35573,6 +35588,7 @@ export interface utility_lineups_stddev_samp_fields {
     practice_attempts: (Scalars['Float'] | null)
     practice_players: (Scalars['Float'] | null)
     practice_successes: (Scalars['Float'] | null)
+    public_reviewed_by: (Scalars['Float'] | null)
     source_grenade_id: (Scalars['Float'] | null)
     trajectory_size: (Scalars['Float'] | null)
     upvotes: (Scalars['Float'] | null)
@@ -35608,6 +35624,7 @@ export interface utility_lineups_sum_fields {
     practice_attempts: (Scalars['Int'] | null)
     practice_players: (Scalars['Int'] | null)
     practice_successes: (Scalars['Int'] | null)
+    public_reviewed_by: (Scalars['bigint'] | null)
     source_grenade_id: (Scalars['Int'] | null)
     trajectory_size: (Scalars['Int'] | null)
     upvotes: (Scalars['Int'] | null)
@@ -35620,7 +35637,7 @@ export interface utility_lineups_sum_fields {
 
 
 /** update columns of table "utility_lineups" */
-export type utility_lineups_update_column = 'archived_at' | 'author_steam_id' | 'confidence' | 'created_at' | 'description' | 'downvotes' | 'external_id' | 'eye_z' | 'favorites' | 'flight_time_ms' | 'forked_from_utility_lineup_id' | 'id' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'jump_throw_bind' | 'land_x' | 'land_y' | 'land_z' | 'map_name' | 'name' | 'origin_source' | 'origin_x' | 'origin_y' | 'origin_z' | 'practice_attempts' | 'practice_players' | 'practice_successes' | 'side' | 'source_grenade_id' | 'source_match_id' | 'source_match_map_id' | 'source_url' | 'tags' | 'team_id' | 'technique' | 'throw_strength' | 'trajectory_file' | 'trajectory_preview' | 'trajectory_size' | 'updated_at' | 'upvotes' | 'utility_type' | 'verified_at' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta' | 'visibility' | 'workshop_map_id'
+export type utility_lineups_update_column = 'archived_at' | 'author_steam_id' | 'confidence' | 'created_at' | 'description' | 'downvotes' | 'external_id' | 'eye_z' | 'favorites' | 'flight_time_ms' | 'forked_from_utility_lineup_id' | 'id' | 'initial_pos_x' | 'initial_pos_y' | 'initial_pos_z' | 'initial_vel_x' | 'initial_vel_y' | 'initial_vel_z' | 'jump_throw_bind' | 'land_x' | 'land_y' | 'land_z' | 'map_name' | 'name' | 'origin_source' | 'origin_x' | 'origin_y' | 'origin_z' | 'practice_attempts' | 'practice_players' | 'practice_successes' | 'public_requested_at' | 'public_review_note' | 'public_reviewed_at' | 'public_reviewed_by' | 'side' | 'source_grenade_id' | 'source_match_id' | 'source_match_map_id' | 'source_url' | 'tags' | 'team_id' | 'technique' | 'throw_strength' | 'trajectory_file' | 'trajectory_preview' | 'trajectory_size' | 'updated_at' | 'upvotes' | 'utility_type' | 'verified_at' | 'view_pitch' | 'view_pitch_delta' | 'view_yaw' | 'view_yaw_delta' | 'visibility' | 'workshop_map_id'
 
 
 /** aggregate var_pop on columns */
@@ -35647,6 +35664,7 @@ export interface utility_lineups_var_pop_fields {
     practice_attempts: (Scalars['Float'] | null)
     practice_players: (Scalars['Float'] | null)
     practice_successes: (Scalars['Float'] | null)
+    public_reviewed_by: (Scalars['Float'] | null)
     source_grenade_id: (Scalars['Float'] | null)
     trajectory_size: (Scalars['Float'] | null)
     upvotes: (Scalars['Float'] | null)
@@ -35682,6 +35700,7 @@ export interface utility_lineups_var_samp_fields {
     practice_attempts: (Scalars['Float'] | null)
     practice_players: (Scalars['Float'] | null)
     practice_successes: (Scalars['Float'] | null)
+    public_reviewed_by: (Scalars['Float'] | null)
     source_grenade_id: (Scalars['Float'] | null)
     trajectory_size: (Scalars['Float'] | null)
     upvotes: (Scalars['Float'] | null)
@@ -35717,6 +35736,7 @@ export interface utility_lineups_variance_fields {
     practice_attempts: (Scalars['Float'] | null)
     practice_players: (Scalars['Float'] | null)
     practice_successes: (Scalars['Float'] | null)
+    public_reviewed_by: (Scalars['Float'] | null)
     source_grenade_id: (Scalars['Float'] | null)
     trajectory_size: (Scalars['Float'] | null)
     upvotes: (Scalars['Float'] | null)
@@ -109606,6 +109626,10 @@ export interface utility_lineupsGenqlSelection{
     order_by?: (utility_lineup_progress_order_by[] | null), 
     /** filter the rows returned */
     where?: (utility_lineup_progress_bool_exp | null)} })
+    public_requested_at?: boolean | number
+    public_review_note?: boolean | number
+    public_reviewed_at?: boolean | number
+    public_reviewed_by?: boolean | number
     /** An array relationship */
     repairs?: (utility_lineup_repairsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -109782,6 +109806,7 @@ export interface utility_lineups_avg_fieldsGenqlSelection{
     practice_attempts?: boolean | number
     practice_players?: boolean | number
     practice_successes?: boolean | number
+    public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
     upvotes?: boolean | number
@@ -109795,11 +109820,11 @@ export interface utility_lineups_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "utility_lineups" */
-export interface utility_lineups_avg_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_avg_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "utility_lineups". All fields are combined with a logical 'AND'. */
-export interface utility_lineups_bool_exp {_and?: (utility_lineups_bool_exp[] | null),_not?: (utility_lineups_bool_exp | null),_or?: (utility_lineups_bool_exp[] | null),archived_at?: (timestamptz_comparison_exp | null),author?: (players_bool_exp | null),author_steam_id?: (bigint_comparison_exp | null),can_edit?: (Boolean_comparison_exp | null),can_view?: (Boolean_comparison_exp | null),collection_items?: (utility_collection_items_bool_exp | null),collection_items_aggregate?: (utility_collection_items_aggregate_bool_exp | null),confidence?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),difficulty?: (String_comparison_exp | null),downvotes?: (Int_comparison_exp | null),external_id?: (String_comparison_exp | null),eye_z?: (float8_comparison_exp | null),favorited_by?: (utility_lineup_favorites_bool_exp | null),favorited_by_aggregate?: (utility_lineup_favorites_aggregate_bool_exp | null),favorites?: (Int_comparison_exp | null),flight_time_ms?: (Int_comparison_exp | null),forked_from?: (utility_lineups_bool_exp | null),forked_from_utility_lineup_id?: (uuid_comparison_exp | null),id?: (uuid_comparison_exp | null),initial_pos_x?: (float8_comparison_exp | null),initial_pos_y?: (float8_comparison_exp | null),initial_pos_z?: (float8_comparison_exp | null),initial_vel_x?: (float8_comparison_exp | null),initial_vel_y?: (float8_comparison_exp | null),initial_vel_z?: (float8_comparison_exp | null),is_favorited?: (Boolean_comparison_exp | null),jump_throw_bind?: (Boolean_comparison_exp | null),land_x?: (float8_comparison_exp | null),land_y?: (float8_comparison_exp | null),land_z?: (float8_comparison_exp | null),lineup_bucket?: (String_comparison_exp | null),map_name?: (String_comparison_exp | null),my_vote?: (smallint_comparison_exp | null),name?: (String_comparison_exp | null),origin_source?: (e_utility_sources_enum_comparison_exp | null),origin_x?: (float8_comparison_exp | null),origin_y?: (float8_comparison_exp | null),origin_z?: (float8_comparison_exp | null),practice_attempts?: (Int_comparison_exp | null),practice_players?: (Int_comparison_exp | null),practice_successes?: (Int_comparison_exp | null),progress?: (utility_lineup_progress_bool_exp | null),progress_aggregate?: (utility_lineup_progress_aggregate_bool_exp | null),repairs?: (utility_lineup_repairs_bool_exp | null),repairs_aggregate?: (utility_lineup_repairs_aggregate_bool_exp | null),side?: (e_sides_enum_comparison_exp | null),source_grenade_id?: (Int_comparison_exp | null),source_match?: (matches_bool_exp | null),source_match_id?: (uuid_comparison_exp | null),source_match_map?: (match_maps_bool_exp | null),source_match_map_id?: (uuid_comparison_exp | null),source_url?: (String_comparison_exp | null),tags?: (String_array_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),technique?: (e_utility_techniques_enum_comparison_exp | null),throw_strength?: (e_utility_throw_strengths_enum_comparison_exp | null),trajectory_file?: (String_comparison_exp | null),trajectory_preview?: (jsonb_comparison_exp | null),trajectory_size?: (Int_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),upvotes?: (Int_comparison_exp | null),utility_type?: (e_utility_types_enum_comparison_exp | null),verified_at?: (timestamptz_comparison_exp | null),view_pitch?: (float8_comparison_exp | null),view_pitch_delta?: (float8_comparison_exp | null),view_yaw?: (float8_comparison_exp | null),view_yaw_delta?: (float8_comparison_exp | null),visibility?: (e_utility_visibility_enum_comparison_exp | null),votes?: (utility_lineup_votes_bool_exp | null),votes_aggregate?: (utility_lineup_votes_aggregate_bool_exp | null),workshop_map_id?: (String_comparison_exp | null)}
+export interface utility_lineups_bool_exp {_and?: (utility_lineups_bool_exp[] | null),_not?: (utility_lineups_bool_exp | null),_or?: (utility_lineups_bool_exp[] | null),archived_at?: (timestamptz_comparison_exp | null),author?: (players_bool_exp | null),author_steam_id?: (bigint_comparison_exp | null),can_edit?: (Boolean_comparison_exp | null),can_view?: (Boolean_comparison_exp | null),collection_items?: (utility_collection_items_bool_exp | null),collection_items_aggregate?: (utility_collection_items_aggregate_bool_exp | null),confidence?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),difficulty?: (String_comparison_exp | null),downvotes?: (Int_comparison_exp | null),external_id?: (String_comparison_exp | null),eye_z?: (float8_comparison_exp | null),favorited_by?: (utility_lineup_favorites_bool_exp | null),favorited_by_aggregate?: (utility_lineup_favorites_aggregate_bool_exp | null),favorites?: (Int_comparison_exp | null),flight_time_ms?: (Int_comparison_exp | null),forked_from?: (utility_lineups_bool_exp | null),forked_from_utility_lineup_id?: (uuid_comparison_exp | null),id?: (uuid_comparison_exp | null),initial_pos_x?: (float8_comparison_exp | null),initial_pos_y?: (float8_comparison_exp | null),initial_pos_z?: (float8_comparison_exp | null),initial_vel_x?: (float8_comparison_exp | null),initial_vel_y?: (float8_comparison_exp | null),initial_vel_z?: (float8_comparison_exp | null),is_favorited?: (Boolean_comparison_exp | null),jump_throw_bind?: (Boolean_comparison_exp | null),land_x?: (float8_comparison_exp | null),land_y?: (float8_comparison_exp | null),land_z?: (float8_comparison_exp | null),lineup_bucket?: (String_comparison_exp | null),map_name?: (String_comparison_exp | null),my_vote?: (smallint_comparison_exp | null),name?: (String_comparison_exp | null),origin_source?: (e_utility_sources_enum_comparison_exp | null),origin_x?: (float8_comparison_exp | null),origin_y?: (float8_comparison_exp | null),origin_z?: (float8_comparison_exp | null),practice_attempts?: (Int_comparison_exp | null),practice_players?: (Int_comparison_exp | null),practice_successes?: (Int_comparison_exp | null),progress?: (utility_lineup_progress_bool_exp | null),progress_aggregate?: (utility_lineup_progress_aggregate_bool_exp | null),public_requested_at?: (timestamptz_comparison_exp | null),public_review_note?: (String_comparison_exp | null),public_reviewed_at?: (timestamptz_comparison_exp | null),public_reviewed_by?: (bigint_comparison_exp | null),repairs?: (utility_lineup_repairs_bool_exp | null),repairs_aggregate?: (utility_lineup_repairs_aggregate_bool_exp | null),side?: (e_sides_enum_comparison_exp | null),source_grenade_id?: (Int_comparison_exp | null),source_match?: (matches_bool_exp | null),source_match_id?: (uuid_comparison_exp | null),source_match_map?: (match_maps_bool_exp | null),source_match_map_id?: (uuid_comparison_exp | null),source_url?: (String_comparison_exp | null),tags?: (String_array_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),technique?: (e_utility_techniques_enum_comparison_exp | null),throw_strength?: (e_utility_throw_strengths_enum_comparison_exp | null),trajectory_file?: (String_comparison_exp | null),trajectory_preview?: (jsonb_comparison_exp | null),trajectory_size?: (Int_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),upvotes?: (Int_comparison_exp | null),utility_type?: (e_utility_types_enum_comparison_exp | null),verified_at?: (timestamptz_comparison_exp | null),view_pitch?: (float8_comparison_exp | null),view_pitch_delta?: (float8_comparison_exp | null),view_yaw?: (float8_comparison_exp | null),view_yaw_delta?: (float8_comparison_exp | null),visibility?: (e_utility_visibility_enum_comparison_exp | null),votes?: (utility_lineup_votes_bool_exp | null),votes_aggregate?: (utility_lineup_votes_aggregate_bool_exp | null),workshop_map_id?: (String_comparison_exp | null)}
 
 
 /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
@@ -109815,11 +109840,11 @@ export interface utility_lineups_delete_key_input {trajectory_preview?: (Scalars
 
 
 /** input type for incrementing numeric columns in table "utility_lineups" */
-export interface utility_lineups_inc_input {author_steam_id?: (Scalars['bigint'] | null),downvotes?: (Scalars['Int'] | null),eye_z?: (Scalars['float8'] | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),source_grenade_id?: (Scalars['Int'] | null),trajectory_size?: (Scalars['Int'] | null),upvotes?: (Scalars['Int'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null)}
+export interface utility_lineups_inc_input {author_steam_id?: (Scalars['bigint'] | null),downvotes?: (Scalars['Int'] | null),eye_z?: (Scalars['float8'] | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),public_reviewed_by?: (Scalars['bigint'] | null),source_grenade_id?: (Scalars['Int'] | null),trajectory_size?: (Scalars['Int'] | null),upvotes?: (Scalars['Int'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null)}
 
 
 /** input type for inserting data into table "utility_lineups" */
-export interface utility_lineups_insert_input {archived_at?: (Scalars['timestamptz'] | null),author?: (players_obj_rel_insert_input | null),author_steam_id?: (Scalars['bigint'] | null),collection_items?: (utility_collection_items_arr_rel_insert_input | null),confidence?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),downvotes?: (Scalars['Int'] | null),external_id?: (Scalars['String'] | null),eye_z?: (Scalars['float8'] | null),favorited_by?: (utility_lineup_favorites_arr_rel_insert_input | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),forked_from?: (utility_lineups_obj_rel_insert_input | null),forked_from_utility_lineup_id?: (Scalars['uuid'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),jump_throw_bind?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),origin_source?: (e_utility_sources_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),progress?: (utility_lineup_progress_arr_rel_insert_input | null),repairs?: (utility_lineup_repairs_arr_rel_insert_input | null),side?: (e_sides_enum | null),source_grenade_id?: (Scalars['Int'] | null),source_match?: (matches_obj_rel_insert_input | null),source_match_id?: (Scalars['uuid'] | null),source_match_map?: (match_maps_obj_rel_insert_input | null),source_match_map_id?: (Scalars['uuid'] | null),source_url?: (Scalars['String'] | null),tags?: (Scalars['String'][] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),technique?: (e_utility_techniques_enum | null),throw_strength?: (e_utility_throw_strengths_enum | null),trajectory_file?: (Scalars['String'] | null),trajectory_preview?: (Scalars['jsonb'] | null),trajectory_size?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),upvotes?: (Scalars['Int'] | null),utility_type?: (e_utility_types_enum | null),verified_at?: (Scalars['timestamptz'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null),visibility?: (e_utility_visibility_enum | null),votes?: (utility_lineup_votes_arr_rel_insert_input | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface utility_lineups_insert_input {archived_at?: (Scalars['timestamptz'] | null),author?: (players_obj_rel_insert_input | null),author_steam_id?: (Scalars['bigint'] | null),collection_items?: (utility_collection_items_arr_rel_insert_input | null),confidence?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),downvotes?: (Scalars['Int'] | null),external_id?: (Scalars['String'] | null),eye_z?: (Scalars['float8'] | null),favorited_by?: (utility_lineup_favorites_arr_rel_insert_input | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),forked_from?: (utility_lineups_obj_rel_insert_input | null),forked_from_utility_lineup_id?: (Scalars['uuid'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),jump_throw_bind?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),origin_source?: (e_utility_sources_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),progress?: (utility_lineup_progress_arr_rel_insert_input | null),public_requested_at?: (Scalars['timestamptz'] | null),public_review_note?: (Scalars['String'] | null),public_reviewed_at?: (Scalars['timestamptz'] | null),public_reviewed_by?: (Scalars['bigint'] | null),repairs?: (utility_lineup_repairs_arr_rel_insert_input | null),side?: (e_sides_enum | null),source_grenade_id?: (Scalars['Int'] | null),source_match?: (matches_obj_rel_insert_input | null),source_match_id?: (Scalars['uuid'] | null),source_match_map?: (match_maps_obj_rel_insert_input | null),source_match_map_id?: (Scalars['uuid'] | null),source_url?: (Scalars['String'] | null),tags?: (Scalars['String'][] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),technique?: (e_utility_techniques_enum | null),throw_strength?: (e_utility_throw_strengths_enum | null),trajectory_file?: (Scalars['String'] | null),trajectory_preview?: (Scalars['jsonb'] | null),trajectory_size?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),upvotes?: (Scalars['Int'] | null),utility_type?: (e_utility_types_enum | null),verified_at?: (Scalars['timestamptz'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null),visibility?: (e_utility_visibility_enum | null),votes?: (utility_lineup_votes_arr_rel_insert_input | null),workshop_map_id?: (Scalars['String'] | null)}
 
 
 /** aggregate max on columns */
@@ -109858,6 +109883,10 @@ export interface utility_lineups_max_fieldsGenqlSelection{
     practice_attempts?: boolean | number
     practice_players?: boolean | number
     practice_successes?: boolean | number
+    public_requested_at?: boolean | number
+    public_review_note?: boolean | number
+    public_reviewed_at?: boolean | number
+    public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     source_match_id?: boolean | number
     source_match_map_id?: boolean | number
@@ -109880,7 +109909,7 @@ export interface utility_lineups_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "utility_lineups" */
-export interface utility_lineups_max_order_by {archived_at?: (order_by | null),author_steam_id?: (order_by | null),confidence?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),downvotes?: (order_by | null),external_id?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),forked_from_utility_lineup_id?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),name?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),source_match_id?: (order_by | null),source_match_map_id?: (order_by | null),source_url?: (order_by | null),tags?: (order_by | null),team_id?: (order_by | null),trajectory_file?: (order_by | null),trajectory_size?: (order_by | null),updated_at?: (order_by | null),upvotes?: (order_by | null),verified_at?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null),workshop_map_id?: (order_by | null)}
+export interface utility_lineups_max_order_by {archived_at?: (order_by | null),author_steam_id?: (order_by | null),confidence?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),downvotes?: (order_by | null),external_id?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),forked_from_utility_lineup_id?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),name?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),public_requested_at?: (order_by | null),public_review_note?: (order_by | null),public_reviewed_at?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),source_match_id?: (order_by | null),source_match_map_id?: (order_by | null),source_url?: (order_by | null),tags?: (order_by | null),team_id?: (order_by | null),trajectory_file?: (order_by | null),trajectory_size?: (order_by | null),updated_at?: (order_by | null),upvotes?: (order_by | null),verified_at?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null),workshop_map_id?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -109919,6 +109948,10 @@ export interface utility_lineups_min_fieldsGenqlSelection{
     practice_attempts?: boolean | number
     practice_players?: boolean | number
     practice_successes?: boolean | number
+    public_requested_at?: boolean | number
+    public_review_note?: boolean | number
+    public_reviewed_at?: boolean | number
+    public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     source_match_id?: boolean | number
     source_match_map_id?: boolean | number
@@ -109941,7 +109974,7 @@ export interface utility_lineups_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "utility_lineups" */
-export interface utility_lineups_min_order_by {archived_at?: (order_by | null),author_steam_id?: (order_by | null),confidence?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),downvotes?: (order_by | null),external_id?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),forked_from_utility_lineup_id?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),name?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),source_match_id?: (order_by | null),source_match_map_id?: (order_by | null),source_url?: (order_by | null),tags?: (order_by | null),team_id?: (order_by | null),trajectory_file?: (order_by | null),trajectory_size?: (order_by | null),updated_at?: (order_by | null),upvotes?: (order_by | null),verified_at?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null),workshop_map_id?: (order_by | null)}
+export interface utility_lineups_min_order_by {archived_at?: (order_by | null),author_steam_id?: (order_by | null),confidence?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),downvotes?: (order_by | null),external_id?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),forked_from_utility_lineup_id?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),name?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),public_requested_at?: (order_by | null),public_review_note?: (order_by | null),public_reviewed_at?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),source_match_id?: (order_by | null),source_match_map_id?: (order_by | null),source_url?: (order_by | null),tags?: (order_by | null),team_id?: (order_by | null),trajectory_file?: (order_by | null),trajectory_size?: (order_by | null),updated_at?: (order_by | null),upvotes?: (order_by | null),verified_at?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null),workshop_map_id?: (order_by | null)}
 
 
 /** response of any mutation on the table "utility_lineups" */
@@ -109966,7 +109999,7 @@ export interface utility_lineups_on_conflict {constraint: utility_lineups_constr
 
 
 /** Ordering options when selecting data from "utility_lineups". */
-export interface utility_lineups_order_by {archived_at?: (order_by | null),author?: (players_order_by | null),author_steam_id?: (order_by | null),can_edit?: (order_by | null),can_view?: (order_by | null),collection_items_aggregate?: (utility_collection_items_aggregate_order_by | null),confidence?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),difficulty?: (order_by | null),downvotes?: (order_by | null),external_id?: (order_by | null),eye_z?: (order_by | null),favorited_by_aggregate?: (utility_lineup_favorites_aggregate_order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),forked_from?: (utility_lineups_order_by | null),forked_from_utility_lineup_id?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),is_favorited?: (order_by | null),jump_throw_bind?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),my_vote?: (order_by | null),name?: (order_by | null),origin_source?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),progress_aggregate?: (utility_lineup_progress_aggregate_order_by | null),repairs_aggregate?: (utility_lineup_repairs_aggregate_order_by | null),side?: (order_by | null),source_grenade_id?: (order_by | null),source_match?: (matches_order_by | null),source_match_id?: (order_by | null),source_match_map?: (match_maps_order_by | null),source_match_map_id?: (order_by | null),source_url?: (order_by | null),tags?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),technique?: (order_by | null),throw_strength?: (order_by | null),trajectory_file?: (order_by | null),trajectory_preview?: (order_by | null),trajectory_size?: (order_by | null),updated_at?: (order_by | null),upvotes?: (order_by | null),utility_type?: (order_by | null),verified_at?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null),visibility?: (order_by | null),votes_aggregate?: (utility_lineup_votes_aggregate_order_by | null),workshop_map_id?: (order_by | null)}
+export interface utility_lineups_order_by {archived_at?: (order_by | null),author?: (players_order_by | null),author_steam_id?: (order_by | null),can_edit?: (order_by | null),can_view?: (order_by | null),collection_items_aggregate?: (utility_collection_items_aggregate_order_by | null),confidence?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),difficulty?: (order_by | null),downvotes?: (order_by | null),external_id?: (order_by | null),eye_z?: (order_by | null),favorited_by_aggregate?: (utility_lineup_favorites_aggregate_order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),forked_from?: (utility_lineups_order_by | null),forked_from_utility_lineup_id?: (order_by | null),id?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),is_favorited?: (order_by | null),jump_throw_bind?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),lineup_bucket?: (order_by | null),map_name?: (order_by | null),my_vote?: (order_by | null),name?: (order_by | null),origin_source?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),progress_aggregate?: (utility_lineup_progress_aggregate_order_by | null),public_requested_at?: (order_by | null),public_review_note?: (order_by | null),public_reviewed_at?: (order_by | null),public_reviewed_by?: (order_by | null),repairs_aggregate?: (utility_lineup_repairs_aggregate_order_by | null),side?: (order_by | null),source_grenade_id?: (order_by | null),source_match?: (matches_order_by | null),source_match_id?: (order_by | null),source_match_map?: (match_maps_order_by | null),source_match_map_id?: (order_by | null),source_url?: (order_by | null),tags?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),technique?: (order_by | null),throw_strength?: (order_by | null),trajectory_file?: (order_by | null),trajectory_preview?: (order_by | null),trajectory_size?: (order_by | null),updated_at?: (order_by | null),upvotes?: (order_by | null),utility_type?: (order_by | null),verified_at?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null),visibility?: (order_by | null),votes_aggregate?: (utility_lineup_votes_aggregate_order_by | null),workshop_map_id?: (order_by | null)}
 
 
 /** primary key columns input for table: utility_lineups */
@@ -109978,7 +110011,7 @@ export interface utility_lineups_prepend_input {trajectory_preview?: (Scalars['j
 
 
 /** input type for updating data in table "utility_lineups" */
-export interface utility_lineups_set_input {archived_at?: (Scalars['timestamptz'] | null),author_steam_id?: (Scalars['bigint'] | null),confidence?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),downvotes?: (Scalars['Int'] | null),external_id?: (Scalars['String'] | null),eye_z?: (Scalars['float8'] | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),forked_from_utility_lineup_id?: (Scalars['uuid'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),jump_throw_bind?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),origin_source?: (e_utility_sources_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),side?: (e_sides_enum | null),source_grenade_id?: (Scalars['Int'] | null),source_match_id?: (Scalars['uuid'] | null),source_match_map_id?: (Scalars['uuid'] | null),source_url?: (Scalars['String'] | null),tags?: (Scalars['String'][] | null),team_id?: (Scalars['uuid'] | null),technique?: (e_utility_techniques_enum | null),throw_strength?: (e_utility_throw_strengths_enum | null),trajectory_file?: (Scalars['String'] | null),trajectory_preview?: (Scalars['jsonb'] | null),trajectory_size?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),upvotes?: (Scalars['Int'] | null),utility_type?: (e_utility_types_enum | null),verified_at?: (Scalars['timestamptz'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null),visibility?: (e_utility_visibility_enum | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface utility_lineups_set_input {archived_at?: (Scalars['timestamptz'] | null),author_steam_id?: (Scalars['bigint'] | null),confidence?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),downvotes?: (Scalars['Int'] | null),external_id?: (Scalars['String'] | null),eye_z?: (Scalars['float8'] | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),forked_from_utility_lineup_id?: (Scalars['uuid'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),jump_throw_bind?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),origin_source?: (e_utility_sources_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),public_requested_at?: (Scalars['timestamptz'] | null),public_review_note?: (Scalars['String'] | null),public_reviewed_at?: (Scalars['timestamptz'] | null),public_reviewed_by?: (Scalars['bigint'] | null),side?: (e_sides_enum | null),source_grenade_id?: (Scalars['Int'] | null),source_match_id?: (Scalars['uuid'] | null),source_match_map_id?: (Scalars['uuid'] | null),source_url?: (Scalars['String'] | null),tags?: (Scalars['String'][] | null),team_id?: (Scalars['uuid'] | null),technique?: (e_utility_techniques_enum | null),throw_strength?: (e_utility_throw_strengths_enum | null),trajectory_file?: (Scalars['String'] | null),trajectory_preview?: (Scalars['jsonb'] | null),trajectory_size?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),upvotes?: (Scalars['Int'] | null),utility_type?: (e_utility_types_enum | null),verified_at?: (Scalars['timestamptz'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null),visibility?: (e_utility_visibility_enum | null),workshop_map_id?: (Scalars['String'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -110005,6 +110038,7 @@ export interface utility_lineups_stddev_fieldsGenqlSelection{
     practice_attempts?: boolean | number
     practice_players?: boolean | number
     practice_successes?: boolean | number
+    public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
     upvotes?: boolean | number
@@ -110018,7 +110052,7 @@ export interface utility_lineups_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "utility_lineups" */
-export interface utility_lineups_stddev_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_stddev_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
@@ -110045,6 +110079,7 @@ export interface utility_lineups_stddev_pop_fieldsGenqlSelection{
     practice_attempts?: boolean | number
     practice_players?: boolean | number
     practice_successes?: boolean | number
+    public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
     upvotes?: boolean | number
@@ -110058,7 +110093,7 @@ export interface utility_lineups_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "utility_lineups" */
-export interface utility_lineups_stddev_pop_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_stddev_pop_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
@@ -110085,6 +110120,7 @@ export interface utility_lineups_stddev_samp_fieldsGenqlSelection{
     practice_attempts?: boolean | number
     practice_players?: boolean | number
     practice_successes?: boolean | number
+    public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
     upvotes?: boolean | number
@@ -110098,7 +110134,7 @@ export interface utility_lineups_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "utility_lineups" */
-export interface utility_lineups_stddev_samp_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_stddev_samp_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 
 /** Streaming cursor of the table "utility_lineups" */
@@ -110110,7 +110146,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface utility_lineups_stream_cursor_value_input {archived_at?: (Scalars['timestamptz'] | null),author_steam_id?: (Scalars['bigint'] | null),confidence?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),downvotes?: (Scalars['Int'] | null),external_id?: (Scalars['String'] | null),eye_z?: (Scalars['float8'] | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),forked_from_utility_lineup_id?: (Scalars['uuid'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),jump_throw_bind?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),lineup_bucket?: (Scalars['String'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),origin_source?: (e_utility_sources_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),side?: (e_sides_enum | null),source_grenade_id?: (Scalars['Int'] | null),source_match_id?: (Scalars['uuid'] | null),source_match_map_id?: (Scalars['uuid'] | null),source_url?: (Scalars['String'] | null),tags?: (Scalars['String'][] | null),team_id?: (Scalars['uuid'] | null),technique?: (e_utility_techniques_enum | null),throw_strength?: (e_utility_throw_strengths_enum | null),trajectory_file?: (Scalars['String'] | null),trajectory_preview?: (Scalars['jsonb'] | null),trajectory_size?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),upvotes?: (Scalars['Int'] | null),utility_type?: (e_utility_types_enum | null),verified_at?: (Scalars['timestamptz'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null),visibility?: (e_utility_visibility_enum | null),workshop_map_id?: (Scalars['String'] | null)}
+export interface utility_lineups_stream_cursor_value_input {archived_at?: (Scalars['timestamptz'] | null),author_steam_id?: (Scalars['bigint'] | null),confidence?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),downvotes?: (Scalars['Int'] | null),external_id?: (Scalars['String'] | null),eye_z?: (Scalars['float8'] | null),favorites?: (Scalars['Int'] | null),flight_time_ms?: (Scalars['Int'] | null),forked_from_utility_lineup_id?: (Scalars['uuid'] | null),id?: (Scalars['uuid'] | null),initial_pos_x?: (Scalars['float8'] | null),initial_pos_y?: (Scalars['float8'] | null),initial_pos_z?: (Scalars['float8'] | null),initial_vel_x?: (Scalars['float8'] | null),initial_vel_y?: (Scalars['float8'] | null),initial_vel_z?: (Scalars['float8'] | null),jump_throw_bind?: (Scalars['Boolean'] | null),land_x?: (Scalars['float8'] | null),land_y?: (Scalars['float8'] | null),land_z?: (Scalars['float8'] | null),lineup_bucket?: (Scalars['String'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),origin_source?: (e_utility_sources_enum | null),origin_x?: (Scalars['float8'] | null),origin_y?: (Scalars['float8'] | null),origin_z?: (Scalars['float8'] | null),practice_attempts?: (Scalars['Int'] | null),practice_players?: (Scalars['Int'] | null),practice_successes?: (Scalars['Int'] | null),public_requested_at?: (Scalars['timestamptz'] | null),public_review_note?: (Scalars['String'] | null),public_reviewed_at?: (Scalars['timestamptz'] | null),public_reviewed_by?: (Scalars['bigint'] | null),side?: (e_sides_enum | null),source_grenade_id?: (Scalars['Int'] | null),source_match_id?: (Scalars['uuid'] | null),source_match_map_id?: (Scalars['uuid'] | null),source_url?: (Scalars['String'] | null),tags?: (Scalars['String'][] | null),team_id?: (Scalars['uuid'] | null),technique?: (e_utility_techniques_enum | null),throw_strength?: (e_utility_throw_strengths_enum | null),trajectory_file?: (Scalars['String'] | null),trajectory_preview?: (Scalars['jsonb'] | null),trajectory_size?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null),upvotes?: (Scalars['Int'] | null),utility_type?: (e_utility_types_enum | null),verified_at?: (Scalars['timestamptz'] | null),view_pitch?: (Scalars['float8'] | null),view_pitch_delta?: (Scalars['float8'] | null),view_yaw?: (Scalars['float8'] | null),view_yaw_delta?: (Scalars['float8'] | null),visibility?: (e_utility_visibility_enum | null),workshop_map_id?: (Scalars['String'] | null)}
 
 
 /** aggregate sum on columns */
@@ -110137,6 +110173,7 @@ export interface utility_lineups_sum_fieldsGenqlSelection{
     practice_attempts?: boolean | number
     practice_players?: boolean | number
     practice_successes?: boolean | number
+    public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
     upvotes?: boolean | number
@@ -110150,7 +110187,7 @@ export interface utility_lineups_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "utility_lineups" */
-export interface utility_lineups_sum_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_sum_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 export interface utility_lineups_updates {
 /** append existing jsonb value of filtered columns with new jsonb value */
@@ -110195,6 +110232,7 @@ export interface utility_lineups_var_pop_fieldsGenqlSelection{
     practice_attempts?: boolean | number
     practice_players?: boolean | number
     practice_successes?: boolean | number
+    public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
     upvotes?: boolean | number
@@ -110208,7 +110246,7 @@ export interface utility_lineups_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "utility_lineups" */
-export interface utility_lineups_var_pop_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_var_pop_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
@@ -110235,6 +110273,7 @@ export interface utility_lineups_var_samp_fieldsGenqlSelection{
     practice_attempts?: boolean | number
     practice_players?: boolean | number
     practice_successes?: boolean | number
+    public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
     upvotes?: boolean | number
@@ -110248,7 +110287,7 @@ export interface utility_lineups_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "utility_lineups" */
-export interface utility_lineups_var_samp_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_var_samp_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 
 /** aggregate variance on columns */
@@ -110275,6 +110314,7 @@ export interface utility_lineups_variance_fieldsGenqlSelection{
     practice_attempts?: boolean | number
     practice_players?: boolean | number
     practice_successes?: boolean | number
+    public_reviewed_by?: boolean | number
     source_grenade_id?: boolean | number
     trajectory_size?: boolean | number
     upvotes?: boolean | number
@@ -110288,7 +110328,7 @@ export interface utility_lineups_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "utility_lineups" */
-export interface utility_lineups_variance_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
+export interface utility_lineups_variance_order_by {author_steam_id?: (order_by | null),downvotes?: (order_by | null),eye_z?: (order_by | null),favorites?: (order_by | null),flight_time_ms?: (order_by | null),initial_pos_x?: (order_by | null),initial_pos_y?: (order_by | null),initial_pos_z?: (order_by | null),initial_vel_x?: (order_by | null),initial_vel_y?: (order_by | null),initial_vel_z?: (order_by | null),land_x?: (order_by | null),land_y?: (order_by | null),land_z?: (order_by | null),origin_x?: (order_by | null),origin_y?: (order_by | null),origin_z?: (order_by | null),practice_attempts?: (order_by | null),practice_players?: (order_by | null),practice_successes?: (order_by | null),public_reviewed_by?: (order_by | null),source_grenade_id?: (order_by | null),trajectory_size?: (order_by | null),upvotes?: (order_by | null),view_pitch?: (order_by | null),view_pitch_delta?: (order_by | null),view_yaw?: (order_by | null),view_yaw_delta?: (order_by | null)}
 
 
 /** columns and relationships of "utility_meta_lineups" */
@@ -146581,6 +146621,10 @@ export const enumUtilityLineupsSelectColumn = {
    practice_attempts: 'practice_attempts' as const,
    practice_players: 'practice_players' as const,
    practice_successes: 'practice_successes' as const,
+   public_requested_at: 'public_requested_at' as const,
+   public_review_note: 'public_review_note' as const,
+   public_reviewed_at: 'public_reviewed_at' as const,
+   public_reviewed_by: 'public_reviewed_by' as const,
    side: 'side' as const,
    source_grenade_id: 'source_grenade_id' as const,
    source_match_id: 'source_match_id' as const,
@@ -146805,6 +146849,10 @@ export const enumUtilityLineupsUpdateColumn = {
    practice_attempts: 'practice_attempts' as const,
    practice_players: 'practice_players' as const,
    practice_successes: 'practice_successes' as const,
+   public_requested_at: 'public_requested_at' as const,
+   public_review_note: 'public_review_note' as const,
+   public_reviewed_at: 'public_reviewed_at' as const,
+   public_reviewed_by: 'public_reviewed_by' as const,
    side: 'side' as const,
    source_grenade_id: 'source_grenade_id' as const,
    source_match_id: 'source_match_id' as const,
