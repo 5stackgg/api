@@ -212,6 +212,12 @@ export class UtilityLineupsService {
     );
 
     if (!row) {
+      // Every utility endpoint resolves through here, so a server with no live
+      // match fails all of them at once with a message that does not say which
+      // server was asked about.
+      this.logger.warn(
+        `utility: server ${serverId} has no live match, so it has no map or roster`,
+      );
       return null;
     }
 
@@ -401,10 +407,14 @@ export class UtilityLineupsService {
     steamId: string,
   ): Promise<Array<UtilityLibraryRow>> {
     if (!context.lineupSteamIds.includes(steamId)) {
+      this.logger.warn(
+        `utility library refused ${steamId} on server ${context.serverId}: ` +
+          `not in match ${context.matchId} (roster: ${context.lineupSteamIds.join(", ") || "empty"})`,
+      );
       throw Error("player is not in this match lineup");
     }
 
-    return await this.postgres.query<Array<UtilityLibraryRow>>(
+    const rows = await this.postgres.query<Array<UtilityLibraryRow>>(
       `SELECT l.id::text AS id, l.name, l.map_name, l.utility_type, l.side,
               l.technique, l.throw_strength, l.jump_throw_bind,
               l.origin_x, l.origin_y, l.origin_z, l.eye_z,
@@ -438,6 +448,30 @@ export class UtilityLineupsService {
         LIMIT 500`,
       [context.mapName, steamId],
     );
+
+    // The map is the match's, not the one the server is standing on, so an
+    // empty answer usually means those two have drifted apart rather than that
+    // the player has nothing saved. Say which map was actually asked for.
+    if (rows.length === 0) {
+      const [mine] = await this.postgres.query<Array<{ maps: string }>>(
+        `SELECT COALESCE(string_agg(DISTINCT l.map_name, ', '), 'none') AS maps
+           FROM public.utility_lineups l
+          WHERE l.author_steam_id = $1::bigint
+            AND l.archived_at IS NULL`,
+        [steamId],
+      );
+
+      this.logger.warn(
+        `utility library empty for ${steamId} on match ${context.matchId}: ` +
+          `asked for map "${context.mapName}", that player has lineups on: ${mine?.maps ?? "none"}`,
+      );
+    } else {
+      this.logger.log(
+        `utility library sent ${rows.length} lineup(s) for ${steamId} on "${context.mapName}"`,
+      );
+    }
+
+    return rows;
   }
 
   // Scores one throw against the lineup that was loaded. The plugin's own
