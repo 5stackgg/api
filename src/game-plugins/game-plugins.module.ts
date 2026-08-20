@@ -16,6 +16,7 @@ import { GameModesService } from "./game-modes.service";
 import { GamePluginsController } from "./game-plugins.controller";
 import { SyncGamePluginRegistry } from "./jobs/SyncGamePluginRegistry";
 import { CheckGamePluginUpdates } from "./jobs/CheckGamePluginUpdates";
+import { NotifyGamePluginUpdate } from "./jobs/NotifyGamePluginUpdate";
 
 @Module({
   providers: [
@@ -23,6 +24,7 @@ import { CheckGamePluginUpdates } from "./jobs/CheckGamePluginUpdates";
     GameModesService,
     SyncGamePluginRegistry,
     CheckGamePluginUpdates,
+    NotifyGamePluginUpdate,
     ...getQueuesProcessors("GamePlugins"),
     loggerFactory(),
     Logger,

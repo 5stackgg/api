@@ -24,6 +24,7 @@ select_permissions:
         - runtime
         - version
         - detected_version
+        - previous_version
         - channel
         - status
         - source
@@ -46,6 +47,7 @@ insert_permissions:
         - runtime
         - version
         - detected_version
+        - previous_version
         - channel
         - status
         - source
@@ -62,6 +64,7 @@ update_permissions:
         - runtime
         - version
         - detected_version
+        - previous_version
         - channel
         - status
         - source

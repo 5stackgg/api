@@ -182,6 +182,101 @@ describe("game plugin install state (SQL-driven)", () => {
     expect(Number(row.target)).toEqual(2);
   });
 
+  // An auto update overwrites the version the moment the node says it is
+  // downloading, so the version it came from has to be carried on the report
+  // or it is gone.
+  describe("recorded progress", () => {
+    const service = () =>
+      new GamePluginsService(
+        { warn: jest.fn(), log: jest.fn() } as never,
+        {} as never,
+        postgres,
+        {} as never,
+        {} as never,
+        { add: jest.fn() } as never,
+      );
+
+    const row = async () => {
+      const [record] = await postgres.query<Array<Record<string, any>>>(
+        `SELECT version, previous_version, status, installed_at
+           FROM game_server_node_plugins
+          WHERE game_server_node_id = 'node-1' AND plugin_slug = 'retakes'`,
+      );
+      return record;
+    };
+
+    it("keeps the version an update replaced", async () => {
+      await addNode("node-1");
+      await request();
+
+      await service().recordNodeProgress("node-1", {
+        slug: "retakes",
+        status: "Installed",
+        version: "1.2.0",
+        previousVersion: "1.1.0",
+      });
+
+      expect(await row()).toEqual(
+        expect.objectContaining({
+          version: "1.2.0",
+          previous_version: "1.1.0",
+        }),
+      );
+    });
+
+    it("dates the install only once it lands", async () => {
+      await addNode("node-1");
+      await request();
+
+      await service().recordNodeProgress("node-1", {
+        slug: "retakes",
+        status: "Installing",
+        version: "1.2.0",
+        previousVersion: "1.1.0",
+      });
+
+      expect((await row()).installed_at).toBeNull();
+
+      await service().recordNodeProgress("node-1", {
+        slug: "retakes",
+        status: "Installed",
+        version: "1.2.0",
+        previousVersion: "1.1.0",
+      });
+
+      expect((await row()).installed_at).not.toBeNull();
+    });
+
+    // Reported once at the start of the install and not again on the failure,
+    // which is the report that has to survive for the notice to say what the
+    // node is still running.
+    it("does not lose the previous version to a later report", async () => {
+      await addNode("node-1");
+      await request();
+
+      await service().recordNodeProgress("node-1", {
+        slug: "retakes",
+        status: "Installing",
+        version: "1.2.0",
+        previousVersion: "1.1.0",
+      });
+
+      await service().recordNodeProgress("node-1", {
+        slug: "retakes",
+        status: "Failed",
+        version: "1.2.0",
+        error: "digest mismatch",
+      });
+
+      expect(await row()).toEqual(
+        expect.objectContaining({
+          status: "Failed",
+          previous_version: "1.1.0",
+        }),
+      );
+    });
+  });
+
   // The catalog cannot say where a csgo-layout release lands, so the node
   // reports it and the panel opens that rather than a guessed configs folder.
   it("records where the node says the plugin lives", async () => {
@@ -191,6 +286,7 @@ describe("game plugin install state (SQL-driven)", () => {
       postgres,
       {} as never,
       {} as never,
+      { add: jest.fn() } as never,
     );
     await addNode("node-1");
     await request();

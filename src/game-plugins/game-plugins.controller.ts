@@ -46,8 +46,9 @@ export class GamePluginsController {
     @Body()
     body: {
       slug: string;
-      status: "Installing" | "Failed" | "Removing";
+      status: "Installing" | "Installed" | "Failed" | "Removing";
       version?: string | null;
+      previousVersion?: string | null;
       error?: string | null;
     },
   ) {
@@ -105,6 +106,22 @@ export class GamePluginsController {
     this.assertAdministrator(data.user);
 
     await this.gamePlugins.requestInstall(data.slug, data.version);
+
+    return { success: true };
+  }
+
+  // Auto is what installing gives you, so the toggle is the only way back to a
+  // pinned version -- and the only way to say "yes, I meant it" about a plugin
+  // that changes underneath the fleet on its own.
+  @HasuraAction()
+  public async setGamePluginAutoUpdate(data: {
+    user: User;
+    slug: string;
+    enabled: boolean;
+  }) {
+    this.assertAdministrator(data.user);
+
+    await this.gamePlugins.setAutoUpdate(data.slug, data.enabled);
 
     return { success: true };
   }
