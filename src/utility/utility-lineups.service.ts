@@ -99,6 +99,7 @@ export type UtilityLibraryRow = {
   technique: string;
   throw_strength: string | null;
   jump_throw_bind: boolean;
+  aim_tolerance: number;
   origin_x: number;
   origin_y: number;
   origin_z: number;
@@ -417,6 +418,7 @@ export class UtilityLineupsService {
     const rows = await this.postgres.query<Array<UtilityLibraryRow>>(
       `SELECT l.id::text AS id, l.name, l.map_name, l.utility_type, l.side,
               l.technique, l.throw_strength, l.jump_throw_bind,
+              l.aim_tolerance,
               l.origin_x, l.origin_y, l.origin_z, l.eye_z,
               l.view_yaw, l.view_pitch, l.land_x, l.land_y, l.land_z,
               l.initial_pos_x, l.initial_pos_y, l.initial_pos_z,
@@ -801,7 +803,7 @@ export class UtilityLineupsService {
     const [forked] = await this.postgres.query<Array<{ id: string }>>(
       `INSERT INTO public.utility_lineups
          (map_name, workshop_map_id, utility_type, side, technique, throw_strength,
-          jump_throw_bind, origin_x, origin_y, origin_z, eye_z,
+          jump_throw_bind, aim_tolerance, origin_x, origin_y, origin_z, eye_z,
           view_yaw, view_pitch, view_yaw_delta, view_pitch_delta,
           land_x, land_y, land_z, flight_time_ms,
           initial_pos_x, initial_pos_y, initial_pos_z,
@@ -810,7 +812,7 @@ export class UtilityLineupsService {
           origin_source, forked_from_utility_lineup_id, confidence,
           trajectory_preview)
        SELECT l.map_name, l.workshop_map_id, l.utility_type, l.side, l.technique,
-              l.throw_strength, l.jump_throw_bind,
+              l.throw_strength, l.jump_throw_bind, l.aim_tolerance,
               l.origin_x, l.origin_y, l.origin_z, l.eye_z,
               l.view_yaw, l.view_pitch, l.view_yaw_delta, l.view_pitch_delta,
               l.land_x, l.land_y, l.land_z, l.flight_time_ms,
