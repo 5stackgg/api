@@ -240,12 +240,13 @@ export class HasuraService {
       "insert into settings (name, value) values ('public.utility_practice_max_minutes', '60') on conflict (name) do nothing",
     );
 
+    // Dropped: a practice session is not a scarce enough thing to ration.
     await this.postgresService.query(
-      "insert into settings (name, value) values ('public.utility_practice_reserved_servers', '2') on conflict (name) do nothing",
+      "delete from settings where name = 'public.utility_practice_daily_limit'",
     );
 
     await this.postgresService.query(
-      "insert into settings (name, value) values ('public.utility_practice_daily_limit', '10') on conflict (name) do nothing",
+      "insert into settings (name, value) values ('public.utility_practice_reserved_servers', '2') on conflict (name) do nothing",
     );
 
     await this.postgresService.query(
