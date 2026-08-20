@@ -331,3 +331,60 @@ CREATE TRIGGER tau_utility_lineups_reset_offsets
     AFTER UPDATE OF land_x, land_y, land_z, view_yaw, origin_x, origin_y
     ON public.utility_lineups
     FOR EACH ROW EXECUTE FUNCTION public.tau_utility_lineups_reset_offsets();
+
+-- Who may publish to the shared library.
+--
+-- This is a trigger rather than a Hasura permission check on purpose: a check
+-- only sees the row AFTER the write, so "visibility <> Public" would also
+-- reject an author editing the name of a lineup that is already public. Only a
+-- trigger can see that this is a TRANSITION into Public.
+--
+-- current_setting('hasura.user') is set by Hasura on every request it proxies.
+-- A direct connection from the API has no such setting and is trusted: that is
+-- our own server, not a caller.
+CREATE OR REPLACE FUNCTION public.tbiu_utility_lineups_public() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    _session json;
+    _role text;
+    _steam_id bigint;
+BEGIN
+    IF NOT (
+        NEW.visibility = 'Public'
+        AND (TG_OP = 'INSERT' OR OLD.visibility IS DISTINCT FROM 'Public')
+    ) THEN
+        -- Editing a lineup must never read as a fresh request, so a pending
+        -- request is only cleared by a review or by the author withdrawing it.
+        RETURN NEW;
+    END IF;
+
+    _session := NULLIF(current_setting('hasura.user', true), '')::json;
+    _role := _session ->> 'x-hasura-role';
+    _steam_id := NULLIF(_session ->> 'x-hasura-user-id', '')::bigint;
+
+    IF _session IS NOT NULL
+       AND _role IS DISTINCT FROM 'admin'
+       AND _role IS DISTINCT FROM 'administrator'
+       AND _role IS DISTINCT FROM 'moderator'
+    THEN
+        RAISE EXCEPTION
+            'A lineup becomes public by review. Submit it and a moderator will look at it.'
+            USING ERRCODE = 'insufficient_privilege';
+    END IF;
+
+    -- Stamped here rather than by the caller so it cannot be forged, and so an
+    -- approval always records who approved it.
+    NEW.public_reviewed_at := now();
+    NEW.public_reviewed_by := COALESCE(_steam_id, NEW.public_reviewed_by);
+    NEW.public_requested_at := NULL;
+
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbiu_utility_lineups_public ON public.utility_lineups;
+CREATE TRIGGER tbiu_utility_lineups_public
+    BEFORE INSERT OR UPDATE ON public.utility_lineups
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tbiu_utility_lineups_public();
