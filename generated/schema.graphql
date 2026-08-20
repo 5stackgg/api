@@ -1092,7 +1092,9 @@ type UtilityPracticePlanOutput {
 }
 
 type UtilityPracticeServer {
+  held_by: String
   id: uuid!
+  in_use: Boolean!
   label: String!
   region: String!
 }
@@ -125074,6 +125076,7 @@ type utility_practice_sessions {
   empty_since: timestamptz
   expires_at: timestamptz
   failure_reason: String
+  first_joined_at: timestamptz
 
   """An object relationship"""
   host: players!
@@ -125250,6 +125253,7 @@ input utility_practice_sessions_bool_exp {
   empty_since: timestamptz_comparison_exp
   expires_at: timestamptz_comparison_exp
   failure_reason: String_comparison_exp
+  first_joined_at: timestamptz_comparison_exp
   host: players_bool_exp
   host_steam_id: bigint_comparison_exp
   id: uuid_comparison_exp
@@ -125314,6 +125318,7 @@ input utility_practice_sessions_insert_input {
   empty_since: timestamptz
   expires_at: timestamptz
   failure_reason: String
+  first_joined_at: timestamptz
   host: players_obj_rel_insert_input
   host_steam_id: bigint
   id: uuid
@@ -125350,6 +125355,7 @@ type utility_practice_sessions_max_fields {
   empty_since: timestamptz
   expires_at: timestamptz
   failure_reason: String
+  first_joined_at: timestamptz
   host_steam_id: bigint
   id: uuid
   invite_code: String
@@ -125371,6 +125377,7 @@ input utility_practice_sessions_max_order_by {
   empty_since: order_by
   expires_at: order_by
   failure_reason: order_by
+  first_joined_at: order_by
   host_steam_id: order_by
   id: order_by
   invite_code: order_by
@@ -125400,6 +125407,7 @@ type utility_practice_sessions_min_fields {
   empty_since: timestamptz
   expires_at: timestamptz
   failure_reason: String
+  first_joined_at: timestamptz
   host_steam_id: bigint
   id: uuid
   invite_code: String
@@ -125421,6 +125429,7 @@ input utility_practice_sessions_min_order_by {
   empty_since: order_by
   expires_at: order_by
   failure_reason: order_by
+  first_joined_at: order_by
   host_steam_id: order_by
   id: order_by
   invite_code: order_by
@@ -125476,6 +125485,7 @@ input utility_practice_sessions_order_by {
   empty_since: order_by
   expires_at: order_by
   failure_reason: order_by
+  first_joined_at: order_by
   host: players_order_by
   host_steam_id: order_by
   id: order_by
@@ -125519,6 +125529,9 @@ enum utility_practice_sessions_select_column {
 
   """column name"""
   failure_reason
+
+  """column name"""
+  first_joined_at
 
   """column name"""
   host_steam_id
@@ -125582,6 +125595,7 @@ input utility_practice_sessions_set_input {
   empty_since: timestamptz
   expires_at: timestamptz
   failure_reason: String
+  first_joined_at: timestamptz
   host_steam_id: bigint
   id: uuid
   invite_code: String
@@ -125650,6 +125664,7 @@ input utility_practice_sessions_stream_cursor_value_input {
   empty_since: timestamptz
   expires_at: timestamptz
   failure_reason: String
+  first_joined_at: timestamptz
   host_steam_id: bigint
   id: uuid
   invite_code: String
@@ -125694,6 +125709,9 @@ enum utility_practice_sessions_update_column {
 
   """column name"""
   failure_reason
+
+  """column name"""
+  first_joined_at
 
   """column name"""
   host_steam_id

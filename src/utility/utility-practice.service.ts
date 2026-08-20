@@ -98,6 +98,7 @@ export class UtilityPracticeService {
     }
 
     await this.assertRole(user);
+    await this.assertNotBusy(user);
 
     const lockKey = UtilityPracticeService.startLockKey(user.steam_id);
 
@@ -208,6 +209,11 @@ export class UtilityPracticeService {
     if (await this.isInLineup(session.match_id, user.steam_id)) {
       return { session_id: session.id, match_id: session.match_id };
     }
+
+    // Only once they are actually about to be added: the re-join above is the
+    // same player already on this roster, and this session is itself a match
+    // they would otherwise be judged "busy" by.
+    await this.assertNotBusy(user);
 
     if (!(await this.canJoin(session, user.steam_id))) {
       throw Error("you were not invited to this practice session");
@@ -1181,6 +1187,114 @@ export class UtilityPracticeService {
       [matchId],
     );
     return Number(row?.count ?? 0);
+  }
+
+  // Booking a practice server is a reservation, so it answers to the same
+  // question matchmaking asks: is this player free? A player already on a
+  // server cannot be on a second one, and holding a practice server while a
+  // real match wants them is how a match ends up a man down.
+  // A real match outranks a practice server. Rather than refuse the session,
+  // the match evicts it when it actually claims the player -- which is what
+  // lets somebody practise in the gap before a scheduled match without the
+  // usual buffer locking them out.
+  public static readonly CLAIMING_STATUSES: ReadonlyArray<string> = [
+    "Live",
+    "Veto",
+    "WaitingForCheckIn",
+    "WaitingForServer",
+  ];
+
+  public async evictForMatch(matchId: string): Promise<number> {
+    const players = await this.postgres.query<Array<{ steam_id: string }>>(
+      `SELECT mlp.steam_id::text AS steam_id
+         FROM public.match_lineup_players mlp
+         INNER JOIN public.match_lineups ml ON ml.id = mlp.match_lineup_id
+        WHERE ml.match_id = $1::uuid`,
+      [matchId],
+    );
+
+    let evicted = 0;
+
+    for (const { steam_id } of players) {
+      // Hosting one means the server goes back; merely being on someone else's
+      // roster only means leaving it, and their session carries on without them.
+      const [hosted] = await this.postgres.query<Array<{ id: string }>>(
+        `SELECT id::text AS id
+           FROM public.utility_practice_sessions
+          WHERE host_steam_id = $1
+            AND status IN ('Starting', 'Ready')
+          LIMIT 1`,
+        [steam_id],
+      );
+
+      if (hosted) {
+        await this.end(await this.session(hosted.id), "Ended");
+        evicted++;
+        continue;
+      }
+
+      const [joined] = await this.postgres.query<
+        Array<{ id: string; match_id: string | null }>
+      >(
+        `SELECT s.id::text AS id, s.match_id::text AS match_id
+           FROM public.utility_practice_sessions s
+           INNER JOIN public.match_lineups ml ON ml.match_id = s.match_id
+           INNER JOIN public.match_lineup_players mlp
+                   ON mlp.match_lineup_id = ml.id AND mlp.steam_id = $1
+          WHERE s.status IN ('Starting', 'Ready')
+          LIMIT 1`,
+        [steam_id],
+      );
+
+      if (joined?.match_id) {
+        await this.removeFromLineup(joined.match_id, steam_id);
+        await this.matchAssistant.sendUtilityPracticeRefresh(joined.match_id);
+        evicted++;
+      }
+    }
+
+    if (evicted > 0) {
+      this.logger.log(
+        `[utility-practice] match ${matchId} evicted ${evicted} practice player(s)`,
+      );
+    }
+
+    return evicted;
+  }
+
+  private async assertNotBusy(user: User): Promise<void> {
+    const [player] = await this.postgres.query<
+      Array<{ is_banned: boolean; in_another_match: boolean }>
+    >(
+      `SELECT p.is_banned,
+              EXISTS (
+                SELECT 1
+                  FROM public.match_lineup_players mlp
+                  INNER JOIN public.match_lineups ml ON ml.id = mlp.match_lineup_id
+                  INNER JOIN public.matches m ON m.id = ml.match_id
+                 WHERE mlp.steam_id = p.steam_id
+                   AND m.source <> 'practice'
+                   AND m.status = ANY ($2::text[])
+              ) AS in_another_match
+         FROM public.players p
+        WHERE p.steam_id = $1`,
+      [user.steam_id, [...UtilityPracticeService.CLAIMING_STATUSES]],
+    );
+
+    if (!player) {
+      throw Error("player not found");
+    }
+
+    if (player.is_banned) {
+      throw Error("you are banned");
+    }
+
+    // Queuing is deliberately not a blocker: a match that pops evicts the
+    // practice session anyway, and refusing to let somebody drill while they
+    // search is the buffer this model exists to remove.
+    if (player.in_another_match) {
+      throw Error("you are already in a match");
+    }
   }
 
   private async assertRole(user: User): Promise<void> {

@@ -3448,8 +3448,14 @@ export default {
             ]
         },
         "UtilityPracticeServer": {
+            "held_by": [
+                84
+            ],
             "id": [
                 6245
+            ],
+            "in_use": [
+                6
             ],
             "label": [
                 84
@@ -138789,6 +138795,9 @@ export default {
             "failure_reason": [
                 84
             ],
+            "first_joined_at": [
+                5083
+            ],
             "host": [
                 4460
             ],
@@ -139119,6 +139128,9 @@ export default {
             "failure_reason": [
                 86
             ],
+            "first_joined_at": [
+                5084
+            ],
             "host": [
                 4464
             ],
@@ -139211,6 +139223,9 @@ export default {
             "failure_reason": [
                 84
             ],
+            "first_joined_at": [
+                5083
+            ],
             "host": [
                 4471
             ],
@@ -139288,6 +139303,9 @@ export default {
             "failure_reason": [
                 84
             ],
+            "first_joined_at": [
+                5083
+            ],
             "host_steam_id": [
                 297
             ],
@@ -139336,6 +139354,9 @@ export default {
                 3502
             ],
             "failure_reason": [
+                3502
+            ],
+            "first_joined_at": [
                 3502
             ],
             "host_steam_id": [
@@ -139394,6 +139415,9 @@ export default {
             "failure_reason": [
                 84
             ],
+            "first_joined_at": [
+                5083
+            ],
             "host_steam_id": [
                 297
             ],
@@ -139442,6 +139466,9 @@ export default {
                 3502
             ],
             "failure_reason": [
+                3502
+            ],
+            "first_joined_at": [
                 3502
             ],
             "host_steam_id": [
@@ -139548,6 +139575,9 @@ export default {
             "failure_reason": [
                 3502
             ],
+            "first_joined_at": [
+                3502
+            ],
             "host": [
                 4473
             ],
@@ -139632,6 +139662,9 @@ export default {
             ],
             "failure_reason": [
                 84
+            ],
+            "first_joined_at": [
+                5083
             ],
             "host_steam_id": [
                 297
@@ -139747,6 +139780,9 @@ export default {
             ],
             "failure_reason": [
                 84
+            ],
+            "first_joined_at": [
+                5083
             ],
             "host_steam_id": [
                 297
