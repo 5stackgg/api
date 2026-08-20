@@ -172,6 +172,12 @@ export class UtilityPracticeService {
 
         await this.matchAssistant.updateMatchStatus(matchId, "Live");
 
+        // A dedicated practice server is already running and has already asked
+        // for a session once -- and been told there wasn't one. Nothing else
+        // tells it otherwise until a map change, so the roster it is holding
+        // stays empty and the host cannot get in.
+        await this.matchAssistant.sendUtilityPracticeRefresh(matchId);
+
         return await this.session(session.id);
       } catch (error) {
         await this.fail(session.id, (error as Error)?.message ?? "unknown");
