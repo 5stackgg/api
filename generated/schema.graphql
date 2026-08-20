@@ -120903,6 +120903,10 @@ type utility_lineups {
     """filter the rows returned"""
     where: utility_lineup_progress_bool_exp
   ): utility_lineup_progress_aggregate!
+  public_requested_at: timestamptz
+  public_review_note: String
+  public_reviewed_at: timestamptz
+  public_reviewed_by: bigint
 
   """An array relationship"""
   repairs(
@@ -121196,6 +121200,7 @@ type utility_lineups_avg_fields {
   practice_attempts: Float
   practice_players: Float
   practice_successes: Float
+  public_reviewed_by: Float
   source_grenade_id: Float
   trajectory_size: Float
   upvotes: Float
@@ -121229,6 +121234,7 @@ input utility_lineups_avg_order_by {
   practice_attempts: order_by
   practice_players: order_by
   practice_successes: order_by
+  public_reviewed_by: order_by
   source_grenade_id: order_by
   trajectory_size: order_by
   upvotes: order_by
@@ -121290,6 +121296,10 @@ input utility_lineups_bool_exp {
   practice_successes: Int_comparison_exp
   progress: utility_lineup_progress_bool_exp
   progress_aggregate: utility_lineup_progress_aggregate_bool_exp
+  public_requested_at: timestamptz_comparison_exp
+  public_review_note: String_comparison_exp
+  public_reviewed_at: timestamptz_comparison_exp
+  public_reviewed_by: bigint_comparison_exp
   repairs: utility_lineup_repairs_bool_exp
   repairs_aggregate: utility_lineup_repairs_aggregate_bool_exp
   side: e_sides_enum_comparison_exp
@@ -121381,6 +121391,7 @@ input utility_lineups_inc_input {
   practice_attempts: Int
   practice_players: Int
   practice_successes: Int
+  public_reviewed_by: bigint
   source_grenade_id: Int
   trajectory_size: Int
   upvotes: Int
@@ -121430,6 +121441,10 @@ input utility_lineups_insert_input {
   practice_players: Int
   practice_successes: Int
   progress: utility_lineup_progress_arr_rel_insert_input
+  public_requested_at: timestamptz
+  public_review_note: String
+  public_reviewed_at: timestamptz
+  public_reviewed_by: bigint
   repairs: utility_lineup_repairs_arr_rel_insert_input
   side: e_sides_enum
   source_grenade_id: Int
@@ -121501,6 +121516,10 @@ type utility_lineups_max_fields {
   practice_attempts: Int
   practice_players: Int
   practice_successes: Int
+  public_requested_at: timestamptz
+  public_review_note: String
+  public_reviewed_at: timestamptz
+  public_reviewed_by: bigint
   source_grenade_id: Int
   source_match_id: uuid
   source_match_map_id: uuid
@@ -121553,6 +121572,10 @@ input utility_lineups_max_order_by {
   practice_attempts: order_by
   practice_players: order_by
   practice_successes: order_by
+  public_requested_at: order_by
+  public_review_note: order_by
+  public_reviewed_at: order_by
+  public_reviewed_by: order_by
   source_grenade_id: order_by
   source_match_id: order_by
   source_match_map_id: order_by
@@ -121613,6 +121636,10 @@ type utility_lineups_min_fields {
   practice_attempts: Int
   practice_players: Int
   practice_successes: Int
+  public_requested_at: timestamptz
+  public_review_note: String
+  public_reviewed_at: timestamptz
+  public_reviewed_by: bigint
   source_grenade_id: Int
   source_match_id: uuid
   source_match_map_id: uuid
@@ -121665,6 +121692,10 @@ input utility_lineups_min_order_by {
   practice_attempts: order_by
   practice_players: order_by
   practice_successes: order_by
+  public_requested_at: order_by
+  public_review_note: order_by
+  public_reviewed_at: order_by
+  public_reviewed_by: order_by
   source_grenade_id: order_by
   source_match_id: order_by
   source_match_map_id: order_by
@@ -121757,6 +121788,10 @@ input utility_lineups_order_by {
   practice_players: order_by
   practice_successes: order_by
   progress_aggregate: utility_lineup_progress_aggregate_order_by
+  public_requested_at: order_by
+  public_review_note: order_by
+  public_reviewed_at: order_by
+  public_reviewed_by: order_by
   repairs_aggregate: utility_lineup_repairs_aggregate_order_by
   side: order_by
   source_grenade_id: order_by
@@ -121895,6 +121930,18 @@ enum utility_lineups_select_column {
 
   """column name"""
   practice_successes
+
+  """column name"""
+  public_requested_at
+
+  """column name"""
+  public_review_note
+
+  """column name"""
+  public_reviewed_at
+
+  """column name"""
+  public_reviewed_by
 
   """column name"""
   side
@@ -122462,6 +122509,10 @@ input utility_lineups_set_input {
   practice_attempts: Int
   practice_players: Int
   practice_successes: Int
+  public_requested_at: timestamptz
+  public_review_note: String
+  public_reviewed_at: timestamptz
+  public_reviewed_by: bigint
   side: e_sides_enum
   source_grenade_id: Int
   source_match_id: uuid
@@ -122513,6 +122564,7 @@ type utility_lineups_stddev_fields {
   practice_attempts: Float
   practice_players: Float
   practice_successes: Float
+  public_reviewed_by: Float
   source_grenade_id: Float
   trajectory_size: Float
   upvotes: Float
@@ -122546,6 +122598,7 @@ input utility_lineups_stddev_order_by {
   practice_attempts: order_by
   practice_players: order_by
   practice_successes: order_by
+  public_reviewed_by: order_by
   source_grenade_id: order_by
   trajectory_size: order_by
   upvotes: order_by
@@ -122582,6 +122635,7 @@ type utility_lineups_stddev_pop_fields {
   practice_attempts: Float
   practice_players: Float
   practice_successes: Float
+  public_reviewed_by: Float
   source_grenade_id: Float
   trajectory_size: Float
   upvotes: Float
@@ -122615,6 +122669,7 @@ input utility_lineups_stddev_pop_order_by {
   practice_attempts: order_by
   practice_players: order_by
   practice_successes: order_by
+  public_reviewed_by: order_by
   source_grenade_id: order_by
   trajectory_size: order_by
   upvotes: order_by
@@ -122651,6 +122706,7 @@ type utility_lineups_stddev_samp_fields {
   practice_attempts: Float
   practice_players: Float
   practice_successes: Float
+  public_reviewed_by: Float
   source_grenade_id: Float
   trajectory_size: Float
   upvotes: Float
@@ -122684,6 +122740,7 @@ input utility_lineups_stddev_samp_order_by {
   practice_attempts: order_by
   practice_players: order_by
   practice_successes: order_by
+  public_reviewed_by: order_by
   source_grenade_id: order_by
   trajectory_size: order_by
   upvotes: order_by
@@ -122738,6 +122795,10 @@ input utility_lineups_stream_cursor_value_input {
   practice_attempts: Int
   practice_players: Int
   practice_successes: Int
+  public_requested_at: timestamptz
+  public_review_note: String
+  public_reviewed_at: timestamptz
+  public_reviewed_by: bigint
   side: e_sides_enum
   source_grenade_id: Int
   source_match_id: uuid
@@ -122789,6 +122850,7 @@ type utility_lineups_sum_fields {
   practice_attempts: Int
   practice_players: Int
   practice_successes: Int
+  public_reviewed_by: bigint
   source_grenade_id: Int
   trajectory_size: Int
   upvotes: Int
@@ -122822,6 +122884,7 @@ input utility_lineups_sum_order_by {
   practice_attempts: order_by
   practice_players: order_by
   practice_successes: order_by
+  public_reviewed_by: order_by
   source_grenade_id: order_by
   trajectory_size: order_by
   upvotes: order_by
@@ -122927,6 +122990,18 @@ enum utility_lineups_update_column {
 
   """column name"""
   practice_successes
+
+  """column name"""
+  public_requested_at
+
+  """column name"""
+  public_review_note
+
+  """column name"""
+  public_reviewed_at
+
+  """column name"""
+  public_reviewed_by
 
   """column name"""
   side
@@ -123054,6 +123129,7 @@ type utility_lineups_var_pop_fields {
   practice_attempts: Float
   practice_players: Float
   practice_successes: Float
+  public_reviewed_by: Float
   source_grenade_id: Float
   trajectory_size: Float
   upvotes: Float
@@ -123087,6 +123163,7 @@ input utility_lineups_var_pop_order_by {
   practice_attempts: order_by
   practice_players: order_by
   practice_successes: order_by
+  public_reviewed_by: order_by
   source_grenade_id: order_by
   trajectory_size: order_by
   upvotes: order_by
@@ -123123,6 +123200,7 @@ type utility_lineups_var_samp_fields {
   practice_attempts: Float
   practice_players: Float
   practice_successes: Float
+  public_reviewed_by: Float
   source_grenade_id: Float
   trajectory_size: Float
   upvotes: Float
@@ -123156,6 +123234,7 @@ input utility_lineups_var_samp_order_by {
   practice_attempts: order_by
   practice_players: order_by
   practice_successes: order_by
+  public_reviewed_by: order_by
   source_grenade_id: order_by
   trajectory_size: order_by
   upvotes: order_by
@@ -123192,6 +123271,7 @@ type utility_lineups_variance_fields {
   practice_attempts: Float
   practice_players: Float
   practice_successes: Float
+  public_reviewed_by: Float
   source_grenade_id: Float
   trajectory_size: Float
   upvotes: Float
@@ -123225,6 +123305,7 @@ input utility_lineups_variance_order_by {
   practice_attempts: order_by
   practice_players: order_by
   practice_successes: order_by
+  public_reviewed_by: order_by
   source_grenade_id: order_by
   trajectory_size: order_by
   upvotes: order_by

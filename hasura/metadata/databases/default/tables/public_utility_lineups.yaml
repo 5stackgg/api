@@ -311,7 +311,6 @@ insert_permissions:
         - visibility
         - team_id
         - trajectory_preview
-        - author_steam_id
         - origin_source
         - source_match_id
         - source_match_map_id
@@ -324,6 +323,8 @@ insert_permissions:
         - trajectory_size
         - verified_at
         - archived_at
+      set:
+        author_steam_id: x-hasura-user-id
     comment: ''
 select_permissions:
   - role: guest
