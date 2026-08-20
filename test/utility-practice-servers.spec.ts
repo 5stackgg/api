@@ -262,6 +262,137 @@ describe("utility practice servers (SQL-driven)", () => {
     });
   });
 
+  // A reservation answers the same question matchmaking does: is this player
+  // free? Two servers for one player is the failure mode.
+  describe("eligibility", () => {
+    it("refuses a player who is already in a live match", async () => {
+      const host = await fx.player();
+      const matchId = await someMatch(host, "5stack");
+      await addToLineup(matchId, host);
+      await setMatchStatus(matchId, "Live");
+
+      await expect(
+        makeService().start({ steam_id: host, role: "user" } as never, {
+          map_name: "de_mirage",
+        }),
+      ).rejects.toThrow(/already in a match/);
+    });
+
+    it("refuses a banned player", async () => {
+      const host = await fx.player();
+      await postgres.query(
+        "INSERT INTO player_sanctions (player_steam_id, type) VALUES ($1, 'ban')",
+        [host],
+      );
+
+      await expect(
+        makeService().start({ steam_id: host, role: "user" } as never, {
+          map_name: "de_mirage",
+        }),
+      ).rejects.toThrow(/banned/);
+    });
+
+  });
+
+  describe("matches take priority", () => {
+    // Asserting the gate rather than the whole start(): everything past it
+    // needs a live Hasura client, and the gate is the behaviour under test.
+    it("lets a player practise with a match scheduled soon", async () => {
+      const host = await fx.player();
+      const matchId = await someMatch(host, "5stack");
+      await addToLineup(matchId, host);
+      await asAdmin(
+        "UPDATE matches SET scheduled_at = now() + interval '20 minutes' WHERE id = $1::uuid",
+        [matchId],
+      );
+
+      await expect(
+        makeService()["assertNotBusy"]({ steam_id: host } as never),
+      ).resolves.toBeUndefined();
+    });
+
+    it("lets a player practise while their own session is the only match", async () => {
+      const host = await fx.player();
+      const practiceMatch = await someMatch(host);
+      await addToLineup(practiceMatch, host);
+      await setMatchStatus(practiceMatch, "Live");
+
+      await expect(
+        makeService()["assertNotBusy"]({ steam_id: host } as never),
+      ).resolves.toBeUndefined();
+    });
+
+    it("ends the host's session when their match claims them", async () => {
+      const host = await fx.player();
+      const practiceMatch = await someMatch(host);
+      await session(host, practiceMatch, "Ready");
+
+      const realMatch = await someMatch(host);
+      await addToLineup(realMatch, host);
+
+      expect(await makeService().evictForMatch(realMatch)).toBe(1);
+      expect(await statusOf(practiceMatch)).toBe("Ended");
+    });
+
+    it("only removes a guest from the roster, leaving the session up", async () => {
+      const host = await fx.player();
+      const guest = await fx.player();
+      const practiceMatch = await someMatch(host);
+      await addToLineup(practiceMatch, guest);
+      await session(host, practiceMatch, "Ready");
+
+      const realMatch = await someMatch(guest);
+      await addToLineup(realMatch, guest);
+
+      expect(await makeService().evictForMatch(realMatch)).toBe(1);
+      expect(await statusOf(practiceMatch)).toBe("Ready");
+      expect(await inLineup(practiceMatch, guest)).toBe(false);
+    });
+  });
+
+  async function asAdmin(
+    sql: string,
+    bindings: Array<unknown>,
+  ): Promise<void> {
+    await postgres.transaction(async (client) => {
+      await client.query("SELECT set_config('hasura.user', $1, false)", [
+        JSON.stringify({ "x-hasura-role": "admin" }),
+      ]);
+      await client.query(sql, bindings);
+    });
+  }
+
+  async function addToLineup(matchId: string, steamId: string): Promise<void> {
+    await asAdmin(
+      `INSERT INTO match_lineup_players (match_lineup_id, steam_id)
+       SELECT lineup_1_id, $2 FROM matches WHERE id = $1::uuid
+       ON CONFLICT DO NOTHING`,
+      [matchId, steamId],
+    );
+  }
+
+  async function setMatchStatus(
+    matchId: string,
+    status: string,
+  ): Promise<void> {
+    await asAdmin("UPDATE matches SET status = $2 WHERE id = $1::uuid", [
+      matchId,
+      status,
+    ]);
+  }
+
+  async function inLineup(matchId: string, steamId: string): Promise<boolean> {
+    const [row] = await postgres.query<Array<{ present: boolean }>>(
+      `SELECT EXISTS (
+         SELECT 1 FROM match_lineup_players mlp
+         INNER JOIN match_lineups ml ON ml.id = mlp.match_lineup_id
+         WHERE ml.match_id = $1::uuid AND mlp.steam_id = $2
+       ) AS present`,
+      [matchId, steamId],
+    );
+    return row.present;
+  }
+
   describe("timers", () => {
     it("reclaims a server nobody ever connected to", async () => {
       const host = await fx.player();
@@ -367,7 +498,10 @@ describe("utility practice servers (SQL-driven)", () => {
     return Number(row.count);
   }
 
-  async function someMatch(hostSteamId: string): Promise<string> {
+  async function someMatch(
+    hostSteamId: string,
+    source = "practice",
+  ): Promise<string> {
     const [map] = await postgres.query<Array<{ id: string }>>(
       "SELECT id FROM maps WHERE type = 'Competitive' AND name = 'de_mirage' LIMIT 1",
     );
@@ -387,9 +521,9 @@ describe("utility practice servers (SQL-driven)", () => {
     );
     const [match] = await postgres.query<Array<{ id: string }>>(
       `INSERT INTO matches (match_options_id, organizer_steam_id, region, source, label)
-       VALUES ($1, $2, 'TestA', 'practice', 'Utility Practice')
+       VALUES ($1, $2, 'TestA', $3, 'Utility Practice')
        RETURNING id`,
-      [options.id, hostSteamId],
+      [options.id, hostSteamId, source],
     );
     return match.id;
   }

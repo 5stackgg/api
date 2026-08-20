@@ -657,6 +657,17 @@ export class MatchesController {
       return;
     }
 
+    // A match outranks a practice server. The moment one actually claims its
+    // players, whatever practice session they are holding gives way -- the host
+    // loses the server, everybody else just leaves the roster.
+    if (
+      data.op === "UPDATE" &&
+      status !== data.old?.status &&
+      UtilityPracticeService.CLAIMING_STATUSES.includes(status as string)
+    ) {
+      void this.utilityPractice.evictForMatch(matchId);
+    }
+
     // Imported matches skip the entire 5stack lifecycle (server, lobby, ELO).
     if (source && source !== "5stack") {
       return;
