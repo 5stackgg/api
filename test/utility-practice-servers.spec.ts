@@ -262,6 +262,61 @@ describe("utility practice servers (SQL-driven)", () => {
     });
   });
 
+  describe("timers", () => {
+    it("reclaims a server nobody ever connected to", async () => {
+      const host = await fx.player();
+      const matchId = await someMatch(host);
+      await session(host, matchId, "Ready", { ageMinutes: 6 });
+
+      const svc = makeService();
+      await svc.reapIdle();
+
+      expect(await statusOf(matchId)).toBe("Ended");
+    });
+
+    it("leaves a fresh unconnected session inside the connect grace", async () => {
+      const host = await fx.player();
+      const matchId = await someMatch(host);
+      await session(host, matchId, "Ready", { ageMinutes: 1 });
+
+      await makeService().reapIdle();
+
+      expect(await statusOf(matchId)).toBe("Ready");
+    });
+
+    it("lets a joined session outlive the connect grace", async () => {
+      const host = await fx.player();
+      const matchId = await someMatch(host);
+      await session(host, matchId, "Ready", { ageMinutes: 30, joined: true });
+
+      await makeService().reapIdle();
+
+      expect(await statusOf(matchId)).toBe("Ready");
+    });
+
+    it("caps a long session only while somebody is waiting", async () => {
+      const host = await fx.player();
+      const matchId = await someMatch(host);
+      await session(host, matchId, "Ready", { ageMinutes: 120, joined: true });
+
+      const svc = makeService();
+      await svc.reapIdle();
+      expect(await statusOf(matchId)).toBe("Ready");
+
+      await svc.joinWaitlist(await fx.player(), "de_mirage", "TestA");
+      await svc.reapIdle();
+      expect(await statusOf(matchId)).toBe("Ended");
+    });
+  });
+
+  async function statusOf(matchId: string): Promise<string> {
+    const [row] = await postgres.query<Array<{ status: string }>>(
+      "SELECT status FROM utility_practice_sessions WHERE match_id = $1::uuid",
+      [matchId],
+    );
+    return row.status;
+  }
+
   async function claim(serverId: string, matchId: string): Promise<void> {
     await postgres.query(
       "UPDATE servers SET reserved_by_match_id = $2::uuid WHERE id = $1::uuid",
@@ -283,12 +338,23 @@ describe("utility practice servers (SQL-driven)", () => {
     hostSteamId: string,
     matchId: string,
     status: string,
+    options: { ageMinutes?: number; joined?: boolean } = {},
   ): Promise<void> {
     await postgres.query(
       `INSERT INTO utility_practice_sessions
-         (host_steam_id, map_name, region, status, match_id)
-       VALUES ($1, 'de_mirage', 'TestA', $3, $2::uuid)`,
-      [hostSteamId, matchId, status],
+         (host_steam_id, map_name, region, status, match_id, created_at,
+          first_joined_at, empty_since)
+       VALUES ($1, 'de_mirage', 'TestA', $3, $2::uuid,
+               now() - ($4 || ' minutes')::interval,
+               CASE WHEN $5 THEN now() - ($4 || ' minutes')::interval END,
+               CASE WHEN $5 THEN now() END)`,
+      [
+        hostSteamId,
+        matchId,
+        status,
+        String(options.ageMinutes ?? 0),
+        options.joined === true,
+      ],
     );
   }
 

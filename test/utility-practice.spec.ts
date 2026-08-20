@@ -729,6 +729,16 @@ describe("utility practice sessions (SQL-driven)", () => {
       };
     }
 
+    // The idle clock only exists once somebody has been in the server. Before
+    // that a session is governed by the connect grace instead, so these two
+    // have to say a player was there and left.
+    async function joined(sessionId: string): Promise<void> {
+      await postgres.query(
+        "UPDATE utility_practice_sessions SET first_joined_at = now() - interval '1 hour' WHERE id = $1",
+        [sessionId],
+      );
+    }
+
     it("marks an empty session's clock and leaves it alone until it is stale", async () => {
       const host = await fx.player();
       const { matchId } = await createPracticeMatch(host);
@@ -737,6 +747,7 @@ describe("utility practice sessions (SQL-driven)", () => {
         status: "Ready",
       });
       await setting("public.utility_practice_idle_minutes", "10");
+      await joined(sessionId);
 
       const { service } = serviceWithRealCancel();
       expect(await service.reapIdle()).toBe(0);
@@ -759,6 +770,7 @@ describe("utility practice sessions (SQL-driven)", () => {
         status: "Ready",
       });
       await setting("public.utility_practice_idle_minutes", "10");
+      await joined(sessionId);
       await postgres.query(
         "UPDATE utility_practice_sessions SET empty_since = now() - interval '30 minutes' WHERE id = $1",
         [sessionId],

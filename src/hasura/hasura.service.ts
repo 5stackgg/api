@@ -228,7 +228,16 @@ export class HasuraService {
     );
 
     await this.postgresService.query(
-      "insert into settings (name, value) values ('public.utility_practice_idle_minutes', '10') on conflict (name) do nothing",
+      "insert into settings (name, value) values ('public.utility_practice_idle_minutes', '5') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.utility_practice_connect_minutes', '5') on conflict (name) do nothing",
+    );
+
+    // Only enforced while somebody is waiting for a server.
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.utility_practice_max_minutes', '60') on conflict (name) do nothing",
     );
 
     await this.postgresService.query(

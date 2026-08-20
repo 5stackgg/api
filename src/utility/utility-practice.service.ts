@@ -60,6 +60,9 @@ export class UtilityPracticeService {
   ];
   private static readonly START_LOCK_SECONDS = 30;
   private static readonly BOOT_GRACE_MINUTES = 10;
+  public static readonly CONNECT_MINUTES = 5;
+  public static readonly IDLE_MINUTES = 5;
+  public static readonly MAX_MINUTES = 60;
 
   private readonly appConfig: AppConfig;
 
@@ -117,15 +120,31 @@ export class UtilityPracticeService {
         ? await this.practiceServer(input.server_id)
         : await this.freePracticeServer(input.region);
 
-      const region = server
-        ? server.region
-        : await this.resolveRegion(input.region);
+      let region: string;
 
-      if (!server) {
-        // Before anything is created, not after: a practice session that takes
-        // the last free slot is a scheduled tournament match that cannot boot.
-        await this.assertServerHeadroom(region);
+      try {
+        region = server
+          ? server.region
+          : await this.resolveRegion(input.region);
+
+        if (!server) {
+          // Before anything is created, not after: a practice session that takes
+          // the last free slot is a scheduled tournament match that cannot boot.
+          await this.assertServerHeadroom(region);
+        }
+      } catch (error) {
+        // Turned away for want of a server: that is the queue, and it is what
+        // puts a max length on whoever is currently holding one.
+        await this.joinWaitlist(
+          user.steam_id,
+          input.map_name,
+          input.region ?? null,
+        );
+        throw error;
       }
+
+      // Got one -- stop counting against the people still waiting.
+      await this.leaveWaitlist(user.steam_id);
 
       await this.assertDailyLimit(user.steam_id);
 
@@ -668,11 +687,19 @@ export class UtilityPracticeService {
   }
 
   public async reapIdle(): Promise<number> {
-    const idleMinutes = Number(
-      (await this.setting(SystemSettingName.UtilityPracticeIdleMinutes)) ?? "10",
+    const idle = await this.minutes(
+      SystemSettingName.UtilityPracticeIdleMinutes,
+      UtilityPracticeService.IDLE_MINUTES,
     );
-    const idle =
-      Number.isFinite(idleMinutes) && idleMinutes > 0 ? idleMinutes : 10;
+    const connect = await this.minutes(
+      SystemSettingName.UtilityPracticeConnectMinutes,
+      UtilityPracticeService.CONNECT_MINUTES,
+    );
+    const max = await this.minutes(
+      SystemSettingName.UtilityPracticeMaxMinutes,
+      UtilityPracticeService.MAX_MINUTES,
+    );
+    const contended = await this.anyoneWaiting();
 
     const sessions = await this.postgres.query<Array<UtilityPracticeSession>>(
       `${UtilityPracticeService.SELECT} WHERE s.status IN ('Starting', 'Ready')`,
@@ -712,10 +739,47 @@ export class UtilityPracticeService {
           await this.markReady(session.match_id);
         }
 
+        // A max length is only fair while somebody is queuing for the server;
+        // an uncontended session runs as long as its host wants it.
+        if (
+          contended &&
+          UtilityPracticeService.olderThanMinutes(session.created_at, max)
+        ) {
+          await this.end(await this.session(session.id), "Ended");
+          reaped++;
+          continue;
+        }
+
         const occupied = await this.connectedPlayers(session.match_id);
 
         if (occupied > 0) {
+          await this.postgres.query(
+            `UPDATE public.utility_practice_sessions
+                SET first_joined_at = COALESCE(first_joined_at, now())
+              WHERE id = $1::uuid`,
+            [session.id],
+          );
           await this.touch(session.id);
+          continue;
+        }
+
+        // Nobody has ever connected: this is the connect grace, not idleness.
+        // Booking a server and walking away is the cheapest way to hold one
+        // hostage, so it gets the shorter clock.
+        const [joined] = await this.postgres.query<
+          Array<{ ever: boolean }>
+        >(
+          "SELECT first_joined_at IS NOT NULL AS ever FROM public.utility_practice_sessions WHERE id = $1::uuid",
+          [session.id],
+        );
+
+        if (!joined?.ever) {
+          if (
+            UtilityPracticeService.olderThanMinutes(session.created_at, connect)
+          ) {
+            await this.end(await this.session(session.id), "Ended");
+            reaped++;
+          }
           continue;
         }
 
@@ -1136,6 +1200,44 @@ export class UtilityPracticeService {
   // leaves a server nobody can book and nothing can free, because end() has no
   // match to cancel. A practice server is only ever held by a live practice
   // session, so anything else holding one is a leak by definition.
+  private async minutes(
+    name: SystemSettingName,
+    fallback: number,
+  ): Promise<number> {
+    const raw = Number(await this.setting(name));
+    return Number.isFinite(raw) && raw > 0 ? raw : fallback;
+  }
+
+  private async anyoneWaiting(): Promise<boolean> {
+    const [row] = await this.postgres.query<Array<{ waiting: boolean }>>(
+      "SELECT EXISTS (SELECT 1 FROM public.utility_practice_waitlist) AS waiting",
+    );
+    return row?.waiting === true;
+  }
+
+  public async joinWaitlist(
+    steamId: string,
+    mapName: string,
+    region?: string | null,
+  ): Promise<void> {
+    await this.postgres.query(
+      `INSERT INTO public.utility_practice_waitlist (steam_id, map_name, region)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (steam_id) DO UPDATE
+          SET map_name = EXCLUDED.map_name,
+              region = EXCLUDED.region,
+              created_at = now()`,
+      [steamId, mapName, region ?? null],
+    );
+  }
+
+  public async leaveWaitlist(steamId: string): Promise<void> {
+    await this.postgres.query(
+      "DELETE FROM public.utility_practice_waitlist WHERE steam_id = $1",
+      [steamId],
+    );
+  }
+
   public async releaseOrphanedServers(): Promise<number> {
     const released = await this.postgres.query<Array<{ id: string }>>(
       `UPDATE public.servers srv
