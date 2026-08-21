@@ -35,9 +35,7 @@ BEGIN
         ELSIF pool_size = 5 THEN
             -- Both bans open the veto, as in the 6- and 7-map patterns below and
             -- in the linked rulebook. Ban/Pick/Pick/Ban let a map be picked
-            -- before either team had finished banning, and it was the only BO3
-            -- pool that did not lead with two bans -- which is also what the
-            -- turn-swap in get_map_veto_picking_lineup_id assumes.
+            -- before either team had finished banning.
             base_pattern := ARRAY['Ban', 'Ban', 'Pick', 'Pick'];
         ELSIF pool_size = 6 THEN
             base_pattern := ARRAY['Ban', 'Ban', 'Pick', 'Pick', 'Ban'];

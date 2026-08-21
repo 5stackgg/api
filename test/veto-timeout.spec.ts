@@ -295,6 +295,56 @@ describe("veto pick timeout (SQL-driven)", () => {
       expect(Number(count)).toBe(1);
     });
 
+    it("drives a whole Bo3 on the 7 map pool, sides included", async () => {
+      const match = await createMapVetoMatch(7, { bestOf: 3 });
+
+      for (let i = 0; i < 12; i++) {
+        const row = await matchRow(match.id);
+        if (row.status !== "Veto") {
+          break;
+        }
+        await expire(match.id);
+        await autoPick(match.id);
+      }
+
+      const row = await matchRow(match.id);
+      expect(row.status).toBe("Live");
+      expect(row.veto_pick_expires_at).toBeNull();
+
+      const picks = await mapPicks(match.id);
+      expect(picks.map((pick) => pick.type)).toEqual([
+        "Ban",
+        "Ban",
+        "Pick",
+        "Side",
+        "Pick",
+        "Side",
+        "Ban",
+        "Ban",
+        "Decider",
+      ]);
+
+      // Auto-taken sides answer the map that was just picked, never the
+      // leftover decider.
+      const decider = picks.find((pick) => pick.type === "Decider")!;
+      picks
+        .filter((pick) => pick.type === "Side")
+        .forEach((side) => {
+          expect(side.map_id).not.toBe(decider.map_id);
+          expect(
+            picks.some(
+              (pick) => pick.type === "Pick" && pick.map_id === side.map_id,
+            ),
+          ).toBe(true);
+        });
+
+      const [{ count }] = await postgres.query<Array<{ count: string }>>(
+        "SELECT COUNT(*) AS count FROM match_maps WHERE match_id = $1",
+        [match.id],
+      );
+      expect(Number(count)).toBe(3);
+    });
+
     it("never bans the last available region", async () => {
       const match = await createRegionVetoMatch();
 

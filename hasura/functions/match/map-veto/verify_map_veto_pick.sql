@@ -4,6 +4,7 @@ CREATE OR REPLACE FUNCTION public.verify_map_veto_pick(match_map_veto_pick match
 DECLARE
     pickType VARCHAR(255);
     lineup_id uuid;
+    picked_map_id uuid;
     _match matches;
     map_pool uuid[];
     use_active_pool BOOLEAN;
@@ -37,8 +38,34 @@ BEGIN
     END IF;
 
     -- Ensure that a side is picked for 'Side' type veto
-    IF pickType = 'Side' AND match_map_veto_pick.side IS NULL THEN
-        RAISE EXCEPTION 'Must pick a side' USING ERRCODE = '22000';
+    IF pickType = 'Side' THEN
+        IF match_map_veto_pick.side IS NULL THEN
+            RAISE EXCEPTION 'Must pick a side' USING ERRCODE = '22000';
+        END IF;
+
+        -- A Side answers the Pick before it and nothing else. Unchecked, the
+        -- side could be recorded against the leftover map -- the decider, which
+        -- no one ever picks sides on -- leaving the picked map unplayed and the
+        -- veto stuck on a Decider step with no maps left to satisfy it.
+        -- Picks and sides alternate, so only one picked map is ever waiting on
+        -- a side. Matched on the rows themselves rather than the latest
+        -- created_at, which ties when picks share a transaction.
+        SELECT mvp.map_id INTO picked_map_id
+        FROM match_map_veto_picks mvp
+        WHERE mvp.match_id = match_map_veto_pick.match_id
+          AND mvp.type = 'Pick'
+          AND NOT EXISTS (
+              SELECT 1
+              FROM match_map_veto_picks sided
+              WHERE sided.match_id = mvp.match_id
+                AND sided.map_id = mvp.map_id
+                AND sided.type = 'Side'
+          )
+        LIMIT 1;
+
+        IF match_map_veto_pick.map_id IS DISTINCT FROM picked_map_id THEN
+            RAISE EXCEPTION 'Must pick a side for the map that was just picked' USING ERRCODE = '22000';
+        END IF;
     END IF;
 
     -- Ensure that a side is not picked for 'Pick' or 'Ban' type veto

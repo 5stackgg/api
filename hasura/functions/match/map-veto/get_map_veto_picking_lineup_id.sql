@@ -8,9 +8,7 @@ DECLARE
     action_index int;
     next_action text;
     turn_index int;
-    best_of int;
     current_team int;
-    team int;
     last_pick_lineup uuid;
 BEGIN
     IF match.status != 'Veto' THEN
@@ -50,21 +48,12 @@ BEGIN
     WHERE match_id = match.id
       AND type IN ('Ban', 'Pick', 'Decider');
 
-    select mo.best_of into best_of from matches m
-        inner join match_options mo on mo.id = m.match_options_id
-        where m.id = match.id;
-
-    -- best of 3 swaps teams after the 4th pick
-    IF best_of = 3 THEN
-        IF turn_index < 4 THEN
-            current_team := CASE WHEN turn_index % 2 = 0 THEN 1 ELSE 2 END;
-        ELSE
-            current_team := CASE WHEN turn_index % 2 = 0 THEN 2 ELSE 1 END;
-        END IF;
-    ELSE
-        current_team := CASE WHEN turn_index % 2 = 0 THEN 1 ELSE 2 END;
-    END IF;
-    
+    -- Bans and picks strictly alternate with lineup 1 opening, so the second
+    -- ban phase starts with the team that started the veto, as in the rulebook.
+    -- Best of 3 used to swap teams from the 5th turn on, which on the 7 map
+    -- pool gave lineup 1 the first ban, the first pick AND the last ban before
+    -- the decider.
+    current_team := CASE WHEN turn_index % 2 = 0 THEN 1 ELSE 2 END;
 
     IF current_team = 1 THEN
         RETURN match.lineup_1_id;
