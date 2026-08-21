@@ -413,6 +413,76 @@ export class MatchAssistantService {
     await this.updateMatchStatus(match.id, "WaitingForServer");
   }
 
+  /**
+   * The last words of a match-server pod, for surfaces that outlive it. The
+   * on-demand practice boot has no other channel: nothing in that pod pings,
+   * so when it wedges, this is the only place the reason exists.
+   */
+  public async getMatchServerLogTail(
+    matchId: string,
+    tailLines = 200,
+  ): Promise<string | null> {
+    const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const core = kc.makeApiClient(CoreV1Api);
+
+    let pods;
+    try {
+      pods = await core.listNamespacedPod({
+        namespace: this.namespace,
+        labelSelector: `job-name=${jobName}`,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `[${matchId}] log-tail listPods: ${(error as Error)?.message}`,
+      );
+      return null;
+    }
+
+    const pod = [...(pods.items ?? [])].sort((a, b) => {
+      const ta = new Date(a.metadata?.creationTimestamp ?? 0).getTime();
+      const tb = new Date(b.metadata?.creationTimestamp ?? 0).getTime();
+      return tb - ta;
+    })[0];
+
+    if (!pod?.metadata?.name) {
+      return null;
+    }
+
+    try {
+      const logs = await core.readNamespacedPodLog({
+        name: pod.metadata.name,
+        namespace: this.namespace,
+        tailLines,
+      });
+      const lines = String(logs ?? "")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+
+      if (lines.length === 0) {
+        return null;
+      }
+
+      this.logger.warn(
+        `[${matchId}] match server log tail:\n${lines.slice(-tailLines).join("\n")}`,
+      );
+
+      // Errors first: the flagged lines are the sentence, the rest is noise.
+      const flagged = lines.filter((line) =>
+        /error|fail|exception|fatal|segfault|unable/i.test(line),
+      );
+      const picked = flagged.length > 0 ? flagged.slice(-4) : lines.slice(-4);
+      return picked.join(" | ");
+    } catch (error) {
+      this.logger.warn(
+        `[${matchId}] log-tail read: ${(error as Error)?.message}`,
+      );
+      return null;
+    }
+  }
+
   public async rebootOnDemandServer(matchId: string) {
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {

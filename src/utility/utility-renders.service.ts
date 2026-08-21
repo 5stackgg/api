@@ -497,6 +497,23 @@ export class UtilityRendersService {
     );
   }
 
+  // The practice server's own boot readout, keyed the way the assignment
+  // leaves it: the server row points back at the match while it is reserved.
+  public async bootStatusForMatch(
+    matchId: string,
+  ): Promise<{ boot_status: string | null; boot_status_detail: string | null } | null> {
+    const [row] = await this.postgres.query<
+      Array<{ boot_status: string | null; boot_status_detail: string | null }>
+    >(
+      `SELECT boot_status, boot_status_detail
+         FROM public.servers
+        WHERE reserved_by_match_id = $1::uuid
+        LIMIT 1`,
+      [matchId],
+    );
+    return row ?? null;
+  }
+
   /**
    * The phases the API itself owns -- booking a practice server, waiting for
    * it, dispatching the pod -- happen before any pod exists to report them, so

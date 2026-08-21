@@ -52,7 +52,8 @@ export type UtilityLoadResult = {
     | "not_on_a_server"
     | "wrong_map"
     | "not_visible"
-    | "unreachable";
+    | "unreachable"
+    | "nothing_to_drill";
   map_name: string | null;
 };
 
@@ -152,6 +153,84 @@ export class UtilityLoadService {
 
     return this.dispatch(at, user.steam_id, lineupId, lineup.map_name);
   }
+
+  /**
+   * Drill a set the caller picked, on the server they are already in.
+   *
+   * Every id is checked the same way a single send is -- visible, and on the
+   * map they are standing on -- because a drill is just a queue of the same
+   * loads, and skipping the checks for a batch would be the obvious way to
+   * make the batch the hole.
+   */
+  public async sendDrill(
+    user: User,
+    lineupIds: Array<string>,
+  ): Promise<UtilityLoadResult & { queued: number }> {
+    const at = await this.serverForPlayer(user.steam_id);
+
+    if (!at) {
+      return { sent: false, reason: "not_on_a_server", map_name: null, queued: 0 };
+    }
+
+    const ids = [...new Set(lineupIds.filter(Boolean))].slice(
+      0,
+      UtilityLoadService.MAX_DRILL,
+    );
+
+    if (ids.length === 0) {
+      return { sent: false, reason: "nothing_to_drill", map_name: null, queued: 0 };
+    }
+
+    const rows = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT l.id::text AS id
+         FROM public.utility_lineups l
+        WHERE l.id = ANY($1::uuid[])
+          AND l.map_name = $2
+          AND l.archived_at IS NULL
+          AND public.can_view_utility_lineup(
+                l,
+                json_build_object(
+                  'x-hasura-user-id', $3::text,
+                  'x-hasura-role', $4::text
+                )
+              )`,
+      [ids, at.map_name, user.steam_id, user.role ?? "user"],
+    );
+
+    // Order is the caller's, not the database's: they chose the sequence.
+    const allowed = new Set(rows.map((row) => row.id));
+    const queue = ids.filter((id) => allowed.has(id));
+
+    if (queue.length === 0) {
+      return { sent: false, reason: "wrong_map", map_name: at.map_name, queued: 0 };
+    }
+
+    for (const id of queue) {
+      await this.remember(at.server_id, user.steam_id, {
+        kind: "saved",
+        lineup_id: id,
+      });
+    }
+
+    const reply = await this.send(
+      at.server_id,
+      `utility_practice_drill ${user.steam_id} ${queue.join(",")}`,
+    );
+
+    if (reply === null) {
+      return { sent: false, reason: "unreachable", map_name: at.map_name, queued: 0 };
+    }
+
+    this.logger.log(
+      `[utility-load] ${user.steam_id} -> drill of ${queue.length} on ${at.server_id}`,
+    );
+
+    return { sent: true, reason: "sent", map_name: at.map_name, queued: queue.length };
+  }
+
+  // A drill is a queue of teleports; a thousand of them is a denial of service
+  // with extra steps.
+  private static readonly MAX_DRILL = 50;
 
   /**
    * Stand the caller on a throw that has no lineup behind it. This is what lets
