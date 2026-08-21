@@ -1016,8 +1016,21 @@ type UtilityImportOutput {
   updated: Int!
 }
 
+type UtilityLaunchSeedBackfillOutput {
+  done: Boolean!
+  scanned: Int!
+  seeded: Int!
+  skipped: Int!
+}
+
 type UtilityLineupOutput {
   id: uuid!
+}
+
+type UtilityLoadOutput {
+  map_name: String
+  reason: String!
+  sent: Boolean!
 }
 
 type UtilityMissPatternOutput {
@@ -1110,6 +1123,12 @@ type UtilityPracticeSessionOutput {
   status: String
 }
 
+type UtilityPracticeWhereOutput {
+  map_name: String
+  on_server: Boolean!
+  session_id: uuid
+}
+
 type UtilityPurgeOutput {
   dry_run: Boolean!
   lineups: Int!
@@ -1131,6 +1150,25 @@ type UtilityRenderQueueOutput {
   render_id: uuid
   status: String!
   success: Boolean!
+}
+
+input UtilityScratchLineupInput {
+  client_id: String!
+  eye_z: Float!
+  land_x: Float
+  land_y: Float
+  land_z: Float
+  map_name: String!
+  name: String!
+  origin_x: Float!
+  origin_y: Float!
+  origin_z: Float!
+  side: String!
+  technique: String!
+  throw_strength: String!
+  utility_type: String!
+  view_pitch: Float!
+  view_yaw: Float!
 }
 
 type UtilitySightlineOutput {
@@ -42757,6 +42795,9 @@ type mutation_root {
   """Return the progress of the season ELO backfill run (admin only)."""
   backfillSeasonEloStatus: SeasonBackfillStatusOutput
 
+  """Recover launch seeds from recorded trajectories, one batch per call"""
+  backfillUtilityLaunchSeeds(limit: Int): UtilityLaunchSeedBackfillOutput
+
   """Launch a Vulkan shader pre-bake Job on a GPU node"""
   bakeShaders(game_server_node_id: uuid!): SuccessOutput
 
@@ -49888,6 +49929,8 @@ type mutation_root {
 
   """sendScrimRequest"""
   sendScrimRequest(best_of: Int, from_team_id: uuid!, proposed_scheduled_at: timestamptz!, region: String, to_team_id: uuid!): SuccessOutput
+  sendUtilityLineupToServer(lineup_id: uuid!): UtilityLoadOutput
+  sendUtilityScratchToServer(lineup: UtilityScratchLineupInput!): UtilityLoadOutput
   setGameNodeSchedulingState(enabled: Boolean!, game_server_node_id: String!): SuccessOutput
 
   """Track new releases of a game plugin, or pin it where it is"""
@@ -86935,6 +86978,7 @@ type query_root {
 
   """Dedicated practice servers free to book right now"""
   utilityPracticeServers: UtilityPracticeServersOutput
+  utilityPracticeWhereAmI: UtilityPracticeWhereOutput
 
   """Read the practice server solver's calibration gate"""
   utilitySolverCalibration(session_id: uuid!): UtilityCalibrationOutput

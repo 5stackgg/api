@@ -41,6 +41,7 @@ describe("BatchUtilityRenderJob", () => {
       attachJobName: jest.fn(),
       stampBootStage: jest.fn(),
       bootStatusForMatch: jest.fn().mockResolvedValue(null),
+      noteBootProblem: jest.fn(),
       failRenders: jest.fn(),
       requesterFor: jest.fn().mockResolvedValue("76561198000000002"),
     };
@@ -113,6 +114,64 @@ describe("BatchUtilityRenderJob", () => {
       [RENDER.id],
       "server_starting:WaitingForPing",
     );
+  });
+
+  it("names the GPU refusal on the stepper instead of retrying invisibly", async () => {
+    practice.session.mockResolvedValueOnce({
+      id: "session-1",
+      status: "Ready",
+      match_id: "match-1",
+    });
+    gameStreamer.dispatchNadePreviews.mockRejectedValueOnce(
+      new NoGpuAvailableError(),
+    );
+
+    await expect(
+      job.process(
+        makeJob({
+          mapName: "de_mirage",
+          sessionId: "session-1",
+          bookedAt: Date.now(),
+        }) as any,
+      ),
+    ).rejects.toThrow();
+
+    expect(renders.stampBootStage).toHaveBeenCalledWith(
+      [RENDER.id],
+      "dispatching_pod:NoGpuAvailable",
+    );
+    expect(renders.failRenders).not.toHaveBeenCalled();
+  });
+
+  it("surfaces the pod's log on the queued rows two minutes into a silent boot", async () => {
+    practice.session.mockResolvedValueOnce({
+      id: "session-1",
+      status: "Starting",
+      match_id: "match-1",
+    });
+    renders.bootStatusForMatch.mockResolvedValueOnce({
+      boot_status: "WaitingForPing",
+      boot_status_detail: "Server pod is running.",
+    });
+    matchAssistant.getMatchServerLogTail.mockResolvedValueOnce(
+      "steamclient.so: cannot open shared object file",
+    );
+
+    await expect(
+      job.process(
+        makeJob({
+          mapName: "de_mirage",
+          sessionId: "session-1",
+          bookedAt: Date.now() - 3 * 60 * 1000,
+        }) as any,
+      ),
+    ).rejects.toThrow();
+
+    expect(renders.noteBootProblem).toHaveBeenCalledWith(
+      [RENDER.id],
+      "practice server pod is up but silent — steamclient.so: cannot open shared object file",
+    );
+    expect(renders.failRenders).not.toHaveBeenCalled();
   });
 
   it("puts the pod's log tail on the ready-timeout failure", async () => {

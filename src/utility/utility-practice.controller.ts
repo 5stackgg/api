@@ -65,6 +65,16 @@ export class UtilityPracticeController {
     return this.load.sendDrill(data.user, data.lineup_ids ?? []);
   }
 
+  /** Change who may join, on a server that is already running. */
+  @HasuraAction()
+  public async setUtilityPracticeAccess(data: {
+    user: User;
+    session_id: string;
+    access: string;
+  }) {
+    return this.practice.setAccess(data.user, data.session_id, data.access);
+  }
+
   @HasuraAction()
   public async utilityPracticeServers(data: { user: User }) {
     return { servers: await this.practice.practiceServers(data.user) };
@@ -78,8 +88,10 @@ export class UtilityPracticeController {
     collection_id?: string;
     team_id?: string;
     is_open?: boolean;
+    access?: string;
   }) {
-    const { user, map_name, region, collection_id, team_id, is_open } = data;
+    const { user, map_name, region, collection_id, team_id, is_open, access } =
+      data;
 
     const session = await this.practice.start(user, {
       map_name,
@@ -87,6 +99,7 @@ export class UtilityPracticeController {
       collection_id,
       team_id,
       is_open,
+      access,
     });
 
     return {

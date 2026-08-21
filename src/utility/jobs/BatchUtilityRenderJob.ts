@@ -30,6 +30,9 @@ type JobData = {
   sessionId?: string;
   dispatched?: boolean;
   bookedAt?: number;
+  // The wedge log is captured once per booking, two minutes in -- early
+  // enough to read while it is still stuck, cheap enough to not spam k8s.
+  podLogNoted?: boolean;
 };
 
 @UseQueue("Utility", UtilityQueues.UtilityRenders, { concurrency: 1 })
@@ -129,11 +132,35 @@ export class BatchUtilityRenderJob extends WorkerHost {
         // shows Creating -> PullingImage -> WaitingForPing instead of a bare
         // "server starting" for ten minutes.
         const boot = await this.renders.bootStatusForMatch(session.match_id);
+        this.logger.log(
+          `${tag} waiting on practice server: session=${session.status} boot=${boot?.boot_status ?? "unassigned"} (${boot?.boot_status_detail ?? "no server reserved yet"})`,
+        );
         if (boot?.boot_status) {
           await this.renders.stampBootStage(
             inFlight.map((render) => render.id),
             `server_starting:${boot.boot_status}`,
           );
+        }
+
+        // Two minutes of a pod that is Running but silent: pull its log once
+        // and put it on the queued rows, so the reason is on screen while the
+        // wedge is still happening rather than after the ten-minute timeout.
+        const elapsed = Date.now() - (job.data.bookedAt ?? Date.now());
+        if (
+          !job.data.podLogNoted &&
+          elapsed > 2 * 60 * 1000 &&
+          boot?.boot_status === "WaitingForPing"
+        ) {
+          const tail = await this.matchAssistant.getMatchServerLogTail(
+            session.match_id,
+          );
+          if (tail) {
+            await this.renders.noteBootProblem(
+              inFlight.map((render) => render.id),
+              `practice server pod is up but silent — ${tail}`,
+            );
+          }
+          await job.updateData({ ...job.data, podLogNoted: true });
         }
 
         return this.delayUntilNext(job, CHECK_DELAY_MS);
@@ -172,11 +199,22 @@ export class BatchUtilityRenderJob extends WorkerHost {
         );
       } catch (error) {
         if (error instanceof NoGpuAvailableError) {
-          this.logger.debug(`${tag} no GPU free, retrying`);
+          // Say it on the row, not at debug level: this retried invisibly for
+          // minutes while the GPU block list counted the render's own
+          // practice match against it.
+          this.logger.log(`${tag} no GPU free, retrying`);
+          await this.renders.stampBootStage(
+            inFlight.map((render) => render.id),
+            "dispatching_pod:NoGpuAvailable",
+          );
           return this.delayUntilNext(job, GPU_BUSY_RETRY_MS);
         }
         if (error instanceof NoSteamAccountAvailableError) {
           this.logger.log(`${tag} no Steam account in the pool, retrying`);
+          await this.renders.stampBootStage(
+            inFlight.map((render) => render.id),
+            "dispatching_pod:NoSteamAccount",
+          );
           return this.delayUntilNext(job, GPU_BUSY_RETRY_MS);
         }
         const message = (error as Error)?.message ?? "dispatch failed";
