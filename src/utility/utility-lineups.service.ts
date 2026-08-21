@@ -491,6 +491,7 @@ export class UtilityLineupsService {
           AND l.archived_at IS NULL
           AND (
             l.author_steam_id = $2::bigint
+            OR l.visibility = 'Public'
             OR (l.visibility = 'Team' AND public.is_utility_team_member(l.team_id, $2::bigint))
             OR EXISTS (
               SELECT 1
