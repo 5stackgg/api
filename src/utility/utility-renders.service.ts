@@ -86,8 +86,14 @@ export class UtilityRendersService {
 
   // One BullMQ job per map, because one server session films one map: the pod
   // skips any lineup whose map_name differs from the session's.
+  //
+  // No colon in the separator: BullMQ uses ':' to build its own redis keys and
+  // rejects a custom id containing one, so `utility-render-batch:de_mirage`
+  // threw "Custom Ids cannot contain :" and left the row queued with nothing
+  // dispatched. Workshop maps put a numeric id in maps.name rather than a
+  // slug, so the sanitiser is what keeps an unexpected name from doing it again.
   public static batchJobId(mapName: string): string {
-    return `utility-render-batch:${mapName}`;
+    return `utility-render-batch-${mapName.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
   }
 
   /**
@@ -555,6 +561,43 @@ export class UtilityRendersService {
         removeOnFail: true,
       },
     );
+  }
+
+  /**
+   * A queued row is only half a booking: dispatchMap() has to have landed a
+   * BullMQ job too. Anything between the INSERT and the add() -- an API restart,
+   * a redis flush, or an add() that throws -- leaves a row queued with nothing
+   * coming for it, and the in-flight unique index then refuses every retry, so
+   * the lineup is wedged until someone cancels it by hand.
+   *
+   * Re-dispatching is safe to repeat: the batch jobId is the map, so BullMQ
+   * drops the add outright while a job for that map is still live or delayed.
+   */
+  public async reconcileQueued(): Promise<number> {
+    const rows = await this.postgres.query<Array<{ map_name: string }>>(
+      `SELECT DISTINCT map_name
+         FROM public.utility_lineup_renders
+        WHERE status = 'queued'`,
+    );
+
+    for (const row of rows) {
+      try {
+        await this.dispatchMap(row.map_name);
+      } catch (error) {
+        this.logger.warn(
+          `[utility-render] could not re-dispatch ${row.map_name}: ${(error as Error)?.message}`,
+        );
+      }
+    }
+
+    if (rows.length > 0) {
+      this.logger.log(
+        `[utility-render] reconciled ${rows.length} queued map(s): ` +
+          rows.map((row) => row.map_name).join(", "),
+      );
+    }
+
+    return rows.length;
   }
 
   public static buildSpec(lineup: LineupSpecRow): UtilityRenderSpec {

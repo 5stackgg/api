@@ -211,8 +211,24 @@ export class UtilityArtifactsService {
     }
   }
 
-  public async readTrajectory(key: string) {
-    return await this.s3.get(key);
+  // Decompressed, not raw. Every trajectory blob is written gzipped -- the key
+  // literally ends .json.gz -- and handing those bytes straight to a caller
+  // that expects JSON is a silent failure at the far end rather than an error
+  // here. readSmokeVolume below always did this; this one did not, so the
+  // plugin got 200s it could not parse.
+  public async readTrajectory(key: string): Promise<Buffer> {
+    return await this.readBlob(key);
+  }
+
+  private async readBlob(key: string): Promise<Buffer> {
+    const stream = await this.s3.get(key);
+    const chunks: Array<Buffer> = [];
+
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk as Buffer));
+    }
+
+    return zlib.gunzipSync(Buffer.concat(chunks));
   }
 
   // The bloom a v3 artifact already carries. Reading it back is what keeps the
@@ -222,15 +238,8 @@ export class UtilityArtifactsService {
     key: string,
   ): Promise<ParsedSmokeVolumeResponse | null> {
     try {
-      const stream = await this.s3.get(key);
-      const chunks: Array<Buffer> = [];
-
-      for await (const chunk of stream) {
-        chunks.push(Buffer.from(chunk as Buffer));
-      }
-
       const blob = JSON.parse(
-        zlib.gunzipSync(Buffer.concat(chunks)).toString(),
+        (await this.readBlob(key)).toString(),
       ) as UtilityTrajectoryBlob;
 
       const volume = blob?.smoke_volumes?.at(0) as

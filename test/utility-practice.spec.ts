@@ -2,6 +2,7 @@ import { Logger } from "@nestjs/common";
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { UtilityPlaybooksService } from "./../src/utility/utility-playbooks.service";
 import { UtilityPracticeService } from "./../src/utility/utility-practice.service";
+import { UtilityLoadService } from "./../src/utility/utility-load.service";
 import { Fixtures } from "./utils/fixtures";
 import {
   bootMigratedDb,
@@ -616,6 +617,114 @@ describe("utility practice sessions (SQL-driven)", () => {
           session_id: sessionId,
         }),
       ).rejects.toThrow(/stopping the session/);
+    });
+  });
+
+  // The reverse of reportOccupancy. That writes is_connected per player for the
+  // session's match; this reads the same column backwards to answer "which
+  // server is this player standing in", which is the whole basis of offering
+  // "load me in" instead of the booking dialog. It joins five tables, so it is
+  // asserted against real SQL rather than trusted.
+  describe("finding the server a player is standing in", () => {
+    function loadService(): UtilityLoadService {
+      // serverForPlayer touches postgres only; cache and rcon belong to the
+      // send path, which is not what is under test here.
+      return new UtilityLoadService(
+        new Logger(),
+        postgres,
+        null as never,
+        null as never,
+      );
+    }
+
+    async function occupiedServer(
+      host: string,
+      label: string,
+      port: number,
+      overrides: Record<string, unknown> = {},
+    ): Promise<{ serverId: string; sessionId: string; lineupId: string }> {
+      const { matchId, lineupId } = await createPracticeMatch(host);
+      const sessionId = await insertSession(host, {
+        match_id: matchId,
+        status: "Ready",
+        ...overrides,
+      });
+      const [server] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO servers
+           (host, label, rcon_password, port, region, type, is_dedicated, enabled,
+            reserved_by_match_id)
+         VALUES ('127.0.0.1', $1, '\\x00'::bytea, $2, 'TestA', 'Ranked', true, true, $3)
+         RETURNING id::text AS id`,
+        [label, port, matchId],
+      );
+      return { serverId: server.id, sessionId, lineupId };
+    }
+
+    // Exactly what reportOccupancy does: the host is already on the lineup, so
+    // arriving is a flag flip rather than a new row.
+    async function connect(lineupId: string, steamId: string) {
+      await postgres.query(
+        `UPDATE match_lineup_players
+            SET is_connected = true
+          WHERE match_lineup_id = $1::uuid
+            AND steam_id = $2::bigint`,
+        [lineupId, steamId],
+      );
+    }
+
+    it("finds the server a connected player is on", async () => {
+      const host = await fx.player();
+      const { serverId, sessionId, lineupId } = await occupiedServer(
+        host,
+        "occupied-a",
+        27600,
+      );
+      await connect(lineupId, host);
+
+      const at = await loadService().serverForPlayer(host);
+
+      expect(at).toMatchObject({
+        server_id: serverId,
+        session_id: sessionId,
+        map_name: "de_mirage",
+      });
+    });
+
+    // The column is what occupancy actually maintains, so a player who has left
+    // has to stop resolving -- otherwise the panel keeps RCONing a server the
+    // player walked out of.
+    it("ignores a player who is no longer connected", async () => {
+      const host = await fx.player();
+      const { lineupId } = await occupiedServer(host, "occupied-b", 27601);
+      await connect(lineupId, host);
+      await postgres.query(
+        "UPDATE match_lineup_players SET is_connected = false WHERE steam_id = $1::bigint",
+        [host],
+      );
+
+      expect(await loadService().serverForPlayer(host)).toBeNull();
+    });
+
+    // A session that has ended still has its rows; loading onto a server that
+    // is no longer running practice would be sending a command into a match.
+    it("ignores a session that is no longer live", async () => {
+      const host = await fx.player();
+      const { lineupId, sessionId } = await occupiedServer(
+        host,
+        "occupied-c",
+        27602,
+      );
+      await connect(lineupId, host);
+      await postgres.query(
+        "UPDATE utility_practice_sessions SET status = 'Ended' WHERE id = $1",
+        [sessionId],
+      );
+
+      expect(await loadService().serverForPlayer(host)).toBeNull();
+    });
+
+    it("answers null for somebody who is on no server at all", async () => {
+      expect(await loadService().serverForPlayer(await fx.player())).toBeNull();
     });
   });
 

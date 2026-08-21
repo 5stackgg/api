@@ -1927,6 +1927,62 @@ type UtilityRemineOutput {
 }
 
 type Mutation {
+  backfillUtilityLaunchSeeds(
+    limit: Int
+  ): UtilityLaunchSeedBackfillOutput
+}
+
+type UtilityLaunchSeedBackfillOutput {
+  scanned: Int!
+  seeded: Int!
+  skipped: Int!
+  done: Boolean!
+}
+
+type UtilityPracticeWhereOutput {
+  on_server: Boolean!
+  map_name: String
+  session_id: uuid
+}
+
+type UtilityLoadOutput {
+  sent: Boolean!
+  reason: String!
+  map_name: String
+}
+
+input UtilityScratchLineupInput {
+  client_id: String!
+  name: String!
+  map_name: String!
+  utility_type: String!
+  side: String!
+  technique: String!
+  throw_strength: String!
+  origin_x: Float!
+  origin_y: Float!
+  origin_z: Float!
+  eye_z: Float!
+  view_yaw: Float!
+  view_pitch: Float!
+  land_x: Float
+  land_y: Float
+  land_z: Float
+}
+
+type Query {
+  utilityPracticeWhereAmI: UtilityPracticeWhereOutput
+}
+
+type Mutation {
+  sendUtilityLineupToServer(lineup_id: uuid!): UtilityLoadOutput
+}
+
+type Mutation {
+  sendUtilityScratchToServer(lineup: UtilityScratchLineupInput!): UtilityLoadOutput
+}
+
+type Mutation {
   startUtilityPractice(
     map_name: String!
     region: String

@@ -20,6 +20,26 @@ const LINEUP = {
   public_reviewed_by: "76561198000000002",
 };
 
+// BullMQ builds its redis keys with ':' and refuses a custom id containing one,
+// which is not a validation the type system can catch -- it throws at add() time,
+// after the render row is already inserted, leaving it queued with no batch.
+describe("UtilityRendersService.batchJobId", () => {
+  it("never emits a colon, whatever the map is called", () => {
+    for (const map of ["de_mirage", "3070563536", "workshop/123/de:weird"]) {
+      expect(UtilityRendersService.batchJobId(map)).not.toContain(":");
+    }
+  });
+
+  it("still gives one id per map, so a map's approvals coalesce", () => {
+    expect(UtilityRendersService.batchJobId("de_mirage")).toBe(
+      UtilityRendersService.batchJobId("de_mirage"),
+    );
+    expect(UtilityRendersService.batchJobId("de_mirage")).not.toBe(
+      UtilityRendersService.batchJobId("de_nuke"),
+    );
+  });
+});
+
 describe("UtilityRendersService", () => {
   let service: UtilityRendersService;
   let postgres: { query: jest.Mock };
@@ -39,6 +59,45 @@ describe("UtilityRendersService", () => {
       s3 as any,
       queue as any,
     );
+  });
+
+  // The wedge this exists to break: a row inserted, an add() that never landed,
+  // and an in-flight unique index that then refuses every retry.
+  describe("reconcileQueued", () => {
+    it("re-dispatches a batch for every map holding queued rows", async () => {
+      postgres.query.mockResolvedValueOnce([
+        { map_name: "de_mirage" },
+        { map_name: "de_nuke" },
+      ]);
+
+      await expect(service.reconcileQueued()).resolves.toBe(2);
+
+      expect(queue.add).toHaveBeenCalledTimes(2);
+      expect(queue.add.mock.calls.map((call) => call[1])).toEqual([
+        { mapName: "de_mirage" },
+        { mapName: "de_nuke" },
+      ]);
+    });
+
+    it("does nothing when no row is queued", async () => {
+      postgres.query.mockResolvedValueOnce([]);
+
+      await expect(service.reconcileQueued()).resolves.toBe(0);
+      expect(queue.add).not.toHaveBeenCalled();
+    });
+
+    // One bad map must not strand the others behind it.
+    it("keeps going when one map fails to dispatch", async () => {
+      postgres.query.mockResolvedValueOnce([
+        { map_name: "de_mirage" },
+        { map_name: "de_nuke" },
+      ]);
+      queue.add.mockRejectedValueOnce(new Error("redis is down"));
+
+      await expect(service.reconcileQueued()).resolves.toBe(2);
+      expect(queue.add).toHaveBeenCalledTimes(2);
+      expect(logger.warn).toHaveBeenCalled();
+    });
   });
 
   describe("enqueue", () => {
@@ -62,7 +121,7 @@ describe("UtilityRendersService", () => {
         "BatchUtilityRenderJob",
         { mapName: "de_mirage" },
         expect.objectContaining({
-          jobId: "utility-render-batch:de_mirage",
+          jobId: "utility-render-batch-de_mirage",
         }),
       );
     });

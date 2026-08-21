@@ -5,6 +5,10 @@ import { UtilityPracticeService } from "./utility-practice.service";
 import { UtilityLineupsService } from "./utility-lineups.service";
 import { UtilityRepairService } from "./utility-repair.service";
 import { UtilitySolverService } from "./utility-solver.service";
+import {
+  UtilityLoadService,
+  UtilityScratchLineup,
+} from "./utility-load.service";
 
 @Controller("utility-practice")
 export class UtilityPracticeController {
@@ -13,7 +17,44 @@ export class UtilityPracticeController {
     private readonly lineups: UtilityLineupsService,
     private readonly solver: UtilitySolverService,
     private readonly repairs: UtilityRepairService,
+    private readonly load: UtilityLoadService,
   ) {}
+
+  /**
+   * Where the caller is right now, so the website can offer "load me in" rather
+   * than the booking dialog to somebody already standing on a practice server.
+   */
+  @HasuraAction()
+  public async utilityPracticeWhereAmI(data: { user: User }) {
+    const at = await this.load.serverForPlayer(data.user.steam_id);
+
+    return {
+      on_server: !!at,
+      map_name: at?.map_name ?? null,
+      session_id: at?.session_id ?? null,
+    };
+  }
+
+  /** Stand the caller on a saved lineup, on the server they are already in. */
+  @HasuraAction()
+  public async sendUtilityLineupToServer(data: {
+    user: User;
+    lineup_id: string;
+  }) {
+    return this.load.sendToLineup(data.user, data.lineup_id);
+  }
+
+  /**
+   * Stand the caller on a throw that has no lineup behind it -- a mined meta
+   * spot they want to try before deciding whether it is worth writing up.
+   */
+  @HasuraAction()
+  public async sendUtilityScratchToServer(data: {
+    user: User;
+    lineup: UtilityScratchLineup;
+  }) {
+    return this.load.sendScratch(data.user, data.lineup);
+  }
 
   @HasuraAction()
   public async utilityPracticeServers(data: { user: User }) {
