@@ -721,16 +721,43 @@ describe("map veto (SQL-driven)", () => {
       [5, 15],
       [1, 15],
     ])(
-      "BO%i pool %i: bans and picks alternate, lineup 1 opening",
+      "BO%i pool %i: the picks snake and the bans alternate",
       async (bestOf, poolSize) => {
         const { steps } = await playOutVeto(bestOf, poolSize);
+        const actor = (step: string) => step.slice(-2);
 
-        const turns = steps
-          .map((s) => s.step)
-          .filter((step) => !step.startsWith("Side"));
+        // Picks reverse every pair: L1, L2, L2, L1, L1, L2 ...
+        steps
+          .filter((s) => s.step.startsWith("Pick"))
+          .forEach((pick, i) => {
+            const expected = Math.floor((i + 1) / 2) % 2 === 0 ? "L1" : "L2";
+            expect({ pick: i, actor: actor(pick.step) }).toEqual({
+              pick: i,
+              actor: expected,
+            });
+          });
 
-        turns.forEach((turn, i) => {
-          expect(turn.endsWith(i % 2 === 0 ? "L1" : "L2")).toBe(true);
+        steps.forEach((step, i) => {
+          const previous = steps[i - 1];
+          if (!previous) {
+            return;
+          }
+
+          // Consecutive bans never land on the same team.
+          if (step.step.startsWith("Ban") && previous.step.startsWith("Ban")) {
+            expect({ step: i, actor: actor(step.step) }).not.toEqual({
+              step: i,
+              actor: actor(previous.step),
+            });
+          }
+
+          // A side is always answered by the opponent of whoever picked.
+          if (step.step.startsWith("Side")) {
+            expect({ step: i, actor: actor(step.step) }).not.toEqual({
+              step: i,
+              actor: actor(previous.step),
+            });
+          }
         });
       },
     );
@@ -916,8 +943,8 @@ describe("map veto (SQL-driven)", () => {
     it("BO3: ban, ban, pick+side, pick+side, ban, ban, decider", async () => {
       const { match, steps } = await playOutVeto(3, 7);
 
-      // Rulebook order: the team that opened the veto also opens the second
-      // ban phase, so the last ban before the decider falls to lineup 2.
+      // The pick pair reverses the lead, so the second ban phase opens with
+      // lineup 2 and the last ban before the decider falls to lineup 1.
       expect(steps.map((s) => s.step)).toEqual([
         "Ban L1",
         "Ban L2",
@@ -925,8 +952,8 @@ describe("map veto (SQL-driven)", () => {
         "Side L2",
         "Pick L2",
         "Side L1",
-        "Ban L1",
         "Ban L2",
+        "Ban L1",
       ]);
 
       const picked = steps
@@ -973,7 +1000,7 @@ describe("map veto (SQL-driven)", () => {
       expect(state.picking).toBeNull();
     });
 
-    it("BO5: ban, ban, then four picks with the opponent on sides", async () => {
+    it("BO5: ban, ban, then four picks snaking L1, L2, L2, L1", async () => {
       const { match, steps } = await playOutVeto(5, 7);
 
       expect(steps.map((s) => s.step)).toEqual([
@@ -983,10 +1010,10 @@ describe("map veto (SQL-driven)", () => {
         "Side L2",
         "Pick L2",
         "Side L1",
-        "Pick L1",
-        "Side L2",
         "Pick L2",
         "Side L1",
+        "Pick L1",
+        "Side L2",
       ]);
 
       const maps = await postgres.query<Array<{ map_id: string }>>(

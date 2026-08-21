@@ -8,6 +8,7 @@ DECLARE
     action_index int;
     next_action text;
     turn_index int;
+    picks_made int;
     current_team int;
     last_pick_lineup uuid;
 BEGIN
@@ -48,12 +49,20 @@ BEGIN
     WHERE match_id = match.id
       AND type IN ('Ban', 'Pick', 'Decider');
 
-    -- Bans and picks strictly alternate with lineup 1 opening, so the second
-    -- ban phase starts with the team that started the veto, as in the rulebook.
-    -- Best of 3 used to swap teams from the 5th turn on, which on the 7 map
-    -- pool gave lineup 1 the first ban, the first pick AND the last ban before
-    -- the decider.
-    current_team := CASE WHEN turn_index % 2 = 0 THEN 1 ELSE 2 END;
+    SELECT COUNT(*) INTO picks_made
+    FROM match_map_veto_picks
+    WHERE match_id = match.id
+      AND type = 'Pick';
+
+    -- Turns alternate, and every completed pair of picks reverses who leads, so
+    -- the picks snake: lineup 1, lineup 2, lineup 2, lineup 1. Without the
+    -- reverse the team that opens the veto takes every odd pick and the last
+    -- ban before the decider.
+    IF (picks_made / 2) % 2 = 1 THEN
+        current_team := CASE WHEN turn_index % 2 = 0 THEN 2 ELSE 1 END;
+    ELSE
+        current_team := CASE WHEN turn_index % 2 = 0 THEN 1 ELSE 2 END;
+    END IF;
 
     IF current_team = 1 THEN
         RETURN match.lineup_1_id;
