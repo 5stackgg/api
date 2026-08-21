@@ -114,6 +114,40 @@ describe("map veto (SQL-driven)", () => {
     throw new Error("veto never completed");
   };
 
+  // The same drive, but recording each step as "<type> <actor>" so turn order
+  // can be asserted.
+  const playOutVeto = async (bestOf: number, poolSize: number) => {
+    const match = await createVetoMatch(bestOf, poolSize);
+    const steps: Array<{ step: string; mapId: string }> = [];
+    const used = new Set<string>();
+    let lastPicked: string | null = null;
+
+    for (let step = 0; step <= poolSize * 2; step++) {
+      const state = await vetoState(match.id);
+      if (state.status !== "Veto") {
+        return { match, steps };
+      }
+
+      const actor = state.picking === match.lineup_1_id ? "L1" : "L2";
+
+      if (state.veto_type === "Side") {
+        steps.push({ step: `Side ${actor}`, mapId: lastPicked! });
+        await insertPick(match.id, "Side", state.picking!, lastPicked!, "CT");
+        continue;
+      }
+
+      const mapId = match.mapIds.filter((id) => !used.has(id))[0];
+      used.add(mapId);
+      if (state.veto_type === "Pick") {
+        lastPicked = mapId;
+      }
+      steps.push({ step: `${state.veto_type} ${actor}`, mapId });
+      await insertPick(match.id, state.veto_type!, state.picking!, mapId);
+    }
+
+    throw new Error("veto never completed");
+  };
+
   it("computes the CS rulebook patterns", async () => {
     expect(await patternFor(1, 3)).toEqual(["Ban", "Ban", "Decider"]);
     expect(await patternFor(3, 4)).toEqual([
@@ -125,6 +159,42 @@ describe("map veto (SQL-driven)", () => {
       "Decider",
     ]);
   });
+
+  // The worked examples in the docs, verbatim.
+  // https://docs.5stack.gg/features/map-veto#examples
+  it.each([
+    [1, 7, ["Ban", "Ban", "Ban", "Ban", "Ban", "Ban", "Decider"]],
+    [3, 5, ["Ban", "Ban", "Pick", "Side", "Pick", "Side", "Decider"]],
+    [
+      3,
+      7,
+      ["Ban", "Ban", "Pick", "Side", "Pick", "Side", "Ban", "Ban", "Decider"],
+    ],
+    [
+      5,
+      7,
+      [
+        "Ban",
+        "Ban",
+        "Pick",
+        "Side",
+        "Pick",
+        "Side",
+        "Pick",
+        "Side",
+        "Pick",
+        "Side",
+        "Decider",
+      ],
+    ],
+  ])(
+    "BO%i pool %i matches the documented example",
+    async (bestOf, poolSize, expected) => {
+      expect(await patternFor(bestOf as number, poolSize as number)).toEqual(
+        expected,
+      );
+    },
+  );
 
   it("refuses a veto on an empty map pool", async () => {
     const { poolId } = await fx.mapPool(0);
@@ -240,18 +310,15 @@ describe("map veto (SQL-driven)", () => {
     await insertPick(match.id, "Ban", match.lineup_1_id, match.mapIds[0]);
     await insertPick(match.id, "Ban", match.lineup_2_id, match.mapIds[1]);
 
-    const [row] = await postgres.query<
-      Array<{ last_ban: string; decider: string }>
-    >(
-      `SELECT max(created_at) FILTER (WHERE type = 'Ban')     AS last_ban,
-              max(created_at) FILTER (WHERE type = 'Decider') AS decider
+    // Compared in SQL: the gap is microseconds, which a JS Date truncates away.
+    const [row] = await postgres.query<Array<{ decider_last: boolean }>>(
+      `SELECT max(created_at) FILTER (WHERE type = 'Decider')
+            > max(created_at) FILTER (WHERE type = 'Ban') AS decider_last
        FROM match_map_veto_picks WHERE match_id = $1`,
       [match.id],
     );
 
-    expect(new Date(row.decider).getTime()).toBeGreaterThan(
-      new Date(row.last_ban).getTime(),
-    );
+    expect(row.decider_last).toBe(true);
   });
 
   it("runs the BO3 Pick/Side steps and assigns the chosen side to the picking lineup", async () => {
@@ -422,18 +489,73 @@ describe("map veto (SQL-driven)", () => {
       },
     );
 
-    it.each([[3], [5]])(
-      "BO%i bans the surplus down to the rulebook shape before the picks",
+    // "Any extra bans a larger pool requires land after the picks and before
+    // the Decider." Those bans used to be spent up front instead, so a 12 map
+    // pool opened with seven straight bans before anyone picked anything.
+    it.each([[2], [3], [5]])(
+      "BO%i spends a larger pool's extra bans after the picks",
       async (bestOf) => {
-        const rulebook = await patternFor(bestOf, 7);
-        const large = await patternFor(bestOf, 12);
+        for (const poolSize of [8, 12, 16, 24]) {
+          const pattern = await patternFor(bestOf, poolSize);
+          const label = `BO${bestOf} pool ${poolSize}`;
 
-        expect(large.slice(-rulebook.length)).toEqual(rulebook);
-        expect(large.slice(0, large.length - rulebook.length)).toEqual(
-          Array(5).fill("Ban"),
-        );
+          // The opening never grows with the pool: the picks start as soon as
+          // the Ban, Ban, Pick, Pick unit reaches them.
+          expect({ label, firstPick: pattern.indexOf("Pick") }).toEqual({
+            label,
+            firstPick: 2,
+          });
+
+          // Everything from the last side to the decider is a ban.
+          const tail = pattern.slice(pattern.lastIndexOf("Side") + 1);
+          expect({ label, tail: tail.slice(0, -1) }).toEqual({
+            label,
+            tail: Array(tail.length - 1).fill("Ban"),
+          });
+          expect({ label, last: tail[tail.length - 1] }).toEqual({
+            label,
+            last: "Decider",
+          });
+        }
       },
     );
+
+    it.each([
+      [
+        3,
+        12,
+        ["Ban", "Ban", "Pick", "Side", "Pick", "Side"]
+          .concat(Array(7).fill("Ban"))
+          .concat(["Decider"]),
+      ],
+      [
+        5,
+        12,
+        // Two turns of the unit, because a best of 5 needs four picks.
+        [
+          "Ban",
+          "Ban",
+          "Pick",
+          "Side",
+          "Pick",
+          "Side",
+          "Ban",
+          "Ban",
+          "Pick",
+          "Side",
+          "Pick",
+          "Side",
+          "Ban",
+          "Ban",
+          "Ban",
+          "Decider",
+        ],
+      ],
+    ])("BO%i pool %i follows the documented pattern", async (bestOf, poolSize, expected) => {
+      expect(await patternFor(bestOf as number, poolSize as number)).toEqual(
+        expected,
+      );
+    });
 
     it.each([
       [3, 12],
@@ -471,7 +593,7 @@ describe("map veto (SQL-driven)", () => {
   // match sat in Veto until an admin canceled it.
   describe("a best of the rulebook doesn't cover", () => {
     it.each([
-      [2, 7, ["Ban", "Ban", "Ban", "Ban", "Ban", "Pick", "Side", "Decider"]],
+      [2, 7, ["Ban", "Ban", "Pick", "Side", "Ban", "Ban", "Ban", "Decider"]],
       [
         4,
         6,
@@ -506,6 +628,534 @@ describe("map veto (SQL-driven)", () => {
         [match.id],
       );
       expect(maps.length).toBe(2);
+    });
+  });
+
+  // Pool sizes well past the rulebook ladder, and the small ones underneath it.
+  // Leagues and custom pools hand out whatever count they like, so the pattern
+  // has to hold for all of them, not just 5/6/7.
+  describe("odd and low map pool sizes", () => {
+    const bestOfs = [1, 2, 3, 4, 5, 7];
+
+    it.each([
+      [2],
+      [3],
+      [4],
+      [5],
+      [6],
+      [7],
+      [8],
+      [9],
+      [10],
+      [11],
+      [12],
+      [13],
+      [14],
+      [15],
+      [16],
+      [20],
+      [24],
+    ])(
+      "pool %i: every best of consumes the pool exactly once and ends on the decider",
+      async (poolSize) => {
+        for (const bestOf of bestOfs.filter((n) => n < poolSize)) {
+          const match = await createVetoMatch(bestOf, poolSize);
+          // A short seed table would quietly build a smaller pool and make the
+          // rest of this vacuous.
+          expect(match.mapIds.length).toBe(poolSize);
+
+          const [{ pattern }] = await postgres.query<
+            Array<{ pattern: string[] }>
+          >(
+            "SELECT get_map_veto_pattern(m) AS pattern FROM matches m WHERE id = $1",
+            [match.id],
+          );
+
+          const count = (type: string) =>
+            pattern.filter((step) => step === type).length;
+          const label = `BO${bestOf} pool ${poolSize}`;
+
+          expect({ label, total: count("Ban") + count("Pick") + 1 }).toEqual({
+            label,
+            total: poolSize,
+          });
+          expect({ label, played: count("Pick") + 1 }).toEqual({
+            label,
+            played: bestOf,
+          });
+          expect({ label, sides: count("Side") }).toEqual({
+            label,
+            sides: count("Pick"),
+          });
+          expect({ label, deciders: count("Decider") }).toEqual({
+            label,
+            deciders: 1,
+          });
+          expect({ label, last: pattern[pattern.length - 1] }).toEqual({
+            label,
+            last: "Decider",
+          });
+          pattern.forEach((step, i) => {
+            if (step === "Side") {
+              expect({ label, before: pattern[i - 1] }).toEqual({
+                label,
+                before: "Pick",
+              });
+            }
+          });
+        }
+      },
+    );
+
+    // The turn order regression guard. Nothing used to assert who acted when,
+    // which is how a best-of-3 turn swap survived: on a pool of 8 it handed
+    // BOTH picks to lineup 2, and on 12 it had lineup 2 ban twice in a row.
+    it.each([
+      [3, 8],
+      [3, 9],
+      [3, 10],
+      [3, 12],
+      [3, 15],
+      [5, 10],
+      [5, 12],
+      [5, 15],
+      [1, 15],
+    ])(
+      "BO%i pool %i: the picks snake and the bans alternate",
+      async (bestOf, poolSize) => {
+        const { steps } = await playOutVeto(bestOf, poolSize);
+        const actor = (step: string) => step.slice(-2);
+
+        // Picks reverse every pair: L1, L2, L2, L1, L1, L2 ...
+        steps
+          .filter((s) => s.step.startsWith("Pick"))
+          .forEach((pick, i) => {
+            const expected = Math.floor((i + 1) / 2) % 2 === 0 ? "L1" : "L2";
+            expect({ pick: i, actor: actor(pick.step) }).toEqual({
+              pick: i,
+              actor: expected,
+            });
+          });
+
+        steps.forEach((step, i) => {
+          const previous = steps[i - 1];
+          if (!previous) {
+            return;
+          }
+
+          // Consecutive bans never land on the same team.
+          if (step.step.startsWith("Ban") && previous.step.startsWith("Ban")) {
+            expect({ step: i, actor: actor(step.step) }).not.toEqual({
+              step: i,
+              actor: actor(previous.step),
+            });
+          }
+
+          // A side is always answered by the opponent of whoever picked.
+          if (step.step.startsWith("Side")) {
+            expect({ step: i, actor: actor(step.step) }).not.toEqual({
+              step: i,
+              actor: actor(previous.step),
+            });
+          }
+        });
+      },
+    );
+
+    it.each([
+      [1, 10],
+      [2, 10],
+      [3, 10],
+      [5, 10],
+      [1, 12],
+      [2, 12],
+      [3, 12],
+      [5, 12],
+      [1, 15],
+      [2, 15],
+      [3, 15],
+      [5, 15],
+      [1, 2],
+      [1, 3],
+      [2, 3],
+      [1, 4],
+      [3, 4],
+    ])(
+      "BO%i pool %i runs to completion with the right maps left standing",
+      async (bestOf, poolSize) => {
+        const match = await runVetoToCompletion(bestOf, poolSize);
+
+        const state = await vetoState(match.id);
+        expect(state.status).toBe("Live");
+        expect(state.veto_type).toBeNull();
+
+        const maps = await postgres.query<Array<{ map_id: string }>>(
+          "SELECT map_id FROM match_maps WHERE match_id = $1",
+          [match.id],
+        );
+        expect(maps.length).toBe(bestOf);
+
+        const picks = await postgres.query<
+          Array<{ type: string; map_id: string }>
+        >(
+          "SELECT type, map_id FROM match_map_veto_picks WHERE match_id = $1 AND type <> 'Side'",
+          [match.id],
+        );
+        expect(new Set(picks.map((p) => p.map_id)).size).toBe(poolSize);
+        expect(picks.filter((p) => p.type === "Ban").length).toBe(
+          poolSize - bestOf,
+        );
+        expect(picks.filter((p) => p.type === "Decider").length).toBe(1);
+      },
+    );
+
+    it.each([
+      [3, 2],
+      [5, 4],
+      [7, 6],
+    ])(
+      "BO%i on a pool of %i is refused at match creation",
+      async (bestOf, poolSize) => {
+        const { poolId } = await fx.mapPool(poolSize);
+
+        await expect(
+          fx.match({ bestOf, mapVeto: true, mapPoolId: poolId }),
+        ).rejects.toThrow(/Not enough maps in the pool/i);
+      },
+    );
+  });
+
+  // https://docs.5stack.gg/features/map-veto#when-there-is-nothing-to-veto
+  // A pool holding exactly best_of maps has no decision in it: every map gets
+  // played, so setup_match_maps assigns them straight from the pool with
+  // alternating starting sides and no veto ever runs.
+  describe("when there is nothing to veto", () => {
+    const goLive = async (bestOf: number, poolSize: number) => {
+      const { poolId, mapIds } = await fx.mapPool(poolSize);
+      const match = await fx.match({
+        bestOf,
+        mapVeto: true,
+        mapPoolId: poolId,
+      });
+      await postgres.query("UPDATE matches SET status = 'Live' WHERE id = $1", [
+        match.id,
+      ]);
+      return { ...match, mapIds };
+    };
+
+    it.each([
+      [1, 1],
+      [3, 3],
+      [5, 5],
+    ])(
+      "BO%i pool %i skips the veto and goes straight to the maps",
+      async (bestOf, poolSize) => {
+        const match = await goLive(bestOf, poolSize);
+
+        // Map veto is on, but with nothing to veto the match stays Live
+        // instead of being bounced into Veto.
+        const state = await vetoState(match.id);
+        expect(state.status).toBe("Live");
+        expect(state.veto_type).toBeNull();
+        expect(state.picking).toBeNull();
+
+        const maps = await postgres.query<
+          Array<{
+            map_id: string;
+            lineup_1_side: string;
+            lineup_2_side: string;
+          }>
+        >(
+          `SELECT map_id, lineup_1_side, lineup_2_side FROM match_maps
+           WHERE match_id = $1 ORDER BY "order"`,
+          [match.id],
+        );
+        expect(maps.length).toBe(bestOf);
+        expect(maps.map((m) => m.map_id).sort()).toEqual(
+          [...match.mapIds].sort(),
+        );
+
+        // Alternating starting sides down the series.
+        maps.forEach((map, i) => {
+          expect(map.lineup_1_side).toBe(i % 2 === 0 ? "CT" : "TERRORIST");
+          expect(map.lineup_2_side).toBe(i % 2 === 0 ? "TERRORIST" : "CT");
+        });
+
+        const picks = await postgres.query<Array<{ id: string }>>(
+          "SELECT id FROM match_map_veto_picks WHERE match_id = $1",
+          [match.id],
+        );
+        expect(picks).toEqual([]);
+
+        // No step is outstanding, so no pick timer is left armed.
+        const [{ expires_at }] = await postgres.query<
+          Array<{ expires_at: string | null }>
+        >(
+          "SELECT veto_pick_expires_at AS expires_at FROM matches WHERE id = $1",
+          [match.id],
+        );
+        expect(expires_at).toBeNull();
+      },
+    );
+
+    it("refuses a pick when there was nothing to veto", async () => {
+      const match = await goLive(3, 3);
+
+      await expect(
+        insertPick(match.id, "Ban", match.lineup_1_id, match.mapIds[0]),
+      ).rejects.toThrow(/No map veto in progress/i);
+
+      const [{ allowed }] = await postgres.query<
+        Array<{ allowed: boolean | null }>
+      >(
+        `SELECT lineup_is_picking_map_veto(ml) AS allowed
+         FROM match_lineups ml WHERE ml.id = $1`,
+        [match.lineup_1_id],
+      );
+      expect(allowed).toBeFalsy();
+    });
+  });
+
+  // The 7 map active duty pool: the shape the linked CS rulebook is actually
+  // written for, and the one nearly every real match runs.
+  // https://github.com/ValveSoftware/counter-strike_rules_and_regs/blob/main/major-supplemental-rulebook.md#map-pick-ban
+  describe("a 7 map pool", () => {
+    it("BO1: the teams alternate bans down to the decider", async () => {
+      const { match, steps } = await playOutVeto(1, 7);
+
+      expect(steps.map((s) => s.step)).toEqual([
+        "Ban L1",
+        "Ban L2",
+        "Ban L1",
+        "Ban L2",
+        "Ban L1",
+        "Ban L2",
+      ]);
+
+      const maps = await postgres.query<Array<{ map_id: string }>>(
+        'SELECT map_id FROM match_maps WHERE match_id = $1 ORDER BY "order"',
+        [match.id],
+      );
+      expect(maps.map((m) => m.map_id)).toEqual([match.mapIds[6]]);
+      expect((await vetoState(match.id)).status).toBe("Live");
+    });
+
+    it("BO3: ban, ban, pick+side, pick+side, ban, ban, decider", async () => {
+      const { match, steps } = await playOutVeto(3, 7);
+
+      // The pick pair reverses the lead, so the second ban phase opens with
+      // lineup 2 and the last ban before the decider falls to lineup 1.
+      expect(steps.map((s) => s.step)).toEqual([
+        "Ban L1",
+        "Ban L2",
+        "Pick L1",
+        "Side L2",
+        "Pick L2",
+        "Side L1",
+        "Ban L2",
+        "Ban L1",
+      ]);
+
+      const picked = steps
+        .filter((s) => s.step.startsWith("Pick"))
+        .map((s) => s.mapId);
+      const banned = steps
+        .filter((s) => s.step.startsWith("Ban"))
+        .map((s) => s.mapId);
+      const leftover = match.mapIds.filter(
+        (id) => !picked.includes(id) && !banned.includes(id),
+      );
+      expect(leftover.length).toBe(1);
+
+      const maps = await postgres.query<
+        Array<{ map_id: string; lineup_1_side: string; lineup_2_side: string }>
+      >(
+        `SELECT map_id, lineup_1_side, lineup_2_side FROM match_maps
+         WHERE match_id = $1 ORDER BY "order"`,
+        [match.id],
+      );
+
+      // Maps are played in the order they were picked, decider last.
+      expect(maps.map((m) => m.map_id)).toEqual([...picked, leftover[0]]);
+
+      // Each pick's side went to the lineup that answered it: lineup 2 chose
+      // CT on lineup 1's pick, lineup 1 chose CT on lineup 2's pick.
+      expect(maps[0].lineup_2_side).toBe("CT");
+      expect(maps[0].lineup_1_side).toBe("TERRORIST");
+      expect(maps[1].lineup_1_side).toBe("CT");
+      expect(maps[1].lineup_2_side).toBe("TERRORIST");
+
+      const [decider] = await postgres.query<
+        Array<{ map_id: string; side: string | null }>
+      >(
+        "SELECT map_id, side FROM match_map_veto_picks WHERE match_id = $1 AND type = 'Decider'",
+        [match.id],
+      );
+      expect(decider.map_id).toBe(leftover[0]);
+      expect(decider.side).toBeNull();
+
+      const state = await vetoState(match.id);
+      expect(state.status).toBe("Live");
+      expect(state.veto_type).toBeNull();
+      expect(state.picking).toBeNull();
+    });
+
+    it("BO5: ban, ban, then four picks snaking L1, L2, L2, L1", async () => {
+      const { match, steps } = await playOutVeto(5, 7);
+
+      expect(steps.map((s) => s.step)).toEqual([
+        "Ban L1",
+        "Ban L2",
+        "Pick L1",
+        "Side L2",
+        "Pick L2",
+        "Side L1",
+        "Pick L2",
+        "Side L1",
+        "Pick L1",
+        "Side L2",
+      ]);
+
+      const maps = await postgres.query<Array<{ map_id: string }>>(
+        'SELECT map_id FROM match_maps WHERE match_id = $1 ORDER BY "order"',
+        [match.id],
+      );
+      expect(maps.length).toBe(5);
+      expect((await vetoState(match.id)).status).toBe("Live");
+    });
+
+    it.each([[1], [3], [5]])(
+      "BO%i: every map in the pool is accounted for exactly once",
+      async (bestOf) => {
+        const match = await runVetoToCompletion(bestOf, 7);
+
+        const picks = await postgres.query<
+          Array<{ type: string; map_id: string }>
+        >(
+          "SELECT type, map_id FROM match_map_veto_picks WHERE match_id = $1 AND type <> 'Side'",
+          [match.id],
+        );
+        expect(new Set(picks.map((p) => p.map_id)).size).toBe(7);
+        expect(picks.filter((p) => p.type === "Decider").length).toBe(1);
+        expect(picks.filter((p) => p.type === "Pick").length).toBe(bestOf - 1);
+        expect(picks.filter((p) => p.type === "Ban").length).toBe(7 - bestOf);
+      },
+    );
+  });
+
+  // Nobody ever picks a side on the decider. It is the map neither team chose,
+  // so the veto ends the moment it is inserted: no Side step is generated for
+  // it, no Side row may name it, and neither captain is left on the clock.
+  describe("the decider is never a side pick", () => {
+    const combos: Array<[number, number]> = [
+      [1, 3],
+      [1, 7],
+      [2, 7],
+      [3, 4],
+      [3, 5],
+      [3, 6],
+      [3, 7],
+      [3, 12],
+      [5, 6],
+      [5, 7],
+      [5, 12],
+    ];
+
+    it.each(combos)(
+      "BO%i pool %i: the pattern has no Side step for the decider",
+      async (bestOf, poolSize) => {
+        const pattern = await patternFor(bestOf, poolSize);
+
+        expect(pattern[pattern.length - 1]).toBe("Decider");
+        expect(pattern.indexOf("Side")).toBeLessThan(
+          pattern.indexOf("Decider"),
+        );
+        // A Side only ever answers the Pick before it.
+        pattern.forEach((type, i) => {
+          if (type === "Side") {
+            expect(pattern[i - 1]).toBe("Pick");
+          }
+        });
+      },
+    );
+
+    it.each(combos)(
+      "BO%i pool %i: no side is chosen for the decider map",
+      async (bestOf, poolSize) => {
+        const match = await runVetoToCompletion(bestOf, poolSize);
+
+        const picks = await postgres.query<
+          Array<{ type: string; map_id: string; side: string | null }>
+        >(
+          `SELECT type, map_id, side FROM match_map_veto_picks
+           WHERE match_id = $1 ORDER BY created_at`,
+          [match.id],
+        );
+
+        const decider = picks.find((pick) => pick.type === "Decider");
+        expect(decider).toBeDefined();
+        expect(decider!.side).toBeNull();
+
+        // The decider closes the veto: nothing is recorded after it, and no
+        // Side row names its map.
+        expect(picks[picks.length - 1].type).toBe("Decider");
+        expect(
+          picks.filter(
+            (pick) => pick.type === "Side" && pick.map_id === decider!.map_id,
+          ),
+        ).toEqual([]);
+
+        // Neither captain is still on the clock once the decider lands.
+        const state = await vetoState(match.id);
+        expect(state.status).toBe("Live");
+        expect(state.veto_type).toBeNull();
+        expect(state.picking).toBeNull();
+
+        const [{ expires_at }] = await postgres.query<
+          Array<{ expires_at: string | null }>
+        >(
+          "SELECT veto_pick_expires_at AS expires_at FROM matches WHERE id = $1",
+          [match.id],
+        );
+        expect(expires_at).toBeNull();
+      },
+    );
+
+    it("rejects a side submitted against the leftover decider map", async () => {
+      // BO3 pool 4: Ban, Pick, Side, Pick, Side, Decider. After the second
+      // Pick the only unvetoed map left IS the decider, so the outstanding
+      // Side step answers the map that was just picked — pointing it at the
+      // leftover map instead would make the decider a side pick.
+      const match = await createVetoMatch(3, 4);
+
+      await insertPick(match.id, "Ban", match.lineup_1_id, match.mapIds[0]);
+
+      let picker = (await vetoState(match.id)).picking!;
+      await insertPick(match.id, "Pick", picker, match.mapIds[1]);
+      let sider =
+        picker === match.lineup_1_id ? match.lineup_2_id : match.lineup_1_id;
+      await insertPick(match.id, "Side", sider, match.mapIds[1], "CT");
+
+      picker = (await vetoState(match.id)).picking!;
+      await insertPick(match.id, "Pick", picker, match.mapIds[2]);
+
+      const state = await vetoState(match.id);
+      expect(state.veto_type).toBe("Side");
+      sider =
+        picker === match.lineup_1_id ? match.lineup_2_id : match.lineup_1_id;
+      expect(state.picking).toBe(sider);
+
+      await expect(
+        insertPick(match.id, "Side", sider, match.mapIds[3], "CT"),
+      ).rejects.toThrow(/side/i);
+
+      await insertPick(match.id, "Side", sider, match.mapIds[2], "CT");
+
+      const [decider] = await postgres.query<Array<{ map_id: string }>>(
+        "SELECT map_id FROM match_map_veto_picks WHERE match_id = $1 AND type = 'Decider'",
+        [match.id],
+      );
+      expect(decider.map_id).toBe(match.mapIds[3]);
     });
   });
 

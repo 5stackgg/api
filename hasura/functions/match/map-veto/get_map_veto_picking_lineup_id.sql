@@ -8,9 +8,8 @@ DECLARE
     action_index int;
     next_action text;
     turn_index int;
-    best_of int;
+    picks_made int;
     current_team int;
-    team int;
     last_pick_lineup uuid;
 BEGIN
     IF match.status != 'Veto' THEN
@@ -50,21 +49,20 @@ BEGIN
     WHERE match_id = match.id
       AND type IN ('Ban', 'Pick', 'Decider');
 
-    select mo.best_of into best_of from matches m
-        inner join match_options mo on mo.id = m.match_options_id
-        where m.id = match.id;
+    SELECT COUNT(*) INTO picks_made
+    FROM match_map_veto_picks
+    WHERE match_id = match.id
+      AND type = 'Pick';
 
-    -- best of 3 swaps teams after the 4th pick
-    IF best_of = 3 THEN
-        IF turn_index < 4 THEN
-            current_team := CASE WHEN turn_index % 2 = 0 THEN 1 ELSE 2 END;
-        ELSE
-            current_team := CASE WHEN turn_index % 2 = 0 THEN 2 ELSE 1 END;
-        END IF;
+    -- Turns alternate, and every completed pair of picks reverses who leads, so
+    -- the picks snake: lineup 1, lineup 2, lineup 2, lineup 1. Without the
+    -- reverse the team that opens the veto takes every odd pick and the last
+    -- ban before the decider.
+    IF (picks_made / 2) % 2 = 1 THEN
+        current_team := CASE WHEN turn_index % 2 = 0 THEN 2 ELSE 1 END;
     ELSE
         current_team := CASE WHEN turn_index % 2 = 0 THEN 1 ELSE 2 END;
     END IF;
-    
 
     IF current_team = 1 THEN
         RETURN match.lineup_1_id;
