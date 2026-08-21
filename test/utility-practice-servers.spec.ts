@@ -79,6 +79,75 @@ describe("utility practice servers (SQL-driven)", () => {
     );
   }
 
+  // The exact wire a render pod dials -- get_server_host's own answer, so the
+  // pod connects the same way a real player does. For a non-LAN region with a
+  // Steam relay token, that is the SDR token; otherwise host:port. Dialling a
+  // raw IP at a relay (P2P-only) server landed the pod on cs2's loopback map.
+  describe("renderConnection", () => {
+    async function renderSessionOn(server: {
+      isLan: boolean;
+      steamRelay: string | null;
+    }): Promise<string> {
+      const suffix = fx.nextName("");
+      const region = `R-${suffix}`;
+      const nodeId = `node-${suffix}`;
+      await postgres.query(
+        `INSERT INTO server_regions (value, description, is_lan)
+         VALUES ($1, $1, $2)`,
+        [region, server.isLan],
+      );
+      await postgres.query(
+        `INSERT INTO game_server_nodes (id, region) VALUES ($1, $2)`,
+        [nodeId, region],
+      );
+      const { matchId } = await fx.bareMatch();
+      const [srv] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO servers
+           (host, label, rcon_password, port, enabled, connected, region, type,
+            is_dedicated, steam_relay, reserved_by_match_id, game_server_node_id)
+         VALUES ('76.139.106.28', $1, '\\x00'::bytea, 30020, true, true,
+                 $2, 'Ranked', false, $3, $4, $5)
+         RETURNING id::text AS id`,
+        [`ondemand-${suffix}`, region, server.steamRelay, matchId, nodeId],
+      );
+      await postgres.query(
+        "UPDATE matches SET server_id = $2::uuid WHERE id = $1::uuid",
+        [matchId, srv.id],
+      );
+      const host = await fx.player();
+      const [session] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO utility_practice_sessions
+           (host_steam_id, map_name, region, status, is_render, match_id)
+         VALUES ($1::bigint, 'de_mirage', $2, 'Ready', true, $3::uuid)
+         RETURNING id::text AS id`,
+        [host, region, matchId],
+      );
+      return session.id;
+    }
+
+    it("dials the Steam relay token for a relay region", async () => {
+      const sessionId = await renderSessionOn({
+        isLan: false,
+        steamRelay: "[A:1:3671442435:50976]",
+      });
+
+      const connection = await makeService().renderConnection(sessionId);
+
+      expect(connection?.addr).toBe("[A:1:3671442435:50976]");
+    });
+
+    it("dials host:port when the region has no relay", async () => {
+      const sessionId = await renderSessionOn({
+        isLan: true,
+        steamRelay: null,
+      });
+
+      const connection = await makeService().renderConnection(sessionId);
+
+      expect(connection?.addr).toBe("76.139.106.28:30020");
+    });
+  });
+
   describe("a practice server is not a match server", () => {
     it("hands out no connection string", async () => {
       const id = await practiceServer();

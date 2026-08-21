@@ -747,6 +747,9 @@ export class MatchAssistantService {
     });
 
     if (game_server_nodes.length === 0) {
+      this.logger.warn(
+        `[${matchId}] no eligible game server node (Online + enabled + matchmaking${match.region ? ` in ${match.region}` : ""}) — cannot boot an on-demand server`,
+      );
       return false;
     }
 
@@ -844,6 +847,9 @@ export class MatchAssistantService {
         const server = servers.at(-1);
 
         if (!server) {
+          this.logger.warn(
+            `[${matchId}] no free on-demand server row in the pool — waiting`,
+          );
           if (!options?.preserveMatchStatus) {
             await this.updateMatchStatus(matchId, "WaitingForServer");
           }
@@ -1168,10 +1174,13 @@ export class MatchAssistantService {
       { name: "INSTALL_5STACK_PLUGIN", value: "false" },
       { name: "INSTALL_UTILITY_PRACTICE_PLUGIN", value: "true" },
       // The api root, not the /utility prefix: every path the plugin builds
-      // already starts with it.
+      // already starts with it. appConfig.apiDomain is ALREADY a full
+      // https:// url (configs/app.ts) -- prefixing it again produced
+      // https://https://... and the pod dialled a host literally named
+      // "https" until it timed out.
       {
         name: "UTILITY_URL",
-        value: `https://${this.appConfig.apiDomain}`,
+        value: this.appConfig.apiDomain,
       },
     ];
   }

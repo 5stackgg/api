@@ -30,6 +30,7 @@ export type UtilityPracticeSession = {
   status: string;
   invite_code: string;
   is_open: boolean;
+  access: string | null;
   is_render: boolean;
   last_occupied_at: Date | null;
   empty_since: Date | null;
@@ -44,6 +45,7 @@ export type StartUtilityPracticeInput = {
   collection_id?: string | null;
   team_id?: string | null;
   is_open?: boolean;
+  access?: string;
   server_id?: string | null;
 };
 
@@ -152,12 +154,18 @@ export class UtilityPracticeService {
       await this.leaveWaitlist(user.steam_id);
 
 
+      const access = UtilityPracticeService.accessFor(input);
+
       const session = await this.insertSession(user.steam_id, {
         mapName,
         region,
         teamId: input.team_id ?? null,
         collectionId: input.collection_id ?? null,
-        isOpen: input.is_open === true,
+        // is_open is kept in step with access rather than read: everything
+        // decides on access now, and a column two things can disagree about is
+        // a bug waiting for whichever one is checked second.
+        isOpen: access === "Open",
+        access,
       });
 
       try {
@@ -227,6 +235,8 @@ export class UtilityPracticeService {
       teamId: null,
       collectionId: null,
       isOpen: false,
+      // A render pod is nobody's to join.
+      access: "Private",
       isRender: true,
     });
 
@@ -264,42 +274,38 @@ export class UtilityPracticeService {
     match_id: string;
     plugin_runtime: string;
   } | null> {
+    // get_server_host is the platform's own answer to "what do I connect to":
+    // the Steam relay address (an SDR token) for a relay region, else host:port.
+    // A relay server binds a Steam P2P listen socket ONLY and answers no raw
+    // ip:port -- dialling the IP landed the pod on cs2's loopback background
+    // map. Use the same target a real player gets.
     const [row] = await this.postgres.query<
       Array<{
         match_id: string;
         password: string;
-        host: string;
-        port: number;
-        node_ip: string | null;
-        is_lan: boolean | null;
+        addr: string | null;
         plugin_runtime: string;
       }>
     >(
       `SELECT m.id::text AS match_id,
               m.password,
-              srv.host,
-              srv.port,
-              n.node_ip,
-              r.is_lan,
+              public.get_server_host(srv) AS addr,
               COALESCE(n.pin_plugin_runtime, public.active_plugin_runtime())
                 AS plugin_runtime
          FROM public.utility_practice_sessions s
          INNER JOIN public.matches m ON m.id = s.match_id
          INNER JOIN public.servers srv ON srv.id = m.server_id
           LEFT JOIN public.game_server_nodes n ON n.id = srv.game_server_node_id
-          LEFT JOIN public.server_regions r ON r.value = srv.region
         WHERE s.id = $1::uuid`,
       [sessionId],
     );
 
-    if (!row?.password) {
+    if (!row?.password || !row?.addr) {
       return null;
     }
 
-    const host = row.is_lan && row.node_ip ? row.node_ip : row.host;
-
     return {
-      addr: `${host}:${row.port}`,
+      addr: row.addr,
       password: row.password,
       match_id: row.match_id,
       plugin_runtime: row.plugin_runtime,
@@ -991,6 +997,7 @@ export class UtilityPracticeService {
            s.status,
            s.invite_code,
            s.is_open,
+           s.access,
            s.is_render,
            s.last_occupied_at,
            s.empty_since,
@@ -1044,6 +1051,18 @@ export class UtilityPracticeService {
     );
   }
 
+  // Old callers sent is_open and nothing else; new ones send access. Closed
+  // meant friends-team-and-invited, so that is what it maps to.
+  private static accessFor(input: { access?: string; is_open?: boolean }): string {
+    const allowed = ["Open", "Friends", "Invite", "Private"];
+
+    if (input.access && allowed.includes(input.access)) {
+      return input.access;
+    }
+
+    return input.is_open === true ? "Open" : "Friends";
+  }
+
   private async insertSession(
     hostSteamId: string,
     options: {
@@ -1052,6 +1071,7 @@ export class UtilityPracticeService {
       teamId: string | null;
       collectionId: string | null;
       isOpen: boolean;
+      access: string;
       isRender?: boolean;
     },
   ): Promise<UtilityPracticeSession> {
@@ -1063,8 +1083,8 @@ export class UtilityPracticeService {
         const [row] = await this.postgres.query<Array<{ id: string }>>(
           `INSERT INTO public.utility_practice_sessions
              (host_steam_id, map_name, region, team_id, collection_id, is_open,
-              is_render)
-           VALUES ($1::bigint, $2, $3, $4::uuid, $5::uuid, $6, $7)
+              access, is_render)
+           VALUES ($1::bigint, $2, $3, $4::uuid, $5::uuid, $6, $7, $8)
            RETURNING id::text AS id`,
           [
             hostSteamId,
@@ -1073,6 +1093,7 @@ export class UtilityPracticeService {
             options.teamId,
             options.collectionId,
             options.isOpen,
+            options.access,
             options.isRender === true,
           ],
         );
@@ -1223,9 +1244,21 @@ export class UtilityPracticeService {
       return true;
     }
 
-    if (session.is_open) {
+    const access = session.access ?? "Friends";
+
+    if (access === "Open") {
       return true;
     }
+
+    // Nobody but the host, and no query worth running to prove it.
+    if (access === "Private") {
+      return false;
+    }
+
+    // Invite and Friends share the invite/team half; only Friends adds the
+    // host's friend list on top. Written as one query with a flag rather than
+    // two, so the two paths cannot drift apart.
+    const friends = access === "Friends";
 
     const [row] = await this.postgres.query<Array<{ allowed: boolean }>>(
       `SELECT (
@@ -1234,19 +1267,55 @@ export class UtilityPracticeService {
             WHERE i.utility_practice_session_id = $1::uuid AND i.steam_id = $2::bigint
          )
          OR public.is_utility_team_member($3::uuid, $2::bigint)
-         OR EXISTS (
-           SELECT 1 FROM public.friends f
-            WHERE f.status = 'Accepted'
-              AND (
-                (f.player_steam_id = $4::bigint AND f.other_player_steam_id = $2::bigint)
-                OR (f.other_player_steam_id = $4::bigint AND f.player_steam_id = $2::bigint)
-              )
+         OR (
+           $5::boolean
+           AND EXISTS (
+             SELECT 1 FROM public.friends f
+              WHERE f.status = 'Accepted'
+                AND (
+                  (f.player_steam_id = $4::bigint AND f.other_player_steam_id = $2::bigint)
+                  OR (f.other_player_steam_id = $4::bigint AND f.player_steam_id = $2::bigint)
+                )
+           )
          )
        ) AS allowed`,
-      [session.id, steamId, session.team_id, session.host_steam_id],
+      [session.id, steamId, session.team_id, session.host_steam_id, friends],
     );
 
     return row?.allowed === true;
+  }
+
+  /**
+   * Who may join, changed after the fact. The old model could only be set at
+   * start time, so a host who opened a server to everybody had no way to close
+   * it again without stopping it.
+   */
+  public async setAccess(
+    user: User,
+    sessionId: string,
+    access: string,
+  ): Promise<{ success: boolean }> {
+    const allowed = ["Open", "Friends", "Invite", "Private"];
+
+    if (!allowed.includes(access)) {
+      throw Error("unknown access level");
+    }
+
+    const [row] = await this.postgres.query<Array<{ id: string }>>(
+      `UPDATE public.utility_practice_sessions
+          SET access = $3, is_open = ($3 = 'Open'), updated_at = now()
+        WHERE id = $1::uuid
+          AND host_steam_id = $2::bigint
+          AND status IN ('Starting', 'Ready')
+        RETURNING id::text AS id`,
+      [sessionId, user.steam_id, access],
+    );
+
+    if (!row) {
+      throw Error("that is not your practice session");
+    }
+
+    return { success: true };
   }
 
   // tbid_match_lineup_players refuses a removal that would take a Live lineup

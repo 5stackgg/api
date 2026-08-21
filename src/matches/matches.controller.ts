@@ -963,6 +963,9 @@ export class MatchesController {
     }
 
     if (status === "Live" && !data.new.server_id) {
+      this.logger.log(
+        `[practice ${matchId}] went Live with no server — assigning one`,
+      );
       await this.matchAssistant.assignServer(matchId);
     }
   }

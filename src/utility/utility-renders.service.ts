@@ -215,16 +215,26 @@ export class UtilityRendersService {
     });
   }
 
-  public async cancel(renderId: string): Promise<boolean> {
-    const rows = await this.postgres.query<Array<{ id: string }>>(
+  public async cancel(renderId: string): Promise<{
+    cancelled: boolean;
+    mapName: string | null;
+    sessionId: string | null;
+  }> {
+    const [row] = await this.postgres.query<
+      Array<{ map_name: string; utility_practice_session_id: string | null }>
+    >(
       `UPDATE public.utility_lineup_renders
           SET status = 'cancelled', last_status_at = now()
         WHERE id = $1::uuid
           AND status = ANY($2::text[])
-      RETURNING id::text AS id`,
+      RETURNING map_name, utility_practice_session_id::text AS utility_practice_session_id`,
       [renderId, [...UTILITY_RENDER_IN_FLIGHT]],
     );
-    return rows.length > 0;
+    return {
+      cancelled: Boolean(row),
+      mapName: row?.map_name ?? null,
+      sessionId: row?.utility_practice_session_id ?? null,
+    };
   }
 
   public async clearFinished(): Promise<number> {
@@ -494,6 +504,28 @@ export class UtilityRendersService {
           : null,
         terminal,
       ],
+    );
+  }
+
+  /**
+   * A problem worth showing while the render is still queued -- the pod's own
+   * log when a boot wedges. error_message on a live row, never a status
+   * change: the batch keeps running, the reviewer just gets to read why it is
+   * taking so long, and a later terminal status overwrites this with the
+   * final verdict.
+   */
+  public async noteBootProblem(
+    renderIds: Array<string>,
+    note: string,
+  ): Promise<void> {
+    if (renderIds.length === 0 || !note) return;
+    await this.postgres.query(
+      `UPDATE public.utility_lineup_renders
+          SET error_message = $2,
+              last_status_at = now()
+        WHERE id = ANY($1::uuid[])
+          AND status = ANY($3::text[])`,
+      [renderIds, note.slice(0, 500), [...UTILITY_RENDER_IN_FLIGHT]],
     );
   }
 

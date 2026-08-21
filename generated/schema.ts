@@ -966,9 +966,24 @@ export interface UtilityImportOutput {
     __typename: 'UtilityImportOutput'
 }
 
+export interface UtilityLaunchSeedBackfillOutput {
+    done: Scalars['Boolean']
+    scanned: Scalars['Int']
+    seeded: Scalars['Int']
+    skipped: Scalars['Int']
+    __typename: 'UtilityLaunchSeedBackfillOutput'
+}
+
 export interface UtilityLineupOutput {
     id: Scalars['uuid']
     __typename: 'UtilityLineupOutput'
+}
+
+export interface UtilityLoadOutput {
+    map_name: (Scalars['String'] | null)
+    reason: Scalars['String']
+    sent: Scalars['Boolean']
+    __typename: 'UtilityLoadOutput'
 }
 
 export interface UtilityMissPatternOutput {
@@ -1063,6 +1078,13 @@ export interface UtilityPracticeSessionOutput {
     match_id: (Scalars['uuid'] | null)
     status: (Scalars['String'] | null)
     __typename: 'UtilityPracticeSessionOutput'
+}
+
+export interface UtilityPracticeWhereOutput {
+    map_name: (Scalars['String'] | null)
+    on_server: Scalars['Boolean']
+    session_id: (Scalars['uuid'] | null)
+    __typename: 'UtilityPracticeWhereOutput'
 }
 
 export interface UtilityPurgeOutput {
@@ -14414,6 +14436,8 @@ export interface mutation_root {
     backfillSeasonElo: (RecomputeEloStartedOutput | null)
     /** Return the progress of the season ELO backfill run (admin only). */
     backfillSeasonEloStatus: (SeasonBackfillStatusOutput | null)
+    /** Recover launch seeds from recorded trajectories, one batch per call */
+    backfillUtilityLaunchSeeds: (UtilityLaunchSeedBackfillOutput | null)
     /** Launch a Vulkan shader pre-bake Job on a GPU node */
     bakeShaders: (SuccessOutput | null)
     /** callForOrganizer */
@@ -16138,6 +16162,8 @@ export interface mutation_root {
     scheduleMatch: (SuccessOutput | null)
     /** sendScrimRequest */
     sendScrimRequest: (SuccessOutput | null)
+    sendUtilityLineupToServer: (UtilityLoadOutput | null)
+    sendUtilityScratchToServer: (UtilityLoadOutput | null)
     setGameNodeSchedulingState: (SuccessOutput | null)
     /** Track new releases of a game plugin, or pin it where it is */
     setGamePluginAutoUpdate: (SuccessOutput | null)
@@ -26903,6 +26929,7 @@ export interface query_root {
     utilityPracticePlan: (UtilityPracticePlanOutput | null)
     /** Dedicated practice servers free to book right now */
     utilityPracticeServers: (UtilityPracticeServersOutput | null)
+    utilityPracticeWhereAmI: (UtilityPracticeWhereOutput | null)
     /** Read the practice server solver's calibration gate */
     utilitySolverCalibration: (UtilityCalibrationOutput | null)
     /** Aggregate a team's mined utility throws against its saved lineups */
@@ -44283,8 +44310,25 @@ export interface UtilityImportOutputGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface UtilityLaunchSeedBackfillOutputGenqlSelection{
+    done?: boolean | number
+    scanned?: boolean | number
+    seeded?: boolean | number
+    skipped?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface UtilityLineupOutputGenqlSelection{
     id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface UtilityLoadOutputGenqlSelection{
+    map_name?: boolean | number
+    reason?: boolean | number
+    sent?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -44396,6 +44440,14 @@ export interface UtilityPracticeSessionOutputGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface UtilityPracticeWhereOutputGenqlSelection{
+    map_name?: boolean | number
+    on_server?: boolean | number
+    session_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface UtilityPurgeOutputGenqlSelection{
     dry_run?: boolean | number
     lineups?: boolean | number
@@ -44426,6 +44478,8 @@ export interface UtilityRenderQueueOutputGenqlSelection{
     __typename?: boolean | number
     __scalar?: boolean | number
 }
+
+export interface UtilityScratchLineupInput {client_id: Scalars['String'],eye_z: Scalars['Float'],land_x?: (Scalars['Float'] | null),land_y?: (Scalars['Float'] | null),land_z?: (Scalars['Float'] | null),map_name: Scalars['String'],name: Scalars['String'],origin_x: Scalars['Float'],origin_y: Scalars['Float'],origin_z: Scalars['Float'],side: Scalars['String'],technique: Scalars['String'],throw_strength: Scalars['String'],utility_type: Scalars['String'],view_pitch: Scalars['Float'],view_yaw: Scalars['Float']}
 
 export interface UtilitySightlineOutputGenqlSelection{
     degraded?: boolean | number
@@ -66937,6 +66991,8 @@ export interface mutation_rootGenqlSelection{
     backfillSeasonElo?: (RecomputeEloStartedOutputGenqlSelection & { __args: {season_id: Scalars['String']} })
     /** Return the progress of the season ELO backfill run (admin only). */
     backfillSeasonEloStatus?: SeasonBackfillStatusOutputGenqlSelection
+    /** Recover launch seeds from recorded trajectories, one batch per call */
+    backfillUtilityLaunchSeeds?: (UtilityLaunchSeedBackfillOutputGenqlSelection & { __args?: {limit?: (Scalars['Int'] | null)} })
     /** Launch a Vulkan shader pre-bake Job on a GPU node */
     bakeShaders?: (SuccessOutputGenqlSelection & { __args: {game_server_node_id: Scalars['uuid']} })
     /** callForOrganizer */
@@ -70635,6 +70691,8 @@ export interface mutation_rootGenqlSelection{
     scheduleMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], time?: (Scalars['timestamptz'] | null)} })
     /** sendScrimRequest */
     sendScrimRequest?: (SuccessOutputGenqlSelection & { __args: {best_of?: (Scalars['Int'] | null), from_team_id: Scalars['uuid'], proposed_scheduled_at: Scalars['timestamptz'], region?: (Scalars['String'] | null), to_team_id: Scalars['uuid']} })
+    sendUtilityLineupToServer?: (UtilityLoadOutputGenqlSelection & { __args: {lineup_id: Scalars['uuid']} })
+    sendUtilityScratchToServer?: (UtilityLoadOutputGenqlSelection & { __args: {lineup: UtilityScratchLineupInput} })
     setGameNodeSchedulingState?: (SuccessOutputGenqlSelection & { __args: {enabled: Scalars['Boolean'], game_server_node_id: Scalars['String']} })
     /** Track new releases of a game plugin, or pin it where it is */
     setGamePluginAutoUpdate?: (SuccessOutputGenqlSelection & { __args: {enabled: Scalars['Boolean'], slug: Scalars['String']} })
@@ -90882,6 +90940,7 @@ export interface query_rootGenqlSelection{
     utilityPracticePlan?: (UtilityPracticePlanOutputGenqlSelection & { __args: {limit?: (Scalars['Int'] | null), map_name: Scalars['String'], order?: (Scalars['String'] | null), side?: (Scalars['String'] | null)} })
     /** Dedicated practice servers free to book right now */
     utilityPracticeServers?: UtilityPracticeServersOutputGenqlSelection
+    utilityPracticeWhereAmI?: UtilityPracticeWhereOutputGenqlSelection
     /** Read the practice server solver's calibration gate */
     utilitySolverCalibration?: (UtilityCalibrationOutputGenqlSelection & { __args: {session_id: Scalars['uuid']} })
     /** Aggregate a team's mined utility throws against its saved lineups */
@@ -121256,10 +121315,26 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const UtilityLaunchSeedBackfillOutput_possibleTypes: string[] = ['UtilityLaunchSeedBackfillOutput']
+    export const isUtilityLaunchSeedBackfillOutput = (obj?: { __typename?: any } | null): obj is UtilityLaunchSeedBackfillOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityLaunchSeedBackfillOutput"')
+      return UtilityLaunchSeedBackfillOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const UtilityLineupOutput_possibleTypes: string[] = ['UtilityLineupOutput']
     export const isUtilityLineupOutput = (obj?: { __typename?: any } | null): obj is UtilityLineupOutput => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityLineupOutput"')
       return UtilityLineupOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const UtilityLoadOutput_possibleTypes: string[] = ['UtilityLoadOutput']
+    export const isUtilityLoadOutput = (obj?: { __typename?: any } | null): obj is UtilityLoadOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityLoadOutput"')
+      return UtilityLoadOutput_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -121348,6 +121423,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isUtilityPracticeSessionOutput = (obj?: { __typename?: any } | null): obj is UtilityPracticeSessionOutput => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityPracticeSessionOutput"')
       return UtilityPracticeSessionOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const UtilityPracticeWhereOutput_possibleTypes: string[] = ['UtilityPracticeWhereOutput']
+    export const isUtilityPracticeWhereOutput = (obj?: { __typename?: any } | null): obj is UtilityPracticeWhereOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityPracticeWhereOutput"')
+      return UtilityPracticeWhereOutput_possibleTypes.includes(obj.__typename)
     }
     
 

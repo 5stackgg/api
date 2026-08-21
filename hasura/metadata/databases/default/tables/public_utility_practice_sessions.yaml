@@ -75,6 +75,7 @@ select_permissions:
         - status
         - invite_code
         - is_open
+        - access
         - last_occupied_at
         - empty_since
         - expires_at
@@ -91,7 +92,7 @@ select_permissions:
         can_view:
           _eq: true
       allow_aggregations: true
-    comment: ""
+    comment: ''
   - role: verified_user
     permission:
       columns:
@@ -106,6 +107,7 @@ select_permissions:
         - status
         - invite_code
         - is_open
+        - access
         - last_occupied_at
         - empty_since
         - expires_at
@@ -122,7 +124,7 @@ select_permissions:
         can_view:
           _eq: true
       allow_aggregations: true
-    comment: ""
+    comment: ''
   - role: streamer
     permission:
       columns:
@@ -137,6 +139,7 @@ select_permissions:
         - status
         - invite_code
         - is_open
+        - access
         - last_occupied_at
         - empty_since
         - expires_at
@@ -153,7 +156,7 @@ select_permissions:
         can_view:
           _eq: true
       allow_aggregations: true
-    comment: ""
+    comment: ''
   - role: match_organizer
     permission:
       columns:
@@ -168,6 +171,7 @@ select_permissions:
         - status
         - invite_code
         - is_open
+        - access
         - last_occupied_at
         - empty_since
         - expires_at
@@ -184,7 +188,7 @@ select_permissions:
         can_view:
           _eq: true
       allow_aggregations: true
-    comment: ""
+    comment: ''
   - role: tournament_organizer
     permission:
       columns:
@@ -199,6 +203,7 @@ select_permissions:
         - status
         - invite_code
         - is_open
+        - access
         - last_occupied_at
         - empty_since
         - expires_at
@@ -215,7 +220,7 @@ select_permissions:
         can_view:
           _eq: true
       allow_aggregations: true
-    comment: ""
+    comment: ''
   - role: moderator
     permission:
       columns:
@@ -230,6 +235,7 @@ select_permissions:
         - status
         - invite_code
         - is_open
+        - access
         - last_occupied_at
         - empty_since
         - expires_at
@@ -246,7 +252,7 @@ select_permissions:
         can_view:
           _eq: true
       allow_aggregations: true
-    comment: ""
+    comment: ''
   - role: administrator
     permission:
       columns:
@@ -261,6 +267,7 @@ select_permissions:
         - status
         - invite_code
         - is_open
+        - access
         - last_occupied_at
         - empty_since
         - expires_at
@@ -275,6 +282,6 @@ select_permissions:
         - connection_string
       filter: {}
       allow_aggregations: true
-    comment: ""
+    comment: ''
 update_permissions: []
 delete_permissions: []

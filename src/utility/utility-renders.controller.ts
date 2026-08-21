@@ -19,6 +19,7 @@ import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import { User } from "../auth/types/User";
 import { isRoleAbove } from "../utilities/isRoleAbove";
+import { UtilityPracticeService } from "./utility-practice.service";
 import { UtilityRendersService } from "./utility-renders.service";
 import { UtilityLaunchSeedService } from "./utility-launch-seed.service";
 import { UtilityRenderStatusDto } from "./types/UtilityRenderStatusDto";
@@ -35,6 +36,7 @@ export class UtilityRendersController {
     private readonly renders: UtilityRendersService,
     private readonly launchSeeds: UtilityLaunchSeedService,
     private readonly gameStreamer: GameStreamerService,
+    private readonly practice: UtilityPracticeService,
   ) {}
 
   // Publishing to the shared library is what books the render. Reviewed
@@ -95,7 +97,24 @@ export class UtilityRendersController {
       throw Error("only a moderator can cancel a render");
     }
 
-    return { success: await this.renders.cancel(data.render_id) };
+    const result = await this.renders.cancel(data.render_id);
+
+    // Cancelling the last render of a map is cancelling the batch: nothing is
+    // coming for the practice server any more, and a booked GPU server idling
+    // until the batch job's next tick noticed was the reviewer's problem to
+    // watch. Tear both down here; the batch job's own release is the backstop
+    // and every step of it is idempotent.
+    if (result.cancelled && result.mapName) {
+      const remaining = await this.renders.inFlightForMap(result.mapName);
+      if (remaining.length === 0) {
+        await this.gameStreamer.killNadeRenderPod(result.mapName);
+        if (result.sessionId) {
+          await this.practice.endRenderSession(result.sessionId);
+        }
+      }
+    }
+
+    return { success: result.cancelled };
   }
 
   @HasuraAction()
