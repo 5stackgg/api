@@ -28,6 +28,14 @@ export type UtilityRenderRow = {
   status: string;
 };
 
+type HistoryEntry = {
+  status: string;
+  at: string;
+  boot_stage?: string;
+  boot_progress?: number;
+  skip_reason?: string;
+};
+
 export type EnqueueResult = {
   queued: boolean;
   render_id: string | null;
@@ -397,7 +405,7 @@ export class UtilityRendersService {
     body: UtilityRenderStatusDto,
   ): Promise<void> {
     const [current] = await this.postgres.query<
-      Array<{ status: string; status_history: Array<unknown> }>
+      Array<{ status: string; status_history: Array<HistoryEntry> }>
     >(
       `SELECT status, status_history
          FROM public.utility_lineup_renders
@@ -412,15 +420,45 @@ export class UtilityRendersService {
       return;
     }
 
-    const history = Array.isArray(current.status_history)
-      ? [...current.status_history]
-      : [];
-    history.push({
-      status: body.status,
-      at: new Date().toISOString(),
-      ...(body.skip_reason ? { skip_reason: body.skip_reason } : {}),
-    });
-    while (history.length > STATUS_HISTORY_CAP) history.shift();
+    // Boot ticks land in status_history without touching `status`: the
+    // in-flight filter, the partial unique index and the status CHECK all
+    // depend on the row staying `queued` for the whole pod boot. Same rule as
+    // reportClipRenderStatus, so one stepper reads both histories.
+    const isEvent = UtilityRendersService.isTruthyFlag(body.event);
+    const isBoot = body.status === "booting" || isEvent;
+    const bootStage = isEvent ? body.status : body.boot_stage;
+
+    const history = UtilityRendersService.appendHistory(
+      Array.isArray(current.status_history) ? current.status_history : [],
+      isBoot
+        ? {
+            status: "booting",
+            at: new Date().toISOString(),
+            ...(typeof bootStage === "string" && bootStage.length > 0
+              ? { boot_stage: bootStage.slice(0, 64) }
+              : {}),
+            ...(typeof body.boot_progress === "number" &&
+            Number.isFinite(body.boot_progress)
+              ? { boot_progress: Math.max(0, Math.min(1, body.boot_progress)) }
+              : {}),
+          }
+        : {
+            status: body.status,
+            at: new Date().toISOString(),
+            ...(body.skip_reason ? { skip_reason: body.skip_reason } : {}),
+          },
+    );
+
+    if (isBoot) {
+      await this.postgres.query(
+        `UPDATE public.utility_lineup_renders
+            SET status_history = $2::jsonb,
+                last_status_at = now()
+          WHERE id = $1::uuid`,
+        [jobId, JSON.stringify(history)],
+      );
+      return;
+    }
 
     const progress =
       typeof body.progress === "number" &&
@@ -457,6 +495,82 @@ export class UtilityRendersService {
         terminal,
       ],
     );
+  }
+
+  /**
+   * The phases the API itself owns -- booking a practice server, waiting for
+   * it, dispatching the pod -- happen before any pod exists to report them, so
+   * they are stamped here in the same {status:"booting", boot_stage} shape the
+   * pod will continue with. Without these the row reads "queued" for the ten
+   * minutes a server can take to come up, which is indistinguishable from a
+   * dispatch that never happened.
+   */
+  public async stampBootStage(
+    renderIds: Array<string>,
+    stage: string,
+    progress: number | null = null,
+  ): Promise<void> {
+    if (renderIds.length === 0) return;
+
+    const rows = await this.postgres.query<
+      Array<{ id: string; status_history: Array<HistoryEntry> }>
+    >(
+      `SELECT id::text AS id, status_history
+         FROM public.utility_lineup_renders
+        WHERE id = ANY($1::uuid[])`,
+      [renderIds],
+    );
+
+    const at = new Date().toISOString();
+    for (const row of rows) {
+      const history = UtilityRendersService.appendHistory(
+        Array.isArray(row.status_history) ? row.status_history : [],
+        {
+          status: "booting",
+          at,
+          boot_stage: stage.slice(0, 64),
+          ...(typeof progress === "number" && Number.isFinite(progress)
+            ? { boot_progress: Math.max(0, Math.min(1, progress)) }
+            : {}),
+        },
+      );
+      await this.postgres.query(
+        `UPDATE public.utility_lineup_renders
+            SET status_history = $2::jsonb,
+                last_status_at = now()
+          WHERE id = $1::uuid`,
+        [row.id, JSON.stringify(history)],
+      );
+    }
+  }
+
+  // Within-stage ticks coalesce onto the last entry and keep its original `at`,
+  // so the stepper's elapsed clock measures the stage rather than the tick. A
+  // new stage -- or any non-boot status -- pushes a fresh entry.
+  private static appendHistory(
+    history: Array<HistoryEntry>,
+    entry: HistoryEntry,
+  ): Array<HistoryEntry> {
+    const next = [...history];
+    const last = next[next.length - 1];
+    const stageOf = (value: HistoryEntry | undefined) =>
+      value && value.status === "booting"
+        ? String(value.boot_stage ?? "").split(":")[0]
+        : null;
+    const lastStage = stageOf(last);
+    const newStage = stageOf(entry);
+
+    if (lastStage !== null && newStage !== null && lastStage === newStage) {
+      next[next.length - 1] = { ...last, ...entry, at: last?.at ?? entry.at };
+    } else {
+      next.push(entry);
+    }
+    while (next.length > STATUS_HISTORY_CAP) next.shift();
+    return next;
+  }
+
+  private static isTruthyFlag(value: unknown): boolean {
+    return value === true || value === "1" || value === "true";
   }
 
   public async uploadThumbnail(

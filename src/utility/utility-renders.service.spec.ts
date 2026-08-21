@@ -100,6 +100,104 @@ describe("UtilityRendersService", () => {
     });
   });
 
+  // Boot ticks are the whole reason the pod can be watched: status-reporter.sh
+  // broadcasts {status:"booting", boot_stage} to every job. They must land in
+  // status_history and NEVER in row.status -- the CHECK constraint rejects
+  // "booting", and the in-flight filter would lose the row if it did not.
+  describe("reportStatus / boot ticks", () => {
+    const row = (history: Array<unknown>) => [
+      { status: "queued", status_history: history },
+    ];
+
+    it("records a boot tick in history without touching the row status", async () => {
+      postgres.query.mockResolvedValueOnce(row([])).mockResolvedValueOnce([]);
+
+      await service.reportStatus("render-1", {
+        status: "booting",
+        boot_stage: "launching_steam",
+      });
+
+      const [sql, bindings] = postgres.query.mock.calls[1];
+      expect(sql).toContain("SET status_history");
+      expect(sql).not.toMatch(/SET status\s*=/);
+      expect(JSON.parse(bindings[1])).toEqual([
+        expect.objectContaining({
+          status: "booting",
+          boot_stage: "launching_steam",
+        }),
+      ]);
+    });
+
+    it("coalesces within-stage ticks onto one entry and keeps the first at", async () => {
+      const first = { status: "booting", at: "2026-01-01T00:00:00.000Z", boot_stage: "downloading_cs2" };
+      postgres.query.mockResolvedValueOnce(row([first])).mockResolvedValueOnce([]);
+
+      await service.reportStatus("render-1", {
+        status: "booting",
+        boot_stage: "downloading_cs2:Validating",
+        boot_progress: 0.4,
+      });
+
+      const history = JSON.parse(postgres.query.mock.calls[1][1][1]);
+      expect(history).toHaveLength(1);
+      expect(history[0]).toEqual(
+        expect.objectContaining({
+          at: first.at,
+          boot_stage: "downloading_cs2:Validating",
+          boot_progress: 0.4,
+        }),
+      );
+    });
+
+    it("pushes a fresh entry when the stage changes", async () => {
+      const first = { status: "booting", at: "2026-01-01T00:00:00.000Z", boot_stage: "downloading_cs2" };
+      postgres.query.mockResolvedValueOnce(row([first])).mockResolvedValueOnce([]);
+
+      await service.reportStatus("render-1", {
+        status: "booting",
+        boot_stage: "launching_steam",
+      });
+
+      const history = JSON.parse(postgres.query.mock.calls[1][1][1]);
+      expect(history.map((entry: any) => entry.boot_stage)).toEqual([
+        "downloading_cs2",
+        "launching_steam",
+      ]);
+    });
+
+    it("still writes a real status transition to the row", async () => {
+      postgres.query.mockResolvedValueOnce(row([])).mockResolvedValueOnce([]);
+
+      await service.reportStatus("render-1", { status: "rendering", progress: 0.3 });
+
+      const [sql, bindings] = postgres.query.mock.calls[1];
+      expect(sql).toMatch(/SET status = \$2/);
+      expect(bindings[1]).toBe("rendering");
+    });
+  });
+
+  // The api's own phases come before any pod exists to report them.
+  describe("stampBootStage", () => {
+    it("stamps the stage onto every render in the batch", async () => {
+      postgres.query
+        .mockResolvedValueOnce([
+          { id: "r1", status_history: [] },
+          { id: "r2", status_history: [] },
+        ])
+        .mockResolvedValue([]);
+
+      await service.stampBootStage(["r1", "r2"], "server_starting");
+
+      const updates = postgres.query.mock.calls.slice(1);
+      expect(updates).toHaveLength(2);
+      for (const [, bindings] of updates) {
+        expect(JSON.parse(bindings[1])).toEqual([
+          expect.objectContaining({ status: "booting", boot_stage: "server_starting" }),
+        ]);
+      }
+    });
+  });
+
   describe("enqueue", () => {
     it("queues a public lineup and dispatches its map", async () => {
       postgres.query

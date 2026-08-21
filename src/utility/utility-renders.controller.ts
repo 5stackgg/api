@@ -1,5 +1,20 @@
-import { Body, Controller, Get, Logger, Param, Post, Req, Res } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Logger,
+  MaxFileSizeValidator,
+  Param,
+  ParseFilePipe,
+  Post,
+  Req,
+  Res,
+  UploadedFile,
+  UseInterceptors,
+} from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
 import { Request, Response } from "express";
+import { GameStreamerService } from "../matches/game-streamer/game-streamer.service";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import { User } from "../auth/types/User";
@@ -7,6 +22,8 @@ import { isRoleAbove } from "../utilities/isRoleAbove";
 import { UtilityRendersService } from "./utility-renders.service";
 import { UtilityLaunchSeedService } from "./utility-launch-seed.service";
 import { UtilityRenderStatusDto } from "./types/UtilityRenderStatusDto";
+
+const SNAPSHOT_MAX_BYTES = 2 * 1024 * 1024;
 
 // The route the game-streamer's nade flow was written against
 // (STATUS_API_BASE/nade-renders/:job_id/...). The table behind it is
@@ -17,6 +34,7 @@ export class UtilityRendersController {
     private readonly logger: Logger,
     private readonly renders: UtilityRendersService,
     private readonly launchSeeds: UtilityLaunchSeedService,
+    private readonly gameStreamer: GameStreamerService,
   ) {}
 
   // Publishing to the shared library is what books the render. Reviewed
@@ -166,6 +184,46 @@ export class UtilityRendersController {
       return response.status(500).json({ error: "internal" });
     }
 
+    return response.status(204).end();
+  }
+
+  // snapshot.sh fans a frame of the pod's screen out to every job in the
+  // batch (the same _snapshot_targets the clip batch uses), so a reviewer can
+  // see what the pod is looking at while it boots and films. Redis-held, 75s
+  // TTL; read back through GET /snapshots/nades/:id.
+  @Post("snapshot")
+  @UseInterceptors(FileInterceptor("file"))
+  public async putSnapshot(
+    @Param("jobId") jobId: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [new MaxFileSizeValidator({ maxSize: SNAPSHOT_MAX_BYTES })],
+      }),
+    )
+    file: Express.Multer.File,
+    @Req() request: Request,
+    @Res() response: Response,
+  ) {
+    const session = await this.renders.validateRenderAuth(
+      jobId,
+      request.headers["x-origin-auth"],
+    );
+    if (!session) {
+      this.logger.warn(
+        `[utility-render ${jobId}] snapshot rejected: invalid x-origin-auth`,
+      );
+      return response.status(401).end();
+    }
+
+    try {
+      await this.gameStreamer.storeSnapshot("nades", jobId, file.buffer);
+    } catch (error) {
+      this.logger.error(
+        `[utility-render ${jobId}] storeSnapshot failed: ${(error as Error)?.message}`,
+        (error as Error)?.stack,
+      );
+      return response.status(500).json({ error: "internal" });
+    }
     return response.status(204).end();
   }
 

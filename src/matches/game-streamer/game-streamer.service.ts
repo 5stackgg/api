@@ -31,7 +31,7 @@ export { NoSteamAccountAvailableError } from "./steam-account.service";
 // Snapshot TTL is a touch over 2x the producer's 30s cadence so a
 // consumer reading mid-cycle always sees a fresh-or-just-stale frame.
 const SNAPSHOT_REDIS_TTL_SECONDS = 75;
-export type SnapshotKind = "live" | "demo" | "bake" | "clips";
+export type SnapshotKind = "live" | "demo" | "bake" | "clips" | "nades";
 const snapshotRedisKey = (kind: SnapshotKind, id: string) =>
   `gs:snapshot:${kind}:${id}`;
 
