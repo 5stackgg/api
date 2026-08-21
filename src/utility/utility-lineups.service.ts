@@ -1,5 +1,9 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger, forwardRef } from "@nestjs/common";
 import { CacheService } from "../cache/cache.service";
+import {
+  UtilityLoadService,
+  UtilityScratchLineup,
+} from "./utility-load.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { User } from "../auth/types/User";
 import { SystemSettingName } from "../system/enums/SystemSettingName";
@@ -184,6 +188,8 @@ export class UtilityLineupsService {
     private readonly postgres: PostgresService,
     private readonly artifacts: UtilityArtifactsService,
     private readonly cache: CacheService,
+    @Inject(forwardRef(() => UtilityLoadService))
+    private readonly load: UtilityLoadService,
   ) {}
 
   public async isLibraryEnabled(): Promise<boolean> {
@@ -527,7 +533,81 @@ export class UtilityLineupsService {
       );
     }
 
-    return rows;
+    return [...rows, ...(await this.sentToPlayer(context, steamId, rows))];
+  }
+
+  /**
+   * Lineups the panel has sent this player that their own library would not
+   * contain: a Public lineup nobody has favourited belongs to no one's library,
+   * and a scratch throw off the meta browser has no row at all.
+   *
+   * Widening by exactly the rows somebody pressed a button on keeps the
+   * ownership clause above honest -- the alternative is handing every practice
+   * server the whole public library on the off chance.
+   */
+  private async sentToPlayer(
+    context: UtilityServerContext,
+    steamId: string,
+    already: Array<UtilityLibraryRow>,
+  ): Promise<Array<UtilityLibraryRow>> {
+    const pending = await this.load.pending(context.serverId, steamId);
+
+    if (pending.length === 0) {
+      return [];
+    }
+
+    const held = new Set(already.map((row) => row.id));
+
+    const scratch = pending
+      .filter((entry) => entry.kind === "scratch")
+      .map((entry) => (entry as { lineup: UtilityScratchLineup }).lineup)
+      .filter((lineup) => lineup.map_name === context.mapName)
+      .map<UtilityLibraryRow>((lineup) => ({
+        // The scratch id is deliberately not a uuid: nothing downstream should
+        // be able to mistake one for a row it can load, edit or delete.
+        id: lineup.client_id,
+        name: lineup.name,
+        map_name: lineup.map_name,
+        utility_type: lineup.utility_type,
+        side: lineup.side,
+        technique: lineup.technique,
+        throw_strength: lineup.throw_strength,
+        origin_x: lineup.origin_x,
+        origin_y: lineup.origin_y,
+        origin_z: lineup.origin_z,
+        eye_z: lineup.eye_z,
+        view_yaw: lineup.view_yaw,
+        view_pitch: lineup.view_pitch,
+        land_x: lineup.land_x,
+        land_y: lineup.land_y,
+        land_z: lineup.land_z,
+        // No physics seed and no flight time: a scratch throw was never thrown.
+        // The plugin already treats these as absent for anything mined.
+        visibility: "Private",
+        confidence: "low",
+        author_steam_id: steamId,
+      } as UtilityLibraryRow));
+
+    const wanted = pending
+      .filter((entry) => entry.kind === "saved")
+      .map((entry) => (entry as { lineup_id: string }).lineup_id)
+      .filter((id) => !held.has(id));
+
+    if (wanted.length === 0) {
+      return scratch;
+    }
+
+    // Visibility was checked when the send was accepted; this re-checks the map
+    // and the archive, which can both change while an entry is still held.
+    const sent = await this.postgres.query<Array<UtilityLibraryRow>>(
+      `${UtilityLineupsService.LIBRARY_SELECT}
+        WHERE l.id = ANY($1::uuid[])
+          AND l.map_name = $2
+          AND l.archived_at IS NULL`,
+      [wanted, context.mapName],
+    );
+
+    return [...sent, ...scratch];
   }
 
   // The flight path of one lineup the library already handed this player. The

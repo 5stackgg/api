@@ -5,6 +5,7 @@ import { HasuraEventData } from "../hasura/types/HasuraEventData";
 import { User } from "../auth/types/User";
 import { isRoleAbove } from "../utilities/isRoleAbove";
 import { UtilityRendersService } from "./utility-renders.service";
+import { UtilityLaunchSeedService } from "./utility-launch-seed.service";
 import { UtilityRenderStatusDto } from "./types/UtilityRenderStatusDto";
 
 // The route the game-streamer's nade flow was written against
@@ -15,6 +16,7 @@ export class UtilityRendersController {
   constructor(
     private readonly logger: Logger,
     private readonly renders: UtilityRendersService,
+    private readonly launchSeeds: UtilityLaunchSeedService,
   ) {}
 
   // Publishing to the shared library is what books the render. Reviewed
@@ -85,6 +87,24 @@ export class UtilityRendersController {
     }
 
     return { cleared: await this.renders.clearFinished() };
+  }
+
+  // One batch per call so a caller can watch it progress, same as the meta
+  // re-mine. Only fills holes, so re-running it is free.
+  @HasuraAction()
+  public async backfillUtilityLaunchSeeds(data: {
+    user: User;
+    limit?: number;
+  }) {
+    if (!isRoleAbove(data.user?.role, "administrator")) {
+      throw Error("only an administrator can backfill launch seeds");
+    }
+
+    return await this.launchSeeds.backfill(
+      data.limit && data.limit > 0
+        ? Math.min(data.limit, UtilityLaunchSeedService.BATCH)
+        : UtilityLaunchSeedService.BATCH,
+    );
   }
 
   // nade-clip.sh reads this once before it films: a job already cancelled is

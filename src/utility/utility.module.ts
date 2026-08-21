@@ -27,6 +27,7 @@ import { UtilityInsightsController } from "./utility-insights.controller";
 import { UtilityInsightsService } from "./utility-insights.service";
 import { UtilityRepairService } from "./utility-repair.service";
 import { UtilitySolverService } from "./utility-solver.service";
+import { UtilityLoadService } from "./utility-load.service";
 import { UtilityLineupsController } from "./utility-lineups.controller";
 import { UtilityLineupsService } from "./utility-lineups.service";
 import { UtilityMetaService } from "./utility-meta.service";
@@ -40,6 +41,7 @@ import { UtilityPracticeModeService } from "./utility-practice-mode.service";
 import { UtilityPracticeService } from "./utility-practice.service";
 import { UtilityRendersController } from "./utility-renders.controller";
 import { UtilityRendersService } from "./utility-renders.service";
+import { UtilityLaunchSeedService } from "./utility-launch-seed.service";
 import { UtilityController } from "./utility.controller";
 import { MineUtilityMeta } from "./jobs/MineUtilityMeta";
 import { ReapIdleUtilityPracticeSessions } from "./jobs/ReapIdleUtilityPracticeSessions";
@@ -48,6 +50,7 @@ import {
   BatchUtilityRenderJob,
   BatchUtilityRenderJobEvents,
 } from "./jobs/BatchUtilityRenderJob";
+import { ReconcileQueuedUtilityRenders } from "./jobs/ReconcileQueuedUtilityRenders";
 import { GameStreamerModule } from "../matches/game-streamer/game-streamer.module";
 
 @Module({
@@ -100,6 +103,7 @@ import { GameStreamerModule } from "../matches/game-streamer/game-streamer.modul
     UtilityInsightsService,
     UtilityRepairService,
     UtilitySolverService,
+    UtilityLoadService,
     UtilityLineupsService,
     UtilityMetaService,
     UtilityMiningService,
@@ -107,8 +111,10 @@ import { GameStreamerModule } from "../matches/game-streamer/game-streamer.modul
     UtilityPracticeModeService,
     UtilityPracticeService,
     UtilityRendersService,
+    UtilityLaunchSeedService,
     BatchUtilityRenderJob,
     BatchUtilityRenderJobEvents,
+    ReconcileQueuedUtilityRenders,
     UtilitySeedService,
     UtilityPluginKeyGuard,
     ReapIdleUtilityPracticeSessions,
@@ -140,12 +146,15 @@ import { GameStreamerModule } from "../matches/game-streamer/game-streamer.modul
     UtilityInsightsService,
     UtilityRepairService,
     UtilitySolverService,
+    UtilityLoadService,
   ],
 })
 export class UtilityModule {
   constructor(
     @InjectQueue(UtilityQueues.UtilityPractice) utilityPracticeQueue: Queue,
     @InjectQueue(UtilityQueues.UtilityMeta) utilityMetaQueue: Queue,
+    @InjectQueue(UtilityQueues.UtilityRenders) utilityRendersQueue: Queue,
+    utilityRendersService: UtilityRendersService,
   ) {
     if (process.env.RUN_MIGRATIONS) {
       return;
@@ -170,5 +179,20 @@ export class UtilityModule {
         },
       },
     );
+
+    void utilityRendersQueue.add(
+      ReconcileQueuedUtilityRenders.name,
+      {},
+      {
+        repeat: {
+          pattern: "*/5 * * * *",
+        },
+      },
+    );
+
+    // Straight away as well as on the schedule: a restart between the row's
+    // INSERT and its dispatch is the case this exists for, and waiting five
+    // minutes to notice would leave the lineup unrenderable the whole time.
+    void utilityRendersService.reconcileQueued().catch(() => {});
   }
 }
