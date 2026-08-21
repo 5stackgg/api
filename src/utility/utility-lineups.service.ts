@@ -104,6 +104,7 @@ export type UtilityLibraryRow = {
   throw_strength: string | null;
   jump_throw_bind: boolean;
   aim_tolerance: number;
+  description: string | null;
   origin_x: number;
   origin_y: number;
   origin_z: number;
@@ -415,7 +416,7 @@ export class UtilityLineupsService {
   private static readonly LIBRARY_SELECT = `
     SELECT l.id::text AS id, l.name, l.map_name, l.utility_type, l.side,
            l.technique, l.throw_strength, l.jump_throw_bind,
-           l.aim_tolerance,
+           l.aim_tolerance, l.description,
            l.origin_x, l.origin_y, l.origin_z, l.eye_z,
            l.view_yaw, l.view_pitch, l.land_x, l.land_y, l.land_z,
            l.initial_pos_x, l.initial_pos_y, l.initial_pos_z,

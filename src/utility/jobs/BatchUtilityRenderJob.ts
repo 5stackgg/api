@@ -56,6 +56,10 @@ export class BatchUtilityRenderJob extends WorkerHost {
     // STEP 1: a server for this map. One session films one map, so the batch
     // is the map's whole queue and the session is booked once for all of it.
     if (!job.data.sessionId) {
+      await this.renders.stampBootStage(
+        inFlight.map((render) => render.id),
+        "booking_server",
+      );
       let session;
       try {
         session = await this.practice.startForRender({
@@ -71,6 +75,10 @@ export class BatchUtilityRenderJob extends WorkerHost {
       await this.renders.attachSession(
         inFlight.map((render) => render.id),
         session.id,
+      );
+      await this.renders.stampBootStage(
+        inFlight.map((render) => render.id),
+        "server_starting",
       );
       await job.updateData({
         ...job.data,
@@ -114,6 +122,10 @@ export class BatchUtilityRenderJob extends WorkerHost {
         return this.delayUntilNext(job, CHECK_DELAY_MS);
       }
 
+      await this.renders.stampBootStage(
+        inFlight.map((render) => render.id),
+        "dispatching_pod",
+      );
       try {
         const { jobName, nodeId } = await this.gameStreamer.dispatchNadePreviews(
           mapName,
@@ -187,17 +199,34 @@ export class BatchUtilityRenderJob extends WorkerHost {
   // The practice server goes back to the pool the moment the batch is over --
   // it is a scarce resource and nobody is sitting on this one.
   private async releaseSession(job: Job<JobData>): Promise<void> {
-    if (!job.data.sessionId) return;
-    try {
-      await this.practice.endRenderSession(job.data.sessionId);
-    } catch (error) {
-      this.logger.warn(
-        `[nade-renders ${job.data.mapName}] releasing the practice session failed: ${(error as Error)?.message}`,
-      );
+    if (job.data.sessionId) {
+      try {
+        await this.practice.endRenderSession(job.data.sessionId);
+      } catch (error) {
+        this.logger.warn(
+          `[nade-renders ${job.data.mapName}] releasing the practice session failed: ${(error as Error)?.message}`,
+        );
+      }
     }
     await job.updateData({
       mapName: job.data.mapName,
     });
+    // The batch held a GPU. Hand it on the way the highlights job does, or a
+    // live stream that was waiting on it sits there until something else
+    // happens to free one.
+    if (job.data.dispatched) {
+      await this.onGpuFreed(job.data.mapName);
+    }
+  }
+
+  private async onGpuFreed(mapName: string): Promise<void> {
+    try {
+      await this.gameStreamer.promotePendingLiveStreams();
+    } catch (error) {
+      this.logger.warn(
+        `[nade-renders ${mapName}] onGpuFreed failed: ${(error as Error)?.message}`,
+      );
+    }
   }
 
   private async hostFor(renderId: string): Promise<string> {

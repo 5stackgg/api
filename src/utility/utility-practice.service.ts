@@ -208,16 +208,18 @@ export class UtilityPracticeService {
     }
 
     const mapName = await this.resolveMap(options.mapName);
-    const server = await this.freePracticeServer(options.region);
-    const region = server
-      ? server.region
-      : await this.resolveRegion(options.region);
 
-    if (!server) {
-      // A preview clip is never worth the last free slot -- the same reserve a
-      // player's session respects.
-      await this.assertServerHeadroom(region);
-    }
+    // Deliberately NOT freePracticeServer(). A render books its own server on a
+    // game server node, every time. Reusing a "free" one drops the pod onto a
+    // server people are already on: an idle practice server is not an empty
+    // one, and the pod does not behave like a guest -- it teleports itself
+    // around, throws grenades, and re-presses jointeam until it spawns, which
+    // respawns whoever else is standing there.
+    const region = await this.resolveRegion(options.region);
+
+    // A preview clip is never worth the last free slot -- the same reserve a
+    // player's session respects.
+    await this.assertServerHeadroom(region);
 
     const session = await this.insertSession(options.hostSteamId, {
       mapName,
@@ -233,7 +235,7 @@ export class UtilityPracticeService {
         hostSteamId: options.hostSteamId,
         mapName,
         region,
-        serverId: server?.id ?? null,
+        serverId: null,
       });
 
       await this.postgres.query(

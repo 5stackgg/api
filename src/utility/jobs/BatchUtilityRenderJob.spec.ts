@@ -38,6 +38,7 @@ describe("BatchUtilityRenderJob", () => {
       inFlightForMap: jest.fn().mockResolvedValue([RENDER]),
       attachSession: jest.fn(),
       attachJobName: jest.fn(),
+      stampBootStage: jest.fn(),
       failRenders: jest.fn(),
       requesterFor: jest.fn().mockResolvedValue("76561198000000002"),
     };
@@ -61,6 +62,7 @@ describe("BatchUtilityRenderJob", () => {
         .fn()
         .mockResolvedValue({ jobName: "gs-nades-demirage", nodeId: "node-A" }),
       getNadeRenderPodState: jest.fn().mockResolvedValue("running"),
+      promotePendingLiveStreams: jest.fn().mockResolvedValue({ promoted: [] }),
       getNadeRenderPodFailureReason: jest.fn().mockResolvedValue(null),
     };
     logger = {
