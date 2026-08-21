@@ -12,6 +12,7 @@ import {
   NoGpuAvailableError,
   NoSteamAccountAvailableError,
 } from "../../matches/game-streamer/game-streamer.service";
+import { MatchAssistantService } from "../../matches/match-assistant/match-assistant.service";
 import { UtilityQueues } from "../enums/UtilityQueues";
 import { UtilityPracticeService } from "../utility-practice.service";
 import { UtilityRendersService } from "../utility-renders.service";
@@ -38,6 +39,7 @@ export class BatchUtilityRenderJob extends WorkerHost {
     private readonly renders: UtilityRendersService,
     private readonly practice: UtilityPracticeService,
     private readonly gameStreamer: GameStreamerService,
+    private readonly matchAssistant: MatchAssistantService,
   ) {
     super();
   }
@@ -96,7 +98,10 @@ export class BatchUtilityRenderJob extends WorkerHost {
       if (!session || !UtilityPracticeService.LIVE_STATUSES.includes(session.status)) {
         await this.renders.failRenders(
           inFlight.map((render) => render.id),
-          `practice server never came up (${session?.failure_reason ?? session?.status ?? "session gone"})`,
+          await this.withServerLog(
+            session?.match_id ?? null,
+            `practice server never came up (${session?.failure_reason ?? session?.status ?? "session gone"})`,
+          ),
         );
         await this.releaseSession(job);
         return;
@@ -107,13 +112,30 @@ export class BatchUtilityRenderJob extends WorkerHost {
           Date.now() - (job.data.bookedAt ?? Date.now()) >
           SERVER_READY_TIMEOUT_MS
         ) {
+          // Before the teardown deletes the job: the pod's own words are the
+          // only place the reason exists -- nothing in a practice pod pings.
           await this.renders.failRenders(
             inFlight.map((render) => render.id),
-            "practice server did not become ready in time",
+            await this.withServerLog(
+              session.match_id,
+              "practice server did not become ready in time",
+            ),
           );
           await this.releaseSession(job);
           return;
         }
+
+        // The server row's boot readout, folded in as a substage so the queue
+        // shows Creating -> PullingImage -> WaitingForPing instead of a bare
+        // "server starting" for ten minutes.
+        const boot = await this.renders.bootStatusForMatch(session.match_id);
+        if (boot?.boot_status) {
+          await this.renders.stampBootStage(
+            inFlight.map((render) => render.id),
+            `server_starting:${boot.boot_status}`,
+          );
+        }
+
         return this.delayUntilNext(job, CHECK_DELAY_MS);
       }
 
@@ -226,6 +248,21 @@ export class BatchUtilityRenderJob extends WorkerHost {
       this.logger.warn(
         `[nade-renders ${mapName}] onGpuFreed failed: ${(error as Error)?.message}`,
       );
+    }
+  }
+
+  // Appends the practice-server pod's log tail to a failure reason. Best
+  // effort: a reason without the log still fails the batch honestly.
+  private async withServerLog(
+    matchId: string | null,
+    reason: string,
+  ): Promise<string> {
+    if (!matchId) return reason;
+    try {
+      const tail = await this.matchAssistant.getMatchServerLogTail(matchId);
+      return tail ? `${reason} — ${tail}` : reason;
+    } catch {
+      return reason;
     }
   }
 

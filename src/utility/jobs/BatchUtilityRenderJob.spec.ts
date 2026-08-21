@@ -31,6 +31,7 @@ describe("BatchUtilityRenderJob", () => {
   let renders: Record<string, jest.Mock>;
   let practice: Record<string, jest.Mock>;
   let gameStreamer: Record<string, jest.Mock>;
+  let matchAssistant: Record<string, jest.Mock>;
   let logger: Record<string, jest.Mock>;
 
   beforeEach(() => {
@@ -39,6 +40,7 @@ describe("BatchUtilityRenderJob", () => {
       attachSession: jest.fn(),
       attachJobName: jest.fn(),
       stampBootStage: jest.fn(),
+      bootStatusForMatch: jest.fn().mockResolvedValue(null),
       failRenders: jest.fn(),
       requesterFor: jest.fn().mockResolvedValue("76561198000000002"),
     };
@@ -65,6 +67,9 @@ describe("BatchUtilityRenderJob", () => {
       promotePendingLiveStreams: jest.fn().mockResolvedValue({ promoted: [] }),
       getNadeRenderPodFailureReason: jest.fn().mockResolvedValue(null),
     };
+    matchAssistant = {
+      getMatchServerLogTail: jest.fn().mockResolvedValue(null),
+    };
     logger = {
       log: jest.fn(),
       warn: jest.fn(),
@@ -77,6 +82,82 @@ describe("BatchUtilityRenderJob", () => {
       renders as any,
       practice as any,
       gameStreamer as any,
+      matchAssistant as any,
+    );
+  });
+
+  // The server boot is the queue's blind spot: these are what turned "queued
+  // for ten minutes" into a readable stall.
+  it("mirrors the server's boot status into the stepper while waiting", async () => {
+    practice.session.mockResolvedValueOnce({
+      id: "session-1",
+      status: "Starting",
+      match_id: "match-1",
+    });
+    renders.bootStatusForMatch.mockResolvedValueOnce({
+      boot_status: "WaitingForPing",
+      boot_status_detail: "Server pod is running.",
+    });
+
+    await expect(
+      job.process(
+        makeJob({
+          mapName: "de_mirage",
+          sessionId: "session-1",
+          bookedAt: Date.now(),
+        }) as any,
+      ),
+    ).rejects.toThrow();
+
+    expect(renders.stampBootStage).toHaveBeenCalledWith(
+      [RENDER.id],
+      "server_starting:WaitingForPing",
+    );
+  });
+
+  it("puts the pod's log tail on the ready-timeout failure", async () => {
+    practice.session.mockResolvedValueOnce({
+      id: "session-1",
+      status: "Starting",
+      match_id: "match-1",
+    });
+    matchAssistant.getMatchServerLogTail.mockResolvedValueOnce(
+      "swiftlys2: unable to load gamedata",
+    );
+
+    await job.process(
+      makeJob({
+        mapName: "de_mirage",
+        sessionId: "session-1",
+        bookedAt: Date.now() - 11 * 60 * 1000,
+      }) as any,
+    );
+
+    expect(matchAssistant.getMatchServerLogTail).toHaveBeenCalledWith("match-1");
+    expect(renders.failRenders).toHaveBeenCalledWith(
+      [RENDER.id],
+      "practice server did not become ready in time — swiftlys2: unable to load gamedata",
+    );
+  });
+
+  it("still fails plainly when no pod log can be read", async () => {
+    practice.session.mockResolvedValueOnce({
+      id: "session-1",
+      status: "Starting",
+      match_id: "match-1",
+    });
+
+    await job.process(
+      makeJob({
+        mapName: "de_mirage",
+        sessionId: "session-1",
+        bookedAt: Date.now() - 11 * 60 * 1000,
+      }) as any,
+    );
+
+    expect(renders.failRenders).toHaveBeenCalledWith(
+      [RENDER.id],
+      "practice server did not become ready in time",
     );
   });
 

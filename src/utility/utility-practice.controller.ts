@@ -56,6 +56,15 @@ export class UtilityPracticeController {
     return this.load.sendScratch(data.user, data.lineup);
   }
 
+  /** Drill a set the caller picked, on the server they are already in. */
+  @HasuraAction()
+  public async sendUtilityDrillToServer(data: {
+    user: User;
+    lineup_ids: Array<string>;
+  }) {
+    return this.load.sendDrill(data.user, data.lineup_ids ?? []);
+  }
+
   @HasuraAction()
   public async utilityPracticeServers(data: { user: User }) {
     return { servers: await this.practice.practiceServers(data.user) };
