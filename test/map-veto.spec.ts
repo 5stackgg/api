@@ -540,6 +540,173 @@ describe("map veto (SQL-driven)", () => {
     });
   });
 
+  // Pool sizes well past the rulebook ladder, and the small ones underneath it.
+  // Leagues and custom pools hand out whatever count they like, so the pattern
+  // has to hold for all of them, not just 5/6/7.
+  describe("odd and low map pool sizes", () => {
+    const bestOfs = [1, 2, 3, 4, 5, 7];
+
+    it.each([
+      [2],
+      [3],
+      [4],
+      [5],
+      [6],
+      [7],
+      [8],
+      [9],
+      [10],
+      [11],
+      [12],
+      [13],
+      [14],
+      [15],
+      [16],
+      [20],
+      [24],
+    ])(
+      "pool %i: every best of consumes the pool exactly once and ends on the decider",
+      async (poolSize) => {
+        for (const bestOf of bestOfs.filter((n) => n < poolSize)) {
+          const match = await createVetoMatch(bestOf, poolSize);
+          // A short seed table would quietly build a smaller pool and make the
+          // rest of this vacuous.
+          expect(match.mapIds.length).toBe(poolSize);
+
+          const [{ pattern }] = await postgres.query<
+            Array<{ pattern: string[] }>
+          >(
+            "SELECT get_map_veto_pattern(m) AS pattern FROM matches m WHERE id = $1",
+            [match.id],
+          );
+
+          const count = (type: string) =>
+            pattern.filter((step) => step === type).length;
+          const label = `BO${bestOf} pool ${poolSize}`;
+
+          expect({ label, total: count("Ban") + count("Pick") + 1 }).toEqual({
+            label,
+            total: poolSize,
+          });
+          expect({ label, played: count("Pick") + 1 }).toEqual({
+            label,
+            played: bestOf,
+          });
+          expect({ label, sides: count("Side") }).toEqual({
+            label,
+            sides: count("Pick"),
+          });
+          expect({ label, deciders: count("Decider") }).toEqual({
+            label,
+            deciders: 1,
+          });
+          expect({ label, last: pattern[pattern.length - 1] }).toEqual({
+            label,
+            last: "Decider",
+          });
+          pattern.forEach((step, i) => {
+            if (step === "Side") {
+              expect({ label, before: pattern[i - 1] }).toEqual({
+                label,
+                before: "Pick",
+              });
+            }
+          });
+        }
+      },
+    );
+
+    // The turn order regression guard. Nothing used to assert who acted when,
+    // which is how a best-of-3 turn swap survived: on a pool of 8 it handed
+    // BOTH picks to lineup 2, and on 12 it had lineup 2 ban twice in a row.
+    it.each([
+      [3, 8],
+      [3, 9],
+      [3, 10],
+      [3, 12],
+      [3, 15],
+      [5, 10],
+      [5, 12],
+      [5, 15],
+      [1, 15],
+    ])(
+      "BO%i pool %i: bans and picks alternate, lineup 1 opening",
+      async (bestOf, poolSize) => {
+        const { steps } = await playOutVeto(bestOf, poolSize);
+
+        const turns = steps
+          .map((s) => s.step)
+          .filter((step) => !step.startsWith("Side"));
+
+        turns.forEach((turn, i) => {
+          expect(turn.endsWith(i % 2 === 0 ? "L1" : "L2")).toBe(true);
+        });
+      },
+    );
+
+    it.each([
+      [1, 10],
+      [2, 10],
+      [3, 10],
+      [5, 10],
+      [1, 12],
+      [2, 12],
+      [3, 12],
+      [5, 12],
+      [1, 15],
+      [2, 15],
+      [3, 15],
+      [5, 15],
+      [1, 2],
+      [1, 3],
+      [2, 3],
+      [1, 4],
+      [3, 4],
+    ])(
+      "BO%i pool %i runs to completion with the right maps left standing",
+      async (bestOf, poolSize) => {
+        const match = await runVetoToCompletion(bestOf, poolSize);
+
+        const state = await vetoState(match.id);
+        expect(state.status).toBe("Live");
+        expect(state.veto_type).toBeNull();
+
+        const maps = await postgres.query<Array<{ map_id: string }>>(
+          "SELECT map_id FROM match_maps WHERE match_id = $1",
+          [match.id],
+        );
+        expect(maps.length).toBe(bestOf);
+
+        const picks = await postgres.query<
+          Array<{ type: string; map_id: string }>
+        >(
+          "SELECT type, map_id FROM match_map_veto_picks WHERE match_id = $1 AND type <> 'Side'",
+          [match.id],
+        );
+        expect(new Set(picks.map((p) => p.map_id)).size).toBe(poolSize);
+        expect(picks.filter((p) => p.type === "Ban").length).toBe(
+          poolSize - bestOf,
+        );
+        expect(picks.filter((p) => p.type === "Decider").length).toBe(1);
+      },
+    );
+
+    it.each([
+      [3, 2],
+      [5, 4],
+      [7, 6],
+    ])(
+      "BO%i on a pool of %i is refused at match creation",
+      async (bestOf, poolSize) => {
+        const { poolId } = await fx.mapPool(poolSize);
+
+        await expect(
+          fx.match({ bestOf, mapVeto: true, mapPoolId: poolId }),
+        ).rejects.toThrow(/Not enough maps in the pool/i);
+      },
+    );
+  });
+
   // https://docs.5stack.gg/features/map-veto#when-there-is-nothing-to-veto
   // A pool holding exactly best_of maps has no decision in it: every map gets
   // played, so setup_match_maps assigns them straight from the pool with
