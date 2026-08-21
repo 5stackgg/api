@@ -160,6 +160,42 @@ describe("map veto (SQL-driven)", () => {
     ]);
   });
 
+  // The worked examples in the docs, verbatim.
+  // https://docs.5stack.gg/features/map-veto#examples
+  it.each([
+    [1, 7, ["Ban", "Ban", "Ban", "Ban", "Ban", "Ban", "Decider"]],
+    [3, 5, ["Ban", "Ban", "Pick", "Side", "Pick", "Side", "Decider"]],
+    [
+      3,
+      7,
+      ["Ban", "Ban", "Pick", "Side", "Pick", "Side", "Ban", "Ban", "Decider"],
+    ],
+    [
+      5,
+      7,
+      [
+        "Ban",
+        "Ban",
+        "Pick",
+        "Side",
+        "Pick",
+        "Side",
+        "Pick",
+        "Side",
+        "Pick",
+        "Side",
+        "Decider",
+      ],
+    ],
+  ])(
+    "BO%i pool %i matches the documented example",
+    async (bestOf, poolSize, expected) => {
+      expect(await patternFor(bestOf as number, poolSize as number)).toEqual(
+        expected,
+      );
+    },
+  );
+
   it("refuses a veto on an empty map pool", async () => {
     const { poolId } = await fx.mapPool(0);
     const match = await fx.match({
@@ -453,18 +489,73 @@ describe("map veto (SQL-driven)", () => {
       },
     );
 
-    it.each([[3], [5]])(
-      "BO%i bans the surplus down to the rulebook shape before the picks",
+    // "Any extra bans a larger pool requires land after the picks and before
+    // the Decider." Those bans used to be spent up front instead, so a 12 map
+    // pool opened with seven straight bans before anyone picked anything.
+    it.each([[2], [3], [5]])(
+      "BO%i spends a larger pool's extra bans after the picks",
       async (bestOf) => {
-        const rulebook = await patternFor(bestOf, 7);
-        const large = await patternFor(bestOf, 12);
+        for (const poolSize of [8, 12, 16, 24]) {
+          const pattern = await patternFor(bestOf, poolSize);
+          const label = `BO${bestOf} pool ${poolSize}`;
 
-        expect(large.slice(-rulebook.length)).toEqual(rulebook);
-        expect(large.slice(0, large.length - rulebook.length)).toEqual(
-          Array(5).fill("Ban"),
-        );
+          // The opening never grows with the pool: the picks start as soon as
+          // the Ban, Ban, Pick, Pick unit reaches them.
+          expect({ label, firstPick: pattern.indexOf("Pick") }).toEqual({
+            label,
+            firstPick: 2,
+          });
+
+          // Everything from the last side to the decider is a ban.
+          const tail = pattern.slice(pattern.lastIndexOf("Side") + 1);
+          expect({ label, tail: tail.slice(0, -1) }).toEqual({
+            label,
+            tail: Array(tail.length - 1).fill("Ban"),
+          });
+          expect({ label, last: tail[tail.length - 1] }).toEqual({
+            label,
+            last: "Decider",
+          });
+        }
       },
     );
+
+    it.each([
+      [
+        3,
+        12,
+        ["Ban", "Ban", "Pick", "Side", "Pick", "Side"]
+          .concat(Array(7).fill("Ban"))
+          .concat(["Decider"]),
+      ],
+      [
+        5,
+        12,
+        // Two turns of the unit, because a best of 5 needs four picks.
+        [
+          "Ban",
+          "Ban",
+          "Pick",
+          "Side",
+          "Pick",
+          "Side",
+          "Ban",
+          "Ban",
+          "Pick",
+          "Side",
+          "Pick",
+          "Side",
+          "Ban",
+          "Ban",
+          "Ban",
+          "Decider",
+        ],
+      ],
+    ])("BO%i pool %i follows the documented pattern", async (bestOf, poolSize, expected) => {
+      expect(await patternFor(bestOf as number, poolSize as number)).toEqual(
+        expected,
+      );
+    });
 
     it.each([
       [3, 12],
@@ -502,7 +593,7 @@ describe("map veto (SQL-driven)", () => {
   // match sat in Veto until an admin canceled it.
   describe("a best of the rulebook doesn't cover", () => {
     it.each([
-      [2, 7, ["Ban", "Ban", "Ban", "Ban", "Ban", "Pick", "Side", "Decider"]],
+      [2, 7, ["Ban", "Ban", "Pick", "Side", "Ban", "Ban", "Ban", "Decider"]],
       [
         4,
         6,
