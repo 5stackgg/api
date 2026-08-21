@@ -38,10 +38,17 @@ import { UtilityPluginKeyGuard } from "./utility-plugin-key.guard";
 import { UtilityPracticeController } from "./utility-practice.controller";
 import { UtilityPracticeModeService } from "./utility-practice-mode.service";
 import { UtilityPracticeService } from "./utility-practice.service";
+import { UtilityRendersController } from "./utility-renders.controller";
+import { UtilityRendersService } from "./utility-renders.service";
 import { UtilityController } from "./utility.controller";
 import { MineUtilityMeta } from "./jobs/MineUtilityMeta";
 import { ReapIdleUtilityPracticeSessions } from "./jobs/ReapIdleUtilityPracticeSessions";
 import { RunUtilityDriftScan } from "./jobs/RunUtilityDriftScan";
+import {
+  BatchUtilityRenderJob,
+  BatchUtilityRenderJobEvents,
+} from "./jobs/BatchUtilityRenderJob";
+import { GameStreamerModule } from "../matches/game-streamer/game-streamer.module";
 
 @Module({
   imports: [
@@ -52,6 +59,7 @@ import { RunUtilityDriftScan } from "./jobs/RunUtilityDriftScan";
     ConfigModule,
     AuthModule,
     forwardRef(() => MatchesModule),
+    forwardRef(() => GameStreamerModule),
     DemosModule,
     NotificationsModule,
     forwardRef(() => RconModule),
@@ -64,6 +72,9 @@ import { RunUtilityDriftScan } from "./jobs/RunUtilityDriftScan";
     BullModule.registerQueue({
       name: UtilityQueues.UtilityDrift,
     }),
+    BullModule.registerQueue({
+      name: UtilityQueues.UtilityRenders,
+    }),
     BullBoardModule.forFeature({
       name: UtilityQueues.UtilityPractice,
       adapter: BullMQAdapter,
@@ -74,6 +85,10 @@ import { RunUtilityDriftScan } from "./jobs/RunUtilityDriftScan";
     }),
     BullBoardModule.forFeature({
       name: UtilityQueues.UtilityDrift,
+      adapter: BullMQAdapter,
+    }),
+    BullBoardModule.forFeature({
+      name: UtilityQueues.UtilityRenders,
       adapter: BullMQAdapter,
     }),
   ],
@@ -91,6 +106,9 @@ import { RunUtilityDriftScan } from "./jobs/RunUtilityDriftScan";
     UtilityPlaybooksService,
     UtilityPracticeModeService,
     UtilityPracticeService,
+    UtilityRendersService,
+    BatchUtilityRenderJob,
+    BatchUtilityRenderJobEvents,
     UtilitySeedService,
     UtilityPluginKeyGuard,
     ReapIdleUtilityPracticeSessions,
@@ -106,10 +124,12 @@ import { RunUtilityDriftScan } from "./jobs/RunUtilityDriftScan";
     UtilityMiningController,
     UtilityAnalysisController,
     UtilityInsightsController,
+    UtilityRendersController,
     UtilityController,
   ],
   exports: [
     UtilityPracticeService,
+    UtilityRendersService,
     UtilityLineupsService,
     UtilityPlaybooksService,
     UtilityMetaService,

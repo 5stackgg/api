@@ -403,10 +403,73 @@ export class UtilityLineupsService {
     return { id: inserted.id, trajectory_file: trajectoryFile };
   }
 
+  // The columns the practice plugin's LineupRecord is deserialized from. Shared
+  // by the player library and the render batch so the two can never drift into
+  // handing the plugin different shapes.
+  private static readonly LIBRARY_SELECT = `
+    SELECT l.id::text AS id, l.name, l.map_name, l.utility_type, l.side,
+           l.technique, l.throw_strength, l.jump_throw_bind,
+           l.aim_tolerance,
+           l.origin_x, l.origin_y, l.origin_z, l.eye_z,
+           l.view_yaw, l.view_pitch, l.land_x, l.land_y, l.land_z,
+           l.initial_pos_x, l.initial_pos_y, l.initial_pos_z,
+           l.initial_vel_x, l.initial_vel_y, l.initial_vel_z,
+           l.flight_time_ms, l.visibility, l.confidence,
+           l.author_steam_id::text AS author_steam_id
+      FROM public.utility_lineups l`;
+
+  // Null when this match is not a render session, which is what keeps the
+  // player path exactly as it was.
+  private async renderBatchLineupIds(
+    matchId: string,
+  ): Promise<Array<string> | null> {
+    const rows = await this.postgres.query<
+      Array<{ utility_lineup_id: string }>
+    >(
+      `SELECT r.utility_lineup_id::text AS utility_lineup_id
+         FROM public.utility_practice_sessions s
+         INNER JOIN public.utility_lineup_renders r
+                 ON r.utility_practice_session_id = s.id
+        WHERE s.match_id = $1::uuid
+          AND s.is_render = true`,
+      [matchId],
+    );
+
+    if (rows.length > 0) {
+      return rows.map((row) => row.utility_lineup_id);
+    }
+
+    const [session] = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT id::text AS id
+         FROM public.utility_practice_sessions
+        WHERE match_id = $1::uuid AND is_render = true`,
+      [matchId],
+    );
+
+    return session ? [] : null;
+  }
+
   public async library(
     context: UtilityServerContext,
     steamId: string,
   ): Promise<Array<UtilityLibraryRow>> {
+    // A render session's server is filming a fixed list of lineups for a client
+    // that is on nobody's roster and owns none of them, so neither the roster
+    // check nor the ownership clause below describes it. The batch IS the
+    // library, and nothing outside the batch is reachable from that server.
+    const renderLineupIds = await this.renderBatchLineupIds(context.matchId);
+
+    if (renderLineupIds) {
+      return this.postgres.query<Array<UtilityLibraryRow>>(
+        `${UtilityLineupsService.LIBRARY_SELECT}
+          WHERE l.id = ANY($1::uuid[])
+            AND l.map_name = $2
+            AND l.archived_at IS NULL
+          ORDER BY l.created_at DESC`,
+        [renderLineupIds, context.mapName],
+      );
+    }
+
     if (!context.lineupSteamIds.includes(steamId)) {
       this.logger.warn(
         `utility library refused ${steamId} on server ${context.serverId}: ` +
@@ -416,16 +479,7 @@ export class UtilityLineupsService {
     }
 
     const rows = await this.postgres.query<Array<UtilityLibraryRow>>(
-      `SELECT l.id::text AS id, l.name, l.map_name, l.utility_type, l.side,
-              l.technique, l.throw_strength, l.jump_throw_bind,
-              l.aim_tolerance,
-              l.origin_x, l.origin_y, l.origin_z, l.eye_z,
-              l.view_yaw, l.view_pitch, l.land_x, l.land_y, l.land_z,
-              l.initial_pos_x, l.initial_pos_y, l.initial_pos_z,
-              l.initial_vel_x, l.initial_vel_y, l.initial_vel_z,
-              l.flight_time_ms, l.visibility, l.confidence,
-              l.author_steam_id::text AS author_steam_id
-         FROM public.utility_lineups l
+      `${UtilityLineupsService.LIBRARY_SELECT}
         WHERE l.map_name = $1
           AND l.archived_at IS NULL
           AND (

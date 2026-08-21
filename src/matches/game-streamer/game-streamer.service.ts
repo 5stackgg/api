@@ -44,6 +44,7 @@ type StreamerMode =
   | "create-clips"
   | "demo"
   | "batch-highlights"
+  | "nade-previews"
   | "warm-shaders";
 
 export type DemoControlAction =
@@ -2380,6 +2381,244 @@ export class GameStreamerService {
     }
   }
 
+  // One pod per map, because one cs2 session films one map: batch-nades.sh
+  // skips any lineup whose map_name is not the session's.
+  public static GetNadeRenderJobName(mapName: string) {
+    return `gs-nades-${mapName
+      .replace(/[^a-z0-9]/gi, "")
+      .slice(0, 24)
+      .toLowerCase()}`;
+  }
+
+  public async getNadeRenderPodState(
+    mapName: string,
+  ): Promise<"running" | "succeeded" | "failed" | "absent"> {
+    const jobName = GameStreamerService.GetNadeRenderJobName(mapName);
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const batch = kc.makeApiClient(BatchV1Api);
+    let job;
+    try {
+      job = await batch.readNamespacedJob({
+        name: jobName,
+        namespace: this.namespace,
+      });
+    } catch (error) {
+      if ((error as { code?: number | string }).code?.toString() === "404") {
+        return "absent";
+      }
+      throw error;
+    }
+    const status = job.status ?? {};
+    if ((status.active ?? 0) > 0) return "running";
+    if ((status.succeeded ?? 0) > 0) return "succeeded";
+    if ((status.failed ?? 0) > 0) return "failed";
+    return "running";
+  }
+
+  public async getNadeRenderPodFailureReason(
+    mapName: string,
+  ): Promise<string | null> {
+    const jobName = GameStreamerService.GetNadeRenderJobName(mapName);
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const core = kc.makeApiClient(CoreV1Api);
+    let pods;
+    try {
+      pods = await core.listNamespacedPod({
+        namespace: this.namespace,
+        labelSelector: `job-name=${jobName}`,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `[nade-renders ${mapName}] failure-reason listPods: ${(error as Error)?.message}`,
+      );
+      return null;
+    }
+    const sorted = [...(pods.items ?? [])].sort((a, b) => {
+      const ta = new Date(a.metadata?.creationTimestamp ?? 0).getTime();
+      const tb = new Date(b.metadata?.creationTimestamp ?? 0).getTime();
+      return tb - ta;
+    });
+    const pod = sorted[0];
+    if (!pod?.metadata?.name) return null;
+
+    const term =
+      pod.status?.containerStatuses?.[0]?.lastState?.terminated ??
+      pod.status?.containerStatuses?.[0]?.state?.terminated;
+
+    let logTail: string | null = null;
+    try {
+      const logs = await core.readNamespacedPodLog({
+        name: pod.metadata.name,
+        namespace: this.namespace,
+        tailLines: 200,
+      });
+      const lines = String(logs ?? "")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+      if (lines.length > 0) {
+        const flagged = lines.filter((line) =>
+          /^\[[^\]]+\]\s+(ERROR|WARN):/i.test(line),
+        );
+        const picked = flagged.length > 0 ? flagged.slice(-5) : lines.slice(-5);
+        logTail = picked.join(" | ");
+      }
+    } catch {}
+
+    const parts: string[] = [];
+    if (term?.reason) parts.push(term.reason);
+    if (term?.exitCode != null) parts.push(`exit=${term.exitCode}`);
+    if (logTail) parts.push(logTail);
+    return parts.length > 0 ? parts.join(" — ").slice(0, 500) : null;
+  }
+
+  public async killNadeRenderPod(mapName: string): Promise<void> {
+    const jobName = GameStreamerService.GetNadeRenderJobName(mapName);
+    try {
+      await this.deleteJob(jobName);
+    } catch (error) {
+      this.logger.error(
+        `[nade-renders ${mapName}] kill failed: ${(error as Error)?.message}`,
+      );
+    }
+  }
+
+  /**
+   * Film a map's queued lineups off a live practice server. Unlike the
+   * highlight batch there is no demo to fetch: the throws only exist as rows,
+   * and the pod reproduces them live against the server it connects to.
+   */
+  public async dispatchNadePreviews(
+    mapName: string,
+    matchId: string,
+    connect: { addr: string; password: string },
+    jobs: Array<{ job_id: string; session_token: string; spec: unknown }>,
+  ): Promise<{ jobName: string; nodeId: string }> {
+    if (jobs.length === 0) {
+      throw new Error("no nade render jobs to dispatch");
+    }
+
+    const jobName = GameStreamerService.GetNadeRenderJobName(mapName);
+    const { nodeId, steamAccount } = await this.claimGpuForNadeRenders(
+      mapName,
+      jobName,
+    );
+
+    const env: V1EnvVar[] = [
+      { name: "MATCH_ID", value: matchId },
+      { name: "STATUS_API_BASE", value: resolveInClusterApiBase() },
+      // Without this the shared status reporter would POST this pod's boot
+      // state to /game-streamer/:match_id/status and flip the practice match
+      // it is only a guest on into "live streaming".
+      { name: "NADE_BATCH_MODE", value: "1" },
+      { name: "NADE_CONNECT_ADDR", value: connect.addr },
+      { name: "NADE_CONNECT_PASSWORD", value: connect.password },
+      {
+        name: "NADE_BATCH_JOBS",
+        value: JSON.stringify(
+          jobs.map((job) => ({
+            job_id: job.job_id,
+            token: job.session_token,
+            spec: job.spec,
+          })),
+        ),
+      },
+    ];
+    env.push({
+      name: "CLIP_VIDEO_CODEC",
+      value: await this.resolveClipVideoCodec(),
+    });
+    env.push(...(await this.buildNodeCs2OptionsEnv(nodeId)));
+
+    const existing = await this.getNadeRenderPodState(mapName);
+    if (existing === "running") {
+      await this.releaseNadeRenderClaim(mapName, jobName);
+      throw new Error(
+        `nade render pod ${jobName} is already running for ${mapName}`,
+      );
+    }
+    if (existing !== "absent") {
+      await this.killNadeRenderPod(mapName);
+      const deadline = Date.now() + 15_000;
+      while (Date.now() < deadline) {
+        if ((await this.getNadeRenderPodState(mapName)) === "absent") break;
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    }
+
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const batch = kc.makeApiClient(BatchV1Api);
+
+    this.logger.log(
+      `[nade-renders ${mapName}] dispatching ${jobs.length} lineup(s) to ${jobName} on node ${nodeId}`,
+    );
+
+    try {
+      await batch.createNamespacedJob({
+        namespace: this.namespace,
+        body: this.buildJobSpec(
+          jobName,
+          matchId,
+          "nade-previews",
+          nodeId,
+          env,
+          { "utility-map": mapName },
+          steamAccount,
+        ),
+      });
+    } catch (error) {
+      await this.releaseNadeRenderClaim(mapName, jobName);
+      throw error;
+    }
+
+    return { jobName, nodeId };
+  }
+
+  private async releaseNadeRenderClaim(mapName: string, jobName: string) {
+    await this.postgres.query(
+      `UPDATE utility_lineup_renders
+          SET game_server_node_id = NULL
+        WHERE map_name = $1
+          AND status IN ('queued','rendering','uploading')`,
+      [mapName],
+    );
+    await this.steamAccounts.release(jobName);
+  }
+
+  private async claimGpuForNadeRenders(
+    mapName: string,
+    jobName: string,
+  ): Promise<GpuClaim> {
+    return this.postgres.transaction(async (client) => {
+      const result = await client.query(
+        `WITH chosen AS (SELECT claim_free_gpu_node_for_batch() AS id)
+         UPDATE utility_lineup_renders
+            SET game_server_node_id = chosen.id
+           FROM chosen
+          WHERE utility_lineup_renders.map_name = $1
+            AND utility_lineup_renders.status IN ('queued','rendering','uploading')
+            AND utility_lineup_renders.game_server_node_id IS NULL
+            AND chosen.id IS NOT NULL
+         RETURNING utility_lineup_renders.game_server_node_id`,
+        [mapName],
+      );
+
+      const nodeId = result.rows[0]?.game_server_node_id as string | undefined;
+      if (!nodeId) {
+        throw new NoGpuAvailableError();
+      }
+
+      const steamAccount = await this.steamAccounts.claim(
+        { nodeId, jobName, purpose: "highlights" },
+        client,
+      );
+      return { nodeId, steamAccount };
+    });
+  }
+
   private async readUsePlaycast(): Promise<boolean> {
     const { settings_by_pk } = await this.hasura.query({
       settings_by_pk: {
@@ -3185,9 +3424,11 @@ export class GameStreamerService {
           ? "demo"
           : mode === "batch-highlights"
             ? "batch"
-            : mode === "warm-shaders"
-              ? "warm"
-              : "live";
+            : mode === "nade-previews"
+              ? "nades"
+              : mode === "warm-shaders"
+                ? "warm"
+                : "live";
     const args =
       mode === "live"
         ? ["live"]
@@ -3195,11 +3436,16 @@ export class GameStreamerService {
           ? ["demo"]
           : mode === "batch-highlights"
             ? ["batch-highlights"]
-            : mode === "warm-shaders"
-              ? ["warm-shaders"]
-              : ["create-clips"];
+            : mode === "nade-previews"
+              ? ["nade-previews"]
+              : mode === "warm-shaders"
+                ? ["warm-shaders"]
+                : ["create-clips"];
     const exposesSpecPorts =
-      mode === "live" || mode === "demo" || mode === "batch-highlights";
+      mode === "live" ||
+      mode === "demo" ||
+      mode === "batch-highlights" ||
+      mode === "nade-previews";
 
     const labels: Record<string, string> = {
       app: "game-streamer",
