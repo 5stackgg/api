@@ -4,4 +4,5 @@ export const UtilityJobs = {
   ReapIdleUtilityPracticeSessions: `ReapIdleUtilityPracticeSessions`,
   MineUtilityMeta: `MineUtilityMeta`,
   RunUtilityDriftScan: `RunUtilityDriftScan`,
+  BatchUtilityRenderJob: `BatchUtilityRenderJob`,
 } as const;

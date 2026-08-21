@@ -1707,6 +1707,32 @@ actions:
     permissions:
       - role: administrator
     comment: Delete every lineup that came from one origin source
+  - name: renderUtilityLineupPreview
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: moderator
+    comment: Re-film a public lineup's preview clip
+  - name: cancelUtilityLineupRender
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: moderator
+    comment: Cancel an in-flight lineup preview render
+  - name: clearFinishedUtilityLineupRenders
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Drop every finished row from the lineup preview queue
 custom_types:
   enums: []
   input_objects:
@@ -1830,4 +1856,6 @@ custom_types:
     - name: UtilityImportError
     - name: UtilityImportOutput
     - name: UtilityPurgeOutput
+    - name: UtilityRenderQueueOutput
+    - name: UtilityRenderClearOutput
   scalars: []

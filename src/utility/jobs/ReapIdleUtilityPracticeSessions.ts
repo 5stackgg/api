@@ -16,6 +16,7 @@ export class ReapIdleUtilityPracticeSessions extends WorkerHost {
   async process(): Promise<void> {
     try {
       await this.practice.reapIdle();
+      await this.practice.reapRenderSessions();
       // After the sessions, not before: reaping one is what turns its claim
       // into an orphan.
       await this.practice.releaseOrphanedServers();

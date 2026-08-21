@@ -2346,3 +2346,30 @@ type UtilityPurgeOutput {
   origin_source: String!
   lineups: Int!
 }
+
+type Mutation {
+  renderUtilityLineupPreview(
+    utility_lineup_id: uuid!
+  ): UtilityRenderQueueOutput
+}
+
+type Mutation {
+  cancelUtilityLineupRender(
+    render_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  clearFinishedUtilityLineupRenders: UtilityRenderClearOutput
+}
+
+type UtilityRenderQueueOutput {
+  success: Boolean!
+  render_id: uuid
+  status: String!
+  reason: String
+}
+
+type UtilityRenderClearOutput {
+  cleared: Int!
+}

@@ -30,6 +30,7 @@ export type UtilityPracticeSession = {
   status: string;
   invite_code: string;
   is_open: boolean;
+  is_render: boolean;
   last_occupied_at: Date | null;
   empty_since: Date | null;
   expires_at: Date | null;
@@ -63,6 +64,9 @@ export class UtilityPracticeService {
   public static readonly CONNECT_MINUTES = 5;
   public static readonly IDLE_MINUTES = 5;
   public static readonly MAX_MINUTES = 60;
+  // A render batch that has not finished in this long is not going to; the
+  // server it is holding is worth more than the last few clips.
+  public static readonly RENDER_GRACE_MINUTES = 90;
 
   private readonly appConfig: AppConfig;
 
@@ -185,6 +189,148 @@ export class UtilityPracticeService {
     } finally {
       await this.cache.forget(lockKey);
     }
+  }
+
+  /**
+   * The same server booking as start(), minus everything that is about a
+   * person: no role gate, no busy check, no waitlist, no lock keyed on a human.
+   * A render session is booked BY the api, its host is only the steam id the
+   * host_steam_id foreign key demands, and it holds the server for exactly as
+   * long as the batch takes.
+   */
+  public async startForRender(options: {
+    mapName: string;
+    hostSteamId: string;
+    region?: string | null;
+  }): Promise<UtilityPracticeSession> {
+    if (!(await this.isEnabled())) {
+      throw Error("utility practice is not enabled");
+    }
+
+    const mapName = await this.resolveMap(options.mapName);
+    const server = await this.freePracticeServer(options.region);
+    const region = server
+      ? server.region
+      : await this.resolveRegion(options.region);
+
+    if (!server) {
+      // A preview clip is never worth the last free slot -- the same reserve a
+      // player's session respects.
+      await this.assertServerHeadroom(region);
+    }
+
+    const session = await this.insertSession(options.hostSteamId, {
+      mapName,
+      region,
+      teamId: null,
+      collectionId: null,
+      isOpen: false,
+      isRender: true,
+    });
+
+    try {
+      const matchId = await this.createPracticeMatch({
+        hostSteamId: options.hostSteamId,
+        mapName,
+        region,
+        serverId: server?.id ?? null,
+      });
+
+      await this.postgres.query(
+        "UPDATE public.utility_practice_sessions SET match_id = $2::uuid WHERE id = $1::uuid",
+        [session.id, matchId],
+      );
+
+      await this.matchAssistant.updateMatchStatus(matchId, "Live");
+      await this.matchAssistant.sendUtilityPracticeRefresh(matchId);
+
+      return await this.session(session.id);
+    } catch (error) {
+      await this.fail(session.id, (error as Error)?.message ?? "unknown");
+      throw error;
+    }
+  }
+
+  /**
+   * Where the render pod connects. The raw match password is the credential:
+   * PracticeConnectUtility.Authorize() takes it as proof on its own, which is
+   * what lets a pod that is on nobody's roster onto the server.
+   */
+  public async renderConnection(sessionId: string): Promise<{
+    addr: string;
+    password: string;
+    match_id: string;
+    plugin_runtime: string;
+  } | null> {
+    const [row] = await this.postgres.query<
+      Array<{
+        match_id: string;
+        password: string;
+        host: string;
+        port: number;
+        node_ip: string | null;
+        is_lan: boolean | null;
+        plugin_runtime: string;
+      }>
+    >(
+      `SELECT m.id::text AS match_id,
+              m.password,
+              srv.host,
+              srv.port,
+              n.node_ip,
+              r.is_lan,
+              COALESCE(n.pin_plugin_runtime, public.active_plugin_runtime())
+                AS plugin_runtime
+         FROM public.utility_practice_sessions s
+         INNER JOIN public.matches m ON m.id = s.match_id
+         INNER JOIN public.servers srv ON srv.id = m.server_id
+          LEFT JOIN public.game_server_nodes n ON n.id = srv.game_server_node_id
+          LEFT JOIN public.server_regions r ON r.value = srv.region
+        WHERE s.id = $1::uuid`,
+      [sessionId],
+    );
+
+    if (!row?.password) {
+      return null;
+    }
+
+    const host = row.is_lan && row.node_ip ? row.node_ip : row.host;
+
+    return {
+      addr: `${host}:${row.port}`,
+      password: row.password,
+      match_id: row.match_id,
+      plugin_runtime: row.plugin_runtime,
+    };
+  }
+
+  public async endRenderSession(sessionId: string): Promise<void> {
+    await this.end(await this.session(sessionId), "Ended");
+  }
+
+  // Backstop for a batch job that died holding a server. The batch itself ends
+  // its session; this only catches the ones nothing is watching any more.
+  public async reapRenderSessions(): Promise<number> {
+    const stale = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT s.id::text AS id
+         FROM public.utility_practice_sessions s
+        WHERE s.is_render = true
+          AND s.status IN ('Starting', 'Ready')
+          AND s.created_at < now() - make_interval(mins => $1)
+          AND NOT EXISTS (
+            SELECT 1
+              FROM public.utility_lineup_renders r
+             WHERE r.utility_practice_session_id = s.id
+               AND r.status IN ('queued', 'rendering', 'uploading')
+          )`,
+      [UtilityPracticeService.RENDER_GRACE_MINUTES],
+    );
+
+    for (const row of stale) {
+      await this.endRenderSession(row.id);
+    }
+
+    return stale.length;
   }
 
   // Two things have to happen and the order is the whole point: the lineup row
@@ -712,8 +858,13 @@ export class UtilityPracticeService {
     );
     const contended = await this.anyoneWaiting();
 
+    // is_render is excluded on purpose: the connect grace and the idle clock
+    // both describe a player who booked a server and left, and neither
+    // describes a pod that is still installing cs2. BatchUtilityRenderJob owns
+    // a render session's lifetime, with reapRenderSessions as the backstop.
     const sessions = await this.postgres.query<Array<UtilityPracticeSession>>(
-      `${UtilityPracticeService.SELECT} WHERE s.status IN ('Starting', 'Ready')`,
+      `${UtilityPracticeService.SELECT}
+        WHERE s.status IN ('Starting', 'Ready') AND s.is_render = false`,
     );
 
     let reaped = 0;
@@ -838,6 +989,7 @@ export class UtilityPracticeService {
            s.status,
            s.invite_code,
            s.is_open,
+           s.is_render,
            s.last_occupied_at,
            s.empty_since,
            s.expires_at,
@@ -898,6 +1050,7 @@ export class UtilityPracticeService {
       teamId: string | null;
       collectionId: string | null;
       isOpen: boolean;
+      isRender?: boolean;
     },
   ): Promise<UtilityPracticeSession> {
     // generate_utility_invite_code() is 50 bits, so a collision is vanishingly
@@ -907,8 +1060,9 @@ export class UtilityPracticeService {
       try {
         const [row] = await this.postgres.query<Array<{ id: string }>>(
           `INSERT INTO public.utility_practice_sessions
-             (host_steam_id, map_name, region, team_id, collection_id, is_open)
-           VALUES ($1::bigint, $2, $3, $4::uuid, $5::uuid, $6)
+             (host_steam_id, map_name, region, team_id, collection_id, is_open,
+              is_render)
+           VALUES ($1::bigint, $2, $3, $4::uuid, $5::uuid, $6, $7)
            RETURNING id::text AS id`,
           [
             hostSteamId,
@@ -917,6 +1071,7 @@ export class UtilityPracticeService {
             options.teamId,
             options.collectionId,
             options.isOpen,
+            options.isRender === true,
           ],
         );
 

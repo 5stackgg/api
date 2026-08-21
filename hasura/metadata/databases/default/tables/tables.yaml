@@ -120,6 +120,7 @@
 - "!include public_utility_drift_scans.yaml"
 - "!include public_utility_lineup_favorites.yaml"
 - "!include public_utility_lineup_progress.yaml"
+- "!include public_utility_lineup_renders.yaml"
 - "!include public_utility_lineup_repairs.yaml"
 - "!include public_utility_lineup_votes.yaml"
 - "!include public_utility_lineups.yaml"
