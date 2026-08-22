@@ -949,7 +949,9 @@ export class MatchAssistantService {
 
           const utilityPracticeEnv =
             match.source === "practice"
-              ? await this.utilityPracticeServerEnv()
+              ? await this.utilityPracticeServerEnv(
+                  await this.isRenderPracticeMatch(matchId),
+                )
               : [];
           const gameMode = await this.gameModesService.resolveForServer(
             server.id,
@@ -1176,7 +1178,24 @@ export class MatchAssistantService {
   // marker for the utility-practice game mode: it is already what match_events
   // branches on, and it is a plain column rather than a join through the
   // game_modes feature.
-  private async utilityPracticeServerEnv() {
+  // Is this practice match backing a nade render (vs a human practising)?
+  private async isRenderPracticeMatch(matchId: string): Promise<boolean> {
+    const { utility_practice_sessions } = await this.hasura.query({
+      utility_practice_sessions: {
+        __args: {
+          where: {
+            match_id: { _eq: matchId },
+            is_render: { _eq: true },
+          },
+          limit: 1,
+        },
+        id: true,
+      },
+    });
+    return (utility_practice_sessions ?? []).length > 0;
+  }
+
+  private async utilityPracticeServerEnv(isRender = false) {
     return [
       { name: "INSTALL_5STACK_PLUGIN", value: "false" },
       { name: "INSTALL_UTILITY_PRACTICE_PLUGIN", value: "true" },
@@ -1189,6 +1208,16 @@ export class MatchAssistantService {
         name: "UTILITY_URL",
         value: this.appConfig.apiDomain,
       },
+      // A render has no human to throw, so `rethrow` must EMIT the real
+      // projectile from the seed (np_ghost_projectile) or it just repositions
+      // and films a player standing still. And no trajectory line cluttering
+      // the clip (np_ghost_preview off). Human practice keeps the defaults.
+      ...(isRender
+        ? [
+            { name: "NP_GHOST_PROJECTILE", value: "true" },
+            { name: "NP_GHOST_PREVIEW", value: "false" },
+          ]
+        : []),
     ];
   }
 
