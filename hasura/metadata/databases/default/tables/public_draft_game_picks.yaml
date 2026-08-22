@@ -80,36 +80,6 @@ insert_permissions:
         - draft_game_id
         - picked_steam_id
     comment: ""
-  - role: match_organizer
-    permission:
-      check:
-        draft_game:
-          status:
-            _eq: Drafting
-      columns:
-        - draft_game_id
-        - picked_steam_id
-    comment: ""
-  - role: tournament_organizer
-    permission:
-      check:
-        draft_game:
-          status:
-            _eq: Drafting
-      columns:
-        - draft_game_id
-        - picked_steam_id
-    comment: ""
-  - role: administrator
-    permission:
-      check:
-        draft_game:
-          status:
-            _eq: Drafting
-      columns:
-        - draft_game_id
-        - picked_steam_id
-    comment: ""
 event_triggers:
   - name: draft_game_pick_events
     definition:

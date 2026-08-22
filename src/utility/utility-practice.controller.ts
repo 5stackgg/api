@@ -32,6 +32,7 @@ export class UtilityPracticeController {
       on_server: !!at,
       map_name: at?.map_name ?? null,
       session_id: at?.session_id ?? null,
+      switching: at?.switching === true,
     };
   }
 
@@ -63,6 +64,32 @@ export class UtilityPracticeController {
     lineup_ids: Array<string>;
   }) {
     return this.load.sendDrill(data.user, data.lineup_ids ?? []);
+  }
+
+  /**
+   * Move a running practice server onto another map.
+   *
+   * The lineups ride along rather than being sent afterwards: the caller is not
+   * there to press a second button -- they are staring at a load screen -- and
+   * the throw they want has to be in their library before the plugin refetches
+   * it on the other side of the changelevel.
+   */
+  @HasuraAction()
+  public async changeUtilityPracticeMap(data: {
+    user: User;
+    session_id: string;
+    map_name: string;
+    lineup_id?: string;
+    lineup_ids?: Array<string>;
+    scratch?: UtilityScratchLineup;
+  }) {
+    return this.practice.changeMap(data.user, {
+      session_id: data.session_id,
+      map_name: data.map_name,
+      lineup_id: data.lineup_id ?? null,
+      lineup_ids: data.lineup_ids ?? null,
+      scratch: data.scratch ?? null,
+    });
   }
 
   /** Change who may join, on a server that is already running. */

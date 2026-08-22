@@ -132,36 +132,6 @@ select_permissions:
           - connection_string:
               _is_null: false
     comment: ""
-  - role: match_organizer
-    permission:
-      columns:
-        - boot_status
-        - boot_status_detail
-        - connected
-        - enabled
-        - game
-        - host
-        - id
-        - is_dedicated
-        - label
-        - max_players
-        - plugin_runtime
-        - plugin_version
-        - port
-        - rcon_status
-        - region
-        - reserved_by_match_id
-        - tv_port
-        - type
-        - game_mode_id
-      computed_fields:
-        - connection_link
-        - connection_string
-      filter:
-        is_dedicated:
-          _eq: true
-      allow_aggregations: true
-    comment: ""
   - role: moderator
     permission:
       columns:

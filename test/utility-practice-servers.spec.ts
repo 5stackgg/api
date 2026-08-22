@@ -73,6 +73,8 @@ describe("utility practice servers (SQL-driven)", () => {
       {
         notifyPlayers: jest.fn(async (): Promise<number> => 0),
       } as unknown as never,
+      // Only a map change reaches the load service, and nothing here makes one.
+      {} as never,
       {
         get: jest.fn(() => ({ webDomain: "https://5stack.test" })),
       } as unknown as never,

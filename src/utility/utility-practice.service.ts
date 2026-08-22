@@ -17,6 +17,10 @@ import {
   UtilityPlaybookPayload,
   UtilityPlaybooksService,
 } from "./utility-playbooks.service";
+import {
+  UtilityLoadService,
+  UtilityScratchLineup,
+} from "./utility-load.service";
 
 export type UtilityPracticeSession = {
   id: string;
@@ -37,6 +41,24 @@ export type UtilityPracticeSession = {
   expires_at: Date | null;
   failure_reason: string | null;
   created_at: Date;
+};
+
+export type ChangeUtilityPracticeMapInput = {
+  session_id: string;
+  map_name: string;
+  /** Stand the caller on this once the new map is up. */
+  lineup_id?: string | null;
+  /** Or drill this set, in the order given. */
+  lineup_ids?: Array<string> | null;
+  /** Or a throw with no row behind it -- a mined spot, or a draft. */
+  scratch?: UtilityScratchLineup | null;
+};
+
+export type ChangeUtilityPracticeMapResult = {
+  success: boolean;
+  map_name: string;
+  /** False when the server took the map change but not the queued load. */
+  queued: boolean;
 };
 
 export type StartUtilityPracticeInput = {
@@ -80,6 +102,7 @@ export class UtilityPracticeService {
     private readonly matchAssistant: MatchAssistantService,
     private readonly playbooks: UtilityPlaybooksService,
     private readonly notifications: NotificationsService,
+    private readonly load: UtilityLoadService,
     private readonly configService: ConfigService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
@@ -1316,6 +1339,282 @@ export class UtilityPracticeService {
    * start time, so a host who opened a server to everybody had no way to close
    * it again without stopping it.
    */
+  // A changelevel drops everyone on the server into a load screen, so two of
+  // them stacked by a double-clicked button is a server that never finishes
+  // loading anything.
+  private static readonly MAP_CHANGE_LOCK_SECONDS = 20;
+
+  /**
+   * Move a running practice server onto another map, optionally handing the
+   * plugin something to stand the caller on once it is up.
+   *
+   * The map lives in three places and they have to move together: the session
+   * row (which is what the plugin's roster fetch and the website read), the
+   * match's one `match_maps` row (which is what `serverContext` -- and
+   * therefore the library, ingest and trajectory endpoints -- reads), and the
+   * Custom map pool behind it.
+   */
+  public async changeMap(
+    user: User,
+    input: ChangeUtilityPracticeMapInput,
+  ): Promise<ChangeUtilityPracticeMapResult> {
+    const session = await this.session(input.session_id);
+
+    if (!session) {
+      throw Error("practice session not found");
+    }
+
+    if (
+      session.host_steam_id !== user.steam_id &&
+      !isRoleAbove(user.role, "administrator")
+    ) {
+      throw Error("only the host can change this practice server's map");
+    }
+
+    // A render session is filming a fixed list of lineups on one map; moving it
+    // would abandon the batch it was booked for.
+    if (session.is_render) {
+      throw Error("that practice session is not yours to change");
+    }
+
+    // A Starting session's pod has +map baked into its job args -- there is no
+    // level running yet for a changelevel to replace.
+    if (session.status !== "Ready" || !session.match_id) {
+      throw Error("that practice server is not ready yet");
+    }
+
+    const map = await this.resolveMapRow(input.map_name);
+
+    if (map.name === session.map_name) {
+      return { success: true, map_name: map.name, queued: false };
+    }
+
+    const lockKey = `utility:practice:map:${session.id}`;
+
+    if (
+      !(await this.cache.acquireLock(
+        lockKey,
+        UtilityPracticeService.MAP_CHANGE_LOCK_SECONDS,
+      ))
+    ) {
+      throw Error("that server is already changing map");
+    }
+
+    try {
+      const serverId = await this.serverForSession(session.match_id);
+
+      // Before the level changes, not after: a throw the caller may not see is
+      // a refusal, and refusing after everyone is already in a load screen is
+      // the worst possible moment to find out.
+      const queued = await this.queueForMapChange(
+        user,
+        serverId,
+        map.name,
+        input,
+      );
+
+      await this.postgres.transaction(async (client) => {
+        // playbook_id goes with it: an execute is a statement about one map.
+        // last_occupied_at keeps the reaper's idle clock off the load screen --
+        // tbiu_utility_practice_sessions clears empty_since from that column.
+        await client.query(
+          `UPDATE public.utility_practice_sessions
+              SET map_name = $2,
+                  map_changing_at = now(),
+                  playbook_id = NULL,
+                  last_occupied_at = now()
+            WHERE id = $1::uuid`,
+          [session.id, map.name],
+        );
+
+        const moved = await client.query(
+          `UPDATE public.match_maps
+              SET map_id = $2::uuid
+            WHERE match_id = $1::uuid
+          RETURNING id`,
+          [session.match_id, map.id],
+        );
+
+        if (moved.rowCount !== 1) {
+          throw Error(
+            `expected exactly one match map for a practice session, moved ${moved.rowCount}`,
+          );
+        }
+
+        // The pool is what materialized that match map. Leaving it on the old
+        // map means the two disagree about what this session is for.
+        await client.query(
+          `UPDATE public._map_pool mp
+              SET map_id = $2::uuid
+             FROM public.matches m
+             INNER JOIN public.match_options mo ON mo.id = m.match_options_id
+            WHERE m.id = $1::uuid
+              AND mp.map_pool_id = mo.map_pool_id`,
+          [session.match_id, map.id],
+        );
+      });
+
+      const sent = await this.load.changeMap({
+        serverId,
+        mapName: map.name,
+        workshopId: map.workshop_map_id,
+        steamId: user.steam_id,
+        lineupIds: queued,
+      });
+
+      if (!sent.sent) {
+        // The row now claims a map the server was never told about, and every
+        // read would be answered for a level it is not running.
+        await this.abandonMapChange(session);
+        throw Error("could not reach your practice server");
+      }
+
+      this.logger.log(
+        `[utility-practice ${session.id}] ${session.map_name} -> ${map.name} ` +
+          `by ${user.steam_id}`,
+      );
+
+      return { success: true, map_name: map.name, queued: sent.queued };
+    } finally {
+      await this.cache.forget(lockKey);
+    }
+  }
+
+  /**
+   * What the plugin should stand the caller on once the new map is up, put into
+   * their library on the way through.
+   *
+   * The library entry is the load-bearing half: the plugin refetches on map
+   * load and only teleports somebody onto a lineup it can find, so a Public
+   * lineup nobody has favourited would otherwise arrive as an id belonging to
+   * nothing. UtilityLoadService.PENDING_SECONDS is thirty minutes precisely so
+   * it outlives a changelevel.
+   */
+  private async queueForMapChange(
+    user: User,
+    serverId: string,
+    mapName: string,
+    input: ChangeUtilityPracticeMapInput,
+  ): Promise<Array<string>> {
+    if (input.scratch) {
+      if (input.scratch.map_name !== mapName) {
+        throw Error("that throw is for another map");
+      }
+
+      await this.load.remember(serverId, user.steam_id, {
+        kind: "scratch",
+        lineup: input.scratch,
+      });
+
+      return [input.scratch.client_id];
+    }
+
+    const asked = [
+      ...new Set(
+        [input.lineup_id, ...(input.lineup_ids ?? [])].filter(
+          (id): id is string => !!id,
+        ),
+      ),
+    ].slice(0, UtilityLoadService.MAX_DRILL);
+
+    if (asked.length === 0) {
+      return [];
+    }
+
+    const allowed = await this.load.visibleOnMap(user, asked, mapName);
+
+    // Order is the caller's: a drill runs in the sequence they chose.
+    const queue = asked.filter((id) => allowed.has(id));
+
+    if (queue.length === 0) {
+      throw Error("that lineup is not available to you on that map");
+    }
+
+    for (const id of queue) {
+      await this.load.remember(serverId, user.steam_id, {
+        kind: "saved",
+        lineup_id: id,
+      });
+    }
+
+    return queue;
+  }
+
+  /** Put a session back on the map it was on, after a change nobody received. */
+  private async abandonMapChange(
+    session: UtilityPracticeSession,
+  ): Promise<void> {
+    try {
+      const previous = await this.resolveMapRow(session.map_name);
+
+      await this.postgres.transaction(async (client) => {
+        await client.query(
+          `UPDATE public.utility_practice_sessions
+              SET map_name = $2, map_changing_at = NULL
+            WHERE id = $1::uuid`,
+          [session.id, previous.name],
+        );
+        await client.query(
+          `UPDATE public.match_maps SET map_id = $2::uuid WHERE match_id = $1::uuid`,
+          [session.match_id, previous.id],
+        );
+        await client.query(
+          `UPDATE public._map_pool mp
+              SET map_id = $2::uuid
+             FROM public.matches m
+             INNER JOIN public.match_options mo ON mo.id = m.match_options_id
+            WHERE m.id = $1::uuid
+              AND mp.map_pool_id = mo.map_pool_id`,
+          [session.match_id, previous.id],
+        );
+      });
+    } catch (error) {
+      this.logger.error(
+        `[utility-practice ${session.id}] could not undo a map change: ` +
+          (error as Error)?.message,
+      );
+    }
+  }
+
+  /**
+   * The plugin fetches its session on every map load, naming the map it came up
+   * on. That is the only honest signal the level actually finished loading --
+   * everything else is a guess at how long a changelevel takes.
+   *
+   * A build that does not name one clears the flag anyway: an old plugin is
+   * still a server that is up, and a flag that never clears would leave every
+   * "load me in" button refusing forever.
+   */
+  public async markMapLoaded(
+    sessionId: string,
+    reportedMap?: string | null,
+  ): Promise<void> {
+    await this.postgres.query(
+      `UPDATE public.utility_practice_sessions
+          SET map_changing_at = NULL
+        WHERE id = $1::uuid
+          AND map_changing_at IS NOT NULL
+          AND ($2::text IS NULL OR map_name = $2::text)`,
+      [sessionId, reportedMap ?? null],
+    );
+  }
+
+  private async serverForSession(matchId: string): Promise<string> {
+    const [row] = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT id::text AS id
+         FROM public.servers
+        WHERE reserved_by_match_id = $1::uuid
+        LIMIT 1`,
+      [matchId],
+    );
+
+    if (!row) {
+      throw Error("that practice session has no server");
+    }
+
+    return row.id;
+  }
+
   public async setAccess(
     user: User,
     sessionId: string,
@@ -1772,9 +2071,32 @@ export class UtilityPracticeService {
   }
 
   private async resolveMap(mapName: string): Promise<string> {
-    const [row] = await this.postgres.query<Array<{ name: string }>>(
-      `SELECT name FROM public.maps
-        WHERE name = $1 AND type = $2 AND enabled = true
+    return (await this.resolveMapRow(mapName)).name;
+  }
+
+  /**
+   * A map a practice session may be on. Everything a change needs is here,
+   * because the id is what `match_maps` and the pool take while the name is
+   * what the session row and the plugin take, and reading them separately is
+   * how the two end up describing different maps.
+   *
+   * deleted_at is excluded: tau_maps_soft_delete strips a deleted map out of
+   * every pool, so pointing a pool row at one is a write the database undoes.
+   */
+  private async resolveMapRow(mapName: string): Promise<{
+    id: string;
+    name: string;
+    workshop_map_id: string | null;
+  }> {
+    const [row] = await this.postgres.query<
+      Array<{ id: string; name: string; workshop_map_id: string | null }>
+    >(
+      `SELECT id::text AS id, name, workshop_map_id
+         FROM public.maps
+        WHERE name = $1
+          AND type = $2
+          AND enabled = true
+          AND deleted_at IS NULL
         LIMIT 1`,
       [mapName, UtilityPracticeService.MATCH_TYPE],
     );
@@ -1783,7 +2105,7 @@ export class UtilityPracticeService {
       throw Error("that map is not available for practice");
     }
 
-    return row.name;
+    return row;
   }
 
   private async mapId(mapName: string): Promise<string> {

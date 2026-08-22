@@ -20,14 +20,3 @@ select_permissions:
         - observed_at
       filter: {}
     comment: ""
-  - role: user
-    permission:
-      columns:
-        - steam_id
-        - skill_level
-        - previous_rank
-        - elo
-        - match_id
-        - observed_at
-      filter: {}
-    comment: ""

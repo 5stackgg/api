@@ -39,27 +39,3 @@ select_permissions:
       filter: {}
       allow_aggregations: true
     comment: 'session_token is absent on purpose: it is the pod''s credential, not queue state.'
-  - role: administrator
-    permission:
-      columns:
-        - id
-        - utility_lineup_id
-        - requested_by_steam_id
-        - map_name
-        - k8s_job_name
-        - game_server_node_id
-        - utility_practice_session_id
-        - spec
-        - status
-        - progress
-        - error_message
-        - skip_reason
-        - duration_ms
-        - paused
-        - sort_index
-        - status_history
-        - last_status_at
-        - created_at
-      filter: {}
-      allow_aggregations: true
-    comment: 'session_token is absent on purpose: it is the pod''s credential, not queue state.'

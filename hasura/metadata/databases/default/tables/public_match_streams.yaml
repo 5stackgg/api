@@ -9,17 +9,6 @@ object_relationships:
     using:
       foreign_key_constraint_on: match_id
 insert_permissions:
-  - role: match_organizer
-    permission:
-      check:
-        is_game_streamer:
-          _eq: false
-      columns:
-        - link
-        - match_id
-        - priority
-        - title
-    comment: ""
   - role: streamer
     permission:
       check:
@@ -69,19 +58,6 @@ select_permissions:
       filter: {}
     comment: ""
 update_permissions:
-  - role: match_organizer
-    permission:
-      columns:
-        - link
-        - priority
-        - title
-      filter:
-        is_game_streamer:
-          _eq: false
-      check:
-        is_game_streamer:
-          _eq: false
-    comment: ""
   - role: streamer
     permission:
       columns:
@@ -117,12 +93,6 @@ update_permissions:
               _eq: false
     comment: ""
 delete_permissions:
-  - role: match_organizer
-    permission:
-      filter:
-        is_game_streamer:
-          _eq: false
-    comment: ""
   - role: streamer
     permission:
       filter:

@@ -39,26 +39,6 @@ select_permissions:
         - paused
       filter: {}
       allow_aggregations: true
-  - role: match_organizer
-    permission:
-      columns:
-        - id
-        - user_steam_id
-        - match_map_id
-        - match_map_demo_id
-        - status
-        - progress
-        - error_message
-        - k8s_job_name
-        - clip_id
-        - status_history
-        - last_status_at
-        - created_at
-        - sort_index
-        - spec
-        - game_server_node_id
-        - paused
-      filter: {}
   - role: streamer
     permission:
       columns:

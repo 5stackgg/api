@@ -7,6 +7,13 @@ CREATE OR REPLACE FUNCTION public.tbiu_utility_playbooks() RETURNS TRIGGER
 BEGIN
     NEW.updated_at = now();
 
+    -- Ahead of the team check below, which reads owner_steam_id.
+    IF TG_OP = 'INSERT' THEN
+        NEW.owner_steam_id = COALESCE(
+            NEW.owner_steam_id, public.hasura_session_steam_id()
+        );
+    END IF;
+
     IF NOT EXISTS (
         SELECT 1 FROM public.maps m WHERE m.name = NEW.map_name
     ) THEN

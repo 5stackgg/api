@@ -36,18 +36,3 @@ select_permissions:
       filter: {}
       allow_aggregations: true
     comment: ""
-  - role: user
-    permission:
-      columns:
-        - tournament_id
-        - player_steam_id
-        - kills
-        - headshots
-        - deaths
-        - assists
-        - matches_played
-        - kdr
-        - headshot_percentage
-      filter: {}
-      allow_aggregations: true
-    comment: ""

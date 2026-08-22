@@ -1943,6 +1943,10 @@ type UtilityPracticeWhereOutput {
   on_server: Boolean!
   map_name: String
   session_id: uuid
+  # map_name is where the server is GOING while this is true. Offering a load
+  # into a level that is still loading is a button that reports success and
+  # does nothing.
+  switching: Boolean!
 }
 
 type UtilityLoadOutput {
@@ -1983,14 +1987,36 @@ type Mutation {
 }
 
 type Mutation {
+  sendUtilityDrillToServer(lineup_ids: [String!]!): UtilityDrillLoadOutput
+}
+
+# The load result plus how many of the named lineups actually made it into the
+# run: ids the caller cannot see, or that are not on the map they are standing
+# on, are dropped rather than failing the whole set.
+type UtilityDrillLoadOutput {
+  sent: Boolean!
+  reason: String!
+  map_name: String
+  queued: Int!
+}
+
+type Mutation {
   startUtilityPractice(
     map_name: String!
     region: String
     collection_id: uuid
     team_id: uuid
     is_open: Boolean
+    access: String
     server_id: uuid
   ): UtilityPracticeSessionOutput
+}
+
+type Mutation {
+  setUtilityPracticeAccess(
+    session_id: uuid!
+    access: String!
+  ): SuccessOutput
 }
 
 type Mutation {
@@ -2010,6 +2036,24 @@ type Mutation {
   stopUtilityPractice(
     session_id: uuid!
   ): SuccessOutput
+}
+
+type Mutation {
+  changeUtilityPracticeMap(
+    session_id: uuid!
+    map_name: String!
+    lineup_id: uuid
+    lineup_ids: [uuid!]
+    scratch: UtilityScratchLineupInput
+  ): UtilityPracticeMapChangeOutput
+}
+
+type UtilityPracticeMapChangeOutput {
+  success: Boolean!
+  map_name: String!
+  # False when the server took the level change but not the lineup to stand you
+  # on -- a plugin build that predates utility_practice_map.
+  queued: Boolean!
 }
 
 type Mutation {

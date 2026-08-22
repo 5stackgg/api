@@ -21,27 +21,3 @@ select_permissions:
         - headshot_percentage
       filter: {}
     comment: ""
-  - role: user
-    permission:
-      columns:
-        - player_steam_id
-        - season_id
-        - kills
-        - deaths
-        - assists
-        - headshots
-        - headshot_percentage
-      filter: {}
-    comment: ""
-  - role: match_organizer
-    permission:
-      columns:
-        - player_steam_id
-        - season_id
-        - kills
-        - deaths
-        - assists
-        - headshots
-        - headshot_percentage
-      filter: {}
-    comment: ""

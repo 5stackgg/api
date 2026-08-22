@@ -219,6 +219,7 @@
 - "!include public_v_player_weapon_damage.yaml"
 - "!include public_v_player_weapon_kills.yaml"
 - "!include public_v_pool_maps.yaml"
+- "!include public_v_role_permissions.yaml"
 - "!include public_v_steam_account_pool_status.yaml"
 - "!include public_v_team_ranks.yaml"
 - "!include public_v_team_reputation.yaml"

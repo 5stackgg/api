@@ -114,7 +114,10 @@ export class UtilityController {
   // server.
   @Get("session")
   @UseGuards(UtilityPluginKeyGuard)
-  public async session(@Req() request: Request) {
+  public async session(
+    @Req() request: Request,
+    @Query("map") reportedMap?: string,
+  ) {
     const serverId = UtilityController.serverId(request);
 
     const session = await this.practice.sessionForServer(serverId);
@@ -127,6 +130,14 @@ export class UtilityController {
 
     // The plugin asking at all is the definitive signal that the server is up.
     await this.practice.markReady(session.match_id);
+
+    // This fetch runs inside the plugin's map-load handler, so the map it names
+    // is the one the level actually came up on -- the only thing that can end a
+    // map change without guessing at how long a changelevel takes.
+    await this.practice.markMapLoaded(
+      session.session_id,
+      reportedMap ? String(reportedMap) : null,
+    );
 
     return session;
   }

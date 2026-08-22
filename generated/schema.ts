@@ -949,6 +949,14 @@ export interface UtilityDriftScanOutput {
     __typename: 'UtilityDriftScanOutput'
 }
 
+export interface UtilityDrillLoadOutput {
+    map_name: (Scalars['String'] | null)
+    queued: Scalars['Int']
+    reason: Scalars['String']
+    sent: Scalars['Boolean']
+    __typename: 'UtilityDrillLoadOutput'
+}
+
 export interface UtilityImportError {
     external_id: (Scalars['String'] | null)
     index: Scalars['Int']
@@ -1036,6 +1044,13 @@ export interface UtilityPlaybookOutput {
     __typename: 'UtilityPlaybookOutput'
 }
 
+export interface UtilityPracticeMapChangeOutput {
+    map_name: Scalars['String']
+    queued: Scalars['Boolean']
+    success: Scalars['Boolean']
+    __typename: 'UtilityPracticeMapChangeOutput'
+}
+
 export interface UtilityPracticePlanEntry {
     attempts: Scalars['Int']
     difficulty: Scalars['String']
@@ -1084,6 +1099,7 @@ export interface UtilityPracticeWhereOutput {
     map_name: (Scalars['String'] | null)
     on_server: Scalars['Boolean']
     session_id: (Scalars['uuid'] | null)
+    switching: Scalars['Boolean']
     __typename: 'UtilityPracticeWhereOutput'
 }
 
@@ -6439,6 +6455,75 @@ export type e_tournament_status_select_column = 'description' | 'value'
 
 /** update columns of table "e_tournament_status" */
 export type e_tournament_status_update_column = 'description' | 'value'
+
+
+/** columns and relationships of "e_utility_practice_access" */
+export interface e_utility_practice_access {
+    description: Scalars['String']
+    /** An array relationship */
+    utility_practice_sessions: utility_practice_sessions[]
+    /** An aggregate relationship */
+    utility_practice_sessions_aggregate: utility_practice_sessions_aggregate
+    value: Scalars['String']
+    __typename: 'e_utility_practice_access'
+}
+
+
+/** aggregated selection of "e_utility_practice_access" */
+export interface e_utility_practice_access_aggregate {
+    aggregate: (e_utility_practice_access_aggregate_fields | null)
+    nodes: e_utility_practice_access[]
+    __typename: 'e_utility_practice_access_aggregate'
+}
+
+
+/** aggregate fields of "e_utility_practice_access" */
+export interface e_utility_practice_access_aggregate_fields {
+    count: Scalars['Int']
+    max: (e_utility_practice_access_max_fields | null)
+    min: (e_utility_practice_access_min_fields | null)
+    __typename: 'e_utility_practice_access_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "e_utility_practice_access" */
+export type e_utility_practice_access_constraint = 'e_utility_practice_access_pkey'
+
+export type e_utility_practice_access_enum = 'Friends' | 'Invite' | 'Open' | 'Private'
+
+
+/** aggregate max on columns */
+export interface e_utility_practice_access_max_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_utility_practice_access_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface e_utility_practice_access_min_fields {
+    description: (Scalars['String'] | null)
+    value: (Scalars['String'] | null)
+    __typename: 'e_utility_practice_access_min_fields'
+}
+
+
+/** response of any mutation on the table "e_utility_practice_access" */
+export interface e_utility_practice_access_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: e_utility_practice_access[]
+    __typename: 'e_utility_practice_access_mutation_response'
+}
+
+
+/** select columns of table "e_utility_practice_access" */
+export type e_utility_practice_access_select_column = 'description' | 'value'
+
+
+/** update columns of table "e_utility_practice_access" */
+export type e_utility_practice_access_update_column = 'description' | 'value'
 
 
 /** columns and relationships of "e_utility_practice_statuses" */
@@ -14462,6 +14547,7 @@ export interface mutation_root {
     cancelScrimRequest: (SuccessOutput | null)
     /** Cancel an in-flight lineup preview render */
     cancelUtilityLineupRender: (SuccessOutput | null)
+    changeUtilityPracticeMap: (UtilityPracticeMapChangeOutput | null)
     /** checkIntoMatch */
     checkIntoMatch: (SuccessOutput | null)
     /** Delete terminal-state clip_render_jobs rows for a single match_map batch. */
@@ -14500,6 +14586,8 @@ export interface mutation_root {
     deleteServerItem: (SuccessOutput | null)
     /** Delete a tournament and clean up demo files */
     deleteTournament: (SuccessOutput | null)
+    /** Delete a render and its preview clip */
+    deleteUtilityLineupRender: (SuccessOutput | null)
     /** Delete a utility playbook */
     deleteUtilityPlaybook: (SuccessOutput | null)
     /** delete data from the table: "_map_pool" */
@@ -14738,6 +14826,10 @@ export interface mutation_root {
     delete_e_tournament_status: (e_tournament_status_mutation_response | null)
     /** delete single row from the table: "e_tournament_status" */
     delete_e_tournament_status_by_pk: (e_tournament_status | null)
+    /** delete data from the table: "e_utility_practice_access" */
+    delete_e_utility_practice_access: (e_utility_practice_access_mutation_response | null)
+    /** delete single row from the table: "e_utility_practice_access" */
+    delete_e_utility_practice_access_by_pk: (e_utility_practice_access | null)
     /** delete data from the table: "e_utility_practice_statuses" */
     delete_e_utility_practice_statuses: (e_utility_practice_statuses_mutation_response | null)
     /** delete single row from the table: "e_utility_practice_statuses" */
@@ -15068,6 +15160,8 @@ export interface mutation_root {
     delete_push_subscriptions: (push_subscriptions_mutation_response | null)
     /** delete single row from the table: "push_subscriptions" */
     delete_push_subscriptions_by_pk: (push_subscriptions | null)
+    /** delete data from the table: "v_role_permissions" */
+    delete_role_permissions: (role_permissions_mutation_response | null)
     /** delete data from the table: "seasons" */
     delete_seasons: (seasons_mutation_response | null)
     /** delete single row from the table: "seasons" */
@@ -15510,6 +15604,10 @@ export interface mutation_root {
     insert_e_tournament_status: (e_tournament_status_mutation_response | null)
     /** insert a single row into the table: "e_tournament_status" */
     insert_e_tournament_status_one: (e_tournament_status | null)
+    /** insert data into the table: "e_utility_practice_access" */
+    insert_e_utility_practice_access: (e_utility_practice_access_mutation_response | null)
+    /** insert a single row into the table: "e_utility_practice_access" */
+    insert_e_utility_practice_access_one: (e_utility_practice_access | null)
     /** insert data into the table: "e_utility_practice_statuses" */
     insert_e_utility_practice_statuses: (e_utility_practice_statuses_mutation_response | null)
     /** insert a single row into the table: "e_utility_practice_statuses" */
@@ -15846,6 +15944,10 @@ export interface mutation_root {
     insert_push_subscriptions: (push_subscriptions_mutation_response | null)
     /** insert a single row into the table: "push_subscriptions" */
     insert_push_subscriptions_one: (push_subscriptions | null)
+    /** insert data into the table: "v_role_permissions" */
+    insert_role_permissions: (role_permissions_mutation_response | null)
+    /** insert a single row into the table: "v_role_permissions" */
+    insert_role_permissions_one: (role_permissions | null)
     /** insert data into the table: "seasons" */
     insert_seasons: (seasons_mutation_response | null)
     /** insert a single row into the table: "seasons" */
@@ -16162,6 +16264,7 @@ export interface mutation_root {
     scheduleMatch: (SuccessOutput | null)
     /** sendScrimRequest */
     sendScrimRequest: (SuccessOutput | null)
+    sendUtilityDrillToServer: (UtilityDrillLoadOutput | null)
     sendUtilityLineupToServer: (UtilityLoadOutput | null)
     sendUtilityScratchToServer: (UtilityLoadOutput | null)
     setGameNodeSchedulingState: (SuccessOutput | null)
@@ -16176,6 +16279,7 @@ export interface mutation_root {
     setNewsPostStatus: (NewsPost | null)
     /** Map a tournament placement to an award */
     setTournamentAward: (TournamentAward | null)
+    setUtilityPracticeAccess: (SuccessOutput | null)
     setupGameServer: (SetupGameServeOutput | null)
     skipShaders: (SuccessOutput | null)
     /** Ask a practice server to solve a throw onto a point */
@@ -16577,6 +16681,12 @@ export interface mutation_root {
     update_e_tournament_status_by_pk: (e_tournament_status | null)
     /** update multiples rows of table: "e_tournament_status" */
     update_e_tournament_status_many: ((e_tournament_status_mutation_response | null)[] | null)
+    /** update data of the table: "e_utility_practice_access" */
+    update_e_utility_practice_access: (e_utility_practice_access_mutation_response | null)
+    /** update single row of the table: "e_utility_practice_access" */
+    update_e_utility_practice_access_by_pk: (e_utility_practice_access | null)
+    /** update multiples rows of table: "e_utility_practice_access" */
+    update_e_utility_practice_access_many: ((e_utility_practice_access_mutation_response | null)[] | null)
     /** update data of the table: "e_utility_practice_statuses" */
     update_e_utility_practice_statuses: (e_utility_practice_statuses_mutation_response | null)
     /** update single row of the table: "e_utility_practice_statuses" */
@@ -17075,6 +17185,10 @@ export interface mutation_root {
     update_push_subscriptions_by_pk: (push_subscriptions | null)
     /** update multiples rows of table: "push_subscriptions" */
     update_push_subscriptions_many: ((push_subscriptions_mutation_response | null)[] | null)
+    /** update data of the table: "v_role_permissions" */
+    update_role_permissions: (role_permissions_mutation_response | null)
+    /** update multiples rows of table: "v_role_permissions" */
+    update_role_permissions_many: ((role_permissions_mutation_response | null)[] | null)
     /** update data of the table: "seasons" */
     update_seasons: (seasons_mutation_response | null)
     /** update single row of the table: "seasons" */
@@ -26168,6 +26282,12 @@ export interface query_root {
     e_tournament_status_aggregate: e_tournament_status_aggregate
     /** fetch data from the table: "e_tournament_status" using primary key columns */
     e_tournament_status_by_pk: (e_tournament_status | null)
+    /** fetch data from the table: "e_utility_practice_access" */
+    e_utility_practice_access: e_utility_practice_access[]
+    /** fetch aggregated fields from the table: "e_utility_practice_access" */
+    e_utility_practice_access_aggregate: e_utility_practice_access_aggregate
+    /** fetch data from the table: "e_utility_practice_access" using primary key columns */
+    e_utility_practice_access_by_pk: (e_utility_practice_access | null)
     /** fetch data from the table: "e_utility_practice_statuses" */
     e_utility_practice_statuses: e_utility_practice_statuses[]
     /** fetch aggregated fields from the table: "e_utility_practice_statuses" */
@@ -26748,6 +26868,10 @@ export interface query_root {
     push_subscriptions_by_pk: (push_subscriptions | null)
     /** Read file content from game server */
     readServerFile: FileContentResponse
+    /** fetch data from the table: "v_role_permissions" */
+    role_permissions: role_permissions[]
+    /** fetch aggregated fields from the table: "v_role_permissions" */
+    role_permissions_aggregate: role_permissions_aggregate
     /** fetch data from the table: "seasons" */
     seasons: seasons[]
     /** fetch aggregated fields from the table: "seasons" */
@@ -27174,6 +27298,61 @@ export interface query_root {
     webPushStatus: (WebPushStatusOutput | null)
     __typename: 'query_root'
 }
+
+
+/** columns and relationships of "v_role_permissions" */
+export interface role_permissions {
+    can_create_events: (Scalars['Boolean'] | null)
+    can_create_matches: (Scalars['Boolean'] | null)
+    can_create_tournaments: (Scalars['Boolean'] | null)
+    role: (Scalars['String'] | null)
+    __typename: 'role_permissions'
+}
+
+
+/** aggregated selection of "v_role_permissions" */
+export interface role_permissions_aggregate {
+    aggregate: (role_permissions_aggregate_fields | null)
+    nodes: role_permissions[]
+    __typename: 'role_permissions_aggregate'
+}
+
+
+/** aggregate fields of "v_role_permissions" */
+export interface role_permissions_aggregate_fields {
+    count: Scalars['Int']
+    max: (role_permissions_max_fields | null)
+    min: (role_permissions_min_fields | null)
+    __typename: 'role_permissions_aggregate_fields'
+}
+
+
+/** aggregate max on columns */
+export interface role_permissions_max_fields {
+    role: (Scalars['String'] | null)
+    __typename: 'role_permissions_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface role_permissions_min_fields {
+    role: (Scalars['String'] | null)
+    __typename: 'role_permissions_min_fields'
+}
+
+
+/** response of any mutation on the table "v_role_permissions" */
+export interface role_permissions_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: role_permissions[]
+    __typename: 'role_permissions_mutation_response'
+}
+
+
+/** select columns of table "v_role_permissions" */
+export type role_permissions_select_column = 'can_create_events' | 'can_create_matches' | 'can_create_tournaments' | 'role'
 
 
 /** columns and relationships of "seasons" */
@@ -28525,6 +28704,14 @@ export interface subscription_root {
     e_tournament_status_by_pk: (e_tournament_status | null)
     /** fetch data from the table in a streaming manner: "e_tournament_status" */
     e_tournament_status_stream: e_tournament_status[]
+    /** fetch data from the table: "e_utility_practice_access" */
+    e_utility_practice_access: e_utility_practice_access[]
+    /** fetch aggregated fields from the table: "e_utility_practice_access" */
+    e_utility_practice_access_aggregate: e_utility_practice_access_aggregate
+    /** fetch data from the table: "e_utility_practice_access" using primary key columns */
+    e_utility_practice_access_by_pk: (e_utility_practice_access | null)
+    /** fetch data from the table in a streaming manner: "e_utility_practice_access" */
+    e_utility_practice_access_stream: e_utility_practice_access[]
     /** fetch data from the table: "e_utility_practice_statuses" */
     e_utility_practice_statuses: e_utility_practice_statuses[]
     /** fetch aggregated fields from the table: "e_utility_practice_statuses" */
@@ -29237,6 +29424,12 @@ export interface subscription_root {
     push_subscriptions_by_pk: (push_subscriptions | null)
     /** fetch data from the table in a streaming manner: "push_subscriptions" */
     push_subscriptions_stream: push_subscriptions[]
+    /** fetch data from the table: "v_role_permissions" */
+    role_permissions: role_permissions[]
+    /** fetch aggregated fields from the table: "v_role_permissions" */
+    role_permissions_aggregate: role_permissions_aggregate
+    /** fetch data from the table in a streaming manner: "v_role_permissions" */
+    role_permissions_stream: role_permissions[]
     /** fetch data from the table: "seasons" */
     seasons: seasons[]
     /** fetch aggregated fields from the table: "seasons" */
@@ -36858,7 +37051,7 @@ export interface utility_practice_invites_variance_fields {
 
 /** columns and relationships of "utility_practice_sessions" */
 export interface utility_practice_sessions {
-    access: Scalars['String']
+    access: e_utility_practice_access_enum
     /** A computed field, executes function "can_manage_utility_practice_session" */
     can_manage: (Scalars['Boolean'] | null)
     /** A computed field, executes function "can_view_utility_practice_session" */
@@ -36878,8 +37071,8 @@ export interface utility_practice_sessions {
     failure_reason: (Scalars['String'] | null)
     first_joined_at: (Scalars['timestamptz'] | null)
     /** An object relationship */
-    host: players
-    host_steam_id: Scalars['bigint']
+    host: (players | null)
+    host_steam_id: (Scalars['bigint'] | null)
     id: Scalars['uuid']
     invite_code: Scalars['String']
     /** An array relationship */
@@ -36891,6 +37084,7 @@ export interface utility_practice_sessions {
     is_open: Scalars['Boolean']
     is_render: Scalars['Boolean']
     last_occupied_at: (Scalars['timestamptz'] | null)
+    map_changing_at: (Scalars['timestamptz'] | null)
     map_name: Scalars['String']
     /** An object relationship */
     match: (matches | null)
@@ -36946,7 +37140,6 @@ export type utility_practice_sessions_constraint = 'utility_practice_sessions_in
 
 /** aggregate max on columns */
 export interface utility_practice_sessions_max_fields {
-    access: (Scalars['String'] | null)
     collection_id: (Scalars['uuid'] | null)
     /** A computed field, executes function "utility_practice_connection_link" */
     connection_link: (Scalars['String'] | null)
@@ -36961,6 +37154,7 @@ export interface utility_practice_sessions_max_fields {
     id: (Scalars['uuid'] | null)
     invite_code: (Scalars['String'] | null)
     last_occupied_at: (Scalars['timestamptz'] | null)
+    map_changing_at: (Scalars['timestamptz'] | null)
     map_name: (Scalars['String'] | null)
     match_id: (Scalars['uuid'] | null)
     playbook_id: (Scalars['uuid'] | null)
@@ -36973,7 +37167,6 @@ export interface utility_practice_sessions_max_fields {
 
 /** aggregate min on columns */
 export interface utility_practice_sessions_min_fields {
-    access: (Scalars['String'] | null)
     collection_id: (Scalars['uuid'] | null)
     /** A computed field, executes function "utility_practice_connection_link" */
     connection_link: (Scalars['String'] | null)
@@ -36988,6 +37181,7 @@ export interface utility_practice_sessions_min_fields {
     id: (Scalars['uuid'] | null)
     invite_code: (Scalars['String'] | null)
     last_occupied_at: (Scalars['timestamptz'] | null)
+    map_changing_at: (Scalars['timestamptz'] | null)
     map_name: (Scalars['String'] | null)
     match_id: (Scalars['uuid'] | null)
     playbook_id: (Scalars['uuid'] | null)
@@ -37009,7 +37203,7 @@ export interface utility_practice_sessions_mutation_response {
 
 
 /** select columns of table "utility_practice_sessions" */
-export type utility_practice_sessions_select_column = 'access' | 'collection_id' | 'created_at' | 'empty_since' | 'expires_at' | 'failure_reason' | 'first_joined_at' | 'host_steam_id' | 'id' | 'invite_code' | 'is_open' | 'is_render' | 'last_occupied_at' | 'map_name' | 'match_id' | 'playbook_id' | 'region' | 'status' | 'team_id' | 'updated_at'
+export type utility_practice_sessions_select_column = 'access' | 'collection_id' | 'created_at' | 'empty_since' | 'expires_at' | 'failure_reason' | 'first_joined_at' | 'host_steam_id' | 'id' | 'invite_code' | 'is_open' | 'is_render' | 'last_occupied_at' | 'map_changing_at' | 'map_name' | 'match_id' | 'playbook_id' | 'region' | 'status' | 'team_id' | 'updated_at'
 
 
 /** select "utility_practice_sessions_aggregate_bool_exp_bool_and_arguments_columns" columns of table "utility_practice_sessions" */
@@ -37049,7 +37243,7 @@ export interface utility_practice_sessions_sum_fields {
 
 
 /** update columns of table "utility_practice_sessions" */
-export type utility_practice_sessions_update_column = 'access' | 'collection_id' | 'created_at' | 'empty_since' | 'expires_at' | 'failure_reason' | 'first_joined_at' | 'host_steam_id' | 'id' | 'invite_code' | 'is_open' | 'is_render' | 'last_occupied_at' | 'map_name' | 'match_id' | 'playbook_id' | 'region' | 'status' | 'team_id' | 'updated_at'
+export type utility_practice_sessions_update_column = 'access' | 'collection_id' | 'created_at' | 'empty_since' | 'expires_at' | 'failure_reason' | 'first_joined_at' | 'host_steam_id' | 'id' | 'invite_code' | 'is_open' | 'is_render' | 'last_occupied_at' | 'map_changing_at' | 'map_name' | 'match_id' | 'playbook_id' | 'region' | 'status' | 'team_id' | 'updated_at'
 
 
 /** aggregate var_pop on columns */
@@ -44294,6 +44488,15 @@ export interface UtilityDriftScanOutputGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface UtilityDrillLoadOutputGenqlSelection{
+    map_name?: boolean | number
+    queued?: boolean | number
+    reason?: boolean | number
+    sent?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface UtilityImportErrorGenqlSelection{
     external_id?: boolean | number
     index?: boolean | number
@@ -44394,6 +44597,14 @@ export interface UtilityPlaybookOutputGenqlSelection{
 
 export interface UtilityPlaybookStepInput {assigned_steam_id?: (Scalars['String'] | null),note?: (Scalars['String'] | null),offset_ms?: (Scalars['Int'] | null),utility_lineup_id: Scalars['uuid']}
 
+export interface UtilityPracticeMapChangeOutputGenqlSelection{
+    map_name?: boolean | number
+    queued?: boolean | number
+    success?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface UtilityPracticePlanEntryGenqlSelection{
     attempts?: boolean | number
     difficulty?: boolean | number
@@ -44447,6 +44658,7 @@ export interface UtilityPracticeWhereOutputGenqlSelection{
     map_name?: boolean | number
     on_server?: boolean | number
     session_id?: boolean | number
+    switching?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -53127,6 +53339,133 @@ export interface e_tournament_status_updates {
 _set?: (e_tournament_status_set_input | null),
 /** filter the rows which have to be updated */
 where: e_tournament_status_bool_exp}
+
+
+/** columns and relationships of "e_utility_practice_access" */
+export interface e_utility_practice_accessGenqlSelection{
+    description?: boolean | number
+    /** An array relationship */
+    utility_practice_sessions?: (utility_practice_sessionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (utility_practice_sessions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (utility_practice_sessions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (utility_practice_sessions_bool_exp | null)} })
+    /** An aggregate relationship */
+    utility_practice_sessions_aggregate?: (utility_practice_sessions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (utility_practice_sessions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (utility_practice_sessions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (utility_practice_sessions_bool_exp | null)} })
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "e_utility_practice_access" */
+export interface e_utility_practice_access_aggregateGenqlSelection{
+    aggregate?: e_utility_practice_access_aggregate_fieldsGenqlSelection
+    nodes?: e_utility_practice_accessGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "e_utility_practice_access" */
+export interface e_utility_practice_access_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (e_utility_practice_access_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: e_utility_practice_access_max_fieldsGenqlSelection
+    min?: e_utility_practice_access_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "e_utility_practice_access". All fields are combined with a logical 'AND'. */
+export interface e_utility_practice_access_bool_exp {_and?: (e_utility_practice_access_bool_exp[] | null),_not?: (e_utility_practice_access_bool_exp | null),_or?: (e_utility_practice_access_bool_exp[] | null),description?: (String_comparison_exp | null),utility_practice_sessions?: (utility_practice_sessions_bool_exp | null),utility_practice_sessions_aggregate?: (utility_practice_sessions_aggregate_bool_exp | null),value?: (String_comparison_exp | null)}
+
+
+/** Boolean expression to compare columns of type "e_utility_practice_access_enum". All fields are combined with logical 'AND'. */
+export interface e_utility_practice_access_enum_comparison_exp {_eq?: (e_utility_practice_access_enum | null),_in?: (e_utility_practice_access_enum[] | null),_is_null?: (Scalars['Boolean'] | null),_neq?: (e_utility_practice_access_enum | null),_nin?: (e_utility_practice_access_enum[] | null)}
+
+
+/** input type for inserting data into table "e_utility_practice_access" */
+export interface e_utility_practice_access_insert_input {description?: (Scalars['String'] | null),utility_practice_sessions?: (utility_practice_sessions_arr_rel_insert_input | null),value?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface e_utility_practice_access_max_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface e_utility_practice_access_min_fieldsGenqlSelection{
+    description?: boolean | number
+    value?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "e_utility_practice_access" */
+export interface e_utility_practice_access_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: e_utility_practice_accessGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "e_utility_practice_access" */
+export interface e_utility_practice_access_on_conflict {constraint: e_utility_practice_access_constraint,update_columns?: e_utility_practice_access_update_column[],where?: (e_utility_practice_access_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "e_utility_practice_access". */
+export interface e_utility_practice_access_order_by {description?: (order_by | null),utility_practice_sessions_aggregate?: (utility_practice_sessions_aggregate_order_by | null),value?: (order_by | null)}
+
+
+/** primary key columns input for table: e_utility_practice_access */
+export interface e_utility_practice_access_pk_columns_input {value: Scalars['String']}
+
+
+/** input type for updating data in table "e_utility_practice_access" */
+export interface e_utility_practice_access_set_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "e_utility_practice_access" */
+export interface e_utility_practice_access_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: e_utility_practice_access_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface e_utility_practice_access_stream_cursor_value_input {description?: (Scalars['String'] | null),value?: (Scalars['String'] | null)}
+
+export interface e_utility_practice_access_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (e_utility_practice_access_set_input | null),
+/** filter the rows which have to be updated */
+where: e_utility_practice_access_bool_exp}
 
 
 /** columns and relationships of "e_utility_practice_statuses" */
@@ -67020,6 +67359,7 @@ export interface mutation_rootGenqlSelection{
     cancelScrimRequest?: (SuccessOutputGenqlSelection & { __args: {request_id: Scalars['uuid']} })
     /** Cancel an in-flight lineup preview render */
     cancelUtilityLineupRender?: (SuccessOutputGenqlSelection & { __args: {render_id: Scalars['uuid']} })
+    changeUtilityPracticeMap?: (UtilityPracticeMapChangeOutputGenqlSelection & { __args: {lineup_id?: (Scalars['uuid'] | null), lineup_ids?: (Scalars['uuid'][] | null), map_name: Scalars['String'], scratch?: (UtilityScratchLineupInput | null), session_id: Scalars['uuid']} })
     /** checkIntoMatch */
     checkIntoMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     /** Delete terminal-state clip_render_jobs rows for a single match_map batch. */
@@ -67070,6 +67410,8 @@ export interface mutation_rootGenqlSelection{
     deleteServerItem?: (SuccessOutputGenqlSelection & { __args: {node_id: Scalars['String'], path: Scalars['String'], server_id?: (Scalars['String'] | null)} })
     /** Delete a tournament and clean up demo files */
     deleteTournament?: (SuccessOutputGenqlSelection & { __args: {tournament_id: Scalars['uuid']} })
+    /** Delete a render and its preview clip */
+    deleteUtilityLineupRender?: (SuccessOutputGenqlSelection & { __args: {render_id: Scalars['uuid']} })
     /** Delete a utility playbook */
     deleteUtilityPlaybook?: (SuccessOutputGenqlSelection & { __args: {playbook_id: Scalars['uuid']} })
     /** delete data from the table: "_map_pool" */
@@ -67426,6 +67768,12 @@ export interface mutation_rootGenqlSelection{
     where: e_tournament_status_bool_exp} })
     /** delete single row from the table: "e_tournament_status" */
     delete_e_tournament_status_by_pk?: (e_tournament_statusGenqlSelection & { __args: {value: Scalars['String']} })
+    /** delete data from the table: "e_utility_practice_access" */
+    delete_e_utility_practice_access?: (e_utility_practice_access_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: e_utility_practice_access_bool_exp} })
+    /** delete single row from the table: "e_utility_practice_access" */
+    delete_e_utility_practice_access_by_pk?: (e_utility_practice_accessGenqlSelection & { __args: {value: Scalars['String']} })
     /** delete data from the table: "e_utility_practice_statuses" */
     delete_e_utility_practice_statuses?: (e_utility_practice_statuses_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -67924,6 +68272,10 @@ export interface mutation_rootGenqlSelection{
     where: push_subscriptions_bool_exp} })
     /** delete single row from the table: "push_subscriptions" */
     delete_push_subscriptions_by_pk?: (push_subscriptionsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "v_role_permissions" */
+    delete_role_permissions?: (role_permissions_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: role_permissions_bool_exp} })
     /** delete data from the table: "seasons" */
     delete_seasons?: (seasons_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -68938,6 +69290,18 @@ export interface mutation_rootGenqlSelection{
     object: e_tournament_status_insert_input, 
     /** upsert condition */
     on_conflict?: (e_tournament_status_on_conflict | null)} })
+    /** insert data into the table: "e_utility_practice_access" */
+    insert_e_utility_practice_access?: (e_utility_practice_access_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: e_utility_practice_access_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (e_utility_practice_access_on_conflict | null)} })
+    /** insert a single row into the table: "e_utility_practice_access" */
+    insert_e_utility_practice_access_one?: (e_utility_practice_accessGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: e_utility_practice_access_insert_input, 
+    /** upsert condition */
+    on_conflict?: (e_utility_practice_access_on_conflict | null)} })
     /** insert data into the table: "e_utility_practice_statuses" */
     insert_e_utility_practice_statuses?: (e_utility_practice_statuses_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -69934,6 +70298,14 @@ export interface mutation_rootGenqlSelection{
     object: push_subscriptions_insert_input, 
     /** upsert condition */
     on_conflict?: (push_subscriptions_on_conflict | null)} })
+    /** insert data into the table: "v_role_permissions" */
+    insert_role_permissions?: (role_permissions_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: role_permissions_insert_input[]} })
+    /** insert a single row into the table: "v_role_permissions" */
+    insert_role_permissions_one?: (role_permissionsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: role_permissions_insert_input} })
     /** insert data into the table: "seasons" */
     insert_seasons?: (seasons_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -70694,6 +71066,7 @@ export interface mutation_rootGenqlSelection{
     scheduleMatch?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid'], time?: (Scalars['timestamptz'] | null)} })
     /** sendScrimRequest */
     sendScrimRequest?: (SuccessOutputGenqlSelection & { __args: {best_of?: (Scalars['Int'] | null), from_team_id: Scalars['uuid'], proposed_scheduled_at: Scalars['timestamptz'], region?: (Scalars['String'] | null), to_team_id: Scalars['uuid']} })
+    sendUtilityDrillToServer?: (UtilityDrillLoadOutputGenqlSelection & { __args: {lineup_ids: Scalars['String'][]} })
     sendUtilityLineupToServer?: (UtilityLoadOutputGenqlSelection & { __args: {lineup_id: Scalars['uuid']} })
     sendUtilityScratchToServer?: (UtilityLoadOutputGenqlSelection & { __args: {lineup: UtilityScratchLineupInput} })
     setGameNodeSchedulingState?: (SuccessOutputGenqlSelection & { __args: {enabled: Scalars['Boolean'], game_server_node_id: Scalars['String']} })
@@ -70708,6 +71081,7 @@ export interface mutation_rootGenqlSelection{
     setNewsPostStatus?: (NewsPostGenqlSelection & { __args: {id: Scalars['uuid'], status: Scalars['String']} })
     /** Map a tournament placement to an award */
     setTournamentAward?: (TournamentAwardGenqlSelection & { __args: {award_id?: (Scalars['uuid'] | null), custom_name?: (Scalars['String'] | null), placement: Scalars['Int'], silhouette?: (Scalars['Int'] | null), tournament_id: Scalars['uuid']} })
+    setUtilityPracticeAccess?: (SuccessOutputGenqlSelection & { __args: {access: Scalars['String'], session_id: Scalars['uuid']} })
     setupGameServer?: SetupGameServeOutputGenqlSelection
     skipShaders?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     /** Ask a practice server to solve a throw onto a point */
@@ -70727,7 +71101,7 @@ export interface mutation_rootGenqlSelection{
     /** Re-fly a map's lineups against two collision meshes */
     startUtilityDriftScan?: (UtilityDriftScanOutputGenqlSelection & { __args: {from_revision?: (Scalars['String'] | null), map_name: Scalars['String'], to_revision?: (Scalars['String'] | null)} })
     /** Start a utility practice session */
-    startUtilityPractice?: (UtilityPracticeSessionOutputGenqlSelection & { __args: {collection_id?: (Scalars['uuid'] | null), is_open?: (Scalars['Boolean'] | null), map_name: Scalars['String'], region?: (Scalars['String'] | null), server_id?: (Scalars['uuid'] | null), team_id?: (Scalars['uuid'] | null)} })
+    startUtilityPractice?: (UtilityPracticeSessionOutputGenqlSelection & { __args: {access?: (Scalars['String'] | null), collection_id?: (Scalars['uuid'] | null), is_open?: (Scalars['Boolean'] | null), map_name: Scalars['String'], region?: (Scalars['String'] | null), server_id?: (Scalars['uuid'] | null), team_id?: (Scalars['uuid'] | null)} })
     stopGpuSession?: (SuccessOutputGenqlSelection & { __args: {game_server_node_id: Scalars['uuid']} })
     stopLive?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     /** Stop a utility practice session */
@@ -71673,6 +72047,20 @@ export interface mutation_rootGenqlSelection{
     update_e_tournament_status_many?: (e_tournament_status_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: e_tournament_status_updates[]} })
+    /** update data of the table: "e_utility_practice_access" */
+    update_e_utility_practice_access?: (e_utility_practice_access_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_utility_practice_access_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: e_utility_practice_access_bool_exp} })
+    /** update single row of the table: "e_utility_practice_access" */
+    update_e_utility_practice_access_by_pk?: (e_utility_practice_accessGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (e_utility_practice_access_set_input | null), pk_columns: e_utility_practice_access_pk_columns_input} })
+    /** update multiples rows of table: "e_utility_practice_access" */
+    update_e_utility_practice_access_many?: (e_utility_practice_access_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: e_utility_practice_access_updates[]} })
     /** update data of the table: "e_utility_practice_statuses" */
     update_e_utility_practice_statuses?: (e_utility_practice_statuses_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -73301,6 +73689,16 @@ export interface mutation_rootGenqlSelection{
     update_push_subscriptions_many?: (push_subscriptions_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: push_subscriptions_updates[]} })
+    /** update data of the table: "v_role_permissions" */
+    update_role_permissions?: (role_permissions_mutation_responseGenqlSelection & { __args: {
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (role_permissions_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: role_permissions_bool_exp} })
+    /** update multiples rows of table: "v_role_permissions" */
+    update_role_permissions_many?: (role_permissions_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: role_permissions_updates[]} })
     /** update data of the table: "seasons" */
     update_seasons?: (seasons_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -87746,6 +88144,32 @@ export interface query_rootGenqlSelection{
     where?: (e_tournament_status_bool_exp | null)} })
     /** fetch data from the table: "e_tournament_status" using primary key columns */
     e_tournament_status_by_pk?: (e_tournament_statusGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table: "e_utility_practice_access" */
+    e_utility_practice_access?: (e_utility_practice_accessGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_utility_practice_access_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_utility_practice_access_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_utility_practice_access_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_utility_practice_access" */
+    e_utility_practice_access_aggregate?: (e_utility_practice_access_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_utility_practice_access_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_utility_practice_access_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_utility_practice_access_bool_exp | null)} })
+    /** fetch data from the table: "e_utility_practice_access" using primary key columns */
+    e_utility_practice_access_by_pk?: (e_utility_practice_accessGenqlSelection & { __args: {value: Scalars['String']} })
     /** fetch data from the table: "e_utility_practice_statuses" */
     e_utility_practice_statuses?: (e_utility_practice_statusesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -90202,6 +90626,30 @@ export interface query_rootGenqlSelection{
     push_subscriptions_by_pk?: (push_subscriptionsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** Read file content from game server */
     readServerFile?: (FileContentResponseGenqlSelection & { __args: {file_path: Scalars['String'], node_id: Scalars['String'], server_id?: (Scalars['String'] | null)} })
+    /** fetch data from the table: "v_role_permissions" */
+    role_permissions?: (role_permissionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (role_permissions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (role_permissions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (role_permissions_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "v_role_permissions" */
+    role_permissions_aggregate?: (role_permissions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (role_permissions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (role_permissions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (role_permissions_bool_exp | null)} })
     /** fetch data from the table: "seasons" */
     seasons?: (seasonsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -92197,6 +92645,97 @@ export interface remove_league_team_from_season_args {_league_team_season_id?: (
 export interface reorder_league_divisions_args {_division_ids?: (Scalars['_uuid'] | null)}
 
 export interface restart_league_season_args {_league_season_id?: (Scalars['uuid'] | null)}
+
+
+/** columns and relationships of "v_role_permissions" */
+export interface role_permissionsGenqlSelection{
+    can_create_events?: boolean | number
+    can_create_matches?: boolean | number
+    can_create_tournaments?: boolean | number
+    role?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "v_role_permissions" */
+export interface role_permissions_aggregateGenqlSelection{
+    aggregate?: role_permissions_aggregate_fieldsGenqlSelection
+    nodes?: role_permissionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "v_role_permissions" */
+export interface role_permissions_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (role_permissions_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: role_permissions_max_fieldsGenqlSelection
+    min?: role_permissions_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "v_role_permissions". All fields are combined with a logical 'AND'. */
+export interface role_permissions_bool_exp {_and?: (role_permissions_bool_exp[] | null),_not?: (role_permissions_bool_exp | null),_or?: (role_permissions_bool_exp[] | null),can_create_events?: (Boolean_comparison_exp | null),can_create_matches?: (Boolean_comparison_exp | null),can_create_tournaments?: (Boolean_comparison_exp | null),role?: (String_comparison_exp | null)}
+
+
+/** input type for inserting data into table "v_role_permissions" */
+export interface role_permissions_insert_input {can_create_events?: (Scalars['Boolean'] | null),can_create_matches?: (Scalars['Boolean'] | null),can_create_tournaments?: (Scalars['Boolean'] | null),role?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface role_permissions_max_fieldsGenqlSelection{
+    role?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface role_permissions_min_fieldsGenqlSelection{
+    role?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "v_role_permissions" */
+export interface role_permissions_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: role_permissionsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Ordering options when selecting data from "v_role_permissions". */
+export interface role_permissions_order_by {can_create_events?: (order_by | null),can_create_matches?: (order_by | null),can_create_tournaments?: (order_by | null),role?: (order_by | null)}
+
+
+/** input type for updating data in table "v_role_permissions" */
+export interface role_permissions_set_input {can_create_events?: (Scalars['Boolean'] | null),can_create_matches?: (Scalars['Boolean'] | null),can_create_tournaments?: (Scalars['Boolean'] | null),role?: (Scalars['String'] | null)}
+
+
+/** Streaming cursor of the table "role_permissions" */
+export interface role_permissions_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: role_permissions_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface role_permissions_stream_cursor_value_input {can_create_events?: (Scalars['Boolean'] | null),can_create_matches?: (Scalars['Boolean'] | null),can_create_tournaments?: (Scalars['Boolean'] | null),role?: (Scalars['String'] | null)}
+
+export interface role_permissions_updates {
+/** sets the columns of the filtered rows to the given values */
+_set?: (role_permissions_set_input | null),
+/** filter the rows which have to be updated */
+where: role_permissions_bool_exp}
 
 
 /** columns and relationships of "seasons" */
@@ -95580,6 +96119,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (e_tournament_status_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (e_tournament_status_bool_exp | null)} })
+    /** fetch data from the table: "e_utility_practice_access" */
+    e_utility_practice_access?: (e_utility_practice_accessGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_utility_practice_access_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_utility_practice_access_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_utility_practice_access_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "e_utility_practice_access" */
+    e_utility_practice_access_aggregate?: (e_utility_practice_access_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (e_utility_practice_access_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (e_utility_practice_access_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (e_utility_practice_access_bool_exp | null)} })
+    /** fetch data from the table: "e_utility_practice_access" using primary key columns */
+    e_utility_practice_access_by_pk?: (e_utility_practice_accessGenqlSelection & { __args: {value: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "e_utility_practice_access" */
+    e_utility_practice_access_stream?: (e_utility_practice_accessGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (e_utility_practice_access_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (e_utility_practice_access_bool_exp | null)} })
     /** fetch data from the table: "e_utility_practice_statuses" */
     e_utility_practice_statuses?: (e_utility_practice_statusesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -98702,6 +99275,38 @@ export interface subscription_rootGenqlSelection{
     cursor: (push_subscriptions_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (push_subscriptions_bool_exp | null)} })
+    /** fetch data from the table: "v_role_permissions" */
+    role_permissions?: (role_permissionsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (role_permissions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (role_permissions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (role_permissions_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "v_role_permissions" */
+    role_permissions_aggregate?: (role_permissions_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (role_permissions_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (role_permissions_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (role_permissions_bool_exp | null)} })
+    /** fetch data from the table in a streaming manner: "v_role_permissions" */
+    role_permissions_stream?: (role_permissionsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (role_permissions_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (role_permissions_bool_exp | null)} })
     /** fetch data from the table: "seasons" */
     seasons?: (seasonsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -112451,6 +113056,7 @@ export interface utility_practice_sessionsGenqlSelection{
     is_open?: boolean | number
     is_render?: boolean | number
     last_occupied_at?: boolean | number
+    map_changing_at?: boolean | number
     map_name?: boolean | number
     /** An object relationship */
     match?: matchesGenqlSelection
@@ -112527,7 +113133,7 @@ export interface utility_practice_sessions_avg_order_by {host_steam_id?: (order_
 
 
 /** Boolean expression to filter rows from the table "utility_practice_sessions". All fields are combined with a logical 'AND'. */
-export interface utility_practice_sessions_bool_exp {_and?: (utility_practice_sessions_bool_exp[] | null),_not?: (utility_practice_sessions_bool_exp | null),_or?: (utility_practice_sessions_bool_exp[] | null),access?: (String_comparison_exp | null),can_manage?: (Boolean_comparison_exp | null),can_view?: (Boolean_comparison_exp | null),collection?: (utility_collections_bool_exp | null),collection_id?: (uuid_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),e_utility_practice_status?: (e_utility_practice_statuses_bool_exp | null),empty_since?: (timestamptz_comparison_exp | null),expires_at?: (timestamptz_comparison_exp | null),failure_reason?: (String_comparison_exp | null),first_joined_at?: (timestamptz_comparison_exp | null),host?: (players_bool_exp | null),host_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),invites?: (utility_practice_invites_bool_exp | null),invites_aggregate?: (utility_practice_invites_aggregate_bool_exp | null),is_member?: (Boolean_comparison_exp | null),is_open?: (Boolean_comparison_exp | null),is_render?: (Boolean_comparison_exp | null),last_occupied_at?: (timestamptz_comparison_exp | null),map_name?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),playbook?: (utility_playbooks_bool_exp | null),playbook_id?: (uuid_comparison_exp | null),region?: (String_comparison_exp | null),status?: (e_utility_practice_statuses_enum_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+export interface utility_practice_sessions_bool_exp {_and?: (utility_practice_sessions_bool_exp[] | null),_not?: (utility_practice_sessions_bool_exp | null),_or?: (utility_practice_sessions_bool_exp[] | null),access?: (e_utility_practice_access_enum_comparison_exp | null),can_manage?: (Boolean_comparison_exp | null),can_view?: (Boolean_comparison_exp | null),collection?: (utility_collections_bool_exp | null),collection_id?: (uuid_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),e_utility_practice_status?: (e_utility_practice_statuses_bool_exp | null),empty_since?: (timestamptz_comparison_exp | null),expires_at?: (timestamptz_comparison_exp | null),failure_reason?: (String_comparison_exp | null),first_joined_at?: (timestamptz_comparison_exp | null),host?: (players_bool_exp | null),host_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),invites?: (utility_practice_invites_bool_exp | null),invites_aggregate?: (utility_practice_invites_aggregate_bool_exp | null),is_member?: (Boolean_comparison_exp | null),is_open?: (Boolean_comparison_exp | null),is_render?: (Boolean_comparison_exp | null),last_occupied_at?: (timestamptz_comparison_exp | null),map_changing_at?: (timestamptz_comparison_exp | null),map_name?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),playbook?: (utility_playbooks_bool_exp | null),playbook_id?: (uuid_comparison_exp | null),region?: (String_comparison_exp | null),status?: (e_utility_practice_statuses_enum_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "utility_practice_sessions" */
@@ -112535,12 +113141,11 @@ export interface utility_practice_sessions_inc_input {host_steam_id?: (Scalars['
 
 
 /** input type for inserting data into table "utility_practice_sessions" */
-export interface utility_practice_sessions_insert_input {access?: (Scalars['String'] | null),collection?: (utility_collections_obj_rel_insert_input | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),e_utility_practice_status?: (e_utility_practice_statuses_obj_rel_insert_input | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host?: (players_obj_rel_insert_input | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),invites?: (utility_practice_invites_arr_rel_insert_input | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),playbook?: (utility_playbooks_obj_rel_insert_input | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_utility_practice_statuses_enum | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface utility_practice_sessions_insert_input {access?: (e_utility_practice_access_enum | null),collection?: (utility_collections_obj_rel_insert_input | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),e_utility_practice_status?: (e_utility_practice_statuses_obj_rel_insert_input | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host?: (players_obj_rel_insert_input | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),invites?: (utility_practice_invites_arr_rel_insert_input | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_changing_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),playbook?: (utility_playbooks_obj_rel_insert_input | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_utility_practice_statuses_enum | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate max on columns */
 export interface utility_practice_sessions_max_fieldsGenqlSelection{
-    access?: boolean | number
     collection_id?: boolean | number
     /** A computed field, executes function "utility_practice_connection_link" */
     connection_link?: boolean | number
@@ -112555,6 +113160,7 @@ export interface utility_practice_sessions_max_fieldsGenqlSelection{
     id?: boolean | number
     invite_code?: boolean | number
     last_occupied_at?: boolean | number
+    map_changing_at?: boolean | number
     map_name?: boolean | number
     match_id?: boolean | number
     playbook_id?: boolean | number
@@ -112567,12 +113173,11 @@ export interface utility_practice_sessions_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "utility_practice_sessions" */
-export interface utility_practice_sessions_max_order_by {access?: (order_by | null),collection_id?: (order_by | null),created_at?: (order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),first_joined_at?: (order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),last_occupied_at?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
+export interface utility_practice_sessions_max_order_by {collection_id?: (order_by | null),created_at?: (order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),first_joined_at?: (order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),last_occupied_at?: (order_by | null),map_changing_at?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** aggregate min on columns */
 export interface utility_practice_sessions_min_fieldsGenqlSelection{
-    access?: boolean | number
     collection_id?: boolean | number
     /** A computed field, executes function "utility_practice_connection_link" */
     connection_link?: boolean | number
@@ -112587,6 +113192,7 @@ export interface utility_practice_sessions_min_fieldsGenqlSelection{
     id?: boolean | number
     invite_code?: boolean | number
     last_occupied_at?: boolean | number
+    map_changing_at?: boolean | number
     map_name?: boolean | number
     match_id?: boolean | number
     playbook_id?: boolean | number
@@ -112599,7 +113205,7 @@ export interface utility_practice_sessions_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "utility_practice_sessions" */
-export interface utility_practice_sessions_min_order_by {access?: (order_by | null),collection_id?: (order_by | null),created_at?: (order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),first_joined_at?: (order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),last_occupied_at?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
+export interface utility_practice_sessions_min_order_by {collection_id?: (order_by | null),created_at?: (order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),first_joined_at?: (order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),last_occupied_at?: (order_by | null),map_changing_at?: (order_by | null),map_name?: (order_by | null),match_id?: (order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** response of any mutation on the table "utility_practice_sessions" */
@@ -112624,7 +113230,7 @@ export interface utility_practice_sessions_on_conflict {constraint: utility_prac
 
 
 /** Ordering options when selecting data from "utility_practice_sessions". */
-export interface utility_practice_sessions_order_by {access?: (order_by | null),can_manage?: (order_by | null),can_view?: (order_by | null),collection?: (utility_collections_order_by | null),collection_id?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),created_at?: (order_by | null),e_utility_practice_status?: (e_utility_practice_statuses_order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),first_joined_at?: (order_by | null),host?: (players_order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),invites_aggregate?: (utility_practice_invites_aggregate_order_by | null),is_member?: (order_by | null),is_open?: (order_by | null),is_render?: (order_by | null),last_occupied_at?: (order_by | null),map_name?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),playbook?: (utility_playbooks_order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),status?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
+export interface utility_practice_sessions_order_by {access?: (order_by | null),can_manage?: (order_by | null),can_view?: (order_by | null),collection?: (utility_collections_order_by | null),collection_id?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),created_at?: (order_by | null),e_utility_practice_status?: (e_utility_practice_statuses_order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),first_joined_at?: (order_by | null),host?: (players_order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),invites_aggregate?: (utility_practice_invites_aggregate_order_by | null),is_member?: (order_by | null),is_open?: (order_by | null),is_render?: (order_by | null),last_occupied_at?: (order_by | null),map_changing_at?: (order_by | null),map_name?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),playbook?: (utility_playbooks_order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),status?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** primary key columns input for table: utility_practice_sessions */
@@ -112632,7 +113238,7 @@ export interface utility_practice_sessions_pk_columns_input {id: Scalars['uuid']
 
 
 /** input type for updating data in table "utility_practice_sessions" */
-export interface utility_practice_sessions_set_input {access?: (Scalars['String'] | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_utility_practice_statuses_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface utility_practice_sessions_set_input {access?: (e_utility_practice_access_enum | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_changing_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_utility_practice_statuses_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -112680,7 +113286,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface utility_practice_sessions_stream_cursor_value_input {access?: (Scalars['String'] | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_utility_practice_statuses_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface utility_practice_sessions_stream_cursor_value_input {access?: (e_utility_practice_access_enum | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_changing_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_utility_practice_statuses_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate sum on columns */
@@ -121305,6 +121911,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const UtilityDrillLoadOutput_possibleTypes: string[] = ['UtilityDrillLoadOutput']
+    export const isUtilityDrillLoadOutput = (obj?: { __typename?: any } | null): obj is UtilityDrillLoadOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityDrillLoadOutput"')
+      return UtilityDrillLoadOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const UtilityImportError_possibleTypes: string[] = ['UtilityImportError']
     export const isUtilityImportError = (obj?: { __typename?: any } | null): obj is UtilityImportError => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityImportError"')
@@ -121389,6 +122003,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isUtilityPlaybookOutput = (obj?: { __typename?: any } | null): obj is UtilityPlaybookOutput => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityPlaybookOutput"')
       return UtilityPlaybookOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const UtilityPracticeMapChangeOutput_possibleTypes: string[] = ['UtilityPracticeMapChangeOutput']
+    export const isUtilityPracticeMapChangeOutput = (obj?: { __typename?: any } | null): obj is UtilityPracticeMapChangeOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isUtilityPracticeMapChangeOutput"')
+      return UtilityPracticeMapChangeOutput_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -125213,6 +125835,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const ise_tournament_status_mutation_response = (obj?: { __typename?: any } | null): obj is e_tournament_status_mutation_response => {
       if (!obj?.__typename) throw new Error('__typename is missing in "ise_tournament_status_mutation_response"')
       return e_tournament_status_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_utility_practice_access_possibleTypes: string[] = ['e_utility_practice_access']
+    export const ise_utility_practice_access = (obj?: { __typename?: any } | null): obj is e_utility_practice_access => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_utility_practice_access"')
+      return e_utility_practice_access_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_utility_practice_access_aggregate_possibleTypes: string[] = ['e_utility_practice_access_aggregate']
+    export const ise_utility_practice_access_aggregate = (obj?: { __typename?: any } | null): obj is e_utility_practice_access_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_utility_practice_access_aggregate"')
+      return e_utility_practice_access_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_utility_practice_access_aggregate_fields_possibleTypes: string[] = ['e_utility_practice_access_aggregate_fields']
+    export const ise_utility_practice_access_aggregate_fields = (obj?: { __typename?: any } | null): obj is e_utility_practice_access_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_utility_practice_access_aggregate_fields"')
+      return e_utility_practice_access_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_utility_practice_access_max_fields_possibleTypes: string[] = ['e_utility_practice_access_max_fields']
+    export const ise_utility_practice_access_max_fields = (obj?: { __typename?: any } | null): obj is e_utility_practice_access_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_utility_practice_access_max_fields"')
+      return e_utility_practice_access_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_utility_practice_access_min_fields_possibleTypes: string[] = ['e_utility_practice_access_min_fields']
+    export const ise_utility_practice_access_min_fields = (obj?: { __typename?: any } | null): obj is e_utility_practice_access_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_utility_practice_access_min_fields"')
+      return e_utility_practice_access_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const e_utility_practice_access_mutation_response_possibleTypes: string[] = ['e_utility_practice_access_mutation_response']
+    export const ise_utility_practice_access_mutation_response = (obj?: { __typename?: any } | null): obj is e_utility_practice_access_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ise_utility_practice_access_mutation_response"')
+      return e_utility_practice_access_mutation_response_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -133685,6 +134355,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isquery_root = (obj?: { __typename?: any } | null): obj is query_root => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isquery_root"')
       return query_root_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const role_permissions_possibleTypes: string[] = ['role_permissions']
+    export const isrole_permissions = (obj?: { __typename?: any } | null): obj is role_permissions => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrole_permissions"')
+      return role_permissions_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const role_permissions_aggregate_possibleTypes: string[] = ['role_permissions_aggregate']
+    export const isrole_permissions_aggregate = (obj?: { __typename?: any } | null): obj is role_permissions_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrole_permissions_aggregate"')
+      return role_permissions_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const role_permissions_aggregate_fields_possibleTypes: string[] = ['role_permissions_aggregate_fields']
+    export const isrole_permissions_aggregate_fields = (obj?: { __typename?: any } | null): obj is role_permissions_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrole_permissions_aggregate_fields"')
+      return role_permissions_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const role_permissions_max_fields_possibleTypes: string[] = ['role_permissions_max_fields']
+    export const isrole_permissions_max_fields = (obj?: { __typename?: any } | null): obj is role_permissions_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrole_permissions_max_fields"')
+      return role_permissions_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const role_permissions_min_fields_possibleTypes: string[] = ['role_permissions_min_fields']
+    export const isrole_permissions_min_fields = (obj?: { __typename?: any } | null): obj is role_permissions_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrole_permissions_min_fields"')
+      return role_permissions_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const role_permissions_mutation_response_possibleTypes: string[] = ['role_permissions_mutation_response']
+    export const isrole_permissions_mutation_response = (obj?: { __typename?: any } | null): obj is role_permissions_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isrole_permissions_mutation_response"')
+      return role_permissions_mutation_response_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -143297,6 +144015,27 @@ export const enumETournamentStatusUpdateColumn = {
    value: 'value' as const
 }
 
+export const enumEUtilityPracticeAccessConstraint = {
+   e_utility_practice_access_pkey: 'e_utility_practice_access_pkey' as const
+}
+
+export const enumEUtilityPracticeAccessEnum = {
+   Friends: 'Friends' as const,
+   Invite: 'Invite' as const,
+   Open: 'Open' as const,
+   Private: 'Private' as const
+}
+
+export const enumEUtilityPracticeAccessSelectColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
+export const enumEUtilityPracticeAccessUpdateColumn = {
+   description: 'description' as const,
+   value: 'value' as const
+}
+
 export const enumEUtilityPracticeStatusesConstraint = {
    e_utility_practice_statuses_pkey: 'e_utility_practice_statuses_pkey' as const
 }
@@ -146347,6 +147086,13 @@ export const enumPushSubscriptionsUpdateColumn = {
    user_agent: 'user_agent' as const
 }
 
+export const enumRolePermissionsSelectColumn = {
+   can_create_events: 'can_create_events' as const,
+   can_create_matches: 'can_create_matches' as const,
+   can_create_tournaments: 'can_create_tournaments' as const,
+   role: 'role' as const
+}
+
 export const enumSeasonsConstraint = {
    seasons_pkey: 'seasons_pkey' as const
 }
@@ -148262,6 +149008,7 @@ export const enumUtilityPracticeSessionsSelectColumn = {
    is_open: 'is_open' as const,
    is_render: 'is_render' as const,
    last_occupied_at: 'last_occupied_at' as const,
+   map_changing_at: 'map_changing_at' as const,
    map_name: 'map_name' as const,
    match_id: 'match_id' as const,
    playbook_id: 'playbook_id' as const,
@@ -148295,6 +149042,7 @@ export const enumUtilityPracticeSessionsUpdateColumn = {
    is_open: 'is_open' as const,
    is_render: 'is_render' as const,
    last_occupied_at: 'last_occupied_at' as const,
+   map_changing_at: 'map_changing_at' as const,
    map_name: 'map_name' as const,
    match_id: 'match_id' as const,
    playbook_id: 'playbook_id' as const,

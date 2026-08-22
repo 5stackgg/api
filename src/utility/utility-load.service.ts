@@ -9,6 +9,10 @@ export type UtilityPlayerLocation = {
   server_id: string;
   session_id: string;
   map_name: string;
+  // map_name moves the moment a switch is accepted; the level takes another
+  // ~15s. Everything that acts on this location has to know it is looking at
+  // where the server is GOING rather than where it is.
+  switching: boolean;
 };
 
 /**
@@ -51,6 +55,7 @@ export type UtilityLoadResult = {
     | "sent"
     | "not_on_a_server"
     | "wrong_map"
+    | "map_switching"
     | "not_visible"
     | "unreachable"
     | "nothing_to_drill";
@@ -91,7 +96,8 @@ export class UtilityLoadService {
     const [row] = await this.postgres.query<Array<UtilityPlayerLocation>>(
       `SELECT srv.id::text AS server_id,
               s.id::text AS session_id,
-              s.map_name
+              s.map_name,
+              s.map_changing_at IS NOT NULL AS switching
          FROM public.match_lineup_players mlp
          INNER JOIN public.match_lineups ml ON ml.id = mlp.match_lineup_id
          INNER JOIN public.matches m ON m.id = ml.match_id
@@ -116,6 +122,13 @@ export class UtilityLoadService {
 
     if (!at) {
       return { sent: false, reason: "not_on_a_server", map_name: null };
+    }
+
+    // Mid-changelevel there is no player on the server to teleport, so the
+    // plugin would take this command and silently do nothing while we reported
+    // it sent. The queued load the switch itself carries is what lands them.
+    if (at.switching) {
+      return { sent: false, reason: "map_switching", map_name: at.map_name };
     }
 
     const [lineup] = await this.postgres.query<
@@ -172,6 +185,10 @@ export class UtilityLoadService {
       return { sent: false, reason: "not_on_a_server", map_name: null, queued: 0 };
     }
 
+    if (at.switching) {
+      return { sent: false, reason: "map_switching", map_name: at.map_name, queued: 0 };
+    }
+
     const ids = [...new Set(lineupIds.filter(Boolean))].slice(
       0,
       UtilityLoadService.MAX_DRILL,
@@ -181,24 +198,9 @@ export class UtilityLoadService {
       return { sent: false, reason: "nothing_to_drill", map_name: null, queued: 0 };
     }
 
-    const rows = await this.postgres.query<Array<{ id: string }>>(
-      `SELECT l.id::text AS id
-         FROM public.utility_lineups l
-        WHERE l.id = ANY($1::uuid[])
-          AND l.map_name = $2
-          AND l.archived_at IS NULL
-          AND public.can_view_utility_lineup(
-                l,
-                json_build_object(
-                  'x-hasura-user-id', $3::text,
-                  'x-hasura-role', $4::text
-                )
-              )`,
-      [ids, at.map_name, user.steam_id, user.role ?? "user"],
-    );
+    const allowed = await this.visibleOnMap(user, ids, at.map_name);
 
     // Order is the caller's, not the database's: they chose the sequence.
-    const allowed = new Set(rows.map((row) => row.id));
     const queue = ids.filter((id) => allowed.has(id));
 
     if (queue.length === 0) {
@@ -230,7 +232,43 @@ export class UtilityLoadService {
 
   // A drill is a queue of teleports; a thousand of them is a denial of service
   // with extra steps.
-  private static readonly MAX_DRILL = 50;
+  public static readonly MAX_DRILL = 50;
+
+  /**
+   * Which of these lineups this player may be stood on, on this map.
+   *
+   * The map is a parameter rather than "the map they are on" because a map
+   * change is decided from lineups that are NOT on the current map -- and the
+   * check has to run against the map being switched to, before anything
+   * changes level.
+   */
+  public async visibleOnMap(
+    user: User,
+    lineupIds: Array<string>,
+    mapName: string,
+  ): Promise<Set<string>> {
+    if (lineupIds.length === 0) {
+      return new Set();
+    }
+
+    const rows = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT l.id::text AS id
+         FROM public.utility_lineups l
+        WHERE l.id = ANY($1::uuid[])
+          AND l.map_name = $2
+          AND l.archived_at IS NULL
+          AND public.can_view_utility_lineup(
+                l,
+                json_build_object(
+                  'x-hasura-user-id', $3::text,
+                  'x-hasura-role', $4::text
+                )
+              )`,
+      [lineupIds, mapName, user.steam_id, user.role ?? "user"],
+    );
+
+    return new Set(rows.map((row) => row.id));
+  }
 
   /**
    * Stand the caller on a throw that has no lineup behind it. This is what lets
@@ -246,6 +284,10 @@ export class UtilityLoadService {
 
     if (!at) {
       return { sent: false, reason: "not_on_a_server", map_name: null };
+    }
+
+    if (at.switching) {
+      return { sent: false, reason: "map_switching", map_name: at.map_name };
     }
 
     if (scratch.map_name !== at.map_name) {
@@ -284,6 +326,71 @@ export class UtilityLoadService {
     return { sent: true, reason: "sent", map_name: mapName };
   }
 
+  /**
+   * Change the level a practice server is running, and optionally hand it a
+   * player to stand on a lineup once the new map is up.
+   *
+   * The plugin owns the queued half: it is the only thing that knows when the
+   * player is actually back in the server, which is minutes after this returns
+   * on a slow client. `queued` says whether it took that half -- a build that
+   * predates `utility_practice_map` still gets the map change, from the same
+   * changelevel/host_workshop_map branch MatchManager uses, but nobody lands
+   * on anything.
+   */
+  public async changeMap(options: {
+    serverId: string;
+    mapName: string;
+    workshopId: string | null;
+    steamId?: string | null;
+    lineupIds?: Array<string>;
+  }): Promise<{ sent: boolean; queued: boolean }> {
+    const target = options.workshopId ?? options.mapName;
+    const ids = (options.lineupIds ?? []).filter(Boolean);
+
+    const queue =
+      options.steamId && ids.length > 0
+        ? ` ${options.steamId} ${ids.join(",")}`
+        : "";
+
+    const reply = await this.send(
+      options.serverId,
+      `utility_practice_map "${target}"${queue}`,
+    );
+
+    if (reply === null) {
+      return { sent: false, queued: false };
+    }
+
+    if (!UtilityLoadService.isUnknownCommand(reply)) {
+      this.logger.log(
+        `[utility-load] ${options.serverId} -> map ${target}` +
+          (queue ? ` (queued ${ids.length} for ${options.steamId})` : ""),
+      );
+      return { sent: true, queued: queue.length > 0 };
+    }
+
+    // Old plugin build. The map change is still worth doing on its own, so it
+    // goes straight to the engine -- but nothing there can hold a load across
+    // the level change, so the caller must not promise one.
+    this.logger.warn(
+      `[utility-load] ${options.serverId} does not know utility_practice_map; ` +
+        `changing level directly`,
+    );
+
+    const fallback = await this.send(
+      options.serverId,
+      options.workshopId
+        ? `host_workshop_map ${options.workshopId}`
+        : `changelevel "${options.mapName}"`,
+    );
+
+    return { sent: fallback !== null, queued: false };
+  }
+
+  private static isUnknownCommand(reply: string): boolean {
+    return reply.toLowerCase().includes("unknown command");
+  }
+
   /** What `GET /utility/library` has to add to this player's own rows. */
   public async pending(
     serverId: string,
@@ -296,7 +403,7 @@ export class UtilityLoadService {
     return Array.isArray(entries) ? (entries as Array<UtilityPendingLineup>) : [];
   }
 
-  private async remember(
+  public async remember(
     serverId: string,
     steamId: string,
     entry: UtilityPendingLineup,

@@ -21,6 +21,7 @@ describe("UtilityPracticeService.startForRender", () => {
       matchAssistant as any,
       {} as any,
       {} as any,
+      {} as any,
       { get: jest.fn() } as any,
     ) as any;
 

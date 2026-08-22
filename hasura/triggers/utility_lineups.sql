@@ -7,6 +7,15 @@ CREATE OR REPLACE FUNCTION public.tbiu_utility_lineups() RETURNS TRIGGER
 BEGIN
     NEW.updated_at = now();
 
+    -- Stamped here, not left to a Hasura column preset: a role whose insert
+    -- permission was written without the preset sends nothing for this column
+    -- and lands a NOT NULL violation. See hasura_session_steam_id().
+    IF TG_OP = 'INSERT' THEN
+        NEW.author_steam_id = COALESCE(
+            NEW.author_steam_id, public.hasura_session_steam_id()
+        );
+    END IF;
+
     IF NOT EXISTS (
         SELECT 1 FROM public.maps m WHERE m.name = NEW.map_name
     ) THEN
@@ -71,6 +80,13 @@ CREATE OR REPLACE FUNCTION public.tbiu_utility_collections() RETURNS TRIGGER
     AS $$
 BEGIN
     NEW.updated_at = now();
+
+    -- Ahead of the team check below, which reads owner_steam_id.
+    IF TG_OP = 'INSERT' THEN
+        NEW.owner_steam_id = COALESCE(
+            NEW.owner_steam_id, public.hasura_session_steam_id()
+        );
+    END IF;
 
     -- teams.id is ON DELETE SET NULL, so deleting a team nulls team_id here
     -- while visibility is still 'Team'. The BEFORE trigger runs first, the
@@ -388,3 +404,20 @@ CREATE TRIGGER tbiu_utility_lineups_public
     BEFORE INSERT OR UPDATE ON public.utility_lineups
     FOR EACH ROW
     EXECUTE FUNCTION public.tbiu_utility_lineups_public();
+
+-- Favourites, votes and progress are all "this player, this lineup" rows, and
+-- none of them has a BEFORE trigger of its own to stamp the owner in.
+DROP TRIGGER IF EXISTS tbi_utility_lineup_favorites_steam_id ON public.utility_lineup_favorites;
+CREATE TRIGGER tbi_utility_lineup_favorites_steam_id
+    BEFORE INSERT ON public.utility_lineup_favorites
+    FOR EACH ROW EXECUTE FUNCTION public.tbi_stamp_session_steam_id('steam_id');
+
+DROP TRIGGER IF EXISTS tbi_utility_lineup_votes_steam_id ON public.utility_lineup_votes;
+CREATE TRIGGER tbi_utility_lineup_votes_steam_id
+    BEFORE INSERT ON public.utility_lineup_votes
+    FOR EACH ROW EXECUTE FUNCTION public.tbi_stamp_session_steam_id('steam_id');
+
+DROP TRIGGER IF EXISTS tbi_utility_lineup_progress_steam_id ON public.utility_lineup_progress;
+CREATE TRIGGER tbi_utility_lineup_progress_steam_id
+    BEFORE INSERT ON public.utility_lineup_progress
+    FOR EACH ROW EXECUTE FUNCTION public.tbi_stamp_session_steam_id('steam_id');

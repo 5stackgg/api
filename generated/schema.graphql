@@ -1001,6 +1001,13 @@ type UtilityDriftScanOutput {
   scan_id: uuid!
 }
 
+type UtilityDrillLoadOutput {
+  map_name: String
+  queued: Int!
+  reason: String!
+  sent: Boolean!
+}
+
 type UtilityImportError {
   external_id: String
   index: Int!
@@ -1084,6 +1091,12 @@ input UtilityPlaybookStepInput {
   utility_lineup_id: uuid!
 }
 
+type UtilityPracticeMapChangeOutput {
+  map_name: String!
+  queued: Boolean!
+  success: Boolean!
+}
+
 type UtilityPracticePlanEntry {
   attempts: Int!
   difficulty: String!
@@ -1127,6 +1140,7 @@ type UtilityPracticeWhereOutput {
   map_name: String
   on_server: Boolean!
   session_id: uuid
+  switching: Boolean!
 }
 
 type UtilityPurgeOutput {
@@ -16394,6 +16408,223 @@ input e_tournament_status_updates {
 
   """filter the rows which have to be updated"""
   where: e_tournament_status_bool_exp!
+}
+
+"""
+columns and relationships of "e_utility_practice_access"
+"""
+type e_utility_practice_access {
+  description: String!
+
+  """An array relationship"""
+  utility_practice_sessions(
+    """distinct select on columns"""
+    distinct_on: [utility_practice_sessions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [utility_practice_sessions_order_by!]
+
+    """filter the rows returned"""
+    where: utility_practice_sessions_bool_exp
+  ): [utility_practice_sessions!]!
+
+  """An aggregate relationship"""
+  utility_practice_sessions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [utility_practice_sessions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [utility_practice_sessions_order_by!]
+
+    """filter the rows returned"""
+    where: utility_practice_sessions_bool_exp
+  ): utility_practice_sessions_aggregate!
+  value: String!
+}
+
+"""
+aggregated selection of "e_utility_practice_access"
+"""
+type e_utility_practice_access_aggregate {
+  aggregate: e_utility_practice_access_aggregate_fields
+  nodes: [e_utility_practice_access!]!
+}
+
+"""
+aggregate fields of "e_utility_practice_access"
+"""
+type e_utility_practice_access_aggregate_fields {
+  count(columns: [e_utility_practice_access_select_column!], distinct: Boolean): Int!
+  max: e_utility_practice_access_max_fields
+  min: e_utility_practice_access_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "e_utility_practice_access". All fields are combined with a logical 'AND'.
+"""
+input e_utility_practice_access_bool_exp {
+  _and: [e_utility_practice_access_bool_exp!]
+  _not: e_utility_practice_access_bool_exp
+  _or: [e_utility_practice_access_bool_exp!]
+  description: String_comparison_exp
+  utility_practice_sessions: utility_practice_sessions_bool_exp
+  utility_practice_sessions_aggregate: utility_practice_sessions_aggregate_bool_exp
+  value: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "e_utility_practice_access"
+"""
+enum e_utility_practice_access_constraint {
+  """
+  unique or primary key constraint on columns "value"
+  """
+  e_utility_practice_access_pkey
+}
+
+enum e_utility_practice_access_enum {
+  """Friends of the host, their team, and invited players"""
+  Friends
+
+  """Only invited players and the host's team"""
+  Invite
+
+  """Anyone with the link can join"""
+  Open
+
+  """Only the host"""
+  Private
+}
+
+"""
+Boolean expression to compare columns of type "e_utility_practice_access_enum". All fields are combined with logical 'AND'.
+"""
+input e_utility_practice_access_enum_comparison_exp {
+  _eq: e_utility_practice_access_enum
+  _in: [e_utility_practice_access_enum!]
+  _is_null: Boolean
+  _neq: e_utility_practice_access_enum
+  _nin: [e_utility_practice_access_enum!]
+}
+
+"""
+input type for inserting data into table "e_utility_practice_access"
+"""
+input e_utility_practice_access_insert_input {
+  description: String
+  utility_practice_sessions: utility_practice_sessions_arr_rel_insert_input
+  value: String
+}
+
+"""aggregate max on columns"""
+type e_utility_practice_access_max_fields {
+  description: String
+  value: String
+}
+
+"""aggregate min on columns"""
+type e_utility_practice_access_min_fields {
+  description: String
+  value: String
+}
+
+"""
+response of any mutation on the table "e_utility_practice_access"
+"""
+type e_utility_practice_access_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [e_utility_practice_access!]!
+}
+
+"""
+on_conflict condition type for table "e_utility_practice_access"
+"""
+input e_utility_practice_access_on_conflict {
+  constraint: e_utility_practice_access_constraint!
+  update_columns: [e_utility_practice_access_update_column!]! = []
+  where: e_utility_practice_access_bool_exp
+}
+
+"""Ordering options when selecting data from "e_utility_practice_access"."""
+input e_utility_practice_access_order_by {
+  description: order_by
+  utility_practice_sessions_aggregate: utility_practice_sessions_aggregate_order_by
+  value: order_by
+}
+
+"""primary key columns input for table: e_utility_practice_access"""
+input e_utility_practice_access_pk_columns_input {
+  value: String!
+}
+
+"""
+select columns of table "e_utility_practice_access"
+"""
+enum e_utility_practice_access_select_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+"""
+input type for updating data in table "e_utility_practice_access"
+"""
+input e_utility_practice_access_set_input {
+  description: String
+  value: String
+}
+
+"""
+Streaming cursor of the table "e_utility_practice_access"
+"""
+input e_utility_practice_access_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: e_utility_practice_access_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input e_utility_practice_access_stream_cursor_value_input {
+  description: String
+  value: String
+}
+
+"""
+update columns of table "e_utility_practice_access"
+"""
+enum e_utility_practice_access_update_column {
+  """column name"""
+  description
+
+  """column name"""
+  value
+}
+
+input e_utility_practice_access_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: e_utility_practice_access_set_input
+
+  """filter the rows which have to be updated"""
+  where: e_utility_practice_access_bool_exp!
 }
 
 """
@@ -42843,6 +43074,7 @@ type mutation_root {
 
   """Cancel an in-flight lineup preview render"""
   cancelUtilityLineupRender(render_id: uuid!): SuccessOutput
+  changeUtilityPracticeMap(lineup_id: uuid, lineup_ids: [uuid!], map_name: String!, scratch: UtilityScratchLineupInput, session_id: uuid!): UtilityPracticeMapChangeOutput
 
   """checkIntoMatch"""
   checkIntoMatch(match_id: uuid!): SuccessOutput
@@ -42930,6 +43162,9 @@ type mutation_root {
 
   """Delete a tournament and clean up demo files"""
   deleteTournament(tournament_id: uuid!): SuccessOutput
+
+  """Delete a render and its preview clip"""
+  deleteUtilityLineupRender(render_id: uuid!): SuccessOutput
 
   """Delete a utility playbook"""
   deleteUtilityPlaybook(playbook_id: uuid!): SuccessOutput
@@ -43700,6 +43935,19 @@ type mutation_root {
   delete single row from the table: "e_tournament_status"
   """
   delete_e_tournament_status_by_pk(value: String!): e_tournament_status
+
+  """
+  delete data from the table: "e_utility_practice_access"
+  """
+  delete_e_utility_practice_access(
+    """filter the rows which have to be deleted"""
+    where: e_utility_practice_access_bool_exp!
+  ): e_utility_practice_access_mutation_response
+
+  """
+  delete single row from the table: "e_utility_practice_access"
+  """
+  delete_e_utility_practice_access_by_pk(value: String!): e_utility_practice_access
 
   """
   delete data from the table: "e_utility_practice_statuses"
@@ -44777,6 +45025,14 @@ type mutation_root {
   delete single row from the table: "push_subscriptions"
   """
   delete_push_subscriptions_by_pk(id: uuid!): push_subscriptions
+
+  """
+  delete data from the table: "v_role_permissions"
+  """
+  delete_role_permissions(
+    """filter the rows which have to be deleted"""
+    where: role_permissions_bool_exp!
+  ): role_permissions_mutation_response
 
   """
   delete data from the table: "seasons"
@@ -46728,6 +46984,28 @@ type mutation_root {
   ): e_tournament_status
 
   """
+  insert data into the table: "e_utility_practice_access"
+  """
+  insert_e_utility_practice_access(
+    """the rows to be inserted"""
+    objects: [e_utility_practice_access_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: e_utility_practice_access_on_conflict
+  ): e_utility_practice_access_mutation_response
+
+  """
+  insert a single row into the table: "e_utility_practice_access"
+  """
+  insert_e_utility_practice_access_one(
+    """the row to be inserted"""
+    object: e_utility_practice_access_insert_input!
+
+    """upsert condition"""
+    on_conflict: e_utility_practice_access_on_conflict
+  ): e_utility_practice_access
+
+  """
   insert data into the table: "e_utility_practice_statuses"
   """
   insert_e_utility_practice_statuses(
@@ -48558,6 +48836,22 @@ type mutation_root {
   ): push_subscriptions
 
   """
+  insert data into the table: "v_role_permissions"
+  """
+  insert_role_permissions(
+    """the rows to be inserted"""
+    objects: [role_permissions_insert_input!]!
+  ): role_permissions_mutation_response
+
+  """
+  insert a single row into the table: "v_role_permissions"
+  """
+  insert_role_permissions_one(
+    """the row to be inserted"""
+    object: role_permissions_insert_input!
+  ): role_permissions
+
+  """
   insert data into the table: "seasons"
   """
   insert_seasons(
@@ -49929,6 +50223,7 @@ type mutation_root {
 
   """sendScrimRequest"""
   sendScrimRequest(best_of: Int, from_team_id: uuid!, proposed_scheduled_at: timestamptz!, region: String, to_team_id: uuid!): SuccessOutput
+  sendUtilityDrillToServer(lineup_ids: [String!]!): UtilityDrillLoadOutput
   sendUtilityLineupToServer(lineup_id: uuid!): UtilityLoadOutput
   sendUtilityScratchToServer(lineup: UtilityScratchLineupInput!): UtilityLoadOutput
   setGameNodeSchedulingState(enabled: Boolean!, game_server_node_id: String!): SuccessOutput
@@ -49950,6 +50245,7 @@ type mutation_root {
 
   """Map a tournament placement to an award"""
   setTournamentAward(award_id: uuid, custom_name: String, placement: Int!, silhouette: Int, tournament_id: uuid!): TournamentAward
+  setUtilityPracticeAccess(access: String!, session_id: uuid!): SuccessOutput
   setupGameServer: SetupGameServeOutput
   skipShaders(match_id: uuid!): SuccessOutput
 
@@ -49973,7 +50269,7 @@ type mutation_root {
   startUtilityDriftScan(from_revision: String, map_name: String!, to_revision: String): UtilityDriftScanOutput
 
   """Start a utility practice session"""
-  startUtilityPractice(collection_id: uuid, is_open: Boolean, map_name: String!, region: String, server_id: uuid, team_id: uuid): UtilityPracticeSessionOutput
+  startUtilityPractice(access: String, collection_id: uuid, is_open: Boolean, map_name: String!, region: String, server_id: uuid, team_id: uuid): UtilityPracticeSessionOutput
   stopGpuSession(game_server_node_id: uuid!): SuccessOutput
   stopLive(match_id: uuid!): SuccessOutput
 
@@ -51822,6 +52118,34 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [e_tournament_status_updates!]!
   ): [e_tournament_status_mutation_response]
+
+  """
+  update data of the table: "e_utility_practice_access"
+  """
+  update_e_utility_practice_access(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_utility_practice_access_set_input
+
+    """filter the rows which have to be updated"""
+    where: e_utility_practice_access_bool_exp!
+  ): e_utility_practice_access_mutation_response
+
+  """
+  update single row of the table: "e_utility_practice_access"
+  """
+  update_e_utility_practice_access_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: e_utility_practice_access_set_input
+    pk_columns: e_utility_practice_access_pk_columns_input!
+  ): e_utility_practice_access
+
+  """
+  update multiples rows of table: "e_utility_practice_access"
+  """
+  update_e_utility_practice_access_many(
+    """updates to execute, in order"""
+    updates: [e_utility_practice_access_updates!]!
+  ): [e_utility_practice_access_mutation_response]
 
   """
   update data of the table: "e_utility_practice_statuses"
@@ -54981,6 +55305,25 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [push_subscriptions_updates!]!
   ): [push_subscriptions_mutation_response]
+
+  """
+  update data of the table: "v_role_permissions"
+  """
+  update_role_permissions(
+    """sets the columns of the filtered rows to the given values"""
+    _set: role_permissions_set_input
+
+    """filter the rows which have to be updated"""
+    where: role_permissions_bool_exp!
+  ): role_permissions_mutation_response
+
+  """
+  update multiples rows of table: "v_role_permissions"
+  """
+  update_role_permissions_many(
+    """updates to execute, in order"""
+    updates: [role_permissions_updates!]!
+  ): [role_permissions_mutation_response]
 
   """
   update data of the table: "seasons"
@@ -81653,6 +81996,51 @@ type query_root {
   e_tournament_status_by_pk(value: String!): e_tournament_status
 
   """
+  fetch data from the table: "e_utility_practice_access"
+  """
+  e_utility_practice_access(
+    """distinct select on columns"""
+    distinct_on: [e_utility_practice_access_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_utility_practice_access_order_by!]
+
+    """filter the rows returned"""
+    where: e_utility_practice_access_bool_exp
+  ): [e_utility_practice_access!]!
+
+  """
+  fetch aggregated fields from the table: "e_utility_practice_access"
+  """
+  e_utility_practice_access_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_utility_practice_access_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_utility_practice_access_order_by!]
+
+    """filter the rows returned"""
+    where: e_utility_practice_access_bool_exp
+  ): e_utility_practice_access_aggregate!
+
+  """
+  fetch data from the table: "e_utility_practice_access" using primary key columns
+  """
+  e_utility_practice_access_by_pk(value: String!): e_utility_practice_access
+
+  """
   fetch data from the table: "e_utility_practice_statuses"
   """
   e_utility_practice_statuses(
@@ -85753,6 +86141,46 @@ type query_root {
   readServerFile(file_path: String!, node_id: String!, server_id: String): FileContentResponse!
 
   """
+  fetch data from the table: "v_role_permissions"
+  """
+  role_permissions(
+    """distinct select on columns"""
+    distinct_on: [role_permissions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [role_permissions_order_by!]
+
+    """filter the rows returned"""
+    where: role_permissions_bool_exp
+  ): [role_permissions!]!
+
+  """
+  fetch aggregated fields from the table: "v_role_permissions"
+  """
+  role_permissions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [role_permissions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [role_permissions_order_by!]
+
+    """filter the rows returned"""
+    where: role_permissions_bool_exp
+  ): role_permissions_aggregate!
+
+  """
   fetch data from the table: "seasons"
   """
   seasons(
@@ -89086,6 +89514,139 @@ input reorder_league_divisions_args {
 
 input restart_league_season_args {
   _league_season_id: uuid
+}
+
+"""
+columns and relationships of "v_role_permissions"
+"""
+type role_permissions {
+  can_create_events: Boolean
+  can_create_matches: Boolean
+  can_create_tournaments: Boolean
+  role: String
+}
+
+"""
+aggregated selection of "v_role_permissions"
+"""
+type role_permissions_aggregate {
+  aggregate: role_permissions_aggregate_fields
+  nodes: [role_permissions!]!
+}
+
+"""
+aggregate fields of "v_role_permissions"
+"""
+type role_permissions_aggregate_fields {
+  count(columns: [role_permissions_select_column!], distinct: Boolean): Int!
+  max: role_permissions_max_fields
+  min: role_permissions_min_fields
+}
+
+"""
+Boolean expression to filter rows from the table "v_role_permissions". All fields are combined with a logical 'AND'.
+"""
+input role_permissions_bool_exp {
+  _and: [role_permissions_bool_exp!]
+  _not: role_permissions_bool_exp
+  _or: [role_permissions_bool_exp!]
+  can_create_events: Boolean_comparison_exp
+  can_create_matches: Boolean_comparison_exp
+  can_create_tournaments: Boolean_comparison_exp
+  role: String_comparison_exp
+}
+
+"""
+input type for inserting data into table "v_role_permissions"
+"""
+input role_permissions_insert_input {
+  can_create_events: Boolean
+  can_create_matches: Boolean
+  can_create_tournaments: Boolean
+  role: String
+}
+
+"""aggregate max on columns"""
+type role_permissions_max_fields {
+  role: String
+}
+
+"""aggregate min on columns"""
+type role_permissions_min_fields {
+  role: String
+}
+
+"""
+response of any mutation on the table "v_role_permissions"
+"""
+type role_permissions_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [role_permissions!]!
+}
+
+"""Ordering options when selecting data from "v_role_permissions"."""
+input role_permissions_order_by {
+  can_create_events: order_by
+  can_create_matches: order_by
+  can_create_tournaments: order_by
+  role: order_by
+}
+
+"""
+select columns of table "v_role_permissions"
+"""
+enum role_permissions_select_column {
+  """column name"""
+  can_create_events
+
+  """column name"""
+  can_create_matches
+
+  """column name"""
+  can_create_tournaments
+
+  """column name"""
+  role
+}
+
+"""
+input type for updating data in table "v_role_permissions"
+"""
+input role_permissions_set_input {
+  can_create_events: Boolean
+  can_create_matches: Boolean
+  can_create_tournaments: Boolean
+  role: String
+}
+
+"""
+Streaming cursor of the table "role_permissions"
+"""
+input role_permissions_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: role_permissions_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input role_permissions_stream_cursor_value_input {
+  can_create_events: Boolean
+  can_create_matches: Boolean
+  can_create_tournaments: Boolean
+  role: String
+}
+
+input role_permissions_updates {
+  """sets the columns of the filtered rows to the given values"""
+  _set: role_permissions_set_input
+
+  """filter the rows which have to be updated"""
+  where: role_permissions_bool_exp!
 }
 
 """
@@ -95081,6 +95642,65 @@ type subscription_root {
   ): [e_tournament_status!]!
 
   """
+  fetch data from the table: "e_utility_practice_access"
+  """
+  e_utility_practice_access(
+    """distinct select on columns"""
+    distinct_on: [e_utility_practice_access_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_utility_practice_access_order_by!]
+
+    """filter the rows returned"""
+    where: e_utility_practice_access_bool_exp
+  ): [e_utility_practice_access!]!
+
+  """
+  fetch aggregated fields from the table: "e_utility_practice_access"
+  """
+  e_utility_practice_access_aggregate(
+    """distinct select on columns"""
+    distinct_on: [e_utility_practice_access_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [e_utility_practice_access_order_by!]
+
+    """filter the rows returned"""
+    where: e_utility_practice_access_bool_exp
+  ): e_utility_practice_access_aggregate!
+
+  """
+  fetch data from the table: "e_utility_practice_access" using primary key columns
+  """
+  e_utility_practice_access_by_pk(value: String!): e_utility_practice_access
+
+  """
+  fetch data from the table in a streaming manner: "e_utility_practice_access"
+  """
+  e_utility_practice_access_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [e_utility_practice_access_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: e_utility_practice_access_bool_exp
+  ): [e_utility_practice_access!]!
+
+  """
   fetch data from the table: "e_utility_practice_statuses"
   """
   e_utility_practice_statuses(
@@ -100354,6 +100974,60 @@ type subscription_root {
     """filter the rows returned"""
     where: push_subscriptions_bool_exp
   ): [push_subscriptions!]!
+
+  """
+  fetch data from the table: "v_role_permissions"
+  """
+  role_permissions(
+    """distinct select on columns"""
+    distinct_on: [role_permissions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [role_permissions_order_by!]
+
+    """filter the rows returned"""
+    where: role_permissions_bool_exp
+  ): [role_permissions!]!
+
+  """
+  fetch aggregated fields from the table: "v_role_permissions"
+  """
+  role_permissions_aggregate(
+    """distinct select on columns"""
+    distinct_on: [role_permissions_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [role_permissions_order_by!]
+
+    """filter the rows returned"""
+    where: role_permissions_bool_exp
+  ): role_permissions_aggregate!
+
+  """
+  fetch data from the table in a streaming manner: "v_role_permissions"
+  """
+  role_permissions_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [role_permissions_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: role_permissions_bool_exp
+  ): [role_permissions!]!
 
   """
   fetch data from the table: "seasons"
@@ -126481,7 +127155,7 @@ input utility_practice_invites_variance_order_by {
 columns and relationships of "utility_practice_sessions"
 """
 type utility_practice_sessions {
-  access: String!
+  access: e_utility_practice_access_enum!
 
   """
   A computed field, executes function "can_manage_utility_practice_session"
@@ -126516,8 +127190,8 @@ type utility_practice_sessions {
   first_joined_at: timestamptz
 
   """An object relationship"""
-  host: players!
-  host_steam_id: bigint!
+  host: players
+  host_steam_id: bigint
   id: uuid!
   invite_code: String!
 
@@ -126564,6 +127238,7 @@ type utility_practice_sessions {
   is_open: Boolean!
   is_render: Boolean!
   last_occupied_at: timestamptz
+  map_changing_at: timestamptz
   map_name: String!
 
   """An object relationship"""
@@ -126680,7 +127355,7 @@ input utility_practice_sessions_bool_exp {
   _and: [utility_practice_sessions_bool_exp!]
   _not: utility_practice_sessions_bool_exp
   _or: [utility_practice_sessions_bool_exp!]
-  access: String_comparison_exp
+  access: e_utility_practice_access_enum_comparison_exp
   can_manage: Boolean_comparison_exp
   can_view: Boolean_comparison_exp
   collection: utility_collections_bool_exp
@@ -126703,6 +127378,7 @@ input utility_practice_sessions_bool_exp {
   is_open: Boolean_comparison_exp
   is_render: Boolean_comparison_exp
   last_occupied_at: timestamptz_comparison_exp
+  map_changing_at: timestamptz_comparison_exp
   map_name: String_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
@@ -126751,7 +127427,7 @@ input utility_practice_sessions_inc_input {
 input type for inserting data into table "utility_practice_sessions"
 """
 input utility_practice_sessions_insert_input {
-  access: String
+  access: e_utility_practice_access_enum
   collection: utility_collections_obj_rel_insert_input
   collection_id: uuid
   created_at: timestamptz
@@ -126768,6 +127444,7 @@ input utility_practice_sessions_insert_input {
   is_open: Boolean
   is_render: Boolean
   last_occupied_at: timestamptz
+  map_changing_at: timestamptz
   map_name: String
   match: matches_obj_rel_insert_input
   match_id: uuid
@@ -126782,7 +127459,6 @@ input utility_practice_sessions_insert_input {
 
 """aggregate max on columns"""
 type utility_practice_sessions_max_fields {
-  access: String
   collection_id: uuid
 
   """
@@ -126803,6 +127479,7 @@ type utility_practice_sessions_max_fields {
   id: uuid
   invite_code: String
   last_occupied_at: timestamptz
+  map_changing_at: timestamptz
   map_name: String
   match_id: uuid
   playbook_id: uuid
@@ -126815,7 +127492,6 @@ type utility_practice_sessions_max_fields {
 order by max() on columns of table "utility_practice_sessions"
 """
 input utility_practice_sessions_max_order_by {
-  access: order_by
   collection_id: order_by
   created_at: order_by
   empty_since: order_by
@@ -126826,6 +127502,7 @@ input utility_practice_sessions_max_order_by {
   id: order_by
   invite_code: order_by
   last_occupied_at: order_by
+  map_changing_at: order_by
   map_name: order_by
   match_id: order_by
   playbook_id: order_by
@@ -126836,7 +127513,6 @@ input utility_practice_sessions_max_order_by {
 
 """aggregate min on columns"""
 type utility_practice_sessions_min_fields {
-  access: String
   collection_id: uuid
 
   """
@@ -126857,6 +127533,7 @@ type utility_practice_sessions_min_fields {
   id: uuid
   invite_code: String
   last_occupied_at: timestamptz
+  map_changing_at: timestamptz
   map_name: String
   match_id: uuid
   playbook_id: uuid
@@ -126869,7 +127546,6 @@ type utility_practice_sessions_min_fields {
 order by min() on columns of table "utility_practice_sessions"
 """
 input utility_practice_sessions_min_order_by {
-  access: order_by
   collection_id: order_by
   created_at: order_by
   empty_since: order_by
@@ -126880,6 +127556,7 @@ input utility_practice_sessions_min_order_by {
   id: order_by
   invite_code: order_by
   last_occupied_at: order_by
+  map_changing_at: order_by
   map_name: order_by
   match_id: order_by
   playbook_id: order_by
@@ -126942,6 +127619,7 @@ input utility_practice_sessions_order_by {
   is_open: order_by
   is_render: order_by
   last_occupied_at: order_by
+  map_changing_at: order_by
   map_name: order_by
   match: matches_order_by
   match_id: order_by
@@ -127003,6 +127681,9 @@ enum utility_practice_sessions_select_column {
   last_occupied_at
 
   """column name"""
+  map_changing_at
+
+  """column name"""
   map_name
 
   """column name"""
@@ -127050,7 +127731,7 @@ enum utility_practice_sessions_select_column_utility_practice_sessions_aggregate
 input type for updating data in table "utility_practice_sessions"
 """
 input utility_practice_sessions_set_input {
-  access: String
+  access: e_utility_practice_access_enum
   collection_id: uuid
   created_at: timestamptz
   empty_since: timestamptz
@@ -127063,6 +127744,7 @@ input utility_practice_sessions_set_input {
   is_open: Boolean
   is_render: Boolean
   last_occupied_at: timestamptz
+  map_changing_at: timestamptz
   map_name: String
   match_id: uuid
   playbook_id: uuid
@@ -127121,7 +127803,7 @@ input utility_practice_sessions_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input utility_practice_sessions_stream_cursor_value_input {
-  access: String
+  access: e_utility_practice_access_enum
   collection_id: uuid
   created_at: timestamptz
   empty_since: timestamptz
@@ -127134,6 +127816,7 @@ input utility_practice_sessions_stream_cursor_value_input {
   is_open: Boolean
   is_render: Boolean
   last_occupied_at: timestamptz
+  map_changing_at: timestamptz
   map_name: String
   match_id: uuid
   playbook_id: uuid
@@ -127197,6 +127880,9 @@ enum utility_practice_sessions_update_column {
 
   """column name"""
   last_occupied_at
+
+  """column name"""
+  map_changing_at
 
   """column name"""
   map_name

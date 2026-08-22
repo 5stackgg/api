@@ -11,21 +11,7 @@ array_relationships:
           name: match_clips
           schema: public
 select_permissions:
-  - role: administrator
-    permission:
-      columns:
-        - description
-        - value
-      filter: {}
-    comment: ""
   - role: guest
-    permission:
-      columns:
-        - description
-        - value
-      filter: {}
-    comment: ""
-  - role: user
     permission:
       columns:
         - description

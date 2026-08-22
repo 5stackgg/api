@@ -41,6 +41,8 @@ describe("utility practice sessions (SQL-driven)", () => {
 
   beforeEach(async () => {
     notified = [];
+    rconSent = [];
+    rconReply = () => "";
     await postgres.query("DELETE FROM utility_practice_sessions");
     await postgres.query("DELETE FROM utility_lineups");
     await postgres.query(
@@ -133,9 +135,76 @@ describe("utility practice sessions (SQL-driven)", () => {
     };
   }
 
+  /**
+   * Enough of a lineup for the visibility function to have an opinion.
+   * Deliberately Private: an author can always see their own, and Public is
+   * refused on insert by the review trigger.
+   */
+  async function insertLineup(
+    author: string,
+    mapName: string,
+  ): Promise<string> {
+    const [inserted] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO utility_lineups
+         (map_name, utility_type, side, technique, throw_strength,
+          origin_x, origin_y, origin_z, view_yaw, view_pitch,
+          land_x, land_y, land_z,
+          name, visibility, author_steam_id)
+       VALUES ($1, 'Smoke', 'TERRORIST', 'Jump', 'Full',
+               -1912, 922, -167, 133.7, -12.4,
+               -560, 320, -140,
+               'Window from T spawn', 'Private', $2::bigint)
+       RETURNING id::text AS id`,
+      [mapName, author],
+    );
+    return inserted.id;
+  }
+
+  // Every command the fake RCON connection was handed, in order. A map change
+  // is only observable from here -- the DB says where the server is meant to be,
+  // and this says whether anything was ever told.
+  let rconSent: Array<{ serverId: string; command: string }>;
+  let rconReply: (command: string) => string | null;
+
+  /**
+   * A real UtilityLoadService over the real database, with only the wire
+   * stubbed. visibleOnMap and the pending-library writes are the half of a map
+   * change that decides whether the caller may practise what they asked for, so
+   * mocking them out would leave the interesting part untested.
+   */
+  function makeLoadService(): UtilityLoadService {
+    const cache = new Map<string, unknown>();
+
+    return new UtilityLoadService(
+      new Logger("UtilityLoadTest"),
+      postgres,
+      {
+        get: jest.fn(async (key: string) => cache.get(key)),
+        put: jest.fn(async (key: string, value: unknown) => {
+          cache.set(key, value);
+        }),
+      } as unknown as never,
+      {
+        connect: jest.fn(async (serverId: string) => ({
+          send: jest.fn(async (command: string) => {
+            const reply = rconReply(command);
+
+            if (reply === null) {
+              throw new Error("server unreachable");
+            }
+
+            rconSent.push({ serverId, command });
+            return reply;
+          }),
+        })),
+      } as unknown as never,
+    );
+  }
+
   function makeService(overrides: {
     matchAssistant?: Record<string, unknown>;
     cache?: Record<string, unknown>;
+    load?: UtilityLoadService;
   }): UtilityPracticeService {
     return new UtilityPracticeService(
       new Logger("UtilityPracticeTest"),
@@ -171,6 +240,7 @@ describe("utility practice sessions (SQL-driven)", () => {
           },
         ),
       } as unknown as never,
+      overrides.load ?? makeLoadService(),
       {
         get: jest.fn(() => ({ webDomain: "https://5stack.test" })),
       } as unknown as never,
@@ -725,6 +795,385 @@ describe("utility practice sessions (SQL-driven)", () => {
 
     it("answers null for somebody who is on no server at all", async () => {
       expect(await loadService().serverForPlayer(await fx.player())).toBeNull();
+    });
+  });
+
+  // The map lives in three places -- the session row, the match's one match_maps
+  // row and the Custom pool behind it -- and every read picks a different one.
+  // A change that moves fewer than all three leaves the plugin fetching a
+  // library for a level the server is not running.
+  describe("changing the map", () => {
+    async function readyServer(
+      host: string,
+      port: number,
+      overrides: Record<string, unknown> = {},
+    ): Promise<{
+      matchId: string;
+      sessionId: string;
+      serverId: string;
+      lineupId: string;
+    }> {
+      const { matchId, lineupId } = await createPracticeMatch(host);
+      const sessionId = await insertSession(host, {
+        match_id: matchId,
+        status: "Ready",
+        ...overrides,
+      });
+      const [server] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO servers
+           (host, label, rcon_password, port, region, type, is_dedicated, enabled,
+            reserved_by_match_id)
+         VALUES ('127.0.0.1', $1, '\\x00'::bytea, $2, 'TestA', 'Practice', true, true, $3)
+         RETURNING id::text AS id`,
+        [`map-change-${port}`, port, matchId],
+      );
+
+      return { matchId, sessionId, serverId: server.id, lineupId };
+    }
+
+    async function mapOf(matchId: string): Promise<{
+      session: string;
+      matchMap: string;
+      pool: string;
+    }> {
+      const [row] = await postgres.query<
+        Array<{ session: string; match_map: string; pool: string }>
+      >(
+        `SELECT s.map_name AS session,
+                mm_map.name AS match_map,
+                pool_map.name AS pool
+           FROM public.matches m
+           INNER JOIN public.utility_practice_sessions s ON s.match_id = m.id
+           INNER JOIN public.match_maps mm ON mm.match_id = m.id
+           INNER JOIN public.maps mm_map ON mm_map.id = mm.map_id
+           INNER JOIN public.match_options mo ON mo.id = m.match_options_id
+           INNER JOIN public._map_pool mp ON mp.map_pool_id = mo.map_pool_id
+           INNER JOIN public.maps pool_map ON pool_map.id = mp.map_id
+          WHERE m.id = $1::uuid`,
+        [matchId],
+      );
+
+      return { session: row.session, matchMap: row.match_map, pool: row.pool };
+    }
+
+    function asUser(steamId: string, role = "user") {
+      return { steam_id: steamId, role } as never;
+    }
+
+    it("moves the session, the match map and the pool together", async () => {
+      const host = await fx.player();
+      const { matchId, sessionId, serverId } = await readyServer(host, 27700);
+
+      const result = await makeService({}).changeMap(asUser(host), {
+        session_id: sessionId,
+        map_name: "de_inferno",
+      });
+
+      expect(result).toMatchObject({ success: true, map_name: "de_inferno" });
+      expect(await mapOf(matchId)).toEqual({
+        session: "de_inferno",
+        matchMap: "de_inferno",
+        pool: "de_inferno",
+      });
+      expect(rconSent).toEqual([
+        { serverId, command: 'utility_practice_map "de_inferno"' },
+      ]);
+    });
+
+    // map_name moves the moment the change is accepted, so without this every
+    // "am I on the right map" check goes true ~15s before the level exists.
+    it("marks the session as changing until the server reports the new map", async () => {
+      const host = await fx.player();
+      const { sessionId } = await readyServer(host, 27701);
+      const service = makeService({});
+
+      await service.changeMap(asUser(host), {
+        session_id: sessionId,
+        map_name: "de_inferno",
+      });
+
+      const changing = async () => {
+        const [row] = await postgres.query<Array<{ changing: boolean }>>(
+          `SELECT map_changing_at IS NOT NULL AS changing
+             FROM utility_practice_sessions WHERE id = $1::uuid`,
+          [sessionId],
+        );
+        return row.changing;
+      };
+
+      expect(await changing()).toBe(true);
+
+      // The plugin came up on the map it was told to leave -- this fetch is
+      // from before the changelevel, and clearing on it would be a lie.
+      await service.markMapLoaded(sessionId, "de_mirage");
+      expect(await changing()).toBe(true);
+
+      await service.markMapLoaded(sessionId, "de_inferno");
+      expect(await changing()).toBe(false);
+    });
+
+    // An old plugin build names no map. It is still a server that is up, and a
+    // flag that never clears would refuse every load forever.
+    it("clears the flag for a plugin that does not name its map", async () => {
+      const host = await fx.player();
+      const { sessionId } = await readyServer(host, 27702);
+      const service = makeService({});
+
+      await service.changeMap(asUser(host), {
+        session_id: sessionId,
+        map_name: "de_inferno",
+      });
+      await service.markMapLoaded(sessionId, null);
+
+      const [row] = await postgres.query<Array<{ changing: boolean }>>(
+        `SELECT map_changing_at IS NOT NULL AS changing
+           FROM utility_practice_sessions WHERE id = $1::uuid`,
+        [sessionId],
+      );
+      expect(row.changing).toBe(false);
+    });
+
+    // A changelevel takes everyone on the server through a load screen, so it
+    // is the host's to call and nobody else's.
+    it("refuses anyone but the host", async () => {
+      const host = await fx.player();
+      const guest = await fx.player();
+      const { matchId, sessionId } = await readyServer(host, 27703);
+
+      await expect(
+        makeService({}).changeMap(asUser(guest), {
+          session_id: sessionId,
+          map_name: "de_inferno",
+        }),
+      ).rejects.toThrow(/only the host/);
+
+      expect((await mapOf(matchId)).session).toBe("de_mirage");
+      expect(rconSent).toEqual([]);
+    });
+
+    it("lets an administrator move somebody else's server", async () => {
+      const host = await fx.player();
+      const admin = await fx.player();
+      const { matchId, sessionId } = await readyServer(host, 27704);
+
+      await makeService({}).changeMap(asUser(admin, "administrator"), {
+        session_id: sessionId,
+        map_name: "de_inferno",
+      });
+
+      expect((await mapOf(matchId)).session).toBe("de_inferno");
+    });
+
+    // A Starting session's pod has +map baked into its job args: there is no
+    // level running for a changelevel to replace.
+    it("refuses a session that has not come up yet", async () => {
+      const host = await fx.player();
+      const { sessionId } = await readyServer(host, 27705, {
+        status: "Starting",
+      });
+
+      await expect(
+        makeService({}).changeMap(asUser(host), {
+          session_id: sessionId,
+          map_name: "de_inferno",
+        }),
+      ).rejects.toThrow(/not ready/);
+    });
+
+    it("refuses a map that is not available for practice", async () => {
+      const host = await fx.player();
+      const { sessionId } = await readyServer(host, 27706);
+
+      await expect(
+        makeService({}).changeMap(asUser(host), {
+          session_id: sessionId,
+          map_name: "de_not_a_map",
+        }),
+      ).rejects.toThrow(/not available for practice/);
+
+      expect(rconSent).toEqual([]);
+    });
+
+    // Pressing it twice, or landing on the map you are already on, must not
+    // put anybody through a load screen for nothing.
+    it("does nothing when the server is already on that map", async () => {
+      const host = await fx.player();
+      const { sessionId } = await readyServer(host, 27707);
+
+      const result = await makeService({}).changeMap(asUser(host), {
+        session_id: sessionId,
+        map_name: "de_mirage",
+      });
+
+      expect(result).toMatchObject({ success: true, queued: false });
+      expect(rconSent).toEqual([]);
+    });
+
+    // The lock is what a double-clicked button runs into: two changelevels
+    // stacked is a server that finishes loading neither.
+    it("refuses a second change while one is in flight", async () => {
+      const host = await fx.player();
+      const { sessionId } = await readyServer(host, 27708);
+
+      const service = makeService({
+        cache: { acquireLock: jest.fn(async (): Promise<boolean> => false) },
+      });
+
+      await expect(
+        service.changeMap(asUser(host), {
+          session_id: sessionId,
+          map_name: "de_inferno",
+        }),
+      ).rejects.toThrow(/already changing/);
+    });
+
+    // The whole point of the cross-map Practice button: the lineup rides with
+    // the map change, because the caller spends the changelevel on a load
+    // screen with no second moment to send anything.
+    it("hands the plugin a lineup to stand the caller on", async () => {
+      const host = await fx.player();
+      const { sessionId, serverId } = await readyServer(host, 27709);
+      const lineup = await insertLineup(host, "de_inferno");
+
+      const result = await makeService({}).changeMap(asUser(host), {
+        session_id: sessionId,
+        map_name: "de_inferno",
+        lineup_id: lineup,
+      });
+
+      expect(result.queued).toBe(true);
+      expect(rconSent).toEqual([
+        {
+          serverId,
+          command: `utility_practice_map "de_inferno" ${host} ${lineup}`,
+        },
+      ]);
+    });
+
+    // Checked BEFORE the level changes: refusing after everyone is already in a
+    // load screen is the worst possible moment to find out.
+    it("refuses a lineup the caller cannot see, without changing anything", async () => {
+      const host = await fx.player();
+      const stranger = await fx.player();
+      const { matchId, sessionId } = await readyServer(host, 27710);
+      const hidden = await insertLineup(stranger, "de_inferno");
+
+      await expect(
+        makeService({}).changeMap(asUser(host), {
+          session_id: sessionId,
+          map_name: "de_inferno",
+          lineup_id: hidden,
+        }),
+      ).rejects.toThrow(/not available to you/);
+
+      expect((await mapOf(matchId)).session).toBe("de_mirage");
+      expect(rconSent).toEqual([]);
+    });
+
+    // A lineup for the map being LEFT is the same mistake as one nobody may
+    // see: it would stand somebody in the middle of nothing.
+    it("refuses a lineup that is not on the map being switched to", async () => {
+      const host = await fx.player();
+      const { sessionId } = await readyServer(host, 27711);
+      const elsewhere = await insertLineup(host, "de_mirage");
+
+      await expect(
+        makeService({}).changeMap(asUser(host), {
+          session_id: sessionId,
+          map_name: "de_inferno",
+          lineup_id: elsewhere,
+        }),
+      ).rejects.toThrow(/not available to you/);
+    });
+
+    // An old plugin build answers "Unknown command". The level change is still
+    // worth making on its own -- but nothing there can hold a load across it,
+    // so the caller must not be promised one.
+    it("falls back to a plain changelevel on a plugin that predates the command", async () => {
+      const host = await fx.player();
+      const { sessionId, serverId } = await readyServer(host, 27712);
+      const lineup = await insertLineup(host, "de_inferno");
+
+      rconReply = (command) =>
+        command.startsWith("utility_practice_map")
+          ? 'Unknown command "utility_practice_map"'
+          : "";
+
+      const result = await makeService({}).changeMap(asUser(host), {
+        session_id: sessionId,
+        map_name: "de_inferno",
+        lineup_id: lineup,
+      });
+
+      expect(result).toMatchObject({ success: true, queued: false });
+      expect(rconSent[rconSent.length - 1]).toEqual({
+        serverId,
+        command: 'changelevel "de_inferno"',
+      });
+    });
+
+    // The row would otherwise claim a map the server was never told about, and
+    // every read after that is answered for a level it is not running.
+    it("puts the map back when the server cannot be reached", async () => {
+      const host = await fx.player();
+      const { matchId, sessionId } = await readyServer(host, 27713);
+
+      rconReply = () => null;
+
+      await expect(
+        makeService({}).changeMap(asUser(host), {
+          session_id: sessionId,
+          map_name: "de_inferno",
+        }),
+      ).rejects.toThrow(/could not reach/);
+
+      expect(await mapOf(matchId)).toEqual({
+        session: "de_mirage",
+        matchMap: "de_mirage",
+        pool: "de_mirage",
+      });
+
+      const [row] = await postgres.query<Array<{ changing: boolean }>>(
+        `SELECT map_changing_at IS NOT NULL AS changing
+           FROM utility_practice_sessions WHERE id = $1::uuid`,
+        [sessionId],
+      );
+      expect(row.changing).toBe(false);
+    });
+
+    // serverForPlayer is what every "load me in" button reads. During a switch
+    // its map_name is where the server is GOING, so the flag has to travel with
+    // it or the button sends a teleport to a player who is not there.
+    it("tells the load path that the server is mid-switch", async () => {
+      const host = await fx.player();
+      const { sessionId, lineupId } = await readyServer(host, 27714);
+      await postgres.query(
+        `UPDATE match_lineup_players SET is_connected = true
+          WHERE match_lineup_id = $1::uuid AND steam_id = $2::bigint`,
+        [lineupId, host],
+      );
+
+      const load = makeLoadService();
+      expect(await load.serverForPlayer(host)).toMatchObject({
+        map_name: "de_mirage",
+        switching: false,
+      });
+
+      await makeService({ load }).changeMap(asUser(host), {
+        session_id: sessionId,
+        map_name: "de_inferno",
+      });
+
+      expect(await load.serverForPlayer(host)).toMatchObject({
+        map_name: "de_inferno",
+        switching: true,
+      });
+
+      const sent = await load.sendToLineup(
+        asUser(host),
+        await insertLineup(host, "de_inferno"),
+      );
+      expect(sent).toMatchObject({ sent: false, reason: "map_switching" });
     });
   });
 

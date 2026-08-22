@@ -59,11 +59,12 @@ insert_permissions:
       columns:
         - captain_steam_id
         - name
-        - owner_steam_id
         - seed
         - short_name
         - team_id
         - tournament_id
+      set:
+        owner_steam_id: x-hasura-user-id
     comment: ""
   - role: user
     permission:
