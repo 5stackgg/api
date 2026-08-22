@@ -79,22 +79,20 @@ describe("utility practice servers (SQL-driven)", () => {
     );
   }
 
-  // The exact wire a render pod dials -- get_server_host's own answer, so the
-  // pod connects the same way a real player does. For a non-LAN region with a
-  // Steam relay token, that is the SDR token; otherwise host:port. Dialling a
-  // raw IP at a relay (P2P-only) server landed the pod on cs2's loopback map.
+  // The exact wire a render pod dials. The pod and its practice server share
+  // one node's host network, so it connects over the loopback they share --
+  // proven live: an A2S query to 127.0.0.1:<port> returned the server's info,
+  // where the relay token bounced cs2 to its own loopback map and the public
+  // IP died on hairpin.
   describe("renderConnection", () => {
-    async function renderSessionOn(server: {
-      isLan: boolean;
-      steamRelay: string | null;
-    }): Promise<string> {
+    async function renderSession(): Promise<{ sessionId: string; port: number }> {
       const suffix = fx.nextName("");
       const region = `R-${suffix}`;
       const nodeId = `node-${suffix}`;
+      const port = 30000 + (Math.abs(hashCode(suffix)) % 2000);
       await postgres.query(
-        `INSERT INTO server_regions (value, description, is_lan)
-         VALUES ($1, $1, $2)`,
-        [region, server.isLan],
+        `INSERT INTO server_regions (value, description, is_lan) VALUES ($1, $1, false)`,
+        [region],
       );
       await postgres.query(
         `INSERT INTO game_server_nodes (id, region) VALUES ($1, $2)`,
@@ -105,10 +103,10 @@ describe("utility practice servers (SQL-driven)", () => {
         `INSERT INTO servers
            (host, label, rcon_password, port, enabled, connected, region, type,
             is_dedicated, steam_relay, reserved_by_match_id, game_server_node_id)
-         VALUES ('76.139.106.28', $1, '\\x00'::bytea, 30020, true, true,
-                 $2, 'Ranked', false, $3, $4, $5)
+         VALUES ('76.139.106.28', $1, '\\x00'::bytea, $2, true, true,
+                 $3, 'Ranked', false, '[A:1:9:9]', $4, $5)
          RETURNING id::text AS id`,
-        [`ondemand-${suffix}`, region, server.steamRelay, matchId, nodeId],
+        [`ondemand-${suffix}`, port, region, matchId, nodeId],
       );
       await postgres.query(
         "UPDATE matches SET server_id = $2::uuid WHERE id = $1::uuid",
@@ -122,29 +120,21 @@ describe("utility practice servers (SQL-driven)", () => {
          RETURNING id::text AS id`,
         [host, region, matchId],
       );
-      return session.id;
+      return { sessionId: session.id, port };
     }
 
-    it("dials the Steam relay token for a relay region", async () => {
-      const sessionId = await renderSessionOn({
-        isLan: false,
-        steamRelay: "[A:1:3671442435:50976]",
-      });
+    function hashCode(str: string): number {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+      return h;
+    }
+
+    it("connects over the shared-node loopback, never the relay token or public IP", async () => {
+      const { sessionId, port } = await renderSession();
 
       const connection = await makeService().renderConnection(sessionId);
 
-      expect(connection?.addr).toBe("[A:1:3671442435:50976]");
-    });
-
-    it("dials host:port when the region has no relay", async () => {
-      const sessionId = await renderSessionOn({
-        isLan: true,
-        steamRelay: null,
-      });
-
-      const connection = await makeService().renderConnection(sessionId);
-
-      expect(connection?.addr).toBe("76.139.106.28:30020");
+      expect(connection?.addr).toBe(`127.0.0.1:${port}`);
     });
   });
 

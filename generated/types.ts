@@ -140910,6 +140910,9 @@ export default {
             ]
         },
         "utility_practice_sessions": {
+            "access": [
+                84
+            ],
             "can_manage": [
                 6
             ],
@@ -141246,6 +141249,9 @@ export default {
             "_or": [
                 6267
             ],
+            "access": [
+                86
+            ],
             "can_manage": [
                 7
             ],
@@ -141356,6 +141362,9 @@ export default {
             ]
         },
         "utility_practice_sessions_insert_input": {
+            "access": [
+                84
+            ],
             "collection": [
                 5642
             ],
@@ -141439,6 +141448,9 @@ export default {
             ]
         },
         "utility_practice_sessions_max_fields": {
+            "access": [
+                84
+            ],
             "collection_id": [
                 6302
             ],
@@ -141498,6 +141510,9 @@ export default {
             ]
         },
         "utility_practice_sessions_max_order_by": {
+            "access": [
+                3509
+            ],
             "collection_id": [
                 3509
             ],
@@ -141551,6 +141566,9 @@ export default {
             ]
         },
         "utility_practice_sessions_min_fields": {
+            "access": [
+                84
+            ],
             "collection_id": [
                 6302
             ],
@@ -141610,6 +141628,9 @@ export default {
             ]
         },
         "utility_practice_sessions_min_order_by": {
+            "access": [
+                3509
+            ],
             "collection_id": [
                 3509
             ],
@@ -141699,6 +141720,9 @@ export default {
             ]
         },
         "utility_practice_sessions_order_by": {
+            "access": [
+                3509
+            ],
             "can_manage": [
                 3509
             ],
@@ -141808,6 +141832,9 @@ export default {
         "utility_practice_sessions_select_column_utility_practice_sessions_aggregate_bool_exp_bool_and_arguments_columns": {},
         "utility_practice_sessions_select_column_utility_practice_sessions_aggregate_bool_exp_bool_or_arguments_columns": {},
         "utility_practice_sessions_set_input": {
+            "access": [
+                84
+            ],
             "collection_id": [
                 6302
             ],
@@ -141929,6 +141956,9 @@ export default {
             ]
         },
         "utility_practice_sessions_stream_cursor_value_input": {
+            "access": [
+                84
+            ],
             "collection_id": [
                 6302
             ],
