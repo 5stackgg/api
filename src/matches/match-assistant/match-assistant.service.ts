@@ -1008,6 +1008,13 @@ export class MatchAssistantService {
                       {
                         name: "game-server",
                         image: pluginImage,
+                        // On-demand servers boot fresh and the plugin image is
+                        // a mutable channel tag (dev-sw / latest), so a cached
+                        // copy on the node is a stale plugin. Always re-checks
+                        // the manifest -- cheap when the digest is unchanged,
+                        // and the only way a pushed dev image actually reaches
+                        // the next server.
+                        imagePullPolicy: "Always",
                         ...(cpus
                           ? {
                               resources: {
