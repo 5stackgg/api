@@ -274,22 +274,29 @@ export class UtilityPracticeService {
     match_id: string;
     plugin_runtime: string;
   } | null> {
-    // get_server_host is the platform's own answer to "what do I connect to":
-    // the Steam relay address (an SDR token) for a relay region, else host:port.
-    // A relay server binds a Steam P2P listen socket ONLY and answers no raw
-    // ip:port -- dialling the IP landed the pod on cs2's loopback background
-    // map. Use the same target a real player gets.
+    // A render pod is NOT an internet player, and the address a player would
+    // use is wrong for it three ways over, all proven on a live pod:
+    //   - the Steam relay token (get_server_host) -> the LAN-only anonymous
+    //     server refuses relay, and cs2 falls back to its own loopback map;
+    //   - the public host:port -> NAT hairpin, dropped by the router;
+    //   - the node mesh IP -> the server answers only a challenge, not the
+    //     connect.
+    // The render pod and its practice server share ONE node's host network
+    // (both hostNetwork, and a render's server is co-located on the render's
+    // node), and an A2S query to 127.0.0.1:<port> from the pod returns the
+    // server's full info. Loopback also counts as LAN, so the LAN-only server
+    // accepts it. So: connect over the loopback they share.
     const [row] = await this.postgres.query<
       Array<{
         match_id: string;
         password: string;
-        addr: string | null;
+        port: number | null;
         plugin_runtime: string;
       }>
     >(
       `SELECT m.id::text AS match_id,
               m.password,
-              public.get_server_host(srv) AS addr,
+              srv.port,
               COALESCE(n.pin_plugin_runtime, public.active_plugin_runtime())
                 AS plugin_runtime
          FROM public.utility_practice_sessions s
@@ -300,12 +307,12 @@ export class UtilityPracticeService {
       [sessionId],
     );
 
-    if (!row?.password || !row?.addr) {
+    if (!row?.password || !row?.port) {
       return null;
     }
 
     return {
-      addr: row.addr,
+      addr: `127.0.0.1:${row.port}`,
       password: row.password,
       match_id: row.match_id,
       plugin_runtime: row.plugin_runtime,

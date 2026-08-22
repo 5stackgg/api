@@ -126481,6 +126481,8 @@ input utility_practice_invites_variance_order_by {
 columns and relationships of "utility_practice_sessions"
 """
 type utility_practice_sessions {
+  access: String!
+
   """
   A computed field, executes function "can_manage_utility_practice_session"
   """
@@ -126678,6 +126680,7 @@ input utility_practice_sessions_bool_exp {
   _and: [utility_practice_sessions_bool_exp!]
   _not: utility_practice_sessions_bool_exp
   _or: [utility_practice_sessions_bool_exp!]
+  access: String_comparison_exp
   can_manage: Boolean_comparison_exp
   can_view: Boolean_comparison_exp
   collection: utility_collections_bool_exp
@@ -126748,6 +126751,7 @@ input utility_practice_sessions_inc_input {
 input type for inserting data into table "utility_practice_sessions"
 """
 input utility_practice_sessions_insert_input {
+  access: String
   collection: utility_collections_obj_rel_insert_input
   collection_id: uuid
   created_at: timestamptz
@@ -126778,6 +126782,7 @@ input utility_practice_sessions_insert_input {
 
 """aggregate max on columns"""
 type utility_practice_sessions_max_fields {
+  access: String
   collection_id: uuid
 
   """
@@ -126810,6 +126815,7 @@ type utility_practice_sessions_max_fields {
 order by max() on columns of table "utility_practice_sessions"
 """
 input utility_practice_sessions_max_order_by {
+  access: order_by
   collection_id: order_by
   created_at: order_by
   empty_since: order_by
@@ -126830,6 +126836,7 @@ input utility_practice_sessions_max_order_by {
 
 """aggregate min on columns"""
 type utility_practice_sessions_min_fields {
+  access: String
   collection_id: uuid
 
   """
@@ -126862,6 +126869,7 @@ type utility_practice_sessions_min_fields {
 order by min() on columns of table "utility_practice_sessions"
 """
 input utility_practice_sessions_min_order_by {
+  access: order_by
   collection_id: order_by
   created_at: order_by
   empty_since: order_by
@@ -126912,6 +126920,7 @@ input utility_practice_sessions_on_conflict {
 
 """Ordering options when selecting data from "utility_practice_sessions"."""
 input utility_practice_sessions_order_by {
+  access: order_by
   can_manage: order_by
   can_view: order_by
   collection: utility_collections_order_by
@@ -126954,6 +126963,9 @@ input utility_practice_sessions_pk_columns_input {
 select columns of table "utility_practice_sessions"
 """
 enum utility_practice_sessions_select_column {
+  """column name"""
+  access
+
   """column name"""
   collection_id
 
@@ -127038,6 +127050,7 @@ enum utility_practice_sessions_select_column_utility_practice_sessions_aggregate
 input type for updating data in table "utility_practice_sessions"
 """
 input utility_practice_sessions_set_input {
+  access: String
   collection_id: uuid
   created_at: timestamptz
   empty_since: timestamptz
@@ -127108,6 +127121,7 @@ input utility_practice_sessions_stream_cursor_input {
 
 """Initial value of the column from where the streaming should start"""
 input utility_practice_sessions_stream_cursor_value_input {
+  access: String
   collection_id: uuid
   created_at: timestamptz
   empty_since: timestamptz
@@ -127145,6 +127159,9 @@ input utility_practice_sessions_sum_order_by {
 update columns of table "utility_practice_sessions"
 """
 enum utility_practice_sessions_update_column {
+  """column name"""
+  access
+
   """column name"""
   collection_id
 
