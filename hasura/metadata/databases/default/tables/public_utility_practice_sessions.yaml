@@ -89,8 +89,11 @@ select_permissions:
         - connection_link
         - connection_string
       filter:
-        can_view:
-          _eq: true
+        _and:
+          - can_view:
+              _eq: true
+          - is_render:
+              _eq: false
       allow_aggregations: true
     comment: ''
   - role: verified_user
@@ -121,8 +124,11 @@ select_permissions:
         - connection_link
         - connection_string
       filter:
-        can_view:
-          _eq: true
+        _and:
+          - can_view:
+              _eq: true
+          - is_render:
+              _eq: false
       allow_aggregations: true
     comment: ''
   - role: streamer
@@ -153,8 +159,11 @@ select_permissions:
         - connection_link
         - connection_string
       filter:
-        can_view:
-          _eq: true
+        _and:
+          - can_view:
+              _eq: true
+          - is_render:
+              _eq: false
       allow_aggregations: true
     comment: ''
   - role: match_organizer
@@ -185,8 +194,11 @@ select_permissions:
         - connection_link
         - connection_string
       filter:
-        can_view:
-          _eq: true
+        _and:
+          - can_view:
+              _eq: true
+          - is_render:
+              _eq: false
       allow_aggregations: true
     comment: ''
   - role: tournament_organizer
@@ -217,8 +229,11 @@ select_permissions:
         - connection_link
         - connection_string
       filter:
-        can_view:
-          _eq: true
+        _and:
+          - can_view:
+              _eq: true
+          - is_render:
+              _eq: false
       allow_aggregations: true
     comment: ''
   - role: moderator
@@ -249,8 +264,11 @@ select_permissions:
         - connection_link
         - connection_string
       filter:
-        can_view:
-          _eq: true
+        _and:
+          - can_view:
+              _eq: true
+          - is_render:
+              _eq: false
       allow_aggregations: true
     comment: ''
   - role: administrator

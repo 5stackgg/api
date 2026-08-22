@@ -236,7 +236,7 @@ describe("BatchUtilityRenderJob", () => {
 
     expect(practice.startForRender).toHaveBeenCalledWith({
       mapName: "de_mirage",
-      hostSteamId: "76561198000000002",
+      requestedBySteamId: "76561198000000002",
     });
     expect(renders.attachSession).toHaveBeenCalledWith(
       ["render-1"],

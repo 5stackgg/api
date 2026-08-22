@@ -69,7 +69,7 @@ export class BatchUtilityRenderJob extends WorkerHost {
       try {
         session = await this.practice.startForRender({
           mapName,
-          hostSteamId: await this.hostFor(inFlight[0].id),
+          requestedBySteamId: await this.requesterFor(inFlight[0].id),
         });
       } catch (error) {
         const message = (error as Error)?.message ?? "no practice server";
@@ -304,7 +304,7 @@ export class BatchUtilityRenderJob extends WorkerHost {
     }
   }
 
-  private async hostFor(renderId: string): Promise<string> {
+  private async requesterFor(renderId: string): Promise<string> {
     const steamId = await this.renders.requesterFor(renderId);
     if (!steamId) {
       throw new Error("render has no requester to host its practice session");

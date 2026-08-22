@@ -117,11 +117,12 @@ insert_permissions:
   - role: administrator
     permission:
       check: {}
+      set:
+        owner_steam_id: x-hasura-user-id
       columns:
         - name
         - description
         - map_name
-        - owner_steam_id
         - team_id
         - visibility
     comment: ''

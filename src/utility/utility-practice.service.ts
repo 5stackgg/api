@@ -21,7 +21,7 @@ import {
 export type UtilityPracticeSession = {
   id: string;
   match_id: string | null;
-  host_steam_id: string;
+  host_steam_id: string | null;
   team_id: string | null;
   map_name: string;
   region: string | null;
@@ -170,7 +170,7 @@ export class UtilityPracticeService {
 
       try {
         const matchId = await this.createPracticeMatch({
-          hostSteamId: user.steam_id,
+          organizerSteamId: user.steam_id,
           mapName,
           region,
           serverId: server?.id ?? null,
@@ -208,7 +208,10 @@ export class UtilityPracticeService {
    */
   public async startForRender(options: {
     mapName: string;
-    hostSteamId: string;
+    // Who asked for the render -- used only as the match organizer (that column
+    // is NOT NULL) and for recovery/audit. The SESSION itself is host-less:
+    // system-owned, so it never reads as this person's practice server.
+    requestedBySteamId: string;
     region?: string | null;
   }): Promise<UtilityPracticeSession> {
     if (!(await this.isEnabled())) {
@@ -229,7 +232,7 @@ export class UtilityPracticeService {
     // player's session respects.
     await this.assertServerHeadroom(region);
 
-    const session = await this.insertSession(options.hostSteamId, {
+    const session = await this.insertSession(null, {
       mapName,
       region,
       teamId: null,
@@ -242,10 +245,11 @@ export class UtilityPracticeService {
 
     try {
       const matchId = await this.createPracticeMatch({
-        hostSteamId: options.hostSteamId,
+        organizerSteamId: options.requestedBySteamId,
         mapName,
         region,
         serverId: null,
+        isRender: true,
       });
 
       await this.postgres.query(
@@ -674,7 +678,7 @@ export class UtilityPracticeService {
   // "your server is ready" a single buzz rather than one per poll.
   public async markReady(matchId: string): Promise<void> {
     const [session] = await this.postgres.query<
-      Array<{ id: string; host_steam_id: string; map_name: string }>
+      Array<{ id: string; host_steam_id: string | null; map_name: string }>
     >(
       `UPDATE public.utility_practice_sessions
           SET status = 'Ready', failure_reason = NULL, last_occupied_at = now()
@@ -692,7 +696,7 @@ export class UtilityPracticeService {
 
   private async notifyReady(
     matchId: string,
-    session: { id: string; host_steam_id: string; map_name: string },
+    session: { id: string; host_steam_id: string | null; map_name: string },
   ): Promise<void> {
     // The host plus anyone already added to the lineup: they were let in while
     // the server was still booting, so the link they were handed only starts
@@ -706,12 +710,18 @@ export class UtilityPracticeService {
       [matchId],
     );
 
+    // A render session has no host and no roster -- nobody to tell it is ready.
     const steamIds = [
-      ...new Set([
-        session.host_steam_id,
-        ...players.map((player) => player.steam_id),
-      ]),
+      ...new Set(
+        [
+          session.host_steam_id,
+          ...players.map((player) => player.steam_id),
+        ].filter((id): id is string => id !== null),
+      ),
     ];
+    if (steamIds.length === 0) {
+      return;
+    }
 
     const map = NotificationsService.escapeHtml(session.map_name);
 
@@ -1071,7 +1081,7 @@ export class UtilityPracticeService {
   }
 
   private async insertSession(
-    hostSteamId: string,
+    hostSteamId: string | null,
     options: {
       mapName: string;
       region: string;
@@ -1130,10 +1140,13 @@ export class UtilityPracticeService {
   // a practice session must trip neither. The host is added to the lineup
   // explicitly below because of it.
   private async createPracticeMatch(options: {
-    hostSteamId: string;
+    // A human session's host, or the requester for a render. Either way this is
+    // the match's organizer (matches.organizer_steam_id is NOT NULL).
+    organizerSteamId: string;
     mapName: string;
     region: string;
     serverId?: string | null;
+    isRender?: boolean;
   }): Promise<string> {
     const mapId = await this.mapId(options.mapName);
 
@@ -1184,7 +1197,7 @@ export class UtilityPracticeService {
         __args: {
           object: {
             match_options_id: matchOptions.id,
-            organizer_steam_id: options.hostSteamId,
+            organizer_steam_id: options.organizerSteamId,
             region: options.region,
             source: "practice",
             label: "Utility Practice",
@@ -1195,17 +1208,23 @@ export class UtilityPracticeService {
       },
     });
 
-    await this.hasura.mutation({
-      insert_match_lineup_players_one: {
-        __args: {
-          object: {
-            match_lineup_id: match.lineup_1_id,
-            steam_id: options.hostSteamId,
+    // A human practice match seats its host in the lineup so the roster lets
+    // them in. A render has no human on the roster -- the pod authorizes on the
+    // match password -- so seating one would only re-introduce a person the
+    // session was made not to have.
+    if (!options.isRender) {
+      await this.hasura.mutation({
+        insert_match_lineup_players_one: {
+          __args: {
+            object: {
+              match_lineup_id: match.lineup_1_id,
+              steam_id: options.organizerSteamId,
+            },
           },
+          __typename: true,
         },
-        __typename: true,
-      },
-    });
+      });
+    }
 
     if (options.serverId) {
       // Claim it here rather than leaving it to assignServer: that searches the
