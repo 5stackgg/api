@@ -1,0 +1,342 @@
+table:
+  name: utility_collection_items
+  schema: public
+object_relationships:
+  - name: collection
+    using:
+      foreign_key_constraint_on: collection_id
+  - name: utility_lineup
+    using:
+      foreign_key_constraint_on: utility_lineup_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        collection:
+          can_edit:
+            _eq: true
+      columns:
+        - collection_id
+        - utility_lineup_id
+        - position
+        - note
+    comment: ''
+  - role: verified_user
+    permission:
+      check:
+        collection:
+          can_edit:
+            _eq: true
+      columns:
+        - collection_id
+        - utility_lineup_id
+        - position
+        - note
+    comment: ''
+  - role: streamer
+    permission:
+      check:
+        collection:
+          can_edit:
+            _eq: true
+      columns:
+        - collection_id
+        - utility_lineup_id
+        - position
+        - note
+    comment: ''
+  - role: match_organizer
+    permission:
+      check:
+        collection:
+          can_edit:
+            _eq: true
+      columns:
+        - collection_id
+        - utility_lineup_id
+        - position
+        - note
+    comment: ''
+  - role: tournament_organizer
+    permission:
+      check:
+        collection:
+          can_edit:
+            _eq: true
+      columns:
+        - collection_id
+        - utility_lineup_id
+        - position
+        - note
+    comment: ''
+  - role: moderator
+    permission:
+      check:
+        collection:
+          can_edit:
+            _eq: true
+      columns:
+        - collection_id
+        - utility_lineup_id
+        - position
+        - note
+    comment: ''
+  - role: administrator
+    permission:
+      check: {}
+      columns:
+        - collection_id
+        - utility_lineup_id
+        - position
+        - note
+    comment: ''
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - collection_id
+        - utility_lineup_id
+        - position
+        - note
+        - created_at
+      filter:
+        collection:
+          visibility:
+            _eq: Public
+      allow_aggregations: true
+    comment: ''
+  - role: user
+    permission:
+      columns:
+        - collection_id
+        - utility_lineup_id
+        - position
+        - note
+        - created_at
+      filter:
+        collection:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: verified_user
+    permission:
+      columns:
+        - collection_id
+        - utility_lineup_id
+        - position
+        - note
+        - created_at
+      filter:
+        collection:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: streamer
+    permission:
+      columns:
+        - collection_id
+        - utility_lineup_id
+        - position
+        - note
+        - created_at
+      filter:
+        collection:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: match_organizer
+    permission:
+      columns:
+        - collection_id
+        - utility_lineup_id
+        - position
+        - note
+        - created_at
+      filter:
+        collection:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: tournament_organizer
+    permission:
+      columns:
+        - collection_id
+        - utility_lineup_id
+        - position
+        - note
+        - created_at
+      filter:
+        collection:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: moderator
+    permission:
+      columns:
+        - collection_id
+        - utility_lineup_id
+        - position
+        - note
+        - created_at
+      filter:
+        collection:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: administrator
+    permission:
+      columns:
+        - collection_id
+        - utility_lineup_id
+        - position
+        - note
+        - created_at
+      filter: {}
+      allow_aggregations: true
+    comment: ''
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - position
+        - note
+      filter:
+        collection:
+          can_edit:
+            _eq: true
+      check:
+        collection:
+          can_edit:
+            _eq: true
+    comment: ''
+  - role: verified_user
+    permission:
+      columns:
+        - position
+        - note
+      filter:
+        collection:
+          can_edit:
+            _eq: true
+      check:
+        collection:
+          can_edit:
+            _eq: true
+    comment: ''
+  - role: streamer
+    permission:
+      columns:
+        - position
+        - note
+      filter:
+        collection:
+          can_edit:
+            _eq: true
+      check:
+        collection:
+          can_edit:
+            _eq: true
+    comment: ''
+  - role: match_organizer
+    permission:
+      columns:
+        - position
+        - note
+      filter:
+        collection:
+          can_edit:
+            _eq: true
+      check:
+        collection:
+          can_edit:
+            _eq: true
+    comment: ''
+  - role: tournament_organizer
+    permission:
+      columns:
+        - position
+        - note
+      filter:
+        collection:
+          can_edit:
+            _eq: true
+      check:
+        collection:
+          can_edit:
+            _eq: true
+    comment: ''
+  - role: moderator
+    permission:
+      columns:
+        - position
+        - note
+      filter:
+        collection:
+          can_edit:
+            _eq: true
+      check:
+        collection:
+          can_edit:
+            _eq: true
+    comment: ''
+  - role: administrator
+    permission:
+      columns:
+        - position
+        - note
+      filter: {}
+      check: {}
+    comment: ''
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        collection:
+          can_edit:
+            _eq: true
+    comment: ''
+  - role: verified_user
+    permission:
+      filter:
+        collection:
+          can_edit:
+            _eq: true
+    comment: ''
+  - role: streamer
+    permission:
+      filter:
+        collection:
+          can_edit:
+            _eq: true
+    comment: ''
+  - role: match_organizer
+    permission:
+      filter:
+        collection:
+          can_edit:
+            _eq: true
+    comment: ''
+  - role: tournament_organizer
+    permission:
+      filter:
+        collection:
+          can_edit:
+            _eq: true
+    comment: ''
+  - role: moderator
+    permission:
+      filter:
+        collection:
+          can_edit:
+            _eq: true
+    comment: ''
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ''

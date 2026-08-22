@@ -63,12 +63,14 @@ select_permissions:
         - bombs
         - players
         - created_at
+        - parser_version
+        - playback_version
       computed_fields:
         - download_url
         - playback_url
       filter: {}
       allow_aggregations: true
-    comment: ""
+    comment: ''
 event_triggers:
   - name: match_map_demo_events
     definition:

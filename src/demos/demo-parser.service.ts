@@ -117,6 +117,10 @@ export type ParsedPosition = {
   has_bomb?: boolean;
   has_defuser?: boolean;
   active_weapon?: string;
+  // The engine's FL_DUCKING flag. A crouch still animating reads as standing.
+  // Stance moves the release point by ~18 units, so a lineup mined out of a
+  // demo cannot state its own technique without it.
+  ducked?: boolean;
 };
 
 // Per-engagement aim metrics emitted by the parser; consumed only by
@@ -189,10 +193,11 @@ export type ParsedGrenadeEvent = {
   z?: number;
 };
 
-// One smoke's occupancy grid, derived by the parser from the map's collision
-// mesh rather than assumed to be a sphere. `occ` is a base64 bitmask of
-// dx*dy*dz bits, x-major then y then z: bit (k*dy + j)*dx + i is the cell whose
-// minimum corner sits at (ox,oy,oz) + (i,j,k)*vs, in source units.
+// One smoke's density grid, derived by the parser from the map's collision mesh
+// rather than assumed to be a sphere. `den` is base64, two cells per byte with
+// the low nibble first, over dx*dy*dz cells, x-major then y then z: cell
+// (i,j,k) is at index (k*dy + j)*dx + i and has its minimum corner at
+// (ox,oy,oz) + (i,j,k)*vs, in source units. 0 is clear, 15 is fully dense.
 export type ParsedSmokeVolume = {
   gid?: number;
   round?: number;
@@ -205,7 +210,151 @@ export type ParsedSmokeVolume = {
   dx: number;
   dy: number;
   dz: number;
-  occ?: string;
+  den?: string;
+};
+
+// What POST /smoke-volume answers with: the same EventSmokeVolume the playback
+// blob carries, inline, plus the two numbers only the standalone endpoint knows.
+export type ParsedSmokeVolumeResponse = ParsedSmokeVolume & {
+  map?: string;
+  cells?: number;
+  radius?: number;
+};
+
+export type ParsedGeometryPoint = { x: number; y: number; z: number };
+
+// One end-to-end line to test. Both ends are eye positions for /sightlines and
+// feet positions for /oneway (which derives the eyes from stance itself).
+export type ParsedSightlinePair = {
+  from: ParsedGeometryPoint;
+  to: ParsedGeometryPoint;
+};
+
+// A cloud, named either by the point it blooms from or by a grid already
+// computed. Supplying the grid skips the flood, which is the expensive half.
+export type ParsedCloudSpec = {
+  at?: ParsedGeometryPoint;
+  volume?: ParsedSmokeVolume;
+};
+
+export type ParsedSightlineRequest = {
+  map: string;
+  pairs: Array<ParsedSightlinePair>;
+  smokes?: Array<ParsedCloudSpec>;
+  threshold?: number;
+};
+
+export type ParsedSightlineResult = {
+  blocked: boolean;
+  blocked_by?: string;
+  world_blocked: boolean;
+  depth: number;
+  transmittance: number;
+  // One entry per cloud in the request, in the order they were sent. This is
+  // what makes a batched "which of these smokes closes this angle" answerable
+  // in one call instead of one call per candidate.
+  per_smoke?: Array<number>;
+  distance: number;
+};
+
+export type ParsedSightlineResponse = {
+  map?: string;
+  threshold: number;
+  smokes?: Array<{
+    center: ParsedGeometryPoint;
+    model: string;
+    cells?: number;
+    radius: number;
+    sealed?: boolean;
+  }>;
+  results: Array<ParsedSightlineResult>;
+};
+
+export type ParsedOneWayRequest = {
+  map: string;
+  pairs: Array<ParsedSightlinePair>;
+  smokes?: Array<ParsedCloudSpec>;
+  positions?: "feet" | "eyes";
+  threshold?: number;
+};
+
+export type ParsedOneWayResult = {
+  one_way: boolean;
+  favors?: string;
+  cause?: string;
+  confidence: string;
+  contested?: boolean;
+};
+
+export type ParsedOneWayResponse = {
+  map?: string;
+  threshold: number;
+  results: Array<ParsedOneWayResult>;
+  caveats?: Array<string>;
+};
+
+// One stored lineup as /drift wants it. `utility_type` uses the parser's own
+// spellings, which are not this database's -- translate it with
+// DemoParserService.parserUtilityType() rather than passing the column through.
+export type ParsedDriftLineup = {
+  id: string;
+  utility_type: string;
+  initial_position?: ParsedGeometryPoint;
+  initial_velocity?: ParsedGeometryPoint;
+};
+
+export type ParsedDriftRequest = {
+  map: string;
+  from?: string;
+  to?: string;
+  lineups: Array<ParsedDriftLineup>;
+  unchanged_radius?: number;
+  major_radius?: number;
+};
+
+export type ParsedDriftVerdict =
+  | "unchanged"
+  | "moved"
+  | "broken"
+  | "unsimulatable";
+
+export type ParsedDriftResult = {
+  index: number;
+  id?: string;
+  verdict: ParsedDriftVerdict;
+  reason?: string;
+  severity?: string;
+  distance?: number;
+  distance_xy?: number;
+  distance_z?: number;
+};
+
+export type ParsedDriftResponse = {
+  map?: string;
+  from?: string;
+  to?: string;
+  thresholds?: { unchanged: number; major: number };
+  summary?: {
+    lineups: number;
+    unchanged: number;
+    moved: number;
+    broken: number;
+    unsimulatable: number;
+    max_distance: number;
+  };
+  results?: Array<ParsedDriftResult>;
+  caveats?: Array<string>;
+};
+
+// Every geometry endpoint can answer "not on this map" (404), "that point is
+// inside a wall" (422) or "busy" (503), and none of those is this API failing.
+// The error travels with the result so a caller can degrade with a reason
+// instead of throwing. A null `data` is the failure; `status` is null when the
+// parser was never reached at all.
+export type DemoParserResult<T> = {
+  data: T | null;
+  status: number | null;
+  error: string | null;
 };
 
 // One molotov or incendiary burn. Flame positions come straight off the demo —
@@ -222,6 +371,11 @@ export type ParsedInferno = {
 };
 
 export type ParsedDemo = {
+  // The PARSER's own contract version, not the playback blob's
+  // (DEMO_METADATA_VERSION). Different numbers for different things: this one
+  // says what the parser emits, that one says what we store. Absent on a
+  // response from a parser older than the constant.
+  schema_version?: number;
   total_ticks: number;
   tick_rate: number;
   map_name?: string;
@@ -278,6 +432,35 @@ export type ParsedDemo = {
 
 @Injectable()
 export class DemoParserService {
+  // The one grenade the parser and e_utility_types disagree about: the parser
+  // -- and the simulator behind /drift -- says "HE", this database says
+  // "HighExplosive".
+  //
+  // Both directions live here, on the service that owns the parser's contract,
+  // because getting either one wrong fails SILENTLY and in opposite ways: an
+  // unmapped throw is dropped on the way in, and an untranslated lineup comes
+  // back "unsimulatable" on the way out, which reads as a real answer rather
+  // than a bug. It has already been rediscovered twice.
+  private static readonly UTILITY_TYPES: Readonly<Record<string, string>> = {
+    Flash: "Flash",
+    HE: "HighExplosive",
+    HighExplosive: "HighExplosive",
+    Smoke: "Smoke",
+    Molotov: "Molotov",
+    Decoy: "Decoy",
+  };
+
+  // Parser spelling to e_utility_types. Undefined is the answer for a grenade
+  // this database has no name for, and a caller must drop it rather than guess.
+  public static utilityType(value: unknown): string | undefined {
+    return DemoParserService.UTILITY_TYPES[String(value)];
+  }
+
+  // e_utility_types to the spelling the parser and the simulator answer to.
+  public static parserUtilityType(value: unknown): string {
+    return String(value) === "HighExplosive" ? "HE" : String(value);
+  }
+
   private readonly appConfig: AppConfig;
 
   constructor(
@@ -386,6 +569,140 @@ export class DemoParserService {
       return null;
     }
     return (await res.json()) as ParsedDemo;
+  }
+
+  // The measured bloom at a point: the free space a smoke would actually fill
+  // there, flooded against the map's collision mesh. Never a hard failure -- a
+  // map with no published mesh, a point that resolves inside geometry, and a
+  // parser that is not deployed are all normal, and all of them mean the viewer
+  // falls back to drawing a sphere.
+  public async smokeVolume(
+    mapName: string,
+    point: { x: number; y: number; z: number },
+  ): Promise<ParsedSmokeVolumeResponse | null> {
+    const url = `${this.appConfig.demoParserUrl}/smoke-volume`;
+
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          map: mapName,
+          x: point.x,
+          y: point.y,
+          z: point.z,
+        }),
+        signal: AbortSignal.timeout(30_000),
+      });
+    } catch (error) {
+      this.logger.warn(
+        `[smoke-volume] ${mapName} unreachable: ${(error as Error)?.message ?? String(error)}`,
+      );
+      return null;
+    }
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      this.logger.warn(
+        `[smoke-volume] ${mapName} ${res.status}: ${text.slice(0, 200).trim()}`,
+      );
+      return null;
+    }
+
+    try {
+      const volume = (await res.json()) as ParsedSmokeVolumeResponse;
+      // A grid with a zero dimension holds no cells at all; embedding it would
+      // make the viewer render an empty box instead of falling back.
+      if (!volume?.dx || !volume?.dy || !volume?.dz) {
+        return null;
+      }
+      return volume;
+    } catch (error) {
+      this.logger.warn(
+        `[smoke-volume] ${mapName} sent a body that is not a volume: ${(error as Error)?.message}`,
+      );
+      return null;
+    }
+  }
+
+  // Density-aware occlusion: for each pair, how much smoke sits on the line and
+  // whether the map was already in the way. A line the map blocks is attributed
+  // to "world", so a lineup can never take credit for a wall.
+  public async sightlines(
+    request: ParsedSightlineRequest,
+  ): Promise<DemoParserResult<ParsedSightlineResponse>> {
+    return await this.geometry<ParsedSightlineResponse>(
+      "/sightlines",
+      request,
+      60_000,
+    );
+  }
+
+  // Asymmetric visibility across stances. Eye-to-eye can never be one-way --
+  // the integral is symmetric -- so every asymmetry here comes from stance and
+  // from which body samples each side can see.
+  public async oneWay(
+    request: ParsedOneWayRequest,
+  ): Promise<DemoParserResult<ParsedOneWayResponse>> {
+    return await this.geometry<ParsedOneWayResponse>(
+      "/oneway",
+      request,
+      60_000,
+    );
+  }
+
+  // Which lineups a map patch moved. The endpoint holds two meshes for the life
+  // of a request and serializes itself, so a caller waits in line: the timeout
+  // covers queueing behind another map's scan, not just the flights.
+  public async drift(
+    request: ParsedDriftRequest,
+  ): Promise<DemoParserResult<ParsedDriftResponse>> {
+    return await this.geometry<ParsedDriftResponse>(
+      "/drift",
+      request,
+      15 * 60_000,
+    );
+  }
+
+  private async geometry<T>(
+    path: string,
+    body: unknown,
+    timeoutMs: number,
+  ): Promise<DemoParserResult<T>> {
+    const url = `${this.appConfig.demoParserUrl}${path}`;
+
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+    } catch (error) {
+      const message = (error as Error)?.message ?? String(error);
+      this.logger.warn(`[demo-parser] ${path} unreachable: ${message}`);
+      return { data: null, status: null, error: "demo-parser unreachable" };
+    }
+
+    if (!res.ok) {
+      const text = (await res.text().catch(() => "")).slice(0, 300).trim();
+      this.logger.warn(`[demo-parser] ${path} ${res.status}: ${text}`);
+      return {
+        data: null,
+        status: res.status,
+        error: text || `demo-parser responded ${res.status}`,
+      };
+    }
+
+    try {
+      return { data: (await res.json()) as T, status: res.status, error: null };
+    } catch (error) {
+      const message = (error as Error)?.message ?? String(error);
+      this.logger.warn(`[demo-parser] ${path} sent an unreadable body`);
+      return { data: null, status: res.status, error: message };
+    }
   }
 
   public async parseFromUrl(demoUrl: string): Promise<ParsedDemo | null> {

@@ -1,0 +1,156 @@
+table:
+  name: utility_lineup_repairs
+  schema: public
+object_relationships:
+  - name: utility_lineup
+    using:
+      foreign_key_constraint_on: utility_lineup_id
+  - name: repaired_utility_lineup
+    using:
+      foreign_key_constraint_on: repaired_utility_lineup_id
+  - name: utility_drift_scan
+    using:
+      foreign_key_constraint_on: utility_drift_scan_id
+  - name: utility_practice_session
+    using:
+      foreign_key_constraint_on: utility_practice_session_id
+  - name: requested_by
+    using:
+      foreign_key_constraint_on: requested_by_steam_id
+insert_permissions: []
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - id
+        - utility_lineup_id
+        - utility_drift_scan_id
+        - utility_practice_session_id
+        - requested_by_steam_id
+        - status
+        - drift_distance
+        - repaired_utility_lineup_id
+        - expires_at
+        - created_at
+        - repaired_at
+      filter:
+        requested_by_steam_id:
+          _eq: X-Hasura-User-Id
+      allow_aggregations: true
+    comment: 'Your own repairs only: a repair names who asked for it.'
+  - role: verified_user
+    permission:
+      columns:
+        - id
+        - utility_lineup_id
+        - utility_drift_scan_id
+        - utility_practice_session_id
+        - requested_by_steam_id
+        - status
+        - drift_distance
+        - repaired_utility_lineup_id
+        - expires_at
+        - created_at
+        - repaired_at
+      filter:
+        requested_by_steam_id:
+          _eq: X-Hasura-User-Id
+      allow_aggregations: true
+    comment: 'Your own repairs only: a repair names who asked for it.'
+  - role: streamer
+    permission:
+      columns:
+        - id
+        - utility_lineup_id
+        - utility_drift_scan_id
+        - utility_practice_session_id
+        - requested_by_steam_id
+        - status
+        - drift_distance
+        - repaired_utility_lineup_id
+        - expires_at
+        - created_at
+        - repaired_at
+      filter:
+        requested_by_steam_id:
+          _eq: X-Hasura-User-Id
+      allow_aggregations: true
+    comment: 'Your own repairs only: a repair names who asked for it.'
+  - role: match_organizer
+    permission:
+      columns:
+        - id
+        - utility_lineup_id
+        - utility_drift_scan_id
+        - utility_practice_session_id
+        - requested_by_steam_id
+        - status
+        - drift_distance
+        - repaired_utility_lineup_id
+        - expires_at
+        - created_at
+        - repaired_at
+      filter:
+        requested_by_steam_id:
+          _eq: X-Hasura-User-Id
+      allow_aggregations: true
+    comment: 'Your own repairs only: a repair names who asked for it.'
+  - role: tournament_organizer
+    permission:
+      columns:
+        - id
+        - utility_lineup_id
+        - utility_drift_scan_id
+        - utility_practice_session_id
+        - requested_by_steam_id
+        - status
+        - drift_distance
+        - repaired_utility_lineup_id
+        - expires_at
+        - created_at
+        - repaired_at
+      filter:
+        requested_by_steam_id:
+          _eq: X-Hasura-User-Id
+      allow_aggregations: true
+    comment: 'Your own repairs only: a repair names who asked for it.'
+  - role: moderator
+    permission:
+      columns:
+        - id
+        - utility_lineup_id
+        - utility_drift_scan_id
+        - utility_practice_session_id
+        - requested_by_steam_id
+        - status
+        - drift_distance
+        - repaired_utility_lineup_id
+        - expires_at
+        - created_at
+        - repaired_at
+      filter: {}
+      allow_aggregations: true
+    comment: 'Moderation reads every repair: verified_at and archival are decided against them.'
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - utility_lineup_id
+        - utility_drift_scan_id
+        - utility_practice_session_id
+        - requested_by_steam_id
+        - status
+        - drift_distance
+        - repaired_utility_lineup_id
+        - expires_at
+        - created_at
+        - repaired_at
+      filter: {}
+      allow_aggregations: true
+    comment: ''
+update_permissions: []
+delete_permissions:
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ''

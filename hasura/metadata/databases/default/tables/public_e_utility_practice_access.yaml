@@ -1,0 +1,69 @@
+table:
+  name: e_utility_practice_access
+  schema: public
+is_enum: true
+array_relationships:
+  - name: utility_practice_sessions
+    using:
+      foreign_key_constraint_on:
+        column: access
+        table:
+          name: utility_practice_sessions
+          schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""
+  - role: user
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""
+  - role: verified_user
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""
+  - role: streamer
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""
+  - role: match_organizer
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""
+  - role: moderator
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""
+  - role: administrator
+    permission:
+      columns:
+        - description
+        - value
+      filter: {}
+    comment: ""

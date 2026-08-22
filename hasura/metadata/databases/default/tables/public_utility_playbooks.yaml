@@ -1,0 +1,451 @@
+table:
+  name: utility_playbooks
+  schema: public
+object_relationships:
+  - name: owner
+    using:
+      foreign_key_constraint_on: owner_steam_id
+  - name: team
+    using:
+      foreign_key_constraint_on: team_id
+array_relationships:
+  - name: steps
+    using:
+      foreign_key_constraint_on:
+        column: playbook_id
+        table:
+          name: utility_playbook_steps
+          schema: public
+computed_fields:
+  - name: can_view
+    definition:
+      function:
+        name: can_view_utility_playbook
+        schema: public
+      session_argument: hasura_session
+  - name: can_edit
+    definition:
+      function:
+        name: can_edit_utility_playbook
+        schema: public
+      session_argument: hasura_session
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        owner_steam_id:
+          _eq: X-Hasura-User-Id
+      set:
+        owner_steam_id: x-hasura-user-id
+      columns:
+        - name
+        - description
+        - map_name
+        - side
+        - team_id
+        - visibility
+    comment: ''
+  - role: verified_user
+    permission:
+      check:
+        owner_steam_id:
+          _eq: X-Hasura-User-Id
+      set:
+        owner_steam_id: x-hasura-user-id
+      columns:
+        - name
+        - description
+        - map_name
+        - side
+        - team_id
+        - visibility
+    comment: ''
+  - role: streamer
+    permission:
+      check:
+        owner_steam_id:
+          _eq: X-Hasura-User-Id
+      set:
+        owner_steam_id: x-hasura-user-id
+      columns:
+        - name
+        - description
+        - map_name
+        - side
+        - team_id
+        - visibility
+    comment: ''
+  - role: match_organizer
+    permission:
+      check:
+        owner_steam_id:
+          _eq: X-Hasura-User-Id
+      set:
+        owner_steam_id: x-hasura-user-id
+      columns:
+        - name
+        - description
+        - map_name
+        - side
+        - team_id
+        - visibility
+    comment: ''
+  - role: tournament_organizer
+    permission:
+      check:
+        owner_steam_id:
+          _eq: X-Hasura-User-Id
+      set:
+        owner_steam_id: x-hasura-user-id
+      columns:
+        - name
+        - description
+        - map_name
+        - side
+        - team_id
+        - visibility
+    comment: ''
+  - role: moderator
+    permission:
+      check:
+        owner_steam_id:
+          _eq: X-Hasura-User-Id
+      set:
+        owner_steam_id: x-hasura-user-id
+      columns:
+        - name
+        - description
+        - map_name
+        - side
+        - team_id
+        - visibility
+    comment: ''
+  - role: administrator
+    permission:
+      check: {}
+      set:
+        owner_steam_id: x-hasura-user-id
+      columns:
+        - name
+        - description
+        - map_name
+        - side
+        - team_id
+        - visibility
+    comment: ''
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - id
+        - name
+        - description
+        - map_name
+        - side
+        - owner_steam_id
+        - team_id
+        - visibility
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+      filter:
+        visibility:
+          _eq: Public
+    comment: ''
+  - role: user
+    permission:
+      columns:
+        - id
+        - name
+        - description
+        - map_name
+        - side
+        - owner_steam_id
+        - team_id
+        - visibility
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: verified_user
+    permission:
+      columns:
+        - id
+        - name
+        - description
+        - map_name
+        - side
+        - owner_steam_id
+        - team_id
+        - visibility
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: streamer
+    permission:
+      columns:
+        - id
+        - name
+        - description
+        - map_name
+        - side
+        - owner_steam_id
+        - team_id
+        - visibility
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: match_organizer
+    permission:
+      columns:
+        - id
+        - name
+        - description
+        - map_name
+        - side
+        - owner_steam_id
+        - team_id
+        - visibility
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: tournament_organizer
+    permission:
+      columns:
+        - id
+        - name
+        - description
+        - map_name
+        - side
+        - owner_steam_id
+        - team_id
+        - visibility
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: moderator
+    permission:
+      columns:
+        - id
+        - name
+        - description
+        - map_name
+        - side
+        - owner_steam_id
+        - team_id
+        - visibility
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+      filter:
+        can_view:
+          _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - name
+        - description
+        - map_name
+        - side
+        - owner_steam_id
+        - team_id
+        - visibility
+        - created_at
+        - updated_at
+      computed_fields:
+        - can_view
+        - can_edit
+      filter: {}
+      allow_aggregations: true
+    comment: ''
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - name
+        - description
+        - map_name
+        - side
+        - team_id
+        - visibility
+      filter:
+        can_edit:
+          _eq: true
+      check:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: verified_user
+    permission:
+      columns:
+        - name
+        - description
+        - map_name
+        - side
+        - team_id
+        - visibility
+      filter:
+        can_edit:
+          _eq: true
+      check:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: streamer
+    permission:
+      columns:
+        - name
+        - description
+        - map_name
+        - side
+        - team_id
+        - visibility
+      filter:
+        can_edit:
+          _eq: true
+      check:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: match_organizer
+    permission:
+      columns:
+        - name
+        - description
+        - map_name
+        - side
+        - team_id
+        - visibility
+      filter:
+        can_edit:
+          _eq: true
+      check:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: tournament_organizer
+    permission:
+      columns:
+        - name
+        - description
+        - map_name
+        - side
+        - team_id
+        - visibility
+      filter:
+        can_edit:
+          _eq: true
+      check:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: moderator
+    permission:
+      columns:
+        - name
+        - description
+        - map_name
+        - side
+        - team_id
+        - visibility
+      filter:
+        can_edit:
+          _eq: true
+      check:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: administrator
+    permission:
+      columns:
+        - name
+        - description
+        - map_name
+        - side
+        - team_id
+        - visibility
+      filter: {}
+      check: {}
+    comment: ''
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: verified_user
+    permission:
+      filter:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: streamer
+    permission:
+      filter:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: match_organizer
+    permission:
+      filter:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: tournament_organizer
+    permission:
+      filter:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: moderator
+    permission:
+      filter:
+        can_edit:
+          _eq: true
+    comment: ''
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ''

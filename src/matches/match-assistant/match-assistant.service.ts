@@ -29,6 +29,7 @@ import { AppConfig } from "src/configs/types/AppConfig";
 import { FailedToCreateOnDemandServer } from "../errors/FailedToCreateOnDemandServer";
 import { LoggingService } from "src/k8s/logging/logging.service";
 import type { MatchServerBootDiagnostic } from "src/k8s/logging/bootDiagnostics";
+import { SystemSettingName } from "src/system/enums/SystemSettingName";
 
 @Injectable()
 export class MatchAssistantService {
@@ -114,6 +115,77 @@ export class MatchAssistantService {
         error.message,
       );
     }
+  }
+
+  // A practice server runs the utility practice plugin instead of the match
+  // plugin, so `get_match` is not a command it knows. This is the equivalent:
+  // re-read the roster that decides who is allowed to connect.
+  public async sendUtilityPracticeRefresh(matchId: string) {
+    try {
+      await this.command(matchId, `utility_practice_refresh`);
+    } catch (error) {
+      this.logger.warn(
+        `[${matchId}] unable to refresh the utility practice roster`,
+        error.message,
+      );
+    }
+  }
+
+  // The same set assignOnDemandServer picks from, counted rather than taken.
+  // Anything that wants to know whether there is room to boot another server
+  // has to ask with this exact predicate, or it will promise a slot that the
+  // assignment then cannot find.
+  public async countFreeOnDemandServers(region?: string | null) {
+    const { servers_aggregate } = await this.hasura.query({
+      servers_aggregate: {
+        __args: {
+          where: {
+            type: {
+              _eq: "Ranked",
+            },
+            enabled: {
+              _eq: true,
+            },
+            is_dedicated: {
+              _eq: false,
+            },
+            reserved_by_match_id: {
+              _is_null: true,
+            },
+            ...MatchAssistantService.pendingDemoUploadExclusion(),
+            game_server_node: {
+              _and: [
+                {
+                  enabled: {
+                    _eq: true,
+                  },
+                  enabled_for_match_making: {
+                    _eq: true,
+                  },
+                  status: {
+                    _eq: "Online",
+                  },
+                },
+                ...(region
+                  ? [
+                      {
+                        region: {
+                          _eq: region,
+                        },
+                      },
+                    ]
+                  : []),
+              ],
+            },
+          },
+        },
+        aggregate: {
+          count: true,
+        },
+      },
+    });
+
+    return servers_aggregate?.aggregate?.count ?? 0;
   }
 
   public async getMatchLineups(matchId: string) {
@@ -341,6 +413,76 @@ export class MatchAssistantService {
     await this.updateMatchStatus(match.id, "WaitingForServer");
   }
 
+  /**
+   * The last words of a match-server pod, for surfaces that outlive it. The
+   * on-demand practice boot has no other channel: nothing in that pod pings,
+   * so when it wedges, this is the only place the reason exists.
+   */
+  public async getMatchServerLogTail(
+    matchId: string,
+    tailLines = 200,
+  ): Promise<string | null> {
+    const jobName = MatchAssistantService.GetMatchServerJobId(matchId);
+    const kc = new KubeConfig();
+    kc.loadFromDefault();
+    const core = kc.makeApiClient(CoreV1Api);
+
+    let pods;
+    try {
+      pods = await core.listNamespacedPod({
+        namespace: this.namespace,
+        labelSelector: `job-name=${jobName}`,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `[${matchId}] log-tail listPods: ${(error as Error)?.message}`,
+      );
+      return null;
+    }
+
+    const pod = [...(pods.items ?? [])].sort((a, b) => {
+      const ta = new Date(a.metadata?.creationTimestamp ?? 0).getTime();
+      const tb = new Date(b.metadata?.creationTimestamp ?? 0).getTime();
+      return tb - ta;
+    })[0];
+
+    if (!pod?.metadata?.name) {
+      return null;
+    }
+
+    try {
+      const logs = await core.readNamespacedPodLog({
+        name: pod.metadata.name,
+        namespace: this.namespace,
+        tailLines,
+      });
+      const lines = String(logs ?? "")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+
+      if (lines.length === 0) {
+        return null;
+      }
+
+      this.logger.warn(
+        `[${matchId}] match server log tail:\n${lines.slice(-tailLines).join("\n")}`,
+      );
+
+      // Errors first: the flagged lines are the sentence, the rest is noise.
+      const flagged = lines.filter((line) =>
+        /error|fail|exception|fatal|segfault|unable/i.test(line),
+      );
+      const picked = flagged.length > 0 ? flagged.slice(-4) : lines.slice(-4);
+      return picked.join(" | ");
+    } catch (error) {
+      this.logger.warn(
+        `[${matchId}] log-tail read: ${(error as Error)?.message}`,
+      );
+      return null;
+    }
+  }
+
   public async rebootOnDemandServer(matchId: string) {
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
@@ -427,7 +569,7 @@ export class MatchAssistantService {
   // Exclude servers still uploading demos for a recently-ended match, so a new
   // match doesn't reset the server mid-upload. Bounded so a stuck upload can't
   // take a server out of rotation forever.
-  private static pendingDemoUploadExclusion() {
+  public static pendingDemoUploadExclusion() {
     const recentlyEnded = new Date(Date.now() - 10 * 60 * 1000).toISOString();
     return {
       _not: {
@@ -551,6 +693,7 @@ export class MatchAssistantService {
         region: true,
         password: true,
         server_id: true,
+        source: true,
         max_players_per_lineup: true,
         is_tournament_match: true,
         options: {
@@ -604,6 +747,9 @@ export class MatchAssistantService {
     });
 
     if (game_server_nodes.length === 0) {
+      this.logger.warn(
+        `[${matchId}] no eligible game server node (Online + enabled + matchmaking${match.region ? ` in ${match.region}` : ""}) — cannot boot an on-demand server`,
+      );
       return false;
     }
 
@@ -701,6 +847,9 @@ export class MatchAssistantService {
         const server = servers.at(-1);
 
         if (!server) {
+          this.logger.warn(
+            `[${matchId}] no free on-demand server row in the pool — waiting`,
+          );
           if (!options?.preserveMatchStatus) {
             await this.updateMatchStatus(matchId, "WaitingForServer");
           }
@@ -798,6 +947,12 @@ export class MatchAssistantService {
 
           const showEloRanks = fivestackRanksSetting?.value === "true";
 
+          const utilityPracticeEnv =
+            match.source === "practice"
+              ? await this.utilityPracticeServerEnv(
+                  await this.isRenderPracticeMatch(matchId),
+                )
+              : [];
           const gameMode = await this.gameModesService.resolveForServer(
             server.id,
             matchId,
@@ -855,6 +1010,13 @@ export class MatchAssistantService {
                       {
                         name: "game-server",
                         image: pluginImage,
+                        // On-demand servers boot fresh and the plugin image is
+                        // a mutable channel tag (dev-sw / latest), so a cached
+                        // copy on the node is a stale plugin. Always re-checks
+                        // the manifest -- cheap when the digest is unchanged,
+                        // and the only way a pushed dev image actually reaches
+                        // the next server.
+                        imagePullPolicy: "Always",
                         ...(cpus
                           ? {
                               resources: {
@@ -917,6 +1079,7 @@ export class MatchAssistantService {
                           ...(showEloRanks
                             ? [{ name: "SHOW_ELO_RANKS", value: "true" }]
                             : []),
+                          ...utilityPracticeEnv,
                           ...gameModeEnvironment,
                         ],
                         volumeMounts: [
@@ -1007,6 +1170,55 @@ export class MatchAssistantService {
       },
       10,
     );
+  }
+
+  // A practice pod runs the utility practice plugin *instead of* the match plugin.
+  // The image ships both and symlinks whichever INSTALL_ flag is set, so this is
+  // what decides which one the server comes up with. source='practice' is the
+  // marker for the utility-practice game mode: it is already what match_events
+  // branches on, and it is a plain column rather than a join through the
+  // game_modes feature.
+  // Is this practice match backing a nade render (vs a human practising)?
+  private async isRenderPracticeMatch(matchId: string): Promise<boolean> {
+    const { utility_practice_sessions } = await this.hasura.query({
+      utility_practice_sessions: {
+        __args: {
+          where: {
+            match_id: { _eq: matchId },
+            is_render: { _eq: true },
+          },
+          limit: 1,
+        },
+        id: true,
+      },
+    });
+    return (utility_practice_sessions ?? []).length > 0;
+  }
+
+  private async utilityPracticeServerEnv(isRender = false) {
+    return [
+      { name: "INSTALL_5STACK_PLUGIN", value: "false" },
+      { name: "INSTALL_UTILITY_PRACTICE_PLUGIN", value: "true" },
+      // The api root, not the /utility prefix: every path the plugin builds
+      // already starts with it. appConfig.apiDomain is ALREADY a full
+      // https:// url (configs/app.ts) -- prefixing it again produced
+      // https://https://... and the pod dialled a host literally named
+      // "https" until it timed out.
+      {
+        name: "UTILITY_URL",
+        value: this.appConfig.apiDomain,
+      },
+      // A render has no human to throw, so `rethrow` must EMIT the real
+      // projectile from the seed (np_ghost_projectile) or it just repositions
+      // and films a player standing still. And no trajectory line cluttering
+      // the clip (np_ghost_preview off). Human practice keeps the defaults.
+      ...(isRender
+        ? [
+            { name: "NP_GHOST_PROJECTILE", value: "true" },
+            { name: "NP_GHOST_PREVIEW", value: "false" },
+          ]
+        : []),
+    ];
   }
 
   public async monitorOnDemandServerBoot(
@@ -1584,7 +1796,9 @@ export class MatchAssistantService {
     });
 
     const isOn = (name: string) => {
-      return settings.find((setting) => setting.name === name)?.value === "true";
+      return (
+        settings.find((setting) => setting.name === name)?.value === "true"
+      );
     };
 
     const camera_required = isOn("public.camera_required_default");

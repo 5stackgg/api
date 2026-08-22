@@ -1,0 +1,15 @@
+table:
+  name: utility_demo_mines
+  schema: public
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - match_map_demo_id
+        - version
+        - throws
+        - failed_reason
+        - mined_at
+      filter: {}
+      allow_aggregations: true
+    comment: 'Job bookkeeping: which demos the meta miner has been through, and what went wrong when it could not.'

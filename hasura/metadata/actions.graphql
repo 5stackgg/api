@@ -1674,7 +1674,6 @@ type Mutation {
   ): SuccessOutput
 }
 
-
 type Mutation {
   assignSteamPresenceBot: SteamPresenceBotAssignment
 }
@@ -1915,4 +1914,524 @@ type Mutation {
     slug: String!
     runtime: String
   ): PluginReadmeOutput
+}
+
+type Mutation {
+  remineUtilityMeta: UtilityRemineOutput
+}
+
+type UtilityRemineOutput {
+  demos: Int!
+  throws: Int!
+  done: Boolean!
+}
+
+type Mutation {
+  backfillUtilityLaunchSeeds(
+    limit: Int
+  ): UtilityLaunchSeedBackfillOutput
+}
+
+type UtilityLaunchSeedBackfillOutput {
+  scanned: Int!
+  seeded: Int!
+  skipped: Int!
+  done: Boolean!
+}
+
+type UtilityPracticeWhereOutput {
+  on_server: Boolean!
+  map_name: String
+  session_id: uuid
+}
+
+type UtilityLoadOutput {
+  sent: Boolean!
+  reason: String!
+  map_name: String
+}
+
+input UtilityScratchLineupInput {
+  client_id: String!
+  name: String!
+  map_name: String!
+  utility_type: String!
+  side: String!
+  technique: String!
+  throw_strength: String!
+  origin_x: Float!
+  origin_y: Float!
+  origin_z: Float!
+  eye_z: Float!
+  view_yaw: Float!
+  view_pitch: Float!
+  land_x: Float
+  land_y: Float
+  land_z: Float
+}
+
+type Query {
+  utilityPracticeWhereAmI: UtilityPracticeWhereOutput
+}
+
+type Mutation {
+  sendUtilityLineupToServer(lineup_id: uuid!): UtilityLoadOutput
+}
+
+type Mutation {
+  sendUtilityScratchToServer(lineup: UtilityScratchLineupInput!): UtilityLoadOutput
+}
+
+type Mutation {
+  startUtilityPractice(
+    map_name: String!
+    region: String
+    collection_id: uuid
+    team_id: uuid
+    is_open: Boolean
+    server_id: uuid
+  ): UtilityPracticeSessionOutput
+}
+
+type Mutation {
+  joinUtilityPractice(
+    session_id: uuid
+    invite_code: String
+  ): UtilityPracticeSessionOutput
+}
+
+type Mutation {
+  leaveUtilityPractice(
+    session_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  stopUtilityPractice(
+    session_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  inviteToUtilityPractice(
+    session_id: uuid!
+    steam_ids: [String!]!
+  ): SuccessOutput
+}
+
+type Mutation {
+  saveUtilityLineupFromPractice(
+    session_id: uuid!
+    utility_lineup_id: uuid!
+    name: String!
+    description: String
+    visibility: String
+    team_id: uuid
+    tags: [String!]
+    collection_id: uuid
+  ): UtilityLineupOutput
+}
+
+type UtilityPracticeSessionOutput {
+  id: uuid!
+  match_id: uuid
+  status: String
+  invite_code: String
+}
+
+type UtilityLineupOutput {
+  id: uuid!
+}
+
+type Mutation {
+  saveUtilityLineupFromDemo(
+    match_id: uuid!
+    match_map_id: uuid!
+    grenade_id: Int!
+    name: String!
+    description: String
+    visibility: String
+    team_id: uuid
+    tags: [String!]
+    collection_id: uuid
+  ): UtilityLineupOutput
+}
+
+type Mutation {
+  saveUtilityPlaybook(
+    playbook_id: uuid
+    name: String!
+    description: String
+    map_name: String!
+    side: String!
+    team_id: uuid
+    visibility: String
+    steps: [UtilityPlaybookStepInput!]
+  ): UtilityPlaybookOutput
+}
+
+type Mutation {
+  deleteUtilityPlaybook(
+    playbook_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  loadUtilityPlaybookIntoSession(
+    session_id: uuid!
+    playbook_id: uuid
+  ): SuccessOutput
+}
+
+input UtilityPlaybookStepInput {
+  utility_lineup_id: uuid!
+  offset_ms: Int
+  assigned_steam_id: String
+  note: String
+}
+
+type UtilityPlaybookOutput {
+  id: uuid!
+}
+
+input UtilitySightlinePairInput {
+  from_x: Float!
+  from_y: Float!
+  from_z: Float!
+  to_x: Float!
+  to_y: Float!
+  to_z: Float!
+}
+
+type Query {
+  checkUtilitySightlines(
+    lineup_id: uuid!
+    pairs: [UtilitySightlinePairInput!]!
+    threshold: Float
+  ): UtilitySightlineOutput
+}
+
+type UtilitySightlineOutput {
+  threshold: Float!
+  results: [UtilitySightlineResult!]!
+  degraded: Boolean
+  message: String
+}
+
+type UtilitySightlineResult {
+  index: Int!
+  blocked: Boolean!
+  blocked_by: String
+  depth: Float!
+  transmittance: Float!
+  world_blocked: Boolean!
+}
+
+type Query {
+  checkUtilityOneWay(
+    lineup_id: uuid!
+    pairs: [UtilitySightlinePairInput!]!
+  ): UtilityOneWayOutput
+}
+
+type UtilityOneWayOutput {
+  results: [UtilityOneWayResult!]!
+  degraded: Boolean
+  message: String
+}
+
+type UtilityOneWayResult {
+  index: Int!
+  one_way: Boolean!
+  favors: String
+  cause: String
+  confidence: String!
+  contested: Boolean!
+}
+
+type Query {
+  findUtilityLineupsBlocking(
+    map_name: String!
+    from_x: Float!
+    from_y: Float!
+    from_z: Float!
+    to_x: Float!
+    to_y: Float!
+    to_z: Float!
+    side: String
+    limit: Int
+  ): UtilityBlockingOutput
+}
+
+type UtilityBlockingOutput {
+  results: [UtilityBlockingResult!]!
+  degraded: Boolean
+  message: String
+}
+
+type UtilityBlockingResult {
+  utility_lineup_id: uuid!
+  depth: Float!
+  transmittance: Float!
+  blocked: Boolean!
+}
+
+type Mutation {
+  solveUtilityLineup(
+    session_id: uuid!
+    target_x: Float!
+    target_y: Float!
+    target_z: Float!
+    from_x: Float
+    from_y: Float
+    from_z: Float
+    utility_type: String
+    name: String
+    tolerance: Float
+  ): UtilitySolveOutput
+}
+
+type UtilitySolveOutput {
+  accepted: Boolean!
+  status: String!
+  message: String
+}
+
+type Query {
+  utilitySolverCalibration(
+    session_id: uuid!
+  ): UtilityCalibrationOutput
+}
+
+type UtilityCalibrationOutput {
+  status: String!
+  ready: Boolean!
+  detail: String
+}
+
+type Mutation {
+  startUtilityDriftScan(
+    map_name: String!
+    from_revision: String
+    to_revision: String
+  ): UtilityDriftScanOutput
+}
+
+type UtilityDriftScanOutput {
+  scan_id: uuid!
+  lineups: Int!
+}
+
+type Mutation {
+  forkUtilityLineup(
+    utility_lineup_id: uuid!
+    name: String
+    collection_id: uuid
+  ): UtilityLineupOutput
+}
+
+type Query {
+  analyseUtilityPlaybookCoverage(
+    playbook_id: uuid!
+    pairs: [UtilitySightlinePairInput!]!
+  ): UtilityPlaybookCoverageOutput
+}
+
+type UtilityPlaybookCoverageOutput {
+  results: [UtilityPlaybookCoverageResult!]!
+  degraded: Boolean
+  message: String
+}
+
+type UtilityPlaybookCoverageResult {
+  index: Int!
+  covered: Boolean!
+  by_step: Int
+  depth: Float
+  transmittance: Float
+}
+
+type Query {
+  utilityMatchUtilityReport(
+    match_id: uuid!
+    steam_id: String
+  ): UtilityUtilityReportOutput
+}
+
+type UtilityUtilityReportOutput {
+  analysed: Boolean!
+  message: String
+  steam_id: String!
+  throws: Int!
+  matched_lineups: Int!
+  matched_meta: Int!
+  landed: Int!
+  radius: Float!
+  by_type: [UtilityUtilityTypeReport!]!
+}
+
+type UtilityUtilityTypeReport {
+  utility_type: String!
+  throws: Int!
+  matched_lineups: Int!
+  matched_meta: Int!
+  landed: Int!
+}
+
+type Mutation {
+  repairUtilityLineup(
+    utility_lineup_id: uuid!
+    session_id: uuid!
+  ): UtilitySolveOutput
+}
+
+type Query {
+  utilityPracticeServers: UtilityPracticeServersOutput
+}
+
+type UtilityPracticeServersOutput {
+  servers: [UtilityPracticeServer!]!
+}
+
+type UtilityPracticeServer {
+  id: uuid!
+  label: String!
+  region: String!
+  in_use: Boolean!
+  held_by: String
+}
+
+type Query {
+  utilityPracticePlan(
+    map_name: String!
+    side: String
+    limit: Int
+    order: String
+  ): UtilityPracticePlanOutput
+}
+
+type UtilityPracticePlanOutput {
+  analysed: Boolean!
+  message: String
+  entries: [UtilityPracticePlanEntry!]!
+}
+
+type UtilityPracticePlanEntry {
+  utility_lineup_id: uuid!
+  priority: Float!
+  meta_throwers: Int!
+  attempts: Int!
+  successes: Int!
+  mastered: Boolean!
+  reason: String!
+  difficulty: String!
+  global_players: Int!
+  global_attempts: Int!
+  global_landing_rate: Float
+}
+
+type Query {
+  utilityLineupMissPattern(
+    utility_lineup_id: uuid!
+  ): UtilityMissPatternOutput
+}
+
+type UtilityMissPatternOutput {
+  analysed: Boolean!
+  message: String
+  samples: Int!
+  players: Int!
+  mean_along: Float
+  mean_lateral: Float
+  mean_vertical: Float
+  bias: String
+}
+
+type Query {
+  utilityTeamUtilityReport(
+    team_id: uuid!
+    map_name: String
+    limit: Int
+  ): UtilityTeamUtilityOutput
+}
+
+type UtilityTeamUtilityOutput {
+  analysed: Boolean!
+  message: String
+  entries: [UtilityTeamUtilityEntry!]!
+}
+
+type UtilityTeamUtilityEntry {
+  utility_lineup_id: uuid!
+  thrown: Int!
+  landed: Int!
+  players: Int!
+}
+
+type Mutation {
+  importUtilityLineups(
+    payload: jsonb!
+    dry_run: Boolean
+  ): UtilityImportOutput
+}
+
+type UtilityImportOutput {
+  dry_run: Boolean!
+  total: Int!
+  imported: Int!
+  updated: Int!
+  failed: Int!
+  errors: [UtilityImportError!]!
+}
+
+type UtilityImportError {
+  index: Int!
+  external_id: String
+  reason: String!
+}
+
+type Mutation {
+  purgeUtilityLineupSource(
+    origin_source: String!
+    dry_run: Boolean
+  ): UtilityPurgeOutput
+}
+
+type UtilityPurgeOutput {
+  dry_run: Boolean!
+  origin_source: String!
+  lineups: Int!
+}
+
+type Mutation {
+  renderUtilityLineupPreview(
+    utility_lineup_id: uuid!
+  ): UtilityRenderQueueOutput
+}
+
+type Mutation {
+  cancelUtilityLineupRender(
+    render_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  deleteUtilityLineupRender(
+    render_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  clearFinishedUtilityLineupRenders: UtilityRenderClearOutput
+}
+
+type UtilityRenderQueueOutput {
+  success: Boolean!
+  render_id: uuid
+  status: String!
+  reason: String
+}
+
+type UtilityRenderClearOutput {
+  cleared: Int!
 }

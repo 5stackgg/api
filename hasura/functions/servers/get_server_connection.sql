@@ -7,7 +7,7 @@ DECLARE
 BEGIN
     -- A disabled server can still be online (external servers keep running),
     -- so gate on connected rather than enabled.
-    IF server.connected = false OR server.type = 'Ranked' OR server.host IS NULL OR server.port IS NULL THEN
+    IF server.connected = false OR server.type IN ('Ranked', 'Practice') OR server.host IS NULL OR server.port IS NULL THEN
         RETURN NULL;
     END IF;
 
@@ -36,7 +36,7 @@ DECLARE
 BEGIN
     -- A disabled server can still be online (external servers keep running),
     -- so gate on connected rather than enabled.
-    IF server.connected = false OR server.type = 'Ranked' OR NULLIF(server.connect_password, '') IS NOT NULL THEN
+    IF server.connected = false OR server.type IN ('Ranked', 'Practice') OR NULLIF(server.connect_password, '') IS NOT NULL THEN
         RETURN NULL;
     END IF;
 

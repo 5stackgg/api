@@ -5,14 +5,40 @@ import { ConfigService } from "@nestjs/config";
 import { TypeSenseConfig } from "../configs/types/TypeSenseConfig";
 import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
 import { CollectionFieldSchema } from "typesense/lib/Typesense/Collection";
-import { TypesenseQueues } from "./enums/TypesenseQueues";
+import {
+  UTILITY_LINEUP_REINDEX_JOB,
+  TypesenseQueues,
+} from "./enums/TypesenseQueues";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
+import { PostgresService } from "../postgres/postgres.service";
 import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
+
+// One publicly visible lineup, as the global search bar needs it. Only ever
+// produced by searchableUtilityLineups, which is the one place the visibility
+// filter lives.
+export type SearchableUtilityLineup = {
+  id: string;
+  name: string;
+  map_name: string;
+  utility_type: string;
+  side: string;
+  technique: string;
+  tags: Array<string> | null;
+  author_steam_id: string;
+  author_name: string | null;
+  upvotes: number;
+  favorites: number;
+  created_at: Date;
+};
 
 @Injectable()
 export class TypeSenseService {
   private client: Client;
+
+  // A private or team lineup in a global index is a leak, so the index is
+  // rebuilt in pages of this size rather than held in memory in one go.
+  public static readonly UTILITY_LINEUP_PAGE = 500;
 
   constructor(
     private readonly logger: Logger,
@@ -21,6 +47,9 @@ export class TypeSenseService {
     @Inject(forwardRef(() => MatchAssistantService))
     private readonly matchAssistant: MatchAssistantService,
     @InjectQueue(TypesenseQueues.PlayerReindex) private reindexQueue: Queue,
+    @InjectQueue(TypesenseQueues.UtilityLineupReindex)
+    private utilityReindexQueue: Queue,
+    private readonly postgres: PostgresService,
   ) {}
 
   public async setup() {
@@ -39,6 +68,7 @@ export class TypeSenseService {
     try {
       await this.createCvarsCollection();
       await this.createPlayerCollection();
+      await this.createUtilityLineupCollection();
     } catch (error) {
       this.logger.error(`unable to setup typesense: ${error}`);
       setTimeout(() => {
@@ -247,6 +277,154 @@ export class TypeSenseService {
       this.expectedIndex(field) &&
       TypeSenseService.SORTABLE_BY_DEFAULT.has(field.type)
     );
+  }
+
+  public async createUtilityLineupCollection() {
+    if (await this.client.collections("utility_lineups").exists()) {
+      return;
+    }
+
+    await this.client.collections().create({
+      name: "utility_lineups",
+      fields: [
+        {
+          name: "name",
+          type: "string",
+          index: true,
+          sort: true,
+          infix: true,
+        },
+        { name: "map_name", type: "string", index: true },
+        { name: "utility_type", type: "string", index: true },
+        { name: "side", type: "string", index: true },
+        { name: "technique", type: "string", index: true },
+        { name: "tags", type: "string[]", optional: true, index: true },
+        { name: "author", type: "string", optional: true, index: true },
+        { name: "author_steam_id", type: "string", index: true },
+        { name: "upvotes", type: "int32", index: true, sort: true },
+        { name: "favorites", type: "int32", index: true, sort: true },
+        { name: "created_at", type: "int64", index: true, sort: true },
+      ],
+      default_sorting_field: "name",
+    } as never);
+
+    await this.utilityReindexQueue.add(
+      UTILITY_LINEUP_REINDEX_JOB,
+      {},
+      {
+        jobId: UTILITY_LINEUP_REINDEX_JOB,
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
+  }
+
+  // THE visibility filter for the global index. Everything that writes a utility
+  // document goes through here, so "only what is publicly visible is indexed"
+  // is one predicate rather than a rule every call site has to remember. A
+  // lineup that stops qualifying returns nothing, which is what makes
+  // updateUtilityLineup delete rather than upsert.
+  public async searchableUtilityLineups(
+    options: {
+      ids?: Array<string> | null;
+      after?: string | null;
+      limit?: number;
+    } = {},
+  ): Promise<Array<SearchableUtilityLineup>> {
+    return await this.postgres.query<Array<SearchableUtilityLineup>>(
+      `SELECT l.id::text AS id, l.name, l.map_name, l.utility_type, l.side,
+              l.technique, l.tags,
+              l.author_steam_id::text AS author_steam_id,
+              p.name AS author_name,
+              l.upvotes, l.favorites, l.created_at
+         FROM public.utility_lineups l
+         LEFT JOIN public.players p ON p.steam_id = l.author_steam_id
+        WHERE l.visibility = 'Public'
+          AND l.archived_at IS NULL
+          AND ($1::uuid[] IS NULL OR l.id = ANY($1::uuid[]))
+          AND ($2::uuid IS NULL OR l.id > $2::uuid)
+        ORDER BY l.id ASC
+        LIMIT $3::int`,
+      [
+        options.ids ?? null,
+        options.after ?? null,
+        options.limit ?? TypeSenseService.UTILITY_LINEUP_PAGE,
+      ],
+    );
+  }
+
+  // One row's worth of index maintenance. A lineup that has gone private, been
+  // archived or been deleted is removed rather than left behind: the row is
+  // gone from the library either way, and a stale document is the leak.
+  public async updateUtilityLineup(lineupId: string) {
+    const [lineup] = await this.searchableUtilityLineups({ ids: [lineupId] });
+
+    if (!lineup) {
+      await this.removeUtilityLineup(lineupId);
+      return;
+    }
+
+    await this.client
+      .collections("utility_lineups")
+      .documents()
+      .upsert(TypeSenseService.utilityLineupDocument(lineup));
+  }
+
+  public async removeUtilityLineup(lineupId: string) {
+    try {
+      await this.client
+        .collections("utility_lineups")
+        .documents(lineupId)
+        .delete();
+    } catch {
+      // Deleting a document that was never indexed is the normal case: every
+      // edit to a private lineup lands here.
+    }
+  }
+
+  public async reindexUtilityLineups(): Promise<number> {
+    let after: string | null = null;
+    let indexed = 0;
+
+    for (;;) {
+      const page: Array<SearchableUtilityLineup> =
+        await this.searchableUtilityLineups({ after });
+
+      if (page.length === 0) {
+        break;
+      }
+
+      await this.client
+        .collections("utility_lineups")
+        .documents()
+        .import(page.map(TypeSenseService.utilityLineupDocument), {
+          action: "upsert",
+        });
+
+      after = page.at(-1)!.id;
+      indexed += page.length;
+    }
+
+    this.logger.log(`indexed ${indexed} public utility lineup(s)`);
+
+    return indexed;
+  }
+
+  public static utilityLineupDocument(lineup: SearchableUtilityLineup) {
+    return {
+      id: lineup.id,
+      name: lineup.name,
+      map_name: lineup.map_name,
+      utility_type: lineup.utility_type,
+      side: lineup.side,
+      technique: lineup.technique,
+      tags: lineup.tags ?? [],
+      author: lineup.author_name ?? "",
+      author_steam_id: lineup.author_steam_id,
+      upvotes: Number(lineup.upvotes) || 0,
+      favorites: Number(lineup.favorites) || 0,
+      created_at: Math.floor(new Date(lineup.created_at).getTime() / 1000),
+    };
   }
 
   public async createCvarsCollection() {

@@ -14,6 +14,7 @@ import { S3Module } from "src/s3/s3.module";
 import { AuthModule } from "src/auth/auth.module";
 import { HasuraModule } from "src/hasura/hasura.module";
 import { PostgresModule } from "src/postgres/postgres.module";
+import { CacheModule } from "src/cache/cache.module";
 import { getQueuesProcessors } from "src/utilities/QueueProcessors";
 import { DemoMetadataService } from "./demo-metadata.service";
 import { DemoParserService } from "./demo-parser.service";
@@ -26,6 +27,7 @@ import { DemoReparseService } from "./demo-reparse.service";
     AuthModule,
     HasuraModule,
     PostgresModule,
+    CacheModule,
     BullModule.registerQueue({
       name: DemoQueues.Demos,
     }),
