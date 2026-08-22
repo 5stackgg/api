@@ -28,7 +28,9 @@ describe("UtilityPracticeService.startForRender", () => {
     jest.spyOn(service, "resolveMap").mockResolvedValue("de_mirage");
     jest.spyOn(service, "resolveRegion").mockResolvedValue("TestA");
     jest.spyOn(service, "assertServerHeadroom").mockResolvedValue(undefined);
-    jest.spyOn(service, "insertSession").mockResolvedValue({ id: "session-1" });
+    const insertSession = jest
+      .spyOn(service, "insertSession")
+      .mockResolvedValue({ id: "session-1" });
     jest.spyOn(service, "session").mockResolvedValue({ id: "session-1" });
 
     // Deliberately made to look attractive: if the render path asks for a free
@@ -40,7 +42,7 @@ describe("UtilityPracticeService.startForRender", () => {
       .spyOn(service, "createPracticeMatch")
       .mockResolvedValue("match-1");
 
-    return { service, freeServer, createMatch, postgres, matchAssistant };
+    return { service, freeServer, createMatch, insertSession, postgres, matchAssistant };
   }
 
   afterEach(() => jest.restoreAllMocks());
@@ -50,7 +52,7 @@ describe("UtilityPracticeService.startForRender", () => {
 
     await service.startForRender({
       mapName: "de_mirage",
-      hostSteamId: "76561198000000001",
+      requestedBySteamId: "76561198000000001",
     });
 
     expect(freeServer).not.toHaveBeenCalled();
@@ -61,11 +63,35 @@ describe("UtilityPracticeService.startForRender", () => {
 
     await service.startForRender({
       mapName: "de_mirage",
-      hostSteamId: "76561198000000001",
+      requestedBySteamId: "76561198000000001",
     });
 
     expect(createMatch).toHaveBeenCalledWith(
       expect.objectContaining({ serverId: null }),
+    );
+  });
+
+  it("creates a system-owned session with no host, requester only the organizer", async () => {
+    const { service, insertSession, createMatch } = makeService();
+
+    await service.startForRender({
+      mapName: "de_mirage",
+      requestedBySteamId: "76561198000000001",
+    });
+
+    // The session itself is host-less -- that is what stops it reading as the
+    // requester's own practice server.
+    expect(insertSession).toHaveBeenCalledWith(
+      null,
+      expect.objectContaining({ isRender: true }),
+    );
+    // The requester survives only as the match organizer (a NOT NULL column)
+    // and the render is flagged so no human is seated in its lineup.
+    expect(createMatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizerSteamId: "76561198000000001",
+        isRender: true,
+      }),
     );
   });
 
@@ -81,7 +107,7 @@ describe("UtilityPracticeService.startForRender", () => {
     await expect(
       service.startForRender({
         mapName: "de_mirage",
-        hostSteamId: "76561198000000001",
+        requestedBySteamId: "76561198000000001",
       }),
     ).rejects.toThrow("no practice servers are free right now");
 
