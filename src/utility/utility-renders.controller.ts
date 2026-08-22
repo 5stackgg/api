@@ -118,6 +118,18 @@ export class UtilityRendersController {
   }
 
   @HasuraAction()
+  public async deleteUtilityLineupRender(data: {
+    user: User;
+    render_id: string;
+  }) {
+    if (!isRoleAbove(data.user?.role, "moderator")) {
+      throw Error("only a moderator can delete a render");
+    }
+
+    return { success: await this.renders.deletePreview(data.render_id) };
+  }
+
+  @HasuraAction()
   public async clearFinishedUtilityLineupRenders(data: { user: User }) {
     if (!isRoleAbove(data.user?.role, "administrator")) {
       throw Error("only an administrator can clear the render queue");

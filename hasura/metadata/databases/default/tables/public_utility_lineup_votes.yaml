@@ -108,9 +108,10 @@ insert_permissions:
   - role: administrator
     permission:
       check: {}
+      set:
+        steam_id: x-hasura-user-id
       columns:
         - utility_lineup_id
-        - steam_id
         - vote
     comment: ''
 select_permissions:

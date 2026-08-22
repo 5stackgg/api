@@ -2416,6 +2416,12 @@ type Mutation {
 }
 
 type Mutation {
+  deleteUtilityLineupRender(
+    render_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
   clearFinishedUtilityLineupRenders: UtilityRenderClearOutput
 }
 

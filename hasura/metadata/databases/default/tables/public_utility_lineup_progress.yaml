@@ -126,9 +126,10 @@ insert_permissions:
   - role: administrator
     permission:
       check: {}
+      set:
+        steam_id: x-hasura-user-id
       columns:
         - utility_lineup_id
-        - steam_id
         - attempts
         - successes
         - last_practiced_at

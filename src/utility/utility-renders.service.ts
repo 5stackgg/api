@@ -237,6 +237,74 @@ export class UtilityRendersService {
     };
   }
 
+  /**
+   * Delete one render and, if it produced the lineup's current preview, take the
+   * clip with it -- the per-row equivalent of a highlight's delete. The S3
+   * objects are keyed on the lineup, so a lineup has exactly one live preview;
+   * clearing its columns and removing the two objects is the whole teardown.
+   */
+  public async deletePreview(renderId: string): Promise<boolean> {
+    const [row] = await this.postgres.query<
+      Array<{ utility_lineup_id: string; status: string }>
+    >(
+      `SELECT utility_lineup_id::text AS utility_lineup_id, status
+         FROM public.utility_lineup_renders
+        WHERE id = $1::uuid`,
+      [renderId],
+    );
+
+    if (!row) return false;
+
+    // In flight -> cancel first (stops the pod's callbacks landing on a row
+    // that is about to vanish); the caller can delete again once it settles.
+    if (UTILITY_RENDER_IN_FLIGHT.includes(row.status as never)) {
+      await this.cancel(renderId);
+    }
+
+    // A lineup carries one preview. If this render owns it (a done render, and
+    // no OTHER done render for the same lineup is keeping it alive), drop it.
+    const [others] = await this.postgres.query<Array<{ count: string }>>(
+      `SELECT COUNT(*) AS count
+         FROM public.utility_lineup_renders
+        WHERE utility_lineup_id = $1::uuid
+          AND id <> $2::uuid
+          AND status = 'done'`,
+      [row.utility_lineup_id, renderId],
+    );
+
+    if (row.status === "done" && Number(others?.count ?? 0) === 0) {
+      await this.postgres.query(
+        `UPDATE public.utility_lineups
+            SET preview_file = NULL,
+                preview_thumbnail = NULL,
+                preview_duration_ms = NULL,
+                preview_rendered_at = NULL
+          WHERE id = $1::uuid`,
+        [row.utility_lineup_id],
+      );
+      for (const key of [
+        UtilityRendersService.GetPreviewS3Key(row.utility_lineup_id),
+        UtilityRendersService.GetPreviewThumbnailS3Key(row.utility_lineup_id),
+      ]) {
+        try {
+          await this.s3.remove(key);
+        } catch (error) {
+          this.logger.warn(
+            `[utility-render] could not remove ${key}: ${(error as Error)?.message}`,
+          );
+        }
+      }
+    }
+
+    const deleted = await this.postgres.query<Array<{ id: string }>>(
+      `DELETE FROM public.utility_lineup_renders
+        WHERE id = $1::uuid
+      RETURNING id::text AS id`,
+      [renderId],
+    );
+    return deleted.length > 0;
+  }
+
   public async clearFinished(): Promise<number> {
     const rows = await this.postgres.query<Array<{ id: string }>>(
       `DELETE FROM public.utility_lineup_renders
