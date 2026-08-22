@@ -1,10 +1,12 @@
 import { Injectable, Logger } from "@nestjs/common";
+import { Redis } from "ioredis";
 import { ConfigService } from "@nestjs/config";
 import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { CacheService } from "../cache/cache.service";
 import { MatchAssistantService } from "../matches/match-assistant/match-assistant.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 import { AppConfig } from "../configs/types/AppConfig";
 import { SystemSettingName } from "../system/enums/SystemSettingName";
 import { isRoleAbove } from "../utilities/isRoleAbove";
@@ -93,6 +95,7 @@ export class UtilityPracticeService {
   public static readonly RENDER_GRACE_MINUTES = 90;
 
   private readonly appConfig: AppConfig;
+  private readonly redis: Redis;
 
   constructor(
     private readonly logger: Logger,
@@ -104,8 +107,10 @@ export class UtilityPracticeService {
     private readonly notifications: NotificationsService,
     private readonly load: UtilityLoadService,
     private readonly configService: ConfigService,
+    private readonly redisManager: RedisManagerService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
+    this.redis = this.redisManager.getConnection();
   }
 
   public static startLockKey(steamId: string): string {
@@ -1738,6 +1743,10 @@ export class UtilityPracticeService {
   // this over the match-events socket, which a practice server has no channel
   // to -- so without this every session reads as empty and the reaper ends it
   // while somebody is mid-throw.
+  //
+  // The plugin posts this the tick after anybody connects or disconnects, and
+  // then on a slow timer as a reconciler. The snapshot is idempotent either
+  // way, which is what lets a missed post heal itself.
   public async reportOccupancy(
     serverId: string,
     steamIds: Array<string>,
@@ -1752,15 +1761,22 @@ export class UtilityPracticeService {
       .map((steamId) => String(steamId ?? "").trim())
       .filter((steamId) => /^\d{5,20}$/.test(steamId));
 
-    await this.postgres.query(
+    // RETURNING pairs with the IS DISTINCT FROM filter: the rows that come back
+    // are exactly the players whose presence actually flipped, in either
+    // direction. A reconciling post that finds nothing changed returns nothing
+    // and so pushes nothing.
+    const flipped = await this.postgres.query<Array<{ steam_id: string }>>(
       `UPDATE public.match_lineup_players mlp
           SET is_connected = (mlp.steam_id::text = ANY ($2::text[]))
          FROM public.match_lineups ml
         WHERE ml.id = mlp.match_lineup_id
           AND ml.match_id = $1::uuid
-          AND mlp.is_connected IS DISTINCT FROM (mlp.steam_id::text = ANY ($2::text[]))`,
+          AND mlp.is_connected IS DISTINCT FROM (mlp.steam_id::text = ANY ($2::text[]))
+      RETURNING mlp.steam_id::text AS steam_id`,
       [session.match_id, present],
     );
+
+    await this.pushWhereAmI(flipped.map(({ steam_id }) => steam_id));
 
     if (present.length > 0) {
       await this.postgres.query(
@@ -1770,6 +1786,38 @@ export class UtilityPracticeService {
         [session.session_id],
       );
       await this.touch(session.session_id);
+    }
+  }
+
+  /**
+   * Tell each player whose presence just flipped, so the website stops asking.
+   *
+   * Rides send-message-to-steam-id so it reaches their tabs on any api pod, and
+   * carries the payload rather than a bare nudge because this channel targets
+   * one player's own sockets -- unlike camera-status, which is cluster-wide and
+   * therefore has to make everyone re-read through an authorized endpoint.
+   */
+  private async pushWhereAmI(steamIds: Array<string>): Promise<void> {
+    for (const steamId of steamIds) {
+      try {
+        await this.redis.publish(
+          "send-message-to-steam-id",
+          JSON.stringify({
+            steamId,
+            event: "utility:where",
+            data: await this.load.whereAmI(steamId),
+          }),
+        );
+      } catch (error) {
+        // A push that cannot be delivered must not fail the occupancy post:
+        // the write already landed, and the next reconciling snapshot is what
+        // the timer is there for.
+        this.logger.warn(
+          `unable to push practice location to ${steamId}: ${
+            (error as Error)?.message
+          }`,
+        );
+      }
     }
   }
 

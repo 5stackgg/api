@@ -23,6 +23,7 @@ describe("UtilityPracticeService.startForRender", () => {
       {} as any,
       {} as any,
       { get: jest.fn() } as any,
+      { getConnection: () => ({ publish: jest.fn() }) } as any,
     ) as any;
 
     jest.spyOn(service, "isEnabled").mockResolvedValue(true);

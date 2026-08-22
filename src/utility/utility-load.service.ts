@@ -48,6 +48,20 @@ export type UtilityScratchLineup = {
   land_z: number | null;
 };
 
+/**
+ * The answer to "am I standing on a practice server right now".
+ *
+ * One shape, built in one place: it is returned by the utilityPracticeWhereAmI
+ * action AND pushed over the socket when occupancy changes, and the two
+ * disagreeing would show a Practice button for a server the player already left.
+ */
+export type UtilityWhere = {
+  on_server: boolean;
+  map_name: string | null;
+  session_id: string | null;
+  switching: boolean;
+};
+
 export type UtilityLoadResult = {
   sent: boolean;
   /** Machine-readable so the web can choose between "book a server" and "fix the map". */
@@ -111,6 +125,18 @@ export class UtilityLoadService {
     );
 
     return row ?? null;
+  }
+
+  /** `serverForPlayer` in the shape the website and the socket push both read. */
+  public async whereAmI(steamId: string): Promise<UtilityWhere> {
+    const at = await this.serverForPlayer(steamId);
+
+    return {
+      on_server: !!at,
+      map_name: at?.map_name ?? null,
+      session_id: at?.session_id ?? null,
+      switching: at?.switching === true,
+    };
   }
 
   /** Stand the caller on a lineup they can see, on the server they are already in. */

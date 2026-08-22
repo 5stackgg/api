@@ -26,14 +26,7 @@ export class UtilityPracticeController {
    */
   @HasuraAction()
   public async utilityPracticeWhereAmI(data: { user: User }) {
-    const at = await this.load.serverForPlayer(data.user.steam_id);
-
-    return {
-      on_server: !!at,
-      map_name: at?.map_name ?? null,
-      session_id: at?.session_id ?? null,
-      switching: at?.switching === true,
-    };
+    return this.load.whereAmI(data.user.steam_id);
   }
 
   /** Stand the caller on a saved lineup, on the server they are already in. */

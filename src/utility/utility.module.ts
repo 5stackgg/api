@@ -6,6 +6,7 @@ import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
 import { Queue } from "bullmq";
 import { HasuraModule } from "../hasura/hasura.module";
 import { PostgresModule } from "../postgres/postgres.module";
+import { RedisModule } from "../redis/redis.module";
 import { CacheModule } from "../cache/cache.module";
 import { S3Module } from "../s3/s3.module";
 import { AuthModule } from "../auth/auth.module";
@@ -57,6 +58,7 @@ import { GameStreamerModule } from "../matches/game-streamer/game-streamer.modul
   imports: [
     HasuraModule,
     PostgresModule,
+    RedisModule,
     CacheModule,
     S3Module,
     ConfigModule,
