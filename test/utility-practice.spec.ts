@@ -447,7 +447,7 @@ describe("utility practice sessions (SQL-driven)", () => {
     // inside* the refresh is what pins the ordering, not just that both
     // happened.
     it("adds the lineup row and only then refreshes the server roster", async () => {
-      const { matchId, sessionId } = await liveSession({ is_open: true });
+      const { matchId, sessionId } = await liveSession({ is_open: true, access: "Open" });
       const guest = await fx.player();
 
       let lineupAtRefresh = -1;
@@ -505,7 +505,7 @@ describe("utility practice sessions (SQL-driven)", () => {
     });
 
     it("resolves a session by its invite code", async () => {
-      const { matchId, sessionId } = await liveSession({ is_open: true });
+      const { matchId, sessionId } = await liveSession({ is_open: true, access: "Open" });
       const guest = await fx.player();
       const [row] = await postgres.query<Array<{ invite_code: string }>>(
         "SELECT invite_code FROM utility_practice_sessions WHERE id = $1",
@@ -629,7 +629,7 @@ describe("utility practice sessions (SQL-driven)", () => {
     });
 
     it("refuses to join a session that is over", async () => {
-      const { sessionId } = await liveSession({ is_open: true });
+      const { sessionId } = await liveSession({ is_open: true, access: "Open" });
       await postgres.query(
         "UPDATE utility_practice_sessions SET status = 'Ended' WHERE id = $1",
         [sessionId],
@@ -1457,7 +1457,7 @@ describe("utility practice sessions (SQL-driven)", () => {
     it("shows an open session to any signed-in player but not a guest", async () => {
       const host = await fx.player();
       const stranger = await fx.player();
-      const sessionId = await insertSession(host, { is_open: true });
+      const sessionId = await insertSession(host, { is_open: true, access: "Open" });
 
       expect(await canView(sessionId, stranger)).toBe(true);
       expect(await canView(sessionId, null, "guest")).toBe(false);

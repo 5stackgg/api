@@ -355,9 +355,11 @@ CREATE TRIGGER tau_utility_lineups_reset_offsets
 -- reject an author editing the name of a lineup that is already public. Only a
 -- trigger can see that this is a TRANSITION into Public.
 --
--- current_setting('hasura.user') is set by Hasura on every request it proxies.
--- A direct connection from the API has no such setting and is trusted: that is
--- our own server, not a caller.
+-- Hasura stamps x-hasura-role on every request it proxies, so the role -- not
+-- the session object -- is what marks a caller. A direct connection from the
+-- API carries no role and is trusted: that is our own server, not a caller.
+-- (hasura.user is left as '{}' once anything has set it on a pooled
+-- connection, so "a session exists" does not mean "a caller sent this".)
 CREATE OR REPLACE FUNCTION public.tbiu_utility_lineups_public() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
@@ -379,10 +381,8 @@ BEGIN
     _role := _session ->> 'x-hasura-role';
     _steam_id := NULLIF(_session ->> 'x-hasura-user-id', '')::bigint;
 
-    IF _session IS NOT NULL
-       AND _role IS DISTINCT FROM 'admin'
-       AND _role IS DISTINCT FROM 'administrator'
-       AND _role IS DISTINCT FROM 'moderator'
+    IF _role IS NOT NULL
+       AND _role NOT IN ('admin', 'administrator', 'moderator')
     THEN
         RAISE EXCEPTION
             'A lineup becomes public by review. Submit it and a moderator will look at it.'
