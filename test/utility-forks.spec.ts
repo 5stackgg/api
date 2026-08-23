@@ -4,6 +4,7 @@ import { UtilityLineupsService } from "./../src/utility/utility-lineups.service"
 import { User } from "./../src/auth/types/User";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
+import { UtilityPendingLineup } from "./../src/utility/utility-load.service";
 
 // A fork copies somebody else's throw into your own library. The line these
 // pin is what crosses and what does not: the geometry and the physics seed do,
@@ -31,6 +32,9 @@ describe("utility lineup forks (SQL-driven)", () => {
         get: jest.fn(async (_key: string, fallback?: unknown) => fallback),
         put: jest.fn(async (): Promise<boolean> => true),
         forget: jest.fn(async (): Promise<boolean> => true),
+      } as unknown as never,
+      {
+        pending: jest.fn(async (): Promise<Array<UtilityPendingLineup>> => []),
       } as unknown as never,
     );
   }, 600_000);

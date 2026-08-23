@@ -244,6 +244,11 @@ describe("utility practice sessions (SQL-driven)", () => {
       {
         get: jest.fn(() => ({ webDomain: "https://5stack.test" })),
       } as unknown as never,
+      {
+        getConnection: () => ({
+          publish: jest.fn(async (): Promise<number> => 0),
+        }),
+      } as unknown as never,
     );
   }
 

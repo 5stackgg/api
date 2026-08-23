@@ -7,6 +7,7 @@ import {
 } from "./../src/utility/utility-lineups.service";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
+import { UtilityPendingLineup } from "./../src/utility/utility-load.service";
 
 // Scoring is the one place a game server's word would move a player's record,
 // so none of it is taken on trust: the distance is recomputed here from the
@@ -55,6 +56,9 @@ describe("utility practice scoring (SQL-driven)", () => {
           store.set(key, value);
           return true;
         }),
+      } as unknown as never,
+      {
+        pending: jest.fn(async (): Promise<Array<UtilityPendingLineup>> => []),
       } as unknown as never,
     );
   }
