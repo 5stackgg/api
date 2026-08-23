@@ -289,6 +289,46 @@ describe("utility lineups (SQL-driven)", () => {
       expect(row.favorites).toBe(0);
     });
 
+    // tbiu_utility_lineups re-validates the whole row on every UPDATE, and a
+    // Team lineup whose author has since left that team raises there. The
+    // counter triggers UPDATE that row, so without a guard the raise takes down
+    // the vote or favourite that moved the counter.
+    it("still takes a vote and a favourite after the author leaves the team", async () => {
+      const team = await fx.team(1);
+      // The author has to be a roster member rather than the owner: an owner is
+      // a member by owner_steam_id alone, so leaving the roster would not make
+      // them one.
+      const [mate] = await postgres.query<Array<{ player_steam_id: string }>>(
+        `SELECT player_steam_id FROM team_roster
+          WHERE team_id = $1 AND player_steam_id <> $2 LIMIT 1`,
+        [team.id, team.owner],
+      );
+      const author = mate.player_steam_id;
+      const id = await insertLineup(author, {
+        visibility: "Team",
+        team_id: team.id,
+      });
+
+      await postgres.query(
+        "DELETE FROM team_roster WHERE team_id = $1 AND player_steam_id = $2",
+        [team.id, author],
+      );
+
+      await expect(
+        postgres.query(
+          "INSERT INTO utility_lineup_votes (utility_lineup_id, steam_id, vote) VALUES ($1, $2, 1)",
+          [id, team.owner],
+        ),
+      ).resolves.toBeDefined();
+
+      await expect(
+        postgres.query(
+          "INSERT INTO utility_lineup_favorites (utility_lineup_id, steam_id) VALUES ($1, $2)",
+          [id, team.owner],
+        ),
+      ).resolves.toBeDefined();
+    });
+
     it("reports the viewer's own vote and favorite state", async () => {
       const author = await fx.player();
       const fan = await fx.player();

@@ -88,6 +88,19 @@ export class UtilityLoadService {
   /** Nothing is gained by remembering more than this, and a library is a chat reply. */
   private static readonly PENDING_MAX = 25;
 
+  // Everything that ends up on an RCON command line goes through here. A saved
+  // id is a uuid the database handed back, but a scratch id is the caller's own
+  // string -- and the source console splits a command line on ';', so an
+  // unchecked one is arbitrary RCON on somebody's practice server. A uuid and a
+  // `scratch-<lineup_bucket>` key both live inside this set; nothing else does.
+  private static readonly RCON_ID = /^[A-Za-z0-9_.,:-]{1,96}$/;
+
+  private static assertRconId(id: string): void {
+    if (!UtilityLoadService.RCON_ID.test(id)) {
+      throw Error("that is not a lineup id");
+    }
+  }
+
   constructor(
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
@@ -328,6 +341,45 @@ export class UtilityLoadService {
     return this.dispatch(at, user.steam_id, scratch.client_id, scratch.map_name);
   }
 
+  /**
+   * Stand the caller on a queue that is already in their library. This is what
+   * a map change is left holding when the server turns out to be on the map
+   * being asked for: there is no level to change, but the load the caller
+   * asked for still has to be sent.
+   */
+  public async sendQueued(
+    serverId: string,
+    steamId: string,
+    lineupIds: Array<string>,
+  ): Promise<boolean> {
+    const ids = lineupIds.filter(Boolean);
+
+    if (ids.length === 0) {
+      return false;
+    }
+
+    for (const id of ids) {
+      UtilityLoadService.assertRconId(id);
+    }
+
+    const reply = await this.send(
+      serverId,
+      ids.length === 1
+        ? `utility_practice_load ${steamId} ${ids[0]}`
+        : `utility_practice_drill ${steamId} ${ids.join(",")}`,
+    );
+
+    if (reply === null) {
+      return false;
+    }
+
+    this.logger.log(
+      `[utility-load] ${steamId} -> ${ids.length} queued on ${serverId}`,
+    );
+
+    return true;
+  }
+
   private async dispatch(
     at: UtilityPlayerLocation,
     steamId: string,
@@ -372,6 +424,10 @@ export class UtilityLoadService {
   }): Promise<{ sent: boolean; queued: boolean }> {
     const target = options.workshopId ?? options.mapName;
     const ids = (options.lineupIds ?? []).filter(Boolean);
+
+    for (const id of ids) {
+      UtilityLoadService.assertRconId(id);
+    }
 
     const queue =
       options.steamId && ids.length > 0
@@ -441,6 +497,9 @@ export class UtilityLoadService {
     // scratch throw has to replace the old one: the client_id is stable per
     // meta spot, so the second send is an edited aim rather than a new throw.
     const id = UtilityLoadService.idOf(entry);
+
+    UtilityLoadService.assertRconId(id);
+
     const next = existing.filter((held) => UtilityLoadService.idOf(held) !== id);
 
     next.push(entry);

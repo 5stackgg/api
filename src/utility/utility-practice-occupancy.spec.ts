@@ -34,6 +34,7 @@ describe("UtilityPracticeService.reportOccupancy", () => {
       {} as any,
       {} as any,
       load as any,
+      { ensureMode: jest.fn().mockResolvedValue(null) } as any,
       { get: jest.fn() } as any,
       { getConnection: () => ({ publish }) } as any,
     ) as any;

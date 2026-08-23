@@ -769,10 +769,10 @@ export class DemoMetadataService {
   // and the compression live in one place.
   public async readPlaybackBlob(playbackFile: string): Promise<PlaybackBlob> {
     const cacheKey = DemoMetadataService.playbackBlobCacheKey(playbackFile);
-    const cached = (await this.cache.get(cacheKey)) as PlaybackBlob | undefined;
+    const cached = await this.cache.getRaw(cacheKey);
 
     if (cached) {
-      return cached;
+      return JSON.parse(cached) as PlaybackBlob;
     }
 
     const existing = this.blobsInFlight.get(playbackFile);
@@ -804,23 +804,28 @@ export class DemoMetadataService {
 
     const gz = Buffer.concat(chunks);
 
+    // The slot is held across the parse and the cache write, not just the
+    // inflate: those are the other two full copies of the same document, and
+    // releasing early puts an unbounded number of them in flight at once --
+    // which is the spike the semaphore exists to stop. The string that was just
+    // inflated is what goes to redis, so the blob is never re-serialised.
     await DemoMetadataService.acquireInflateSlot();
 
-    let json: string;
+    let blob: PlaybackBlob;
     try {
-      json = zlib.gunzipSync(gz).toString("utf8");
+      const json = zlib.gunzipSync(gz).toString("utf8");
+
+      blob = JSON.parse(json) as PlaybackBlob;
+
+      if (json.length <= DemoMetadataService.PLAYBACK_BLOB_MAX_CACHE_BYTES) {
+        await this.cache.putRaw(
+          cacheKey,
+          json,
+          DemoMetadataService.PLAYBACK_BLOB_TTL_SECONDS,
+        );
+      }
     } finally {
       DemoMetadataService.releaseInflateSlot();
-    }
-
-    const blob = JSON.parse(json) as PlaybackBlob;
-
-    if (json.length <= DemoMetadataService.PLAYBACK_BLOB_MAX_CACHE_BYTES) {
-      await this.cache.put(
-        cacheKey,
-        blob,
-        DemoMetadataService.PLAYBACK_BLOB_TTL_SECONDS,
-      );
     }
 
     return blob;

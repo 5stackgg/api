@@ -591,6 +591,19 @@ export class MatchAssistantService {
   // Boot the server in the right mode instead of leaving the plugin to correct
   // it after the map has already loaded — game_mode picks the map layout
   // (Wingman/Duel get the 2v2 version) and only applies at map load.
+  // A channel tag (latest, dev-sw) moves under the same name, so a copy cached
+  // on the node is a stale plugin and the manifest has to be re-checked -- that
+  // is the only way a pushed dev image reaches the next server. A pinned
+  // `:v1.2.3` is immutable and the cached copy IS the right one, so pulling
+  // Always would put a registry round-trip in front of every match boot for
+  // nothing, and a registry that is rate limiting or down would stop matches
+  // that could otherwise have started from the node's disk.
+  public static imagePullPolicyFor(image: string): "Always" | "IfNotPresent" {
+    const tag = image.slice(image.lastIndexOf("/") + 1).split(":")[1] ?? "";
+
+    return /^v\d/.test(tag) ? "IfNotPresent" : "Always";
+  }
+
   private static getGameMode(type?: e_match_types_enum): number {
     return type === "Wingman" || type === "Duel" ? 2 : 1;
   }
@@ -1010,13 +1023,8 @@ export class MatchAssistantService {
                       {
                         name: "game-server",
                         image: pluginImage,
-                        // On-demand servers boot fresh and the plugin image is
-                        // a mutable channel tag (dev-sw / latest), so a cached
-                        // copy on the node is a stale plugin. Always re-checks
-                        // the manifest -- cheap when the digest is unchanged,
-                        // and the only way a pushed dev image actually reaches
-                        // the next server.
-                        imagePullPolicy: "Always",
+                        imagePullPolicy:
+                          MatchAssistantService.imagePullPolicyFor(pluginImage),
                         ...(cpus
                           ? {
                               resources: {

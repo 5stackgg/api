@@ -839,6 +839,7 @@ export class UtilityLineupsService {
   // that watched the grenade fly.
   public async saveFromPractice(options: {
     steamId: string;
+    role?: string | null;
     matchId: string;
     lineupId: string;
     name: string;
@@ -862,23 +863,34 @@ export class UtilityLineupsService {
 
     await this.assertDailyLineupLimit(options.steamId);
 
+    const visibility = UtilityLineupsService.visibilityFor(options.visibility, {
+      steam_id: options.steamId,
+      role: options.role,
+    });
+
     await this.postgres.query(
       `UPDATE public.utility_lineups
           SET name = $2,
               description = $3,
               visibility = $4,
               team_id = $5::uuid,
-              tags = $6::text[]
+              tags = $6::text[],
+              public_requested_at = CASE
+                WHEN $7::boolean THEN now() ELSE public_requested_at
+              END,
+              public_reviewed_by = COALESCE($8::bigint, public_reviewed_by)
         WHERE id = $1::uuid`,
       [
         options.lineupId,
         UtilityLineupsService.sanitizeName(options.name, "Lineup"),
         UtilityLineupsService.sanitizeText(options.description, 1000),
-        options.visibility ?? "Private",
+        visibility.visibility,
         options.teamId ?? null,
         (options.tags ?? [])
           .slice(0, 16)
           .map((tag) => String(tag).slice(0, 40)),
+        visibility.requestedPublic,
+        visibility.reviewedBy,
       ],
     );
 
@@ -1369,6 +1381,57 @@ export class UtilityLineupsService {
     }
 
     return preview;
+  }
+
+  // Who may publish straight to the shared library. The same list
+  // tbiu_utility_lineups_public enforces -- but that trigger only ever sees a
+  // role on a write Hasura proxied, and these saves run on the API's own pooled
+  // connection, which carries none. So it waves them through and this is the
+  // only gate on this path.
+  private static readonly REVIEWER_ROLES: ReadonlyArray<string> = [
+    "moderator",
+    "administrator",
+  ];
+
+  /**
+   * What a caller-supplied visibility is allowed to become.
+   *
+   * A 'Public' ask from anybody who is not a reviewer is a REQUEST rather than
+   * a publication -- the same one the library's own "submit for review" button
+   * makes -- and anything the enum does not know is Private.
+   */
+  public static visibilityFor(
+    requested: string | null | undefined,
+    user: { steam_id: string; role?: string | null },
+  ): {
+    visibility: "Private" | "Team" | "Public";
+    requestedPublic: boolean;
+    reviewedBy: string | null;
+  } {
+    const asked = String(requested ?? "Private");
+
+    if (asked === "Public") {
+      if (
+        UtilityLineupsService.REVIEWER_ROLES.includes(String(user.role ?? ""))
+      ) {
+        return {
+          visibility: "Public",
+          requestedPublic: false,
+          // The trigger COALESCEs onto whatever the write carries, and on this
+          // connection it has nothing of its own to stamp -- so an approval
+          // that records no reviewer would be the alternative.
+          reviewedBy: user.steam_id,
+        };
+      }
+
+      return { visibility: "Private", requestedPublic: true, reviewedBy: null };
+    }
+
+    return {
+      visibility: asked === "Team" ? "Team" : "Private",
+      requestedPublic: false,
+      reviewedBy: null,
+    };
   }
 
   public static sanitizeName(

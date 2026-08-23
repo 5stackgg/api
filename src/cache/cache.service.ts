@@ -45,6 +45,28 @@ export class CacheService {
     }
   }
 
+  // For values that are already JSON. Putting a document that is tens of
+  // megabytes through JSON.stringify only escapes it into a second copy of
+  // itself, and the caller that inflated it is holding the string anyway.
+  public async putRaw(key: string, value: string, seconds?: number) {
+    try {
+      if (seconds) {
+        await this.connection.set(key, value, "EX", seconds);
+      } else {
+        await this.connection.set(key, value);
+      }
+
+      return true;
+    } catch (error) {
+      this.logger.error("unable to put value into redis", error);
+      return false;
+    }
+  }
+
+  public async getRaw(key: string): Promise<string | null> {
+    return await this.connection.get(key);
+  }
+
   public async forget(key: string) {
     try {
       await this.connection.del(key);

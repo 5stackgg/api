@@ -1,6 +1,7 @@
 import { DelayedError } from "bullmq";
 import { BatchUtilityRenderJob } from "./BatchUtilityRenderJob";
 import {
+  NadeRenderPodBusyError,
   NoGpuAvailableError,
   NoSteamAccountAvailableError,
 } from "../../matches/game-streamer/game-streamer.service";
@@ -406,6 +407,55 @@ describe("BatchUtilityRenderJob", () => {
       "Error — exit=1 — [nade] ERROR: capture failed to start",
     );
     expect(practice.endRenderSession).toHaveBeenCalledWith("session-1");
+  });
+
+  it("leaves a render approved after dispatch out of the pod's failure", async () => {
+    const late = { ...RENDER, id: "render-2", utility_lineup_id: "lineup-2" };
+    renders.inFlightForMap.mockResolvedValueOnce([RENDER, late]);
+    gameStreamer.getNadeRenderPodState.mockResolvedValueOnce("succeeded");
+    const bull = makeJob({
+      mapName: "de_mirage",
+      sessionId: "session-1",
+      dispatched: true,
+      dispatchedIds: ["render-1"],
+    });
+
+    await job.process(bull as any);
+
+    expect(renders.failRenders).toHaveBeenCalledWith(
+      ["render-1"],
+      "render pod exited before reporting terminal status",
+    );
+  });
+
+  it("holds the batch when a pod for the map is still terminating", async () => {
+    gameStreamer.dispatchNadePreviews.mockRejectedValueOnce(
+      new NadeRenderPodBusyError(),
+    );
+    const bull = makeJob({
+      mapName: "de_mirage",
+      sessionId: "session-1",
+      bookedAt: Date.now(),
+    });
+
+    await expect(job.process(bull as any)).rejects.toBeInstanceOf(DelayedError);
+
+    expect(renders.failRenders).not.toHaveBeenCalled();
+    expect(practice.endRenderSession).not.toHaveBeenCalled();
+  });
+
+  it("fails a render that has no requester instead of retrying forever", async () => {
+    renders.requesterFor.mockResolvedValueOnce(null);
+    const bull = makeJob({ mapName: "de_mirage" });
+
+    await job.process(bull as any);
+
+    expect(practice.startForRender).not.toHaveBeenCalled();
+    expect(bull.moveToDelayed).not.toHaveBeenCalled();
+    expect(renders.failRenders).toHaveBeenCalledWith(
+      ["render-1"],
+      "render has no requester to host its practice session",
+    );
   });
 
   it("releases the practice server once the queue drains", async () => {

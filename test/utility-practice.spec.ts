@@ -201,11 +201,44 @@ describe("utility practice sessions (SQL-driven)", () => {
     );
   }
 
+  // Counters the service keeps in redis rather than in the cache service --
+  // the invite-lookup limit is an INCR, because a get-then-put cannot count
+  // attempts that are in flight together.
+  function redisStub() {
+    const counters = new Map<string, number>();
+
+    return {
+      counters,
+      connection: {
+        publish: jest.fn(async (): Promise<number> => 0),
+        multi: () => {
+          const queued: Array<[string, unknown]> = [];
+          const chain = {
+            incr(key: string) {
+              const next = (counters.get(key) ?? 0) + 1;
+              counters.set(key, next);
+              queued.push([key, next]);
+              return chain;
+            },
+            expire() {
+              return chain;
+            },
+            exec: async () => queued.map(([, value]) => [null, value]),
+          };
+          return chain;
+        },
+      },
+    };
+  }
+
   function makeService(overrides: {
     matchAssistant?: Record<string, unknown>;
     cache?: Record<string, unknown>;
     load?: UtilityLoadService;
+    redis?: ReturnType<typeof redisStub>;
   }): UtilityPracticeService {
+    const redis = overrides.redis ?? redisStub();
+
     return new UtilityPracticeService(
       new Logger("UtilityPracticeTest"),
       postgres,
@@ -242,12 +275,13 @@ describe("utility practice sessions (SQL-driven)", () => {
       } as unknown as never,
       overrides.load ?? makeLoadService(),
       {
+        ensureMode: jest.fn(async (): Promise<null> => null),
+      } as unknown as never,
+      {
         get: jest.fn(() => ({ webDomain: "https://5stack.test" })),
       } as unknown as never,
       {
-        getConnection: () => ({
-          publish: jest.fn(async (): Promise<number> => 0),
-        }),
+        getConnection: () => redis.connection,
       } as unknown as never,
     );
   }
@@ -476,17 +510,7 @@ describe("utility practice sessions (SQL-driven)", () => {
     // surface. Without this the only thing standing between a stranger and
     // someone's practice server is the width of the code.
     it("rate limits repeated invite code lookups by the caller", async () => {
-      const counts = new Map<string, number>();
-      const service = makeService({
-        cache: {
-          get: jest.fn(async (key: string, fallback: unknown) =>
-            counts.has(key) ? counts.get(key) : fallback,
-          ),
-          put: jest.fn(async (key: string, value: unknown) => {
-            counts.set(key, Number(value));
-          }),
-        },
-      });
+      const service = makeService({});
       const guest = await fx.player();
 
       for (let attempt = 0; attempt < 10; attempt++) {
@@ -1014,6 +1038,62 @@ describe("utility practice sessions (SQL-driven)", () => {
 
       expect(result).toMatchObject({ success: true, queued: false });
       expect(rconSent).toEqual([]);
+    });
+
+    // A scratch id is the caller's own string and it arrives inside an RCON
+    // command line, which the source console splits on ';'. Everything else on
+    // this path is a uuid the database handed back.
+    it("refuses a scratch id that would carry its own commands", async () => {
+      const host = await fx.player();
+      const { sessionId } = await readyServer(host, 27718);
+
+      await expect(
+        makeService({}).changeMap(asUser(host), {
+          session_id: sessionId,
+          map_name: "de_inferno",
+          scratch: {
+            client_id: "x; sv_cheats 1; changelevel de_dust2",
+            name: "smoke",
+            map_name: "de_inferno",
+            utility_type: "Smoke",
+            side: "TERRORIST",
+            technique: "Stationary",
+            throw_strength: "Full",
+            origin_x: -1912,
+            origin_y: 922,
+            origin_z: -167,
+            eye_z: -103,
+            view_yaw: 133.7,
+            view_pitch: -12.4,
+            land_x: -560,
+            land_y: 320,
+            land_z: -140,
+          },
+        }),
+      ).rejects.toThrow(/not a lineup id/);
+
+      expect(rconSent).toEqual([]);
+    });
+
+    // ...but "nothing to change level to" is not "nothing to do". The button
+    // that switches map and stands you on a lineup is one call, and answering
+    // success without sending the load leaves the player standing where they
+    // were while the page says it worked.
+    it("still sends the queued load when the map is already up", async () => {
+      const host = await fx.player();
+      const { sessionId, serverId } = await readyServer(host, 27717);
+      const lineupId = await insertLineup(host, "de_mirage");
+
+      const result = await makeService({}).changeMap(asUser(host), {
+        session_id: sessionId,
+        map_name: "de_mirage",
+        lineup_id: lineupId,
+      });
+
+      expect(result).toMatchObject({ success: true, queued: true });
+      expect(rconSent).toEqual([
+        { serverId, command: `utility_practice_load ${host} ${lineupId}` },
+      ]);
     });
 
     // The lock is what a double-clicked button runs into: two changelevels

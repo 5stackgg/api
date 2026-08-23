@@ -23,6 +23,7 @@ import {
   UtilityLoadService,
   UtilityScratchLineup,
 } from "./utility-load.service";
+import { UtilityPracticeModeService } from "./utility-practice-mode.service";
 
 export type UtilityPracticeSession = {
   id: string;
@@ -106,6 +107,7 @@ export class UtilityPracticeService {
     private readonly playbooks: UtilityPlaybooksService,
     private readonly notifications: NotificationsService,
     private readonly load: UtilityLoadService,
+    private readonly practiceMode: UtilityPracticeModeService,
     private readonly configService: ConfigService,
     private readonly redisManager: RedisManagerService,
   ) {
@@ -652,9 +654,14 @@ export class UtilityPracticeService {
     const key = `utility-invite-lookup:${steamId}:${Math.floor(
       Date.now() / 60000,
     )}`;
-    const count = Number(await this.cache.get(key, 0)) + 1;
+    // INCR rather than get-then-put: guesses fired concurrently all read the
+    // same pre-increment value, and a limit that only counts the attempts that
+    // happened to be serialised is not a limit. EXPIRE has to follow INCR --
+    // on a key that does not exist yet it does nothing, which would leave the
+    // counter with no TTL at all.
+    const result = await this.redis.multi().incr(key).expire(key, 120).exec();
 
-    await this.cache.put(key, count, 120);
+    const count = Number(result?.[0]?.[1] ?? 0);
 
     if (count > UtilityPracticeService.INVITE_LOOKUPS_PER_MINUTE) {
       throw Error("too many invite attempts, try again in a minute");
@@ -1192,11 +1199,17 @@ export class UtilityPracticeService {
       },
     });
 
+    // Without a mode the server boots a plain Competitive config: rounds end,
+    // freezetime applies and grenades are limited, which is every one of the
+    // things a practice server exists not to do.
+    const mode = await this.practiceMode.ensureMode();
+
     const { insert_match_options_one: matchOptions } =
       await this.hasura.mutation({
         insert_match_options_one: {
           __args: {
             object: {
+              ...(mode ? { game_mode_id: mode.id } : {}),
               type: UtilityPracticeService.MATCH_TYPE,
               // One map, no veto, best_of 1: setup_match_maps then materializes
               // exactly one match_maps row, which is what check_match_status
@@ -1390,8 +1403,23 @@ export class UtilityPracticeService {
 
     const map = await this.resolveMapRow(input.map_name);
 
+    // Already on that map, so there is no level to change -- but the caller
+    // asked to be stood on something, and reporting success without sending it
+    // leaves them watching a button that says it worked from the wrong spot.
     if (map.name === session.map_name) {
-      return { success: true, map_name: map.name, queued: false };
+      const serverId = await this.serverForSession(session.match_id);
+      const queued = await this.queueForMapChange(
+        user,
+        serverId,
+        map.name,
+        input,
+      );
+
+      return {
+        success: true,
+        map_name: map.name,
+        queued: await this.load.sendQueued(serverId, user.steam_id, queued),
+      };
     }
 
     const lockKey = `utility:practice:map:${session.id}`;

@@ -661,6 +661,9 @@ describe("utility playbooks (SQL-driven)", () => {
         // one.
         {} as never,
         {
+          ensureMode: jest.fn(async (): Promise<null> => null),
+        } as unknown as never,
+        {
           get: jest.fn(() => ({ webDomain: "https://5stack.test" })),
         } as unknown as never,
         {

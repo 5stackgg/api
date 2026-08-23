@@ -112,6 +112,16 @@ export class NoGpuAvailableError extends Error {
   }
 }
 
+// A pod for this map is still up -- usually the previous batch's Job on its way
+// out. Typed rather than a plain Error because the batch job has to tell it
+// apart from a dispatch that will never work: this one clears on its own.
+export class NadeRenderPodBusyError extends Error {
+  constructor(message = "a nade render pod is already running for that map") {
+    super(message);
+    this.name = "NadeRenderPodBusyError";
+  }
+}
+
 export class NodeBusyError extends Error {
   constructor(message = "node is busy with an active session") {
     super(message);
@@ -2546,7 +2556,7 @@ export class GameStreamerService {
     const existing = await this.getNadeRenderPodState(mapName);
     if (existing === "running") {
       await this.releaseNadeRenderClaim(mapName, jobName);
-      throw new Error(
+      throw new NadeRenderPodBusyError(
         `nade render pod ${jobName} is already running for ${mapName}`,
       );
     }

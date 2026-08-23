@@ -272,6 +272,16 @@ describe("utility lineups mined from demos (SQL-driven)", () => {
           store.set(key, value);
           return true;
         }),
+        // The playback blob is cached as the JSON it was inflated from rather
+        // than re-serialised through put().
+        getRaw: jest.fn(async (key: string): Promise<string | null> => {
+          const held = store.get(key);
+          return typeof held === "string" ? held : null;
+        }),
+        putRaw: jest.fn(async (key: string, value: string): Promise<boolean> => {
+          store.set(key, value);
+          return true;
+        }),
         forget: jest.fn(async (key: string): Promise<boolean> => {
           store.delete(key);
           return true;
@@ -675,6 +685,73 @@ describe("utility lineups mined from demos (SQL-driven)", () => {
       // Nothing in a demo says whether the jump was bound or hand timed.
       expect(row.jump_throw_bind).toBe(false);
       expect(row.view_yaw_delta).not.toBeNull();
+    });
+
+    // The trigger that gates publishing only ever sees a role on a write Hasura
+    // proxied. This INSERT is on the API's own connection, so a 'Public' asked
+    // for here would be stamped approved with nobody's name against it.
+    it("turns a player's Public ask into a review request", async () => {
+      const context = await demoContext();
+      await seedDemoRow(context);
+      const service = miningService(
+        context,
+        blobWith({ thrower: context.author }),
+      );
+
+      const { id } = await service.saveFromDemo({
+        user: { steam_id: context.author, role: "user" } as never,
+        match_id: context.matchId,
+        match_map_id: context.mapId,
+        grenade_id: 7,
+        name: "A site smoke",
+        visibility: "Public",
+      });
+
+      const [row] = await postgres.query<
+        Array<{
+          visibility: string;
+          requested: Date | null;
+          reviewed_at: Date | null;
+        }>
+      >(
+        `SELECT visibility, public_requested_at AS requested,
+                public_reviewed_at AS reviewed_at
+           FROM utility_lineups WHERE id = $1::uuid`,
+        [id],
+      );
+
+      expect(row.visibility).toBe("Private");
+      expect(row.requested).not.toBeNull();
+      expect(row.reviewed_at).toBeNull();
+    });
+
+    it("publishes for a moderator, and records who approved it", async () => {
+      const context = await demoContext();
+      await seedDemoRow(context);
+      const service = miningService(
+        context,
+        blobWith({ thrower: context.author }),
+      );
+
+      const { id } = await service.saveFromDemo({
+        user: { steam_id: context.author, role: "moderator" } as never,
+        match_id: context.matchId,
+        match_map_id: context.mapId,
+        grenade_id: 7,
+        name: "A site smoke",
+        visibility: "Public",
+      });
+
+      const [row] = await postgres.query<
+        Array<{ visibility: string; reviewed_by: string | null }>
+      >(
+        `SELECT visibility, public_reviewed_by::text AS reviewed_by
+           FROM utility_lineups WHERE id = $1::uuid`,
+        [id],
+      );
+
+      expect(row.visibility).toBe("Public");
+      expect(row.reviewed_by).toBe(context.author);
     });
 
     it("leaves the physics seed null, because a demo does not carry one", async () => {

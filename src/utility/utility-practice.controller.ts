@@ -242,6 +242,7 @@ export class UtilityPracticeController {
     // publish it as an exact one.
     return await this.lineups.saveFromPractice({
       steamId: user.steam_id,
+      role: user.role,
       matchId: session.match_id,
       lineupId: utility_lineup_id,
       name: data.name,

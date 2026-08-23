@@ -9,6 +9,7 @@ import {
 import { UseQueue } from "../../utilities/QueueProcessors";
 import {
   GameStreamerService,
+  NadeRenderPodBusyError,
   NoGpuAvailableError,
   NoSteamAccountAvailableError,
 } from "../../matches/game-streamer/game-streamer.service";
@@ -29,6 +30,11 @@ type JobData = {
   mapName: string;
   sessionId?: string;
   dispatched?: boolean;
+  // The rows that were actually in the pod's NADE_BATCH_JOBS. A row approved
+  // while this batch was already filming joins the map's in-flight set without
+  // ever being sent anywhere, and failing it when the pod exits would fail a
+  // render that was never attempted.
+  dispatchedIds?: Array<string>;
   bookedAt?: number;
   // The wedge log is captured once per booking, two minutes in -- early
   // enough to read while it is still stuck, cheap enough to not spam k8s.
@@ -65,11 +71,27 @@ export class BatchUtilityRenderJob extends WorkerHost {
         inFlight.map((render) => render.id),
         "booking_server",
       );
+      // Outside the try below: a render with no requester has nothing to host
+      // its session and never will, so reading it as "no server yet" is a
+      // once-a-minute retry that runs forever.
+      let requestedBySteamId: string;
+      try {
+        requestedBySteamId = await this.requesterFor(inFlight[0].id);
+      } catch (error) {
+        const message = (error as Error)?.message ?? "no requester";
+        this.logger.error(`${tag} cannot book a server: ${message}`);
+        await this.renders.failRenders(
+          inFlight.map((render) => render.id),
+          message,
+        );
+        return;
+      }
+
       let session;
       try {
         session = await this.practice.startForRender({
           mapName,
-          requestedBySteamId: await this.requesterFor(inFlight[0].id),
+          requestedBySteamId,
         });
       } catch (error) {
         const message = (error as Error)?.message ?? "no practice server";
@@ -209,6 +231,16 @@ export class BatchUtilityRenderJob extends WorkerHost {
           );
           return this.delayUntilNext(job, GPU_BUSY_RETRY_MS);
         }
+        if (error instanceof NadeRenderPodBusyError) {
+          // The previous batch's Job is still terminating. Failing the queue
+          // over a condition that clears in seconds is the expensive answer.
+          this.logger.log(`${tag} a render pod is still up, retrying`);
+          await this.renders.stampBootStage(
+            inFlight.map((render) => render.id),
+            "dispatching_pod:PodBusy",
+          );
+          return this.delayUntilNext(job, CHECK_DELAY_MS);
+        }
         if (error instanceof NoSteamAccountAvailableError) {
           this.logger.log(`${tag} no Steam account in the pool, retrying`);
           await this.renders.stampBootStage(
@@ -227,7 +259,11 @@ export class BatchUtilityRenderJob extends WorkerHost {
         return;
       }
 
-      await job.updateData({ ...job.data, dispatched: true });
+      await job.updateData({
+        ...job.data,
+        dispatched: true,
+        dispatchedIds: inFlight.map((render) => render.id),
+      });
       return this.delayUntilNext(job, CHECK_DELAY_MS * 2);
     }
 
@@ -246,11 +282,22 @@ export class BatchUtilityRenderJob extends WorkerHost {
           ? "render pod failed (k8s reported Job in failed state)"
           : "render pod no longer present (Job deleted)");
 
+    // Anything approved after this pod was dispatched was never in its batch.
+    // Left queued, ReconcileQueuedUtilityRenders picks it up on its next pass;
+    // failed here it would need a moderator to cancel it by hand, because the
+    // in-flight unique index refuses a second row for the same lineup.
+    const dispatchedIds = job.data.dispatchedIds;
+    const attempted = dispatchedIds
+      ? inFlight.filter((render) => dispatchedIds.includes(render.id))
+      : inFlight;
+    const untouched = inFlight.length - attempted.length;
+
     this.logger.warn(
-      `${tag} pod ${podState} with ${inFlight.length} lineup(s) still in flight — ${reason}`,
+      `${tag} pod ${podState} with ${attempted.length} lineup(s) still in flight — ${reason}` +
+        (untouched > 0 ? ` (${untouched} queued after dispatch, left alone)` : ""),
     );
     await this.renders.failRenders(
-      inFlight.map((render) => render.id),
+      attempted.map((render) => render.id),
       reason,
     );
     await this.releaseSession(job);

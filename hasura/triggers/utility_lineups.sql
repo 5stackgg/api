@@ -122,16 +122,24 @@ CREATE OR REPLACE FUNCTION public.taiud_utility_lineup_votes() RETURNS TRIGGER
 DECLARE
     _lineup_id uuid := COALESCE(NEW.utility_lineup_id, OLD.utility_lineup_id);
 BEGIN
-    UPDATE public.utility_lineups l
-       SET upvotes = (
-               SELECT COUNT(*) FROM public.utility_lineup_votes v
-               WHERE v.utility_lineup_id = _lineup_id AND v.vote = 1
-           ),
-           downvotes = (
-               SELECT COUNT(*) FROM public.utility_lineup_votes v
-               WHERE v.utility_lineup_id = _lineup_id AND v.vote = -1
-           )
-     WHERE l.id = _lineup_id;
+    BEGIN
+        UPDATE public.utility_lineups l
+           SET upvotes = (
+                   SELECT COUNT(*) FROM public.utility_lineup_votes v
+                   WHERE v.utility_lineup_id = _lineup_id AND v.vote = 1
+               ),
+               downvotes = (
+                   SELECT COUNT(*) FROM public.utility_lineup_votes v
+                   WHERE v.utility_lineup_id = _lineup_id AND v.vote = -1
+               )
+         WHERE l.id = _lineup_id;
+    EXCEPTION WHEN others THEN
+        -- tbiu_utility_lineups re-validates the whole row on every UPDATE, and a
+        -- Team lineup whose author has since left that team raises there.
+        -- Losing a counter must never fail the vote that moved it.
+        RAISE WARNING 'could not count votes on utility lineup %: %',
+            _lineup_id, SQLERRM;
+    END;
 
     RETURN NULL;
 END;
@@ -148,12 +156,17 @@ CREATE OR REPLACE FUNCTION public.taid_utility_lineup_favorites() RETURNS TRIGGE
 DECLARE
     _lineup_id uuid := COALESCE(NEW.utility_lineup_id, OLD.utility_lineup_id);
 BEGIN
-    UPDATE public.utility_lineups l
-       SET favorites = (
-               SELECT COUNT(*) FROM public.utility_lineup_favorites f
-               WHERE f.utility_lineup_id = _lineup_id
-           )
-     WHERE l.id = _lineup_id;
+    BEGIN
+        UPDATE public.utility_lineups l
+           SET favorites = (
+                   SELECT COUNT(*) FROM public.utility_lineup_favorites f
+                   WHERE f.utility_lineup_id = _lineup_id
+               )
+         WHERE l.id = _lineup_id;
+    EXCEPTION WHEN others THEN
+        RAISE WARNING 'could not count favorites on utility lineup %: %',
+            _lineup_id, SQLERRM;
+    END;
 
     RETURN NULL;
 END;

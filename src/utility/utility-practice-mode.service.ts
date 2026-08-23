@@ -41,6 +41,12 @@ export class UtilityPracticeModeService implements OnApplicationBootstrap {
     "tv_enable 0",
   ];
 
+  // Resolved once per process. Every practice match asks for it on the way to
+  // its match_options, and the row is installed on boot -- so re-running the
+  // upsert per booking would be a write per practice server for an answer that
+  // cannot change under us.
+  private resolved: UtilityGameModeRef | null = null;
+
   constructor(
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
@@ -51,6 +57,10 @@ export class UtilityPracticeModeService implements OnApplicationBootstrap {
   }
 
   public async ensureMode(): Promise<UtilityGameModeRef | null> {
+    if (this.resolved) {
+      return this.resolved;
+    }
+
     if (!(await this.hasGameModes())) {
       return null;
     }
@@ -59,13 +69,15 @@ export class UtilityPracticeModeService implements OnApplicationBootstrap {
       const [mode] = await this.postgres.query<
         Array<{ id: string; slug: string }>
       >(
+        // The cfg is installed once and is the operator's afterwards: this runs
+        // on every boot, and re-asserting EXCLUDED.cfg would silently undo any
+        // cvar they had edited on this mode. competitive_safe is the one thing
+        // held down, because a practice mode that claims to be safe would let
+        // sv_cheats into a ranked match.
         `INSERT INTO public.game_modes (slug, name, description, competitive_safe, cfg, enabled)
          VALUES ($1, $2, $3, false, $4, true)
          ON CONFLICT (slug) DO UPDATE
-            SET name = EXCLUDED.name,
-                description = EXCLUDED.description,
-                competitive_safe = false,
-                cfg = EXCLUDED.cfg
+            SET competitive_safe = false
          RETURNING id::text AS id, slug`,
         [
           UtilityPracticeModeService.SLUG,
@@ -75,7 +87,9 @@ export class UtilityPracticeModeService implements OnApplicationBootstrap {
         ],
       );
 
-      return { id: mode.id, slug: mode.slug };
+      this.resolved = { id: mode.id, slug: mode.slug };
+
+      return this.resolved;
     } catch (error) {
       // The WIP schema is not frozen. A column that has since been renamed must
       // not take the whole API down on boot.

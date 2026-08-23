@@ -213,6 +213,14 @@ export class UtilityMiningService {
 
     await this.lineups.assertDailyLineupLimit(request.user.steam_id);
 
+    // The same gate saveFromPractice runs: this INSERT is on the API's own
+    // connection, where tbiu_utility_lineups_public sees no role and approves
+    // whatever visibility it is handed.
+    const visibility = UtilityLineupsService.visibilityFor(
+      request.visibility,
+      request.user,
+    );
+
     const [inserted] = await this.postgres.query<Array<{ id: string }>>(
       `INSERT INTO public.utility_lineups
          (map_name, utility_type, side, technique, throw_strength, jump_throw_bind,
@@ -221,14 +229,16 @@ export class UtilityMiningService {
           land_x, land_y, land_z, flight_time_ms,
           name, description, tags, visibility, team_id, author_steam_id,
           origin_source, source_match_id, source_match_map_id, source_grenade_id,
-          confidence, verified_at, trajectory_preview)
+          confidence, verified_at, trajectory_preview,
+          public_requested_at, public_reviewed_by)
        VALUES ($1, $2, $3, $4, $5, false,
                $6, $7, $8, $9, $10, $11,
                $12, $13,
                $14, $15, $16, $17,
                $18, $19, $20::text[], $21, $22::uuid, $23::bigint,
                'demo', $24::uuid, $25::uuid, $26::int,
-               'derived', NULL, $27::jsonb)
+               'derived', NULL, $27::jsonb,
+               CASE WHEN $28::boolean THEN now() END, $29::bigint)
        RETURNING id::text AS id`,
       [
         mined.mapName,
@@ -253,13 +263,15 @@ export class UtilityMiningService {
         (request.tags ?? [])
           .slice(0, 16)
           .map((tag) => String(tag).slice(0, 40)),
-        request.visibility ?? "Private",
+        visibility.visibility,
         request.team_id ?? null,
         request.user.steam_id,
         request.match_id,
         request.match_map_id,
         mined.grenadeId,
         JSON.stringify(UtilityLineupsService.preview(mined.path)),
+        visibility.requestedPublic,
+        visibility.reviewedBy,
       ],
     );
 

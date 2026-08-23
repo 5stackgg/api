@@ -22,6 +22,7 @@ describe("UtilityPracticeService.startForRender", () => {
       {} as any,
       {} as any,
       {} as any,
+      { ensureMode: jest.fn().mockResolvedValue(null) } as any,
       { get: jest.fn() } as any,
       { getConnection: () => ({ publish: jest.fn() }) } as any,
     ) as any;
