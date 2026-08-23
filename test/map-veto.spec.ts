@@ -1174,4 +1174,144 @@ describe("map veto (SQL-driven)", () => {
     );
     expect(picks.length).toBe(0);
   });
+
+  // The suites above hand-check the pools people actually play (up to 15). A
+  // map pool is user-built though, so it can hold every seeded Competitive map,
+  // and best_of is a free integer the leagues hand out unchecked. Sweep the
+  // whole range so the generalisation is exercised where nobody has written a
+  // pattern out by hand.
+  describe("every best-of against the widest pools", () => {
+    // Every seeded Competitive map — the largest pool the panel can build.
+    const MAX_POOL = 28;
+    const BEST_OFS = [1, 2, 3, 4, 5, 6, 7];
+
+    // The turn rule restated independently of the SQL that implements it:
+    // teams alternate over Ban/Pick/Decider steps with lineup 1 opening, every
+    // completed PAIR of picks reverses the lead (so the picks snake L1, L2, L2,
+    // L1), and a Side always falls to the opponent of whoever just picked.
+    const expectedSteps = (pattern: Array<string>): Array<string> => {
+      const out: Array<string> = [];
+      let turnIndex = 0;
+      let picksMade = 0;
+      let lastPicker = 1;
+
+      for (const type of pattern) {
+        if (type === "Side") {
+          out.push(`Side L${lastPicker === 1 ? 2 : 1}`);
+          continue;
+        }
+
+        const flipped = Math.floor(picksMade / 2) % 2 === 1;
+        const team = flipped
+          ? turnIndex % 2 === 0
+            ? 2
+            : 1
+          : turnIndex % 2 === 0
+            ? 1
+            : 2;
+
+        if (type === "Pick") {
+          lastPicker = team;
+          picksMade++;
+        }
+        out.push(`${type} L${team}`);
+        turnIndex++;
+      }
+
+      return out;
+    };
+
+    it("has enough Competitive maps to build the widest pool", async () => {
+      const [{ count }] = await postgres.query<Array<{ count: string }>>(
+        "SELECT count(*) AS count FROM maps WHERE type = 'Competitive'",
+      );
+      // Raise MAX_POOL when more Competitive maps are seeded.
+      expect(Number(count)).toBeGreaterThanOrEqual(MAX_POOL);
+    });
+
+    describe.each(BEST_OFS)("best of %i", (bestOf) => {
+      it(`stays well formed for every pool size through ${MAX_POOL}`, async () => {
+        const problems: Array<string> = [];
+
+        // A pool the size of the best-of is played whole and never vetoes.
+        for (let poolSize = bestOf + 1; poolSize <= MAX_POOL; poolSize++) {
+          const pattern = await patternFor(bestOf, poolSize);
+          const at = `BO${bestOf} pool ${poolSize}`;
+          const count = (type: string) =>
+            pattern.filter((step) => step === type).length;
+
+          const consumed = count("Ban") + count("Pick") + count("Decider");
+          if (consumed !== poolSize) {
+            problems.push(
+              `${at}: accounts for ${consumed} of ${poolSize} maps`,
+            );
+          }
+          if (count("Pick") + 1 !== bestOf) {
+            problems.push(
+              `${at}: plays ${count("Pick") + 1} maps, expected ${bestOf}`,
+            );
+          }
+          if (count("Side") !== count("Pick")) {
+            problems.push(
+              `${at}: ${count("Side")} Side steps for ${count("Pick")} Picks — they pair one to one`,
+            );
+          }
+          if (pattern.indexOf("Decider") !== pattern.length - 1) {
+            problems.push(`${at}: the Decider is not the final step`);
+          }
+          // A Side only ever answers the Pick immediately before it. Anywhere
+          // else it is a team being asked to choose a side on a map nobody
+          // picked — the decider, which the knife round settles.
+          pattern.forEach((type, index) => {
+            if (type === "Side" && pattern[index - 1] !== "Pick") {
+              problems.push(
+                `${at}: Side at step ${index + 1} follows ${pattern[index - 1] ?? "nothing"}, not a Pick`,
+              );
+            }
+          });
+        }
+
+        expect(problems).toEqual([]);
+      });
+
+      it(`plays a ${MAX_POOL}-map pool out in the documented order`, async () => {
+        const pattern = await patternFor(bestOf, MAX_POOL);
+        const { match, steps } = await playOutVeto(bestOf, MAX_POOL);
+
+        // playOutVeto records only the steps a team submits; the Decider is
+        // auto-inserted by create_match_map_from_veto and always closes.
+        expect(steps.map((step) => step.step)).toEqual(
+          expectedSteps(pattern).slice(0, -1),
+        );
+
+        // Whatever survives is the decider, and nobody chose a side on it.
+        const [decider] = await postgres.query<
+          Array<{ map_id: string; side: string | null }>
+        >(
+          "SELECT map_id, side FROM match_map_veto_picks WHERE match_id = $1 AND type = 'Decider'",
+          [match.id],
+        );
+        expect(decider.side).toBeNull();
+        expect(
+          steps.filter(
+            (step) =>
+              step.step.startsWith("Side") && step.mapId === decider.map_id,
+          ),
+        ).toEqual([]);
+
+        // The series is the picked maps in pick order, decider last.
+        const picked = steps
+          .filter((step) => step.step.startsWith("Pick"))
+          .map((step) => step.mapId);
+        const maps = await postgres.query<Array<{ map_id: string }>>(
+          `SELECT map_id FROM match_maps WHERE match_id = $1 ORDER BY "order"`,
+          [match.id],
+        );
+        expect(maps.map((m) => m.map_id)).toEqual([...picked, decider.map_id]);
+        expect(maps.length).toBe(bestOf);
+
+        expect((await vetoState(match.id)).status).toBe("Live");
+      });
+    });
+  });
 });

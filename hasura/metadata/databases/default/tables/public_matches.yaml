@@ -344,173 +344,19 @@ computed_fields:
         schema: public
       session_argument: hasura_session
 insert_permissions:
-  - role: administrator
-    permission:
-      check: {}
-      set:
-        organizer_steam_id: x-hasura-user-id
-      columns:
-        - label
-        - match_options_id
-        - scheduled_at
-        - server_id
-    comment: ""
-  - role: match_organizer
-    permission:
-      check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_matches_role
-          - _exists:
-              _table:
-                name: settings
-                schema: public
-              _where:
-                _and:
-                  - name:
-                      _eq: public.create_matches_role
-                  - value:
-                      _in:
-                        - user
-                        - verified_user
-                        - streamer
-                        - match_organizer
-      set:
-        organizer_steam_id: x-hasura-user-id
-      columns:
-        - label
-        - match_options_id
-        - scheduled_at
-        - server_id
-    comment: ""
-  - role: streamer
-    permission:
-      check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_matches_role
-          - _exists:
-              _table:
-                name: settings
-                schema: public
-              _where:
-                _and:
-                  - name:
-                      _eq: public.create_matches_role
-                  - value:
-                      _in:
-                        - user
-                        - verified_user
-                        - streamer
-      set:
-        organizer_steam_id: x-hasura-user-id
-      columns:
-        - label
-        - match_options_id
-        - scheduled_at
-        - server_id
-    comment: ""
-  - role: tournament_organizer
-    permission:
-      check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_matches_role
-          - _exists:
-              _table:
-                name: settings
-                schema: public
-              _where:
-                _and:
-                  - name:
-                      _eq: public.create_matches_role
-                  - value:
-                      _in:
-                        - user
-                        - verified_user
-                        - streamer
-                        - match_organizer
-                        - tournament_organizer
-      set:
-        organizer_steam_id: x-hasura-user-id
-      columns:
-        - label
-        - match_options_id
-        - scheduled_at
-        - server_id
-    comment: ""
   - role: user
     permission:
       check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_matches_role
-          - _exists:
-              _table:
-                name: settings
-                schema: public
-              _where:
-                _and:
-                  - name:
-                      _eq: public.create_matches_role
-                  - value:
-                      _eq: user
-      set:
-        organizer_steam_id: x-hasura-user-id
-      columns:
-        - label
-        - match_options_id
-        - scheduled_at
-        - server_id
-    comment: ""
-  - role: verified_user
-    permission:
-      check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_matches_role
-          - _exists:
-              _table:
-                name: settings
-                schema: public
-              _where:
-                _and:
-                  - name:
-                      _eq: public.create_matches_role
-                  - value:
-                      _in:
-                        - user
-                        - verified_user
+        _exists:
+          _table:
+            name: v_role_permissions
+            schema: public
+          _where:
+            _and:
+              - role:
+                  _eq: X-Hasura-Role
+              - can_create_matches:
+                  _eq: true
       set:
         organizer_steam_id: x-hasura-user-id
       columns:
@@ -576,10 +422,13 @@ select_permissions:
         - server_type
         - tv_connection_string
       filter:
-        status:
-          _nin:
-            - PickingPlayers
-            - Canceled
+        _and:
+          - status:
+              _nin:
+                - PickingPlayers
+                - Canceled
+          - source:
+              _neq: practice
       allow_aggregations: true
     comment: ""
   - role: user
@@ -638,17 +487,20 @@ select_permissions:
         - server_type
         - tv_connection_string
       filter:
-        _or:
-          - status:
-              _nin:
-                - PickingPlayers
-                - Canceled
-          - is_organizer:
-              _eq: true
-          - is_in_lineup:
-              _eq: true
-          - is_friend_in_match_lineup:
-              _eq: true
+        _and:
+          - _or:
+              - status:
+                  _nin:
+                    - PickingPlayers
+                    - Canceled
+              - is_organizer:
+                  _eq: true
+              - is_in_lineup:
+                  _eq: true
+              - is_friend_in_match_lineup:
+                  _eq: true
+          - source:
+              _neq: practice
       allow_aggregations: true
     comment: ""
 update_permissions:
@@ -656,7 +508,6 @@ update_permissions:
     permission:
       columns:
         - label
-        - organizer_steam_id
         - region
         - scheduled_at
         - server_id
@@ -664,42 +515,10 @@ update_permissions:
       filter: {}
       check: {}
     comment: ""
-  - role: match_organizer
-    permission:
-      columns:
-        - label
-        - organizer_steam_id
-        - region
-        - scheduled_at
-        - server_id
-        - winning_lineup_id
-      filter:
-        is_organizer:
-          _eq: true
-      check:
-        is_organizer:
-          _eq: true
-    comment: ""
-  - role: tournament_organizer
-    permission:
-      columns:
-        - label
-        - organizer_steam_id
-        - scheduled_at
-        - server_id
-        - winning_lineup_id
-      filter:
-        is_organizer:
-          _eq: true
-      check:
-        is_organizer:
-          _eq: true
-    comment: ""
   - role: user
     permission:
       columns:
         - label
-        - organizer_steam_id
         - region
         - scheduled_at
         - server_id

@@ -27,15 +27,6 @@ select_permissions:
           _is_null: true
     comment: ""
 update_permissions:
-  - role: match_organizer
-    permission:
-      columns:
-        - remove_sanction_date
-      filter:
-        deleted_at:
-          _is_null: true
-      check: null
-    comment: ""
   - role: moderator
     permission:
       columns:

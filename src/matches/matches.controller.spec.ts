@@ -51,6 +51,7 @@ describe("MatchesController", () => {
       {} as any,
       {} as any,
       {} as any,
+      {} as any
     );
   });
 

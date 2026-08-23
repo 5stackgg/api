@@ -33,6 +33,7 @@ type Modules =
   | "S3Scan"
   | "Scrims"
   | "Chat"
+  | "Utility"
   | "Voice";
 
 export type UseQueueOptions = {

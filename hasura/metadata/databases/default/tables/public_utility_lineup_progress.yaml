@@ -1,0 +1,117 @@
+table:
+  name: utility_lineup_progress
+  schema: public
+object_relationships:
+  - name: utility_lineup
+    using:
+      foreign_key_constraint_on: utility_lineup_id
+  - name: player
+    using:
+      foreign_key_constraint_on: steam_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        _and:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - utility_lineup:
+              can_view:
+                _eq: true
+      set:
+        steam_id: x-hasura-user-id
+      columns:
+        - utility_lineup_id
+        - attempts
+        - successes
+        - last_practiced_at
+        - mastered_at
+    comment: ''
+  - role: administrator
+    permission:
+      check: {}
+      set:
+        steam_id: x-hasura-user-id
+      columns:
+        - utility_lineup_id
+        - attempts
+        - successes
+        - last_practiced_at
+        - mastered_at
+    comment: ''
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - utility_lineup_id
+        - steam_id
+        - attempts
+        - successes
+        - current_streak
+        - best_streak
+        - miss_samples
+        - miss_along_sum
+        - miss_lateral_sum
+        - miss_vertical_sum
+        - last_practiced_at
+        - mastered_at
+      filter:
+        utility_lineup:
+          can_view:
+            _eq: true
+      allow_aggregations: true
+    comment: ''
+  - role: administrator
+    permission:
+      columns:
+        - utility_lineup_id
+        - steam_id
+        - attempts
+        - successes
+        - current_streak
+        - best_streak
+        - miss_samples
+        - miss_along_sum
+        - miss_lateral_sum
+        - miss_vertical_sum
+        - last_practiced_at
+        - mastered_at
+      filter: {}
+      allow_aggregations: true
+    comment: ''
+update_permissions:
+  - role: user
+    permission:
+      columns:
+        - attempts
+        - successes
+        - last_practiced_at
+        - mastered_at
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+      check:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: administrator
+    permission:
+      columns:
+        - attempts
+        - successes
+        - last_practiced_at
+        - mastered_at
+      filter: {}
+      check: {}
+    comment: ''
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        steam_id:
+          _eq: X-Hasura-User-Id
+    comment: ''
+  - role: administrator
+    permission:
+      filter: {}
+    comment: ''

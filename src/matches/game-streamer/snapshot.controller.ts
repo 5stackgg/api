@@ -12,7 +12,13 @@ import { Request, Response } from "express";
 import { GameStreamerService, SnapshotKind } from "./game-streamer.service";
 import { StreamAccessService } from "./stream-access.service";
 
-const SNAPSHOT_KINDS: SnapshotKind[] = ["live", "demo", "bake", "clips"];
+const SNAPSHOT_KINDS: SnapshotKind[] = [
+  "live",
+  "demo",
+  "bake",
+  "clips",
+  "nades",
+];
 
 @Controller("snapshots")
 export class SnapshotController {

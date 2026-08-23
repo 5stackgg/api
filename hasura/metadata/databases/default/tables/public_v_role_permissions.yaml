@@ -1,0 +1,20 @@
+table:
+  name: v_role_permissions
+  schema: public
+configuration:
+  column_config: {}
+  custom_column_names: {}
+  custom_name: role_permissions
+  custom_root_fields: {}
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - role
+        - can_create_matches
+        - can_create_tournaments
+        - can_create_events
+      filter:
+        role:
+          _eq: X-Hasura-Role
+    comment: Scoped to the caller's own row, so a client can hide an action it cannot take rather than re-deriving the role ordering from settings.

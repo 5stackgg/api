@@ -32,7 +32,7 @@ insert_permissions:
                             - Friends
                             - Invite
       set:
-        invited_by_player_steam_id: x-hasura-User-Id
+        invited_by_player_steam_id: x-hasura-user-id
       columns:
         - match_id
         - steam_id

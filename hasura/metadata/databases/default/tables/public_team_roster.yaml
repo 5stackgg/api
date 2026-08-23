@@ -22,13 +22,15 @@ insert_permissions:
   - role: user
     permission:
       check:
-        _or:
-          - team:
-              roster:
-                role:
+        team:
+          roster:
+            _and:
+              - role:
                   _in:
                     - Admin
                     - Invite
+              - player_steam_id:
+                  _eq: X-Hasura-User-Id
       columns:
         - coach
         - player_steam_id
@@ -66,13 +68,19 @@ update_permissions:
       filter:
         team:
           roster:
-            role:
-              _eq: Admin
+            _and:
+              - role:
+                  _eq: Admin
+              - player_steam_id:
+                  _eq: X-Hasura-User-Id
       check:
         team:
           roster:
-            role:
-              _eq: Admin
+            _and:
+              - role:
+                  _eq: Admin
+              - player_steam_id:
+                  _eq: X-Hasura-User-Id
     comment: ""
 delete_permissions:
   - role: tournament_organizer
@@ -85,10 +93,13 @@ delete_permissions:
         _or:
           - team:
               roster:
-                role:
-                  _eq: Admin
+                _and:
+                  - role:
+                      _eq: Admin
+                  - player_steam_id:
+                      _eq: X-Hasura-User-Id
           - player_steam_id:
-              _eq: x-hasura-user-Id
+              _eq: X-Hasura-User-Id
     comment: ""
 event_triggers:
   - name: team_roster_events

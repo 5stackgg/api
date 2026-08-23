@@ -1,0 +1,29 @@
+table:
+  name: utility_drift_results
+  schema: public
+object_relationships:
+  - name: scan
+    using:
+      foreign_key_constraint_on: utility_drift_scan_id
+  - name: utility_lineup
+    using:
+      foreign_key_constraint_on: utility_lineup_id
+insert_permissions: []
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - utility_drift_scan_id
+        - utility_lineup_id
+        - verdict
+        - severity
+        - reason
+        - distance
+        - distance_xy
+        - distance_z
+        - created_at
+      filter: {}
+      allow_aggregations: true
+    comment: 'Verdicts only. The simulator''s endpoints are meaningless on their own and are deliberately not stored, so nothing here can be read as where a utility lands.'
+update_permissions: []
+delete_permissions: []

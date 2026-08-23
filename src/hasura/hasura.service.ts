@@ -215,6 +215,64 @@ export class HasuraService {
     await this.postgresService.query(
       "insert into settings (name, value) values ('public.video_chat_matches_enabled', 'true') on conflict (name) do nothing",
     );
+
+    // The utility library is inert without a server, so it ships on. Practice
+    // sessions consume a real game server slot, so that half ships off and is
+    // an operator's deliberate choice.
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.utility_library_enabled', 'true') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.utility_practice_enabled', 'true') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.utility_practice_idle_minutes', '5') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.utility_practice_connect_minutes', '5') on conflict (name) do nothing",
+    );
+
+    // Only enforced while somebody is waiting for a server.
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.utility_practice_max_minutes', '60') on conflict (name) do nothing",
+    );
+
+    // Dropped: a practice session is not a scarce enough thing to ration.
+    await this.postgresService.query(
+      "delete from settings where name = 'public.utility_practice_daily_limit'",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.utility_practice_reserved_servers', '2') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.utility_lineup_daily_limit', '200') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.utility_success_radius', '96') on conflict (name) do nothing",
+    );
+
+    // Three distinct players clearing five consecutive throws is a much harder
+    // claim than one moderator's opinion, and it is the one the library can
+    // actually collect at scale.
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.utility_verify_masteries', '3') on conflict (name) do nothing",
+    );
+
+    // A solve costs up to 300 grenades and two minutes of a practice pod, so it
+    // is capped per caller like every other expensive path in the module.
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.utility_solves_per_hour', '6') on conflict (name) do nothing",
+    );
+
+    await this.postgresService.query(
+      "insert into settings (name, value) values ('public.utility_import_enabled', 'false') on conflict (name) do nothing",
+    );
   }
 
   private async applyMigrations(path: string): Promise<number> {

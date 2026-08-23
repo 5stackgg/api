@@ -1353,6 +1353,481 @@ actions:
       - role: verified_user
       - role: user
     comment: Map a tournament placement to an award
+  - name: utilityPracticeWhereAmI
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+  - name: sendUtilityLineupToServer
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+  - name: sendUtilityDrillToServer
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+  - name: setUtilityPracticeAccess
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+  - name: changeUtilityPracticeMap
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+  - name: sendUtilityScratchToServer
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+  - name: startUtilityPractice
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Start a utility practice session
+  - name: joinUtilityPractice
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Join a utility practice session
+  - name: leaveUtilityPractice
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Leave a utility practice session
+  - name: stopUtilityPractice
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Stop a utility practice session
+  - name: inviteToUtilityPractice
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Invite players to a utility practice session
+  - name: saveUtilityLineupFromPractice
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Save a lineup recorded in a practice session
+  - name: saveUtilityLineupFromDemo
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Mine a lineup out of a parsed demo
+  - name: saveUtilityPlaybook
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Create or update a utility playbook and its steps
+  - name: deleteUtilityPlaybook
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Delete a utility playbook
+  - name: loadUtilityPlaybookIntoSession
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Load a utility playbook into a running practice session
+  - name: remineUtilityMeta
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Re-mine one batch of demos after a miner change
+  - name: backfillUtilityLaunchSeeds
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Recover launch seeds from recorded trajectories, one batch per call
+  - name: checkUtilitySightlines
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Ask whether a lineup's smoke blocks a set of sightlines
+  - name: checkUtilityOneWay
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Ask whether a lineup's smoke makes an angle one-way
+  - name: findUtilityLineupsBlocking
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Find the saved smokes that close a given sightline
+  - name: solveUtilityLineup
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Ask a practice server to solve a throw onto a point
+  - name: utilitySolverCalibration
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Read the practice server solver's calibration gate
+  - name: startUtilityDriftScan
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Re-fly a map's lineups against two collision meshes
+  - name: forkUtilityLineup
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Copy a lineup you can see into your own library
+  - name: analyseUtilityPlaybookCoverage
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Ask which sightlines a playbook's smokes leave open
+  - name: utilityMatchUtilityReport
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Report a player's mined utility throws for a match
+  - name: repairUtilityLineup
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Re-solve a lineup a drift scan says the map moved
+  - name: utilityPracticeServers
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Dedicated practice servers free to book right now
+  - name: utilityPracticePlan
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Rank what to practise next on a map from the mined meta
+  - name: utilityLineupMissPattern
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Which way everybody misses one lineup, from their practice throws
+  - name: utilityTeamUtilityReport
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: tournament_organizer
+      - role: match_organizer
+      - role: moderator
+      - role: streamer
+      - role: verified_user
+      - role: user
+    comment: Aggregate a team's mined utility throws against its saved lineups
+  - name: importUtilityLineups
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Seed the utility library from an operator-supplied payload
+  - name: purgeUtilityLineupSource
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Delete every lineup that came from one origin source
+  - name: renderUtilityLineupPreview
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: moderator
+    comment: Re-film a public lineup's preview clip
+  - name: cancelUtilityLineupRender
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+      - role: moderator
+    comment: Cancel an in-flight lineup preview render
+  - name: deleteUtilityLineupRender
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: moderator
+      - role: administrator
+    comment: Delete a render and its preview clip
+  - name: clearFinishedUtilityLineupRenders
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Drop every finished row from the lineup preview queue
 custom_types:
   enums: []
   input_objects:
@@ -1362,6 +1837,8 @@ custom_types:
     - name: ClipAudioInput
     - name: ClipOutputInput
     - name: ClipSpecInput
+    - name: UtilityPlaybookStepInput
+    - name: UtilitySightlinePairInput
   objects:
     - name: Award
     - name: AwardRecipient
@@ -1390,6 +1867,18 @@ custom_types:
           source: default
           type: object
     - name: SuccessOutput
+    - name: UtilityPracticeSessionOutput
+    - name: UtilityLineupOutput
+    - name: UtilityPlaybookOutput
+    - name: UtilitySightlineResult
+    - name: UtilitySightlineOutput
+    - name: UtilityOneWayResult
+    - name: UtilityOneWayOutput
+    - name: UtilityBlockingResult
+    - name: UtilityBlockingOutput
+    - name: UtilitySolveOutput
+    - name: UtilityCalibrationOutput
+    - name: UtilityDriftScanOutput
     - name: WebPushPlatformCount
     - name: WebPushStatusOutput
     - name: ScanStartedOutput
@@ -1450,4 +1939,18 @@ custom_types:
     - name: StorageSummary
     - name: TableSizeInfo
     - name: NewsPost
+    - name: UtilityPlaybookCoverageOutput
+    - name: UtilityPlaybookCoverageResult
+    - name: UtilityUtilityReportOutput
+    - name: UtilityUtilityTypeReport
+    - name: UtilityPracticePlanEntry
+    - name: UtilityPracticePlanOutput
+    - name: UtilityMissPatternOutput
+    - name: UtilityTeamUtilityEntry
+    - name: UtilityTeamUtilityOutput
+    - name: UtilityImportError
+    - name: UtilityImportOutput
+    - name: UtilityPurgeOutput
+    - name: UtilityRenderQueueOutput
+    - name: UtilityRenderClearOutput
   scalars: []

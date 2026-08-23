@@ -179,109 +179,19 @@ computed_fields:
         name: tournament_min_players_per_lineup
         schema: public
 insert_permissions:
-  - role: administrator
-    permission:
-      check: {}
-      set:
-        organizer_steam_id: x-hasura-user-id
-      columns:
-        - auto_start
-        - description
-        - discord_guild_id
-        - discord_notifications_enabled
-        - discord_voice_enabled
-        - discord_notify_Canceled
-        - discord_notify_Finished
-        - discord_notify_Forfeit
-        - discord_notify_Live
-        - discord_notify_MapPaused
-        - discord_notify_PickingPlayers
-        - discord_notify_Scheduled
-        - discord_notify_Surrendered
-        - discord_notify_Tie
-        - discord_notify_Veto
-        - discord_notify_WaitingForCheckIn
-        - discord_notify_WaitingForServer
-        - discord_role_id
-        - discord_webhook
-        - homepage
-        - latitude
-        - location
-        - banner
-        - logo
-        - longitude
-        - match_options_id
-        - name
-        - scheduling_mode
-        - start
-    comment: ""
-  - role: match_organizer
+  - role: user
     permission:
       check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_tournaments_role
-          - _exists:
-              _table:
-                name: settings
-                schema: public
-              _where:
-                _and:
-                  - name:
-                      _eq: public.create_tournaments_role
-                  - value:
-                      _in:
-                        - user
-                        - verified_user
-                        - streamer
-                        - match_organizer
-      set:
-        organizer_steam_id: x-hasura-user-id
-      columns:
-        - auto_start
-        - description
-        - homepage
-        - latitude
-        - location
-        - banner
-        - logo
-        - longitude
-        - match_options_id
-        - name
-        - scheduling_mode
-        - start
-    comment: ""
-  - role: streamer
-    permission:
-      check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_tournaments_role
-          - _exists:
-              _table:
-                name: settings
-                schema: public
-              _where:
-                _and:
-                  - name:
-                      _eq: public.create_tournaments_role
-                  - value:
-                      _in:
-                        - user
-                        - verified_user
-                        - streamer
+        _exists:
+          _table:
+            name: v_role_permissions
+            schema: public
+          _where:
+            _and:
+              - role:
+                  _eq: X-Hasura-Role
+              - can_create_tournaments:
+                  _eq: true
       set:
         organizer_steam_id: x-hasura-user-id
       columns:
@@ -301,30 +211,16 @@ insert_permissions:
   - role: tournament_organizer
     permission:
       check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_tournaments_role
-          - _exists:
-              _table:
-                name: settings
-                schema: public
-              _where:
-                _and:
-                  - name:
-                      _eq: public.create_tournaments_role
-                  - value:
-                      _in:
-                        - user
-                        - verified_user
-                        - streamer
-                        - match_organizer
-                        - tournament_organizer
+        _exists:
+          _table:
+            name: v_role_permissions
+            schema: public
+          _where:
+            _and:
+              - role:
+                  _eq: X-Hasura-Role
+              - can_create_tournaments:
+                  _eq: true
       set:
         organizer_steam_id: x-hasura-user-id
       columns:
@@ -347,85 +243,6 @@ insert_permissions:
         - discord_notify_WaitingForServer
         - discord_role_id
         - discord_webhook
-        - homepage
-        - latitude
-        - location
-        - banner
-        - logo
-        - longitude
-        - match_options_id
-        - name
-        - scheduling_mode
-        - start
-    comment: ""
-  - role: user
-    permission:
-      check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_tournaments_role
-          - _exists:
-              _table:
-                name: settings
-                schema: public
-              _where:
-                _and:
-                  - name:
-                      _eq: public.create_tournaments_role
-                  - value:
-                      _in:
-                        - user
-      set:
-        organizer_steam_id: x-hasura-user-id
-      columns:
-        - auto_start
-        - description
-        - homepage
-        - latitude
-        - location
-        - banner
-        - logo
-        - longitude
-        - match_options_id
-        - name
-        - scheduling_mode
-        - start
-    comment: ""
-  - role: verified_user
-    permission:
-      check:
-        _or:
-          - _not:
-              _exists:
-                _table:
-                  name: settings
-                  schema: public
-                _where:
-                  name:
-                    _eq: public.create_tournaments_role
-          - _exists:
-              _table:
-                name: settings
-                schema: public
-              _where:
-                _and:
-                  - name:
-                      _eq: public.create_tournaments_role
-                  - value:
-                      _in:
-                        - user
-                        - verified_user
-      set:
-        organizer_steam_id: x-hasura-user-id
-      columns:
-        - auto_start
-        - description
         - homepage
         - latitude
         - location

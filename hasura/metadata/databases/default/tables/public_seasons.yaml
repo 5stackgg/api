@@ -17,18 +17,6 @@ array_relationships:
           name: player_season_stats
           schema: public
 select_permissions:
-  - role: administrator
-    permission:
-      columns:
-        - id
-        - number
-        - description
-        - starts_at
-        - ends_at
-        - created_at
-        - needs_rebuild
-      filter: {}
-    comment: ""
   - role: guest
     permission:
       columns:
@@ -41,39 +29,7 @@ select_permissions:
         - needs_rebuild
       filter: {}
     comment: ""
-  - role: user
-    permission:
-      columns:
-        - id
-        - number
-        - description
-        - starts_at
-        - ends_at
-        - created_at
-        - needs_rebuild
-      filter: {}
-    comment: ""
-  - role: match_organizer
-    permission:
-      columns:
-        - id
-        - number
-        - description
-        - starts_at
-        - ends_at
-        - created_at
-        - needs_rebuild
-      filter: {}
-    comment: ""
 insert_permissions:
-  - role: administrator
-    permission:
-      columns:
-        - description
-        - starts_at
-        - ends_at
-      check: {}
-    comment: ""
   - role: match_organizer
     permission:
       columns:
@@ -83,15 +39,6 @@ insert_permissions:
       check: {}
     comment: ""
 update_permissions:
-  - role: administrator
-    permission:
-      columns:
-        - description
-        - starts_at
-        - ends_at
-      filter: {}
-      check: {}
-    comment: ""
   - role: match_organizer
     permission:
       columns:

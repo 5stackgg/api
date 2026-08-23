@@ -16,6 +16,7 @@ import { SteamMatchHistoryQueues } from "src/steam-match-history/enums/SteamMatc
 import { RedisModule } from "src/redis/redis.module";
 import { PostgresModule } from "../postgres/postgres.module";
 import { RefreshAllPlayersJob } from "./jobs/RefreshAllPlayers";
+import { RefreshAllUtilityLineupsJob } from "./jobs/RefreshAllUtilityLineups";
 import { PlayerReindexService } from "./player-reindex.service";
 
 @Module({
@@ -33,6 +34,9 @@ import { PlayerReindexService } from "./player-reindex.service";
       name: TypesenseQueues.PlayerReindex,
     }),
     BullModule.registerQueue({
+      name: TypesenseQueues.UtilityLineupReindex,
+    }),
+    BullModule.registerQueue({
       name: SteamMatchHistoryQueues.CheckSteamBans,
     }),
     BullBoardModule.forFeature({
@@ -43,12 +47,17 @@ import { PlayerReindexService } from "./player-reindex.service";
       name: TypesenseQueues.PlayerReindex,
       adapter: BullMQAdapter,
     }),
+    BullBoardModule.forFeature({
+      name: TypesenseQueues.UtilityLineupReindex,
+      adapter: BullMQAdapter,
+    }),
   ],
   exports: [TypeSenseService],
   providers: [
     TypeSenseService,
     RefreshPlayerJob,
     RefreshAllPlayersJob,
+    RefreshAllUtilityLineupsJob,
     PlayerReindexService,
     ...getQueuesProcessors("TypeSense"),
     loggerFactory(),

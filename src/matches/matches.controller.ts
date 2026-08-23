@@ -1,4 +1,13 @@
-import { Controller, Get, Logger, Query, Req, Res } from "@nestjs/common";
+import {
+  Controller,
+  forwardRef,
+  Get,
+  Inject,
+  Logger,
+  Query,
+  Req,
+  Res,
+} from "@nestjs/common";
 import { Request, Response } from "express";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { User } from "../auth/types/User";
@@ -53,6 +62,7 @@ import { ClipsService } from "./clips/clips.service";
 import { CameraService } from "./camera/camera.service";
 import { CameraMonitorService } from "./camera/camera-monitor.service";
 import { ClipSpec } from "./clips/types/ClipSpec";
+import { UtilityPracticeService } from "../utility/utility-practice.service";
 
 @Controller("matches")
 export class MatchesController {
@@ -116,6 +126,8 @@ export class MatchesController {
     private readonly matchImport: MatchImportService,
     private readonly camera: CameraService,
     private readonly cameraMonitor: CameraMonitorService,
+    @Inject(forwardRef(() => UtilityPracticeService))
+    private readonly utilityPractice: UtilityPracticeService,
     private readonly gameModesService: GameModesService,
   ) {
     this.appConfig = this.configService.get<AppConfig>("app");
@@ -632,8 +644,31 @@ export class MatchesController {
 
     const status = data.new.status;
 
-    // Imported matches skip the entire 5stack lifecycle (server, lobby, ELO).
     const source = (data.new.source ?? data.old?.source) as string | undefined;
+
+    // A utility practice session is a real match row, so it needs a server and it
+    // needs that server released again. It needs nothing else -- no Discord, no
+    // matchmaking, no ELO, no game streamer, no chat lobby -- which is what this
+    // early branch buys. It has to sit above the imported-match guard below,
+    // because that guard would otherwise leave a practice match without a
+    // server forever.
+    if (source === "practice") {
+      await this.utilityPracticeMatchEvents(data, matchId);
+      return;
+    }
+
+    // A match outranks a practice server. The moment one actually claims its
+    // players, whatever practice session they are holding gives way -- the host
+    // loses the server, everybody else just leaves the roster.
+    if (
+      data.op === "UPDATE" &&
+      status !== data.old?.status &&
+      UtilityPracticeService.CLAIMING_STATUSES.includes(status as string)
+    ) {
+      void this.utilityPractice.evictForMatch(matchId);
+    }
+
+    // Imported matches skip the entire 5stack lifecycle (server, lobby, ELO).
     if (source && source !== "5stack") {
       return;
     }
@@ -878,6 +913,61 @@ export class MatchesController {
     }
 
     await this.discordMatchOverview.updateMatchOverview(matchId);
+  }
+
+  private async utilityPracticeMatchEvents(
+    data: HasuraEventData<matches_set_input>,
+    matchId: string,
+  ) {
+    const status = data.new.status as string;
+
+    if (
+      data.op === "DELETE" ||
+      MatchesController.TERMINAL_STATUSES.includes(status)
+    ) {
+      await this.utilityPractice.markEndedForMatch(matchId);
+
+      const serverId = (data.new.server_id ?? data.old.server_id) as
+        | string
+        | null;
+
+      if (!serverId) {
+        return;
+      }
+
+      await this.scheduledMatchesQueue.add(StopOnDemandServer.name, {
+        matchId,
+      });
+
+      if (data.op !== "DELETE") {
+        await this.hasura.mutation({
+          update_matches_by_pk: {
+            __args: {
+              pk_columns: { id: matchId },
+              _set: { server_id: null },
+            },
+            __typename: true,
+          },
+        });
+      }
+
+      return;
+    }
+
+    if (status === "WaitingForServer" && data.old.status === "Live") {
+      await this.utilityPractice.markFailedForMatch(
+        matchId,
+        "no practice server was available",
+      );
+      return;
+    }
+
+    if (status === "Live" && !data.new.server_id) {
+      this.logger.log(
+        `[practice ${matchId}] went Live with no server — assigning one`,
+      );
+      await this.matchAssistant.assignServer(matchId);
+    }
   }
 
   private async maybePauseRendersForServerNode(

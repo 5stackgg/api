@@ -463,6 +463,27 @@ describe("MatchAssistantService", () => {
     );
   });
 
+  // The node's cached copy of a pinned tag IS the right image, and re-checking
+  // the manifest before every match server can start is a registry round-trip
+  // that buys nothing -- and a hard failure when the registry is rate limiting.
+  describe("pulling the game-server image", () => {
+    it("re-checks a channel tag and trusts a pinned one", () => {
+      expect(
+        MatchAssistantService.imagePullPolicyFor("ghcr.io/5stackgg/game-server:latest"),
+      ).toBe("Always");
+      expect(
+        MatchAssistantService.imagePullPolicyFor("ghcr.io/5stackgg/game-server:dev-sw"),
+      ).toBe("Always");
+      expect(
+        MatchAssistantService.imagePullPolicyFor("ghcr.io/5stackgg/game-server:v1.2.3"),
+      ).toBe("IfNotPresent");
+      // A registry port is not a tag.
+      expect(
+        MatchAssistantService.imagePullPolicyFor("registry:5000/game-server"),
+      ).toBe("Always");
+    });
+  });
+
   // Matchmaking builds its match_options inline rather than through the match
   // form, so the platform defaults have to be read here or a "cameras on all
   // matches" operator would still get ranked games without them.

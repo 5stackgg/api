@@ -25,7 +25,6 @@ insert_permissions:
           is_organizer:
             _eq: true
       columns:
-        - id
         - match_id
         - match_lineup_id
         - region

@@ -12,7 +12,8 @@ insert_permissions:
         - is_active
         - dismissible
         - expires_at
-        - created_by
+      set:
+        created_by: x-hasura-user-id
     comment: ""
 select_permissions:
   - role: administrator

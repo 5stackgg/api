@@ -1,0 +1,31 @@
+table:
+  name: utility_meta_lineups
+  schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - lineup_bucket
+        - map_name
+        - utility_type
+        - side
+        - technique
+        - throw_strength
+        - throws
+        - throwers
+        - matches
+        - lineups
+        - origin_x
+        - origin_y
+        - origin_z
+        - land_x
+        - land_y
+        - land_z
+        - view_yaw
+        - view_pitch
+        - first_seen_at
+        - last_seen_at
+        - refreshed_at
+      filter: {}
+      allow_aggregations: true
+    comment: 'Aggregate only: a cluster names no player and no match, so it is public the way a map is.'

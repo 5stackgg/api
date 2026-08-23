@@ -19,8 +19,7 @@ insert_permissions:
       check: {}
       set:
         access: Invite
-      columns:
-        - access
+      columns: []
     comment: ""
 select_permissions:
   - role: user

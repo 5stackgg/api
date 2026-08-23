@@ -22,6 +22,9 @@ $$;
 
 -- Render-only: nodes running a live match while
 -- `pause_renders_during_active_match` is on. Streams/demos ignore this.
+-- A nade preview's own practice session is carved out: it books a Live
+-- match on the GPU node BY DESIGN, and counting it here deadlocked the
+-- render it was booked for on any single-GPU install.
 create or replace function public.gpu_batch_blocked_node_ids()
   returns setof text
   language sql
@@ -32,6 +35,12 @@ as $$
     join servers s on s.id = m.server_id
    where m.status = 'Live'
      and s.game_server_node_id is not null
+     and not exists (
+       select 1
+         from utility_practice_sessions ups
+        where ups.match_id = m.id
+          and ups.is_render = true
+     )
      and (
        select value from settings
         where name = 'pause_renders_during_active_match'
