@@ -582,6 +582,7 @@ describe("utility practice sessions (SQL-driven)", () => {
     it("refuses once the lineup is at max_players_per_lineup", async () => {
       const { matchId, sessionId, host } = await liveSession({
         is_open: true,
+        access: "Open",
       });
       const [match] = await postgres.query<Array<{ lineup_1_id: string }>>(
         "SELECT lineup_1_id FROM matches WHERE id = $1",
@@ -615,6 +616,7 @@ describe("utility practice sessions (SQL-driven)", () => {
     it("is a no-op for someone already in the lineup", async () => {
       const { host, matchId, sessionId } = await liveSession({
         is_open: true,
+        access: "Open",
       });
 
       const service = makeService({});
