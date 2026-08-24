@@ -9,6 +9,7 @@ import { CacheService } from "src/cache/cache.service";
 import {
   TelemetryCompetition,
   TelemetryPlugins,
+  TelemetryUtility,
   TelemetryFeature,
   TelemetryPayload,
   TELEMETRY_SCHEMA_VERSION,
@@ -84,6 +85,20 @@ export class TelemetryService {
     },
     league_division_requests: {
       setting: "public.league_allow_division_request",
+      defaultEnabled: false,
+    },
+    utility_library: {
+      setting: "public.utility_library_enabled",
+      defaultEnabled: true,
+    },
+    utility_practice: {
+      setting: "public.utility_practice_enabled",
+      defaultEnabled: true,
+    },
+    // Off unless an operator opened it: the seeder writes lineups nobody threw
+    // on this panel.
+    utility_import: {
+      setting: "public.utility_import_enabled",
       defaultEnabled: false,
     },
   };
@@ -183,12 +198,22 @@ export class TelemetryService {
   }
 
   public async collect(): Promise<TelemetryPayload> {
-    const [installId, settings, counts, byType, bySource] = await Promise.all([
+    const [
+      installId,
+      settings,
+      counts,
+      byType,
+      bySource,
+      utilityByType,
+      utilityBySource,
+    ] = await Promise.all([
       this.getInstallId(),
       this.getSettings(),
       this.getCounts(),
       this.getMatchesByType(),
       this.getMatchesBySource(),
+      this.getUtilityBy("utility_type"),
+      this.getUtilityBy("origin_source"),
     ]);
 
     return {
@@ -262,6 +287,42 @@ export class TelemetryService {
         modes: counts.game_modes,
         modes_enabled: counts.game_modes_enabled,
         modes_unranked: counts.game_modes_unranked,
+      },
+      utility: {
+        lineups: counts.utility_lineups,
+        archived: counts.utility_archived,
+        week: counts.utility_lineups_week,
+        month: counts.utility_lineups_month,
+        public: counts.utility_public,
+        team: counts.utility_team,
+        private: counts.utility_private,
+        authors: counts.utility_authors,
+        maps: counts.utility_maps,
+        verified: counts.utility_verified,
+        pending_review: counts.utility_pending_review,
+        previews: counts.utility_previews,
+        favorites: counts.utility_favorites,
+        votes: counts.utility_votes,
+        collections: counts.utility_collections,
+        playbooks: counts.utility_playbooks,
+        playbook_steps: counts.utility_playbook_steps,
+        by_type: utilityByType,
+        by_source: utilityBySource,
+        sessions: counts.utility_sessions,
+        sessions_week: counts.utility_sessions_week,
+        sessions_month: counts.utility_sessions_month,
+        sessions_failed: counts.utility_sessions_failed,
+        hosts: counts.utility_hosts,
+        practicing: counts.utility_practicing,
+        attempts: counts.utility_attempts,
+        successes: counts.utility_successes,
+        mastered: counts.utility_mastered,
+        demos_mined: counts.utility_demos_mined,
+        demo_throws: counts.utility_demo_throws,
+        meta_lineups: counts.utility_meta_lineups,
+        drift_scans: counts.utility_drift_scans,
+        drift_flagged: counts.utility_drift_flagged,
+        repairs: counts.utility_repairs,
       },
       features: this.buildFeatures(settings, counts),
     };
@@ -339,7 +400,7 @@ export class TelemetryService {
     const aggregates = await this.cache.remember(
       // Versioned: a cached blob from the previous shape would leave the page
       // missing every field added since, for as long as the TTL lasts.
-      "telemetry:fleet:v2",
+      "telemetry:fleet:v3",
       async () => {
         const [
           installs,
@@ -349,6 +410,7 @@ export class TelemetryService {
           activity,
           composition,
           distribution,
+          utility,
         ] = await Promise.all([
           this.getInstallCounts(),
           this.getFleetTotals(),
@@ -357,6 +419,7 @@ export class TelemetryService {
           this.getFleetActivity(),
           this.getMatchComposition(),
           this.getFleetDistribution(),
+          this.getUtilityComposition(),
         ]);
 
         return {
@@ -367,6 +430,7 @@ export class TelemetryService {
           activity,
           ...composition,
           ...distribution,
+          ...utility,
         };
       },
       300,
@@ -564,40 +628,125 @@ export class TelemetryService {
   // the page could say how many matches ran but never what kind they were.
   private async getMatchComposition() {
     const [types, sources] = await Promise.all([
-      this.sumCountMap("by_type"),
-      this.sumCountMap("by_source"),
+      this.sumCountMap("matches", "by_type"),
+      this.sumCountMap("matches", "by_source"),
     ]);
 
     return {
-      matchTypes: types.map(({ name, ...counts }) => ({
+      matchTypes: types.map(({ name, total }) => ({
         type: name,
-        ...counts,
+        matches: total,
       })),
-      matchSources: sources.map(({ name, ...counts }) => ({
+      matchSources: sources.map(({ name, total }) => ({
         source: name,
-        ...counts,
+        matches: total,
       })),
     };
   }
 
-  private async sumCountMap(field: string) {
+  // The library section of the payload, summed the same way and over the same
+  // window as the fleet totals. Kept out of getFleetTotals because that query
+  // is already one statement per panel column, and this whole block is absent
+  // from most of the fleet until panels update.
+  private async getUtilityComposition() {
+    const [totals, types, sources] = await Promise.all([
+      this.getUtilityTotals(),
+      this.sumCountMap("utility", "by_type"),
+      this.sumCountMap("utility", "by_source"),
+    ]);
+
+    return {
+      utility: totals,
+      utilityTypes: types.map(({ name, total }) => ({
+        type: name,
+        lineups: total,
+      })),
+      utilitySources: sources.map(({ name, total }) => ({
+        source: name,
+        lineups: total,
+      })),
+    };
+  }
+
+  private static readonly UtilityFields = [
+    "lineups",
+    "archived",
+    "week",
+    "month",
+    "public",
+    "team",
+    "private",
+    "authors",
+    "maps",
+    "verified",
+    "pending_review",
+    "previews",
+    "favorites",
+    "votes",
+    "collections",
+    "playbooks",
+    "playbook_steps",
+    "sessions",
+    "sessions_week",
+    "sessions_month",
+    "sessions_failed",
+    "hosts",
+    "practicing",
+    "attempts",
+    "successes",
+    "mastered",
+    "demos_mined",
+    "demo_throws",
+    "meta_lineups",
+    "drift_scans",
+    "drift_flagged",
+    "repairs",
+  ] as const;
+
+  private async getUtilityTotals() {
+    // Every field is summed the same way, so the column list is generated from
+    // the payload's own field names rather than written out twice.
+    const sums = TelemetryService.UtilityFields.map(
+      (field) =>
+        `coalesce(sum((payload->'utility'->>'${field}')::numeric), 0) AS "${TelemetryService.camel(field)}"`,
+    ).join(",\n         ");
+
+    const [row] = await this.postgres.query<Array<Record<string, string>>>(
+      `SELECT
+         count(*) FILTER (WHERE jsonb_typeof(payload->'utility') = 'object') AS reported,
+         ${sums}
+       FROM public.telemetry_installs
+       WHERE last_seen_at >= now() - interval '30 days'`,
+    );
+
+    return TelemetryService.toIntegers(row, [
+      "reported",
+      ...TelemetryService.UtilityFields.map(TelemetryService.camel),
+    ]);
+  }
+
+  private static camel(field: string) {
+    return field.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+  }
+
+  private async sumCountMap(section: string, field: string) {
     const rows = await this.postgres.query<Array<Record<string, string>>>(
       `SELECT
          e.key                                          AS name,
-         coalesce(sum((e.value#>>'{}')::numeric), 0)    AS matches
+         coalesce(sum((e.value#>>'{}')::numeric), 0)    AS total
        FROM public.telemetry_installs i,
             LATERAL jsonb_each(
-              coalesce(i.payload->'matches'->'${field}', '{}'::jsonb)
+              coalesce(i.payload->'${section}'->'${field}', '{}'::jsonb)
             ) e(key, value)
        WHERE i.last_seen_at >= now() - interval '30 days'
          AND jsonb_typeof(e.value) = 'number'
        GROUP BY e.key
-       ORDER BY matches DESC, e.key ASC`,
+       ORDER BY total DESC, e.key ASC`,
     );
 
     return rows.map((row) => ({
       name: row.name,
-      ...TelemetryService.toIntegers(row, ["matches"]),
+      ...TelemetryService.toIntegers(row, ["total"]),
     }));
   }
 
@@ -942,6 +1091,7 @@ export class TelemetryService {
       },
       competition: TelemetryService.sanitizeCompetition(body.competition, int),
       plugins: TelemetryService.sanitizePlugins(body.plugins, int),
+      utility: TelemetryService.sanitizeUtility(body.utility, int),
       features: TelemetryService.sanitizeFeatures(body.features, int),
     };
   }
@@ -1004,6 +1154,55 @@ export class TelemetryService {
       modes: int(plugins.modes),
       modes_enabled: int(plugins.modes_enabled),
       modes_unranked: int(plugins.modes_unranked),
+    };
+  }
+
+  // Same null-in-null-out rule as competition and plugins.
+  private static sanitizeUtility(
+    value: unknown,
+    int: (value: unknown) => number,
+  ): TelemetryUtility | null {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      return null;
+    }
+
+    const utility = value as Record<string, any>;
+
+    return {
+      lineups: int(utility.lineups),
+      archived: int(utility.archived),
+      week: int(utility.week),
+      month: int(utility.month),
+      public: int(utility.public),
+      team: int(utility.team),
+      private: int(utility.private),
+      authors: int(utility.authors),
+      maps: int(utility.maps),
+      verified: int(utility.verified),
+      pending_review: int(utility.pending_review),
+      previews: int(utility.previews),
+      favorites: int(utility.favorites),
+      votes: int(utility.votes),
+      collections: int(utility.collections),
+      playbooks: int(utility.playbooks),
+      playbook_steps: int(utility.playbook_steps),
+      by_type: TelemetryService.sanitizeCountMap(utility.by_type, int),
+      by_source: TelemetryService.sanitizeCountMap(utility.by_source, int),
+      sessions: int(utility.sessions),
+      sessions_week: int(utility.sessions_week),
+      sessions_month: int(utility.sessions_month),
+      sessions_failed: int(utility.sessions_failed),
+      hosts: int(utility.hosts),
+      practicing: int(utility.practicing),
+      attempts: int(utility.attempts),
+      successes: int(utility.successes),
+      mastered: int(utility.mastered),
+      demos_mined: int(utility.demos_mined),
+      demo_throws: int(utility.demo_throws),
+      meta_lineups: int(utility.meta_lineups),
+      drift_scans: int(utility.drift_scans),
+      drift_flagged: int(utility.drift_flagged),
+      repairs: int(utility.repairs),
     };
   }
 
@@ -1112,6 +1311,11 @@ export class TelemetryService {
       api_keys: counts.api_keys,
       gamedata_validations: counts.gamedata_validations,
       push_notifications: counts.push_subscriptions,
+      utility_library: counts.utility_lineups,
+      utility_practice: counts.utility_sessions,
+      // Lineups an operator bulk-loaded rather than anybody throwing them, which
+      // is the only thing the switch controls.
+      utility_import: counts.utility_imported,
       // demo_playback and live_streaming deliberately have no count. The only
       // rows that record either -- match_demo_sessions, match_streams -- are
       // deleted when the session ends, so counting them reports how many people
@@ -1265,6 +1469,21 @@ export class TelemetryService {
     );
 
     return TelemetryService.toCountMap(rows, "source");
+  }
+
+  // Live lineups only, so both breakdowns decompose the same `lineups` count
+  // the rest of the section reports.
+  private async getUtilityBy(
+    column: "utility_type" | "origin_source",
+  ): Promise<Record<string, number>> {
+    const rows = await this.collectQuery<Array<Record<string, string>>>(
+      `SELECT ${column} AS name, count(*) AS count
+         FROM public.utility_lineups
+        WHERE archived_at IS NULL
+        GROUP BY ${column}`,
+    );
+
+    return TelemetryService.toCountMap(rows, "name");
   }
 
   private static toCountMap(
@@ -1443,6 +1662,79 @@ export class TelemetryService {
         (SELECT count(*) FROM public.gamedata_signature_validations)                     AS gamedata_validations,
         (SELECT count(*) FROM public.push_subscriptions)                                 AS push_subscriptions,
         (SELECT count(*) FROM public.player_steam_bot_friend)                            AS steam_presence_friends,
+
+        -- Archived is excluded everywhere but its own count: an archived lineup
+        -- is still visible to its author and to nobody else, so counting it in
+        -- the library overstates what anyone can actually browse.
+        (SELECT count(*) FROM public.utility_lineups WHERE archived_at IS NULL)          AS utility_lineups,
+        (SELECT count(*) FROM public.utility_lineups WHERE archived_at IS NOT NULL)      AS utility_archived,
+        (SELECT count(*) FROM public.utility_lineups
+          WHERE archived_at IS NULL AND created_at >= now() - interval '7 days')         AS utility_lineups_week,
+        (SELECT count(*) FROM public.utility_lineups
+          WHERE archived_at IS NULL AND created_at >= now() - interval '30 days')        AS utility_lineups_month,
+        (SELECT count(*) FROM public.utility_lineups
+          WHERE archived_at IS NULL AND visibility = 'Public')                           AS utility_public,
+        (SELECT count(*) FROM public.utility_lineups
+          WHERE archived_at IS NULL AND visibility = 'Team')                             AS utility_team,
+        (SELECT count(*) FROM public.utility_lineups
+          WHERE archived_at IS NULL AND visibility = 'Private')                          AS utility_private,
+        (SELECT count(DISTINCT author_steam_id) FROM public.utility_lineups
+          WHERE archived_at IS NULL)                                                     AS utility_authors,
+        (SELECT count(DISTINCT map_name) FROM public.utility_lineups
+          WHERE archived_at IS NULL)                                                     AS utility_maps,
+        (SELECT count(*) FROM public.utility_lineups
+          WHERE archived_at IS NULL AND verified_at IS NOT NULL)                         AS utility_verified,
+        -- The moderator queue, spelled exactly as utility_lineups_public_queue_idx
+        -- spells it. Approval is what clears public_requested_at (the trigger
+        -- stamps the review and nulls the request), so "requested and not yet
+        -- public" is the whole of it -- reading public_reviewed_at instead would
+        -- count a lineup that was reviewed once and asked again as settled.
+        (SELECT count(*) FROM public.utility_lineups
+          WHERE archived_at IS NULL
+            AND public_requested_at IS NOT NULL
+            AND visibility <> 'Public')                                                  AS utility_pending_review,
+        (SELECT count(*) FROM public.utility_lineups
+          WHERE archived_at IS NULL AND preview_rendered_at IS NOT NULL)                 AS utility_previews,
+        (SELECT count(*) FROM public.utility_lineups
+          WHERE archived_at IS NULL AND origin_source = 'import')                        AS utility_imported,
+        (SELECT count(*) FROM public.utility_lineup_favorites)                           AS utility_favorites,
+        (SELECT count(*) FROM public.utility_lineup_votes)                               AS utility_votes,
+        (SELECT count(*) FROM public.utility_collections)                                AS utility_collections,
+        (SELECT count(*) FROM public.utility_playbooks)                                  AS utility_playbooks,
+        (SELECT count(*) FROM public.utility_playbook_steps)                             AS utility_playbook_steps,
+
+        -- A render books a practice server exactly as a player does and is
+        -- hosted by whoever approved the lineup, so counting those rows reports
+        -- the clip pipeline's server bookings as people practising. The
+        -- render pipeline is measured by utility_previews instead.
+        (SELECT count(*) FROM public.utility_practice_sessions
+          WHERE NOT is_render)                                                           AS utility_sessions,
+        (SELECT count(*) FROM public.utility_practice_sessions
+          WHERE NOT is_render AND created_at >= now() - interval '7 days')               AS utility_sessions_week,
+        (SELECT count(*) FROM public.utility_practice_sessions
+          WHERE NOT is_render AND created_at >= now() - interval '30 days')              AS utility_sessions_month,
+        (SELECT count(*) FROM public.utility_practice_sessions
+          WHERE NOT is_render AND status = 'Failed')                                     AS utility_sessions_failed,
+        (SELECT count(DISTINCT host_steam_id) FROM public.utility_practice_sessions
+          WHERE NOT is_render)                                                           AS utility_hosts,
+        -- The practice plugin scores every throw and rolls it into this row, so
+        -- attempts is grenades thrown at a lineup rather than sessions started.
+        (SELECT count(DISTINCT steam_id) FROM public.utility_lineup_progress)            AS utility_practicing,
+        (SELECT coalesce(sum(attempts), 0) FROM public.utility_lineup_progress)          AS utility_attempts,
+        (SELECT coalesce(sum(successes), 0) FROM public.utility_lineup_progress)         AS utility_successes,
+        (SELECT count(*) FROM public.utility_lineup_progress
+          WHERE mastered_at IS NOT NULL)                                                 AS utility_mastered,
+
+        (SELECT count(*) FROM public.utility_demo_mines)                                 AS utility_demos_mined,
+        (SELECT count(*) FROM public.utility_demo_throws)                                AS utility_demo_throws,
+        (SELECT count(*) FROM public.utility_meta_lineups)                               AS utility_meta_lineups,
+        (SELECT count(*) FROM public.utility_drift_scans)                                AS utility_drift_scans,
+        -- Distinct lineups, not verdict rows: every scan re-judges the whole
+        -- map, so summing verdicts counts one unlucky smoke once per patch.
+        (SELECT count(DISTINCT utility_lineup_id) FROM public.utility_drift_results
+          WHERE verdict IN ('moved', 'broken'))                                          AS utility_drift_flagged,
+        (SELECT count(*) FROM public.utility_lineup_repairs
+          WHERE status = 'Repaired')                                                     AS utility_repairs,
 
         (SELECT count(*) FROM public.game_plugin_installs WHERE enabled)                 AS plugins_requested,
         -- source = 'manual' is a folder somebody dropped on a node by hand. It

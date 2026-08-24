@@ -1311,10 +1311,59 @@ type TelemetryActivityPoint {
   matches: Int!
 }
 
+type TelemetryUtilityTotals {
+  reported: Int!
+  lineups: Int!
+  archived: Int!
+  week: Int!
+  month: Int!
+  public: Int!
+  team: Int!
+  private: Int!
+  authors: Int!
+  maps: Int!
+  verified: Int!
+  pendingReview: Int!
+  previews: Int!
+  favorites: Int!
+  votes: Int!
+  collections: Int!
+  playbooks: Int!
+  playbookSteps: Int!
+  sessions: Int!
+  sessionsWeek: Int!
+  sessionsMonth: Int!
+  sessionsFailed: Int!
+  hosts: Int!
+  practicing: Int!
+  attempts: Int!
+  successes: Int!
+  mastered: Int!
+  demosMined: Int!
+  demoThrows: Int!
+  metaLineups: Int!
+  driftScans: Int!
+  driftFlagged: Int!
+  repairs: Int!
+}
+
+type TelemetryUtilityTypeCount {
+  type: String!
+  lineups: Int!
+}
+
+type TelemetryUtilitySourceCount {
+  source: String!
+  lineups: Int!
+}
+
 type TelemetryStats {
   online: Int!
   installs: TelemetryInstallCounts!
   totals: TelemetryFleetTotals!
+  utility: TelemetryUtilityTotals!
+  utilityTypes: [TelemetryUtilityTypeCount!]!
+  utilitySources: [TelemetryUtilitySourceCount!]!
   features: [TelemetryFeatureAdoption!]!
   growth: [TelemetryGrowthPoint!]!
   activity: [TelemetryActivityPoint!]!
