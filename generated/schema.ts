@@ -863,8 +863,60 @@ export interface TelemetryStats {
     online: Scalars['Int']
     runtimes: TelemetryRuntimeCount[]
     totals: TelemetryFleetTotals
+    utility: TelemetryUtilityTotals
+    utilitySources: TelemetryUtilitySourceCount[]
+    utilityTypes: TelemetryUtilityTypeCount[]
     versions: TelemetryVersionCount[]
     __typename: 'TelemetryStats'
+}
+
+export interface TelemetryUtilitySourceCount {
+    lineups: Scalars['Int']
+    source: Scalars['String']
+    __typename: 'TelemetryUtilitySourceCount'
+}
+
+export interface TelemetryUtilityTotals {
+    archived: Scalars['Int']
+    attempts: Scalars['Int']
+    authors: Scalars['Int']
+    collections: Scalars['Int']
+    demoThrows: Scalars['Int']
+    demosMined: Scalars['Int']
+    driftFlagged: Scalars['Int']
+    driftScans: Scalars['Int']
+    favorites: Scalars['Int']
+    hosts: Scalars['Int']
+    lineups: Scalars['Int']
+    maps: Scalars['Int']
+    mastered: Scalars['Int']
+    metaLineups: Scalars['Int']
+    month: Scalars['Int']
+    pendingReview: Scalars['Int']
+    playbookSteps: Scalars['Int']
+    playbooks: Scalars['Int']
+    practicing: Scalars['Int']
+    previews: Scalars['Int']
+    private: Scalars['Int']
+    public: Scalars['Int']
+    repairs: Scalars['Int']
+    reported: Scalars['Int']
+    sessions: Scalars['Int']
+    sessionsFailed: Scalars['Int']
+    sessionsMonth: Scalars['Int']
+    sessionsWeek: Scalars['Int']
+    successes: Scalars['Int']
+    team: Scalars['Int']
+    verified: Scalars['Int']
+    votes: Scalars['Int']
+    week: Scalars['Int']
+    __typename: 'TelemetryUtilityTotals'
+}
+
+export interface TelemetryUtilityTypeCount {
+    lineups: Scalars['Int']
+    type: Scalars['String']
+    __typename: 'TelemetryUtilityTypeCount'
 }
 
 export interface TelemetryVersionCount {
@@ -44391,7 +44443,62 @@ export interface TelemetryStatsGenqlSelection{
     online?: boolean | number
     runtimes?: TelemetryRuntimeCountGenqlSelection
     totals?: TelemetryFleetTotalsGenqlSelection
+    utility?: TelemetryUtilityTotalsGenqlSelection
+    utilitySources?: TelemetryUtilitySourceCountGenqlSelection
+    utilityTypes?: TelemetryUtilityTypeCountGenqlSelection
     versions?: TelemetryVersionCountGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface TelemetryUtilitySourceCountGenqlSelection{
+    lineups?: boolean | number
+    source?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface TelemetryUtilityTotalsGenqlSelection{
+    archived?: boolean | number
+    attempts?: boolean | number
+    authors?: boolean | number
+    collections?: boolean | number
+    demoThrows?: boolean | number
+    demosMined?: boolean | number
+    driftFlagged?: boolean | number
+    driftScans?: boolean | number
+    favorites?: boolean | number
+    hosts?: boolean | number
+    lineups?: boolean | number
+    maps?: boolean | number
+    mastered?: boolean | number
+    metaLineups?: boolean | number
+    month?: boolean | number
+    pendingReview?: boolean | number
+    playbookSteps?: boolean | number
+    playbooks?: boolean | number
+    practicing?: boolean | number
+    previews?: boolean | number
+    private?: boolean | number
+    public?: boolean | number
+    repairs?: boolean | number
+    reported?: boolean | number
+    sessions?: boolean | number
+    sessionsFailed?: boolean | number
+    sessionsMonth?: boolean | number
+    sessionsWeek?: boolean | number
+    successes?: boolean | number
+    team?: boolean | number
+    verified?: boolean | number
+    votes?: boolean | number
+    week?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface TelemetryUtilityTypeCountGenqlSelection{
+    lineups?: boolean | number
+    type?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -121827,6 +121934,30 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isTelemetryStats = (obj?: { __typename?: any } | null): obj is TelemetryStats => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isTelemetryStats"')
       return TelemetryStats_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const TelemetryUtilitySourceCount_possibleTypes: string[] = ['TelemetryUtilitySourceCount']
+    export const isTelemetryUtilitySourceCount = (obj?: { __typename?: any } | null): obj is TelemetryUtilitySourceCount => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTelemetryUtilitySourceCount"')
+      return TelemetryUtilitySourceCount_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const TelemetryUtilityTotals_possibleTypes: string[] = ['TelemetryUtilityTotals']
+    export const isTelemetryUtilityTotals = (obj?: { __typename?: any } | null): obj is TelemetryUtilityTotals => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTelemetryUtilityTotals"')
+      return TelemetryUtilityTotals_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const TelemetryUtilityTypeCount_possibleTypes: string[] = ['TelemetryUtilityTypeCount']
+    export const isTelemetryUtilityTypeCount = (obj?: { __typename?: any } | null): obj is TelemetryUtilityTypeCount => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTelemetryUtilityTypeCount"')
+      return TelemetryUtilityTypeCount_possibleTypes.includes(obj.__typename)
     }
     
 
