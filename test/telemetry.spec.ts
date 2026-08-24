@@ -131,6 +131,92 @@ describe("telemetry (SQL-driven)", () => {
         [ran.mapId, ran.matchId, signedIn, ghost],
       );
 
+      // A small library: two live lineups by two different authors on two maps,
+      // one archived, plus everything hung off a lineup.
+      const [lineup] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO utility_lineups
+           (map_name, utility_type, side, technique, origin_source, visibility,
+            origin_x, origin_y, origin_z, view_yaw, view_pitch,
+            land_x, land_y, land_z, name, author_steam_id, verified_at,
+            public_requested_at, preview_rendered_at)
+         VALUES
+           ('de_dust2', 'Smoke', 'CT', 'Jump', 'plugin', 'Public',
+            1, 2, 3, 90, -20, 10, 20, 30, 'xbox smoke', $1, now(), null, now()),
+           -- Asked to be published and still waiting: approval is what clears
+           -- public_requested_at, so a pending one is never already Public.
+           ('de_mirage', 'Flash', 'TERRORIST', 'Stationary', 'editor', 'Private',
+            4, 5, 6, 45, -10, 40, 50, 60, 'window pop', $2, null, now() - interval '1 day', null),
+           ('de_dust2', 'Smoke', 'CT', 'Running', 'demo', 'Public',
+            7, 8, 9, 10, -5, 70, 80, 90, 'archived one', $1, null, null, null)
+         RETURNING id`,
+        [signedIn, ghost],
+      );
+
+      await postgres.query(
+        "UPDATE utility_lineups SET archived_at = now() WHERE name = 'archived one'",
+      );
+
+      await postgres.query(
+        `INSERT INTO utility_lineup_favorites (utility_lineup_id, steam_id) VALUES ($1, $2)`,
+        [lineup.id, ghost],
+      );
+      await postgres.query(
+        `INSERT INTO utility_lineup_votes (utility_lineup_id, steam_id, vote) VALUES ($1, $2, 1)`,
+        [lineup.id, ghost],
+      );
+
+      // Ten throws at it, four of which landed.
+      await postgres.query(
+        `INSERT INTO utility_lineup_progress
+           (utility_lineup_id, steam_id, attempts, successes, mastered_at)
+         VALUES ($1, $2, 10, 4, now())`,
+        [lineup.id, signedIn],
+      );
+
+      const [collection] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO utility_collections (name, owner_steam_id, map_name)
+         VALUES ('dust2 book', $1, 'de_dust2') RETURNING id`,
+        [signedIn],
+      );
+      await postgres.query(
+        `INSERT INTO utility_collection_items (collection_id, utility_lineup_id)
+         VALUES ($1, $2)`,
+        [collection.id, lineup.id],
+      );
+
+      const [playbook] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO utility_playbooks (name, map_name, side, owner_steam_id)
+         VALUES ('a exec', 'de_dust2', 'TERRORIST', $1) RETURNING id`,
+        [signedIn],
+      );
+      await postgres.query(
+        `INSERT INTO utility_playbook_steps (playbook_id, utility_lineup_id)
+         VALUES ($1, $2)`,
+        [playbook.id, lineup.id],
+      );
+
+      // The third books a server the same way, but it is the render pipeline
+      // filming clips rather than anybody practising.
+      await postgres.query(
+        `INSERT INTO utility_practice_sessions (host_steam_id, map_name, status, is_render)
+         VALUES ($1, 'de_dust2', 'Ended', false),
+                ($2, 'de_mirage', 'Failed', false),
+                ($1, 'de_dust2', 'Ended', true)`,
+        [signedIn, ghost],
+      );
+
+      // Two scans over the same lineup: the flagged count is lineups, not
+      // verdict rows, so this must still come back as one.
+      const scans = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO utility_drift_scans (map_name) VALUES ('de_dust2'), ('de_dust2')
+         RETURNING id`,
+      );
+      await postgres.query(
+        `INSERT INTO utility_drift_results (utility_drift_scan_id, utility_lineup_id, verdict)
+         VALUES ($1, $3, 'moved'), ($2, $3, 'broken')`,
+        [scans[0].id, scans[1].id, lineup.id],
+      );
+
       payload = await service.collect();
     }, 600_000);
 
@@ -328,6 +414,69 @@ describe("telemetry (SQL-driven)", () => {
         events: 0,
         event_teams: 0,
       });
+    });
+
+    it("reports the library without counting archived lineups in it", () => {
+      const utility = payload.utility;
+
+      expect(utility.lineups).toBe(2);
+      expect(utility.archived).toBe(1);
+      expect(utility.week).toBe(2);
+      expect(utility.month).toBe(2);
+      expect(utility.public).toBe(1);
+      expect(utility.private).toBe(1);
+      expect(utility.team).toBe(0);
+      expect(utility.authors).toBe(2);
+      expect(utility.maps).toBe(2);
+      expect(utility.verified).toBe(1);
+      expect(utility.pending_review).toBe(1);
+      expect(utility.previews).toBe(1);
+
+      // The archived smoke is out of both breakdowns, so each decomposes the
+      // same `lineups` count.
+      expect(utility.by_type).toEqual({ Smoke: 1, Flash: 1 });
+      expect(utility.by_source).toEqual({ plugin: 1, editor: 1 });
+    });
+
+    it("counts throws at a lineup rather than sessions started", () => {
+      const utility = payload.utility;
+
+      expect(utility.practicing).toBe(1);
+      expect(utility.attempts).toBe(10);
+      expect(utility.successes).toBe(4);
+      expect(utility.mastered).toBe(1);
+
+      // Three session rows, one of which is a render.
+      expect(utility.sessions).toBe(2);
+      expect(utility.sessions_week).toBe(2);
+      expect(utility.sessions_failed).toBe(1);
+      expect(utility.hosts).toBe(2);
+    });
+
+    it("counts a lineup two scans both flagged once", () => {
+      expect(payload.utility.drift_scans).toBe(2);
+      expect(payload.utility.drift_flagged).toBe(1);
+    });
+
+    it("runs the mining counters against the real schema", () => {
+      // Nothing is mined here, so this is the schema check: every table the
+      // block reads has to exist and be spelled the way the query says.
+      expect(payload.utility.demos_mined).toBe(0);
+      expect(payload.utility.demo_throws).toBe(0);
+      expect(payload.utility.meta_lineups).toBe(0);
+      expect(payload.utility.repairs).toBe(0);
+    });
+
+    it("measures the utility switches by what they actually gate", () => {
+      // Both default on with no settings row, and the import switch does not.
+      expect(payload.features.utility_library.enabled).toBe(true);
+      expect(payload.features.utility_practice.enabled).toBe(true);
+      expect(payload.features.utility_import.enabled).toBe(false);
+
+      expect(payload.features.utility_library.count).toBe(2);
+      expect(payload.features.utility_practice.count).toBe(2);
+      // Nothing was bulk-loaded, which is the only thing that switch controls.
+      expect(payload.features.utility_import.count).toBe(0);
     });
 
     it("keeps the install id out of the guest-readable settings namespace", async () => {
@@ -546,6 +695,42 @@ describe("telemetry (SQL-driven)", () => {
         events: 5,
         event_teams: 15,
       },
+      utility: {
+        lineups: 40,
+        archived: 2,
+        week: 4,
+        month: 12,
+        public: 15,
+        team: 10,
+        private: 15,
+        authors: 8,
+        maps: 5,
+        verified: 6,
+        pending_review: 3,
+        previews: 9,
+        favorites: 30,
+        votes: 18,
+        collections: 7,
+        playbooks: 4,
+        playbook_steps: 16,
+        by_type: { Smoke: 25, Flash: 15 },
+        by_source: { plugin: 30, editor: 10 },
+        sessions: 20,
+        sessions_week: 3,
+        sessions_month: 8,
+        sessions_failed: 1,
+        hosts: 6,
+        practicing: 11,
+        attempts: 500,
+        successes: 220,
+        mastered: 14,
+        demos_mined: 60,
+        demo_throws: 2400,
+        meta_lineups: 90,
+        drift_scans: 2,
+        drift_flagged: 5,
+        repairs: 1,
+      },
       features: {
         events: { enabled: installId === installA, count: 3 },
         highlights: { enabled: null as boolean | null, count: 10 },
@@ -698,6 +883,48 @@ describe("telemetry (SQL-driven)", () => {
       );
 
       expect(row.payload.competition).toBeNull();
+    });
+
+    it("sums the utility library across the fleet and says who reported it", async () => {
+      const stats = await service.getFleetStats();
+
+      expect(stats.utility.reported).toBe(2);
+      expect(stats.utility.lineups).toBe(80);
+      expect(stats.utility.authors).toBe(16);
+      expect(stats.utility.pendingReview).toBe(6);
+      expect(stats.utility.playbookSteps).toBe(32);
+      expect(stats.utility.sessionsWeek).toBe(6);
+      // 1,000 throws for 440 landings, which is the fleet's hit rate.
+      expect(stats.utility.attempts).toBe(1000);
+      expect(stats.utility.successes).toBe(440);
+      expect(stats.utility.demoThrows).toBe(4800);
+      expect(stats.utility.driftFlagged).toBe(10);
+    });
+
+    it("leaves a panel with no utility block out of that count", async () => {
+      const older = "cccccccc-0000-4000-8000-000000000003";
+      const { utility, ...rest } = report(older, 10, 1);
+
+      await service.record("203.0.113.3", "US", { ...rest, install_id: older });
+
+      const stats = await service.getFleetStats();
+
+      expect(utility).toBeDefined();
+      expect(stats.utility.reported).toBe(2);
+      expect(stats.utility.lineups).toBe(80);
+    });
+
+    it("breaks the fleet's lineups down by grenade and by how they were made", async () => {
+      const stats = await service.getFleetStats();
+
+      expect(stats.utilityTypes).toEqual([
+        { type: "Smoke", lineups: 50 },
+        { type: "Flash", lineups: 30 },
+      ]);
+      expect(stats.utilitySources).toEqual([
+        { source: "plugin", lineups: 60 },
+        { source: "editor", lineups: 20 },
+      ]);
     });
 
     it("adds up the match type and source mixes across the fleet", async () => {

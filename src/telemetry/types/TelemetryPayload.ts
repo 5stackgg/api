@@ -1,4 +1,4 @@
-export const TELEMETRY_SCHEMA_VERSION = 4;
+export const TELEMETRY_SCHEMA_VERSION = 5;
 
 export type TelemetryFeature = {
   enabled: boolean | null;
@@ -89,6 +89,10 @@ export type TelemetryPayload = {
   // are different facts, and averaging the second in as zero understates every
   // plugin in the catalog.
   plugins: TelemetryPlugins | null;
+  // The utility library and the practice servers that feed it. Absent from a
+  // panel built before the section existed rather than zero-filled, for the
+  // same reason `competition` is.
+  utility: TelemetryUtility | null;
   features: Record<string, TelemetryFeature>;
 };
 
@@ -123,4 +127,69 @@ export type TelemetryCompetition = {
   scrim_requests: number;
   events: number;
   event_teams: number;
+};
+
+// A lineup is one throw somebody wrote up; a throw is one grenade somebody
+// actually threw. Nothing here counts both, and the two are never added
+// together -- the library is what people chose to keep, the mined throws are
+// what a demo happened to contain.
+export type TelemetryUtility = {
+  // Archived lineups are excluded from every count except `archived`: the
+  // author can still see them, but they are out of the library.
+  lineups: number;
+  archived: number;
+  week: number;
+  month: number;
+  // Visibility decomposes `lineups`. Public is what the whole panel can see,
+  // which is not the same as reviewed -- see `pending_review`.
+  public: number;
+  team: number;
+  private: number;
+  // Distinct authors and distinct maps, which is what separates a library one
+  // person filled in from one a community wrote.
+  authors: number;
+  maps: number;
+  // Derived by trigger once enough separate players have mastered a lineup in
+  // a practice server, so it is a fact about the throw rather than a badge an
+  // admin handed out.
+  verified: number;
+  pending_review: number;
+  // Lineups carrying a rendered preview clip, i.e. how much of the library the
+  // render pipeline has actually filmed.
+  previews: number;
+  favorites: number;
+  votes: number;
+  collections: number;
+  playbooks: number;
+  playbook_steps: number;
+  // Which grenade, and how the lineup came to exist -- plugin (recorded from a
+  // real throw), demo (mined), editor (typed), import, fork. The second is the
+  // one that says whether the in-game recorder is what people use.
+  by_type: Record<string, number>;
+  by_source: Record<string, number>;
+
+  sessions: number;
+  sessions_week: number;
+  sessions_month: number;
+  // Never came up. A panel with no spare on-demand slots reports its shortage
+  // here rather than anywhere in the server counts.
+  sessions_failed: number;
+  hosts: number;
+  // Distinct players with a progress row, and the throws behind it. attempts
+  // and successes are counted per throw by the practice plugin, so their ratio
+  // is a real hit rate rather than a self-assessment.
+  practicing: number;
+  attempts: number;
+  successes: number;
+  mastered: number;
+
+  demos_mined: number;
+  demo_throws: number;
+  meta_lineups: number;
+  drift_scans: number;
+  // Lineups a drift scan has ever called moved or broken, counted once each.
+  // Not how many are broken now: a repaired lineup keeps the verdict that sent
+  // it to be repaired.
+  drift_flagged: number;
+  repairs: number;
 };

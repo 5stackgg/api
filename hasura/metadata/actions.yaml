@@ -1904,6 +1904,9 @@ custom_types:
     - name: TelemetryVersionCount
     - name: TelemetryRuntimeCount
     - name: TelemetryCountryCount
+    - name: TelemetryUtilityTotals
+    - name: TelemetryUtilityTypeCount
+    - name: TelemetryUtilitySourceCount
     - name: TelemetryStats
     - name: TestUploadResponse
     - name: GetTestUploadResponse
