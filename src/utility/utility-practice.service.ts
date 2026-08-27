@@ -903,6 +903,36 @@ export class UtilityPracticeService {
     return row ?? null;
   }
 
+  /**
+   * Tell every practice server sitting on a map that its library is out of
+   * date.
+   *
+   * The plugin caches the library per player and only re-reads it when it is
+   * asked to, so a lineup written or edited on the website was invisible in
+   * game until somebody typed .reload -- which is not something a player knows
+   * to do, and is the in-game half of "the panel doesn't auto refresh". Scoped
+   * to the map because a lineup on Ancient is nothing to a server on Mirage.
+   */
+  public async refreshLibrariesOnMap(mapName: string): Promise<void> {
+    if (!mapName) {
+      return;
+    }
+
+    const rows = await this.postgres.query<Array<{ match_id: string }>>(
+      `SELECT m.id::text AS match_id
+         FROM public.utility_practice_sessions s
+         INNER JOIN public.matches m ON m.id = s.match_id
+        WHERE s.map_name = $1
+          AND s.map_changing_at IS NULL
+          AND s.status IN ('Starting', 'Ready')`,
+      [mapName],
+    );
+
+    for (const row of rows) {
+      await this.matchAssistant.sendUtilityPracticeRefresh(row.match_id);
+    }
+  }
+
   public async reapIdle(): Promise<number> {
     const idle = await this.minutes(
       SystemSettingName.UtilityPracticeIdleMinutes,
