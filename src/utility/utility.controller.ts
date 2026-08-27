@@ -72,11 +72,12 @@ export class UtilityController {
   @UseGuards(UtilityPluginKeyGuard)
   public async occupancy(
     @Req() request: Request,
-    @Body() body: { steam_ids?: Array<string> },
+    @Body() body: { steam_ids?: Array<string>; steam_relay?: string | null },
   ) {
     await this.practice.reportOccupancy(
       UtilityController.serverId(request),
       Array.isArray(body?.steam_ids) ? body.steam_ids : [],
+      typeof body?.steam_relay === "string" ? body.steam_relay : null,
     );
 
     return { ok: true };
