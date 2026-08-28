@@ -132,15 +132,29 @@ export type UtilityLibraryRow = {
   author_steam_id: string;
 };
 
-@Injectable()
 /**
  * A refusal rather than a bad request: the caller asked a well-formed question
  * and the answer is no. Typed so the route can say 403 and mean it -- a plugin
  * told 400 for "that is not yours" would report it to the player as its own
  * bug.
+ *
+ * The reason travels as a CODE as well as a sentence. The two refusals here
+ * need different words in game -- one is "not yours", the other is "save a copy
+ * instead" -- and a caller telling them apart by matching on the prose is
+ * coupled to wording nobody would think twice about rewording.
  */
-export class UtilityLineupForbidden extends Error {}
+export type UtilityLineupRefusal = "not_author" | "already_practised";
 
+export class UtilityLineupForbidden extends Error {
+  constructor(
+    public readonly reason: UtilityLineupRefusal,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+@Injectable()
 export class UtilityLineupsService {
   // A compromised game server can send anything, so every one of these is a
   // hard reject rather than a clamp: a silently corrected lineup is a lineup
@@ -876,7 +890,10 @@ export class UtilityLineupsService {
     // to. Without this, anybody on a practice server could rewrite anybody
     // else's lineup and the plugin would have no way to refuse.
     if (row.author_steam_id !== String(options.steamId)) {
-      throw new UtilityLineupForbidden("that lineup belongs to somebody else");
+      throw new UtilityLineupForbidden(
+        "not_author",
+        "that lineup belongs to somebody else",
+      );
     }
 
     const sets: Array<string> = [];
@@ -990,6 +1007,7 @@ export class UtilityLineupsService {
 
     if (Number(others?.count ?? 0) > 0) {
       throw new UtilityLineupForbidden(
+        "already_practised",
         "somebody else has practised this lineup; fork it instead of moving it",
       );
     }

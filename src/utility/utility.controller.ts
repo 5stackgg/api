@@ -293,7 +293,10 @@ export class UtilityController {
       });
     } catch (error) {
       if (error instanceof UtilityLineupForbidden) {
-        throw new ForbiddenException(error.message);
+        throw new ForbiddenException({
+          message: error.message,
+          reason: error.reason,
+        });
       }
 
       throw new BadRequestException(

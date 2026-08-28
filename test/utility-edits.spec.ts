@@ -1,6 +1,9 @@
 import { Logger } from "@nestjs/common";
 import { PostgresService } from "./../src/postgres/postgres.service";
-import { UtilityLineupsService } from "./../src/utility/utility-lineups.service";
+import {
+  UtilityLineupForbidden,
+  UtilityLineupsService,
+} from "./../src/utility/utility-lineups.service";
 import { User } from "./../src/auth/types/User";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
@@ -254,6 +257,40 @@ describe("utility lineup edits (SQL-driven)", () => {
 
     expect(await progressCount(id)).toBe(1);
     expect(Number((await rowOf(id)).land_x)).toBe(GEOMETRY.land_x);
+  });
+
+  // The plugin shows a different sentence for each refusal, and it should not
+  // have to match on our prose to tell them apart.
+  it("names each refusal with a stable code", async () => {
+    const AUTHOR = await fx.player();
+    const SOMEBODY_ELSE = await fx.player();
+
+    const mine = await insertLineup(AUTHOR);
+
+    await expect(
+      lineups.updateLineup({ lineupId: mine, steamId: SOMEBODY_ELSE, name: "x" }),
+    ).rejects.toMatchObject({ reason: "not_author" });
+
+    const practised = await insertLineup(AUTHOR);
+    await practise(practised, SOMEBODY_ELSE);
+
+    await expect(
+      lineups.updateLineup({
+        lineupId: practised,
+        steamId: AUTHOR,
+        geometry: { ...GEOMETRY, land_x: GEOMETRY.land_x + 2000 },
+      }),
+    ).rejects.toMatchObject({ reason: "already_practised" });
+  });
+
+  it("marks a refusal as a refusal rather than a bad request", async () => {
+    const AUTHOR = await fx.player();
+    const SOMEBODY_ELSE = await fx.player();
+    const id = await insertLineup(AUTHOR);
+
+    await expect(
+      lineups.updateLineup({ lineupId: id, steamId: SOMEBODY_ELSE, name: "x" }),
+    ).rejects.toBeInstanceOf(UtilityLineupForbidden);
   });
 
   it("refuses a lineup that does not exist", async () => {
