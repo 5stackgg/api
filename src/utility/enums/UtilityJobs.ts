@@ -3,6 +3,7 @@
 export const UtilityJobs = {
   ReapIdleUtilityPracticeSessions: `ReapIdleUtilityPracticeSessions`,
   MineUtilityMeta: `MineUtilityMeta`,
+  SyncMapCallouts: `SyncMapCallouts`,
   RunUtilityDriftScan: `RunUtilityDriftScan`,
   BatchUtilityRenderJob: `BatchUtilityRenderJob`,
 } as const;

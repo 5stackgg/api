@@ -887,6 +887,14 @@ export class MatchAssistantService {
                   connected: false,
                   offline_at: null,
                   reserved_by_match_id: matchId,
+                  // The row outlives the pod, and the relay account id in it
+                  // belonged to the previous tenant. get_match_server_info
+                  // prefers steam_relay over host:port whenever it is set, so
+                  // leaving it behind handed the next player a connect string
+                  // pointing at somebody else's relay -- which connects and
+                  // then drops. The pod that is about to boot reports its own
+                  // once it is up.
+                  steam_relay: null,
                 },
               },
               __typename: true,

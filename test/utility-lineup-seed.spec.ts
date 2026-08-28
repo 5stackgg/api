@@ -16,6 +16,7 @@ import {
   SqlTestDb,
 } from "./utils/sql-test-db";
 import { UtilityPendingLineup } from "./../src/utility/utility-load.service";
+import { UtilityCalloutsService } from "./../src/utility/utility-callouts.service";
 
 // m_vInitialPosition / m_vInitialVelocity are the engine's own starting state
 // for the projectile. Storing them is what makes a lineup replayable exactly
@@ -75,6 +76,7 @@ describe("utility lineup physics seed (SQL-driven)", () => {
       {
         pending: jest.fn(async (): Promise<Array<UtilityPendingLineup>> => []),
       } as unknown as never,
+      new UtilityCalloutsService(new Logger("UtilitySeedTest"), postgres),
     );
   }
 

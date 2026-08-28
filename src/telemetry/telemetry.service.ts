@@ -118,6 +118,52 @@ export class TelemetryService {
     "branding",
   ]);
 
+  // Feature key -> the collect count that measures it. Static, rather than
+  // built inside buildFeatures, so the fleet page can also list a feature no
+  // panel has reported yet (see getFeatureAdoption) instead of dropping it
+  // until the fleet has updated.
+  //
+  // demo_playback and live_streaming deliberately have no count. The only rows
+  // that record either -- match_demo_sessions, match_streams -- are deleted
+  // when the session ends, so counting them reports how many people happen to
+  // be watching during the collect, not how much the panel has ever used it. A
+  // panel that has served ten thousand playbacks would report zero. Both are in
+  // DetectedFeatures, so their adoption comes from `enabled` (a GPU node
+  // carrying the workload) and the null count reads as "not measured" rather
+  // than as "nobody uses it".
+  private static readonly FeatureUsage: Record<string, string> = {
+    tournaments: "tournaments",
+    leagues: "league_seasons",
+    seasons: "seasons",
+    events: "events",
+    news: "news_articles",
+    highlights: "match_clips",
+    clip_renders: "clip_render_jobs",
+    system_alerts: "system_alerts",
+    awards: "award_recipients",
+    scrims: "scrim_requests",
+    matchmaking: "lobbies",
+    custom_pages: "custom_pages",
+    external_matches: "matches_external",
+    faceit_import: "matches_faceit",
+    draft_games: "draft_games",
+    demos: "demos",
+    sanctions: "sanctions",
+    api_keys: "api_keys",
+    gamedata_validations: "gamedata_validations",
+    push_notifications: "push_subscriptions",
+    utility_library: "utility_lineups",
+    utility_practice: "utility_sessions",
+    // Lineups an operator bulk-loaded rather than anybody throwing them, which
+    // is the only thing the switch controls.
+    utility_import: "utility_imported",
+    game_server_nodes: "nodes_total",
+    version_pinning: "nodes_pinned",
+    discord_bot: "players_discord",
+    steam_presence: "steam_presence_friends",
+    player_name_registration: "players_name_registered",
+  };
+
   // A match this panel actually hosted. Imported demos are stamped with a
   // started_at (from demo metadata, or the import time when that is missing),
   // so started_at alone would count every FACEIT import as a match we ran.
@@ -856,7 +902,7 @@ export class TelemetryService {
        ORDER BY total DESC, f.key ASC`,
     );
 
-    return rows.map((row) => {
+    const adoption = rows.map((row) => {
       const counts = TelemetryService.toIntegers(row, [
         "enabled",
         "flagged",
@@ -872,6 +918,46 @@ export class TelemetryService {
         ...counts,
       };
     });
+
+    // A feature added after the builds currently in the fleet has no row here
+    // at all, and leaving it out reads as a feature that does not exist rather
+    // than as one nothing has reported yet. Emit it with nothing reported --
+    // `reporting: 0` is what the page reads to say so -- so a switch shows up
+    // on the fleet page the moment this build knows about it.
+    const reported = new Set(adoption.map((feature) => feature.key));
+
+    for (const key of TelemetryService.knownFeatures()) {
+      if (reported.has(key)) {
+        continue;
+      }
+
+      adoption.push({
+        key,
+        kind: TelemetryService.featureKind(key, 0),
+        enabled: 0,
+        flagged: 0,
+        reporting: 0,
+        counted: 0,
+        installsUsing: 0,
+        total: 0,
+      });
+    }
+
+    // Same order the query asked for, applied again now that the unreported
+    // ones have been folded in.
+    return adoption.sort(
+      (a, b) => b.total - a.total || a.key.localeCompare(b.key),
+    );
+  }
+
+  // Every feature this build can report, whether or not a panel in the fleet
+  // has sent it yet.
+  private static knownFeatures() {
+    return new Set([
+      ...Object.keys(TelemetryService.FeatureFlags),
+      ...Object.keys(TelemetryService.FeatureUsage),
+      ...TelemetryService.DetectedFeatures,
+    ]);
   }
 
   // Detected first. The `supports_*` ones are stored as settings and so are in
@@ -1290,46 +1376,11 @@ export class TelemetryService {
     settings: Map<string, string>,
     counts: TelemetryCounts,
   ): Record<string, TelemetryFeature> {
-    const usage: Record<string, number> = {
-      tournaments: counts.tournaments,
-      leagues: counts.league_seasons,
-      seasons: counts.seasons,
-      events: counts.events,
-      news: counts.news_articles,
-      highlights: counts.match_clips,
-      clip_renders: counts.clip_render_jobs,
-      system_alerts: counts.system_alerts,
-      awards: counts.award_recipients,
-      scrims: counts.scrim_requests,
-      matchmaking: counts.lobbies,
-      custom_pages: counts.custom_pages,
-      external_matches: counts.matches_external,
-      faceit_import: counts.matches_faceit,
-      draft_games: counts.draft_games,
-      demos: counts.demos,
-      sanctions: counts.sanctions,
-      api_keys: counts.api_keys,
-      gamedata_validations: counts.gamedata_validations,
-      push_notifications: counts.push_subscriptions,
-      utility_library: counts.utility_lineups,
-      utility_practice: counts.utility_sessions,
-      // Lineups an operator bulk-loaded rather than anybody throwing them, which
-      // is the only thing the switch controls.
-      utility_import: counts.utility_imported,
-      // demo_playback and live_streaming deliberately have no count. The only
-      // rows that record either -- match_demo_sessions, match_streams -- are
-      // deleted when the session ends, so counting them reports how many people
-      // happen to be watching during the collect, not how much the panel has
-      // ever used it. A panel that has served ten thousand playbacks would
-      // report zero. Both are in DetectedFeatures, so their adoption comes from
-      // `enabled` (a GPU node carrying the workload) and the null count reads as
-      // "not measured" rather than as "nobody uses it".
-      game_server_nodes: counts.nodes_total,
-      version_pinning: counts.nodes_pinned,
-      discord_bot: counts.players_discord,
-      steam_presence: counts.steam_presence_friends,
-      player_name_registration: counts.players_name_registered,
-    };
+    const usage: Record<string, number> = {};
+
+    for (const [key, count] of Object.entries(TelemetryService.FeatureUsage)) {
+      usage[key] = counts[count];
+    }
 
     // Read back rather than switched. The GPU workloads are toggled per node,
     // so on means at least one node is carrying that work; branding is on once

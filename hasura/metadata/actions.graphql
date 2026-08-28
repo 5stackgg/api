@@ -1969,6 +1969,15 @@ type Mutation {
   remineUtilityMeta: UtilityRemineOutput
 }
 
+type Mutation {
+  syncMapCallouts: MapCalloutSyncOutput
+}
+
+type MapCalloutSyncOutput {
+  maps: Int!
+  callouts: Int!
+}
+
 type UtilityRemineOutput {
   demos: Int!
   throws: Int!

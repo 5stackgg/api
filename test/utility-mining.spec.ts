@@ -20,6 +20,7 @@ import {
   SqlTestDb,
 } from "./utils/sql-test-db";
 import { UtilityPendingLineup } from "./../src/utility/utility-load.service";
+import { UtilityCalloutsService } from "./../src/utility/utility-callouts.service";
 
 // A lineup mined out of a demo is a reconstruction, not a recording: the
 // crosshair, the standing pixel and the release timing are all inferred from
@@ -299,6 +300,7 @@ describe("utility lineups mined from demos (SQL-driven)", () => {
       {
         pending: jest.fn(async (): Promise<Array<UtilityPendingLineup>> => []),
       } as unknown as never,
+      new UtilityCalloutsService(new Logger("UtilityMiningTest"), postgres),
     );
   }
 
@@ -352,6 +354,7 @@ describe("utility lineups mined from demos (SQL-driven)", () => {
       } as never,
       artifacts,
       lineupsService(artifacts),
+      new UtilityCalloutsService(new Logger("UtilityMiningTest"), postgres),
     );
   }
 

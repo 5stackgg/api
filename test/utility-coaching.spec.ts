@@ -10,6 +10,7 @@ import { User } from "./../src/auth/types/User";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 import { UtilityPendingLineup } from "./../src/utility/utility-load.service";
+import { UtilityCalloutsService } from "./../src/utility/utility-callouts.service";
 
 // The two things the practice data can say that a browse cannot: which way
 // everybody misses one lineup, and how hard the lineup is for everybody.
@@ -75,6 +76,7 @@ describe("utility coaching (SQL-driven)", () => {
       {
         pending: jest.fn(async (): Promise<Array<UtilityPendingLineup>> => []),
       } as unknown as never,
+      new UtilityCalloutsService(new Logger("UtilityCoachingTest"), postgres),
     );
   }
 

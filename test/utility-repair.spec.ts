@@ -17,6 +17,7 @@ import {
   SqlTestDb,
 } from "./utils/sql-test-db";
 import { UtilityPendingLineup } from "./../src/utility/utility-load.service";
+import { UtilityCalloutsService } from "./../src/utility/utility-callouts.service";
 
 // Repair is the join between two things that already worked separately: a drift
 // scan that says a lineup moved, and a solver that can find a throw onto a
@@ -97,6 +98,7 @@ describe("utility lineup repair (SQL-driven)", () => {
       {
         pending: jest.fn(async (): Promise<Array<UtilityPendingLineup>> => []),
       } as unknown as never,
+      new UtilityCalloutsService(new Logger("UtilityRepairTest"), postgres),
     );
   }
 

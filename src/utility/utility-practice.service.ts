@@ -903,6 +903,67 @@ export class UtilityPracticeService {
     return row ?? null;
   }
 
+  /**
+   * Record where a practice pod can be reached over Steam's relay network.
+   *
+   * Nothing else ever writes this for a practice server: the match plugin's
+   * ping is what maintains it everywhere else, and a practice pod does not run
+   * the match plugin. Deliberately not that endpoint either -- it also writes
+   * plugin_version and plugin_runtime, which decide how the panel talks to a
+   * server, and the utility plugin's version is not the answer to that.
+   *
+   * A null is "nothing to say", never "clear it": a pod still registering with
+   * the relay would otherwise flap the address out from under a player joining.
+   * The stale value that caused the original bug is cleared when the row is
+   * reserved, which is the moment it is known to be wrong.
+   */
+  private async reportSteamRelay(
+    serverId: string,
+    steamRelay: string | null,
+  ): Promise<void> {
+    if (!steamRelay) {
+      return;
+    }
+
+    await this.postgres.query(
+      `UPDATE public.servers
+          SET steam_relay = $2
+        WHERE id = $1::uuid
+          AND steam_relay IS DISTINCT FROM $2`,
+      [serverId, steamRelay],
+    );
+  }
+
+  /**
+   * Tell every practice server sitting on a map that its library is out of
+   * date.
+   *
+   * The plugin caches the library per player and only re-reads it when it is
+   * asked to, so a lineup written or edited on the website was invisible in
+   * game until somebody typed .reload -- which is not something a player knows
+   * to do, and is the in-game half of "the panel doesn't auto refresh". Scoped
+   * to the map because a lineup on Ancient is nothing to a server on Mirage.
+   */
+  public async refreshLibrariesOnMap(mapName: string): Promise<void> {
+    if (!mapName) {
+      return;
+    }
+
+    const rows = await this.postgres.query<Array<{ match_id: string }>>(
+      `SELECT m.id::text AS match_id
+         FROM public.utility_practice_sessions s
+         INNER JOIN public.matches m ON m.id = s.match_id
+        WHERE s.map_name = $1
+          AND s.map_changing_at IS NULL
+          AND s.status IN ('Starting', 'Ready')`,
+      [mapName],
+    );
+
+    for (const row of rows) {
+      await this.matchAssistant.sendUtilityPracticeRefresh(row.match_id);
+    }
+  }
+
   public async reapIdle(): Promise<number> {
     const idle = await this.minutes(
       SystemSettingName.UtilityPracticeIdleMinutes,
@@ -1778,7 +1839,13 @@ export class UtilityPracticeService {
   public async reportOccupancy(
     serverId: string,
     steamIds: Array<string>,
+    steamRelay: string | null = null,
   ): Promise<void> {
+    // Independent of the session: a pod reports where it can be reached
+    // whether or not anyone is on it yet, and the connect string is read
+    // before the first player arrives.
+    await this.reportSteamRelay(serverId, steamRelay);
+
     const session = await this.liveSessionForServer(serverId);
 
     if (!session) {

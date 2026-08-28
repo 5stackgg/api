@@ -1,0 +1,14 @@
+table:
+  name: map_callouts
+  schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - map_name
+        - name
+        - boxes
+        - source
+        - updated_at
+      filter: {}
+    comment: ""

@@ -11,6 +11,7 @@ import {
   UtilityAnalysisService,
   UtilitySightlinePairInput,
 } from "./utility-analysis.service";
+import { UtilityCalloutsService } from "./utility-callouts.service";
 import { UtilityDriftService } from "./utility-drift.service";
 
 @Controller("utility-analysis")
@@ -19,6 +20,7 @@ export class UtilityAnalysisController {
     private readonly analysis: UtilityAnalysisService,
     private readonly drift: UtilityDriftService,
     private readonly meta: UtilityMetaService,
+    private readonly callouts: UtilityCalloutsService,
     @InjectQueue(UtilityQueues.UtilityDrift) private readonly driftQueue: Queue,
   ) {}
 
@@ -39,6 +41,18 @@ export class UtilityAnalysisController {
       // Each call takes one batch; the caller repeats until demos comes back 0.
       done: result.demos === 0,
     };
+  }
+
+  // The daily job is the normal path; this exists for the run right after a new
+  // callouts tag is published, when waiting until 4am means every throw named
+  // in between is named from the old map.
+  @HasuraAction()
+  public async syncMapCallouts(data: { user: User }) {
+    if (!data.user || !isRoleAbove(data.user.role, "administrator")) {
+      throw new Error("only an administrator can sync map callouts");
+    }
+
+    return await this.callouts.syncAll();
   }
 
   @HasuraAction()

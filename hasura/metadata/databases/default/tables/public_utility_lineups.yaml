@@ -598,6 +598,44 @@ event_triggers:
       num_retries: 6
       timeout_sec: 60
     webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
+  # The search index deliberately ignores the geometry columns; a practice
+  # server standing somebody on a throw cannot. Separate trigger rather than
+  # more columns on that one, so re-indexing and re-serving stay independent.
+  - name: utility_lineups_practice_events
+    definition:
+      delete:
+        columns: '*'
+      enable_manual: true
+      insert:
+        columns: '*'
+      update:
+        columns:
+          - map_name
+          - utility_type
+          - side
+          - technique
+          - name
+          - description
+          - visibility
+          - archived_at
+          - team_id
+          - aim_tolerance
+          - origin_x
+          - origin_y
+          - origin_z
+          - eye_z
+          - view_yaw
+          - view_pitch
+          - land_x
+          - land_y
+          - land_z
+          - jump_throw_bind
+          - throw_strength
+    retry_conf:
+      interval_sec: 10
+      num_retries: 6
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
   - name: utility_lineups_events
     definition:
       delete:

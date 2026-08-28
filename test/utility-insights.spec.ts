@@ -10,6 +10,7 @@ import {
   SqlTestDb,
 } from "./utils/sql-test-db";
 import { UtilityPendingLineup } from "./../src/utility/utility-load.service";
+import { UtilityCalloutsService } from "./../src/utility/utility-callouts.service";
 
 // The two reads over mined data. Both have one property that is worth more than
 // their arithmetic: the plan must not answer "nothing to learn" when the truth
@@ -38,6 +39,7 @@ describe("utility insights (SQL-driven)", () => {
       {
         pending: jest.fn(async (): Promise<Array<UtilityPendingLineup>> => []),
       } as unknown as never,
+      new UtilityCalloutsService(new Logger("UtilityInsightsTest"), postgres),
     );
 
     insights = new UtilityInsightsService(postgres, lineups);

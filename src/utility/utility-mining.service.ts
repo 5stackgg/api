@@ -15,6 +15,7 @@ import {
   UtilityTrajectoryPoint,
   UtilityVector,
 } from "./utility-artifacts.service";
+import { UtilityCalloutsService } from "./utility-callouts.service";
 import { UtilityLineupsService } from "./utility-lineups.service";
 
 export type UtilityMiningRequest = {
@@ -192,7 +193,30 @@ export class UtilityMiningService {
     private readonly demoMetadata: DemoMetadataService,
     private readonly artifacts: UtilityArtifactsService,
     private readonly lineups: UtilityLineupsService,
+    private readonly callouts: UtilityCalloutsService,
   ) {}
+
+  /**
+   * What the map itself would call this throw. Falls back to the map's name --
+   * a lineup has to be called something, and an unnamed row in the library is
+   * worse than a vague one.
+   */
+  private async calloutName(mined: MinedLineup): Promise<string> {
+    try {
+      const name = await this.callouts.autoName(
+        mined.mapName,
+        mined.utilityType,
+        mined.origin,
+        mined.land,
+      );
+      return name || mined.mapName;
+    } catch (error) {
+      this.logger.warn(
+        `unable to name a mined lineup from callouts: ${(error as Error)?.message}`,
+      );
+      return mined.mapName;
+    }
+  }
 
   public async saveFromDemo(
     request: UtilityMiningRequest,
@@ -258,7 +282,10 @@ export class UtilityMiningService {
         mined.land.y,
         mined.land.z,
         mined.flightTimeMs,
-        UtilityLineupsService.sanitizeName(request.name, mined.mapName),
+        UtilityLineupsService.sanitizeName(
+          request.name,
+          await this.calloutName(mined),
+        ),
         UtilityLineupsService.sanitizeText(request.description, 1000),
         (request.tags ?? [])
           .slice(0, 16)
