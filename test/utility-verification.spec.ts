@@ -7,6 +7,7 @@ import {
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 import { UtilityPendingLineup } from "./../src/utility/utility-load.service";
+import { UtilityCalloutsService } from "./../src/utility/utility-callouts.service";
 
 // verified_at used to be a moderator's manual claim, which at library scale
 // means it is null forever and the badge means nothing. It is now derived from
@@ -64,6 +65,7 @@ describe("utility lineup verification (SQL-driven)", () => {
       {
         pending: jest.fn(async (): Promise<Array<UtilityPendingLineup>> => []),
       } as unknown as never,
+      new UtilityCalloutsService(new Logger("UtilityVerifyTest"), postgres),
     );
   }
 

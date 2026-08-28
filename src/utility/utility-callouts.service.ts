@@ -24,13 +24,13 @@ type CalloutRow = {
 
 @Injectable()
 export class UtilityCalloutsService {
-  // Callouts are published into the same tagged snapshot as the collision
-  // meshes, so this tag has to move with the one the browser is pinned to
-  // (web/nuxt.config.ts public.mapMeshCdn) and the one the demo parser
-  // defaults to -- otherwise the panel and the API can name the same throw
-  // differently after a map patch. Override with MAP_MESH_CDN.
+  // Callouts are published beside the collision meshes under one CS2 build, so
+  // this has to move with the browser's pin (web/nuxt.config.ts
+  // public.mapMeshCdn) and the demo parser's default -- otherwise the panel and
+  // the API can name the same throw differently after a map patch. Override
+  // with MAP_MESH_CDN.
   private static readonly DEFAULT_CDN =
-    "https://cdn.jsdelivr.net/gh/5stackgg/replay-map-meshes@17595823-5";
+    "https://demo-dl.5stack.gg/maps/24957633";
 
   // How far outside every place volume a point may sit and still be named. The
   // volumes do not tile a map, and a grenade rests on top of geometry as often

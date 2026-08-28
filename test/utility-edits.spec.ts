@@ -8,6 +8,7 @@ import { User } from "./../src/auth/types/User";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 import { UtilityPendingLineup } from "./../src/utility/utility-load.service";
+import { UtilityCalloutsService } from "./../src/utility/utility-callouts.service";
 
 // Editing a lineup in place, which nothing could do before: the only UPDATE on
 // the table set name/description/visibility, and the plugin had ingest and
@@ -40,6 +41,7 @@ describe("utility lineup edits (SQL-driven)", () => {
       {
         pending: jest.fn(async (): Promise<Array<UtilityPendingLineup>> => []),
       } as unknown as never,
+      new UtilityCalloutsService(new Logger("UtilityEditTest"), postgres),
     );
   }, 600_000);
 
