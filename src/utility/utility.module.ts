@@ -31,6 +31,7 @@ import { UtilitySolverService } from "./utility-solver.service";
 import { UtilityLoadService } from "./utility-load.service";
 import { UtilityLineupsController } from "./utility-lineups.controller";
 import { UtilityLineupsService } from "./utility-lineups.service";
+import { UtilityCalloutsService } from "./utility-callouts.service";
 import { UtilityMetaService } from "./utility-meta.service";
 import { UtilityMiningController } from "./utility-mining.controller";
 import { UtilityMiningService } from "./utility-mining.service";
@@ -45,6 +46,7 @@ import { UtilityRendersService } from "./utility-renders.service";
 import { UtilityLaunchSeedService } from "./utility-launch-seed.service";
 import { UtilityController } from "./utility.controller";
 import { MineUtilityMeta } from "./jobs/MineUtilityMeta";
+import { SyncMapCallouts } from "./jobs/SyncMapCallouts";
 import { ReapIdleUtilityPracticeSessions } from "./jobs/ReapIdleUtilityPracticeSessions";
 import { RunUtilityDriftScan } from "./jobs/RunUtilityDriftScan";
 import {
@@ -100,6 +102,7 @@ import { GameStreamerModule } from "../matches/game-streamer/game-streamer.modul
   providers: [
     UtilityAnalysisService,
     UtilityArtifactsService,
+    UtilityCalloutsService,
     UtilityDriftService,
     UtilityImportService,
     UtilityInsightsService,
@@ -121,6 +124,7 @@ import { GameStreamerModule } from "../matches/game-streamer/game-streamer.modul
     UtilityPluginKeyGuard,
     ReapIdleUtilityPracticeSessions,
     MineUtilityMeta,
+    SyncMapCallouts,
     RunUtilityDriftScan,
     ...getQueuesProcessors("Utility"),
     loggerFactory(),
@@ -136,6 +140,7 @@ import { GameStreamerModule } from "../matches/game-streamer/game-streamer.modul
     UtilityController,
   ],
   exports: [
+    UtilityCalloutsService,
     UtilityPracticeService,
     UtilityRendersService,
     UtilityLineupsService,
@@ -181,6 +186,20 @@ export class UtilityModule {
         },
       },
     );
+
+    // Callouts only change when Valve patches a map, so daily is generous. The
+    // immediate call is what gets a fresh install named on its first boot
+    // rather than at 4am tomorrow.
+    void utilityMetaQueue.add(
+      UtilityJobs.SyncMapCallouts,
+      {},
+      {
+        repeat: {
+          pattern: "23 4 * * *",
+        },
+      },
+    );
+    void utilityMetaQueue.add(UtilityJobs.SyncMapCallouts, {});
 
     void utilityRendersQueue.add(
       ReconcileQueuedUtilityRenders.name,

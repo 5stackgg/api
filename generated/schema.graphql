@@ -403,6 +403,11 @@ type LockInfo {
   usename: String
 }
 
+type MapCalloutSyncOutput {
+  callouts: Int!
+  maps: Int!
+}
+
 type MeResponse {
   avatar_url: String!
   country: String
@@ -32427,6 +32432,254 @@ input lobby_players_variance_order_by {
 }
 
 """
+columns and relationships of "map_callouts"
+"""
+type map_callouts {
+  boxes(
+    """JSON select path"""
+    path: String
+  ): jsonb!
+  map_name: String!
+  name: String!
+  source: String!
+  updated_at: timestamptz!
+}
+
+"""
+aggregated selection of "map_callouts"
+"""
+type map_callouts_aggregate {
+  aggregate: map_callouts_aggregate_fields
+  nodes: [map_callouts!]!
+}
+
+"""
+aggregate fields of "map_callouts"
+"""
+type map_callouts_aggregate_fields {
+  count(columns: [map_callouts_select_column!], distinct: Boolean): Int!
+  max: map_callouts_max_fields
+  min: map_callouts_min_fields
+}
+
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input map_callouts_append_input {
+  boxes: jsonb
+}
+
+"""
+Boolean expression to filter rows from the table "map_callouts". All fields are combined with a logical 'AND'.
+"""
+input map_callouts_bool_exp {
+  _and: [map_callouts_bool_exp!]
+  _not: map_callouts_bool_exp
+  _or: [map_callouts_bool_exp!]
+  boxes: jsonb_comparison_exp
+  map_name: String_comparison_exp
+  name: String_comparison_exp
+  source: String_comparison_exp
+  updated_at: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "map_callouts"
+"""
+enum map_callouts_constraint {
+  """
+  unique or primary key constraint on columns "name", "map_name"
+  """
+  map_callouts_pkey
+}
+
+"""
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input map_callouts_delete_at_path_input {
+  boxes: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input map_callouts_delete_elem_input {
+  boxes: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input map_callouts_delete_key_input {
+  boxes: String
+}
+
+"""
+input type for inserting data into table "map_callouts"
+"""
+input map_callouts_insert_input {
+  boxes: jsonb
+  map_name: String
+  name: String
+  source: String
+  updated_at: timestamptz
+}
+
+"""aggregate max on columns"""
+type map_callouts_max_fields {
+  map_name: String
+  name: String
+  source: String
+  updated_at: timestamptz
+}
+
+"""aggregate min on columns"""
+type map_callouts_min_fields {
+  map_name: String
+  name: String
+  source: String
+  updated_at: timestamptz
+}
+
+"""
+response of any mutation on the table "map_callouts"
+"""
+type map_callouts_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [map_callouts!]!
+}
+
+"""
+on_conflict condition type for table "map_callouts"
+"""
+input map_callouts_on_conflict {
+  constraint: map_callouts_constraint!
+  update_columns: [map_callouts_update_column!]! = []
+  where: map_callouts_bool_exp
+}
+
+"""Ordering options when selecting data from "map_callouts"."""
+input map_callouts_order_by {
+  boxes: order_by
+  map_name: order_by
+  name: order_by
+  source: order_by
+  updated_at: order_by
+}
+
+"""primary key columns input for table: map_callouts"""
+input map_callouts_pk_columns_input {
+  map_name: String!
+  name: String!
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input map_callouts_prepend_input {
+  boxes: jsonb
+}
+
+"""
+select columns of table "map_callouts"
+"""
+enum map_callouts_select_column {
+  """column name"""
+  boxes
+
+  """column name"""
+  map_name
+
+  """column name"""
+  name
+
+  """column name"""
+  source
+
+  """column name"""
+  updated_at
+}
+
+"""
+input type for updating data in table "map_callouts"
+"""
+input map_callouts_set_input {
+  boxes: jsonb
+  map_name: String
+  name: String
+  source: String
+  updated_at: timestamptz
+}
+
+"""
+Streaming cursor of the table "map_callouts"
+"""
+input map_callouts_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: map_callouts_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input map_callouts_stream_cursor_value_input {
+  boxes: jsonb
+  map_name: String
+  name: String
+  source: String
+  updated_at: timestamptz
+}
+
+"""
+update columns of table "map_callouts"
+"""
+enum map_callouts_update_column {
+  """column name"""
+  boxes
+
+  """column name"""
+  map_name
+
+  """column name"""
+  name
+
+  """column name"""
+  source
+
+  """column name"""
+  updated_at
+}
+
+input map_callouts_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: map_callouts_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: map_callouts_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: map_callouts_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: map_callouts_delete_key_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: map_callouts_prepend_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: map_callouts_set_input
+
+  """filter the rows which have to be updated"""
+  where: map_callouts_bool_exp!
+}
+
+"""
 columns and relationships of "map_pools"
 """
 type map_pools {
@@ -44501,6 +44754,19 @@ type mutation_root {
   delete_lobby_players_by_pk(lobby_id: uuid!, steam_id: bigint!): lobby_players
 
   """
+  delete data from the table: "map_callouts"
+  """
+  delete_map_callouts(
+    """filter the rows which have to be deleted"""
+    where: map_callouts_bool_exp!
+  ): map_callouts_mutation_response
+
+  """
+  delete single row from the table: "map_callouts"
+  """
+  delete_map_callouts_by_pk(map_name: String!, name: String!): map_callouts
+
+  """
   delete data from the table: "map_pools"
   """
   delete_map_pools(
@@ -47907,6 +48173,28 @@ type mutation_root {
   ): lobby_players
 
   """
+  insert data into the table: "map_callouts"
+  """
+  insert_map_callouts(
+    """the rows to be inserted"""
+    objects: [map_callouts_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: map_callouts_on_conflict
+  ): map_callouts_mutation_response
+
+  """
+  insert a single row into the table: "map_callouts"
+  """
+  insert_map_callouts_one(
+    """the row to be inserted"""
+    object: map_callouts_insert_input!
+
+    """upsert condition"""
+    on_conflict: map_callouts_on_conflict
+  ): map_callouts
+
+  """
   insert data into the table: "map_pools"
   """
   insert_map_pools(
@@ -50331,6 +50619,9 @@ type mutation_root {
   swapLineups(match_id: uuid!): SuccessOutput
   switchLineup(match_id: String!): SuccessOutput
   switchLiveMatch(from_match_id: uuid!, mode: String!, to_match_id: uuid!): SuccessOutput
+
+  """Pull the published map callouts for every enabled map"""
+  syncMapCallouts: MapCalloutSyncOutput
 
   """Pull the game plugin registry into this panel's catalog"""
   syncPluginRegistry: SyncPluginRegistryOutput
@@ -53653,6 +53944,76 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [lobby_players_updates!]!
   ): [lobby_players_mutation_response]
+
+  """
+  update data of the table: "map_callouts"
+  """
+  update_map_callouts(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: map_callouts_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: map_callouts_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: map_callouts_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: map_callouts_delete_key_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: map_callouts_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: map_callouts_set_input
+
+    """filter the rows which have to be updated"""
+    where: map_callouts_bool_exp!
+  ): map_callouts_mutation_response
+
+  """
+  update single row of the table: "map_callouts"
+  """
+  update_map_callouts_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: map_callouts_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: map_callouts_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: map_callouts_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: map_callouts_delete_key_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: map_callouts_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: map_callouts_set_input
+    pk_columns: map_callouts_pk_columns_input!
+  ): map_callouts
+
+  """
+  update multiples rows of table: "map_callouts"
+  """
+  update_map_callouts_many(
+    """updates to execute, in order"""
+    updates: [map_callouts_updates!]!
+  ): [map_callouts_mutation_response]
 
   """
   update data of the table: "map_pools"
@@ -84061,6 +84422,49 @@ type query_root {
   lobby_players_by_pk(lobby_id: uuid!, steam_id: bigint!): lobby_players
 
   """
+  fetch data from the table: "map_callouts"
+  """
+  map_callouts(
+    """distinct select on columns"""
+    distinct_on: [map_callouts_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [map_callouts_order_by!]
+
+    """filter the rows returned"""
+    where: map_callouts_bool_exp
+  ): [map_callouts!]!
+
+  """
+  fetch aggregated fields from the table: "map_callouts"
+  """
+  map_callouts_aggregate(
+    """distinct select on columns"""
+    distinct_on: [map_callouts_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [map_callouts_order_by!]
+
+    """filter the rows returned"""
+    where: map_callouts_bool_exp
+  ): map_callouts_aggregate!
+
+  """fetch data from the table: "map_callouts" using primary key columns"""
+  map_callouts_by_pk(map_name: String!, name: String!): map_callouts
+
+  """
   fetch data from the table: "map_pools"
   """
   map_pools(
@@ -98210,6 +98614,63 @@ type subscription_root {
     """filter the rows returned"""
     where: lobby_players_bool_exp
   ): [lobby_players!]!
+
+  """
+  fetch data from the table: "map_callouts"
+  """
+  map_callouts(
+    """distinct select on columns"""
+    distinct_on: [map_callouts_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [map_callouts_order_by!]
+
+    """filter the rows returned"""
+    where: map_callouts_bool_exp
+  ): [map_callouts!]!
+
+  """
+  fetch aggregated fields from the table: "map_callouts"
+  """
+  map_callouts_aggregate(
+    """distinct select on columns"""
+    distinct_on: [map_callouts_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [map_callouts_order_by!]
+
+    """filter the rows returned"""
+    where: map_callouts_bool_exp
+  ): map_callouts_aggregate!
+
+  """fetch data from the table: "map_callouts" using primary key columns"""
+  map_callouts_by_pk(map_name: String!, name: String!): map_callouts
+
+  """
+  fetch data from the table in a streaming manner: "map_callouts"
+  """
+  map_callouts_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [map_callouts_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: map_callouts_bool_exp
+  ): [map_callouts!]!
 
   """
   fetch data from the table: "map_pools"

@@ -992,6 +992,21 @@ describe("telemetry (SQL-driven)", () => {
       expect(gated.installsUsing).toBe(0);
     });
 
+    it("lists a feature no panel has reported yet rather than dropping it", async () => {
+      const stats = await service.getFleetStats();
+      const utility = stats.features.find((f) => f.key === "utility_library");
+
+      // Neither fixture panel reports the utility block. Left to the rows
+      // alone the switch is simply absent from the page, which reads as a
+      // feature that does not exist rather than as one nothing has sent yet.
+      expect(utility).toBeDefined();
+      expect(utility.kind).toBe("setting");
+      expect(utility.reporting).toBe(0);
+      expect(utility.flagged).toBe(0);
+      expect(utility.counted).toBe(0);
+      expect(utility.total).toBe(0);
+    });
+
     it("says whether a feature is a setting, a capability, or always on", async () => {
       const stats = await service.getFleetStats();
       const kind = (key: string) =>

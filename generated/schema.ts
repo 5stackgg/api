@@ -368,6 +368,12 @@ export interface LockInfo {
     __typename: 'LockInfo'
 }
 
+export interface MapCalloutSyncOutput {
+    callouts: Scalars['Int']
+    maps: Scalars['Int']
+    __typename: 'MapCalloutSyncOutput'
+}
+
 export interface MeResponse {
     avatar_url: Scalars['String']
     country: (Scalars['String'] | null)
@@ -11679,6 +11685,76 @@ export interface lobby_players_variance_fields {
 }
 
 
+/** columns and relationships of "map_callouts" */
+export interface map_callouts {
+    boxes: Scalars['jsonb']
+    map_name: Scalars['String']
+    name: Scalars['String']
+    source: Scalars['String']
+    updated_at: Scalars['timestamptz']
+    __typename: 'map_callouts'
+}
+
+
+/** aggregated selection of "map_callouts" */
+export interface map_callouts_aggregate {
+    aggregate: (map_callouts_aggregate_fields | null)
+    nodes: map_callouts[]
+    __typename: 'map_callouts_aggregate'
+}
+
+
+/** aggregate fields of "map_callouts" */
+export interface map_callouts_aggregate_fields {
+    count: Scalars['Int']
+    max: (map_callouts_max_fields | null)
+    min: (map_callouts_min_fields | null)
+    __typename: 'map_callouts_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "map_callouts" */
+export type map_callouts_constraint = 'map_callouts_pkey'
+
+
+/** aggregate max on columns */
+export interface map_callouts_max_fields {
+    map_name: (Scalars['String'] | null)
+    name: (Scalars['String'] | null)
+    source: (Scalars['String'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'map_callouts_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface map_callouts_min_fields {
+    map_name: (Scalars['String'] | null)
+    name: (Scalars['String'] | null)
+    source: (Scalars['String'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'map_callouts_min_fields'
+}
+
+
+/** response of any mutation on the table "map_callouts" */
+export interface map_callouts_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: map_callouts[]
+    __typename: 'map_callouts_mutation_response'
+}
+
+
+/** select columns of table "map_callouts" */
+export type map_callouts_select_column = 'boxes' | 'map_name' | 'name' | 'source' | 'updated_at'
+
+
+/** update columns of table "map_callouts" */
+export type map_callouts_update_column = 'boxes' | 'map_name' | 'name' | 'source' | 'updated_at'
+
+
 /** columns and relationships of "map_pools" */
 export interface map_pools {
     /** An object relationship */
@@ -15036,6 +15112,10 @@ export interface mutation_root {
     delete_lobby_players: (lobby_players_mutation_response | null)
     /** delete single row from the table: "lobby_players" */
     delete_lobby_players_by_pk: (lobby_players | null)
+    /** delete data from the table: "map_callouts" */
+    delete_map_callouts: (map_callouts_mutation_response | null)
+    /** delete single row from the table: "map_callouts" */
+    delete_map_callouts_by_pk: (map_callouts | null)
     /** delete data from the table: "map_pools" */
     delete_map_pools: (map_pools_mutation_response | null)
     /** delete single row from the table: "map_pools" */
@@ -15816,6 +15896,10 @@ export interface mutation_root {
     insert_lobby_players: (lobby_players_mutation_response | null)
     /** insert a single row into the table: "lobby_players" */
     insert_lobby_players_one: (lobby_players | null)
+    /** insert data into the table: "map_callouts" */
+    insert_map_callouts: (map_callouts_mutation_response | null)
+    /** insert a single row into the table: "map_callouts" */
+    insert_map_callouts_one: (map_callouts | null)
     /** insert data into the table: "map_pools" */
     insert_map_pools: (map_pools_mutation_response | null)
     /** insert a single row into the table: "map_pools" */
@@ -16362,6 +16446,8 @@ export interface mutation_root {
     swapLineups: (SuccessOutput | null)
     switchLineup: (SuccessOutput | null)
     switchLiveMatch: (SuccessOutput | null)
+    /** Pull the published map callouts for every enabled map */
+    syncMapCallouts: (MapCalloutSyncOutput | null)
     /** Pull the game plugin registry into this panel's catalog */
     syncPluginRegistry: (SyncPluginRegistryOutput | null)
     syncSteamFriends: (SuccessOutput | null)
@@ -16971,6 +17057,12 @@ export interface mutation_root {
     update_lobby_players_by_pk: (lobby_players | null)
     /** update multiples rows of table: "lobby_players" */
     update_lobby_players_many: ((lobby_players_mutation_response | null)[] | null)
+    /** update data of the table: "map_callouts" */
+    update_map_callouts: (map_callouts_mutation_response | null)
+    /** update single row of the table: "map_callouts" */
+    update_map_callouts_by_pk: (map_callouts | null)
+    /** update multiples rows of table: "map_callouts" */
+    update_map_callouts_many: ((map_callouts_mutation_response | null)[] | null)
     /** update data of the table: "map_pools" */
     update_map_pools: (map_pools_mutation_response | null)
     /** update single row of the table: "map_pools" */
@@ -26626,6 +26718,12 @@ export interface query_root {
     lobby_players_aggregate: lobby_players_aggregate
     /** fetch data from the table: "lobby_players" using primary key columns */
     lobby_players_by_pk: (lobby_players | null)
+    /** fetch data from the table: "map_callouts" */
+    map_callouts: map_callouts[]
+    /** fetch aggregated fields from the table: "map_callouts" */
+    map_callouts_aggregate: map_callouts_aggregate
+    /** fetch data from the table: "map_callouts" using primary key columns */
+    map_callouts_by_pk: (map_callouts | null)
     /** fetch data from the table: "map_pools" */
     map_pools: map_pools[]
     /** fetch aggregated fields from the table: "map_pools" */
@@ -29090,6 +29188,14 @@ export interface subscription_root {
     lobby_players_by_pk: (lobby_players | null)
     /** fetch data from the table in a streaming manner: "lobby_players" */
     lobby_players_stream: lobby_players[]
+    /** fetch data from the table: "map_callouts" */
+    map_callouts: map_callouts[]
+    /** fetch aggregated fields from the table: "map_callouts" */
+    map_callouts_aggregate: map_callouts_aggregate
+    /** fetch data from the table: "map_callouts" using primary key columns */
+    map_callouts_by_pk: (map_callouts | null)
+    /** fetch data from the table in a streaming manner: "map_callouts" */
+    map_callouts_stream: map_callouts[]
     /** fetch data from the table: "map_pools" */
     map_pools: map_pools[]
     /** fetch aggregated fields from the table: "map_pools" */
@@ -43860,6 +43966,13 @@ export interface LockInfoGenqlSelection{
     query?: boolean | number
     relation?: boolean | number
     usename?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface MapCalloutSyncOutputGenqlSelection{
+    callouts?: boolean | number
+    maps?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -62282,6 +62395,144 @@ export interface lobby_players_variance_fieldsGenqlSelection{
 export interface lobby_players_variance_order_by {invited_by_steam_id?: (order_by | null),steam_id?: (order_by | null)}
 
 
+/** columns and relationships of "map_callouts" */
+export interface map_calloutsGenqlSelection{
+    boxes?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    map_name?: boolean | number
+    name?: boolean | number
+    source?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "map_callouts" */
+export interface map_callouts_aggregateGenqlSelection{
+    aggregate?: map_callouts_aggregate_fieldsGenqlSelection
+    nodes?: map_calloutsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "map_callouts" */
+export interface map_callouts_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (map_callouts_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: map_callouts_max_fieldsGenqlSelection
+    min?: map_callouts_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** append existing jsonb value of filtered columns with new jsonb value */
+export interface map_callouts_append_input {boxes?: (Scalars['jsonb'] | null)}
+
+
+/** Boolean expression to filter rows from the table "map_callouts". All fields are combined with a logical 'AND'. */
+export interface map_callouts_bool_exp {_and?: (map_callouts_bool_exp[] | null),_not?: (map_callouts_bool_exp | null),_or?: (map_callouts_bool_exp[] | null),boxes?: (jsonb_comparison_exp | null),map_name?: (String_comparison_exp | null),name?: (String_comparison_exp | null),source?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export interface map_callouts_delete_at_path_input {boxes?: (Scalars['String'][] | null)}
+
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export interface map_callouts_delete_elem_input {boxes?: (Scalars['Int'] | null)}
+
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export interface map_callouts_delete_key_input {boxes?: (Scalars['String'] | null)}
+
+
+/** input type for inserting data into table "map_callouts" */
+export interface map_callouts_insert_input {boxes?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),source?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate max on columns */
+export interface map_callouts_max_fieldsGenqlSelection{
+    map_name?: boolean | number
+    name?: boolean | number
+    source?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface map_callouts_min_fieldsGenqlSelection{
+    map_name?: boolean | number
+    name?: boolean | number
+    source?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "map_callouts" */
+export interface map_callouts_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: map_calloutsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "map_callouts" */
+export interface map_callouts_on_conflict {constraint: map_callouts_constraint,update_columns?: map_callouts_update_column[],where?: (map_callouts_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "map_callouts". */
+export interface map_callouts_order_by {boxes?: (order_by | null),map_name?: (order_by | null),name?: (order_by | null),source?: (order_by | null),updated_at?: (order_by | null)}
+
+
+/** primary key columns input for table: map_callouts */
+export interface map_callouts_pk_columns_input {map_name: Scalars['String'],name: Scalars['String']}
+
+
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export interface map_callouts_prepend_input {boxes?: (Scalars['jsonb'] | null)}
+
+
+/** input type for updating data in table "map_callouts" */
+export interface map_callouts_set_input {boxes?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),source?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** Streaming cursor of the table "map_callouts" */
+export interface map_callouts_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: map_callouts_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface map_callouts_stream_cursor_value_input {boxes?: (Scalars['jsonb'] | null),map_name?: (Scalars['String'] | null),name?: (Scalars['String'] | null),source?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+export interface map_callouts_updates {
+/** append existing jsonb value of filtered columns with new jsonb value */
+_append?: (map_callouts_append_input | null),
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+_delete_at_path?: (map_callouts_delete_at_path_input | null),
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+_delete_elem?: (map_callouts_delete_elem_input | null),
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+_delete_key?: (map_callouts_delete_key_input | null),
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+_prepend?: (map_callouts_prepend_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (map_callouts_set_input | null),
+/** filter the rows which have to be updated */
+where: map_callouts_bool_exp}
+
+
 /** columns and relationships of "map_pools" */
 export interface map_poolsGenqlSelection{
     /** An object relationship */
@@ -68113,6 +68364,12 @@ export interface mutation_rootGenqlSelection{
     where: lobby_players_bool_exp} })
     /** delete single row from the table: "lobby_players" */
     delete_lobby_players_by_pk?: (lobby_playersGenqlSelection & { __args: {lobby_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** delete data from the table: "map_callouts" */
+    delete_map_callouts?: (map_callouts_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: map_callouts_bool_exp} })
+    /** delete single row from the table: "map_callouts" */
+    delete_map_callouts_by_pk?: (map_calloutsGenqlSelection & { __args: {map_name: Scalars['String'], name: Scalars['String']} })
     /** delete data from the table: "map_pools" */
     delete_map_pools?: (map_pools_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -69873,6 +70130,18 @@ export interface mutation_rootGenqlSelection{
     object: lobby_players_insert_input, 
     /** upsert condition */
     on_conflict?: (lobby_players_on_conflict | null)} })
+    /** insert data into the table: "map_callouts" */
+    insert_map_callouts?: (map_callouts_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: map_callouts_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (map_callouts_on_conflict | null)} })
+    /** insert a single row into the table: "map_callouts" */
+    insert_map_callouts_one?: (map_calloutsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: map_callouts_insert_input, 
+    /** upsert condition */
+    on_conflict?: (map_callouts_on_conflict | null)} })
     /** insert data into the table: "map_pools" */
     insert_map_pools?: (map_pools_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -71219,6 +71488,8 @@ export interface mutation_rootGenqlSelection{
     swapLineups?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
     switchLineup?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     switchLiveMatch?: (SuccessOutputGenqlSelection & { __args: {from_match_id: Scalars['uuid'], mode: Scalars['String'], to_match_id: Scalars['uuid']} })
+    /** Pull the published map callouts for every enabled map */
+    syncMapCallouts?: MapCalloutSyncOutputGenqlSelection
     /** Pull the game plugin registry into this panel's catalog */
     syncPluginRegistry?: SyncPluginRegistryOutputGenqlSelection
     syncSteamFriends?: SuccessOutputGenqlSelection
@@ -72912,6 +73183,40 @@ export interface mutation_rootGenqlSelection{
     update_lobby_players_many?: (lobby_players_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: lobby_players_updates[]} })
+    /** update data of the table: "map_callouts" */
+    update_map_callouts?: (map_callouts_mutation_responseGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (map_callouts_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (map_callouts_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (map_callouts_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (map_callouts_delete_key_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (map_callouts_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (map_callouts_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: map_callouts_bool_exp} })
+    /** update single row of the table: "map_callouts" */
+    update_map_callouts_by_pk?: (map_calloutsGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (map_callouts_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (map_callouts_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (map_callouts_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (map_callouts_delete_key_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (map_callouts_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (map_callouts_set_input | null), pk_columns: map_callouts_pk_columns_input} })
+    /** update multiples rows of table: "map_callouts" */
+    update_map_callouts_many?: (map_callouts_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: map_callouts_updates[]} })
     /** update data of the table: "map_pools" */
     update_map_pools?: (map_pools_mutation_responseGenqlSelection & { __args: {
     /** sets the columns of the filtered rows to the given values */
@@ -89439,6 +89744,32 @@ export interface query_rootGenqlSelection{
     where?: (lobby_players_bool_exp | null)} })
     /** fetch data from the table: "lobby_players" using primary key columns */
     lobby_players_by_pk?: (lobby_playersGenqlSelection & { __args: {lobby_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** fetch data from the table: "map_callouts" */
+    map_callouts?: (map_calloutsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (map_callouts_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (map_callouts_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (map_callouts_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "map_callouts" */
+    map_callouts_aggregate?: (map_callouts_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (map_callouts_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (map_callouts_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (map_callouts_bool_exp | null)} })
+    /** fetch data from the table: "map_callouts" using primary key columns */
+    map_callouts_by_pk?: (map_calloutsGenqlSelection & { __args: {map_name: Scalars['String'], name: Scalars['String']} })
     /** fetch data from the table: "map_pools" */
     map_pools?: (map_poolsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -97696,6 +98027,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (lobby_players_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (lobby_players_bool_exp | null)} })
+    /** fetch data from the table: "map_callouts" */
+    map_callouts?: (map_calloutsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (map_callouts_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (map_callouts_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (map_callouts_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "map_callouts" */
+    map_callouts_aggregate?: (map_callouts_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (map_callouts_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (map_callouts_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (map_callouts_bool_exp | null)} })
+    /** fetch data from the table: "map_callouts" using primary key columns */
+    map_callouts_by_pk?: (map_calloutsGenqlSelection & { __args: {map_name: Scalars['String'], name: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "map_callouts" */
+    map_callouts_stream?: (map_calloutsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (map_callouts_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (map_callouts_bool_exp | null)} })
     /** fetch data from the table: "map_pools" */
     map_pools?: (map_poolsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -121530,6 +121895,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const MapCalloutSyncOutput_possibleTypes: string[] = ['MapCalloutSyncOutput']
+    export const isMapCalloutSyncOutput = (obj?: { __typename?: any } | null): obj is MapCalloutSyncOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isMapCalloutSyncOutput"')
+      return MapCalloutSyncOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const MeResponse_possibleTypes: string[] = ['MeResponse']
     export const isMeResponse = (obj?: { __typename?: any } | null): obj is MeResponse => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isMeResponse"')
@@ -129294,6 +129667,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const islobby_players_variance_fields = (obj?: { __typename?: any } | null): obj is lobby_players_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "islobby_players_variance_fields"')
       return lobby_players_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_callouts_possibleTypes: string[] = ['map_callouts']
+    export const ismap_callouts = (obj?: { __typename?: any } | null): obj is map_callouts => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_callouts"')
+      return map_callouts_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_callouts_aggregate_possibleTypes: string[] = ['map_callouts_aggregate']
+    export const ismap_callouts_aggregate = (obj?: { __typename?: any } | null): obj is map_callouts_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_callouts_aggregate"')
+      return map_callouts_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_callouts_aggregate_fields_possibleTypes: string[] = ['map_callouts_aggregate_fields']
+    export const ismap_callouts_aggregate_fields = (obj?: { __typename?: any } | null): obj is map_callouts_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_callouts_aggregate_fields"')
+      return map_callouts_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_callouts_max_fields_possibleTypes: string[] = ['map_callouts_max_fields']
+    export const ismap_callouts_max_fields = (obj?: { __typename?: any } | null): obj is map_callouts_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_callouts_max_fields"')
+      return map_callouts_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_callouts_min_fields_possibleTypes: string[] = ['map_callouts_min_fields']
+    export const ismap_callouts_min_fields = (obj?: { __typename?: any } | null): obj is map_callouts_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_callouts_min_fields"')
+      return map_callouts_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_callouts_mutation_response_possibleTypes: string[] = ['map_callouts_mutation_response']
+    export const ismap_callouts_mutation_response = (obj?: { __typename?: any } | null): obj is map_callouts_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_callouts_mutation_response"')
+      return map_callouts_mutation_response_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -145268,6 +145689,26 @@ export const enumLobbyPlayersUpdateColumn = {
    lobby_id: 'lobby_id' as const,
    status: 'status' as const,
    steam_id: 'steam_id' as const
+}
+
+export const enumMapCalloutsConstraint = {
+   map_callouts_pkey: 'map_callouts_pkey' as const
+}
+
+export const enumMapCalloutsSelectColumn = {
+   boxes: 'boxes' as const,
+   map_name: 'map_name' as const,
+   name: 'name' as const,
+   source: 'source' as const,
+   updated_at: 'updated_at' as const
+}
+
+export const enumMapCalloutsUpdateColumn = {
+   boxes: 'boxes' as const,
+   map_name: 'map_name' as const,
+   name: 'name' as const,
+   source: 'source' as const,
+   updated_at: 'updated_at' as const
 }
 
 export const enumMapPoolsConstraint = {
