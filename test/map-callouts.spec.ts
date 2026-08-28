@@ -88,6 +88,28 @@ describe("map callouts (SQL-driven)", () => {
     expect(await rows()).toEqual([{ name: "Window", source: "plugin" }]);
   });
 
+  // The extract wins wherever it exists, so a name it does not carry has to go
+  // even when a practice server reported it first -- otherwise a map filled in
+  // before the extract landed keeps its mis-read names for ever, mixed in with
+  // the real ones, and `report` will never correct them.
+  it("sweeps away plugin names the published extract does not carry", async () => {
+    const callouts_ = service();
+    await callouts_.report("de_mirage", callouts("Window", "Windw", "Ladderr"));
+
+    const fetched = jest.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({ callouts: callouts("Window") }),
+    } as never);
+
+    try {
+      await callouts_.sync("de_mirage");
+    } finally {
+      fetched.mockRestore();
+    }
+
+    expect(await rows()).toEqual([{ name: "Window", source: "cdn" }]);
+  });
+
   it("refuses a report with no usable geometry", async () => {
     const result = await service().report("de_mirage", [
       { name: "Broken", boxes: [] },

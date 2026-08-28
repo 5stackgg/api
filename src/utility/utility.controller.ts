@@ -315,17 +315,7 @@ export class UtilityController {
       return null;
     }
 
-    const columns = [
-      "origin_x",
-      "origin_y",
-      "origin_z",
-      "eye_z",
-      "view_yaw",
-      "view_pitch",
-      "land_x",
-      "land_y",
-      "land_z",
-    ] as const;
+    const columns = UtilityLineupsService.GEOMETRY_COLUMNS;
 
     const present = columns.filter((column) =>
       Number.isFinite(Number(input[column])),

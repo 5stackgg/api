@@ -904,16 +904,6 @@ export class UtilityPracticeService {
   }
 
   /**
-   * Tell every practice server sitting on a map that its library is out of
-   * date.
-   *
-   * The plugin caches the library per player and only re-reads it when it is
-   * asked to, so a lineup written or edited on the website was invisible in
-   * game until somebody typed .reload -- which is not something a player knows
-   * to do, and is the in-game half of "the panel doesn't auto refresh". Scoped
-   * to the map because a lineup on Ancient is nothing to a server on Mirage.
-   */
-  /**
    * Record where a practice pod can be reached over Steam's relay network.
    *
    * Nothing else ever writes this for a practice server: the match plugin's
@@ -944,6 +934,16 @@ export class UtilityPracticeService {
     );
   }
 
+  /**
+   * Tell every practice server sitting on a map that its library is out of
+   * date.
+   *
+   * The plugin caches the library per player and only re-reads it when it is
+   * asked to, so a lineup written or edited on the website was invisible in
+   * game until somebody typed .reload -- which is not something a player knows
+   * to do, and is the in-game half of "the panel doesn't auto refresh". Scoped
+   * to the map because a lineup on Ancient is nothing to a server on Mirage.
+   */
   public async refreshLibrariesOnMap(mapName: string): Promise<void> {
     if (!mapName) {
       return;

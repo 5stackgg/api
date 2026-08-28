@@ -199,6 +199,22 @@ export class UtilityLineupsService {
   private static readonly UUID =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+  // The columns an edit is allowed to name, kept beside the UPDATE that
+  // interpolates them rather than at the one call site that happens to build
+  // the object today: a column name spliced into SQL must never be able to
+  // arrive off a parsed request body.
+  public static readonly GEOMETRY_COLUMNS = [
+    "origin_x",
+    "origin_y",
+    "origin_z",
+    "eye_z",
+    "view_yaw",
+    "view_pitch",
+    "land_x",
+    "land_y",
+    "land_z",
+  ] as const;
+
   // How a re-solve issued for a drifted lineup names itself on the way out, so
   // the lineup that comes back can be recognised on the way in. The solver's
   // tokenizer keeps [A-Za-z0-9_.-] up to 48 characters, which this fits, and no
@@ -868,13 +884,14 @@ export class UtilityLineupsService {
     const [row] = await this.postgres.query<
       Array<{
         id: string;
+        name: string;
         author_steam_id: string;
         land_x: number | null;
         land_y: number | null;
         land_z: number | null;
       }>
     >(
-      `SELECT id::text AS id, author_steam_id::text AS author_steam_id,
+      `SELECT id::text AS id, name, author_steam_id::text AS author_steam_id,
               land_x, land_y, land_z
          FROM public.utility_lineups
         WHERE id = $1::uuid AND archived_at IS NULL`,
@@ -899,15 +916,22 @@ export class UtilityLineupsService {
     const sets: Array<string> = [];
     const values: Array<string | number | null> = [options.lineupId];
 
-    const push = (fragment: string, value: string | number | null) => {
+    const push = (
+      column: string,
+      value: string | number | null,
+      cast = "",
+    ) => {
       values.push(value);
-      sets.push(`${fragment} = $${values.length}`);
+      sets.push(`${column} = $${values.length}${cast}`);
     };
 
     // Same hardening as ingest, because this is a second front door onto the
     // same input: a name typed in game is echoed straight back into chat.
+    // Falls back to the name the row already carries -- the column is NOT NULL,
+    // and a name that sanitizes away to nothing is the plugin sending a blank
+    // field, not an ask to have the lineup un-named.
     if (options.name != null) {
-      push("name", UtilityLineupsService.sanitizeText(options.name, 120));
+      push("name", UtilityLineupsService.sanitizeName(options.name, row.name));
     }
 
     if (options.description != null) {
@@ -924,6 +948,18 @@ export class UtilityLineupsService {
       );
 
       push("visibility", visibility.visibility);
+
+      // A 'Public' ask from a non-reviewer only becomes a review request if the
+      // stamp goes down with the visibility. Without it the row is quietly set
+      // Private, the plugin reports "saved", and nobody -- player or moderator
+      // -- ever learns the request was made.
+      if (visibility.requestedPublic) {
+        sets.push("public_requested_at = now()");
+      }
+
+      if (visibility.reviewedBy) {
+        push("public_reviewed_by", visibility.reviewedBy, "::bigint");
+      }
     }
 
     let progressReset = false;
@@ -931,12 +967,14 @@ export class UtilityLineupsService {
     if (options.geometry) {
       const geometry = options.geometry;
 
-      for (const [column, value] of Object.entries(geometry)) {
-        if (!Number.isFinite(Number(value))) {
+      for (const column of UtilityLineupsService.GEOMETRY_COLUMNS) {
+        const value = Number(geometry[column]);
+
+        if (!Number.isFinite(value)) {
           throw Error("the geometry is incomplete");
         }
 
-        push(column, Number(value));
+        push(column, value);
       }
 
       // The recorded flight described the OLD geometry, so it is no longer a

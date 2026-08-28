@@ -26,8 +26,23 @@ export class UtilityLineupsController {
    */
   @HasuraEvent()
   public async utility_lineups_practice_events(
-    data: HasuraEventData<{ map_name?: string | null }>,
+    data: HasuraEventData<{
+      map_name?: string | null;
+      origin_source?: string | null;
+    }>,
   ) {
+    // A throw a practice server just recorded is already in that server's own
+    // library -- the plugin adds it as it writes it -- so broadcasting the
+    // insert tells every pod on the map to re-read a library only one of them
+    // has a new row in, and tells the pod that caused it to re-read what it
+    // already has. A player rehearsing one lineup saves it a dozen times in a
+    // session, which is a dozen full-library fetches per connected player for
+    // nothing. Every other insert -- authored on the website, forked, imported,
+    // mined -- is a row no server on the map has, and does need the push.
+    if (!data.old && data.new?.origin_source === "plugin") {
+      return;
+    }
+
     const maps = new Set(
       [data.new?.map_name, data.old?.map_name].filter(
         (map): map is string => !!map,

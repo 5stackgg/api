@@ -55,7 +55,22 @@ export class UtilityCalloutsService {
     counterterroristspawn: "CT Spawn",
   };
 
-  private readonly cache = new Map<string, CalloutRow[]>();
+  // The cache is per PROCESS, and the sync that fills the table runs on one
+  // replica. Without an expiry every other replica keeps answering from
+  // whatever it read first -- and an empty answer is the one that matters,
+  // because a replica that looked before the first sync landed would name every
+  // throw after the map for the life of the process. `write` still invalidates
+  // locally; this is what the replicas that did not do the writing rely on.
+  private static readonly CACHE_TTL_MS = 5 * 60 * 1000;
+
+  // A map with no callouts is a map still waiting for its extract, so it is
+  // re-asked far sooner than one that answered.
+  private static readonly EMPTY_CACHE_TTL_MS = 30 * 1000;
+
+  private readonly cache = new Map<
+    string,
+    { rows: CalloutRow[]; expires: number }
+  >();
 
   constructor(
     private readonly logger: Logger,
@@ -80,8 +95,8 @@ export class UtilityCalloutsService {
     }
 
     const cached = this.cache.get(map);
-    if (cached) {
-      return cached;
+    if (cached && cached.expires > Date.now()) {
+      return cached.rows;
     }
 
     const rows = await this.postgres.query<Array<CalloutRow>>(
@@ -91,7 +106,15 @@ export class UtilityCalloutsService {
       [map],
     );
 
-    this.cache.set(map, rows);
+    this.cache.set(map, {
+      rows,
+      expires:
+        Date.now() +
+        (rows.length
+          ? UtilityCalloutsService.CACHE_TTL_MS
+          : UtilityCalloutsService.EMPTY_CACHE_TTL_MS),
+    });
+
     return rows;
   }
 
@@ -353,12 +376,18 @@ export class UtilityCalloutsService {
 
     // A place Valve deleted in a patch has to go, or it keeps naming throws
     // after the area it named stopped existing.
+    //
+    // NOT scoped to the source being written. The extract wins wherever it
+    // exists, so a name it does not carry must go even if a plugin reported it
+    // first -- otherwise a map a practice server filled in before the extract
+    // landed keeps its mis-read names for ever, mixed in with the real ones.
+    // The reverse never arises: `report` no-ops entirely once any cdn row
+    // exists, so a plugin write can only ever prune plugin rows.
     await this.postgres.query(
       `DELETE FROM public.map_callouts
         WHERE map_name = $1
-          AND source = $3
           AND name <> ALL($2::text[])`,
-      [map, callouts.map(({ name }) => name), source],
+      [map, callouts.map(({ name }) => name)],
     );
 
     this.cache.delete(map);

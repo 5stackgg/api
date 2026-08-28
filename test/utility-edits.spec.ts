@@ -174,6 +174,84 @@ describe("utility lineup edits (SQL-driven)", () => {
     ).rejects.toThrow(/belongs to somebody else/i);
   });
 
+  // `name` is NOT NULL and the sanitizer answers null for anything that is only
+  // whitespace or control characters, so a blank field from the plugin used to
+  // reach Postgres as `SET name = NULL` and come back as a raw constraint error.
+  it("keeps the name it has when the new one sanitizes away to nothing", async () => {
+    const AUTHOR = await fx.player();
+    const id = await insertLineup(AUTHOR, { name: "Window Smoke" });
+
+    await lineups.updateLineup({ lineupId: id, steamId: AUTHOR, name: "   " });
+    expect((await rowOf(id)).name).toBe("Window Smoke");
+
+    await lineups.updateLineup({ lineupId: id, steamId: AUTHOR, name: "\u0007\u0007" });
+    expect((await rowOf(id)).name).toBe("Window Smoke");
+  });
+
+  // A 'Public' ask from somebody who cannot approve one is a REQUEST. Setting
+  // the visibility without stamping the request drops it silently: the row goes
+  // Private, the plugin says "saved", and it never reaches the review queue.
+  it("records a non-reviewer's public ask as a request for review", async () => {
+    const AUTHOR = await fx.player();
+    const id = await insertLineup(AUTHOR);
+
+    await lineups.updateLineup({
+      lineupId: id,
+      steamId: AUTHOR,
+      visibility: "Public",
+      role: "user",
+    });
+
+    const row = await rowOf(id);
+    expect(row.visibility).toBe("Private");
+    expect(row.public_requested_at).not.toBeNull();
+    expect(row.public_reviewed_by).toBeNull();
+  });
+
+  it("publishes outright for a reviewer, and records who reviewed it", async () => {
+    const AUTHOR = await fx.player();
+    const id = await insertLineup(AUTHOR);
+
+    await lineups.updateLineup({
+      lineupId: id,
+      steamId: AUTHOR,
+      visibility: "Public",
+      role: "administrator",
+    });
+
+    const row = await rowOf(id);
+    expect(row.visibility).toBe("Public");
+    expect(String(row.public_reviewed_by)).toBe(AUTHOR);
+  });
+
+  // The SET clause interpolates column names, so they come off the service's
+  // own list and never off the caller's object.
+  it("ignores a geometry key that is not a geometry column", async () => {
+    const AUTHOR = await fx.player();
+    const id = await insertLineup(AUTHOR);
+
+    await lineups.updateLineup({
+      lineupId: id,
+      steamId: AUTHOR,
+      geometry: {
+        origin_x: 1,
+        origin_y: 2,
+        origin_z: 3,
+        eye_z: 4,
+        view_yaw: 5,
+        view_pitch: 6,
+        land_x: 7,
+        land_y: 8,
+        land_z: 9,
+        "name = 'pwned', map_name": 0,
+      } as never,
+    });
+
+    const row = await rowOf(id);
+    expect(row.name).not.toBe("pwned");
+    expect(Number(row.origin_x)).toBe(1);
+  });
+
   it("hardens text the same way ingest does", async () => {
     const AUTHOR = await fx.player();
     const id = await insertLineup(AUTHOR);
