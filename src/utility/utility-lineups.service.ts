@@ -11,6 +11,7 @@ import {
   UtilityArtifactsService,
   UtilityTrajectoryPoint,
 } from "./utility-artifacts.service";
+import { UtilityCalloutsService } from "./utility-callouts.service";
 
 export type UtilityIngestPayload = {
   match_id?: string;
@@ -191,6 +192,7 @@ export class UtilityLineupsService {
     private readonly cache: CacheService,
     @Inject(forwardRef(() => UtilityLoadService))
     private readonly load: UtilityLoadService,
+    private readonly callouts: UtilityCalloutsService,
   ) {}
 
   public async isLibraryEnabled(): Promise<boolean> {
@@ -368,7 +370,15 @@ export class UtilityLineupsService {
         // of rows called repair-<uuid>.
         repair
           ? repair.lineup_name
-          : UtilityLineupsService.sanitizeName(payload.name, context.mapName),
+          : UtilityLineupsService.sanitizeName(
+              payload.name,
+              await this.calloutName(
+                context.mapName,
+                payload.utility_type,
+                origin,
+                land,
+              ),
+            ),
         UtilityLineupsService.sanitizeText(payload.description, 1000),
         author,
         context.matchId,
@@ -798,6 +808,192 @@ export class UtilityLineupsService {
     };
   }
 
+  /**
+   * Change a lineup that already exists, keeping its id.
+   *
+   * Deliberately not delete-and-reinsert: the id is what every scored attempt,
+   * favourite and collection entry hangs off, so re-creating the row would
+   * silently throw all of that away to change a name.
+   *
+   * Geometry is separate from the rest and all-or-nothing. Moving where a
+   * smoke lands changes what the lineup IS, so it cannot arrive by accident on
+   * the back of a rename, and everything downstream of the old geometry has to
+   * be dealt with rather than left pointing at a throw that no longer exists.
+   */
+  public async updateLineup(options: {
+    lineupId: string;
+    steamId: string;
+    name?: string | null;
+    description?: string | null;
+    visibility?: string | null;
+    role?: string | null;
+    geometry?: {
+      origin_x: number;
+      origin_y: number;
+      origin_z: number;
+      eye_z: number;
+      view_yaw: number;
+      view_pitch: number;
+      land_x: number;
+      land_y: number;
+      land_z: number;
+    } | null;
+  }): Promise<{ id: string; progress_reset: boolean }> {
+    if (!UtilityLineupsService.UUID.test(options.lineupId)) {
+      throw Error("that is not a lineup");
+    }
+
+    const [row] = await this.postgres.query<
+      Array<{
+        id: string;
+        author_steam_id: string;
+        land_x: number | null;
+        land_y: number | null;
+        land_z: number | null;
+      }>
+    >(
+      `SELECT id::text AS id, author_steam_id::text AS author_steam_id,
+              land_x, land_y, land_z
+         FROM public.utility_lineups
+        WHERE id = $1::uuid AND archived_at IS NULL`,
+      [options.lineupId],
+    );
+
+    if (!row) {
+      throw Error("that lineup does not exist");
+    }
+
+    // The server key proves which SERVER is asking, never which player, and the
+    // plugin holding it is the same plugin every player on the pod is talking
+    // to. Without this, anybody on a practice server could rewrite anybody
+    // else's lineup and the plugin would have no way to refuse.
+    if (row.author_steam_id !== String(options.steamId)) {
+      throw Error("that lineup belongs to somebody else");
+    }
+
+    const sets: Array<string> = [];
+    const values: Array<string | number | null> = [options.lineupId];
+
+    const push = (fragment: string, value: string | number | null) => {
+      values.push(value);
+      sets.push(`${fragment} = $${values.length}`);
+    };
+
+    // Same hardening as ingest, because this is a second front door onto the
+    // same input: a name typed in game is echoed straight back into chat.
+    if (options.name != null) {
+      push("name", UtilityLineupsService.sanitizeText(options.name, 120));
+    }
+
+    if (options.description != null) {
+      push(
+        "description",
+        UtilityLineupsService.sanitizeText(options.description, 1000),
+      );
+    }
+
+    if (options.visibility != null) {
+      const visibility = UtilityLineupsService.visibilityFor(
+        options.visibility,
+        { steam_id: options.steamId, role: options.role ?? null },
+      );
+
+      push("visibility", visibility.visibility);
+    }
+
+    let progressReset = false;
+
+    if (options.geometry) {
+      const geometry = options.geometry;
+
+      for (const [column, value] of Object.entries(geometry)) {
+        if (!Number.isFinite(Number(value))) {
+          throw Error("the geometry is incomplete");
+        }
+
+        push(column, Number(value));
+      }
+
+      // The recorded flight described the OLD geometry, so it is no longer a
+      // measurement of this lineup. Cleared rather than left to be served
+      // against coordinates it never belonged to, and the confidence drops to
+      // match: a hand-moved point is not something a server watched happen.
+      push("trajectory_file", null);
+      push("confidence", "low");
+
+      progressReset = await this.resetProgressIfMoved(row, geometry);
+    }
+
+    if (sets.length === 0) {
+      return { id: row.id, progress_reset: false };
+    }
+
+    await this.postgres.query(
+      `UPDATE public.utility_lineups SET ${sets.join(", ")} WHERE id = $1::uuid`,
+      values,
+    );
+
+    return { id: row.id, progress_reset: progressReset };
+  }
+
+  /**
+   * Every scored attempt was measured against where the smoke used to land, so
+   * moving it further than the radius they were judged by makes them
+   * measurements of a different throw.
+   *
+   * The author's own record is theirs to invalidate. ANOTHER player's is not:
+   * somebody who has drilled this lineup fifty times did not agree to have that
+   * turned into a hit rate against a throw they have never made. When anyone
+   * else has practised it the move is refused and the caller is pointed at a
+   * fork, which is the answer the panel has always given for the same reason --
+   * a different throw is a new lineup, not an edit to somebody else's.
+   */
+  private async resetProgressIfMoved(
+    was: {
+      id: string;
+      author_steam_id: string;
+      land_x: number | null;
+      land_y: number | null;
+      land_z: number | null;
+    },
+    now: { land_x: number; land_y: number; land_z: number },
+  ): Promise<boolean> {
+    if (was.land_x == null || was.land_y == null || was.land_z == null) {
+      return false;
+    }
+
+    const moved = Math.sqrt(
+      (now.land_x - was.land_x) ** 2 +
+        (now.land_y - was.land_y) ** 2 +
+        (now.land_z - was.land_z) ** 2,
+    );
+
+    if (moved <= (await this.successRadius())) {
+      return false;
+    }
+
+    const [others] = await this.postgres.query<Array<{ count: string }>>(
+      `SELECT count(*)::text AS count
+         FROM public.utility_lineup_progress
+        WHERE utility_lineup_id = $1::uuid
+          AND steam_id <> $2::bigint`,
+      [was.id, was.author_steam_id],
+    );
+
+    if (Number(others?.count ?? 0) > 0) {
+      throw Error(
+        "somebody else has practised this lineup; fork it instead of moving it",
+      );
+    }
+
+    await this.postgres.query(
+      `DELETE FROM public.utility_lineup_progress WHERE utility_lineup_id = $1::uuid`,
+      [was.id],
+    );
+
+    return true;
+  }
+
   public async successRadius(): Promise<number> {
     const configured = Number(
       await this.setting(SystemSettingName.UtilitySuccessRadius),
@@ -849,8 +1045,8 @@ export class UtilityLineupsService {
     tags?: Array<string>;
     collectionId?: string | null;
   }): Promise<{ id: string }> {
-    const [row] = await this.postgres.query<Array<{ id: string }>>(
-      `SELECT id::text AS id FROM public.utility_lineups
+    const [row] = await this.postgres.query<Array<{ id: string; name: string }>>(
+      `SELECT id::text AS id, name FROM public.utility_lineups
         WHERE id = $1::uuid
           AND source_match_id = $2::uuid
           AND author_steam_id = $3::bigint`,
@@ -882,7 +1078,9 @@ export class UtilityLineupsService {
         WHERE id = $1::uuid`,
       [
         options.lineupId,
-        UtilityLineupsService.sanitizeName(options.name, "Lineup"),
+        // The row already carries the name the ingest gave it, which is the
+        // callouts it was thrown between -- a better fallback than a literal.
+        UtilityLineupsService.sanitizeName(options.name, row.name || "Lineup"),
         UtilityLineupsService.sanitizeText(options.description, 1000),
         visibility.visibility,
         options.teamId ?? null,
@@ -1432,6 +1630,33 @@ export class UtilityLineupsService {
       requestedPublic: false,
       reviewedBy: null,
     };
+  }
+
+  /**
+   * What the map itself would call this throw. Empty when the map has no
+   * callouts, which is what keeps a caller's own fallback in play rather than
+   * replacing it with a name that says nothing.
+   */
+  private async calloutName(
+    mapName: string,
+    utilityType: string | undefined,
+    origin: { x: number; y: number; z: number },
+    land: { x: number; y: number; z: number },
+  ): Promise<string> {
+    try {
+      const name = await this.callouts.autoName(
+        mapName,
+        utilityType ?? "",
+        origin,
+        land,
+      );
+      return name || mapName;
+    } catch (error) {
+      this.logger.warn(
+        `unable to name a lineup from callouts: ${(error as Error)?.message}`,
+      );
+      return mapName;
+    }
   }
 
   public static sanitizeName(

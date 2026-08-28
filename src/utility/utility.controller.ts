@@ -9,6 +9,7 @@ import {
   Logger,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Query,
   Req,
@@ -20,6 +21,10 @@ import { PostgresService } from "../postgres/postgres.service";
 import { SystemSettingName } from "../system/enums/SystemSettingName";
 import { isRoleAbove } from "../utilities/isRoleAbove";
 import { UtilityArtifactsService } from "./utility-artifacts.service";
+import {
+  MapCallout,
+  UtilityCalloutsService,
+} from "./utility-callouts.service";
 import {
   UtilityIngestPayload,
   UtilityLineupsService,
@@ -37,6 +42,7 @@ export class UtilityController {
     private readonly lineups: UtilityLineupsService,
     private readonly artifacts: UtilityArtifactsService,
     private readonly practice: UtilityPracticeService,
+    private readonly callouts: UtilityCalloutsService,
   ) {}
 
   @Post("ingest")
@@ -81,6 +87,30 @@ export class UtilityController {
     );
 
     return { ok: true };
+  }
+
+  // What the server found in the map it just loaded. Reported rather than
+  // asked for, because only a server with the map open can answer, and a
+  // workshop map is never going to be in the published extract.
+  //
+  // Deliberately does NOT resolve a server context: this fires on map load,
+  // which is before a practice session exists, and the guard has already said
+  // which server is talking.
+  @Post("callouts")
+  @UseGuards(UtilityPluginKeyGuard)
+  public async reportCallouts(
+    @Body() body: { map?: string; callouts?: Array<MapCallout> },
+  ) {
+    const map = String(body?.map ?? "").trim();
+
+    if (!map) {
+      throw new BadRequestException("no map");
+    }
+
+    return await this.callouts.report(
+      map,
+      Array.isArray(body?.callouts) ? body.callouts : [],
+    );
   }
 
   @Get("library")
@@ -215,6 +245,95 @@ export class UtilityController {
     }
 
     return new StreamableFile(await this.artifacts.readTrajectory(file));
+  }
+
+  /**
+   * Change a lineup that already exists.
+   *
+   * Nothing else could: the only UPDATE on the table sets name, description and
+   * visibility from the panel's own action, and the plugin had ingest and
+   * delete and nothing between them. Fixing a throw therefore meant deleting it
+   * and recording it again, which loses the id and every scored attempt hanging
+   * off it.
+   */
+  @Patch(":id")
+  @UseGuards(UtilityPluginKeyGuard)
+  public async update(
+    @Req() request: Request,
+    @Param("id") id: string,
+    @Body()
+    body: {
+      steam_id?: string;
+      name?: string;
+      description?: string;
+      visibility?: string;
+      geometry?: Record<string, number>;
+    },
+  ) {
+    await this.assertLibraryEnabled();
+
+    const context = await this.context(request);
+    const author = String(body?.steam_id ?? "");
+
+    // Same gate the delete beside this uses: the server key says which server
+    // is asking, and the roster says the player it names is actually on it.
+    if (!context.lineupSteamIds.includes(author)) {
+      throw new ForbiddenException("player is not in this match lineup");
+    }
+
+    try {
+      return await this.lineups.updateLineup({
+        lineupId: id,
+        steamId: author,
+        name: body?.name ?? null,
+        description: body?.description ?? null,
+        visibility: body?.visibility ?? null,
+        geometry: UtilityController.geometry(body?.geometry),
+      });
+    } catch (error) {
+      throw new BadRequestException(
+        (error as Error)?.message ?? "invalid request",
+      );
+    }
+  }
+
+  /**
+   * Geometry is taken whole or not at all. A lineup carries where you stand,
+   * where you look and where it lands as one description of one throw, and a
+   * partial write leaves a row describing a throw nobody ever made.
+   */
+  private static geometry(input?: Record<string, number>) {
+    if (!input) {
+      return null;
+    }
+
+    const columns = [
+      "origin_x",
+      "origin_y",
+      "origin_z",
+      "eye_z",
+      "view_yaw",
+      "view_pitch",
+      "land_x",
+      "land_y",
+      "land_z",
+    ] as const;
+
+    const present = columns.filter((column) =>
+      Number.isFinite(Number(input[column])),
+    );
+
+    if (present.length === 0) {
+      return null;
+    }
+
+    if (present.length !== columns.length) {
+      throw new BadRequestException("the geometry is incomplete");
+    }
+
+    return Object.fromEntries(
+      columns.map((column) => [column, Number(input[column])]),
+    ) as Record<(typeof columns)[number], number>;
   }
 
   @Delete(":id")
