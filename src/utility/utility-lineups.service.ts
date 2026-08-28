@@ -133,6 +133,14 @@ export type UtilityLibraryRow = {
 };
 
 @Injectable()
+/**
+ * A refusal rather than a bad request: the caller asked a well-formed question
+ * and the answer is no. Typed so the route can say 403 and mean it -- a plugin
+ * told 400 for "that is not yours" would report it to the player as its own
+ * bug.
+ */
+export class UtilityLineupForbidden extends Error {}
+
 export class UtilityLineupsService {
   // A compromised game server can send anything, so every one of these is a
   // hard reject rather than a clamp: a silently corrected lineup is a lineup
@@ -868,7 +876,7 @@ export class UtilityLineupsService {
     // to. Without this, anybody on a practice server could rewrite anybody
     // else's lineup and the plugin would have no way to refuse.
     if (row.author_steam_id !== String(options.steamId)) {
-      throw Error("that lineup belongs to somebody else");
+      throw new UtilityLineupForbidden("that lineup belongs to somebody else");
     }
 
     const sets: Array<string> = [];
@@ -981,7 +989,7 @@ export class UtilityLineupsService {
     );
 
     if (Number(others?.count ?? 0) > 0) {
-      throw Error(
+      throw new UtilityLineupForbidden(
         "somebody else has practised this lineup; fork it instead of moving it",
       );
     }

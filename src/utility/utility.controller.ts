@@ -27,6 +27,7 @@ import {
 } from "./utility-callouts.service";
 import {
   UtilityIngestPayload,
+  UtilityLineupForbidden,
   UtilityLineupsService,
   UtilityPracticeResultPayload,
   UtilityServerContext,
@@ -291,6 +292,10 @@ export class UtilityController {
         geometry: UtilityController.geometry(body?.geometry),
       });
     } catch (error) {
+      if (error instanceof UtilityLineupForbidden) {
+        throw new ForbiddenException(error.message);
+      }
+
       throw new BadRequestException(
         (error as Error)?.message ?? "invalid request",
       );
