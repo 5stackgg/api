@@ -24,6 +24,7 @@ import {
   UtilityScratchLineup,
 } from "./utility-load.service";
 import { UtilityPracticeModeService } from "./utility-practice-mode.service";
+import { NoPracticeServerHere } from "./errors/NoPracticeServerHere";
 
 export type UtilityPracticeSession = {
   id: string;
@@ -91,6 +92,12 @@ export class UtilityPracticeService {
   public static readonly CONNECT_MINUTES = 5;
   public static readonly IDLE_MINUTES = 5;
   public static readonly MAX_MINUTES = 60;
+  // How long a queue entry means anything. Nothing serves this table -- it is
+  // only ever cleared by the same player getting a server -- so without an age
+  // bound one person who tried once and walked away leaves a row that says
+  // "somebody is waiting" forever, and MAX_MINUTES then caps every session on
+  // the install for the life of the database.
+  public static readonly WAITLIST_MINUTES = 30;
   // A render batch that has not finished in this long is not going to; the
   // server it is holding is worth more than the last few clips.
   public static readonly RENDER_GRACE_MINUTES = 90;
@@ -167,7 +174,7 @@ export class UtilityPracticeService {
         ? await this.practiceServer(input.server_id)
         : input.region
           ? null
-          : await this.freePracticeServer(null);
+          : await this.freePracticeServer();
 
       let region: string;
 
@@ -183,17 +190,24 @@ export class UtilityPracticeService {
         }
       } catch (error) {
         // Turned away for want of a server: that is the queue, and it is what
-        // puts a max length on whoever is currently holding one.
-        await this.joinWaitlist(
-          user.steam_id,
-          input.map_name,
-          input.region ?? null,
-        );
+        // puts a max length on whoever is currently holding one. Nothing about
+        // an install that cannot boot here belongs in it -- the row would never
+        // be served, and every other session would run under the max clock
+        // until somebody noticed.
+        if (!(error instanceof NoPracticeServerHere)) {
+          await this.joinWaitlist(
+            user.steam_id,
+            input.map_name,
+            input.region ?? null,
+          );
+        }
         throw error;
       }
 
-      // Got one -- stop counting against the people still waiting.
-      await this.leaveWaitlist(user.steam_id);
+      // Got one -- stop counting against the people still waiting. Whether
+      // they were in the queue at all is the answer to who still needs telling
+      // when the server comes up.
+      const waited = await this.leaveWaitlist(user.steam_id);
 
 
       const access = UtilityPracticeService.accessFor(input);
@@ -208,6 +222,7 @@ export class UtilityPracticeService {
         // a bug waiting for whichever one is checked second.
         isOpen: access === "Open",
         access,
+        notifyWhenReady: waited,
       });
 
       try {
@@ -720,16 +735,93 @@ export class UtilityPracticeService {
     return row ?? null;
   }
 
-  // The plugin polls, so this runs on every GET /utility/session. The status
-  // guard is what makes that idempotent: only a row still in 'Starting' is
-  // moved.
+  // The plugin polls, so this runs on every GET /utility/session. Only the row
+  // the UPDATE actually moved out of 'Starting' comes back, which is what keeps
+  // "your server is ready" a single buzz rather than one per poll -- the status
+  // guard alone makes the write idempotent, not the announcement.
   public async markReady(matchId: string): Promise<void> {
-    await this.postgres.query(
+    const [session] = await this.postgres.query<
+      Array<{
+        id: string;
+        host_steam_id: string | null;
+        map_name: string;
+        notify_when_ready: boolean;
+      }>
+    >(
       `UPDATE public.utility_practice_sessions
           SET status = 'Ready', failure_reason = NULL, last_occupied_at = now()
-        WHERE match_id = $1::uuid AND status = 'Starting'`,
+        WHERE match_id = $1::uuid AND status = 'Starting'
+    RETURNING id::text AS id,
+              host_steam_id::text AS host_steam_id,
+              map_name,
+              notify_when_ready`,
       [matchId],
     );
+
+    // Everybody else is already being told: the practice bar in the top nav
+    // follows the session on every page, and says both that it is booting and
+    // that it is up. The bell is for the player who was turned away first,
+    // queued, and had every reason to stop watching.
+    if (!session?.notify_when_ready) {
+      return;
+    }
+
+    await this.notifyReady(matchId, session);
+  }
+
+  private async notifyReady(
+    matchId: string,
+    session: { id: string; host_steam_id: string | null; map_name: string },
+  ): Promise<void> {
+    // The host plus anyone already added to the lineup: they were let in while
+    // the server was still booting, so the link they were handed only starts
+    // working now.
+    const players = await this.postgres.query<Array<{ steam_id: string }>>(
+      `SELECT DISTINCT mlp.steam_id::text AS steam_id
+         FROM public.match_lineup_players mlp
+         INNER JOIN public.match_lineups ml ON ml.id = mlp.match_lineup_id
+        WHERE ml.match_id = $1::uuid
+          AND mlp.steam_id IS NOT NULL`,
+      [matchId],
+    );
+
+    // A render session has no host and no roster -- nobody to tell it is ready.
+    const steamIds = [
+      ...new Set(
+        [
+          session.host_steam_id,
+          ...players.map((player) => player.steam_id),
+        ].filter((id): id is string => id !== null),
+      ),
+    ];
+
+    if (steamIds.length === 0) {
+      return;
+    }
+
+    const map = NotificationsService.escapeHtml(session.map_name);
+
+    try {
+      await this.notifications.notifyPlayers(
+        "UtilityPracticeReady" as e_notification_types_enum,
+        {
+          title: "Practice Server Ready",
+          message:
+            `Your utility practice server on <b>${map}</b> is up. ` +
+            `<a href="${this.mapUrl(session.map_name)}">Open the board</a>.`,
+          role: "user" as e_player_roles_enum,
+          // Suffixed, not the bare session id: the bell stacks rows that share
+          // an entity_id, so an invite and a ready for the same session would
+          // collapse into one another and the second would never be seen.
+          entity_id: `${session.id}:ready`,
+          steamIds,
+        },
+      );
+    } catch (error) {
+      this.logger.warn(
+        `[utility-practice] unable to announce ${session.id} as ready: ${(error as Error)?.message}`,
+      );
+    }
   }
 
   // A practice session has no page of its own -- it is a dialog on the map
@@ -917,6 +1009,10 @@ export class UtilityPracticeService {
   }
 
   public async reapIdle(): Promise<number> {
+    // Before contention is read, not after: a stale row would otherwise put
+    // every session on this pass under the max-length clock.
+    await this.sweepWaitlist();
+
     const idle = await this.minutes(
       SystemSettingName.UtilityPracticeIdleMinutes,
       UtilityPracticeService.IDLE_MINUTES,
@@ -1138,6 +1234,7 @@ export class UtilityPracticeService {
       isOpen: boolean;
       access: string;
       isRender?: boolean;
+      notifyWhenReady?: boolean;
     },
   ): Promise<UtilityPracticeSession> {
     // generate_utility_invite_code() is 50 bits, so a collision is vanishingly
@@ -1148,8 +1245,8 @@ export class UtilityPracticeService {
         const [row] = await this.postgres.query<Array<{ id: string }>>(
           `INSERT INTO public.utility_practice_sessions
              (host_steam_id, map_name, region, team_id, collection_id, is_open,
-              access, is_render)
-           VALUES ($1::bigint, $2, $3, $4::uuid, $5::uuid, $6, $7, $8)
+              access, is_render, notify_when_ready)
+           VALUES ($1::bigint, $2, $3, $4::uuid, $5::uuid, $6, $7, $8, $9)
            RETURNING id::text AS id`,
           [
             hostSteamId,
@@ -1160,6 +1257,7 @@ export class UtilityPracticeService {
             options.isOpen,
             options.access,
             options.isRender === true,
+            options.notifyWhenReady === true,
           ],
         );
 
@@ -2028,7 +2126,12 @@ export class UtilityPracticeService {
 
   private async anyoneWaiting(): Promise<boolean> {
     const [row] = await this.postgres.query<Array<{ waiting: boolean }>>(
-      "SELECT EXISTS (SELECT 1 FROM public.utility_practice_waitlist) AS waiting",
+      `SELECT EXISTS (
+                SELECT 1
+                  FROM public.utility_practice_waitlist
+                 WHERE created_at > now() - ($1 || ' minutes')::interval
+              ) AS waiting`,
+      [UtilityPracticeService.WAITLIST_MINUTES],
     );
     return row?.waiting === true;
   }
@@ -2049,11 +2152,32 @@ export class UtilityPracticeService {
     );
   }
 
-  public async leaveWaitlist(steamId: string): Promise<void> {
-    await this.postgres.query(
-      "DELETE FROM public.utility_practice_waitlist WHERE steam_id = $1",
+  // Answers whether they had been queuing, because that is the one thing that
+  // separates a player watching the dialog from a player who was told to come
+  // back later -- and only the second is owed a buzz when the server is up.
+  public async leaveWaitlist(steamId: string): Promise<boolean> {
+    const rows = await this.postgres.query<Array<{ steam_id: string }>>(
+      `DELETE FROM public.utility_practice_waitlist
+        WHERE steam_id = $1
+    RETURNING steam_id::text AS steam_id`,
       [steamId],
     );
+
+    return rows.length > 0;
+  }
+
+  // The sweep the queue never had. Kept beside the reaper rather than on its
+  // own timer: the rows only matter to anyoneWaiting, which is what the reaper
+  // asks.
+  public async sweepWaitlist(): Promise<number> {
+    const removed = await this.postgres.query<Array<{ steam_id: string }>>(
+      `DELETE FROM public.utility_practice_waitlist
+        WHERE created_at <= now() - ($1 || ' minutes')::interval
+    RETURNING steam_id::text AS steam_id`,
+      [UtilityPracticeService.WAITLIST_MINUTES],
+    );
+
+    return removed.length;
   }
 
   public async releaseOrphanedServers(): Promise<number> {
@@ -2145,9 +2269,13 @@ export class UtilityPracticeService {
     return { id: row.id, region: row.region };
   }
 
-  private async freePracticeServer(
-    region?: string | null,
-  ): Promise<{ id: string; region: string } | null> {
+  // Unfiltered on purpose. Only the automatic choice reaches this -- a named
+  // region is the on-demand answer and a named server is taken by id -- so
+  // there is no caller left that wants a region-scoped standing server.
+  private async freePracticeServer(): Promise<{
+    id: string;
+    region: string;
+  } | null> {
     const [row] = await this.postgres.query<
       Array<{ id: string; region: string }>
     >(
@@ -2157,10 +2285,8 @@ export class UtilityPracticeService {
           AND s.enabled = true
           AND s.connected = true
           AND s.reserved_by_match_id IS NULL
-          AND ($1::text IS NULL OR s.region = $1::text)
         ORDER BY s.region
         LIMIT 1`,
-      [region ?? null],
     );
 
     return row ? { id: row.id, region: row.region } : null;
@@ -2174,9 +2300,21 @@ export class UtilityPracticeService {
     const headroom = Number.isFinite(reserved) && reserved >= 0 ? reserved : 2;
     const free = await this.matchAssistant.countFreeOnDemandServers(region);
 
-    if (free <= headroom) {
-      throw Error("no practice servers are free right now");
+    if (free > headroom) {
+      return;
     }
+
+    // Busy and impossible both count zero here, and they are not the same
+    // answer: one is worth waiting for and the other never will be. An install
+    // with no node in this region has no pod to boot no matter who gives up
+    // theirs.
+    if (!(await this.matchAssistant.hasOnDemandNodes(region))) {
+      throw new NoPracticeServerHere(
+        `no practice server can be started in ${region}`,
+      );
+    }
+
+    throw Error("no practice servers are free right now");
   }
 
   private async resolveMap(mapName: string): Promise<string> {

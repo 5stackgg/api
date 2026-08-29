@@ -240,6 +240,42 @@ describe("MatchAssistantService", () => {
     expect(waitingForServerWrites()).toHaveLength(1);
   });
 
+  // countFreeOnDemandServers answers zero for "everything is busy" and for
+  // "there is no node here", and only the second is hopeless -- the practice
+  // start reads this to decide whether queuing could ever help.
+  describe("hasOnDemandNodes", () => {
+    it("is false when no node in the region can take a pod", async () => {
+      hasura.query.mockResolvedValue({ game_server_nodes: [] });
+
+      expect(await service.hasOnDemandNodes("USE")).toBe(false);
+    });
+
+    it("asks only about the region it was given", async () => {
+      hasura.query.mockResolvedValue({ game_server_nodes: [{ id: "node-1" }] });
+
+      expect(await service.hasOnDemandNodes("USE")).toBe(true);
+
+      const [[query]] = hasura.query.mock.calls;
+
+      expect(query.game_server_nodes.__args.where.region).toEqual({
+        _eq: "USE",
+      });
+      expect(query.game_server_nodes.__args.where.status).toEqual({
+        _eq: "Online",
+      });
+    });
+
+    it("asks about the whole install when given no region", async () => {
+      hasura.query.mockResolvedValue({ game_server_nodes: [{ id: "node-1" }] });
+
+      await service.hasOnDemandNodes();
+
+      const [[query]] = hasura.query.mock.calls;
+
+      expect(query.game_server_nodes.__args.where.region).toBeUndefined();
+    });
+  });
+
   // The boot attempt outlives the host pressing Stop. Writing the status back
   // without a condition moved the already Canceled match to WaitingForServer,
   // and with the practice session already Ended nothing was left to move it

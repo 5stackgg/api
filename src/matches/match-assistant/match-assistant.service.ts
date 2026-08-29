@@ -48,6 +48,19 @@ export class MatchAssistantService {
     ];
   private static readonly TERMINAL_MATCH_STATUSES: readonly e_match_status_enum[] =
     ["Finished", "Canceled", "Forfeit", "Tie", "Surrendered"];
+  // Sources only the on-demand image can run. The utility practice plugin ships
+  // in that image and not in the dedicated one, so a dedicated server handed to
+  // one of these is worse than failing: the connect string resolves the moment
+  // the server is assigned, so the website reads "ready to join" for a box that
+  // will never answer GET /utility/session and never comes up as a practice
+  // server at all.
+  //
+  // Not the same rule as the `source === "practice"` branch in match_events,
+  // which is about skipping Discord, ELO and the rest -- a source can want one
+  // without the other.
+  private static readonly ON_DEMAND_ONLY_SOURCES: ReadonlyArray<string> = [
+    "practice",
+  ];
   public static readonly ON_DEMAND_SERVER_BOOT_CHECK_DELAY_MS = 15 * 1000;
   private static readonly INITIAL_BOOT_STATUS_DETAIL =
     "Waiting for Kubernetes to create the match server pod.";
@@ -129,6 +142,42 @@ export class MatchAssistantService {
         error.message,
       );
     }
+  }
+
+  // Whether a pod could be booted here at all, as opposed to whether one is
+  // free right now. countFreeOnDemandServers answers zero for both, and telling
+  // them apart is what keeps a player queuing for a server no node could ever
+  // provide. Same node predicate assignOnDemandServer runs before it takes the
+  // pool lock.
+  public async hasOnDemandNodes(region?: string | null): Promise<boolean> {
+    const { game_server_nodes } = await this.hasura.query({
+      game_server_nodes: {
+        __args: {
+          where: {
+            status: {
+              _eq: "Online",
+            },
+            enabled: {
+              _eq: true,
+            },
+            enabled_for_match_making: {
+              _eq: true,
+            },
+            ...(region
+              ? {
+                  region: {
+                    _eq: region,
+                  },
+                }
+              : {}),
+          },
+          limit: 1,
+        },
+        id: true,
+      },
+    });
+
+    return game_server_nodes.length > 0;
   }
 
   // The same set assignOnDemandServer picks from, counted rather than taken.
@@ -377,13 +426,8 @@ export class MatchAssistantService {
       },
     });
 
-    // A practice match runs the utility practice plugin, and only the on-demand
-    // image installs it -- a dedicated server is running the match plugin
-    // instead. Handing one to a practice session is worse than failing: the
-    // connect string resolves the moment the server is assigned, so the website
-    // reads "ready to join" for a box that will never answer GET
-    // /utility/session and never comes up as a practice server at all.
-    const onDemandOnly = match.source === "practice";
+    const onDemandOnly =
+      MatchAssistantService.ON_DEMAND_ONLY_SOURCES.includes(match.source);
 
     if (!onDemandOnly && match.options.prefer_dedicated_server) {
       try {

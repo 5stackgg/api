@@ -60,9 +60,11 @@ export class NotificationsService {
     "LeagueMatchUnscheduled",
     "LeagueRegistrationDecision",
     "LeagueRosterUndersized",
-    // One player inviting a friend to their own practice server. A staff
-    // channel has nothing to do with it.
+    // One player's own practice server. A staff channel has nothing to do with
+    // it, and a busy install would post one line per player who had to queue
+    // for one.
     "UtilityPracticeInvite",
+    "UtilityPracticeReady",
   ]);
 
   // Nobody has seen a notification in six months who hasn't signed in, and a

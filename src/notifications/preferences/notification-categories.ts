@@ -48,7 +48,7 @@ export const PUSH_CATEGORIES: Record<string, e_notification_types_enum[]> = {
   ],
   teams: ["FormTeamSuggestion"],
   invites: ["TeamInvite", "TournamentTeamInvite", "DraftInvite"],
-  utility: ["UtilityPracticeInvite"],
+  utility: ["UtilityPracticeInvite", "UtilityPracticeReady"],
   account: ["NameChangeApproved", "NameChangeDenied", "PlayerSanctioned", "AwardGranted"],
   news: ["NewsPublished"],
   staff_moderation: ["MatchSupport", "MatchAbandoned", "NameChangeRequest"],
@@ -111,6 +111,7 @@ export const IN_APP_KEYS: PreferenceKey[] = [
   { key: "ScrimAlertMatch", defaultEnabled: true },
   { key: "LeagueMatchUnscheduled", defaultEnabled: true },
   { key: "UtilityPracticeInvite", defaultEnabled: true },
+  { key: "UtilityPracticeReady", defaultEnabled: true },
 ];
 
 const PUSH_CATEGORY_BY_TYPE: Record<string, string> = Object.fromEntries(

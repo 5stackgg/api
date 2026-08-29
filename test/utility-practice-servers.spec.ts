@@ -234,12 +234,15 @@ describe("utility practice servers (SQL-driven)", () => {
       ).rejects.toThrow(/already in use/);
     });
 
-    it("auto-picks a free one in the region", async () => {
-      const id = await practiceServer({ region: "TestA" });
+    // Only the automatic choice gets here -- a named region is the on-demand
+    // answer and a named server is taken by id -- so this picks from the whole
+    // standing pool rather than from one region of it.
+    it("auto-picks a free one wherever it is standing", async () => {
+      const id = await practiceServer({ region: "TestB" });
 
-      const picked = await makeService()["freePracticeServer"]("TestA");
+      const picked = await makeService()["freePracticeServer"]();
 
-      expect(picked).toEqual({ id, region: "TestA" });
+      expect(picked).toEqual({ id, region: "TestB" });
     });
 
     it("picks nothing when every practice server is taken", async () => {
@@ -251,7 +254,7 @@ describe("utility practice servers (SQL-driven)", () => {
         [id, matchId],
       );
 
-      expect(await makeService()["freePracticeServer"]("TestA")).toBeNull();
+      expect(await makeService()["freePracticeServer"]()).toBeNull();
     });
   });
 
