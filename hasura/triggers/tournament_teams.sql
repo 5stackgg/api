@@ -6,12 +6,26 @@ DECLARE
     tournament tournaments;
     _team_captain_steam_id bigint;
     _session_steam_id bigint;
+    _session json;
 BEGIN
     SELECT * INTO tournament
     FROM tournaments
     WHERE id = NEW.tournament_id;
 
     _session_steam_id = nullif(current_setting('hasura.user', true)::jsonb ->> 'x-hasura-user-id', '')::bigint;
+    _session := nullif(current_setting('hasura.user', true), '')::json;
+
+    -- A session with no role is an internal write (a cascade, a job, the
+    -- free-agent draft). Those were unrestricted before this guard existed and
+    -- stay unrestricted, so only a real request is gated -- the same shape
+    -- tbd_tournament_team uses.
+    IF (_session ->> 'x-hasura-role') IS NOT NULL
+       AND tournament.invite_only
+       AND NOT is_tournament_organizer(tournament, _session)
+       AND NOT public.tournament_registration_unlocked(NEW.tournament_id, _session_steam_id) THEN
+        RAISE EXCEPTION USING ERRCODE = '22000',
+            MESSAGE = 'This tournament is invite only';
+    END IF;
 
     IF NEW.team_id IS NOT NULL THEN
        SELECT owner_steam_id, captain_steam_id
@@ -39,6 +53,13 @@ BEGIN
        NEW.captain_steam_id = COALESCE(NEW.owner_steam_id, _session_steam_id);
     END IF;
 
+    -- Registering after the window opened counts as checked in: a team that
+    -- signs up at T-30 must not be swept at T-15 for failing to confirm a
+    -- prompt it was never shown.
+    IF NEW.checked_in_at IS NULL AND public.tournament_check_in_open(tournament) THEN
+        NEW.checked_in_at = now();
+    END IF;
+
     RETURN NEW;
 END;
 $$;
@@ -53,16 +74,32 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    tournament_status text;
+    tournament tournaments;
+    _session json;
 BEGIN
-    SELECT status
-    INTO tournament_status
+    SELECT *
+    INTO tournament
     FROM tournaments
     WHERE id = OLD.tournament_id;
 
     -- If tournament doesn't exist (cascade delete), allow the team removal
-    IF tournament_status IS NOT NULL AND tournament_status IN ('Cancelled', 'CancelledMinTeams', 'Finished') THEN
+    IF NOT FOUND THEN
+        RETURN OLD;
+    END IF;
+
+    IF tournament.status IN ('Cancelled', 'CancelledMinTeams', 'Finished') THEN
         RAISE EXCEPTION 'Cannot leave an active tournament' USING ERRCODE = '22000';
+    END IF;
+
+    _session := nullif(current_setting('hasura.user', true), '')::json;
+
+    -- A session with no role is an internal write (a cascade, a job, a test
+    -- harness that reset hasura.user). Those were unrestricted before this
+    -- guard existed and stay unrestricted, so only a real request is gated.
+    IF (_session ->> 'x-hasura-role') IS NOT NULL
+       AND tournament.status IN ('RegistrationClosed', 'Live', 'Paused')
+       AND NOT is_tournament_organizer(tournament, _session) THEN
+        RAISE EXCEPTION 'Cannot withdraw a team once the bracket has been drawn' USING ERRCODE = '22000';
     END IF;
 
     RETURN OLD;

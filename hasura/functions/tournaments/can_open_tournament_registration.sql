@@ -8,7 +8,9 @@ AS $$
 DECLARE
     has_stages boolean;
 BEGIN
-    IF tournament.status != 'Setup' AND tournament.status != 'RegistrationClosed' AND tournament.status != 'Cancelled' AND tournament.status != 'CancelledMinTeams' THEN
+    -- CheckInReview is the "give them another chance" path: reopening extends
+    -- the check-in window for the field that is already registered.
+    IF tournament.status NOT IN ('Setup', 'RegistrationClosed', 'Cancelled', 'CancelledMinTeams', 'CheckInReview') THEN
         RETURN false;
     END IF;
 
@@ -16,7 +18,9 @@ BEGIN
         RETURN false;
     END IF;
 
-    IF tournament_has_max_teams(tournament) THEN
+    -- A full bracket blocks a NEW intake, not an extension of the window for
+    -- teams that are already in it.
+    IF tournament.status != 'CheckInReview' AND tournament_has_max_teams(tournament) THEN
         RETURN false;
     END IF;
 

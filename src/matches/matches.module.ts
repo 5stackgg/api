@@ -41,6 +41,7 @@ import { CheckLeagueSeasonTransitions } from "./jobs/CheckLeagueSeasonTransition
 import { ApplyLeagueDefaultSchedules } from "./jobs/ApplyLeagueDefaultSchedules";
 import { LeagueWeekReminders } from "./jobs/LeagueWeekReminders";
 import { TournamentReminders } from "./jobs/TournamentReminders";
+import { ProcessTournamentCheckIn } from "./jobs/ProcessTournamentCheckIn";
 import { EventReminders } from "./jobs/EventReminders";
 import { EncryptionModule } from "../encryption/encryption.module";
 import { getQueuesProcessors } from "../utilities/QueueProcessors";
@@ -179,6 +180,7 @@ import { CameraMonitorService } from "./camera/camera-monitor.service";
     ApplyLeagueDefaultSchedules,
     LeagueWeekReminders,
     TournamentReminders,
+    ProcessTournamentCheckIn,
     EventReminders,
     CheckForScheduledMatches,
     RemoveCancelledMatches,
@@ -269,6 +271,19 @@ export class MatchesModule implements NestModule {
       {
         repeat: {
           pattern: "*/5 * * * *",
+        },
+      },
+    );
+
+    // Every minute, unlike the reminders above: the closing cutoff is a hard
+    // deadline the bracket waits on, so a 5-minute cadence would hold a
+    // tournament past its own start.
+    void scheduleMatchQueue.add(
+      ProcessTournamentCheckIn.name,
+      {},
+      {
+        repeat: {
+          pattern: "* * * * *",
         },
       },
     );

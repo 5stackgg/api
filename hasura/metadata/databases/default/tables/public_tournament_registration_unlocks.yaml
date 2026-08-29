@@ -1,0 +1,56 @@
+table:
+  name: tournament_registration_unlocks
+  schema: public
+object_relationships:
+  - name: player
+    using:
+      foreign_key_constraint_on: player_steam_id
+  - name: tournament
+    using:
+      foreign_key_constraint_on: tournament_id
+insert_permissions:
+  - role: tournament_organizer
+    permission:
+      check:
+        tournament:
+          is_organizer:
+            _eq: true
+      columns:
+        - player_steam_id
+        - tournament_id
+    comment: Pre-unlock a player without handing out the passcode
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - created_at
+        - player_steam_id
+        - tournament_id
+      filter:
+        player_steam_id:
+          _eq: X-Hasura-User-Id
+      allow_aggregations: true
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      columns:
+        - created_at
+        - player_steam_id
+        - tournament_id
+      filter:
+        _or:
+          - player_steam_id:
+              _eq: X-Hasura-User-Id
+          - tournament:
+              is_organizer:
+                _eq: true
+      allow_aggregations: true
+    comment: ""
+delete_permissions:
+  - role: tournament_organizer
+    permission:
+      filter:
+        tournament:
+          is_organizer:
+            _eq: true
+    comment: ""

@@ -779,7 +779,7 @@ type Mutation {
 }
 
 type Query {
-  telemetryStats: TelemetryStats!
+  telemetryStats(includeSelf: Boolean): TelemetryStats!
 }
 
 type Mutation {
@@ -2536,4 +2536,60 @@ type UtilityRenderQueueOutput {
 
 type UtilityRenderClearOutput {
   cleared: Int!
+}
+
+type Mutation {
+  checkIntoTournament(
+    tournament_id: uuid!
+    tournament_team_id: uuid
+  ): SuccessOutput
+}
+
+type Mutation {
+  readmitTournamentTeam(
+    tournament_id: uuid!
+    tournament_team_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  extendTournamentCheckIn(
+    tournament_id: uuid!
+    minutes: Int!
+  ): SuccessOutput
+}
+
+type Mutation {
+  continueTournamentCheckIn(
+    tournament_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  draftTournamentTeams(
+    tournament_id: uuid!
+  ): TournamentDraftOutput
+}
+
+type Mutation {
+  joinTournamentAsFreeAgent(
+    tournament_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  leaveTournamentAsFreeAgent(
+    tournament_id: uuid!
+  ): SuccessOutput
+}
+
+type Mutation {
+  unlockTournamentRegistration(
+    tournament_id: uuid!
+    passcode: String!
+  ): SuccessOutput
+}
+
+type TournamentDraftOutput {
+  teams_created: Int!
 }

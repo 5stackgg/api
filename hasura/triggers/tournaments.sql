@@ -16,8 +16,18 @@ BEGIN
     IF (
         NEW.status IS DISTINCT FROM OLD.status AND
         NEW.status IN ('Live', 'RegistrationClosed') AND
-        OLD.status IN ('Setup', 'RegistrationOpen')
+        OLD.status IN ('Setup', 'RegistrationOpen', 'CheckInReview')
     ) THEN
+        -- Draft BEFORE the seeding sequence, not after. update_tournament_stages
+        -- sizes the bracket from the live team count and assign_seeds_to_teams
+        -- seeds whatever exists, so teams created here are picked up by the same
+        -- pass every registered team goes through -- and none of the three has to
+        -- be re-run afterwards. Draft after them and the bracket is built for
+        -- zero teams.
+        IF NEW.registration_type IN ('free_agents', 'both') THEN
+            PERFORM draft_tournament_free_agent_teams(NEW.id);
+        END IF;
+
         PERFORM update_tournament_stages(NEW.id);
         PERFORM assign_seeds_to_teams(NEW);
         
@@ -88,7 +98,46 @@ CREATE OR REPLACE FUNCTION public.tbu_tournaments() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 BEGIN
+    -- Outside the status branch on purpose: a schedule edit usually arrives with
+    -- no status change at all.
+    --
+    -- Evaluated against OLD, never NEW: reading NEW would let the same statement
+    -- push `start` far enough into the future that the window it is currently
+    -- inside "has not opened yet", and the lock would unlock itself.
+    IF tournament_check_in_started(OLD) AND (
+           NEW.start IS DISTINCT FROM OLD.start
+        OR NEW.check_in_opens_before_minutes IS DISTINCT FROM OLD.check_in_opens_before_minutes
+        OR NEW.check_in_closes_before_minutes IS DISTINCT FROM OLD.check_in_closes_before_minutes
+    ) THEN
+        RAISE EXCEPTION USING ERRCODE = '22000',
+            MESSAGE = 'Check-in has already started; the schedule can no longer be changed';
+    END IF;
+
     IF NEW.status IS DISTINCT FROM OLD.status THEN
+        -- CheckInReview is a HOLD, not a lifecycle step: entering it is only
+        -- legal out of RegistrationOpen with check-in actually in force, and
+        -- leaving it is an organizer decision (re-admit, extend, or continue).
+        -- Handled before the CASE because the CASE keys on NEW.status and the
+        -- exit branches -- RegistrationOpen, RegistrationClosed, Live, Cancelled
+        -- -- are shared with transitions that have nothing to do with review.
+        IF NEW.status = 'CheckInReview'
+           AND NOT can_review_tournament_check_in(OLD, current_setting('hasura.user', true)::json) THEN
+            RAISE EXCEPTION USING ERRCODE = '22000',
+                MESSAGE = 'Cannot hold tournament for check-in review';
+        END IF;
+
+        IF OLD.status = 'CheckInReview' THEN
+            IF NEW.status NOT IN ('RegistrationOpen', 'RegistrationClosed', 'Live', 'Cancelled', 'CancelledMinTeams') THEN
+                RAISE EXCEPTION USING ERRCODE = '22000',
+                    MESSAGE = 'Invalid status change out of check-in review';
+            END IF;
+
+            IF NOT is_tournament_organizer(OLD, current_setting('hasura.user', true)::json) THEN
+                RAISE EXCEPTION USING ERRCODE = '22000',
+                    MESSAGE = 'Only a tournament organizer can resolve check-in review';
+            END IF;
+        END IF;
+
         -- A league owns the lifecycle of its division/playoff tournaments;
         -- resetting or cancelling one directly corrupts the season. Only allow
         -- it when the league season cascade sets the bypass (season cancel).
@@ -122,6 +171,16 @@ BEGIN
                         RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Cannot resume tournament';
                     END IF;
                 ELSE
+                    -- A free-agent tournament has NO teams until the pool is
+                    -- drafted, and the draft lives in tau_tournaments -- which
+                    -- runs after this. Setup -> Live would therefore always see
+                    -- zero teams and cancel itself. Drafting here first makes
+                    -- the count real; the draft is idempotent on is_drafted, so
+                    -- the tau_tournaments call that follows is a no-op.
+                    IF NEW.registration_type IN ('free_agents', 'both') THEN
+                        PERFORM draft_tournament_free_agent_teams(NEW.id);
+                    END IF;
+
                     IF NOT tournament_has_min_teams(NEW) THEN
                         NEW.status = 'CancelledMinTeams';
                     END IF;

@@ -28,6 +28,13 @@ array_relationships:
         table:
           name: tournament_categories
           schema: public
+  - name: free_agents
+    using:
+      foreign_key_constraint_on:
+        column: tournament_id
+        table:
+          name: tournament_free_agents
+          schema: public
   - name: organizer_teams
     using:
       foreign_key_constraint_on:
@@ -139,6 +146,12 @@ computed_fields:
         name: can_resume_tournament
         schema: public
       session_argument: hasura_session
+  - name: can_review_check_in
+    definition:
+      function:
+        name: can_review_tournament_check_in
+        schema: public
+      session_argument: hasura_session
   - name: can_setup
     definition:
       function:
@@ -151,6 +164,16 @@ computed_fields:
         name: can_start_tournament
         schema: public
       session_argument: hasura_session
+  - name: check_in_open
+    definition:
+      function:
+        name: tournament_check_in_open
+        schema: public
+  - name: check_in_started
+    definition:
+      function:
+        name: tournament_check_in_started
+        schema: public
   - name: has_min_teams
     definition:
       function:
@@ -173,11 +196,34 @@ computed_fields:
       function:
         name: tournament_max_players_per_lineup
         schema: public
+  - name: meets_min_role
+    definition:
+      function:
+        name: meets_min_role
+        schema: public
+      session_argument: hasura_session
   - name: min_players_per_lineup
     definition:
       function:
         name: tournament_min_players_per_lineup
         schema: public
+  - name: missed_check_in_count
+    definition:
+      function:
+        name: tournament_missed_check_in_count
+        schema: public
+  - name: organizer_registration_passcode
+    definition:
+      function:
+        name: tournament_organizer_registration_passcode
+        schema: public
+      session_argument: hasura_session
+  - name: registration_unlocked
+    definition:
+      function:
+        name: tournament_registration_unlocked_for_session
+        schema: public
+      session_argument: hasura_session
 insert_permissions:
   - role: user
     permission:
@@ -207,6 +253,17 @@ insert_permissions:
         - name
         - scheduling_mode
         - start
+        - check_in_closes_before_minutes
+        - check_in_opens_before_minutes
+        - check_in_required
+        - check_in_setting
+        - invite_only
+        - max_elo
+        - min_elo
+        - min_role
+        - regions
+        - registration_type
+        - registration_passcode
     comment: ""
   - role: tournament_organizer
     permission:
@@ -253,6 +310,17 @@ insert_permissions:
         - name
         - scheduling_mode
         - start
+        - check_in_closes_before_minutes
+        - check_in_opens_before_minutes
+        - check_in_required
+        - check_in_setting
+        - invite_only
+        - max_elo
+        - min_elo
+        - min_role
+        - regions
+        - registration_type
+        - registration_passcode
     comment: ""
 select_permissions:
   - role: guest
@@ -275,6 +343,17 @@ select_permissions:
         - start
         - status
         - awards_enabled
+        - check_in_closes_before_minutes
+        - check_in_ends_at
+        - check_in_opens_before_minutes
+        - check_in_required
+        - check_in_setting
+        - invite_only
+        - max_elo
+        - min_elo
+        - min_role
+        - regions
+        - registration_type
       computed_fields:
         - can_cancel
         - can_close_registration
@@ -289,6 +368,12 @@ select_permissions:
         - joined_tournament
         - max_players_per_lineup
         - min_players_per_lineup
+        - check_in_open
+        - check_in_started
+        - meets_min_role
+        - can_review_check_in
+        - missed_check_in_count
+        - registration_unlocked
       filter:
         status:
           _neq: Setup
@@ -331,6 +416,18 @@ select_permissions:
         - start
         - status
         - awards_enabled
+        - check_in_closes_before_minutes
+        - check_in_ends_at
+        - check_in_opens_before_minutes
+        - check_in_required
+        - check_in_setting
+        - invite_only
+        - max_elo
+        - min_elo
+        - min_role
+        - regions
+        - registration_type
+        - registration_passcode
       computed_fields:
         - can_cancel
         - can_close_registration
@@ -345,6 +442,13 @@ select_permissions:
         - joined_tournament
         - max_players_per_lineup
         - min_players_per_lineup
+        - check_in_open
+        - check_in_started
+        - meets_min_role
+        - can_review_check_in
+        - missed_check_in_count
+        - organizer_registration_passcode
+        - registration_unlocked
       filter:
         _or:
           - is_organizer:
@@ -373,6 +477,17 @@ select_permissions:
         - start
         - status
         - awards_enabled
+        - check_in_closes_before_minutes
+        - check_in_ends_at
+        - check_in_opens_before_minutes
+        - check_in_required
+        - check_in_setting
+        - invite_only
+        - max_elo
+        - min_elo
+        - min_role
+        - regions
+        - registration_type
       computed_fields:
         - can_cancel
         - can_close_registration
@@ -387,6 +502,13 @@ select_permissions:
         - joined_tournament
         - max_players_per_lineup
         - min_players_per_lineup
+        - check_in_open
+        - check_in_started
+        - meets_min_role
+        - can_review_check_in
+        - missed_check_in_count
+        - organizer_registration_passcode
+        - registration_unlocked
       filter:
         _or:
           - is_organizer:
@@ -429,6 +551,17 @@ update_permissions:
         - start
         - status
         - awards_enabled
+        - check_in_closes_before_minutes
+        - check_in_opens_before_minutes
+        - check_in_required
+        - check_in_setting
+        - invite_only
+        - max_elo
+        - min_elo
+        - min_role
+        - regions
+        - registration_type
+        - registration_passcode
       filter:
         is_organizer:
           _eq: true
@@ -452,6 +585,17 @@ update_permissions:
         - start
         - status
         - awards_enabled
+        - check_in_closes_before_minutes
+        - check_in_opens_before_minutes
+        - check_in_required
+        - check_in_setting
+        - invite_only
+        - max_elo
+        - min_elo
+        - min_role
+        - regions
+        - registration_type
+        - registration_passcode
       filter:
         is_organizer:
           _eq: true

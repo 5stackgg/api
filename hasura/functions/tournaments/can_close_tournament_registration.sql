@@ -6,7 +6,8 @@ RETURNS boolean
 LANGUAGE plpgsql STABLE
 AS $$
 BEGIN
-    IF tournament.status != 'RegistrationOpen' THEN
+    -- Also the "continue without them" exit from check-in review.
+    IF tournament.status NOT IN ('RegistrationOpen', 'CheckInReview') THEN
         RETURN false;
     END IF;
 
