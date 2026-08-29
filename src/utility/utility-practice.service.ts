@@ -720,9 +720,9 @@ export class UtilityPracticeService {
     return row ?? null;
   }
 
-  // The plugin polls, so this runs on every GET /utility/session, and the
-  // occupancy tick posts it again every minute. The status guard is what makes
-  // that idempotent: only a row still in 'Starting' is moved.
+  // The plugin polls, so this runs on every GET /utility/session. The status
+  // guard is what makes that idempotent: only a row still in 'Starting' is
+  // moved.
   public async markReady(matchId: string): Promise<void> {
     await this.postgres.query(
       `UPDATE public.utility_practice_sessions
@@ -828,6 +828,7 @@ export class UtilityPracticeService {
     match_id: string;
     map_name: string;
     password: string;
+    status: string;
   } | null> {
     const [row] = await this.postgres.query<
       Array<{
@@ -835,12 +836,14 @@ export class UtilityPracticeService {
         match_id: string;
         map_name: string;
         password: string;
+        status: string;
       }>
     >(
       `SELECT s.id::text AS session_id,
               m.id::text AS match_id,
               s.map_name,
-              m.password
+              m.password,
+              s.status
          FROM public.servers srv
          INNER JOIN public.matches m ON m.id = srv.reserved_by_match_id
          INNER JOIN public.utility_practice_sessions s ON s.match_id = m.id
@@ -1801,14 +1804,6 @@ export class UtilityPracticeService {
       return;
     }
 
-    // The second proof that the server is up, and the reason there has to be
-    // one: GET /utility/session is asked once, at map load, and a plugin whose
-    // first ask failed never asks again -- leaving a session Starting behind a
-    // server that is running and talking. A practice pod does not ping
-    // /game-server-node, so nothing else would ever notice. This tick is the
-    // plugin on a loaded map, which is all Ready has ever meant.
-    await this.markReady(session.match_id);
-
     const present = steamIds
       .map((steamId) => String(steamId ?? "").trim())
       .filter((steamId) => /^\d{5,20}$/.test(steamId));
@@ -1827,6 +1822,20 @@ export class UtilityPracticeService {
       RETURNING mlp.steam_id::text AS steam_id`,
       [session.match_id, present],
     );
+
+    // The second proof that the server is up, and the reason there has to be
+    // one: GET /utility/session is asked once, at map load, and a plugin whose
+    // first ask failed never asks again -- leaving a session Starting behind a
+    // server that is running and talking. A practice pod does not ping
+    // /game-server-node, so nothing else would ever notice. This tick is the
+    // plugin on a loaded map, which is all Ready has ever meant.
+    //
+    // Behind the roster write and behind the status the session row already
+    // reported: the reaper reads is_connected, so a throw here must not be
+    // what leaves an occupied session looking empty.
+    if (session.status === "Starting") {
+      await this.markReady(session.match_id);
+    }
 
     await this.pushWhereAmI(flipped.map(({ steam_id }) => steam_id));
 

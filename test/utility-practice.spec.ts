@@ -341,10 +341,18 @@ describe("utility practice sessions (SQL-driven)", () => {
   });
 
   describe("server headroom", () => {
-    it("refuses to start when only the reserved servers are free", async () => {
+    // Two rules on one fixture, because a standing server in the named region
+    // is what makes the refusal meaningful. The region group in the picker is
+    // headed ON DEMAND, and every standing practice server is a row of its own
+    // beside it: answering "US-EAST" with the box already running in US-EAST
+    // handed back a server nobody asked for -- and when that box is not really
+    // up, one that never answers, behind a connect string that made the website
+    // say "ready to join".
+    it("refuses a named region on reserved headroom without taking the standing server", async () => {
       const host = await fx.player();
       await setting("public.utility_practice_enabled", "true");
       await setting("public.utility_practice_reserved_servers", "2");
+      await standingPracticeServer("TestA");
 
       const service = makeService({
         matchAssistant: {
@@ -363,31 +371,6 @@ describe("utility practice sessions (SQL-driven)", () => {
         "SELECT 1 FROM utility_practice_sessions",
       );
       expect(rows.length).toBe(0);
-    });
-
-    // The region group in the picker is headed ON DEMAND, and every standing
-    // practice server is a row of its own beside it. Answering "US-EAST" with
-    // the box already running in US-EAST handed back a server nobody asked for
-    // -- and when that box is not really up, one that never answers, behind a
-    // connect string that made the website say "ready to join".
-    it("boots on demand for a named region rather than taking a standing server", async () => {
-      const host = await fx.player();
-      await setting("public.utility_practice_enabled", "true");
-      await setting("public.utility_practice_reserved_servers", "2");
-      await standingPracticeServer("TestA");
-
-      const service = makeService({
-        matchAssistant: {
-          countFreeOnDemandServers: jest.fn(async (): Promise<number> => 2),
-        },
-      });
-
-      await expect(
-        service.start({ steam_id: host, role: "user" } as never, {
-          map_name: "de_mirage",
-          region: "TestA",
-        }),
-      ).rejects.toThrow(/no practice servers are free/);
 
       const [server] = await postgres.query<Array<{ reserved: string | null }>>(
         `SELECT reserved_by_match_id::text AS reserved
@@ -413,17 +396,18 @@ describe("utility practice sessions (SQL-driven)", () => {
 
       // The match behind it needs hasura, which this suite does not stand up --
       // so it gets as far as the session row and no further. That row is the
-      // whole assertion: the headroom never turned it away.
-      await expect(
-        service.start({ steam_id: host, role: "user" } as never, {
+      // whole assertion: a start turned away by the headroom never reaches it,
+      // and the region on it is the standing server's.
+      await service
+        .start({ steam_id: host, role: "user" } as never, {
           map_name: "de_mirage",
-        }),
-      ).rejects.not.toThrow(/no practice servers are free/);
+        })
+        .catch((): undefined => undefined);
 
       const [session] = await postgres.query<Array<{ region: string }>>(
         "SELECT region FROM utility_practice_sessions",
       );
-      expect(session.region).toBe("TestA");
+      expect(session?.region).toBe("TestA");
     });
 
     it("refuses to start at all while the feature is off", async () => {

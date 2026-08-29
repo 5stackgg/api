@@ -322,6 +322,42 @@ export class MatchAssistantService {
     });
   }
 
+  /**
+   * Say a match is waiting for a server, unless it is past caring.
+   *
+   * A boot attempt outlives the host's Stop: the plain write would move an
+   * already Canceled match back to WaitingForServer, and with the practice
+   * session already Ended nothing is left that would move it again. Conditional
+   * in the statement rather than read-then-write, because a Stop landing
+   * between the two would win the read and lose the row.
+   *
+   * Excluding WaitingForServer itself is what keeps the assignment path from
+   * firing the status webhook twice when the step that failed already said so.
+   */
+  private async markWaitingForServer(matchId: string): Promise<void> {
+    await this.hasura.mutation({
+      update_matches: {
+        __args: {
+          where: {
+            id: {
+              _eq: matchId,
+            },
+            status: {
+              _nin: [
+                ...MatchAssistantService.TERMINAL_MATCH_STATUSES,
+                "WaitingForServer",
+              ],
+            },
+          },
+          _set: {
+            status: "WaitingForServer",
+          },
+        },
+        affected_rows: true,
+      },
+    });
+  }
+
   public async assignServer(matchId: string, tries = 0): Promise<void> {
     if (tries === 0) {
       await this.setServerError(matchId, null);
@@ -383,7 +419,7 @@ export class MatchAssistantService {
           this.logger.error(
             `[${matchId}] max retries reached for server assignment`,
           );
-          await this.updateMatchStatus(matchId, "WaitingForServer");
+          await this.markWaitingForServer(matchId);
           return;
         }
         setTimeout(async () => {
@@ -402,7 +438,7 @@ export class MatchAssistantService {
       this.logger.log(
         `[${matchId}] practice match, and no on demand server could be booted`,
       );
-      await this.updateMatchStatus(match.id, "WaitingForServer");
+      await this.markWaitingForServer(match.id);
       return;
     }
 
@@ -411,7 +447,7 @@ export class MatchAssistantService {
       this.logger.log(
         `[${matchId}] unable to assign dedicated server, trying on demand`,
       );
-      await this.updateMatchStatus(match.id, "WaitingForServer");
+      await this.markWaitingForServer(match.id);
       return;
     }
 
@@ -431,7 +467,7 @@ export class MatchAssistantService {
       `[${matchId}] unable to assign dedicated server, updating match status to waiting for server`,
     );
 
-    await this.updateMatchStatus(match.id, "WaitingForServer");
+    await this.markWaitingForServer(match.id);
   }
 
   /**
@@ -885,7 +921,7 @@ export class MatchAssistantService {
             `[${matchId}] no free on-demand server row in the pool — waiting`,
           );
           if (!options?.preserveMatchStatus) {
-            await this.updateMatchStatus(matchId, "WaitingForServer");
+            await this.markWaitingForServer(matchId);
           }
           return false;
         }

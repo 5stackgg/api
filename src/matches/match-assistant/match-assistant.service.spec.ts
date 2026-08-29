@@ -24,6 +24,17 @@ describe("MatchAssistantService", () => {
     getDelayed: jest.Mock;
   };
 
+  // Every "we could not get you a server" write goes out as one conditional
+  // update_matches, so the assertions read the statement rather than a status
+  // setter that is no longer how the assignment path says it.
+  function waitingForServerWrites() {
+    return hasura.mutation.mock.calls
+      .map(([mutation]) => mutation?.update_matches)
+      .filter(
+        (update) => update?.__args?._set?.status === "WaitingForServer",
+      );
+  }
+
   beforeEach(() => {
     hasura = {
       query: jest.fn(),
@@ -222,16 +233,37 @@ describe("MatchAssistantService", () => {
     const assignDedicated = jest
       .spyOn(service as any, "assignDedicatedServer")
       .mockResolvedValue(true);
-    const updateMatchStatus = jest
-      .spyOn(service, "updateMatchStatus")
-      .mockResolvedValue(undefined);
 
     await expect(service.assignServer("match-1")).resolves.toBeUndefined();
 
     expect(assignDedicated).not.toHaveBeenCalled();
-    expect(updateMatchStatus).toHaveBeenCalledWith(
-      "match-1",
-      "WaitingForServer",
+    expect(waitingForServerWrites()).toHaveLength(1);
+  });
+
+  // The boot attempt outlives the host pressing Stop. Writing the status back
+  // without a condition moved the already Canceled match to WaitingForServer,
+  // and with the practice session already Ended nothing was left to move it
+  // again -- so the row sat there forever.
+  it("cannot move a finished match back to waiting for a server", async () => {
+    hasura.query.mockResolvedValue({
+      matches_by_pk: {
+        id: "match-1",
+        region: "USE",
+        source: "practice",
+        options: {
+          prefer_dedicated_server: false,
+        },
+      },
+    });
+
+    jest.spyOn(service as any, "assignOnDemandServer").mockResolvedValue(false);
+
+    await service.assignServer("match-1");
+
+    const [write] = waitingForServerWrites();
+
+    expect(write.__args.where.status._nin).toEqual(
+      expect.arrayContaining(["Canceled", "Finished", "WaitingForServer"]),
     );
   });
 

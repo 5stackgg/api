@@ -6,7 +6,10 @@ import { UtilityPracticeService } from "./utility-practice.service";
 // nobody else. A reconciling post that finds nothing changed must be silent, or
 // every idle server would wake every tab on it once a minute.
 describe("UtilityPracticeService.reportOccupancy", () => {
-  function makeService(flipped: Array<{ steam_id: string }>) {
+  function makeService(
+    flipped: Array<{ steam_id: string }>,
+    status = "Starting",
+  ) {
     const publish = jest.fn().mockResolvedValue(undefined);
     const postgres = { query: jest.fn() };
 
@@ -45,13 +48,16 @@ describe("UtilityPracticeService.reportOccupancy", () => {
       match_id: "match-1",
       map_name: "de_mirage",
       password: "hunter2",
+      status,
     });
     jest.spyOn(service, "touch").mockResolvedValue(undefined);
     // A tick is also the proof that the server came up, but that is the
     // readiness path's business, not the push's.
-    jest.spyOn(service, "markReady").mockResolvedValue(undefined);
+    const markReady = jest
+      .spyOn(service, "markReady")
+      .mockResolvedValue(undefined);
 
-    return { service, publish, postgres, load };
+    return { service, publish, postgres, load, markReady };
   }
 
   function pushed(publish: jest.Mock) {
@@ -121,6 +127,25 @@ describe("UtilityPracticeService.reportOccupancy", () => {
     const [, params] = postgres.query.mock.calls[0];
 
     expect(params[1]).toEqual(["76561100000000001"]);
+  });
+
+  it("marks a session ready on the tick that finds it still starting", async () => {
+    const { service, markReady } = makeService([], "Starting");
+
+    await service.reportOccupancy("server-1", ["76561100000000001"]);
+
+    expect(markReady).toHaveBeenCalledWith("match-1");
+  });
+
+  // The plugin ticks for the life of the session. A row that is already Ready
+  // has nothing left to move, and writing it again once a minute per server is
+  // a write nobody reads.
+  it("does not write readiness again once the session is ready", async () => {
+    const { service, markReady } = makeService([], "Ready");
+
+    await service.reportOccupancy("server-1", ["76561100000000001"]);
+
+    expect(markReady).not.toHaveBeenCalled();
   });
 
   it("does not fail the occupancy write when a push cannot be delivered", async () => {
