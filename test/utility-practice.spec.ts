@@ -509,6 +509,15 @@ describe("utility practice sessions (SQL-driven)", () => {
       expect(rows.map(({ steam_id }) => steam_id)).toEqual([fresh]);
     });
 
+    it("takes the waiting window from the settings table", async () => {
+      const stale = await fx.player();
+      await setting("public.utility_practice_waitlist_minutes", "5");
+      // Inside the 30-minute default, outside the 5 the operator asked for.
+      await waitlist(stale, 10);
+
+      expect(await makeService({}).sweepWaitlist()).toBe(1);
+    });
+
     // The reaper is the only reader of contention, so the sweep runs there
     // rather than on a timer of its own.
     it("is swept before the reaper reads contention", async () => {

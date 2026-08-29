@@ -92,11 +92,11 @@ export class UtilityPracticeService {
   public static readonly CONNECT_MINUTES = 5;
   public static readonly IDLE_MINUTES = 5;
   public static readonly MAX_MINUTES = 60;
-  // How long a queue entry means anything. Nothing serves this table -- it is
-  // only ever cleared by the same player getting a server -- so without an age
-  // bound one person who tried once and walked away leaves a row that says
-  // "somebody is waiting" forever, and MAX_MINUTES then caps every session on
-  // the install for the life of the database.
+  // Default for how long a queue entry means anything. Nothing serves this
+  // table -- it is only ever cleared by the same player getting a server -- so
+  // without an age bound one person who tried once and walked away leaves a row
+  // that says "somebody is waiting" forever, and MAX_MINUTES then caps every
+  // session on the install for the life of the database.
   public static readonly WAITLIST_MINUTES = 30;
   // A render batch that has not finished in this long is not going to; the
   // server it is holding is worth more than the last few clips.
@@ -2131,9 +2131,16 @@ export class UtilityPracticeService {
                   FROM public.utility_practice_waitlist
                  WHERE created_at > now() - ($1 || ' minutes')::interval
               ) AS waiting`,
-      [UtilityPracticeService.WAITLIST_MINUTES],
+      [await this.waitlistMinutes()],
     );
     return row?.waiting === true;
+  }
+
+  private async waitlistMinutes(): Promise<number> {
+    return await this.minutes(
+      SystemSettingName.UtilityPracticeWaitlistMinutes,
+      UtilityPracticeService.WAITLIST_MINUTES,
+    );
   }
 
   public async joinWaitlist(
@@ -2174,7 +2181,7 @@ export class UtilityPracticeService {
       `DELETE FROM public.utility_practice_waitlist
         WHERE created_at <= now() - ($1 || ' minutes')::interval
     RETURNING steam_id::text AS steam_id`,
-      [UtilityPracticeService.WAITLIST_MINUTES],
+      [await this.waitlistMinutes()],
     );
 
     return removed.length;

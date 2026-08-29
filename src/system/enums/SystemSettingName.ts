@@ -41,6 +41,11 @@ export enum SystemSettingName {
   UtilityPracticeIdleMinutes = "public.utility_practice_idle_minutes",
   UtilityPracticeConnectMinutes = "public.utility_practice_connect_minutes",
   UtilityPracticeMaxMinutes = "public.utility_practice_max_minutes",
+  // Minutes a queue entry means anything. Nothing serves the waitlist -- it is
+  // only ever cleared by the same player getting a server -- so an unbounded
+  // one lets a player who tried once and walked away hold every other session
+  // under the max-length clock indefinitely.
+  UtilityPracticeWaitlistMinutes = "public.utility_practice_waitlist_minutes",
   // On-demand server slots a practice session will never take. Without it a
   // player idly practising can consume the last slot a scheduled tournament
   // match was going to boot into.
