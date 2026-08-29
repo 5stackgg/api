@@ -141996,6 +141996,9 @@ export default {
             "match_id": [
                 6365
             ],
+            "notify_when_ready": [
+                6
+            ],
             "playbook": [
                 6250
             ],
@@ -142300,6 +142303,9 @@ export default {
             "match_id": [
                 6367
             ],
+            "notify_when_ready": [
+                7
+            ],
             "playbook": [
                 6254
             ],
@@ -142397,6 +142403,9 @@ export default {
             ],
             "match_id": [
                 6365
+            ],
+            "notify_when_ready": [
+                6
             ],
             "playbook": [
                 6261
@@ -142774,6 +142783,9 @@ export default {
             "match_id": [
                 3558
             ],
+            "notify_when_ready": [
+                3558
+            ],
             "playbook": [
                 6263
             ],
@@ -142858,6 +142870,9 @@ export default {
             ],
             "match_id": [
                 6365
+            ],
+            "notify_when_ready": [
+                6
             ],
             "playbook_id": [
                 6365
@@ -142985,6 +143000,9 @@ export default {
             ],
             "match_id": [
                 6365
+            ],
+            "notify_when_ready": [
+                6
             ],
             "playbook_id": [
                 6365

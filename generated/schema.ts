@@ -37247,6 +37247,7 @@ export interface utility_practice_sessions {
     /** An object relationship */
     match: (matches | null)
     match_id: (Scalars['uuid'] | null)
+    notify_when_ready: Scalars['Boolean']
     /** An object relationship */
     playbook: (utility_playbooks | null)
     playbook_id: (Scalars['uuid'] | null)
@@ -37361,15 +37362,15 @@ export interface utility_practice_sessions_mutation_response {
 
 
 /** select columns of table "utility_practice_sessions" */
-export type utility_practice_sessions_select_column = 'access' | 'collection_id' | 'created_at' | 'empty_since' | 'expires_at' | 'failure_reason' | 'first_joined_at' | 'host_steam_id' | 'id' | 'invite_code' | 'is_open' | 'is_render' | 'last_occupied_at' | 'map_changing_at' | 'map_name' | 'match_id' | 'playbook_id' | 'region' | 'status' | 'team_id' | 'updated_at'
+export type utility_practice_sessions_select_column = 'access' | 'collection_id' | 'created_at' | 'empty_since' | 'expires_at' | 'failure_reason' | 'first_joined_at' | 'host_steam_id' | 'id' | 'invite_code' | 'is_open' | 'is_render' | 'last_occupied_at' | 'map_changing_at' | 'map_name' | 'match_id' | 'notify_when_ready' | 'playbook_id' | 'region' | 'status' | 'team_id' | 'updated_at'
 
 
 /** select "utility_practice_sessions_aggregate_bool_exp_bool_and_arguments_columns" columns of table "utility_practice_sessions" */
-export type utility_practice_sessions_select_column_utility_practice_sessions_aggregate_bool_exp_bool_and_arguments_columns = 'is_open' | 'is_render'
+export type utility_practice_sessions_select_column_utility_practice_sessions_aggregate_bool_exp_bool_and_arguments_columns = 'is_open' | 'is_render' | 'notify_when_ready'
 
 
 /** select "utility_practice_sessions_aggregate_bool_exp_bool_or_arguments_columns" columns of table "utility_practice_sessions" */
-export type utility_practice_sessions_select_column_utility_practice_sessions_aggregate_bool_exp_bool_or_arguments_columns = 'is_open' | 'is_render'
+export type utility_practice_sessions_select_column_utility_practice_sessions_aggregate_bool_exp_bool_or_arguments_columns = 'is_open' | 'is_render' | 'notify_when_ready'
 
 
 /** aggregate stddev on columns */
@@ -37401,7 +37402,7 @@ export interface utility_practice_sessions_sum_fields {
 
 
 /** update columns of table "utility_practice_sessions" */
-export type utility_practice_sessions_update_column = 'access' | 'collection_id' | 'created_at' | 'empty_since' | 'expires_at' | 'failure_reason' | 'first_joined_at' | 'host_steam_id' | 'id' | 'invite_code' | 'is_open' | 'is_render' | 'last_occupied_at' | 'map_changing_at' | 'map_name' | 'match_id' | 'playbook_id' | 'region' | 'status' | 'team_id' | 'updated_at'
+export type utility_practice_sessions_update_column = 'access' | 'collection_id' | 'created_at' | 'empty_since' | 'expires_at' | 'failure_reason' | 'first_joined_at' | 'host_steam_id' | 'id' | 'invite_code' | 'is_open' | 'is_render' | 'last_occupied_at' | 'map_changing_at' | 'map_name' | 'match_id' | 'notify_when_ready' | 'playbook_id' | 'region' | 'status' | 'team_id' | 'updated_at'
 
 
 /** aggregate var_pop on columns */
@@ -113533,6 +113534,7 @@ export interface utility_practice_sessionsGenqlSelection{
     /** An object relationship */
     match?: matchesGenqlSelection
     match_id?: boolean | number
+    notify_when_ready?: boolean | number
     /** An object relationship */
     playbook?: utility_playbooksGenqlSelection
     playbook_id?: boolean | number
@@ -113605,7 +113607,7 @@ export interface utility_practice_sessions_avg_order_by {host_steam_id?: (order_
 
 
 /** Boolean expression to filter rows from the table "utility_practice_sessions". All fields are combined with a logical 'AND'. */
-export interface utility_practice_sessions_bool_exp {_and?: (utility_practice_sessions_bool_exp[] | null),_not?: (utility_practice_sessions_bool_exp | null),_or?: (utility_practice_sessions_bool_exp[] | null),access?: (e_utility_practice_access_enum_comparison_exp | null),can_manage?: (Boolean_comparison_exp | null),can_view?: (Boolean_comparison_exp | null),collection?: (utility_collections_bool_exp | null),collection_id?: (uuid_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),e_utility_practice_status?: (e_utility_practice_statuses_bool_exp | null),empty_since?: (timestamptz_comparison_exp | null),expires_at?: (timestamptz_comparison_exp | null),failure_reason?: (String_comparison_exp | null),first_joined_at?: (timestamptz_comparison_exp | null),host?: (players_bool_exp | null),host_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),invites?: (utility_practice_invites_bool_exp | null),invites_aggregate?: (utility_practice_invites_aggregate_bool_exp | null),is_member?: (Boolean_comparison_exp | null),is_open?: (Boolean_comparison_exp | null),is_render?: (Boolean_comparison_exp | null),last_occupied_at?: (timestamptz_comparison_exp | null),map_changing_at?: (timestamptz_comparison_exp | null),map_name?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),playbook?: (utility_playbooks_bool_exp | null),playbook_id?: (uuid_comparison_exp | null),region?: (String_comparison_exp | null),status?: (e_utility_practice_statuses_enum_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+export interface utility_practice_sessions_bool_exp {_and?: (utility_practice_sessions_bool_exp[] | null),_not?: (utility_practice_sessions_bool_exp | null),_or?: (utility_practice_sessions_bool_exp[] | null),access?: (e_utility_practice_access_enum_comparison_exp | null),can_manage?: (Boolean_comparison_exp | null),can_view?: (Boolean_comparison_exp | null),collection?: (utility_collections_bool_exp | null),collection_id?: (uuid_comparison_exp | null),connection_link?: (String_comparison_exp | null),connection_string?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),e_utility_practice_status?: (e_utility_practice_statuses_bool_exp | null),empty_since?: (timestamptz_comparison_exp | null),expires_at?: (timestamptz_comparison_exp | null),failure_reason?: (String_comparison_exp | null),first_joined_at?: (timestamptz_comparison_exp | null),host?: (players_bool_exp | null),host_steam_id?: (bigint_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),invites?: (utility_practice_invites_bool_exp | null),invites_aggregate?: (utility_practice_invites_aggregate_bool_exp | null),is_member?: (Boolean_comparison_exp | null),is_open?: (Boolean_comparison_exp | null),is_render?: (Boolean_comparison_exp | null),last_occupied_at?: (timestamptz_comparison_exp | null),map_changing_at?: (timestamptz_comparison_exp | null),map_name?: (String_comparison_exp | null),match?: (matches_bool_exp | null),match_id?: (uuid_comparison_exp | null),notify_when_ready?: (Boolean_comparison_exp | null),playbook?: (utility_playbooks_bool_exp | null),playbook_id?: (uuid_comparison_exp | null),region?: (String_comparison_exp | null),status?: (e_utility_practice_statuses_enum_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "utility_practice_sessions" */
@@ -113613,7 +113615,7 @@ export interface utility_practice_sessions_inc_input {host_steam_id?: (Scalars['
 
 
 /** input type for inserting data into table "utility_practice_sessions" */
-export interface utility_practice_sessions_insert_input {access?: (e_utility_practice_access_enum | null),collection?: (utility_collections_obj_rel_insert_input | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),e_utility_practice_status?: (e_utility_practice_statuses_obj_rel_insert_input | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host?: (players_obj_rel_insert_input | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),invites?: (utility_practice_invites_arr_rel_insert_input | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_changing_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),playbook?: (utility_playbooks_obj_rel_insert_input | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_utility_practice_statuses_enum | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface utility_practice_sessions_insert_input {access?: (e_utility_practice_access_enum | null),collection?: (utility_collections_obj_rel_insert_input | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),e_utility_practice_status?: (e_utility_practice_statuses_obj_rel_insert_input | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host?: (players_obj_rel_insert_input | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),invites?: (utility_practice_invites_arr_rel_insert_input | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_changing_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match?: (matches_obj_rel_insert_input | null),match_id?: (Scalars['uuid'] | null),notify_when_ready?: (Scalars['Boolean'] | null),playbook?: (utility_playbooks_obj_rel_insert_input | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_utility_practice_statuses_enum | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate max on columns */
@@ -113702,7 +113704,7 @@ export interface utility_practice_sessions_on_conflict {constraint: utility_prac
 
 
 /** Ordering options when selecting data from "utility_practice_sessions". */
-export interface utility_practice_sessions_order_by {access?: (order_by | null),can_manage?: (order_by | null),can_view?: (order_by | null),collection?: (utility_collections_order_by | null),collection_id?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),created_at?: (order_by | null),e_utility_practice_status?: (e_utility_practice_statuses_order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),first_joined_at?: (order_by | null),host?: (players_order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),invites_aggregate?: (utility_practice_invites_aggregate_order_by | null),is_member?: (order_by | null),is_open?: (order_by | null),is_render?: (order_by | null),last_occupied_at?: (order_by | null),map_changing_at?: (order_by | null),map_name?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),playbook?: (utility_playbooks_order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),status?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
+export interface utility_practice_sessions_order_by {access?: (order_by | null),can_manage?: (order_by | null),can_view?: (order_by | null),collection?: (utility_collections_order_by | null),collection_id?: (order_by | null),connection_link?: (order_by | null),connection_string?: (order_by | null),created_at?: (order_by | null),e_utility_practice_status?: (e_utility_practice_statuses_order_by | null),empty_since?: (order_by | null),expires_at?: (order_by | null),failure_reason?: (order_by | null),first_joined_at?: (order_by | null),host?: (players_order_by | null),host_steam_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),invites_aggregate?: (utility_practice_invites_aggregate_order_by | null),is_member?: (order_by | null),is_open?: (order_by | null),is_render?: (order_by | null),last_occupied_at?: (order_by | null),map_changing_at?: (order_by | null),map_name?: (order_by | null),match?: (matches_order_by | null),match_id?: (order_by | null),notify_when_ready?: (order_by | null),playbook?: (utility_playbooks_order_by | null),playbook_id?: (order_by | null),region?: (order_by | null),status?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** primary key columns input for table: utility_practice_sessions */
@@ -113710,7 +113712,7 @@ export interface utility_practice_sessions_pk_columns_input {id: Scalars['uuid']
 
 
 /** input type for updating data in table "utility_practice_sessions" */
-export interface utility_practice_sessions_set_input {access?: (e_utility_practice_access_enum | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_changing_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_utility_practice_statuses_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface utility_practice_sessions_set_input {access?: (e_utility_practice_access_enum | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_changing_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),notify_when_ready?: (Scalars['Boolean'] | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_utility_practice_statuses_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -113758,7 +113760,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface utility_practice_sessions_stream_cursor_value_input {access?: (e_utility_practice_access_enum | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_changing_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_utility_practice_statuses_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface utility_practice_sessions_stream_cursor_value_input {access?: (e_utility_practice_access_enum | null),collection_id?: (Scalars['uuid'] | null),created_at?: (Scalars['timestamptz'] | null),empty_since?: (Scalars['timestamptz'] | null),expires_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),first_joined_at?: (Scalars['timestamptz'] | null),host_steam_id?: (Scalars['bigint'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),is_open?: (Scalars['Boolean'] | null),is_render?: (Scalars['Boolean'] | null),last_occupied_at?: (Scalars['timestamptz'] | null),map_changing_at?: (Scalars['timestamptz'] | null),map_name?: (Scalars['String'] | null),match_id?: (Scalars['uuid'] | null),notify_when_ready?: (Scalars['Boolean'] | null),playbook_id?: (Scalars['uuid'] | null),region?: (Scalars['String'] | null),status?: (e_utility_practice_statuses_enum | null),team_id?: (Scalars['uuid'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate sum on columns */
@@ -149583,6 +149585,7 @@ export const enumUtilityPracticeSessionsSelectColumn = {
    map_changing_at: 'map_changing_at' as const,
    map_name: 'map_name' as const,
    match_id: 'match_id' as const,
+   notify_when_ready: 'notify_when_ready' as const,
    playbook_id: 'playbook_id' as const,
    region: 'region' as const,
    status: 'status' as const,
@@ -149592,12 +149595,14 @@ export const enumUtilityPracticeSessionsSelectColumn = {
 
 export const enumUtilityPracticeSessionsSelectColumnUtilityPracticeSessionsAggregateBoolExpBoolAndArgumentsColumns = {
    is_open: 'is_open' as const,
-   is_render: 'is_render' as const
+   is_render: 'is_render' as const,
+   notify_when_ready: 'notify_when_ready' as const
 }
 
 export const enumUtilityPracticeSessionsSelectColumnUtilityPracticeSessionsAggregateBoolExpBoolOrArgumentsColumns = {
    is_open: 'is_open' as const,
-   is_render: 'is_render' as const
+   is_render: 'is_render' as const,
+   notify_when_ready: 'notify_when_ready' as const
 }
 
 export const enumUtilityPracticeSessionsUpdateColumn = {
@@ -149617,6 +149622,7 @@ export const enumUtilityPracticeSessionsUpdateColumn = {
    map_changing_at: 'map_changing_at' as const,
    map_name: 'map_name' as const,
    match_id: 'match_id' as const,
+   notify_when_ready: 'notify_when_ready' as const,
    playbook_id: 'playbook_id' as const,
    region: 'region' as const,
    status: 'status' as const,
