@@ -127754,6 +127754,7 @@ type utility_practice_sessions {
   """An object relationship"""
   match: matches
   match_id: uuid
+  notify_when_ready: Boolean!
 
   """An object relationship"""
   playbook: utility_playbooks
@@ -127892,6 +127893,7 @@ input utility_practice_sessions_bool_exp {
   map_name: String_comparison_exp
   match: matches_bool_exp
   match_id: uuid_comparison_exp
+  notify_when_ready: Boolean_comparison_exp
   playbook: utility_playbooks_bool_exp
   playbook_id: uuid_comparison_exp
   region: String_comparison_exp
@@ -127958,6 +127960,7 @@ input utility_practice_sessions_insert_input {
   map_name: String
   match: matches_obj_rel_insert_input
   match_id: uuid
+  notify_when_ready: Boolean
   playbook: utility_playbooks_obj_rel_insert_input
   playbook_id: uuid
   region: String
@@ -128133,6 +128136,7 @@ input utility_practice_sessions_order_by {
   map_name: order_by
   match: matches_order_by
   match_id: order_by
+  notify_when_ready: order_by
   playbook: utility_playbooks_order_by
   playbook_id: order_by
   region: order_by
@@ -128200,6 +128204,9 @@ enum utility_practice_sessions_select_column {
   match_id
 
   """column name"""
+  notify_when_ready
+
+  """column name"""
   playbook_id
 
   """column name"""
@@ -128224,6 +128231,9 @@ enum utility_practice_sessions_select_column_utility_practice_sessions_aggregate
 
   """column name"""
   is_render
+
+  """column name"""
+  notify_when_ready
 }
 
 """
@@ -128235,6 +128245,9 @@ enum utility_practice_sessions_select_column_utility_practice_sessions_aggregate
 
   """column name"""
   is_render
+
+  """column name"""
+  notify_when_ready
 }
 
 """
@@ -128257,6 +128270,7 @@ input utility_practice_sessions_set_input {
   map_changing_at: timestamptz
   map_name: String
   match_id: uuid
+  notify_when_ready: Boolean
   playbook_id: uuid
   region: String
   status: e_utility_practice_statuses_enum
@@ -128329,6 +128343,7 @@ input utility_practice_sessions_stream_cursor_value_input {
   map_changing_at: timestamptz
   map_name: String
   match_id: uuid
+  notify_when_ready: Boolean
   playbook_id: uuid
   region: String
   status: e_utility_practice_statuses_enum
@@ -128399,6 +128414,9 @@ enum utility_practice_sessions_update_column {
 
   """column name"""
   match_id
+
+  """column name"""
+  notify_when_ready
 
   """column name"""
   playbook_id

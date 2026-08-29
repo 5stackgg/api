@@ -86,6 +86,19 @@ describe("utility practice sessions (SQL-driven)", () => {
     return inserted.id;
   }
 
+  // A dedicated practice box: already running, already listed in the picker,
+  // and the thing an on-demand choice must not be quietly answered with.
+  async function standingPracticeServer(region: string): Promise<string> {
+    const [row] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO servers
+         (host, label, rcon_password, port, enabled, connected, region, type, is_dedicated)
+       VALUES ('127.0.0.1', $1, $2, 27960, true, true, $3, 'Practice', true)
+       RETURNING id::text AS id`,
+      [`practice-${region}`, Buffer.from("password"), region],
+    );
+    return row.id;
+  }
+
   // The exact shape startUtilityPractice builds: a one-map Custom pool, no veto,
   // Competitive with enough substitutes for a full practice server, and
   // source='practice' so match_events takes the practice branch.
@@ -252,6 +265,9 @@ describe("utility practice sessions (SQL-driven)", () => {
       } as unknown as never,
       {
         countFreeOnDemandServers: jest.fn(async (): Promise<number> => 10),
+        // An install that can boot pods, unless a test says otherwise: the
+        // other answer is a different refusal, not a busier one.
+        hasOnDemandNodes: jest.fn(async (): Promise<boolean> => true),
         sendUtilityPracticeRefresh: jest.fn(async (): Promise<void> => undefined),
         updateMatchStatus: jest.fn(async (): Promise<void> => undefined),
         ...(overrides.matchAssistant ?? {}),
@@ -328,10 +344,18 @@ describe("utility practice sessions (SQL-driven)", () => {
   });
 
   describe("server headroom", () => {
-    it("refuses to start when only the reserved servers are free", async () => {
+    // Two rules on one fixture, because a standing server in the named region
+    // is what makes the refusal meaningful. The region group in the picker is
+    // headed ON DEMAND, and every standing practice server is a row of its own
+    // beside it: answering "US-EAST" with the box already running in US-EAST
+    // handed back a server nobody asked for -- and when that box is not really
+    // up, one that never answers, behind a connect string that made the website
+    // say "ready to join".
+    it("refuses a named region on reserved headroom without taking the standing server", async () => {
       const host = await fx.player();
       await setting("public.utility_practice_enabled", "true");
       await setting("public.utility_practice_reserved_servers", "2");
+      await standingPracticeServer("TestA");
 
       const service = makeService({
         matchAssistant: {
@@ -350,6 +374,97 @@ describe("utility practice sessions (SQL-driven)", () => {
         "SELECT 1 FROM utility_practice_sessions",
       );
       expect(rows.length).toBe(0);
+
+      const [server] = await postgres.query<Array<{ reserved: string | null }>>(
+        `SELECT reserved_by_match_id::text AS reserved
+           FROM servers WHERE type = 'Practice'`,
+      );
+      expect(server.reserved).toBeNull();
+    });
+
+    // The other half of the same rule: automatic is the choice whose own hint
+    // promises "a free practice server if one is standing", so it takes one and
+    // never spends a slot the headroom is holding back.
+    it("still takes a standing server for the automatic choice", async () => {
+      const host = await fx.player();
+      await setting("public.utility_practice_enabled", "true");
+      await setting("public.utility_practice_reserved_servers", "2");
+      await standingPracticeServer("TestA");
+
+      const service = makeService({
+        matchAssistant: {
+          countFreeOnDemandServers: jest.fn(async (): Promise<number> => 2),
+        },
+      });
+
+      // The match behind it needs hasura, which this suite does not stand up --
+      // so it gets as far as the session row and no further. That row is the
+      // whole assertion: a start turned away by the headroom never reaches it,
+      // and the region on it is the standing server's.
+      await service
+        .start({ steam_id: host, role: "user" } as never, {
+          map_name: "de_mirage",
+        })
+        .catch((): undefined => undefined);
+
+      const [session] = await postgres.query<Array<{ region: string }>>(
+        "SELECT region FROM utility_practice_sessions",
+      );
+      expect(session?.region).toBe("TestA");
+    });
+
+    // Busy is worth waiting for; impossible is not. Queuing is what puts a max
+    // length on everybody currently holding a server, so a row nothing can ever
+    // serve costs every other player time and buys its author nothing.
+    it("does not queue a player for a region that has no node to boot on", async () => {
+      const host = await fx.player();
+      await setting("public.utility_practice_enabled", "true");
+      await setting("public.utility_practice_reserved_servers", "2");
+
+      const service = makeService({
+        matchAssistant: {
+          countFreeOnDemandServers: jest.fn(async (): Promise<number> => 0),
+          hasOnDemandNodes: jest.fn(async (): Promise<boolean> => false),
+        },
+      });
+
+      await expect(
+        service.start({ steam_id: host, role: "user" } as never, {
+          map_name: "de_mirage",
+          region: "TestA",
+        }),
+      ).rejects.toThrow(/no practice server can be started in TestA/);
+
+      const waiting = await postgres.query<Array<unknown>>(
+        "SELECT 1 FROM utility_practice_waitlist",
+      );
+      expect(waiting.length).toBe(0);
+    });
+
+    it("queues a player when the servers exist and are merely busy", async () => {
+      const host = await fx.player();
+      await setting("public.utility_practice_enabled", "true");
+      await setting("public.utility_practice_reserved_servers", "2");
+
+      const service = makeService({
+        matchAssistant: {
+          countFreeOnDemandServers: jest.fn(async (): Promise<number> => 2),
+          hasOnDemandNodes: jest.fn(async (): Promise<boolean> => true),
+        },
+      });
+
+      await expect(
+        service.start({ steam_id: host, role: "user" } as never, {
+          map_name: "de_mirage",
+          region: "TestA",
+        }),
+      ).rejects.toThrow(/no practice servers are free/);
+
+      const [waiting] = await postgres.query<Array<{ region: string }>>(
+        "SELECT region FROM utility_practice_waitlist WHERE steam_id = $1",
+        [host],
+      );
+      expect(waiting?.region).toBe("TestA");
     });
 
     it("refuses to start at all while the feature is off", async () => {
@@ -364,6 +479,107 @@ describe("utility practice sessions (SQL-driven)", () => {
           region: "TestA",
         }),
       ).rejects.toThrow(/not enabled/);
+    });
+  });
+
+  // Nothing serves this table -- it is only ever cleared by the same player
+  // getting a server -- so an abandoned row used to say "somebody is waiting"
+  // for the life of the database, and MAX_MINUTES then capped every session on
+  // the install.
+  describe("the waitlist", () => {
+    async function waitlist(steamId: string, minutesAgo: number) {
+      await postgres.query(
+        `INSERT INTO utility_practice_waitlist (steam_id, map_name, region, created_at)
+         VALUES ($1, 'de_mirage', 'TestA', now() - ($2 || ' minutes')::interval)`,
+        [steamId, minutesAgo],
+      );
+    }
+
+    it("drops entries older than the waiting window", async () => {
+      const stale = await fx.player();
+      const fresh = await fx.player();
+      await waitlist(stale, UtilityPracticeService.WAITLIST_MINUTES + 5);
+      await waitlist(fresh, 1);
+
+      expect(await makeService({}).sweepWaitlist()).toBe(1);
+
+      const rows = await postgres.query<Array<{ steam_id: string }>>(
+        "SELECT steam_id::text AS steam_id FROM utility_practice_waitlist",
+      );
+      expect(rows.map(({ steam_id }) => steam_id)).toEqual([fresh]);
+    });
+
+    it("takes the waiting window from the settings table", async () => {
+      const stale = await fx.player();
+      await setting("public.utility_practice_waitlist_minutes", "5");
+      // Inside the 30-minute default, outside the 5 the operator asked for.
+      await waitlist(stale, 10);
+
+      expect(await makeService({}).sweepWaitlist()).toBe(1);
+    });
+
+    // The reaper is the only reader of contention, so the sweep runs there
+    // rather than on a timer of its own.
+    it("is swept before the reaper reads contention", async () => {
+      const stale = await fx.player();
+      await waitlist(stale, UtilityPracticeService.WAITLIST_MINUTES + 5);
+
+      await makeService({}).reapIdle();
+
+      const rows = await postgres.query<Array<unknown>>(
+        "SELECT 1 FROM utility_practice_waitlist",
+      );
+      expect(rows.length).toBe(0);
+    });
+
+    // What the flag is for: the session remembers that its host had been sent
+    // away, so markReady knows there is somebody who stopped watching.
+    it("marks a session that came out of the queue for a buzz", async () => {
+      const host = await fx.player();
+      await setting("public.utility_practice_enabled", "true");
+      await standingPracticeServer("TestA");
+      await waitlist(host, 1);
+
+      // The match behind it needs hasura, which this suite does not stand up,
+      // so it gets as far as the session row and no further.
+      await makeService({})
+        .start({ steam_id: host, role: "user" } as never, {
+          map_name: "de_mirage",
+        })
+        .catch((): undefined => undefined);
+
+      const [session] = await postgres.query<
+        Array<{ notify_when_ready: boolean }>
+      >("SELECT notify_when_ready FROM utility_practice_sessions");
+      expect(session?.notify_when_ready).toBe(true);
+    });
+
+    it("leaves a walk-up session to the nav bar", async () => {
+      const host = await fx.player();
+      await setting("public.utility_practice_enabled", "true");
+      await standingPracticeServer("TestA");
+
+      await makeService({})
+        .start({ steam_id: host, role: "user" } as never, {
+          map_name: "de_mirage",
+        })
+        .catch((): undefined => undefined);
+
+      const [session] = await postgres.query<
+        Array<{ notify_when_ready: boolean }>
+      >("SELECT notify_when_ready FROM utility_practice_sessions");
+      expect(session?.notify_when_ready).toBe(false);
+    });
+
+    it("reports whether the player was actually queued", async () => {
+      const queued = await fx.player();
+      const walkUp = await fx.player();
+      await waitlist(queued, 1);
+
+      const service = makeService({});
+
+      expect(await service.leaveWaitlist(queued)).toBe(true);
+      expect(await service.leaveWaitlist(walkUp)).toBe(false);
     });
   });
 
@@ -1356,6 +1572,28 @@ describe("utility practice sessions (SQL-driven)", () => {
       const service = makeService({});
       expect(await service.sessionForServer(serverId)).toBeNull();
     });
+
+    // GET /utility/session is asked once, at map load, and a plugin whose first
+    // ask failed never asks again -- so the session sat Starting behind a server
+    // that was up and posting. A practice pod pings nothing else, so this tick
+    // is the only other proof there is.
+    it("takes an occupancy tick as proof the server came up", async () => {
+      const host = await fx.player();
+      const { matchId } = await createPracticeMatch(host);
+      const sessionId = await insertSession(host, {
+        match_id: matchId,
+        status: "Starting",
+      });
+      const serverId = await reservedServer("practice-a", matchId, 27964);
+
+      await makeService({}).reportOccupancy(serverId, []);
+
+      const [session] = await postgres.query<Array<{ status: string }>>(
+        "SELECT status FROM utility_practice_sessions WHERE id = $1::uuid",
+        [sessionId],
+      );
+      expect(session.status).toBe("Ready");
+    });
   });
 
   describe("the reaper", () => {
@@ -1644,9 +1882,11 @@ describe("utility practice sessions (SQL-driven)", () => {
       expect(notified).toHaveLength(1);
     });
 
-    // The plugin polls GET /utility/session, so markReady runs over and over.
-    // Only the poll that moved the session out of Starting may announce it.
-    it("announces a ready server once, to the host and the lineup", async () => {
+    // The practice bar in the top nav says a server is booting and when it is
+    // up, on every page, for as long as the session lasts -- so somebody who
+    // pressed Start and stayed there is already being told, and a bell row a
+    // moment later says the same thing worse.
+    it("moves a session to Ready without buzzing anybody who was watching", async () => {
       const host = await fx.player();
       const { matchId, lineupId } = await createPracticeMatch(host);
       const mate = await fx.player();
@@ -1661,18 +1901,79 @@ describe("utility practice sessions (SQL-driven)", () => {
       const service = makeService({});
 
       await service.markReady(matchId);
-      await service.markReady(matchId);
+
+      expect(await statusOf(sessionId)).toBe("Ready");
+      expect(notified).toHaveLength(0);
+    });
+
+    // The exception, and the only one: they were turned away, queued, and the
+    // whole point of a queue is that you stop watching it.
+    it("buzzes the session that had to wait for its turn", async () => {
+      const host = await fx.player();
+      const { matchId, lineupId } = await createPracticeMatch(host);
+      const mate = await fx.player();
+      await postgres.query(
+        "INSERT INTO match_lineup_players (match_lineup_id, steam_id) VALUES ($1, $2)",
+        [lineupId, mate],
+      );
+      const sessionId = await insertSession(host, {
+        match_id: matchId,
+        status: "Starting",
+        notify_when_ready: true,
+      });
+
+      await makeService({}).markReady(matchId);
 
       expect(notified).toHaveLength(1);
       expect(notified[0].type).toBe("UtilityPracticeReady");
-      expect(notified[0].steamIds.sort()).toEqual([host, mate].sort());
-      // Suffixed so the bell does not stack it onto the invite for the same
-      // session.
       expect(notified[0].entity_id).toBe(`${sessionId}:ready`);
-      // No deeper target exists; the host already holds the dialog.
-      expect(notified[0].message).toContain(
-        "https://5stack.test/utility/de_mirage",
-      );
+      // The host plus whoever was let into the lineup while it booted: the
+      // link they were handed only starts working now.
+      expect([...notified[0].steamIds].sort()).toEqual([host, mate].sort());
     });
+
+    // The plugin polls GET /utility/session and the occupancy tick posts every
+    // minute, so this runs over and over. Only the row the UPDATE actually
+    // moved comes back, which is what keeps it one buzz rather than one a
+    // minute for the life of the session.
+    it("buzzes once however many times the plugin asks", async () => {
+      const host = await fx.player();
+      const { matchId } = await createPracticeMatch(host);
+      await insertSession(host, {
+        match_id: matchId,
+        status: "Starting",
+        notify_when_ready: true,
+      });
+      const service = makeService({});
+
+      await service.markReady(matchId);
+      await service.markReady(matchId);
+      await service.markReady(matchId);
+
+      expect(notified).toHaveLength(1);
+    });
+
+    // A late poll from a server that is being torn down must not put the
+    // session back on the board.
+    it("never brings a session back out of a terminal status", async () => {
+      const host = await fx.player();
+      const { matchId } = await createPracticeMatch(host);
+      const sessionId = await insertSession(host, {
+        match_id: matchId,
+        status: "Ended",
+      });
+
+      await makeService({}).markReady(matchId);
+
+      expect(await statusOf(sessionId)).toBe("Ended");
+    });
+
+    async function statusOf(sessionId: string): Promise<string> {
+      const [session] = await postgres.query<Array<{ status: string }>>(
+        "SELECT status FROM utility_practice_sessions WHERE id = $1::uuid",
+        [sessionId],
+      );
+      return session.status;
+    }
   });
 });

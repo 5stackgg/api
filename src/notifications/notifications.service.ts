@@ -61,7 +61,8 @@ export class NotificationsService {
     "LeagueRegistrationDecision",
     "LeagueRosterUndersized",
     // One player's own practice server. A staff channel has nothing to do with
-    // it, and a busy install would post one line per session boot.
+    // it, and a busy install would post one line per player who had to queue
+    // for one.
     "UtilityPracticeInvite",
     "UtilityPracticeReady",
   ]);

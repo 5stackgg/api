@@ -24,6 +24,17 @@ describe("MatchAssistantService", () => {
     getDelayed: jest.Mock;
   };
 
+  // Every "we could not get you a server" write goes out as one conditional
+  // update_matches, so the assertions read the statement rather than a status
+  // setter that is no longer how the assignment path says it.
+  function waitingForServerWrites() {
+    return hasura.mutation.mock.calls
+      .map(([mutation]) => mutation?.update_matches)
+      .filter(
+        (update) => update?.__args?._set?.status === "WaitingForServer",
+      );
+  }
+
   beforeEach(() => {
     hasura = {
       query: jest.fn(),
@@ -200,6 +211,123 @@ describe("MatchAssistantService", () => {
     await expect(service.assignServer("match-1")).resolves.toBeUndefined();
 
     expect(startMatch).not.toHaveBeenCalled();
+  });
+
+  // A dedicated server runs the match plugin; the utility practice plugin ships
+  // only in the on-demand image. Falling back to one gave a practice session a
+  // connect string -- so the website read "ready to join" -- for a box that can
+  // never answer GET /utility/session, which is what turns the session Ready.
+  it("never falls back to a dedicated server for a practice match", async () => {
+    hasura.query.mockResolvedValue({
+      matches_by_pk: {
+        id: "match-1",
+        region: "USE",
+        source: "practice",
+        options: {
+          prefer_dedicated_server: false,
+        },
+      },
+    });
+
+    jest.spyOn(service as any, "assignOnDemandServer").mockResolvedValue(false);
+    const assignDedicated = jest
+      .spyOn(service as any, "assignDedicatedServer")
+      .mockResolvedValue(true);
+
+    await expect(service.assignServer("match-1")).resolves.toBeUndefined();
+
+    expect(assignDedicated).not.toHaveBeenCalled();
+    expect(waitingForServerWrites()).toHaveLength(1);
+  });
+
+  // countFreeOnDemandServers answers zero for "everything is busy" and for
+  // "there is no node here", and only the second is hopeless -- the practice
+  // start reads this to decide whether queuing could ever help.
+  describe("hasOnDemandNodes", () => {
+    it("is false when no node in the region can take a pod", async () => {
+      hasura.query.mockResolvedValue({ game_server_nodes: [] });
+
+      expect(await service.hasOnDemandNodes("USE")).toBe(false);
+    });
+
+    it("asks only about the region it was given", async () => {
+      hasura.query.mockResolvedValue({ game_server_nodes: [{ id: "node-1" }] });
+
+      expect(await service.hasOnDemandNodes("USE")).toBe(true);
+
+      const [[query]] = hasura.query.mock.calls;
+
+      expect(query.game_server_nodes.__args.where.region).toEqual({
+        _eq: "USE",
+      });
+      expect(query.game_server_nodes.__args.where.status).toEqual({
+        _eq: "Online",
+      });
+    });
+
+    it("asks about the whole install when given no region", async () => {
+      hasura.query.mockResolvedValue({ game_server_nodes: [{ id: "node-1" }] });
+
+      await service.hasOnDemandNodes();
+
+      const [[query]] = hasura.query.mock.calls;
+
+      expect(query.game_server_nodes.__args.where.region).toBeUndefined();
+    });
+  });
+
+  // The boot attempt outlives the host pressing Stop. Writing the status back
+  // without a condition moved the already Canceled match to WaitingForServer,
+  // and with the practice session already Ended nothing was left to move it
+  // again -- so the row sat there forever.
+  it("cannot move a finished match back to waiting for a server", async () => {
+    hasura.query.mockResolvedValue({
+      matches_by_pk: {
+        id: "match-1",
+        region: "USE",
+        source: "practice",
+        options: {
+          prefer_dedicated_server: false,
+        },
+      },
+    });
+
+    jest.spyOn(service as any, "assignOnDemandServer").mockResolvedValue(false);
+
+    await service.assignServer("match-1");
+
+    const [write] = waitingForServerWrites();
+
+    expect(write.__args.where.status._nin).toEqual(
+      expect.arrayContaining(["Canceled", "Finished", "WaitingForServer"]),
+    );
+  });
+
+  // The same guard on the other side of the branch: prefer_dedicated_server is
+  // an option a practice match never sets, but nothing stops it being set.
+  it("ignores prefer_dedicated_server on a practice match", async () => {
+    hasura.query.mockResolvedValue({
+      matches_by_pk: {
+        id: "match-1",
+        region: "USE",
+        source: "practice",
+        options: {
+          prefer_dedicated_server: true,
+        },
+      },
+    });
+
+    const assignOnDemand = jest
+      .spyOn(service as any, "assignOnDemandServer")
+      .mockResolvedValue(true);
+    const assignDedicated = jest
+      .spyOn(service as any, "assignDedicatedServer")
+      .mockResolvedValue(true);
+
+    await expect(service.assignServer("match-1")).resolves.toBeUndefined();
+
+    expect(assignOnDemand).toHaveBeenCalled();
+    expect(assignDedicated).not.toHaveBeenCalled();
   });
 
   it("schedules the next on-demand server boot check after 15 seconds", async () => {
