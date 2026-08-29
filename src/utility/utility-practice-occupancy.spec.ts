@@ -10,8 +10,9 @@ describe("UtilityPracticeService.reportOccupancy", () => {
     const publish = jest.fn().mockResolvedValue(undefined);
     const postgres = { query: jest.fn() };
 
-    // The UPDATE ... RETURNING is the first query; the two session bookkeeping
-    // writes that follow it only run when somebody is present.
+    // The UPDATE ... RETURNING is the first query this spec lets through --
+    // markReady is stubbed below, so its own write never lands here. The two
+    // session bookkeeping writes that follow only run when somebody is present.
     postgres.query
       .mockResolvedValueOnce(flipped)
       .mockResolvedValue([] as Array<unknown>);
@@ -46,6 +47,9 @@ describe("UtilityPracticeService.reportOccupancy", () => {
       password: "hunter2",
     });
     jest.spyOn(service, "touch").mockResolvedValue(undefined);
+    // A tick is also the proof that the server came up, but that is the
+    // readiness path's business, not the push's.
+    jest.spyOn(service, "markReady").mockResolvedValue(undefined);
 
     return { service, publish, postgres, load };
   }

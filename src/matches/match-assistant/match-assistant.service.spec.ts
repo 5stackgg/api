@@ -202,6 +202,66 @@ describe("MatchAssistantService", () => {
     expect(startMatch).not.toHaveBeenCalled();
   });
 
+  // A dedicated server runs the match plugin; the utility practice plugin ships
+  // only in the on-demand image. Falling back to one gave a practice session a
+  // connect string -- so the website read "ready to join" -- for a box that can
+  // never answer GET /utility/session, which is what turns the session Ready.
+  it("never falls back to a dedicated server for a practice match", async () => {
+    hasura.query.mockResolvedValue({
+      matches_by_pk: {
+        id: "match-1",
+        region: "USE",
+        source: "practice",
+        options: {
+          prefer_dedicated_server: false,
+        },
+      },
+    });
+
+    jest.spyOn(service as any, "assignOnDemandServer").mockResolvedValue(false);
+    const assignDedicated = jest
+      .spyOn(service as any, "assignDedicatedServer")
+      .mockResolvedValue(true);
+    const updateMatchStatus = jest
+      .spyOn(service, "updateMatchStatus")
+      .mockResolvedValue(undefined);
+
+    await expect(service.assignServer("match-1")).resolves.toBeUndefined();
+
+    expect(assignDedicated).not.toHaveBeenCalled();
+    expect(updateMatchStatus).toHaveBeenCalledWith(
+      "match-1",
+      "WaitingForServer",
+    );
+  });
+
+  // The same guard on the other side of the branch: prefer_dedicated_server is
+  // an option a practice match never sets, but nothing stops it being set.
+  it("ignores prefer_dedicated_server on a practice match", async () => {
+    hasura.query.mockResolvedValue({
+      matches_by_pk: {
+        id: "match-1",
+        region: "USE",
+        source: "practice",
+        options: {
+          prefer_dedicated_server: true,
+        },
+      },
+    });
+
+    const assignOnDemand = jest
+      .spyOn(service as any, "assignOnDemandServer")
+      .mockResolvedValue(true);
+    const assignDedicated = jest
+      .spyOn(service as any, "assignDedicatedServer")
+      .mockResolvedValue(true);
+
+    await expect(service.assignServer("match-1")).resolves.toBeUndefined();
+
+    expect(assignOnDemand).toHaveBeenCalled();
+    expect(assignDedicated).not.toHaveBeenCalled();
+  });
+
   it("schedules the next on-demand server boot check after 15 seconds", async () => {
     await service.delayCheckOnDemandServer("match-1");
 

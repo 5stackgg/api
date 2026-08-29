@@ -334,13 +334,22 @@ export class MatchAssistantService {
         },
         id: true,
         region: true,
+        source: true,
         options: {
           prefer_dedicated_server: true,
         },
       },
     });
 
-    if (match.options.prefer_dedicated_server) {
+    // A practice match runs the utility practice plugin, and only the on-demand
+    // image installs it -- a dedicated server is running the match plugin
+    // instead. Handing one to a practice session is worse than failing: the
+    // connect string resolves the moment the server is assigned, so the website
+    // reads "ready to join" for a box that will never answer GET
+    // /utility/session and never comes up as a practice server at all.
+    const onDemandOnly = match.source === "practice";
+
+    if (!onDemandOnly && match.options.prefer_dedicated_server) {
       try {
         const assignedDedicated = await this.assignDedicatedServer(
           match.id,
@@ -383,6 +392,18 @@ export class MatchAssistantService {
         }, tries * 1000);
         return;
       }
+    }
+
+    // No pod, and no second pool to fall back on. Saying so is what turns the
+    // session Failed -- match_events reads WaitingForServer off a practice
+    // match as "no practice server was available" -- rather than leaving it
+    // Starting until the boot grace runs out.
+    if (onDemandOnly) {
+      this.logger.log(
+        `[${matchId}] practice match, and no on demand server could be booted`,
+      );
+      await this.updateMatchStatus(match.id, "WaitingForServer");
+      return;
     }
 
     // we already checked above, so we can skip trying to assign again

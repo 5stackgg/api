@@ -63,7 +63,6 @@ export class NotificationsService {
     // One player's own practice server. A staff channel has nothing to do with
     // it, and a busy install would post one line per session boot.
     "UtilityPracticeInvite",
-    "UtilityPracticeReady",
   ]);
 
   // Nobody has seen a notification in six months who hasn't signed in, and a

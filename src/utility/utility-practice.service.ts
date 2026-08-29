@@ -153,9 +153,21 @@ export class UtilityPracticeService {
       // A practice server is a pool of its own -- matchmaking never sees
       // type = 'Practice' -- so booking one costs matchmaking nothing and
       // skips both the region search and the headroom reserve.
+      //
+      // A named region is the ON DEMAND answer and nothing else. The picker
+      // lists every standing practice server as a row of its own, so a caller
+      // who wanted the box in US-EAST asked for it by id; one who picked
+      // US-EAST out of the region group asked for a pod to be booted there.
+      // Substituting the standing box handed back a server nobody asked for --
+      // and if it is not actually up, one that never answers. Only the
+      // automatic choice may take a standing one, which is what its own hint
+      // promises: "a free practice server if one is standing, otherwise a
+      // fresh one".
       const server = input.server_id
         ? await this.practiceServer(input.server_id)
-        : await this.freePracticeServer(input.region);
+        : input.region
+          ? null
+          : await this.freePracticeServer(null);
 
       let region: string;
 
@@ -708,79 +720,16 @@ export class UtilityPracticeService {
     return row ?? null;
   }
 
-  // The plugin polls, so this runs on every GET /utility/session. Only the row
-  // the UPDATE actually moved out of 'Starting' comes back, which is what keeps
-  // "your server is ready" a single buzz rather than one per poll.
+  // The plugin polls, so this runs on every GET /utility/session, and the
+  // occupancy tick posts it again every minute. The status guard is what makes
+  // that idempotent: only a row still in 'Starting' is moved.
   public async markReady(matchId: string): Promise<void> {
-    const [session] = await this.postgres.query<
-      Array<{ id: string; host_steam_id: string | null; map_name: string }>
-    >(
+    await this.postgres.query(
       `UPDATE public.utility_practice_sessions
           SET status = 'Ready', failure_reason = NULL, last_occupied_at = now()
-        WHERE match_id = $1::uuid AND status = 'Starting'
-       RETURNING id::text AS id, host_steam_id::text AS host_steam_id, map_name`,
+        WHERE match_id = $1::uuid AND status = 'Starting'`,
       [matchId],
     );
-
-    if (!session) {
-      return;
-    }
-
-    await this.notifyReady(matchId, session);
-  }
-
-  private async notifyReady(
-    matchId: string,
-    session: { id: string; host_steam_id: string | null; map_name: string },
-  ): Promise<void> {
-    // The host plus anyone already added to the lineup: they were let in while
-    // the server was still booting, so the link they were handed only starts
-    // working now.
-    const players = await this.postgres.query<Array<{ steam_id: string }>>(
-      `SELECT DISTINCT mlp.steam_id::text AS steam_id
-         FROM public.match_lineup_players mlp
-         INNER JOIN public.match_lineups ml ON ml.id = mlp.match_lineup_id
-        WHERE ml.match_id = $1::uuid
-          AND mlp.steam_id IS NOT NULL`,
-      [matchId],
-    );
-
-    // A render session has no host and no roster -- nobody to tell it is ready.
-    const steamIds = [
-      ...new Set(
-        [
-          session.host_steam_id,
-          ...players.map((player) => player.steam_id),
-        ].filter((id): id is string => id !== null),
-      ),
-    ];
-    if (steamIds.length === 0) {
-      return;
-    }
-
-    const map = NotificationsService.escapeHtml(session.map_name);
-
-    try {
-      await this.notifications.notifyPlayers(
-        "UtilityPracticeReady" as e_notification_types_enum,
-        {
-          title: "Practice Server Ready",
-          message:
-            `Your utility practice server on <b>${map}</b> is up. ` +
-            `<a href="${this.mapUrl(session.map_name)}">Open the board</a>.`,
-          role: "user" as e_player_roles_enum,
-          // Suffixed, not the bare session id: the bell stacks rows that share
-          // an entity_id, so an invite and a ready for the same session would
-          // collapse into one another and the second would never be seen.
-          entity_id: `${session.id}:ready`,
-          steamIds,
-        },
-      );
-    } catch (error) {
-      this.logger.warn(
-        `[utility-practice] unable to announce ${session.id} as ready: ${(error as Error)?.message}`,
-      );
-    }
   }
 
   // A practice session has no page of its own -- it is a dialog on the map
@@ -1851,6 +1800,14 @@ export class UtilityPracticeService {
     if (!session) {
       return;
     }
+
+    // The second proof that the server is up, and the reason there has to be
+    // one: GET /utility/session is asked once, at map load, and a plugin whose
+    // first ask failed never asks again -- leaving a session Starting behind a
+    // server that is running and talking. A practice pod does not ping
+    // /game-server-node, so nothing else would ever notice. This tick is the
+    // plugin on a loaded map, which is all Ready has ever meant.
+    await this.markReady(session.match_id);
 
     const present = steamIds
       .map((steamId) => String(steamId ?? "").trim())
