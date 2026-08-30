@@ -177,6 +177,25 @@ export class ProcessTournamentCheckIn extends WorkerHost {
     );
 
     for (const tournament of closed) {
+      // Before the CheckInReview filter on purpose: a tournament where every
+      // team showed up closes straight to RegistrationClosed, and the recorder
+      // has to see that too -- it no-ops there rather than being skipped.
+      // Idempotent and self-disabling, so a repeated close pass cannot double
+      // a sanction and a disabled policy costs nothing.
+      try {
+        await this.postgres.query(
+          "SELECT public.record_tournament_no_shows($1::uuid)",
+          [tournament.id],
+        );
+      } catch (error) {
+        // A sanction-policy failure must never strand the tournament in a
+        // half-closed state -- the status flip has already committed.
+        this.logger.error(
+          `[${tournament.id}] failed to record tournament no-shows`,
+          error,
+        );
+      }
+
       if (tournament.status !== "CheckInReview") {
         continue;
       }
