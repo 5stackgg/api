@@ -215,18 +215,29 @@ export class TelemetryService {
     this.redis = this.redisManagerService.getConnection();
   }
 
-  async send() {
-    // The panel receiving the reports would otherwise report to itself.
-    if (this.appConfig.webDomain.includes("://5stack.gg")) {
-      return;
-    }
+  // The panel the whole fleet reports to. It is a panel like any other and its
+  // counts belong in the fleet, but it is the one install that cannot get them
+  // there over the wire.
+  private isReceivingPanel() {
+    return this.appConfig.webDomain.includes("://5stack.gg");
+  }
 
+  async send() {
     let payload: TelemetryPayload;
 
     try {
       payload = await this.collect();
     } catch (error) {
       this.logger.warn("unable to collect telemetry", error);
+      return;
+    }
+
+    // Handed to the same ingest every other panel goes through -- sanitize and
+    // all -- rather than POSTed to itself. A loopback request would land on the
+    // public route's per-address throttle and arrive with no country header,
+    // and the flagship is exactly the install a dropped report is worst on.
+    if (this.isReceivingPanel()) {
+      await this.record(null, null, payload);
       return;
     }
 
@@ -396,7 +407,7 @@ export class TelemetryService {
     return Object.fromEntries(rows.map((row) => [row.plugin_slug, row.nodes]));
   }
 
-  async record(ip: string, country: string, data: unknown) {
+  async record(ip: string | null, country: string | null, data: unknown) {
     const payload = TelemetryService.sanitize(data);
 
     // Panels older than the payload rollout POST an empty body forever. They
@@ -416,7 +427,7 @@ export class TelemetryService {
 
   // SCAN rather than KEYS: this runs on a per-minute poll, and KEYS walks the
   // whole keyspace in one blocking command that stalls every other client.
-  async getOnlineSystemsCount(): Promise<number> {
+  async getOnlineSystemsCount(includeSelf = true): Promise<number> {
     let cursor = "0";
     // SCAN can hand back the same key on more than one pass, so count distinct.
     const seen = new Set<string>();
@@ -435,6 +446,18 @@ export class TelemetryService {
       }
     } while (cursor !== "0");
 
+    // The receiving panel keeps its own heartbeat under its install id like
+    // everyone else, so filtering it out of the totals has to take it out of
+    // the badge too -- otherwise the filtered page is one panel short of its
+    // own online count.
+    if (!includeSelf) {
+      const installId = await this.selfInstallId(false);
+
+      if (installId) {
+        seen.delete(`online_system:${installId}`);
+      }
+    }
+
     return seen.size;
   }
 
@@ -442,11 +465,14 @@ export class TelemetryService {
   // Hasura action handler cannot see the GraphQL selection set — so the
   // aggregates are cached and only the Redis-backed online count runs per call.
   // Panels report hourly, so nothing here goes stale within the TTL.
-  async getFleetStats() {
+  async getFleetStats(includeSelf = true) {
+    const self = await this.selfInstallId(includeSelf);
+
     const aggregates = await this.cache.remember(
       // Versioned: a cached blob from the previous shape would leave the page
-      // missing every field added since, for as long as the TTL lasts.
-      "telemetry:fleet:v3",
+      // missing every field added since, for as long as the TTL lasts. Keyed on
+      // the filter too, so the two views cannot serve each other's numbers.
+      `telemetry:fleet:v4:${includeSelf ? "all" : "others"}`,
       async () => {
         const [
           installs,
@@ -458,14 +484,14 @@ export class TelemetryService {
           distribution,
           utility,
         ] = await Promise.all([
-          this.getInstallCounts(),
-          this.getFleetTotals(),
-          this.getFeatureAdoption(),
-          this.getInstallGrowth(),
-          this.getFleetActivity(),
-          this.getMatchComposition(),
-          this.getFleetDistribution(),
-          this.getUtilityComposition(),
+          this.getInstallCounts(self),
+          this.getFleetTotals(self),
+          this.getFeatureAdoption(self),
+          this.getInstallGrowth(self),
+          this.getFleetActivity(self),
+          this.getMatchComposition(self),
+          this.getFleetDistribution(self),
+          this.getUtilityComposition(self),
         ]);
 
         return {
@@ -483,12 +509,45 @@ export class TelemetryService {
     );
 
     return {
-      online: await this.getOnlineSystemsCount(),
+      online: await this.getOnlineSystemsCount(includeSelf),
       ...aggregates,
     };
   }
 
-  private async getInstallCounts() {
+  // 5stack.gg reports like every other panel now, and it is far and away the
+  // largest install on the page -- big enough that its history reads as the
+  // fleet's rather than as one panel's. This is what the page's filter turns
+  // off, and every aggregate takes it so a filtered view is filtered all the
+  // way down instead of in the headline alone.
+  //
+  // Null when the flagship is being counted like everything else. On any panel
+  // but the receiving one this excludes an install id that is not in the table
+  // to begin with, which is the no-op it should be.
+  private async selfInstallId(includeSelf: boolean) {
+    if (includeSelf) {
+      return null;
+    }
+
+    const installId = await this.getInstallId();
+
+    // The id is interpolated rather than bound: the aggregates take no
+    // parameters and every one of them would need its own placeholder number.
+    // Safe because it is a uuid this panel generated in its own settings row,
+    // and the shape is checked here rather than trusted.
+    return TelemetryService.Uuid.test(installId) ? installId : null;
+  }
+
+  private static readonly Uuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  // `true` rather than an empty string so callers can always append it with
+  // AND, including the queries that have nothing else to filter on. The column
+  // is spelled out per call site because half of these queries alias the table.
+  private static excluding(self: string | null, column = "install_id") {
+    return self ? `${column} <> '${self}'::uuid` : "true";
+  }
+
+  private async getInstallCounts(self: string | null) {
     const [row] = await this.postgres.query<Array<Record<string, string>>>(
       `SELECT
          count(*)                                                                   AS total,
@@ -498,7 +557,8 @@ export class TelemetryService {
          count(*) FILTER (WHERE first_seen_at >= now() - interval '30 days')        AS new30d,
          count(*) FILTER (WHERE first_seen_at < now() - interval '180 days'
                             AND last_seen_at >= now() - interval '7 days')          AS retained180d
-       FROM public.telemetry_installs`,
+       FROM public.telemetry_installs
+       WHERE ${TelemetryService.excluding(self)}`,
     );
 
     return TelemetryService.toIntegers(row, [
@@ -511,43 +571,61 @@ export class TelemetryService {
     ]);
   }
 
-  // Summed across the latest payload of every install seen in the last 30 days.
-  // Installs that have gone dark are excluded so the fleet picture does not keep
-  // counting servers that were torn down a year ago. `panels` is that same set
-  // counted, so the page can say which denominator every total is over.
-  private async getFleetTotals() {
+  // Summed across the latest payload of every install that ever reported one.
+  //
+  // A panel that has gone dark still played the matches it played, so nothing
+  // cumulative is held to a window -- dropping a dark install took its whole
+  // all-time counter out of the fleet, which is why the totals read far below
+  // what the panels behind them have actually run.
+  //
+  // Only two kinds of column keep the window, via a per-column FILTER:
+  // point-in-time state, because a node torn down a year ago is not capacity
+  // and a build nobody runs is not the fleet; and the rolling windows, because
+  // a dark panel's "last 7 days" ended whenever it stopped reporting and
+  // summing it into today's would date the number to nothing.
+  //
+  // So the two totals are over two different denominators, and the page has to
+  // say which: `panels` counts the ones still checking in, and installs.total
+  // (getInstallCounts) is the set every cumulative number is summed over.
+  private static readonly RecentPanel =
+    "last_seen_at >= now() - interval '30 days'";
+
+  private async getFleetTotals(self: string | null) {
+    const recent = `FILTER (WHERE ${TelemetryService.RecentPanel})`;
+
     const [row] = await this.postgres.query<Array<Record<string, string>>>(
       `SELECT
-         count(*)                                                             AS panels,
-         coalesce(sum((payload->'nodes'->>'total')::numeric), 0)              AS "gameServerNodes",
-         coalesce(sum((payload->'nodes'->>'enabled')::numeric), 0)            AS "gameServerNodesEnabled",
-         coalesce(sum((payload->'nodes'->>'online')::numeric), 0)             AS "gameServerNodesOnline",
+         count(*) ${recent}                                                   AS panels,
+         coalesce(sum((payload->'nodes'->>'total')::numeric) ${recent}, 0)    AS "gameServerNodes",
+         coalesce(sum((payload->'nodes'->>'enabled')::numeric) ${recent}, 0)  AS "gameServerNodesEnabled",
+         coalesce(sum((payload->'nodes'->>'online')::numeric) ${recent}, 0)   AS "gameServerNodesOnline",
          -- Regions are named per panel, so this is how many each has stood up
          -- rather than how many distinct regions the fleet covers.
-         coalesce(sum((payload->'nodes'->>'regions')::numeric), 0)            AS regions,
-         coalesce(sum((payload->'nodes'->>'gpu')::numeric), 0)                AS "gpuNodes",
-         coalesce(sum((payload->'servers'->>'total')::numeric), 0)            AS servers,
-         coalesce(sum((payload->'servers'->>'enabled')::numeric), 0)          AS "serversEnabled",
-         coalesce(sum((payload->'servers'->>'dedicated')::numeric), 0)        AS "dedicatedServers",
-         coalesce(sum((payload->'servers'->>'public')::numeric), 0)           AS "publicServers",
+         coalesce(sum((payload->'nodes'->>'regions')::numeric) ${recent}, 0)  AS regions,
+         coalesce(sum((payload->'nodes'->>'gpu')::numeric) ${recent}, 0)      AS "gpuNodes",
+         coalesce(sum((payload->'servers'->>'total')::numeric) ${recent}, 0)  AS servers,
+         coalesce(sum((payload->'servers'->>'enabled')::numeric) ${recent}, 0) AS "serversEnabled",
+         coalesce(sum((payload->'servers'->>'dedicated')::numeric) ${recent}, 0) AS "dedicatedServers",
+         coalesce(sum((payload->'servers'->>'public')::numeric) ${recent}, 0) AS "publicServers",
          coalesce(sum((payload->'matches'->>'total')::numeric), 0)            AS matches,
          coalesce(sum((payload->'matches'->>'created')::numeric), 0)          AS "matchesCreated",
-         coalesce(sum((payload->'matches'->>'week')::numeric), 0)             AS "matchesWeek",
-         coalesce(sum((payload->'matches'->>'month')::numeric), 0)            AS "matchesMonth",
-         coalesce(sum((payload->'matches'->>'year')::numeric), 0)             AS "matchesYear",
+         coalesce(sum((payload->'matches'->>'week')::numeric) ${recent}, 0)   AS "matchesWeek",
+         coalesce(sum((payload->'matches'->>'month')::numeric) ${recent}, 0)  AS "matchesMonth",
+         coalesce(sum((payload->'matches'->>'year')::numeric) ${recent}, 0)   AS "matchesYear",
          -- A field added after a panel's build reports nothing, and summing
          -- that to zero reads as "no match ever finished". Count who actually
          -- supplied it so the page can say "not reported yet" instead.
          count(*) FILTER (WHERE payload->'matches'->>'finished' IS NOT NULL) AS "outcomesReported",
          coalesce(sum((payload->'matches'->>'finished')::numeric), 0)         AS "matchesFinished",
          coalesce(sum((payload->'matches'->>'abandoned')::numeric), 0)        AS "matchesAbandoned",
-         coalesce(sum((payload->'matches'->>'live')::numeric), 0)             AS "matchesLive",
+         -- Live Now is the one match column that is state rather than history.
+         coalesce(sum((payload->'matches'->>'live')::numeric) ${recent}, 0)   AS "matchesLive",
          coalesce(sum((payload->'matches'->>'tournament')::numeric), 0)       AS "matchesTournament",
          coalesce(sum((payload->'matches'->>'league')::numeric), 0)           AS "matchesLeague",
          coalesce(sum((payload->'matches'->>'scrim')::numeric), 0)            AS "matchesScrim",
          coalesce(sum((payload->'matches'->'external'->>'total')::numeric), 0) AS "matchesImported",
-         coalesce(sum((payload->'matches'->'external'->>'month')::numeric), 0) AS "matchesImportedMonth",
-         coalesce(sum((payload->'matches'->'external'->>'year')::numeric), 0)  AS "matchesImportedYear",
+         coalesce(sum((payload->'matches'->'external'->>'month')::numeric) ${recent}, 0) AS "matchesImportedMonth",
+         coalesce(sum((payload->'matches'->'external'->>'year')::numeric) ${recent}, 0)  AS "matchesImportedYear",
          coalesce(sum((payload->'matches'->>'maps_played')::numeric), 0)      AS "mapsPlayed",
          coalesce(sum((payload->'players'->>'known')::numeric), 0)            AS "playersKnown",
          coalesce(sum((payload->'players'->>'registered')::numeric), 0)       AS "playersRegistered",
@@ -556,8 +634,8 @@ export class TelemetryService {
            WHERE payload->'players'->>'appearances' IS NOT NULL
          )                                                                    AS "appearancesReported",
          coalesce(sum((payload->'players'->>'appearances')::numeric), 0)      AS "playerAppearances",
-         coalesce(sum((payload->'players'->>'active_7d')::numeric), 0)        AS "playersActive7d",
-         coalesce(sum((payload->'players'->>'active_30d')::numeric), 0)       AS "playersActive30d",
+         coalesce(sum((payload->'players'->>'active_7d')::numeric) ${recent}, 0)  AS "playersActive7d",
+         coalesce(sum((payload->'players'->>'active_30d')::numeric) ${recent}, 0) AS "playersActive30d",
          coalesce(sum((payload->'players'->>'teams')::numeric), 0)            AS teams,
 
          -- Same absent-vs-zero split as the match outcomes above: this whole
@@ -578,12 +656,18 @@ export class TelemetryService {
 
          -- Same "reported vs zero" split the match outcomes use: a panel too old
          -- to send this section is not a panel running no plugins.
-         count(*) FILTER (WHERE jsonb_typeof(payload->'plugins') = 'object')           AS "pluginsReported",
-         coalesce(sum((payload->'plugins'->>'requested')::numeric), 0)                 AS "pluginsRequested",
-         coalesce(sum((payload->'plugins'->>'manual')::numeric), 0)                    AS "pluginsManual",
-         coalesce(sum((payload->'plugins'->>'modes')::numeric), 0)                     AS "gameModes",
-         coalesce(sum((payload->'plugins'->>'modes_enabled')::numeric), 0)             AS "gameModesEnabled",
-         coalesce(sum((payload->'plugins'->>'modes_unranked')::numeric), 0)            AS "gameModesUnranked",
+         -- Windowed with the rest of the point-in-time state: what a panel had
+         -- on disk before it went dark is not what the fleet runs today, and
+         -- the directory's whole job is to rank what anybody is running now.
+         count(*) FILTER (
+           WHERE jsonb_typeof(payload->'plugins') = 'object'
+             AND ${TelemetryService.RecentPanel}
+         )                                                                             AS "pluginsReported",
+         coalesce(sum((payload->'plugins'->>'requested')::numeric) ${recent}, 0)        AS "pluginsRequested",
+         coalesce(sum((payload->'plugins'->>'manual')::numeric) ${recent}, 0)           AS "pluginsManual",
+         coalesce(sum((payload->'plugins'->>'modes')::numeric) ${recent}, 0)            AS "gameModes",
+         coalesce(sum((payload->'plugins'->>'modes_enabled')::numeric) ${recent}, 0)    AS "gameModesEnabled",
+         coalesce(sum((payload->'plugins'->>'modes_unranked')::numeric) ${recent}, 0)   AS "gameModesUnranked",
          -- Installs per plugin across the fleet, and how many separate panels
          -- run each. The panel count is the honest popularity signal: one
          -- operator with forty nodes is not forty operators.
@@ -600,12 +684,13 @@ export class TelemetryService {
                    coalesce(i.payload->'plugins'->'by_slug', '{}'::jsonb)
                  ) AS entry
                 WHERE i.last_seen_at >= now() - interval '30 days'
+                  AND ${TelemetryService.excluding(self, "i.install_id")}
                 GROUP BY entry.key
              ) ranked
          )                                                                             AS "pluginsBySlug"
        FROM public.telemetry_installs
-       WHERE last_seen_at >= now() - interval '30 days'
-         AND payload ? 'matches'`,
+       WHERE payload ? 'matches'
+         AND ${TelemetryService.excluding(self)}`,
     );
 
     const totals = TelemetryService.toIntegers(row, [
@@ -672,10 +757,10 @@ export class TelemetryService {
 
   // Both breakdowns live in the payload already; nothing read them before, so
   // the page could say how many matches ran but never what kind they were.
-  private async getMatchComposition() {
+  private async getMatchComposition(self: string | null) {
     const [types, sources] = await Promise.all([
-      this.sumCountMap("matches", "by_type"),
-      this.sumCountMap("matches", "by_source"),
+      this.sumCountMap("matches", "by_type", self),
+      this.sumCountMap("matches", "by_source", self),
     ]);
 
     return {
@@ -694,11 +779,11 @@ export class TelemetryService {
   // window as the fleet totals. Kept out of getFleetTotals because that query
   // is already one statement per panel column, and this whole block is absent
   // from most of the fleet until panels update.
-  private async getUtilityComposition() {
+  private async getUtilityComposition(self: string | null) {
     const [totals, types, sources] = await Promise.all([
-      this.getUtilityTotals(),
-      this.sumCountMap("utility", "by_type"),
-      this.sumCountMap("utility", "by_source"),
+      this.getUtilityTotals(self),
+      this.sumCountMap("utility", "by_type", self),
+      this.sumCountMap("utility", "by_source", self),
     ]);
 
     return {
@@ -749,20 +834,27 @@ export class TelemetryService {
     "repairs",
   ] as const;
 
-  private async getUtilityTotals() {
+  // Rolling windows rather than all-time counts, so they are the only utility
+  // fields a dark panel cannot contribute to -- see getFleetTotals.
+  private static readonly UtilityWindowFields = new Set(["week", "month"]);
+
+  private async getUtilityTotals(self: string | null) {
     // Every field is summed the same way, so the column list is generated from
     // the payload's own field names rather than written out twice.
-    const sums = TelemetryService.UtilityFields.map(
-      (field) =>
-        `coalesce(sum((payload->'utility'->>'${field}')::numeric), 0) AS "${TelemetryService.camel(field)}"`,
-    ).join(",\n         ");
+    const sums = TelemetryService.UtilityFields.map((field) => {
+      const filter = TelemetryService.UtilityWindowFields.has(field)
+        ? ` FILTER (WHERE ${TelemetryService.RecentPanel})`
+        : "";
+
+      return `coalesce(sum((payload->'utility'->>'${field}')::numeric)${filter}, 0) AS "${TelemetryService.camel(field)}"`;
+    }).join(",\n         ");
 
     const [row] = await this.postgres.query<Array<Record<string, string>>>(
       `SELECT
          count(*) FILTER (WHERE jsonb_typeof(payload->'utility') = 'object') AS reported,
          ${sums}
        FROM public.telemetry_installs
-       WHERE last_seen_at >= now() - interval '30 days'`,
+       WHERE ${TelemetryService.excluding(self)}`,
     );
 
     return TelemetryService.toIntegers(row, [
@@ -775,7 +867,11 @@ export class TelemetryService {
     return field.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
   }
 
-  private async sumCountMap(section: string, field: string) {
+  private async sumCountMap(
+    section: string,
+    field: string,
+    self: string | null,
+  ) {
     const rows = await this.postgres.query<Array<Record<string, string>>>(
       `SELECT
          e.key                                          AS name,
@@ -784,8 +880,10 @@ export class TelemetryService {
             LATERAL jsonb_each(
               coalesce(i.payload->'${section}'->'${field}', '{}'::jsonb)
             ) e(key, value)
-       WHERE i.last_seen_at >= now() - interval '30 days'
-         AND jsonb_typeof(e.value) = 'number'
+       -- Unwindowed, like the totals these break down: a mix that drops the
+       -- dark panels no longer adds up to the number it sits under.
+       WHERE jsonb_typeof(e.value) = 'number'
+         AND ${TelemetryService.excluding(self, "i.install_id")}
        GROUP BY e.key
        ORDER BY total DESC, e.key ASC`,
     );
@@ -798,11 +896,11 @@ export class TelemetryService {
 
   // Version and country are promoted to columns on arrival; the plugin runtime
   // only ever lands in the payload, so it has to be read back out of the json.
-  private async getFleetDistribution() {
+  private async getFleetDistribution(self: string | null) {
     const [versions, runtimes, countries] = await Promise.all([
-      this.getVersionAdoption(),
-      this.countInstallsBy("payload->>'plugin_runtime'"),
-      this.countInstallsBy("country"),
+      this.getVersionAdoption(self),
+      this.countInstallsBy("payload->>'plugin_runtime'", self),
+      this.countInstallsBy("country", self),
     ]);
 
     return {
@@ -821,7 +919,7 @@ export class TelemetryService {
   // A commit sha does not sort, so "newest" is decided by when each build first
   // showed up in anybody's report. Ranking that way turns a list of hashes --
   // which says nothing on its own -- into how far behind the fleet is running.
-  private async getVersionAdoption() {
+  private async getVersionAdoption(self: string | null) {
     const rows = await this.postgres.query<Array<Record<string, string>>>(
       `WITH seen AS (
          SELECT
@@ -829,6 +927,7 @@ export class TelemetryService {
            min(day)                                        AS since
          FROM public.telemetry_snapshots
          WHERE coalesce(payload->>'panel_version', '') <> ''
+           AND ${TelemetryService.excluding(self)}
          GROUP BY 1
        ),
        -- A build nobody is running any more is history, not fleet state.
@@ -838,6 +937,7 @@ export class TelemetryService {
          JOIN public.telemetry_installs i
            ON i.panel_version = s.version
           AND i.last_seen_at >= now() - interval '30 days'
+          AND ${TelemetryService.excluding(self, "i.install_id")}
          GROUP BY 1, 2
        )
        -- Ranked after the dead builds are dropped, not before. Ranking over
@@ -862,11 +962,12 @@ export class TelemetryService {
     }));
   }
 
-  private async countInstallsBy(expression: string) {
+  private async countInstallsBy(expression: string, self: string | null) {
     const rows = await this.postgres.query<Array<Record<string, string>>>(
       `SELECT ${expression} AS name, count(*) AS installs
        FROM public.telemetry_installs
        WHERE last_seen_at >= now() - interval '30 days'
+         AND ${TelemetryService.excluding(self)}
          AND ${expression} IS NOT NULL
          AND ${expression} <> ''
        GROUP BY 1
@@ -880,7 +981,7 @@ export class TelemetryService {
     }));
   }
 
-  private async getFeatureAdoption() {
+  private async getFeatureAdoption(self: string | null) {
     const rows = await this.postgres.query<Array<Record<string, string>>>(
       `SELECT
          f.key                                                                AS key,
@@ -898,6 +999,7 @@ export class TelemetryService {
        FROM public.telemetry_installs i,
             LATERAL jsonb_each(coalesce(i.payload->'features', '{}'::jsonb)) f(key, value)
        WHERE i.last_seen_at >= now() - interval '30 days'
+         AND ${TelemetryService.excluding(self, "i.install_id")}
        GROUP BY f.key
        ORDER BY total DESC, f.key ASC`,
     );
@@ -979,12 +1081,13 @@ export class TelemetryService {
     return flagged > 0 ? "detected" : "always";
   }
 
-  private async getInstallGrowth() {
+  private async getInstallGrowth(self: string | null) {
     const rows = await this.postgres.query<Array<Record<string, string>>>(
       `SELECT
          to_char(date_trunc('month', first_seen_at), 'YYYY-MM') AS month,
          count(*)                                               AS installs
        FROM public.telemetry_installs
+       WHERE ${TelemetryService.excluding(self)}
        GROUP BY 1
        ORDER BY 1 ASC`,
     );
@@ -999,7 +1102,7 @@ export class TelemetryService {
   // a missed heartbeat shifts a day's matches onto the next report rather than
   // losing them. GREATEST clamps the negative delta a wiped or restored
   // database would otherwise contribute.
-  private async getFleetActivity() {
+  private async getFleetActivity(self: string | null) {
     const rows = await this.postgres.query<Array<Record<string, string>>>(
       `WITH daily AS (
          SELECT
@@ -1014,6 +1117,7 @@ export class TelemetryService {
          -- directly pins the left edge of the line to zero every day.
          WHERE day >= current_date - 97
            AND payload ? 'matches'
+           AND ${TelemetryService.excluding(self)}
        )
        SELECT
          to_char(day, 'YYYY-MM-DD')                                        AS day,
@@ -1047,7 +1151,7 @@ export class TelemetryService {
     return values;
   }
 
-  private async persist(payload: TelemetryPayload, country: string) {
+  private async persist(payload: TelemetryPayload, country: string | null) {
     await this.postgres.query(
       `INSERT INTO public.telemetry_installs
          (install_id, first_seen_at, last_seen_at, installed_at, panel_version, schema_version, country, payload)

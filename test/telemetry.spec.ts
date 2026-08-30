@@ -79,7 +79,23 @@ describe("telemetry (SQL-driven)", () => {
       await postgres.query(
         `UPDATE matches SET started_at = now(), status = 'Live', match_options_id = $2
           WHERE id = $1`,
-        [ran.matchId, await fx.matchOptions({ type: "Wingman" })],
+        [ran.matchId, await fx.matchOptions({ type: "Wingman", bestOf: 3 })],
+      );
+
+      // A Bo3 materializes a row per map the moment the series is set up, so
+      // the third here is a map nobody played. Going through an UPDATE rather
+      // than inserting them Finished runs the real update_match_state path.
+      for (const order of [2, 3]) {
+        await postgres.query(
+          `INSERT INTO match_maps (match_id, map_id, "order")
+           SELECT $1, id, $2 FROM maps ORDER BY name LIMIT 1`,
+          [ran.matchId, order],
+        );
+      }
+      await postgres.query(
+        `UPDATE match_maps SET status = 'Finished'
+          WHERE match_id = $1 AND "order" <= 2`,
+        [ran.matchId],
       );
 
       // Never started: must land in `created` but not in `total` or the windows.
@@ -94,6 +110,13 @@ describe("telemetry (SQL-driven)", () => {
                 status = 'Finished', match_options_id = $3
           WHERE id = $1`,
         [imported.matchId, "faceit-1", await fx.matchOptions()],
+      );
+
+      // The import's map finished too. `maps_played` leads the fleet page, so
+      // it has to split hosted from imported the same way the match counts do.
+      await postgres.query(
+        "UPDATE match_maps SET status = 'Finished' WHERE id = $1",
+        [imported.mapId],
       );
 
       // A demo played on a 5stack server and imported back in keeps
@@ -234,6 +257,12 @@ describe("telemetry (SQL-driven)", () => {
       expect(payload.matches.week).toBe(1);
       expect(payload.matches.month).toBe(1);
       expect(payload.matches.year).toBe(1);
+    });
+
+    it("counts a finished map of a hosted match, and nothing else, as played", () => {
+      // Two of the Bo3's three maps finished. The third was never played, and
+      // the imported match's map finished on somebody else's server.
+      expect(payload.matches.maps_played).toBe(2);
     });
 
     it("keeps imported matches out of the matches the panel ran", () => {
@@ -640,6 +669,46 @@ describe("telemetry (SQL-driven)", () => {
     });
   });
 
+  describe("send", () => {
+    // The panel every other panel reports to is a panel too, and it is the one
+    // install that cannot get its counts there over the wire.
+    it("records the receiving panel's own payload rather than posting it", async () => {
+      const flagship = new TelemetryService(
+        new Logger("TelemetryFlagship"),
+        { getConnection: () => redis } as never,
+        { get: () => ({ webDomain: "https://5stack.gg" }) } as never,
+        postgres,
+        { getPanelVersion: async () => "abcdef1234567890" } as never,
+        {
+          remember: async (_key: string, callback: () => Promise<unknown>) =>
+            await callback(),
+        } as never,
+      );
+
+      const post = jest
+        .spyOn(global, "fetch")
+        .mockRejectedValue(new Error("the receiving panel must not post"));
+
+      try {
+        await flagship.send();
+
+        expect(post).not.toHaveBeenCalled();
+
+        const rows = await postgres.query<Array<{ matches: number }>>(
+          `SELECT (payload->'matches'->>'total')::int AS matches
+             FROM telemetry_installs`,
+        );
+
+        // Its own collect(), through the same sanitize every report goes
+        // through -- the one hosted match seeded above.
+        expect(rows).toHaveLength(1);
+        expect(rows[0].matches).toBe(1);
+      } finally {
+        post.mockRestore();
+      }
+    });
+  });
+
   describe("getFleetStats", () => {
     const installA = "aaaaaaaa-0000-4000-8000-000000000001";
     const installB = "bbbbbbbb-0000-4000-8000-000000000002";
@@ -780,6 +849,66 @@ describe("telemetry (SQL-driven)", () => {
       expect(stats.totals.playersActive7d).toBe(10);
       expect(stats.totals.matchesAbandoned).toBe(6);
       expect(stats.totals.matchesLive).toBe(4);
+    });
+
+    // The flagship is counted by default -- it runs matches like anybody else.
+    // But it dwarfs a typical install, so the page can set it aside to answer
+    // what everybody else is running, and that has to hold all the way down
+    // rather than in the headline alone.
+    it("can leave the receiving panel's own install out of every aggregate", async () => {
+      await postgres.query(
+        `INSERT INTO settings (name, value) VALUES ('telemetry_install_id', $1)
+         ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value`,
+        [installA],
+      );
+
+      const stats = await service.getFleetStats(false);
+
+      expect(stats.installs.total).toBe(1);
+      expect(stats.totals.panels).toBe(1);
+      expect(stats.totals.matches).toBe(250);
+      expect(stats.totals.mapsPlayed).toBe(500);
+      // The breakdowns and the distributions, not just the totals.
+      expect(
+        stats.matchTypes.find(({ type }) => type === "Competitive")?.matches,
+      ).toBe(250);
+      expect(stats.countries.map(({ country }) => country)).toEqual(["DE"]);
+      expect(stats.growth.at(-1)?.installs).toBe(1);
+
+      // And unfiltered it is the whole fleet again.
+      expect((await service.getFleetStats(true)).totals.matches).toBe(350);
+    });
+
+    // The matches a panel ran do not stop having happened when it stops
+    // reporting, and holding the all-time counters to a window was reading the
+    // fleet far below what it had actually played.
+    it("keeps a dark install's history but not its capacity", async () => {
+      await postgres.query(
+        "UPDATE telemetry_installs SET last_seen_at = now() - interval '90 days' WHERE install_id = $1",
+        [installB],
+      );
+
+      const stats = await service.getFleetStats();
+
+      // B's 250 matches and its 500 maps are still in the fleet's history.
+      expect(stats.totals.matches).toBe(350);
+      expect(stats.totals.mapsPlayed).toBe(700);
+      expect(stats.totals.matchesCreated).toBe(350);
+      expect(stats.totals.playersKnown).toBe(400);
+      expect(stats.totals.playerAppearances).toBe(1400);
+      // The mixes break down the totals above, so they have to match them.
+      expect(
+        stats.matchTypes.find(({ type }) => type === "Competitive")?.matches,
+      ).toBe(350);
+
+      // Its servers were torn down with it, and its "last 7 days" ended three
+      // months ago -- neither is fleet state today.
+      expect(stats.totals.panels).toBe(1);
+      expect(stats.totals.servers).toBe(4);
+      expect(stats.totals.gameServerNodesOnline).toBe(1);
+      expect(stats.totals.matchesWeek).toBe(5);
+      expect(stats.totals.playersActive7d).toBe(5);
+      expect(stats.totals.matchesLive).toBe(2);
     });
 
     // A sha does not sort, so the only thing that says which build is current
