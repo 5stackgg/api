@@ -50,6 +50,18 @@ type CheckInTeam = {
   is_captain: boolean;
 };
 
+// One accepted member of the lobby being signed up as a free agent party, with
+// every gate the pool applies to them resolved in the same round trip.
+type LobbyPartyMember = {
+  steam_id: string;
+  name: string;
+  eligible: boolean;
+  unlocked: boolean;
+  rostered: boolean;
+  owns_team: boolean;
+  pool_status: string | null;
+};
+
 @Controller("tournaments")
 export class TournamentsController {
   private readonly redis: Redis;
@@ -832,6 +844,7 @@ export class TournamentsController {
   public async joinTournamentAsFreeAgent(data: {
     user: User;
     tournament_id: string;
+    with_party?: boolean;
   }) {
     const { tournament_id } = data;
     const tournament = await this.getTournamentAccess(tournament_id, data.user);
@@ -855,6 +868,10 @@ export class TournamentsController {
       throw Error("you do not meet this tournament's entry requirements");
     }
 
+    if (data.with_party) {
+      return await this.joinFreeAgentPoolWithLobby(tournament, data.user);
+    }
+
     await this.postgres.query(
       `INSERT INTO tournament_free_agents (tournament_id, player_steam_id)
        VALUES ($1::uuid, $2::bigint)
@@ -863,6 +880,192 @@ export class TournamentsController {
     );
 
     return { success: true };
+  }
+
+  private static freeAgentPartyBlocker(
+    member: LobbyPartyMember,
+    requireUnlock: boolean,
+  ): string | null {
+    if (member.owns_team) {
+      return "already has a team in this tournament";
+    }
+
+    if (member.rostered) {
+      return "is already on a roster in this tournament";
+    }
+
+    if (!member.eligible) {
+      return "does not meet this tournament's entry requirements";
+    }
+
+    // The invite-only gate is per player, like the passcode and the invite it
+    // grants: the captain being unlocked says nothing about their friends.
+    if (requireUnlock && !member.unlocked) {
+      return "has not been invited to this tournament";
+    }
+
+    // Anything past 'registered' is a commitment the pool has already acted on
+    // -- a draft has placed them, passed them over, or they were removed. Folding
+    // such a row into a new party silently would build a party that the draft
+    // then treats as smaller than the lobby that formed it.
+    if (member.pool_status !== null && member.pool_status !== "registered") {
+      return "is already committed in this tournament";
+    }
+
+    return null;
+  }
+
+  // Signing the lobby up IS the party: everyone accepted into it is entered
+  // together under the lobby's id, and the draft keeps them on one team. There
+  // is no invite to accept because there is nothing new to consent to -- the
+  // captain already queues this exact roster into matchmaking, which commits
+  // them to a live match rather than a signup.
+  private async joinFreeAgentPoolWithLobby(
+    tournament: TournamentAccess,
+    user: User,
+  ) {
+    const [lobby] = await this.postgres.query<
+      Array<{ lobby_id: string; captain: boolean }>
+    >(
+      `SELECT lobby_id::text AS lobby_id, captain
+         FROM lobby_players
+        WHERE steam_id = $1::bigint AND status = 'Accepted'`,
+      [user.steam_id],
+    );
+
+    if (!lobby) {
+      throw Error("you are not in a lobby");
+    }
+
+    if (!lobby.captain) {
+      throw Error("you are not the captain of this lobby");
+    }
+
+    const members = await this.postgres.query<Array<LobbyPartyMember>>(
+      `SELECT lp.steam_id::text AS steam_id,
+              COALESCE(p.name, 'A player') AS name,
+              player_meets_tournament_requirements($1::uuid, lp.steam_id) AS eligible,
+              tournament_registration_unlocked($1::uuid, lp.steam_id) AS unlocked,
+              EXISTS (
+                  SELECT 1 FROM tournament_team_roster ttr
+                   WHERE ttr.tournament_id = $1::uuid
+                     AND ttr.player_steam_id = lp.steam_id
+              ) AS rostered,
+              EXISTS (
+                  SELECT 1 FROM tournament_teams tt
+                   WHERE tt.tournament_id = $1::uuid
+                     AND tt.owner_steam_id = lp.steam_id
+              ) AS owns_team,
+              fa.status AS pool_status
+         FROM lobby_players lp
+         JOIN players p ON p.steam_id = lp.steam_id
+    LEFT JOIN tournament_free_agents fa
+           ON fa.tournament_id = $1::uuid AND fa.player_steam_id = lp.steam_id
+        WHERE lp.lobby_id = $2::uuid AND lp.status = 'Accepted'
+        ORDER BY lp.captain DESC, lp.steam_id`,
+      [tournament.id, lobby.lobby_id],
+    );
+
+    if (members.length === 0) {
+      throw Error("you are not in a lobby");
+    }
+
+    const steamIds = members.map((member) => member.steam_id);
+
+    for (const member of members) {
+      const blocker = TournamentsController.freeAgentPartyBlocker(
+        member,
+        tournament.invite_only,
+      );
+
+      if (blocker) {
+        throw Error(`${member.name} ${blocker}`);
+      }
+    }
+
+    const [sizing] = await this.postgres.query<
+      Array<{ team_size: number | null; carried_over: string }>
+    >(
+      `SELECT COALESCE(
+                  tournament_min_players_per_lineup(t),
+                  tournament_max_players_per_lineup(t)
+              ) AS team_size,
+              (
+                  SELECT COUNT(*)
+                    FROM tournament_free_agents fa
+                   WHERE fa.tournament_id = t.id
+                     AND fa.party_id = $2::uuid
+                     AND fa.status <> 'withdrawn'
+                     AND fa.player_steam_id <> ALL($3::bigint[])
+              )::text AS carried_over
+         FROM tournaments t
+        WHERE t.id = $1::uuid`,
+      [tournament.id, lobby.lobby_id, steamIds],
+    );
+
+    // Members who signed up from this lobby and have since left it still hold
+    // the party's id, so the cap is measured on the pool rather than on the
+    // lobby: a lobby that has churned can be larger than any team it drafts on.
+    const partySize = members.length + Number(sizing?.carried_over ?? 0);
+    const teamSize = sizing?.team_size ?? null;
+
+    if (teamSize !== null && partySize > teamSize) {
+      throw Error(
+        `a party of ${partySize} cannot be drafted onto a team of ${teamSize}`,
+      );
+    }
+
+    await this.postgres.query(
+      `INSERT INTO tournament_free_agents (tournament_id, player_steam_id, party_id)
+       SELECT $1::uuid, member.steam_id, $2::uuid
+         FROM unnest($3::bigint[]) AS member(steam_id)
+       ON CONFLICT (tournament_id, player_steam_id)
+       DO UPDATE SET party_id = EXCLUDED.party_id
+                WHERE tournament_free_agents.status = 'registered'`,
+      [tournament.id, lobby.lobby_id, steamIds],
+    );
+
+    await this.announceFreeAgentParty(
+      tournament,
+      user,
+      steamIds.filter((steamId) => steamId !== user.steam_id),
+    );
+
+    return { success: true };
+  }
+
+  private async announceFreeAgentParty(
+    tournament: TournamentAccess,
+    captain: User,
+    steamIds: Array<string>,
+  ) {
+    if (steamIds.length === 0) {
+      return;
+    }
+
+    try {
+      await this.notifications.notifyPlayers("TournamentPartySignup", {
+        title: "Signed up with your lobby",
+        message: `<b>${NotificationsService.escapeHtml(
+          captain.name,
+        )}</b> signed your lobby up for <a href="/tournaments/${
+          tournament.id
+        }"><b>${NotificationsService.escapeHtml(
+          tournament.name,
+        )}</b></a>. You will be drafted onto the same team.`,
+        role: "user",
+        entity_id: tournament.id,
+        steamIds,
+        data: { image: tournament.banner ?? tournament.logo },
+      });
+    } catch (error) {
+      // The signup is already written; a lost notification must not surface as
+      // a failed registration to the captain who sent it.
+      this.logger.warn(
+        `[${tournament.id}] unable to announce free agent party`,
+        error,
+      );
+    }
   }
 
   @HasuraAction()

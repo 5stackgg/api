@@ -2574,6 +2574,7 @@ type Mutation {
 type Mutation {
   joinTournamentAsFreeAgent(
     tournament_id: uuid!
+    with_party: Boolean
   ): SuccessOutput
 }
 

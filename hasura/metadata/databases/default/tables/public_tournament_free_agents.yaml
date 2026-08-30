@@ -60,6 +60,7 @@ insert_permissions:
                       - Finished
       columns:
         - checked_in_at
+        - party_id
         - player_steam_id
         - status
         - tournament_id
@@ -72,6 +73,7 @@ select_permissions:
         - checked_in_at
         - created_at
         - id
+        - party_id
         - player_steam_id
         - status
         - tournament_id
@@ -84,6 +86,7 @@ update_permissions:
     permission:
       columns:
         - checked_in_at
+        - party_id
         - status
         - tournament_team_id
       filter:

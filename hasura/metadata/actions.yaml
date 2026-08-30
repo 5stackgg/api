@@ -1919,7 +1919,7 @@ actions:
       - role: streamer
       - role: verified_user
       - role: user
-    comment: Register alone for a tournament that drafts teams
+    comment: Register for a tournament that drafts teams, alone or with your lobby
   - name: leaveTournamentAsFreeAgent
     definition:
       kind: synchronous

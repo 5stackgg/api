@@ -48,6 +48,7 @@ INSERT INTO e_notification_types ("value", "description") VALUES
     ('SeasonEnded', 'A season has ended'),
     ('UtilityPracticeInvite', 'You were invited to a utility practice session'),
     ('UtilityPracticeReady', 'Your utility practice server is ready'),
-    ('UtilityDriftScanFinished', 'A utility drift scan finished')
+    ('UtilityDriftScanFinished', 'A utility drift scan finished'),
+    ('TournamentPartySignup', 'Your lobby was signed up for a tournament as a free agent party')
 ON CONFLICT("value") DO UPDATE
     SET "description" = EXCLUDED."description";

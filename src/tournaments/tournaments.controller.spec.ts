@@ -35,6 +35,9 @@ describe("TournamentsController registration and check-in actions", () => {
   let eligible: boolean;
   let passcodeRow: Record<string, unknown> | undefined;
   let draftedTeams: number;
+  let lobbyRow: Record<string, unknown> | undefined;
+  let lobbyMembers: Rows;
+  let sizingRow: Record<string, unknown> | undefined;
   let statements: Array<string>;
 
   const player: User = {
@@ -48,6 +51,23 @@ describe("TournamentsController registration and check-in actions", () => {
     role: "user",
     steam_id: "76561190000000099",
   };
+
+  const friend: User = {
+    name: "Friend",
+    role: "user",
+    steam_id: "76561190000000002",
+  };
+
+  const lobbyMember = (overrides: Record<string, unknown> = {}) => ({
+    steam_id: friend.steam_id,
+    name: "Friend",
+    eligible: true,
+    unlocked: true,
+    rostered: false,
+    owns_team: false,
+    pool_status: null as string | null,
+    ...overrides,
+  });
 
   const tournament = (overrides: Record<string, unknown> = {}) => ({
     id: "tournament-1",
@@ -81,11 +101,28 @@ describe("TournamentsController registration and check-in actions", () => {
     eligible = true;
     passcodeRow = undefined;
     draftedTeams = 2;
+    lobbyRow = { lobby_id: "lobby-1", captain: true };
+    lobbyMembers = [
+      lobbyMember({ steam_id: player.steam_id, name: "Player" }),
+      lobbyMember({ steam_id: friend.steam_id, name: "Friend" }),
+    ];
+    sizingRow = { team_size: 5, carried_over: "0" };
     statements = [];
 
     postgres.query.mockImplementation(async (sql: string) => {
       statements.push(sql);
 
+      // Before the generic routes: the lobby member lookup resolves every gate
+      // in one statement, so it matches several of them.
+      if (sql.includes("FROM lobby_players lp")) {
+        return lobbyMembers;
+      }
+      if (sql.includes("FROM lobby_players")) {
+        return lobbyRow ? [lobbyRow] : [];
+      }
+      if (sql.includes("tournament_min_players_per_lineup")) {
+        return sizingRow ? [sizingRow] : [];
+      }
       if (sql.includes("is_tournament_organizer(t, $2::json)")) {
         return tournamentRow ? [tournamentRow] : [];
       }
@@ -612,6 +649,138 @@ describe("TournamentsController registration and check-in actions", () => {
           tournament_id: "tournament-1",
         }),
       ).rejects.toThrow(/entry requirements/i);
+    });
+  });
+
+  // Signing up "with a friend" reuses the matchmaking lobby rather than
+  // inventing an invite: the captain already queues this exact roster into a
+  // live match, so there is nothing new to consent to.
+  describe("joinTournamentAsFreeAgent with a lobby", () => {
+    beforeEach(() => {
+      tournamentRow = tournament({ registration_type: "free_agents" });
+    });
+
+    const join = () =>
+      controller.joinTournamentAsFreeAgent({
+        user: player,
+        tournament_id: "tournament-1",
+        with_party: true,
+      });
+
+    it("refuses when the caller is in no lobby", async () => {
+      lobbyRow = undefined;
+
+      await expect(join()).rejects.toThrow(/not in a lobby/i);
+    });
+
+    it("refuses when the caller is not the lobby captain", async () => {
+      lobbyRow = { lobby_id: "lobby-1", captain: false };
+
+      await expect(join()).rejects.toThrow(/captain of this lobby/i);
+    });
+
+    it("refuses a lobby larger than the team it would be drafted onto", async () => {
+      sizingRow = { team_size: 1, carried_over: "0" };
+
+      await expect(join()).rejects.toThrow(
+        /cannot be drafted onto a team of 1/i,
+      );
+    });
+
+    // Members who signed up from this lobby and then left it still hold the
+    // party's id, so the cap is measured on the pool, not on the lobby.
+    it("counts members who already hold the party id towards the cap", async () => {
+      sizingRow = { team_size: 2, carried_over: "1" };
+
+      await expect(join()).rejects.toThrow(/a party of 3/i);
+    });
+
+    it("names the member who fails the entry requirements", async () => {
+      lobbyMembers = [
+        lobbyMember({ steam_id: player.steam_id, name: "Player" }),
+        lobbyMember({ name: "Friend", eligible: false }),
+      ];
+
+      await expect(join()).rejects.toThrow(/Friend does not meet/i);
+    });
+
+    it("names a member who already has a team in the tournament", async () => {
+      lobbyMembers = [
+        lobbyMember({ steam_id: player.steam_id, name: "Player" }),
+        lobbyMember({ name: "Friend", owns_team: true }),
+      ];
+
+      await expect(join()).rejects.toThrow(/Friend already has a team/i);
+    });
+
+    // The invite gate is per player: the captain being unlocked says nothing
+    // about the people they are bringing.
+    it("requires every member to be unlocked on an invite only tournament", async () => {
+      tournamentRow = tournament({
+        registration_type: "free_agents",
+        invite_only: true,
+        unlocked: true,
+      });
+      lobbyMembers = [
+        lobbyMember({ steam_id: player.steam_id, name: "Player" }),
+        lobbyMember({ name: "Friend", unlocked: false }),
+      ];
+
+      await expect(join()).rejects.toThrow(/Friend has not been invited/i);
+    });
+
+    it("lets an un-unlocked member in when the tournament is open to all", async () => {
+      lobbyMembers = [
+        lobbyMember({ steam_id: player.steam_id, name: "Player" }),
+        lobbyMember({ name: "Friend", unlocked: false }),
+      ];
+
+      await expect(join()).resolves.toEqual({ success: true });
+    });
+
+    it("refuses a member the pool has already acted on", async () => {
+      lobbyMembers = [
+        lobbyMember({ steam_id: player.steam_id, name: "Player" }),
+        lobbyMember({ name: "Friend", pool_status: "waitlisted" }),
+      ];
+
+      await expect(join()).rejects.toThrow(/Friend is already committed/i);
+    });
+
+    it("enters the whole lobby under the lobby's id and tells the others", async () => {
+      await expect(join()).resolves.toEqual({ success: true });
+
+      const insert = statements.find((sql) =>
+        sql.includes("INSERT INTO tournament_free_agents"),
+      );
+      expect(insert).toContain("party_id");
+
+      expect(notifications.notifyPlayers).toHaveBeenCalledWith(
+        "TournamentPartySignup",
+        expect.objectContaining({ steamIds: [friend.steam_id] }),
+      );
+    });
+
+    it("does not notify a captain signing up on their own", async () => {
+      lobbyMembers = [
+        lobbyMember({ steam_id: player.steam_id, name: "Player" }),
+      ];
+
+      await expect(join()).resolves.toEqual({ success: true });
+      expect(notifications.notifyPlayers).not.toHaveBeenCalled();
+    });
+
+    it("never looks at a lobby when the party was not asked for", async () => {
+      await expect(
+        controller.joinTournamentAsFreeAgent({
+          user: player,
+          tournament_id: "tournament-1",
+        }),
+      ).resolves.toEqual({ success: true });
+
+      expect(statements.some((sql) => sql.includes("lobby_players"))).toBe(
+        false,
+      );
     });
   });
 
