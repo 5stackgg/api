@@ -397,6 +397,12 @@ computed_fields:
       function:
         name: get_player_teams
         schema: public
+  - name: tournament_cooldown
+    definition:
+      function:
+        name: get_player_tournament_cooldown
+        schema: public
+      session_argument: hasura_session
   - name: total_matches
     definition:
       function:
@@ -464,6 +470,7 @@ select_permissions:
         - losses_wingman
         - matchmaking_cooldown
         - peak_elo
+        - tournament_cooldown
         - total_matches
         - wins
         - wins_competitive
@@ -517,6 +524,7 @@ select_permissions:
         - losses_wingman
         - matchmaking_cooldown
         - peak_elo
+        - tournament_cooldown
         - total_matches
         - wins
         - wins_competitive
@@ -569,6 +577,7 @@ select_permissions:
         - losses_wingman
         - matchmaking_cooldown
         - peak_elo
+        - tournament_cooldown
         - total_matches
         - wins
         - wins_competitive

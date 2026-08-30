@@ -11,11 +11,13 @@ import { DedicatedServersModule } from "src/dedicated-servers/dedicated-servers.
 import { loggerFactory } from "src/utilities/LoggerFactory";
 import { MatchServerMiddlewareMiddleware } from "src/matches/match-server-middleware/match-server-middleware.middleware";
 import { SanctionsService } from "./sanctions.service";
+import { SanctionPolicyService } from "./sanction-policy.service";
 import { SanctionsController } from "./sanctions.controller";
 
 @Module({
   imports: [HasuraModule, PostgresModule, RconModule, DedicatedServersModule],
-  providers: [SanctionsService, loggerFactory()],
+  providers: [SanctionsService, SanctionPolicyService, loggerFactory()],
+  exports: [SanctionPolicyService],
   controllers: [SanctionsController],
 })
 export class SanctionsModule implements NestModule {

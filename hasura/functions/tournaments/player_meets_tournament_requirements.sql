@@ -75,6 +75,14 @@ BEGIN
         RETURN false;
     END IF;
 
+    -- The tournaments half of the sanctions policy. Checked on the way IN only:
+    -- this gate runs on roster and free-agent inserts, so a player who earns a
+    -- tournament ban keeps the place they already hold rather than being pulled
+    -- out of a bracket mid-run.
+    IF public.player_sanction_expiry(player_steam_id, 'tournaments') > now() THEN
+        RETURN false;
+    END IF;
+
     IF _tournament.min_elo IS NULL AND _tournament.max_elo IS NULL THEN
         RETURN true;
     END IF;

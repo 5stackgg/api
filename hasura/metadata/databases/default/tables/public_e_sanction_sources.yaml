@@ -1,0 +1,21 @@
+table:
+  name: e_sanction_sources
+  schema: public
+object_relationships:
+  - name: e_sanction_scope
+    using:
+      foreign_key_constraint_on: default_scope
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - value
+        - description
+        - default_enabled
+        - default_threshold
+        - default_window_days
+        - default_durations
+        - default_scope
+        - writes_platform_ban
+      filter: {}
+    comment: ""
