@@ -39,6 +39,7 @@ INSERT INTO e_notification_types ("value", "description") VALUES
     ('NewsPublished', 'A news article was published'),
     ('TeamInvite', 'You were invited to a team'),
     ('TournamentTeamInvite', 'You were invited to play in a tournament'),
+    ('TournamentInvite', 'You were invited to register for a tournament'),
     ('DraftInvite', 'You were invited to a draft lobby'),
     ('MatchStatsReady', 'Stats for a match you played are ready'),
     ('ClipReady', 'A clip you requested finished rendering'),

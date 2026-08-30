@@ -103,6 +103,44 @@ export class InvitesController {
     });
   }
 
+  @HasuraEvent()
+  public async tournament_invite_events(data: HasuraEventData<{ id: string }>) {
+    if (data.op !== "INSERT") {
+      return;
+    }
+
+    const [invite] = await this.postgres.query<
+      Array<{
+        steam_id: string;
+        tournament_name: string;
+        tournament_logo: string | null;
+        invited_by: string;
+      }>
+    >(
+      `SELECT ti.steam_id::text AS steam_id,
+              tour.name AS tournament_name,
+              tour.logo AS tournament_logo,
+              COALESCE(p.name, 'Someone') AS invited_by
+         FROM public.tournament_invites ti
+         JOIN public.tournaments tour ON tour.id = ti.tournament_id
+    LEFT JOIN public.players p ON p.steam_id = ti.invited_by_player_steam_id
+        WHERE ti.id = $1::uuid`,
+      [data.new.id],
+    );
+
+    if (!invite) {
+      return;
+    }
+
+    await this.notifyInvited("TournamentInvite", {
+      steamId: invite.steam_id,
+      title: "Tournament Invite",
+      body: `<b>${NotificationsService.escapeHtml(invite.invited_by)}</b> invited you to register for <b>${NotificationsService.escapeHtml(invite.tournament_name)}</b>.`,
+      entityId: data.new.id,
+      icon: invite.tournament_logo,
+    });
+  }
+
   public async notifyInvited(
     type: e_notification_types_enum,
     invite: {
@@ -138,11 +176,22 @@ export class InvitesController {
   }) {
     const { invite_id, user, type } = data;
 
-    if (type === "team") {
-      return await this.acceptTeamInvite(invite_id, user);
+    switch (type) {
+      case "team":
+        return await this.acceptTeamInvite(invite_id, user);
+      // "tournament" has meant the tournament TEAM invite since long before
+      // tournament_invites existed and deployed clients still send it, so the
+      // new table gets its own key rather than stealing that one.
+      case "tournament":
+      case "tournament-team":
+        return await this.acceptTournamentTeamInvite(invite_id, user);
+      case "tournament-registration":
+        return await this.acceptTournamentInvite(invite_id, user);
     }
 
-    return await this.acceptTournamentTeamInvite(invite_id, user);
+    // This used to fall through to the tournament-team branch, which turned a
+    // typo into a lookup against the wrong table.
+    throw Error(`unknown invite type ${type}`);
   }
 
   private async acceptTeamInvite(invite_id: string, user: User) {
@@ -250,6 +299,56 @@ export class InvitesController {
     };
   }
 
+  // Steam ids are read back as text for the same reason the event handlers do
+  // it: a bigint that round-trips through JSON stops being exact well below a
+  // steam id.
+  private async findTournamentInvite(invite_id: string) {
+    const [invite] = await this.postgres.query<
+      Array<{ tournament_id: string; steam_id: string }>
+    >(
+      `SELECT tournament_id, steam_id::text AS steam_id
+         FROM public.tournament_invites
+        WHERE id = $1::uuid`,
+      [invite_id],
+    );
+
+    if (!invite) {
+      throw Error("unable to find tournament invite");
+    }
+
+    return invite;
+  }
+
+  private async acceptTournamentInvite(invite_id: string, user: User) {
+    const invite = await this.findTournamentInvite(invite_id);
+
+    if (invite.steam_id !== user.steam_id) {
+      return {
+        success: false,
+      };
+    }
+
+    // An unlock row is what tbi_tournament_team and tbi_tournament_free_agents
+    // already check, so the invite grants exactly what the passcode grants
+    // rather than becoming a second gate they would both have to learn about.
+    // ON CONFLICT because the player may have redeemed a passcode first.
+    await this.postgres.query(
+      `INSERT INTO public.tournament_registration_unlocks (tournament_id, player_steam_id)
+       VALUES ($1::uuid, $2::bigint)
+       ON CONFLICT DO NOTHING`,
+      [invite.tournament_id, invite.steam_id],
+    );
+
+    await this.postgres.query(
+      "DELETE FROM public.tournament_invites WHERE id = $1::uuid",
+      [invite_id],
+    );
+
+    return {
+      success: true,
+    };
+  }
+
   @HasuraAction()
   public async denyInvite(data: {
     user: User;
@@ -258,11 +357,17 @@ export class InvitesController {
   }) {
     const { invite_id, user, type } = data;
 
-    if (type === "team") {
-      return this.denyTeamInvite(invite_id, user);
+    switch (type) {
+      case "team":
+        return this.denyTeamInvite(invite_id, user);
+      case "tournament":
+      case "tournament-team":
+        return this.denyTournamentTeamInvite(invite_id, user);
+      case "tournament-registration":
+        return this.denyTournamentInvite(invite_id, user);
     }
 
-    return this.denyTournamentTeamInvite(invite_id, user);
+    throw Error(`unknown invite type ${type}`);
   }
 
   public async denyTeamInvite(invite_id: string, user: User) {
@@ -332,6 +437,27 @@ export class InvitesController {
         __typename: true,
       },
     });
+
+    return {
+      success: true,
+    };
+  }
+
+  public async denyTournamentInvite(invite_id: string, user: User) {
+    const invite = await this.findTournamentInvite(invite_id);
+
+    if (invite.steam_id !== user.steam_id) {
+      return {
+        success: false,
+      };
+    }
+
+    // Only the invite goes; a declined invite never granted an unlock, and
+    // deleting one here would revoke a passcode the player redeemed themselves.
+    await this.postgres.query(
+      "DELETE FROM public.tournament_invites WHERE id = $1::uuid",
+      [invite_id],
+    );
 
     return {
       success: true,

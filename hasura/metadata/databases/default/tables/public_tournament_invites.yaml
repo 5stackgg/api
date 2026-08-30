@@ -1,0 +1,67 @@
+table:
+  name: tournament_invites
+  schema: public
+event_triggers:
+  - name: tournament_invite_events
+    definition:
+      enable_manual: false
+      insert:
+        columns: '*'
+    retry_conf:
+      interval_sec: 10
+      num_retries: 3
+      timeout_sec: 60
+    webhook: '{{HASURA_GRAPHQL_EVENT_HOOK}}'
+object_relationships:
+  - name: invited_by
+    using:
+      foreign_key_constraint_on: invited_by_player_steam_id
+  - name: player
+    using:
+      foreign_key_constraint_on: steam_id
+  - name: tournament
+    using:
+      foreign_key_constraint_on: tournament_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        tournament:
+          is_organizer:
+            _eq: true
+      set:
+        invited_by_player_steam_id: x-hasura-user-id
+      columns:
+        - steam_id
+        - tournament_id
+    comment: A tournament_organizer by role and a plain user who owns the tournament are the same
+      person here, so one block covers both and every role above it inherits it
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - created_at
+        - id
+        - invited_by_player_steam_id
+        - steam_id
+        - tournament_id
+      filter:
+        _or:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - tournament:
+              is_organizer:
+                _eq: true
+      allow_aggregations: true
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        _or:
+          - steam_id:
+              _eq: X-Hasura-User-Id
+          - tournament:
+              is_organizer:
+                _eq: true
+    comment: ""

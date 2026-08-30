@@ -186,6 +186,7 @@
 - "!include public_tournament_brackets.yaml"
 - "!include public_tournament_categories.yaml"
 - "!include public_tournament_free_agents.yaml"
+- "!include public_tournament_invites.yaml"
 - "!include public_tournament_leaderboard_entries.yaml"
 - "!include public_tournament_organizer_teams.yaml"
 - "!include public_tournament_organizers.yaml"
