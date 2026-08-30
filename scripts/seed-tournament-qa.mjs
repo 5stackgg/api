@@ -6,13 +6,18 @@
 //   node seed-tournament-qa.mjs           seed (wipes previous [QA] data first)
 //   node seed-tournament-qa.mjs --clean   remove all [QA] data and exit
 //
-// Everything it creates is prefixed "[QA]" and owned by synthetic players in a
-// reserved steam-id block, so a wipe can never touch real data.
+// Everything it creates is prefixed "[QA]" and owned by synthetic players whose
+// steam ids sit above the entire real Steam64 individual range. Cleanup requires
+// BOTH, so it cannot reach a real account.
 
 import pg from "pg";
 
 const PREFIX = "[QA]";
-const STEAM_BASE = 76500000000000000n; // reserved block for synthetic players
+// Above the entire Steam64 individual-account space. The universe of real IDs is
+// 76561197960265728 .. 76561197960265728 + 2^32 (= 76561202255233024), so a base
+// BELOW that range -- as an earlier version of this file had -- makes the cleanup
+// predicate match every real account instead of none of them.
+const STEAM_BASE = 76600000000000000n;
 
 const pool = new pg.Pool({
   user: process.env.POSTGRES_USER || "hasura",
@@ -55,7 +60,13 @@ async function clean(client) {
     [PREFIX + "%"],
   );
   await client.query("DELETE FROM tournaments WHERE name LIKE $1", [PREFIX + "%"]);
-  await client.query("DELETE FROM players WHERE steam_id >= $1", [STEAM_BASE.toString()]);
+  // Both conditions on purpose: the id range alone is one typo away from matching
+  // real accounts, and players cascade to 26 tables. The name prefix is the thing
+  // this script actually controls.
+  await client.query(
+    "DELETE FROM players WHERE steam_id >= $1 AND name LIKE $2",
+    [STEAM_BASE.toString(), PREFIX + "%"],
+  );
 }
 
 // Seeding a bracket schedules matches, and tbi_match -> sanitize_match_options_regions
