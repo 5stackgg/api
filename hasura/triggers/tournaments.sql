@@ -45,6 +45,27 @@ BEGIN
         END IF;
     END IF;
 
+    -- Round 1 is materialized at RegistrationClosed and parked as 'Scheduled'
+    -- by tournament_match_is_pre_start. Releasing it here rather than leaving it
+    -- to CheckForScheduledMatches saves up to a minute of dead time at kickoff,
+    -- and covers an organizer who starts the tournament early.
+    --
+    -- Bounded to matches due around the tournament's own kickoff, using the same
+    -- 15-minute lead that job uses: a bracket carrying its own explicit, later
+    -- schedule -- a league fixture, an admin-mode bracket -- must keep waiting
+    -- for its own time rather than all going live at once.
+    IF NEW.status = 'Live' AND OLD.status IS DISTINCT FROM 'Live' THEN
+        UPDATE matches m
+           SET status = 'WaitingForCheckIn'
+          FROM tournament_brackets tb
+          INNER JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+         WHERE tb.match_id = m.id
+           AND ts.tournament_id = NEW.id
+           AND m.status = 'Scheduled'
+           AND m.scheduled_at IS NOT NULL
+           AND m.scheduled_at <= GREATEST(NEW."start", now()) + interval '15 minutes';
+    END IF;
+
     -- When tournament resumes from Paused, schedule all ready brackets (only if auto_start)
     IF (
         NEW.status IS DISTINCT FROM OLD.status AND

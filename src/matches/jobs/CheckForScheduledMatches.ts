@@ -36,6 +36,27 @@ export class CheckForScheduledMatches extends WorkerHost {
                   _eq: "Scheduled",
                 },
               },
+              // Mirrors tournament_match_is_pre_start. A round-1 match
+              // materialized before its tournament starts is parked, and
+              // tbu_matches forces it straight back to Scheduled -- so without
+              // this the UPDATE still reports an affected row and the job logs
+              // "N matches started" for a no-op every single pass.
+              {
+                _not: {
+                  tournament_brackets: {
+                    stage: {
+                      tournament: {
+                        status: {
+                          _in: ["RegistrationClosed", "CheckInReview"],
+                        },
+                        start: {
+                          _gt: new Date(),
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             ],
           },
           _set: {

@@ -67,3 +67,75 @@ CREATE TRIGGER tbi_tournament_free_agents
     BEFORE INSERT ON public.tournament_free_agents
     FOR EACH ROW
     EXECUTE FUNCTION public.tbi_tournament_free_agents();
+
+-- Leaving the pool has to give the slot up too. The roster row is what the
+-- seeding, the lineups and the team page actually read, so a drafted agent who
+-- deleted only their pool row stayed on the team while the waitlist behind them
+-- never moved. Deleting it here is also what runs the promotion, via
+-- tad_tournament_team_roster_free_agents below -- one path, not two.
+CREATE OR REPLACE FUNCTION public.tad_tournament_free_agents() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF OLD.status <> 'drafted' OR OLD.tournament_team_id IS NULL THEN
+        RETURN OLD;
+    END IF;
+
+    -- The tournament itself is on its way out; the roster rows are cascading
+    -- anyway and there is nothing left to promote into.
+    IF NOT EXISTS (SELECT 1 FROM public.tournaments t WHERE t.id = OLD.tournament_id) THEN
+        RETURN OLD;
+    END IF;
+
+    DELETE FROM public.tournament_team_roster ttr
+     WHERE ttr.tournament_id = OLD.tournament_id
+       AND ttr.player_steam_id = OLD.player_steam_id
+       AND ttr.tournament_team_id = OLD.tournament_team_id;
+
+    RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tad_tournament_free_agents ON public.tournament_free_agents;
+CREATE TRIGGER tad_tournament_free_agents
+    AFTER DELETE ON public.tournament_free_agents
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tad_tournament_free_agents();
+
+-- Lives with the free agents rather than in tournament_team_roster.sql because
+-- it is entirely the pool's business: it exists so a vacated drafted slot is
+-- refilled from the waitlist, whichever route emptied it -- the leave action,
+-- an organizer removing the player, or a pool row deleted straight through
+-- Hasura.
+CREATE OR REPLACE FUNCTION public.tad_tournament_team_roster_free_agents() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM public.tournament_free_agents fa
+        WHERE fa.tournament_id = OLD.tournament_id
+    ) THEN
+        RETURN OLD;
+    END IF;
+
+    -- A pool row left pointing at a team the player is no longer on hides them
+    -- from the waitlist and from the pool alike. Withdrawn, not waitlisted: they
+    -- were removed from the tournament, not passed over by the draft.
+    UPDATE public.tournament_free_agents fa
+       SET status = 'withdrawn',
+           tournament_team_id = NULL
+     WHERE fa.tournament_id = OLD.tournament_id
+       AND fa.player_steam_id = OLD.player_steam_id
+       AND fa.status = 'drafted';
+
+    PERFORM public.promote_tournament_free_agent(OLD.tournament_id, OLD.tournament_team_id);
+
+    RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tad_tournament_team_roster_free_agents ON public.tournament_team_roster;
+CREATE TRIGGER tad_tournament_team_roster_free_agents
+    AFTER DELETE ON public.tournament_team_roster
+    FOR EACH ROW
+    EXECUTE FUNCTION public.tad_tournament_team_roster_free_agents();

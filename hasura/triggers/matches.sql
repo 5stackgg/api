@@ -286,6 +286,18 @@ DECLARE
     _auto_cancel_duration_override integer;
     _veto_pick_timeout integer;
 BEGIN
+    -- The single gate for "materialized early, not playable yet". It lives here
+    -- rather than on each caller because every route onto the playable ladder
+    -- has to be refused, not just the scheduler: an organizer pressing start, a
+    -- lineup-ready cascade and CheckForScheduledMatches all arrive as an UPDATE
+    -- on this row. Terminal statuses are untouched on purpose -- cancelling, a
+    -- tournament reset and deleting a match must keep working.
+    IF OLD.status = 'Scheduled'
+       AND NEW.status IN ('WaitingForCheckIn', 'Veto', 'WaitingForServer', 'Live')
+       AND tournament_match_is_pre_start(NEW.id) THEN
+        NEW.status = 'Scheduled';
+    END IF;
+
     SELECT auto_cancellation, auto_cancel_duration INTO _auto_cancellation, _auto_cancel_duration_override FROM resolve_match_auto_cancel(NEW.id);
     _auto_cancel_duration := COALESCE(_auto_cancel_duration_override, get_int_setting('auto_cancel_duration', 15))::text || ' minutes';
 

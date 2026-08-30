@@ -877,15 +877,26 @@ export class TournamentsController {
       throw Error("the free agent pool is closed");
     }
 
-    const removed = await this.postgres.query<Array<{ id: string }>>(
+    const removed = await this.postgres.query<
+      Array<{ id: string; status: string }>
+    >(
       `DELETE FROM tournament_free_agents
         WHERE tournament_id = $1::uuid AND player_steam_id = $2::bigint
-      RETURNING id::text AS id`,
+      RETURNING id::text AS id, status`,
       [tournament_id, data.user.steam_id],
     );
 
     if (removed.length === 0) {
       throw Error("you are not in this tournament's free agent pool");
+    }
+
+    // Giving up a drafted slot drops the roster row and pulls the earliest
+    // waitlisted agent into it (tad_tournament_free_agents). Both the team that
+    // lost a player and the one that gained one need eligible_at and their seed
+    // recomputed -- check_team_eligibility restores eligibility on the roster
+    // write but never gives the seed back.
+    if (removed[0].status === "drafted") {
+      await this.reseedTournament(tournament_id);
     }
 
     return { success: true };
