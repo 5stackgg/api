@@ -18,12 +18,13 @@ DECLARE
 BEGIN
     min_players := tournament_min_players_per_lineup(tournament);
 
-    -- Gated on the window having OPENED, not just on the setting: seeding can be
-    -- run while registration is still open (an organizer closing early, a stage
-    -- rebuild), and nobody is a no-show for a prompt that has not appeared yet.
-    -- Without this every team would be stripped of its seed the moment an
-    -- organizer touched a check-in tournament before T-minus-opens.
-    _check_in_gate := tournament.check_in_required AND tournament_check_in_started(tournament);
+    -- Gated on check_in_ends_at, which is stamped only when a window actually
+    -- opened -- not on the derived "the clock has passed start - opens_before".
+    -- Seeding runs in situations where no window ever opened (an organizer who
+    -- closed registration early, a stage rebuild), and nobody is a no-show for
+    -- a prompt that never appeared: with the derived form every team in such a
+    -- tournament loses its seed the moment the clock crosses the threshold.
+    _check_in_gate := tournament_check_in_window_opened(tournament);
 
     UPDATE tournament_teams tt
     SET eligible_at = CASE

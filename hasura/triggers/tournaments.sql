@@ -28,8 +28,12 @@ BEGIN
             PERFORM draft_tournament_free_agent_teams(NEW.id);
         END IF;
 
-        PERFORM update_tournament_stages(NEW.id);
+        -- Seed before sizing: update_tournament_stages reads eligible_at and
+        -- assign_seeds_to_teams is what writes it, so sizing first builds the
+        -- bracket from a count that still counts every no-show and pads the
+        -- difference with first-round byes.
         PERFORM assign_seeds_to_teams(NEW);
+        PERFORM update_tournament_stages(NEW.id);
         
         SELECT id INTO first_stage_id
         FROM tournament_stages

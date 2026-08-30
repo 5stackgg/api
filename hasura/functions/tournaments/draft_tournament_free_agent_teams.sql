@@ -67,6 +67,13 @@ BEGIN
     -- A free agent who also ended up on a registered roster is skipped rather
     -- than drafted: tournament_team_roster is unique per (tournament, player),
     -- so drafting them would abort the whole transition on a key violation.
+    --
+    -- Owning a team counts as being in the tournament even with no roster row.
+    -- tournament_teams is UNIQUE (owner_steam_id, tournament_id) and every
+    -- generated team takes its top-rated player as owner, so drafting one of
+    -- these would raise a duplicate key -- inside tau_tournaments, which rolls
+    -- the entire RegistrationOpen -> RegistrationClosed transition back and
+    -- fails identically on every retry, with no way for the organizer out.
     SELECT array_agg(fa.id ORDER BY fa.created_at, fa.id)
     INTO _pool
     FROM public.tournament_free_agents fa
@@ -80,6 +87,12 @@ BEGIN
           FROM public.tournament_team_roster ttr
           WHERE ttr.tournament_id = _tournament_id
             AND ttr.player_steam_id = fa.player_steam_id
+      )
+      AND NOT EXISTS (
+          SELECT 1
+          FROM public.tournament_teams tt
+          WHERE tt.tournament_id = _tournament_id
+            AND tt.owner_steam_id = fa.player_steam_id
       );
 
     _eligible := COALESCE(array_length(_pool, 1), 0);
@@ -96,6 +109,17 @@ BEGIN
         _teams := GREATEST(_max_teams - _existing_teams, 0);
     END IF;
 
+    -- Before any status write, never after: waitlisting is one way (the pool
+    -- only re-admits a waitlisted agent who has checked in, which needs
+    -- check_in_required), so a draft that creates nothing must leave the pool
+    -- exactly as it found it. Otherwise an organizer clicking "Draft Teams" on
+    -- three early signups buries all three permanently, and the seven who
+    -- register afterwards take the team those three were queued for -- the
+    -- precise inversion the created_at rule exists to prevent.
+    IF _teams < 1 THEN
+        RETURN 0;
+    END IF;
+
     _selected := _teams * _team_size;
 
     -- Everyone past the cut waits. created_at is untouched, so a later pass
@@ -104,10 +128,6 @@ BEGIN
        SET status = 'waitlisted',
            tournament_team_id = NULL
      WHERE fa.id = ANY(_pool[(_selected + 1):_eligible]);
-
-    IF _teams < 1 THEN
-        RETURN 0;
-    END IF;
 
     -- Stage 2: assignment. The shuffle exists only so equal-rated players do not
     -- always land on the same side of the snake; it never reorders the pool.

@@ -1,4 +1,5 @@
 import { Controller, Logger } from "@nestjs/common";
+import { Redis } from "ioredis";
 import { HasuraAction, HasuraEvent } from "../hasura/hasura.controller";
 import { HasuraService } from "../hasura/hasura.service";
 import { HasuraEventData } from "../hasura/types/HasuraEventData";
@@ -9,6 +10,7 @@ import { DiscordTournamentVoiceService } from "../discord-bot/discord-tournament
 import { tournaments_set_input } from "../../generated";
 import { NotificationsService } from "../notifications/notifications.service";
 import { PostgresService } from "../postgres/postgres.service";
+import { RedisManagerService } from "../redis/redis-manager/redis-manager.service";
 
 // These tables are newer than the generated GraphQL types; event payloads are
 // typed locally (mirrors the leagues controller).
@@ -50,6 +52,8 @@ type CheckInTeam = {
 
 @Controller("tournaments")
 export class TournamentsController {
+  private readonly redis: Redis;
+
   constructor(
     private readonly logger: Logger,
     private readonly hasura: HasuraService,
@@ -58,7 +62,10 @@ export class TournamentsController {
     private readonly tournamentVoice: DiscordTournamentVoiceService,
     private readonly notifications: NotificationsService,
     private readonly postgres: PostgresService,
-  ) {}
+    private readonly redisManager: RedisManagerService,
+  ) {
+    this.redis = this.redisManager.getConnection();
+  }
 
   private async announceRegistrationOpen(
     tournamentId: string,
@@ -637,12 +644,7 @@ export class TournamentsController {
       throw Error("team is not registered for this tournament");
     }
 
-    // assign_seeds_to_teams recomputes eligibility from scratch every run, so
-    // the stamp above only takes effect once it has run again.
-    await this.postgres.query(
-      `SELECT assign_seeds_to_teams(t) FROM tournaments t WHERE t.id = $1::uuid`,
-      [tournament_id],
-    );
+    await this.reseedTournament(tournament_id);
 
     this.logger.log(
       `[${tournament_id}] re-admitted team ${tournament_team_id} after a missed check-in`,
@@ -790,27 +792,40 @@ export class TournamentsController {
       tournament_id,
     ]);
 
-    // The same order tau_tournaments uses: the bracket is sized from the live
-    // team count, so seeding before the draft would build it for zero teams.
-    await this.postgres.query(`SELECT update_tournament_stages($1::uuid)`, [
-      tournament_id,
-    ]);
-    await this.postgres.query(
-      `SELECT assign_seeds_to_teams(t) FROM tournaments t WHERE t.id = $1::uuid`,
-      [tournament_id],
-    );
-    await this.postgres.query(
-      `SELECT seed_stage(ts.id)
-         FROM tournament_stages ts
-        WHERE ts.tournament_id = $1::uuid AND ts."order" = 1`,
-      [tournament_id],
-    );
+    await this.reseedTournament(tournament_id);
 
     this.logger.log(
       `[${tournament_id}] drafted ${drafted.teams_created} free agent teams`,
     );
 
     return { teams_created: drafted.teams_created };
+  }
+
+  // All three, in this order. Stamping checked_in_at is not enough on its own:
+  // assign_seeds_to_teams recomputes eligibility from scratch, the bracket is
+  // SIZED by update_tournament_stages from the eligible count, and the slots are
+  // filled by seed_stage. Run the seeding alone after "continue without them"
+  // already drew the bracket and a re-admitted team gets eligible_at and a seed
+  // with nowhere to play -- a seeded entrant that never appears in a match.
+  //
+  // Seeding runs FIRST because update_tournament_stages sizes the bracket from
+  // eligible_at, and assign_seeds_to_teams is what writes it. The other way
+  // round the bracket is built from the count as it stood before the re-admit,
+  // so the team just let back in is seeded past the last slot that exists.
+  private async reseedTournament(tournamentId: string) {
+    await this.postgres.query(
+      `SELECT assign_seeds_to_teams(t) FROM tournaments t WHERE t.id = $1::uuid`,
+      [tournamentId],
+    );
+    await this.postgres.query(`SELECT update_tournament_stages($1::uuid)`, [
+      tournamentId,
+    ]);
+    await this.postgres.query(
+      `SELECT seed_stage(ts.id)
+         FROM tournament_stages ts
+        WHERE ts.tournament_id = $1::uuid AND ts."order" = 1`,
+      [tournamentId],
+    );
   }
 
   @HasuraAction()
@@ -888,6 +903,31 @@ export class TournamentsController {
     throw Error("this tournament is invite only");
   }
 
+  // A passcode is a bearer credential and the action takes an arbitrary
+  // tournament id, so every logged-in player can guess against every
+  // tournament. Keyed per caller, and the minute is part of the key rather than
+  // a refreshed TTL -- re-setting the TTL on each attempt would push the window
+  // ahead of somebody who never stops and lock them out for good.
+  public static readonly PASSCODE_ATTEMPTS_PER_MINUTE = 5;
+
+  private async assertPasscodeRateLimit(steamId: string): Promise<void> {
+    const key = `tournament-passcode:${steamId}:${Math.floor(
+      Date.now() / 60000,
+    )}`;
+    // INCR rather than get-then-put: guesses fired concurrently all read the
+    // same pre-increment value, and a limit that only counts the attempts that
+    // happened to be serialised is not a limit. EXPIRE has to follow INCR --
+    // on a key that does not exist yet it does nothing, which would leave the
+    // counter with no TTL at all.
+    const result = await this.redis.multi().incr(key).expire(key, 120).exec();
+
+    const count = Number(result?.[0]?.[1] ?? 0);
+
+    if (count > TournamentsController.PASSCODE_ATTEMPTS_PER_MINUTE) {
+      throw Error("too many passcode attempts, try again in a minute");
+    }
+  }
+
   @HasuraAction()
   public async unlockTournamentRegistration(data: {
     user: User;
@@ -895,6 +935,8 @@ export class TournamentsController {
     passcode: string;
   }) {
     const { tournament_id, passcode } = data;
+
+    await this.assertPasscodeRateLimit(data.user.steam_id);
 
     // Compared in SQL so the passcode never has to be read back out of the
     // database and into a log or an error message.
@@ -917,11 +959,9 @@ export class TournamentsController {
       throw Error("registration is not open");
     }
 
-    if (!tournament.has_passcode) {
-      throw Error("this tournament does not use a passcode");
-    }
-
-    if (!tournament.matches) {
+    // One message for both. "No passcode set" and "wrong passcode" told apart
+    // is half the search space handed over for free.
+    if (!tournament.has_passcode || !tournament.matches) {
       throw Error("incorrect passcode");
     }
 

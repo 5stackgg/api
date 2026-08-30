@@ -166,7 +166,14 @@ BEGIN
            SET checked_in_at = now()
          WHERE tt.id = NEW.tournament_team_id
            AND tt.checked_in_at IS NULL;
-    ELSE
+
+    -- Clearing is only ever a WITHDRAWN confirmation breaking a roll-up that
+    -- was already satisfied -- this row went from stamped to NULL, so the count
+    -- was _checked_in + 1 a moment ago. A player CHECKING IN can only raise the
+    -- count, and reacting to that would let the first player to confirm wipe a
+    -- team the registration auto-stamp or an organizer re-admit had already
+    -- checked in: they would harm their own team by doing what the UI asked.
+    ELSIF NEW.checked_in_at IS NULL AND _checked_in + 1 >= _min_players THEN
         UPDATE public.tournament_teams tt
            SET checked_in_at = NULL
          WHERE tt.id = NEW.tournament_team_id

@@ -93,10 +93,16 @@ BEGIN
 
     _session := nullif(current_setting('hasura.user', true), '')::json;
 
+    -- Check-in tournaments only. Withdrawing from a drawn bracket was open to
+    -- every player before this feature existed, and check-in is the only thing
+    -- that changed: a tournament with check_in_required false must behave
+    -- exactly as it did.
+    --
     -- A session with no role is an internal write (a cascade, a job, a test
     -- harness that reset hasura.user). Those were unrestricted before this
     -- guard existed and stay unrestricted, so only a real request is gated.
     IF (_session ->> 'x-hasura-role') IS NOT NULL
+       AND tournament.check_in_required
        AND tournament.status IN ('RegistrationClosed', 'Live', 'Paused')
        AND NOT is_tournament_organizer(tournament, _session) THEN
         RAISE EXCEPTION 'Cannot withdraw a team once the bracket has been drawn' USING ERRCODE = '22000';

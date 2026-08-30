@@ -36,6 +36,22 @@ BEGIN
             MESSAGE = 'Player does not meet this tournament''s entry requirements';
     END IF;
 
+    -- A team owner is already in the tournament. The draft makes its top-rated
+    -- player the generated team's owner, and tournament_teams is
+    -- UNIQUE (owner_steam_id, tournament_id), so letting an owner into the pool
+    -- sets up a duplicate key that aborts the whole registration-close
+    -- transition. The draft skips them too; this only refuses the join outright
+    -- so the pool never shows a slot that could not be honoured.
+    IF EXISTS (
+        SELECT 1
+        FROM public.tournament_teams tt
+        WHERE tt.tournament_id = NEW.tournament_id
+          AND tt.owner_steam_id = NEW.player_steam_id
+    ) THEN
+        RAISE EXCEPTION USING ERRCODE = '22000',
+            MESSAGE = 'You already have a team in this tournament';
+    END IF;
+
     -- Registering after the window opened counts as present: nobody can confirm
     -- a prompt they were never shown, and the close pass waitlists no-shows.
     IF NEW.checked_in_at IS NULL AND public.tournament_check_in_open(_tournament) THEN

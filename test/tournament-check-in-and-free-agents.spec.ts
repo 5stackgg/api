@@ -1,4 +1,7 @@
+import { Logger } from "@nestjs/common";
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { TournamentsController } from "./../src/tournaments/tournaments.controller";
+import { ProcessTournamentCheckIn } from "./../src/matches/jobs/ProcessTournamentCheckIn";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, runAsUser, SqlTestDb } from "./utils/sql-test-db";
 
@@ -88,6 +91,54 @@ describe("tournament check-in, registration rules and free agents (SQL-driven)",
       `INSERT INTO tournament_free_agents (tournament_id, player_steam_id, created_at)
        VALUES ($1, $2, COALESCE($3::timestamptz, now()))`,
       [tournamentId, steamId, createdAt ?? null],
+    );
+
+  const registerTeam = async (
+    tournamentId: string,
+    name: string,
+    players: Array<string>,
+  ) => {
+    const [team] = await postgres.query<Array<{ id: string }>>(
+      `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id, captain_steam_id)
+       VALUES ($1, $2, $3, $3) RETURNING id`,
+      [tournamentId, name, players[0]],
+    );
+
+    for (const player of players) {
+      // tbi_tournament_team_roster reads hasura.user unconditionally, so a
+      // roster insert has to arrive with a session like a real request.
+      await runAsUser(postgres, player, "admin", (query) =>
+        query(
+          `INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id)
+           VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
+          [team.id, player, tournamentId],
+        ),
+      );
+    }
+
+    return team.id;
+  };
+
+  const teamCheckedIn = async (teamId: string) => {
+    const [row] = await postgres.query<Array<{ checked_in_at: Date | null }>>(
+      "SELECT checked_in_at FROM tournament_teams WHERE id = $1",
+      [teamId],
+    );
+    return row.checked_in_at !== null;
+  };
+
+  const confirmPlayer = (teamId: string, steamId: string) =>
+    postgres.query(
+      `UPDATE tournament_team_roster SET checked_in_at = now()
+        WHERE tournament_team_id = $1 AND player_steam_id = $2`,
+      [teamId, steamId],
+    );
+
+  const withdrawPlayer = (teamId: string, steamId: string) =>
+    postgres.query(
+      `UPDATE tournament_team_roster SET checked_in_at = NULL
+        WHERE tournament_team_id = $1 AND player_steam_id = $2`,
+      [teamId, steamId],
     );
 
   describe("registration requirements", () => {
@@ -226,54 +277,82 @@ describe("tournament check-in, registration rules and free agents (SQL-driven)",
       expect(team.checked_in_at).not.toBeNull();
     });
 
+    // The team is registered BEFORE the window opens so nothing auto-stamps it:
+    // its checked_in_at is then the roll-up's work and nothing else. Registered
+    // inside the window instead, the team starts out stamped and the roll-up
+    // could be deleted outright without the assertions noticing.
     it("rolls per-player confirmations up into the team in Players mode", async () => {
+      const t = await createTournament({
+        start: "3 days",
+        columns: { check_in_required: true, check_in_setting: "Players" },
+      });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      const [owner, mate] = await fx.players(2);
+      const teamId = await registerTeam(t.id, "Roster", [owner, mate]);
+      expect(await teamCheckedIn(teamId)).toBe(false);
+
+      await postgres.query(
+        "UPDATE tournaments SET start = now() + interval '30 minutes' WHERE id = $1",
+        [t.id],
+      );
+
+      // Wingman fields two, so one confirmation is not enough.
+      await confirmPlayer(teamId, owner);
+      expect(await teamCheckedIn(teamId)).toBe(false);
+
+      await confirmPlayer(teamId, mate);
+      expect(await teamCheckedIn(teamId)).toBe(true);
+
+      // Withdrawing a confirmation from a satisfied roll-up is the only thing
+      // that may take the team back out.
+      await withdrawPlayer(teamId, mate);
+      expect(await teamCheckedIn(teamId)).toBe(false);
+
+      await confirmPlayer(teamId, mate);
+      expect(await teamCheckedIn(teamId)).toBe(true);
+    });
+
+    // The registration auto-stamp and the per-player roll-up meet here: a team
+    // that signed up mid-window is already checked in, and the first player to
+    // do what the UI asked used to wipe it -- one confirmation being below the
+    // minimum lineup. The same branch silently reversed an organizer re-admit.
+    it("never lets the first player to confirm un-check their own team", async () => {
       const t = await createTournament({
         start: "30 minutes",
         columns: { check_in_required: true, check_in_setting: "Players" },
       });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      const players = await fx.players(2);
+      const teamId = await registerTeam(t.id, "Auto", players);
+      expect(await teamCheckedIn(teamId)).toBe(true);
+
+      await confirmPlayer(teamId, players[0]);
+      expect(await teamCheckedIn(teamId)).toBe(true);
+    });
+
+    it("never lets a withdrawal reverse an organizer re-admit", async () => {
+      const t = await createTournament({
+        start: "3 days",
+        columns: { check_in_required: true, check_in_setting: "Players" },
+      });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      const players = await fx.players(2);
+      const teamId = await registerTeam(t.id, "Missed", players);
+
+      // One player confirmed, the team never reached the bar, the organizer
+      // re-admitted it anyway. Losing that one confirmation is not a drop from
+      // a satisfied roll-up, so the re-admission stands.
+      await confirmPlayer(teamId, players[0]);
       await postgres.query(
-        "UPDATE tournaments SET status = 'RegistrationOpen' WHERE id = $1",
-        [t.id],
+        "UPDATE tournament_teams SET checked_in_at = now() WHERE id = $1",
+        [teamId],
       );
 
-      const owner = await fx.player();
-      const mate = await fx.player();
-      const [team] = await postgres.query<Array<{ id: string }>>(
-        `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id, captain_steam_id, checked_in_at)
-         VALUES ($1, 'Roster', $2, $2, NULL) RETURNING id`,
-        [t.id, owner],
-      );
-      for (const player of [owner, mate]) {
-        await runAsUser(postgres, player, "admin", (query) =>
-          query(
-            `INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id)
-             VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
-            [team.id, player, t.id],
-          ),
-        );
-      }
-
-      const teamCheckedIn = async () => {
-        const [row] = await postgres.query<
-          Array<{ checked_in_at: Date | null }>
-        >("SELECT checked_in_at FROM tournament_teams WHERE id = $1", [
-          team.id,
-        ]);
-        return row.checked_in_at !== null;
-      };
-
-      // Wingman fields two, so one confirmation is not enough.
-      await postgres.query(
-        "UPDATE tournament_team_roster SET checked_in_at = now() WHERE tournament_team_id = $1 AND player_steam_id = $2",
-        [team.id, owner],
-      );
-      expect(await teamCheckedIn()).toBe(false);
-
-      await postgres.query(
-        "UPDATE tournament_team_roster SET checked_in_at = now() WHERE tournament_team_id = $1 AND player_steam_id = $2",
-        [team.id, mate],
-      );
-      expect(await teamCheckedIn()).toBe(true);
+      await withdrawPlayer(teamId, players[0]);
+      expect(await teamCheckedIn(teamId)).toBe(true);
     });
 
     it("drops a no-show from seeding without deleting it, and re-admits on demand", async () => {
@@ -286,37 +365,15 @@ describe("tournament check-in, registration rules and free agents (SQL-driven)",
         [t.id],
       );
 
-      const showed = await fx.player();
-      const mate = await fx.player();
-      const noShow = await fx.player();
-      const noShowMate = await fx.player();
+      await registerTeam(t.id, "A", await fx.players(2));
+      const teamB = { id: await registerTeam(t.id, "B", await fx.players(2)) };
 
-      const [teamA] = await postgres.query<Array<{ id: string }>>(
-        `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id, captain_steam_id)
-         VALUES ($1, 'A', $2, $2) RETURNING id`,
-        [t.id, showed],
+      // The exclusion keys off check_in_ends_at, which only a real opened
+      // window ever stamps; without it nobody can be a no-show.
+      await postgres.query(
+        "UPDATE tournaments SET check_in_ends_at = now() + interval '10 minutes' WHERE id = $1",
+        [t.id],
       );
-      const [teamB] = await postgres.query<Array<{ id: string }>>(
-        `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id, captain_steam_id)
-         VALUES ($1, 'B', $2, $2) RETURNING id`,
-        [t.id, noShow],
-      );
-      for (const [team, players] of [
-        [teamA.id, [showed, mate]],
-        [teamB.id, [noShow, noShowMate]],
-      ] as Array<[string, Array<string>]>) {
-        for (const player of players) {
-          // tbi_tournament_team_roster reads hasura.user unconditionally, so a
-          // roster insert has to arrive with a session like a real request.
-          await runAsUser(postgres, player, "admin", (query) =>
-            query(
-              `INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id)
-               VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
-              [team, player, t.id],
-            ),
-          );
-        }
-      }
 
       // Both were auto-stamped on insert (the window is open); clear B to make
       // it a genuine no-show.
@@ -703,6 +760,449 @@ describe("tournament check-in, registration rules and free agents (SQL-driven)",
         [t.id, JSON.stringify({ "x-hasura-role": "guest" })],
       );
       expect(rows).toHaveLength(0);
+    });
+  });
+
+  // Every case below was a live defect: the suite above stayed green through
+  // all of them.
+  describe("check-in windows that never opened", () => {
+    // check_in_ends_at is stamped only by the open pass, which fires on
+    // RegistrationOpen alone. An organizer who closes registration early
+    // therefore leaves it NULL for good -- and the derived
+    // "clock is past start - opens_before" said "check-in has started" anyway.
+    const fullField = async (start: string) => {
+      const t = await createTournament({
+        start,
+        columns: { check_in_required: true },
+      });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      for (let i = 1; i <= 4; i++) {
+        await registerTeam(t.id, `T${i}`, await fx.players(2));
+      }
+
+      return t;
+    };
+
+    it("does not cancel a fully rostered field when no window ever opened", async () => {
+      const t = await fullField("3 days");
+
+      await postgres.query(
+        "UPDATE tournaments SET start = now() + interval '30 minutes' WHERE id = $1",
+        [t.id],
+      );
+
+      const [gate] = await postgres.query<
+        Array<{ started: boolean; opened: boolean; min_teams: boolean }>
+      >(
+        `SELECT tournament_check_in_started(t) AS started,
+                tournament_check_in_window_opened(t) AS opened,
+                tournament_has_min_teams(t) AS min_teams
+           FROM tournaments t WHERE t.id = $1`,
+        [t.id],
+      );
+      expect(gate.started).toBe(true);
+      expect(gate.opened).toBe(false);
+      expect(gate.min_teams).toBe(true);
+
+      await postgres.query(
+        "SELECT assign_seeds_to_teams(t) FROM tournaments t WHERE t.id = $1",
+        [t.id],
+      );
+      const seeded = await postgres.query<Array<{ seed: number | null }>>(
+        "SELECT seed FROM tournament_teams WHERE tournament_id = $1",
+        [t.id],
+      );
+      expect(seeded).toHaveLength(4);
+      expect(seeded.every((row) => row.seed !== null)).toBe(true);
+
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+      await setStatus(t.id, t.organizer, "Live");
+
+      const [row] = await postgres.query<Array<{ status: string }>>(
+        "SELECT status FROM tournaments WHERE id = $1",
+        [t.id],
+      );
+      expect(row.status).toBe("Live");
+    });
+
+    it("still excludes no-shows once a window really opened", async () => {
+      const t = await fullField("3 days");
+
+      await postgres.query(
+        `UPDATE tournaments
+            SET start = now() + interval '30 minutes',
+                check_in_ends_at = now() + interval '10 minutes'
+          WHERE id = $1`,
+        [t.id],
+      );
+
+      const [gate] = await postgres.query<Array<{ min_teams: boolean }>>(
+        "SELECT tournament_has_min_teams(t) AS min_teams FROM tournaments t WHERE t.id = $1",
+        [t.id],
+      );
+      expect(gate.min_teams).toBe(false);
+
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+      await setStatus(t.id, t.organizer, "Live");
+
+      const [row] = await postgres.query<Array<{ status: string }>>(
+        "SELECT status FROM tournaments WHERE id = $1",
+        [t.id],
+      );
+      expect(row.status).toBe("CancelledMinTeams");
+    });
+
+    // The withdrawal block arrived with check-in but applied to every
+    // tournament, and the Hasura delete permission only ever excluded the
+    // terminal statuses.
+    it("leaves team withdrawal alone on a tournament without check-in", async () => {
+      const t = await createTournament();
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      const players = await fx.players(2);
+      const teamId = await registerTeam(t.id, "Leaver", players);
+
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+
+      await expect(
+        runAsUser(postgres, players[0], "user", (query) =>
+          query("DELETE FROM tournament_teams WHERE id = $1", [teamId]),
+        ),
+      ).resolves.not.toThrow();
+    });
+
+    it("blocks the same withdrawal once check-in is required", async () => {
+      const t = await createTournament({
+        columns: { check_in_required: true },
+      });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      const players = await fx.players(2);
+      const teamId = await registerTeam(t.id, "Leaver", players);
+
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+
+      await expect(
+        runAsUser(postgres, players[0], "user", (query) =>
+          query("DELETE FROM tournament_teams WHERE id = $1", [teamId]),
+        ),
+      ).rejects.toThrow(/bracket has been drawn/i);
+    });
+  });
+
+  // update_tournament_stages sizes the bracket from eligible_at and
+  // assign_seeds_to_teams is what writes it, so the seeding has to run first --
+  // the other order builds the bracket from a count that still includes every
+  // no-show and pads the difference with first-round byes.
+  describe("bracket sizing", () => {
+    it("builds the bracket for the teams that checked in", async () => {
+      const t = await createTournament({
+        start: "3 days",
+        maxTeams: 8,
+        columns: { check_in_required: true },
+      });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      const teams: Array<string> = [];
+      for (let i = 1; i <= 8; i++) {
+        teams.push(await registerTeam(t.id, `T${i}`, await fx.players(2)));
+      }
+
+      await postgres.query(
+        `UPDATE tournaments
+            SET start = now() + interval '30 minutes',
+                check_in_ends_at = now() + interval '10 minutes'
+          WHERE id = $1`,
+        [t.id],
+      );
+      await postgres.query(
+        "UPDATE tournament_teams SET checked_in_at = now() WHERE id = ANY($1::uuid[])",
+        [teams.slice(0, 4)],
+      );
+
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+
+      // Four teams is two first-round matches. Sized for eight it would be four,
+      // half of them byes, plus a round nobody plays.
+      const [round] = await postgres.query<Array<{ matches: string }>>(
+        `SELECT COUNT(*)::text AS matches
+           FROM tournament_brackets tb
+           JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+          WHERE ts.tournament_id = $1 AND ts."order" = 1 AND tb.round = 1`,
+        [t.id],
+      );
+      expect(Number(round.matches)).toBe(2);
+    });
+  });
+
+  describe("a draft that creates nothing", () => {
+    it("leaves the pool exactly as it found it", async () => {
+      const t = await createTournament({
+        columns: { registration_type: "free_agents" },
+      });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      const first = await fx.player();
+      await registerFreeAgent(
+        t.id,
+        first,
+        new Date(Date.now() - 3_600_000).toISOString(),
+      );
+
+      const [empty] = await postgres.query<Array<{ created: number }>>(
+        "SELECT draft_tournament_free_agent_teams($1) AS created",
+        [t.id],
+      );
+      expect(empty.created).toBe(0);
+
+      // Waitlisting is one-way without check-in, so burying the earliest
+      // signups here hands their slot to whoever registers next.
+      const [untouched] = await postgres.query<Array<{ status: string }>>(
+        "SELECT status FROM tournament_free_agents WHERE tournament_id = $1",
+        [t.id],
+      );
+      expect(untouched.status).toBe("registered");
+
+      await registerFreeAgent(t.id, await fx.player());
+
+      const [drafted] = await postgres.query<Array<{ created: number }>>(
+        "SELECT draft_tournament_free_agent_teams($1) AS created",
+        [t.id],
+      );
+      expect(drafted.created).toBe(1);
+
+      const agents = await postgres.query<
+        Array<{ player_steam_id: string; status: string }>
+      >(
+        "SELECT player_steam_id, status FROM tournament_free_agents WHERE tournament_id = $1 ORDER BY created_at",
+        [t.id],
+      );
+      expect(agents.map((agent) => agent.status)).toEqual([
+        "drafted",
+        "drafted",
+      ]);
+      expect(agents[0].player_steam_id).toBe(first);
+    });
+  });
+
+  describe("a free agent who also owns a team", () => {
+    it("does not stall the close of registration", async () => {
+      const t = await createTournament({
+        columns: { registration_type: "both" },
+      });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      // Pool first, team second: no trigger can catch that order, so the draft
+      // is what has to skip them. tournament_teams is
+      // UNIQUE (owner_steam_id, tournament_id) and the draft makes its top-rated
+      // pick the generated team's owner, so drafting this player raises inside
+      // tau_tournaments and rolls the whole transition back -- identically on
+      // every retry, with no way out for the organizer.
+      const owner = await fx.player();
+      await registerFreeAgent(
+        t.id,
+        owner,
+        new Date(Date.now() - 3_600_000).toISOString(),
+      );
+      await postgres.query(
+        `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id, captain_steam_id)
+         VALUES ($1, 'Owned', $2, $2)`,
+        [t.id, owner],
+      );
+
+      for (const agent of await fx.players(2)) {
+        await registerFreeAgent(t.id, agent);
+      }
+
+      await expect(
+        setStatus(t.id, t.organizer, "RegistrationClosed"),
+      ).resolves.not.toThrow();
+
+      const [pooled] = await postgres.query<Array<{ status: string }>>(
+        `SELECT status FROM tournament_free_agents
+          WHERE tournament_id = $1 AND player_steam_id = $2`,
+        [t.id, owner],
+      );
+      expect(pooled.status).toBe("registered");
+
+      const rostered = await postgres.query<Array<{ player_steam_id: string }>>(
+        `SELECT player_steam_id FROM tournament_team_roster
+          WHERE tournament_id = $1 AND player_steam_id = $2`,
+        [t.id, owner],
+      );
+      expect(rostered).toHaveLength(0);
+
+      const drafted = await postgres.query<Array<{ id: string }>>(
+        "SELECT id FROM tournament_teams WHERE tournament_id = $1 AND is_drafted",
+        [t.id],
+      );
+      expect(drafted).toHaveLength(1);
+    });
+
+    it("refuses the pool join when the team came first", async () => {
+      const t = await createTournament({
+        columns: { registration_type: "both" },
+      });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      const owner = await fx.player();
+      await postgres.query(
+        `INSERT INTO tournament_teams (tournament_id, name, owner_steam_id, captain_steam_id)
+         VALUES ($1, 'Owned', $2, $2)`,
+        [t.id, owner],
+      );
+
+      await expect(registerFreeAgent(t.id, owner)).rejects.toThrow(
+        /already have a team/i,
+      );
+    });
+  });
+
+  // The action and the job carry rules no trigger can enforce (their writes run
+  // on a pooled connection with no hasura.user), so they are exercised against
+  // the real schema rather than a statement mock.
+  describe("check-in action and job on the real schema", () => {
+    const notifications = { notifyPlayers: jest.fn() };
+
+    const controller = () =>
+      new TournamentsController(
+        new Logger("TournamentCheckInActionTest"),
+        {} as never,
+        {} as never,
+        {} as never,
+        {} as never,
+        notifications as never,
+        postgres,
+        { getConnection: () => ({}) } as never,
+      );
+
+    const job = () =>
+      new ProcessTournamentCheckIn(
+        new Logger("TournamentCheckInJobTest"),
+        postgres,
+        notifications as never,
+      );
+
+    const bracketSlots = (tournamentId: string, teamId: string) =>
+      postgres.query<Array<{ id: string }>>(
+        `SELECT tb.id FROM tournament_brackets tb
+           JOIN tournament_stages ts ON ts.id = tb.tournament_stage_id
+          WHERE ts.tournament_id = $1
+            AND $2::uuid IN (tb.tournament_team_id_1, tb.tournament_team_id_2)`,
+        [tournamentId, teamId],
+      );
+
+    const status = async (tournamentId: string) => {
+      const [row] = await postgres.query<Array<{ status: string }>>(
+        "SELECT status FROM tournaments WHERE id = $1",
+        [tournamentId],
+      );
+      return row.status;
+    };
+
+    // Re-admission is allowed after "continue without them" has already drawn
+    // the bracket, and a seed with no slot is a team that shows on the entrant
+    // list and never plays.
+    it("gives a re-admitted team a bracket slot, not just a seed", async () => {
+      const t = await createTournament({
+        start: "3 days",
+        maxTeams: 4,
+        columns: { check_in_required: true },
+      });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      const teams: Array<string> = [];
+      for (let i = 1; i <= 4; i++) {
+        teams.push(await registerTeam(t.id, `T${i}`, await fx.players(2)));
+      }
+
+      await postgres.query(
+        `UPDATE tournaments
+            SET start = now() + interval '30 minutes',
+                check_in_ends_at = now() + interval '10 minutes'
+          WHERE id = $1`,
+        [t.id],
+      );
+      await postgres.query(
+        `UPDATE tournament_teams SET checked_in_at = now()
+          WHERE tournament_id = $1 AND id <> $2`,
+        [t.id, teams[3]],
+      );
+
+      await setStatus(t.id, t.organizer, "RegistrationClosed");
+      expect(await bracketSlots(t.id, teams[3])).toHaveLength(0);
+
+      await controller().readmitTournamentTeam({
+        user: { name: "Organizer", role: "user", steam_id: t.organizer },
+        tournament_id: t.id,
+        tournament_team_id: teams[3],
+      });
+
+      const [readmitted] = await postgres.query<Array<{ seed: number | null }>>(
+        "SELECT seed FROM tournament_teams WHERE id = $1",
+        [teams[3]],
+      );
+      expect(readmitted.seed).not.toBeNull();
+      expect((await bracketSlots(t.id, teams[3])).length).toBeGreaterThan(0);
+    });
+
+    // A team holding half a lineup is not seedable with or without a
+    // confirmation, so it cannot be a no-show -- one abandoned registration
+    // would otherwise page the organizer on every check-in tournament.
+    const closingField = async (strandedRoster: number) => {
+      const t = await createTournament({
+        start: "3 days",
+        columns: { check_in_required: true },
+      });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      const confirmed = await registerTeam(t.id, "Full", await fx.players(2));
+      await registerTeam(t.id, "Partial", await fx.players(strandedRoster));
+
+      await postgres.query(
+        `UPDATE tournaments
+            SET start = now() + interval '10 minutes',
+                check_in_ends_at = now() - interval '1 minute'
+          WHERE id = $1`,
+        [t.id],
+      );
+      await postgres.query(
+        "UPDATE tournament_teams SET checked_in_at = now() WHERE id = $1",
+        [confirmed],
+      );
+
+      return t;
+    };
+
+    it("does not hold a tournament for a half-finished registration", async () => {
+      const t = await closingField(1);
+
+      const [count] = await postgres.query<Array<{ missed: number }>>(
+        `SELECT tournament_missed_check_in_count(t) AS missed
+           FROM tournaments t WHERE t.id = $1`,
+        [t.id],
+      );
+      expect(count.missed).toBe(0);
+
+      await job().process();
+
+      expect(await status(t.id)).toBe("RegistrationClosed");
+    });
+
+    it("still holds a tournament for a team that could have been seeded", async () => {
+      const t = await closingField(2);
+
+      const [count] = await postgres.query<Array<{ missed: number }>>(
+        `SELECT tournament_missed_check_in_count(t) AS missed
+           FROM tournaments t WHERE t.id = $1`,
+        [t.id],
+      );
+      expect(count.missed).toBe(1);
+
+      await job().process();
+
+      expect(await status(t.id)).toBe("CheckInReview");
     });
   });
 });

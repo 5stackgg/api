@@ -152,6 +152,11 @@ export class ProcessTournamentCheckIn extends WorkerHost {
     // One statement decides the destination and claims the tournament: a manual
     // "Close Registration" click racing this tick loses the WHERE and neither
     // side acts twice.
+    //
+    // Only a team that would otherwise have been seeded can be a no-show. An
+    // abandoned half-registration is not seedable whether it confirms or not,
+    // so counting it would hold every check-in tournament in CheckInReview and
+    // page the organizer over a decision that changes nothing.
     const closed = await this.postgres.query<Array<ClosedTournament>>(
       `UPDATE tournaments t
           SET status = CASE
@@ -159,6 +164,7 @@ export class ProcessTournamentCheckIn extends WorkerHost {
                   SELECT 1 FROM tournament_teams tt
                    WHERE tt.tournament_id = t.id
                      AND tt.checked_in_at IS NULL
+                     AND tournament_team_lineup_filled(tt)
               ) THEN 'CheckInReview'
               ELSE 'RegistrationClosed'
           END

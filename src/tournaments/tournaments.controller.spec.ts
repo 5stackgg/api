@@ -15,6 +15,13 @@ describe("TournamentsController registration and check-in actions", () => {
   const tournamentVoice = {};
   const notifications = { notifyPlayers: jest.fn() };
   const postgres = { query: jest.fn() };
+  const redisExec = jest.fn();
+  const redis = {
+    multi: () => ({
+      incr: () => ({ expire: () => ({ exec: redisExec }) }),
+    }),
+  };
+  const redisManager = { getConnection: () => redis };
 
   let controller: TournamentsController;
   let tournamentRow: Record<string, unknown> | undefined;
@@ -62,6 +69,7 @@ describe("TournamentsController registration and check-in actions", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    redisExec.mockResolvedValue([[null, 1]]);
     tournamentRow = tournament();
     teamRow = { id: "team-1", can_manage: false, is_captain: false };
     rosterStamped = [];
@@ -139,6 +147,7 @@ describe("TournamentsController registration and check-in actions", () => {
       tournamentVoice as any,
       notifications as any,
       postgres as any,
+      redisManager as any,
     );
   });
 
@@ -314,7 +323,10 @@ describe("TournamentsController registration and check-in actions", () => {
       ).rejects.toThrow(/live/i);
     });
 
-    it("stamps the team and re-runs seeding", async () => {
+    // Seeding alone leaves a re-admitted team with a seed and no bracket slot
+    // once "continue without them" has already drawn the bracket, so all three
+    // steps have to run -- the same sequence tau_tournaments uses.
+    it("stamps the team and rebuilds the bracket around it", async () => {
       tournamentRow = tournament({ is_organizer: true });
 
       await expect(
@@ -326,8 +338,32 @@ describe("TournamentsController registration and check-in actions", () => {
       ).resolves.toEqual({ success: true });
 
       expect(
+        statements.some((sql) => sql.includes("update_tournament_stages")),
+      ).toBe(true);
+      expect(
         statements.some((sql) => sql.includes("assign_seeds_to_teams")),
       ).toBe(true);
+      expect(statements.some((sql) => sql.includes("seed_stage"))).toBe(true);
+    });
+
+    it("rebuilds the bracket after registration has already closed", async () => {
+      tournamentRow = tournament({
+        is_organizer: true,
+        status: "RegistrationClosed",
+      });
+
+      await expect(
+        controller.readmitTournamentTeam({
+          user: organizer,
+          tournament_id: "tournament-1",
+          tournament_team_id: "team-1",
+        }),
+      ).resolves.toEqual({ success: true });
+
+      expect(
+        statements.some((sql) => sql.includes("update_tournament_stages")),
+      ).toBe(true);
+      expect(statements.some((sql) => sql.includes("seed_stage"))).toBe(true);
     });
   });
 
@@ -485,6 +521,8 @@ describe("TournamentsController registration and check-in actions", () => {
       ).rejects.toThrow(/live/i);
     });
 
+    // update_tournament_stages sizes the bracket from eligible_at, and
+    // assign_seeds_to_teams is what writes it, so the seeding has to come first.
     it("drafts and rebuilds the bracket in the trigger's order", async () => {
       tournamentRow = tournament({
         is_organizer: true,
@@ -500,8 +538,8 @@ describe("TournamentsController registration and check-in actions", () => {
 
       const order = [
         "draft_tournament_free_agent_teams",
-        "update_tournament_stages",
         "assign_seeds_to_teams",
+        "update_tournament_stages",
         "seed_stage",
       ].map((fragment) =>
         statements.findIndex((sql) => sql.includes(fragment)),
@@ -611,7 +649,9 @@ describe("TournamentsController registration and check-in actions", () => {
   });
 
   describe("unlockTournamentRegistration", () => {
-    it("refuses a tournament with no passcode", async () => {
+    // "No passcode set" and "wrong passcode" must not be told apart: the
+    // distinction is half the search space handed to a guesser for free.
+    it("refuses a tournament with no passcode indistinguishably", async () => {
       passcodeRow = {
         status: "RegistrationOpen",
         has_passcode: false,
@@ -624,7 +664,28 @@ describe("TournamentsController registration and check-in actions", () => {
           tournament_id: "tournament-1",
           passcode: "hunter2",
         }),
-      ).rejects.toThrow(/does not use a passcode/i);
+      ).rejects.toThrow(/^incorrect passcode$/i);
+    });
+
+    it("throttles a guesser before the database is even asked", async () => {
+      passcodeRow = {
+        status: "RegistrationOpen",
+        has_passcode: true,
+        matches: false,
+      };
+      redisExec.mockResolvedValue([
+        [null, TournamentsController.PASSCODE_ATTEMPTS_PER_MINUTE + 1],
+      ]);
+
+      await expect(
+        controller.unlockTournamentRegistration({
+          user: player,
+          tournament_id: "tournament-1",
+          passcode: "nope",
+        }),
+      ).rejects.toThrow(/too many passcode attempts/i);
+
+      expect(statements).toHaveLength(0);
     });
 
     it("refuses a wrong passcode", async () => {
@@ -640,7 +701,7 @@ describe("TournamentsController registration and check-in actions", () => {
           tournament_id: "tournament-1",
           passcode: "nope",
         }),
-      ).rejects.toThrow(/incorrect passcode/i);
+      ).rejects.toThrow(/^incorrect passcode$/i);
     });
 
     it("records the unlock on a match", async () => {
