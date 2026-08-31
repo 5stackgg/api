@@ -63,6 +63,7 @@ import { CameraService } from "./camera/camera.service";
 import { CameraMonitorService } from "./camera/camera-monitor.service";
 import { ClipSpec } from "./clips/types/ClipSpec";
 import { UtilityPracticeService } from "../utility/utility-practice.service";
+import { VoiceService } from "../voice/voice.service";
 
 @Controller("matches")
 export class MatchesController {
@@ -84,6 +85,15 @@ export class MatchesController {
   ];
 
   private static readonly BLOCKING_RESET_STATUSES: string[] = ["Live", "Veto"];
+
+  // A DELETE carries the row in `old` and an UPDATE in `new`, and a voice
+  // channel is per lineup rather than per match.
+  private static lineupIds(data: HasuraEventData<matches_set_input>) {
+    return [
+      data.new?.lineup_1_id ?? data.old?.lineup_1_id,
+      data.new?.lineup_2_id ?? data.old?.lineup_2_id,
+    ].filter((id): id is string => typeof id === "string");
+  }
 
   // The event payload carries every matches column, but the generated
   // matches_set_input only regains veto_pick_expires_at once codegen is re-run
@@ -126,6 +136,7 @@ export class MatchesController {
     private readonly matchImport: MatchImportService,
     private readonly camera: CameraService,
     private readonly cameraMonitor: CameraMonitorService,
+    private readonly voice: VoiceService,
     @Inject(forwardRef(() => UtilityPracticeService))
     private readonly utilityPractice: UtilityPracticeService,
     private readonly gameModesService: GameModesService,
@@ -746,6 +757,30 @@ export class MatchesController {
 
     if (data.op === "DELETE") {
       await this.chatService.removeLobby(ChatLobbyType.Match, matchId);
+
+      // No grace window here, unlike a match that merely ended: there is no
+      // match left to have just played, and the roster the channel is built
+      // from went with the row.
+      for (const lineupId of MatchesController.lineupIds(data)) {
+        await this.voice.closeChannel(lineupId);
+      }
+    }
+
+    // Voice outlives the match by a few minutes rather than ending with it --
+    // the scoreboard is still up when the last round lands. This only starts the
+    // clock; VoiceService's monitor closes the channel when it runs out.
+    //
+    // Armed on the transition alone: the branch below nulls the server, which
+    // re-enters here with the same terminal status and would push the deadline
+    // out every time.
+    if (
+      data.op === "UPDATE" &&
+      MatchesController.TERMINAL_STATUSES.includes(status) &&
+      !MatchesController.TERMINAL_STATUSES.includes(data.old.status as string)
+    ) {
+      for (const lineupId of MatchesController.lineupIds(data)) {
+        await this.voice.graceOnMatchEnd(lineupId);
+      }
     }
 
     /**

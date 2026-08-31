@@ -33,9 +33,13 @@ INSERT INTO e_notification_types ("value", "description") VALUES
     ('MatchChatMessage', 'A new message in a match''s chat'),
     ('TournamentCreated', 'Registration opened for a tournament'),
     ('TournamentReminder', 'A tournament you are registered for starts soon'),
+    ('TournamentCheckInOpen', 'Check-in has opened for a tournament you are registered for'),
+    ('TournamentCheckInClosing', 'Check-in for your tournament closes soon'),
+    ('TournamentCheckInMissed', 'Your team missed check-in and was not seeded'),
     ('NewsPublished', 'A news article was published'),
     ('TeamInvite', 'You were invited to a team'),
     ('TournamentTeamInvite', 'You were invited to play in a tournament'),
+    ('TournamentInvite', 'You were invited to register for a tournament'),
     ('DraftInvite', 'You were invited to a draft lobby'),
     ('MatchStatsReady', 'Stats for a match you played are ready'),
     ('ClipReady', 'A clip you requested finished rendering'),
@@ -44,6 +48,7 @@ INSERT INTO e_notification_types ("value", "description") VALUES
     ('SeasonEnded', 'A season has ended'),
     ('UtilityPracticeInvite', 'You were invited to a utility practice session'),
     ('UtilityPracticeReady', 'Your utility practice server is ready'),
-    ('UtilityDriftScanFinished', 'A utility drift scan finished')
+    ('UtilityDriftScanFinished', 'A utility drift scan finished'),
+    ('TournamentPartySignup', 'Your lobby was signed up for a tournament as a free agent party')
 ON CONFLICT("value") DO UPDATE
     SET "description" = EXCLUDED."description";

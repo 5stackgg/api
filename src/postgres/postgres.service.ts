@@ -35,6 +35,7 @@ export class PostgresService {
       | Array<string>
       | Array<number>
       | Array<Date>
+      | Array<Date | null>
       | Array<bigint>
     >,
   ): Promise<T> {

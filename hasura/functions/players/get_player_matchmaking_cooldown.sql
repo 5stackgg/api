@@ -1,42 +1,28 @@
+-- The matchmaking half of the sanctions policy. The escalation ladder, the decay
+-- window and whether this fires at all now live in settings (see
+-- hasura/functions/sanctions/sanction_policy.sql); the shipped defaults for
+-- match_abandon reproduce exactly what was hardcoded here before -- a 7 day
+-- window and the 10/60/120/240/480/960/1920 minute ladder, counted from the last
+-- abandon -- so turning the policy on changes nothing until an operator edits it.
+--
+-- The window is still counted rather than the rows being deleted. The escalation
+-- used to be forgiven by CleanAbandonedMatches deleting the rows, which made the
+-- record too short-lived to recompute elo from: a leaver penalty applied at match
+-- time silently vanished from any later recompute.
 CREATE OR REPLACE FUNCTION get_player_matchmaking_cooldown(player public.players, hasura_session json)
 RETURNS TIMESTAMP WITH TIME ZONE AS $$
 DECLARE
-    abandoned_count INTEGER;
-    last_abandoned_time TIMESTAMP WITH TIME ZONE;
-    minutes_since_last_abandoned INTEGER;
-    cooldown_duration INTEGER;
     cooldown_time TIMESTAMP WITH TIME ZONE;
-    cooldown_durations INTEGER[] := ARRAY[10, 60, 120, 240, 480, 960, 1920];
 BEGIN
 
     IF (hasura_session ->> 'x-hasura-user-id')::bigint != player.steam_id::bigint THEN
         RETURN NULL;
     END IF;
 
-    -- Windowed rather than counting every row ever. The escalation used to be
-    -- forgiven by CleanAbandonedMatches deleting the rows, which made the
-    -- record too short-lived to recompute elo from -- a leaver penalty applied
-    -- at match time silently vanished from any later recompute. The window
-    -- keeps the same forgiveness while the rows stay put.
-    SELECT COUNT(*) INTO abandoned_count
-    FROM abandoned_matches
-    WHERE steam_id = player.steam_id
-      AND abandoned_at > NOW() - INTERVAL '7 days';
+    cooldown_time := public.player_sanction_expiry(player.steam_id, 'matchmaking');
 
-    IF abandoned_count > 0 THEN
-        SELECT abandoned_at
-        INTO last_abandoned_time
-        FROM abandoned_matches
-        WHERE steam_id = player.steam_id
-          AND abandoned_at > NOW() - INTERVAL '7 days'
-        ORDER BY abandoned_at DESC
-        LIMIT 1;
-
-        cooldown_time := last_abandoned_time + (cooldown_durations[LEAST(abandoned_count, array_length(cooldown_durations, 1))] * INTERVAL '1 minute');
-
-        IF cooldown_time > NOW() THEN
-            RETURN cooldown_time;
-        END IF; 
+    IF cooldown_time > NOW() THEN
+        RETURN cooldown_time;
     END IF;
 
     RETURN NULL;

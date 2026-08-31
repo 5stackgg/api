@@ -317,13 +317,13 @@ describe("notifications (SQL-driven)", () => {
   });
 
   // A notification that reaches the support webhook is posted verbatim into a
-  // staff channel. Most types are fine there; some are somebody's own words or
-  // are addressed to one player, and the only thing standing between them and
-  // that channel is IN_APP_ONLY_TYPES.
+  // staff channel, so only the types an operator has to act on go there and
+  // everything else is in-app. Routing used to say that the other way round --
+  // a list of exclusions, with Discord the default -- which is how invites and
+  // check-in reminders addressed to one player came to be posted to staff.
   //
-  // This exists because routing two writers through notifyPlayers -- which is
-  // where the webhook lives -- silently made them Discord-facing. The next
-  // reroute should fail here rather than in a staff channel.
+  // The next type that gets routed through notifyPlayers, which is where the
+  // webhook lives, should fail here rather than in a staff channel.
   describe("discord relay", () => {
     const withWebhook = () => {
       const hasura = hasuraWritingToPostgres();
@@ -389,13 +389,28 @@ describe("notifications (SQL-driven)", () => {
       expect(posted).toEqual([]);
     });
 
+    // The complaint this came from: organizer invites were showing up in the
+    // operators' channel. An invite is one player being asked something, and
+    // staff have nothing to do about it either way.
+    it("keeps an invite out of the staff channel", async () => {
+      await notify("TournamentInvite", "You were invited to register.");
+
+      expect(posted).toEqual([]);
+    });
+
+    it("keeps a check-in reminder out of the staff channel", async () => {
+      await notify("TournamentCheckInOpen", "Check-in is open.");
+
+      expect(posted).toEqual([]);
+    });
+
     it("still relays the types that are meant for it", async () => {
       // Guards the test itself: if the webhook never fired for any type, every
       // assertion above would pass for the wrong reason.
-      await notify("TeamInvite", "You were invited to a team.");
+      await notify("MatchSupport", "A match needs an admin.");
 
       expect(posted).toHaveLength(1);
-      expect(posted[0]).toContain("You were invited to a team.");
+      expect(posted[0]).toContain("A match needs an admin.");
     });
   });
 

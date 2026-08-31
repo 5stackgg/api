@@ -138,7 +138,13 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
          'PickingPlayers',
          tournament.organizer_steam_id,
          _match_options_id,
-         GREATEST(COALESCE(bracket.scheduled_at, now()), now())
+         -- The tournament's own start is the fallback, not now(). cancels_at is
+         -- derived from this timestamp, so a round-1 match materialized at
+         -- 18:45 for a 19:00 tournament used to get an 18:50 no-show deadline
+         -- -- ten minutes before the tournament even begins. The outer GREATEST
+         -- keeps an already-underway tournament (and therefore every later
+         -- round) on exactly its current timing.
+         GREATEST(COALESCE(bracket.scheduled_at, tournament."start", now()), now())
      )
      RETURNING lineup_1_id, lineup_2_id
        INTO _lineup_1_id, _lineup_2_id;
@@ -223,9 +229,17 @@ CREATE OR REPLACE FUNCTION public.schedule_tournament_match(bracket public.tourn
      -- by the accept path), park it as 'Scheduled' instead so it shows on team
      -- calendars without opening check-in / voice / the cancel timer yet;
      -- CheckForScheduledMatches flips it to WaitingForCheckIn near kickoff.
+     --
+     -- Same shape for a bracket materialized before its tournament starts: the
+     -- draw is published at RegistrationClosed / CheckInReview so teams can see
+     -- who they play, which must not make the match playable an hour early.
+     -- tbu_matches refuses the transition anyway; parking it here means the row
+     -- never briefly exists in a playable status at all.
      UPDATE matches
      SET status = CASE
              WHEN current_setting('fivestack.schedule_as_pending', true) = 'true'
+                 THEN 'Scheduled'
+             WHEN tournament_match_is_pre_start(_match_id)
                  THEN 'Scheduled'
              ELSE 'WaitingForCheckIn'
          END

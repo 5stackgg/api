@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { ForbiddenException, Injectable, Logger } from "@nestjs/common";
 import { createHmac } from "crypto";
 import { Redis } from "ioredis";
 import { PostgresService } from "../postgres/postgres.service";
@@ -27,6 +27,27 @@ const MEMBERS_TTL_SECONDS = 30;
 // The last set of members MediaMTX reported as publishing, per channel. Only
 // has to outlive the gap between monitor passes; it is rewritten on every one.
 const PUBLISHING_TTL_SECONDS = 120;
+
+// How long a call outlives the match it belongs to. A match reaches its final
+// status the moment the last round lands -- the scoreboard is still up and
+// nobody has said gg yet -- so a channel that closed on that event would cut
+// the call at the one point everybody is talking.
+const GRACE_SECONDS = 5 * 60;
+
+// What "over" means, in one place: membership stops at exactly the point the
+// monitor starts closing, and two queries that disagreed about it would either
+// strand a call nothing ever closes or refuse one that is still open.
+const ENDED_MATCH_STATUSES = [
+  "Finished",
+  "Canceled",
+  "Forfeit",
+  "Surrendered",
+  "Tie",
+];
+
+const ENDED_MATCH_STATUS_SQL = ENDED_MATCH_STATUSES.map(
+  (status) => `'${status}'`,
+).join(", ");
 
 // `voice-<uuid>-<steamid>`. Split on "-" would be ambiguous -- a uuid is full of
 // them -- so the shape is matched whole.
@@ -165,6 +186,13 @@ export class VoiceService {
     return `${VoiceService.PUBLISHING_KEY_PREFIX}${channelId}`;
   }
 
+  // Set when the match ends, gone when the grace window is up. Its absence is
+  // what the monitor closes on, so the window survives a pod restart: the key
+  // is the deadline, not a timer somebody is holding.
+  private static graceKey(channelId: string) {
+    return `voice:grace:${channelId}`;
+  }
+
   // The inverse of pathForMember, kept beside it so the two cannot drift.
   public static parseMemberPath(path: string) {
     const match = MEMBER_PATH_PATTERN.exec(path);
@@ -294,7 +322,7 @@ export class VoiceService {
   // camera nobody can now stop publishing.
   private async assertMembership(channelId: string, user: User) {
     if (!UUID_PATTERN.test(channelId)) {
-      throw new Error(NOT_A_MEMBER);
+      throw new ForbiddenException(NOT_A_MEMBER);
     }
 
     const [lobby] = await this.postgres.query<Array<{ status: string }>>(
@@ -316,7 +344,7 @@ export class VoiceService {
          ON m.lineup_1_id = ml.id
          OR m.lineup_2_id = ml.id
        WHERE ml.id = $1
-         AND m.status NOT IN ('Finished', 'Canceled', 'Forfeit', 'Surrendered', 'Tie')
+         AND m.status NOT IN (${ENDED_MATCH_STATUS_SQL})
          AND (
            ml.coach_steam_id = $2
            OR EXISTS (
@@ -334,7 +362,19 @@ export class VoiceService {
       return;
     }
 
-    throw new Error(NOT_A_MEMBER);
+    // The match is over, but not for long. Membership is asked of the cached
+    // list rather than the query above because that query is the one that just
+    // said no -- this is the same roster with the match's own status left out
+    // of it, bounded by a key that expires on its own.
+    if (await this.redis.get(VoiceService.graceKey(channelId))) {
+      const members = await this.members(channelId);
+
+      if (members.some((member) => member.steam_id === user.steam_id)) {
+        return;
+      }
+    }
+
+    throw new ForbiddenException(NOT_A_MEMBER);
   }
 
   // Which channel this player already has a live microphone on, if any.
@@ -479,6 +519,91 @@ export class VoiceService {
 
     await this.redis.del(VoiceService.speakingKey(lobbyId, user.steam_id));
     this.pushParticipantsSoon(lobbyId);
+  }
+
+  // The match this channel belongs to has ended. Nothing is torn down here on
+  // purpose: this only starts the clock, and the monitor is what closes the
+  // channel once it has run out. A teardown fired straight from the match event
+  // would have to be re-fired by hand if the pod handling it died, where a
+  // deadline in Redis is read by whichever pod takes the next monitor pass.
+  public async graceOnMatchEnd(channelId: string) {
+    await this.redis.set(
+      VoiceService.graceKey(channelId),
+      "1",
+      "EX",
+      GRACE_SECONDS,
+    );
+  }
+
+  // Everybody out, and the channel with them.
+  //
+  // Who to kick comes from the paths rather than the roster: a deleted match
+  // has no match_lineup_players rows left to read and its call is still up.
+  // Who to tell is the two lists together -- a member sitting in the channel
+  // without publishing has nothing on MediaMTX to find them by, and they are
+  // exactly the person still looking at a call that has stopped existing.
+  public async closeChannel(
+    channelId: string,
+    known?: Map<string, { ready: boolean }> | null,
+  ) {
+    const paths = known ?? (await this.mediaMtx.listPaths());
+    const publishing = new Set<string>();
+
+    for (const path of paths?.keys() ?? []) {
+      const member =
+        VoiceService.parseMemberPath(path) ??
+        VoiceService.parseCameraPath(path);
+
+      if (member?.channelId === channelId) {
+        publishing.add(member.steamId);
+      }
+    }
+
+    for (const steamId of publishing) {
+      await this.mediaMtx.kickSessions(
+        VoiceService.pathForMember(channelId, steamId),
+      );
+      await this.mediaMtx.kickSessions(
+        VoiceService.pathForMemberCamera(channelId, steamId),
+      );
+    }
+
+    const told = new Map<string, VoiceMember>();
+
+    for (const member of await this.members(channelId)) {
+      told.set(member.steam_id, member);
+    }
+
+    for (const steamId of publishing) {
+      if (!told.has(steamId)) {
+        told.set(steamId, {
+          steam_id: steamId,
+          name: null,
+          avatar_url: null,
+          coach: false,
+        });
+      }
+    }
+
+    await this.redis.del(
+      VoiceService.membersKey(channelId),
+      VoiceService.publishingKey(channelId),
+      VoiceService.graceKey(channelId),
+      ...[...told.keys()].flatMap((steamId) => [
+        VoiceService.speakingKey(channelId, steamId),
+        VoiceService.remoteKey(channelId, steamId, "mic"),
+        VoiceService.remoteKey(channelId, steamId, "cam"),
+      ]),
+    );
+
+    // Kicking the publisher does not tell the browser anything -- see
+    // relayDeviceClaim -- so without this the call sits there looking connected
+    // until ICE consent freshness gives up, which is up to thirty seconds of a
+    // panel showing a room nobody is in. The member list is passed in because
+    // the cache it would otherwise be read from has just been dropped.
+    await this.push(channelId, "voice:closed", { channelId }, [
+      ...told.values(),
+    ]);
   }
 
   // The camera half of publish/subscribe/leave above. Same membership gate, same
@@ -742,7 +867,7 @@ export class VoiceService {
   // only place the truth exists.
   public async setSpeaking(channelId: string, user: User, speaking: boolean) {
     if (!UUID_PATTERN.test(channelId)) {
-      throw new Error(NOT_A_MEMBER);
+      throw new ForbiddenException(NOT_A_MEMBER);
     }
 
     // Checked against the cached membership rather than through assertMember:
@@ -752,7 +877,7 @@ export class VoiceService {
     const members = await this.members(channelId);
 
     if (!members.some((member) => member.steam_id === user.steam_id)) {
-      throw new Error(NOT_A_MEMBER);
+      throw new ForbiddenException(NOT_A_MEMBER);
     }
 
     const key = VoiceService.speakingKey(channelId, user.steam_id);
@@ -887,6 +1012,48 @@ export class VoiceService {
         key.slice(VoiceService.PUBLISHING_KEY_PREFIX.length),
         paths,
       );
+    }
+
+    await this.closeEndedChannels([...publishing.keys()], paths);
+  }
+
+  // Calls whose match has ended and whose grace window has run out.
+  //
+  // Driven from the paths rather than from the match event so nothing has to be
+  // remembered between the two: the sweep only ever looks at channels that are
+  // live right now, and closes the ones the grace key no longer covers. A pod
+  // that died holding the window, or a match that ended while the API was down,
+  // is closed by whichever pod takes the next pass rather than staying open
+  // forever.
+  private async closeEndedChannels(
+    channelIds: Array<string>,
+    known?: Map<string, { ready: boolean }> | null,
+  ) {
+    if (channelIds.length === 0) {
+      return;
+    }
+
+    // A lobby id never matches match_lineups, so party channels are simply not
+    // in the answer -- a party is not something a match can end.
+    const ended = await this.postgres.query<Array<{ id: string }>>(
+      `SELECT ml.id::text AS id
+       FROM match_lineups ml
+       INNER JOIN matches m
+         ON m.lineup_1_id = ml.id
+         OR m.lineup_2_id = ml.id
+       WHERE ml.id = ANY($1::uuid[])
+         AND m.status IN (${ENDED_MATCH_STATUS_SQL})`,
+      [channelIds],
+    );
+
+    for (const { id } of ended) {
+      if (await this.redis.get(VoiceService.graceKey(id))) {
+        continue;
+      }
+
+      this.logger.log(`[voice] closing ${id}: its match has ended`);
+
+      await this.closeChannel(id, known);
     }
   }
 

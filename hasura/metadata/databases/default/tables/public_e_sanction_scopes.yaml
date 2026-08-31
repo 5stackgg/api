@@ -1,0 +1,11 @@
+table:
+  name: e_sanction_scopes
+  schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - value
+        - description
+      filter: {}
+    comment: ""

@@ -1,0 +1,26 @@
+table:
+  name: tournament_leaderboard_entries
+  schema: public
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - player_steam_id
+        - player_name
+        - player_avatar_url
+        - player_custom_avatar_url
+        - player_country
+        - tournament_team_id
+        - team_name
+        - rating
+        - adr
+        - kills
+        - deaths
+        - assists
+        - kdr
+        - headshot_percentage
+        - rounds_played
+        - matches_played
+      filter: {}
+      allow_aggregations: true
+    comment: ""

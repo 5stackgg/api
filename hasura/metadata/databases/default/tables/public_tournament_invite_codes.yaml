@@ -1,0 +1,40 @@
+table:
+  name: tournament_invite_codes
+  schema: public
+object_relationships:
+  - name: created_by
+    using:
+      foreign_key_constraint_on: created_by_player_steam_id
+  - name: tournament
+    using:
+      foreign_key_constraint_on: tournament_id
+array_relationships:
+  - name: used_by
+    using:
+      foreign_key_constraint_on:
+        column: invite_code_id
+        table:
+          name: tournament_invite_code_uses
+          schema: public
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - code
+        - created_at
+        - created_by_player_steam_id
+        - expires_at
+        - id
+        - max_uses
+        - revoked_at
+        - tournament_id
+        - uses
+      filter:
+        tournament:
+          is_organizer:
+            _eq: true
+      allow_aggregations: true
+    comment: Organizers only, and deliberately no wider - code is a bearer credential, so
+      anyone who can select the row can enter an invite only tournament. Minting, revoking
+      and spending a code all go through actions, which is why there is no write permission
+      here at all

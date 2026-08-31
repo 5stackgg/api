@@ -273,6 +273,29 @@ export class HasuraService {
     await this.postgresService.query(
       "insert into settings (name, value) values ('public.utility_import_enabled', 'false') on conflict (name) do nothing",
     );
+
+    await this.seedSanctionPolicySettings();
+  }
+
+  // The Sanctions policy: five rows per automatic sanction source. The shipped
+  // values live on e_sanction_sources (applied from hasura/enums before this
+  // runs), so adding a source is one enum row rather than five more statements
+  // here, and a release can correct a default without reaching into a live
+  // install. `do nothing` is what keeps an operator's edit across a redeploy.
+  private async seedSanctionPolicySettings() {
+    await this.postgresService.query(
+      `insert into settings (name, value)
+       select 'public.sanction_' || value || '_enabled', default_enabled::text from e_sanction_sources
+       union all
+       select 'public.sanction_' || value || '_threshold', default_threshold::text from e_sanction_sources
+       union all
+       select 'public.sanction_' || value || '_window_days', default_window_days::text from e_sanction_sources
+       union all
+       select 'public.sanction_' || value || '_durations', default_durations from e_sanction_sources
+       union all
+       select 'public.sanction_' || value || '_scope', default_scope from e_sanction_sources
+       on conflict (name) do nothing`,
+    );
   }
 
   private async applyMigrations(path: string): Promise<number> {

@@ -1,6 +1,12 @@
 table:
   name: tournament_team_roster
   schema: public
+computed_fields:
+  - name: target_eligible
+    definition:
+      function:
+        name: tournament_team_roster_target_eligible
+        schema: public
 object_relationships:
   - name: e_team_role
     using:
@@ -102,10 +108,13 @@ select_permissions:
   - role: guest
     permission:
       columns:
+        - checked_in_at
         - player_steam_id
         - role
         - tournament_id
         - tournament_team_id
+      computed_fields:
+        - target_eligible
       filter: {}
       allow_aggregations: true
     comment: ""
@@ -113,6 +122,7 @@ update_permissions:
   - role: tournament_organizer
     permission:
       columns:
+        - checked_in_at
         - role
       filter:
         _or:

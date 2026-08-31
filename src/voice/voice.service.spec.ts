@@ -1,4 +1,4 @@
-import { Logger } from "@nestjs/common";
+import { ForbiddenException, Logger } from "@nestjs/common";
 import { createHmac } from "crypto";
 import { VoiceService } from "./voice.service";
 import { User } from "../auth/types/User";
@@ -546,10 +546,16 @@ describe("VoiceService", () => {
     const path = (steamId: string) => `voice-${LOBBY_ID}-${steamId}`;
 
     const roster = () =>
-      postgres.query.mockResolvedValue([
-        { steam_id: ME.steam_id, name: "me", avatar_url: null },
-        { steam_id: PEER, name: "peer", avatar_url: null },
-      ]);
+      postgres.query.mockImplementation((sql: string) =>
+        Promise.resolve(
+          sql.includes("uuid[]")
+            ? []
+            : [
+                { steam_id: ME.steam_id, name: "me", avatar_url: null },
+                { steam_id: PEER, name: "peer", avatar_url: null },
+              ],
+        ),
+      );
 
     // Keyed, so a test cannot pass because the members cache happened to answer
     // with the publishing snapshot (or the other way round).
@@ -1085,6 +1091,141 @@ describe("VoiceService", () => {
         channelId: null,
         video: false,
       });
+    });
+  });
+  // A call belongs to a match, and a match ends. It does not end the moment the
+  // last round does, though -- see GRACE_SECONDS.
+  describe("a match that has ended", () => {
+    const LINEUP_ID = "33333333-3333-3333-3333-333333333333";
+    const MEMBER = {
+      steam_id: ME.steam_id,
+      name: "me",
+      avatar_url: null,
+      coach: false,
+    };
+
+    const live = () =>
+      mediaMtx.listPaths.mockResolvedValue(
+        new Map([
+          [
+            `voice-${LINEUP_ID}-${ME.steam_id}`,
+            { ready: true, bytesReceived: 1 },
+          ],
+          [
+            `voicecam-${LINEUP_ID}-${ME.steam_id}`,
+            { ready: true, bytesReceived: 1 },
+          ],
+        ]),
+      );
+
+    // Which of the live channels belong to a match that is over. Everything else
+    // the pass asks Postgres for is the member list.
+    const overIs = (ids: Array<string>) =>
+      postgres.query.mockImplementation((sql: string) =>
+        Promise.resolve(sql.includes("uuid[]") ? ids.map((id) => ({ id })) : [MEMBER]),
+      );
+
+    const graceOpen = (open: boolean) =>
+      redis.get.mockImplementation((key: string) =>
+        Promise.resolve(key === `voice:grace:${LINEUP_ID}` && open ? "1" : null),
+      );
+
+    const closed = () =>
+      redis.publish.mock.calls
+        .map(([, payload]) => JSON.parse(payload as string))
+        .filter((event) => event.event === "voice:closed");
+
+    it("leaves the call up while the grace window is open", async () => {
+      live();
+      overIs([LINEUP_ID]);
+      graceOpen(true);
+
+      await service.monitorChannels();
+
+      expect(mediaMtx.kickSessions).not.toHaveBeenCalled();
+      expect(closed()).toHaveLength(0);
+    });
+
+    it("closes the call once the window has run out", async () => {
+      live();
+      overIs([LINEUP_ID]);
+      graceOpen(false);
+
+      await service.monitorChannels();
+
+      expect(mediaMtx.kickSessions).toHaveBeenCalledWith(
+        `voice-${LINEUP_ID}-${ME.steam_id}`,
+      );
+      // The camera goes with the microphone: a tile that kept playing after the
+      // call closed is the worse half of this to leave running.
+      expect(mediaMtx.kickSessions).toHaveBeenCalledWith(
+        `voicecam-${LINEUP_ID}-${ME.steam_id}`,
+      );
+      expect(closed()).toHaveLength(1);
+      expect(closed()[0].data.channelId).toBe(LINEUP_ID);
+    });
+
+    // Kicking the publisher tells the browser nothing, so the event is the only
+    // thing that stops a client rendering a call that has stopped existing.
+    it("tells a member who was in it, not only whoever was publishing", async () => {
+      mediaMtx.listPaths.mockResolvedValue(new Map());
+      postgres.query.mockResolvedValue([MEMBER]);
+      graceOpen(false);
+
+      await service.closeChannel(LINEUP_ID);
+
+      expect(closed()[0].steamId).toBe(ME.steam_id);
+    });
+
+    it("leaves a channel whose match is still running alone", async () => {
+      live();
+      overIs([]);
+      graceOpen(false);
+
+      await service.monitorChannels();
+
+      expect(mediaMtx.kickSessions).not.toHaveBeenCalled();
+    });
+
+    // The window is membership, not just a delay before a kick: the roster can
+    // still get back into the call they were in when the match ended.
+    it("still admits a member during the grace window", async () => {
+      postgres.query
+        .mockResolvedValueOnce(enabled(true))
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([MEMBER]);
+      graceOpen(true);
+
+      await expect(service.publish(LINEUP_ID, ME, "offer")).resolves.toBe(
+        "answer-sdp",
+      );
+    });
+
+    it("refuses once the window has closed", async () => {
+      postgres.query
+        .mockResolvedValueOnce(enabled(true))
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+      graceOpen(false);
+
+      await expect(service.publish(LINEUP_ID, ME, "offer")).rejects.toThrow(
+        /not a member/i,
+      );
+    });
+
+    // A roster that reads a channel it is no longer in is an ordinary thing for
+    // a client to do -- every match page does it -- so it answers rather than
+    // raising something the exceptions handler logs a stack trace for.
+    it("answers a non-member with a 403", async () => {
+      postgres.query
+        .mockResolvedValueOnce(enabled(true))
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+
+      await expect(service.participants(LINEUP_ID, ME)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
     });
   });
 });

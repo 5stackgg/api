@@ -3,6 +3,7 @@
 - "!include public_get_event_leaderboard.yaml"
 - "!include public_get_leaderboard.yaml"
 - "!include public_get_league_season_leaderboard.yaml"
+- "!include public_get_tournament_leaderboard.yaml"
 - "!include public_league_award_forfeit.yaml"
 - "!include public_get_player_leaderboard_rank.yaml"
 - "!include public_recalculate_tournament_awards.yaml"

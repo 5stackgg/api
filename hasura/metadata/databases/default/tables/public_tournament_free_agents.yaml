@@ -1,0 +1,129 @@
+table:
+  name: tournament_free_agents
+  schema: public
+object_relationships:
+  - name: e_tournament_free_agent_status
+    using:
+      foreign_key_constraint_on: status
+  - name: player
+    using:
+      foreign_key_constraint_on: player_steam_id
+  - name: tournament
+    using:
+      foreign_key_constraint_on: tournament_id
+  - name: tournament_team
+    using:
+      foreign_key_constraint_on: tournament_team_id
+insert_permissions:
+  - role: user
+    permission:
+      check:
+        _and:
+          - player_steam_id:
+              _eq: X-Hasura-User-Id
+          - tournament:
+              registration_type:
+                _in:
+                  - free_agents
+                  - both
+          - tournament:
+              status:
+                _eq: RegistrationOpen
+      columns:
+        - player_steam_id
+        - tournament_id
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      check:
+        _or:
+          - _and:
+              - player_steam_id:
+                  _eq: X-Hasura-User-Id
+              - tournament:
+                  registration_type:
+                    _in:
+                      - free_agents
+                      - both
+              - tournament:
+                  status:
+                    _eq: RegistrationOpen
+          - _and:
+              - tournament:
+                  is_organizer:
+                    _eq: true
+              - tournament:
+                  status:
+                    _nin:
+                      - Cancelled
+                      - CancelledMinTeams
+                      - Finished
+      columns:
+        - checked_in_at
+        - party_id
+        - player_steam_id
+        - status
+        - tournament_id
+        - tournament_team_id
+    comment: ""
+select_permissions:
+  - role: guest
+    permission:
+      columns:
+        - checked_in_at
+        - created_at
+        - id
+        - party_id
+        - player_steam_id
+        - status
+        - tournament_id
+        - tournament_team_id
+      filter: {}
+      allow_aggregations: true
+    comment: ""
+update_permissions:
+  - role: tournament_organizer
+    permission:
+      columns:
+        - checked_in_at
+        - party_id
+        - status
+        - tournament_team_id
+      filter:
+        tournament:
+          is_organizer:
+            _eq: true
+      check:
+        tournament:
+          is_organizer:
+            _eq: true
+    comment: ""
+delete_permissions:
+  - role: user
+    permission:
+      filter:
+        _and:
+          - player_steam_id:
+              _eq: X-Hasura-User-Id
+          - tournament:
+              status:
+                _in:
+                  - Setup
+                  - RegistrationOpen
+    comment: ""
+  - role: tournament_organizer
+    permission:
+      filter:
+        _or:
+          - _and:
+              - player_steam_id:
+                  _eq: X-Hasura-User-Id
+              - tournament:
+                  status:
+                    _in:
+                      - Setup
+                      - RegistrationOpen
+          - tournament:
+              is_organizer:
+                _eq: true
+    comment: ""

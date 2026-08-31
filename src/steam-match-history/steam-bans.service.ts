@@ -348,11 +348,25 @@ export class SteamBansService {
   }
 
   private async applyAutoBans(bans: SteamBan[]): Promise<void> {
+    if (!(await this.writesPlatformBan())) {
+      this.logger.log(
+        `steam-bans: ${bans.length} flagged player(s) left to the scoped ` +
+          `cooldown; the vac_ban sanction is not scoped to the whole platform`,
+      );
+      return;
+    }
+
     const flaggedIds = bans.map((ban) => ban.SteamId);
     const flaggedDays = bans.map((ban) => ban.DaysSinceLastBan ?? 0);
 
-    const needsBan = await this.postgres.query<Array<{ steam_id: string }>>(
-      `SELECT p.steam_id::text AS steam_id
+    const needsBan = await this.postgres.query<
+      Array<{ steam_id: string; remove_sanction_date: Date | null }>
+    >(
+      `SELECT p.steam_id::text AS steam_id,
+              NULLIF(
+                public.player_source_sanction_expiry('vac_ban', p.steam_id),
+                'infinity'::timestamptz
+              ) AS remove_sanction_date
          FROM public.players p
          JOIN UNNEST($1::bigint[], $2::int[]) AS f(steam_id, days_since_last_ban)
            ON p.steam_id = f.steam_id
@@ -373,7 +387,12 @@ export class SteamBansService {
                AND ps.sanctioned_by_steam_id IS NULL
                AND ps.deleted_at IS NOT NULL
                AND ps.deleted_at::date >= (now() - (f.days_since_last_ban || ' days')::interval)::date
-          )`,
+          )
+          -- The policy decides whether this ban happens at all: NULL here means
+          -- the vac_ban source is off, or its threshold or decay window says
+          -- this account has not earned one. With the shipped defaults it is
+          -- never NULL for a flagged account.
+          AND public.player_source_sanction_expiry('vac_ban', p.steam_id) IS NOT NULL`,
       [flaggedIds, flaggedDays],
     );
 
@@ -384,36 +403,43 @@ export class SteamBansService {
     const byId = new Map(bans.map((ban) => [ban.SteamId, ban]));
     const ids = needsBan.map((row) => row.steam_id);
     const reasons = ids.map((id) => SteamBansService.banReason(byId.get(id)));
+    // NULL is how player_sanctions spells a ban with no end date, which is what
+    // the shipped ladder ('0') resolves to.
+    const removeDates = needsBan.map((row) => row.remove_sanction_date);
 
     const reactivated = await this.postgres.query<Array<{ steam_id: string }>>(
       `UPDATE public.player_sanctions ps
-          SET remove_sanction_date = NULL, reason = v.reason
-         FROM UNNEST($1::bigint[], $2::text[]) AS v(steam_id, reason)
+          SET remove_sanction_date = v.remove_sanction_date, reason = v.reason
+         FROM UNNEST($1::bigint[], $2::text[], $3::timestamptz[])
+              AS v(steam_id, reason, remove_sanction_date)
         WHERE ps.player_steam_id = v.steam_id
           AND ps.type = 'ban'
           AND ps.sanctioned_by_steam_id IS NULL
           AND ps.deleted_at IS NULL
       RETURNING ps.player_steam_id::text AS steam_id`,
-      [ids, reasons],
+      [ids, reasons, removeDates],
     );
 
     const reactivatedIds = new Set(reactivated.map((row) => row.steam_id));
     const freshIds: string[] = [];
     const freshReasons: string[] = [];
+    const freshRemoveDates: Array<Date | null> = [];
     ids.forEach((id, index) => {
       if (!reactivatedIds.has(id)) {
         freshIds.push(id);
         freshReasons.push(reasons[index]);
+        freshRemoveDates.push(removeDates[index]);
       }
     });
 
     if (freshIds.length > 0) {
       await this.postgres.query(
         `INSERT INTO public.player_sanctions
-            (player_steam_id, type, sanctioned_by_steam_id, reason)
-         SELECT v.steam_id, 'ban', NULL, v.reason
-           FROM UNNEST($1::bigint[], $2::text[]) AS v(steam_id, reason)`,
-        [freshIds, freshReasons],
+            (player_steam_id, type, sanctioned_by_steam_id, reason, remove_sanction_date)
+         SELECT v.steam_id, 'ban', NULL, v.reason, v.remove_sanction_date
+           FROM UNNEST($1::bigint[], $2::text[], $3::timestamptz[])
+                AS v(steam_id, reason, remove_sanction_date)`,
+        [freshIds, freshReasons, freshRemoveDates],
       );
     }
 
@@ -456,10 +482,26 @@ export class SteamBansService {
     return `Auto: Steam ${ban.NumberOfVACBans} VAC ban(s), last ${ban.DaysSinceLastBan}d ago`;
   }
 
+  // Part of the configurable sanctions policy (the `vac_ban` source). Its
+  // shipped defaults reproduce what this service did when the numbers were
+  // hardcoded: enabled, fires on the first VAC ban, never decays, never lifts,
+  // and bars the whole platform.
   private async isEnforcementEnabled(): Promise<boolean> {
-    const rows = await this.postgres.query<Array<{ value: string }>>(
-      `SELECT value FROM public.settings WHERE name = 'public.steam_ban_enforcement_enabled' LIMIT 1`,
+    const rows = await this.postgres.query<Array<{ enabled: boolean }>>(
+      `SELECT COALESCE(public.sanction_policy_enabled('vac_ban'), true) AS enabled`,
     );
-    return rows.at(0)?.value !== "false";
+    return rows.at(0)?.enabled !== false;
+  }
+
+  // A player_sanctions ban is enforced by is_banned() across the whole platform,
+  // so it is only an honest way to carry this source when the operator has left
+  // the scope at "both". Narrowed to one surface, the ban row is skipped and the
+  // scoped cooldown (public.player_sanction_expiry) does the gating instead --
+  // reading the same players.vac_banned flag storeBans keeps up to date.
+  private async writesPlatformBan(): Promise<boolean> {
+    const rows = await this.postgres.query<Array<{ platform: boolean }>>(
+      `SELECT public.sanction_policy_scope('vac_ban') = 'both' AS platform`,
+    );
+    return rows.at(0)?.platform !== false;
   }
 }

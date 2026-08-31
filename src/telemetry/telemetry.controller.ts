@@ -22,8 +22,12 @@ export class TelemetryController {
     );
   }
 
+  // Defaults to the whole fleet, 5stack.gg included: it reports like any other
+  // panel and its history is fleet history. The page passes false to set the
+  // flagship aside, which is the only view that answers what everybody else is
+  // running.
   @HasuraAction()
-  public async telemetryStats() {
-    return await this.telemetryService.getFleetStats();
+  public async telemetryStats(data: { includeSelf?: boolean }) {
+    return await this.telemetryService.getFleetStats(data?.includeSelf ?? true);
   }
 }

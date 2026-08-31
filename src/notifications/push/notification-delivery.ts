@@ -39,6 +39,7 @@ const DELIVERY_POLICIES: Record<string, e_notification_types_enum[]> = {
   "instant-unseen": [
     "TeamInvite",
     "TournamentTeamInvite",
+    "TournamentInvite",
     "DraftInvite",
     "MatchImported",
     "MatchStatsReady",
@@ -48,6 +49,10 @@ const DELIVERY_POLICIES: Record<string, e_notification_types_enum[]> = {
     "NameChangeDenied",
     "PlayerSanctioned",
     "TournamentReminder",
+    "TournamentCheckInOpen",
+    "TournamentCheckInClosing",
+    "TournamentCheckInMissed",
+    "TournamentPartySignup",
     "EventReminder",
     "SeasonEnded",
     "FormTeamSuggestion",

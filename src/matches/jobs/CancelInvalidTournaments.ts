@@ -19,8 +19,13 @@ export class CancelInvalidTournaments extends WorkerHost {
           where: {
             _and: [
               {
+                // CheckInReview belongs here too: tournament_has_min_teams
+                // excludes no-shows once the window has opened, so a held
+                // tournament reporting has_min_teams = false really is short of
+                // checked-in teams. Without this it hangs in review forever if
+                // the check-in job never ran.
                 status: {
-                  _eq: "RegistrationOpen",
+                  _in: ["RegistrationOpen", "CheckInReview"],
                 },
               },
               {

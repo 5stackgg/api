@@ -4,6 +4,7 @@ insert into e_tournament_status ("value", "description") values
     ('Setup', 'Setup'),
     ('RegistrationOpen', 'Registration Open'),
     ('RegistrationClosed', 'Registration Closed'),
+    ('CheckInReview', 'Check-in closed with teams missing; held for organizer review'),
     ('Live', 'Live'),
     ('Cancelled', 'Cancelled'),
     ('CancelledMinTeams', 'Cancelled because it did not meet minimum number of teams'),
