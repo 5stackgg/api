@@ -339,6 +339,10 @@ export class InvitesController {
     };
   }
 
+  // The window an invite can still be acted on in, matching the one the invite
+  // links are minted and redeemed in.
+  private static readonly REGISTRATION_STATUSES = ["Setup", "RegistrationOpen"];
+
   // Steam ids are read back as text for the same reason the event handlers do
   // it: a bigint that round-trips through JSON stops being exact well below a
   // steam id.
@@ -348,11 +352,16 @@ export class InvitesController {
         tournament_id: string;
         steam_id: string | null;
         team_id: string | null;
+        status: string;
       }>
     >(
-      `SELECT tournament_id, steam_id::text AS steam_id, team_id::text AS team_id
-         FROM public.tournament_invites
-        WHERE id = $1::uuid`,
+      `SELECT ti.tournament_id,
+              ti.steam_id::text AS steam_id,
+              ti.team_id::text AS team_id,
+              t.status
+         FROM public.tournament_invites ti
+         JOIN public.tournaments t ON t.id = ti.tournament_id
+        WHERE ti.id = $1::uuid`,
       [invite_id],
     );
 
@@ -381,6 +390,15 @@ export class InvitesController {
 
   private async acceptTournamentInvite(invite_id: string, user: User) {
     const invite = await this.findTournamentInvite(invite_id);
+
+    // An invite outlives the window it was sent in, so the trigger that gates
+    // handing one out cannot be the whole answer: accepting is the write that
+    // grants access, and granting it against an already-seeded bracket is what
+    // this refuses. Declining stays open -- clearing an invite off the bell is
+    // not registering for anything.
+    if (!InvitesController.REGISTRATION_STATUSES.includes(invite.status)) {
+      throw Error("registration is not open");
+    }
 
     if (!(await this.canAnswerTournamentInvite(invite, user))) {
       return {

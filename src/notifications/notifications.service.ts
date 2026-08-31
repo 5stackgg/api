@@ -24,48 +24,50 @@ import { inAppKeyForType } from "./preferences/notification-categories";
 export class NotificationsService {
   private readonly appConfig: AppConfig;
 
-  static readonly IN_APP_ONLY_TYPES = new Set<string>([
-    "ScrimRequestReceived",
-    "ScrimRequestCountered",
-    "ScrimRequestAccepted",
-    "ScrimRequestDeclined",
-    "ScrimRequestExpired",
-    "ScrimMatchScheduled",
-    "ScrimMatchCanceled",
-    "ScrimTimeChanged",
-    "ScrimAlertMatch",
-    "FormTeamSuggestion",
-    // Relaying every chat line to a Discord webhook would be unusable, and
-    // the people in the lobby are already the ones being notified.
-    //
-    // This one is load-bearing beyond noise: a ChatMessage's body IS the
-    // message somebody typed, direct messages included. Anything that reaches
-    // the support webhook is posted verbatim into a staff channel.
-    "ChatMessage",
-    "MatchChatMessage",
-    // Addressed to one player and about their own play ("you went 14/9"), so
-    // there is nothing in it for a staff channel. These two reached the bell
-    // through raw inserts until they were routed via notifyPlayers, which is
-    // where the webhook lives -- without them here that reroute would have
-    // started posting to Discord as a side effect.
-    "MatchImported",
-    // Names the sanctioned player and quotes the ban reason, to an audience of
-    // everyone who played with them. Reaching the bell through notifyPlayers
-    // is what put it in range of the webhook at all -- it was a raw insert
-    // before, and a staff channel is not where that belongs.
-    "PlayerSanctioned",
-    "LeagueProposalReceived",
-    "LeagueProposalAccepted",
-    "LeagueProposalDeclined",
-    "LeagueMatchUnscheduled",
-    "LeagueRegistrationDecision",
-    "LeagueRosterUndersized",
-    // One player's own practice server. A staff channel has nothing to do with
-    // it, and a busy install would post one line per player who had to queue
-    // for one.
-    "UtilityPracticeInvite",
-    "UtilityPracticeReady",
+  // The operators' Discord channel, and nothing else. Everything named here is
+  // posted into it verbatim, so this is an allowlist: a type reaches Discord by
+  // being argued onto this list, and anything new is in-app only until it is.
+  //
+  // It used to be the other way round -- a list of exclusions, with Discord the
+  // default -- which made every type anyone added Discord-facing on the day it
+  // was added. Tournament invites, check-in reminders and free-agent signups,
+  // each of them one player being asked something, were posted to staff that
+  // way.
+  //
+  // What "verbatim" costs is why the default has to be off rather than merely
+  // tidy: a ChatMessage's body IS the message somebody typed, direct messages
+  // included, and a PlayerSanctioned names the sanctioned player and quotes the
+  // ban reason to an audience of everyone who played with them.
+  //
+  // The bar is whether an operator has to do something about it. Broadcast
+  // announcements (TournamentCreated, NewsPublished, SeasonEnded) read like
+  // they might belong, but they are addressed to the whole player base rather
+  // than to staff -- an install that wants those in Discord wants an
+  // announcements webhook, not the support one.
+  //
+  // Per-match alerts have their own door: sendDiscordMatchNotification, with a
+  // webhook and a role configured per tournament. It does not read this.
+  static readonly DISCORD_TYPES = new Set<string>([
+    "DedicatedServerRconStatus",
+    "DedicatedServerStatus",
+    "GameNodeStatus",
+    "GameUpdate",
+    "StorageScan",
+    "EloRecompute",
+    "PlayerReindex",
+    "UtilityDriftScanFinished",
+    // Addressed to staff by what they are: a name change waiting on a decision,
+    // a match asking for an admin, and an abandon whose cooldown escalates on
+    // repeat -- which admins need to see to catch an unfair one before the
+    // player has to appeal it.
+    "NameChangeRequest",
+    "MatchSupport",
+    "MatchAbandoned",
   ]);
+
+  public static relaysToDiscord(type: string): boolean {
+    return NotificationsService.DISCORD_TYPES.has(type);
+  }
 
   // Nobody has seen a notification in six months who hasn't signed in, and a
   // broadcast to every player row would include shadow rows created by match
@@ -306,19 +308,6 @@ export class NotificationsService {
       role?: string;
     },
   ) {
-    const webhookSetting = routing?.webhook ?? "discord_support_webhook";
-    const roleSetting = routing?.role ?? "discord_support_role_id";
-
-    let webhook = await this.getSettingValue(webhookSetting);
-    if (!webhook && webhookSetting !== "discord_support_webhook") {
-      webhook = await this.getSettingValue("discord_support_webhook");
-    }
-
-    let roleId = await this.getSettingValue(roleSetting);
-    if (!roleId && roleSetting !== "discord_support_role_id") {
-      roleId = await this.getSettingValue("discord_support_role_id");
-    }
-
     await this.hasura.mutation({
       insert_notifications_one: {
         __args: {
@@ -332,6 +321,23 @@ export class NotificationsService {
         id: true,
       },
     });
+
+    if (!NotificationsService.relaysToDiscord(type)) {
+      return;
+    }
+
+    const webhookSetting = routing?.webhook ?? "discord_support_webhook";
+    const roleSetting = routing?.role ?? "discord_support_role_id";
+
+    let webhook = await this.getSettingValue(webhookSetting);
+    if (!webhook && webhookSetting !== "discord_support_webhook") {
+      webhook = await this.getSettingValue("discord_support_webhook");
+    }
+
+    let roleId = await this.getSettingValue(roleSetting);
+    if (!roleId && roleSetting !== "discord_support_role_id") {
+      roleId = await this.getSettingValue("discord_support_role_id");
+    }
 
     if (webhook) {
       await this.postDiscord(webhook, roleId, {
@@ -517,13 +523,15 @@ export class NotificationsService {
       );
     }
 
-    const webhook = await this.getSettingValue("discord_support_webhook");
-    if (webhook && !NotificationsService.IN_APP_ONLY_TYPES.has(type)) {
-      await this.postDiscord(webhook, undefined, {
-        title: notification.title,
-        message: notification.message,
-        color,
-      });
+    if (NotificationsService.relaysToDiscord(type)) {
+      const webhook = await this.getSettingValue("discord_support_webhook");
+      if (webhook) {
+        await this.postDiscord(webhook, undefined, {
+          title: notification.title,
+          message: notification.message,
+          color,
+        });
+      }
     }
 
     // How many rows were written, not how many recipients were offered. The

@@ -19,10 +19,23 @@ BEGIN
     -- what an accepted invite writes is a tournament_registration_unlocks row,
     -- which IS the invite-only gate -- worth stating once more where no path
     -- can route around it.
-    IF (_session ->> 'x-hasura-role') IS NOT NULL
-       AND NOT public.is_tournament_organizer(_tournament, _session) THEN
-        RAISE EXCEPTION USING ERRCODE = '22000',
-            MESSAGE = 'Only a tournament organizer can invite players';
+    IF (_session ->> 'x-hasura-role') IS NOT NULL THEN
+        IF NOT public.is_tournament_organizer(_tournament, _session) THEN
+            RAISE EXCEPTION USING ERRCODE = '22000',
+                MESSAGE = 'Only a tournament organizer can invite players';
+        END IF;
+
+        -- Deliberately not conditioned on invite_only: that governs who may
+        -- ENTER, not whether an organizer may recruit, so inviting works in
+        -- either state. What it is conditioned on is the registration window --
+        -- the same one the invite links use -- because past it there is nothing
+        -- to invite anybody into. An accepted invite writes a registration
+        -- unlock, and the bracket has already been drawn off the teams that
+        -- registered.
+        IF _tournament.status NOT IN ('Setup', 'RegistrationOpen') THEN
+            RAISE EXCEPTION USING ERRCODE = '22000',
+                MESSAGE = 'Registration is closed';
+        END IF;
     END IF;
 
     RETURN NEW;
