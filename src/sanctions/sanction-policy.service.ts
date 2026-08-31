@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { PostgresService } from "src/postgres/postgres.service";
 
 export type SanctionSource = "match_abandon" | "vac_ban" | "tournament_no_show";
@@ -31,10 +31,7 @@ export class SanctionPolicyService {
     "scope",
   ] as const;
 
-  constructor(
-    private readonly logger: Logger,
-    private readonly postgres: PostgresService,
-  ) {}
+  constructor(private readonly postgres: PostgresService) {}
 
   public static settingName(
     source: string,
@@ -132,37 +129,5 @@ export class SanctionPolicyService {
     );
 
     return rows.at(0)?.expiry ?? null;
-  }
-
-  // Called when a tournament's check-in window closes. Records one occurrence
-  // per rostered player of every team that missed it, and is safe to call again
-  // for the same tournament -- the unique constraint on tournament_no_shows is
-  // what stops a second pass from doubling anybody's count.
-  public async recordTournamentNoShows(tournamentId: string): Promise<number> {
-    try {
-      const rows = await this.postgres.query<Array<{ recorded: number }>>(
-        `SELECT public.record_tournament_no_shows($1::uuid) AS recorded`,
-        [tournamentId],
-      );
-
-      const recorded = rows.at(0)?.recorded ?? 0;
-
-      if (recorded > 0) {
-        this.logger.log(
-          `recorded ${recorded} tournament no-show(s) for ${tournamentId}`,
-        );
-      }
-
-      return recorded;
-    } catch (error) {
-      // Holding the tournament for review is what actually matters; never lose
-      // that because the bookkeeping behind a future ban failed.
-      this.logger.warn(
-        `unable to record tournament no-shows for ${tournamentId}`,
-        error,
-      );
-
-      return 0;
-    }
   }
 }

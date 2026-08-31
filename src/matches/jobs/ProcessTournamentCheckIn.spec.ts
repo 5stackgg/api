@@ -49,7 +49,7 @@ describe("ProcessTournamentCheckIn", () => {
       if (sql.includes('SET check_in_ends_at = t."start"')) {
         return opened;
       }
-      if (sql.includes("'TournamentCheckInClosing'")) {
+      if (sql.includes("SET check_in_closing_notified_for")) {
         return closing;
       }
       if (sql.includes("UPDATE tournament_free_agents")) {
@@ -61,7 +61,7 @@ describe("ProcessTournamentCheckIn", () => {
       if (sql.includes("t.status = 'CheckInReview'")) {
         return released;
       }
-      if (sql.includes("FROM tournament_team_roster ttr")) {
+      if (sql.includes("tournament_pending_check_in_recipients")) {
         return recipients;
       }
 
@@ -120,16 +120,23 @@ describe("ProcessTournamentCheckIn", () => {
   });
 
   describe("closing reminder", () => {
-    it("keys the dedup on the deadline so an extension earns a new reminder", async () => {
+    // Claimed by stamping the deadline, not by looking for the notification it
+    // wrote: notifyPlayers writes no row at all when every recipient has the
+    // type muted, and a dedup keyed on one would re-run the whole fan-out every
+    // tick for the entire lead-in. Stamping the deadline rather than a flag is
+    // what earns a fresh reminder after an extension.
+    it("claims the deadline it reminded for", async () => {
       closing = [tournament({ entity_id: "tournament-1:closing:1700000000" })];
 
       await job.process();
 
       const reminder = statements.find((sql) =>
-        sql.includes("'TournamentCheckInClosing'"),
+        sql.includes("SET check_in_closing_notified_for"),
       );
-      expect(reminder).toContain("NOT EXISTS");
-      expect(reminder).toContain("extract(epoch from t.check_in_ends_at)");
+      expect(reminder).toContain(
+        "t.check_in_closing_notified_for IS DISTINCT FROM t.check_in_ends_at",
+      );
+      expect(reminder).not.toContain("FROM notifications");
 
       expect(notifications.notifyPlayers).toHaveBeenCalledWith(
         "TournamentCheckInClosing",
@@ -163,8 +170,29 @@ describe("ProcessTournamentCheckIn", () => {
       const flip = statements.find((sql) =>
         sql.includes("THEN 'CheckInReview'"),
       );
-      expect(flip).toContain("t.status = 'RegistrationOpen'");
+      expect(flip).toContain("t.check_in_closed_for IS DISTINCT FROM");
+      expect(flip).toContain("check_in_closed_for = t.check_in_ends_at");
       expect(flip).toContain("RETURNING");
+    });
+
+    // An organizer extending the window leaves the tournament held in
+    // CheckInReview -- that hold is what keeps registration shut -- so the
+    // extended deadline has to be closed from there. What stops the pass from
+    // firing again on a tournament that is merely sitting in review is the
+    // stamped deadline, not the status.
+    it("closes an extended window from the review hold", async () => {
+      await job.process();
+
+      for (const sql of statements.filter(
+        (statement) =>
+          statement.includes("THEN 'CheckInReview'") ||
+          statement.includes("UPDATE tournament_free_agents"),
+      )) {
+        expect(sql).toContain(
+          "t.status IN ('RegistrationOpen', 'CheckInReview')",
+        );
+        expect(sql).toContain("t.check_in_closed_for IS DISTINCT FROM");
+      }
     });
 
     it("says nothing when every team checked in", async () => {

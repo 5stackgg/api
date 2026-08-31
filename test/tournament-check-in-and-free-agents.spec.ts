@@ -332,6 +332,57 @@ describe("tournament check-in, registration rules and free agents (SQL-driven)",
       expect(await teamCheckedIn(teamId)).toBe(true);
     });
 
+    // Removing the people who confirmed is a withdrawal with the row deleted:
+    // left to the UPDATE path alone, a captain could seed an unconfirmed lineup
+    // simply by dropping the players whose stamps carried the team.
+    it("drops the roll-up when a confirmed player leaves the roster", async () => {
+      const t = await createTournament({
+        start: "3 days",
+        columns: { check_in_required: true, check_in_setting: "Players" },
+      });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      const [owner, mate] = await fx.players(2);
+      const teamId = await registerTeam(t.id, "Roster", [owner, mate]);
+
+      await postgres.query(
+        "UPDATE tournaments SET start = now() + interval '30 minutes' WHERE id = $1",
+        [t.id],
+      );
+
+      await confirmPlayer(teamId, owner);
+      await confirmPlayer(teamId, mate);
+      expect(await teamCheckedIn(teamId)).toBe(true);
+
+      await postgres.query(
+        `DELETE FROM tournament_team_roster
+          WHERE tournament_team_id = $1 AND player_steam_id = $2`,
+        [teamId, mate],
+      );
+      expect(await teamCheckedIn(teamId)).toBe(false);
+    });
+
+    // The mirror of the re-admit rule below: a player who never confirmed was
+    // not holding the roll-up up, so their removal cannot break one.
+    it("leaves an auto-stamped team alone when an unconfirmed player leaves", async () => {
+      const t = await createTournament({
+        start: "30 minutes",
+        columns: { check_in_required: true, check_in_setting: "Players" },
+      });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+
+      const players = await fx.players(2);
+      const teamId = await registerTeam(t.id, "Auto", players);
+      expect(await teamCheckedIn(teamId)).toBe(true);
+
+      await postgres.query(
+        `DELETE FROM tournament_team_roster
+          WHERE tournament_team_id = $1 AND player_steam_id = $2`,
+        [teamId, players[1]],
+      );
+      expect(await teamCheckedIn(teamId)).toBe(true);
+    });
+
     it("never lets a withdrawal reverse an organizer re-admit", async () => {
       const t = await createTournament({
         start: "3 days",
@@ -448,7 +499,10 @@ describe("tournament check-in, registration rules and free agents (SQL-driven)",
       expect(closed.status).toBe("RegistrationClosed");
     });
 
-    it("allows the extend path back to RegistrationOpen", async () => {
+    // Not what extendTournamentCheckIn does -- that leaves the tournament held
+    // -- but an organizer deliberately enlarging the field still has to be able
+    // to re-open signups out of the hold.
+    it("allows an organizer back to RegistrationOpen", async () => {
       const t = await createTournament({
         start: "30 minutes",
         columns: { check_in_required: true },
@@ -1203,6 +1257,75 @@ describe("tournament check-in, registration rules and free agents (SQL-driven)",
       await job().process();
 
       expect(await status(t.id)).toBe("CheckInReview");
+    });
+
+    // An extension is for the field that is already in. The hold stays -- it is
+    // what keeps registration shut to newcomers who would be auto-stamped as
+    // checked in on the way past -- and only the deadline moves.
+    it("re-opens check-in from the hold without re-opening registration", async () => {
+      const t = await closingField(2);
+      await job().process();
+      expect(await status(t.id)).toBe("CheckInReview");
+
+      await controller().extendTournamentCheckIn({
+        user: { name: "Organizer", role: "user", steam_id: t.organizer },
+        tournament_id: t.id,
+        minutes: 5,
+      });
+
+      expect(await status(t.id)).toBe("CheckInReview");
+
+      const [window] = await postgres.query<Array<{ open: boolean }>>(
+        `SELECT tournament_check_in_open(t) AS open
+           FROM tournaments t WHERE t.id = $1`,
+        [t.id],
+      );
+      expect(window.open).toBe(true);
+
+      // The pass has to leave the live extension alone and come back for its
+      // deadline -- once. Keyed on the deadline it closed rather than on the
+      // status, which cannot tell an extension apart from the hold it runs in.
+      await job().process();
+      expect(await status(t.id)).toBe("CheckInReview");
+
+      await postgres.query(
+        "UPDATE tournaments SET check_in_ends_at = now() - interval '1 minute' WHERE id = $1",
+        [t.id],
+      );
+      notifications.notifyPlayers.mockClear();
+
+      await job().process();
+      expect(await status(t.id)).toBe("CheckInReview");
+      expect(notifications.notifyPlayers).toHaveBeenCalledTimes(1);
+
+      notifications.notifyPlayers.mockClear();
+      await job().process();
+      expect(notifications.notifyPlayers).not.toHaveBeenCalled();
+    });
+
+    // The whole point of extending: the team that shows up in the extra minutes
+    // is seeded, and the tournament closes on its own.
+    it("closes into RegistrationClosed once the missing team confirms", async () => {
+      const t = await closingField(2);
+      await job().process();
+
+      await controller().extendTournamentCheckIn({
+        user: { name: "Organizer", role: "user", steam_id: t.organizer },
+        tournament_id: t.id,
+        minutes: 5,
+      });
+
+      await postgres.query(
+        "UPDATE tournament_teams SET checked_in_at = now() WHERE tournament_id = $1",
+        [t.id],
+      );
+      await postgres.query(
+        "UPDATE tournaments SET check_in_ends_at = now() - interval '1 minute' WHERE id = $1",
+        [t.id],
+      );
+
+      await job().process();
+      expect(await status(t.id)).toBe("RegistrationClosed");
     });
   });
 });

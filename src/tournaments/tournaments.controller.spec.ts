@@ -190,7 +190,7 @@ describe("TournamentsController registration and check-in actions", () => {
       ) {
         return [];
       }
-      if (sql.includes("FROM tournament_team_roster ttr")) {
+      if (sql.includes("tournament_pending_check_in_recipients")) {
         return [{ steam_id: "1" }];
       }
 
@@ -465,7 +465,7 @@ describe("TournamentsController registration and check-in actions", () => {
       ).rejects.toThrow(/1 to 240/);
     });
 
-    it("reopens registration and re-notifies the teams that missed", async () => {
+    it("moves the deadline and re-notifies everyone still pending", async () => {
       tournamentRow = tournament({
         is_organizer: true,
         status: "CheckInReview",
@@ -482,7 +482,6 @@ describe("TournamentsController registration and check-in actions", () => {
       const update = statements.find((sql) =>
         sql.includes("SET check_in_ends_at"),
       );
-      expect(update).toContain("status = 'RegistrationOpen'");
       // Extending past the tournament's own start is not an extension.
       expect(update).toContain('< t."start"');
 
@@ -490,6 +489,29 @@ describe("TournamentsController registration and check-in actions", () => {
         "TournamentCheckInOpen",
         expect.objectContaining({ steamIds: ["1"] }),
       );
+    });
+
+    // An extension is for the teams that are already in. Re-opening
+    // registration lets brand new ones in as well, auto-stamped as checked in
+    // by tbi_tournament_team, and reseeds a bracket the organizer never agreed
+    // to enlarge.
+    it("leaves the tournament held rather than re-opening registration", async () => {
+      tournamentRow = tournament({
+        is_organizer: true,
+        status: "CheckInReview",
+      });
+
+      await controller.extendTournamentCheckIn({
+        user: organizer,
+        tournament_id: "tournament-1",
+        minutes: 15,
+      });
+
+      const update = statements.find((sql) =>
+        sql.includes("SET check_in_ends_at"),
+      );
+      expect(update).not.toContain("status = 'RegistrationOpen'");
+      expect(update).toContain("t.status = 'CheckInReview'");
     });
 
     it("reports the clamp when the extension would outrun the start", async () => {
@@ -1032,8 +1054,8 @@ describe("TournamentsController registration and check-in actions", () => {
       ).rejects.toThrow(/^invite_not_found$/);
     });
 
-    // A double-clicked Accept is not a second entry: they already hold the
-    // unlock, so it is a no-op rather than an invite_used_up refusal.
+    // A double-clicked Accept is not a second entry: they already spent the
+    // link, so it is a no-op rather than an invite_used_up refusal.
     it("treats a second redemption by the same player as a no-op", async () => {
       claimedRows = [];
       diagnosisRow = {
@@ -1050,6 +1072,57 @@ describe("TournamentsController registration and check-in actions", () => {
           code: "ABCDEFGHJK",
         }),
       ).resolves.toEqual({ success: true });
+    });
+
+    // "Accepted" has to mean they can actually register. The use row and the
+    // unlock can come apart -- an organizer may delete an unlock -- and without
+    // this the spent link answers success forever while registration keeps
+    // refusing them.
+    it("re-grants the unlock on a link that was already spent", async () => {
+      claimedRows = [];
+      diagnosisRow = {
+        revoked: false,
+        expired: false,
+        exhausted: false,
+        already_used: true,
+      };
+
+      await controller.redeemTournamentInviteCode({
+        user: player,
+        tournament_id: "tournament-1",
+        code: "ABCDEFGHJK",
+      });
+
+      const regrant = statements.find(
+        (sql) =>
+          sql.includes("INSERT INTO tournament_registration_unlocks") &&
+          !sql.includes("WITH claimed AS ("),
+      );
+      expect(regrant).toContain("ON CONFLICT DO NOTHING");
+    });
+
+    // A limiter that reads zero whenever Redis breaks is a limiter that turns
+    // itself off exactly when it matters.
+    it("refuses rather than fails open when redis cannot count", async () => {
+      redisExec.mockResolvedValue(null);
+
+      await expect(
+        controller.redeemTournamentInviteCode({
+          user: player,
+          tournament_id: "tournament-1",
+          code: "ABCDEFGHJK",
+        }),
+      ).rejects.toThrow(/^invite_rate_limited$/);
+
+      redisExec.mockResolvedValue([[new Error("READONLY"), null]]);
+
+      await expect(
+        controller.redeemTournamentInviteCode({
+          user: player,
+          tournament_id: "tournament-1",
+          code: "ABCDEFGHJK",
+        }),
+      ).rejects.toThrow(/^invite_rate_limited$/);
     });
   });
 });

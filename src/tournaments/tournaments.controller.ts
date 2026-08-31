@@ -560,7 +560,7 @@ export class TournamentsController {
           throw Error("you are not on this team's roster");
         }
 
-        // taiu_tournament_team_roster_check_in rolls the per-player stamps up
+        // taiud_tournament_team_roster_check_in rolls the per-player stamps up
         // into the team once the minimum lineup has confirmed.
         return { success: true };
       }
@@ -608,8 +608,14 @@ export class TournamentsController {
       return team;
     }
 
+    // The team they are ROSTERED on wins, and only then one they merely own or
+    // captain: a player holds at most one roster row per tournament
+    // (tournament_roster_pkey), and Players mode confirms that row and nothing
+    // else. Ordered all the way down to the id, because an unordered LIMIT 1
+    // over an owner who is also somebody else's substitute can answer
+    // differently between two calls and check in the wrong team.
     const [team] = await this.postgres.query<Array<CheckInTeam>>(
-      `SELECT DISTINCT tt.id::text AS id,
+      `SELECT tt.id::text AS id,
               COALESCE(can_manage_tournament_team(tt, $2::json), false) AS can_manage,
               tt.captain_steam_id = $3::bigint OR tt.owner_steam_id = $3::bigint AS is_captain
          FROM tournament_teams tt
@@ -622,6 +628,10 @@ export class TournamentsController {
               OR tt.owner_steam_id = $3::bigint
               OR tt.captain_steam_id = $3::bigint
           )
+        ORDER BY (ttr.player_steam_id IS NOT NULL) DESC,
+                 (tt.captain_steam_id = $3::bigint OR tt.owner_steam_id = $3::bigint) DESC,
+                 tt.created_at,
+                 tt.id
         LIMIT 1`,
       [tournamentId, session, user.steam_id],
     );
@@ -687,10 +697,17 @@ export class TournamentsController {
     // Measured from now, not from the deadline that already passed: a review is
     // only reached after the cutoff, so extending "by 10 minutes" from a stale
     // deadline could still land in the past.
+    //
+    // The status stays CheckInReview. Flipping it back to RegistrationOpen was
+    // what re-opened the window, but it also re-opened REGISTRATION -- Hasura's
+    // insert rules key off exactly that status -- so an extension meant for two
+    // missing teams enlarged the field with brand new ones, each auto-stamped as
+    // checked in by tbi_tournament_team. Moving the deadline is enough on its
+    // own: check-in is gated on the clock, and ProcessTournamentCheckIn closes
+    // any deadline it has not already closed.
     const extended = await this.postgres.query<Array<{ id: string }>>(
       `UPDATE tournaments t
-          SET check_in_ends_at = GREATEST(t.check_in_ends_at, now()) + make_interval(mins => $2::int),
-              status = 'RegistrationOpen'
+          SET check_in_ends_at = GREATEST(t.check_in_ends_at, now()) + make_interval(mins => $2::int)
         WHERE t.id = $1::uuid
           AND t.status = 'CheckInReview'
           AND GREATEST(t.check_in_ends_at, now()) + make_interval(mins => $2::int) < t."start"
@@ -722,25 +739,17 @@ export class TournamentsController {
     return { success: true };
   }
 
-  // Deliberately narrower than the job's own recipient query: an extension is
-  // only ever announced to the teams that held the tournament up.
+  // The same recipients the job announces the window to, from the same SQL:
+  // an extension exists to rescue whoever has not confirmed, and free agents
+  // waitlisted by the cutoff are the ones with the most to lose by not hearing
+  // about it -- the draft re-admits exactly the waitlisted agents that checked
+  // in.
   private async pendingCheckInRecipients(
     tournamentId: string,
   ): Promise<Array<string>> {
     const rows = await this.postgres.query<Array<{ steam_id: string }>>(
-      `SELECT DISTINCT steam_id::text AS steam_id FROM (
-              SELECT ttr.player_steam_id AS steam_id
-                FROM tournament_team_roster ttr
-                JOIN tournament_teams tt ON tt.id = ttr.tournament_team_id
-               WHERE tt.tournament_id = $1::uuid
-                 AND tt.checked_in_at IS NULL
-              UNION
-              SELECT tt.owner_steam_id AS steam_id
-                FROM tournament_teams tt
-               WHERE tt.tournament_id = $1::uuid
-                 AND tt.checked_in_at IS NULL
-                 AND tt.owner_steam_id IS NOT NULL
-            ) pending`,
+      `SELECT steam_id::text AS steam_id
+         FROM tournament_pending_check_in_recipients($1::uuid)`,
       [tournamentId],
     );
 
@@ -1276,11 +1285,23 @@ export class TournamentsController {
 
     // Nothing was claimed, and the statement is silent about why. This either
     // names the refusal or returns, which happens for one reason only: the
-    // player already spent this link and holds the unlock already.
+    // player already spent this link.
     await this.explainRefusedInviteCode(
       tournament_id,
       code ?? "",
       data.user.steam_id,
+    );
+
+    // Spending the link is recorded on the use row, but what lets them in is
+    // the unlock -- and the two can come apart (an organizer revoking an unlock,
+    // a claim whose ON CONFLICT swallowed it). Re-granting it here is what stops
+    // a spent link from answering "accepted" to a player registration still
+    // refuses; the use row is untouched, so it costs the code nothing.
+    await this.postgres.query(
+      `INSERT INTO tournament_registration_unlocks (tournament_id, player_steam_id)
+       VALUES ($1::uuid, $2::bigint)
+       ON CONFLICT DO NOTHING`,
+      [tournament_id, data.user.steam_id],
     );
 
     return { success: true };

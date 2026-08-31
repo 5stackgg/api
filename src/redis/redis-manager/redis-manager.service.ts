@@ -107,9 +107,15 @@ export class RedisManagerService implements OnApplicationShutdown {
     // counter with no TTL at all.
     const result = await redis.multi().incr(key).expire(key, 120).exec();
 
-    const count = Number(result?.[0]?.[1] ?? 0);
+    // An aborted MULTI answers null and a failed command answers [error, null],
+    // so the INCR reply is only trustworthy when it is an actual number -- and
+    // a counter that reads 0 whenever Redis breaks is a limiter that switches
+    // itself off exactly when someone is hammering it. Refuse instead: the
+    // credentials this guards are guessable, and a caller who cannot be counted
+    // cannot be let through.
+    const [error, count] = result?.[0] ?? [];
 
-    if (count > options.limit) {
+    if (error || typeof count !== "number" || count > options.limit) {
       throw Error(options.message);
     }
   }

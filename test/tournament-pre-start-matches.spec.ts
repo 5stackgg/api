@@ -196,7 +196,10 @@ describe("tournament matches before the tournament starts (SQL-driven)", () => {
   });
 
   describe("the gate refuses every route", () => {
-    it("refuses the scheduler, an organizer and a raw write alike", async () => {
+    // A session-less write is the internal path -- reset_tournament_match parks
+    // a bracket by design and has nobody to hand an error to -- so it is held
+    // at 'Scheduled' silently.
+    it("parks every route onto the playable ladder", async () => {
       const t = await closedCup();
       const [match] = await tournamentMatches(t.id);
 
@@ -212,10 +215,22 @@ describe("tournament matches before the tournament starts (SQL-driven)", () => {
         ]);
         expect(await matchStatus(match.id)).toBe("Scheduled");
       }
+    });
 
-      await runAsUser(postgres, t.organizer, "admin", (query) =>
-        query("UPDATE matches SET status = 'Live' WHERE id = $1", [match.id]),
-      );
+    // A request is told instead. Rewriting the status under a caller hands it a
+    // successful UPDATE over a row that did not move: startMatch reads the
+    // result back and reports "the server is not available", and every other
+    // caller reports nothing at all.
+    it("refuses a requested start rather than silently undoing it", async () => {
+      const t = await closedCup();
+      const [match] = await tournamentMatches(t.id);
+
+      await expect(
+        runAsUser(postgres, t.organizer, "admin", (query) =>
+          query("UPDATE matches SET status = 'Live' WHERE id = $1", [match.id]),
+        ),
+      ).rejects.toThrow(/cannot start before its tournament/i);
+
       expect(await matchStatus(match.id)).toBe("Scheduled");
     });
 

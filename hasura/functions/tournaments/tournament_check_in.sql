@@ -101,3 +101,39 @@ AS $$
     FROM public.tournaments t
     WHERE t.id = team.tournament_id;
 $$;
+
+-- Everyone who still owes a confirmation: rostered players (per-player in
+-- Players mode, the whole roster otherwise), the team owner even when they are
+-- not on the roster, and free agents who registered on their own. Waitlisted
+-- agents are in it on purpose -- the cutoff waitlists a no-show, and the draft
+-- re-admits exactly the waitlisted agents that later checked in, so a re-opened
+-- window is theirs to act on too.
+CREATE OR REPLACE FUNCTION public.tournament_pending_check_in_recipients(
+    _tournament_id uuid
+)
+RETURNS TABLE (steam_id bigint)
+LANGUAGE sql
+STABLE
+AS $$
+    SELECT DISTINCT pending.steam_id FROM (
+        SELECT ttr.player_steam_id AS steam_id
+          FROM public.tournament_team_roster ttr
+          JOIN public.tournament_teams tt ON tt.id = ttr.tournament_team_id
+          JOIN public.tournaments t ON t.id = tt.tournament_id
+         WHERE tt.tournament_id = _tournament_id
+           AND tt.checked_in_at IS NULL
+           AND (t.check_in_setting <> 'Players' OR ttr.checked_in_at IS NULL)
+        UNION
+        SELECT tt.owner_steam_id AS steam_id
+          FROM public.tournament_teams tt
+         WHERE tt.tournament_id = _tournament_id
+           AND tt.checked_in_at IS NULL
+           AND tt.owner_steam_id IS NOT NULL
+        UNION
+        SELECT fa.player_steam_id AS steam_id
+          FROM public.tournament_free_agents fa
+         WHERE fa.tournament_id = _tournament_id
+           AND fa.checked_in_at IS NULL
+           AND fa.status IN ('registered', 'waitlisted')
+    ) pending;
+$$;

@@ -140,6 +140,23 @@ describe("tournament invites (SQL-driven)", () => {
     return row.unlocked;
   };
 
+  // What the tournament page actually gates on, as opposed to the 3-argument
+  // form the insert trigger calls with the team being registered in hand.
+  const unlockedForSession = async (tournamentId: string, steamId: string) => {
+    const [row] = await postgres.query<Array<{ unlocked: boolean }>>(
+      `SELECT tournament_registration_unlocked_for_session(t, $2::json) AS unlocked
+         FROM tournaments t WHERE t.id = $1`,
+      [
+        tournamentId,
+        JSON.stringify({
+          "x-hasura-role": "user",
+          "x-hasura-user-id": steamId,
+        }),
+      ],
+    );
+    return row.unlocked;
+  };
+
   const registerTeam = (tournamentId: string, owner: string) =>
     runAsUser(postgres, owner, "user", (query) =>
       query(
@@ -476,6 +493,30 @@ describe("tournament invites (SQL-driven)", () => {
       await expect(registerFreeAgent(t.id, team.owner)).rejects.toThrow(
         /invite only/i,
       );
+    });
+
+    // The page gate has no team in hand yet, so it asks the any-team form.
+    // Asking the team-scoped one with a NULL team told a captain, on the very
+    // page they had just been invited to, that they still needed an invite.
+    it("reads as unlocked for whoever may register the invited team", async () => {
+      const t = await createTournament({ columns: { invite_only: true } });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+      const team = await fx.team();
+
+      expect(await unlockedForSession(t.id, team.owner)).toBe(false);
+
+      const id = await inviteTeam(t.id, team.id, t.organizer);
+      await controller().acceptInvite({
+        user: asUser(team.owner),
+        invite_id: id,
+        type: "tournament-registration",
+      });
+
+      expect(await unlockedForSession(t.id, team.owner)).toBe(true);
+      // Still the team's grant and nobody else's, and still not a personal one:
+      // the free-agent gate asks the player-scoped form.
+      expect(await unlockedForSession(t.id, await fx.player())).toBe(false);
+      expect(await unlocked(t.id, team.owner)).toBe(false);
     });
 
     // A team-scoped grant is not a personal one: the same admin bringing a

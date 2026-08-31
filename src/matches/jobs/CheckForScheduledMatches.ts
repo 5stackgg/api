@@ -36,11 +36,17 @@ export class CheckForScheduledMatches extends WorkerHost {
                   _eq: "Scheduled",
                 },
               },
-              // Mirrors tournament_match_is_pre_start. A round-1 match
-              // materialized before its tournament starts is parked, and
-              // tbu_matches forces it straight back to Scheduled -- so without
-              // this the UPDATE still reports an affected row and the job logs
-              // "N matches started" for a no-op every single pass.
+              // Mirrors tournament_match_is_pre_start, which tbu_matches
+              // refuses outright: without this the whole batch would fail on a
+              // round-1 match that was materialized early, taking every other
+              // due match with it.
+              //
+              // Compared against a minute ago rather than now, because the two
+              // clocks are not the same one: `start` is measured here and
+              // `now()` in Postgres, and only the generous side of that skew is
+              // safe. A pre-start match excluded for a minute longer than it had
+              // to be loses nothing -- the tournament going Live releases its
+              // own round 1.
               {
                 _not: {
                   tournament_brackets: {
@@ -50,7 +56,7 @@ export class CheckForScheduledMatches extends WorkerHost {
                           _in: ["RegistrationClosed", "CheckInReview"],
                         },
                         start: {
-                          _gt: new Date(),
+                          _gt: new Date(Date.now() - 60 * 1000),
                         },
                       },
                     },

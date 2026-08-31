@@ -1,17 +1,11 @@
 -- Turns a free agent pool into balanced pickup teams. Returns the number of
 -- teams created.
 --
--- TWO STAGES, deliberately not merged:
---   1. Selection -- who plays at all -- is decided by registration order alone.
---   2. Assignment -- which team a selected player lands on -- is decided by ELO.
--- Collapsing them would let a late high-ELO signup take the slot of someone who
--- registered hours earlier, which is the one thing a first-come pool must not do.
---
--- Both stages work on UNITS, not players. A unit is everyone sharing a party_id
--- (the lobby they signed up from), or a single agent with no party. A unit is
--- indivisible and its priority is its EARLIEST member's signup: joining a party
--- can neither buy a late signup an earlier place nor cost the early member the
--- place they already held.
+-- Selection (who plays at all) is registration order alone and assignment
+-- (which team) is ELO; merging them would let a late high-ELO signup take the
+-- slot of someone who registered hours earlier. Both work on UNITS -- everyone
+-- sharing a party_id, or a lone agent -- and a unit's priority is its EARLIEST
+-- member's signup, so joining a party neither buys nor costs anyone a place.
 CREATE OR REPLACE FUNCTION public.draft_tournament_free_agent_teams(_tournament_id uuid)
 RETURNS integer
 LANGUAGE plpgsql

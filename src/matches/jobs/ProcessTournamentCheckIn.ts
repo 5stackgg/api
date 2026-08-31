@@ -32,6 +32,14 @@ export class ProcessTournamentCheckIn extends WorkerHost {
   // same moment as the "check-in is open" notice on the tightest setup.
   private static readonly CLOSING_REMINDER_MINUTES = 5;
 
+  // CheckInReview belongs to the window as much as RegistrationOpen does:
+  // extendTournamentCheckIn leaves the tournament held -- that hold is what
+  // keeps registration shut to newcomers -- and only moves check_in_ends_at, so
+  // the extended window has to be reminded about and closed from there. What
+  // keeps this from re-closing a tournament that is merely sitting in review is
+  // check_in_closed_for, not the status.
+  private static readonly WINDOW_IN_FORCE = `t.status IN ('RegistrationOpen', 'CheckInReview')`;
+
   constructor(
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
@@ -90,25 +98,25 @@ export class ProcessTournamentCheckIn extends WorkerHost {
     return opened.length;
   }
 
-  // Deduped the way TournamentReminders dedupes its own windows: a distinct
-  // entity_id makes a NOT EXISTS check enough with no extra state on the
-  // tournament. The deadline is part of the key so an organizer extending the
-  // window earns a fresh reminder rather than silence.
+  // The claim IS the write: stamping the deadline it was sent for is what stops
+  // a second tick from sending it again, and two workers cannot both win the
+  // row. Deliberately not a NOT EXISTS over `notifications` -- notifyPlayers
+  // writes no row when every recipient has the type muted, so a dedupe keyed on
+  // one would re-run this and the whole recipient fan-out on every tick for the
+  // entire lead-in. The deadline is what is stamped rather than a flag, so an
+  // organizer extending the window earns a fresh reminder rather than silence.
   private async remindBeforeCutoff(): Promise<number> {
     const due = await this.postgres.query<Array<ClosingTournament>>(
-      `SELECT t.id::text AS id, t.name, t.banner, t.logo,
-              t.id::text || ':closing:' || extract(epoch from t.check_in_ends_at)::bigint::text AS entity_id
-         FROM tournaments t
+      `UPDATE tournaments t
+          SET check_in_closing_notified_for = t.check_in_ends_at
         WHERE t.check_in_required
-          AND t.status = 'RegistrationOpen'
+          AND ${ProcessTournamentCheckIn.WINDOW_IN_FORCE}
           AND t.check_in_ends_at IS NOT NULL
           AND t.check_in_ends_at > now()
           AND t.check_in_ends_at <= now() + make_interval(mins => $1::int)
-          AND NOT EXISTS (
-            SELECT 1 FROM notifications n
-             WHERE n.type = 'TournamentCheckInClosing'
-               AND n.entity_id = t.id::text || ':closing:' || extract(epoch from t.check_in_ends_at)::bigint::text
-          )`,
+          AND t.check_in_closing_notified_for IS DISTINCT FROM t.check_in_ends_at
+       RETURNING t.id::text AS id, t.name, t.banner, t.logo,
+                 t.id::text || ':closing:' || extract(epoch from t.check_in_ends_at)::bigint::text AS entity_id`,
       [ProcessTournamentCheckIn.CLOSING_REMINDER_MINUTES],
     );
 
@@ -142,9 +150,10 @@ export class ProcessTournamentCheckIn extends WorkerHost {
          FROM tournaments t
         WHERE t.id = fa.tournament_id
           AND t.check_in_required
-          AND t.status = 'RegistrationOpen'
+          AND ${ProcessTournamentCheckIn.WINDOW_IN_FORCE}
           AND t.check_in_ends_at IS NOT NULL
           AND t.check_in_ends_at <= now()
+          AND t.check_in_closed_for IS DISTINCT FROM t.check_in_ends_at
           AND fa.status = 'registered'
           AND fa.checked_in_at IS NULL`,
     );
@@ -157,6 +166,11 @@ export class ProcessTournamentCheckIn extends WorkerHost {
     // abandoned half-registration is not seedable whether it confirms or not,
     // so counting it would hold every check-in tournament in CheckInReview and
     // page the organizer over a decision that changes nothing.
+    //
+    // check_in_closed_for is the fence rather than the status flip: an extended
+    // window ends back in CheckInReview, which the status alone cannot tell
+    // apart from the review it is already sitting in -- and re-firing would
+    // re-notify the whole field every minute until the tournament started.
     const closed = await this.postgres.query<Array<ClosedTournament>>(
       `UPDATE tournaments t
           SET status = CASE
@@ -167,11 +181,13 @@ export class ProcessTournamentCheckIn extends WorkerHost {
                      AND tournament_team_lineup_filled(tt)
               ) THEN 'CheckInReview'
               ELSE 'RegistrationClosed'
-          END
+          END,
+          check_in_closed_for = t.check_in_ends_at
         WHERE t.check_in_required
-          AND t.status = 'RegistrationOpen'
+          AND ${ProcessTournamentCheckIn.WINDOW_IN_FORCE}
           AND t.check_in_ends_at IS NOT NULL
           AND t.check_in_ends_at <= now()
+          AND t.check_in_closed_for IS DISTINCT FROM t.check_in_ends_at
        RETURNING t.id::text AS id, t.name, t.banner, t.logo, t.status,
                  t.organizer_steam_id::text AS organizer_steam_id`,
     );
@@ -244,34 +260,12 @@ export class ProcessTournamentCheckIn extends WorkerHost {
     return released.length;
   }
 
-  // Everyone who still owes a confirmation: rostered players (per-player in
-  // Players mode, whole roster otherwise), the team owner even when they are
-  // not on the roster, and free agents who registered on their own.
   private async pendingRecipients(
     tournamentId: string,
   ): Promise<Array<string>> {
     const rows = await this.postgres.query<Array<{ steam_id: string }>>(
-      `SELECT DISTINCT steam_id::text AS steam_id FROM (
-              SELECT ttr.player_steam_id AS steam_id
-                FROM tournament_team_roster ttr
-                JOIN tournament_teams tt ON tt.id = ttr.tournament_team_id
-                JOIN tournaments t ON t.id = tt.tournament_id
-               WHERE tt.tournament_id = $1::uuid
-                 AND tt.checked_in_at IS NULL
-                 AND (t.check_in_setting <> 'Players' OR ttr.checked_in_at IS NULL)
-              UNION
-              SELECT tt.owner_steam_id AS steam_id
-                FROM tournament_teams tt
-               WHERE tt.tournament_id = $1::uuid
-                 AND tt.checked_in_at IS NULL
-                 AND tt.owner_steam_id IS NOT NULL
-              UNION
-              SELECT fa.player_steam_id AS steam_id
-                FROM tournament_free_agents fa
-               WHERE fa.tournament_id = $1::uuid
-                 AND fa.checked_in_at IS NULL
-                 AND fa.status IN ('registered', 'waitlisted')
-            ) pending`,
+      `SELECT steam_id::text AS steam_id
+         FROM tournament_pending_check_in_recipients($1::uuid)`,
       [tournamentId],
     );
 

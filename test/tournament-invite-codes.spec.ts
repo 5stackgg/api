@@ -392,6 +392,34 @@ describe("tournament invite codes (SQL-driven)", () => {
       expect((await codeRow(code.id)).uses).toBe(1);
       expect(await usedBy(code.id)).toEqual([player]);
     });
+
+    // The use row records that the link was spent; the unlock is what actually
+    // lets them register, and the two can come apart -- an organizer may delete
+    // an unlock. Answering "accepted" off the use row alone left the player
+    // holding a spent link and no way in.
+    it("re-grants the unlock when the spent link is opened again", async () => {
+      const t = await createTournament();
+      const code = await mint(t.id, t.organizer);
+      const player = await fx.player();
+
+      await redeem(t.id, player, code.code);
+
+      await postgres.query(
+        "DELETE FROM tournament_registration_unlocks WHERE tournament_id = $1 AND player_steam_id = $2",
+        [t.id, player],
+      );
+      expect(await unlocked(t.id, player)).toBe(false);
+      await expect(registerTeam(t.id, player)).rejects.toThrow(/invite only/i);
+
+      await expect(redeem(t.id, player, code.code)).resolves.toEqual({
+        success: true,
+      });
+
+      expect(await unlocked(t.id, player)).toBe(true);
+      await expect(registerTeam(t.id, player)).resolves.toBeDefined();
+      // Still one use: re-granting is not a second entry.
+      expect((await codeRow(code.id)).uses).toBe(1);
+    });
   });
 
   describe("max_uses", () => {

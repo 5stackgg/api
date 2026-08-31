@@ -118,11 +118,20 @@ $$;
 DROP TRIGGER IF EXISTS tbi_tournament_team_roster ON public.tournament_team_roster;
 CREATE TRIGGER tbi_tournament_team_roster BEFORE INSERT ON public.tournament_team_roster FOR EACH ROW EXECUTE FUNCTION public.tbi_tournament_team_roster();
 
-CREATE OR REPLACE FUNCTION public.taiu_tournament_team_roster_check_in() RETURNS TRIGGER
+-- Dropped before it is rebuilt: the function grew a DELETE path and with it a
+-- new name, and the old pair would otherwise both survive a re-apply.
+DROP TRIGGER IF EXISTS taiu_tournament_team_roster_check_in ON public.tournament_team_roster;
+DROP TRIGGER IF EXISTS taiud_tournament_team_roster_check_in ON public.tournament_team_roster;
+DROP FUNCTION IF EXISTS public.taiu_tournament_team_roster_check_in();
+
+CREATE OR REPLACE FUNCTION public.taiud_tournament_team_roster_check_in() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
 DECLARE
     _tournament public.tournaments;
+    _tournament_id uuid;
+    _tournament_team_id uuid;
+    _confirmation_lost boolean;
     _min_players int;
     _checked_in int;
 BEGIN
@@ -137,18 +146,37 @@ BEGIN
         RETURN NEW;
     END IF;
 
+    -- Dropping a confirmed player is a withdrawn confirmation with the row
+    -- removed: the count it was part of is gone either way, so a team that
+    -- falls back under the minimum lineup has to lose its roll-up here too.
+    -- Left to the UPDATE path alone, a captain could seed an unconfirmed lineup
+    -- into the bracket simply by removing the people who confirmed it.
+    IF TG_OP = 'DELETE' THEN
+        IF OLD.checked_in_at IS NULL THEN
+            RETURN OLD;
+        END IF;
+
+        _tournament_id := OLD.tournament_id;
+        _tournament_team_id := OLD.tournament_team_id;
+        _confirmation_lost := true;
+    ELSE
+        _tournament_id := NEW.tournament_id;
+        _tournament_team_id := NEW.tournament_team_id;
+        _confirmation_lost := NEW.checked_in_at IS NULL;
+    END IF;
+
     SELECT t.* INTO _tournament
       FROM public.tournaments t
-     WHERE t.id = NEW.tournament_id;
+     WHERE t.id = _tournament_id;
 
     IF NOT FOUND THEN
-        RETURN NEW;
+        RETURN NULL;
     END IF;
 
     -- Captains and Admin modes stamp tournament_teams.checked_in_at directly;
     -- per-player rows carry no authority there.
     IF NOT _tournament.check_in_required OR _tournament.check_in_setting <> 'Players' THEN
-        RETURN NEW;
+        RETURN NULL;
     END IF;
 
     -- The bar is the MINIMUM LINEUP, not the whole roster: a roster of seven
@@ -158,34 +186,37 @@ BEGIN
 
     SELECT COUNT(*) INTO _checked_in
       FROM public.tournament_team_roster ttr
-     WHERE ttr.tournament_team_id = NEW.tournament_team_id
+     WHERE ttr.tournament_team_id = _tournament_team_id
        AND ttr.checked_in_at IS NOT NULL;
 
     IF _checked_in >= _min_players THEN
         UPDATE public.tournament_teams tt
            SET checked_in_at = now()
-         WHERE tt.id = NEW.tournament_team_id
+         WHERE tt.id = _tournament_team_id
            AND tt.checked_in_at IS NULL;
 
-    -- Clearing is only ever a WITHDRAWN confirmation breaking a roll-up that
-    -- was already satisfied -- this row went from stamped to NULL, so the count
-    -- was _checked_in + 1 a moment ago. A player CHECKING IN can only raise the
-    -- count, and reacting to that would let the first player to confirm wipe a
-    -- team the registration auto-stamp or an organizer re-admit had already
-    -- checked in: they would harm their own team by doing what the UI asked.
-    ELSIF NEW.checked_in_at IS NULL AND _checked_in + 1 >= _min_players THEN
+    -- Clearing is only ever a LOST confirmation breaking a roll-up that was
+    -- already satisfied -- this row went from stamped to NULL (or left the
+    -- roster stamped), so the count was _checked_in + 1 a moment ago. A player
+    -- CHECKING IN can only raise the count, and reacting to that would let the
+    -- first player to confirm wipe a team the registration auto-stamp or an
+    -- organizer re-admit had already checked in: they would harm their own team
+    -- by doing what the UI asked.
+    ELSIF _confirmation_lost AND _checked_in + 1 >= _min_players THEN
         UPDATE public.tournament_teams tt
            SET checked_in_at = NULL
-         WHERE tt.id = NEW.tournament_team_id
+         WHERE tt.id = _tournament_team_id
            AND tt.checked_in_at IS NOT NULL;
     END IF;
 
-    RETURN NEW;
+    RETURN NULL;
 END;
 $$;
 
-DROP TRIGGER IF EXISTS taiu_tournament_team_roster_check_in ON public.tournament_team_roster;
-CREATE TRIGGER taiu_tournament_team_roster_check_in
-    AFTER INSERT OR UPDATE OF checked_in_at ON public.tournament_team_roster
+-- UPDATE OF checked_in_at, but DELETE unqualified: a delete carries no column
+-- list to narrow on, and the row taking its stamp with it is exactly the case
+-- the clear branch exists for.
+CREATE TRIGGER taiud_tournament_team_roster_check_in
+    AFTER INSERT OR DELETE OR UPDATE OF checked_in_at ON public.tournament_team_roster
     FOR EACH ROW
-    EXECUTE FUNCTION public.taiu_tournament_team_roster_check_in();
+    EXECUTE FUNCTION public.taiud_tournament_team_roster_check_in();

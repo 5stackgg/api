@@ -24,26 +24,12 @@ import { inAppKeyForType } from "./preferences/notification-categories";
 export class NotificationsService {
   private readonly appConfig: AppConfig;
 
-  // The operators' Discord channel, and nothing else. Everything named here is
-  // posted into it verbatim, so this is an allowlist: a type reaches Discord by
-  // being argued onto this list, and anything new is in-app only until it is.
-  //
-  // It used to be the other way round -- a list of exclusions, with Discord the
-  // default -- which made every type anyone added Discord-facing on the day it
-  // was added. Tournament invites, check-in reminders and free-agent signups,
-  // each of them one player being asked something, were posted to staff that
-  // way.
-  //
-  // What "verbatim" costs is why the default has to be off rather than merely
-  // tidy: a ChatMessage's body IS the message somebody typed, direct messages
-  // included, and a PlayerSanctioned names the sanctioned player and quotes the
-  // ban reason to an audience of everyone who played with them.
-  //
-  // The bar is whether an operator has to do something about it. Broadcast
-  // announcements (TournamentCreated, NewsPublished, SeasonEnded) read like
-  // they might belong, but they are addressed to the whole player base rather
-  // than to staff -- an install that wants those in Discord wants an
-  // announcements webhook, not the support one.
+  // The operators' Discord channel, and nothing else. An ALLOWLIST, not a
+  // denylist: everything named here is posted verbatim -- a ChatMessage's body
+  // is what somebody typed, direct messages included -- so a type reaches
+  // Discord only by being argued onto this list, and anything new is in-app
+  // only until it is. The bar is whether an operator has to act on it, which
+  // broadcast announcements (TournamentCreated, NewsPublished) do not clear.
   //
   // Per-match alerts have their own door: sendDiscordMatchNotification, with a
   // webhook and a role configured per tournament. It does not read this.
