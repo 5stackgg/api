@@ -5,6 +5,9 @@ object_relationships:
   - name: player
     using:
       foreign_key_constraint_on: player_steam_id
+  - name: team
+    using:
+      foreign_key_constraint_on: team_id
   - name: tournament
     using:
       foreign_key_constraint_on: tournament_id
@@ -17,14 +20,16 @@ insert_permissions:
             _eq: true
       columns:
         - player_steam_id
+        - team_id
         - tournament_id
-    comment: Pre-unlock a player without handing out the passcode
+    comment: Pre-unlock a player or a team without handing out an invite link
 select_permissions:
   - role: user
     permission:
       columns:
         - created_at
         - player_steam_id
+        - team_id
         - tournament_id
       filter:
         player_steam_id:
@@ -36,6 +41,7 @@ select_permissions:
       columns:
         - created_at
         - player_steam_id
+        - team_id
         - tournament_id
       filter:
         _or:

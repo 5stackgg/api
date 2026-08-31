@@ -33,7 +33,10 @@ describe("TournamentsController registration and check-in actions", () => {
   let continued: Rows;
   let removedFreeAgent: Rows;
   let eligible: boolean;
-  let passcodeRow: Record<string, unknown> | undefined;
+  let mintedCode: Record<string, unknown>;
+  let codeRow: Record<string, unknown> | undefined;
+  let claimedRows: Rows;
+  let diagnosisRow: Record<string, unknown> | undefined;
   let draftedTeams: number;
   let lobbyRow: Record<string, unknown> | undefined;
   let lobbyMembers: Rows;
@@ -99,7 +102,10 @@ describe("TournamentsController registration and check-in actions", () => {
     continued = [{ id: "tournament-1" }];
     removedFreeAgent = [{ id: "agent-1" }];
     eligible = true;
-    passcodeRow = undefined;
+    mintedCode = { id: "code-1", code: "ABCDEFGHJK" };
+    codeRow = { tournament_id: "tournament-1" };
+    claimedRows = [{ invite_code_id: "code-1" }];
+    diagnosisRow = undefined;
     draftedTeams = 2;
     lobbyRow = { lobby_id: "lobby-1", captain: true };
     lobbyMembers = [
@@ -156,8 +162,23 @@ describe("TournamentsController registration and check-in actions", () => {
       if (sql.includes("DELETE FROM tournament_free_agents")) {
         return removedFreeAgent;
       }
-      if (sql.includes("registration_passcode")) {
-        return passcodeRow ? [passcodeRow] : [];
+      if (sql.includes("INSERT INTO tournament_invite_codes")) {
+        return [mintedCode];
+      }
+      if (sql.includes("SELECT tournament_id::text AS tournament_id")) {
+        return codeRow ? [codeRow] : [];
+      }
+      if (sql.includes("SET revoked_at = now()")) {
+        return [];
+      }
+      if (sql.includes("DELETE FROM tournament_invite_codes c")) {
+        return [];
+      }
+      if (sql.includes("WITH claimed AS (")) {
+        return claimedRows;
+      }
+      if (sql.includes("AS already_used")) {
+        return diagnosisRow ? [diagnosisRow] : [];
       }
       if (sql.includes("INSERT INTO tournament_registration_unlocks")) {
         return [];
@@ -817,82 +838,218 @@ describe("TournamentsController registration and check-in actions", () => {
     });
   });
 
-  describe("unlockTournamentRegistration", () => {
-    // "No passcode set" and "wrong passcode" must not be told apart: the
-    // distinction is half the search space handed to a guesser for free.
-    it("refuses a tournament with no passcode indistinguishably", async () => {
-      passcodeRow = {
-        status: "RegistrationOpen",
-        has_passcode: false,
-        matches: false,
-      };
+  describe("tournament invite codes", () => {
+    it("refuses to mint a link for a tournament the caller does not run", async () => {
+      tournamentRow = tournament({ is_organizer: false });
 
       await expect(
-        controller.unlockTournamentRegistration({
+        controller.createTournamentInviteCode({
           user: player,
           tournament_id: "tournament-1",
-          passcode: "hunter2",
         }),
-      ).rejects.toThrow(/^incorrect passcode$/i);
+      ).rejects.toThrow(/not the tournament organizer/i);
+
+      expect(
+        statements.some((sql) =>
+          sql.includes("INSERT INTO tournament_invite_codes"),
+        ),
+      ).toBe(false);
     });
 
-    it("throttles a guesser before the database is even asked", async () => {
-      passcodeRow = {
-        status: "RegistrationOpen",
-        has_passcode: true,
-        matches: false,
-      };
-      redisExec.mockResolvedValue([
-        [null, TournamentsController.PASSCODE_ATTEMPTS_PER_MINUTE + 1],
-      ]);
+    it("hands back the code the database minted", async () => {
+      tournamentRow = tournament({ is_organizer: true });
 
       await expect(
-        controller.unlockTournamentRegistration({
-          user: player,
+        controller.createTournamentInviteCode({
+          user: organizer,
           tournament_id: "tournament-1",
-          passcode: "nope",
+          expires_in_minutes: 30,
+          max_uses: 2,
         }),
-      ).rejects.toThrow(/too many passcode attempts/i);
-
-      expect(statements).toHaveLength(0);
+      ).resolves.toEqual({ id: "code-1", code: "ABCDEFGHJK" });
     });
 
-    it("refuses a wrong passcode", async () => {
-      passcodeRow = {
-        status: "RegistrationOpen",
-        has_passcode: true,
-        matches: false,
-      };
+    // NULL is the "never expires" / "unlimited" case, so a zero or a negative
+    // has to be refused rather than quietly stored as one of them.
+    it("refuses a non-positive expiry or use limit", async () => {
+      tournamentRow = tournament({ is_organizer: true });
 
       await expect(
-        controller.unlockTournamentRegistration({
-          user: player,
+        controller.createTournamentInviteCode({
+          user: organizer,
           tournament_id: "tournament-1",
-          passcode: "nope",
+          expires_in_minutes: 0,
         }),
-      ).rejects.toThrow(/^incorrect passcode$/i);
+      ).rejects.toThrow(/expiry has to be in the future/i);
+
+      await expect(
+        controller.createTournamentInviteCode({
+          user: organizer,
+          tournament_id: "tournament-1",
+          max_uses: 0,
+        }),
+      ).rejects.toThrow(/use limit has to be at least one/i);
     });
 
-    it("records the unlock on a match", async () => {
-      passcodeRow = {
-        status: "RegistrationOpen",
-        has_passcode: true,
-        matches: true,
-      };
+    it("refuses to revoke a link belonging to somebody else's tournament", async () => {
+      tournamentRow = tournament({ is_organizer: false });
 
       await expect(
-        controller.unlockTournamentRegistration({
+        controller.revokeTournamentInviteCode({
           user: player,
-          tournament_id: "tournament-1",
-          passcode: "hunter2",
+          invite_code_id: "code-1",
+        }),
+      ).rejects.toThrow(/not the tournament organizer/i);
+
+      expect(
+        statements.some((sql) => sql.includes("SET revoked_at = now()")),
+      ).toBe(false);
+    });
+
+    it("stamps rather than deletes, so the uses survive the revoke", async () => {
+      tournamentRow = tournament({ is_organizer: true });
+
+      await expect(
+        controller.revokeTournamentInviteCode({
+          user: organizer,
+          invite_code_id: "code-1",
         }),
       ).resolves.toEqual({ success: true });
 
       expect(
-        statements.some((sql) =>
-          sql.includes("INSERT INTO tournament_registration_unlocks"),
-        ),
+        statements.some((sql) => sql.includes("SET revoked_at = now()")),
       ).toBe(true);
+      expect(
+        statements.some((sql) =>
+          sql.includes("DELETE FROM tournament_invite_codes\n"),
+        ),
+      ).toBe(false);
+    });
+
+    it("throttles a guesser before the database is even asked", async () => {
+      redisExec.mockResolvedValue([
+        [null, TournamentsController.REDEEM_ATTEMPTS_PER_MINUTE + 1],
+      ]);
+
+      await expect(
+        controller.redeemTournamentInviteCode({
+          user: player,
+          tournament_id: "tournament-1",
+          code: "NOPE",
+        }),
+      ).rejects.toThrow(/too many invite attempts/i);
+
+      expect(statements).toHaveLength(0);
+    });
+
+    it("refuses once registration has closed", async () => {
+      tournamentRow = tournament({ status: "RegistrationClosed" });
+
+      await expect(
+        controller.redeemTournamentInviteCode({
+          user: player,
+          tournament_id: "tournament-1",
+          code: "ABCDEFGHJK",
+        }),
+      ).rejects.toThrow(/registration is not open/i);
+
+      expect(statements.some((sql) => sql.includes("WITH claimed AS ("))).toBe(
+        false,
+      );
+    });
+
+    it("claims the code, the unlock and the audit row in one statement", async () => {
+      await expect(
+        controller.redeemTournamentInviteCode({
+          user: player,
+          tournament_id: "tournament-1",
+          code: "ABCDEFGHJK",
+        }),
+      ).resolves.toEqual({ success: true });
+
+      const [claim] = statements.filter((sql) =>
+        sql.includes("WITH claimed AS ("),
+      );
+      expect(claim).toContain("SET uses = c.uses + 1");
+      expect(claim).toContain("INSERT INTO tournament_registration_unlocks");
+      expect(claim).toContain("INSERT INTO tournament_invite_code_uses");
+    });
+
+    // The claim is silent about why it matched nothing; naming the reason is a
+    // second read that must never be able to let anybody in.
+    it("names the refusal without ever granting on the diagnosis", async () => {
+      claimedRows = [];
+
+      diagnosisRow = {
+        revoked: true,
+        expired: false,
+        exhausted: false,
+        already_used: false,
+      };
+      await expect(
+        controller.redeemTournamentInviteCode({
+          user: player,
+          tournament_id: "tournament-1",
+          code: "ABCDEFGHJK",
+        }),
+      ).rejects.toThrow(/was revoked/i);
+
+      diagnosisRow = {
+        revoked: false,
+        expired: true,
+        exhausted: false,
+        already_used: false,
+      };
+      await expect(
+        controller.redeemTournamentInviteCode({
+          user: player,
+          tournament_id: "tournament-1",
+          code: "ABCDEFGHJK",
+        }),
+      ).rejects.toThrow(/has expired/i);
+
+      diagnosisRow = {
+        revoked: false,
+        expired: false,
+        exhausted: true,
+        already_used: false,
+      };
+      await expect(
+        controller.redeemTournamentInviteCode({
+          user: player,
+          tournament_id: "tournament-1",
+          code: "ABCDEFGHJK",
+        }),
+      ).rejects.toThrow(/has been used up/i);
+
+      diagnosisRow = undefined;
+      await expect(
+        controller.redeemTournamentInviteCode({
+          user: player,
+          tournament_id: "tournament-1",
+          code: "ABCDEFGHJK",
+        }),
+      ).rejects.toThrow(/not found/i);
+    });
+
+    // A double-clicked Accept is not a second entry: they already hold the
+    // unlock, so it is a no-op rather than "this link has been used up".
+    it("treats a second redemption by the same player as a no-op", async () => {
+      claimedRows = [];
+      diagnosisRow = {
+        revoked: false,
+        expired: false,
+        exhausted: true,
+        already_used: true,
+      };
+
+      await expect(
+        controller.redeemTournamentInviteCode({
+          user: player,
+          tournament_id: "tournament-1",
+          code: "ABCDEFGHJK",
+        }),
+      ).resolves.toEqual({ success: true });
     });
   });
 });

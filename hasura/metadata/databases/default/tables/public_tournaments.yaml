@@ -212,12 +212,6 @@ computed_fields:
       function:
         name: tournament_missed_check_in_count
         schema: public
-  - name: organizer_registration_passcode
-    definition:
-      function:
-        name: tournament_organizer_registration_passcode
-        schema: public
-      session_argument: hasura_session
   - name: registration_unlocked
     definition:
       function:
@@ -263,7 +257,6 @@ insert_permissions:
         - min_role
         - regions
         - registration_type
-        - registration_passcode
     comment: ""
   - role: tournament_organizer
     permission:
@@ -320,7 +313,6 @@ insert_permissions:
         - min_role
         - regions
         - registration_type
-        - registration_passcode
     comment: ""
 select_permissions:
   - role: guest
@@ -427,7 +419,6 @@ select_permissions:
         - min_role
         - regions
         - registration_type
-        - registration_passcode
       computed_fields:
         - can_cancel
         - can_close_registration
@@ -447,7 +438,6 @@ select_permissions:
         - meets_min_role
         - can_review_check_in
         - missed_check_in_count
-        - organizer_registration_passcode
         - registration_unlocked
       filter:
         _or:
@@ -507,7 +497,6 @@ select_permissions:
         - meets_min_role
         - can_review_check_in
         - missed_check_in_count
-        - organizer_registration_passcode
         - registration_unlocked
       filter:
         _or:
@@ -561,7 +550,6 @@ update_permissions:
         - min_role
         - regions
         - registration_type
-        - registration_passcode
       filter:
         is_organizer:
           _eq: true
@@ -595,7 +583,6 @@ update_permissions:
         - min_role
         - regions
         - registration_type
-        - registration_passcode
       filter:
         is_organizer:
           _eq: true

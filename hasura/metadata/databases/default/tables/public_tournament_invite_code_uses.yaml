@@ -1,0 +1,32 @@
+table:
+  name: tournament_invite_code_uses
+  schema: public
+object_relationships:
+  - name: invite_code
+    using:
+      foreign_key_constraint_on: invite_code_id
+  - name: player
+    using:
+      foreign_key_constraint_on: player_steam_id
+  - name: team
+    using:
+      foreign_key_constraint_on: team_id
+select_permissions:
+  - role: user
+    permission:
+      columns:
+        - invite_code_id
+        - player_steam_id
+        - team_id
+        - used_at
+      filter:
+        _or:
+          - player_steam_id:
+              _eq: X-Hasura-User-Id
+          - invite_code:
+              tournament:
+                is_organizer:
+                  _eq: true
+      allow_aggregations: true
+    comment: The organizer's audit of a link they published, plus the player's own record of
+      what they spent

@@ -671,28 +671,16 @@ export class UtilityPracticeService {
   // index that keeps codes unique is scoped to Starting/Ready, so an ended
   // session's code is free to be minted again by somebody else.
   // An invite code is a bearer credential, so the lookup is the enumeration
-  // surface rather than the code length alone. Keyed per caller, and the minute
-  // is part of the key rather than a refreshed TTL -- re-setting the TTL on
-  // every attempt would push the window ahead of a caller who never stops and
-  // lock them out for good.
+  // surface rather than the code length alone.
   public static readonly INVITE_LOOKUPS_PER_MINUTE = 10;
 
   private async assertInviteLookupRateLimit(steamId: string): Promise<void> {
-    const key = `utility-invite-lookup:${steamId}:${Math.floor(
-      Date.now() / 60000,
-    )}`;
-    // INCR rather than get-then-put: guesses fired concurrently all read the
-    // same pre-increment value, and a limit that only counts the attempts that
-    // happened to be serialised is not a limit. EXPIRE has to follow INCR --
-    // on a key that does not exist yet it does nothing, which would leave the
-    // counter with no TTL at all.
-    const result = await this.redis.multi().incr(key).expire(key, 120).exec();
-
-    const count = Number(result?.[0]?.[1] ?? 0);
-
-    if (count > UtilityPracticeService.INVITE_LOOKUPS_PER_MINUTE) {
-      throw Error("too many invite attempts, try again in a minute");
-    }
+    await RedisManagerService.assertRateLimit(this.redis, {
+      key: "utility-invite-lookup",
+      steamId,
+      limit: UtilityPracticeService.INVITE_LOOKUPS_PER_MINUTE,
+      message: "too many invite attempts, try again in a minute",
+    });
   }
 
   private async findSession(options: {

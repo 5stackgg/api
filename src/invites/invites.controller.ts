@@ -52,7 +52,7 @@ export class InvitesController {
     }
 
     await this.notifyInvited("TeamInvite", {
-      steamId: invite.steam_id,
+      steamIds: [invite.steam_id],
       title: "Team Invite",
       body: `<b>${NotificationsService.escapeHtml(invite.invited_by)}</b> invited you to <b>${NotificationsService.escapeHtml(invite.team_name)}</b>.`,
       entityId: data.new.id,
@@ -95,7 +95,7 @@ export class InvitesController {
     }
 
     await this.notifyInvited("TournamentTeamInvite", {
-      steamId: invite.steam_id,
+      steamIds: [invite.steam_id],
       title: "Tournament Invite",
       body: `<b>${NotificationsService.escapeHtml(invite.invited_by)}</b> invited you to play for <b>${NotificationsService.escapeHtml(invite.team_name)}</b> in <b>${NotificationsService.escapeHtml(invite.tournament_name)}</b>.`,
       entityId: data.new.id,
@@ -111,18 +111,23 @@ export class InvitesController {
 
     const [invite] = await this.postgres.query<
       Array<{
-        steam_id: string;
+        steam_id: string | null;
+        team_id: string | null;
+        team_name: string | null;
         tournament_name: string;
         tournament_logo: string | null;
         invited_by: string;
       }>
     >(
       `SELECT ti.steam_id::text AS steam_id,
+              ti.team_id::text AS team_id,
+              team.name AS team_name,
               tour.name AS tournament_name,
               tour.logo AS tournament_logo,
               COALESCE(p.name, 'Someone') AS invited_by
          FROM public.tournament_invites ti
          JOIN public.tournaments tour ON tour.id = ti.tournament_id
+    LEFT JOIN public.teams team ON team.id = ti.team_id
     LEFT JOIN public.players p ON p.steam_id = ti.invited_by_player_steam_id
         WHERE ti.id = $1::uuid`,
       [data.new.id],
@@ -132,19 +137,54 @@ export class InvitesController {
       return;
     }
 
+    // A team-addressed invite has nobody to tell on the row itself, so it goes
+    // to the people who could act on it -- the same owner / captain / roster
+    // Admin the unlock will answer for.
+    const steamIds = invite.team_id
+      ? await this.teamRegistrars(invite.team_id)
+      : [invite.steam_id!];
+
+    if (steamIds.length === 0) {
+      return;
+    }
+
     await this.notifyInvited("TournamentInvite", {
-      steamId: invite.steam_id,
+      steamIds,
       title: "Tournament Invite",
-      body: `<b>${NotificationsService.escapeHtml(invite.invited_by)}</b> invited you to register for <b>${NotificationsService.escapeHtml(invite.tournament_name)}</b>.`,
+      body: invite.team_id
+        ? `<b>${NotificationsService.escapeHtml(invite.invited_by)}</b> invited <b>${NotificationsService.escapeHtml(invite.team_name ?? "your team")}</b> to register for <b>${NotificationsService.escapeHtml(invite.tournament_name)}</b>.`
+        : `<b>${NotificationsService.escapeHtml(invite.invited_by)}</b> invited you to register for <b>${NotificationsService.escapeHtml(invite.tournament_name)}</b>.`,
       entityId: data.new.id,
       icon: invite.tournament_logo,
     });
   }
 
+  // Owner, captain and roster Admins: exactly the people
+  // tournament_registration_unlocked() treats as able to register the team, so
+  // the invite reaches whoever can actually accept it.
+  private async teamRegistrars(teamId: string): Promise<Array<string>> {
+    const rows = await this.postgres.query<Array<{ steam_id: string }>>(
+      `SELECT DISTINCT steam_id::text AS steam_id
+         FROM (
+             SELECT t.owner_steam_id AS steam_id FROM public.teams t WHERE t.id = $1::uuid
+              UNION
+             SELECT t.captain_steam_id FROM public.teams t WHERE t.id = $1::uuid
+              UNION
+             SELECT tr.player_steam_id
+               FROM public.team_roster tr
+              WHERE tr.team_id = $1::uuid AND tr.role = 'Admin'
+         ) registrars
+        WHERE steam_id IS NOT NULL`,
+      [teamId],
+    );
+
+    return rows.map((row) => row.steam_id);
+  }
+
   public async notifyInvited(
     type: e_notification_types_enum,
     invite: {
-      steamId: string;
+      steamIds: Array<string>;
       title: string;
       body: string;
       entityId: string;
@@ -158,7 +198,7 @@ export class InvitesController {
         message: invite.body,
         role: "user",
         entity_id: invite.entityId,
-        steamIds: [invite.steamId],
+        steamIds: invite.steamIds,
         data: { icon: invite.icon },
       });
     } catch (error) {
@@ -304,9 +344,13 @@ export class InvitesController {
   // steam id.
   private async findTournamentInvite(invite_id: string) {
     const [invite] = await this.postgres.query<
-      Array<{ tournament_id: string; steam_id: string }>
+      Array<{
+        tournament_id: string;
+        steam_id: string | null;
+        team_id: string | null;
+      }>
     >(
-      `SELECT tournament_id, steam_id::text AS steam_id
+      `SELECT tournament_id, steam_id::text AS steam_id, team_id::text AS team_id
          FROM public.tournament_invites
         WHERE id = $1::uuid`,
       [invite_id],
@@ -319,24 +363,43 @@ export class InvitesController {
     return invite;
   }
 
+  // The row is addressed to exactly one of a player or a team
+  // (tournament_invites_addressed_once), and who may answer it follows from
+  // which: the player themselves, or anyone who could register that team.
+  private async canAnswerTournamentInvite(
+    invite: { steam_id: string | null; team_id: string | null },
+    user: User,
+  ): Promise<boolean> {
+    if (invite.team_id === null) {
+      return invite.steam_id === user.steam_id;
+    }
+
+    const registrars = await this.teamRegistrars(invite.team_id);
+
+    return registrars.includes(user.steam_id);
+  }
+
   private async acceptTournamentInvite(invite_id: string, user: User) {
     const invite = await this.findTournamentInvite(invite_id);
 
-    if (invite.steam_id !== user.steam_id) {
+    if (!(await this.canAnswerTournamentInvite(invite, user))) {
       return {
         success: false,
       };
     }
 
     // An unlock row is what tbi_tournament_team and tbi_tournament_free_agents
-    // already check, so the invite grants exactly what the passcode grants
+    // already check, so the invite grants exactly what an invite code grants
     // rather than becoming a second gate they would both have to learn about.
-    // ON CONFLICT because the player may have redeemed a passcode first.
+    // ON CONFLICT because the player may have redeemed a code first.
+    //
+    // A team invite writes the team-scoped half: the team gets to register, and
+    // its members do not each get a free-agent slot out of it.
     await this.postgres.query(
-      `INSERT INTO public.tournament_registration_unlocks (tournament_id, player_steam_id)
-       VALUES ($1::uuid, $2::bigint)
+      `INSERT INTO public.tournament_registration_unlocks (tournament_id, player_steam_id, team_id)
+       VALUES ($1::uuid, $2::bigint, $3::uuid)
        ON CONFLICT DO NOTHING`,
-      [invite.tournament_id, invite.steam_id],
+      [invite.tournament_id, invite.steam_id, invite.team_id],
     );
 
     await this.postgres.query(
@@ -446,14 +509,14 @@ export class InvitesController {
   public async denyTournamentInvite(invite_id: string, user: User) {
     const invite = await this.findTournamentInvite(invite_id);
 
-    if (invite.steam_id !== user.steam_id) {
+    if (!(await this.canAnswerTournamentInvite(invite, user))) {
       return {
         success: false,
       };
     }
 
     // Only the invite goes; a declined invite never granted an unlock, and
-    // deleting one here would revoke a passcode the player redeemed themselves.
+    // deleting one here would revoke a code the player redeemed themselves.
     await this.postgres.query(
       "DELETE FROM public.tournament_invites WHERE id = $1::uuid",
       [invite_id],

@@ -298,12 +298,30 @@ async function main() {
         name: "7 join rules", organizer: org, startsInMinutes: 300,
         columns: {
           min_role: "verified_user", min_elo: 1200, max_elo: 2000,
-          invite_only: true, registration_passcode: "QA-2026",
+          invite_only: true,
           regions: "{}",
         },
       });
       await setStatus(client, id, org, "RegistrationOpen");
-      record("JOIN RULES", id, "verified_user + 1200-2000 ELO + invite only, passcode QA-2026");
+
+      // A live link and a dead one, so the fixture covers both answers without
+      // anyone having to wait out an expiry.
+      const { rows: [live] } = await client.query(
+        `INSERT INTO tournament_invite_codes (tournament_id, created_by_player_steam_id, expires_at, max_uses)
+         VALUES ($1, $2, now() + interval '7 days', 2) RETURNING code`,
+        [id, org],
+      );
+      const { rows: [dead] } = await client.query(
+        `INSERT INTO tournament_invite_codes (tournament_id, created_by_player_steam_id, expires_at)
+         VALUES ($1, $2, now() - interval '1 hour') RETURNING code`,
+        [id, org],
+      );
+
+      record(
+        "JOIN RULES",
+        id,
+        `verified_user + 1200-2000 ELO + invite only. Live link ?invite=${live.code} (2 uses), expired ?invite=${dead.code}`,
+      );
     }
 
     console.log(`\nSeeded ${scenarios.length} scenarios:\n`);

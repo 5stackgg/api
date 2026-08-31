@@ -81,6 +81,39 @@ export class RedisManagerService implements OnApplicationShutdown {
     return this.connections[connection];
   }
 
+  // Every bearer credential the platform hands out -- a practice session invite
+  // code, a tournament invite link -- is guessable in principle, and the action
+  // that redeems one takes an arbitrary id, so any logged-in caller can grind
+  // against every target. Keyed per caller, and the minute is part of the key
+  // rather than a refreshed TTL: re-setting the TTL on every attempt would push
+  // the window ahead of a caller who never stops and lock them out for good.
+  public static async assertRateLimit(
+    redis: Redis,
+    options: {
+      key: string;
+      steamId: string;
+      limit: number;
+      message: string;
+    },
+  ): Promise<void> {
+    const key = `${options.key}:${options.steamId}:${Math.floor(
+      Date.now() / 60000,
+    )}`;
+
+    // INCR rather than get-then-put: attempts fired concurrently all read the
+    // same pre-increment value, and a limit that only counts the ones that
+    // happened to be serialised is not a limit. EXPIRE has to follow INCR --
+    // on a key that does not exist yet it does nothing, which would leave the
+    // counter with no TTL at all.
+    const result = await redis.multi().incr(key).expire(key, 120).exec();
+
+    const count = Number(result?.[0]?.[1] ?? 0);
+
+    if (count > options.limit) {
+      throw Error(options.message);
+    }
+  }
+
   public getConfig(connection: string): RedisOptions {
     if (!this.config.connections[connection]) {
       throw new Error(`Redis connection ${connection} not found`);

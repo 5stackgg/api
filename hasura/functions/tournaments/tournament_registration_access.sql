@@ -1,9 +1,22 @@
--- Has this player traded the passcode for an unlock on this tournament?
--- The insert triggers on tournament_teams / tournament_free_agents ask this;
--- unlockTournamentRegistration is what writes the row.
+-- The single choke point every invite_only gate reduces to: has this player
+-- been let into this tournament, either in their own right or through a team
+-- they are allowed to register?
+--
+-- _team_id is what tells the two apart, and it is the whole reason a team invite
+-- means what it says. tbi_tournament_team passes the team being registered;
+-- tbi_tournament_free_agents and the computed field pass NULL, so an invited
+-- team gets to enter as a team and its members do not each get a free-agent
+-- slot out of it.
+--
+-- The 2-argument form has to be dropped explicitly rather than replaced: a
+-- default-valued third parameter leaves both resolvable, and every existing call
+-- site then fails as ambiguous (42725).
+DROP FUNCTION IF EXISTS public.tournament_registration_unlocked(uuid, bigint);
+
 CREATE OR REPLACE FUNCTION public.tournament_registration_unlocked(
     _tournament_id uuid,
-    _player_steam_id bigint
+    _player_steam_id bigint,
+    _team_id uuid DEFAULT NULL
 )
 RETURNS boolean
 LANGUAGE sql
@@ -13,12 +26,35 @@ AS $$
         SELECT 1
         FROM public.tournament_registration_unlocks u
         WHERE u.tournament_id = _tournament_id
+          AND u.team_id IS NULL
           AND u.player_steam_id = _player_steam_id
+    )
+    -- Exactly the people public_tournament_teams.yaml already lets register a
+    -- team: its owner, its captain, or a team_roster Admin.
+    OR EXISTS (
+        SELECT 1
+        FROM public.tournament_registration_unlocks u
+        JOIN public.teams t ON t.id = u.team_id
+        WHERE u.tournament_id = _tournament_id
+          AND u.team_id = _team_id
+          AND (
+              t.owner_steam_id = _player_steam_id
+              OR t.captain_steam_id = _player_steam_id
+              OR EXISTS (
+                  SELECT 1
+                  FROM public.team_roster tr
+                  WHERE tr.team_id = t.id
+                    AND tr.player_steam_id = _player_steam_id
+                    AND tr.role = 'Admin'
+              )
+          )
     );
 $$;
 
 -- Computed-field form, so the join UI can tell "locked" from "already unlocked"
--- without being handed the passcode to compare against.
+-- without being handed anything it could redeem. NULL team: this answers
+-- whether the player themselves may enter, which is what the gate on the
+-- tournament page is asking.
 CREATE OR REPLACE FUNCTION public.tournament_registration_unlocked_for_session(
     tournament public.tournaments,
     hasura_session json
@@ -33,24 +69,4 @@ AS $$
                tournament.id,
                (hasura_session ->> 'x-hasura-user-id')::bigint
            );
-$$;
-
--- registration_passcode is a column only the tournament_organizer ROLE may
--- select, but a plain `user` with can_create_tournaments owns tournaments too
--- and has to be able to read back the passcode they set. Granting the column to
--- the `user` role would hand it to every logged-in player for every tournament
--- they can see -- which is the gate itself -- so the organizer reads it through
--- this row-level field instead.
-CREATE OR REPLACE FUNCTION public.tournament_organizer_registration_passcode(
-    tournament public.tournaments,
-    hasura_session json
-)
-RETURNS text
-LANGUAGE sql
-STABLE
-AS $$
-    SELECT CASE
-        WHEN public.is_tournament_organizer(tournament, hasura_session)
-        THEN tournament.registration_passcode
-    END;
 $$;

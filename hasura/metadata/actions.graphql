@@ -2585,10 +2585,29 @@ type Mutation {
 }
 
 type Mutation {
-  unlockTournamentRegistration(
+  createTournamentInviteCode(
     tournament_id: uuid!
-    passcode: String!
+    expires_in_minutes: Int
+    max_uses: Int
+  ): TournamentInviteCodeOutput
+}
+
+type Mutation {
+  revokeTournamentInviteCode(
+    invite_code_id: uuid!
   ): SuccessOutput
+}
+
+type Mutation {
+  redeemTournamentInviteCode(
+    tournament_id: uuid!
+    code: String!
+  ): SuccessOutput
+}
+
+type TournamentInviteCodeOutput {
+  id: uuid!
+  code: String!
 }
 
 type TournamentDraftOutput {

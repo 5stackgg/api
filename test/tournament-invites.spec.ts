@@ -5,11 +5,11 @@ import { User } from "./../src/auth/types/User";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, runAsUser, SqlTestDb } from "./utils/sql-test-db";
 
-// tournament_invites is the other half of invite_only: the passcode was the
-// only way into a locked tournament, so an organizer who never handed a code
-// out had no mechanism at all. Accepting writes the same
-// tournament_registration_unlocks row unlockTournamentRegistration writes, so
-// both paths meet at one grant the join triggers already check.
+// tournament_invites is the half of invite_only that names who is wanted: an
+// invite link is a shortcut, an invite is an address. It is addressed to a
+// player or to a team -- tournaments recruit teams -- and accepting writes the
+// same tournament_registration_unlocks row a redeemed link writes, so every
+// path meets at one grant the join triggers already check.
 describe("tournament invites (SQL-driven)", () => {
   let db: SqlTestDb;
   let postgres: PostgresService;
@@ -134,6 +134,31 @@ describe("tournament invites (SQL-driven)", () => {
       ),
     );
 
+  // The invite arrives the same way a player invite does; only the address
+  // column changes.
+  const inviteTeam = (tournamentId: string, teamId: string, actor: string) =>
+    runAsUser(postgres, actor, "user", async (query) => {
+      const [row] = (await query(
+        `INSERT INTO tournament_invites (tournament_id, team_id, invited_by_player_steam_id)
+         VALUES ($1, $2, $3) RETURNING id`,
+        [tournamentId, teamId, actor],
+      )) as Array<{ id: string }>;
+      return row.id;
+    });
+
+  const registerRealTeam = (
+    tournamentId: string,
+    teamId: string,
+    actor: string,
+  ) =>
+    runAsUser(postgres, actor, "user", (query) =>
+      query(
+        `INSERT INTO tournament_teams (tournament_id, team_id, name, owner_steam_id, captain_steam_id)
+         VALUES ($1, $2, $3, $4, $4)`,
+        [tournamentId, teamId, fx.nextName("squad"), actor],
+      ),
+    );
+
   const registerFreeAgent = (tournamentId: string, steamId: string) =>
     runAsUser(postgres, steamId, "user", (query) =>
       query(
@@ -214,9 +239,9 @@ describe("tournament invites (SQL-driven)", () => {
       expect(await inviteCount(t.id)).toBe(0);
     });
 
-    it("stays a no-op when the player already redeemed the passcode", async () => {
+    it("stays a no-op when the player already redeemed a link", async () => {
       const t = await createTournament({
-        columns: { invite_only: true, registration_passcode: "letmein" },
+        columns: { invite_only: true },
       });
       const player = await fx.player();
       await postgres.query(
@@ -303,6 +328,149 @@ describe("tournament invites (SQL-driven)", () => {
       expect(notifications.notifyPlayers).toHaveBeenCalledWith(
         "TournamentInvite",
         expect.objectContaining({ entity_id: id, steamIds: [player] }),
+      );
+    });
+  });
+
+  describe("inviting a team", () => {
+    it("lets the invited team register once an admin accepts", async () => {
+      const t = await createTournament({ columns: { invite_only: true } });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+      const team = await fx.team();
+
+      await expect(registerRealTeam(t.id, team.id, team.owner)).rejects.toThrow(
+        /invite only/i,
+      );
+
+      const id = await inviteTeam(t.id, team.id, t.organizer);
+      await expect(
+        controller().acceptInvite({
+          user: asUser(team.owner),
+          invite_id: id,
+          type: "tournament-registration",
+        }),
+      ).resolves.toEqual({ success: true });
+
+      await expect(
+        registerRealTeam(t.id, team.id, team.owner),
+      ).resolves.toBeDefined();
+    });
+
+    // The team was invited, not its players individually. A free-agent slot is
+    // a different thing to have been offered.
+    it("does not put the accepting admin into the free agent pool", async () => {
+      const t = await createTournament({
+        columns: { invite_only: true, registration_type: "both" },
+      });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+      const team = await fx.team();
+
+      const id = await inviteTeam(t.id, team.id, t.organizer);
+      await controller().acceptInvite({
+        user: asUser(team.owner),
+        invite_id: id,
+        type: "tournament-registration",
+      });
+
+      await expect(registerFreeAgent(t.id, team.owner)).rejects.toThrow(
+        /invite only/i,
+      );
+    });
+
+    // A team-scoped grant is not a personal one: the same admin bringing a
+    // different team is still outside.
+    it("does not let the accepting admin register some other team", async () => {
+      const t = await createTournament({ columns: { invite_only: true } });
+      await setStatus(t.id, t.organizer, "RegistrationOpen");
+      const invited = await fx.team();
+      const [other] = await postgres.query<Array<{ id: string }>>(
+        "INSERT INTO teams (name, short_name, owner_steam_id) VALUES ($1, $1, $2) RETURNING id",
+        [fx.nextName("other"), invited.owner],
+      );
+
+      const id = await inviteTeam(t.id, invited.id, t.organizer);
+      await controller().acceptInvite({
+        user: asUser(invited.owner),
+        invite_id: id,
+        type: "tournament-registration",
+      });
+
+      await expect(
+        registerRealTeam(t.id, other.id, invited.owner),
+      ).rejects.toThrow(/invite only/i);
+    });
+
+    it("refuses an accept from somebody who cannot register the team", async () => {
+      const t = await createTournament({ columns: { invite_only: true } });
+      const team = await fx.team();
+      const outsider = await fx.player();
+      const id = await inviteTeam(t.id, team.id, t.organizer);
+
+      await expect(
+        controller().acceptInvite({
+          user: asUser(outsider),
+          invite_id: id,
+          type: "tournament-registration",
+        }),
+      ).resolves.toEqual({ success: false });
+      expect(await inviteCount(t.id)).toBe(1);
+    });
+
+    // num_nonnulls(steam_id, team_id) = 1: an invite has exactly one address.
+    it("refuses a row addressed to both a player and a team, or to neither", async () => {
+      const t = await createTournament();
+      const team = await fx.team();
+      const player = await fx.player();
+
+      await expect(
+        runAsUser(postgres, t.organizer, "user", (query) =>
+          query(
+            `INSERT INTO tournament_invites (tournament_id, steam_id, team_id, invited_by_player_steam_id)
+             VALUES ($1, $2, $3, $4)`,
+            [t.id, player, team.id, t.organizer],
+          ),
+        ),
+      ).rejects.toThrow(/addressed_once/i);
+
+      await expect(
+        runAsUser(postgres, t.organizer, "user", (query) =>
+          query(
+            `INSERT INTO tournament_invites (tournament_id, invited_by_player_steam_id)
+             VALUES ($1, $2)`,
+            [t.id, t.organizer],
+          ),
+        ),
+      ).rejects.toThrow(/addressed_once/i);
+    });
+
+    // A plain UNIQUE stops deduping the moment the other half can be NULL.
+    it("keeps one invite per team per tournament", async () => {
+      const t = await createTournament();
+      const team = await fx.team();
+      await inviteTeam(t.id, team.id, t.organizer);
+
+      await expect(inviteTeam(t.id, team.id, t.organizer)).rejects.toThrow(
+        /duplicate key/i,
+      );
+    });
+
+    it("notifies whoever could register the invited team", async () => {
+      const t = await createTournament({ columns: { invite_only: true } });
+      const team = await fx.team();
+      const id = await inviteTeam(t.id, team.id, t.organizer);
+
+      await controller().tournament_invite_events({
+        op: "INSERT",
+        old: { id },
+        new: { id },
+      });
+
+      expect(notifications.notifyPlayers).toHaveBeenCalledWith(
+        "TournamentInvite",
+        expect.objectContaining({
+          entity_id: id,
+          steamIds: expect.arrayContaining([team.owner]),
+        }),
       );
     });
   });

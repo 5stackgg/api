@@ -1117,75 +1117,237 @@ export class TournamentsController {
     throw Error("this tournament is invite only");
   }
 
-  // A passcode is a bearer credential and the action takes an arbitrary
-  // tournament id, so every logged-in player can guess against every
-  // tournament. Keyed per caller, and the minute is part of the key rather than
-  // a refreshed TTL -- re-setting the TTL on each attempt would push the window
-  // ahead of somebody who never stops and lock them out for good.
-  public static readonly PASSCODE_ATTEMPTS_PER_MINUTE = 5;
+  @HasuraAction()
+  public async createTournamentInviteCode(data: {
+    user: User;
+    tournament_id: string;
+    expires_in_minutes?: number | null;
+    max_uses?: number | null;
+  }) {
+    const { tournament_id, expires_in_minutes, max_uses } = data;
+    const tournament = await this.getTournamentAccess(tournament_id, data.user);
 
-  private async assertPasscodeRateLimit(steamId: string): Promise<void> {
-    const key = `tournament-passcode:${steamId}:${Math.floor(
-      Date.now() / 60000,
-    )}`;
-    // INCR rather than get-then-put: guesses fired concurrently all read the
-    // same pre-increment value, and a limit that only counts the attempts that
-    // happened to be serialised is not a limit. EXPIRE has to follow INCR --
-    // on a key that does not exist yet it does nothing, which would leave the
-    // counter with no TTL at all.
-    const result = await this.redis.multi().incr(key).expire(key, 120).exec();
+    this.requireOrganizer(tournament);
 
-    const count = Number(result?.[0]?.[1] ?? 0);
-
-    if (count > TournamentsController.PASSCODE_ATTEMPTS_PER_MINUTE) {
-      throw Error("too many passcode attempts, try again in a minute");
+    if (expires_in_minutes != null && expires_in_minutes <= 0) {
+      throw Error("an expiry has to be in the future");
     }
+
+    if (max_uses != null && max_uses <= 0) {
+      throw Error("a use limit has to be at least one");
+    }
+
+    // The code itself comes from the column default: generating it in SQL keeps
+    // one generator for every public link on the platform, and keeps the API
+    // out of the business of seeding randomness.
+    const [code] = await this.postgres.query<
+      Array<{ id: string; code: string }>
+    >(
+      `INSERT INTO tournament_invite_codes
+         (tournament_id, created_by_player_steam_id, expires_at, max_uses)
+       VALUES ($1::uuid, $2::bigint,
+               CASE WHEN $3::int IS NULL THEN NULL
+                    ELSE now() + ($3::int * interval '1 minute') END,
+               $4::int)
+       RETURNING id::text AS id, code`,
+      [
+        tournament_id,
+        data.user.steam_id,
+        expires_in_minutes ?? null,
+        max_uses ?? null,
+      ],
+    );
+
+    return { id: code.id, code: code.code };
   }
 
   @HasuraAction()
-  public async unlockTournamentRegistration(data: {
+  public async revokeTournamentInviteCode(data: {
     user: User;
-    tournament_id: string;
-    passcode: string;
+    invite_code_id: string;
   }) {
-    const { tournament_id, passcode } = data;
+    const { invite_code_id } = data;
 
-    await this.assertPasscodeRateLimit(data.user.steam_id);
-
-    // Compared in SQL so the passcode never has to be read back out of the
-    // database and into a log or an error message.
-    const [tournament] = await this.postgres.query<
-      Array<{ status: string; matches: boolean; has_passcode: boolean }>
-    >(
-      `SELECT t.status,
-              t.registration_passcode IS NOT NULL AND t.registration_passcode <> '' AS has_passcode,
-              lower(btrim(COALESCE(t.registration_passcode, ''))) = lower(btrim($2::text)) AS matches
-         FROM tournaments t
-        WHERE t.id = $1::uuid`,
-      [tournament_id, passcode ?? ""],
+    const [code] = await this.postgres.query<Array<{ tournament_id: string }>>(
+      `SELECT tournament_id::text AS tournament_id
+         FROM tournament_invite_codes
+        WHERE id = $1::uuid`,
+      [invite_code_id],
     );
 
-    if (!tournament) {
-      throw Error("tournament not found");
+    if (!code) {
+      throw Error("invite link not found");
     }
+
+    const tournament = await this.getTournamentAccess(
+      code.tournament_id,
+      data.user,
+    );
+
+    this.requireOrganizer(tournament);
+
+    // Stamped rather than deleted: the uses cascade off the code, and revoking
+    // a link must not erase the record of who already came in through it.
+    await this.postgres.query(
+      `UPDATE tournament_invite_codes
+          SET revoked_at = now()
+        WHERE id = $1::uuid AND revoked_at IS NULL`,
+      [invite_code_id],
+    );
+
+    return { success: true };
+  }
+
+  // An invite code is a bearer credential and redemption takes an arbitrary
+  // tournament id, so every logged-in player can grind codes against every
+  // tournament.
+  public static readonly REDEEM_ATTEMPTS_PER_MINUTE = 5;
+
+  @HasuraAction()
+  public async redeemTournamentInviteCode(data: {
+    user: User;
+    tournament_id: string;
+    code: string;
+  }) {
+    const { tournament_id, code } = data;
+
+    await RedisManagerService.assertRateLimit(this.redis, {
+      key: "tournament-invite-code",
+      steamId: data.user.steam_id,
+      limit: TournamentsController.REDEEM_ATTEMPTS_PER_MINUTE,
+      message: "too many invite attempts, try again in a minute",
+    });
+
+    const tournament = await this.getTournamentAccess(tournament_id, data.user);
 
     if (!["Setup", "RegistrationOpen"].includes(tournament.status)) {
       throw Error("registration is not open");
     }
 
-    // One message for both. "No passcode set" and "wrong passcode" told apart
-    // is half the search space handed over for free.
-    if (!tournament.has_passcode || !tournament.matches) {
-      throw Error("incorrect passcode");
+    await this.pruneInviteCodes(tournament_id);
+
+    // One statement, so two players spending the last slot at once cannot both
+    // win it: the second UPDATE blocks on the row, then re-checks its own WHERE
+    // against the committed `uses` and matches nothing. A read-then-write has no
+    // way to say that. Both writes hang off the same CTE, so the unlock and the
+    // audit row only exist for a claim that actually landed.
+    const claimed = await this.postgres.query<
+      Array<{ invite_code_id: string }>
+    >(
+      `WITH claimed AS (
+           UPDATE tournament_invite_codes c
+              SET uses = c.uses + 1
+            WHERE c.tournament_id = $1::uuid
+              AND upper(btrim(c.code)) = upper(btrim($2::text))
+              AND c.revoked_at IS NULL
+              AND (c.expires_at IS NULL OR c.expires_at > now())
+              AND (c.max_uses IS NULL OR c.uses < c.max_uses)
+              AND NOT EXISTS (
+                  SELECT 1
+                    FROM tournament_invite_code_uses u
+                   WHERE u.invite_code_id = c.id
+                     AND u.player_steam_id = $3::bigint
+              )
+           RETURNING c.id
+       ),
+       unlocked AS (
+           INSERT INTO tournament_registration_unlocks (tournament_id, player_steam_id)
+           SELECT $1::uuid, $3::bigint FROM claimed
+           ON CONFLICT DO NOTHING
+           RETURNING tournament_id
+       )
+       INSERT INTO tournament_invite_code_uses (invite_code_id, player_steam_id)
+       SELECT id, $3::bigint FROM claimed
+       ON CONFLICT (invite_code_id, player_steam_id) DO NOTHING
+       RETURNING invite_code_id::text AS invite_code_id`,
+      [tournament_id, code ?? "", data.user.steam_id],
+    );
+
+    if (claimed.length > 0) {
+      return { success: true };
     }
 
-    await this.postgres.query(
-      `INSERT INTO tournament_registration_unlocks (tournament_id, player_steam_id)
-       VALUES ($1::uuid, $2::bigint)
-       ON CONFLICT (tournament_id, player_steam_id) DO NOTHING`,
-      [tournament_id, data.user.steam_id],
+    // Nothing was claimed, and the statement is silent about why. This either
+    // names the refusal or returns, which happens for one reason only: the
+    // player already spent this link and holds the unlock already.
+    await this.explainRefusedInviteCode(
+      tournament_id,
+      code ?? "",
+      data.user.steam_id,
     );
 
     return { success: true };
+  }
+
+  // Lazily, on the path that already has this tournament's codes in hand,
+  // rather than on a cron. Only codes nobody ever spent: a code with uses on it
+  // is the record of who came in through it, and the uses cascade off it. The
+  // grace period is what keeps a link that has only just lapsed answering "this
+  // expired" instead of "no such link".
+  private async pruneInviteCodes(tournamentId: string): Promise<void> {
+    await this.postgres.query(
+      `DELETE FROM tournament_invite_codes c
+        WHERE c.tournament_id = $1::uuid
+          AND c.uses = 0
+          AND (c.expires_at <= now() - interval '1 day'
+               OR c.revoked_at <= now() - interval '1 day')`,
+      [tournamentId],
+    );
+  }
+
+  // Only ever reached once the claim has failed, so the diagnosis races nothing
+  // that matters: it decides which refusal to name, never whether to let anyone
+  // in.
+  private async explainRefusedInviteCode(
+    tournamentId: string,
+    code: string,
+    steamId: string,
+  ): Promise<void> {
+    const [row] = await this.postgres.query<
+      Array<{
+        revoked: boolean;
+        expired: boolean;
+        exhausted: boolean;
+        already_used: boolean;
+      }>
+    >(
+      `SELECT c.revoked_at IS NOT NULL AS revoked,
+              c.expires_at IS NOT NULL AND c.expires_at <= now() AS expired,
+              c.max_uses IS NOT NULL AND c.uses >= c.max_uses AS exhausted,
+              EXISTS (
+                  SELECT 1
+                    FROM tournament_invite_code_uses u
+                   WHERE u.invite_code_id = c.id
+                     AND u.player_steam_id = $3::bigint
+              ) AS already_used
+         FROM tournament_invite_codes c
+        WHERE c.tournament_id = $1::uuid
+          AND upper(btrim(c.code)) = upper(btrim($2::text))`,
+      [tournamentId, code, steamId],
+    );
+
+    if (!row) {
+      throw Error("invite link not found");
+    }
+
+    // Spending a link twice is the double-clicked button, not a second entry:
+    // they already hold the unlock, so this is a no-op rather than a refusal.
+    if (row.already_used) {
+      return;
+    }
+
+    if (row.revoked) {
+      throw Error("this invite link was revoked");
+    }
+
+    if (row.expired) {
+      throw Error("this invite link has expired");
+    }
+
+    if (row.exhausted) {
+      throw Error("this invite link has been used up");
+    }
+
+    throw Error("invite link not found");
   }
 }

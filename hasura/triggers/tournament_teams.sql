@@ -22,7 +22,14 @@ BEGIN
     IF (_session ->> 'x-hasura-role') IS NOT NULL
        AND tournament.invite_only
        AND NOT is_tournament_organizer(tournament, _session)
-       AND NOT public.tournament_registration_unlocked(NEW.tournament_id, _session_steam_id) THEN
+       -- NEW.team_id, so an invite addressed to the team is what lets the team
+       -- in. It is NULL for an ad-hoc tournament team, which then falls back to
+       -- the player-scoped half on its own.
+       AND NOT public.tournament_registration_unlocked(
+               NEW.tournament_id,
+               _session_steam_id,
+               NEW.team_id
+           ) THEN
         RAISE EXCEPTION USING ERRCODE = '22000',
             MESSAGE = 'This tournament is invite only';
     END IF;
