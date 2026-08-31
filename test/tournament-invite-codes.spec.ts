@@ -278,7 +278,9 @@ describe("tournament invite codes (SQL-driven)", () => {
       const player = await fx.player();
       await expire(code.id, "1 hour");
 
-      await expect(redeem(t.id, player, code.code)).rejects.toThrow(/expired/i);
+      await expect(redeem(t.id, player, code.code)).rejects.toThrow(
+        /^invite_expired$/,
+      );
 
       expect(await unlocked(t.id, player)).toBe(false);
       expect((await codeRow(code.id)).uses).toBe(0);
@@ -308,7 +310,9 @@ describe("tournament invite codes (SQL-driven)", () => {
         }),
       ).resolves.toEqual({ success: true });
 
-      await expect(redeem(t.id, second, code.code)).rejects.toThrow(/revoked/i);
+      await expect(redeem(t.id, second, code.code)).rejects.toThrow(
+        /^invite_revoked$/,
+      );
       expect(await unlocked(t.id, second)).toBe(false);
 
       // Revoking kills the link, not the record of who already came in.
@@ -341,7 +345,7 @@ describe("tournament invite codes (SQL-driven)", () => {
       );
 
       await expect(redeem(t.id, player, code.code)).rejects.toThrow(
-        /registration is not open/i,
+        /^invite_registration_closed$/,
       );
     });
 
@@ -352,7 +356,7 @@ describe("tournament invite codes (SQL-driven)", () => {
       const player = await fx.player();
 
       await expect(redeem(mine.id, player, code.code)).rejects.toThrow(
-        /not found/i,
+        /^invite_not_found$/,
       );
       expect(await unlocked(mine.id, player)).toBe(false);
     });
@@ -370,7 +374,7 @@ describe("tournament invite codes (SQL-driven)", () => {
       }
 
       await expect(redeem(t.id, player, "AAAAAAAAAA")).rejects.toThrow(
-        /too many invite attempts/i,
+        /^invite_rate_limited$/,
       );
     });
 
@@ -441,7 +445,9 @@ describe("tournament invite codes (SQL-driven)", () => {
       await expect(redeem(t.id, second, code.code)).resolves.toEqual({
         success: true,
       });
-      await expect(redeem(t.id, third, code.code)).rejects.toThrow(/used up/i);
+      await expect(redeem(t.id, third, code.code)).rejects.toThrow(
+        /^invite_used_up$/,
+      );
 
       expect((await codeRow(code.id)).uses).toBe(2);
       expect(await unlocked(t.id, third)).toBe(false);
@@ -470,7 +476,7 @@ describe("tournament invite codes (SQL-driven)", () => {
 
         await holder.query("COMMIT");
 
-        await expect(pending).rejects.toThrow(/used up/i);
+        await expect(pending).rejects.toThrow(/^invite_used_up$/);
       } finally {
         holder.release();
       }

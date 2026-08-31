@@ -346,6 +346,13 @@ export class InvitesController {
   // Steam ids are read back as text for the same reason the event handlers do
   // it: a bigint that round-trips through JSON stops being exact well below a
   // steam id.
+  //
+  // The refusals a player can be handed off a tournament invite are thrown as
+  // codes, not sentences, for the reason redeemTournamentInviteCode is: an
+  // action's error reaches the client as `message` and nothing else, so the code
+  // has to BE the message for the browser to have anything to translate. The
+  // team-invite branches keep their prose -- web renders an unrecognised message
+  // verbatim, so a refusal outside this contract still says something.
   private async findTournamentInvite(invite_id: string) {
     const [invite] = await this.postgres.query<
       Array<{
@@ -366,7 +373,7 @@ export class InvitesController {
     );
 
     if (!invite) {
-      throw Error("unable to find tournament invite");
+      throw Error("invite_not_found");
     }
 
     return invite;
@@ -397,7 +404,7 @@ export class InvitesController {
     // this refuses. Declining stays open -- clearing an invite off the bell is
     // not registering for anything.
     if (!InvitesController.REGISTRATION_STATUSES.includes(invite.status)) {
-      throw Error("registration is not open");
+      throw Error("invite_registration_closed");
     }
 
     if (!(await this.canAnswerTournamentInvite(invite, user))) {

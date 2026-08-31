@@ -937,7 +937,7 @@ describe("TournamentsController registration and check-in actions", () => {
           tournament_id: "tournament-1",
           code: "NOPE",
         }),
-      ).rejects.toThrow(/too many invite attempts/i);
+      ).rejects.toThrow(/^invite_rate_limited$/);
 
       expect(statements).toHaveLength(0);
     });
@@ -951,7 +951,7 @@ describe("TournamentsController registration and check-in actions", () => {
           tournament_id: "tournament-1",
           code: "ABCDEFGHJK",
         }),
-      ).rejects.toThrow(/registration is not open/i);
+      ).rejects.toThrow(/^invite_registration_closed$/);
 
       expect(statements.some((sql) => sql.includes("WITH claimed AS ("))).toBe(
         false,
@@ -992,7 +992,7 @@ describe("TournamentsController registration and check-in actions", () => {
           tournament_id: "tournament-1",
           code: "ABCDEFGHJK",
         }),
-      ).rejects.toThrow(/was revoked/i);
+      ).rejects.toThrow(/^invite_revoked$/);
 
       diagnosisRow = {
         revoked: false,
@@ -1006,7 +1006,7 @@ describe("TournamentsController registration and check-in actions", () => {
           tournament_id: "tournament-1",
           code: "ABCDEFGHJK",
         }),
-      ).rejects.toThrow(/has expired/i);
+      ).rejects.toThrow(/^invite_expired$/);
 
       diagnosisRow = {
         revoked: false,
@@ -1020,7 +1020,7 @@ describe("TournamentsController registration and check-in actions", () => {
           tournament_id: "tournament-1",
           code: "ABCDEFGHJK",
         }),
-      ).rejects.toThrow(/has been used up/i);
+      ).rejects.toThrow(/^invite_used_up$/);
 
       diagnosisRow = undefined;
       await expect(
@@ -1029,11 +1029,11 @@ describe("TournamentsController registration and check-in actions", () => {
           tournament_id: "tournament-1",
           code: "ABCDEFGHJK",
         }),
-      ).rejects.toThrow(/not found/i);
+      ).rejects.toThrow(/^invite_not_found$/);
     });
 
     // A double-clicked Accept is not a second entry: they already hold the
-    // unlock, so it is a no-op rather than "this link has been used up".
+    // unlock, so it is a no-op rather than an invite_used_up refusal.
     it("treats a second redemption by the same player as a no-op", async () => {
       claimedRows = [];
       diagnosisRow = {

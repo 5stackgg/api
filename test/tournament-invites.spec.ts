@@ -338,7 +338,7 @@ describe("tournament invites (SQL-driven)", () => {
           invite_id: id,
           type: "tournament-registration",
         }),
-      ).rejects.toThrow(/registration is not open/i);
+      ).rejects.toThrow(/^invite_registration_closed$/);
 
       expect(await unlocked(t.id, player)).toBe(false);
       expect(await inviteCount(t.id)).toBe(1);

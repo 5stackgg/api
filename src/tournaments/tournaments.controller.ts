@@ -1203,6 +1203,13 @@ export class TournamentsController {
   // tournament.
   public static readonly REDEEM_ATTEMPTS_PER_MINUTE = 5;
 
+  // Every refusal a player can be handed here is thrown as a code rather than a
+  // sentence: an action's error reaches the client as `message` and nothing
+  // else, so the only way the reason survives in a form the browser can
+  // translate is to BE the message. The web side maps each one onto
+  // tournament.invite_accept.errors.*; anything unrecognised there falls back to
+  // showing the message verbatim, which is why refusals from outside this
+  // contract stay prose.
   @HasuraAction()
   public async redeemTournamentInviteCode(data: {
     user: User;
@@ -1215,13 +1222,13 @@ export class TournamentsController {
       key: "tournament-invite-code",
       steamId: data.user.steam_id,
       limit: TournamentsController.REDEEM_ATTEMPTS_PER_MINUTE,
-      message: "too many invite attempts, try again in a minute",
+      message: "invite_rate_limited",
     });
 
     const tournament = await this.getTournamentAccess(tournament_id, data.user);
 
     if (!["Setup", "RegistrationOpen"].includes(tournament.status)) {
-      throw Error("registration is not open");
+      throw Error("invite_registration_closed");
     }
 
     await this.pruneInviteCodes(tournament_id);
@@ -1327,7 +1334,7 @@ export class TournamentsController {
     );
 
     if (!row) {
-      throw Error("invite link not found");
+      throw Error("invite_not_found");
     }
 
     // Spending a link twice is the double-clicked button, not a second entry:
@@ -1337,17 +1344,17 @@ export class TournamentsController {
     }
 
     if (row.revoked) {
-      throw Error("this invite link was revoked");
+      throw Error("invite_revoked");
     }
 
     if (row.expired) {
-      throw Error("this invite link has expired");
+      throw Error("invite_expired");
     }
 
     if (row.exhausted) {
-      throw Error("this invite link has been used up");
+      throw Error("invite_used_up");
     }
 
-    throw Error("invite link not found");
+    throw Error("invite_not_found");
   }
 }
