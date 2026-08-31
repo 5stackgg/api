@@ -41,21 +41,6 @@ ALTER TABLE public.tournament_invites
 DROP TABLE IF EXISTS public.tournament_invite_code_uses;
 DROP TABLE IF EXISTS public.tournament_invite_codes;
 
-CREATE OR REPLACE FUNCTION public.generate_utility_invite_code() RETURNS text
-    LANGUAGE plpgsql
-    VOLATILE
-    AS $fn$
-DECLARE
-    alphabet constant text := '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-    source bytea := gen_random_bytes(10);
-    code text := '';
-    i int;
-BEGIN
-    FOR i IN 0..9 LOOP
-        code := code || substr(alphabet, (get_byte(source, i) % 32) + 1, 1);
-    END LOOP;
-    RETURN code;
-END;
-$fn$;
-
-DROP FUNCTION IF EXISTS public.generate_secure_invite_code();
+-- generate_secure_invite_code() and generate_utility_invite_code() are left
+-- alone: hasura/functions owns both, and dropping the generator would break the
+-- utility_practice_sessions default that delegates to it.

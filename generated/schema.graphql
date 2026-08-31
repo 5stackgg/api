@@ -121140,7 +121140,13 @@ type tournaments {
     """filter the rows returned"""
     where: tournament_categories_bool_exp
   ): tournament_categories_aggregate!
+
+  """The check_in_ends_at the close pass has already acted on"""
+  check_in_closed_for: timestamptz
   check_in_closes_before_minutes: Int!
+
+  """The check_in_ends_at the closing reminder was sent for"""
+  check_in_closing_notified_for: timestamptz
 
   """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: timestamptz
@@ -121794,7 +121800,9 @@ input tournaments_bool_exp {
   can_start: Boolean_comparison_exp
   categories: tournament_categories_bool_exp
   categories_aggregate: tournament_categories_aggregate_bool_exp
+  check_in_closed_for: timestamptz_comparison_exp
   check_in_closes_before_minutes: Int_comparison_exp
+  check_in_closing_notified_for: timestamptz_comparison_exp
   check_in_ends_at: timestamptz_comparison_exp
   check_in_open: Boolean_comparison_exp
   check_in_opens_before_minutes: Int_comparison_exp
@@ -121909,7 +121917,13 @@ input tournaments_insert_input {
   awards_enabled: Boolean
   banner: String
   categories: tournament_categories_arr_rel_insert_input
+
+  """The check_in_ends_at the close pass has already acted on"""
+  check_in_closed_for: timestamptz
   check_in_closes_before_minutes: Int
+
+  """The check_in_ends_at the closing reminder was sent for"""
+  check_in_closing_notified_for: timestamptz
 
   """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: timestamptz
@@ -121977,7 +121991,13 @@ input tournaments_insert_input {
 """aggregate max on columns"""
 type tournaments_max_fields {
   banner: String
+
+  """The check_in_ends_at the close pass has already acted on"""
+  check_in_closed_for: timestamptz
   check_in_closes_before_minutes: Int
+
+  """The check_in_ends_at the closing reminder was sent for"""
+  check_in_closing_notified_for: timestamptz
 
   """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: timestamptz
@@ -122025,7 +122045,13 @@ order by max() on columns of table "tournaments"
 """
 input tournaments_max_order_by {
   banner: order_by
+
+  """The check_in_ends_at the close pass has already acted on"""
+  check_in_closed_for: order_by
   check_in_closes_before_minutes: order_by
+
+  """The check_in_ends_at the closing reminder was sent for"""
+  check_in_closing_notified_for: order_by
 
   """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: order_by
@@ -122056,7 +122082,13 @@ input tournaments_max_order_by {
 """aggregate min on columns"""
 type tournaments_min_fields {
   banner: String
+
+  """The check_in_ends_at the close pass has already acted on"""
+  check_in_closed_for: timestamptz
   check_in_closes_before_minutes: Int
+
+  """The check_in_ends_at the closing reminder was sent for"""
+  check_in_closing_notified_for: timestamptz
 
   """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: timestamptz
@@ -122104,7 +122136,13 @@ order by min() on columns of table "tournaments"
 """
 input tournaments_min_order_by {
   banner: order_by
+
+  """The check_in_ends_at the close pass has already acted on"""
+  check_in_closed_for: order_by
   check_in_closes_before_minutes: order_by
+
+  """The check_in_ends_at the closing reminder was sent for"""
+  check_in_closing_notified_for: order_by
 
   """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: order_by
@@ -122180,7 +122218,9 @@ input tournaments_order_by {
   can_setup: order_by
   can_start: order_by
   categories_aggregate: tournament_categories_aggregate_order_by
+  check_in_closed_for: order_by
   check_in_closes_before_minutes: order_by
+  check_in_closing_notified_for: order_by
   check_in_ends_at: order_by
   check_in_open: order_by
   check_in_opens_before_minutes: order_by
@@ -122266,7 +122306,13 @@ enum tournaments_select_column {
   banner
 
   """column name"""
+  check_in_closed_for
+
+  """column name"""
   check_in_closes_before_minutes
+
+  """column name"""
+  check_in_closing_notified_for
 
   """column name"""
   check_in_ends_at
@@ -122614,7 +122660,13 @@ input tournaments_set_input {
   auto_start: Boolean
   awards_enabled: Boolean
   banner: String
+
+  """The check_in_ends_at the close pass has already acted on"""
+  check_in_closed_for: timestamptz
   check_in_closes_before_minutes: Int
+
+  """The check_in_ends_at the closing reminder was sent for"""
+  check_in_closing_notified_for: timestamptz
 
   """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: timestamptz
@@ -122800,7 +122852,13 @@ input tournaments_stream_cursor_value_input {
   auto_start: Boolean
   awards_enabled: Boolean
   banner: String
+
+  """The check_in_ends_at the close pass has already acted on"""
+  check_in_closed_for: timestamptz
   check_in_closes_before_minutes: Int
+
+  """The check_in_ends_at the closing reminder was sent for"""
+  check_in_closing_notified_for: timestamptz
 
   """When the check-in window closes; NULL until it opens"""
   check_in_ends_at: timestamptz
@@ -122906,7 +122964,13 @@ enum tournaments_update_column {
   banner
 
   """column name"""
+  check_in_closed_for
+
+  """column name"""
   check_in_closes_before_minutes
+
+  """column name"""
+  check_in_closing_notified_for
 
   """column name"""
   check_in_ends_at

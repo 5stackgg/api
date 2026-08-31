@@ -1,37 +1,34 @@
--- Crockford base32 over gen_random_bytes: 10 chars, 50 bits, no ambiguous
--- glyphs, 256 % 32 == 0 so the modulo is unbiased. It arrived with the utility
--- practice sessions and is the right algorithm for any link handed out in
--- public, so it moves here and generate_utility_invite_code() delegates -- its
--- name and signature are untouched, which is what keeps the
--- utility_practice_sessions.invite_code default working.
---
--- This has to be a migration rather than a hasura/functions file: migrations run
--- before the functions phase, so the tournament_invite_codes.code DEFAULT below
--- would not resolve on a fresh install. 1880000000000_utility_lineups documents
--- the same trap for generate_invite_code().
-CREATE OR REPLACE FUNCTION public.generate_secure_invite_code() RETURNS text
-    LANGUAGE plpgsql
-    VOLATILE
-    AS $fn$
-DECLARE
-    alphabet constant text := '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-    source bytea := gen_random_bytes(10);
-    code text := '';
-    i int;
+-- hasura/functions/generate_secure_invite_code.sql is the maintained
+-- definition; generate_utility_invite_code() delegates to it there. Seed it here
+-- when it is missing, because migrations run before the functions phase and the
+-- tournament_invite_codes.code DEFAULT below would not resolve on a fresh
+-- install. Guarded rather than CREATE OR REPLACE so it cannot overwrite a body
+-- the functions phase already put in place -- 1880000000000_utility_lineups
+-- documents the same trap for generate_invite_code().
+DO $do$
 BEGIN
-    FOR i IN 0..9 LOOP
-        code := code || substr(alphabet, (get_byte(source, i) % 32) + 1, 1);
-    END LOOP;
-    RETURN code;
-END;
-$fn$;
-
-CREATE OR REPLACE FUNCTION public.generate_utility_invite_code() RETURNS text
-    LANGUAGE sql
-    VOLATILE
-    AS $fn$
-    SELECT public.generate_secure_invite_code();
-$fn$;
+    IF to_regprocedure('public.generate_secure_invite_code()') IS NULL THEN
+        EXECUTE $fn$
+            CREATE FUNCTION public.generate_secure_invite_code() RETURNS text
+                LANGUAGE plpgsql
+                VOLATILE
+                AS $body$
+            DECLARE
+                alphabet constant text := '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+                source bytea := gen_random_bytes(10);
+                code text := '';
+                i int;
+            BEGIN
+                FOR i IN 0..9 LOOP
+                    code := code || substr(alphabet, (get_byte(source, i) % 32) + 1, 1);
+                END LOOP;
+                RETURN code;
+            END;
+            $body$;
+        $fn$;
+    END IF;
+END
+$do$;
 
 
 -- A tournament is advertised for weeks, so its way in cannot be a static

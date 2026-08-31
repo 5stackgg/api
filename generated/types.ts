@@ -128238,8 +128238,14 @@ export default {
                     ]
                 }
             ],
+            "check_in_closed_for": [
+                5243
+            ],
             "check_in_closes_before_minutes": [
                 41
+            ],
+            "check_in_closing_notified_for": [
+                5243
             ],
             "check_in_ends_at": [
                 5243
@@ -129288,8 +129294,14 @@ export default {
             "categories_aggregate": [
                 5335
             ],
+            "check_in_closed_for": [
+                5244
+            ],
             "check_in_closes_before_minutes": [
                 42
+            ],
+            "check_in_closing_notified_for": [
+                5244
             ],
             "check_in_ends_at": [
                 5244
@@ -129563,8 +129575,14 @@ export default {
             "categories": [
                 5339
             ],
+            "check_in_closed_for": [
+                5243
+            ],
             "check_in_closes_before_minutes": [
                 41
+            ],
+            "check_in_closing_notified_for": [
+                5243
             ],
             "check_in_ends_at": [
                 5243
@@ -129736,8 +129754,14 @@ export default {
             "banner": [
                 85
             ],
+            "check_in_closed_for": [
+                5243
+            ],
             "check_in_closes_before_minutes": [
                 41
+            ],
+            "check_in_closing_notified_for": [
+                5243
             ],
             "check_in_ends_at": [
                 5243
@@ -129819,7 +129843,13 @@ export default {
             "banner": [
                 3648
             ],
+            "check_in_closed_for": [
+                3648
+            ],
             "check_in_closes_before_minutes": [
+                3648
+            ],
+            "check_in_closing_notified_for": [
                 3648
             ],
             "check_in_ends_at": [
@@ -129893,8 +129923,14 @@ export default {
             "banner": [
                 85
             ],
+            "check_in_closed_for": [
+                5243
+            ],
             "check_in_closes_before_minutes": [
                 41
+            ],
+            "check_in_closing_notified_for": [
+                5243
             ],
             "check_in_ends_at": [
                 5243
@@ -129976,7 +130012,13 @@ export default {
             "banner": [
                 3648
             ],
+            "check_in_closed_for": [
+                3648
+            ],
             "check_in_closes_before_minutes": [
+                3648
+            ],
+            "check_in_closing_notified_for": [
                 3648
             ],
             "check_in_ends_at": [
@@ -130131,7 +130173,13 @@ export default {
             "categories_aggregate": [
                 5338
             ],
+            "check_in_closed_for": [
+                3648
+            ],
             "check_in_closes_before_minutes": [
+                3648
+            ],
+            "check_in_closing_notified_for": [
                 3648
             ],
             "check_in_ends_at": [
@@ -130359,8 +130407,14 @@ export default {
             "banner": [
                 85
             ],
+            "check_in_closed_for": [
+                5243
+            ],
             "check_in_closes_before_minutes": [
                 41
+            ],
+            "check_in_closing_notified_for": [
+                5243
             ],
             "check_in_ends_at": [
                 5243
@@ -130696,8 +130750,14 @@ export default {
             "banner": [
                 85
             ],
+            "check_in_closed_for": [
+                5243
+            ],
             "check_in_closes_before_minutes": [
                 41
+            ],
+            "check_in_closing_notified_for": [
+                5243
             ],
             "check_in_ends_at": [
                 5243
