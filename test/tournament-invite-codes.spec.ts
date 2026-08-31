@@ -391,6 +391,45 @@ describe("tournament invite codes (SQL-driven)", () => {
   });
 
   describe("max_uses", () => {
+    // NULL max_uses means unlimited, and `uses < NULL` is NULL rather than
+    // true -- so a claim that forgot to special-case it would refuse the very
+    // first redemption of an uncapped link while every capped test stayed
+    // green.
+    it("lets an uncapped link keep going", async () => {
+      const t = await createTournament();
+      const code = await mint(t.id, t.organizer);
+      const players = await fx.players(4);
+
+      for (const player of players) {
+        await expect(redeem(t.id, player, code.code)).resolves.toEqual({
+          success: true,
+        });
+      }
+
+      expect((await codeRow(code.id)).uses).toBe(players.length);
+      expect(await usedBy(code.id)).toEqual(players);
+    });
+
+    // Same shape one column over: NULL expires_at means never, and
+    // `now() < NULL` is NULL, so an expiry check without the null branch
+    // rejects a link that was minted to last forever.
+    it("lets a link with no expiry keep going", async () => {
+      const t = await createTournament();
+      const code = await mint(t.id, t.organizer);
+      const player = await fx.player();
+
+      const [row] = await postgres.query<Array<{ expires_at: Date | null }>>(
+        "SELECT expires_at FROM tournament_invite_codes WHERE id = $1",
+        [code.id],
+      );
+      expect(row.expires_at).toBeNull();
+
+      await expect(redeem(t.id, player, code.code)).resolves.toEqual({
+        success: true,
+      });
+      expect(await unlocked(t.id, player)).toBe(true);
+    });
+
     it("stops at the cap", async () => {
       const t = await createTournament();
       const code = await mint(t.id, t.organizer, { max_uses: 2 });
