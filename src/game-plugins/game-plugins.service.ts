@@ -9,6 +9,7 @@ import { InjectQueue } from "@nestjs/bullmq";
 import { Job, Queue } from "bullmq";
 import { HasuraService } from "../hasura/hasura.service";
 import { PostgresService } from "../postgres/postgres.service";
+import { FileManagerService } from "../file-manager/file-manager.service";
 import { PluginRuntimeService } from "../plugin-runtime/plugin-runtime.service";
 import { CacheService } from "../cache/cache.service";
 import { SystemSettingName } from "../system/enums/SystemSettingName";
@@ -1476,11 +1477,10 @@ export class GamePluginsService {
     });
 
     if (!response.ok) {
-      const body = await response
-        .json()
-        .catch(() => ({}) as { message?: string });
+      const body = await response.json().catch(() => ({}));
       throw new BadRequestException(
-        body.message || `node connector returned ${response.status}`,
+        FileManagerService.connectorErrorMessage(body) ||
+          `node connector returned ${response.status}`,
       );
     }
 

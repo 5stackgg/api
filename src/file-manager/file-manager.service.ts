@@ -62,17 +62,28 @@ export class FileManagerService {
     return `http://${nodeIP}:8585/file-operations/${endpoint}`;
   }
 
-  // The connector's validation errors come back as an array of strings, which
-  // Nest drops on the floor -- an HttpException built from a non-string reports
-  // itself as "Bad Request Exception" and the operator never learns why.
-  private connectorErrorMessage(error: {
-    message?: string | string[];
-  }): string {
-    if (Array.isArray(error?.message)) {
-      return error.message.join(", ");
+  // The connector's validation errors come back as an array of strings, and an
+  // HttpException built from anything but a string reports itself as "Bad
+  // Request Exception" -- the operator is told the request failed and nothing
+  // about why. The body is whatever came off the wire, so nothing here can
+  // assume the shape. Public because GamePluginsService reaches the same
+  // connector behind the same ValidationPipe.
+  public static connectorErrorMessage(error: unknown): string {
+    const message = (error as { message?: unknown })?.message;
+
+    if (Array.isArray(message)) {
+      return message.join(", ");
     }
 
-    return error?.message ?? "";
+    if (typeof message === "string") {
+      return message;
+    }
+
+    if (message === undefined || message === null) {
+      return "";
+    }
+
+    return JSON.stringify(message);
   }
 
   private async requestNodeConnector(
@@ -81,29 +92,37 @@ export class FileManagerService {
     options: RequestInit = {},
   ): Promise<any> {
     const url = this.getNodeConnectorURL(nodeIP, endpoint);
+    // fetch sets its own multipart Content-Type, boundary and all; naming it
+    // here would leave the connector unable to parse the upload.
+    const isFormData = options.body instanceof FormData;
+
+    let response: Response;
 
     try {
-      const response = await fetch(url, {
+      response = await fetch(url, {
         ...options,
         headers: {
-          "Content-Type": "application/json",
+          ...(isFormData ? {} : { "Content-Type": "application/json" }),
           ...options.headers,
         },
       });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new BadRequestException(
-          this.connectorErrorMessage(error) ||
-            `Node connector error: ${response.statusText}`,
-        );
-      }
-
-      return await response.json();
     } catch (error) {
       this.logger.error(`Error calling node connector at ${url}`, error);
       throw error;
     }
+
+    // Thrown outside the catch above: a rejected file operation is the operator
+    // mistyping a path, not the node being unreachable, and logging it at error
+    // level with a stack buries the transport failures that are.
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new BadRequestException(
+        FileManagerService.connectorErrorMessage(error) ||
+          `Node connector error: ${response.statusText}`,
+      );
+    }
+
+    return await response.json();
   }
 
   async listFiles(
@@ -260,26 +279,9 @@ export class FileManagerService {
     formData.append("basePath", basePath);
     formData.append("filePath", filePath);
 
-    const url = this.getNodeConnectorURL(nodeIP, "upload");
-
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new BadRequestException(
-          this.connectorErrorMessage(error) ||
-            `Upload failed: ${response.statusText}`,
-        );
-      }
-
-      return await response.json();
-    } catch (error) {
-      this.logger.error(`Error uploading file to ${url}`, error);
-      throw error;
-    }
+    return await this.requestNodeConnector(nodeIP, "upload", {
+      method: "POST",
+      body: formData,
+    });
   }
 }
