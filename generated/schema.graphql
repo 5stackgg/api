@@ -1022,6 +1022,11 @@ type TournamentDraftOutput {
   teams_created: Int!
 }
 
+type TournamentInviteCodeOutput {
+  code: String!
+  id: uuid!
+}
+
 type TournamentMatchResetImpact {
   bracket_id: uuid!
   depth: Int!
@@ -44400,6 +44405,9 @@ type mutation_root {
   """Create directory on game server"""
   createServerDirectory(dir_path: String!, node_id: String!, server_id: String): SuccessOutput
 
+  """Organizer mints an expiring, use capped invite link for a tournament"""
+  createTournamentInviteCode(expires_in_minutes: Int, max_uses: Int, tournament_id: uuid!): TournamentInviteCodeOutput
+
   """Delete a catalog award"""
   deleteAward(id: uuid!): SuccessOutput
 
@@ -46620,6 +46628,32 @@ type mutation_root {
   delete_tournament_free_agents_by_pk(id: uuid!): tournament_free_agents
 
   """
+  delete data from the table: "tournament_invite_code_uses"
+  """
+  delete_tournament_invite_code_uses(
+    """filter the rows which have to be deleted"""
+    where: tournament_invite_code_uses_bool_exp!
+  ): tournament_invite_code_uses_mutation_response
+
+  """
+  delete single row from the table: "tournament_invite_code_uses"
+  """
+  delete_tournament_invite_code_uses_by_pk(invite_code_id: uuid!, player_steam_id: bigint!): tournament_invite_code_uses
+
+  """
+  delete data from the table: "tournament_invite_codes"
+  """
+  delete_tournament_invite_codes(
+    """filter the rows which have to be deleted"""
+    where: tournament_invite_codes_bool_exp!
+  ): tournament_invite_codes_mutation_response
+
+  """
+  delete single row from the table: "tournament_invite_codes"
+  """
+  delete_tournament_invite_codes_by_pk(id: uuid!): tournament_invite_codes
+
+  """
   delete data from the table: "tournament_invites"
   """
   delete_tournament_invites(
@@ -46699,11 +46733,6 @@ type mutation_root {
     """filter the rows which have to be deleted"""
     where: tournament_registration_unlocks_bool_exp!
   ): tournament_registration_unlocks_mutation_response
-
-  """
-  delete single row from the table: "tournament_registration_unlocks"
-  """
-  delete_tournament_registration_unlocks_by_pk(player_steam_id: bigint!, tournament_id: uuid!): tournament_registration_unlocks
 
   """
   delete data from the table: "tournament_stage_windows"
@@ -50793,6 +50822,50 @@ type mutation_root {
   ): tournament_free_agents
 
   """
+  insert data into the table: "tournament_invite_code_uses"
+  """
+  insert_tournament_invite_code_uses(
+    """the rows to be inserted"""
+    objects: [tournament_invite_code_uses_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: tournament_invite_code_uses_on_conflict
+  ): tournament_invite_code_uses_mutation_response
+
+  """
+  insert a single row into the table: "tournament_invite_code_uses"
+  """
+  insert_tournament_invite_code_uses_one(
+    """the row to be inserted"""
+    object: tournament_invite_code_uses_insert_input!
+
+    """upsert condition"""
+    on_conflict: tournament_invite_code_uses_on_conflict
+  ): tournament_invite_code_uses
+
+  """
+  insert data into the table: "tournament_invite_codes"
+  """
+  insert_tournament_invite_codes(
+    """the rows to be inserted"""
+    objects: [tournament_invite_codes_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: tournament_invite_codes_on_conflict
+  ): tournament_invite_codes_mutation_response
+
+  """
+  insert a single row into the table: "tournament_invite_codes"
+  """
+  insert_tournament_invite_codes_one(
+    """the row to be inserted"""
+    object: tournament_invite_codes_insert_input!
+
+    """upsert condition"""
+    on_conflict: tournament_invite_codes_on_conflict
+  ): tournament_invite_codes
+
+  """
   insert data into the table: "tournament_invites"
   """
   insert_tournament_invites(
@@ -51662,6 +51735,11 @@ type mutation_root {
   reconnectLive(match_id: uuid!): SuccessOutput
 
   """
+  Spend a tournament invite link for an unlock on an invite only tournament
+  """
+  redeemTournamentInviteCode(code: String!, tournament_id: uuid!): SuccessOutput
+
+  """
   Reindex every player into the Typesense search index (admin only). Runs in the background; track via refreshAllPlayersStatus.
   """
   refreshAllPlayers: ReindexStartedOutput
@@ -51805,6 +51883,11 @@ type mutation_root {
 
   """Revoke a hand-granted award"""
   revokeAward(id: uuid!): SuccessOutput
+
+  """
+  Organizer kills a tournament invite link without losing who already used it
+  """
+  revokeTournamentInviteCode(invite_code_id: uuid!): SuccessOutput
   sanctionServerPlayer(duration: Float, reason: String, serverId: String, steam_id: String!, type: String!): SanctionResult!
 
   """Create or update a catalog award"""
@@ -51912,11 +51995,6 @@ type mutation_root {
   uninstallGamePlugin(force: Boolean, slug: String!): SuccessOutput
   unlinkDiscord: SuccessOutput
   unlinkSteamMatchHistory: SuccessOutput
-
-  """
-  Trade the registration passcode for an unlock on an invite only tournament
-  """
-  unlockTournamentRegistration(passcode: String!, tournament_id: uuid!): SuccessOutput
   unsanctionServerPlayer(serverId: String, steam_id: String!, type: String!): SanctionResult!
 
   """Owner-only patch for clip title / visibility / target_steam_id."""
@@ -57828,6 +57906,74 @@ type mutation_root {
   ): [tournament_free_agents_mutation_response]
 
   """
+  update data of the table: "tournament_invite_code_uses"
+  """
+  update_tournament_invite_code_uses(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: tournament_invite_code_uses_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: tournament_invite_code_uses_set_input
+
+    """filter the rows which have to be updated"""
+    where: tournament_invite_code_uses_bool_exp!
+  ): tournament_invite_code_uses_mutation_response
+
+  """
+  update single row of the table: "tournament_invite_code_uses"
+  """
+  update_tournament_invite_code_uses_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: tournament_invite_code_uses_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: tournament_invite_code_uses_set_input
+    pk_columns: tournament_invite_code_uses_pk_columns_input!
+  ): tournament_invite_code_uses
+
+  """
+  update multiples rows of table: "tournament_invite_code_uses"
+  """
+  update_tournament_invite_code_uses_many(
+    """updates to execute, in order"""
+    updates: [tournament_invite_code_uses_updates!]!
+  ): [tournament_invite_code_uses_mutation_response]
+
+  """
+  update data of the table: "tournament_invite_codes"
+  """
+  update_tournament_invite_codes(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: tournament_invite_codes_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: tournament_invite_codes_set_input
+
+    """filter the rows which have to be updated"""
+    where: tournament_invite_codes_bool_exp!
+  ): tournament_invite_codes_mutation_response
+
+  """
+  update single row of the table: "tournament_invite_codes"
+  """
+  update_tournament_invite_codes_by_pk(
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: tournament_invite_codes_inc_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: tournament_invite_codes_set_input
+    pk_columns: tournament_invite_codes_pk_columns_input!
+  ): tournament_invite_codes
+
+  """
+  update multiples rows of table: "tournament_invite_codes"
+  """
+  update_tournament_invite_codes_many(
+    """updates to execute, in order"""
+    updates: [tournament_invite_codes_updates!]!
+  ): [tournament_invite_codes_mutation_response]
+
+  """
   update data of the table: "tournament_invites"
   """
   update_tournament_invites(
@@ -58026,18 +58172,6 @@ type mutation_root {
     """filter the rows which have to be updated"""
     where: tournament_registration_unlocks_bool_exp!
   ): tournament_registration_unlocks_mutation_response
-
-  """
-  update single row of the table: "tournament_registration_unlocks"
-  """
-  update_tournament_registration_unlocks_by_pk(
-    """increments the numeric columns with given value of the filtered values"""
-    _inc: tournament_registration_unlocks_inc_input
-
-    """sets the columns of the filtered rows to the given values"""
-    _set: tournament_registration_unlocks_set_input
-    pk_columns: tournament_registration_unlocks_pk_columns_input!
-  ): tournament_registration_unlocks
 
   """
   update multiples rows of table: "tournament_registration_unlocks"
@@ -89308,6 +89442,96 @@ type query_root {
   tournament_free_agents_by_pk(id: uuid!): tournament_free_agents
 
   """
+  fetch data from the table: "tournament_invite_code_uses"
+  """
+  tournament_invite_code_uses(
+    """distinct select on columns"""
+    distinct_on: [tournament_invite_code_uses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_invite_code_uses_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_invite_code_uses_bool_exp
+  ): [tournament_invite_code_uses!]!
+
+  """
+  fetch aggregated fields from the table: "tournament_invite_code_uses"
+  """
+  tournament_invite_code_uses_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_invite_code_uses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_invite_code_uses_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_invite_code_uses_bool_exp
+  ): tournament_invite_code_uses_aggregate!
+
+  """
+  fetch data from the table: "tournament_invite_code_uses" using primary key columns
+  """
+  tournament_invite_code_uses_by_pk(invite_code_id: uuid!, player_steam_id: bigint!): tournament_invite_code_uses
+
+  """
+  fetch data from the table: "tournament_invite_codes"
+  """
+  tournament_invite_codes(
+    """distinct select on columns"""
+    distinct_on: [tournament_invite_codes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_invite_codes_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_invite_codes_bool_exp
+  ): [tournament_invite_codes!]!
+
+  """
+  fetch aggregated fields from the table: "tournament_invite_codes"
+  """
+  tournament_invite_codes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_invite_codes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_invite_codes_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_invite_codes_bool_exp
+  ): tournament_invite_codes_aggregate!
+
+  """
+  fetch data from the table: "tournament_invite_codes" using primary key columns
+  """
+  tournament_invite_codes_by_pk(id: uuid!): tournament_invite_codes
+
+  """
   fetch data from the table: "tournament_invites"
   """
   tournament_invites(
@@ -89607,11 +89831,6 @@ type query_root {
     """filter the rows returned"""
     where: tournament_registration_unlocks_bool_exp
   ): tournament_registration_unlocks_aggregate!
-
-  """
-  fetch data from the table: "tournament_registration_unlocks" using primary key columns
-  """
-  tournament_registration_unlocks_by_pk(player_steam_id: bigint!, tournament_id: uuid!): tournament_registration_unlocks
 
   """
   fetch data from the table: "tournament_stage_windows"
@@ -104989,6 +105208,124 @@ type subscription_root {
   ): [tournament_free_agents!]!
 
   """
+  fetch data from the table: "tournament_invite_code_uses"
+  """
+  tournament_invite_code_uses(
+    """distinct select on columns"""
+    distinct_on: [tournament_invite_code_uses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_invite_code_uses_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_invite_code_uses_bool_exp
+  ): [tournament_invite_code_uses!]!
+
+  """
+  fetch aggregated fields from the table: "tournament_invite_code_uses"
+  """
+  tournament_invite_code_uses_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_invite_code_uses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_invite_code_uses_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_invite_code_uses_bool_exp
+  ): tournament_invite_code_uses_aggregate!
+
+  """
+  fetch data from the table: "tournament_invite_code_uses" using primary key columns
+  """
+  tournament_invite_code_uses_by_pk(invite_code_id: uuid!, player_steam_id: bigint!): tournament_invite_code_uses
+
+  """
+  fetch data from the table in a streaming manner: "tournament_invite_code_uses"
+  """
+  tournament_invite_code_uses_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [tournament_invite_code_uses_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: tournament_invite_code_uses_bool_exp
+  ): [tournament_invite_code_uses!]!
+
+  """
+  fetch data from the table: "tournament_invite_codes"
+  """
+  tournament_invite_codes(
+    """distinct select on columns"""
+    distinct_on: [tournament_invite_codes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_invite_codes_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_invite_codes_bool_exp
+  ): [tournament_invite_codes!]!
+
+  """
+  fetch aggregated fields from the table: "tournament_invite_codes"
+  """
+  tournament_invite_codes_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_invite_codes_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_invite_codes_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_invite_codes_bool_exp
+  ): tournament_invite_codes_aggregate!
+
+  """
+  fetch data from the table: "tournament_invite_codes" using primary key columns
+  """
+  tournament_invite_codes_by_pk(id: uuid!): tournament_invite_codes
+
+  """
+  fetch data from the table in a streaming manner: "tournament_invite_codes"
+  """
+  tournament_invite_codes_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [tournament_invite_codes_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: tournament_invite_codes_bool_exp
+  ): [tournament_invite_codes!]!
+
+  """
   fetch data from the table: "tournament_invites"
   """
   tournament_invites(
@@ -105372,11 +105709,6 @@ type subscription_root {
     """filter the rows returned"""
     where: tournament_registration_unlocks_bool_exp
   ): tournament_registration_unlocks_aggregate!
-
-  """
-  fetch data from the table: "tournament_registration_unlocks" using primary key columns
-  """
-  tournament_registration_unlocks_by_pk(player_steam_id: bigint!, tournament_id: uuid!): tournament_registration_unlocks
 
   """
   fetch data from the table in a streaming manner: "tournament_registration_unlocks"
@@ -114833,6 +115165,771 @@ input tournament_free_agents_variance_order_by {
 }
 
 """
+columns and relationships of "tournament_invite_code_uses"
+"""
+type tournament_invite_code_uses {
+  """An object relationship"""
+  invite_code: tournament_invite_codes!
+  invite_code_id: uuid!
+
+  """An object relationship"""
+  player: players!
+  player_steam_id: bigint!
+
+  """An object relationship"""
+  team: teams
+  team_id: uuid
+  used_at: timestamptz!
+}
+
+"""
+aggregated selection of "tournament_invite_code_uses"
+"""
+type tournament_invite_code_uses_aggregate {
+  aggregate: tournament_invite_code_uses_aggregate_fields
+  nodes: [tournament_invite_code_uses!]!
+}
+
+input tournament_invite_code_uses_aggregate_bool_exp {
+  count: tournament_invite_code_uses_aggregate_bool_exp_count
+}
+
+input tournament_invite_code_uses_aggregate_bool_exp_count {
+  arguments: [tournament_invite_code_uses_select_column!]
+  distinct: Boolean
+  filter: tournament_invite_code_uses_bool_exp
+  predicate: Int_comparison_exp!
+}
+
+"""
+aggregate fields of "tournament_invite_code_uses"
+"""
+type tournament_invite_code_uses_aggregate_fields {
+  avg: tournament_invite_code_uses_avg_fields
+  count(columns: [tournament_invite_code_uses_select_column!], distinct: Boolean): Int!
+  max: tournament_invite_code_uses_max_fields
+  min: tournament_invite_code_uses_min_fields
+  stddev: tournament_invite_code_uses_stddev_fields
+  stddev_pop: tournament_invite_code_uses_stddev_pop_fields
+  stddev_samp: tournament_invite_code_uses_stddev_samp_fields
+  sum: tournament_invite_code_uses_sum_fields
+  var_pop: tournament_invite_code_uses_var_pop_fields
+  var_samp: tournament_invite_code_uses_var_samp_fields
+  variance: tournament_invite_code_uses_variance_fields
+}
+
+"""
+order by aggregate values of table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_aggregate_order_by {
+  avg: tournament_invite_code_uses_avg_order_by
+  count: order_by
+  max: tournament_invite_code_uses_max_order_by
+  min: tournament_invite_code_uses_min_order_by
+  stddev: tournament_invite_code_uses_stddev_order_by
+  stddev_pop: tournament_invite_code_uses_stddev_pop_order_by
+  stddev_samp: tournament_invite_code_uses_stddev_samp_order_by
+  sum: tournament_invite_code_uses_sum_order_by
+  var_pop: tournament_invite_code_uses_var_pop_order_by
+  var_samp: tournament_invite_code_uses_var_samp_order_by
+  variance: tournament_invite_code_uses_variance_order_by
+}
+
+"""
+input type for inserting array relation for remote table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_arr_rel_insert_input {
+  data: [tournament_invite_code_uses_insert_input!]!
+
+  """upsert condition"""
+  on_conflict: tournament_invite_code_uses_on_conflict
+}
+
+"""aggregate avg on columns"""
+type tournament_invite_code_uses_avg_fields {
+  player_steam_id: Float
+}
+
+"""
+order by avg() on columns of table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_avg_order_by {
+  player_steam_id: order_by
+}
+
+"""
+Boolean expression to filter rows from the table "tournament_invite_code_uses". All fields are combined with a logical 'AND'.
+"""
+input tournament_invite_code_uses_bool_exp {
+  _and: [tournament_invite_code_uses_bool_exp!]
+  _not: tournament_invite_code_uses_bool_exp
+  _or: [tournament_invite_code_uses_bool_exp!]
+  invite_code: tournament_invite_codes_bool_exp
+  invite_code_id: uuid_comparison_exp
+  player: players_bool_exp
+  player_steam_id: bigint_comparison_exp
+  team: teams_bool_exp
+  team_id: uuid_comparison_exp
+  used_at: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "tournament_invite_code_uses"
+"""
+enum tournament_invite_code_uses_constraint {
+  """
+  unique or primary key constraint on columns "player_steam_id", "invite_code_id"
+  """
+  tournament_invite_code_uses_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_inc_input {
+  player_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_insert_input {
+  invite_code: tournament_invite_codes_obj_rel_insert_input
+  invite_code_id: uuid
+  player: players_obj_rel_insert_input
+  player_steam_id: bigint
+  team: teams_obj_rel_insert_input
+  team_id: uuid
+  used_at: timestamptz
+}
+
+"""aggregate max on columns"""
+type tournament_invite_code_uses_max_fields {
+  invite_code_id: uuid
+  player_steam_id: bigint
+  team_id: uuid
+  used_at: timestamptz
+}
+
+"""
+order by max() on columns of table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_max_order_by {
+  invite_code_id: order_by
+  player_steam_id: order_by
+  team_id: order_by
+  used_at: order_by
+}
+
+"""aggregate min on columns"""
+type tournament_invite_code_uses_min_fields {
+  invite_code_id: uuid
+  player_steam_id: bigint
+  team_id: uuid
+  used_at: timestamptz
+}
+
+"""
+order by min() on columns of table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_min_order_by {
+  invite_code_id: order_by
+  player_steam_id: order_by
+  team_id: order_by
+  used_at: order_by
+}
+
+"""
+response of any mutation on the table "tournament_invite_code_uses"
+"""
+type tournament_invite_code_uses_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [tournament_invite_code_uses!]!
+}
+
+"""
+on_conflict condition type for table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_on_conflict {
+  constraint: tournament_invite_code_uses_constraint!
+  update_columns: [tournament_invite_code_uses_update_column!]! = []
+  where: tournament_invite_code_uses_bool_exp
+}
+
+"""
+Ordering options when selecting data from "tournament_invite_code_uses".
+"""
+input tournament_invite_code_uses_order_by {
+  invite_code: tournament_invite_codes_order_by
+  invite_code_id: order_by
+  player: players_order_by
+  player_steam_id: order_by
+  team: teams_order_by
+  team_id: order_by
+  used_at: order_by
+}
+
+"""primary key columns input for table: tournament_invite_code_uses"""
+input tournament_invite_code_uses_pk_columns_input {
+  invite_code_id: uuid!
+  player_steam_id: bigint!
+}
+
+"""
+select columns of table "tournament_invite_code_uses"
+"""
+enum tournament_invite_code_uses_select_column {
+  """column name"""
+  invite_code_id
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  team_id
+
+  """column name"""
+  used_at
+}
+
+"""
+input type for updating data in table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_set_input {
+  invite_code_id: uuid
+  player_steam_id: bigint
+  team_id: uuid
+  used_at: timestamptz
+}
+
+"""aggregate stddev on columns"""
+type tournament_invite_code_uses_stddev_fields {
+  player_steam_id: Float
+}
+
+"""
+order by stddev() on columns of table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_stddev_order_by {
+  player_steam_id: order_by
+}
+
+"""aggregate stddev_pop on columns"""
+type tournament_invite_code_uses_stddev_pop_fields {
+  player_steam_id: Float
+}
+
+"""
+order by stddev_pop() on columns of table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_stddev_pop_order_by {
+  player_steam_id: order_by
+}
+
+"""aggregate stddev_samp on columns"""
+type tournament_invite_code_uses_stddev_samp_fields {
+  player_steam_id: Float
+}
+
+"""
+order by stddev_samp() on columns of table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_stddev_samp_order_by {
+  player_steam_id: order_by
+}
+
+"""
+Streaming cursor of the table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: tournament_invite_code_uses_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input tournament_invite_code_uses_stream_cursor_value_input {
+  invite_code_id: uuid
+  player_steam_id: bigint
+  team_id: uuid
+  used_at: timestamptz
+}
+
+"""aggregate sum on columns"""
+type tournament_invite_code_uses_sum_fields {
+  player_steam_id: bigint
+}
+
+"""
+order by sum() on columns of table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_sum_order_by {
+  player_steam_id: order_by
+}
+
+"""
+update columns of table "tournament_invite_code_uses"
+"""
+enum tournament_invite_code_uses_update_column {
+  """column name"""
+  invite_code_id
+
+  """column name"""
+  player_steam_id
+
+  """column name"""
+  team_id
+
+  """column name"""
+  used_at
+}
+
+input tournament_invite_code_uses_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: tournament_invite_code_uses_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: tournament_invite_code_uses_set_input
+
+  """filter the rows which have to be updated"""
+  where: tournament_invite_code_uses_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type tournament_invite_code_uses_var_pop_fields {
+  player_steam_id: Float
+}
+
+"""
+order by var_pop() on columns of table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_var_pop_order_by {
+  player_steam_id: order_by
+}
+
+"""aggregate var_samp on columns"""
+type tournament_invite_code_uses_var_samp_fields {
+  player_steam_id: Float
+}
+
+"""
+order by var_samp() on columns of table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_var_samp_order_by {
+  player_steam_id: order_by
+}
+
+"""aggregate variance on columns"""
+type tournament_invite_code_uses_variance_fields {
+  player_steam_id: Float
+}
+
+"""
+order by variance() on columns of table "tournament_invite_code_uses"
+"""
+input tournament_invite_code_uses_variance_order_by {
+  player_steam_id: order_by
+}
+
+"""
+columns and relationships of "tournament_invite_codes"
+"""
+type tournament_invite_codes {
+  code: String!
+  created_at: timestamptz!
+
+  """An object relationship"""
+  created_by: players!
+  created_by_player_steam_id: bigint!
+  expires_at: timestamptz
+  id: uuid!
+  max_uses: Int
+  revoked_at: timestamptz
+
+  """An object relationship"""
+  tournament: tournaments!
+  tournament_id: uuid!
+
+  """An array relationship"""
+  used_by(
+    """distinct select on columns"""
+    distinct_on: [tournament_invite_code_uses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_invite_code_uses_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_invite_code_uses_bool_exp
+  ): [tournament_invite_code_uses!]!
+
+  """An aggregate relationship"""
+  used_by_aggregate(
+    """distinct select on columns"""
+    distinct_on: [tournament_invite_code_uses_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [tournament_invite_code_uses_order_by!]
+
+    """filter the rows returned"""
+    where: tournament_invite_code_uses_bool_exp
+  ): tournament_invite_code_uses_aggregate!
+  uses: Int!
+}
+
+"""
+aggregated selection of "tournament_invite_codes"
+"""
+type tournament_invite_codes_aggregate {
+  aggregate: tournament_invite_codes_aggregate_fields
+  nodes: [tournament_invite_codes!]!
+}
+
+"""
+aggregate fields of "tournament_invite_codes"
+"""
+type tournament_invite_codes_aggregate_fields {
+  avg: tournament_invite_codes_avg_fields
+  count(columns: [tournament_invite_codes_select_column!], distinct: Boolean): Int!
+  max: tournament_invite_codes_max_fields
+  min: tournament_invite_codes_min_fields
+  stddev: tournament_invite_codes_stddev_fields
+  stddev_pop: tournament_invite_codes_stddev_pop_fields
+  stddev_samp: tournament_invite_codes_stddev_samp_fields
+  sum: tournament_invite_codes_sum_fields
+  var_pop: tournament_invite_codes_var_pop_fields
+  var_samp: tournament_invite_codes_var_samp_fields
+  variance: tournament_invite_codes_variance_fields
+}
+
+"""aggregate avg on columns"""
+type tournament_invite_codes_avg_fields {
+  created_by_player_steam_id: Float
+  max_uses: Float
+  uses: Float
+}
+
+"""
+Boolean expression to filter rows from the table "tournament_invite_codes". All fields are combined with a logical 'AND'.
+"""
+input tournament_invite_codes_bool_exp {
+  _and: [tournament_invite_codes_bool_exp!]
+  _not: tournament_invite_codes_bool_exp
+  _or: [tournament_invite_codes_bool_exp!]
+  code: String_comparison_exp
+  created_at: timestamptz_comparison_exp
+  created_by: players_bool_exp
+  created_by_player_steam_id: bigint_comparison_exp
+  expires_at: timestamptz_comparison_exp
+  id: uuid_comparison_exp
+  max_uses: Int_comparison_exp
+  revoked_at: timestamptz_comparison_exp
+  tournament: tournaments_bool_exp
+  tournament_id: uuid_comparison_exp
+  used_by: tournament_invite_code_uses_bool_exp
+  used_by_aggregate: tournament_invite_code_uses_aggregate_bool_exp
+  uses: Int_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "tournament_invite_codes"
+"""
+enum tournament_invite_codes_constraint {
+  """
+  unique or primary key constraint on columns "code"
+  """
+  tournament_invite_codes_code_key
+
+  """
+  unique or primary key constraint on columns "id"
+  """
+  tournament_invite_codes_pkey
+}
+
+"""
+input type for incrementing numeric columns in table "tournament_invite_codes"
+"""
+input tournament_invite_codes_inc_input {
+  created_by_player_steam_id: bigint
+  max_uses: Int
+  uses: Int
+}
+
+"""
+input type for inserting data into table "tournament_invite_codes"
+"""
+input tournament_invite_codes_insert_input {
+  code: String
+  created_at: timestamptz
+  created_by: players_obj_rel_insert_input
+  created_by_player_steam_id: bigint
+  expires_at: timestamptz
+  id: uuid
+  max_uses: Int
+  revoked_at: timestamptz
+  tournament: tournaments_obj_rel_insert_input
+  tournament_id: uuid
+  used_by: tournament_invite_code_uses_arr_rel_insert_input
+  uses: Int
+}
+
+"""aggregate max on columns"""
+type tournament_invite_codes_max_fields {
+  code: String
+  created_at: timestamptz
+  created_by_player_steam_id: bigint
+  expires_at: timestamptz
+  id: uuid
+  max_uses: Int
+  revoked_at: timestamptz
+  tournament_id: uuid
+  uses: Int
+}
+
+"""aggregate min on columns"""
+type tournament_invite_codes_min_fields {
+  code: String
+  created_at: timestamptz
+  created_by_player_steam_id: bigint
+  expires_at: timestamptz
+  id: uuid
+  max_uses: Int
+  revoked_at: timestamptz
+  tournament_id: uuid
+  uses: Int
+}
+
+"""
+response of any mutation on the table "tournament_invite_codes"
+"""
+type tournament_invite_codes_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [tournament_invite_codes!]!
+}
+
+"""
+input type for inserting object relation for remote table "tournament_invite_codes"
+"""
+input tournament_invite_codes_obj_rel_insert_input {
+  data: tournament_invite_codes_insert_input!
+
+  """upsert condition"""
+  on_conflict: tournament_invite_codes_on_conflict
+}
+
+"""
+on_conflict condition type for table "tournament_invite_codes"
+"""
+input tournament_invite_codes_on_conflict {
+  constraint: tournament_invite_codes_constraint!
+  update_columns: [tournament_invite_codes_update_column!]! = []
+  where: tournament_invite_codes_bool_exp
+}
+
+"""Ordering options when selecting data from "tournament_invite_codes"."""
+input tournament_invite_codes_order_by {
+  code: order_by
+  created_at: order_by
+  created_by: players_order_by
+  created_by_player_steam_id: order_by
+  expires_at: order_by
+  id: order_by
+  max_uses: order_by
+  revoked_at: order_by
+  tournament: tournaments_order_by
+  tournament_id: order_by
+  used_by_aggregate: tournament_invite_code_uses_aggregate_order_by
+  uses: order_by
+}
+
+"""primary key columns input for table: tournament_invite_codes"""
+input tournament_invite_codes_pk_columns_input {
+  id: uuid!
+}
+
+"""
+select columns of table "tournament_invite_codes"
+"""
+enum tournament_invite_codes_select_column {
+  """column name"""
+  code
+
+  """column name"""
+  created_at
+
+  """column name"""
+  created_by_player_steam_id
+
+  """column name"""
+  expires_at
+
+  """column name"""
+  id
+
+  """column name"""
+  max_uses
+
+  """column name"""
+  revoked_at
+
+  """column name"""
+  tournament_id
+
+  """column name"""
+  uses
+}
+
+"""
+input type for updating data in table "tournament_invite_codes"
+"""
+input tournament_invite_codes_set_input {
+  code: String
+  created_at: timestamptz
+  created_by_player_steam_id: bigint
+  expires_at: timestamptz
+  id: uuid
+  max_uses: Int
+  revoked_at: timestamptz
+  tournament_id: uuid
+  uses: Int
+}
+
+"""aggregate stddev on columns"""
+type tournament_invite_codes_stddev_fields {
+  created_by_player_steam_id: Float
+  max_uses: Float
+  uses: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type tournament_invite_codes_stddev_pop_fields {
+  created_by_player_steam_id: Float
+  max_uses: Float
+  uses: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type tournament_invite_codes_stddev_samp_fields {
+  created_by_player_steam_id: Float
+  max_uses: Float
+  uses: Float
+}
+
+"""
+Streaming cursor of the table "tournament_invite_codes"
+"""
+input tournament_invite_codes_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: tournament_invite_codes_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input tournament_invite_codes_stream_cursor_value_input {
+  code: String
+  created_at: timestamptz
+  created_by_player_steam_id: bigint
+  expires_at: timestamptz
+  id: uuid
+  max_uses: Int
+  revoked_at: timestamptz
+  tournament_id: uuid
+  uses: Int
+}
+
+"""aggregate sum on columns"""
+type tournament_invite_codes_sum_fields {
+  created_by_player_steam_id: bigint
+  max_uses: Int
+  uses: Int
+}
+
+"""
+update columns of table "tournament_invite_codes"
+"""
+enum tournament_invite_codes_update_column {
+  """column name"""
+  code
+
+  """column name"""
+  created_at
+
+  """column name"""
+  created_by_player_steam_id
+
+  """column name"""
+  expires_at
+
+  """column name"""
+  id
+
+  """column name"""
+  max_uses
+
+  """column name"""
+  revoked_at
+
+  """column name"""
+  tournament_id
+
+  """column name"""
+  uses
+}
+
+input tournament_invite_codes_updates {
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: tournament_invite_codes_inc_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: tournament_invite_codes_set_input
+
+  """filter the rows which have to be updated"""
+  where: tournament_invite_codes_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type tournament_invite_codes_var_pop_fields {
+  created_by_player_steam_id: Float
+  max_uses: Float
+  uses: Float
+}
+
+"""aggregate var_samp on columns"""
+type tournament_invite_codes_var_samp_fields {
+  created_by_player_steam_id: Float
+  max_uses: Float
+  uses: Float
+}
+
+"""aggregate variance on columns"""
+type tournament_invite_codes_variance_fields {
+  created_by_player_steam_id: Float
+  max_uses: Float
+  uses: Float
+}
+
+"""
 columns and relationships of "tournament_invites"
 """
 type tournament_invites {
@@ -114844,8 +115941,12 @@ type tournament_invites {
   invited_by_player_steam_id: bigint!
 
   """An object relationship"""
-  player: players!
-  steam_id: bigint!
+  player: players
+  steam_id: bigint
+
+  """An object relationship"""
+  team: teams
+  team_id: uuid
 
   """An object relationship"""
   tournament: tournaments!
@@ -114896,6 +115997,8 @@ input tournament_invites_bool_exp {
   invited_by_player_steam_id: bigint_comparison_exp
   player: players_bool_exp
   steam_id: bigint_comparison_exp
+  team: teams_bool_exp
+  team_id: uuid_comparison_exp
   tournament: tournaments_bool_exp
   tournament_id: uuid_comparison_exp
 }
@@ -114905,14 +116008,19 @@ unique or primary key constraints on table "tournament_invites"
 """
 enum tournament_invites_constraint {
   """
+  unique or primary key constraint on columns "steam_id", "tournament_id"
+  """
+  idx_tournament_invites_player_unique
+
+  """
+  unique or primary key constraint on columns "tournament_id", "team_id"
+  """
+  idx_tournament_invites_team_unique
+
+  """
   unique or primary key constraint on columns "id"
   """
   tournament_invites_pkey
-
-  """
-  unique or primary key constraint on columns "steam_id", "tournament_id"
-  """
-  tournament_invites_tournament_id_steam_id_key
 }
 
 """
@@ -114933,6 +116041,8 @@ input tournament_invites_insert_input {
   invited_by_player_steam_id: bigint
   player: players_obj_rel_insert_input
   steam_id: bigint
+  team: teams_obj_rel_insert_input
+  team_id: uuid
   tournament: tournaments_obj_rel_insert_input
   tournament_id: uuid
 }
@@ -114943,6 +116053,7 @@ type tournament_invites_max_fields {
   id: uuid
   invited_by_player_steam_id: bigint
   steam_id: bigint
+  team_id: uuid
   tournament_id: uuid
 }
 
@@ -114952,6 +116063,7 @@ type tournament_invites_min_fields {
   id: uuid
   invited_by_player_steam_id: bigint
   steam_id: bigint
+  team_id: uuid
   tournament_id: uuid
 }
 
@@ -114983,6 +116095,8 @@ input tournament_invites_order_by {
   invited_by_player_steam_id: order_by
   player: players_order_by
   steam_id: order_by
+  team: teams_order_by
+  team_id: order_by
   tournament: tournaments_order_by
   tournament_id: order_by
 }
@@ -115009,6 +116123,9 @@ enum tournament_invites_select_column {
   steam_id
 
   """column name"""
+  team_id
+
+  """column name"""
   tournament_id
 }
 
@@ -115020,6 +116137,7 @@ input tournament_invites_set_input {
   id: uuid
   invited_by_player_steam_id: bigint
   steam_id: bigint
+  team_id: uuid
   tournament_id: uuid
 }
 
@@ -115058,6 +116176,7 @@ input tournament_invites_stream_cursor_value_input {
   id: uuid
   invited_by_player_steam_id: bigint
   steam_id: bigint
+  team_id: uuid
   tournament_id: uuid
 }
 
@@ -115082,6 +116201,9 @@ enum tournament_invites_update_column {
 
   """column name"""
   steam_id
+
+  """column name"""
+  team_id
 
   """column name"""
   tournament_id
@@ -116771,8 +117893,12 @@ type tournament_registration_unlocks {
   created_at: timestamptz!
 
   """An object relationship"""
-  player: players!
-  player_steam_id: bigint!
+  player: players
+  player_steam_id: bigint
+
+  """An object relationship"""
+  team: teams
+  team_id: uuid
 
   """An object relationship"""
   tournament: tournaments!
@@ -116819,6 +117945,8 @@ input tournament_registration_unlocks_bool_exp {
   created_at: timestamptz_comparison_exp
   player: players_bool_exp
   player_steam_id: bigint_comparison_exp
+  team: teams_bool_exp
+  team_id: uuid_comparison_exp
   tournament: tournaments_bool_exp
   tournament_id: uuid_comparison_exp
 }
@@ -116830,7 +117958,12 @@ enum tournament_registration_unlocks_constraint {
   """
   unique or primary key constraint on columns "player_steam_id", "tournament_id"
   """
-  tournament_registration_unlocks_pkey
+  idx_tournament_registration_unlocks_player
+
+  """
+  unique or primary key constraint on columns "tournament_id", "team_id"
+  """
+  idx_tournament_registration_unlocks_team
 }
 
 """
@@ -116847,6 +117980,8 @@ input tournament_registration_unlocks_insert_input {
   created_at: timestamptz
   player: players_obj_rel_insert_input
   player_steam_id: bigint
+  team: teams_obj_rel_insert_input
+  team_id: uuid
   tournament: tournaments_obj_rel_insert_input
   tournament_id: uuid
 }
@@ -116855,6 +117990,7 @@ input tournament_registration_unlocks_insert_input {
 type tournament_registration_unlocks_max_fields {
   created_at: timestamptz
   player_steam_id: bigint
+  team_id: uuid
   tournament_id: uuid
 }
 
@@ -116862,6 +117998,7 @@ type tournament_registration_unlocks_max_fields {
 type tournament_registration_unlocks_min_fields {
   created_at: timestamptz
   player_steam_id: bigint
+  team_id: uuid
   tournament_id: uuid
 }
 
@@ -116892,14 +118029,10 @@ input tournament_registration_unlocks_order_by {
   created_at: order_by
   player: players_order_by
   player_steam_id: order_by
+  team: teams_order_by
+  team_id: order_by
   tournament: tournaments_order_by
   tournament_id: order_by
-}
-
-"""primary key columns input for table: tournament_registration_unlocks"""
-input tournament_registration_unlocks_pk_columns_input {
-  player_steam_id: bigint!
-  tournament_id: uuid!
 }
 
 """
@@ -116913,6 +118046,9 @@ enum tournament_registration_unlocks_select_column {
   player_steam_id
 
   """column name"""
+  team_id
+
+  """column name"""
   tournament_id
 }
 
@@ -116922,6 +118058,7 @@ input type for updating data in table "tournament_registration_unlocks"
 input tournament_registration_unlocks_set_input {
   created_at: timestamptz
   player_steam_id: bigint
+  team_id: uuid
   tournament_id: uuid
 }
 
@@ -116955,6 +118092,7 @@ input tournament_registration_unlocks_stream_cursor_input {
 input tournament_registration_unlocks_stream_cursor_value_input {
   created_at: timestamptz
   player_steam_id: bigint
+  team_id: uuid
   tournament_id: uuid
 }
 
@@ -116972,6 +118110,9 @@ enum tournament_registration_unlocks_update_column {
 
   """column name"""
   player_steam_id
+
+  """column name"""
+  team_id
 
   """column name"""
   tournament_id
@@ -120132,11 +121273,6 @@ type tournaments {
 
   """An object relationship"""
   options: match_options!
-
-  """
-  A computed field, executes function "tournament_organizer_registration_passcode"
-  """
-  organizer_registration_passcode: String
   organizer_steam_id: bigint!
 
   """An array relationship"""
@@ -120285,7 +121421,6 @@ type tournaments {
 
   """Preferred server regions for hosted matches"""
   regions: [String!]!
-  registration_passcode: String
   registration_type: e_tournament_registration_types_enum!
 
   """
@@ -120710,7 +121845,6 @@ input tournaments_bool_exp {
   missed_check_in_count: Int_comparison_exp
   name: String_comparison_exp
   options: match_options_bool_exp
-  organizer_registration_passcode: String_comparison_exp
   organizer_steam_id: bigint_comparison_exp
   organizer_teams: tournament_organizer_teams_bool_exp
   organizer_teams_aggregate: tournament_organizer_teams_aggregate_bool_exp
@@ -120721,7 +121855,6 @@ input tournaments_bool_exp {
   prizes: tournament_prizes_bool_exp
   prizes_aggregate: tournament_prizes_aggregate_bool_exp
   regions: String_array_comparison_exp
-  registration_passcode: String_comparison_exp
   registration_type: e_tournament_registration_types_enum_comparison_exp
   registration_unlocked: Boolean_comparison_exp
   results: v_team_tournament_results_bool_exp
@@ -120831,7 +121964,6 @@ input tournaments_insert_input {
 
   """Preferred server regions for hosted matches"""
   regions: [String!]
-  registration_passcode: String
   registration_type: e_tournament_registration_types_enum
   results: v_team_tournament_results_arr_rel_insert_input
   rosters: tournament_team_roster_arr_rel_insert_input
@@ -120880,16 +122012,10 @@ type tournaments_max_fields {
   """
   missed_check_in_count: Int
   name: String
-
-  """
-  A computed field, executes function "tournament_organizer_registration_passcode"
-  """
-  organizer_registration_passcode: String
   organizer_steam_id: bigint
 
   """Preferred server regions for hosted matches"""
   regions: [String!]
-  registration_passcode: String
   scheduling_mode: String
   start: timestamptz
 }
@@ -120923,7 +122049,6 @@ input tournaments_max_order_by {
 
   """Preferred server regions for hosted matches"""
   regions: order_by
-  registration_passcode: order_by
   scheduling_mode: order_by
   start: order_by
 }
@@ -120966,16 +122091,10 @@ type tournaments_min_fields {
   """
   missed_check_in_count: Int
   name: String
-
-  """
-  A computed field, executes function "tournament_organizer_registration_passcode"
-  """
-  organizer_registration_passcode: String
   organizer_steam_id: bigint
 
   """Preferred server regions for hosted matches"""
   regions: [String!]
-  registration_passcode: String
   scheduling_mode: String
   start: timestamptz
 }
@@ -121009,7 +122128,6 @@ input tournaments_min_order_by {
 
   """Preferred server regions for hosted matches"""
   regions: order_by
-  registration_passcode: order_by
   scheduling_mode: order_by
   start: order_by
 }
@@ -121112,14 +122230,12 @@ input tournaments_order_by {
   missed_check_in_count: order_by
   name: order_by
   options: match_options_order_by
-  organizer_registration_passcode: order_by
   organizer_steam_id: order_by
   organizer_teams_aggregate: tournament_organizer_teams_aggregate_order_by
   organizers_aggregate: tournament_organizers_aggregate_order_by
   player_stats_aggregate: v_tournament_player_stats_aggregate_order_by
   prizes_aggregate: tournament_prizes_aggregate_order_by
   regions: order_by
-  registration_passcode: order_by
   registration_type: order_by
   registration_unlocked: order_by
   results_aggregate: v_team_tournament_results_aggregate_order_by
@@ -121265,9 +122381,6 @@ enum tournaments_select_column {
 
   """column name"""
   regions
-
-  """column name"""
-  registration_passcode
 
   """column name"""
   registration_type
@@ -121548,7 +122661,6 @@ input tournaments_set_input {
 
   """Preferred server regions for hosted matches"""
   regions: [String!]
-  registration_passcode: String
   registration_type: e_tournament_registration_types_enum
   scheduling_mode: String
   start: timestamptz
@@ -121735,7 +122847,6 @@ input tournaments_stream_cursor_value_input {
 
   """Preferred server regions for hosted matches"""
   regions: [String!]
-  registration_passcode: String
   registration_type: e_tournament_registration_types_enum
   scheduling_mode: String
   start: timestamptz
@@ -121910,9 +123021,6 @@ enum tournaments_update_column {
 
   """column name"""
   regions
-
-  """column name"""
-  registration_passcode
 
   """column name"""
   registration_type

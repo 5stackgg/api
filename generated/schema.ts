@@ -970,6 +970,12 @@ export interface TournamentDraftOutput {
     __typename: 'TournamentDraftOutput'
 }
 
+export interface TournamentInviteCodeOutput {
+    code: Scalars['String']
+    id: Scalars['uuid']
+    __typename: 'TournamentInviteCodeOutput'
+}
+
 export interface TournamentMatchResetImpact {
     bracket_id: Scalars['uuid']
     depth: Scalars['Int']
@@ -15066,6 +15072,8 @@ export interface mutation_root {
     createScheduledMatch: (CreateScheduledMatchOutput | null)
     /** Create directory on game server */
     createServerDirectory: (SuccessOutput | null)
+    /** Organizer mints an expiring, use capped invite link for a tournament */
+    createTournamentInviteCode: (TournamentInviteCodeOutput | null)
     /** Delete a catalog award */
     deleteAward: (SuccessOutput | null)
     /** Delete a saved clip and its underlying S3 object */
@@ -15755,6 +15763,14 @@ export interface mutation_root {
     delete_tournament_free_agents: (tournament_free_agents_mutation_response | null)
     /** delete single row from the table: "tournament_free_agents" */
     delete_tournament_free_agents_by_pk: (tournament_free_agents | null)
+    /** delete data from the table: "tournament_invite_code_uses" */
+    delete_tournament_invite_code_uses: (tournament_invite_code_uses_mutation_response | null)
+    /** delete single row from the table: "tournament_invite_code_uses" */
+    delete_tournament_invite_code_uses_by_pk: (tournament_invite_code_uses | null)
+    /** delete data from the table: "tournament_invite_codes" */
+    delete_tournament_invite_codes: (tournament_invite_codes_mutation_response | null)
+    /** delete single row from the table: "tournament_invite_codes" */
+    delete_tournament_invite_codes_by_pk: (tournament_invite_codes | null)
     /** delete data from the table: "tournament_invites" */
     delete_tournament_invites: (tournament_invites_mutation_response | null)
     /** delete single row from the table: "tournament_invites" */
@@ -15779,8 +15795,6 @@ export interface mutation_root {
     delete_tournament_prizes_by_pk: (tournament_prizes | null)
     /** delete data from the table: "tournament_registration_unlocks" */
     delete_tournament_registration_unlocks: (tournament_registration_unlocks_mutation_response | null)
-    /** delete single row from the table: "tournament_registration_unlocks" */
-    delete_tournament_registration_unlocks_by_pk: (tournament_registration_unlocks | null)
     /** delete data from the table: "tournament_stage_windows" */
     delete_tournament_stage_windows: (tournament_stage_windows_mutation_response | null)
     /** delete single row from the table: "tournament_stage_windows" */
@@ -16583,6 +16597,14 @@ export interface mutation_root {
     insert_tournament_free_agents: (tournament_free_agents_mutation_response | null)
     /** insert a single row into the table: "tournament_free_agents" */
     insert_tournament_free_agents_one: (tournament_free_agents | null)
+    /** insert data into the table: "tournament_invite_code_uses" */
+    insert_tournament_invite_code_uses: (tournament_invite_code_uses_mutation_response | null)
+    /** insert a single row into the table: "tournament_invite_code_uses" */
+    insert_tournament_invite_code_uses_one: (tournament_invite_code_uses | null)
+    /** insert data into the table: "tournament_invite_codes" */
+    insert_tournament_invite_codes: (tournament_invite_codes_mutation_response | null)
+    /** insert a single row into the table: "tournament_invite_codes" */
+    insert_tournament_invite_codes_one: (tournament_invite_codes | null)
     /** insert data into the table: "tournament_invites" */
     insert_tournament_invites: (tournament_invites_mutation_response | null)
     /** insert a single row into the table: "tournament_invites" */
@@ -16778,6 +16800,8 @@ export interface mutation_root {
     /** Re-read which plugins are actually on a node */
     reconcileNodePlugins: (ReconcileNodePluginsOutput | null)
     reconnectLive: (SuccessOutput | null)
+    /** Spend a tournament invite link for an unlock on an invite only tournament */
+    redeemTournamentInviteCode: (SuccessOutput | null)
     /** Reindex every player into the Typesense search index (admin only). Runs in the background; track via refreshAllPlayersStatus. */
     refreshAllPlayers: (ReindexStartedOutput | null)
     /** Return the progress of the player reindex run (admin only). */
@@ -16826,6 +16850,8 @@ export interface mutation_root {
     retryPendingMatchImport: (PendingMatchImportActionOutput | null)
     /** Revoke a hand-granted award */
     revokeAward: (SuccessOutput | null)
+    /** Organizer kills a tournament invite link without losing who already used it */
+    revokeTournamentInviteCode: (SuccessOutput | null)
     sanctionServerPlayer: SanctionResult
     /** Create or update a catalog award */
     saveAward: (Award | null)
@@ -16903,8 +16929,6 @@ export interface mutation_root {
     uninstallGamePlugin: (SuccessOutput | null)
     unlinkDiscord: (SuccessOutput | null)
     unlinkSteamMatchHistory: (SuccessOutput | null)
-    /** Trade the registration passcode for an unlock on an invite only tournament */
-    unlockTournamentRegistration: (SuccessOutput | null)
     unsanctionServerPlayer: SanctionResult
     /** Owner-only patch for clip title / visibility / target_steam_id. */
     updateClip: (SuccessOutput | null)
@@ -17924,6 +17948,18 @@ export interface mutation_root {
     update_tournament_free_agents_by_pk: (tournament_free_agents | null)
     /** update multiples rows of table: "tournament_free_agents" */
     update_tournament_free_agents_many: ((tournament_free_agents_mutation_response | null)[] | null)
+    /** update data of the table: "tournament_invite_code_uses" */
+    update_tournament_invite_code_uses: (tournament_invite_code_uses_mutation_response | null)
+    /** update single row of the table: "tournament_invite_code_uses" */
+    update_tournament_invite_code_uses_by_pk: (tournament_invite_code_uses | null)
+    /** update multiples rows of table: "tournament_invite_code_uses" */
+    update_tournament_invite_code_uses_many: ((tournament_invite_code_uses_mutation_response | null)[] | null)
+    /** update data of the table: "tournament_invite_codes" */
+    update_tournament_invite_codes: (tournament_invite_codes_mutation_response | null)
+    /** update single row of the table: "tournament_invite_codes" */
+    update_tournament_invite_codes_by_pk: (tournament_invite_codes | null)
+    /** update multiples rows of table: "tournament_invite_codes" */
+    update_tournament_invite_codes_many: ((tournament_invite_codes_mutation_response | null)[] | null)
     /** update data of the table: "tournament_invites" */
     update_tournament_invites: (tournament_invites_mutation_response | null)
     /** update single row of the table: "tournament_invites" */
@@ -17960,8 +17996,6 @@ export interface mutation_root {
     update_tournament_prizes_many: ((tournament_prizes_mutation_response | null)[] | null)
     /** update data of the table: "tournament_registration_unlocks" */
     update_tournament_registration_unlocks: (tournament_registration_unlocks_mutation_response | null)
-    /** update single row of the table: "tournament_registration_unlocks" */
-    update_tournament_registration_unlocks_by_pk: (tournament_registration_unlocks | null)
     /** update multiples rows of table: "tournament_registration_unlocks" */
     update_tournament_registration_unlocks_many: ((tournament_registration_unlocks_mutation_response | null)[] | null)
     /** update data of the table: "tournament_stage_windows" */
@@ -27680,6 +27714,18 @@ export interface query_root {
     tournament_free_agents_aggregate: tournament_free_agents_aggregate
     /** fetch data from the table: "tournament_free_agents" using primary key columns */
     tournament_free_agents_by_pk: (tournament_free_agents | null)
+    /** fetch data from the table: "tournament_invite_code_uses" */
+    tournament_invite_code_uses: tournament_invite_code_uses[]
+    /** fetch aggregated fields from the table: "tournament_invite_code_uses" */
+    tournament_invite_code_uses_aggregate: tournament_invite_code_uses_aggregate
+    /** fetch data from the table: "tournament_invite_code_uses" using primary key columns */
+    tournament_invite_code_uses_by_pk: (tournament_invite_code_uses | null)
+    /** fetch data from the table: "tournament_invite_codes" */
+    tournament_invite_codes: tournament_invite_codes[]
+    /** fetch aggregated fields from the table: "tournament_invite_codes" */
+    tournament_invite_codes_aggregate: tournament_invite_codes_aggregate
+    /** fetch data from the table: "tournament_invite_codes" using primary key columns */
+    tournament_invite_codes_by_pk: (tournament_invite_codes | null)
     /** fetch data from the table: "tournament_invites" */
     tournament_invites: tournament_invites[]
     /** fetch aggregated fields from the table: "tournament_invites" */
@@ -27718,8 +27764,6 @@ export interface query_root {
     tournament_registration_unlocks: tournament_registration_unlocks[]
     /** fetch aggregated fields from the table: "tournament_registration_unlocks" */
     tournament_registration_unlocks_aggregate: tournament_registration_unlocks_aggregate
-    /** fetch data from the table: "tournament_registration_unlocks" using primary key columns */
-    tournament_registration_unlocks_by_pk: (tournament_registration_unlocks | null)
     /** fetch data from the table: "tournament_stage_windows" */
     tournament_stage_windows: tournament_stage_windows[]
     /** fetch aggregated fields from the table: "tournament_stage_windows" */
@@ -30345,6 +30389,22 @@ export interface subscription_root {
     tournament_free_agents_by_pk: (tournament_free_agents | null)
     /** fetch data from the table in a streaming manner: "tournament_free_agents" */
     tournament_free_agents_stream: tournament_free_agents[]
+    /** fetch data from the table: "tournament_invite_code_uses" */
+    tournament_invite_code_uses: tournament_invite_code_uses[]
+    /** fetch aggregated fields from the table: "tournament_invite_code_uses" */
+    tournament_invite_code_uses_aggregate: tournament_invite_code_uses_aggregate
+    /** fetch data from the table: "tournament_invite_code_uses" using primary key columns */
+    tournament_invite_code_uses_by_pk: (tournament_invite_code_uses | null)
+    /** fetch data from the table in a streaming manner: "tournament_invite_code_uses" */
+    tournament_invite_code_uses_stream: tournament_invite_code_uses[]
+    /** fetch data from the table: "tournament_invite_codes" */
+    tournament_invite_codes: tournament_invite_codes[]
+    /** fetch aggregated fields from the table: "tournament_invite_codes" */
+    tournament_invite_codes_aggregate: tournament_invite_codes_aggregate
+    /** fetch data from the table: "tournament_invite_codes" using primary key columns */
+    tournament_invite_codes_by_pk: (tournament_invite_codes | null)
+    /** fetch data from the table in a streaming manner: "tournament_invite_codes" */
+    tournament_invite_codes_stream: tournament_invite_codes[]
     /** fetch data from the table: "tournament_invites" */
     tournament_invites: tournament_invites[]
     /** fetch aggregated fields from the table: "tournament_invites" */
@@ -30395,8 +30455,6 @@ export interface subscription_root {
     tournament_registration_unlocks: tournament_registration_unlocks[]
     /** fetch aggregated fields from the table: "tournament_registration_unlocks" */
     tournament_registration_unlocks_aggregate: tournament_registration_unlocks_aggregate
-    /** fetch data from the table: "tournament_registration_unlocks" using primary key columns */
-    tournament_registration_unlocks_by_pk: (tournament_registration_unlocks | null)
     /** fetch data from the table in a streaming manner: "tournament_registration_unlocks" */
     tournament_registration_unlocks_stream: tournament_registration_unlocks[]
     /** fetch data from the table: "tournament_stage_windows" */
@@ -32924,6 +32982,317 @@ export interface tournament_free_agents_variance_fields {
 }
 
 
+/** columns and relationships of "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses {
+    /** An object relationship */
+    invite_code: tournament_invite_codes
+    invite_code_id: Scalars['uuid']
+    /** An object relationship */
+    player: players
+    player_steam_id: Scalars['bigint']
+    /** An object relationship */
+    team: (teams | null)
+    team_id: (Scalars['uuid'] | null)
+    used_at: Scalars['timestamptz']
+    __typename: 'tournament_invite_code_uses'
+}
+
+
+/** aggregated selection of "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_aggregate {
+    aggregate: (tournament_invite_code_uses_aggregate_fields | null)
+    nodes: tournament_invite_code_uses[]
+    __typename: 'tournament_invite_code_uses_aggregate'
+}
+
+
+/** aggregate fields of "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_aggregate_fields {
+    avg: (tournament_invite_code_uses_avg_fields | null)
+    count: Scalars['Int']
+    max: (tournament_invite_code_uses_max_fields | null)
+    min: (tournament_invite_code_uses_min_fields | null)
+    stddev: (tournament_invite_code_uses_stddev_fields | null)
+    stddev_pop: (tournament_invite_code_uses_stddev_pop_fields | null)
+    stddev_samp: (tournament_invite_code_uses_stddev_samp_fields | null)
+    sum: (tournament_invite_code_uses_sum_fields | null)
+    var_pop: (tournament_invite_code_uses_var_pop_fields | null)
+    var_samp: (tournament_invite_code_uses_var_samp_fields | null)
+    variance: (tournament_invite_code_uses_variance_fields | null)
+    __typename: 'tournament_invite_code_uses_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface tournament_invite_code_uses_avg_fields {
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_invite_code_uses_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "tournament_invite_code_uses" */
+export type tournament_invite_code_uses_constraint = 'tournament_invite_code_uses_pkey'
+
+
+/** aggregate max on columns */
+export interface tournament_invite_code_uses_max_fields {
+    invite_code_id: (Scalars['uuid'] | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    team_id: (Scalars['uuid'] | null)
+    used_at: (Scalars['timestamptz'] | null)
+    __typename: 'tournament_invite_code_uses_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface tournament_invite_code_uses_min_fields {
+    invite_code_id: (Scalars['uuid'] | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    team_id: (Scalars['uuid'] | null)
+    used_at: (Scalars['timestamptz'] | null)
+    __typename: 'tournament_invite_code_uses_min_fields'
+}
+
+
+/** response of any mutation on the table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: tournament_invite_code_uses[]
+    __typename: 'tournament_invite_code_uses_mutation_response'
+}
+
+
+/** select columns of table "tournament_invite_code_uses" */
+export type tournament_invite_code_uses_select_column = 'invite_code_id' | 'player_steam_id' | 'team_id' | 'used_at'
+
+
+/** aggregate stddev on columns */
+export interface tournament_invite_code_uses_stddev_fields {
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_invite_code_uses_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface tournament_invite_code_uses_stddev_pop_fields {
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_invite_code_uses_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface tournament_invite_code_uses_stddev_samp_fields {
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_invite_code_uses_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface tournament_invite_code_uses_sum_fields {
+    player_steam_id: (Scalars['bigint'] | null)
+    __typename: 'tournament_invite_code_uses_sum_fields'
+}
+
+
+/** update columns of table "tournament_invite_code_uses" */
+export type tournament_invite_code_uses_update_column = 'invite_code_id' | 'player_steam_id' | 'team_id' | 'used_at'
+
+
+/** aggregate var_pop on columns */
+export interface tournament_invite_code_uses_var_pop_fields {
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_invite_code_uses_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface tournament_invite_code_uses_var_samp_fields {
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_invite_code_uses_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface tournament_invite_code_uses_variance_fields {
+    player_steam_id: (Scalars['Float'] | null)
+    __typename: 'tournament_invite_code_uses_variance_fields'
+}
+
+
+/** columns and relationships of "tournament_invite_codes" */
+export interface tournament_invite_codes {
+    code: Scalars['String']
+    created_at: Scalars['timestamptz']
+    /** An object relationship */
+    created_by: players
+    created_by_player_steam_id: Scalars['bigint']
+    expires_at: (Scalars['timestamptz'] | null)
+    id: Scalars['uuid']
+    max_uses: (Scalars['Int'] | null)
+    revoked_at: (Scalars['timestamptz'] | null)
+    /** An object relationship */
+    tournament: tournaments
+    tournament_id: Scalars['uuid']
+    /** An array relationship */
+    used_by: tournament_invite_code_uses[]
+    /** An aggregate relationship */
+    used_by_aggregate: tournament_invite_code_uses_aggregate
+    uses: Scalars['Int']
+    __typename: 'tournament_invite_codes'
+}
+
+
+/** aggregated selection of "tournament_invite_codes" */
+export interface tournament_invite_codes_aggregate {
+    aggregate: (tournament_invite_codes_aggregate_fields | null)
+    nodes: tournament_invite_codes[]
+    __typename: 'tournament_invite_codes_aggregate'
+}
+
+
+/** aggregate fields of "tournament_invite_codes" */
+export interface tournament_invite_codes_aggregate_fields {
+    avg: (tournament_invite_codes_avg_fields | null)
+    count: Scalars['Int']
+    max: (tournament_invite_codes_max_fields | null)
+    min: (tournament_invite_codes_min_fields | null)
+    stddev: (tournament_invite_codes_stddev_fields | null)
+    stddev_pop: (tournament_invite_codes_stddev_pop_fields | null)
+    stddev_samp: (tournament_invite_codes_stddev_samp_fields | null)
+    sum: (tournament_invite_codes_sum_fields | null)
+    var_pop: (tournament_invite_codes_var_pop_fields | null)
+    var_samp: (tournament_invite_codes_var_samp_fields | null)
+    variance: (tournament_invite_codes_variance_fields | null)
+    __typename: 'tournament_invite_codes_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface tournament_invite_codes_avg_fields {
+    created_by_player_steam_id: (Scalars['Float'] | null)
+    max_uses: (Scalars['Float'] | null)
+    uses: (Scalars['Float'] | null)
+    __typename: 'tournament_invite_codes_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "tournament_invite_codes" */
+export type tournament_invite_codes_constraint = 'tournament_invite_codes_code_key' | 'tournament_invite_codes_pkey'
+
+
+/** aggregate max on columns */
+export interface tournament_invite_codes_max_fields {
+    code: (Scalars['String'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    created_by_player_steam_id: (Scalars['bigint'] | null)
+    expires_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    max_uses: (Scalars['Int'] | null)
+    revoked_at: (Scalars['timestamptz'] | null)
+    tournament_id: (Scalars['uuid'] | null)
+    uses: (Scalars['Int'] | null)
+    __typename: 'tournament_invite_codes_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface tournament_invite_codes_min_fields {
+    code: (Scalars['String'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    created_by_player_steam_id: (Scalars['bigint'] | null)
+    expires_at: (Scalars['timestamptz'] | null)
+    id: (Scalars['uuid'] | null)
+    max_uses: (Scalars['Int'] | null)
+    revoked_at: (Scalars['timestamptz'] | null)
+    tournament_id: (Scalars['uuid'] | null)
+    uses: (Scalars['Int'] | null)
+    __typename: 'tournament_invite_codes_min_fields'
+}
+
+
+/** response of any mutation on the table "tournament_invite_codes" */
+export interface tournament_invite_codes_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: tournament_invite_codes[]
+    __typename: 'tournament_invite_codes_mutation_response'
+}
+
+
+/** select columns of table "tournament_invite_codes" */
+export type tournament_invite_codes_select_column = 'code' | 'created_at' | 'created_by_player_steam_id' | 'expires_at' | 'id' | 'max_uses' | 'revoked_at' | 'tournament_id' | 'uses'
+
+
+/** aggregate stddev on columns */
+export interface tournament_invite_codes_stddev_fields {
+    created_by_player_steam_id: (Scalars['Float'] | null)
+    max_uses: (Scalars['Float'] | null)
+    uses: (Scalars['Float'] | null)
+    __typename: 'tournament_invite_codes_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface tournament_invite_codes_stddev_pop_fields {
+    created_by_player_steam_id: (Scalars['Float'] | null)
+    max_uses: (Scalars['Float'] | null)
+    uses: (Scalars['Float'] | null)
+    __typename: 'tournament_invite_codes_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface tournament_invite_codes_stddev_samp_fields {
+    created_by_player_steam_id: (Scalars['Float'] | null)
+    max_uses: (Scalars['Float'] | null)
+    uses: (Scalars['Float'] | null)
+    __typename: 'tournament_invite_codes_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface tournament_invite_codes_sum_fields {
+    created_by_player_steam_id: (Scalars['bigint'] | null)
+    max_uses: (Scalars['Int'] | null)
+    uses: (Scalars['Int'] | null)
+    __typename: 'tournament_invite_codes_sum_fields'
+}
+
+
+/** update columns of table "tournament_invite_codes" */
+export type tournament_invite_codes_update_column = 'code' | 'created_at' | 'created_by_player_steam_id' | 'expires_at' | 'id' | 'max_uses' | 'revoked_at' | 'tournament_id' | 'uses'
+
+
+/** aggregate var_pop on columns */
+export interface tournament_invite_codes_var_pop_fields {
+    created_by_player_steam_id: (Scalars['Float'] | null)
+    max_uses: (Scalars['Float'] | null)
+    uses: (Scalars['Float'] | null)
+    __typename: 'tournament_invite_codes_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface tournament_invite_codes_var_samp_fields {
+    created_by_player_steam_id: (Scalars['Float'] | null)
+    max_uses: (Scalars['Float'] | null)
+    uses: (Scalars['Float'] | null)
+    __typename: 'tournament_invite_codes_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface tournament_invite_codes_variance_fields {
+    created_by_player_steam_id: (Scalars['Float'] | null)
+    max_uses: (Scalars['Float'] | null)
+    uses: (Scalars['Float'] | null)
+    __typename: 'tournament_invite_codes_variance_fields'
+}
+
+
 /** columns and relationships of "tournament_invites" */
 export interface tournament_invites {
     created_at: Scalars['timestamptz']
@@ -32932,8 +33301,11 @@ export interface tournament_invites {
     invited_by: players
     invited_by_player_steam_id: Scalars['bigint']
     /** An object relationship */
-    player: players
-    steam_id: Scalars['bigint']
+    player: (players | null)
+    steam_id: (Scalars['bigint'] | null)
+    /** An object relationship */
+    team: (teams | null)
+    team_id: (Scalars['uuid'] | null)
     /** An object relationship */
     tournament: tournaments
     tournament_id: Scalars['uuid']
@@ -32975,7 +33347,7 @@ export interface tournament_invites_avg_fields {
 
 
 /** unique or primary key constraints on table "tournament_invites" */
-export type tournament_invites_constraint = 'tournament_invites_pkey' | 'tournament_invites_tournament_id_steam_id_key'
+export type tournament_invites_constraint = 'idx_tournament_invites_player_unique' | 'idx_tournament_invites_team_unique' | 'tournament_invites_pkey'
 
 
 /** aggregate max on columns */
@@ -32984,6 +33356,7 @@ export interface tournament_invites_max_fields {
     id: (Scalars['uuid'] | null)
     invited_by_player_steam_id: (Scalars['bigint'] | null)
     steam_id: (Scalars['bigint'] | null)
+    team_id: (Scalars['uuid'] | null)
     tournament_id: (Scalars['uuid'] | null)
     __typename: 'tournament_invites_max_fields'
 }
@@ -32995,6 +33368,7 @@ export interface tournament_invites_min_fields {
     id: (Scalars['uuid'] | null)
     invited_by_player_steam_id: (Scalars['bigint'] | null)
     steam_id: (Scalars['bigint'] | null)
+    team_id: (Scalars['uuid'] | null)
     tournament_id: (Scalars['uuid'] | null)
     __typename: 'tournament_invites_min_fields'
 }
@@ -33011,7 +33385,7 @@ export interface tournament_invites_mutation_response {
 
 
 /** select columns of table "tournament_invites" */
-export type tournament_invites_select_column = 'created_at' | 'id' | 'invited_by_player_steam_id' | 'steam_id' | 'tournament_id'
+export type tournament_invites_select_column = 'created_at' | 'id' | 'invited_by_player_steam_id' | 'steam_id' | 'team_id' | 'tournament_id'
 
 
 /** aggregate stddev on columns */
@@ -33047,7 +33421,7 @@ export interface tournament_invites_sum_fields {
 
 
 /** update columns of table "tournament_invites" */
-export type tournament_invites_update_column = 'created_at' | 'id' | 'invited_by_player_steam_id' | 'steam_id' | 'tournament_id'
+export type tournament_invites_update_column = 'created_at' | 'id' | 'invited_by_player_steam_id' | 'steam_id' | 'team_id' | 'tournament_id'
 
 
 /** aggregate var_pop on columns */
@@ -33790,8 +34164,11 @@ export interface tournament_prizes_variance_fields {
 export interface tournament_registration_unlocks {
     created_at: Scalars['timestamptz']
     /** An object relationship */
-    player: players
-    player_steam_id: Scalars['bigint']
+    player: (players | null)
+    player_steam_id: (Scalars['bigint'] | null)
+    /** An object relationship */
+    team: (teams | null)
+    team_id: (Scalars['uuid'] | null)
     /** An object relationship */
     tournament: tournaments
     tournament_id: Scalars['uuid']
@@ -33832,13 +34209,14 @@ export interface tournament_registration_unlocks_avg_fields {
 
 
 /** unique or primary key constraints on table "tournament_registration_unlocks" */
-export type tournament_registration_unlocks_constraint = 'tournament_registration_unlocks_pkey'
+export type tournament_registration_unlocks_constraint = 'idx_tournament_registration_unlocks_player' | 'idx_tournament_registration_unlocks_team'
 
 
 /** aggregate max on columns */
 export interface tournament_registration_unlocks_max_fields {
     created_at: (Scalars['timestamptz'] | null)
     player_steam_id: (Scalars['bigint'] | null)
+    team_id: (Scalars['uuid'] | null)
     tournament_id: (Scalars['uuid'] | null)
     __typename: 'tournament_registration_unlocks_max_fields'
 }
@@ -33848,6 +34226,7 @@ export interface tournament_registration_unlocks_max_fields {
 export interface tournament_registration_unlocks_min_fields {
     created_at: (Scalars['timestamptz'] | null)
     player_steam_id: (Scalars['bigint'] | null)
+    team_id: (Scalars['uuid'] | null)
     tournament_id: (Scalars['uuid'] | null)
     __typename: 'tournament_registration_unlocks_min_fields'
 }
@@ -33864,7 +34243,7 @@ export interface tournament_registration_unlocks_mutation_response {
 
 
 /** select columns of table "tournament_registration_unlocks" */
-export type tournament_registration_unlocks_select_column = 'created_at' | 'player_steam_id' | 'tournament_id'
+export type tournament_registration_unlocks_select_column = 'created_at' | 'player_steam_id' | 'team_id' | 'tournament_id'
 
 
 /** aggregate stddev on columns */
@@ -33896,7 +34275,7 @@ export interface tournament_registration_unlocks_sum_fields {
 
 
 /** update columns of table "tournament_registration_unlocks" */
-export type tournament_registration_unlocks_update_column = 'created_at' | 'player_steam_id' | 'tournament_id'
+export type tournament_registration_unlocks_update_column = 'created_at' | 'player_steam_id' | 'team_id' | 'tournament_id'
 
 
 /** aggregate var_pop on columns */
@@ -34908,8 +35287,6 @@ export interface tournaments {
     name: Scalars['String']
     /** An object relationship */
     options: match_options
-    /** A computed field, executes function "tournament_organizer_registration_passcode" */
-    organizer_registration_passcode: (Scalars['String'] | null)
     organizer_steam_id: Scalars['bigint']
     /** An array relationship */
     organizer_teams: tournament_organizer_teams[]
@@ -34929,7 +35306,6 @@ export interface tournaments {
     prizes_aggregate: tournament_prizes_aggregate
     /** Preferred server regions for hosted matches */
     regions: Scalars['String'][]
-    registration_passcode: (Scalars['String'] | null)
     registration_type: e_tournament_registration_types_enum
     /** A computed field, executes function "tournament_registration_unlocked_for_session" */
     registration_unlocked: (Scalars['Boolean'] | null)
@@ -35032,12 +35408,9 @@ export interface tournaments_max_fields {
     /** A computed field, executes function "tournament_missed_check_in_count" */
     missed_check_in_count: (Scalars['Int'] | null)
     name: (Scalars['String'] | null)
-    /** A computed field, executes function "tournament_organizer_registration_passcode" */
-    organizer_registration_passcode: (Scalars['String'] | null)
     organizer_steam_id: (Scalars['bigint'] | null)
     /** Preferred server regions for hosted matches */
     regions: (Scalars['String'][] | null)
-    registration_passcode: (Scalars['String'] | null)
     scheduling_mode: (Scalars['String'] | null)
     start: (Scalars['timestamptz'] | null)
     __typename: 'tournaments_max_fields'
@@ -35072,12 +35445,9 @@ export interface tournaments_min_fields {
     /** A computed field, executes function "tournament_missed_check_in_count" */
     missed_check_in_count: (Scalars['Int'] | null)
     name: (Scalars['String'] | null)
-    /** A computed field, executes function "tournament_organizer_registration_passcode" */
-    organizer_registration_passcode: (Scalars['String'] | null)
     organizer_steam_id: (Scalars['bigint'] | null)
     /** Preferred server regions for hosted matches */
     regions: (Scalars['String'][] | null)
-    registration_passcode: (Scalars['String'] | null)
     scheduling_mode: (Scalars['String'] | null)
     start: (Scalars['timestamptz'] | null)
     __typename: 'tournaments_min_fields'
@@ -35095,7 +35465,7 @@ export interface tournaments_mutation_response {
 
 
 /** select columns of table "tournaments" */
-export type tournaments_select_column = 'auto_start' | 'awards_enabled' | 'banner' | 'check_in_closes_before_minutes' | 'check_in_ends_at' | 'check_in_opens_before_minutes' | 'check_in_required' | 'check_in_setting' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'homepage' | 'id' | 'invite_only' | 'is_league' | 'latitude' | 'location' | 'logo' | 'longitude' | 'match_options_id' | 'max_elo' | 'min_elo' | 'min_role' | 'name' | 'organizer_steam_id' | 'regions' | 'registration_passcode' | 'registration_type' | 'scheduling_mode' | 'start' | 'status'
+export type tournaments_select_column = 'auto_start' | 'awards_enabled' | 'banner' | 'check_in_closes_before_minutes' | 'check_in_ends_at' | 'check_in_opens_before_minutes' | 'check_in_required' | 'check_in_setting' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'homepage' | 'id' | 'invite_only' | 'is_league' | 'latitude' | 'location' | 'logo' | 'longitude' | 'match_options_id' | 'max_elo' | 'min_elo' | 'min_role' | 'name' | 'organizer_steam_id' | 'regions' | 'registration_type' | 'scheduling_mode' | 'start' | 'status'
 
 
 /** select "tournaments_aggregate_bool_exp_avg_arguments_columns" columns of table "tournaments" */
@@ -35215,7 +35585,7 @@ export interface tournaments_sum_fields {
 
 
 /** update columns of table "tournaments" */
-export type tournaments_update_column = 'auto_start' | 'awards_enabled' | 'banner' | 'check_in_closes_before_minutes' | 'check_in_ends_at' | 'check_in_opens_before_minutes' | 'check_in_required' | 'check_in_setting' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'homepage' | 'id' | 'invite_only' | 'is_league' | 'latitude' | 'location' | 'logo' | 'longitude' | 'match_options_id' | 'max_elo' | 'min_elo' | 'min_role' | 'name' | 'organizer_steam_id' | 'regions' | 'registration_passcode' | 'registration_type' | 'scheduling_mode' | 'start' | 'status'
+export type tournaments_update_column = 'auto_start' | 'awards_enabled' | 'banner' | 'check_in_closes_before_minutes' | 'check_in_ends_at' | 'check_in_opens_before_minutes' | 'check_in_required' | 'check_in_setting' | 'created_at' | 'description' | 'discord_guild_id' | 'discord_notifications_enabled' | 'discord_notify_Canceled' | 'discord_notify_Finished' | 'discord_notify_Forfeit' | 'discord_notify_Live' | 'discord_notify_MapPaused' | 'discord_notify_PickingPlayers' | 'discord_notify_Scheduled' | 'discord_notify_Surrendered' | 'discord_notify_Tie' | 'discord_notify_Veto' | 'discord_notify_WaitingForCheckIn' | 'discord_notify_WaitingForServer' | 'discord_role_id' | 'discord_voice_enabled' | 'discord_webhook' | 'homepage' | 'id' | 'invite_only' | 'is_league' | 'latitude' | 'location' | 'logo' | 'longitude' | 'match_options_id' | 'max_elo' | 'min_elo' | 'min_role' | 'name' | 'organizer_steam_id' | 'regions' | 'registration_type' | 'scheduling_mode' | 'start' | 'status'
 
 
 /** aggregate var_pop on columns */
@@ -46233,6 +46603,13 @@ export interface TournamentAwardGenqlSelection{
 
 export interface TournamentDraftOutputGenqlSelection{
     teams_created?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface TournamentInviteCodeOutputGenqlSelection{
+    code?: boolean | number
+    id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -69919,6 +70296,8 @@ export interface mutation_rootGenqlSelection{
     createScheduledMatch?: (CreateScheduledMatchOutputGenqlSelection & { __args: {lineup_1: ScheduledLineupInput, lineup_2: ScheduledLineupInput, options: Scalars['jsonb'], scheduled_at: Scalars['String']} })
     /** Create directory on game server */
     createServerDirectory?: (SuccessOutputGenqlSelection & { __args: {dir_path: Scalars['String'], node_id: Scalars['String'], server_id?: (Scalars['String'] | null)} })
+    /** Organizer mints an expiring, use capped invite link for a tournament */
+    createTournamentInviteCode?: (TournamentInviteCodeOutputGenqlSelection & { __args: {expires_in_minutes?: (Scalars['Int'] | null), max_uses?: (Scalars['Int'] | null), tournament_id: Scalars['uuid']} })
     /** Delete a catalog award */
     deleteAward?: (SuccessOutputGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** Delete a saved clip and its underlying S3 object */
@@ -70948,6 +71327,18 @@ export interface mutation_rootGenqlSelection{
     where: tournament_free_agents_bool_exp} })
     /** delete single row from the table: "tournament_free_agents" */
     delete_tournament_free_agents_by_pk?: (tournament_free_agentsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "tournament_invite_code_uses" */
+    delete_tournament_invite_code_uses?: (tournament_invite_code_uses_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: tournament_invite_code_uses_bool_exp} })
+    /** delete single row from the table: "tournament_invite_code_uses" */
+    delete_tournament_invite_code_uses_by_pk?: (tournament_invite_code_usesGenqlSelection & { __args: {invite_code_id: Scalars['uuid'], player_steam_id: Scalars['bigint']} })
+    /** delete data from the table: "tournament_invite_codes" */
+    delete_tournament_invite_codes?: (tournament_invite_codes_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: tournament_invite_codes_bool_exp} })
+    /** delete single row from the table: "tournament_invite_codes" */
+    delete_tournament_invite_codes_by_pk?: (tournament_invite_codesGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "tournament_invites" */
     delete_tournament_invites?: (tournament_invites_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -70986,8 +71377,6 @@ export interface mutation_rootGenqlSelection{
     delete_tournament_registration_unlocks?: (tournament_registration_unlocks_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
     where: tournament_registration_unlocks_bool_exp} })
-    /** delete single row from the table: "tournament_registration_unlocks" */
-    delete_tournament_registration_unlocks_by_pk?: (tournament_registration_unlocksGenqlSelection & { __args: {player_steam_id: Scalars['bigint'], tournament_id: Scalars['uuid']} })
     /** delete data from the table: "tournament_stage_windows" */
     delete_tournament_stage_windows?: (tournament_stage_windows_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -73190,6 +73579,30 @@ export interface mutation_rootGenqlSelection{
     object: tournament_free_agents_insert_input, 
     /** upsert condition */
     on_conflict?: (tournament_free_agents_on_conflict | null)} })
+    /** insert data into the table: "tournament_invite_code_uses" */
+    insert_tournament_invite_code_uses?: (tournament_invite_code_uses_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: tournament_invite_code_uses_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (tournament_invite_code_uses_on_conflict | null)} })
+    /** insert a single row into the table: "tournament_invite_code_uses" */
+    insert_tournament_invite_code_uses_one?: (tournament_invite_code_usesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: tournament_invite_code_uses_insert_input, 
+    /** upsert condition */
+    on_conflict?: (tournament_invite_code_uses_on_conflict | null)} })
+    /** insert data into the table: "tournament_invite_codes" */
+    insert_tournament_invite_codes?: (tournament_invite_codes_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: tournament_invite_codes_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (tournament_invite_codes_on_conflict | null)} })
+    /** insert a single row into the table: "tournament_invite_codes" */
+    insert_tournament_invite_codes_one?: (tournament_invite_codesGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: tournament_invite_codes_insert_input, 
+    /** upsert condition */
+    on_conflict?: (tournament_invite_codes_on_conflict | null)} })
     /** insert data into the table: "tournament_invites" */
     insert_tournament_invites?: (tournament_invites_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -73669,6 +74082,8 @@ export interface mutation_rootGenqlSelection{
     /** Re-read which plugins are actually on a node */
     reconcileNodePlugins?: (ReconcileNodePluginsOutputGenqlSelection & { __args: {nodeId: Scalars['String']} })
     reconnectLive?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['uuid']} })
+    /** Spend a tournament invite link for an unlock on an invite only tournament */
+    redeemTournamentInviteCode?: (SuccessOutputGenqlSelection & { __args: {code: Scalars['String'], tournament_id: Scalars['uuid']} })
     /** Reindex every player into the Typesense search index (admin only). Runs in the background; track via refreshAllPlayersStatus. */
     refreshAllPlayers?: ReindexStartedOutputGenqlSelection
     /** Return the progress of the player reindex run (admin only). */
@@ -73753,6 +74168,8 @@ export interface mutation_rootGenqlSelection{
     retryPendingMatchImport?: (PendingMatchImportActionOutputGenqlSelection & { __args: {valve_match_id: Scalars['String']} })
     /** Revoke a hand-granted award */
     revokeAward?: (SuccessOutputGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** Organizer kills a tournament invite link without losing who already used it */
+    revokeTournamentInviteCode?: (SuccessOutputGenqlSelection & { __args: {invite_code_id: Scalars['uuid']} })
     sanctionServerPlayer?: (SanctionResultGenqlSelection & { __args: {duration?: (Scalars['Float'] | null), reason?: (Scalars['String'] | null), serverId?: (Scalars['String'] | null), steam_id: Scalars['String'], type: Scalars['String']} })
     /** Create or update a catalog award */
     saveAward?: (AwardGenqlSelection & { __args: {allow_multiple?: (Scalars['Boolean'] | null), description?: (Scalars['String'] | null), event_id?: (Scalars['uuid'] | null), id?: (Scalars['uuid'] | null), league_season_id?: (Scalars['uuid'] | null), name: Scalars['String'], season_id?: (Scalars['uuid'] | null), silhouette?: (Scalars['Int'] | null), tier: Scalars['String'], tournament_id?: (Scalars['uuid'] | null)} })
@@ -73830,8 +74247,6 @@ export interface mutation_rootGenqlSelection{
     uninstallGamePlugin?: (SuccessOutputGenqlSelection & { __args: {force?: (Scalars['Boolean'] | null), slug: Scalars['String']} })
     unlinkDiscord?: SuccessOutputGenqlSelection
     unlinkSteamMatchHistory?: SuccessOutputGenqlSelection
-    /** Trade the registration passcode for an unlock on an invite only tournament */
-    unlockTournamentRegistration?: (SuccessOutputGenqlSelection & { __args: {passcode: Scalars['String'], tournament_id: Scalars['uuid']} })
     unsanctionServerPlayer?: (SanctionResultGenqlSelection & { __args: {serverId?: (Scalars['String'] | null), steam_id: Scalars['String'], type: Scalars['String']} })
     /** Owner-only patch for clip title / visibility / target_steam_id. */
     updateClip?: (SuccessOutputGenqlSelection & { __args: {clip_id: Scalars['uuid'], target_steam_id?: (Scalars['String'] | null), title?: (Scalars['String'] | null), visibility?: (Scalars['String'] | null)} })
@@ -76863,6 +77278,42 @@ export interface mutation_rootGenqlSelection{
     update_tournament_free_agents_many?: (tournament_free_agents_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: tournament_free_agents_updates[]} })
+    /** update data of the table: "tournament_invite_code_uses" */
+    update_tournament_invite_code_uses?: (tournament_invite_code_uses_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (tournament_invite_code_uses_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (tournament_invite_code_uses_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: tournament_invite_code_uses_bool_exp} })
+    /** update single row of the table: "tournament_invite_code_uses" */
+    update_tournament_invite_code_uses_by_pk?: (tournament_invite_code_usesGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (tournament_invite_code_uses_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (tournament_invite_code_uses_set_input | null), pk_columns: tournament_invite_code_uses_pk_columns_input} })
+    /** update multiples rows of table: "tournament_invite_code_uses" */
+    update_tournament_invite_code_uses_many?: (tournament_invite_code_uses_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: tournament_invite_code_uses_updates[]} })
+    /** update data of the table: "tournament_invite_codes" */
+    update_tournament_invite_codes?: (tournament_invite_codes_mutation_responseGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (tournament_invite_codes_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (tournament_invite_codes_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: tournament_invite_codes_bool_exp} })
+    /** update single row of the table: "tournament_invite_codes" */
+    update_tournament_invite_codes_by_pk?: (tournament_invite_codesGenqlSelection & { __args: {
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (tournament_invite_codes_inc_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (tournament_invite_codes_set_input | null), pk_columns: tournament_invite_codes_pk_columns_input} })
+    /** update multiples rows of table: "tournament_invite_codes" */
+    update_tournament_invite_codes_many?: (tournament_invite_codes_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: tournament_invite_codes_updates[]} })
     /** update data of the table: "tournament_invites" */
     update_tournament_invites?: (tournament_invites_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -76969,12 +77420,6 @@ export interface mutation_rootGenqlSelection{
     _set?: (tournament_registration_unlocks_set_input | null), 
     /** filter the rows which have to be updated */
     where: tournament_registration_unlocks_bool_exp} })
-    /** update single row of the table: "tournament_registration_unlocks" */
-    update_tournament_registration_unlocks_by_pk?: (tournament_registration_unlocksGenqlSelection & { __args: {
-    /** increments the numeric columns with given value of the filtered values */
-    _inc?: (tournament_registration_unlocks_inc_input | null), 
-    /** sets the columns of the filtered rows to the given values */
-    _set?: (tournament_registration_unlocks_set_input | null), pk_columns: tournament_registration_unlocks_pk_columns_input} })
     /** update multiples rows of table: "tournament_registration_unlocks" */
     update_tournament_registration_unlocks_many?: (tournament_registration_unlocks_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
@@ -94227,6 +94672,58 @@ export interface query_rootGenqlSelection{
     where?: (tournament_free_agents_bool_exp | null)} })
     /** fetch data from the table: "tournament_free_agents" using primary key columns */
     tournament_free_agents_by_pk?: (tournament_free_agentsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "tournament_invite_code_uses" */
+    tournament_invite_code_uses?: (tournament_invite_code_usesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_invite_code_uses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_invite_code_uses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_invite_code_uses_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "tournament_invite_code_uses" */
+    tournament_invite_code_uses_aggregate?: (tournament_invite_code_uses_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_invite_code_uses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_invite_code_uses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_invite_code_uses_bool_exp | null)} })
+    /** fetch data from the table: "tournament_invite_code_uses" using primary key columns */
+    tournament_invite_code_uses_by_pk?: (tournament_invite_code_usesGenqlSelection & { __args: {invite_code_id: Scalars['uuid'], player_steam_id: Scalars['bigint']} })
+    /** fetch data from the table: "tournament_invite_codes" */
+    tournament_invite_codes?: (tournament_invite_codesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_invite_codes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_invite_codes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_invite_codes_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "tournament_invite_codes" */
+    tournament_invite_codes_aggregate?: (tournament_invite_codes_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_invite_codes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_invite_codes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_invite_codes_bool_exp | null)} })
+    /** fetch data from the table: "tournament_invite_codes" using primary key columns */
+    tournament_invite_codes_by_pk?: (tournament_invite_codesGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "tournament_invites" */
     tournament_invites?: (tournament_invitesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -94405,8 +94902,6 @@ export interface query_rootGenqlSelection{
     order_by?: (tournament_registration_unlocks_order_by[] | null), 
     /** filter the rows returned */
     where?: (tournament_registration_unlocks_bool_exp | null)} })
-    /** fetch data from the table: "tournament_registration_unlocks" using primary key columns */
-    tournament_registration_unlocks_by_pk?: (tournament_registration_unlocksGenqlSelection & { __args: {player_steam_id: Scalars['bigint'], tournament_id: Scalars['uuid']} })
     /** fetch data from the table: "tournament_stage_windows" */
     tournament_stage_windows?: (tournament_stage_windowsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -103365,6 +103860,74 @@ export interface subscription_rootGenqlSelection{
     cursor: (tournament_free_agents_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (tournament_free_agents_bool_exp | null)} })
+    /** fetch data from the table: "tournament_invite_code_uses" */
+    tournament_invite_code_uses?: (tournament_invite_code_usesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_invite_code_uses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_invite_code_uses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_invite_code_uses_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "tournament_invite_code_uses" */
+    tournament_invite_code_uses_aggregate?: (tournament_invite_code_uses_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_invite_code_uses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_invite_code_uses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_invite_code_uses_bool_exp | null)} })
+    /** fetch data from the table: "tournament_invite_code_uses" using primary key columns */
+    tournament_invite_code_uses_by_pk?: (tournament_invite_code_usesGenqlSelection & { __args: {invite_code_id: Scalars['uuid'], player_steam_id: Scalars['bigint']} })
+    /** fetch data from the table in a streaming manner: "tournament_invite_code_uses" */
+    tournament_invite_code_uses_stream?: (tournament_invite_code_usesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (tournament_invite_code_uses_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (tournament_invite_code_uses_bool_exp | null)} })
+    /** fetch data from the table: "tournament_invite_codes" */
+    tournament_invite_codes?: (tournament_invite_codesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_invite_codes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_invite_codes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_invite_codes_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "tournament_invite_codes" */
+    tournament_invite_codes_aggregate?: (tournament_invite_codes_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_invite_codes_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_invite_codes_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_invite_codes_bool_exp | null)} })
+    /** fetch data from the table: "tournament_invite_codes" using primary key columns */
+    tournament_invite_codes_by_pk?: (tournament_invite_codesGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "tournament_invite_codes" */
+    tournament_invite_codes_stream?: (tournament_invite_codesGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (tournament_invite_codes_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (tournament_invite_codes_bool_exp | null)} })
     /** fetch data from the table: "tournament_invites" */
     tournament_invites?: (tournament_invitesGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -103591,8 +104154,6 @@ export interface subscription_rootGenqlSelection{
     order_by?: (tournament_registration_unlocks_order_by[] | null), 
     /** filter the rows returned */
     where?: (tournament_registration_unlocks_bool_exp | null)} })
-    /** fetch data from the table: "tournament_registration_unlocks" using primary key columns */
-    tournament_registration_unlocks_by_pk?: (tournament_registration_unlocksGenqlSelection & { __args: {player_steam_id: Scalars['bigint'], tournament_id: Scalars['uuid']} })
     /** fetch data from the table in a streaming manner: "tournament_registration_unlocks" */
     tournament_registration_unlocks_stream?: (tournament_registration_unlocksGenqlSelection & { __args: {
     /** maximum number of rows returned in a single batch */
@@ -108949,6 +109510,497 @@ export interface tournament_free_agents_variance_fieldsGenqlSelection{
 export interface tournament_free_agents_variance_order_by {player_steam_id?: (order_by | null)}
 
 
+/** columns and relationships of "tournament_invite_code_uses" */
+export interface tournament_invite_code_usesGenqlSelection{
+    /** An object relationship */
+    invite_code?: tournament_invite_codesGenqlSelection
+    invite_code_id?: boolean | number
+    /** An object relationship */
+    player?: playersGenqlSelection
+    player_steam_id?: boolean | number
+    /** An object relationship */
+    team?: teamsGenqlSelection
+    team_id?: boolean | number
+    used_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_aggregateGenqlSelection{
+    aggregate?: tournament_invite_code_uses_aggregate_fieldsGenqlSelection
+    nodes?: tournament_invite_code_usesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface tournament_invite_code_uses_aggregate_bool_exp {count?: (tournament_invite_code_uses_aggregate_bool_exp_count | null)}
+
+export interface tournament_invite_code_uses_aggregate_bool_exp_count {arguments?: (tournament_invite_code_uses_select_column[] | null),distinct?: (Scalars['Boolean'] | null),filter?: (tournament_invite_code_uses_bool_exp | null),predicate: Int_comparison_exp}
+
+
+/** aggregate fields of "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_aggregate_fieldsGenqlSelection{
+    avg?: tournament_invite_code_uses_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (tournament_invite_code_uses_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: tournament_invite_code_uses_max_fieldsGenqlSelection
+    min?: tournament_invite_code_uses_min_fieldsGenqlSelection
+    stddev?: tournament_invite_code_uses_stddev_fieldsGenqlSelection
+    stddev_pop?: tournament_invite_code_uses_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: tournament_invite_code_uses_stddev_samp_fieldsGenqlSelection
+    sum?: tournament_invite_code_uses_sum_fieldsGenqlSelection
+    var_pop?: tournament_invite_code_uses_var_pop_fieldsGenqlSelection
+    var_samp?: tournament_invite_code_uses_var_samp_fieldsGenqlSelection
+    variance?: tournament_invite_code_uses_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by aggregate values of table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_aggregate_order_by {avg?: (tournament_invite_code_uses_avg_order_by | null),count?: (order_by | null),max?: (tournament_invite_code_uses_max_order_by | null),min?: (tournament_invite_code_uses_min_order_by | null),stddev?: (tournament_invite_code_uses_stddev_order_by | null),stddev_pop?: (tournament_invite_code_uses_stddev_pop_order_by | null),stddev_samp?: (tournament_invite_code_uses_stddev_samp_order_by | null),sum?: (tournament_invite_code_uses_sum_order_by | null),var_pop?: (tournament_invite_code_uses_var_pop_order_by | null),var_samp?: (tournament_invite_code_uses_var_samp_order_by | null),variance?: (tournament_invite_code_uses_variance_order_by | null)}
+
+
+/** input type for inserting array relation for remote table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_arr_rel_insert_input {data: tournament_invite_code_uses_insert_input[],
+/** upsert condition */
+on_conflict?: (tournament_invite_code_uses_on_conflict | null)}
+
+
+/** aggregate avg on columns */
+export interface tournament_invite_code_uses_avg_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by avg() on columns of table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_avg_order_by {player_steam_id?: (order_by | null)}
+
+
+/** Boolean expression to filter rows from the table "tournament_invite_code_uses". All fields are combined with a logical 'AND'. */
+export interface tournament_invite_code_uses_bool_exp {_and?: (tournament_invite_code_uses_bool_exp[] | null),_not?: (tournament_invite_code_uses_bool_exp | null),_or?: (tournament_invite_code_uses_bool_exp[] | null),invite_code?: (tournament_invite_codes_bool_exp | null),invite_code_id?: (uuid_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),used_at?: (timestamptz_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_inc_input {player_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_insert_input {invite_code?: (tournament_invite_codes_obj_rel_insert_input | null),invite_code_id?: (Scalars['uuid'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),used_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate max on columns */
+export interface tournament_invite_code_uses_max_fieldsGenqlSelection{
+    invite_code_id?: boolean | number
+    player_steam_id?: boolean | number
+    team_id?: boolean | number
+    used_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by max() on columns of table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_max_order_by {invite_code_id?: (order_by | null),player_steam_id?: (order_by | null),team_id?: (order_by | null),used_at?: (order_by | null)}
+
+
+/** aggregate min on columns */
+export interface tournament_invite_code_uses_min_fieldsGenqlSelection{
+    invite_code_id?: boolean | number
+    player_steam_id?: boolean | number
+    team_id?: boolean | number
+    used_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by min() on columns of table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_min_order_by {invite_code_id?: (order_by | null),player_steam_id?: (order_by | null),team_id?: (order_by | null),used_at?: (order_by | null)}
+
+
+/** response of any mutation on the table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: tournament_invite_code_usesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_on_conflict {constraint: tournament_invite_code_uses_constraint,update_columns?: tournament_invite_code_uses_update_column[],where?: (tournament_invite_code_uses_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "tournament_invite_code_uses". */
+export interface tournament_invite_code_uses_order_by {invite_code?: (tournament_invite_codes_order_by | null),invite_code_id?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),used_at?: (order_by | null)}
+
+
+/** primary key columns input for table: tournament_invite_code_uses */
+export interface tournament_invite_code_uses_pk_columns_input {invite_code_id: Scalars['uuid'],player_steam_id: Scalars['bigint']}
+
+
+/** input type for updating data in table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_set_input {invite_code_id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),team_id?: (Scalars['uuid'] | null),used_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface tournament_invite_code_uses_stddev_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev() on columns of table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_stddev_order_by {player_steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_pop on columns */
+export interface tournament_invite_code_uses_stddev_pop_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_pop() on columns of table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_stddev_pop_order_by {player_steam_id?: (order_by | null)}
+
+
+/** aggregate stddev_samp on columns */
+export interface tournament_invite_code_uses_stddev_samp_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by stddev_samp() on columns of table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_stddev_samp_order_by {player_steam_id?: (order_by | null)}
+
+
+/** Streaming cursor of the table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: tournament_invite_code_uses_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface tournament_invite_code_uses_stream_cursor_value_input {invite_code_id?: (Scalars['uuid'] | null),player_steam_id?: (Scalars['bigint'] | null),team_id?: (Scalars['uuid'] | null),used_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate sum on columns */
+export interface tournament_invite_code_uses_sum_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by sum() on columns of table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_sum_order_by {player_steam_id?: (order_by | null)}
+
+export interface tournament_invite_code_uses_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (tournament_invite_code_uses_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (tournament_invite_code_uses_set_input | null),
+/** filter the rows which have to be updated */
+where: tournament_invite_code_uses_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface tournament_invite_code_uses_var_pop_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_pop() on columns of table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_var_pop_order_by {player_steam_id?: (order_by | null)}
+
+
+/** aggregate var_samp on columns */
+export interface tournament_invite_code_uses_var_samp_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by var_samp() on columns of table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_var_samp_order_by {player_steam_id?: (order_by | null)}
+
+
+/** aggregate variance on columns */
+export interface tournament_invite_code_uses_variance_fieldsGenqlSelection{
+    player_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** order by variance() on columns of table "tournament_invite_code_uses" */
+export interface tournament_invite_code_uses_variance_order_by {player_steam_id?: (order_by | null)}
+
+
+/** columns and relationships of "tournament_invite_codes" */
+export interface tournament_invite_codesGenqlSelection{
+    code?: boolean | number
+    created_at?: boolean | number
+    /** An object relationship */
+    created_by?: playersGenqlSelection
+    created_by_player_steam_id?: boolean | number
+    expires_at?: boolean | number
+    id?: boolean | number
+    max_uses?: boolean | number
+    revoked_at?: boolean | number
+    /** An object relationship */
+    tournament?: tournamentsGenqlSelection
+    tournament_id?: boolean | number
+    /** An array relationship */
+    used_by?: (tournament_invite_code_usesGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_invite_code_uses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_invite_code_uses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_invite_code_uses_bool_exp | null)} })
+    /** An aggregate relationship */
+    used_by_aggregate?: (tournament_invite_code_uses_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (tournament_invite_code_uses_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (tournament_invite_code_uses_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (tournament_invite_code_uses_bool_exp | null)} })
+    uses?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "tournament_invite_codes" */
+export interface tournament_invite_codes_aggregateGenqlSelection{
+    aggregate?: tournament_invite_codes_aggregate_fieldsGenqlSelection
+    nodes?: tournament_invite_codesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "tournament_invite_codes" */
+export interface tournament_invite_codes_aggregate_fieldsGenqlSelection{
+    avg?: tournament_invite_codes_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (tournament_invite_codes_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: tournament_invite_codes_max_fieldsGenqlSelection
+    min?: tournament_invite_codes_min_fieldsGenqlSelection
+    stddev?: tournament_invite_codes_stddev_fieldsGenqlSelection
+    stddev_pop?: tournament_invite_codes_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: tournament_invite_codes_stddev_samp_fieldsGenqlSelection
+    sum?: tournament_invite_codes_sum_fieldsGenqlSelection
+    var_pop?: tournament_invite_codes_var_pop_fieldsGenqlSelection
+    var_samp?: tournament_invite_codes_var_samp_fieldsGenqlSelection
+    variance?: tournament_invite_codes_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate avg on columns */
+export interface tournament_invite_codes_avg_fieldsGenqlSelection{
+    created_by_player_steam_id?: boolean | number
+    max_uses?: boolean | number
+    uses?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "tournament_invite_codes". All fields are combined with a logical 'AND'. */
+export interface tournament_invite_codes_bool_exp {_and?: (tournament_invite_codes_bool_exp[] | null),_not?: (tournament_invite_codes_bool_exp | null),_or?: (tournament_invite_codes_bool_exp[] | null),code?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),created_by?: (players_bool_exp | null),created_by_player_steam_id?: (bigint_comparison_exp | null),expires_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),max_uses?: (Int_comparison_exp | null),revoked_at?: (timestamptz_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null),used_by?: (tournament_invite_code_uses_bool_exp | null),used_by_aggregate?: (tournament_invite_code_uses_aggregate_bool_exp | null),uses?: (Int_comparison_exp | null)}
+
+
+/** input type for incrementing numeric columns in table "tournament_invite_codes" */
+export interface tournament_invite_codes_inc_input {created_by_player_steam_id?: (Scalars['bigint'] | null),max_uses?: (Scalars['Int'] | null),uses?: (Scalars['Int'] | null)}
+
+
+/** input type for inserting data into table "tournament_invite_codes" */
+export interface tournament_invite_codes_insert_input {code?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),created_by?: (players_obj_rel_insert_input | null),created_by_player_steam_id?: (Scalars['bigint'] | null),expires_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),max_uses?: (Scalars['Int'] | null),revoked_at?: (Scalars['timestamptz'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null),used_by?: (tournament_invite_code_uses_arr_rel_insert_input | null),uses?: (Scalars['Int'] | null)}
+
+
+/** aggregate max on columns */
+export interface tournament_invite_codes_max_fieldsGenqlSelection{
+    code?: boolean | number
+    created_at?: boolean | number
+    created_by_player_steam_id?: boolean | number
+    expires_at?: boolean | number
+    id?: boolean | number
+    max_uses?: boolean | number
+    revoked_at?: boolean | number
+    tournament_id?: boolean | number
+    uses?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface tournament_invite_codes_min_fieldsGenqlSelection{
+    code?: boolean | number
+    created_at?: boolean | number
+    created_by_player_steam_id?: boolean | number
+    expires_at?: boolean | number
+    id?: boolean | number
+    max_uses?: boolean | number
+    revoked_at?: boolean | number
+    tournament_id?: boolean | number
+    uses?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "tournament_invite_codes" */
+export interface tournament_invite_codes_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: tournament_invite_codesGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** input type for inserting object relation for remote table "tournament_invite_codes" */
+export interface tournament_invite_codes_obj_rel_insert_input {data: tournament_invite_codes_insert_input,
+/** upsert condition */
+on_conflict?: (tournament_invite_codes_on_conflict | null)}
+
+
+/** on_conflict condition type for table "tournament_invite_codes" */
+export interface tournament_invite_codes_on_conflict {constraint: tournament_invite_codes_constraint,update_columns?: tournament_invite_codes_update_column[],where?: (tournament_invite_codes_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "tournament_invite_codes". */
+export interface tournament_invite_codes_order_by {code?: (order_by | null),created_at?: (order_by | null),created_by?: (players_order_by | null),created_by_player_steam_id?: (order_by | null),expires_at?: (order_by | null),id?: (order_by | null),max_uses?: (order_by | null),revoked_at?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null),used_by_aggregate?: (tournament_invite_code_uses_aggregate_order_by | null),uses?: (order_by | null)}
+
+
+/** primary key columns input for table: tournament_invite_codes */
+export interface tournament_invite_codes_pk_columns_input {id: Scalars['uuid']}
+
+
+/** input type for updating data in table "tournament_invite_codes" */
+export interface tournament_invite_codes_set_input {code?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),created_by_player_steam_id?: (Scalars['bigint'] | null),expires_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),max_uses?: (Scalars['Int'] | null),revoked_at?: (Scalars['timestamptz'] | null),tournament_id?: (Scalars['uuid'] | null),uses?: (Scalars['Int'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface tournament_invite_codes_stddev_fieldsGenqlSelection{
+    created_by_player_steam_id?: boolean | number
+    max_uses?: boolean | number
+    uses?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface tournament_invite_codes_stddev_pop_fieldsGenqlSelection{
+    created_by_player_steam_id?: boolean | number
+    max_uses?: boolean | number
+    uses?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface tournament_invite_codes_stddev_samp_fieldsGenqlSelection{
+    created_by_player_steam_id?: boolean | number
+    max_uses?: boolean | number
+    uses?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "tournament_invite_codes" */
+export interface tournament_invite_codes_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: tournament_invite_codes_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface tournament_invite_codes_stream_cursor_value_input {code?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),created_by_player_steam_id?: (Scalars['bigint'] | null),expires_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),max_uses?: (Scalars['Int'] | null),revoked_at?: (Scalars['timestamptz'] | null),tournament_id?: (Scalars['uuid'] | null),uses?: (Scalars['Int'] | null)}
+
+
+/** aggregate sum on columns */
+export interface tournament_invite_codes_sum_fieldsGenqlSelection{
+    created_by_player_steam_id?: boolean | number
+    max_uses?: boolean | number
+    uses?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface tournament_invite_codes_updates {
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (tournament_invite_codes_inc_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (tournament_invite_codes_set_input | null),
+/** filter the rows which have to be updated */
+where: tournament_invite_codes_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface tournament_invite_codes_var_pop_fieldsGenqlSelection{
+    created_by_player_steam_id?: boolean | number
+    max_uses?: boolean | number
+    uses?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface tournament_invite_codes_var_samp_fieldsGenqlSelection{
+    created_by_player_steam_id?: boolean | number
+    max_uses?: boolean | number
+    uses?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface tournament_invite_codes_variance_fieldsGenqlSelection{
+    created_by_player_steam_id?: boolean | number
+    max_uses?: boolean | number
+    uses?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
 /** columns and relationships of "tournament_invites" */
 export interface tournament_invitesGenqlSelection{
     created_at?: boolean | number
@@ -108959,6 +110011,9 @@ export interface tournament_invitesGenqlSelection{
     /** An object relationship */
     player?: playersGenqlSelection
     steam_id?: boolean | number
+    /** An object relationship */
+    team?: teamsGenqlSelection
+    team_id?: boolean | number
     /** An object relationship */
     tournament?: tournamentsGenqlSelection
     tournament_id?: boolean | number
@@ -109004,7 +110059,7 @@ export interface tournament_invites_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "tournament_invites". All fields are combined with a logical 'AND'. */
-export interface tournament_invites_bool_exp {_and?: (tournament_invites_bool_exp[] | null),_not?: (tournament_invites_bool_exp | null),_or?: (tournament_invites_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),invited_by?: (players_bool_exp | null),invited_by_player_steam_id?: (bigint_comparison_exp | null),player?: (players_bool_exp | null),steam_id?: (bigint_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null)}
+export interface tournament_invites_bool_exp {_and?: (tournament_invites_bool_exp[] | null),_not?: (tournament_invites_bool_exp | null),_or?: (tournament_invites_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),id?: (uuid_comparison_exp | null),invited_by?: (players_bool_exp | null),invited_by_player_steam_id?: (bigint_comparison_exp | null),player?: (players_bool_exp | null),steam_id?: (bigint_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournament_invites" */
@@ -109012,7 +110067,7 @@ export interface tournament_invites_inc_input {invited_by_player_steam_id?: (Sca
 
 
 /** input type for inserting data into table "tournament_invites" */
-export interface tournament_invites_insert_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),invited_by?: (players_obj_rel_insert_input | null),invited_by_player_steam_id?: (Scalars['bigint'] | null),player?: (players_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null)}
+export interface tournament_invites_insert_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),invited_by?: (players_obj_rel_insert_input | null),invited_by_player_steam_id?: (Scalars['bigint'] | null),player?: (players_obj_rel_insert_input | null),steam_id?: (Scalars['bigint'] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
@@ -109021,6 +110076,7 @@ export interface tournament_invites_max_fieldsGenqlSelection{
     id?: boolean | number
     invited_by_player_steam_id?: boolean | number
     steam_id?: boolean | number
+    team_id?: boolean | number
     tournament_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -109033,6 +110089,7 @@ export interface tournament_invites_min_fieldsGenqlSelection{
     id?: boolean | number
     invited_by_player_steam_id?: boolean | number
     steam_id?: boolean | number
+    team_id?: boolean | number
     tournament_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -109055,7 +110112,7 @@ export interface tournament_invites_on_conflict {constraint: tournament_invites_
 
 
 /** Ordering options when selecting data from "tournament_invites". */
-export interface tournament_invites_order_by {created_at?: (order_by | null),id?: (order_by | null),invited_by?: (players_order_by | null),invited_by_player_steam_id?: (order_by | null),player?: (players_order_by | null),steam_id?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null)}
+export interface tournament_invites_order_by {created_at?: (order_by | null),id?: (order_by | null),invited_by?: (players_order_by | null),invited_by_player_steam_id?: (order_by | null),player?: (players_order_by | null),steam_id?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null)}
 
 
 /** primary key columns input for table: tournament_invites */
@@ -109063,7 +110120,7 @@ export interface tournament_invites_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "tournament_invites" */
-export interface tournament_invites_set_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),invited_by_player_steam_id?: (Scalars['bigint'] | null),steam_id?: (Scalars['bigint'] | null),tournament_id?: (Scalars['uuid'] | null)}
+export interface tournament_invites_set_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),invited_by_player_steam_id?: (Scalars['bigint'] | null),steam_id?: (Scalars['bigint'] | null),team_id?: (Scalars['uuid'] | null),tournament_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -109102,7 +110159,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface tournament_invites_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),invited_by_player_steam_id?: (Scalars['bigint'] | null),steam_id?: (Scalars['bigint'] | null),tournament_id?: (Scalars['uuid'] | null)}
+export interface tournament_invites_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),id?: (Scalars['uuid'] | null),invited_by_player_steam_id?: (Scalars['bigint'] | null),steam_id?: (Scalars['bigint'] | null),team_id?: (Scalars['uuid'] | null),tournament_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
@@ -110234,6 +111291,9 @@ export interface tournament_registration_unlocksGenqlSelection{
     player?: playersGenqlSelection
     player_steam_id?: boolean | number
     /** An object relationship */
+    team?: teamsGenqlSelection
+    team_id?: boolean | number
+    /** An object relationship */
     tournament?: tournamentsGenqlSelection
     tournament_id?: boolean | number
     __typename?: boolean | number
@@ -110277,7 +111337,7 @@ export interface tournament_registration_unlocks_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "tournament_registration_unlocks". All fields are combined with a logical 'AND'. */
-export interface tournament_registration_unlocks_bool_exp {_and?: (tournament_registration_unlocks_bool_exp[] | null),_not?: (tournament_registration_unlocks_bool_exp | null),_or?: (tournament_registration_unlocks_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null)}
+export interface tournament_registration_unlocks_bool_exp {_and?: (tournament_registration_unlocks_bool_exp[] | null),_not?: (tournament_registration_unlocks_bool_exp | null),_or?: (tournament_registration_unlocks_bool_exp[] | null),created_at?: (timestamptz_comparison_exp | null),player?: (players_bool_exp | null),player_steam_id?: (bigint_comparison_exp | null),team?: (teams_bool_exp | null),team_id?: (uuid_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_id?: (uuid_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournament_registration_unlocks" */
@@ -110285,13 +111345,14 @@ export interface tournament_registration_unlocks_inc_input {player_steam_id?: (S
 
 
 /** input type for inserting data into table "tournament_registration_unlocks" */
-export interface tournament_registration_unlocks_insert_input {created_at?: (Scalars['timestamptz'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null)}
+export interface tournament_registration_unlocks_insert_input {created_at?: (Scalars['timestamptz'] | null),player?: (players_obj_rel_insert_input | null),player_steam_id?: (Scalars['bigint'] | null),team?: (teams_obj_rel_insert_input | null),team_id?: (Scalars['uuid'] | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate max on columns */
 export interface tournament_registration_unlocks_max_fieldsGenqlSelection{
     created_at?: boolean | number
     player_steam_id?: boolean | number
+    team_id?: boolean | number
     tournament_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -110302,6 +111363,7 @@ export interface tournament_registration_unlocks_max_fieldsGenqlSelection{
 export interface tournament_registration_unlocks_min_fieldsGenqlSelection{
     created_at?: boolean | number
     player_steam_id?: boolean | number
+    team_id?: boolean | number
     tournament_id?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
@@ -110324,15 +111386,11 @@ export interface tournament_registration_unlocks_on_conflict {constraint: tourna
 
 
 /** Ordering options when selecting data from "tournament_registration_unlocks". */
-export interface tournament_registration_unlocks_order_by {created_at?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null)}
-
-
-/** primary key columns input for table: tournament_registration_unlocks */
-export interface tournament_registration_unlocks_pk_columns_input {player_steam_id: Scalars['bigint'],tournament_id: Scalars['uuid']}
+export interface tournament_registration_unlocks_order_by {created_at?: (order_by | null),player?: (players_order_by | null),player_steam_id?: (order_by | null),team?: (teams_order_by | null),team_id?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_id?: (order_by | null)}
 
 
 /** input type for updating data in table "tournament_registration_unlocks" */
-export interface tournament_registration_unlocks_set_input {created_at?: (Scalars['timestamptz'] | null),player_steam_id?: (Scalars['bigint'] | null),tournament_id?: (Scalars['uuid'] | null)}
+export interface tournament_registration_unlocks_set_input {created_at?: (Scalars['timestamptz'] | null),player_steam_id?: (Scalars['bigint'] | null),team_id?: (Scalars['uuid'] | null),tournament_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -110368,7 +111426,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface tournament_registration_unlocks_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),player_steam_id?: (Scalars['bigint'] | null),tournament_id?: (Scalars['uuid'] | null)}
+export interface tournament_registration_unlocks_stream_cursor_value_input {created_at?: (Scalars['timestamptz'] | null),player_steam_id?: (Scalars['bigint'] | null),team_id?: (Scalars['uuid'] | null),tournament_id?: (Scalars['uuid'] | null)}
 
 
 /** aggregate sum on columns */
@@ -112161,8 +113219,6 @@ export interface tournamentsGenqlSelection{
     name?: boolean | number
     /** An object relationship */
     options?: match_optionsGenqlSelection
-    /** A computed field, executes function "tournament_organizer_registration_passcode" */
-    organizer_registration_passcode?: boolean | number
     organizer_steam_id?: boolean | number
     /** An array relationship */
     organizer_teams?: (tournament_organizer_teamsGenqlSelection & { __args?: {
@@ -112262,7 +113318,6 @@ export interface tournamentsGenqlSelection{
     where?: (tournament_prizes_bool_exp | null)} })
     /** Preferred server regions for hosted matches */
     regions?: boolean | number
-    registration_passcode?: boolean | number
     registration_type?: boolean | number
     /** A computed field, executes function "tournament_registration_unlocked_for_session" */
     registration_unlocked?: boolean | number
@@ -112460,7 +113515,7 @@ export interface tournaments_avg_order_by {check_in_closes_before_minutes?: (ord
 
 
 /** Boolean expression to filter rows from the table "tournaments". All fields are combined with a logical 'AND'. */
-export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),auto_start?: (Boolean_comparison_exp | null),award_configs?: (tournament_awards_bool_exp | null),award_configs_aggregate?: (tournament_awards_aggregate_bool_exp | null),awards?: (award_recipients_bool_exp | null),awards_aggregate?: (award_recipients_aggregate_bool_exp | null),awards_enabled?: (Boolean_comparison_exp | null),banner?: (String_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_close_registration?: (Boolean_comparison_exp | null),can_join?: (Boolean_comparison_exp | null),can_open_registration?: (Boolean_comparison_exp | null),can_pause?: (Boolean_comparison_exp | null),can_resume?: (Boolean_comparison_exp | null),can_review_check_in?: (Boolean_comparison_exp | null),can_setup?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),categories?: (tournament_categories_bool_exp | null),categories_aggregate?: (tournament_categories_aggregate_bool_exp | null),check_in_closes_before_minutes?: (Int_comparison_exp | null),check_in_ends_at?: (timestamptz_comparison_exp | null),check_in_open?: (Boolean_comparison_exp | null),check_in_opens_before_minutes?: (Int_comparison_exp | null),check_in_required?: (Boolean_comparison_exp | null),check_in_setting?: (e_check_in_settings_enum_comparison_exp | null),check_in_started?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),discord_guild_id?: (String_comparison_exp | null),discord_notifications_enabled?: (Boolean_comparison_exp | null),discord_notify_Canceled?: (Boolean_comparison_exp | null),discord_notify_Finished?: (Boolean_comparison_exp | null),discord_notify_Forfeit?: (Boolean_comparison_exp | null),discord_notify_Live?: (Boolean_comparison_exp | null),discord_notify_MapPaused?: (Boolean_comparison_exp | null),discord_notify_PickingPlayers?: (Boolean_comparison_exp | null),discord_notify_Scheduled?: (Boolean_comparison_exp | null),discord_notify_Surrendered?: (Boolean_comparison_exp | null),discord_notify_Tie?: (Boolean_comparison_exp | null),discord_notify_Veto?: (Boolean_comparison_exp | null),discord_notify_WaitingForCheckIn?: (Boolean_comparison_exp | null),discord_notify_WaitingForServer?: (Boolean_comparison_exp | null),discord_role_id?: (String_comparison_exp | null),discord_voice_enabled?: (Boolean_comparison_exp | null),discord_webhook?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),free_agents?: (tournament_free_agents_bool_exp | null),free_agents_aggregate?: (tournament_free_agents_aggregate_bool_exp | null),has_min_teams?: (Boolean_comparison_exp | null),homepage?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_only?: (Boolean_comparison_exp | null),is_league?: (Boolean_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),joined_tournament?: (Boolean_comparison_exp | null),latitude?: (float8_comparison_exp | null),league_season_division?: (league_season_divisions_bool_exp | null),location?: (String_comparison_exp | null),logo?: (String_comparison_exp | null),longitude?: (float8_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),max_elo?: (Int_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),meets_min_role?: (Boolean_comparison_exp | null),min_elo?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),min_role?: (e_player_roles_enum_comparison_exp | null),missed_check_in_count?: (Int_comparison_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_registration_passcode?: (String_comparison_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizer_teams?: (tournament_organizer_teams_bool_exp | null),organizer_teams_aggregate?: (tournament_organizer_teams_aggregate_bool_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),player_stats?: (v_tournament_player_stats_bool_exp | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_bool_exp | null),prizes?: (tournament_prizes_bool_exp | null),prizes_aggregate?: (tournament_prizes_aggregate_bool_exp | null),regions?: (String_array_comparison_exp | null),registration_passcode?: (String_comparison_exp | null),registration_type?: (e_tournament_registration_types_enum_comparison_exp | null),registration_unlocked?: (Boolean_comparison_exp | null),results?: (v_team_tournament_results_bool_exp | null),results_aggregate?: (v_team_tournament_results_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),scheduling_mode?: (String_comparison_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
+export interface tournaments_bool_exp {_and?: (tournaments_bool_exp[] | null),_not?: (tournaments_bool_exp | null),_or?: (tournaments_bool_exp[] | null),admin?: (players_bool_exp | null),auto_start?: (Boolean_comparison_exp | null),award_configs?: (tournament_awards_bool_exp | null),award_configs_aggregate?: (tournament_awards_aggregate_bool_exp | null),awards?: (award_recipients_bool_exp | null),awards_aggregate?: (award_recipients_aggregate_bool_exp | null),awards_enabled?: (Boolean_comparison_exp | null),banner?: (String_comparison_exp | null),can_cancel?: (Boolean_comparison_exp | null),can_close_registration?: (Boolean_comparison_exp | null),can_join?: (Boolean_comparison_exp | null),can_open_registration?: (Boolean_comparison_exp | null),can_pause?: (Boolean_comparison_exp | null),can_resume?: (Boolean_comparison_exp | null),can_review_check_in?: (Boolean_comparison_exp | null),can_setup?: (Boolean_comparison_exp | null),can_start?: (Boolean_comparison_exp | null),categories?: (tournament_categories_bool_exp | null),categories_aggregate?: (tournament_categories_aggregate_bool_exp | null),check_in_closes_before_minutes?: (Int_comparison_exp | null),check_in_ends_at?: (timestamptz_comparison_exp | null),check_in_open?: (Boolean_comparison_exp | null),check_in_opens_before_minutes?: (Int_comparison_exp | null),check_in_required?: (Boolean_comparison_exp | null),check_in_setting?: (e_check_in_settings_enum_comparison_exp | null),check_in_started?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),discord_guild_id?: (String_comparison_exp | null),discord_notifications_enabled?: (Boolean_comparison_exp | null),discord_notify_Canceled?: (Boolean_comparison_exp | null),discord_notify_Finished?: (Boolean_comparison_exp | null),discord_notify_Forfeit?: (Boolean_comparison_exp | null),discord_notify_Live?: (Boolean_comparison_exp | null),discord_notify_MapPaused?: (Boolean_comparison_exp | null),discord_notify_PickingPlayers?: (Boolean_comparison_exp | null),discord_notify_Scheduled?: (Boolean_comparison_exp | null),discord_notify_Surrendered?: (Boolean_comparison_exp | null),discord_notify_Tie?: (Boolean_comparison_exp | null),discord_notify_Veto?: (Boolean_comparison_exp | null),discord_notify_WaitingForCheckIn?: (Boolean_comparison_exp | null),discord_notify_WaitingForServer?: (Boolean_comparison_exp | null),discord_role_id?: (String_comparison_exp | null),discord_voice_enabled?: (Boolean_comparison_exp | null),discord_webhook?: (String_comparison_exp | null),e_tournament_status?: (e_tournament_status_bool_exp | null),free_agents?: (tournament_free_agents_bool_exp | null),free_agents_aggregate?: (tournament_free_agents_aggregate_bool_exp | null),has_min_teams?: (Boolean_comparison_exp | null),homepage?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_only?: (Boolean_comparison_exp | null),is_league?: (Boolean_comparison_exp | null),is_organizer?: (Boolean_comparison_exp | null),joined_tournament?: (Boolean_comparison_exp | null),latitude?: (float8_comparison_exp | null),league_season_division?: (league_season_divisions_bool_exp | null),location?: (String_comparison_exp | null),logo?: (String_comparison_exp | null),longitude?: (float8_comparison_exp | null),match_options_id?: (uuid_comparison_exp | null),max_elo?: (Int_comparison_exp | null),max_players_per_lineup?: (Int_comparison_exp | null),meets_min_role?: (Boolean_comparison_exp | null),min_elo?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),min_role?: (e_player_roles_enum_comparison_exp | null),missed_check_in_count?: (Int_comparison_exp | null),name?: (String_comparison_exp | null),options?: (match_options_bool_exp | null),organizer_steam_id?: (bigint_comparison_exp | null),organizer_teams?: (tournament_organizer_teams_bool_exp | null),organizer_teams_aggregate?: (tournament_organizer_teams_aggregate_bool_exp | null),organizers?: (tournament_organizers_bool_exp | null),organizers_aggregate?: (tournament_organizers_aggregate_bool_exp | null),player_stats?: (v_tournament_player_stats_bool_exp | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_bool_exp | null),prizes?: (tournament_prizes_bool_exp | null),prizes_aggregate?: (tournament_prizes_aggregate_bool_exp | null),regions?: (String_array_comparison_exp | null),registration_type?: (e_tournament_registration_types_enum_comparison_exp | null),registration_unlocked?: (Boolean_comparison_exp | null),results?: (v_team_tournament_results_bool_exp | null),results_aggregate?: (v_team_tournament_results_aggregate_bool_exp | null),rosters?: (tournament_team_roster_bool_exp | null),rosters_aggregate?: (tournament_team_roster_aggregate_bool_exp | null),scheduling_mode?: (String_comparison_exp | null),stages?: (tournament_stages_bool_exp | null),stages_aggregate?: (tournament_stages_aggregate_bool_exp | null),start?: (timestamptz_comparison_exp | null),status?: (e_tournament_status_enum_comparison_exp | null),teams?: (tournament_teams_bool_exp | null),teams_aggregate?: (tournament_teams_aggregate_bool_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "tournaments" */
@@ -112474,7 +113529,7 @@ check_in_ends_at?: (Scalars['timestamptz'] | null),check_in_opens_before_minutes
 /** Who confirms a team: Captains, every rostered Player, or the organizer (Admin) */
 check_in_setting?: (e_check_in_settings_enum | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),e_tournament_status?: (e_tournament_status_obj_rel_insert_input | null),free_agents?: (tournament_free_agents_arr_rel_insert_input | null),homepage?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),invite_only?: (Scalars['Boolean'] | null),is_league?: (Scalars['Boolean'] | null),latitude?: (Scalars['float8'] | null),league_season_division?: (league_season_divisions_obj_rel_insert_input | null),location?: (Scalars['String'] | null),logo?: (Scalars['String'] | null),longitude?: (Scalars['float8'] | null),match_options_id?: (Scalars['uuid'] | null),max_elo?: (Scalars['Int'] | null),min_elo?: (Scalars['Int'] | null),min_role?: (e_player_roles_enum | null),name?: (Scalars['String'] | null),options?: (match_options_obj_rel_insert_input | null),organizer_steam_id?: (Scalars['bigint'] | null),organizer_teams?: (tournament_organizer_teams_arr_rel_insert_input | null),organizers?: (tournament_organizers_arr_rel_insert_input | null),player_stats?: (v_tournament_player_stats_arr_rel_insert_input | null),prizes?: (tournament_prizes_arr_rel_insert_input | null),
 /** Preferred server regions for hosted matches */
-regions?: (Scalars['String'][] | null),registration_passcode?: (Scalars['String'] | null),registration_type?: (e_tournament_registration_types_enum | null),results?: (v_team_tournament_results_arr_rel_insert_input | null),rosters?: (tournament_team_roster_arr_rel_insert_input | null),scheduling_mode?: (Scalars['String'] | null),stages?: (tournament_stages_arr_rel_insert_input | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),teams?: (tournament_teams_arr_rel_insert_input | null)}
+regions?: (Scalars['String'][] | null),registration_type?: (e_tournament_registration_types_enum | null),results?: (v_team_tournament_results_arr_rel_insert_input | null),rosters?: (tournament_team_roster_arr_rel_insert_input | null),scheduling_mode?: (Scalars['String'] | null),stages?: (tournament_stages_arr_rel_insert_input | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null),teams?: (tournament_teams_arr_rel_insert_input | null)}
 
 
 /** aggregate max on columns */
@@ -112505,12 +113560,9 @@ export interface tournaments_max_fieldsGenqlSelection{
     /** A computed field, executes function "tournament_missed_check_in_count" */
     missed_check_in_count?: boolean | number
     name?: boolean | number
-    /** A computed field, executes function "tournament_organizer_registration_passcode" */
-    organizer_registration_passcode?: boolean | number
     organizer_steam_id?: boolean | number
     /** Preferred server regions for hosted matches */
     regions?: boolean | number
-    registration_passcode?: boolean | number
     scheduling_mode?: boolean | number
     start?: boolean | number
     __typename?: boolean | number
@@ -112523,7 +113575,7 @@ export interface tournaments_max_order_by {banner?: (order_by | null),check_in_c
 /** When the check-in window closes; NULL until it opens */
 check_in_ends_at?: (order_by | null),check_in_opens_before_minutes?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),discord_guild_id?: (order_by | null),discord_role_id?: (order_by | null),discord_webhook?: (order_by | null),homepage?: (order_by | null),id?: (order_by | null),latitude?: (order_by | null),location?: (order_by | null),logo?: (order_by | null),longitude?: (order_by | null),match_options_id?: (order_by | null),max_elo?: (order_by | null),min_elo?: (order_by | null),name?: (order_by | null),organizer_steam_id?: (order_by | null),
 /** Preferred server regions for hosted matches */
-regions?: (order_by | null),registration_passcode?: (order_by | null),scheduling_mode?: (order_by | null),start?: (order_by | null)}
+regions?: (order_by | null),scheduling_mode?: (order_by | null),start?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -112554,12 +113606,9 @@ export interface tournaments_min_fieldsGenqlSelection{
     /** A computed field, executes function "tournament_missed_check_in_count" */
     missed_check_in_count?: boolean | number
     name?: boolean | number
-    /** A computed field, executes function "tournament_organizer_registration_passcode" */
-    organizer_registration_passcode?: boolean | number
     organizer_steam_id?: boolean | number
     /** Preferred server regions for hosted matches */
     regions?: boolean | number
-    registration_passcode?: boolean | number
     scheduling_mode?: boolean | number
     start?: boolean | number
     __typename?: boolean | number
@@ -112572,7 +113621,7 @@ export interface tournaments_min_order_by {banner?: (order_by | null),check_in_c
 /** When the check-in window closes; NULL until it opens */
 check_in_ends_at?: (order_by | null),check_in_opens_before_minutes?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),discord_guild_id?: (order_by | null),discord_role_id?: (order_by | null),discord_webhook?: (order_by | null),homepage?: (order_by | null),id?: (order_by | null),latitude?: (order_by | null),location?: (order_by | null),logo?: (order_by | null),longitude?: (order_by | null),match_options_id?: (order_by | null),max_elo?: (order_by | null),min_elo?: (order_by | null),name?: (order_by | null),organizer_steam_id?: (order_by | null),
 /** Preferred server regions for hosted matches */
-regions?: (order_by | null),registration_passcode?: (order_by | null),scheduling_mode?: (order_by | null),start?: (order_by | null)}
+regions?: (order_by | null),scheduling_mode?: (order_by | null),start?: (order_by | null)}
 
 
 /** response of any mutation on the table "tournaments" */
@@ -112597,7 +113646,7 @@ export interface tournaments_on_conflict {constraint: tournaments_constraint,upd
 
 
 /** Ordering options when selecting data from "tournaments". */
-export interface tournaments_order_by {admin?: (players_order_by | null),auto_start?: (order_by | null),award_configs_aggregate?: (tournament_awards_aggregate_order_by | null),awards_aggregate?: (award_recipients_aggregate_order_by | null),awards_enabled?: (order_by | null),banner?: (order_by | null),can_cancel?: (order_by | null),can_close_registration?: (order_by | null),can_join?: (order_by | null),can_open_registration?: (order_by | null),can_pause?: (order_by | null),can_resume?: (order_by | null),can_review_check_in?: (order_by | null),can_setup?: (order_by | null),can_start?: (order_by | null),categories_aggregate?: (tournament_categories_aggregate_order_by | null),check_in_closes_before_minutes?: (order_by | null),check_in_ends_at?: (order_by | null),check_in_open?: (order_by | null),check_in_opens_before_minutes?: (order_by | null),check_in_required?: (order_by | null),check_in_setting?: (order_by | null),check_in_started?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),discord_guild_id?: (order_by | null),discord_notifications_enabled?: (order_by | null),discord_notify_Canceled?: (order_by | null),discord_notify_Finished?: (order_by | null),discord_notify_Forfeit?: (order_by | null),discord_notify_Live?: (order_by | null),discord_notify_MapPaused?: (order_by | null),discord_notify_PickingPlayers?: (order_by | null),discord_notify_Scheduled?: (order_by | null),discord_notify_Surrendered?: (order_by | null),discord_notify_Tie?: (order_by | null),discord_notify_Veto?: (order_by | null),discord_notify_WaitingForCheckIn?: (order_by | null),discord_notify_WaitingForServer?: (order_by | null),discord_role_id?: (order_by | null),discord_voice_enabled?: (order_by | null),discord_webhook?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),free_agents_aggregate?: (tournament_free_agents_aggregate_order_by | null),has_min_teams?: (order_by | null),homepage?: (order_by | null),id?: (order_by | null),invite_only?: (order_by | null),is_league?: (order_by | null),is_organizer?: (order_by | null),joined_tournament?: (order_by | null),latitude?: (order_by | null),league_season_division?: (league_season_divisions_order_by | null),location?: (order_by | null),logo?: (order_by | null),longitude?: (order_by | null),match_options_id?: (order_by | null),max_elo?: (order_by | null),max_players_per_lineup?: (order_by | null),meets_min_role?: (order_by | null),min_elo?: (order_by | null),min_players_per_lineup?: (order_by | null),min_role?: (order_by | null),missed_check_in_count?: (order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_registration_passcode?: (order_by | null),organizer_steam_id?: (order_by | null),organizer_teams_aggregate?: (tournament_organizer_teams_aggregate_order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_order_by | null),prizes_aggregate?: (tournament_prizes_aggregate_order_by | null),regions?: (order_by | null),registration_passcode?: (order_by | null),registration_type?: (order_by | null),registration_unlocked?: (order_by | null),results_aggregate?: (v_team_tournament_results_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),scheduling_mode?: (order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
+export interface tournaments_order_by {admin?: (players_order_by | null),auto_start?: (order_by | null),award_configs_aggregate?: (tournament_awards_aggregate_order_by | null),awards_aggregate?: (award_recipients_aggregate_order_by | null),awards_enabled?: (order_by | null),banner?: (order_by | null),can_cancel?: (order_by | null),can_close_registration?: (order_by | null),can_join?: (order_by | null),can_open_registration?: (order_by | null),can_pause?: (order_by | null),can_resume?: (order_by | null),can_review_check_in?: (order_by | null),can_setup?: (order_by | null),can_start?: (order_by | null),categories_aggregate?: (tournament_categories_aggregate_order_by | null),check_in_closes_before_minutes?: (order_by | null),check_in_ends_at?: (order_by | null),check_in_open?: (order_by | null),check_in_opens_before_minutes?: (order_by | null),check_in_required?: (order_by | null),check_in_setting?: (order_by | null),check_in_started?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),discord_guild_id?: (order_by | null),discord_notifications_enabled?: (order_by | null),discord_notify_Canceled?: (order_by | null),discord_notify_Finished?: (order_by | null),discord_notify_Forfeit?: (order_by | null),discord_notify_Live?: (order_by | null),discord_notify_MapPaused?: (order_by | null),discord_notify_PickingPlayers?: (order_by | null),discord_notify_Scheduled?: (order_by | null),discord_notify_Surrendered?: (order_by | null),discord_notify_Tie?: (order_by | null),discord_notify_Veto?: (order_by | null),discord_notify_WaitingForCheckIn?: (order_by | null),discord_notify_WaitingForServer?: (order_by | null),discord_role_id?: (order_by | null),discord_voice_enabled?: (order_by | null),discord_webhook?: (order_by | null),e_tournament_status?: (e_tournament_status_order_by | null),free_agents_aggregate?: (tournament_free_agents_aggregate_order_by | null),has_min_teams?: (order_by | null),homepage?: (order_by | null),id?: (order_by | null),invite_only?: (order_by | null),is_league?: (order_by | null),is_organizer?: (order_by | null),joined_tournament?: (order_by | null),latitude?: (order_by | null),league_season_division?: (league_season_divisions_order_by | null),location?: (order_by | null),logo?: (order_by | null),longitude?: (order_by | null),match_options_id?: (order_by | null),max_elo?: (order_by | null),max_players_per_lineup?: (order_by | null),meets_min_role?: (order_by | null),min_elo?: (order_by | null),min_players_per_lineup?: (order_by | null),min_role?: (order_by | null),missed_check_in_count?: (order_by | null),name?: (order_by | null),options?: (match_options_order_by | null),organizer_steam_id?: (order_by | null),organizer_teams_aggregate?: (tournament_organizer_teams_aggregate_order_by | null),organizers_aggregate?: (tournament_organizers_aggregate_order_by | null),player_stats_aggregate?: (v_tournament_player_stats_aggregate_order_by | null),prizes_aggregate?: (tournament_prizes_aggregate_order_by | null),regions?: (order_by | null),registration_type?: (order_by | null),registration_unlocked?: (order_by | null),results_aggregate?: (v_team_tournament_results_aggregate_order_by | null),rosters_aggregate?: (tournament_team_roster_aggregate_order_by | null),scheduling_mode?: (order_by | null),stages_aggregate?: (tournament_stages_aggregate_order_by | null),start?: (order_by | null),status?: (order_by | null),teams_aggregate?: (tournament_teams_aggregate_order_by | null)}
 
 
 /** primary key columns input for table: tournaments */
@@ -112611,7 +113660,7 @@ check_in_ends_at?: (Scalars['timestamptz'] | null),check_in_opens_before_minutes
 /** Who confirms a team: Captains, every rostered Player, or the organizer (Admin) */
 check_in_setting?: (e_check_in_settings_enum | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),homepage?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),invite_only?: (Scalars['Boolean'] | null),is_league?: (Scalars['Boolean'] | null),latitude?: (Scalars['float8'] | null),location?: (Scalars['String'] | null),logo?: (Scalars['String'] | null),longitude?: (Scalars['float8'] | null),match_options_id?: (Scalars['uuid'] | null),max_elo?: (Scalars['Int'] | null),min_elo?: (Scalars['Int'] | null),min_role?: (e_player_roles_enum | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),
 /** Preferred server regions for hosted matches */
-regions?: (Scalars['String'][] | null),registration_passcode?: (Scalars['String'] | null),registration_type?: (e_tournament_registration_types_enum | null),scheduling_mode?: (Scalars['String'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
+regions?: (Scalars['String'][] | null),registration_type?: (e_tournament_registration_types_enum | null),scheduling_mode?: (Scalars['String'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
 
 
 /** aggregate stddev on columns */
@@ -112701,7 +113750,7 @@ check_in_ends_at?: (Scalars['timestamptz'] | null),check_in_opens_before_minutes
 /** Who confirms a team: Captains, every rostered Player, or the organizer (Admin) */
 check_in_setting?: (e_check_in_settings_enum | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),discord_guild_id?: (Scalars['String'] | null),discord_notifications_enabled?: (Scalars['Boolean'] | null),discord_notify_Canceled?: (Scalars['Boolean'] | null),discord_notify_Finished?: (Scalars['Boolean'] | null),discord_notify_Forfeit?: (Scalars['Boolean'] | null),discord_notify_Live?: (Scalars['Boolean'] | null),discord_notify_MapPaused?: (Scalars['Boolean'] | null),discord_notify_PickingPlayers?: (Scalars['Boolean'] | null),discord_notify_Scheduled?: (Scalars['Boolean'] | null),discord_notify_Surrendered?: (Scalars['Boolean'] | null),discord_notify_Tie?: (Scalars['Boolean'] | null),discord_notify_Veto?: (Scalars['Boolean'] | null),discord_notify_WaitingForCheckIn?: (Scalars['Boolean'] | null),discord_notify_WaitingForServer?: (Scalars['Boolean'] | null),discord_role_id?: (Scalars['String'] | null),discord_voice_enabled?: (Scalars['Boolean'] | null),discord_webhook?: (Scalars['String'] | null),homepage?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),invite_only?: (Scalars['Boolean'] | null),is_league?: (Scalars['Boolean'] | null),latitude?: (Scalars['float8'] | null),location?: (Scalars['String'] | null),logo?: (Scalars['String'] | null),longitude?: (Scalars['float8'] | null),match_options_id?: (Scalars['uuid'] | null),max_elo?: (Scalars['Int'] | null),min_elo?: (Scalars['Int'] | null),min_role?: (e_player_roles_enum | null),name?: (Scalars['String'] | null),organizer_steam_id?: (Scalars['bigint'] | null),
 /** Preferred server regions for hosted matches */
-regions?: (Scalars['String'][] | null),registration_passcode?: (Scalars['String'] | null),registration_type?: (e_tournament_registration_types_enum | null),scheduling_mode?: (Scalars['String'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
+regions?: (Scalars['String'][] | null),registration_type?: (e_tournament_registration_types_enum | null),scheduling_mode?: (Scalars['String'] | null),start?: (Scalars['timestamptz'] | null),status?: (e_tournament_status_enum | null)}
 
 
 /** aggregate sum on columns */
@@ -126770,6 +127819,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isTournamentDraftOutput = (obj?: { __typename?: any } | null): obj is TournamentDraftOutput => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isTournamentDraftOutput"')
       return TournamentDraftOutput_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const TournamentInviteCodeOutput_possibleTypes: string[] = ['TournamentInviteCodeOutput']
+    export const isTournamentInviteCodeOutput = (obj?: { __typename?: any } | null): obj is TournamentInviteCodeOutput => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTournamentInviteCodeOutput"')
+      return TournamentInviteCodeOutput_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -141606,6 +142663,230 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const tournament_invite_code_uses_possibleTypes: string[] = ['tournament_invite_code_uses']
+    export const istournament_invite_code_uses = (obj?: { __typename?: any } | null): obj is tournament_invite_code_uses => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_code_uses"')
+      return tournament_invite_code_uses_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_code_uses_aggregate_possibleTypes: string[] = ['tournament_invite_code_uses_aggregate']
+    export const istournament_invite_code_uses_aggregate = (obj?: { __typename?: any } | null): obj is tournament_invite_code_uses_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_code_uses_aggregate"')
+      return tournament_invite_code_uses_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_code_uses_aggregate_fields_possibleTypes: string[] = ['tournament_invite_code_uses_aggregate_fields']
+    export const istournament_invite_code_uses_aggregate_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_code_uses_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_code_uses_aggregate_fields"')
+      return tournament_invite_code_uses_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_code_uses_avg_fields_possibleTypes: string[] = ['tournament_invite_code_uses_avg_fields']
+    export const istournament_invite_code_uses_avg_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_code_uses_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_code_uses_avg_fields"')
+      return tournament_invite_code_uses_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_code_uses_max_fields_possibleTypes: string[] = ['tournament_invite_code_uses_max_fields']
+    export const istournament_invite_code_uses_max_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_code_uses_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_code_uses_max_fields"')
+      return tournament_invite_code_uses_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_code_uses_min_fields_possibleTypes: string[] = ['tournament_invite_code_uses_min_fields']
+    export const istournament_invite_code_uses_min_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_code_uses_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_code_uses_min_fields"')
+      return tournament_invite_code_uses_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_code_uses_mutation_response_possibleTypes: string[] = ['tournament_invite_code_uses_mutation_response']
+    export const istournament_invite_code_uses_mutation_response = (obj?: { __typename?: any } | null): obj is tournament_invite_code_uses_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_code_uses_mutation_response"')
+      return tournament_invite_code_uses_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_code_uses_stddev_fields_possibleTypes: string[] = ['tournament_invite_code_uses_stddev_fields']
+    export const istournament_invite_code_uses_stddev_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_code_uses_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_code_uses_stddev_fields"')
+      return tournament_invite_code_uses_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_code_uses_stddev_pop_fields_possibleTypes: string[] = ['tournament_invite_code_uses_stddev_pop_fields']
+    export const istournament_invite_code_uses_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_code_uses_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_code_uses_stddev_pop_fields"')
+      return tournament_invite_code_uses_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_code_uses_stddev_samp_fields_possibleTypes: string[] = ['tournament_invite_code_uses_stddev_samp_fields']
+    export const istournament_invite_code_uses_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_code_uses_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_code_uses_stddev_samp_fields"')
+      return tournament_invite_code_uses_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_code_uses_sum_fields_possibleTypes: string[] = ['tournament_invite_code_uses_sum_fields']
+    export const istournament_invite_code_uses_sum_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_code_uses_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_code_uses_sum_fields"')
+      return tournament_invite_code_uses_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_code_uses_var_pop_fields_possibleTypes: string[] = ['tournament_invite_code_uses_var_pop_fields']
+    export const istournament_invite_code_uses_var_pop_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_code_uses_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_code_uses_var_pop_fields"')
+      return tournament_invite_code_uses_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_code_uses_var_samp_fields_possibleTypes: string[] = ['tournament_invite_code_uses_var_samp_fields']
+    export const istournament_invite_code_uses_var_samp_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_code_uses_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_code_uses_var_samp_fields"')
+      return tournament_invite_code_uses_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_code_uses_variance_fields_possibleTypes: string[] = ['tournament_invite_code_uses_variance_fields']
+    export const istournament_invite_code_uses_variance_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_code_uses_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_code_uses_variance_fields"')
+      return tournament_invite_code_uses_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_codes_possibleTypes: string[] = ['tournament_invite_codes']
+    export const istournament_invite_codes = (obj?: { __typename?: any } | null): obj is tournament_invite_codes => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_codes"')
+      return tournament_invite_codes_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_codes_aggregate_possibleTypes: string[] = ['tournament_invite_codes_aggregate']
+    export const istournament_invite_codes_aggregate = (obj?: { __typename?: any } | null): obj is tournament_invite_codes_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_codes_aggregate"')
+      return tournament_invite_codes_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_codes_aggregate_fields_possibleTypes: string[] = ['tournament_invite_codes_aggregate_fields']
+    export const istournament_invite_codes_aggregate_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_codes_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_codes_aggregate_fields"')
+      return tournament_invite_codes_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_codes_avg_fields_possibleTypes: string[] = ['tournament_invite_codes_avg_fields']
+    export const istournament_invite_codes_avg_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_codes_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_codes_avg_fields"')
+      return tournament_invite_codes_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_codes_max_fields_possibleTypes: string[] = ['tournament_invite_codes_max_fields']
+    export const istournament_invite_codes_max_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_codes_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_codes_max_fields"')
+      return tournament_invite_codes_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_codes_min_fields_possibleTypes: string[] = ['tournament_invite_codes_min_fields']
+    export const istournament_invite_codes_min_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_codes_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_codes_min_fields"')
+      return tournament_invite_codes_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_codes_mutation_response_possibleTypes: string[] = ['tournament_invite_codes_mutation_response']
+    export const istournament_invite_codes_mutation_response = (obj?: { __typename?: any } | null): obj is tournament_invite_codes_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_codes_mutation_response"')
+      return tournament_invite_codes_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_codes_stddev_fields_possibleTypes: string[] = ['tournament_invite_codes_stddev_fields']
+    export const istournament_invite_codes_stddev_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_codes_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_codes_stddev_fields"')
+      return tournament_invite_codes_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_codes_stddev_pop_fields_possibleTypes: string[] = ['tournament_invite_codes_stddev_pop_fields']
+    export const istournament_invite_codes_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_codes_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_codes_stddev_pop_fields"')
+      return tournament_invite_codes_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_codes_stddev_samp_fields_possibleTypes: string[] = ['tournament_invite_codes_stddev_samp_fields']
+    export const istournament_invite_codes_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_codes_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_codes_stddev_samp_fields"')
+      return tournament_invite_codes_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_codes_sum_fields_possibleTypes: string[] = ['tournament_invite_codes_sum_fields']
+    export const istournament_invite_codes_sum_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_codes_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_codes_sum_fields"')
+      return tournament_invite_codes_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_codes_var_pop_fields_possibleTypes: string[] = ['tournament_invite_codes_var_pop_fields']
+    export const istournament_invite_codes_var_pop_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_codes_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_codes_var_pop_fields"')
+      return tournament_invite_codes_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_codes_var_samp_fields_possibleTypes: string[] = ['tournament_invite_codes_var_samp_fields']
+    export const istournament_invite_codes_var_samp_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_codes_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_codes_var_samp_fields"')
+      return tournament_invite_codes_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const tournament_invite_codes_variance_fields_possibleTypes: string[] = ['tournament_invite_codes_variance_fields']
+    export const istournament_invite_codes_variance_fields = (obj?: { __typename?: any } | null): obj is tournament_invite_codes_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invite_codes_variance_fields"')
+      return tournament_invite_codes_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const tournament_invites_possibleTypes: string[] = ['tournament_invites']
     export const istournament_invites = (obj?: { __typename?: any } | null): obj is tournament_invites => {
       if (!obj?.__typename) throw new Error('__typename is missing in "istournament_invites"')
@@ -153600,9 +154881,57 @@ export const enumTournamentFreeAgentsUpdateColumn = {
    tournament_team_id: 'tournament_team_id' as const
 }
 
+export const enumTournamentInviteCodeUsesConstraint = {
+   tournament_invite_code_uses_pkey: 'tournament_invite_code_uses_pkey' as const
+}
+
+export const enumTournamentInviteCodeUsesSelectColumn = {
+   invite_code_id: 'invite_code_id' as const,
+   player_steam_id: 'player_steam_id' as const,
+   team_id: 'team_id' as const,
+   used_at: 'used_at' as const
+}
+
+export const enumTournamentInviteCodeUsesUpdateColumn = {
+   invite_code_id: 'invite_code_id' as const,
+   player_steam_id: 'player_steam_id' as const,
+   team_id: 'team_id' as const,
+   used_at: 'used_at' as const
+}
+
+export const enumTournamentInviteCodesConstraint = {
+   tournament_invite_codes_code_key: 'tournament_invite_codes_code_key' as const,
+   tournament_invite_codes_pkey: 'tournament_invite_codes_pkey' as const
+}
+
+export const enumTournamentInviteCodesSelectColumn = {
+   code: 'code' as const,
+   created_at: 'created_at' as const,
+   created_by_player_steam_id: 'created_by_player_steam_id' as const,
+   expires_at: 'expires_at' as const,
+   id: 'id' as const,
+   max_uses: 'max_uses' as const,
+   revoked_at: 'revoked_at' as const,
+   tournament_id: 'tournament_id' as const,
+   uses: 'uses' as const
+}
+
+export const enumTournamentInviteCodesUpdateColumn = {
+   code: 'code' as const,
+   created_at: 'created_at' as const,
+   created_by_player_steam_id: 'created_by_player_steam_id' as const,
+   expires_at: 'expires_at' as const,
+   id: 'id' as const,
+   max_uses: 'max_uses' as const,
+   revoked_at: 'revoked_at' as const,
+   tournament_id: 'tournament_id' as const,
+   uses: 'uses' as const
+}
+
 export const enumTournamentInvitesConstraint = {
-   tournament_invites_pkey: 'tournament_invites_pkey' as const,
-   tournament_invites_tournament_id_steam_id_key: 'tournament_invites_tournament_id_steam_id_key' as const
+   idx_tournament_invites_player_unique: 'idx_tournament_invites_player_unique' as const,
+   idx_tournament_invites_team_unique: 'idx_tournament_invites_team_unique' as const,
+   tournament_invites_pkey: 'tournament_invites_pkey' as const
 }
 
 export const enumTournamentInvitesSelectColumn = {
@@ -153610,6 +154939,7 @@ export const enumTournamentInvitesSelectColumn = {
    id: 'id' as const,
    invited_by_player_steam_id: 'invited_by_player_steam_id' as const,
    steam_id: 'steam_id' as const,
+   team_id: 'team_id' as const,
    tournament_id: 'tournament_id' as const
 }
 
@@ -153618,6 +154948,7 @@ export const enumTournamentInvitesUpdateColumn = {
    id: 'id' as const,
    invited_by_player_steam_id: 'invited_by_player_steam_id' as const,
    steam_id: 'steam_id' as const,
+   team_id: 'team_id' as const,
    tournament_id: 'tournament_id' as const
 }
 
@@ -153716,18 +155047,21 @@ export const enumTournamentPrizesUpdateColumn = {
 }
 
 export const enumTournamentRegistrationUnlocksConstraint = {
-   tournament_registration_unlocks_pkey: 'tournament_registration_unlocks_pkey' as const
+   idx_tournament_registration_unlocks_player: 'idx_tournament_registration_unlocks_player' as const,
+   idx_tournament_registration_unlocks_team: 'idx_tournament_registration_unlocks_team' as const
 }
 
 export const enumTournamentRegistrationUnlocksSelectColumn = {
    created_at: 'created_at' as const,
    player_steam_id: 'player_steam_id' as const,
+   team_id: 'team_id' as const,
    tournament_id: 'tournament_id' as const
 }
 
 export const enumTournamentRegistrationUnlocksUpdateColumn = {
    created_at: 'created_at' as const,
    player_steam_id: 'player_steam_id' as const,
+   team_id: 'team_id' as const,
    tournament_id: 'tournament_id' as const
 }
 
@@ -153942,7 +155276,6 @@ export const enumTournamentsSelectColumn = {
    name: 'name' as const,
    organizer_steam_id: 'organizer_steam_id' as const,
    regions: 'regions' as const,
-   registration_passcode: 'registration_passcode' as const,
    registration_type: 'registration_type' as const,
    scheduling_mode: 'scheduling_mode' as const,
    start: 'start' as const,
@@ -154076,7 +155409,6 @@ export const enumTournamentsUpdateColumn = {
    name: 'name' as const,
    organizer_steam_id: 'organizer_steam_id' as const,
    regions: 'regions' as const,
-   registration_passcode: 'registration_passcode' as const,
    registration_type: 'registration_type' as const,
    scheduling_mode: 'scheduling_mode' as const,
    start: 'start' as const,

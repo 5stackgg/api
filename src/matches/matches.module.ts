@@ -69,6 +69,7 @@ import { MatchRelayService } from "./match-relay/match-relay.service";
 import { MatchRelayAuthMiddleware } from "./match-relay/match-relay-auth-middleware";
 import { K8sModule } from "src/k8s/k8s.module";
 import { DiscordTournamentVoiceModule } from "../discord-bot/discord-tournament-voice/discord-tournament-voice.module";
+import { VoiceModule } from "../voice/voice.module";
 import { GameStreamerModule } from "./game-streamer/game-streamer.module";
 import { DemosModule } from "../demos/demos.module";
 import { ClipsModule } from "./clips/clips.module";
@@ -98,6 +99,7 @@ import { CameraMonitorService } from "./camera/camera-monitor.service";
     forwardRef(() => SteamMatchHistoryModule),
     forwardRef(() => DiscordBotModule),
     DiscordTournamentVoiceModule,
+    VoiceModule,
     MatchMaking,
     ChatModule,
     LeaguesModule,
