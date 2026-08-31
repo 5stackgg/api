@@ -62,6 +62,19 @@ export class FileManagerService {
     return `http://${nodeIP}:8585/file-operations/${endpoint}`;
   }
 
+  // The connector's validation errors come back as an array of strings, which
+  // Nest drops on the floor -- an HttpException built from a non-string reports
+  // itself as "Bad Request Exception" and the operator never learns why.
+  private connectorErrorMessage(error: {
+    message?: string | string[];
+  }): string {
+    if (Array.isArray(error?.message)) {
+      return error.message.join(", ");
+    }
+
+    return error?.message ?? "";
+  }
+
   private async requestNodeConnector(
     nodeIP: string,
     endpoint: string,
@@ -81,7 +94,8 @@ export class FileManagerService {
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
         throw new BadRequestException(
-          error.message || `Node connector error: ${response.statusText}`,
+          this.connectorErrorMessage(error) ||
+            `Node connector error: ${response.statusText}`,
         );
       }
 
@@ -257,7 +271,8 @@ export class FileManagerService {
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
         throw new BadRequestException(
-          error.message || `Upload failed: ${response.statusText}`,
+          this.connectorErrorMessage(error) ||
+            `Upload failed: ${response.statusText}`,
         );
       }
 
