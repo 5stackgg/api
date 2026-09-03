@@ -3,7 +3,7 @@ import {
   e_notification_types_enum,
   e_player_roles_enum,
 } from "../../generated";
-import { S3ObjectInfo, S3Service } from "../s3/s3.service";
+import { S3Service } from "../s3/s3.service";
 import { PostgresService } from "../postgres/postgres.service";
 import { NotificationsService } from "../notifications/notifications.service";
 
@@ -104,8 +104,7 @@ export class S3ScanService {
       const sizeByKey = new Map<string, number>();
 
       const stream = this.s3.listStream();
-      for await (const entry of stream) {
-        const obj = entry as S3ObjectInfo;
+      for await (const obj of stream) {
         const key = obj.name;
         if (!key) {
           continue;

@@ -95,8 +95,7 @@ describe("SystemService.isReservedDeployment", () => {
     "redis",
     "timescaledb",
     "rustfs",
-    // minio outlives its own deployment: the panel keeps a Service under that
-    // name pointing at the rustfs pods.
+    // minio outlives its own deployment as a Service alias.
     "minio",
   ])("reserves %s", (name) => {
     expect(SystemService.isReservedDeployment(name)).toBe(true);

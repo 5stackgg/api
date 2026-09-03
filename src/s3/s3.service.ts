@@ -2,7 +2,7 @@ import { Readable } from "stream";
 import { Request } from "express";
 import { ConfigService } from "@nestjs/config";
 import { S3Config } from "../configs/types/S3Config";
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, OnModuleDestroy } from "@nestjs/common";
 import {
   AbortMultipartUploadCommand,
   CompleteMultipartUploadCommand,
@@ -48,7 +48,7 @@ const importESM = new Function("specifier", "return import(specifier)") as <T>(
 ) => Promise<T>;
 
 @Injectable()
-export class S3Service {
+export class S3Service implements OnModuleDestroy {
   private bucket: string;
   private config: S3Config;
   private modules?: Promise<S3Modules>;
@@ -99,12 +99,18 @@ export class S3Service {
     };
   }
 
-  // The in-cluster object store is addressed by its Kubernetes Service name.
-  // Both names resolve to the same pods: installs that predate the RustFS
-  // migration still carry S3_ENDPOINT=minio, and the panel keeps that Service
-  // as an alias. Anything else is a real remote bucket.
+  // Both names are the in-cluster store: the panel keeps a minio Service
+  // aliased onto the rustfs pods for installs that still carry
+  // S3_ENDPOINT=minio. Anything else is a real remote bucket.
   private get isInternalStore(): boolean {
     return this.config.endpoint === "rustfs" || this.config.endpoint === "minio";
+  }
+
+  // Path style is not negotiable for the in-cluster store: it is addressed by
+  // a Service name, and virtual-host style would look for a bucket subdomain
+  // of it that no DNS answers.
+  private get forcePathStyle(): boolean {
+    return this.isInternalStore || this.config.forcePathStyle;
   }
 
   private async files(
@@ -124,8 +130,8 @@ export class S3Service {
       adapter: s3({
         bucket,
         endpoint: this.endpointFor(external),
-        region: process.env.S3_REGION || "us-east-1",
-        forcePathStyle: true,
+        region: this.config.region,
+        forcePathStyle: this.forcePathStyle,
         credentials: this.credentials,
       }),
     });
@@ -140,12 +146,11 @@ export class S3Service {
   // way to hand a client a per-part signed URL, and its versioning plugin
   // snapshots to a key prefix rather than using real S3 object versions. They
   // talk to the AWS SDK directly rather than reaching through files.raw, which
-  // also keeps them clear of the ESM import.
-  private raw(
-    bucket: string = this.bucket,
-    external: boolean = false,
-  ): S3Client {
-    const scope = `${external ? "external" : "internal"}:${bucket}`;
+  // also keeps them clear of the ESM import. Unlike files(), the bucket is a
+  // per-command argument rather than baked into the client, so the endpoint is
+  // all that scopes these.
+  private raw(external: boolean = false): S3Client {
+    const scope = external ? "external" : "internal";
 
     const cached = this.rawClients.get(scope);
     if (cached) {
@@ -154,14 +159,23 @@ export class S3Service {
 
     const client = new S3Client({
       endpoint: this.endpointFor(external),
-      region: process.env.S3_REGION || "us-east-1",
-      forcePathStyle: true,
+      region: this.config.region,
+      forcePathStyle: this.forcePathStyle,
       credentials: this.credentials,
     });
 
     this.rawClients.set(scope, client);
 
     return client;
+  }
+
+  public onModuleDestroy() {
+    for (const client of this.rawClients.values()) {
+      client.destroy();
+    }
+
+    this.rawClients.clear();
+    this.clients.clear();
   }
 
   private static toObjectInfo(file: StoredFile): S3ObjectInfo {
@@ -212,7 +226,7 @@ export class S3Service {
   public async list(bucket: string = this.bucket): Promise<S3ObjectInfo[]> {
     const objects: S3ObjectInfo[] = [];
 
-    for await (const object of this.listStream("", true, bucket)) {
+    for await (const object of this.listStream("", bucket)) {
       objects.push(object);
     }
 
@@ -221,17 +235,11 @@ export class S3Service {
 
   public async *listStream(
     prefix: string = "",
-    recursive: boolean = true,
     bucket: string = this.bucket,
   ): AsyncGenerator<S3ObjectInfo> {
     const client = await this.files(bucket);
 
-    // A non-recursive listing is the "folder" view: a delimiter collapses
-    // everything below the prefix into common prefixes, which listAll drops.
-    for await (const file of client.listAll({
-      prefix,
-      ...(recursive ? {} : { delimiter: "/" }),
-    })) {
+    for await (const file of client.listAll({ prefix })) {
       yield S3Service.toObjectInfo(file);
     }
   }
@@ -286,17 +294,19 @@ export class S3Service {
   ): Promise<void> {
     const client = await this.files(bucket);
 
-    const body =
-      stream instanceof Readable
-        ? (Readable.toWeb(stream) as never)
-        : new Uint8Array(stream);
+    const isStream = stream instanceof Readable;
 
-    await client.upload(filename, body, {
-      ...(contentType ? { contentType } : {}),
-      // Demos and clips routinely run to hundreds of megabytes, and a stream
-      // body has no length to size a single PUT from.
-      multipart: true,
-    });
+    await client.upload(
+      filename,
+      isStream ? (Readable.toWeb(stream) as never) : stream,
+      {
+        ...(contentType ? { contentType } : {}),
+        // Demos and clips routinely run to hundreds of megabytes, and a stream
+        // body has no length to size a single PUT from. A buffer does, so it
+        // does not need to pay for multipart.
+        ...(isStream ? { multipart: true } : {}),
+      },
+    );
   }
 
   public async copyObject(
@@ -332,7 +342,7 @@ export class S3Service {
     prefix: string,
     bucket: string = this.bucket,
   ): Promise<number> {
-    const client = this.raw(bucket);
+    const client = this.raw();
 
     let removed = 0;
     let keyMarker: string | undefined;
@@ -392,8 +402,19 @@ export class S3Service {
     let removed = 0;
     for (let i = 0; i < keys.length; i += 1000) {
       const batch = keys.slice(i, i + 1000);
-      await client.delete(batch);
-      removed += batch.length;
+
+      // The bulk delete resolves even when individual keys fail, collecting
+      // them in `errors` -- counting the batch instead of what came back
+      // reports a clean sweep over objects that are still there.
+      const result = await client.delete(batch);
+
+      removed += result.deleted.length;
+
+      for (const failure of result.errors ?? []) {
+        this.logger.error(
+          `unable to remove ${failure.key}: ${failure.error.message}`,
+        );
+      }
     }
     return removed;
   }
@@ -447,11 +468,15 @@ export class S3Service {
     key: string,
     bucket: string = this.bucket,
   ): Promise<string> {
-    const client = this.raw(bucket);
+    const client = this.raw();
 
     const upload = await client.send(
       new CreateMultipartUploadCommand({ Bucket: bucket, Key: key }),
     );
+
+    if (!upload.UploadId) {
+      throw new Error(`no upload id returned for ${key}`);
+    }
 
     return upload.UploadId;
   }
@@ -463,7 +488,7 @@ export class S3Service {
     expires = 60 * 60 * 6,
     bucket: string = this.bucket,
   ): Promise<string> {
-    const client = this.raw(bucket, this.isInternalStore);
+    const client = this.raw(this.isInternalStore);
 
     return await getSignedUrl(
       client,
@@ -482,13 +507,31 @@ export class S3Service {
     uploadId: string,
     bucket: string = this.bucket,
   ): Promise<void> {
-    const client = this.raw(bucket);
+    const client = this.raw();
 
-    const listed = await client.send(
-      new ListPartsCommand({ Bucket: bucket, Key: key, UploadId: uploadId }),
-    );
+    // ListParts caps a page at 1000. Completing with a truncated part list
+    // does not error -- S3 assembles the object out of just those parts and
+    // silently drops the rest.
+    const parts: Array<{ PartNumber?: number; ETag?: string }> = [];
+    let partNumberMarker: string | undefined;
 
-    const parts = listed.Parts ?? [];
+    do {
+      const listed = await client.send(
+        new ListPartsCommand({
+          Bucket: bucket,
+          Key: key,
+          UploadId: uploadId,
+          PartNumberMarker: partNumberMarker,
+        }),
+      );
+
+      parts.push(...(listed.Parts ?? []));
+
+      partNumberMarker = listed.IsTruncated
+        ? listed.NextPartNumberMarker
+        : undefined;
+    } while (partNumberMarker);
+
     if (parts.length === 0) {
       throw new Error("no parts uploaded");
     }
@@ -515,7 +558,7 @@ export class S3Service {
     uploadId: string,
     bucket: string = this.bucket,
   ): Promise<void> {
-    const client = this.raw(bucket);
+    const client = this.raw();
 
     await client.send(
       new AbortMultipartUploadCommand({
