@@ -42,6 +42,9 @@ export class SystemService {
     "typesense",
     "timescaledb",
     "redis",
+    "rustfs",
+    // Still reserved after the RustFS migration: the panel keeps a Service
+    // named minio pointed at the rustfs pods, so the name is still live.
     "minio",
     "mediamtx",
   ];

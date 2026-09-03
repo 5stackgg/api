@@ -34,6 +34,10 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1125.0",
+    "@aws-sdk/lib-storage": "^3.1125.0",
+    "@aws-sdk/s3-presigned-post": "^3.1125.0",
+    "@aws-sdk/s3-request-presigner": "^3.1125.0",
     "@bull-board/api": "^6.3.0",
     "@bull-board/express": "^6.3.0",
     "@bull-board/nestjs": "^6.3.0",
@@ -58,10 +62,10 @@
     "connect-redis": "^7.1.0",
     "discord.js": "^14.14.1",
     "express-session": "^1.18.0",
+    "files-sdk": "^2.3.0",
     "globaloffensive": "^3.0.2",
     "ioredis": "^5.6.1",
     "jsonwebtoken": "^9.0.2",
-    "minio": "^8.0.1",
     "minisearch": "^7.1.0",
     "oauth": "^0.10.0",
     "openpgp": "^6.1.1",
