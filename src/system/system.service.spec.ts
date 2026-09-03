@@ -87,12 +87,19 @@ describe("SystemService.parseImageRef", () => {
 describe("SystemService.isReservedDeployment", () => {
   // Plugin manifests are third-party input. If these names were claimable, a
   // plugin could get the panel to restart the panel.
-  it.each(["api", "web", "hasura", "panel", "redis", "timescaledb"])(
-    "reserves %s",
-    (name) => {
-      expect(SystemService.isReservedDeployment(name)).toBe(true);
-    },
-  );
+  it.each([
+    "api",
+    "web",
+    "hasura",
+    "panel",
+    "redis",
+    "timescaledb",
+    "rustfs",
+    // minio outlives its own deployment as a Service alias.
+    "minio",
+  ])("reserves %s", (name) => {
+    expect(SystemService.isReservedDeployment(name)).toBe(true);
+  });
 
   it.each(["inventory-frontend", "inventory-backend", "example-plugin"])(
     "allows %s",

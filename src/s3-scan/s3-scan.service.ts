@@ -1,5 +1,4 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ObjectInfo } from "minio/dist/main/internal/type";
 import {
   e_notification_types_enum,
   e_player_roles_enum,
@@ -105,8 +104,7 @@ export class S3ScanService {
       const sizeByKey = new Map<string, number>();
 
       const stream = this.s3.listStream();
-      for await (const entry of stream) {
-        const obj = entry as ObjectInfo;
+      for await (const obj of stream) {
         const key = obj.name;
         if (!key) {
           continue;

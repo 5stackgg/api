@@ -4,6 +4,8 @@ export type S3Config = {
   bucket: string;
   db_backup_bucket: string;
   endpoint: string;
+  region: string;
   useSSL: boolean;
+  forcePathStyle: boolean;
   port: string;
 };
