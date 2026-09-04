@@ -122,6 +122,7 @@ select_permissions:
         - match_mode
         - mr
         - number_of_substitutes
+        - min_players_per_lineup
         - overtime
         - prefer_dedicated_server
         - ready_setting

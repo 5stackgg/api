@@ -45,6 +45,8 @@ export class DraftService {
 
       const perTeam = draftGame.capacity / 2;
       const accepted = this.draftGameService.acceptedPlayers(draftGame);
+      const shortHanded =
+        await this.draftGameService.allowsShortHandedStart(draftGame);
 
       if (draftGame.mode === "Teams") {
         if (!draftGame.team_1_id) {
@@ -54,10 +56,13 @@ export class DraftService {
         return;
       }
 
+      // Only a short-handed lobby relaxes these. It narrows capacity to the
+      // players who turned up, so an equality could strand a room the trigger
+      // already cleared; every other lobby keeps the exact == it always had.
       if (draftGame.mode === "Host") {
         const team1 = accepted.filter((player) => player.lineup === 1).length;
         const team2 = accepted.filter((player) => player.lineup === 2).length;
-        if (team1 !== perTeam || team2 !== perTeam) {
+        if (shortHanded ? team1 < 1 || team2 < 1 : team1 !== perTeam || team2 !== perTeam) {
           return;
         }
         await this.draftMatchService.finalize(draftGameId);
@@ -65,7 +70,11 @@ export class DraftService {
       }
 
       if (draftGame.mode === "Pug") {
-        if (accepted.length !== draftGame.capacity) {
+        if (
+          shortHanded
+            ? accepted.length < draftGame.capacity
+            : accepted.length !== draftGame.capacity
+        ) {
           return;
         }
         await this.autoSplit(draftGame);
@@ -74,7 +83,11 @@ export class DraftService {
       }
 
       if (draftGame.mode === "Captains") {
-        if (accepted.length !== draftGame.capacity) {
+        if (
+          shortHanded
+            ? accepted.length < draftGame.capacity
+            : accepted.length !== draftGame.capacity
+        ) {
           return;
         }
         await this.runDraftStart(draftGameId);

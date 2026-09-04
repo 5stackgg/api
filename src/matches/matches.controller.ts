@@ -230,6 +230,7 @@ export class MatchesController {
           halftime_pausematch: true,
           camera_required: true,
           game_mode_id: true,
+          min_players_per_lineup: true,
         },
         match_maps: {
           id: true,
@@ -459,6 +460,14 @@ export class MatchesController {
       match.options.cfg_overrides.Mode = gameMode.cfg;
       match.options.cfg_execs.push("mode");
     }
+
+    // Tells the server this match is not the size its type implies, so the ready
+    // check, the short-handed auto-pause and the per-team join cap all measure
+    // against the roster it was actually given. The snapshot wins: a lobby that
+    // started short-handed is smaller than even its mode declares. Null on a
+    // normal match, where the plugin keeps its own 5/2/1 table.
+    match.options.min_players_per_lineup =
+      match.options.min_players_per_lineup ?? gameMode?.playersPerTeam ?? null;
 
     // withAlwaysLoad answers with a nameless mode when the only thing to load
     // is an always-load plugin; that is not a mode the match is playing under.

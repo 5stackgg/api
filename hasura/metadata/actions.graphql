@@ -1688,6 +1688,13 @@ type Mutation {
 }
 
 type Mutation {
+  startDraftGame(
+    draftGameId: uuid!
+    force: Boolean
+  ): SuccessOutput
+}
+
+type Mutation {
   joinDraftGame(
     draftGameId: uuid!
     inviteCode: String

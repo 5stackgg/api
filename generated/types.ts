@@ -32929,6 +32929,12 @@ export default {
             "competitive_safe": [
                 6
             ],
+            "allow_short_handed_start": [
+                6
+            ],
+            "players_per_team": [
+                41
+            ],
             "created_at": [
                 5243
             ],
@@ -33117,6 +33123,12 @@ export default {
             "competitive_safe": [
                 7
             ],
+            "allow_short_handed_start": [
+                7
+            ],
+            "players_per_team": [
+                42
+            ],
             "created_at": [
                 5244
             ],
@@ -33176,6 +33188,12 @@ export default {
             ],
             "competitive_safe": [
                 6
+            ],
+            "allow_short_handed_start": [
+                6
+            ],
+            "players_per_team": [
+                41
             ],
             "created_at": [
                 5243
@@ -33330,6 +33348,12 @@ export default {
             "competitive_safe": [
                 3648
             ],
+            "allow_short_handed_start": [
+                3648
+            ],
+            "players_per_team": [
+                3648
+            ],
             "created_at": [
                 3648
             ],
@@ -33392,6 +33416,12 @@ export default {
             "competitive_safe": [
                 6
             ],
+            "allow_short_handed_start": [
+                6
+            ],
+            "players_per_team": [
+                41
+            ],
             "created_at": [
                 5243
             ],
@@ -33443,6 +33473,12 @@ export default {
             ],
             "competitive_safe": [
                 6
+            ],
+            "allow_short_handed_start": [
+                6
+            ],
+            "players_per_team": [
+                41
             ],
             "created_at": [
                 5243
@@ -59332,6 +59368,9 @@ export default {
             "number_of_substitutes": [
                 41
             ],
+            "min_players_per_lineup": [
+                41
+            ],
             "overtime": [
                 6
             ],
@@ -59566,6 +59605,9 @@ export default {
             "number_of_substitutes": [
                 32
             ],
+            "min_players_per_lineup": [
+                32
+            ],
             "round_restart_delay": [
                 32
             ],
@@ -59593,6 +59635,9 @@ export default {
                 3648
             ],
             "number_of_substitutes": [
+                3648
+            ],
+            "min_players_per_lineup": [
                 3648
             ],
             "round_restart_delay": [
@@ -59690,6 +59735,9 @@ export default {
             "number_of_substitutes": [
                 42
             ],
+            "min_players_per_lineup": [
+                42
+            ],
             "overtime": [
                 7
             ],
@@ -59751,6 +59799,9 @@ export default {
                 41
             ],
             "number_of_substitutes": [
+                41
+            ],
+            "min_players_per_lineup": [
                 41
             ],
             "round_restart_delay": [
@@ -59833,6 +59884,9 @@ export default {
             "number_of_substitutes": [
                 41
             ],
+            "min_players_per_lineup": [
+                41
+            ],
             "overtime": [
                 6
             ],
@@ -59907,6 +59961,9 @@ export default {
             "number_of_substitutes": [
                 41
             ],
+            "min_players_per_lineup": [
+                41
+            ],
             "regions": [
                 85
             ],
@@ -59949,6 +60006,9 @@ export default {
                 3648
             ],
             "number_of_substitutes": [
+                3648
+            ],
+            "min_players_per_lineup": [
                 3648
             ],
             "regions": [
@@ -59995,6 +60055,9 @@ export default {
             "number_of_substitutes": [
                 41
             ],
+            "min_players_per_lineup": [
+                41
+            ],
             "regions": [
                 85
             ],
@@ -60037,6 +60100,9 @@ export default {
                 3648
             ],
             "number_of_substitutes": [
+                3648
+            ],
+            "min_players_per_lineup": [
                 3648
             ],
             "regions": [
@@ -60161,6 +60227,9 @@ export default {
             "number_of_substitutes": [
                 3648
             ],
+            "min_players_per_lineup": [
+                3648
+            ],
             "overtime": [
                 3648
             ],
@@ -60276,6 +60345,9 @@ export default {
             "number_of_substitutes": [
                 41
             ],
+            "min_players_per_lineup": [
+                41
+            ],
             "overtime": [
                 6
             ],
@@ -60329,6 +60401,9 @@ export default {
             "number_of_substitutes": [
                 32
             ],
+            "min_players_per_lineup": [
+                32
+            ],
             "round_restart_delay": [
                 32
             ],
@@ -60356,6 +60431,9 @@ export default {
                 3648
             ],
             "number_of_substitutes": [
+                3648
+            ],
+            "min_players_per_lineup": [
                 3648
             ],
             "round_restart_delay": [
@@ -60387,6 +60465,9 @@ export default {
             "number_of_substitutes": [
                 32
             ],
+            "min_players_per_lineup": [
+                32
+            ],
             "round_restart_delay": [
                 32
             ],
@@ -60414,6 +60495,9 @@ export default {
                 3648
             ],
             "number_of_substitutes": [
+                3648
+            ],
+            "min_players_per_lineup": [
                 3648
             ],
             "round_restart_delay": [
@@ -60445,6 +60529,9 @@ export default {
             "number_of_substitutes": [
                 32
             ],
+            "min_players_per_lineup": [
+                32
+            ],
             "round_restart_delay": [
                 32
             ],
@@ -60472,6 +60559,9 @@ export default {
                 3648
             ],
             "number_of_substitutes": [
+                3648
+            ],
+            "min_players_per_lineup": [
                 3648
             ],
             "round_restart_delay": [
@@ -60556,6 +60646,9 @@ export default {
             "number_of_substitutes": [
                 41
             ],
+            "min_players_per_lineup": [
+                41
+            ],
             "overtime": [
                 6
             ],
@@ -60609,6 +60702,9 @@ export default {
             "number_of_substitutes": [
                 41
             ],
+            "min_players_per_lineup": [
+                41
+            ],
             "round_restart_delay": [
                 41
             ],
@@ -60636,6 +60732,9 @@ export default {
                 3648
             ],
             "number_of_substitutes": [
+                3648
+            ],
+            "min_players_per_lineup": [
                 3648
             ],
             "round_restart_delay": [
@@ -60682,6 +60781,9 @@ export default {
             "number_of_substitutes": [
                 32
             ],
+            "min_players_per_lineup": [
+                32
+            ],
             "round_restart_delay": [
                 32
             ],
@@ -60709,6 +60811,9 @@ export default {
                 3648
             ],
             "number_of_substitutes": [
+                3648
+            ],
+            "min_players_per_lineup": [
                 3648
             ],
             "round_restart_delay": [
@@ -60740,6 +60845,9 @@ export default {
             "number_of_substitutes": [
                 32
             ],
+            "min_players_per_lineup": [
+                32
+            ],
             "round_restart_delay": [
                 32
             ],
@@ -60767,6 +60875,9 @@ export default {
                 3648
             ],
             "number_of_substitutes": [
+                3648
+            ],
+            "min_players_per_lineup": [
                 3648
             ],
             "round_restart_delay": [
@@ -60798,6 +60909,9 @@ export default {
             "number_of_substitutes": [
                 32
             ],
+            "min_players_per_lineup": [
+                32
+            ],
             "round_restart_delay": [
                 32
             ],
@@ -60825,6 +60939,9 @@ export default {
                 3648
             ],
             "number_of_substitutes": [
+                3648
+            ],
+            "min_players_per_lineup": [
                 3648
             ],
             "round_restart_delay": [

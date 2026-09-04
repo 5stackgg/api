@@ -1,7 +1,7 @@
 import { Logger } from "@nestjs/common";
 import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { e_map_pool_types_enum } from "generated";
-import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
+import { resolvePlayersPerTeam } from "src/game-plugins/resolveExpectedPlayers";
 import { HasuraService } from "src/hasura/hasura.service";
 import { CacheService } from "src/cache/cache.service";
 import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
@@ -93,6 +93,8 @@ export class DraftMatchService {
 
     await this.ensureLineups(draftGame, match);
 
+    await this.stampLaunchSize(draftGame, match);
+
     // The room's conversation continues in the match chat: carry the history
     // over and tear down the draft lobby so non-participants drop out.
     await this.chat.migrateLobbyMessages(
@@ -123,6 +125,81 @@ export class DraftMatchService {
     });
 
     await this.matchAssistant.updateMatchStatus(match.id, "WaitingForCheckIn");
+  }
+
+  // A lobby that started short-handed produces a match smaller than its mode
+  // declares, and every gate downstream -- check_match_has_min_players,
+  // is_match_lineup_ready, the lineup removal trigger -- would refuse it. Pin
+  // the size it actually launched at so those read the real shape.
+  //
+  // The smaller side wins because the gates apply one number to both lineups; an
+  // uneven 3v2 has to clear at 2 or it can never start.
+  private async stampLaunchSize(
+    draftGame: DraftGame,
+    match: { id: string; lineup_1_id?: string | null; lineup_2_id?: string | null },
+  ) {
+    if (!draftGame.match_options_id) {
+      return;
+    }
+
+    const { match_options_by_pk } = await this.hasura.query({
+      match_options_by_pk: {
+        __args: { id: draftGame.match_options_id },
+        game_mode: {
+          players_per_team: true,
+          allow_short_handed_start: true,
+        },
+      },
+    });
+
+    const gameMode = match_options_by_pk?.game_mode;
+
+    if (!gameMode?.allow_short_handed_start) {
+      return;
+    }
+
+    const declared = resolvePlayersPerTeam(draftGame.type, gameMode);
+
+    const counts = await this.lineupCounts(match);
+    const smallest = Math.min(...counts);
+
+    if (smallest >= declared) {
+      return;
+    }
+
+    await this.hasura.mutation({
+      update_match_options_by_pk: {
+        __args: {
+          pk_columns: { id: draftGame.match_options_id },
+          _set: { min_players_per_lineup: Math.max(1, smallest) },
+        },
+        __typename: true,
+      },
+    });
+  }
+
+  private async lineupCounts(match: {
+    lineup_1_id?: string | null;
+    lineup_2_id?: string | null;
+  }): Promise<Array<number>> {
+    const counts: Array<number> = [];
+
+    for (const lineupId of [match.lineup_1_id, match.lineup_2_id]) {
+      if (!lineupId) {
+        continue;
+      }
+
+      const { match_lineup_players } = await this.hasura.query({
+        match_lineup_players: {
+          __args: { where: { match_lineup_id: { _eq: lineupId } } },
+          steam_id: true,
+        },
+      });
+
+      counts.push(match_lineup_players.length);
+    }
+
+    return counts.length > 0 ? counts : [0];
   }
 
   private async ensureLineups(
@@ -333,18 +410,25 @@ export class DraftMatchService {
   }
 
   private async maxPlayersPerLineup(draftGame: DraftGame): Promise<number> {
-    const starters = Math.floor(ExpectedPlayers[draftGame.type] / 2);
-
     if (!draftGame.match_options_id) {
-      return starters;
+      return resolvePlayersPerTeam(draftGame.type);
     }
 
     const { match_options_by_pk } = await this.hasura.query({
       match_options_by_pk: {
         __args: { id: draftGame.match_options_id },
         number_of_substitutes: true,
+        game_mode: {
+          players_per_team: true,
+          allow_short_handed_start: true,
+        },
       },
     });
+
+    const starters = resolvePlayersPerTeam(
+      draftGame.type,
+      match_options_by_pk?.game_mode,
+    );
 
     return starters + (match_options_by_pk?.number_of_substitutes ?? 0);
   }

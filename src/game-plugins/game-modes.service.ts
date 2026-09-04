@@ -9,6 +9,9 @@ export type ResolvedGameMode = {
   name: string;
   cfg: string | null;
   extraGameParams: string | null;
+  // How many players a side this mode is built for; null means it inherits the
+  // match type's count.
+  playersPerTeam: number | null;
   enabledPlugins: string;
   pluginConfigs: string | null;
   missingRequired: Array<string>;
@@ -41,6 +44,7 @@ type ModeRow = {
   name: string;
   cfg: string | null;
   extra_game_params: string | null;
+  players_per_team: number | null;
 };
 
 type ModePluginRow = {
@@ -197,6 +201,8 @@ export class GameModesService {
       name: "",
       cfg: null,
       extraGameParams: null,
+      // No mode means no size override; the match keeps its type's count.
+      playersPerTeam: null,
       enabledPlugins: enabled.join(","),
       pluginConfigs: null,
       missingRequired: [],
@@ -257,7 +263,7 @@ export class GameModesService {
     scope?: PluginScope,
   ): Promise<ResolvedGameMode | null> {
     const [mode] = await this.postgres.query<Array<ModeRow>>(
-      `SELECT id, slug, name, cfg, extra_game_params
+      `SELECT id, slug, name, cfg, extra_game_params, players_per_team
          FROM game_modes
         WHERE id = $1 AND enabled = true AND archived_at IS NULL`,
       [gameModeId],
@@ -328,6 +334,7 @@ export class GameModesService {
       name: mode.name,
       cfg: mode.cfg,
       extraGameParams: mode.extra_game_params,
+      playersPerTeam: mode.players_per_team ?? null,
       enabledPlugins: enabled.join(","),
       pluginConfigs:
         Object.keys(configs).length > 0

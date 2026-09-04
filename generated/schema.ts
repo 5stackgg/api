@@ -8751,6 +8751,8 @@ export interface game_modes {
     archived_at: (Scalars['timestamptz'] | null)
     cfg: (Scalars['String'] | null)
     competitive_safe: Scalars['Boolean']
+    players_per_team: (Scalars['Int'] | null)
+    allow_short_handed_start: Scalars['Boolean']
     created_at: Scalars['timestamptz']
     description: (Scalars['String'] | null)
     enabled: Scalars['Boolean']
@@ -8840,11 +8842,11 @@ export interface game_modes_mutation_response {
 
 
 /** select columns of table "game_modes" */
-export type game_modes_select_column = 'archived_at' | 'cfg' | 'competitive_safe' | 'created_at' | 'description' | 'enabled' | 'extra_game_params' | 'icon' | 'id' | 'name' | 'slug' | 'updated_at'
+export type game_modes_select_column = 'archived_at' | 'cfg' | 'competitive_safe' | 'players_per_team' | 'allow_short_handed_start' | 'created_at' | 'description' | 'enabled' | 'extra_game_params' | 'icon' | 'id' | 'name' | 'slug' | 'updated_at'
 
 
 /** update columns of table "game_modes" */
-export type game_modes_update_column = 'archived_at' | 'cfg' | 'competitive_safe' | 'created_at' | 'description' | 'enabled' | 'extra_game_params' | 'icon' | 'id' | 'name' | 'slug' | 'updated_at'
+export type game_modes_update_column = 'archived_at' | 'cfg' | 'competitive_safe' | 'players_per_team' | 'allow_short_handed_start' | 'created_at' | 'description' | 'enabled' | 'extra_game_params' | 'icon' | 'id' | 'name' | 'slug' | 'updated_at'
 
 
 /** columns and relationships of "game_plugin_installs" */
@@ -13958,6 +13960,7 @@ export interface match_options {
     matches_aggregate: matches_aggregate
     mr: Scalars['Int']
     number_of_substitutes: Scalars['Int']
+    min_players_per_lineup: (Scalars['Int'] | null)
     overtime: Scalars['Boolean']
     prefer_dedicated_server: Scalars['Boolean']
     ready_setting: e_ready_settings_enum
@@ -14011,6 +14014,7 @@ export interface match_options_avg_fields {
     live_match_timeout: (Scalars['Float'] | null)
     mr: (Scalars['Float'] | null)
     number_of_substitutes: (Scalars['Float'] | null)
+    min_players_per_lineup: (Scalars['Float'] | null)
     round_restart_delay: (Scalars['Float'] | null)
     tv_delay: (Scalars['Float'] | null)
     veto_pick_timeout: (Scalars['Float'] | null)
@@ -14033,6 +14037,7 @@ export interface match_options_max_fields {
     map_pool_id: (Scalars['uuid'] | null)
     mr: (Scalars['Int'] | null)
     number_of_substitutes: (Scalars['Int'] | null)
+    min_players_per_lineup: (Scalars['Int'] | null)
     regions: (Scalars['String'][] | null)
     round_restart_delay: (Scalars['Int'] | null)
     tv_delay: (Scalars['Int'] | null)
@@ -14052,6 +14057,7 @@ export interface match_options_min_fields {
     map_pool_id: (Scalars['uuid'] | null)
     mr: (Scalars['Int'] | null)
     number_of_substitutes: (Scalars['Int'] | null)
+    min_players_per_lineup: (Scalars['Int'] | null)
     regions: (Scalars['String'][] | null)
     round_restart_delay: (Scalars['Int'] | null)
     tv_delay: (Scalars['Int'] | null)
@@ -14071,7 +14077,7 @@ export interface match_options_mutation_response {
 
 
 /** select columns of table "match_options" */
-export type match_options_select_column = 'auto_cancel_duration' | 'auto_cancellation' | 'best_of' | 'camera_allow_teammates' | 'camera_required' | 'check_in_setting' | 'coaches' | 'default_models' | 'game_mode_id' | 'halftime_pausematch' | 'id' | 'invite_code' | 'knife_round' | 'live_match_timeout' | 'map_pool_id' | 'map_veto' | 'match_mode' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'round_restart_delay' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type' | 'veto_pick_timeout'
+export type match_options_select_column = 'auto_cancel_duration' | 'auto_cancellation' | 'best_of' | 'camera_allow_teammates' | 'camera_required' | 'check_in_setting' | 'coaches' | 'default_models' | 'game_mode_id' | 'halftime_pausematch' | 'id' | 'invite_code' | 'knife_round' | 'live_match_timeout' | 'map_pool_id' | 'map_veto' | 'match_mode' | 'mr' | 'number_of_substitutes' | 'min_players_per_lineup' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'round_restart_delay' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type' | 'veto_pick_timeout'
 
 
 /** select "match_options_aggregate_bool_exp_bool_and_arguments_columns" columns of table "match_options" */
@@ -14089,6 +14095,7 @@ export interface match_options_stddev_fields {
     live_match_timeout: (Scalars['Float'] | null)
     mr: (Scalars['Float'] | null)
     number_of_substitutes: (Scalars['Float'] | null)
+    min_players_per_lineup: (Scalars['Float'] | null)
     round_restart_delay: (Scalars['Float'] | null)
     tv_delay: (Scalars['Float'] | null)
     veto_pick_timeout: (Scalars['Float'] | null)
@@ -14103,6 +14110,7 @@ export interface match_options_stddev_pop_fields {
     live_match_timeout: (Scalars['Float'] | null)
     mr: (Scalars['Float'] | null)
     number_of_substitutes: (Scalars['Float'] | null)
+    min_players_per_lineup: (Scalars['Float'] | null)
     round_restart_delay: (Scalars['Float'] | null)
     tv_delay: (Scalars['Float'] | null)
     veto_pick_timeout: (Scalars['Float'] | null)
@@ -14117,6 +14125,7 @@ export interface match_options_stddev_samp_fields {
     live_match_timeout: (Scalars['Float'] | null)
     mr: (Scalars['Float'] | null)
     number_of_substitutes: (Scalars['Float'] | null)
+    min_players_per_lineup: (Scalars['Float'] | null)
     round_restart_delay: (Scalars['Float'] | null)
     tv_delay: (Scalars['Float'] | null)
     veto_pick_timeout: (Scalars['Float'] | null)
@@ -14131,6 +14140,7 @@ export interface match_options_sum_fields {
     live_match_timeout: (Scalars['Int'] | null)
     mr: (Scalars['Int'] | null)
     number_of_substitutes: (Scalars['Int'] | null)
+    min_players_per_lineup: (Scalars['Int'] | null)
     round_restart_delay: (Scalars['Int'] | null)
     tv_delay: (Scalars['Int'] | null)
     veto_pick_timeout: (Scalars['Int'] | null)
@@ -14139,7 +14149,7 @@ export interface match_options_sum_fields {
 
 
 /** update columns of table "match_options" */
-export type match_options_update_column = 'auto_cancel_duration' | 'auto_cancellation' | 'best_of' | 'camera_allow_teammates' | 'camera_required' | 'check_in_setting' | 'coaches' | 'default_models' | 'game_mode_id' | 'halftime_pausematch' | 'id' | 'invite_code' | 'knife_round' | 'live_match_timeout' | 'map_pool_id' | 'map_veto' | 'match_mode' | 'mr' | 'number_of_substitutes' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'round_restart_delay' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type' | 'veto_pick_timeout'
+export type match_options_update_column = 'auto_cancel_duration' | 'auto_cancellation' | 'best_of' | 'camera_allow_teammates' | 'camera_required' | 'check_in_setting' | 'coaches' | 'default_models' | 'game_mode_id' | 'halftime_pausematch' | 'id' | 'invite_code' | 'knife_round' | 'live_match_timeout' | 'map_pool_id' | 'map_veto' | 'match_mode' | 'mr' | 'number_of_substitutes' | 'min_players_per_lineup' | 'overtime' | 'prefer_dedicated_server' | 'ready_setting' | 'region_veto' | 'regions' | 'round_restart_delay' | 'tech_timeout_setting' | 'timeout_setting' | 'tv_delay' | 'type' | 'veto_pick_timeout'
 
 
 /** aggregate var_pop on columns */
@@ -14149,6 +14159,7 @@ export interface match_options_var_pop_fields {
     live_match_timeout: (Scalars['Float'] | null)
     mr: (Scalars['Float'] | null)
     number_of_substitutes: (Scalars['Float'] | null)
+    min_players_per_lineup: (Scalars['Float'] | null)
     round_restart_delay: (Scalars['Float'] | null)
     tv_delay: (Scalars['Float'] | null)
     veto_pick_timeout: (Scalars['Float'] | null)
@@ -14163,6 +14174,7 @@ export interface match_options_var_samp_fields {
     live_match_timeout: (Scalars['Float'] | null)
     mr: (Scalars['Float'] | null)
     number_of_substitutes: (Scalars['Float'] | null)
+    min_players_per_lineup: (Scalars['Float'] | null)
     round_restart_delay: (Scalars['Float'] | null)
     tv_delay: (Scalars['Float'] | null)
     veto_pick_timeout: (Scalars['Float'] | null)
@@ -14177,6 +14189,7 @@ export interface match_options_variance_fields {
     live_match_timeout: (Scalars['Float'] | null)
     mr: (Scalars['Float'] | null)
     number_of_substitutes: (Scalars['Float'] | null)
+    min_players_per_lineup: (Scalars['Float'] | null)
     round_restart_delay: (Scalars['Float'] | null)
     tv_delay: (Scalars['Float'] | null)
     veto_pick_timeout: (Scalars['Float'] | null)
@@ -59461,6 +59474,8 @@ export interface game_modesGenqlSelection{
     archived_at?: boolean | number
     cfg?: boolean | number
     competitive_safe?: boolean | number
+    players_per_team?: boolean | number
+    allow_short_handed_start?: boolean | number
     created_at?: boolean | number
     description?: boolean | number
     enabled?: boolean | number
@@ -59551,11 +59566,11 @@ export interface game_modes_aggregate_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "game_modes". All fields are combined with a logical 'AND'. */
-export interface game_modes_bool_exp {_and?: (game_modes_bool_exp[] | null),_not?: (game_modes_bool_exp | null),_or?: (game_modes_bool_exp[] | null),archived_at?: (timestamptz_comparison_exp | null),cfg?: (String_comparison_exp | null),competitive_safe?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),enabled?: (Boolean_comparison_exp | null),extra_game_params?: (String_comparison_exp | null),icon?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),match_options?: (match_options_bool_exp | null),match_options_aggregate?: (match_options_aggregate_bool_exp | null),name?: (String_comparison_exp | null),plugins?: (game_mode_plugins_bool_exp | null),plugins_aggregate?: (game_mode_plugins_aggregate_bool_exp | null),runtime_conflicts?: (jsonb_comparison_exp | null),slug?: (String_comparison_exp | null),supported_runtimes?: (jsonb_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+export interface game_modes_bool_exp {_and?: (game_modes_bool_exp[] | null),_not?: (game_modes_bool_exp | null),_or?: (game_modes_bool_exp[] | null),archived_at?: (timestamptz_comparison_exp | null),cfg?: (String_comparison_exp | null),competitive_safe?: (Boolean_comparison_exp | null),players_per_team?: (Int_comparison_exp | null),allow_short_handed_start?: (Boolean_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),enabled?: (Boolean_comparison_exp | null),extra_game_params?: (String_comparison_exp | null),icon?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),match_options?: (match_options_bool_exp | null),match_options_aggregate?: (match_options_aggregate_bool_exp | null),name?: (String_comparison_exp | null),plugins?: (game_mode_plugins_bool_exp | null),plugins_aggregate?: (game_mode_plugins_aggregate_bool_exp | null),runtime_conflicts?: (jsonb_comparison_exp | null),slug?: (String_comparison_exp | null),supported_runtimes?: (jsonb_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
 
 
 /** input type for inserting data into table "game_modes" */
-export interface game_modes_insert_input {archived_at?: (Scalars['timestamptz'] | null),cfg?: (Scalars['String'] | null),competitive_safe?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),extra_game_params?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_options?: (match_options_arr_rel_insert_input | null),name?: (Scalars['String'] | null),plugins?: (game_mode_plugins_arr_rel_insert_input | null),slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface game_modes_insert_input {archived_at?: (Scalars['timestamptz'] | null),cfg?: (Scalars['String'] | null),competitive_safe?: (Scalars['Boolean'] | null),players_per_team?: (Scalars['Int'] | null),allow_short_handed_start?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),extra_game_params?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),match_options?: (match_options_arr_rel_insert_input | null),name?: (Scalars['String'] | null),plugins?: (game_mode_plugins_arr_rel_insert_input | null),slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate max on columns */
@@ -59614,7 +59629,7 @@ export interface game_modes_on_conflict {constraint: game_modes_constraint,updat
 
 
 /** Ordering options when selecting data from "game_modes". */
-export interface game_modes_order_by {archived_at?: (order_by | null),cfg?: (order_by | null),competitive_safe?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),enabled?: (order_by | null),extra_game_params?: (order_by | null),icon?: (order_by | null),id?: (order_by | null),match_options_aggregate?: (match_options_aggregate_order_by | null),name?: (order_by | null),plugins_aggregate?: (game_mode_plugins_aggregate_order_by | null),runtime_conflicts?: (order_by | null),slug?: (order_by | null),supported_runtimes?: (order_by | null),updated_at?: (order_by | null)}
+export interface game_modes_order_by {archived_at?: (order_by | null),cfg?: (order_by | null),competitive_safe?: (order_by | null),players_per_team?: (order_by | null),allow_short_handed_start?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),enabled?: (order_by | null),extra_game_params?: (order_by | null),icon?: (order_by | null),id?: (order_by | null),match_options_aggregate?: (match_options_aggregate_order_by | null),name?: (order_by | null),plugins_aggregate?: (game_mode_plugins_aggregate_order_by | null),runtime_conflicts?: (order_by | null),slug?: (order_by | null),supported_runtimes?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** primary key columns input for table: game_modes */
@@ -59622,7 +59637,7 @@ export interface game_modes_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "game_modes" */
-export interface game_modes_set_input {archived_at?: (Scalars['timestamptz'] | null),cfg?: (Scalars['String'] | null),competitive_safe?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),extra_game_params?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface game_modes_set_input {archived_at?: (Scalars['timestamptz'] | null),cfg?: (Scalars['String'] | null),competitive_safe?: (Scalars['Boolean'] | null),players_per_team?: (Scalars['Int'] | null),allow_short_handed_start?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),extra_game_params?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** Streaming cursor of the table "game_modes" */
@@ -59634,7 +59649,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface game_modes_stream_cursor_value_input {archived_at?: (Scalars['timestamptz'] | null),cfg?: (Scalars['String'] | null),competitive_safe?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),extra_game_params?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface game_modes_stream_cursor_value_input {archived_at?: (Scalars['timestamptz'] | null),cfg?: (Scalars['String'] | null),competitive_safe?: (Scalars['Boolean'] | null),players_per_team?: (Scalars['Int'] | null),allow_short_handed_start?: (Scalars['Boolean'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),extra_game_params?: (Scalars['String'] | null),icon?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),name?: (Scalars['String'] | null),slug?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 export interface game_modes_updates {
 /** sets the columns of the filtered rows to the given values */
@@ -68348,6 +68363,7 @@ export interface match_optionsGenqlSelection{
     where?: (matches_bool_exp | null)} })
     mr?: boolean | number
     number_of_substitutes?: boolean | number
+    min_players_per_lineup?: boolean | number
     overtime?: boolean | number
     prefer_dedicated_server?: boolean | number
     ready_setting?: boolean | number
@@ -68422,6 +68438,7 @@ export interface match_options_avg_fieldsGenqlSelection{
     live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
+    min_players_per_lineup?: boolean | number
     round_restart_delay?: boolean | number
     tv_delay?: boolean | number
     veto_pick_timeout?: boolean | number
@@ -68431,19 +68448,19 @@ export interface match_options_avg_fieldsGenqlSelection{
 
 
 /** order by avg() on columns of table "match_options" */
-export interface match_options_avg_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
+export interface match_options_avg_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),min_players_per_lineup?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
 
 
 /** Boolean expression to filter rows from the table "match_options". All fields are combined with a logical 'AND'. */
-export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),auto_cancel_duration?: (Int_comparison_exp | null),auto_cancellation?: (Boolean_comparison_exp | null),best_of?: (Int_comparison_exp | null),camera_allow_teammates?: (Boolean_comparison_exp | null),camera_required?: (Boolean_comparison_exp | null),check_in_setting?: (e_check_in_settings_enum_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),default_models?: (Boolean_comparison_exp | null),game_mode?: (game_modes_bool_exp | null),game_mode_id?: (uuid_comparison_exp | null),halftime_pausematch?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),live_match_timeout?: (Int_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),match_mode?: (e_match_mode_enum_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),prefer_dedicated_server?: (Boolean_comparison_exp | null),ready_setting?: (e_ready_settings_enum_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),regions?: (String_array_comparison_exp | null),round_restart_delay?: (Int_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_bracket?: (tournament_brackets_bool_exp | null),tournament_stage?: (tournament_stages_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null),veto_pick_timeout?: (Int_comparison_exp | null)}
+export interface match_options_bool_exp {_and?: (match_options_bool_exp[] | null),_not?: (match_options_bool_exp | null),_or?: (match_options_bool_exp[] | null),auto_cancel_duration?: (Int_comparison_exp | null),auto_cancellation?: (Boolean_comparison_exp | null),best_of?: (Int_comparison_exp | null),camera_allow_teammates?: (Boolean_comparison_exp | null),camera_required?: (Boolean_comparison_exp | null),check_in_setting?: (e_check_in_settings_enum_comparison_exp | null),coaches?: (Boolean_comparison_exp | null),default_models?: (Boolean_comparison_exp | null),game_mode?: (game_modes_bool_exp | null),game_mode_id?: (uuid_comparison_exp | null),halftime_pausematch?: (Boolean_comparison_exp | null),has_active_matches?: (Boolean_comparison_exp | null),id?: (uuid_comparison_exp | null),invite_code?: (String_comparison_exp | null),knife_round?: (Boolean_comparison_exp | null),live_match_timeout?: (Int_comparison_exp | null),map_pool?: (map_pools_bool_exp | null),map_pool_id?: (uuid_comparison_exp | null),map_veto?: (Boolean_comparison_exp | null),match_mode?: (e_match_mode_enum_comparison_exp | null),matches?: (matches_bool_exp | null),matches_aggregate?: (matches_aggregate_bool_exp | null),mr?: (Int_comparison_exp | null),number_of_substitutes?: (Int_comparison_exp | null),min_players_per_lineup?: (Int_comparison_exp | null),overtime?: (Boolean_comparison_exp | null),prefer_dedicated_server?: (Boolean_comparison_exp | null),ready_setting?: (e_ready_settings_enum_comparison_exp | null),region_veto?: (Boolean_comparison_exp | null),regions?: (String_array_comparison_exp | null),round_restart_delay?: (Int_comparison_exp | null),tech_timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),timeout_setting?: (e_timeout_settings_enum_comparison_exp | null),tournament?: (tournaments_bool_exp | null),tournament_bracket?: (tournament_brackets_bool_exp | null),tournament_stage?: (tournament_stages_bool_exp | null),tv_delay?: (Int_comparison_exp | null),type?: (e_match_types_enum_comparison_exp | null),veto_pick_timeout?: (Int_comparison_exp | null)}
 
 
 /** input type for incrementing numeric columns in table "match_options" */
-export interface match_options_inc_input {auto_cancel_duration?: (Scalars['Int'] | null),best_of?: (Scalars['Int'] | null),live_match_timeout?: (Scalars['Int'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),round_restart_delay?: (Scalars['Int'] | null),tv_delay?: (Scalars['Int'] | null),veto_pick_timeout?: (Scalars['Int'] | null)}
+export interface match_options_inc_input {auto_cancel_duration?: (Scalars['Int'] | null),best_of?: (Scalars['Int'] | null),live_match_timeout?: (Scalars['Int'] | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),min_players_per_lineup?: (Scalars['Int'] | null),round_restart_delay?: (Scalars['Int'] | null),tv_delay?: (Scalars['Int'] | null),veto_pick_timeout?: (Scalars['Int'] | null)}
 
 
 /** input type for inserting data into table "match_options" */
-export interface match_options_insert_input {auto_cancel_duration?: (Scalars['Int'] | null),auto_cancellation?: (Scalars['Boolean'] | null),best_of?: (Scalars['Int'] | null),camera_allow_teammates?: (Scalars['Boolean'] | null),camera_required?: (Scalars['Boolean'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),game_mode?: (game_modes_obj_rel_insert_input | null),game_mode_id?: (Scalars['uuid'] | null),halftime_pausematch?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),live_match_timeout?: (Scalars['Int'] | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),match_mode?: (e_match_mode_enum | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),round_restart_delay?: (Scalars['Int'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_bracket?: (tournament_brackets_obj_rel_insert_input | null),tournament_stage?: (tournament_stages_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null),veto_pick_timeout?: (Scalars['Int'] | null)}
+export interface match_options_insert_input {auto_cancel_duration?: (Scalars['Int'] | null),auto_cancellation?: (Scalars['Boolean'] | null),best_of?: (Scalars['Int'] | null),camera_allow_teammates?: (Scalars['Boolean'] | null),camera_required?: (Scalars['Boolean'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),game_mode?: (game_modes_obj_rel_insert_input | null),game_mode_id?: (Scalars['uuid'] | null),halftime_pausematch?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),live_match_timeout?: (Scalars['Int'] | null),map_pool?: (map_pools_obj_rel_insert_input | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),match_mode?: (e_match_mode_enum | null),matches?: (matches_arr_rel_insert_input | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),min_players_per_lineup?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),round_restart_delay?: (Scalars['Int'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tournament?: (tournaments_obj_rel_insert_input | null),tournament_bracket?: (tournament_brackets_obj_rel_insert_input | null),tournament_stage?: (tournament_stages_obj_rel_insert_input | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null),veto_pick_timeout?: (Scalars['Int'] | null)}
 
 
 /** aggregate max on columns */
@@ -68457,6 +68474,7 @@ export interface match_options_max_fieldsGenqlSelection{
     map_pool_id?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
+    min_players_per_lineup?: boolean | number
     regions?: boolean | number
     round_restart_delay?: boolean | number
     tv_delay?: boolean | number
@@ -68467,7 +68485,7 @@ export interface match_options_max_fieldsGenqlSelection{
 
 
 /** order by max() on columns of table "match_options" */
-export interface match_options_max_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),game_mode_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),live_match_timeout?: (order_by | null),map_pool_id?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),regions?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
+export interface match_options_max_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),game_mode_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),live_match_timeout?: (order_by | null),map_pool_id?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),min_players_per_lineup?: (order_by | null),regions?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
 
 
 /** aggregate min on columns */
@@ -68481,6 +68499,7 @@ export interface match_options_min_fieldsGenqlSelection{
     map_pool_id?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
+    min_players_per_lineup?: boolean | number
     regions?: boolean | number
     round_restart_delay?: boolean | number
     tv_delay?: boolean | number
@@ -68491,7 +68510,7 @@ export interface match_options_min_fieldsGenqlSelection{
 
 
 /** order by min() on columns of table "match_options" */
-export interface match_options_min_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),game_mode_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),live_match_timeout?: (order_by | null),map_pool_id?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),regions?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
+export interface match_options_min_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),game_mode_id?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),live_match_timeout?: (order_by | null),map_pool_id?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),min_players_per_lineup?: (order_by | null),regions?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
 
 
 /** response of any mutation on the table "match_options" */
@@ -68516,7 +68535,7 @@ export interface match_options_on_conflict {constraint: match_options_constraint
 
 
 /** Ordering options when selecting data from "match_options". */
-export interface match_options_order_by {auto_cancel_duration?: (order_by | null),auto_cancellation?: (order_by | null),best_of?: (order_by | null),camera_allow_teammates?: (order_by | null),camera_required?: (order_by | null),check_in_setting?: (order_by | null),coaches?: (order_by | null),default_models?: (order_by | null),game_mode?: (game_modes_order_by | null),game_mode_id?: (order_by | null),halftime_pausematch?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),knife_round?: (order_by | null),live_match_timeout?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),match_mode?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),overtime?: (order_by | null),prefer_dedicated_server?: (order_by | null),ready_setting?: (order_by | null),region_veto?: (order_by | null),regions?: (order_by | null),round_restart_delay?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_bracket?: (tournament_brackets_order_by | null),tournament_stage?: (tournament_stages_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null),veto_pick_timeout?: (order_by | null)}
+export interface match_options_order_by {auto_cancel_duration?: (order_by | null),auto_cancellation?: (order_by | null),best_of?: (order_by | null),camera_allow_teammates?: (order_by | null),camera_required?: (order_by | null),check_in_setting?: (order_by | null),coaches?: (order_by | null),default_models?: (order_by | null),game_mode?: (game_modes_order_by | null),game_mode_id?: (order_by | null),halftime_pausematch?: (order_by | null),has_active_matches?: (order_by | null),id?: (order_by | null),invite_code?: (order_by | null),knife_round?: (order_by | null),live_match_timeout?: (order_by | null),map_pool?: (map_pools_order_by | null),map_pool_id?: (order_by | null),map_veto?: (order_by | null),match_mode?: (order_by | null),matches_aggregate?: (matches_aggregate_order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),min_players_per_lineup?: (order_by | null),overtime?: (order_by | null),prefer_dedicated_server?: (order_by | null),ready_setting?: (order_by | null),region_veto?: (order_by | null),regions?: (order_by | null),round_restart_delay?: (order_by | null),tech_timeout_setting?: (order_by | null),timeout_setting?: (order_by | null),tournament?: (tournaments_order_by | null),tournament_bracket?: (tournament_brackets_order_by | null),tournament_stage?: (tournament_stages_order_by | null),tv_delay?: (order_by | null),type?: (order_by | null),veto_pick_timeout?: (order_by | null)}
 
 
 /** primary key columns input for table: match_options */
@@ -68524,7 +68543,7 @@ export interface match_options_pk_columns_input {id: Scalars['uuid']}
 
 
 /** input type for updating data in table "match_options" */
-export interface match_options_set_input {auto_cancel_duration?: (Scalars['Int'] | null),auto_cancellation?: (Scalars['Boolean'] | null),best_of?: (Scalars['Int'] | null),camera_allow_teammates?: (Scalars['Boolean'] | null),camera_required?: (Scalars['Boolean'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),game_mode_id?: (Scalars['uuid'] | null),halftime_pausematch?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),live_match_timeout?: (Scalars['Int'] | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),match_mode?: (e_match_mode_enum | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),round_restart_delay?: (Scalars['Int'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null),veto_pick_timeout?: (Scalars['Int'] | null)}
+export interface match_options_set_input {auto_cancel_duration?: (Scalars['Int'] | null),auto_cancellation?: (Scalars['Boolean'] | null),best_of?: (Scalars['Int'] | null),camera_allow_teammates?: (Scalars['Boolean'] | null),camera_required?: (Scalars['Boolean'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),game_mode_id?: (Scalars['uuid'] | null),halftime_pausematch?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),live_match_timeout?: (Scalars['Int'] | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),match_mode?: (e_match_mode_enum | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),min_players_per_lineup?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),round_restart_delay?: (Scalars['Int'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null),veto_pick_timeout?: (Scalars['Int'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -68534,6 +68553,7 @@ export interface match_options_stddev_fieldsGenqlSelection{
     live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
+    min_players_per_lineup?: boolean | number
     round_restart_delay?: boolean | number
     tv_delay?: boolean | number
     veto_pick_timeout?: boolean | number
@@ -68543,7 +68563,7 @@ export interface match_options_stddev_fieldsGenqlSelection{
 
 
 /** order by stddev() on columns of table "match_options" */
-export interface match_options_stddev_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
+export interface match_options_stddev_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),min_players_per_lineup?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
 
 
 /** aggregate stddev_pop on columns */
@@ -68553,6 +68573,7 @@ export interface match_options_stddev_pop_fieldsGenqlSelection{
     live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
+    min_players_per_lineup?: boolean | number
     round_restart_delay?: boolean | number
     tv_delay?: boolean | number
     veto_pick_timeout?: boolean | number
@@ -68562,7 +68583,7 @@ export interface match_options_stddev_pop_fieldsGenqlSelection{
 
 
 /** order by stddev_pop() on columns of table "match_options" */
-export interface match_options_stddev_pop_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
+export interface match_options_stddev_pop_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),min_players_per_lineup?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
 
 
 /** aggregate stddev_samp on columns */
@@ -68572,6 +68593,7 @@ export interface match_options_stddev_samp_fieldsGenqlSelection{
     live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
+    min_players_per_lineup?: boolean | number
     round_restart_delay?: boolean | number
     tv_delay?: boolean | number
     veto_pick_timeout?: boolean | number
@@ -68581,7 +68603,7 @@ export interface match_options_stddev_samp_fieldsGenqlSelection{
 
 
 /** order by stddev_samp() on columns of table "match_options" */
-export interface match_options_stddev_samp_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
+export interface match_options_stddev_samp_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),min_players_per_lineup?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
 
 
 /** Streaming cursor of the table "match_options" */
@@ -68593,7 +68615,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface match_options_stream_cursor_value_input {auto_cancel_duration?: (Scalars['Int'] | null),auto_cancellation?: (Scalars['Boolean'] | null),best_of?: (Scalars['Int'] | null),camera_allow_teammates?: (Scalars['Boolean'] | null),camera_required?: (Scalars['Boolean'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),game_mode_id?: (Scalars['uuid'] | null),halftime_pausematch?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),live_match_timeout?: (Scalars['Int'] | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),match_mode?: (e_match_mode_enum | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),round_restart_delay?: (Scalars['Int'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null),veto_pick_timeout?: (Scalars['Int'] | null)}
+export interface match_options_stream_cursor_value_input {auto_cancel_duration?: (Scalars['Int'] | null),auto_cancellation?: (Scalars['Boolean'] | null),best_of?: (Scalars['Int'] | null),camera_allow_teammates?: (Scalars['Boolean'] | null),camera_required?: (Scalars['Boolean'] | null),check_in_setting?: (e_check_in_settings_enum | null),coaches?: (Scalars['Boolean'] | null),default_models?: (Scalars['Boolean'] | null),game_mode_id?: (Scalars['uuid'] | null),halftime_pausematch?: (Scalars['Boolean'] | null),id?: (Scalars['uuid'] | null),invite_code?: (Scalars['String'] | null),knife_round?: (Scalars['Boolean'] | null),live_match_timeout?: (Scalars['Int'] | null),map_pool_id?: (Scalars['uuid'] | null),map_veto?: (Scalars['Boolean'] | null),match_mode?: (e_match_mode_enum | null),mr?: (Scalars['Int'] | null),number_of_substitutes?: (Scalars['Int'] | null),min_players_per_lineup?: (Scalars['Int'] | null),overtime?: (Scalars['Boolean'] | null),prefer_dedicated_server?: (Scalars['Boolean'] | null),ready_setting?: (e_ready_settings_enum | null),region_veto?: (Scalars['Boolean'] | null),regions?: (Scalars['String'][] | null),round_restart_delay?: (Scalars['Int'] | null),tech_timeout_setting?: (e_timeout_settings_enum | null),timeout_setting?: (e_timeout_settings_enum | null),tv_delay?: (Scalars['Int'] | null),type?: (e_match_types_enum | null),veto_pick_timeout?: (Scalars['Int'] | null)}
 
 
 /** aggregate sum on columns */
@@ -68603,6 +68625,7 @@ export interface match_options_sum_fieldsGenqlSelection{
     live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
+    min_players_per_lineup?: boolean | number
     round_restart_delay?: boolean | number
     tv_delay?: boolean | number
     veto_pick_timeout?: boolean | number
@@ -68612,7 +68635,7 @@ export interface match_options_sum_fieldsGenqlSelection{
 
 
 /** order by sum() on columns of table "match_options" */
-export interface match_options_sum_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
+export interface match_options_sum_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),min_players_per_lineup?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
 
 export interface match_options_updates {
 /** increments the numeric columns with given value of the filtered values */
@@ -68630,6 +68653,7 @@ export interface match_options_var_pop_fieldsGenqlSelection{
     live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
+    min_players_per_lineup?: boolean | number
     round_restart_delay?: boolean | number
     tv_delay?: boolean | number
     veto_pick_timeout?: boolean | number
@@ -68639,7 +68663,7 @@ export interface match_options_var_pop_fieldsGenqlSelection{
 
 
 /** order by var_pop() on columns of table "match_options" */
-export interface match_options_var_pop_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
+export interface match_options_var_pop_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),min_players_per_lineup?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
 
 
 /** aggregate var_samp on columns */
@@ -68649,6 +68673,7 @@ export interface match_options_var_samp_fieldsGenqlSelection{
     live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
+    min_players_per_lineup?: boolean | number
     round_restart_delay?: boolean | number
     tv_delay?: boolean | number
     veto_pick_timeout?: boolean | number
@@ -68658,7 +68683,7 @@ export interface match_options_var_samp_fieldsGenqlSelection{
 
 
 /** order by var_samp() on columns of table "match_options" */
-export interface match_options_var_samp_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
+export interface match_options_var_samp_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),min_players_per_lineup?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
 
 
 /** aggregate variance on columns */
@@ -68668,6 +68693,7 @@ export interface match_options_variance_fieldsGenqlSelection{
     live_match_timeout?: boolean | number
     mr?: boolean | number
     number_of_substitutes?: boolean | number
+    min_players_per_lineup?: boolean | number
     round_restart_delay?: boolean | number
     tv_delay?: boolean | number
     veto_pick_timeout?: boolean | number
@@ -68677,7 +68703,7 @@ export interface match_options_variance_fieldsGenqlSelection{
 
 
 /** order by variance() on columns of table "match_options" */
-export interface match_options_variance_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
+export interface match_options_variance_order_by {auto_cancel_duration?: (order_by | null),best_of?: (order_by | null),live_match_timeout?: (order_by | null),mr?: (order_by | null),number_of_substitutes?: (order_by | null),min_players_per_lineup?: (order_by | null),round_restart_delay?: (order_by | null),tv_delay?: (order_by | null),veto_pick_timeout?: (order_by | null)}
 
 
 /** columns and relationships of "match_region_veto_picks" */
@@ -151602,6 +151628,8 @@ export const enumGameModesSelectColumn = {
    archived_at: 'archived_at' as const,
    cfg: 'cfg' as const,
    competitive_safe: 'competitive_safe' as const,
+   players_per_team: 'players_per_team' as const,
+   allow_short_handed_start: 'allow_short_handed_start' as const,
    created_at: 'created_at' as const,
    description: 'description' as const,
    enabled: 'enabled' as const,
@@ -151617,6 +151645,8 @@ export const enumGameModesUpdateColumn = {
    archived_at: 'archived_at' as const,
    cfg: 'cfg' as const,
    competitive_safe: 'competitive_safe' as const,
+   players_per_team: 'players_per_team' as const,
+   allow_short_handed_start: 'allow_short_handed_start' as const,
    created_at: 'created_at' as const,
    description: 'description' as const,
    enabled: 'enabled' as const,
@@ -152754,6 +152784,7 @@ export const enumMatchOptionsSelectColumn = {
    match_mode: 'match_mode' as const,
    mr: 'mr' as const,
    number_of_substitutes: 'number_of_substitutes' as const,
+   min_players_per_lineup: 'min_players_per_lineup' as const,
    overtime: 'overtime' as const,
    prefer_dedicated_server: 'prefer_dedicated_server' as const,
    ready_setting: 'ready_setting' as const,
@@ -152815,6 +152846,7 @@ export const enumMatchOptionsUpdateColumn = {
    match_mode: 'match_mode' as const,
    mr: 'mr' as const,
    number_of_substitutes: 'number_of_substitutes' as const,
+   min_players_per_lineup: 'min_players_per_lineup' as const,
    overtime: 'overtime' as const,
    prefer_dedicated_server: 'prefer_dedicated_server' as const,
    ready_setting: 'ready_setting' as const,

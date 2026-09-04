@@ -1,4 +1,4 @@
-import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
+import { resolvePlayersPerTeam } from "src/game-plugins/resolveExpectedPlayers";
 import MatchEventProcessor from "./abstracts/MatchEventProcessor";
 
 export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
@@ -73,7 +73,14 @@ export default class MatchUpdatedLineupsEvent extends MatchEventProcessor<{
       }
     }
 
-    if (players.length < ExpectedPlayers[match.options.type]) {
+    // A short-handed custom-mode match legitimately reports fewer players than
+    // the type expects; measuring against the type would throw the whole roster
+    // away and leave the lineups stale.
+    const expected =
+      match.options.min_players_per_lineup ??
+      resolvePlayersPerTeam(match.options.type, match.options.game_mode);
+
+    if (players.length < expected * 2) {
       return;
     }
 
