@@ -231,6 +231,7 @@ export class MatchesController {
           camera_required: true,
           game_mode_id: true,
           min_players_per_lineup: true,
+          expected_players: true,
         },
         match_maps: {
           id: true,
@@ -468,6 +469,11 @@ export class MatchesController {
     // normal match, where the plugin keeps its own 5/2/1 table.
     match.options.min_players_per_lineup =
       match.options.min_players_per_lineup ?? gameMode?.playersPerTeam ?? null;
+
+    // The total to wait for, which min_players_per_lineup cannot express once
+    // the sides are uneven. Only a short-handed start records one; otherwise the
+    // server doubles the per-lineup figure as before.
+    match.options.expected_players = match.options.expected_players ?? null;
 
     // withAlwaysLoad answers with a nameless mode when the only thing to load
     // is an always-load plugin; that is not a mode the match is playing under.

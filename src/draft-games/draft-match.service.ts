@@ -132,8 +132,17 @@ export class DraftMatchService {
   // is_match_lineup_ready, the lineup removal trigger -- would refuse it. Pin
   // the size it actually launched at so those read the real shape.
   //
-  // The smaller side wins because the gates apply one number to both lineups; an
-  // uneven 3v2 has to clear at 2 or it can never start.
+  // Two numbers, because one cannot express an uneven start:
+  //
+  //   min_players_per_lineup -- the SMALLER side. The gates apply it to both
+  //     lineups, so a 1v2 has to record 1 or the short side never clears.
+  //   expected_players -- the TOTAL. What the game server waits for. A 1v2
+  //     records 3; deriving it as min x 2 would give 2 and take the match live
+  //     with someone still connecting.
+  //
+  // Both count starters only, read off the draft rather than the match lineups:
+  // buildTeams also seats waitlisted backups in the substitute slots, and a
+  // backup is not someone warmup should wait for.
   private async stampLaunchSize(
     draftGame: DraftGame,
     match: { id: string; lineup_1_id?: string | null; lineup_2_id?: string | null },
@@ -160,8 +169,8 @@ export class DraftMatchService {
 
     const declared = resolvePlayersPerTeam(draftGame.type, gameMode);
 
-    const counts = await this.lineupCounts(match);
-    const smallest = Math.min(...counts);
+    const [side1, side2] = this.starterCounts(draftGame);
+    const smallest = Math.min(side1, side2);
 
     if (smallest >= declared) {
       return;
@@ -171,35 +180,26 @@ export class DraftMatchService {
       update_match_options_by_pk: {
         __args: {
           pk_columns: { id: draftGame.match_options_id },
-          _set: { min_players_per_lineup: Math.max(1, smallest) },
+          _set: {
+            min_players_per_lineup: Math.max(1, smallest),
+            expected_players: Math.max(2, side1 + side2),
+          },
         },
         __typename: true,
       },
     });
   }
 
-  private async lineupCounts(match: {
-    lineup_1_id?: string | null;
-    lineup_2_id?: string | null;
-  }): Promise<Array<number>> {
-    const counts: Array<number> = [];
+  private starterCounts(draftGame: DraftGame): [number, number] {
+    const starters = (lineup: number) =>
+      draftGame.players.filter(
+        (player) =>
+          player.lineup === lineup &&
+          player.status !== "Waitlist" &&
+          player.status !== "Requested",
+      ).length;
 
-    for (const lineupId of [match.lineup_1_id, match.lineup_2_id]) {
-      if (!lineupId) {
-        continue;
-      }
-
-      const { match_lineup_players } = await this.hasura.query({
-        match_lineup_players: {
-          __args: { where: { match_lineup_id: { _eq: lineupId } } },
-          steam_id: true,
-        },
-      });
-
-      counts.push(match_lineup_players.length);
-    }
-
-    return counts.length > 0 ? counts : [0];
+    return [starters(1), starters(2)];
   }
 
   private async ensureLineups(
