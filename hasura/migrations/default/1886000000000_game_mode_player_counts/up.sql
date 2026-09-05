@@ -26,11 +26,3 @@ $$;
 -- back to the mode, then to the match type.
 ALTER TABLE "public"."match_options"
     ADD COLUMN IF NOT EXISTS "min_players_per_lineup" integer;
-
--- The total the match actually launched with, across both lineups. Stamped
--- beside min_players_per_lineup rather than derived from it, because a single
--- per-lineup number cannot express an uneven start: a 1v2 has to record 1 above
--- (the gates apply that to *both* sides, so the smaller one has to clear) while
--- the server still has to wait for 3 people. Counts starters only.
-ALTER TABLE "public"."match_options"
-    ADD COLUMN IF NOT EXISTS "expected_players" integer;
