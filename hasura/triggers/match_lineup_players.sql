@@ -42,11 +42,13 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     status text;
-    match_type text;
     lineup_count INT;
     _max_players_per_lineup INT;
 BEGIN
-    SELECT mo.type, m.status INTO match_type, status
+    -- Resolved here rather than carrying the match_options row: plpgsql refuses
+    -- a record variable in a multiple-item INTO list.
+    SELECT get_match_options_min_players(mo), m.status
+    INTO _max_players_per_lineup, status
     FROM matches m
     INNER JOIN match_lineups ml ON ml.match_id = m.id
     INNER JOIN match_options mo ON mo.id = m.match_options_id
@@ -64,8 +66,6 @@ BEGIN
             WHERE match_lineup_id = OLD.match_lineup_id;
 
         IF ((status != 'PickingPlayers' AND status != 'Canceled') AND (current_setting('hasura.user', true)::jsonb ->> 'x-hasura-role')::text != 'admin') THEN
-            SELECT get_match_type_min_players(match_type) INTO _max_players_per_lineup;
-
             IF (lineup_count - 1) >= _max_players_per_lineup THEN
                 RETURN OLD;
             END IF;

@@ -3,7 +3,7 @@ RETURNS integer
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT get_match_type_min_players(mo.type) + COALESCE(mo.number_of_substitutes, 0)
+    SELECT get_match_options_min_players(mo) + COALESCE(mo.number_of_substitutes, 0)
     FROM match_options mo
     WHERE mo.id = match.match_options_id;
 $$;
@@ -13,7 +13,7 @@ RETURNS integer
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT get_match_type_min_players(mo.type)
+    SELECT get_match_options_min_players(mo)
     FROM match_options mo
     WHERE mo.id = match.match_options_id;
 $$;
@@ -23,7 +23,7 @@ RETURNS integer
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT get_match_type_min_players(mo.type) + COALESCE(mo.number_of_substitutes, 0)
+    SELECT get_match_options_min_players(mo) + COALESCE(mo.number_of_substitutes, 0)
     FROM match_options mo
     WHERE mo.id = tournament.match_options_id;
 $$;
@@ -33,7 +33,7 @@ RETURNS integer
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT get_match_type_min_players(mo.type)
+    SELECT get_match_options_min_players(mo)
     FROM match_options mo
     WHERE mo.id = tournament.match_options_id;
 $$;

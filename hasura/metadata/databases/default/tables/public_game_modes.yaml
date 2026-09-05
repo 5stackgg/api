@@ -41,6 +41,8 @@ select_permissions:
         - enabled
         - archived_at
         - competitive_safe
+        - players_per_team
+        - allow_short_handed_start
         - cfg
         - extra_game_params
         - created_at
@@ -62,6 +64,8 @@ select_permissions:
         - enabled
         - archived_at
         - competitive_safe
+        - players_per_team
+        - allow_short_handed_start
         - cfg
         - extra_game_params
         - created_at
@@ -86,6 +90,8 @@ insert_permissions:
         - enabled
         - archived_at
         - competitive_safe
+        - players_per_team
+        - allow_short_handed_start
         - cfg
         - extra_game_params
       computed_fields:
@@ -103,6 +109,8 @@ update_permissions:
         - enabled
         - archived_at
         - competitive_safe
+        - players_per_team
+        - allow_short_handed_start
         - cfg
         - extra_game_params
       computed_fields:

@@ -1,7 +1,7 @@
 import { Logger } from "@nestjs/common";
 import { forwardRef, Inject, Injectable } from "@nestjs/common";
 import { e_map_pool_types_enum } from "generated";
-import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
+import { resolvePlayersPerTeam } from "src/game-plugins/resolveExpectedPlayers";
 import { HasuraService } from "src/hasura/hasura.service";
 import { CacheService } from "src/cache/cache.service";
 import { MatchAssistantService } from "src/matches/match-assistant/match-assistant.service";
@@ -93,6 +93,8 @@ export class DraftMatchService {
 
     await this.ensureLineups(draftGame, match);
 
+    await this.stampLaunchSize(draftGame, match);
+
     // The room's conversation continues in the match chat: carry the history
     // over and tear down the draft lobby so non-participants drop out.
     await this.chat.migrateLobbyMessages(
@@ -123,6 +125,81 @@ export class DraftMatchService {
     });
 
     await this.matchAssistant.updateMatchStatus(match.id, "WaitingForCheckIn");
+  }
+
+  // A lobby that started short-handed produces a match smaller than its mode
+  // declares, and every gate downstream -- check_match_has_min_players,
+  // is_match_lineup_ready, the lineup removal trigger -- would refuse it. Pin
+  // the size it actually launched at so those read the real shape.
+  //
+  // Two numbers, because one cannot express an uneven start:
+  //
+  //   min_players_per_lineup -- the SMALLER side. The gates apply it to both
+  //     lineups, so a 1v2 has to record 1 or the short side never clears.
+  //   expected_players -- the TOTAL. What the game server waits for. A 1v2
+  //     records 3; deriving it as min x 2 would give 2 and take the match live
+  //     with someone still connecting.
+  //
+  // Both count starters only, read off the draft rather than the match lineups:
+  // buildTeams also seats waitlisted backups in the substitute slots, and a
+  // backup is not someone warmup should wait for.
+  private async stampLaunchSize(
+    draftGame: DraftGame,
+    match: { id: string; lineup_1_id?: string | null; lineup_2_id?: string | null },
+  ) {
+    if (!draftGame.match_options_id) {
+      return;
+    }
+
+    const { match_options_by_pk } = await this.hasura.query({
+      match_options_by_pk: {
+        __args: { id: draftGame.match_options_id },
+        game_mode: {
+          players_per_team: true,
+          allow_short_handed_start: true,
+        },
+      },
+    });
+
+    const gameMode = match_options_by_pk?.game_mode;
+
+    if (!gameMode?.allow_short_handed_start) {
+      return;
+    }
+
+    const declared = resolvePlayersPerTeam(draftGame.type, gameMode);
+
+    const [side1, side2] = this.starterCounts(draftGame);
+    const smallest = Math.min(side1, side2);
+
+    if (smallest >= declared) {
+      return;
+    }
+
+    await this.hasura.mutation({
+      update_match_options_by_pk: {
+        __args: {
+          pk_columns: { id: draftGame.match_options_id },
+          _set: {
+            min_players_per_lineup: Math.max(1, smallest),
+            expected_players: Math.max(2, side1 + side2),
+          },
+        },
+        __typename: true,
+      },
+    });
+  }
+
+  private starterCounts(draftGame: DraftGame): [number, number] {
+    const starters = (lineup: number) =>
+      draftGame.players.filter(
+        (player) =>
+          player.lineup === lineup &&
+          player.status !== "Waitlist" &&
+          player.status !== "Requested",
+      ).length;
+
+    return [starters(1), starters(2)];
   }
 
   private async ensureLineups(
@@ -333,18 +410,25 @@ export class DraftMatchService {
   }
 
   private async maxPlayersPerLineup(draftGame: DraftGame): Promise<number> {
-    const starters = Math.floor(ExpectedPlayers[draftGame.type] / 2);
-
     if (!draftGame.match_options_id) {
-      return starters;
+      return resolvePlayersPerTeam(draftGame.type);
     }
 
     const { match_options_by_pk } = await this.hasura.query({
       match_options_by_pk: {
         __args: { id: draftGame.match_options_id },
         number_of_substitutes: true,
+        game_mode: {
+          players_per_team: true,
+          allow_short_handed_start: true,
+        },
       },
     });
+
+    const starters = resolvePlayersPerTeam(
+      draftGame.type,
+      match_options_by_pk?.game_mode,
+    );
 
     return starters + (match_options_by_pk?.number_of_substitutes ?? 0);
   }

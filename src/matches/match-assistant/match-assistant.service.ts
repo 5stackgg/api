@@ -246,6 +246,11 @@ export class MatchAssistantService {
         map_veto_picking_lineup_id: true,
         options: {
           type: true,
+          min_players_per_lineup: true,
+          game_mode: {
+            players_per_team: true,
+            allow_short_handed_start: true,
+          },
         },
         lineup_1_id: true,
         lineup_2_id: true,

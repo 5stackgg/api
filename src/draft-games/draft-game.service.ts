@@ -15,7 +15,11 @@ import {
 import { HasuraService } from "src/hasura/hasura.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { CacheService } from "src/cache/cache.service";
-import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
+import {
+  GameModeSizing,
+  allowsShortHandedStart as modeAllowsShortHandedStart,
+  resolveCapacity,
+} from "src/game-plugins/resolveExpectedPlayers";
 import { isRoleAbove } from "src/utilities/isRoleAbove";
 import { DraftGame } from "./types/DraftGame";
 import { DraftGameError } from "./types/DraftGameError";
@@ -132,7 +136,13 @@ export class DraftGameService {
         }
       }
 
-      const capacity = ExpectedPlayers[settings.type];
+      // A custom mode can size its own teams. The DB trigger derives capacity
+      // the same way off match_options; this copy is what seeds the lobby with
+      // the host's party, so the two have to agree.
+      const gameMode = await this.getGameModeSizing(
+        this.requestedGameModeId(user, settings.options),
+      );
+      const capacity = resolveCapacity(settings.type, gameMode);
       const elo = hostJoins
         ? await this.getPlayerElo(user.steam_id, settings.type)
         : null;
@@ -1049,6 +1059,51 @@ export class DraftGameService {
     return insert_map_pools_one.id;
   }
 
+  // game_mode_id is gated behind match_organizer in matchOptionScalars, so a
+  // lower role submitting one must not be allowed to resize the lobby with it.
+  private requestedGameModeId(
+    user: User,
+    options?: Record<string, unknown>,
+  ): string | null {
+    if (!options || !isRoleAbove(user.role, "match_organizer")) {
+      return null;
+    }
+
+    return (options as Record<string, any>).game_mode_id || null;
+  }
+
+  // What the mode will be after this settings update: the submitted one when
+  // the user may set it, otherwise whatever match_options already holds.
+  private async nextGameModeId(
+    user: User,
+    settings: Partial<CreateDraftGameSettings>,
+    draftGame: DraftGame,
+  ): Promise<string | null> {
+    if (settings.options && isRoleAbove(user.role, "match_organizer")) {
+      return this.requestedGameModeId(user, settings.options);
+    }
+
+    return this.currentGameModeId(draftGame);
+  }
+
+  private async getGameModeSizing(
+    gameModeId?: string | null,
+  ): Promise<GameModeSizing | null> {
+    if (!gameModeId) {
+      return null;
+    }
+
+    const { game_modes_by_pk } = await this.hasura.query({
+      game_modes_by_pk: {
+        __args: { id: gameModeId },
+        players_per_team: true,
+        allow_short_handed_start: true,
+      },
+    });
+
+    return game_modes_by_pk ?? null;
+  }
+
   private matchOptionScalars(
     user: User,
     options: Record<string, unknown>,
@@ -1177,6 +1232,134 @@ export class DraftGameService {
     }
   }
 
+  // Flipping the row to Filled is what kicks off beginDraft, and the DB trigger
+  // refuses that unless the lobby is ready. A short-handed start has to narrow
+  // the lobby to the players who actually turned up *before* that trigger and
+  // the draft pick pattern read capacity, which a raw client mutation cannot do.
+  public async startDraftGame(user: User, draftGameId: string, force: boolean) {
+    return this.draftLock(draftGameId, async () => {
+      const draftGame = await this.getDraftGame(draftGameId);
+
+      if (!draftGame) {
+        throw new DraftGameError("Draft game not found");
+      }
+
+      if (!this.isOrganizerOrHost(user, draftGame)) {
+        throw new DraftGameError(
+          "Only the host or an organizer can start the match",
+        );
+      }
+
+      if (draftGame.status !== "Open") {
+        throw new DraftGameError("This draft has already started");
+      }
+
+      const accepted = this.acceptedPlayers(draftGame);
+      const isFull =
+        draftGame.mode === "Teams" || accepted.length >= draftGame.capacity;
+
+      // Narrowing happens before the status flip, never after: the trigger lets
+      // a short-handed mode through on the mode alone, so flipping first and
+      // narrowing second would leave a lobby stuck in Filled that beginDraft
+      // then refuses to act on -- and every player in it locked out of joining
+      // anything else.
+      if (!isFull) {
+        if (!force) {
+          throw new DraftGameError("The lobby must be full to start");
+        }
+
+        await this.applyShortHandedStart(draftGame, accepted.length);
+      }
+
+      await this.hasura.mutation({
+        update_draft_games_by_pk: {
+          __args: {
+            pk_columns: { id: draftGameId },
+            _set: { status: "Filled" },
+          },
+          __typename: true,
+        },
+      });
+    });
+  }
+
+  // Pug and Captains split whoever accepted across two sides, so the lobby's
+  // capacity has to come down to that pool or autoSplit and the pick pattern
+  // still plan around empty seats. Host and Teams place players by hand and are
+  // left alone -- their sides are already whatever the host made them.
+  private async applyShortHandedStart(
+    draftGame: DraftGame,
+    acceptedCount: number,
+  ) {
+    const gameMode = await this.getGameModeSizing(
+      await this.currentGameModeId(draftGame),
+    );
+
+    if (!modeAllowsShortHandedStart(gameMode)) {
+      throw new DraftGameError("The lobby must be full to start");
+    }
+
+    if (draftGame.mode === "Teams" || draftGame.mode === "Host") {
+      return;
+    }
+
+    if (acceptedCount < 2) {
+      throw new DraftGameError(
+        "At least two players must accept before starting",
+      );
+    }
+
+    // get_draft_game_pattern builds the pick order off capacity / 2, which an
+    // odd pool turns into a short pattern that strands the last player.
+    if (draftGame.mode === "Captains" && acceptedCount % 2 !== 0) {
+      throw new DraftGameError(
+        "A captains draft needs an even number of players",
+      );
+    }
+
+    if (acceptedCount >= draftGame.capacity) {
+      return;
+    }
+
+    await this.hasura.mutation({
+      update_draft_games_by_pk: {
+        __args: {
+          pk_columns: { id: draftGame.id },
+          _set: { capacity: acceptedCount },
+        },
+        __typename: true,
+      },
+    });
+
+    draftGame.capacity = acceptedCount;
+  }
+
+  // Whether this lobby's custom mode lets it start before both sides are full.
+  public async allowsShortHandedStart(draftGame: DraftGame): Promise<boolean> {
+    const gameMode = await this.getGameModeSizing(
+      await this.currentGameModeId(draftGame),
+    );
+
+    return modeAllowsShortHandedStart(gameMode);
+  }
+
+  private async currentGameModeId(
+    draftGame: DraftGame,
+  ): Promise<string | null> {
+    if (!draftGame.match_options_id) {
+      return null;
+    }
+
+    const { match_options_by_pk } = await this.hasura.query({
+      match_options_by_pk: {
+        __args: { id: draftGame.match_options_id },
+        game_mode_id: true,
+      },
+    });
+
+    return match_options_by_pk?.game_mode_id || null;
+  }
+
   public async updateDraftSettings(
     user: User,
     draftGameId: string,
@@ -1211,17 +1394,28 @@ export class DraftGameService {
         ]);
       }
 
-      let capacity = draftGame.capacity;
-      if (settings.type && settings.type !== draftGame.type) {
-        if (!DraftGameService.DRAFTABLE_TYPES.includes(settings.type)) {
-          throw new DraftGameError("Invalid draft game type");
-        }
-        capacity = ExpectedPlayers[settings.type];
+      if (
+        settings.type &&
+        settings.type !== draftGame.type &&
+        !DraftGameService.DRAFTABLE_TYPES.includes(settings.type)
+      ) {
+        throw new DraftGameError("Invalid draft game type");
       }
+
+      // Swapping the custom mode resizes the lobby just as swapping the type
+      // does, so both have to be resolved together -- a 3v3 mode traded for
+      // Competitive has to grow back to 10 even though the type never moved.
+      const nextType = settings.type || draftGame.type;
+      const nextGameMode = await this.getGameModeSizing(
+        await this.nextGameModeId(user, settings, draftGame),
+      );
+      const capacity = resolveCapacity(nextType, nextGameMode);
 
       const _set: Record<string, unknown> = {};
       if (settings.type) {
         _set.type = settings.type;
+      }
+      if (capacity !== draftGame.capacity) {
         _set.capacity = capacity;
       }
       if (settings.regions) {

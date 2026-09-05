@@ -22950,6 +22950,8 @@ type game_modes {
   archived_at: timestamptz
   cfg: String
   competitive_safe: Boolean!
+  players_per_team: Int
+  allow_short_handed_start: Boolean!
   created_at: timestamptz!
   description: String
   enabled: Boolean!
@@ -23074,6 +23076,8 @@ input game_modes_bool_exp {
   archived_at: timestamptz_comparison_exp
   cfg: String_comparison_exp
   competitive_safe: Boolean_comparison_exp
+  players_per_team: Int_comparison_exp
+  allow_short_handed_start: Boolean_comparison_exp
   created_at: timestamptz_comparison_exp
   description: String_comparison_exp
   enabled: Boolean_comparison_exp
@@ -23113,6 +23117,8 @@ input game_modes_insert_input {
   archived_at: timestamptz
   cfg: String
   competitive_safe: Boolean
+  players_per_team: Int
+  allow_short_handed_start: Boolean
   created_at: timestamptz
   description: String
   enabled: Boolean
@@ -23189,6 +23195,8 @@ input game_modes_order_by {
   archived_at: order_by
   cfg: order_by
   competitive_safe: order_by
+  players_per_team: order_by
+  allow_short_handed_start: order_by
   created_at: order_by
   description: order_by
   enabled: order_by
@@ -23221,6 +23229,8 @@ enum game_modes_select_column {
 
   """column name"""
   competitive_safe
+  players_per_team
+  allow_short_handed_start
 
   """column name"""
   created_at
@@ -23257,6 +23267,8 @@ input game_modes_set_input {
   archived_at: timestamptz
   cfg: String
   competitive_safe: Boolean
+  players_per_team: Int
+  allow_short_handed_start: Boolean
   created_at: timestamptz
   description: String
   enabled: Boolean
@@ -23284,6 +23296,8 @@ input game_modes_stream_cursor_value_input {
   archived_at: timestamptz
   cfg: String
   competitive_safe: Boolean
+  players_per_team: Int
+  allow_short_handed_start: Boolean
   created_at: timestamptz
   description: String
   enabled: Boolean
@@ -23307,6 +23321,8 @@ enum game_modes_update_column {
 
   """column name"""
   competitive_safe
+  players_per_team
+  allow_short_handed_start
 
   """column name"""
   created_at
@@ -40162,6 +40178,7 @@ type match_options {
   ): matches_aggregate!
   mr: Int!
   number_of_substitutes: Int!
+  min_players_per_lineup: Int
   overtime: Boolean!
   prefer_dedicated_server: Boolean!
   ready_setting: e_ready_settings_enum!
@@ -40270,6 +40287,7 @@ type match_options_avg_fields {
   live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
+  min_players_per_lineup: Float
   round_restart_delay: Float
   tv_delay: Float
   veto_pick_timeout: Float
@@ -40284,6 +40302,7 @@ input match_options_avg_order_by {
   live_match_timeout: order_by
   mr: order_by
   number_of_substitutes: order_by
+  min_players_per_lineup: order_by
   round_restart_delay: order_by
   tv_delay: order_by
   veto_pick_timeout: order_by
@@ -40320,6 +40339,7 @@ input match_options_bool_exp {
   matches_aggregate: matches_aggregate_bool_exp
   mr: Int_comparison_exp
   number_of_substitutes: Int_comparison_exp
+  min_players_per_lineup: Int_comparison_exp
   overtime: Boolean_comparison_exp
   prefer_dedicated_server: Boolean_comparison_exp
   ready_setting: e_ready_settings_enum_comparison_exp
@@ -40355,6 +40375,7 @@ input match_options_inc_input {
   live_match_timeout: Int
   mr: Int
   number_of_substitutes: Int
+  min_players_per_lineup: Int
   round_restart_delay: Int
   tv_delay: Int
   veto_pick_timeout: Int
@@ -40386,6 +40407,7 @@ input match_options_insert_input {
   matches: matches_arr_rel_insert_input
   mr: Int
   number_of_substitutes: Int
+  min_players_per_lineup: Int
   overtime: Boolean
   prefer_dedicated_server: Boolean
   ready_setting: e_ready_settings_enum
@@ -40413,6 +40435,7 @@ type match_options_max_fields {
   map_pool_id: uuid
   mr: Int
   number_of_substitutes: Int
+  min_players_per_lineup: Int
   regions: [String!]
   round_restart_delay: Int
   tv_delay: Int
@@ -40432,6 +40455,7 @@ input match_options_max_order_by {
   map_pool_id: order_by
   mr: order_by
   number_of_substitutes: order_by
+  min_players_per_lineup: order_by
   regions: order_by
   round_restart_delay: order_by
   tv_delay: order_by
@@ -40449,6 +40473,7 @@ type match_options_min_fields {
   map_pool_id: uuid
   mr: Int
   number_of_substitutes: Int
+  min_players_per_lineup: Int
   regions: [String!]
   round_restart_delay: Int
   tv_delay: Int
@@ -40468,6 +40493,7 @@ input match_options_min_order_by {
   map_pool_id: order_by
   mr: order_by
   number_of_substitutes: order_by
+  min_players_per_lineup: order_by
   regions: order_by
   round_restart_delay: order_by
   tv_delay: order_by
@@ -40529,6 +40555,7 @@ input match_options_order_by {
   matches_aggregate: matches_aggregate_order_by
   mr: order_by
   number_of_substitutes: order_by
+  min_players_per_lineup: order_by
   overtime: order_by
   prefer_dedicated_server: order_by
   ready_setting: order_by
@@ -40610,6 +40637,7 @@ enum match_options_select_column {
 
   """column name"""
   number_of_substitutes
+  min_players_per_lineup
 
   """column name"""
   overtime
@@ -40744,6 +40772,7 @@ input match_options_set_input {
   match_mode: e_match_mode_enum
   mr: Int
   number_of_substitutes: Int
+  min_players_per_lineup: Int
   overtime: Boolean
   prefer_dedicated_server: Boolean
   ready_setting: e_ready_settings_enum
@@ -40764,6 +40793,7 @@ type match_options_stddev_fields {
   live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
+  min_players_per_lineup: Float
   round_restart_delay: Float
   tv_delay: Float
   veto_pick_timeout: Float
@@ -40778,6 +40808,7 @@ input match_options_stddev_order_by {
   live_match_timeout: order_by
   mr: order_by
   number_of_substitutes: order_by
+  min_players_per_lineup: order_by
   round_restart_delay: order_by
   tv_delay: order_by
   veto_pick_timeout: order_by
@@ -40790,6 +40821,7 @@ type match_options_stddev_pop_fields {
   live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
+  min_players_per_lineup: Float
   round_restart_delay: Float
   tv_delay: Float
   veto_pick_timeout: Float
@@ -40804,6 +40836,7 @@ input match_options_stddev_pop_order_by {
   live_match_timeout: order_by
   mr: order_by
   number_of_substitutes: order_by
+  min_players_per_lineup: order_by
   round_restart_delay: order_by
   tv_delay: order_by
   veto_pick_timeout: order_by
@@ -40816,6 +40849,7 @@ type match_options_stddev_samp_fields {
   live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
+  min_players_per_lineup: Float
   round_restart_delay: Float
   tv_delay: Float
   veto_pick_timeout: Float
@@ -40830,6 +40864,7 @@ input match_options_stddev_samp_order_by {
   live_match_timeout: order_by
   mr: order_by
   number_of_substitutes: order_by
+  min_players_per_lineup: order_by
   round_restart_delay: order_by
   tv_delay: order_by
   veto_pick_timeout: order_by
@@ -40867,6 +40902,7 @@ input match_options_stream_cursor_value_input {
   match_mode: e_match_mode_enum
   mr: Int
   number_of_substitutes: Int
+  min_players_per_lineup: Int
   overtime: Boolean
   prefer_dedicated_server: Boolean
   ready_setting: e_ready_settings_enum
@@ -40887,6 +40923,7 @@ type match_options_sum_fields {
   live_match_timeout: Int
   mr: Int
   number_of_substitutes: Int
+  min_players_per_lineup: Int
   round_restart_delay: Int
   tv_delay: Int
   veto_pick_timeout: Int
@@ -40901,6 +40938,7 @@ input match_options_sum_order_by {
   live_match_timeout: order_by
   mr: order_by
   number_of_substitutes: order_by
+  min_players_per_lineup: order_by
   round_restart_delay: order_by
   tv_delay: order_by
   veto_pick_timeout: order_by
@@ -40966,6 +41004,7 @@ enum match_options_update_column {
 
   """column name"""
   number_of_substitutes
+  min_players_per_lineup
 
   """column name"""
   overtime
@@ -41019,6 +41058,7 @@ type match_options_var_pop_fields {
   live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
+  min_players_per_lineup: Float
   round_restart_delay: Float
   tv_delay: Float
   veto_pick_timeout: Float
@@ -41033,6 +41073,7 @@ input match_options_var_pop_order_by {
   live_match_timeout: order_by
   mr: order_by
   number_of_substitutes: order_by
+  min_players_per_lineup: order_by
   round_restart_delay: order_by
   tv_delay: order_by
   veto_pick_timeout: order_by
@@ -41045,6 +41086,7 @@ type match_options_var_samp_fields {
   live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
+  min_players_per_lineup: Float
   round_restart_delay: Float
   tv_delay: Float
   veto_pick_timeout: Float
@@ -41059,6 +41101,7 @@ input match_options_var_samp_order_by {
   live_match_timeout: order_by
   mr: order_by
   number_of_substitutes: order_by
+  min_players_per_lineup: order_by
   round_restart_delay: order_by
   tv_delay: order_by
   veto_pick_timeout: order_by
@@ -41071,6 +41114,7 @@ type match_options_variance_fields {
   live_match_timeout: Float
   mr: Float
   number_of_substitutes: Float
+  min_players_per_lineup: Float
   round_restart_delay: Float
   tv_delay: Float
   veto_pick_timeout: Float
@@ -41085,6 +41129,7 @@ input match_options_variance_order_by {
   live_match_timeout: order_by
   mr: order_by
   number_of_substitutes: order_by
+  min_players_per_lineup: order_by
   round_restart_delay: order_by
   tv_delay: order_by
   veto_pick_timeout: order_by

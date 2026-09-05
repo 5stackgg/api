@@ -73,6 +73,20 @@ export class DraftGamesController {
   }
 
   @HasuraAction()
+  public async startDraftGame(data: {
+    user: User;
+    draftGameId: string;
+    force?: boolean;
+  }) {
+    await this.draftGameService.startDraftGame(
+      data.user,
+      data.draftGameId,
+      data.force === true,
+    );
+    return { success: true };
+  }
+
+  @HasuraAction()
   public async joinDraftGame(data: {
     user: User;
     draftGameId: string;

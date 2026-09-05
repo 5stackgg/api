@@ -5,11 +5,11 @@ DECLARE
     min_players INTEGER;
     lineup_1_count INTEGER;
     lineup_2_count INTEGER;
-    match_type VARCHAR(255);
+    options public.match_options;
 BEGIN
-    SELECT type INTO match_type
-    FROM match_options
-    WHERE id = match.match_options_id;
+    SELECT mo.* INTO options
+    FROM match_options mo
+    WHERE mo.id = match.match_options_id;
 
     WITH lineup_counts AS (
         SELECT get_lineup_counts(match) AS counts
@@ -22,7 +22,7 @@ BEGIN
         lineup_2_count
     FROM lineup_counts;
 
-    min_players := get_match_type_min_players(match_type);
+    min_players := get_match_options_min_players(options);
 
     IF lineup_1_count < min_players OR lineup_2_count < min_players THEN
         RETURN false;
