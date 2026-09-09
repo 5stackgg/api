@@ -37,6 +37,9 @@ describe("GameStreamerService", () => {
       {} as any,
       {} as any,
       {} as any,
+      // broadcastHuds -- resolveDefault() is only reached through the job-spec
+      // env builder, which these tests do not exercise.
+      { resolveDefault: jest.fn().mockResolvedValue(null) } as any,
     );
   });
 

@@ -1,0 +1,84 @@
+table:
+  name: broadcast_huds
+  schema: public
+select_permissions:
+  # Defined on guest only: every other role inherits it up the chain in
+  # inherited_roles.yaml, and an explicit block overrides rather than merges --
+  # so repeating this per role is how the copies drift apart.
+  #
+  # The HUD pickers in the demo player and the stream deck are not
+  # administrator-only surfaces, and a row carries nothing sensitive: a name, a
+  # layout id, a thumbnail. storage_key is withheld below administrator so the
+  # object key is only ever handled by the import flow.
+  - role: guest
+    permission:
+      columns:
+        - id
+        - slug
+        - jthud_id
+        - variant
+        - name
+        - author
+        - version
+        - description
+        - source
+        - enabled
+        - thumbnail
+        - is_signed
+        - created_at
+        - updated_at
+      filter:
+        enabled:
+          _eq: true
+    comment: ""
+  # Administrators see disabled rows too -- the settings page has to list what
+  # it is about to re-enable -- and the storage/manifest columns the importer
+  # writes.
+  - role: administrator
+    permission:
+      columns:
+        - id
+        - slug
+        - jthud_id
+        - variant
+        - name
+        - author
+        - version
+        - description
+        - source
+        - enabled
+        - storage_key
+        - size_bytes
+        - thumbnail
+        - hud_json
+        - is_signed
+        - uploaded_by_steam_id
+        - created_at
+        - updated_at
+      filter: {}
+    comment: ""
+update_permissions:
+  # Enable/disable and rename only. Everything describing the archive (slug,
+  # jthud_id, storage_key, hud_json, is_signed) is written once by the import
+  # flow from the bytes themselves; letting it be edited afterwards would let a
+  # row stop describing the zip it points at.
+  - role: administrator
+    permission:
+      columns:
+        - name
+        - description
+        - enabled
+      filter: {}
+      check: {}
+    comment: ""
+delete_permissions:
+  # Builtins have no archive to remove and are what the pod falls back to, so
+  # they are disabled rather than deleted. Imported rows are deleted through the
+  # api action, which also removes the object -- but the row delete is permitted
+  # here so a half-imported row is never stuck.
+  - role: administrator
+    permission:
+      filter:
+        source:
+          _eq: imported
+    comment: ""

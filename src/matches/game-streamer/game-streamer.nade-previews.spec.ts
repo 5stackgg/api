@@ -86,6 +86,9 @@ describe("GameStreamerService — nade previews", () => {
       {} as any,
       {} as any,
       steamAccounts as any,
+      // broadcastHuds -- resolveDefault() is only reached through the job-spec
+      // env builder, which these tests do not exercise.
+      { resolveDefault: jest.fn().mockResolvedValue(null) } as any,
     );
   });
 
