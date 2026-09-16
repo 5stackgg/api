@@ -247,6 +247,7 @@ insert_permissions:
         - name
         - scheduling_mode
         - start
+        - substitutes_enabled
         - check_in_closes_before_minutes
         - check_in_opens_before_minutes
         - check_in_required
@@ -303,6 +304,7 @@ insert_permissions:
         - name
         - scheduling_mode
         - start
+        - substitutes_enabled
         - check_in_closes_before_minutes
         - check_in_opens_before_minutes
         - check_in_required
@@ -334,6 +336,7 @@ select_permissions:
         - organizer_steam_id
         - start
         - status
+        - substitutes_enabled
         - awards_enabled
         - check_in_closes_before_minutes
         - check_in_ends_at
@@ -407,6 +410,7 @@ select_permissions:
         - organizer_steam_id
         - start
         - status
+        - substitutes_enabled
         - awards_enabled
         - check_in_closes_before_minutes
         - check_in_ends_at
@@ -466,6 +470,7 @@ select_permissions:
         - organizer_steam_id
         - start
         - status
+        - substitutes_enabled
         - awards_enabled
         - check_in_closes_before_minutes
         - check_in_ends_at
@@ -539,6 +544,7 @@ update_permissions:
         - scheduling_mode
         - start
         - status
+        - substitutes_enabled
         - awards_enabled
         - check_in_closes_before_minutes
         - check_in_opens_before_minutes
@@ -572,6 +578,7 @@ update_permissions:
         - scheduling_mode
         - start
         - status
+        - substitutes_enabled
         - awards_enabled
         - check_in_closes_before_minutes
         - check_in_opens_before_minutes

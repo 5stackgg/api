@@ -1,4 +1,7 @@
-CREATE OR REPLACE FUNCTION public.check_team_eligibility(roster tournament_team_roster) RETURNS VOID
+-- Without the drop the one-argument version survives as an ambiguous overload.
+DROP FUNCTION IF EXISTS public.check_team_eligibility(tournament_team_roster);
+
+CREATE OR REPLACE FUNCTION public.check_team_eligibility(roster tournament_team_roster, enforce_max_players boolean DEFAULT true) RETURNS VOID
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -18,10 +21,12 @@ BEGIN
         RETURN;
     END IF;
 
-    max_players := tournament_max_players_per_lineup(tournament);
+    IF enforce_max_players THEN
+        max_players := tournament_max_players_per_lineup(tournament);
 
-    IF roster_count > max_players THEN
-         RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Roster has too many players';
+        IF roster_count > max_players THEN
+             RAISE EXCEPTION USING ERRCODE = '22000', MESSAGE = 'Roster has too many players';
+        END IF;
     END IF;
 
     min_players := tournament_min_players_per_lineup(tournament);
