@@ -87,7 +87,7 @@ export class AwardsController {
     note?: string | null;
     user?: User;
   }) {
-    const user = await this.assertCanGrant(data.user, data);
+    const user = await this.assertCanGrant(data.user, data, data);
     return await this.awards.grantAward({
       award_id: data.award_id,
       player_steam_id: data.player_steam_id,
@@ -241,6 +241,8 @@ export class AwardsController {
   // Tournament organizers can always hand out awards inside their own
   // tournament, regardless of where the global grant floor sits. No other scope
   // has a delegated role, so an event/season/league grant needs the floor.
+  // Medals count on the leaderboard, so that delegation stops short of the
+  // organizer's own name and team.
   private async assertCanGrant(
     user: User | undefined,
     scope: {
@@ -248,6 +250,10 @@ export class AwardsController {
       event_id?: string | null;
       season_id?: string | null;
       league_season_id?: string | null;
+    },
+    recipient?: {
+      player_steam_id?: string | null;
+      team_id?: string | null;
     },
   ): Promise<User> {
     const resolved = this.requireUser(user);
@@ -270,6 +276,16 @@ export class AwardsController {
     }
 
     await this.awards.requireOrganizer(scope.tournament_id, resolved);
+
+    if (
+      recipient &&
+      (await this.awards.isOwnRecipient(resolved.steam_id, recipient))
+    ) {
+      throw new ForbiddenException(
+        "Tournament organizers cannot grant awards to themselves or their own team",
+      );
+    }
+
     return resolved;
   }
 

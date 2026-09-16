@@ -690,6 +690,46 @@ describe("awards (SQL-driven)", () => {
       }
     });
 
+    it("counts a tier once per tournament however often it was granted there", async () => {
+      const t = await playedOutCup();
+      const [{ player_steam_id: steam }] = await postgres.query<
+        Array<{ player_steam_id: string }>
+      >(
+        `SELECT r.player_steam_id::text FROM tournament_team_roster r
+          WHERE r.tournament_id = $1
+            AND NOT EXISTS (
+              SELECT 1 FROM award_recipients ar
+               WHERE ar.tournament_id = r.tournament_id
+                 AND ar.player_steam_id = r.player_steam_id
+                 AND ar.placement IN (0, 1)
+            )
+          LIMIT 1`,
+        [t.id],
+      );
+      const before = (await medalBoard()).get(steam) ?? {
+        mvp: 0,
+        gold: 0,
+        silver: 0,
+        bronze: 0,
+      };
+      const gold = await systemAward("tournament_gold");
+
+      for (let i = 0; i < 3; i++) {
+        await awardsController().grantAward({
+          award_id: gold,
+          player_steam_id: steam,
+          tournament_id: t.id,
+          user: user(await fx.player(), "administrator"),
+        });
+      }
+      await grant({ award_id: gold, player_steam_id: steam });
+
+      expect((await medalBoard()).get(steam)).toEqual({
+        ...before,
+        gold: before.gold + 2,
+      });
+    });
+
     it("ranks a player where the board's default order places them", async () => {
       const [mvp, doubleGold, goldSilver, gold] = await fx.players(4);
       const mvpAward = await createAward("Hand MVP", "mvp");
@@ -1123,6 +1163,42 @@ describe("awards (SQL-driven)", () => {
             user: user(t.organizer, "user"),
           }),
         ).rejects.toThrow("Not the tournament organizer");
+      });
+
+      it("refuses an organizer below the floor granting to themselves or their own team", async () => {
+        const t = await playedOutCup();
+        const awardId = await systemAward("tournament_gold");
+        const { player_steam_id, team_id } = await rosterOf(t.id);
+        const teammate = String(player_steam_id);
+        await postgres.query(
+          "UPDATE tournaments SET organizer_steam_id = $2 WHERE id = $1",
+          [t.id, teammate],
+        );
+
+        await expect(
+          controller.grantAward({
+            award_id: awardId,
+            player_steam_id: teammate,
+            tournament_id: t.id,
+            user: user(teammate, "user"),
+          }),
+        ).rejects.toThrow("cannot grant awards to themselves");
+        await expect(
+          controller.grantAward({
+            award_id: awardId,
+            team_id,
+            tournament_id: t.id,
+            user: user(teammate, "user"),
+          }),
+        ).rejects.toThrow("cannot grant awards to themselves");
+
+        const granted = await controller.grantAward({
+          award_id: awardId,
+          player_steam_id: teammate,
+          tournament_id: t.id,
+          user: user(teammate, "administrator"),
+        });
+        expect(granted.id).toBeTruthy();
       });
 
       it("refuses a recipient who never played in the tournament", async () => {

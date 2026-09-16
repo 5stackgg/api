@@ -825,14 +825,14 @@ BEGIN
   END IF;
 
   RETURN QUERY
-  WITH counts AS (
-    SELECT
+  -- A tier counts once per player per tournament, season, event or league season,
+  -- however often it was granted there. Only unscoped grants, which need the grant
+  -- role, count every row.
+  WITH medals AS (
+    SELECT DISTINCT
       ar.player_steam_id,
-      COUNT(*) FILTER (WHERE medal.tier = 'mvp')::int as mvp,
-      COUNT(*) FILTER (WHERE medal.tier = 'gold')::int as gold,
-      COUNT(*) FILTER (WHERE medal.tier = 'silver')::int as silver,
-      COUNT(*) FILTER (WHERE medal.tier = 'bronze')::int as bronze,
-      COUNT(*)::int as total
+      medal.tier,
+      COALESCE(ar.tournament_id, ar.season_id, ar.event_id, ar.league_season_id, ar.id) AS occasion
     FROM award_recipients ar
     JOIN awards a ON a.id = ar.award_id
     CROSS JOIN LATERAL (
@@ -887,7 +887,17 @@ BEGIN
           )
         )
       )
-    GROUP BY ar.player_steam_id
+  ),
+  counts AS (
+    SELECT
+      m.player_steam_id,
+      COUNT(*) FILTER (WHERE m.tier = 'mvp')::int as mvp,
+      COUNT(*) FILTER (WHERE m.tier = 'gold')::int as gold,
+      COUNT(*) FILTER (WHERE m.tier = 'silver')::int as silver,
+      COUNT(*) FILTER (WHERE m.tier = 'bronze')::int as bronze,
+      COUNT(*)::int as total
+    FROM medals m
+    GROUP BY m.player_steam_id
   )
   SELECT
     c.player_steam_id::text   as player_steam_id,
