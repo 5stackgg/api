@@ -339,6 +339,109 @@ describe("match scoring from rounds (SQL-driven)", () => {
     expect(paused.cancels_at).toBeNull();
   });
 
+  describe("the end-of-map window (WaitingForTV / UploadingDemo)", () => {
+    const setMapStatus = (mapId: string, status: string) =>
+      postgres.query("UPDATE match_maps SET status = $2 WHERE id = $1", [
+        mapId,
+        status,
+      ]);
+
+    const cancelsAt = async (matchId: string) => {
+      const [row] = await postgres.query<Array<{ cancels_at: Date | null }>>(
+        "SELECT cancels_at FROM matches WHERE id = $1",
+        [matchId],
+      );
+      return row.cancels_at;
+    };
+
+    it("pushes the live-match timeout past the tv_delay the broadcast still needs", async () => {
+      const match = await createLiveMatch(1);
+      await postgres.query(
+        "UPDATE match_options SET live_match_timeout = 30, tv_delay = 115 WHERE id = $1",
+        [match.options_id],
+      );
+      await setMapStatus(match.mapIds[0], "Live");
+
+      for (const status of ["WaitingForTV", "UploadingDemo"]) {
+        await postgres.query(
+          "UPDATE matches SET cancels_at = NOW() - interval '1 minute' WHERE id = $1",
+          [match.id],
+        );
+
+        await setMapStatus(match.mapIds[0], status);
+
+        const deadline = await cancelsAt(match.id);
+        expect(deadline).not.toBeNull();
+        const minutesOut = (deadline!.getTime() - Date.now()) / 60_000;
+        // live_match_timeout (30m) + tv_delay (115s)
+        expect(minutesOut).toBeGreaterThan(31.5);
+        expect(minutesOut).toBeLessThan(32.5);
+      }
+    });
+
+    it("does not re-arm a match that already ended", async () => {
+      const match = await createLiveMatch(1);
+      await setMapStatus(match.mapIds[0], "Live");
+      await postgres.query(
+        "UPDATE matches SET status = 'Forfeit' WHERE id = $1",
+        [match.id],
+      );
+
+      await setMapStatus(match.mapIds[0], "WaitingForTV");
+
+      expect(await cancelsAt(match.id)).toBeNull();
+    });
+
+    it("finishing a map with more of the series to play gives the next map the warmup window", async () => {
+      const match = await createLiveMatch(3);
+      await postgres.query(
+        "UPDATE match_options SET auto_cancel_duration = 20 WHERE id = $1",
+        [match.options_id],
+      );
+      await setMapStatus(match.mapIds[0], "Live");
+      await setMapStatus(match.mapIds[0], "WaitingForTV");
+      await postgres.query(
+        "UPDATE matches SET cancels_at = NOW() - interval '1 minute' WHERE id = $1",
+        [match.id],
+      );
+
+      await recordScore(match.mapIds[0], 13, 7);
+      await finishMap(match.mapIds[0]);
+
+      expect((await matchRow(match.id)).status).toBe("Live");
+      const deadline = await cancelsAt(match.id);
+      expect(deadline).not.toBeNull();
+      const minutesOut = (deadline!.getTime() - Date.now()) / 60_000;
+      expect(minutesOut).toBeGreaterThan(19);
+      expect(minutesOut).toBeLessThan(21);
+
+      await setMapStatus(match.mapIds[1], "Live");
+      await recordScore(match.mapIds[1], 13, 5);
+      await finishMap(match.mapIds[1]);
+
+      expect((await matchRow(match.id)).status).toBe("Finished");
+      expect(await cancelsAt(match.id)).toBeNull();
+    });
+
+    it("finishing a map left in WaitingForTV finishes the match for its winner", async () => {
+      const match = await createLiveMatch(1);
+      await recordScore(match.mapIds[0], 13, 7);
+      await setMapStatus(match.mapIds[0], "Live");
+      await postgres.query(
+        "UPDATE match_maps SET status = 'WaitingForTV', winning_lineup_id = $2 WHERE id = $1",
+        [match.mapIds[0], match.lineup_1_id],
+      );
+
+      await finishMap(match.mapIds[0]);
+
+      const after = await matchRow(match.id);
+      expect(after.status).toBe("Finished");
+      expect(after.winning_lineup_id).toBe(match.lineup_1_id);
+      expect(after.ended_at).not.toBeNull();
+      expect(await cancelsAt(match.id)).toBeNull();
+    });
+  });
+
   it("finishing the map stamps the map's ended_at", async () => {
     const match = await createLiveMatch(1);
     await recordScore(match.mapIds[0], 13, 7);

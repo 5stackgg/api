@@ -5,6 +5,21 @@ export default class MatchMapStatusEvent extends MatchEventProcessor<{
   status: e_match_map_status_enum;
   winning_lineup_id?: string;
 }> {
+  private static readonly END_OF_MAP_STATUSES = [
+    "WaitingForTV",
+    "UploadingDemo",
+    "Finished",
+  ];
+
+  private static readonly IN_PLAY_MAP_STATUSES = [
+    "Knife",
+    "Live",
+    "Overtime",
+    "Paused",
+    "WaitingForTV",
+    "UploadingDemo",
+  ];
+
   public async process() {
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
@@ -14,10 +29,30 @@ export default class MatchMapStatusEvent extends MatchEventProcessor<{
         current_match_map_id: true,
         lineup_1_id: true,
         lineup_2_id: true,
+        match_maps: {
+          id: true,
+          status: true,
+        },
       },
     });
 
     if (!match?.current_match_map_id) {
+      return;
+    }
+
+    // Statuses hit whichever map is current, so a late one would land on a map that never started.
+    const currentMapStatus = match.match_maps?.find(
+      (matchMap) => matchMap.id === match.current_match_map_id,
+    )?.status as string | undefined;
+
+    if (
+      MatchMapStatusEvent.END_OF_MAP_STATUSES.includes(this.data.status) &&
+      !MatchMapStatusEvent.IN_PLAY_MAP_STATUSES.includes(currentMapStatus)
+    ) {
+      this.logger.warn(
+        `MatchMapStatusEvent ignoring ${this.data.status} match=${this.matchId} ` +
+          `match_map=${match.current_match_map_id} is ${currentMapStatus}, not in play`,
+      );
       return;
     }
 

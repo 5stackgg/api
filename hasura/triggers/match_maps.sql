@@ -36,13 +36,14 @@ DECLARE
     _auto_cancel_duration_override integer;
     _live_match_timeout_override integer;
     _live_match_timeout text;
+    _tv_delay integer;
 BEGIN
     SELECT auto_cancellation, auto_cancel_duration
     INTO _auto_cancellation, _auto_cancel_duration_override
     FROM resolve_match_auto_cancel(NEW.match_id);
 
-    SELECT mo.live_match_timeout
-    INTO _live_match_timeout_override
+    SELECT mo.live_match_timeout, mo.tv_delay
+    INTO _live_match_timeout_override, _tv_delay
     FROM matches m
     INNER JOIN match_options mo ON mo.id = m.match_options_id
     WHERE m.id = NEW.match_id;
@@ -73,8 +74,33 @@ BEGIN
         END IF;
     END IF;
 
+    -- Re-armed so tv_delay + demo upload can't outlast a timeout counted from map start.
+    -- Live only: re-arming an ended match lets CancelExpiredMatches overwrite its result.
+    IF NEW.status IN ('WaitingForTV', 'UploadingDemo') AND OLD.status IS DISTINCT FROM NEW.status THEN
+        IF _auto_cancellation THEN
+            UPDATE matches
+            SET cancels_at = NOW() + (COALESCE(_tv_delay, 0) || ' seconds')::interval + (_live_match_timeout)::interval
+            WHERE id = NEW.match_id
+              AND status = 'Live';
+        END IF;
+    END IF;
+
     IF NEW.status = 'Finished' AND OLD.status IS DISTINCT FROM NEW.status THEN
         NEW.ended_at = NOW();
+
+        -- The next map gets a warmup window, not the end-of-map deadline that may have expired.
+        IF _auto_cancellation AND EXISTS (
+            SELECT 1
+            FROM match_maps mm
+            WHERE mm.match_id = NEW.match_id
+              AND mm.id <> NEW.id
+              AND mm.status NOT IN ('Finished', 'Surrendered', 'Canceled')
+        ) THEN
+            UPDATE matches
+            SET cancels_at = NOW() + (_auto_cancel_duration)::interval
+            WHERE id = NEW.match_id
+              AND status = 'Live';
+        END IF;
     END IF;
 
     -- Server-side anchor for how long demo recording/upload has been running,

@@ -8,11 +8,28 @@ import { NotificationsService } from "../../notifications/notifications.service"
 import { AppConfig } from "../../configs/types/AppConfig";
 import { RconService } from "../../rcon/rcon.service";
 import { DISCORD_COLORS } from "../../notifications/utilities/constants";
+import { MatchAssistantService } from "../match-assistant/match-assistant.service";
 
 @UseQueue("Matches", MatchQueues.ScheduledMatches)
 export class CancelExpiredMatches extends WorkerHost {
   // How far ahead of cancels_at a full lobby is allowed to be force started.
   private static readonly FORCE_START_LEAD_MS = 60 * 1000;
+
+  private static readonly IN_PLAY_MAP_STATUSES = [
+    "Knife",
+    "Live",
+    "Overtime",
+    "Paused",
+    "WaitingForTV",
+    "UploadingDemo",
+  ];
+
+  private static readonly END_OF_MAP_STATUSES = [
+    "WaitingForTV",
+    "UploadingDemo",
+  ];
+
+  private static readonly PLAYED_MAP_STATUSES = ["Finished", "Surrendered"];
 
   private readonly appConfig: AppConfig;
 
@@ -22,6 +39,7 @@ export class CancelExpiredMatches extends WorkerHost {
     private readonly notifications: NotificationsService,
     private readonly configService: ConfigService,
     private readonly rcon: RconService,
+    private readonly matchAssistant: MatchAssistantService,
   ) {
     super();
     this.appConfig = this.configService.get<AppConfig>("app");
@@ -54,6 +72,13 @@ export class CancelExpiredMatches extends WorkerHost {
         continue;
       }
 
+      const decidedMap = this.getDecidedUnfinishedMap(match);
+      if (decidedMap) {
+        await this.finishDecidedMap(match, decidedMap);
+        handled++;
+        continue;
+      }
+
       if (match.is_tournament_match) {
         await this.handleExpiredTournamentMatch(match);
       } else {
@@ -79,11 +104,86 @@ export class CancelExpiredMatches extends WorkerHost {
   private isAwaitingWarmup(
     match: Awaited<ReturnType<typeof this.getExpiredMatches>>[number],
   ) {
-    const started = ["Knife", "Live", "Overtime", "Paused"];
+    const matchMaps = match.match_maps ?? [];
 
-    return !(match.match_maps ?? []).some((matchMap) =>
-      started.includes(matchMap.status as string),
+    if (
+      matchMaps.some((matchMap) =>
+        CancelExpiredMatches.IN_PLAY_MAP_STATUSES.includes(
+          matchMap.status as string,
+        ),
+      )
+    ) {
+      return false;
+    }
+
+    return (
+      matchMaps.length === 0 ||
+      matchMaps.some(
+        (matchMap) =>
+          !CancelExpiredMatches.PLAYED_MAP_STATUSES.includes(
+            matchMap.status as string,
+          ),
+      )
     );
+  }
+
+  private hasPlayedMap(
+    match: Awaited<ReturnType<typeof this.getExpiredMatches>>[number],
+  ) {
+    return (match.match_maps ?? []).some((matchMap) =>
+      CancelExpiredMatches.PLAYED_MAP_STATUSES.includes(
+        matchMap.status as string,
+      ),
+    );
+  }
+
+  // The winner was published but the server died before Finished; nothing else will finish it.
+  private getDecidedUnfinishedMap(
+    match: Awaited<ReturnType<typeof this.getExpiredMatches>>[number],
+  ) {
+    return (match.match_maps ?? []).find(
+      (matchMap) =>
+        CancelExpiredMatches.END_OF_MAP_STATUSES.includes(
+          matchMap.status as string,
+        ) && matchMap.winning_lineup_id,
+    );
+  }
+
+  // The map, not the match: update_match_state then settles the series from the rounds.
+  private async finishDecidedMap(
+    match: Awaited<ReturnType<typeof this.getExpiredMatches>>[number],
+    matchMap: Awaited<
+      ReturnType<typeof this.getExpiredMatches>
+    >[number]["match_maps"][number],
+  ) {
+    const { update_match_maps_by_pk } = await this.hasura.mutation({
+      update_match_maps_by_pk: {
+        __args: {
+          pk_columns: {
+            id: matchMap.id,
+          },
+          _set: {
+            status: "Finished",
+          },
+        },
+        match: {
+          status: true,
+          current_match_map_id: true,
+        },
+      },
+    });
+
+    this.logger.log(
+      `finished map ${matchMap.id} stuck in ${matchMap.status} on expired match ${match.id}`,
+    );
+
+    // A series that just ended still has its unplayed maps as the current one.
+    if (
+      update_match_maps_by_pk?.match?.status === "Live" &&
+      update_match_maps_by_pk.match.current_match_map_id
+    ) {
+      await this.matchAssistant.sendServerMatchId(match.id);
+    }
   }
 
   // A no-show is a rostered player who never connected to the server at all.
@@ -189,7 +289,7 @@ export class CancelExpiredMatches extends WorkerHost {
     // out and then stalled lands here too. Nobody no-showed that one -- they
     // all turned up -- and by the time it expires they have long since
     // disconnected, so is_connected would read every one of them as absent.
-    if (!this.isAwaitingWarmup(match)) {
+    if (!this.isAwaitingWarmup(match) || this.hasPlayedMap(match)) {
       return;
     }
 
@@ -267,7 +367,8 @@ export class CancelExpiredMatches extends WorkerHost {
     const hasReadyLineup = match.lineup_1.is_ready || match.lineup_2.is_ready;
     const isAdminMode = match.options?.match_mode === "admin";
 
-    if (!hasReadyLineup && isAdminMode) {
+    // After a played map, a forfeit would pick the series winner by readiness.
+    if (this.hasPlayedMap(match) || (!hasReadyLineup && isAdminMode)) {
       await this.requestOrganizerAttention(match.id);
       return;
     }
@@ -405,7 +506,9 @@ export class CancelExpiredMatches extends WorkerHost {
         server_id: true,
         is_tournament_match: true,
         match_maps: {
+          id: true,
           status: true,
+          winning_lineup_id: true,
         },
         options: {
           match_mode: true,
