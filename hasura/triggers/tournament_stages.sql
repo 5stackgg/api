@@ -50,16 +50,28 @@ BEGIN
         FROM tournament_stages 
         WHERE tournament_id = p_tournament_id AND "order" = p_stage_order - 1;
         
-        IF prev_stage_record.id IS NOT NULL
-           AND (prev_stage_record.type = 'RoundRobin'
-                OR (prev_stage_record.type = 'Swiss' AND prev_stage_record.swiss_no_elimination)) THEN
+        IF prev_stage_record.id IS NOT NULL AND prev_stage_record.type IN ('RoundRobin', 'Swiss') THEN
+            -- Valve Swiss only advances its 3-win teams: N/8 + 3N/16 + 3N/16 = half the field.
+            -- Its last round is just the 2-2 pool, so it never bounds this stage's minimum.
+            IF prev_stage_record.type = 'Swiss' AND NOT prev_stage_record.swiss_no_elimination THEN
+                max_teams_advancing := prev_stage_record.max_teams / 2;
+            ELSE
+                max_teams_advancing := prev_stage_record.max_teams;
+            END IF;
+
             IF p_max_teams < 2 THEN
                 RAISE EXCEPTION 'Stage % must have at least 2 teams', p_stage_order USING ERRCODE = '22000';
             END IF;
 
-            IF p_max_teams > prev_stage_record.max_teams THEN
+            IF p_max_teams > max_teams_advancing THEN
+                IF prev_stage_record.type = 'Swiss' AND NOT prev_stage_record.swiss_no_elimination THEN
+                    RAISE EXCEPTION 'Stage % takes % teams but only % teams can reach 3 wins in stage %',
+                        p_stage_order, p_max_teams, max_teams_advancing, p_stage_order - 1
+                        USING ERRCODE = '22000';
+                END IF;
+
                 RAISE EXCEPTION 'Stage % advances % teams but stage % holds at most % teams',
-                    p_stage_order, p_max_teams, p_stage_order - 1, prev_stage_record.max_teams
+                    p_stage_order, p_max_teams, p_stage_order - 1, max_teams_advancing
                     USING ERRCODE = '22000';
             END IF;
         ELSIF prev_stage_record.id IS NOT NULL THEN
@@ -87,13 +99,6 @@ BEGIN
             IF p_min_teams < max_teams_advancing THEN
                 RAISE EXCEPTION 'Stage % cannot accommodate % teams advancing from stage % (min_teams: %)',
                     p_stage_order, max_teams_advancing, p_stage_order - 1, p_min_teams
-                    USING ERRCODE = '22000';
-            END IF;
-
-            -- Valve Swiss only advances its 3-win teams: N/8 + 3N/16 + 3N/16 = half the field.
-            IF prev_stage_record.type = 'Swiss' AND p_max_teams > prev_stage_record.max_teams / 2 THEN
-                RAISE EXCEPTION 'Stage % takes % teams but only % teams can reach 3 wins in stage %',
-                    p_stage_order, p_max_teams, prev_stage_record.max_teams / 2, p_stage_order - 1
                     USING ERRCODE = '22000';
             END IF;
         END IF;
@@ -194,8 +199,7 @@ BEGIN
                 SELECT 1
                 FROM tournament_stages ranked
                 WHERE ranked.tournament_id = NEW.tournament_id
-                  AND (ranked.type = 'RoundRobin'
-                       OR (ranked.type = 'Swiss' AND ranked.swiss_no_elimination))
+                  AND ranked.type IN ('RoundRobin', 'Swiss')
                   AND ranked."order" >= LEAST(stage_record."order", current_order)
                   AND ranked."order" < GREATEST(stage_record."order", current_order)
             ) THEN

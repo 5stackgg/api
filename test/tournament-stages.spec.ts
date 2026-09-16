@@ -521,5 +521,47 @@ describe("tournament stages: Swiss and RoundRobin (SQL-driven)", () => {
       );
       expect(quarterfinals.length).toBe(4);
     });
+
+    it("a stage after a Valve Swiss only has to fit under its 3-win half, not its 2-2 last round", async () => {
+      const insertPlayoff = (
+        tournamentId: string,
+        minTeams: number,
+        maxTeams: number,
+      ) =>
+        postgres.query(
+          `INSERT INTO tournament_stages (tournament_id, type, "order", min_teams, max_teams)
+           VALUES ($1, 'SingleElimination', 2, $2, $3)`,
+          [tournamentId, minTeams, maxTeams],
+        );
+
+      const wide = await tfx.createTournament([
+        { type: "Swiss", order: 1, minTeams: 32, maxTeams: 32 },
+      ]);
+      await expect(insertPlayoff(wide.id, 4, 8)).resolves.toBeDefined();
+
+      const final = await tfx.createTournament([
+        { type: "Swiss", order: 1, minTeams: 16, maxTeams: 16 },
+      ]);
+      await expect(insertPlayoff(final.id, 2, 2)).resolves.toBeDefined();
+    });
+
+    it("resizing a Valve Swiss leaves the stage after it alone", async () => {
+      const t = await tfx.createTournament([
+        { type: "Swiss", order: 1, minTeams: 16, maxTeams: 16 },
+        { type: "SingleElimination", order: 2, minTeams: 4, maxTeams: 4 },
+      ]);
+
+      await postgres.query(
+        "UPDATE tournament_stages SET min_teams = 12 WHERE id = $1",
+        [t.stageIds[0]],
+      );
+
+      const [playoff] = await postgres.query<
+        Array<{ min_teams: number; max_teams: number }>
+      >("SELECT min_teams, max_teams FROM tournament_stages WHERE id = $1", [
+        t.stageIds[1],
+      ]);
+      expect(playoff).toEqual({ min_teams: 4, max_teams: 4 });
+    });
   });
 });
