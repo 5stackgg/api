@@ -66,13 +66,24 @@ BEGIN
             ) AS position
         FROM eligible e
         WHERE e.placement > _whole_placements
+    ),
+    -- Numbered in order rather than by slot: a group short of its guaranteed places leaves its seed to the wildcards.
+    qualifiers AS (
+        SELECT 0 AS pool, (e.placement - 1) * _groups + e.group_number AS slot, e.tournament_team_id
+        FROM eligible e
+        WHERE e.placement <= _whole_placements
+        UNION ALL
+        SELECT 1, w.position, w.tournament_team_id
+        FROM wildcards w
+    ),
+    seeded AS (
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY q.pool, q.slot) AS seed,
+            q.tournament_team_id
+        FROM qualifiers q
     )
-    SELECT ((e.placement - 1) * _groups + e.group_number)::int, e.tournament_team_id
-    FROM eligible e
-    WHERE e.placement <= _whole_placements
-    UNION ALL
-    SELECT (_whole_placements * _groups + w.position)::int, w.tournament_team_id
-    FROM wildcards w
-    WHERE _whole_placements * _groups + w.position <= _seeds;
+    SELECT s.seed::int, s.tournament_team_id
+    FROM seeded s
+    WHERE s.seed <= _seeds;
 END;
 $$;

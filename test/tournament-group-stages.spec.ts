@@ -230,6 +230,54 @@ describe("tournament stages: grouped RoundRobin advancement (SQL-driven)", () =>
     }, 180_000);
   });
 
+  describe("a group left short of its guaranteed places", () => {
+    it("gives the empty seed to the best wildcard instead of a bye", async () => {
+      const t = await tfx.launch(
+        [
+          {
+            type: "RoundRobin",
+            order: 1,
+            minTeams: 10,
+            maxTeams: 10,
+            groups: 2,
+          },
+          { type: "SingleElimination", order: 2, minTeams: 8, maxTeams: 8 },
+        ],
+        10,
+      );
+      const [roundRobin] = t.stageIds;
+
+      await tfx.playStage(
+        roundRobin,
+        await scriptedResults(t.id, 2, new Set([1, 2])),
+      );
+
+      const table = await standings(roundRobin);
+      const disqualified = [teamAt(table, 2, 4), teamAt(table, 2, 5)];
+      await postgres.query(
+        "UPDATE tournament_teams SET eligible_at = NULL WHERE id = ANY($1)",
+        [disqualified],
+      );
+
+      const seeds = await postgres.query<
+        Array<{ seed: number; tournament_team_id: string }>
+      >(
+        "SELECT seed, tournament_team_id FROM get_stage_qualifier_seeds($1, 8) ORDER BY seed",
+        [roundRobin],
+      );
+
+      expect(seeds.map((row) => Number(row.seed))).toEqual([
+        1, 2, 3, 4, 5, 6, 7, 8,
+      ]);
+      expect(seeds.map((row) => row.tournament_team_id).sort()).toEqual(
+        [
+          ...[1, 2, 3, 4, 5].map((rank) => teamAt(table, 1, rank)),
+          ...[1, 2, 3].map((rank) => teamAt(table, 2, rank)),
+        ].sort(),
+      );
+    }, 120_000);
+  });
+
   describe("#617 any number of teams can advance", () => {
     it("an 8-team round robin (min 4) feeds a 2-seat playoff, the shape start_league_season builds", async () => {
       const t = await tfx.createTournament([
