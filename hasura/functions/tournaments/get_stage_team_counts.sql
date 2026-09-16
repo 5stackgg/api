@@ -34,13 +34,13 @@ BEGIN
         ELSE
             -- Get the previous stage to check its type
             DECLARE
-                previous_stage_id uuid;
                 previous_stage_type text;
                 previous_stage_max_teams int;
                 previous_stage_no_elimination boolean;
+                previous_stage_teams int;
             BEGIN
-                SELECT id, type, max_teams, swiss_no_elimination
-                INTO previous_stage_id, previous_stage_type, previous_stage_max_teams, previous_stage_no_elimination
+                SELECT type, max_teams, swiss_no_elimination
+                INTO previous_stage_type, previous_stage_max_teams, previous_stage_no_elimination
                 FROM tournament_stages
                 WHERE tournament_id = _tournament_id AND "order" = _stage_order - 1;
 
@@ -48,13 +48,12 @@ BEGIN
                    OR (previous_stage_type = 'Swiss' AND previous_stage_no_elimination) THEN
                     effective_teams := LEAST(stage_max_teams, previous_stage_max_teams);
                 ELSIF previous_stage_type = 'Swiss' THEN
-                    -- 3-win teams = one per round-1 match; the last round only holds the 2-2 pool.
-                    SELECT LEAST(stage_max_teams, COUNT(*))
-                    INTO effective_teams
-                    FROM tournament_brackets tb
-                    WHERE tb.tournament_stage_id = previous_stage_id
-                      AND tb.round = 1
-                      AND COALESCE(tb.bye, false) = false;
+                    SELECT previous.effective_teams
+                    INTO previous_stage_teams
+                    FROM get_stage_team_counts(_tournament_id, _stage_order - 1, _tournament_status) previous;
+
+                    -- Half the field reaches 3 wins, rounded up: an odd field's bye is a free win.
+                    effective_teams := LEAST(stage_max_teams, CEIL(previous_stage_teams / 2.0)::int);
                 ELSE
                     -- get the number of matches from the last round of the previous stage
                     SELECT COUNT(*) INTO effective_teams

@@ -479,6 +479,36 @@ describe("tournament stages: Swiss and RoundRobin (SQL-driven)", () => {
       expect(await tfx.tournamentStatus(t.id)).toBe("Finished");
     }, 180_000);
 
+    // One team takes a bye, a free win, every round, so fifteen teams send eight on.
+    it("an odd Valve Swiss seats every 3-win team, the bye's included", async () => {
+      const t = await tfx.launch(
+        [
+          { type: "Swiss", order: 1, minTeams: 15, maxTeams: 15 },
+          { type: "SingleElimination", order: 2, minTeams: 2, maxTeams: 8 },
+        ],
+        15,
+      );
+      const [swiss, playoff] = t.stageIds;
+
+      await tfx.playStage(swiss);
+
+      const qualified = (await tfx.stageResults(swiss))
+        .filter((row) => Number(row.wins) >= 3)
+        .map((row) => row.tournament_team_id)
+        .sort();
+      expect(qualified.length).toBe(8);
+
+      const quarterfinals = (await tfx.getBrackets(playoff)).filter(
+        (b) => b.round === 1,
+      );
+      expect(
+        quarterfinals
+          .flatMap((b) => [b.tournament_team_id_1, b.tournament_team_id_2])
+          .filter(Boolean)
+          .sort(),
+      ).toEqual(qualified);
+    }, 180_000);
+
     it("a stage after a Valve Swiss can't take more teams than reach 3 wins", async () => {
       const t = await tfx.createTournament([
         { type: "Swiss", order: 1, minTeams: 16, maxTeams: 16 },
@@ -494,6 +524,24 @@ describe("tournament stages: Swiss and RoundRobin (SQL-driven)", () => {
         /only 8 teams can reach 3 wins/i,
       );
       await expect(insertPlayoff(8)).resolves.toBeDefined();
+
+      const odd = await tfx.createTournament([
+        { type: "Swiss", order: 1, minTeams: 15, maxTeams: 15 },
+      ]);
+      await expect(
+        postgres.query(
+          `INSERT INTO tournament_stages (tournament_id, type, "order", min_teams, max_teams)
+           VALUES ($1, 'SingleElimination', 2, 8, 9)`,
+          [odd.id],
+        ),
+      ).rejects.toThrow(/only 8 teams can reach 3 wins/i);
+      await expect(
+        postgres.query(
+          `INSERT INTO tournament_stages (tournament_id, type, "order", min_teams, max_teams)
+           VALUES ($1, 'SingleElimination', 2, 8, 8)`,
+          [odd.id],
+        ),
+      ).resolves.toBeDefined();
 
       const wide = await tfx.createTournament([
         { type: "Swiss", order: 1, minTeams: 32, maxTeams: 32 },

@@ -51,10 +51,10 @@ BEGIN
         WHERE tournament_id = p_tournament_id AND "order" = p_stage_order - 1;
         
         IF prev_stage_record.id IS NOT NULL AND prev_stage_record.type IN ('RoundRobin', 'Swiss') THEN
-            -- Valve Swiss only advances its 3-win teams: N/8 + 3N/16 + 3N/16 = half the field.
-            -- Its last round is just the 2-2 pool, so it never bounds this stage's minimum.
+            -- Valve Swiss only advances its 3-win teams: half the field, rounded up for an odd
+            -- field's bye. Its last round is just the 2-2 pool, so it never bounds this stage's minimum.
             IF prev_stage_record.type = 'Swiss' AND NOT prev_stage_record.swiss_no_elimination THEN
-                max_teams_advancing := prev_stage_record.max_teams / 2;
+                max_teams_advancing := (prev_stage_record.max_teams + 1) / 2;
             ELSE
                 max_teams_advancing := prev_stage_record.max_teams;
             END IF;
@@ -119,9 +119,9 @@ BEGIN
         FROM tournament_stages
         WHERE tournament_id = p_tournament_id AND "order" = p_stage_order + 1;
 
-        IF next_stage_record.id IS NOT NULL AND next_stage_record.max_teams > p_max_teams / 2 THEN
+        IF next_stage_record.id IS NOT NULL AND next_stage_record.max_teams > (p_max_teams + 1) / 2 THEN
             RAISE EXCEPTION 'Stage % takes % teams but only % teams can reach 3 wins in stage %',
-                p_stage_order + 1, next_stage_record.max_teams, p_max_teams / 2, p_stage_order
+                p_stage_order + 1, next_stage_record.max_teams, (p_max_teams + 1) / 2, p_stage_order
                 USING ERRCODE = '22000';
         END IF;
     END IF;
