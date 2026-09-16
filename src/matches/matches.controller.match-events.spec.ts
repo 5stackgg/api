@@ -14,7 +14,14 @@ describe("MatchesController — match_events on-demand servers", () => {
   let scheduledMatchesQueue: { add: jest.Mock };
   let discordBotMessaging: { removeMatchChannel: jest.Mock };
   let utilityPractice: Record<string, jest.Mock>;
-  let servers: Record<string, { is_dedicated: boolean } | null>;
+  let servers: Record<
+    string,
+    {
+      is_dedicated: boolean;
+      reserved_by_match_id?: string | null;
+      game_server_node?: { region: string } | null;
+    } | null
+  >;
   let currentMatch: Record<string, unknown>;
 
   const stopJobs = () =>
@@ -36,9 +43,22 @@ describe("MatchesController — match_events on-demand servers", () => {
 
   beforeEach(() => {
     servers = {
-      "server-1": { is_dedicated: false },
-      "server-2": { is_dedicated: false },
-      "dedicated-1": { is_dedicated: true },
+      "server-1": {
+        is_dedicated: false,
+        reserved_by_match_id: "match-1",
+        game_server_node: { region: "USE" },
+      },
+      "server-2": {
+        is_dedicated: false,
+        reserved_by_match_id: "match-1",
+        game_server_node: { region: "USE" },
+      },
+      "server-3": {
+        is_dedicated: false,
+        reserved_by_match_id: null,
+        game_server_node: { region: "USE" },
+      },
+      "dedicated-1": { is_dedicated: true, game_server_node: null },
     };
     currentMatch = {
       id: "match-1",
@@ -66,7 +86,9 @@ describe("MatchesController — match_events on-demand servers", () => {
         }
         return {};
       }),
-      mutation: jest.fn(async () => ({})),
+      mutation: jest.fn(async (request: any) =>
+        request.update_matches ? { update_matches: { affected_rows: 1 } } : {},
+      ),
     };
     matchAssistant = {
       removeVetoPickTimeout: jest.fn(),
@@ -269,6 +291,75 @@ describe("MatchesController — match_events on-demand servers", () => {
 
     expect(matchAssistant.stopOnDemandServer).not.toHaveBeenCalled();
   });
+
+  const serverClears = () =>
+    hasura.mutation.mock.calls
+      .map(([request]) => request.update_matches?.__args)
+      .filter(Boolean);
+
+  it("hands a server picked by hand back to assignment, since nothing booted it", async () => {
+    await controller.match_events({
+      op: "UPDATE",
+      old: row({ server_id: "server-1" }),
+      new: row({ server_id: "server-3" }),
+    } as any);
+
+    expect(serverClears()).toEqual([
+      {
+        where: { id: { _eq: "match-1" }, server_id: { _eq: "server-3" } },
+        _set: { server_id: null },
+      },
+    ]);
+    expect(matchAssistant.stopOnDemandServer).not.toHaveBeenCalled();
+    expect(matchAssistant.releaseOnDemandServer).not.toHaveBeenCalled();
+    expect(matchAssistant.assignServer).not.toHaveBeenCalled();
+  });
+
+  it("moves an on-demand server off a region the match left", async () => {
+    await controller.match_events({
+      op: "UPDATE",
+      old: row({ region: "USE", server_id: "server-1" }),
+      new: row({ region: "EUW", server_id: "server-1" }),
+    } as any);
+
+    expect(serverClears()).toEqual([
+      {
+        where: { id: { _eq: "match-1" }, server_id: { _eq: "server-1" } },
+        _set: { server_id: null },
+      },
+    ]);
+    expect(matchAssistant.stopOnDemandServer).not.toHaveBeenCalled();
+    expect(matchAssistant.releaseOnDemandServer).not.toHaveBeenCalled();
+    expect(matchAssistant.assignServer).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["an on-demand server already in the new region", null, "server-1"],
+    ["a dedicated server", "EUW", "dedicated-1"],
+  ])(
+    "keeps %s when only the region changes",
+    async (_label, oldRegion, serverId) => {
+      currentMatch = {
+        ...currentMatch,
+        server: {
+          id: serverId,
+          is_dedicated: serverId === "dedicated-1",
+          reserved_by_match_id: "match-1",
+          game_server_node_id: null,
+        },
+      };
+
+      await controller.match_events({
+        op: "UPDATE",
+        old: row({ region: oldRegion, server_id: serverId }),
+        new: row({ region: "USE", server_id: serverId }),
+      } as any);
+
+      expect(serverClears()).toEqual([]);
+      expect(matchAssistant.stopOnDemandServer).not.toHaveBeenCalled();
+      expect(matchAssistant.releaseOnDemandServer).not.toHaveBeenCalled();
+    },
+  );
 
   describe("a practice match", () => {
     it("stops the server even when ending the session throws", async () => {

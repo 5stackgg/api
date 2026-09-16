@@ -854,7 +854,9 @@ export class MatchesController {
       data.old.region !== data.new.region
     ) {
       try {
-        await this.stopReplacedServer(data, matchId);
+        if (await this.stopReplacedServer(data, matchId)) {
+          return;
+        }
       } catch (error) {
         this.logger.error(
           `[${matchId}] unable to stop on demand server`,
@@ -991,21 +993,22 @@ export class MatchesController {
     );
   }
 
+  // True when it cleared server_id instead: that write's own event stops the Job and reassigns.
   private async stopReplacedServer(
     data: HasuraEventData<matches_set_input>,
     matchId: string,
-  ) {
+  ): Promise<boolean> {
     const oldServerId = data.old.server_id as string | undefined;
     const newServerId = data.new.server_id as string | undefined;
 
     // No old server: a Job under this match's name is an assignment still in flight.
     if (!oldServerId) {
-      return;
+      return false;
     }
 
-    if (!newServerId || newServerId === oldServerId) {
+    if (!newServerId) {
       await this.matchAssistant.stopOnDemandServer(matchId);
-      return;
+      return false;
     }
 
     const { servers_by_pk: server } = await this.hasura.query({
@@ -1014,18 +1017,65 @@ export class MatchesController {
           id: newServerId,
         },
         is_dedicated: true,
+        reserved_by_match_id: true,
+        game_server_node: {
+          region: true,
+        },
       },
     });
 
-    // The Job is named per match, so its pods are already the replacement's.
+    if (newServerId === oldServerId) {
+      if (
+        !server ||
+        server.is_dedicated ||
+        !data.new.region ||
+        server.game_server_node?.region === data.new.region
+      ) {
+        return false;
+      }
+
+      return await this.clearMatchServer(matchId, oldServerId);
+    }
+
     if (server && !server.is_dedicated) {
-      await this.matchAssistant.releaseOnDemandServer(matchId, oldServerId);
-      return;
+      // assignOnDemandServer reserves the row before writing server_id, and the Job is named per match.
+      if (server.reserved_by_match_id === matchId) {
+        await this.matchAssistant.releaseOnDemandServer(matchId, oldServerId);
+        return false;
+      }
+
+      // Picked by hand, so nothing booted a Job for it.
+      return await this.clearMatchServer(matchId, newServerId);
     }
 
     await this.matchAssistant.stopOnDemandServer(matchId, {
       serverId: oldServerId,
     });
+
+    return false;
+  }
+
+  private async clearMatchServer(matchId: string, serverId: string) {
+    const { update_matches } = await this.hasura.mutation({
+      update_matches: {
+        __args: {
+          where: {
+            id: {
+              _eq: matchId,
+            },
+            server_id: {
+              _eq: serverId,
+            },
+          },
+          _set: {
+            server_id: null,
+          },
+        },
+        affected_rows: true,
+      },
+    });
+
+    return (update_matches?.affected_rows ?? 0) > 0;
   }
 
   private async utilityPracticeMatchEvents(
