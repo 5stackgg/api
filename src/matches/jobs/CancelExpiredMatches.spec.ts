@@ -329,9 +329,7 @@ describe("CancelExpiredMatches", () => {
           lineup_2: {
             id: "lineup-2",
             is_ready: false,
-            lineup_players: [
-              { steam_id: "no-show-b", is_connected: false },
-            ],
+            lineup_players: [{ steam_id: "no-show-b", is_connected: false }],
           },
         }),
       ];
@@ -495,7 +493,9 @@ describe("CancelExpiredMatches", () => {
       );
 
       expect(order.indexOf("forfeit")).toBeGreaterThanOrEqual(0);
-      expect(order.indexOf("abandon")).toBeGreaterThan(order.indexOf("forfeit"));
+      expect(order.indexOf("abandon")).toBeGreaterThan(
+        order.indexOf("forfeit"),
+      );
     });
   });
 
@@ -757,6 +757,33 @@ describe("CancelExpiredMatches", () => {
             __args: expect.objectContaining({ _set: { cancels_at: null } }),
           }),
         ]);
+        expect(notifications.send).toHaveBeenCalledWith(
+          "MatchSupport",
+          expect.objectContaining({ entity_id: "match-1" }),
+          undefined,
+          DISCORD_COLORS.RED,
+        );
+        expect(mutationsOf("insert_abandoned_matches")).toEqual([]);
+      },
+    );
+
+    it.each(["Live", "Paused", "WaitingForTV"])(
+      "asks an organizer about a tournament match whose server died with map 1 %s and no winner",
+      async (mapStatus) => {
+        tournamentMatches = [
+          expiredTournamentMatch({
+            match_maps: [
+              { id: "map-1", status: mapStatus, winning_lineup_id: null },
+              { id: "map-2", status: "Scheduled", winning_lineup_id: null },
+            ],
+            lineup_1: { ...playedLineup("lineup-1", "1"), is_ready: true },
+            lineup_2: { ...playedLineup("lineup-2", "2"), is_ready: true },
+          }),
+        ];
+
+        await job.process();
+
+        expect(matchStatusSets()).toEqual([]);
         expect(notifications.send).toHaveBeenCalledWith(
           "MatchSupport",
           expect.objectContaining({ entity_id: "match-1" }),

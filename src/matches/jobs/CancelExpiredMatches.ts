@@ -137,6 +137,17 @@ export class CancelExpiredMatches extends WorkerHost {
     );
   }
 
+  private hasStartedMap(
+    match: Awaited<ReturnType<typeof this.getExpiredMatches>>[number],
+  ) {
+    return (match.match_maps ?? []).some((matchMap) =>
+      [
+        ...CancelExpiredMatches.IN_PLAY_MAP_STATUSES,
+        ...CancelExpiredMatches.PLAYED_MAP_STATUSES,
+      ].includes(matchMap.status as string),
+    );
+  }
+
   // The winner was published but the server died before Finished; nothing else will finish it.
   private getDecidedUnfinishedMap(
     match: Awaited<ReturnType<typeof this.getExpiredMatches>>[number],
@@ -350,7 +361,7 @@ export class CancelExpiredMatches extends WorkerHost {
       }
 
       await rcon.send(
-        'say Match canceled - not everyone showed up before the deadline.',
+        "say Match canceled - not everyone showed up before the deadline.",
       );
     } catch (error) {
       // Never let this stop the cancellation itself.
@@ -367,8 +378,8 @@ export class CancelExpiredMatches extends WorkerHost {
     const hasReadyLineup = match.lineup_1.is_ready || match.lineup_2.is_ready;
     const isAdminMode = match.options?.match_mode === "admin";
 
-    // After a played map, a forfeit would pick the series winner by readiness.
-    if (this.hasPlayedMap(match) || (!hasReadyLineup && isAdminMode)) {
+    // Once a map has started, a forfeit would pick the series winner by readiness.
+    if (this.hasStartedMap(match) || (!hasReadyLineup && isAdminMode)) {
       await this.requestOrganizerAttention(match.id);
       return;
     }
