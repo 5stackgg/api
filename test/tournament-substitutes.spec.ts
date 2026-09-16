@@ -301,6 +301,29 @@ describe("tournament substitutes (SQL-driven)", () => {
       }
     });
 
+    it("can be turned back on but not off once registration has closed", async () => {
+      const tournament = await createTournament({
+        type: "Wingman",
+        substitutes: 2,
+      });
+      await seedBracket(tournament, 1);
+
+      await expect(setSubstitutesEnabled(tournament.id, false)).rejects.toThrow(
+        /only be turned off before registration closes/i,
+      );
+
+      const withoutSubstitutes = await createTournament({
+        type: "Wingman",
+        substitutes: 2,
+      });
+      await setSubstitutesEnabled(withoutSubstitutes.id, false);
+      await seedBracket(withoutSubstitutes, 1);
+
+      await expect(
+        setSubstitutesEnabled(withoutSubstitutes.id, true),
+      ).resolves.toBeDefined();
+    });
+
     it("a roster already over the new cap can still check in and drop its stand-ins", async () => {
       const tournament = await createTournament({
         type: "Wingman",
