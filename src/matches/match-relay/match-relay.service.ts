@@ -198,11 +198,14 @@ export class MatchRelayService {
       broadcast.fragments.clear();
     }
 
+    const signupFragment = fragmentIndex;
+
     if (field == "start") {
       fragmentIndex = 0;
     }
 
-    if (field != "start" && !broadcast.fragments.has(0)) {
+    // 205 makes the server re-send start, so it also covers a start whose body hasn't landed.
+    if (field != "start" && broadcast.fragments.get(0)?.start?.data == null) {
       response.writeHead(205);
       response.end();
       return;
@@ -216,13 +219,15 @@ export class MatchRelayService {
     const fragment = broadcast.fragments.get(fragmentIndex)!;
 
     if (fragment[field] == null) {
-      fragment[field] = {
-        ...(field === "start" ? { signup_fragment: fragmentIndex } : {}),
-      };
+      fragment[field] = {};
+    }
+
+    if (field === "start") {
+      fragment.start!.signup_fragment = signupFragment;
     }
 
     Object.entries(request.query).forEach(([key, value]) => {
-      fragment[field]![key] = value;
+      fragment[field]![key] = MatchRelayService.parseQueryValue(value);
     });
 
     const body: Buffer[] = [];
@@ -253,6 +258,17 @@ export class MatchRelayService {
           this.cleanupOldFragments(matchId);
         });
     });
+  }
+
+  // Clients read /sync's tick, tps, etc. as JSON numbers, as Valve's reference relay sends them.
+  private static parseQueryValue(value: unknown) {
+    if (typeof value !== "string") {
+      return value;
+    }
+
+    const parsed = parseInt(value);
+
+    return Number(value) === parsed ? parsed : value;
   }
 
   private relayError(

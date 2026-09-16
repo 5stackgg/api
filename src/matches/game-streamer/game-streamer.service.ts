@@ -2830,7 +2830,10 @@ export class GameStreamerService {
     if (mode === "tv") {
       if (usePlaycast) {
         return [
-          { name: "PLAYCAST_URL", value: `https://tv.5stack.gg/${matchId}` },
+          {
+            name: "PLAYCAST_URL",
+            value: `${this.appConfig.relayDomain}/${matchId}`,
+          },
           { name: "PLAYCAST_PASSWORD", value: "" },
         ];
       }
