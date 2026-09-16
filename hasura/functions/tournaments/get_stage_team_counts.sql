@@ -34,18 +34,27 @@ BEGIN
         ELSE
             -- Get the previous stage to check its type
             DECLARE
+                previous_stage_id uuid;
                 previous_stage_type text;
                 previous_stage_max_teams int;
+                previous_stage_no_elimination boolean;
             BEGIN
-                SELECT type, max_teams INTO previous_stage_type, previous_stage_max_teams
+                SELECT id, type, max_teams, swiss_no_elimination
+                INTO previous_stage_id, previous_stage_type, previous_stage_max_teams, previous_stage_no_elimination
                 FROM tournament_stages
                 WHERE tournament_id = _tournament_id AND "order" = _stage_order - 1;
 
-                -- For RoundRobin stages, only the top teams advance, capped by this
-                -- stage's max_teams. Using the previous stage's max_teams here would
-                -- size brackets for every team in the RR, not just the qualifiers.
-                IF previous_stage_type = 'RoundRobin' THEN
+                IF previous_stage_type = 'RoundRobin'
+                   OR (previous_stage_type = 'Swiss' AND previous_stage_no_elimination) THEN
                     effective_teams := LEAST(stage_max_teams, previous_stage_max_teams);
+                ELSIF previous_stage_type = 'Swiss' THEN
+                    -- 3-win teams = one per round-1 match; the last round only holds the 2-2 pool.
+                    SELECT LEAST(stage_max_teams, COUNT(*))
+                    INTO effective_teams
+                    FROM tournament_brackets tb
+                    WHERE tb.tournament_stage_id = previous_stage_id
+                      AND tb.round = 1
+                      AND COALESCE(tb.bye, false) = false;
                 ELSE
                     -- get the number of matches from the last round of the previous stage
                     SELECT COUNT(*) INTO effective_teams

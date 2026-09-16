@@ -1,14 +1,14 @@
 -- Tracks: matches played, matches remaining, wins, losses, rounds won, rounds lost
 -- Also exposes the team's group within the stage (taken from their winner-bracket
 -- brackets) and their rank within that group, computed with the same tiebreaker
--- chain that advance_round_robin_teams / get_team_at_stage_rank / seed_stage use
+-- chain that advance_round_robin_teams / get_stage_qualifier_seeds / seed_stage use
 -- to promote teams to the next stage. The UI reads `rank` directly so it never
 -- disagrees with bracket progression.
 --
 -- Two ordering columns are exposed and share the SAME ORDER BY so they can never
 -- disagree:
 --   - `rank`      : ROW_NUMBER, unique & deterministic. Used by the UI display
---                   and by get_team_at_stage_rank() for OFFSET-based seeding.
+--                   and by get_stage_qualifier_seeds() for next-stage seeding.
 --   - `placement` : RANK, ties allowed. Used by calculate_tournament_awards()
 --                   so multiple teams sharing a final-stage placement suppress
 --                   the bronze award when appropriate.
@@ -374,7 +374,7 @@ stage_rows AS NOT MATERIALIZED (
         AND te.tournament_stage_id = ass.tournament_stage_id
 )
 -- Column order MUST keep the original 16 columns first (tournament_team_id ..
--- group_number) and `rank` next so existing consumers (UI, get_team_at_stage_rank)
+-- group_number) and `rank` next so existing consumers (UI, get_stage_qualifier_seeds)
 -- keep working. `placement` is appended at the end for the award calculator.
 SELECT
     sr.tournament_team_id,

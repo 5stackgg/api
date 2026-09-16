@@ -344,7 +344,7 @@ describe("tournament stages: Swiss and RoundRobin (SQL-driven)", () => {
   describe("multi-stage advancement", () => {
     it("adding a later stage raises earlier stage minimums (halving rule)", async () => {
       const t = await tfx.createTournament([
-        { type: "RoundRobin", order: 1, minTeams: 4, maxTeams: 8 },
+        { type: "SingleElimination", order: 1, minTeams: 4, maxTeams: 8 },
       ]);
       await postgres.query(
         `INSERT INTO tournament_stages (tournament_id, type, "order", min_teams, max_teams)
@@ -444,5 +444,82 @@ describe("tournament stages: Swiss and RoundRobin (SQL-driven)", () => {
       await tfx.playRound(t.stageIds[1], 2);
       expect(await tfx.tournamentStatus(t.id)).toBe("Finished");
     }, 120_000);
+
+    it("a Valve Swiss stage sends all eight 3-win teams into an 8-team playoff", async () => {
+      const t = await tfx.launch(
+        [
+          { type: "Swiss", order: 1, minTeams: 16, maxTeams: 16 },
+          { type: "SingleElimination", order: 2, minTeams: 8, maxTeams: 8 },
+        ],
+        16,
+      );
+      const [swiss, playoff] = t.stageIds;
+
+      for (let round = 1; round <= 5; round++) {
+        await tfx.playRound(swiss, round);
+      }
+
+      const qualified = (await tfx.stageResults(swiss))
+        .filter((row) => Number(row.wins) === 3)
+        .map((row) => row.tournament_team_id)
+        .sort();
+      expect(qualified.length).toBe(8);
+
+      const quarterfinals = (await tfx.getBrackets(playoff)).filter(
+        (b) => b.round === 1,
+      );
+      expect(quarterfinals.length).toBe(4);
+      expect(
+        quarterfinals
+          .flatMap((b) => [b.tournament_team_id_1, b.tournament_team_id_2])
+          .sort(),
+      ).toEqual(qualified);
+
+      await tfx.playStage(playoff);
+      expect(await tfx.tournamentStatus(t.id)).toBe("Finished");
+    }, 180_000);
+
+    it("a stage after a Valve Swiss can't take more teams than reach 3 wins", async () => {
+      const t = await tfx.createTournament([
+        { type: "Swiss", order: 1, minTeams: 16, maxTeams: 16 },
+      ]);
+      const insertPlayoff = (maxTeams: number) =>
+        postgres.query(
+          `INSERT INTO tournament_stages (tournament_id, type, "order", min_teams, max_teams)
+           VALUES ($1, 'SingleElimination', 2, 8, $2)`,
+          [t.id, maxTeams],
+        );
+
+      await expect(insertPlayoff(16)).rejects.toThrow(
+        /only 8 teams can reach 3 wins/i,
+      );
+      await expect(insertPlayoff(8)).resolves.toBeDefined();
+
+      const wide = await tfx.createTournament([
+        { type: "Swiss", order: 1, minTeams: 32, maxTeams: 32 },
+        { type: "SingleElimination", order: 2, minTeams: 16, maxTeams: 16 },
+      ]);
+      await expect(
+        postgres.query(
+          "UPDATE tournament_stages SET min_teams = 16, max_teams = 16 WHERE id = $1",
+          [wide.stageIds[0]],
+        ),
+      ).rejects.toThrow(/only 8 teams can reach 3 wins/i);
+    });
+
+    it("a Valve Swiss that fills below its max only sizes the playoff for the half that reaches 3 wins", async () => {
+      const t = await tfx.launch(
+        [
+          { type: "Swiss", order: 1, minTeams: 16, maxTeams: 32 },
+          { type: "SingleElimination", order: 2, minTeams: 8, maxTeams: 16 },
+        ],
+        16,
+      );
+
+      const quarterfinals = (await tfx.getBrackets(t.stageIds[1])).filter(
+        (b) => b.round === 1,
+      );
+      expect(quarterfinals.length).toBe(4);
+    });
   });
 });

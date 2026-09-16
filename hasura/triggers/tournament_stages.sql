@@ -1,8 +1,12 @@
+DROP FUNCTION IF EXISTS public.validate_tournament_stage(text, integer, integer, integer, uuid, uuid);
+
 -- Shared validation function for tournament stages
 CREATE OR REPLACE FUNCTION public.validate_tournament_stage(
     p_stage_type text,
     p_groups integer,
     p_min_teams integer,
+    p_max_teams integer,
+    p_swiss_no_elimination boolean,
     p_stage_order integer,
     p_tournament_id uuid,
     p_stage_id uuid
@@ -12,8 +16,10 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     prev_stage_record RECORD;
+    next_stage_record RECORD;
     max_teams_advancing int;
     last_round_matches int;
+    _groups int := GREATEST(COALESCE(p_groups, 1), 1);
 BEGIN
     -- Validate Swiss tournament requirements
     IF p_stage_type = 'Swiss' THEN
@@ -25,8 +31,12 @@ BEGIN
         -- Note: Odd numbers are handled by pairing with adjacent pools
     END IF;
 
-    -- Validate first stage minimum teams (must be at least 4 * number of groups)
-    IF p_stage_order = 1 AND p_groups IS NOT NULL AND p_groups > 0 AND p_stage_type != 'Swiss' THEN
+    IF p_stage_type = 'RoundRobin' THEN
+        IF p_min_teams < 3 * _groups THEN
+            RAISE EXCEPTION 'Stage % must have at least % teams given % groups (minimum 3 teams per group)',
+                p_stage_order, 3 * _groups, _groups USING ERRCODE = '22000';
+        END IF;
+    ELSIF p_stage_order = 1 AND p_groups IS NOT NULL AND p_groups > 0 AND p_stage_type != 'Swiss' THEN
         IF p_min_teams < 4 * p_groups THEN
             RAISE EXCEPTION 'First stage must have at least % teams given % groups (minimum 4 teams per group)', 
                 4 * p_groups, p_groups USING ERRCODE = '22000';
@@ -40,7 +50,19 @@ BEGIN
         FROM tournament_stages 
         WHERE tournament_id = p_tournament_id AND "order" = p_stage_order - 1;
         
-        IF prev_stage_record.id IS NOT NULL THEN
+        IF prev_stage_record.id IS NOT NULL
+           AND (prev_stage_record.type = 'RoundRobin'
+                OR (prev_stage_record.type = 'Swiss' AND prev_stage_record.swiss_no_elimination)) THEN
+            IF p_max_teams < 2 THEN
+                RAISE EXCEPTION 'Stage % must have at least 2 teams', p_stage_order USING ERRCODE = '22000';
+            END IF;
+
+            IF p_max_teams > prev_stage_record.max_teams THEN
+                RAISE EXCEPTION 'Stage % advances % teams but stage % holds at most % teams',
+                    p_stage_order, p_max_teams, p_stage_order - 1, prev_stage_record.max_teams
+                    USING ERRCODE = '22000';
+            END IF;
+        ELSIF prev_stage_record.id IS NOT NULL THEN
             -- Calculate max teams that can advance from previous stage
             -- Count matches in the last round of the previous stage (each match produces 1 winner)
             SELECT COUNT(*) INTO last_round_matches
@@ -63,10 +85,39 @@ BEGIN
             
             -- This stage must be able to accommodate the advancing teams
             IF p_min_teams < max_teams_advancing THEN
-                RAISE EXCEPTION 'Stage % cannot accommodate % teams advancing from stage % (min_teams: %)', 
-                    p_stage_order, max_teams_advancing, p_stage_order - 1, p_min_teams 
+                RAISE EXCEPTION 'Stage % cannot accommodate % teams advancing from stage % (min_teams: %)',
+                    p_stage_order, max_teams_advancing, p_stage_order - 1, p_min_teams
                     USING ERRCODE = '22000';
             END IF;
+
+            -- Valve Swiss only advances its 3-win teams: N/8 + 3N/16 + 3N/16 = half the field.
+            IF prev_stage_record.type = 'Swiss' AND p_max_teams > prev_stage_record.max_teams / 2 THEN
+                RAISE EXCEPTION 'Stage % takes % teams but only % teams can reach 3 wins in stage %',
+                    p_stage_order, p_max_teams, prev_stage_record.max_teams / 2, p_stage_order - 1
+                    USING ERRCODE = '22000';
+            END IF;
+        END IF;
+    END IF;
+
+    IF p_stage_type = 'RoundRobin' OR (p_stage_type = 'Swiss' AND COALESCE(p_swiss_no_elimination, false)) THEN
+        SELECT * INTO next_stage_record
+        FROM tournament_stages
+        WHERE tournament_id = p_tournament_id AND "order" = p_stage_order + 1;
+
+        IF next_stage_record.id IS NOT NULL AND next_stage_record.max_teams > p_max_teams THEN
+            RAISE EXCEPTION 'Stage % advances % teams but stage % holds at most % teams',
+                p_stage_order + 1, next_stage_record.max_teams, p_stage_order, p_max_teams
+                USING ERRCODE = '22000';
+        END IF;
+    ELSIF p_stage_type = 'Swiss' THEN
+        SELECT * INTO next_stage_record
+        FROM tournament_stages
+        WHERE tournament_id = p_tournament_id AND "order" = p_stage_order + 1;
+
+        IF next_stage_record.id IS NOT NULL AND next_stage_record.max_teams > p_max_teams / 2 THEN
+            RAISE EXCEPTION 'Stage % takes % teams but only % teams can reach 3 wins in stage %',
+                p_stage_order + 1, next_stage_record.max_teams, p_max_teams / 2, p_stage_order
+                USING ERRCODE = '22000';
         END IF;
     END IF;
 END;
@@ -125,6 +176,8 @@ BEGIN
             NEW.type,
             NEW.groups,
             NEW.min_teams,
+            NEW.max_teams,
+            NEW.swiss_no_elimination,
             current_order,
             NEW.tournament_id,
             NEW.id
@@ -136,6 +189,19 @@ BEGIN
             AND id != NEW.id
             ORDER BY "order" ASC
         LOOP
+            -- Halving only chains elimination stages; a ranked stage in between breaks the chain.
+            IF EXISTS (
+                SELECT 1
+                FROM tournament_stages ranked
+                WHERE ranked.tournament_id = NEW.tournament_id
+                  AND (ranked.type = 'RoundRobin'
+                       OR (ranked.type = 'Swiss' AND ranked.swiss_no_elimination))
+                  AND ranked."order" >= LEAST(stage_record."order", current_order)
+                  AND ranked."order" < GREATEST(stage_record."order", current_order)
+            ) THEN
+                CONTINUE;
+            END IF;
+
             IF stage_record."order" < current_order THEN
                 next_min_teams := _min_teams * (2 ^ (current_order - stage_record."order"));
             ELSE
@@ -161,7 +227,7 @@ BEGIN
         
         -- Validate groups number can divide next stage's min_teams with remainder 0
         -- This check happens after all stages have been updated
-        IF NEW.groups IS NOT NULL AND NEW.groups > 1 THEN
+        IF NEW.groups IS NOT NULL AND NEW.groups > 1 AND NEW.type != 'RoundRobin' THEN
             -- Get the next stage in sequence
             SELECT * INTO next_stage_record
             FROM tournament_stages 
@@ -268,6 +334,8 @@ BEGIN
         NEW.type,
         NEW.groups,
         NEW.min_teams,
+        NEW.max_teams,
+        NEW.swiss_no_elimination,
         NEW."order",
         NEW.tournament_id,
         NEW.id
