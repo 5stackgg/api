@@ -6,6 +6,8 @@ LANGUAGE sql
 STABLE
 AS $$
     SELECT get_match_type_min_players(mo.type) + CASE
+        -- A computed field on every match list row: without substitutes there is nothing to look up.
+        WHEN COALESCE(mo.number_of_substitutes, 0) = 0 THEN 0
         WHEN EXISTS (
             SELECT 1
             FROM tournament_brackets tb
@@ -14,7 +16,7 @@ AS $$
             WHERE tb.match_id = match.id
               AND (mo.type = 'Duel' OR NOT t.substitutes_enabled)
         ) THEN 0
-        ELSE COALESCE(mo.number_of_substitutes, 0)
+        ELSE mo.number_of_substitutes
     END
     FROM match_options mo
     WHERE mo.id = match.match_options_id;
