@@ -795,8 +795,8 @@ $$;
 -- ============================================================
 -- Awards leaderboard
 -- value = gold count, secondary = silver count, tertiary = bronze count
--- matches_played = total medals. Olympic medal-table ordering. Only tournament
--- placements count; hand-granted awards must not move rankings.
+-- matches_played = mvp count. Olympic medal-table ordering, MVP first.
+-- Hand-granted awards count the same as calculated ones.
 -- ============================================================
 CREATE OR REPLACE FUNCTION public._leaderboard_awards(
   _window_days INT,
@@ -828,20 +828,32 @@ BEGIN
   WITH counts AS (
     SELECT
       ar.player_steam_id,
-      SUM(CASE WHEN ar.placement = 0 THEN 1 ELSE 0 END)::int as mvp,
-      SUM(CASE WHEN ar.placement = 1 THEN 1 ELSE 0 END)::int as gold,
-      SUM(CASE WHEN ar.placement = 2 THEN 1 ELSE 0 END)::int as silver,
-      SUM(CASE WHEN ar.placement = 3 THEN 1 ELSE 0 END)::int as bronze,
+      COUNT(*) FILTER (WHERE medal.tier = 'mvp')::int as mvp,
+      COUNT(*) FILTER (WHERE medal.tier = 'gold')::int as gold,
+      COUNT(*) FILTER (WHERE medal.tier = 'silver')::int as silver,
+      COUNT(*) FILTER (WHERE medal.tier = 'bronze')::int as bronze,
       COUNT(*)::int as total
     FROM award_recipients ar
+    JOIN awards a ON a.id = ar.award_id
+    CROSS JOIN LATERAL (
+      SELECT COALESCE(ar.placement_tier, a.tier) AS tier
+    ) medal
     -- Season placements have no match_options, so a match-type filter has to
     -- exclude them rather than drop them for a missing join.
     LEFT JOIN tournaments t ON t.id = ar.tournament_id
     LEFT JOIN match_options mo ON mo.id = t.match_options_id
     LEFT JOIN seasons s ON s.id = ar.season_id
     WHERE ar.player_steam_id IS NOT NULL
-      AND ar.placement IS NOT NULL
-      AND (ar.tournament_id IS NOT NULL OR ar.season_id IS NOT NULL)
+      AND medal.tier IN ('mvp', 'gold', 'silver', 'bronze')
+      AND (
+        ar.tournament_id IS NOT NULL
+        OR ar.season_id IS NOT NULL
+        OR (
+          _match_type IS NULL
+          AND (_from IS NULL OR ar.created_at >= _from)
+          AND (_to IS NULL OR ar.created_at < _to)
+        )
+      )
       -- Awards hang off a tournament, so there is no matchmaking bucket: any
       -- non-Overall source keeps only tournament-backed awards of that kind,
       -- and Matchmaking correctly comes back empty.
@@ -938,7 +950,14 @@ BEGIN
     SELECT
       le.player_steam_id,
       le.value,
-      (RANK() OVER (ORDER BY le.value DESC))::int AS rank,
+      -- Must match web/pages/leaderboard.vue's order_by or jump-to-player opens the wrong page.
+      (RANK() OVER (
+        ORDER BY
+          CASE WHEN _category = 'awards' THEN le.matches_played END DESC,
+          le.value DESC,
+          CASE WHEN _category = 'awards' THEN le.secondary_value END DESC,
+          CASE WHEN _category = 'awards' THEN le.tertiary_value END DESC
+      ))::int AS rank,
       (COUNT(*) OVER ())::int AS total
     -- Pass all 7 args explicitly. A shorter call binds ambiguously if a stale
     -- overload still exists; exact arity always resolves the 7-arg one.
