@@ -40,6 +40,8 @@ export class MatchAssistantService {
   private gameServerConfig: GameServersConfig;
 
   private readonly namespace: string;
+  // Jobs created before the match labels only match by name, so the sweep lists everything until none is left.
+  private unlabelledServerJobsRemain = true;
   private static readonly REBOOTABLE_ON_DEMAND_STATUSES: readonly e_match_status_enum[] =
     [
       "Scheduled",
@@ -73,6 +75,8 @@ export class MatchAssistantService {
   private static readonly ORPHANED_JOB_CREATE_GRACE_MS = 5 * 60 * 1000;
   private static readonly ORPHANED_JOB_UNASSIGNED_GRACE_MS = 5 * 60 * 1000;
   private static readonly ORPHANED_JOB_ENDED_GRACE_MS = 10 * 60 * 1000;
+  private static readonly MATCH_SERVER_JOB_SELECTOR =
+    "app=game-server,role=match";
   private static readonly MATCH_SERVER_JOB_NAME =
     /^m-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
   private static readonly UUID =
@@ -1872,6 +1876,9 @@ export class MatchAssistantService {
     try {
       ({ items: jobs } = await batch.listNamespacedJob({
         namespace: this.namespace,
+        ...(this.unlabelledServerJobsRemain
+          ? {}
+          : { labelSelector: MatchAssistantService.MATCH_SERVER_JOB_SELECTOR }),
       }));
     } catch (error) {
       this.logger.error(
@@ -1882,12 +1889,17 @@ export class MatchAssistantService {
 
     const now = Date.now();
     const candidates = new Map<string, V1Job>();
+    let unlabelledServerJobsRemain = false;
 
     for (const job of jobs) {
       const matchId = MatchAssistantService.getServerJobMatchId(job);
 
       if (!matchId || MatchAssistantService.isJobFinished(job)) {
         continue;
+      }
+
+      if (job.metadata?.labels?.role !== "match") {
+        unlabelledServerJobsRemain = true;
       }
 
       const createdAt = new Date(
@@ -1904,6 +1916,8 @@ export class MatchAssistantService {
       candidates.set(matchId, job);
     }
 
+    this.unlabelledServerJobsRemain = unlabelledServerJobsRemain;
+
     if (candidates.size === 0) {
       return;
     }
@@ -1912,12 +1926,14 @@ export class MatchAssistantService {
       ...candidates.keys(),
     ]);
 
+    const heldKeys: Array<string> = [];
+
     for (const [matchId, job] of candidates) {
       const match = matches.find(({ id }) => id === matchId);
       const orphanedKey = `match-server-job:orphaned-since:${job.metadata?.uid ?? job.metadata?.name}`;
 
       if (MatchAssistantService.holdsOnDemandServer(match, servers)) {
-        await this.cache.forget(orphanedKey);
+        heldKeys.push(orphanedKey);
         continue;
       }
 
@@ -1967,6 +1983,8 @@ export class MatchAssistantService {
         );
       }
     }
+
+    await this.cache.forget(...heldKeys);
   }
 
   private async getOnDemandServerJobMatches(matchIds: Array<string>) {

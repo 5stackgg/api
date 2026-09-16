@@ -116,8 +116,8 @@ describe("MatchAssistantService — reconciling on-demand server Jobs", () => {
         store.set(key, value);
         return true;
       }),
-      forget: jest.fn(async (key: string) => {
-        store.delete(key);
+      forget: jest.fn(async (...keys: Array<string>) => {
+        keys.forEach((key) => store.delete(key));
         return true;
       }),
       lock: jest.fn(),
@@ -251,6 +251,48 @@ describe("MatchAssistantService — reconciling on-demand server Jobs", () => {
 
     expect(deleteNamespacedJob).not.toHaveBeenCalled();
     expect(hasura.query).not.toHaveBeenCalled();
+  });
+
+  it("lists only labelled Jobs once no unlabelled match server Job is left", async () => {
+    const labelled = job({
+      metadata: {
+        labels: { app: "game-server", role: "match", "match-id": MATCH_ID },
+      },
+    });
+    matches = [match()];
+    reservedServers = [{ id: "server-1", reserved_by_match_id: MATCH_ID }];
+
+    await service.reconcileOnDemandServerJobs();
+    await service.reconcileOnDemandServerJobs();
+
+    listNamespacedJob.mockResolvedValue({ items: [labelled] });
+    await service.reconcileOnDemandServerJobs();
+    await service.reconcileOnDemandServerJobs();
+
+    expect(
+      listNamespacedJob.mock.calls.map(([request]) => request.labelSelector),
+    ).toEqual([undefined, undefined, undefined, "app=game-server,role=match"]);
+  });
+
+  it("clears the orphan timers of every match holding its server in one call", async () => {
+    const other = "1c0e2d3f-5b6a-4c7d-8e9f-0a1b2c3d4e5f";
+    listNamespacedJob.mockResolvedValue({
+      items: [job(), job({ metadata: { name: `m-${other}`, uid: "uid-2" } })],
+    });
+    matches = [match(), match({ id: other, server_id: "server-2" })];
+    reservedServers = [
+      { id: "server-1", reserved_by_match_id: MATCH_ID },
+      { id: "server-2", reserved_by_match_id: other },
+    ];
+
+    await service.reconcileOnDemandServerJobs();
+
+    expect(cache.forget.mock.calls).toEqual([
+      [
+        "match-server-job:orphaned-since:uid-1",
+        "match-server-job:orphaned-since:uid-2",
+      ],
+    ]);
   });
 
   it("deletes nothing when the Jobs cannot be listed", async () => {
