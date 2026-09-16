@@ -125,6 +125,22 @@ describe("MatchRelayService", () => {
     );
   });
 
+  it("keeps fields that are not numeric in /sync as the strings the server sent", async () => {
+    await post("start", 42, {
+      tick: "100",
+      tps: "64",
+      map: "3070284539",
+      protocol: "5",
+    });
+    await post("full", 42, { tick: "100" });
+    await post("delta", 42, { endtick: "292" });
+
+    const body = JSON.parse(sync({ fragment: "0" }).body as string);
+
+    expect(body.map).toBe("3070284539");
+    expect(body.tick).toBe(100);
+  });
+
   it("serves start only at the fragment the broadcast signed up at", async () => {
     await startBroadcastAt(42);
 

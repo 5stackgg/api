@@ -11,6 +11,14 @@ import {
 
 @Injectable()
 export class MatchRelayService {
+  private static readonly NUMERIC_QUERY_FIELDS = [
+    "tick",
+    "endtick",
+    "tps",
+    "keyframe_interval",
+    "protocol",
+  ];
+
   private readonly gzip = promisify(zlib.gzip);
 
   private readonly broadcasts: {
@@ -227,7 +235,7 @@ export class MatchRelayService {
     }
 
     Object.entries(request.query).forEach(([key, value]) => {
-      fragment[field]![key] = MatchRelayService.parseQueryValue(value);
+      fragment[field]![key] = MatchRelayService.parseQueryValue(key, value);
     });
 
     const body: Buffer[] = [];
@@ -261,14 +269,16 @@ export class MatchRelayService {
   }
 
   // Clients read /sync's tick, tps, etc. as JSON numbers, as Valve's reference relay sends them.
-  private static parseQueryValue(value: unknown) {
-    if (typeof value !== "string") {
+  private static parseQueryValue(key: string, value: unknown) {
+    if (
+      typeof value !== "string" ||
+      !MatchRelayService.NUMERIC_QUERY_FIELDS.includes(key) ||
+      !/^\d+$/.test(value)
+    ) {
       return value;
     }
 
-    const parsed = parseInt(value);
-
-    return Number(value) === parsed ? parsed : value;
+    return Number(value);
   }
 
   private relayError(
