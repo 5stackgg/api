@@ -1345,10 +1345,6 @@ export class MatchAssistantService {
             await this.releaseOnDemandServer(matchId, server.id);
             return false;
           }
-
-          await this.delayCheckOnDemandServer(matchId);
-
-          return true;
         } catch (error) {
           try {
             await this.removeOnDemandServerJob(matchId);
@@ -1369,6 +1365,19 @@ export class MatchAssistantService {
 
           throw new FailedToCreateOnDemandServer();
         }
+
+        // The match holds the server now, so the retry goes through a reboot instead of the teardown above.
+        try {
+          await this.delayCheckOnDemandServer(matchId);
+        } catch (error) {
+          this.logger.error(
+            `[${matchId}] unable to schedule the on demand server boot check`,
+            error,
+          );
+          throw new FailedToCreateOnDemandServer();
+        }
+
+        return true;
       },
       MatchAssistantService.ON_DEMAND_ASSIGNMENT_LOCK_SECONDS,
     );

@@ -601,6 +601,31 @@ describe("MatchAssistantService — on-demand server teardown", () => {
       expect(queue.add).not.toHaveBeenCalled();
     });
 
+    it("keeps the server the match already points at when the boot check cannot be queued", async () => {
+      queue.add.mockRejectedValue(new Error("redis unavailable"));
+
+      await expect(
+        (service as any).assignOnDemandServer("match-1"),
+      ).rejects.toBeInstanceOf(FailedToCreateOnDemandServer);
+
+      const created = createNamespacedJob.mock.invocationCallOrder[0];
+
+      expect(
+        deleteNamespacedJob.mock.invocationCallOrder.some(
+          (order) => order > created,
+        ),
+      ).toBe(false);
+      expect(
+        serverReleases().filter((release) =>
+          hasura.mutation.mock.invocationCallOrder.some(
+            (order, index) =>
+              order > created &&
+              hasura.mutation.mock.calls[index][0]?.update_servers === release,
+          ),
+        ),
+      ).toEqual([]);
+    });
+
     it("labels the Job so a sweep can find it", async () => {
       await expect(
         (service as any).assignOnDemandServer("match-1"),
