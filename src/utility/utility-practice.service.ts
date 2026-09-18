@@ -552,6 +552,10 @@ export class UtilityPracticeService {
       [session.id, steamIds, user.steam_id],
     );
 
+    if (invited.length > 0 && session.match_id) {
+      await this.matchAssistant.sendUtilityPracticeRefresh(session.match_id);
+    }
+
     await this.notifyInvited(
       session,
       user.steam_id,
@@ -884,13 +888,20 @@ export class UtilityPracticeService {
       return null;
     }
 
+    // Invitees are on the door list before they join: a player who takes the
+    // invite by joining the host through Steam never touches joinUtilityPractice,
+    // and would otherwise be turned away with no idea why.
     const players = await this.postgres.query<Array<{ steam_id: string }>>(
       `SELECT mlp.steam_id::text AS steam_id
          FROM public.match_lineup_players mlp
          INNER JOIN public.match_lineups ml ON ml.id = mlp.match_lineup_id
         WHERE ml.match_id = $1::uuid
-          AND mlp.steam_id IS NOT NULL`,
-      [row.match_id],
+          AND mlp.steam_id IS NOT NULL
+       UNION
+       SELECT i.steam_id::text AS steam_id
+         FROM public.utility_practice_invites i
+        WHERE i.utility_practice_session_id = $2::uuid`,
+      [row.match_id, row.session_id],
     );
 
     return {

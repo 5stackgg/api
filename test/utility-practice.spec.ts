@@ -1517,6 +1517,33 @@ describe("utility practice sessions (SQL-driven)", () => {
       expect(session?.steam_ids.sort()).toEqual([host, mate].sort());
     });
 
+    it("lets an invitee in before they have joined from the site", async () => {
+      const host = await fx.player();
+      const invited = await fx.player();
+      const { matchId } = await createPracticeMatch(host);
+      const sessionId = await insertSession(host, {
+        match_id: matchId,
+        status: "Ready",
+      });
+      const serverId = await reservedServer("practice-a", matchId, 27964);
+
+      const sendUtilityPracticeRefresh = jest.fn(
+        async (): Promise<void> => undefined,
+      );
+      const service = makeService({
+        matchAssistant: { sendUtilityPracticeRefresh },
+      });
+
+      await service.invite({ steam_id: host } as never, {
+        session_id: sessionId,
+        steam_ids: [invited],
+      });
+
+      expect(sendUtilityPracticeRefresh).toHaveBeenCalledWith(matchId);
+      const session = await service.sessionForServer(serverId);
+      expect(session?.steam_ids.sort()).toEqual([host, invited].sort());
+    });
+
     // A compromised game server that could name a session id could read another
     // session's match password, which is the credential for walking onto that
     // server. The lookup starts from the authenticated server for that reason.
