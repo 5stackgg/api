@@ -16,8 +16,10 @@ import { MatchAssistantService } from "src/matches/match-assistant/match-assista
 import {
   getMatchmakingQueueCacheKey,
   getMatchmakingConformationCacheKey,
+  getMatchmakingLobbyDetailsCacheKey,
   getMatchmakingRankCacheKey,
 } from "./utilities/cacheKeys";
+import { QueuedLobbyStat } from "./types/QueuedLobbyStat";
 import { ExpectedPlayers } from "src/discord-bot/enums/ExpectedPlayers";
 import { shuffleSplit } from "./utilities/shuffleSplit";
 import { balanceTeams, canFillTeams } from "./utilities/balanceTeams";
@@ -111,11 +113,18 @@ export class MatchmakeService {
     const types: e_match_types_enum[] = ["Duel", "Wingman", "Competitive"];
 
     const regionStats: Partial<
-      Record<string, Partial<Record<e_match_types_enum, number[]>>>
+      Record<string, Partial<Record<e_match_types_enum, QueuedLobbyStat[]>>>
     > = {};
 
+    const regionValues = regions.server_regions.map(
+      (region: { value: string }) => region.value,
+    );
+
     for (const type of types) {
+      // A lobby queued in several regions keeps one index across all of them,
+      // so the client can count it once.
       const lobbyIndexes = new Map<string, number>();
+      const lobbySizes = new Map<string, number>();
 
       for (const region of regions.server_regions) {
         const lobbyIds = await this.redis.zrange(
@@ -124,15 +133,30 @@ export class MatchmakeService {
           -1,
         );
 
-        const stats = (regionStats[region.value] ??= {});
-        stats[type] = lobbyIds.map((lobbyId) => {
+        const queued: QueuedLobbyStat[] = [];
+
+        for (const lobbyId of lobbyIds) {
           let index = lobbyIndexes.get(lobbyId);
+
           if (index === undefined) {
+            const details =
+              await this.matchmakingLobbyService.getLobbyDetails(lobbyId);
+
+            if (!details) {
+              await this.sweepOrphanedQueueEntry(lobbyId, type, regionValues);
+              continue;
+            }
+
             index = lobbyIndexes.size;
             lobbyIndexes.set(lobbyId, index);
+            lobbySizes.set(lobbyId, details.players.length);
           }
-          return index;
-        });
+
+          queued.push({ lobby: index, players: lobbySizes.get(lobbyId) });
+        }
+
+        const stats = (regionStats[region.value] ??= {});
+        stats[type] = queued;
       }
     }
 
@@ -474,6 +498,49 @@ export class MatchmakeService {
     await this.redis.del(lockKey);
   }
 
+  // Removing the queue entry unconditionally would drop a lobby that left and
+  // rejoined between the details read and this call, so the details key is
+  // re-checked inside the script: if it is back, the entry is the fresh one.
+  private static readonly SWEEP_ORPHANED_ENTRY_SCRIPT = `
+    if redis.call('EXISTS', KEYS[1]) == 1 then
+      return 0
+    end
+    for i = 2, #KEYS do
+      redis.call('ZREM', KEYS[i], ARGV[1])
+    end
+    return 1
+  `;
+
+  // A queue entry can outlive its details: addLobbyToQueue reads the details
+  // and then zadds, so a leave landing in between leaves an entry behind with
+  // nothing to read. Nothing expires the sorted sets, so it would sit in the
+  // queue - and in the queue counts - forever.
+  private async sweepOrphanedQueueEntry(
+    lobbyId: string,
+    type: e_match_types_enum,
+    regions: string[],
+  ) {
+    const keys = [getMatchmakingLobbyDetailsCacheKey(lobbyId)];
+
+    for (const region of regions) {
+      keys.push(getMatchmakingQueueCacheKey(type, region));
+      keys.push(getMatchmakingRankCacheKey(type, region));
+    }
+
+    const swept = await this.redis.eval(
+      MatchmakeService.SWEEP_ORPHANED_ENTRY_SCRIPT,
+      keys.length,
+      ...keys,
+      lobbyId,
+    );
+
+    if (swept === 1) {
+      this.logger.warn(
+        `removed orphaned ${type} queue entry for lobby ${lobbyId}`,
+      );
+    }
+  }
+
   private static readonly CLAIM_LOBBY_SCRIPT = `
     local acquired = redis.call('SET', KEYS[1], 1, 'EX', ARGV[2], 'NX')
     if not acquired then
@@ -624,6 +691,8 @@ export class MatchmakeService {
     const confirmedKey = `${getMatchmakingConformationCacheKey(confirmationId)}:confirmed`;
     await this.redis.del(confirmedKey);
 
+    await this.redis.del(this.getMatchCreationClaimKey(confirmationId));
+
     await this.redis.del(getMatchmakingConformationCacheKey(confirmationId));
   }
 
@@ -726,13 +795,30 @@ export class MatchmakeService {
     confirmationId: string,
     steamId: string,
   ) {
+    const { lobbyIds, team1, team2, matchId } =
+      await this.getMatchConfirmationDetails(confirmationId);
+
+    if (matchId) {
+      return;
+    }
+
+    // An expired confirmation reads back as empty teams, so this also stops a
+    // late confirmation from creating a match with nobody in it.
+    const isPlaying = [...team1, ...team2].some(
+      (player) => player.steam_id === steamId,
+    );
+
+    if (!isPlaying) {
+      return;
+    }
+
     await this.redis.hset(
       `${getMatchmakingConformationCacheKey(confirmationId)}:confirmed`,
       steamId,
       1,
     );
 
-    const { lobbyIds, team1, team2, confirmed } =
+    const { confirmed } =
       await this.getMatchConfirmationDetails(confirmationId);
 
     if (confirmed.length != team1.length + team2.length) {
@@ -742,7 +828,26 @@ export class MatchmakeService {
       return;
     }
 
+    // Everyone is ready, but so is every other confirmation that arrived at the
+    // same time. Whoever claims this key creates the match; the rest return.
+    // The claim never expires on its own - it is dropped with the rest of the
+    // confirmation details, so a failed creation is cleaned up by the cancel
+    // job rather than by a second match.
+    const claimedCreation = await this.redis.set(
+      this.getMatchCreationClaimKey(confirmationId),
+      1,
+      "NX",
+    );
+
+    if (!claimedCreation) {
+      return;
+    }
+
     await this.createMatch(confirmationId);
+  }
+
+  private getMatchCreationClaimKey(confirmationId: string) {
+    return `${getMatchmakingConformationCacheKey(confirmationId)}:creating`;
   }
 
   private async createMatch(confirmationId: string) {

@@ -58,10 +58,20 @@ export default class MatchMapStatusEvent extends MatchEventProcessor<{
 
     const isFinished = this.data.status === "Finished";
 
+    // The plugin reports the winner when the map ends, which is WaitingForTV or
+    // UploadingDemo before it is ever Finished. A map that stalls there would
+    // otherwise keep a winner nobody checked against the round score.
+    // Surrendered is deliberately not in this list: its winner is the team that
+    // did not give up, which is frequently the team behind on rounds.
+    const carriesPlayedOutWinner =
+      isFinished ||
+      this.data.status === "WaitingForTV" ||
+      this.data.status === "UploadingDemo";
+
     let resolvedWinningLineupId: string | undefined =
       this.data.winning_lineup_id;
 
-    if (isFinished) {
+    if (carriesPlayedOutWinner) {
       const { match_map_rounds } = await this.hasura.query({
         match_map_rounds: {
           __args: {

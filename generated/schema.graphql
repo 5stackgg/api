@@ -1601,6 +1601,11 @@ enum abandoned_matches_constraint {
   unique or primary key constraint on columns "id"
   """
   abandoned_matches_pkey
+
+  """
+  unique or primary key constraint on columns "match_id", "steam_id"
+  """
+  abandoned_matches_steam_id_match_id_key
 }
 
 """

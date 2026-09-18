@@ -126,4 +126,64 @@ describe("MatchMapStatusEvent", () => {
       }),
     ]);
   });
+
+  // The winner the server reports is cross-checked against the round score,
+  // because a wrong winner here decides the series. The plugin reports it first
+  // with WaitingForTV or UploadingDemo, so a map that stalls there would
+  // otherwise keep a value nobody checked.
+  describe("winner resolution", () => {
+    beforeEach(() => {
+      matchMaps = [{ id: "map-1", status: "Live" }];
+      currentMatchMapId = "map-1";
+    });
+
+    const winnerWritten = () => mapUpdates()[0]?.__args._set.winning_lineup_id;
+
+    it.each(["Finished", "WaitingForTV", "UploadingDemo"])(
+      "overrides a wrong winner reported with %s",
+      async (status) => {
+        // lineup-1 won the map 13-7
+        await process(status, "lineup-2");
+
+        expect(winnerWritten()).toBe("lineup-1");
+      },
+    );
+
+    it("keeps the reported winner of a surrendered map", async () => {
+      // the team that gives up is frequently the one ahead on rounds, so the
+      // score is not the authority here - the forfeit is
+      await process("Surrendered", "lineup-2");
+
+      expect(winnerWritten()).toBe("lineup-2");
+    });
+
+    it("keeps the reported winner when the scores are tied", async () => {
+      hasura.query.mockImplementation(async (query: any) => {
+        if (query.match_map_rounds) {
+          return {
+            match_map_rounds: [{ lineup_1_score: 12, lineup_2_score: 12 }],
+          };
+        }
+        return {
+          matches_by_pk: {
+            current_match_map_id: currentMatchMapId,
+            lineup_1_id: "lineup-1",
+            lineup_2_id: "lineup-2",
+            status: "Live",
+            match_maps: matchMaps,
+          },
+        };
+      });
+
+      await process("Finished", "lineup-2");
+
+      expect(winnerWritten()).toBe("lineup-2");
+    });
+
+    it("leaves the winner alone for a status that carries none", async () => {
+      await process("Paused");
+
+      expect(winnerWritten()).toBeUndefined();
+    });
+  });
 });

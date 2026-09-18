@@ -19,6 +19,7 @@ import { RedisManagerService } from "../redis/redis-manager/redis-manager.servic
 import { MatchmakingQueues } from "./enums/MatchmakingQueues";
 import { FakeRedis } from "./testing/fakeRedis";
 import {
+  getMatchmakingLobbyDetailsCacheKey,
   getMatchmakingQueueCacheKey,
   getMatchmakingRankCacheKey,
 } from "./utilities/cacheKeys";
@@ -50,6 +51,7 @@ describe("matchmaking (end to end)", () => {
     updateMatchStatus: jest.Mock;
   };
   let hasura: { query: jest.Mock; mutation: jest.Mock };
+  let lobbyService: Record<string, jest.Mock>;
   let queue: { add: jest.Mock; remove: jest.Mock };
 
   beforeEach(async () => {
@@ -62,7 +64,7 @@ describe("matchmaking (end to end)", () => {
     confirmationIds = [];
     lineupInserts = [];
 
-    const lobbyService = {
+    lobbyService = {
       getLobbyDetails: jest.fn(async (lobbyId: string) => {
         const lobby = lobbyStore.get(lobbyId);
         return lobby ? { ...lobby, players: [...lobby.players] } : null;
@@ -91,6 +93,7 @@ describe("matchmaking (end to end)", () => {
       }),
       removeLobbyDetails: jest.fn(async (lobbyId: string) => {
         lobbyStore.delete(lobbyId);
+        await redis.del(getMatchmakingLobbyDetailsCacheKey(lobbyId));
       }),
       removeConfirmationIdFromLobby: jest.fn(),
     };
@@ -176,6 +179,11 @@ describe("matchmaking (end to end)", () => {
   async function enqueue(lobbies: MatchmakingLobby[]) {
     for (const lobby of lobbies) {
       lobbyStore.set(lobby.lobbyId, lobby);
+      // the real getLobbyDetails reads this key, and the orphan sweep checks it
+      await redis.set(
+        getMatchmakingLobbyDetailsCacheKey(lobby.lobbyId),
+        JSON.stringify(lobby),
+      );
       for (const region of lobby.regions) {
         await redis.zadd(
           getMatchmakingRankCacheKey(lobby.type, region),
@@ -249,6 +257,93 @@ describe("matchmaking (end to end)", () => {
   }
 
   // --- tests
+
+  describe("region stats", () => {
+    function lastRegionStats() {
+      const published = redis.published
+        .filter((entry) => entry.channel === "broadcast-message")
+        .map((entry) => JSON.parse(entry.message))
+        .filter((message) => message.event === "matchmaking:region-stats");
+
+      return published.at(-1)?.data;
+    }
+
+    it("counts queued players, not lobbies", async () => {
+      await enqueue([
+        makeLobby("trio", [5000, 5000, 5000]),
+        makeLobby("solo", [5000]),
+      ]);
+
+      await service.sendRegionStats();
+
+      const queued = lastRegionStats()["us-east"][COMPETITIVE];
+      const players = queued.reduce(
+        (total: number, lobby: { players: number }) => total + lobby.players,
+        0,
+      );
+
+      // a party of three is three people waiting for a game, not one
+      expect(players).toBe(4);
+    });
+
+    it("counts a multi region lobby once", async () => {
+      await enqueue([
+        makeLobby("duo", [5000, 5000], { regions: ["us-east", "eu-west"] }),
+      ]);
+
+      await service.sendRegionStats();
+
+      const stats = lastRegionStats();
+      const east = stats["us-east"][COMPETITIVE];
+      const west = stats["eu-west"][COMPETITIVE];
+
+      // the same lobby index in both regions is what lets the client dedupe it
+      expect(east[0].lobby).toBe(west[0].lobby);
+      expect(east[0].players).toBe(2);
+    });
+
+    it("drops a queue entry whose lobby details are gone", async () => {
+      await enqueue([makeLobby("ghost", [5000]), makeLobby("real", [5000])]);
+
+      // a lobby can be left in the sorted set with no details behind it: a
+      // leave that lands between reading the details and the zadd of a rejoin
+      lobbyStore.delete("ghost");
+      await redis.del(getMatchmakingLobbyDetailsCacheKey("ghost"));
+
+      await service.sendRegionStats();
+
+      const queued = lastRegionStats()["us-east"][COMPETITIVE];
+      expect(queued).toHaveLength(1);
+
+      // and it is swept out of the queue rather than counted forever
+      expect(
+        redis.members(getMatchmakingQueueCacheKey(COMPETITIVE, "us-east")),
+      ).toEqual(["real"]);
+    });
+
+    it("keeps a lobby that rejoins while the stats are being built", async () => {
+      await enqueue([makeLobby("rejoiner", [5000])]);
+
+      const details = lobbyService.getLobbyDetails as jest.Mock;
+      details.mockImplementationOnce(async (lobbyId: string) => {
+        // the lobby leaves and comes straight back while we are reading it
+        const rejoined = makeLobby("rejoiner", [5000]);
+        lobbyStore.set("rejoiner", rejoined);
+        await redis.set(
+          getMatchmakingLobbyDetailsCacheKey(lobbyId),
+          JSON.stringify(rejoined),
+        );
+        return null;
+      });
+
+      await service.sendRegionStats();
+
+      // the sweep must not take the fresh entry down with the stale read
+      expect(
+        redis.members(getMatchmakingQueueCacheKey(COMPETITIVE, "us-east")),
+      ).toEqual(["rejoiner"]);
+    });
+  });
 
   describe("queue state", () => {
     it("matches ten solo players and empties the queue", async () => {
@@ -692,6 +787,70 @@ describe("matchmaking (end to end)", () => {
         players.at(-1).steam_id,
       );
       expect(matchAssistant.createMatchBasedOnType).toHaveBeenCalledTimes(1);
+    });
+
+    it("creates one match when the last players confirm at the same moment", async () => {
+      await enqueue(tenSolos());
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      const [confirmation] = confirmations;
+      const [confirmationId] = confirmationIds;
+      const players = [
+        ...confirmation.team1.players,
+        ...confirmation.team2.players,
+      ];
+
+      for (const player of players.slice(0, 8)) {
+        await service.playerConfirmMatchmaking(confirmationId, player.steam_id);
+      }
+
+      // the last two confirmations land together: both see a full lobby
+      await Promise.all(
+        players
+          .slice(8)
+          .map((player) =>
+            service.playerConfirmMatchmaking(confirmationId, player.steam_id),
+          ),
+      );
+
+      expect(matchAssistant.createMatchBasedOnType).toHaveBeenCalledTimes(1);
+      expect(lineupInserts).toHaveLength(2);
+    });
+
+    it("does not create a second match when a player confirms twice", async () => {
+      await enqueue(tenSolos());
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      const { confirmation, confirmationId } = await confirmAll();
+
+      // the client re-sends matchmaking:confirm - the match already exists, so
+      // this must be a no-op rather than a second match for the same players
+      await service.playerConfirmMatchmaking(
+        confirmationId,
+        confirmation.team1.players[0].steam_id,
+      );
+
+      expect(matchAssistant.createMatchBasedOnType).toHaveBeenCalledTimes(1);
+    });
+
+    it("ignores a confirmation from a player who is not in the match", async () => {
+      await enqueue(tenSolos());
+      await service.matchmake(COMPETITIVE, "us-east");
+
+      const [confirmation] = confirmations;
+      const [confirmationId] = confirmationIds;
+      const players = [
+        ...confirmation.team1.players,
+        ...confirmation.team2.players,
+      ];
+
+      // nine of the ten ready up, and a stranger sends the tenth confirmation
+      for (const player of players.slice(0, 9)) {
+        await service.playerConfirmMatchmaking(confirmationId, player.steam_id);
+      }
+      await service.playerConfirmMatchmaking(confirmationId, "not-in-match");
+
+      expect(matchAssistant.createMatchBasedOnType).not.toHaveBeenCalled();
     });
 
     it("drops every lobby from the queue when nobody confirms", async () => {

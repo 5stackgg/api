@@ -1040,6 +1040,92 @@ describe("tournament check-in, registration rules and free agents (SQL-driven)",
     });
   });
 
+  // joined_tournament is what puts the tournament's chat room in a player's
+  // sidebar, so anyone who can talk in that room has to answer true here.
+  describe("joined_tournament", () => {
+    const joined = async (tournamentId: string, steamId: string) => {
+      const rows = await runAsUser(postgres, steamId, "user", async (query) =>
+        (await query(
+          `SELECT joined_tournament(t, json_build_object('x-hasura-user-id', $2::text)) AS joined
+             FROM tournaments t WHERE t.id = $1`,
+          [tournamentId, steamId],
+        )) as Array<{ joined: boolean }>,
+      );
+
+      return rows[0].joined;
+    };
+
+    it("counts a player on a tournament team roster", async () => {
+      const t = await createTournament();
+      const [owner, player] = await fx.players(2);
+      await registerTeam(t.id, "Rostered", [owner, player]);
+
+      expect(await joined(t.id, player)).toBe(true);
+    });
+
+    it("counts a registered free agent", async () => {
+      const t = await createTournament({
+        columns: { registration_type: "free_agents" },
+      });
+      const player = await fx.player();
+      await registerFreeAgent(t.id, player);
+
+      // until the draft runs there is no roster to be on, so without this the
+      // signup sees no tournament chat at all
+      expect(await joined(t.id, player)).toBe(true);
+    });
+
+    it("counts a waitlisted free agent", async () => {
+      const t = await createTournament({
+        columns: { registration_type: "free_agents" },
+      });
+      const player = await fx.player();
+      await registerFreeAgent(t.id, player);
+      await postgres.query(
+        `UPDATE tournament_free_agents SET status = 'waitlisted'
+          WHERE tournament_id = $1 AND player_steam_id = $2`,
+        [t.id, player],
+      );
+
+      expect(await joined(t.id, player)).toBe(true);
+    });
+
+    it("drops a free agent who withdrew", async () => {
+      const t = await createTournament({
+        columns: { registration_type: "free_agents" },
+      });
+      const player = await fx.player();
+      await registerFreeAgent(t.id, player);
+      await postgres.query(
+        `UPDATE tournament_free_agents SET status = 'withdrawn'
+          WHERE tournament_id = $1 AND player_steam_id = $2`,
+        [t.id, player],
+      );
+
+      expect(await joined(t.id, player)).toBe(false);
+    });
+
+    it("counts a team owner who is not on their own roster", async () => {
+      const t = await createTournament();
+      const [owner, player] = await fx.players(2);
+      await registerTeam(t.id, "Owned", [owner, player]);
+      await postgres.query(
+        `DELETE FROM tournament_team_roster
+          WHERE tournament_id = $1 AND player_steam_id = $2`,
+        [t.id, owner],
+      );
+
+      expect(await joined(t.id, owner)).toBe(true);
+    });
+
+    it("says no to an unrelated player", async () => {
+      const t = await createTournament();
+      const stranger = await fx.player();
+
+      expect(await joined(t.id, stranger)).toBe(false);
+    });
+  });
+
   describe("a free agent who also owns a team", () => {
     it("does not stall the close of registration", async () => {
       const t = await createTournament({

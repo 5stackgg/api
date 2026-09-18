@@ -153,16 +153,66 @@ describe("teams, rosters and lineup membership (SQL-driven)", () => {
       expect(await getTeamCaptain(teamId)).toBe(owner);
     });
 
-    it("removing the owner-captain from the roster leaves the team captainless", async () => {
+    // The owner is the team's last line of authority: can_change_team_role and
+    // can_remove_from_team both fall back to owner_steam_id, so a team whose
+    // owner has walked off the roster can only be managed by a site admin.
+    it("refuses to drop the owner from their own roster", async () => {
       const owner = await seedPlayer();
       const teamId = await createTeam(owner);
+
+      await expect(
+        postgres.query(
+          "DELETE FROM team_roster WHERE team_id = $1 AND player_steam_id = $2",
+          [teamId, owner],
+        ),
+      ).rejects.toThrow(/owner/i);
+
+      const roster = await postgres.query<Array<{ player_steam_id: string }>>(
+        "SELECT player_steam_id FROM team_roster WHERE team_id = $1",
+        [teamId],
+      );
+      expect(roster).toHaveLength(1);
+    });
+
+    it("lets the old owner leave once ownership is handed over", async () => {
+      const owner = await seedPlayer();
+      const heir = await seedPlayer();
+      const teamId = await createTeam(owner);
+
+      await asUser(owner, "admin", (query) =>
+        query(
+          "INSERT INTO team_roster (team_id, player_steam_id) VALUES ($1, $2)",
+          [teamId, heir],
+        ),
+      );
+      await postgres.query("UPDATE teams SET owner_steam_id = $1 WHERE id = $2", [
+        heir,
+        teamId,
+      ]);
 
       await postgres.query(
         "DELETE FROM team_roster WHERE team_id = $1 AND player_steam_id = $2",
         [teamId, owner],
       );
 
-      expect(await getTeamCaptain(teamId)).toBeNull();
+      expect(await getTeamCaptain(teamId)).toBe(heir);
+    });
+
+    it("still lets the whole team be deleted", async () => {
+      const owner = await seedPlayer();
+      const teamId = await createTeam(owner);
+
+      // the roster rows go with it by cascade, and the owner guard must not
+      // turn that into an error
+      await expect(
+        postgres.query("DELETE FROM teams WHERE id = $1", [teamId]),
+      ).resolves.not.toThrow();
+
+      const roster = await postgres.query<Array<{ player_steam_id: string }>>(
+        "SELECT player_steam_id FROM team_roster WHERE team_id = $1",
+        [teamId],
+      );
+      expect(roster).toHaveLength(0);
     });
   });
 

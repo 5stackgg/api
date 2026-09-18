@@ -30,6 +30,7 @@ describe("sanctions policy (SQL-driven)", () => {
 
   beforeEach(async () => {
     await postgres.query("DELETE FROM tournaments");
+    await postgres.query("DELETE FROM matches");
     await postgres.query("DELETE FROM match_options");
     await postgres.query("DELETE FROM abandoned_matches");
     await postgres.query("DELETE FROM player_sanctions");
@@ -67,6 +68,16 @@ describe("sanctions policy (SQL-driven)", () => {
       `INSERT INTO abandoned_matches (steam_id, abandoned_at)
        VALUES ($1::bigint, now() - $2::interval)`,
       [steamId, agoInterval],
+    );
+
+  // What MatchAbandoned does for a real match: the same event can arrive more
+  // than once, so the insert has to be idempotent per match.
+  const abandonMatch = (steamId: string, matchId: string) =>
+    postgres.query(
+      `INSERT INTO abandoned_matches (steam_id, match_id)
+       VALUES ($1::bigint, $2::uuid)
+       ON CONFLICT DO NOTHING`,
+      [steamId, matchId],
     );
 
   const createTournament = async (
@@ -238,6 +249,69 @@ describe("sanctions policy (SQL-driven)", () => {
           HARDCODED_LADDER[count - 1],
         );
       }
+    });
+
+    it("counts one match once, however many abandon events it sends", async () => {
+      const player = await fx.player();
+      const match = await fx.match({ regions: ["TestSanctions"] });
+
+      await abandonMatch(player, match.id);
+
+      // the plugin re-arms its disconnect timer per map and per reconnect, so
+      // the same player leaving one match can report it more than once. Each
+      // extra row would move them a rung up the ladder for a single offense.
+      await abandonMatch(player, match.id);
+
+      const [row] = await postgres.query<Array<{ count: string }>>(
+        "SELECT COUNT(*) AS count FROM abandoned_matches WHERE steam_id = $1::bigint",
+        [player],
+      );
+      expect(Number(row.count)).toBe(1);
+
+      const [last] = await postgres.query<Array<{ last_abandoned_at: Date }>>(
+        "SELECT MAX(abandoned_at) AS last_abandoned_at FROM abandoned_matches WHERE steam_id = $1::bigint",
+        [player],
+      );
+      const cooldown = await matchmakingCooldown(player);
+
+      expect(minutesBetween(last.last_abandoned_at, cooldown!)).toBe(
+        HARDCODED_LADDER[0],
+      );
+    });
+
+    it("still counts abandons from different matches separately", async () => {
+      const player = await fx.player();
+      const first = await fx.match({ regions: ["TestSanctions"] });
+      const second = await fx.match({ regions: ["TestSanctions"] });
+
+      await abandonMatch(player, first.id);
+      await abandonMatch(player, second.id);
+
+      const [last] = await postgres.query<Array<{ last_abandoned_at: Date }>>(
+        "SELECT MAX(abandoned_at) AS last_abandoned_at FROM abandoned_matches WHERE steam_id = $1::bigint",
+        [player],
+      );
+      const cooldown = await matchmakingCooldown(player);
+
+      expect(minutesBetween(last.last_abandoned_at, cooldown!)).toBe(
+        HARDCODED_LADDER[1],
+      );
+    });
+
+    it("keeps counting match-less abandons separately", async () => {
+      const player = await fx.player();
+
+      // historical rows, and no-shows recorded before a match exists, carry no
+      // match_id at all - those must not collapse into one another
+      await abandon(player);
+      await abandon(player);
+
+      const [row] = await postgres.query<Array<{ count: string }>>(
+        "SELECT COUNT(*) AS count FROM abandoned_matches WHERE steam_id = $1::bigint",
+        [player],
+      );
+
+      expect(Number(row.count)).toBe(2);
     });
 
     it("clamps past the end of the ladder instead of escalating forever", async () => {
