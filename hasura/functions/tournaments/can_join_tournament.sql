@@ -59,6 +59,8 @@ BEGIN
     -- Otherwise they can still register another team they manage that is not
     -- already in this tournament (e.g. an A team and a B team that share
     -- members): being on another team's roster does not block registration.
+    -- The team's owner must not already have one here, or tbi_tournament_team
+    -- refuses the insert.
     RETURN EXISTS (
         SELECT 1
         FROM public.teams t
@@ -67,7 +69,7 @@ BEGIN
               SELECT 1
               FROM public.tournament_teams tt
               WHERE tt.tournament_id = tournament.id
-                AND tt.team_id = t.id
+                AND (tt.team_id = t.id OR tt.owner_steam_id = t.owner_steam_id)
           )
     );
 END;

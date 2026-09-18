@@ -1,5 +1,6 @@
 import { PostgresService } from "./../src/postgres/postgres.service";
 import { Fixtures } from "./utils/fixtures";
+import { TournamentFixtures } from "./utils/tournament-fixtures";
 import { bootMigratedDb, runAsUser, SqlTestDb } from "./utils/sql-test-db";
 
 // Reproduces the "duplicate key value violates unique constraint
@@ -258,6 +259,116 @@ describe("tournament roster duplicate key (SQL-driven)", () => {
     await expect(register(teamB.id)).rejects.toThrow(
       /already have a team in this tournament/,
     );
+  });
+
+  describe("can_join_tournament", () => {
+    let tfx: TournamentFixtures;
+
+    beforeAll(() => {
+      tfx = new TournamentFixtures(postgres, fx);
+    });
+
+    const openTournament = async () => {
+      const tournament = await tfx.createTournament([
+        { type: "SingleElimination", order: 1, minTeams: 4, maxTeams: 8 },
+      ]);
+      await tfx.setStatus(
+        tournament.id,
+        tournament.organizer,
+        "RegistrationOpen",
+      );
+      return tournament.id;
+    };
+
+    const canJoin = async (
+      tournamentId: string,
+      steamId: string,
+      role = "user",
+    ) => {
+      const [row] = await postgres.query<Array<{ can_join: boolean }>>(
+        `SELECT can_join_tournament(t, $2::json) AS can_join
+         FROM tournaments t WHERE t.id = $1`,
+        [
+          tournamentId,
+          JSON.stringify({
+            "x-hasura-role": role,
+            "x-hasura-user-id": steamId,
+          }),
+        ],
+      );
+      return row.can_join;
+    };
+
+    const ownedTeam = async (owner: string) => {
+      const [team] = await postgres.query<Array<{ id: string }>>(
+        "INSERT INTO teams (name, short_name, owner_steam_id) VALUES ($1, $1, $2) RETURNING id",
+        [fx.nextName(`owned${owner}`), owner],
+      );
+      return { id: team.id, owner };
+    };
+
+    const makeTeamAdmin = async (
+      team: { id: string; owner: string },
+      steamId: string,
+    ) => {
+      await runAsUser(postgres, team.owner, "admin", (query) =>
+        query(
+          "INSERT INTO team_roster (team_id, player_steam_id, status) VALUES ($1, $2, 'Starter')",
+          [team.id, steamId],
+        ),
+      );
+      await postgres.query(
+        "UPDATE team_roster SET role = 'Admin' WHERE team_id = $1 AND player_steam_id = $2",
+        [team.id, steamId],
+      );
+    };
+
+    it("lets a player with no team join", async () => {
+      const tournamentId = await openTournament();
+      expect(await canJoin(tournamentId, await fx.player())).toBe(true);
+    });
+
+    it("does not offer a second team the player also owns", async () => {
+      const tournamentId = await openTournament();
+      const teamA = await fx.team(1);
+      await ownedTeam(teamA.owner);
+      await tfx.registerTeam(tournamentId, teamA);
+
+      expect(await canJoin(tournamentId, teamA.owner)).toBe(false);
+    });
+
+    it("offers a second team the player manages but someone else owns", async () => {
+      const tournamentId = await openTournament();
+      const teamA = await fx.team(1);
+      await tfx.registerTeam(tournamentId, teamA);
+      const teamB = await ownedTeam(await fx.player());
+      await makeTeamAdmin(teamB, teamA.owner);
+
+      expect(await canJoin(tournamentId, teamA.owner)).toBe(true);
+    });
+
+    it("does not offer a team whose owner already has a team in the tournament", async () => {
+      const tournamentId = await openTournament();
+      const teamA = await fx.team(1);
+      await tfx.registerTeam(tournamentId, teamA);
+      const teamC = await fx.team(1);
+      await tfx.registerTeam(tournamentId, teamC);
+      const teamB = await ownedTeam(teamC.owner);
+      await makeTeamAdmin(teamB, teamA.owner);
+
+      expect(await canJoin(tournamentId, teamA.owner)).toBe(false);
+    });
+
+    it("always lets a tournament organizer add teams", async () => {
+      const tournamentId = await openTournament();
+      const teamA = await fx.team(1);
+      await ownedTeam(teamA.owner);
+      await tfx.registerTeam(tournamentId, teamA);
+
+      expect(
+        await canJoin(tournamentId, teamA.owner, "tournament_organizer"),
+      ).toBe(true);
+    });
   });
 
   const memberIds = async (teamId: string) => {
