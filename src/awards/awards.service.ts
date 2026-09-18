@@ -550,6 +550,31 @@ export class AwardsService {
     throw new ForbiddenException("Not the tournament organizer");
   }
 
+  public async isOwnRecipient(
+    steamId: string,
+    recipient: { player_steam_id?: string | null; team_id?: string | null },
+  ): Promise<boolean> {
+    if (recipient.player_steam_id) {
+      return String(recipient.player_steam_id) === String(steamId);
+    }
+
+    if (!recipient.team_id) {
+      return false;
+    }
+
+    const rows = await this.postgres.query<Array<{ steam_id: string }>>(
+      `SELECT player_steam_id AS steam_id
+         FROM public.team_roster
+        WHERE team_id = $1
+          AND player_steam_id = $2
+          AND role <> 'Invite'
+        LIMIT 1`,
+      [recipient.team_id, steamId],
+    );
+
+    return rows.length > 0;
+  }
+
   private async requireAward(awardId: string): Promise<AwardRow> {
     const [award] = await this.postgres.query<AwardRow[]>(
       `SELECT * FROM public.awards WHERE id = $1 LIMIT 1`,

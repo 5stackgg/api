@@ -36,16 +36,24 @@ BEGIN
             DECLARE
                 previous_stage_type text;
                 previous_stage_max_teams int;
+                previous_stage_no_elimination boolean;
+                previous_stage_teams int;
             BEGIN
-                SELECT type, max_teams INTO previous_stage_type, previous_stage_max_teams
+                SELECT type, max_teams, swiss_no_elimination
+                INTO previous_stage_type, previous_stage_max_teams, previous_stage_no_elimination
                 FROM tournament_stages
                 WHERE tournament_id = _tournament_id AND "order" = _stage_order - 1;
 
-                -- For RoundRobin stages, only the top teams advance, capped by this
-                -- stage's max_teams. Using the previous stage's max_teams here would
-                -- size brackets for every team in the RR, not just the qualifiers.
-                IF previous_stage_type = 'RoundRobin' THEN
+                IF previous_stage_type = 'RoundRobin'
+                   OR (previous_stage_type = 'Swiss' AND previous_stage_no_elimination) THEN
                     effective_teams := LEAST(stage_max_teams, previous_stage_max_teams);
+                ELSIF previous_stage_type = 'Swiss' THEN
+                    SELECT previous.effective_teams
+                    INTO previous_stage_teams
+                    FROM get_stage_team_counts(_tournament_id, _stage_order - 1, _tournament_status) previous;
+
+                    -- Half the field reaches 3 wins, rounded up: an odd field's bye is a free win.
+                    effective_teams := LEAST(stage_max_teams, CEIL(previous_stage_teams / 2.0)::int);
                 ELSE
                     -- get the number of matches from the last round of the previous stage
                     SELECT COUNT(*) INTO effective_teams

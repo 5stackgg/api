@@ -10,6 +10,7 @@ export type StageSpec = {
   order: number;
   minTeams: number;
   maxTeams: number;
+  groups?: number;
 };
 
 export type BracketRow = {
@@ -48,9 +49,16 @@ export class TournamentFixtures {
     const stageIds: Array<string> = [];
     for (const stage of stages) {
       const [row] = await this.postgres.query<Array<{ id: string }>>(
-        `INSERT INTO tournament_stages (tournament_id, type, "order", min_teams, max_teams)
-         VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-        [tournament.id, stage.type, stage.order, stage.minTeams, stage.maxTeams],
+        `INSERT INTO tournament_stages (tournament_id, type, "order", min_teams, max_teams, groups)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+        [
+          tournament.id,
+          stage.type,
+          stage.order,
+          stage.minTeams,
+          stage.maxTeams,
+          stage.groups ?? 1,
+        ],
       );
       stageIds.push(row.id);
     }
@@ -140,6 +148,31 @@ export class TournamentFixtures {
       await this.winMatch(bracket.match_id);
     }
     return brackets.length;
+  }
+
+  // Uneven groups run different round counts, so this sweeps open matches, not rounds.
+  async playStage(
+    stageId: string,
+    pickWinner: (
+      bracket: BracketRow,
+    ) => "lineup_1_id" | "lineup_2_id" = () => "lineup_1_id",
+  ): Promise<void> {
+    for (;;) {
+      const open = await this.postgres.query<Array<BracketRow>>(
+        `SELECT id, round, match_number, "group", match_id,
+                tournament_team_id_1, tournament_team_id_2, finished
+         FROM tournament_brackets
+         WHERE tournament_stage_id = $1 AND match_id IS NOT NULL AND finished = false
+         ORDER BY round, "group", match_number`,
+        [stageId],
+      );
+      if (open.length === 0) {
+        return;
+      }
+      for (const bracket of open) {
+        await this.winMatch(bracket.match_id!, pickWinner(bracket));
+      }
+    }
   }
 
   async tournamentStatus(id: string): Promise<string> {

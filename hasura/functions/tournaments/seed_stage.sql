@@ -11,6 +11,8 @@ DECLARE
     team_1_seed_val int;
     team_2_seed_val int;
     teams_assigned_count int;
+    _seed_count int;
+    _qualifiers uuid[];
 BEGIN
     RAISE NOTICE '=== STARTING STAGE SEEDING ===';
     RAISE NOTICE 'Stage ID: %', stage_id;
@@ -90,6 +92,20 @@ BEGIN
         PERFORM public.seed_swiss_stage(stage_id);
         RETURN;
     ELSE
+        IF previous_stage.id IS NOT NULL AND (previous_stage.type = 'RoundRobin' OR previous_stage.type = 'Swiss') THEN
+            SELECT MAX(GREATEST(COALESCE(tb.team_1_seed, 0), COALESCE(tb.team_2_seed, 0)))
+            INTO _seed_count
+            FROM tournament_brackets tb
+            WHERE tb.tournament_stage_id = stage.id
+              AND COALESCE(tb.path, 'WB') = 'WB';
+
+            SELECT array_agg(q.tournament_team_id ORDER BY s.n)
+            INTO _qualifiers
+            FROM generate_series(1, COALESCE(_seed_count, 0)) AS s(n)
+            LEFT JOIN public.get_stage_qualifier_seeds(previous_stage.id, _seed_count) q
+                ON q.seed = s.n;
+        END IF;
+
         -- Process first-round brackets for elimination tournaments
         -- For elimination: process first-round winners brackets
         FOR bracket IN 
@@ -105,33 +121,14 @@ BEGIN
             team_1_seed_val := bracket.team_1_seed;
             team_2_seed_val := bracket.team_2_seed;
             
-            -- For elimination brackets coming from RoundRobin/Swiss stages, use stage results
-            -- Otherwise, lookup teams by seed
             IF previous_stage.id IS NOT NULL AND (previous_stage.type = 'RoundRobin' OR previous_stage.type = 'Swiss') THEN
-                -- Map next-stage seed N to (group, rank_in_group) of the previous
-                -- stage so groups cross-seed: with G groups, seed 1 = top of group 1,
-                -- seed 2 = top of group 2, seed G+1 = 2nd of group 1, and so on.
-                -- Falls back to a single group for Swiss (or RR with groups = 1),
-                -- which degenerates to plain top-N ordering.
-                DECLARE
-                    prev_groups int;
-                    group_idx int;
-                    rank_in_group int;
-                BEGIN
-                    prev_groups := GREATEST(COALESCE(previous_stage.groups, 1), 1);
+                IF team_1_seed_val IS NOT NULL THEN
+                    team_1_id := _qualifiers[team_1_seed_val];
+                END IF;
 
-                    IF team_1_seed_val IS NOT NULL THEN
-                        group_idx := ((team_1_seed_val - 1) % prev_groups) + 1;
-                        rank_in_group := ((team_1_seed_val - 1) / prev_groups) + 1;
-                        team_1_id := get_team_at_stage_rank(previous_stage.id, group_idx, rank_in_group);
-                    END IF;
-
-                    IF team_2_seed_val IS NOT NULL THEN
-                        group_idx := ((team_2_seed_val - 1) % prev_groups) + 1;
-                        rank_in_group := ((team_2_seed_val - 1) / prev_groups) + 1;
-                        team_2_id := get_team_at_stage_rank(previous_stage.id, group_idx, rank_in_group);
-                    END IF;
-                END;
+                IF team_2_seed_val IS NOT NULL THEN
+                    team_2_id := _qualifiers[team_2_seed_val];
+                END IF;
             ELSE
                 -- Find team with matching seed for position 1
                 IF team_1_seed_val IS NOT NULL THEN

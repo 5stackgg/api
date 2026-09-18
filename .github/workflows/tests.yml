@@ -18,7 +18,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "24"
           cache: yarn
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -45,7 +45,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "24"
           cache: yarn
       - name: Install dependencies (pre-pulling the database image)
         run: |

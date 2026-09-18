@@ -4,12 +4,15 @@ CREATE OR REPLACE FUNCTION public.taiud_tournament_team_roster() RETURNS TRIGGER
 DECLARE
     _team_id uuid;
 BEGIN
+    -- Max players only on joining: a lowered cap must not block a roster shedding players.
     IF TG_OP = 'DELETE' THEN
-        PERFORM check_team_eligibility(OLD);
+        PERFORM check_team_eligibility(OLD, false);
+    ELSIF TG_OP = 'INSERT' THEN
+        PERFORM check_team_eligibility(NEW, true);
     ELSE
-        PERFORM check_team_eligibility(NEW);
+        PERFORM check_team_eligibility(NEW, NEW.tournament_team_id IS DISTINCT FROM OLD.tournament_team_id);
     END IF;
-    
+
     RETURN NEW;
 END;
 $$;

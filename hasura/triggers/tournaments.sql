@@ -138,6 +138,14 @@ BEGIN
             MESSAGE = 'Check-in has already started; the schedule can no longer be changed';
     END IF;
 
+    -- The bracket is seeded once registration closes, and the roster lock then keeps a team at
+    -- its minimum from swapping anyone out, so taking substitutes away would strand it.
+    IF OLD.substitutes_enabled AND NOT NEW.substitutes_enabled
+       AND OLD.status NOT IN ('Setup', 'RegistrationOpen') THEN
+        RAISE EXCEPTION USING ERRCODE = '22000',
+            MESSAGE = 'Substitutes can only be turned off before registration closes';
+    END IF;
+
     IF NEW.status IS DISTINCT FROM OLD.status THEN
         -- CheckInReview is a HOLD, not a lifecycle step: entering it is only
         -- legal out of RegistrationOpen with check-in actually in force, and

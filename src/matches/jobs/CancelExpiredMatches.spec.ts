@@ -52,6 +52,9 @@ describe("CancelExpiredMatches", () => {
   const rcon = {
     connect: jest.fn(),
   };
+  const matchAssistant = {
+    sendServerMatchId: jest.fn(),
+  };
 
   let job: CancelExpiredMatches;
   let tournamentMatches: any[];
@@ -85,6 +88,7 @@ describe("CancelExpiredMatches", () => {
       notifications as any,
       configService as any,
       rcon as any,
+      matchAssistant as any,
     );
   });
 
@@ -325,9 +329,7 @@ describe("CancelExpiredMatches", () => {
           lineup_2: {
             id: "lineup-2",
             is_ready: false,
-            lineup_players: [
-              { steam_id: "no-show-b", is_connected: false },
-            ],
+            lineup_players: [{ steam_id: "no-show-b", is_connected: false }],
           },
         }),
       ];
@@ -491,7 +493,9 @@ describe("CancelExpiredMatches", () => {
       );
 
       expect(order.indexOf("forfeit")).toBeGreaterThanOrEqual(0);
-      expect(order.indexOf("abandon")).toBeGreaterThan(order.indexOf("forfeit"));
+      expect(order.indexOf("abandon")).toBeGreaterThan(
+        order.indexOf("forfeit"),
+      );
     });
   });
 
@@ -581,6 +585,293 @@ describe("CancelExpiredMatches", () => {
         }),
       }),
     );
+  });
+
+  describe("a map the server decided but never finished", () => {
+    const playedLineup = (
+      id: string,
+      steamId: string,
+      isConnected = false,
+    ) => ({
+      id,
+      is_ready: true,
+      lineup_players: [{ steam_id: steamId, is_connected: isConnected }],
+    });
+
+    const mutationsOf = (key: string) =>
+      hasura.mutation.mock.calls
+        .map(([arg]: [any]) => arg?.[key])
+        .filter(Boolean);
+
+    const matchStatusSets = () =>
+      mutationsOf("update_matches_by_pk")
+        .map((mutation: any) => mutation.__args._set.status)
+        .filter(Boolean);
+
+    it("finishes a map left in WaitingForTV instead of cancelling the match", async () => {
+      tournamentMatches = [
+        expiredTournamentMatch({
+          is_tournament_match: false,
+          match_maps: [
+            {
+              id: "map-1",
+              status: "WaitingForTV",
+              winning_lineup_id: "lineup-2",
+            },
+          ],
+          lineup_1: playedLineup("lineup-1", "1"),
+          lineup_2: playedLineup("lineup-2", "2"),
+        }),
+      ];
+
+      await expect(job.process()).resolves.toBe(1);
+
+      expect(mutationsOf("update_match_maps_by_pk")).toEqual([
+        expect.objectContaining({
+          __args: {
+            pk_columns: { id: "map-1" },
+            _set: { status: "Finished" },
+          },
+        }),
+      ]);
+      expect(matchStatusSets()).toEqual([]);
+      expect(mutationsOf("insert_abandoned_matches")).toEqual([]);
+      expect(rconClient.send).not.toHaveBeenCalled();
+    });
+
+    it("finishes a tournament map still uploading its demo instead of forfeiting", async () => {
+      tournamentMatches = [
+        expiredTournamentMatch({
+          match_maps: [
+            {
+              id: "map-1",
+              status: "UploadingDemo",
+              winning_lineup_id: "lineup-1",
+            },
+          ],
+          lineup_1: playedLineup("lineup-1", "1"),
+          lineup_2: playedLineup("lineup-2", "2"),
+        }),
+      ];
+
+      await job.process();
+
+      expect(mutationsOf("update_match_maps_by_pk")).toHaveLength(1);
+      expect(matchStatusSets()).toEqual([]);
+      expect(mutationsOf("insert_abandoned_matches")).toEqual([]);
+    });
+
+    const finishedMapLeaves = (match: Record<string, unknown>) =>
+      hasura.mutation.mockImplementation(async (mutation: any) =>
+        mutation.update_match_maps_by_pk
+          ? { update_match_maps_by_pk: { match } }
+          : {},
+      );
+
+    const stalledSeries = (overrides: Record<string, any> = {}) =>
+      expiredTournamentMatch({
+        match_maps: [
+          { id: "map-1", status: "Finished", winning_lineup_id: "lineup-2" },
+          { id: "map-2", status: "Scheduled", winning_lineup_id: null },
+        ],
+        lineup_1: playedLineup("lineup-1", "1"),
+        lineup_2: playedLineup("lineup-2", "2"),
+        ...overrides,
+      });
+
+    it("asks the server for the next map when the series is not over", async () => {
+      finishedMapLeaves({ status: "Live", current_match_map_id: "map-2" });
+      tournamentMatches = [
+        expiredTournamentMatch({
+          is_tournament_match: false,
+          match_maps: [
+            {
+              id: "map-1",
+              status: "WaitingForTV",
+              winning_lineup_id: "lineup-1",
+            },
+            { id: "map-2", status: "Scheduled", winning_lineup_id: null },
+          ],
+          lineup_1: playedLineup("lineup-1", "1"),
+          lineup_2: playedLineup("lineup-2", "2"),
+        }),
+      ];
+
+      await job.process();
+
+      expect(matchAssistant.sendServerMatchId).toHaveBeenCalledWith("match-1");
+      expect(matchStatusSets()).toEqual([]);
+    });
+
+    it("leaves the server alone when finishing the map ended the series", async () => {
+      // A Bo3 won 2-0 still has map 3 as its current map.
+      finishedMapLeaves({ status: "Finished", current_match_map_id: "map-3" });
+      tournamentMatches = [
+        expiredTournamentMatch({
+          is_tournament_match: false,
+          match_maps: [
+            { id: "map-1", status: "Finished", winning_lineup_id: "lineup-1" },
+            {
+              id: "map-2",
+              status: "UploadingDemo",
+              winning_lineup_id: "lineup-1",
+            },
+            { id: "map-3", status: "Scheduled", winning_lineup_id: null },
+          ],
+          lineup_1: playedLineup("lineup-1", "1"),
+          lineup_2: playedLineup("lineup-2", "2"),
+        }),
+      ];
+
+      await job.process();
+
+      expect(matchAssistant.sendServerMatchId).not.toHaveBeenCalled();
+    });
+
+    it("cancels a series whose server never came back without penalising anyone", async () => {
+      tournamentMatches = [stalledSeries({ is_tournament_match: false })];
+
+      await job.process();
+
+      expect(matchStatusSets()).toEqual(["Canceled"]);
+      expect(mutationsOf("insert_abandoned_matches")).toEqual([]);
+    });
+
+    it.each([true, false])(
+      "asks an organizer about a stalled tournament series rather than forfeiting it (is_ready=%s)",
+      async (isReady) => {
+        // A forfeit would go to lineup 1 despite lineup 2 winning (is_ready) or coin-toss (not).
+        jest.spyOn(Math, "random").mockReturnValue(0.25);
+        tournamentMatches = [
+          stalledSeries({
+            lineup_1: { ...playedLineup("lineup-1", "1"), is_ready: isReady },
+            lineup_2: { ...playedLineup("lineup-2", "2"), is_ready: isReady },
+          }),
+        ];
+
+        await job.process();
+
+        expect(matchStatusSets()).toEqual([]);
+        expect(mutationsOf("update_matches_by_pk")).toEqual([
+          expect.objectContaining({
+            __args: expect.objectContaining({ _set: { cancels_at: null } }),
+          }),
+        ]);
+        expect(notifications.send).toHaveBeenCalledWith(
+          "MatchSupport",
+          expect.objectContaining({ entity_id: "match-1" }),
+          undefined,
+          DISCORD_COLORS.RED,
+        );
+        expect(mutationsOf("insert_abandoned_matches")).toEqual([]);
+      },
+    );
+
+    it.each(["Live", "Paused", "WaitingForTV"])(
+      "asks an organizer about a tournament match whose server died with map 1 %s and no winner",
+      async (mapStatus) => {
+        tournamentMatches = [
+          expiredTournamentMatch({
+            match_maps: [
+              { id: "map-1", status: mapStatus, winning_lineup_id: null },
+              { id: "map-2", status: "Scheduled", winning_lineup_id: null },
+            ],
+            lineup_1: { ...playedLineup("lineup-1", "1"), is_ready: true },
+            lineup_2: { ...playedLineup("lineup-2", "2"), is_ready: true },
+          }),
+        ];
+
+        await job.process();
+
+        expect(matchStatusSets()).toEqual([]);
+        expect(notifications.send).toHaveBeenCalledWith(
+          "MatchSupport",
+          expect.objectContaining({ entity_id: "match-1" }),
+          undefined,
+          DISCORD_COLORS.RED,
+        );
+        expect(mutationsOf("insert_abandoned_matches")).toEqual([]);
+      },
+    );
+
+    it("does not force start a match waiting on the TV broadcast", async () => {
+      tournamentMatches = [
+        expiredTournamentMatch({
+          is_tournament_match: false,
+          cancels_at: new Date(Date.now() + 30 * 1000).toISOString(),
+          match_maps: [
+            {
+              id: "map-1",
+              status: "WaitingForTV",
+              winning_lineup_id: "lineup-1",
+            },
+          ],
+          lineup_1: playedLineup("lineup-1", "1", true),
+          lineup_2: playedLineup("lineup-2", "2", true),
+        }),
+      ];
+
+      await expect(job.process()).resolves.toBe(0);
+
+      expect(rconClient.send).not.toHaveBeenCalled();
+      expect(hasura.mutation).not.toHaveBeenCalled();
+    });
+
+    it("cancels a WaitingForTV map with no winner, but penalises nobody", async () => {
+      tournamentMatches = [
+        expiredTournamentMatch({
+          is_tournament_match: false,
+          match_maps: [
+            { id: "map-1", status: "WaitingForTV", winning_lineup_id: null },
+          ],
+          lineup_1: playedLineup("lineup-1", "1"),
+          lineup_2: playedLineup("lineup-2", "2"),
+        }),
+      ];
+
+      await job.process();
+
+      expect(mutationsOf("update_match_maps_by_pk")).toEqual([]);
+      expect(matchStatusSets()).toEqual(["Canceled"]);
+      expect(mutationsOf("insert_abandoned_matches")).toEqual([]);
+    });
+
+    it("penalises nobody when every map was already played", async () => {
+      tournamentMatches = [
+        expiredTournamentMatch({
+          is_tournament_match: false,
+          match_maps: [
+            { id: "map-1", status: "Finished", winning_lineup_id: null },
+          ],
+          lineup_1: playedLineup("lineup-1", "1"),
+          lineup_2: playedLineup("lineup-2", "2"),
+        }),
+      ];
+
+      await job.process();
+
+      expect(rconClient.send).not.toHaveBeenCalledWith("force_ready");
+      expect(mutationsOf("insert_abandoned_matches")).toEqual([]);
+    });
+
+    it("still force starts the next map of a series once everyone is back", async () => {
+      tournamentMatches = [
+        expiredTournamentMatch({
+          is_tournament_match: false,
+          match_maps: [
+            { id: "map-1", status: "Finished", winning_lineup_id: "lineup-1" },
+            { id: "map-2", status: "Warmup", winning_lineup_id: null },
+          ],
+          lineup_1: playedLineup("lineup-1", "1", true),
+          lineup_2: playedLineup("lineup-2", "2", true),
+        }),
+      ];
+
+      await job.process();
+
+      expect(rconClient.send).toHaveBeenCalledWith("force_ready");
+      expect(mutationsOf("update_match_maps_by_pk")).toEqual([]);
+    });
   });
 
   it("falls back to the normal expiry path when force start fails", async () => {

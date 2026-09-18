@@ -67,9 +67,13 @@ export class CacheService {
     return await this.connection.get(key);
   }
 
-  public async forget(key: string) {
+  public async forget(...keys: Array<string>) {
+    if (keys.length === 0) {
+      return true;
+    }
+
     try {
-      await this.connection.del(key);
+      await this.connection.del(...keys);
       return true;
     } catch (error) {
       this.logger.error("unable to remove value from redis", error);

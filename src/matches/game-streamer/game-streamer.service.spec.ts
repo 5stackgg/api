@@ -13,8 +13,15 @@ describe("GameStreamerService", () => {
   let logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock };
 
   const config = {
-    get: (key: string) =>
-      key === "gameServers" ? { namespace: "test" } : ({} as any),
+    get: (key: string) => {
+      if (key === "gameServers") {
+        return { namespace: "test" };
+      }
+      if (key === "app") {
+        return { relayDomain: "https://tv.example.test" };
+      }
+      return {} as any;
+    },
   };
 
   beforeEach(() => {
@@ -168,6 +175,24 @@ describe("GameStreamerService", () => {
       await service.reportDemoStatus("session-1", { status: "live" });
 
       expect(hasura.mutation).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("buildConnectEnv", () => {
+    const server = { host: "game.example.test", port: 27015, tv_port: 27020 };
+
+    it("streams a playcast match from this install's relay", async () => {
+      const env = await (service as any).buildConnectEnv(
+        "m-1",
+        server,
+        "secret",
+        true,
+        "tv",
+      );
+
+      expect(env.find((e: any) => e.name === "PLAYCAST_URL")?.value).toBe(
+        "https://tv.example.test/m-1",
+      );
     });
   });
 
