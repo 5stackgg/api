@@ -16,6 +16,8 @@ export class FaceitService {
   private static readonly BASE_URL = "https://open.faceit.com/data/v4";
   private static readonly REFRESH_INTERVAL_SECONDS = 60 * 60;
   private static readonly NO_ACCOUNT_TTL_SECONDS = 12 * 60 * 60;
+  private static readonly STALE_REFRESH_LIMIT = 100;
+  private static readonly STALE_REFRESH_CONCURRENCY = 2;
   private readonly apiKey: string;
 
   constructor(
@@ -293,6 +295,66 @@ export class FaceitService {
       this.logger.error(`faceit request failed for ${path}`, error);
       return null;
     }
+  }
+
+  // Keeps the ratings behind external_rank_leaderboard warm. Bounded and
+  // low-concurrency on purpose: this runs on a schedule against an API we do
+  // not own, and the leaderboard is a standings board, not a live readout.
+  public async refreshStaleRatings(): Promise<{
+    refreshed: number;
+    failed: number;
+  }> {
+    if (!this.isEnabled()) {
+      return { refreshed: 0, failed: 0 };
+    }
+
+    const { players } = await this.hasura.query({
+      players: {
+        __args: {
+          where: {
+            faceit_player_id: {
+              _is_null: false,
+            },
+          },
+          order_by: [{ faceit_updated_at: "asc_nulls_first" }],
+          limit: FaceitService.STALE_REFRESH_LIMIT,
+        },
+        steam_id: true,
+      },
+    });
+
+    let refreshed = 0;
+    let failed = 0;
+
+    const queue = [...(players ?? [])];
+
+    const worker = async () => {
+      while (queue.length > 0) {
+        const player = queue.shift();
+
+        if (!player) {
+          return;
+        }
+
+        try {
+          await this.refreshPlayer(player.steam_id);
+          refreshed++;
+        } catch (error) {
+          failed++;
+          this.logger.warn(
+            `faceit rating refresh failed for ${player.steam_id}: ${
+              (error as Error)?.message ?? String(error)
+            }`,
+          );
+        }
+      }
+    };
+
+    await Promise.all(
+      Array.from({ length: FaceitService.STALE_REFRESH_CONCURRENCY }, worker),
+    );
+
+    return { refreshed, failed };
   }
 
   public async refreshPlayer(steamId: string, force = false): Promise<boolean> {
