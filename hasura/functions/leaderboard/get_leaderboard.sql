@@ -17,6 +17,7 @@ DROP FUNCTION IF EXISTS public._leaderboard_win_rate(INT, TEXT, BOOLEAN);
 DROP FUNCTION IF EXISTS public._leaderboard_hs_pct(INT, TEXT, BOOLEAN);
 DROP FUNCTION IF EXISTS public._leaderboard_hltv_metric(TEXT, INT, TEXT, BOOLEAN, TEXT);
 DROP FUNCTION IF EXISTS public._leaderboard_udr(INT, TEXT, BOOLEAN, TEXT);
+DROP FUNCTION IF EXISTS public._leaderboard_external_rank(TEXT);
 
 -- Belt-and-suspenders: sweep up any other historical get_leaderboard arity we
 -- did not enumerate above (e.g. an even older 3-arg overload).
@@ -36,7 +37,8 @@ BEGIN
         '_leaderboard_hs_pct',
         '_leaderboard_awards',
         '_leaderboard_hltv_metric',
-        '_leaderboard_udr'
+        '_leaderboard_udr',
+        '_leaderboard_external_rank'
       )
   LOOP
     EXECUTE 'DROP FUNCTION ' || r.sig;
@@ -125,8 +127,14 @@ BEGIN
   ELSIF _category = 'best_udr' THEN
     RETURN QUERY SELECT * FROM _leaderboard_udr(_window_days, _match_type, _exclude_tournaments, _role, _season_id, _source);
 
+  ELSIF _category = 'faceit_elo' THEN
+    RETURN QUERY SELECT * FROM _leaderboard_external_rank('faceit');
+
+  ELSIF _category = 'premier_rank' THEN
+    RETURN QUERY SELECT * FROM _leaderboard_external_rank('premier');
+
   ELSE
-    RAISE EXCEPTION 'Invalid category: %. Must be one of: elo, best_kdr, best_win_rate, highest_hs_pct, awards, best_rating, best_adr, best_kpr, best_kast, best_udr', _category;
+    RAISE EXCEPTION 'Invalid category: %. Must be one of: elo, best_kdr, best_win_rate, highest_hs_pct, awards, best_rating, best_adr, best_kpr, best_kast, best_udr, faceit_elo, premier_rank', _category;
   END IF;
 END;
 $$;
@@ -135,6 +143,54 @@ $$;
 -- ELO leaderboard
 -- value = current ELO, secondary = ELO change, tertiary = win streak
 -- ============================================================
+-- FACEIT rating and Premier rank.
+--
+-- These are the only categories that do not come from our own matches: they are
+-- snapshots we cache on players from FACEIT and from parsed Premier demos. They
+-- therefore take no window, season, match type or source - a player's FACEIT
+-- rating is what it is whether or not they played here this week, and filtering
+-- one by "last 7 days" would empty the board rather than narrow it.
+CREATE OR REPLACE FUNCTION public._leaderboard_external_rank(_rating TEXT)
+RETURNS SETOF public.leaderboard_entries
+LANGUAGE plpgsql STABLE
+AS $$
+BEGIN
+  IF _rating = 'faceit' THEN
+    RETURN QUERY
+      SELECT
+        p.steam_id::text,
+        p.name,
+        p.avatar_url,
+        p.country,
+        p.faceit_elo::float,
+        p.faceit_skill_level::float,
+        NULL::float,
+        0,
+        p.custom_avatar_url
+      FROM public.players p
+      WHERE p.faceit_elo IS NOT NULL
+      ORDER BY p.faceit_elo DESC, p.name ASC;
+  ELSE
+    RETURN QUERY
+      SELECT
+        p.steam_id::text,
+        p.name,
+        p.avatar_url,
+        p.country,
+        p.premier_rank::float,
+        NULL::float,
+        NULL::float,
+        0,
+        p.custom_avatar_url
+      FROM public.players p
+      -- The demo importer writes 0 for a player who has not placed this
+      -- season; ranked as a number that sorts as the worst rating in the game.
+      WHERE NULLIF(p.premier_rank, 0) IS NOT NULL
+      ORDER BY p.premier_rank DESC, p.name ASC;
+  END IF;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION public._leaderboard_elo(
   _window_days INT,
   _match_type TEXT,
