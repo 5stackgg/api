@@ -150,6 +150,12 @@ $$;
 -- therefore take no window, season, match type or source - a player's FACEIT
 -- rating is what it is whether or not they played here this week, and filtering
 -- one by "last 7 days" would empty the board rather than narrow it.
+--
+-- They do take one filter the other categories get for free by construction:
+-- the board is OUR players. Importing a demo mints a players row for everyone
+-- in the match, so without this the board fills up with strangers who have
+-- never signed in here - a rating we scraped in passing, attached to someone
+-- who is not on the platform. Signed in at least once AND played a match here.
 CREATE OR REPLACE FUNCTION public._leaderboard_external_rank(_rating TEXT)
 RETURNS SETOF public.leaderboard_entries
 LANGUAGE plpgsql STABLE
@@ -168,7 +174,17 @@ BEGIN
         0,
         p.custom_avatar_url
       FROM public.players p
-      WHERE p.faceit_elo IS NOT NULL
+      WHERE p.last_sign_in_at IS NOT NULL
+        AND EXISTS (
+          SELECT 1
+          FROM public.match_lineup_players mlp
+          JOIN public.match_lineups ml ON ml.id = mlp.match_lineup_id
+          JOIN public.matches m ON m.id = ml.match_id
+          WHERE mlp.steam_id = p.steam_id
+            AND m.source = '5stack'
+            AND m.status = 'Finished'
+        )
+        AND p.faceit_elo IS NOT NULL
       ORDER BY p.faceit_elo DESC, p.name ASC;
   ELSE
     RETURN QUERY
@@ -183,9 +199,19 @@ BEGIN
         0,
         p.custom_avatar_url
       FROM public.players p
-      -- The demo importer writes 0 for a player who has not placed this
-      -- season; ranked as a number that sorts as the worst rating in the game.
-      WHERE NULLIF(p.premier_rank, 0) IS NOT NULL
+      WHERE p.last_sign_in_at IS NOT NULL
+        AND EXISTS (
+          SELECT 1
+          FROM public.match_lineup_players mlp
+          JOIN public.match_lineups ml ON ml.id = mlp.match_lineup_id
+          JOIN public.matches m ON m.id = ml.match_id
+          WHERE mlp.steam_id = p.steam_id
+            AND m.source = '5stack'
+            AND m.status = 'Finished'
+        )
+        -- The demo importer writes 0 for a player who has not placed this
+        -- season; ranked as a number that sorts as the worst rating in the game.
+        AND NULLIF(p.premier_rank, 0) IS NOT NULL
       ORDER BY p.premier_rank DESC, p.name ASC;
   END IF;
 END;
