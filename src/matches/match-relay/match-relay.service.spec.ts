@@ -125,6 +125,24 @@ describe("MatchRelayService", () => {
     );
   });
 
+  // CS2 sends tps as a decimal (64.0), not an integer, so the coercion has to
+  // accept a fractional part or clients get tps back as a string.
+  it("reports a fractional tps as a number", async () => {
+    await post("start", 42, {
+      tick: "100",
+      tps: "64.0",
+      map: "de_inferno",
+    });
+    await post("full", 42, { tick: "100" });
+    await post("delta", 42, { endtick: "292" });
+
+    const response = sync({ fragment: "0" });
+
+    expect(JSON.parse(response.body as string)).toEqual(
+      expect.objectContaining({ tps: 64 }),
+    );
+  });
+
   it("keeps fields that are not numeric in /sync as the strings the server sent", async () => {
     await post("start", 42, {
       tick: "100",

@@ -273,7 +273,7 @@ export class MatchRelayService {
     if (
       typeof value !== "string" ||
       !MatchRelayService.NUMERIC_QUERY_FIELDS.includes(key) ||
-      !/^\d+$/.test(value)
+      !/^\d+(?:\.\d+)?$/.test(value)
     ) {
       return value;
     }
