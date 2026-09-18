@@ -329,6 +329,13 @@ export class CancelExpiredMatches extends WorkerHost {
               steam_id: lineupPlayer.steam_id,
               match_id: match.id,
             })),
+            // A player may already carry an abandon for this match from the
+            // game server. Without this the conflict would throw away the whole
+            // batch, penalising nobody.
+            on_conflict: {
+              constraint: "abandoned_matches_steam_id_match_id_key",
+              update_columns: [],
+            },
           },
           affected_rows: true,
         },
@@ -389,9 +396,9 @@ export class CancelExpiredMatches extends WorkerHost {
     // Same ordering as cancelMatch, and for the same reason: the matches
     // trigger clears cancels_at on the Forfeit/Finished transition and
     // getExpiredMatches requires cancels_at IS NOT NULL, so the match leaves
-    // the window and this runs exactly once. abandoned_matches has no unique
-    // constraint, so a second insert would silently double the escalating
-    // cooldown.
+    // the window and this runs exactly once. abandoned_matches is unique per
+    // (steam_id, match_id) as a backstop, so a second insert cannot double the
+    // escalating cooldown.
     await this.recordNoShows(match);
   }
 

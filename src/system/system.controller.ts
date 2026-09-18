@@ -161,6 +161,30 @@ export class SystemController {
 
   @HasuraAction()
   public async registerName(data: { user: User; name: string }) {
+    const name = SystemController.validateName(data.name);
+
+    const { players_by_pk: player } = await this.hasura.query({
+      players_by_pk: {
+        __args: {
+          steam_id: data.user.steam_id,
+        },
+        name_registered: true,
+      },
+    });
+
+    if (!player) {
+      throw new Error("Player not found");
+    }
+
+    // Registration is the one rename that skips admin approval, so it is only
+    // available to a player who has never registered a name. Everyone else
+    // goes through requestNameChange.
+    if (player.name_registered) {
+      throw new Error(
+        "Your name is already registered, request a name change instead",
+      );
+    }
+
     await this.hasura.mutation({
       update_players_by_pk: {
         __args: {
@@ -168,7 +192,7 @@ export class SystemController {
             steam_id: data.user.steam_id,
           },
           _set: {
-            name: data.name,
+            name,
             name_registered: true,
           },
         },
@@ -179,6 +203,16 @@ export class SystemController {
     return {
       success: true,
     };
+  }
+
+  private static validateName(name: string) {
+    const trimmed = (name ?? "").trim();
+
+    if (trimmed.length < 3 || trimmed.length > 32) {
+      throw new Error("Name must be between 3 and 32 characters");
+    }
+
+    return trimmed;
   }
 
   @HasuraAction()
@@ -227,7 +261,19 @@ export class SystemController {
   }
 
   @HasuraAction()
-  public async requestNameChange(data: { name: string; steam_id: string }) {
+  public async requestNameChange(data: {
+    user: User;
+    name: string;
+    steam_id: string;
+  }) {
+    const name = SystemController.validateName(data.name);
+
+    // steam_id comes from the client, so a player could otherwise file a
+    // rename for somebody else and have an admin approve it.
+    const steamId = isRoleAbove(data.user?.role, "administrator")
+      ? data.steam_id
+      : data.user.steam_id;
+
     const { notifications } = await this.hasura.query({
       notifications: {
         __args: {
@@ -236,7 +282,7 @@ export class SystemController {
               _eq: "NameChangeRequest",
             },
             entity_id: {
-              _eq: data.steam_id,
+              _eq: steamId,
             },
             is_read: {
               _eq: false,
@@ -254,7 +300,7 @@ export class SystemController {
     const { players_by_pk: player } = await this.hasura.query({
       players_by_pk: {
         __args: {
-          steam_id: data.steam_id,
+          steam_id: steamId,
         },
         name: true,
       },
@@ -267,10 +313,10 @@ export class SystemController {
     await this.notifications.send(
       "NameChangeRequest",
       {
-        message: `Player ${NotificationsService.escapeHtml(player.name)} has requested to change their name to ${NotificationsService.escapeHtml(data.name)}`,
+        message: `Player ${NotificationsService.escapeHtml(player.name)} has requested to change their name to ${NotificationsService.escapeHtml(name)}`,
         title: "Name Change Request",
         role: "administrator",
-        entity_id: data.steam_id,
+        entity_id: steamId,
       },
       [
         {
@@ -279,8 +325,8 @@ export class SystemController {
             type: "mutation",
             action: "denyNameChange",
             variables: {
-              name: data.name,
-              steam_id: data.steam_id,
+              name,
+              steam_id: steamId,
             },
             selection: {
               success: true,
@@ -293,8 +339,8 @@ export class SystemController {
             type: "mutation",
             action: "approveNameChange",
             variables: {
-              name: data.name,
-              steam_id: data.steam_id,
+              name,
+              steam_id: steamId,
             },
             selection: {
               success: true,

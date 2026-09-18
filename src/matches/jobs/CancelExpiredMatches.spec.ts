@@ -314,6 +314,37 @@ describe("CancelExpiredMatches", () => {
         .flatMap((call: any) => call.__args.objects)
         .map((row: any) => row.steam_id);
 
+    it("records a no-show at most once per player per match", async () => {
+      tournamentMatches = [
+        expiredTournamentMatch({
+          is_tournament_match: false,
+          lineup_1: {
+            id: "lineup-1",
+            is_ready: false,
+            lineup_players: [{ steam_id: "no-show-a", is_connected: false }],
+          },
+          lineup_2: {
+            id: "lineup-2",
+            is_ready: false,
+            lineup_players: [{ steam_id: "no-show-b", is_connected: false }],
+          },
+        }),
+      ];
+
+      await job.process();
+
+      // a player can already carry an abandon for this match from the plugin,
+      // and the cooldown counts rows - without this the whole batch would throw
+      const [insert] = hasura.mutation.mock.calls
+        .map(([arg]: [any]) => arg?.insert_abandoned_matches)
+        .filter(Boolean);
+
+      expect(insert.__args.on_conflict).toEqual({
+        constraint: "abandoned_matches_steam_id_match_id_key",
+        update_columns: [],
+      });
+    });
+
     it("penalises only the players who never connected", async () => {
       tournamentMatches = [
         expiredTournamentMatch({

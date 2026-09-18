@@ -1397,7 +1397,7 @@ export interface abandoned_matches_avg_fields {
 
 
 /** unique or primary key constraints on table "abandoned_matches" */
-export type abandoned_matches_constraint = 'abandoned_matches_pkey'
+export type abandoned_matches_constraint = 'abandoned_matches_pkey' | 'abandoned_matches_steam_id_match_id_key'
 
 
 /** aggregate max on columns */

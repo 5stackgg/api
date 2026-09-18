@@ -57,7 +57,8 @@ describe("utility insights (SQL-driven)", () => {
     await postgres.query("DELETE FROM utility_lineups");
     await postgres.query("DELETE FROM match_map_demos");
     await postgres.query("DELETE FROM matches");
-    await postgres.query("DELETE FROM team_roster");
+    // deleting the team takes its roster with it, and an owner cannot be
+    // dropped from a roster while the team still exists
     await postgres.query("DELETE FROM teams");
     await postgres.query("DELETE FROM players");
   });

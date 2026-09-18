@@ -5,17 +5,30 @@ export default class MatchAbandoned extends MatchEventProcessor<{
   steam_id: string;
 }> {
   public async process() {
-    await this.hasura.mutation({
-      insert_abandoned_matches_one: {
+    // The plugin re-arms its disconnect timer per reconnect and per map, so one
+    // leave can report itself several times. The cooldown counts rows, so a
+    // duplicate would escalate the ban for a single offense.
+    const { insert_abandoned_matches: inserted } = await this.hasura.mutation({
+      insert_abandoned_matches: {
         __args: {
-          object: {
-            steam_id: this.data.steam_id,
-            match_id: this.matchId,
+          objects: [
+            {
+              steam_id: this.data.steam_id,
+              match_id: this.matchId,
+            },
+          ],
+          on_conflict: {
+            constraint: "abandoned_matches_steam_id_match_id_key",
+            update_columns: [],
           },
         },
-        __typename: true,
+        affected_rows: true,
       },
     });
+
+    if (!inserted?.affected_rows) {
+      return;
+    }
 
     await this.notifyAdmins();
   }

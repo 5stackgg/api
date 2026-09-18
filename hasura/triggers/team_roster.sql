@@ -27,6 +27,34 @@ $$;
 DROP TRIGGER IF EXISTS tbi_team_roster ON public.team_roster;
 CREATE TRIGGER tbi_team_roster BEFORE INSERT ON public.team_roster FOR EACH ROW EXECUTE FUNCTION public.tbi_team_roster();
 
+-- The owner is a team's last line of authority: can_change_team_role and
+-- can_remove_from_team both fall back to owner_steam_id, so an owner who walks
+-- off the roster leaves a team that only a site admin can manage. Ownership has
+-- to be handed over first.
+--
+-- Deleting the team itself cascades to these rows, and by then the team row is
+-- already gone, so that path finds no owner here and passes.
+CREATE OR REPLACE FUNCTION public.tbd_team_roster() RETURNS TRIGGER
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM teams t
+        WHERE t.id = OLD.team_id
+          AND t.owner_steam_id = OLD.player_steam_id
+    ) THEN
+        RAISE EXCEPTION USING ERRCODE = '22000',
+            MESSAGE = 'The team owner cannot leave the team; transfer ownership first';
+    END IF;
+
+    RETURN OLD;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tbd_team_roster ON public.team_roster;
+CREATE TRIGGER tbd_team_roster BEFORE DELETE ON public.team_roster FOR EACH ROW EXECUTE FUNCTION public.tbd_team_roster();
+
 CREATE OR REPLACE FUNCTION public.tad_team_roster() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$

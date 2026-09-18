@@ -10,6 +10,7 @@ import { ChatLobbyType } from "./enums/ChatLobbyTypes";
 import {
   e_notification_types_enum,
   e_player_roles_enum,
+  e_tournament_free_agent_statuses_enum,
 } from "generated/schema";
 import { isRoleAbove, rolesAtOrAbove } from "src/utilities/isRoleAbove";
 import { NotificationsService } from "src/notifications/notifications.service";
@@ -37,6 +38,11 @@ export class ChatService {
   ]);
 
   private static readonly DEFAULT_TTL = 60 * 60;
+
+  // A drafted free agent is on a roster and gets in that way; withdrawn means
+  // they left the pool.
+  private static readonly TOURNAMENT_CHAT_FREE_AGENT_STATUSES: e_tournament_free_agent_statuses_enum[] =
+    ["registered", "waitlisted"];
 
   // Which setting governs which room's lifetime, and what it falls back to.
   // Read from system/ on boot and whenever a setting changes, so there is one
@@ -283,6 +289,18 @@ export class ChatService {
                         ],
                       },
                     },
+                    {
+                      // Nobody is on a roster until the draft runs, so in a
+                      // free agent tournament this is everyone who signed up.
+                      free_agents: {
+                        player_steam_id: {
+                          _eq: user.steam_id,
+                        },
+                        status: {
+                          _in: ChatService.TOURNAMENT_CHAT_FREE_AGENT_STATUSES,
+                        },
+                      },
+                    },
                   ],
                 },
               },
@@ -512,6 +530,16 @@ export class ChatService {
       if (
         type === ChatLobbyType.Draft &&
         !(await this.canSendDraftMessage(id, player))
+      ) {
+        return;
+      }
+
+      // Room membership lives in redis for a day, so leaving the tournament -
+      // withdrawing from the free agent pool, or being dropped from a roster -
+      // has to be re-checked here rather than only at join time.
+      if (
+        type === ChatLobbyType.Tournament &&
+        !(await this.canAccessLobby(type, id, player))
       ) {
         return;
       }
@@ -846,6 +874,16 @@ export class ChatService {
               owner_steam_id: true,
               roster: { player_steam_id: true },
             },
+            free_agents: {
+              __args: {
+                where: {
+                  status: {
+                    _in: ChatService.TOURNAMENT_CHAT_FREE_AGENT_STATUSES,
+                  },
+                },
+              },
+              player_steam_id: true,
+            },
           },
         });
 
@@ -860,6 +898,10 @@ export class ChatService {
           for (const roster of team.roster ?? []) {
             add(roster.player_steam_id);
           }
+        }
+
+        for (const freeAgent of tournaments_by_pk?.free_agents ?? []) {
+          add(freeAgent.player_steam_id);
         }
 
         break;

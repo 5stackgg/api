@@ -77,16 +77,32 @@ CREATE OR REPLACE FUNCTION public.joined_tournament(tournament public.tournament
     LANGUAGE plpgsql STABLE
     AS $$
 DECLARE
-    on_roster boolean;
+    _steam_id bigint := (hasura_session ->> 'x-hasura-user-id')::bigint;
 BEGIN
-    SELECT EXISTS (
+    RETURN EXISTS (
         SELECT 1
         FROM tournament_team_roster ttr
         WHERE
-            tournament_id = tournament.id
-            AND player_steam_id = (hasura_session ->> 'x-hasura-user-id')::bigint
-    ) INTO on_roster;
-
-    RETURN on_roster;
+            ttr.tournament_id = tournament.id
+            AND ttr.player_steam_id = _steam_id
+    ) OR EXISTS (
+        -- An owner who fields a team without playing on it is still part of
+        -- the tournament.
+        SELECT 1
+        FROM tournament_teams tt
+        WHERE
+            tt.tournament_id = tournament.id
+            AND tt.owner_steam_id = _steam_id
+    ) OR EXISTS (
+        -- Nobody is on a roster until the draft runs, so in a free agent
+        -- tournament this is everyone who signed up. Drafted agents are on a
+        -- roster by then, and withdrawn ones have left the pool.
+        SELECT 1
+        FROM tournament_free_agents tfa
+        WHERE
+            tfa.tournament_id = tournament.id
+            AND tfa.player_steam_id = _steam_id
+            AND tfa.status IN ('registered', 'waitlisted')
+    );
 END;
 $$;

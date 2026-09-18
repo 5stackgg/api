@@ -177,15 +177,32 @@ export class FakeRedis {
   }
 
   /**
-   * The redis EVAL command, not javascript eval. The lua source is ignored, not
-   * interpreted - this hardcodes the one script matchmaking runs
-   * (CLAIM_LOBBY_SCRIPT): SET NX the lock, and on success ZREM the lobby from
-   * every queue key passed in. Atomic here by virtue of being synchronous,
-   * which is the property the real script buys with lua.
+   * The redis EVAL command, not javascript eval. The lua source is not
+   * interpreted - this hardcodes the two scripts matchmaking runs, recognised
+   * by their first command, and both are atomic here by virtue of being
+   * synchronous, which is the property the real scripts buy with lua.
+   *
+   * CLAIM_LOBBY_SCRIPT: SET NX the lock, and on success ZREM the lobby from
+   * every queue key passed in.
+   *
+   * SWEEP_ORPHANED_ENTRY_SCRIPT: ZREM the lobby from every queue key passed in,
+   * but only while its details key is still missing.
    */
-  async eval(_script: string, numKeys: number, ...args: unknown[]) {
+  async eval(script: string, numKeys: number, ...args: unknown[]) {
     const keys = args.slice(0, numKeys) as string[];
     const [member, ttl] = args.slice(numKeys) as [string, number];
+
+    if (script.includes("EXISTS")) {
+      if (this.has(keys[0])) {
+        return 0;
+      }
+
+      for (const key of keys.slice(1)) {
+        await this.zrem(key, member);
+      }
+
+      return 1;
+    }
 
     const acquired = await this.set(keys[0], 1, "EX", ttl, "NX");
     if (!acquired) {
