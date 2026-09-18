@@ -18,9 +18,11 @@ import { RedisModule } from "../../redis/redis.module";
 import { DemosModule } from "../../demos/demos.module";
 import { K8sModule } from "../../k8s/k8s.module";
 import { loggerFactory } from "../../utilities/LoggerFactory";
+import { BroadcastHudsModule } from "src/broadcast-huds/broadcast-huds.module";
 
 @Module({
   imports: [
+    BroadcastHudsModule,
     HasuraModule,
     EncryptionModule,
     PostgresModule,

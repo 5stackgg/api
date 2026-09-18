@@ -19,6 +19,10 @@ import { GameStreamerStatusDto } from "./types/GameStreamerStatusDto";
 import { AppConfig } from "../../configs/types/AppConfig";
 import { SteamConfig } from "../../configs/types/SteamConfig";
 import { resolveInClusterApiBase } from "../clips/clips.constants";
+import {
+  BroadcastHud,
+  BroadcastHudsService,
+} from "src/broadcast-huds/broadcast-huds.service";
 import { LoggingService } from "../../k8s/logging/logging.service";
 import {
   SteamAccountService,
@@ -171,6 +175,7 @@ export class GameStreamerService {
     private readonly demoMetadata: DemoMetadataService,
     private readonly loggingService: LoggingService,
     private readonly steamAccounts: SteamAccountService,
+    private readonly broadcastHuds: BroadcastHudsService,
   ) {
     this.gameServerConfig = this.config.get<GameServersConfig>("gameServers");
     this.appConfig = this.config.get<AppConfig>("app");
@@ -288,29 +293,55 @@ export class GameStreamerService {
     return result;
   }
 
-  private async resolveHudMode(): Promise<"horizontal" | "vertical"> {
-    let value: string | undefined;
+  // Which HUD the pod boots, as pod env.
+  //
+  // Three variables rather than one because two different things are being
+  // named. HUD_ID is the JTs Hud Manager hud id -- the dimension that used to
+  // be permanently "default". HUD_VARIANT is the `?variant=` layout within that
+  // bundle, which is all HUD_MODE ever meant. HUD_MODE is still sent, carrying
+  // the variant, so an older game-streamer image that has never heard of
+  // HUD_ID boots exactly as it does today.
+  private async resolveHudEnv(): Promise<Array<V1EnvVar>> {
+    let hud: BroadcastHud | null = null;
     try {
-      const { settings_by_pk } = await this.hasura.query({
-        settings_by_pk: {
-          __args: { name: "default_hud_mode" },
-          value: true,
-        },
-      });
-      value = settings_by_pk?.value ?? undefined;
+      hud = await this.broadcastHuds.resolveDefault();
     } catch (error) {
       this.logger.warn(
-        `failed to read default_hud_mode setting: ${(error as Error)?.message ?? error}`,
+        `failed to resolve the default broadcast hud: ${
+          (error as Error)?.message ?? error
+        }`,
       );
     }
-    const candidate = value || process.env.HUD_MODE || "horizontal";
-    if (candidate === "vertical") return "vertical";
-    if (candidate === "horizontal" || candidate === "default")
-      return "horizontal";
-    this.logger.warn(
-      `default_hud_mode="${candidate}" is not one of horizontal|vertical — falling back to "horizontal"`,
-    );
-    return "horizontal";
+
+    // No row at all means the library table is empty -- a fresh install whose
+    // migration seeded nothing, or a database mid-upgrade. The pod's own
+    // defaults are the bundled HUD, so saying nothing is the safe answer.
+    //
+    // An imported HUD carries no variant, and the empty string is the answer
+    // rather than a missing key: it means "whatever layout this bundle opens
+    // with". Handing an imported bundle `?variant=horizontal` names a layout
+    // its hud.json very likely does not declare, and a bundle that switches
+    // strictly on that param would render nothing.
+    const variant = hud ? (hud.variant ?? "") : (process.env.HUD_MODE ?? "horizontal");
+
+    return [
+      { name: "HUD_ID", value: hud?.jthud_id ?? "default" },
+      { name: "HUD_VARIANT", value: variant },
+      // The legacy name, which an older image reads instead. It has to stay a
+      // layout it understands, so it never carries the empty string.
+      { name: "HUD_MODE", value: variant || "horizontal" },
+      // Only set for an imported HUD: it tells the pod where to fetch the
+      // archive so JTs Hud Manager can install it before the overlay opens.
+      // A builtin is already inside the image and needs no download.
+      ...(hud && hud.source === "imported"
+        ? [{ name: "HUD_BUNDLE_URL", value: this.hudBundleUrl(hud.slug) }]
+        : []),
+    ];
+  }
+
+  // In-cluster, same base the HUD already uses to reach /hud-data/:matchId.
+  private hudBundleUrl(slug: string): string {
+    return `${resolveInClusterApiBase().replace(/\/$/, "")}/huds/${slug}/bundle.zip`;
   }
 
   private async readSetting(name: string): Promise<string | undefined> {
@@ -590,11 +621,53 @@ export class GameStreamerService {
     return { gsi: body?.gsi ?? null };
   }
 
-  public async setLiveHudMode(
-    matchId: string,
-    mode: "default" | "horizontal" | "vertical",
-  ) {
-    return this.callSpec(matchId, "hud-mode", { mode });
+  // `slug` names a broadcast_huds row, which resolves to the pair the pod needs:
+  // a JTHud hud id and an optional layout variant within it. The old
+  // horizontal|vertical arguments still arrive here from clients that have not
+  // been updated -- they are slugs of the two seeded builtin rows once mapped,
+  // so they resolve through the same path rather than needing a branch.
+  public async setLiveHud(matchId: string, slug: string) {
+    return this.callSpec(
+      matchId,
+      "hud-mode",
+      await this.resolveHudSwitchPayload(slug),
+    );
+  }
+
+  // What the pod's /spec/hud-mode needs in order to switch: which bundle, which
+  // layout inside it, and -- for an imported HUD -- where to fetch it from if
+  // this pod has never installed it.
+  //
+  // Shared by the live and demo paths so a HUD means the same thing in both.
+  // The demo path reaches the very same endpoint through demoControl, and
+  // having only one of them resolve slugs is how the two would drift.
+  public async resolveHudSwitchPayload(
+    slug: string,
+  ): Promise<Record<string, unknown>> {
+    const hud = await this.broadcastHuds.bySlug(this.normalizeHudSlug(slug));
+
+    if (!hud || !hud.enabled) {
+      throw new Error(`no enabled broadcast hud named "${slug}"`);
+    }
+
+    return {
+      hudId: hud.jthud_id,
+      variant: hud.variant,
+      // Kept so a spec-server from an older image, which only understands a
+      // layout name, still switches layout instead of rejecting the call.
+      mode: hud.variant ?? "default",
+      bundleUrl:
+        hud.source === "imported" ? this.hudBundleUrl(hud.slug) : undefined,
+    };
+  }
+
+  // Back-compat: "horizontal"/"vertical"/"default" were layout names before
+  // they were rows. Map them onto the seeded builtin slugs so an un-updated
+  // client keeps working.
+  private normalizeHudSlug(slug: string): string {
+    if (slug === "vertical") return "default-vertical";
+    if (slug === "horizontal" || slug === "default") return "default-horizontal";
+    return slug;
   }
 
   public async refreshLiveHud(matchId: string) {
@@ -800,7 +873,7 @@ export class GameStreamerService {
       { name: "DEMO_URL", value: options.presignedDemoUrl },
       { name: "DEMO_FILE_NAME", value: options.demoFile },
       { name: "DEMO_SESSION_ID", value: sessionId },
-      { name: "HUD_MODE", value: await this.resolveHudMode() },
+      ...(await this.resolveHudEnv()),
       { name: "CLIP_VIDEO_CODEC", value: await this.resolveClipVideoCodec() },
       {
         name: "CLIP_BAKE_BRANDING",
@@ -1028,6 +1101,13 @@ export class GameStreamerService {
     }
 
     this.bumpDemoSessionActivityThrottled(session.id);
+
+    // The demo player sends a HUD by slug, exactly as the stream deck does.
+    // Resolve it here rather than forwarding the slug, so the pod is handed the
+    // same shape from both paths.
+    if (action === "hud-mode" && typeof body.slug === "string") {
+      body = await this.resolveHudSwitchPayload(body.slug);
+    }
 
     const prefix = SPEC_PROXIED_DEMO_ACTIONS.has(action) ? "spec" : "demo";
     const url = this.getDemoSpecUrl(session.id, action, prefix);
@@ -1608,7 +1688,7 @@ export class GameStreamerService {
 
     const reporterEnv: V1EnvVar[] = [
       { name: "MATCH_PASSWORD", value: match.password },
-      { name: "HUD_MODE", value: await this.resolveHudMode() },
+      ...(await this.resolveHudEnv()),
       { name: "LIVE_VIDEO_CODEC", value: await this.resolveLiveVideoCodec() },
       { name: "CLIP_VIDEO_CODEC", value: await this.resolveClipVideoCodec() },
       {
@@ -2276,7 +2356,7 @@ export class GameStreamerService {
       { name: "DEMO_URL", value: presignedDemoUrl },
       { name: "DEMO_FILE_NAME", value: demo.file as string },
       { name: "STATUS_API_BASE", value: resolveInClusterApiBase() },
-      { name: "HUD_MODE", value: await this.resolveHudMode() },
+      ...(await this.resolveHudEnv()),
       { name: "CLIP_BATCH_MODE", value: "1" },
       { name: "AUTODIRECTOR", value: "0" },
       {

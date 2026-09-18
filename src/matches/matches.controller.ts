@@ -1941,6 +1941,11 @@ export class MatchesController {
     return state;
   }
 
+  // `mode` is a broadcast_huds slug now that HUDs are a library rather than two
+  // layouts. The argument keeps its name so the action signature -- and every
+  // client already calling it -- is unchanged, and the three old layout names
+  // still resolve, onto the seeded builtin rows. Validation moved into the
+  // service, which is the thing that knows what is installed.
   @HasuraAction()
   public async setHudMode(data: {
     match_id: string;
@@ -1951,10 +1956,7 @@ export class MatchesController {
     if (!isRoleAbove(user.role, "streamer")) {
       throw Error("you must have the streamer role or above");
     }
-    if (mode !== "default" && mode !== "horizontal" && mode !== "vertical") {
-      throw Error("mode must be one of default|horizontal|vertical");
-    }
-    await this.gameStreamer.setLiveHudMode(match_id, mode);
+    await this.gameStreamer.setLiveHud(match_id, mode);
     return { success: true };
   }
 
