@@ -141,6 +141,60 @@ describe("tournament roster duplicate key (SQL-driven)", () => {
     expect(teamBSize).toBeGreaterThan(0);
   });
 
+  // Hasura presets owner_steam_id to the caller on insert, so every team an
+  // organizer adds by hand is owned by the organizer.
+  it("an organizer can add several tournament-only teams", async () => {
+    const { id: tournamentId, organizer } = await createTournament();
+    const [first, second] = [await fx.player(), await fx.player()];
+
+    for (const [index, player] of [first, second].entries()) {
+      await runAsUser(postgres, organizer, "user", async (query) => {
+        const [tt] = (await query(
+          `INSERT INTO tournament_teams (tournament_id, team_id, name, owner_steam_id, captain_steam_id)
+           VALUES ($1, NULL, $2, $3, $4) RETURNING id`,
+          [tournamentId, fx.nextName(`adhoc${index}`), organizer, player],
+        )) as Array<{ id: string }>;
+
+        await query(
+          `INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id)
+           VALUES ($1, $2, $3)`,
+          [tt.id, player, tournamentId],
+        );
+      });
+    }
+
+    const [{ count }] = await postgres.query<Array<{ count: number }>>(
+      `SELECT count(*)::int AS count FROM tournament_teams WHERE tournament_id = $1`,
+      [tournamentId],
+    );
+    expect(count).toBe(2);
+  });
+
+  it("two existing teams with the same owner can both register", async () => {
+    const { id: tournamentId } = await createTournament();
+    const teamA = await fx.team(1);
+    const [teamB] = await postgres.query<Array<{ id: string }>>(
+      "INSERT INTO teams (name, short_name, owner_steam_id) VALUES ($1, $1, $2) RETURNING id",
+      [fx.nextName("team"), teamA.owner],
+    );
+    const mate = await fx.player();
+    await runAsUser(postgres, teamA.owner, "admin", (query) =>
+      query(
+        "INSERT INTO team_roster (team_id, player_steam_id, status) VALUES ($1, $2, 'Starter')",
+        [teamB.id, mate],
+      ),
+    );
+
+    await registerRealTeam(tournamentId, teamA);
+    await registerRealTeam(tournamentId, { id: teamB.id, owner: teamA.owner });
+
+    const [{ count }] = await postgres.query<Array<{ count: number }>>(
+      `SELECT count(*)::int AS count FROM tournament_teams WHERE tournament_id = $1`,
+      [tournamentId],
+    );
+    expect(count).toBe(2);
+  });
+
   const memberIds = async (teamId: string) => {
     const rows = await postgres.query<Array<{ player_steam_id: string }>>(
       "SELECT player_steam_id FROM team_roster WHERE team_id = $1",

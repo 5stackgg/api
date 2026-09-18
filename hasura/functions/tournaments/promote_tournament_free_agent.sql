@@ -112,10 +112,9 @@ BEGIN
            AND public.player_meets_tournament_requirements(_tournament_id, fa.player_steam_id)
            -- Already playing, under either identity. The roster key is unique per
            -- (tournament, player) so the insert below would abort the caller's whole
-           -- statement, and owning a team collides with
-           -- UNIQUE (owner_steam_id, tournament_id) -- the collision that hard-stalled
-           -- the draft once already. Per member: an ineligible member shrinks
-           -- their party, it does not disqualify the party.
+           -- statement, and owning a team counts as being in the tournament. Per
+           -- member: an ineligible member shrinks their party, it does not
+           -- disqualify the party.
            AND NOT EXISTS (
                SELECT 1 FROM public.tournament_team_roster ttr
                WHERE ttr.tournament_id = _tournament_id
