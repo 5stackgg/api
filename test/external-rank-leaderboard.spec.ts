@@ -15,6 +15,7 @@ describe("external rank leaderboard (SQL-driven)", () => {
     db = await bootMigratedDb("ExternalRankLeaderboardTest");
     postgres = db.postgres;
     fx = new Fixtures(postgres, 76561196200000000n);
+    await fx.region("TestExternalRank");
   }, 600_000);
 
   afterAll(async () => {
@@ -22,30 +23,53 @@ describe("external rank leaderboard (SQL-driven)", () => {
   });
 
   beforeEach(async () => {
+    await postgres.query("DELETE FROM matches");
+    await postgres.query("DELETE FROM match_options");
     await postgres.query("DELETE FROM players");
   });
 
+  // A rated player who also belongs here: signed in at least once and played a
+  // match on this platform. Anyone who has not is off the board entirely.
   const withRanks = async (ranks: {
     name?: string;
     faceitElo?: number | null;
     faceitLevel?: number | null;
     premierRank?: number | null;
+    signedIn?: boolean;
+    playedHere?: boolean;
   }) => {
     const steamId = await fx.player(ranks.name);
     await postgres.query(
       `UPDATE players
           SET faceit_elo = $2,
               faceit_skill_level = $3,
-              premier_rank = $4
+              premier_rank = $4,
+              last_sign_in_at = CASE WHEN $5 THEN now() ELSE NULL END
         WHERE steam_id = $1::bigint`,
       [
         steamId,
         ranks.faceitElo ?? null,
         ranks.faceitLevel ?? null,
         ranks.premierRank ?? null,
+        ranks.signedIn ?? true,
       ],
     );
+
+    if (ranks.playedHere ?? true) {
+      await playAMatch(steamId);
+    }
+
     return steamId;
+  };
+
+  const playAMatch = async (steamId: string, status = "Finished") => {
+    const match = await fx.match({ regions: ["TestExternalRank"] });
+    await fx.lineupPlayer(match.lineup_1_id, steamId);
+    await postgres.query("UPDATE matches SET status = $2 WHERE id = $1", [
+      match.id,
+      status,
+    ]);
+    return match;
   };
 
   type Entry = {
@@ -132,6 +156,49 @@ describe("external rank leaderboard (SQL-driven)", () => {
       const [row] = await board("premier_rank");
 
       expect(row.matches_played).toBe(0);
+    });
+  });
+
+  describe("who belongs on an external board", () => {
+    it("leaves out a rated player who has never signed in", async () => {
+      // an imported demo can mint a player row for someone who has no account
+      // here; their FACEIT rating is not ours to put on a board
+      await withRanks({ faceitElo: 3000, signedIn: false });
+      await withRanks({ premierRank: 25000, signedIn: false });
+
+      expect(await board("faceit_elo")).toHaveLength(0);
+      expect(await board("premier_rank")).toHaveLength(0);
+    });
+
+    it("leaves out a rated player who has never played here", async () => {
+      await withRanks({ faceitElo: 3000, playedHere: false });
+      await withRanks({ premierRank: 25000, playedHere: false });
+
+      expect(await board("faceit_elo")).toHaveLength(0);
+      expect(await board("premier_rank")).toHaveLength(0);
+    });
+
+    it("counts a player who has signed in and played", async () => {
+      await withRanks({ faceitElo: 3000 });
+      await withRanks({ premierRank: 25000 });
+
+      expect(await board("faceit_elo")).toHaveLength(1);
+      expect(await board("premier_rank")).toHaveLength(1);
+    });
+
+    it("does not count a match that never finished", async () => {
+      const player = await withRanks({ faceitElo: 2000, playedHere: false });
+      await playAMatch(player, "Canceled");
+
+      expect(await board("faceit_elo")).toHaveLength(0);
+    });
+
+    it("counts a player once however many matches they have played", async () => {
+      const player = await withRanks({ faceitElo: 2000 });
+      await playAMatch(player);
+      await playAMatch(player);
+
+      expect(await board("faceit_elo")).toHaveLength(1);
     });
   });
 
