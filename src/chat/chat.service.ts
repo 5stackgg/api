@@ -1417,6 +1417,18 @@ export class ChatService {
     }
   }
 
+  // The message is inlined into an rcon command inside quotes, so a quote ends
+  // the argument and a newline ends the command: either one turns the rest of
+  // what a player typed into console input. Chat in game is one line anyway.
+  private static oneRconArgument(message: string) {
+    return message
+      .replace(/[\r\n]+/g, " ")
+      .replace(/"/g, "")
+      // eslint-disable-next-line no-control-regex
+      .replace(/[\x00-\x1f]/g, "")
+      .trim();
+  }
+
   public async sendChatToServer(matchId: string, message: string) {
     try {
       const { matches_by_pk } = await this.hasuraService.query({
@@ -1452,7 +1464,9 @@ export class ChatService {
           ? "css_web_chat"
           : "sw_web_chat";
 
-      return await rcon.send(`${command} "${message}"`);
+      return await rcon.send(
+        `${command} "${ChatService.oneRconArgument(message)}"`,
+      );
     } catch (error) {
       this.logger.warn(
         `[${matchId}] unable to send match to server`,

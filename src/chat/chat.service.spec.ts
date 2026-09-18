@@ -28,6 +28,8 @@ describe("ChatService direct messages", () => {
     eval: jest.fn().mockResolvedValue([1, 1]),
   };
 
+  const rcon = { connect: jest.fn(), send: jest.fn() };
+
   let service: ChatService;
   let acceptedFriendships: Array<[string, string]>;
   let role: string;
@@ -153,6 +155,15 @@ describe("ChatService direct messages", () => {
         };
       }
 
+      if (query.matches_by_pk?.server) {
+        return {
+          matches_by_pk: {
+            status: "Live",
+            server: { id: "server-1", plugin_runtime: "counterstrikesharp" },
+          },
+        };
+      }
+
       if (query.matches_by_pk) {
         return myMatches.includes(query.matches_by_pk.__args.id)
           ? {
@@ -215,9 +226,12 @@ describe("ChatService direct messages", () => {
     staff = [];
     role = "user";
     queries = [];
+    rcon.send.mockResolvedValue(undefined);
+    rcon.connect.mockResolvedValue(rcon);
+
     service = new ChatService(
       logger as any,
-      { } as any,
+      { connect: rcon.connect } as any,
       hasuraService as any,
       postgres as any,
       { getConnection: () => redis } as any,
@@ -385,6 +399,32 @@ describe("ChatService direct messages", () => {
       expect(recipients).toContain(FRIEND);
       expect(recipients).toContain(STRANGER);
       expect(recipients).not.toContain("76561198000000004");
+    });
+  });
+
+  // Match chat is relayed into the game server as an rcon command with the
+  // message inlined in quotes, so what a player types has to be unable to
+  // terminate that argument or that line.
+  describe("relaying to the game server", () => {
+    const relayed = async (message: string) => {
+      await service.sendChatToServer("m-1", message);
+      return rcon.send.mock.calls.at(-1)?.[0] as string;
+    };
+
+    it("sends the message as one quoted argument", async () => {
+      expect(await relayed("nice shot")).toBe('css_web_chat "nice shot"');
+    });
+
+    it("flattens a multi line message onto one line", async () => {
+      expect(await relayed("top\nbottom")).toBe('css_web_chat "top bottom"');
+      expect(await relayed("top\r\nbottom")).toBe('css_web_chat "top bottom"');
+    });
+
+    it("strips quotes so the message cannot escape the argument", async () => {
+      expect(await relayed('x" ; quit ; say "')).not.toContain('"x"');
+      expect(await relayed('x" ; quit ; say "')).toBe(
+        'css_web_chat "x ; quit ; say"',
+      );
     });
   });
 
