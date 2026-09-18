@@ -1044,19 +1044,15 @@ describe("tournament check-in, registration rules and free agents (SQL-driven)",
   // sidebar, so anyone who can talk in that room has to answer true here.
   describe("joined_tournament", () => {
     const joined = async (tournamentId: string, steamId: string) => {
-      const [row] = await runAsUser<Array<{ joined: boolean }>>(
-        postgres,
-        steamId,
-        "user",
-        (query) =>
-          query(
-            `SELECT joined_tournament(t, json_build_object('x-hasura-user-id', $2::text)) AS joined
-               FROM tournaments t WHERE t.id = $1`,
-            [tournamentId, steamId],
-          ),
+      const rows = await runAsUser(postgres, steamId, "user", async (query) =>
+        (await query(
+          `SELECT joined_tournament(t, json_build_object('x-hasura-user-id', $2::text)) AS joined
+             FROM tournaments t WHERE t.id = $1`,
+          [tournamentId, steamId],
+        )) as Array<{ joined: boolean }>,
       );
 
-      return row.joined;
+      return rows[0].joined;
     };
 
     it("counts a player on a tournament team roster", async () => {
