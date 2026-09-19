@@ -39854,6 +39854,12 @@ export default {
             "_is_null": [
                 6
             ],
+            "_jsonb_path_exists": [
+                85
+            ],
+            "_jsonb_path_match": [
+                85
+            ],
             "_lt": [
                 2439
             ],
@@ -128617,9 +128623,6 @@ export default {
                     ]
                 }
             ],
-            "regions": [
-                85
-            ],
             "registration_type": [
                 1596
             ],
@@ -129492,9 +129495,6 @@ export default {
             "prizes_aggregate": [
                 5611
             ],
-            "regions": [
-                86
-            ],
             "registration_type": [
                 1597
             ],
@@ -129734,9 +129734,6 @@ export default {
             "prizes": [
                 5615
             ],
-            "regions": [
-                85
-            ],
             "registration_type": [
                 1596
             ],
@@ -129847,9 +129844,6 @@ export default {
             "organizer_steam_id": [
                 312
             ],
-            "regions": [
-                85
-            ],
             "scheduling_mode": [
                 85
             ],
@@ -129925,9 +129919,6 @@ export default {
                 3648
             ],
             "organizer_steam_id": [
-                3648
-            ],
-            "regions": [
                 3648
             ],
             "scheduling_mode": [
@@ -130019,9 +130010,6 @@ export default {
             "organizer_steam_id": [
                 312
             ],
-            "regions": [
-                85
-            ],
             "scheduling_mode": [
                 85
             ],
@@ -130097,9 +130085,6 @@ export default {
                 3648
             ],
             "organizer_steam_id": [
-                3648
-            ],
-            "regions": [
                 3648
             ],
             "scheduling_mode": [
@@ -130371,9 +130356,6 @@ export default {
             "prizes_aggregate": [
                 5614
             ],
-            "regions": [
-                3648
-            ],
             "registration_type": [
                 3648
             ],
@@ -130556,9 +130538,6 @@ export default {
             ],
             "organizer_steam_id": [
                 312
-            ],
-            "regions": [
-                85
             ],
             "registration_type": [
                 1596
@@ -130911,9 +130890,6 @@ export default {
             ],
             "organizer_steam_id": [
                 312
-            ],
-            "regions": [
-                85
             ],
             "registration_type": [
                 1596
