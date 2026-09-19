@@ -1299,7 +1299,13 @@ export class GameStreamerService {
     // An `event` is a one-shot milestone (demo_ready) raised by a worker
     // running alongside the main boot — it marks a stage complete in the
     // history without yanking the row off whatever setup-steam is doing.
-    const isEvent = GameStreamerService.isTruthyFlag(body.event);
+    //
+    // A `live` landing after `playing` gets the same treatment. The pod sends
+    // `live` through a 2s-polled daemon but `playing` straight from the
+    // spec-server, exactly once, so the two can arrive swapped — and applying
+    // the late `live` strands the viewer on the boot screen for good.
+    const isLateLive = current.status === "playing" && status === "live";
+    const isEvent = GameStreamerService.isTruthyFlag(body.event) || isLateLive;
     const statusChanged = current.status !== status;
     const set: Record<string, unknown> = {
       status_history: nextHistory,

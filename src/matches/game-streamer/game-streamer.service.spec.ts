@@ -101,6 +101,44 @@ describe("GameStreamerService", () => {
       expect(setOf().status).toBe("launching_cs2");
     });
 
+    it("keeps the row on playing when the pod's live report lands second", async () => {
+      hasura.query.mockResolvedValueOnce({
+        match_demo_sessions_by_pk: {
+          status: "playing",
+          status_history: [
+            { status: "connecting_to_game", at: "2026-01-01T00:00:00.000Z" },
+            { status: "playing", at: "2026-01-01T00:01:00.000Z" },
+          ],
+        },
+      });
+      hasura.mutation.mockResolvedValueOnce({});
+
+      await service.reportDemoStatus("session-1", { status: "live" });
+
+      const set = setOf();
+      expect(set.status).toBeUndefined();
+      expect(set.error_message).toBeUndefined();
+      expect((set.status_history as any[]).map((e: any) => e.status)).toEqual([
+        "connecting_to_game",
+        "playing",
+        "live",
+      ]);
+    });
+
+    it("still lets a rebooted pod move the row off playing", async () => {
+      hasura.query.mockResolvedValueOnce({
+        match_demo_sessions_by_pk: {
+          status: "playing",
+          status_history: [{ status: "playing", at: "2026-01-01" }],
+        },
+      });
+      hasura.mutation.mockResolvedValueOnce({});
+
+      await service.reportDemoStatus("session-1", { status: "booting" });
+
+      expect(setOf().status).toBe("booting");
+    });
+
     it("appends after an event instead of rewriting it", async () => {
       // The row still says downloading_cs2 while the newest history entry is
       // the demo_ready event — coalescing must compare against the entry.
