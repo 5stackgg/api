@@ -140,6 +140,21 @@ BEGIN
         PERFORM refresh_veto_pick_expiry(_match_id);
     END IF;
 
+    -- tbi_match pins matches.region from a single-region option set, and
+    -- nothing re-reads it before Veto, so a match drawn early keeps hosting on
+    -- the region it was created with unless the pin moves with its options.
+    IF (NEW.regions IS DISTINCT FROM OLD.regions AND _match_status IN ('PickingPlayers', 'Scheduled', 'WaitingForCheckIn')) THEN
+        IF cardinality(NEW.regions) = 1 THEN
+            UPDATE matches SET region = NEW.regions[1]
+            WHERE id = _match_id AND region IS DISTINCT FROM NEW.regions[1];
+        ELSIF NEW.region_veto THEN
+            UPDATE matches SET region = NULL
+            WHERE id = _match_id AND region IS NOT NULL;
+        END IF;
+    END IF;
+
+    PERFORM sync_tournament_match_options(OLD, NEW);
+
     RETURN NEW;
 END;
 $$;
