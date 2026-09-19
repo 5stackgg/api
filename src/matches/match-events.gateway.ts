@@ -117,10 +117,6 @@ export class MatchEventsGateway {
 
     const { data, event } = message.data;
 
-    this.logger.debug(
-      `[${matchId}] received game event ${event} (messageId=${messageId})`,
-    );
-
     const Processor = MatchEvents[event as keyof typeof MatchEvents];
 
     if (!Processor) {
