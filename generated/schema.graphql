@@ -1603,7 +1603,7 @@ enum abandoned_matches_constraint {
   abandoned_matches_pkey
 
   """
-  unique or primary key constraint on columns "match_id", "steam_id"
+  unique or primary key constraint on columns "steam_id", "match_id"
   """
   abandoned_matches_steam_id_match_id_key
 }
@@ -120526,11 +120526,6 @@ unique or primary key constraints on table "tournament_teams"
 """
 enum tournament_teams_constraint {
   """
-  unique or primary key constraint on columns "tournament_id", "owner_steam_id"
-  """
-  tournament_teams_creator_steam_id_tournament_id_key
-
-  """
   unique or primary key constraint on columns "id"
   """
   tournament_teams_pkey
@@ -121173,6 +121168,11 @@ type tournaments {
   """
   check_in_started: Boolean
   created_at: timestamptz
+
+  """
+  A computed field, executes function "tournament_current_stage"
+  """
+  current_stage: Int
   description: String
   discord_guild_id: String
   discord_notifications_enabled: Boolean
@@ -121550,6 +121550,11 @@ type tournaments {
   start: timestamptz!
   status: e_tournament_status_enum!
 
+  """
+  Whether teams may roster and field substitutes beyond the starting lineup
+  """
+  substitutes_enabled: Boolean!
+
   """An array relationship"""
   teams(
     """distinct select on columns"""
@@ -121744,6 +121749,11 @@ input tournaments_arr_rel_insert_input {
 type tournaments_avg_fields {
   check_in_closes_before_minutes: Float
   check_in_opens_before_minutes: Float
+
+  """
+  A computed field, executes function "tournament_current_stage"
+  """
+  current_stage: Int
   latitude: Float
   longitude: Float
   max_elo: Float
@@ -121815,6 +121825,7 @@ input tournaments_bool_exp {
   check_in_setting: e_check_in_settings_enum_comparison_exp
   check_in_started: Boolean_comparison_exp
   created_at: timestamptz_comparison_exp
+  current_stage: Int_comparison_exp
   description: String_comparison_exp
   discord_guild_id: String_comparison_exp
   discord_notifications_enabled: Boolean_comparison_exp
@@ -121879,6 +121890,7 @@ input tournaments_bool_exp {
   stages_aggregate: tournament_stages_aggregate_bool_exp
   start: timestamptz_comparison_exp
   status: e_tournament_status_enum_comparison_exp
+  substitutes_enabled: Boolean_comparison_exp
   teams: tournament_teams_bool_exp
   teams_aggregate: tournament_teams_aggregate_bool_exp
 }
@@ -121990,6 +122002,11 @@ input tournaments_insert_input {
   stages: tournament_stages_arr_rel_insert_input
   start: timestamptz
   status: e_tournament_status_enum
+
+  """
+  Whether teams may roster and field substitutes beyond the starting lineup
+  """
+  substitutes_enabled: Boolean
   teams: tournament_teams_arr_rel_insert_input
 }
 
@@ -122008,6 +122025,11 @@ type tournaments_max_fields {
   check_in_ends_at: timestamptz
   check_in_opens_before_minutes: Int
   created_at: timestamptz
+
+  """
+  A computed field, executes function "tournament_current_stage"
+  """
+  current_stage: Int
   description: String
   discord_guild_id: String
   discord_role_id: String
@@ -122099,6 +122121,11 @@ type tournaments_min_fields {
   check_in_ends_at: timestamptz
   check_in_opens_before_minutes: Int
   created_at: timestamptz
+
+  """
+  A computed field, executes function "tournament_current_stage"
+  """
+  current_stage: Int
   description: String
   discord_guild_id: String
   discord_role_id: String
@@ -122233,6 +122260,7 @@ input tournaments_order_by {
   check_in_setting: order_by
   check_in_started: order_by
   created_at: order_by
+  current_stage: order_by
   description: order_by
   discord_guild_id: order_by
   discord_notifications_enabled: order_by
@@ -122289,6 +122317,7 @@ input tournaments_order_by {
   stages_aggregate: tournament_stages_aggregate_order_by
   start: order_by
   status: order_by
+  substitutes_enabled: order_by
   teams_aggregate: tournament_teams_aggregate_order_by
 }
 
@@ -122444,6 +122473,9 @@ enum tournaments_select_column {
 
   """column name"""
   status
+
+  """column name"""
+  substitutes_enabled
 }
 
 """
@@ -122517,6 +122549,9 @@ enum tournaments_select_column_tournaments_aggregate_bool_exp_bool_and_arguments
 
   """column name"""
   is_league
+
+  """column name"""
+  substitutes_enabled
 }
 
 """
@@ -122579,6 +122614,9 @@ enum tournaments_select_column_tournaments_aggregate_bool_exp_bool_or_arguments_
 
   """column name"""
   is_league
+
+  """column name"""
+  substitutes_enabled
 }
 
 """
@@ -122722,12 +122760,22 @@ input tournaments_set_input {
   scheduling_mode: String
   start: timestamptz
   status: e_tournament_status_enum
+
+  """
+  Whether teams may roster and field substitutes beyond the starting lineup
+  """
+  substitutes_enabled: Boolean
 }
 
 """aggregate stddev on columns"""
 type tournaments_stddev_fields {
   check_in_closes_before_minutes: Float
   check_in_opens_before_minutes: Float
+
+  """
+  A computed field, executes function "tournament_current_stage"
+  """
+  current_stage: Int
   latitude: Float
   longitude: Float
   max_elo: Float
@@ -122767,6 +122815,11 @@ input tournaments_stddev_order_by {
 type tournaments_stddev_pop_fields {
   check_in_closes_before_minutes: Float
   check_in_opens_before_minutes: Float
+
+  """
+  A computed field, executes function "tournament_current_stage"
+  """
+  current_stage: Int
   latitude: Float
   longitude: Float
   max_elo: Float
@@ -122806,6 +122859,11 @@ input tournaments_stddev_pop_order_by {
 type tournaments_stddev_samp_fields {
   check_in_closes_before_minutes: Float
   check_in_opens_before_minutes: Float
+
+  """
+  A computed field, executes function "tournament_current_stage"
+  """
+  current_stage: Int
   latitude: Float
   longitude: Float
   max_elo: Float
@@ -122914,12 +122972,22 @@ input tournaments_stream_cursor_value_input {
   scheduling_mode: String
   start: timestamptz
   status: e_tournament_status_enum
+
+  """
+  Whether teams may roster and field substitutes beyond the starting lineup
+  """
+  substitutes_enabled: Boolean
 }
 
 """aggregate sum on columns"""
 type tournaments_sum_fields {
   check_in_closes_before_minutes: Int
   check_in_opens_before_minutes: Int
+
+  """
+  A computed field, executes function "tournament_current_stage"
+  """
+  current_stage: Int
   latitude: float8
   longitude: float8
   max_elo: Int
@@ -123102,6 +123170,9 @@ enum tournaments_update_column {
 
   """column name"""
   status
+
+  """column name"""
+  substitutes_enabled
 }
 
 input tournaments_updates {
@@ -123119,6 +123190,11 @@ input tournaments_updates {
 type tournaments_var_pop_fields {
   check_in_closes_before_minutes: Float
   check_in_opens_before_minutes: Float
+
+  """
+  A computed field, executes function "tournament_current_stage"
+  """
+  current_stage: Int
   latitude: Float
   longitude: Float
   max_elo: Float
@@ -123158,6 +123234,11 @@ input tournaments_var_pop_order_by {
 type tournaments_var_samp_fields {
   check_in_closes_before_minutes: Float
   check_in_opens_before_minutes: Float
+
+  """
+  A computed field, executes function "tournament_current_stage"
+  """
+  current_stage: Int
   latitude: Float
   longitude: Float
   max_elo: Float
@@ -123197,6 +123278,11 @@ input tournaments_var_samp_order_by {
 type tournaments_variance_fields {
   check_in_closes_before_minutes: Float
   check_in_opens_before_minutes: Float
+
+  """
+  A computed field, executes function "tournament_current_stage"
+  """
+  current_stage: Int
   latitude: Float
   longitude: Float
   max_elo: Float

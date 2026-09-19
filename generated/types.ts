@@ -128268,6 +128268,9 @@ export default {
             "created_at": [
                 5243
             ],
+            "current_stage": [
+                41
+            ],
             "description": [
                 85
             ],
@@ -128764,6 +128767,9 @@ export default {
             "status": [
                 1637
             ],
+            "substitutes_enabled": [
+                6
+            ],
             "teams": [
                 5850,
                 {
@@ -129173,6 +129179,9 @@ export default {
             "check_in_opens_before_minutes": [
                 32
             ],
+            "current_stage": [
+                41
+            ],
             "latitude": [
                 32
             ],
@@ -129323,6 +129332,9 @@ export default {
             ],
             "created_at": [
                 5244
+            ],
+            "current_stage": [
+                42
             ],
             "description": [
                 87
@@ -129515,6 +129527,9 @@ export default {
             ],
             "status": [
                 1638
+            ],
+            "substitutes_enabled": [
+                7
             ],
             "teams": [
                 5861
@@ -129743,6 +129758,9 @@ export default {
             "status": [
                 1637
             ],
+            "substitutes_enabled": [
+                6
+            ],
             "teams": [
                 5858
             ],
@@ -129771,6 +129789,9 @@ export default {
             ],
             "created_at": [
                 5243
+            ],
+            "current_stage": [
+                41
             ],
             "description": [
                 85
@@ -129940,6 +129961,9 @@ export default {
             ],
             "created_at": [
                 5243
+            ],
+            "current_stage": [
+                41
             ],
             "description": [
                 85
@@ -130203,6 +130227,9 @@ export default {
             "created_at": [
                 3648
             ],
+            "current_stage": [
+                3648
+            ],
             "description": [
                 3648
             ],
@@ -130369,6 +130396,9 @@ export default {
                 3648
             ],
             "status": [
+                3648
+            ],
+            "substitutes_enabled": [
                 3648
             ],
             "teams_aggregate": [
@@ -130542,6 +130572,9 @@ export default {
             "status": [
                 1637
             ],
+            "substitutes_enabled": [
+                6
+            ],
             "__typename": [
                 85
             ]
@@ -130552,6 +130585,9 @@ export default {
             ],
             "check_in_opens_before_minutes": [
                 32
+            ],
+            "current_stage": [
+                41
             ],
             "latitude": [
                 32
@@ -130614,6 +130650,9 @@ export default {
             "check_in_opens_before_minutes": [
                 32
             ],
+            "current_stage": [
+                41
+            ],
             "latitude": [
                 32
             ],
@@ -130674,6 +130713,9 @@ export default {
             ],
             "check_in_opens_before_minutes": [
                 32
+            ],
+            "current_stage": [
+                41
             ],
             "latitude": [
                 32
@@ -130885,6 +130927,9 @@ export default {
             "status": [
                 1637
             ],
+            "substitutes_enabled": [
+                6
+            ],
             "__typename": [
                 85
             ]
@@ -130894,6 +130939,9 @@ export default {
                 41
             ],
             "check_in_opens_before_minutes": [
+                41
+            ],
+            "current_stage": [
                 41
             ],
             "latitude": [
@@ -130972,6 +131020,9 @@ export default {
             "check_in_opens_before_minutes": [
                 32
             ],
+            "current_stage": [
+                41
+            ],
             "latitude": [
                 32
             ],
@@ -131033,6 +131084,9 @@ export default {
             "check_in_opens_before_minutes": [
                 32
             ],
+            "current_stage": [
+                41
+            ],
             "latitude": [
                 32
             ],
@@ -131093,6 +131147,9 @@ export default {
             ],
             "check_in_opens_before_minutes": [
                 32
+            ],
+            "current_stage": [
+                41
             ],
             "latitude": [
                 32
