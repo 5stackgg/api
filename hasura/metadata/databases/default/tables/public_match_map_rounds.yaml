@@ -56,6 +56,12 @@ select_permissions:
         match_map:
           status:
             _in:
+              - Knife
+              - Live
+              - Paused
+              - Overtime
+              - WaitingForTV
+              - UploadingDemo
               - Finished
               - Surrendered
     comment: ""
