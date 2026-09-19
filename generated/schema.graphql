@@ -27540,6 +27540,14 @@ input jsonb_comparison_exp {
   _has_keys_any: [String!]
   _in: [jsonb!]
   _is_null: Boolean
+
+  """does the jsonpath return any item for the specified JSON value"""
+  _jsonb_path_exists: String
+
+  """
+  does the jsonpath predicate check return true for the specified JSON value
+  """
+  _jsonb_path_match: String
   _lt: jsonb
   _lte: jsonb
   _neq: jsonb
@@ -121429,9 +121437,6 @@ type tournaments {
     """filter the rows returned"""
     where: tournament_prizes_bool_exp
   ): tournament_prizes_aggregate!
-
-  """Preferred server regions for hosted matches"""
-  regions: [String!]!
   registration_type: e_tournament_registration_types_enum!
 
   """
@@ -121878,7 +121883,6 @@ input tournaments_bool_exp {
   player_stats_aggregate: v_tournament_player_stats_aggregate_bool_exp
   prizes: tournament_prizes_bool_exp
   prizes_aggregate: tournament_prizes_aggregate_bool_exp
-  regions: String_array_comparison_exp
   registration_type: e_tournament_registration_types_enum_comparison_exp
   registration_unlocked: Boolean_comparison_exp
   results: v_team_tournament_results_bool_exp
@@ -121992,9 +121996,6 @@ input tournaments_insert_input {
   organizers: tournament_organizers_arr_rel_insert_input
   player_stats: v_tournament_player_stats_arr_rel_insert_input
   prizes: tournament_prizes_arr_rel_insert_input
-
-  """Preferred server regions for hosted matches"""
-  regions: [String!]
   registration_type: e_tournament_registration_types_enum
   results: v_team_tournament_results_arr_rel_insert_input
   rosters: tournament_team_roster_arr_rel_insert_input
@@ -122060,9 +122061,6 @@ type tournaments_max_fields {
   missed_check_in_count: Int
   name: String
   organizer_steam_id: bigint
-
-  """Preferred server regions for hosted matches"""
-  regions: [String!]
   scheduling_mode: String
   start: timestamptz
 }
@@ -122099,9 +122097,6 @@ input tournaments_max_order_by {
   min_elo: order_by
   name: order_by
   organizer_steam_id: order_by
-
-  """Preferred server regions for hosted matches"""
-  regions: order_by
   scheduling_mode: order_by
   start: order_by
 }
@@ -122156,9 +122151,6 @@ type tournaments_min_fields {
   missed_check_in_count: Int
   name: String
   organizer_steam_id: bigint
-
-  """Preferred server regions for hosted matches"""
-  regions: [String!]
   scheduling_mode: String
   start: timestamptz
 }
@@ -122195,9 +122187,6 @@ input tournaments_min_order_by {
   min_elo: order_by
   name: order_by
   organizer_steam_id: order_by
-
-  """Preferred server regions for hosted matches"""
-  regions: order_by
   scheduling_mode: order_by
   start: order_by
 }
@@ -122308,7 +122297,6 @@ input tournaments_order_by {
   organizers_aggregate: tournament_organizers_aggregate_order_by
   player_stats_aggregate: v_tournament_player_stats_aggregate_order_by
   prizes_aggregate: tournament_prizes_aggregate_order_by
-  regions: order_by
   registration_type: order_by
   registration_unlocked: order_by
   results_aggregate: v_team_tournament_results_aggregate_order_by
@@ -122458,9 +122446,6 @@ enum tournaments_select_column {
 
   """column name"""
   organizer_steam_id
-
-  """column name"""
-  regions
 
   """column name"""
   registration_type
@@ -122753,9 +122738,6 @@ input tournaments_set_input {
   min_role: e_player_roles_enum
   name: String
   organizer_steam_id: bigint
-
-  """Preferred server regions for hosted matches"""
-  regions: [String!]
   registration_type: e_tournament_registration_types_enum
   scheduling_mode: String
   start: timestamptz
@@ -122965,9 +122947,6 @@ input tournaments_stream_cursor_value_input {
   min_role: e_player_roles_enum
   name: String
   organizer_steam_id: bigint
-
-  """Preferred server regions for hosted matches"""
-  regions: [String!]
   registration_type: e_tournament_registration_types_enum
   scheduling_mode: String
   start: timestamptz
@@ -123155,9 +123134,6 @@ enum tournaments_update_column {
 
   """column name"""
   organizer_steam_id
-
-  """column name"""
-  regions
 
   """column name"""
   registration_type
