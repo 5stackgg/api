@@ -261,7 +261,6 @@ insert_permissions:
         - max_elo
         - min_elo
         - min_role
-        - regions
         - registration_type
     comment: ""
   - role: tournament_organizer
@@ -318,7 +317,6 @@ insert_permissions:
         - max_elo
         - min_elo
         - min_role
-        - regions
         - registration_type
     comment: ""
 select_permissions:
@@ -352,7 +350,6 @@ select_permissions:
         - max_elo
         - min_elo
         - min_role
-        - regions
         - registration_type
       computed_fields:
         - can_cancel
@@ -427,7 +424,6 @@ select_permissions:
         - max_elo
         - min_elo
         - min_role
-        - regions
         - registration_type
       computed_fields:
         - can_cancel
@@ -488,7 +484,6 @@ select_permissions:
         - max_elo
         - min_elo
         - min_role
-        - regions
         - registration_type
       computed_fields:
         - can_cancel
@@ -562,7 +557,6 @@ update_permissions:
         - max_elo
         - min_elo
         - min_role
-        - regions
         - registration_type
       filter:
         is_organizer:
@@ -596,7 +590,6 @@ update_permissions:
         - max_elo
         - min_elo
         - min_role
-        - regions
         - registration_type
       filter:
         is_organizer:
