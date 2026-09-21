@@ -71,6 +71,13 @@ array_relationships:
         table:
           name: draft_games
           schema: public
+  - name: event_links
+    using:
+      foreign_key_constraint_on:
+        column: match_id
+        table:
+          name: event_match_links
+          schema: public
   - name: map_veto_picks
     using:
       foreign_key_constraint_on:
