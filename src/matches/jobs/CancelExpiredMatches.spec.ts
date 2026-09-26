@@ -373,6 +373,36 @@ describe("CancelExpiredMatches", () => {
       expect(penalised).not.toContain("showed-up");
     });
 
+    it("does not penalise the benched substitute of a side that showed up in full", async () => {
+      tournamentMatches = [
+        expiredTournamentMatch({
+          is_tournament_match: false,
+          options: { match_mode: "auto", type: "Wingman" },
+          lineup_1: {
+            id: "lineup-1",
+            is_ready: true,
+            lineup_players: [
+              { steam_id: "starter-a", is_connected: true },
+              { steam_id: "starter-b", is_connected: true },
+              { steam_id: "benched-sub", is_connected: false },
+            ],
+          },
+          lineup_2: {
+            id: "lineup-2",
+            is_ready: false,
+            lineup_players: [
+              { steam_id: "showed-up", is_connected: true },
+              { steam_id: "no-show", is_connected: false },
+            ],
+          },
+        }),
+      ];
+
+      await job.process();
+
+      expect(abandonedFor()).toEqual(["no-show"]);
+    });
+
     it("penalises nobody when no server was ever assigned", async () => {
       tournamentMatches = [
         expiredTournamentMatch({

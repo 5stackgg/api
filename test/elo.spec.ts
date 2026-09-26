@@ -90,9 +90,13 @@ describe("ELO engine (SQL-driven)", () => {
   const wingman = async (
     teamA: Array<string>,
     teamB: Array<string>,
-    { winner = "a", endedDaysAgo = 1 }: { winner?: "a" | "b"; endedDaysAgo?: number } = {},
+    {
+      winner = "a",
+      endedDaysAgo = 1,
+      substitutes = 0,
+    }: { winner?: "a" | "b"; endedDaysAgo?: number; substitutes?: number } = {},
   ) => {
-    const match = await fx.match({ type: "Wingman" });
+    const match = await fx.match({ type: "Wingman", substitutes });
     for (const steamId of teamA) {
       await fx.lineupPlayer(match.lineup_1_id, steamId);
     }
@@ -397,6 +401,107 @@ describe("ELO engine (SQL-driven)", () => {
     expect(Math.abs(Number(fightingLoser.change))).toBeLessThan(
       Math.abs(Number(silentLoser.change)),
     );
+  });
+
+  describe("substitutes", () => {
+    const mapFor = async (matchId: string) => {
+      const [existing] = await postgres.query<Array<{ id: string }>>(
+        `SELECT id FROM match_maps WHERE match_id = $1 ORDER BY "order" LIMIT 1`,
+        [matchId],
+      );
+      if (existing) {
+        return { matchId, mapId: existing.id };
+      }
+      const [map] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO match_maps (match_id, map_id, "order")
+         SELECT $1, id, 1 FROM maps ORDER BY name LIMIT 1 RETURNING id`,
+        [matchId],
+      );
+      return { matchId, mapId: map.id };
+    };
+
+    it("does not rate a substitute who never played", async () => {
+      const [a, b, sub, c, d] = await fx.players(5);
+      await seedRatings({
+        [a]: 5000,
+        [b]: 5000,
+        [sub]: 9000,
+        [c]: 5000,
+        [d]: 5000,
+      });
+      const match = await wingman([a, b, sub], [c, d], { substitutes: 1 });
+      const ctx = await mapFor(match.id);
+      await fx.kill(ctx, a, c);
+      await fx.kill(ctx, b, d);
+
+      expect(await generate(match.id)).toBe(4);
+
+      const rows = await eloRows(match.id);
+      expect(rows.map((r) => r.steam_id).sort()).toEqual([a, b, c, d].sort());
+
+      // The benched 9000 must not drag the team average up either.
+      const rated = rows.find((r) => r.steam_id === a)!;
+      expect(Number(rated.rating_for_expected)).toBeCloseTo(5000);
+    });
+
+    it("rates a substitute who came in and played", async () => {
+      const [a, b, sub, c, d] = await fx.players(5);
+      const match = await wingman([a, b, sub], [c, d], { substitutes: 1 });
+      const ctx = await mapFor(match.id);
+      await fx.kill(ctx, a, c);
+      await fx.kill(ctx, c, sub, { round: 2 });
+
+      await generate(match.id);
+
+      const steamIds = (await eloRows(match.id)).map((r) => r.steam_id);
+      expect(steamIds).toContain(sub);
+      expect(steamIds).toContain(a);
+      expect(steamIds).toContain(c);
+    });
+
+    it("still penalises a player who abandoned without ever playing", async () => {
+      await postgres.query(
+        "DELETE FROM settings WHERE name = 'leaver_elo_penalty'",
+      );
+      const [a, b, c, d] = await fx.players(4);
+      const match = await wingman([a, b], [c, d]);
+      const ctx = await mapFor(match.id);
+      await fx.kill(ctx, a, c);
+      await fx.kill(ctx, b, c, { round: 2 });
+      await postgres.query(
+        "INSERT INTO abandoned_matches (steam_id, match_id) VALUES ($1, $2)",
+        [d, match.id],
+      );
+      await generate(match.id);
+
+      const leaver = (await eloRows(match.id)).find((r) => r.steam_id === d)!;
+      expect(Number(leaver.change)).toBe(-150);
+    });
+
+    it("still rates against a lineup of unlinked placeholders", async () => {
+      const [a, b] = await fx.players(2);
+      const match = await wingman([a, b], []);
+      for (const name of ["ghost-1", "ghost-2"]) {
+        await postgres.query(
+          `INSERT INTO match_lineup_players (match_lineup_id, discord_id, placeholder_name)
+           VALUES ($1, $2, $2)`,
+          [match.lineup_2_id, name],
+        );
+      }
+
+      expect(await generate(match.id)).toBe(2);
+
+      const rows = await eloRows(match.id);
+      expect(rows.every((r) => r.expected_score !== null)).toBe(true);
+      expect(rows.every((r) => Number(r.change) > 0)).toBe(true);
+    });
+
+    it("keeps a whole lineup rated when nothing was recorded against it", async () => {
+      const [a, b, sub, c, d] = await fx.players(5);
+      const match = await wingman([a, b, sub], [c, d], { substitutes: 1 });
+
+      expect(await generate(match.id)).toBe(5);
+    });
   });
 
   describe("abandon penalty", () => {

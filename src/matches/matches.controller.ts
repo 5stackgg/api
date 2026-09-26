@@ -50,6 +50,7 @@ import { PlayerEloRecomputeService } from "./player-elo-recompute.service";
 import { BackfillSeasonElo } from "./jobs/BackfillSeasonElo";
 import { SeasonEloBackfillService } from "./season-elo-backfill.service";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
+import { StopMatchBroadcast } from "./jobs/StopMatchBroadcast";
 import { S3Service } from "src/s3/s3.service";
 import { ChatService } from "src/chat/chat.service";
 import { ChatLobbyType } from "src/chat/enums/ChatLobbyTypes";
@@ -85,6 +86,16 @@ export class MatchesController {
   ];
 
   private static readonly BLOCKING_RESET_STATUSES: string[] = ["Live", "Veto"];
+
+  // Viewers of an ended match are still watching it play out: the relay syncs
+  // clients 7 fragments behind the newest one, and the stream adds its own
+  // encode/playout latency on top.
+  private static readonly BROADCAST_END_GRACE_SECONDS = 30;
+
+  // The plugin reports Finished and Surrendered only once it has waited out
+  // tv_delay, so the feed has already caught up. These land in real time, a
+  // whole tv_delay ahead of what the feed is showing.
+  private static readonly REAL_TIME_END_STATUSES: string[] = ["Forfeit", "Tie"];
 
   // A DELETE carries the row in `old` and an UPDATE in `new`, and a voice
   // channel is per lineup rather than per match.
@@ -797,21 +808,7 @@ export class MatchesController {
       data.op === "DELETE" ||
       MatchesController.TERMINAL_STATUSES.includes(status)
     ) {
-      try {
-        if (data.op === "DELETE") {
-          await this.gameStreamer.stopLive(matchId);
-        } else {
-          await this.gameStreamer.stopLiveIfRunning(matchId);
-        }
-      } catch (error) {
-        this.logger.error(
-          `[${matchId}] failed to stop live stream on match end: ${
-            (error as Error)?.message
-          }`,
-        );
-      }
-
-      this.matchRelayService.removeBroadcast(matchId);
+      await this.endMatchBroadcast(data, matchId);
       await this.removeDiscordIntegration(matchId);
       await this.matchmaking.cancelMatchMakingByMatchId(matchId);
       await this.releaseScrimScheduledNotifications(matchId);
@@ -936,6 +933,88 @@ export class MatchesController {
     }
 
     return null;
+  }
+
+  private async endMatchBroadcast(
+    data: HasuraEventData<matches_set_input>,
+    matchId: string,
+  ) {
+    const delay = await this.broadcastEndDelaySeconds(data);
+
+    let scheduled = false;
+    if (delay) {
+      try {
+        await this.scheduledMatchesQueue.add(
+          StopMatchBroadcast.name,
+          { matchId },
+          MatchesController.stopOnDemandServerJobOptions(delay),
+        );
+        scheduled = true;
+      } catch (error) {
+        this.logger.error(
+          `[${matchId}] failed to schedule the broadcast stop: ${
+            (error as Error)?.message
+          }`,
+        );
+      }
+    }
+
+    try {
+      if (data.op === "DELETE") {
+        await this.gameStreamer.stopLive(matchId);
+      } else if (
+        !scheduled ||
+        // A live-mode stream watches the game port, not the delayed TV feed.
+        (await this.gameStreamer.getLiveStreamMode(matchId)) === "live"
+      ) {
+        await this.gameStreamer.stopLiveIfRunning(matchId);
+      }
+    } catch (error) {
+      this.logger.error(
+        `[${matchId}] failed to stop live stream on match end: ${
+          (error as Error)?.message
+        }`,
+      );
+    }
+
+    if (!scheduled) {
+      this.matchRelayService.removeBroadcast(matchId);
+    }
+  }
+
+  private async broadcastEndDelaySeconds(
+    data: HasuraEventData<matches_set_input>,
+  ): Promise<number> {
+    if (data.op === "DELETE" || data.new.status === "Canceled") {
+      return 0;
+    }
+
+    if (!MatchesController.REAL_TIME_END_STATUSES.includes(data.new.status)) {
+      return MatchesController.BROADCAST_END_GRACE_SECONDS;
+    }
+
+    try {
+      const { match_options_by_pk: matchOptions } = await this.hasura.query({
+        match_options_by_pk: {
+          __args: {
+            id: data.new.match_options_id,
+          },
+          tv_delay: true,
+        },
+      });
+
+      return (
+        (matchOptions?.tv_delay ?? 0) +
+        MatchesController.BROADCAST_END_GRACE_SECONDS
+      );
+    } catch (error) {
+      this.logger.error(
+        `[${data.new.id}] failed to read tv_delay for the broadcast stop: ${
+          (error as Error)?.message
+        }`,
+      );
+      return MatchesController.BROADCAST_END_GRACE_SECONDS;
+    }
   }
 
   private static stopOnDemandServerJobOptions(delaySeconds = 0) {

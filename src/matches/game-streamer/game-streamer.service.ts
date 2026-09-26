@@ -1865,7 +1865,9 @@ export class GameStreamerService {
     }
   }
 
-  public async stopLiveIfRunning(matchId: string) {
+  public async getLiveStreamMode(
+    matchId: string,
+  ): Promise<"live" | "tv" | null> {
     const { match_streams } = await this.hasura.query({
       match_streams: {
         __args: {
@@ -1875,15 +1877,24 @@ export class GameStreamerService {
           },
           limit: 1,
         },
-        id: true,
+        mode: true,
       },
     });
 
     if (!match_streams?.length) {
-      return;
+      return null;
+    }
+
+    return match_streams[0].mode === "tv" ? "tv" : "live";
+  }
+
+  public async stopLiveIfRunning(matchId: string): Promise<boolean> {
+    if (!(await this.getLiveStreamMode(matchId))) {
+      return false;
     }
 
     await this.stopLive(matchId);
+    return true;
   }
 
   public async switchLive(

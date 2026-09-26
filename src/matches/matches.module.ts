@@ -64,6 +64,7 @@ import { BackfillSeasonElo } from "./jobs/BackfillSeasonElo";
 import { SeasonEloBackfillService } from "./season-elo-backfill.service";
 import { PostgresService } from "src/postgres/postgres.service";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
+import { StopMatchBroadcast } from "./jobs/StopMatchBroadcast";
 import { ReconcileOnDemandServerJobs } from "./jobs/ReconcileOnDemandServerJobs";
 import { MatchRelayController } from "./match-relay/match-relay.controller";
 import { MatchRelayService } from "./match-relay/match-relay.service";
@@ -188,6 +189,7 @@ import { CameraMonitorService } from "./camera/camera-monitor.service";
     CheckForScheduledMatches,
     RemoveCancelledMatches,
     StopOnDemandServer,
+    StopMatchBroadcast,
     ReconcileOnDemandServerJobs,
     CancelInvalidTournaments,
     CleanAbandonedMatches,
