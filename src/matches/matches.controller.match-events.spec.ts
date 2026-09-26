@@ -15,7 +15,8 @@ describe("MatchesController — match_events on-demand servers", () => {
   let discordBotMessaging: { removeMatchChannel: jest.Mock };
   let utilityPractice: Record<string, jest.Mock>;
   let gameStreamer: Record<string, jest.Mock>;
-  let matchRelay: { removeBroadcast: jest.Mock };
+  let matchRelay: { removeBroadcast: jest.Mock; playoutSeconds: jest.Mock };
+  let inPlayMaps: Array<{ id: string }>;
   let servers: Record<
     string,
     {
@@ -85,6 +86,12 @@ describe("MatchesController — match_events on-demand servers", () => {
             servers_by_pk: servers[request.servers_by_pk.__args.id] ?? null,
           };
         }
+        if (request.match_maps) {
+          return {
+            match_maps: inPlayMaps,
+            match_options_by_pk: { tv_delay: 30 },
+          };
+        }
         if (request.match_options_by_pk) {
           return { match_options_by_pk: { tv_delay: 30 } };
         }
@@ -119,7 +126,11 @@ describe("MatchesController — match_events on-demand servers", () => {
         promoted: [] as string[],
       })),
     };
-    matchRelay = { removeBroadcast: jest.fn() };
+    matchRelay = {
+      removeBroadcast: jest.fn(),
+      playoutSeconds: jest.fn(() => 0),
+    };
+    inPlayMaps = [];
 
     controller = new MatchesController(
       { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
@@ -420,7 +431,9 @@ describe("MatchesController — match_events on-demand servers", () => {
         } as any)
         .catch((): void => undefined);
 
-    it("keeps a TV stream and the relay up until the delayed feed catches up", async () => {
+    const broadcastStopDelay = () => broadcastStopJobs()[0][2].delay;
+
+    it("keeps a TV stream up until the plugin stops the TV", async () => {
       await finish();
 
       expect(gameStreamer.stopLive).not.toHaveBeenCalled();
@@ -428,22 +441,52 @@ describe("MatchesController — match_events on-demand servers", () => {
       expect(matchRelay.removeBroadcast).not.toHaveBeenCalled();
 
       expect(broadcastStopJobs()).toHaveLength(1);
-      const [[, data, options]] = broadcastStopJobs();
+      const [[, data]] = broadcastStopJobs();
       expect(data).toEqual({ matchId: "match-1" });
-      // Finished only lands once the plugin has waited out tv_delay, so what
-      // is left is the viewers' playback lag, not another tv_delay.
-      expect(options.delay).toBe(30 * 1000);
+      // The plugin already waited out tv_delay before finishing the map, and
+      // runs tv_stop 5s later.
+      expect(broadcastStopDelay()).toBe(5 * 1000);
     });
 
-    it("waits out tv_delay as well when the match is forfeited mid-game", async () => {
-      await controller.match_events({
-        op: "UPDATE",
-        old: row({ status: "Live" }),
-        new: row({ status: "Forfeit" }),
-      } as any);
+    it("lets relay viewers play out what they had buffered", async () => {
+      matchRelay.playoutSeconds.mockReturnValue(24);
 
+      await finish();
+
+      expect(matchRelay.playoutSeconds).toHaveBeenCalledWith("match-1");
+      expect(broadcastStopDelay()).toBe((5 + 24) * 1000);
+    });
+
+    it("waits out tv_delay when an organizer ends the match mid-map", async () => {
+      // A forfeit with a winner is stored as Finished, so only the map still
+      // being played gives away that the TV feed is behind.
+      inPlayMaps = [{ id: "map-1" }];
+
+      await finish();
+
+      expect(broadcastStopDelay()).toBe(30 * 1000);
+    });
+
+    it("adds the relay play-out on top of tv_delay mid-map", async () => {
+      inPlayMaps = [{ id: "map-1" }];
+      matchRelay.playoutSeconds.mockReturnValue(24);
+
+      await finish();
+
+      expect(broadcastStopDelay()).toBe((30 + 24) * 1000);
+    });
+
+    it("schedules the stop once, not on every later update", async () => {
+      await controller
+        .match_events({
+          op: "UPDATE",
+          old: row({ status: "Finished" }),
+          new: row({ status: "Finished", server_id: null }),
+        } as any)
+        .catch((): void => undefined);
+
+      expect(broadcastStopJobs()).toHaveLength(0);
       expect(gameStreamer.stopLiveIfRunning).not.toHaveBeenCalled();
-      expect(broadcastStopJobs()[0][2].delay).toBe((30 + 30) * 1000);
     });
 
     it("stops a live-mode stream straight away but still waits on the relay", async () => {

@@ -31,6 +31,7 @@ import {
   match_lineup_players_set_input,
   e_notification_types_enum,
   e_player_roles_enum,
+  e_match_map_status_enum,
 } from "../../generated";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "src/configs/types/AppConfig";
@@ -87,15 +88,20 @@ export class MatchesController {
 
   private static readonly BLOCKING_RESET_STATUSES: string[] = ["Live", "Veto"];
 
-  // Viewers of an ended match are still watching it play out: the relay syncs
-  // clients 7 fragments behind the newest one, and the stream adds its own
-  // encode/playout latency on top.
-  private static readonly BROADCAST_END_GRACE_SECONDS = 30;
+  // When the plugin ends a map itself it has already waited out tv_delay, so the
+  // TV feed has caught up; it then runs tv_stop 5s after marking the map
+  // Finished (delayChangeMap(5) in the game-server plugin).
+  private static readonly PLUGIN_TV_STOP_SECONDS = 5;
 
-  // The plugin reports Finished and Surrendered only once it has waited out
-  // tv_delay, so the feed has already caught up. These land in real time, a
-  // whole tv_delay ahead of what the feed is showing.
-  private static readonly REAL_TIME_END_STATUSES: string[] = ["Forfeit", "Tie"];
+  // A map still in one of these when the match ends was cut short from outside
+  // the plugin (an organizer forfeit, tie or winner), so the TV feed is still a
+  // whole tv_delay behind.
+  private static readonly IN_PLAY_MAP_STATUSES: e_match_map_status_enum[] = [
+    "Knife",
+    "Live",
+    "Overtime",
+    "Paused",
+  ];
 
   // A DELETE carries the row in `old` and an UPDATE in `new`, and a voice
   // channel is per lineup rather than per match.
@@ -939,7 +945,14 @@ export class MatchesController {
     data: HasuraEventData<matches_set_input>,
     matchId: string,
   ) {
-    const delay = await this.broadcastEndDelaySeconds(data);
+    if (
+      data.op !== "DELETE" &&
+      MatchesController.TERMINAL_STATUSES.includes(data.old?.status)
+    ) {
+      return;
+    }
+
+    const delay = await this.broadcastEndDelaySeconds(data, matchId);
 
     let scheduled = false;
     if (delay) {
@@ -982,19 +995,30 @@ export class MatchesController {
     }
   }
 
+  // Seconds until TV viewers have seen the end of the match: until the TV feed
+  // runs out, plus however long relay clients keep playing what they buffered.
   private async broadcastEndDelaySeconds(
     data: HasuraEventData<matches_set_input>,
+    matchId: string,
   ): Promise<number> {
     if (data.op === "DELETE" || data.new.status === "Canceled") {
       return 0;
     }
 
-    if (!MatchesController.REAL_TIME_END_STATUSES.includes(data.new.status)) {
-      return MatchesController.BROADCAST_END_GRACE_SECONDS;
-    }
+    let feedEndsIn = MatchesController.PLUGIN_TV_STOP_SECONDS;
 
     try {
-      const { match_options_by_pk: matchOptions } = await this.hasura.query({
+      const { match_maps, match_options_by_pk } = await this.hasura.query({
+        match_maps: {
+          __args: {
+            where: {
+              match_id: { _eq: matchId },
+              status: { _in: MatchesController.IN_PLAY_MAP_STATUSES },
+            },
+            limit: 1,
+          },
+          id: true,
+        },
         match_options_by_pk: {
           __args: {
             id: data.new.match_options_id,
@@ -1003,18 +1027,18 @@ export class MatchesController {
         },
       });
 
-      return (
-        (matchOptions?.tv_delay ?? 0) +
-        MatchesController.BROADCAST_END_GRACE_SECONDS
-      );
+      if (match_maps.length > 0) {
+        feedEndsIn = match_options_by_pk?.tv_delay ?? 0;
+      }
     } catch (error) {
       this.logger.error(
-        `[${data.new.id}] failed to read tv_delay for the broadcast stop: ${
+        `[${matchId}] failed to check how far behind the TV feed is: ${
           (error as Error)?.message
         }`,
       );
-      return MatchesController.BROADCAST_END_GRACE_SECONDS;
     }
+
+    return feedEndsIn + this.matchRelayService.playoutSeconds(matchId);
   }
 
   private static stopOnDemandServerJobOptions(delaySeconds = 0) {
