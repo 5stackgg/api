@@ -1865,7 +1865,9 @@ export class GameStreamerService {
     }
   }
 
-  public async stopLiveIfRunning(matchId: string) {
+  public async getLiveStreamMode(
+    matchId: string,
+  ): Promise<"live" | "tv" | null> {
     const { match_streams } = await this.hasura.query({
       match_streams: {
         __args: {
@@ -1875,15 +1877,24 @@ export class GameStreamerService {
           },
           limit: 1,
         },
-        id: true,
+        mode: true,
       },
     });
 
     if (!match_streams?.length) {
-      return;
+      return null;
+    }
+
+    return match_streams[0].mode === "tv" ? "tv" : "live";
+  }
+
+  public async stopLiveIfRunning(matchId: string): Promise<boolean> {
+    if (!(await this.getLiveStreamMode(matchId))) {
+      return false;
     }
 
     await this.stopLive(matchId);
+    return true;
   }
 
   public async switchLive(
@@ -3092,38 +3103,15 @@ export class GameStreamerService {
       `[${matchId}] reportStatus ${isEvent ? "event" : "status"}=${status}${progressNote} updated=${updated}`,
     );
 
+    // The row is inserted before the pod exists (claimGpuForLive) and only goes
+    // away when the stream is stopped or switched to another match, so a report
+    // with no row is from a pod on its way out. Re-creating the row would put a
+    // dead player back on the match page.
     if (updated === 0) {
       this.logger.log(
-        `[${matchId}] no existing row — falling back to delete + insert`,
+        `[${matchId}] no stream row — ignoring status from a stopped streamer`,
       );
-      await this.hasura.mutation({
-        delete_match_streams: {
-          __args: {
-            where: {
-              match_id: { _eq: matchId },
-              is_game_streamer: { _eq: true },
-            },
-          },
-          affected_rows: true,
-        },
-        insert_match_streams_one: {
-          __args: {
-            object: {
-              match_id: matchId,
-              title: GAME_STREAMER_TITLE,
-              link: `${this.appConfig.gameStreamDomain}/${matchId}/`,
-              priority: 0,
-              is_game_streamer: true,
-              // Seed `status` first: an event omits it from setClause, and a
-              // brand-new row is better off with the reported stage than null.
-              status,
-              ...setClause,
-            },
-          },
-          id: true,
-        },
-      });
-      this.logger.log(`[${matchId}] inserted new match_streams row`);
+      return;
     }
 
     if (status === "live") {

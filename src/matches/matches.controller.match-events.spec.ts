@@ -14,6 +14,9 @@ describe("MatchesController — match_events on-demand servers", () => {
   let scheduledMatchesQueue: { add: jest.Mock };
   let discordBotMessaging: { removeMatchChannel: jest.Mock };
   let utilityPractice: Record<string, jest.Mock>;
+  let gameStreamer: Record<string, jest.Mock>;
+  let matchRelay: { removeBroadcast: jest.Mock; playoutSeconds: jest.Mock };
+  let inPlayMaps: Array<{ id: string }>;
   let servers: Record<
     string,
     {
@@ -27,6 +30,11 @@ describe("MatchesController — match_events on-demand servers", () => {
   const stopJobs = () =>
     scheduledMatchesQueue.add.mock.calls.filter(
       ([name]) => name === "StopOnDemandServer",
+    );
+
+  const broadcastStopJobs = () =>
+    scheduledMatchesQueue.add.mock.calls.filter(
+      ([name]) => name === "StopMatchBroadcast",
     );
 
   const row = (overrides: Record<string, unknown> = {}) => ({
@@ -78,6 +86,12 @@ describe("MatchesController — match_events on-demand servers", () => {
             servers_by_pk: servers[request.servers_by_pk.__args.id] ?? null,
           };
         }
+        if (request.match_maps) {
+          return {
+            match_maps: inPlayMaps,
+            match_options_by_pk: { tv_delay: 30 },
+          };
+        }
         if (request.match_options_by_pk) {
           return { match_options_by_pk: { tv_delay: 30 } };
         }
@@ -104,6 +118,19 @@ describe("MatchesController — match_events on-demand servers", () => {
       evictForMatch: jest.fn(async (): Promise<void> => undefined),
       markEndedForMatch: jest.fn(),
     };
+    gameStreamer = {
+      stopLive: jest.fn(),
+      stopLiveIfRunning: jest.fn(),
+      getLiveStreamMode: jest.fn(async (): Promise<string | null> => "tv"),
+      promotePendingLiveStreams: jest.fn(async () => ({
+        promoted: [] as string[],
+      })),
+    };
+    matchRelay = {
+      removeBroadcast: jest.fn(),
+      playoutSeconds: jest.fn(() => 0),
+    };
+    inPlayMaps = [];
 
     controller = new MatchesController(
       { log: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
@@ -130,18 +157,12 @@ describe("MatchesController — match_events on-demand servers", () => {
       { add: jest.fn(async (): Promise<void> => undefined) } as any,
       scheduledMatchesQueue as any,
       {} as any,
-      { removeBroadcast: jest.fn() } as any,
+      matchRelay as any,
       {
         createMatchVoiceChannels: jest.fn(),
         movePlayersToMatchChannels: jest.fn(),
       } as any,
-      {
-        stopLive: jest.fn(),
-        stopLiveIfRunning: jest.fn(),
-        promotePendingLiveStreams: jest.fn(async () => ({
-          promoted: [] as string[],
-        })),
-      } as any,
+      gameStreamer as any,
       {} as any,
       { resumeAllPausedBatches: jest.fn() } as any,
       {} as any,
@@ -397,6 +418,122 @@ describe("MatchesController — match_events on-demand servers", () => {
       } as any);
 
       expect(stopJobs()).toHaveLength(1);
+    });
+  });
+
+  describe("the broadcast of a match that ends", () => {
+    const finish = () =>
+      controller
+        .match_events({
+          op: "UPDATE",
+          old: row({ status: "Live" }),
+          new: row({ status: "Finished" }),
+        } as any)
+        .catch((): void => undefined);
+
+    const broadcastStopDelay = () => broadcastStopJobs()[0][2].delay;
+
+    it("keeps a TV stream up until the plugin stops the TV", async () => {
+      await finish();
+
+      expect(gameStreamer.stopLive).not.toHaveBeenCalled();
+      expect(gameStreamer.stopLiveIfRunning).not.toHaveBeenCalled();
+      expect(matchRelay.removeBroadcast).not.toHaveBeenCalled();
+
+      expect(broadcastStopJobs()).toHaveLength(1);
+      const [[, data]] = broadcastStopJobs();
+      expect(data).toEqual({ matchId: "match-1" });
+      // The plugin already waited out tv_delay before finishing the map, and
+      // runs tv_stop 5s later.
+      expect(broadcastStopDelay()).toBe(5 * 1000);
+    });
+
+    it("lets relay viewers play out what they had buffered", async () => {
+      matchRelay.playoutSeconds.mockReturnValue(24);
+
+      await finish();
+
+      expect(matchRelay.playoutSeconds).toHaveBeenCalledWith("match-1");
+      expect(broadcastStopDelay()).toBe((5 + 24) * 1000);
+    });
+
+    it("waits out tv_delay when an organizer ends the match mid-map", async () => {
+      // A forfeit with a winner is stored as Finished, so only the map still
+      // being played gives away that the TV feed is behind.
+      inPlayMaps = [{ id: "map-1" }];
+
+      await finish();
+
+      expect(broadcastStopDelay()).toBe(30 * 1000);
+    });
+
+    it("adds the relay play-out on top of tv_delay mid-map", async () => {
+      inPlayMaps = [{ id: "map-1" }];
+      matchRelay.playoutSeconds.mockReturnValue(24);
+
+      await finish();
+
+      expect(broadcastStopDelay()).toBe((30 + 24) * 1000);
+    });
+
+    it("schedules the stop once, not on every later update", async () => {
+      await controller
+        .match_events({
+          op: "UPDATE",
+          old: row({ status: "Finished" }),
+          new: row({ status: "Finished", server_id: null }),
+        } as any)
+        .catch((): void => undefined);
+
+      expect(broadcastStopJobs()).toHaveLength(0);
+      expect(gameStreamer.stopLiveIfRunning).not.toHaveBeenCalled();
+    });
+
+    it("stops a live-mode stream straight away but still waits on the relay", async () => {
+      gameStreamer.getLiveStreamMode.mockResolvedValue("live");
+
+      await finish();
+
+      expect(gameStreamer.stopLiveIfRunning).toHaveBeenCalledWith("match-1");
+      expect(matchRelay.removeBroadcast).not.toHaveBeenCalled();
+      expect(broadcastStopJobs()).toHaveLength(1);
+    });
+
+    it("tears down a canceled match straight away", async () => {
+      await controller.match_events({
+        op: "UPDATE",
+        old: row({ status: "Live" }),
+        new: row({ status: "Canceled" }),
+      } as any);
+
+      expect(gameStreamer.stopLiveIfRunning).toHaveBeenCalledWith("match-1");
+      expect(matchRelay.removeBroadcast).toHaveBeenCalledWith("match-1");
+      expect(broadcastStopJobs()).toHaveLength(0);
+    });
+
+    it("tears down a deleted match straight away", async () => {
+      await controller.match_events({
+        op: "DELETE",
+        old: row(),
+        new: {},
+      } as any);
+
+      expect(gameStreamer.stopLive).toHaveBeenCalledWith("match-1");
+      expect(matchRelay.removeBroadcast).toHaveBeenCalledWith("match-1");
+      expect(broadcastStopJobs()).toHaveLength(0);
+    });
+
+    it("tears down straight away when the delayed stop cannot be scheduled", async () => {
+      scheduledMatchesQueue.add.mockImplementation(async (name: string) => {
+        if (name === "StopMatchBroadcast") {
+          throw new Error("redis unavailable");
+        }
+      });
+
+      await finish();
+
+      expect(gameStreamer.stopLiveIfRunning).toHaveBeenCalledWith("match-1");
+      expect(matchRelay.removeBroadcast).toHaveBeenCalledWith("match-1");
     });
   });
 });

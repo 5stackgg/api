@@ -18,6 +18,60 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE;
 
+-- A lineup carries its substitutes whether or not they ever joined the server,
+-- so lineup membership alone cannot tell who played. Anything the game server
+-- recorded against a player in this match can.
+CREATE OR REPLACE FUNCTION public.player_has_match_activity(
+    _match_id UUID,
+    _steam_id BIGINT
+) RETURNS BOOLEAN AS $$
+    SELECT EXISTS (SELECT 1 FROM player_kills WHERE match_id = _match_id AND attacker_steam_id = _steam_id)
+        OR EXISTS (SELECT 1 FROM player_kills WHERE match_id = _match_id AND attacked_steam_id = _steam_id)
+        OR EXISTS (SELECT 1 FROM player_damages WHERE match_id = _match_id AND attacker_steam_id = _steam_id)
+        OR EXISTS (SELECT 1 FROM player_damages WHERE match_id = _match_id AND attacked_steam_id = _steam_id)
+        OR EXISTS (SELECT 1 FROM player_assists WHERE match_id = _match_id AND attacker_steam_id = _steam_id)
+        OR EXISTS (SELECT 1 FROM player_flashes WHERE match_id = _match_id AND attacker_steam_id = _steam_id)
+        OR EXISTS (SELECT 1 FROM player_utility WHERE match_id = _match_id AND attacker_steam_id = _steam_id)
+        OR EXISTS (SELECT 1 FROM player_objectives WHERE match_id = _match_id AND player_steam_id = _steam_id)
+        OR EXISTS (SELECT 1 FROM player_unused_utility WHERE match_id = _match_id AND player_steam_id = _steam_id);
+$$ LANGUAGE sql STABLE;
+
+-- The players a match is rated over: everyone who played, plus anyone who
+-- abandoned it so the leaver penalty still lands on a player who never
+-- connected. A lineup with no recorded activity at all (a no-show forfeit, a
+-- match whose events never arrived) keeps every member, since there is nothing
+-- to tell its players apart by.
+CREATE OR REPLACE FUNCTION public.match_elo_participants(
+    _match_id UUID
+) RETURNS TABLE (steam_id BIGINT, match_lineup_id UUID) AS $$
+    WITH lineup_players AS (
+        SELECT
+            mlp.steam_id AS player_steam_id,
+            mlp.match_lineup_id AS lineup_id,
+            public.player_has_match_activity(_match_id, mlp.steam_id) AS played
+        FROM matches m
+        JOIN match_lineup_players mlp
+            ON mlp.match_lineup_id IN (m.lineup_1_id, m.lineup_2_id)
+        WHERE m.id = _match_id
+          AND mlp.steam_id IS NOT NULL
+    )
+    SELECT DISTINCT lp.player_steam_id, lp.lineup_id
+    FROM lineup_players lp
+    WHERE lp.played
+       OR EXISTS (
+           SELECT 1
+           FROM abandoned_matches am
+           WHERE am.match_id = _match_id
+             AND am.steam_id = lp.player_steam_id
+       )
+       OR NOT EXISTS (
+           SELECT 1
+           FROM lineup_players teammate
+           WHERE teammate.lineup_id = lp.lineup_id
+             AND teammate.played
+       );
+$$ LANGUAGE sql STABLE;
+
 CREATE OR REPLACE FUNCTION get_player_elo_for_match(
     match_record public.matches,
     player_record public.players,
@@ -62,8 +116,13 @@ DECLARE
     _player_map_wins INT := 0;
     _player_map_losses INT := 0;
     _series_multiplier INT := 1;
+
+    _participants BIGINT[];
 BEGIN
     SELECT "type" INTO match_type FROM match_options WHERE id = match_record.match_options_id;
+
+    SELECT array_agg(mep.steam_id) INTO _participants
+    FROM public.match_elo_participants(match_record.id) mep;
 
     _seasons_enabled := seasons_enabled();
 
@@ -187,6 +246,7 @@ BEGIN
             match_lineup_players mlp
         WHERE
             mlp.match_lineup_id = _player_lineup_id
+            AND (mlp.steam_id IS NULL OR mlp.steam_id = ANY(_participants))
         GROUP BY
             mlp.steam_id
     ) AS team_elos;
@@ -241,6 +301,7 @@ BEGIN
             match_lineup_players mlp
         WHERE
             mlp.match_lineup_id = _opponent_lineup_id
+            AND (mlp.steam_id IS NULL OR mlp.steam_id = ANY(_participants))
         GROUP BY
             mlp.steam_id
     ) AS team_elos;
@@ -482,8 +543,7 @@ BEGIN
     FOR player_record IN
         SELECT DISTINCT p.*
         FROM players p
-        JOIN match_lineup_players mlp ON p.steam_id = mlp.steam_id
-        WHERE mlp.match_lineup_id IN (match_record.lineup_1_id, match_record.lineup_2_id)
+        JOIN public.match_elo_participants(_match_id) mep ON p.steam_id = mep.steam_id
     LOOP
         -- Calculate ELO change for this player in this match
         elo_data := get_player_elo_for_match(match_record, player_record, _season_id, _is_tournament);

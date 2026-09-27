@@ -289,5 +289,21 @@ describe("GameStreamerService", () => {
       expect(set.stream_url).toBeNull();
       expect(set.is_live).toBe(false);
     });
+
+    it("does not bring back the row of a stream that was stopped", async () => {
+      hasura.query.mockResolvedValueOnce({ match_streams: [] });
+      hasura.mutation.mockResolvedValueOnce({
+        update_match_streams: { affected_rows: 0 },
+      });
+
+      await service.reportStatus("match-1", { status: "live" });
+
+      expect(hasura.mutation).toHaveBeenCalledTimes(1);
+      expect(
+        hasura.mutation.mock.calls.some(
+          ([arg]: [any]) => arg.insert_match_streams_one,
+        ),
+      ).toBe(false);
+    });
   });
 });

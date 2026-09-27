@@ -31,6 +31,7 @@ import {
   match_lineup_players_set_input,
   e_notification_types_enum,
   e_player_roles_enum,
+  e_match_map_status_enum,
 } from "../../generated";
 import { ConfigService } from "@nestjs/config";
 import { AppConfig } from "src/configs/types/AppConfig";
@@ -50,6 +51,7 @@ import { PlayerEloRecomputeService } from "./player-elo-recompute.service";
 import { BackfillSeasonElo } from "./jobs/BackfillSeasonElo";
 import { SeasonEloBackfillService } from "./season-elo-backfill.service";
 import { StopOnDemandServer } from "./jobs/StopOnDemandServer";
+import { StopMatchBroadcast } from "./jobs/StopMatchBroadcast";
 import { S3Service } from "src/s3/s3.service";
 import { ChatService } from "src/chat/chat.service";
 import { ChatLobbyType } from "src/chat/enums/ChatLobbyTypes";
@@ -85,6 +87,21 @@ export class MatchesController {
   ];
 
   private static readonly BLOCKING_RESET_STATUSES: string[] = ["Live", "Veto"];
+
+  // When the plugin ends a map itself it has already waited out tv_delay, so the
+  // TV feed has caught up; it then runs tv_stop 5s after marking the map
+  // Finished (delayChangeMap(5) in the game-server plugin).
+  private static readonly PLUGIN_TV_STOP_SECONDS = 5;
+
+  // A map still in one of these when the match ends was cut short from outside
+  // the plugin (an organizer forfeit, tie or winner), so the TV feed is still a
+  // whole tv_delay behind.
+  private static readonly IN_PLAY_MAP_STATUSES: e_match_map_status_enum[] = [
+    "Knife",
+    "Live",
+    "Overtime",
+    "Paused",
+  ];
 
   // A DELETE carries the row in `old` and an UPDATE in `new`, and a voice
   // channel is per lineup rather than per match.
@@ -797,21 +814,7 @@ export class MatchesController {
       data.op === "DELETE" ||
       MatchesController.TERMINAL_STATUSES.includes(status)
     ) {
-      try {
-        if (data.op === "DELETE") {
-          await this.gameStreamer.stopLive(matchId);
-        } else {
-          await this.gameStreamer.stopLiveIfRunning(matchId);
-        }
-      } catch (error) {
-        this.logger.error(
-          `[${matchId}] failed to stop live stream on match end: ${
-            (error as Error)?.message
-          }`,
-        );
-      }
-
-      this.matchRelayService.removeBroadcast(matchId);
+      await this.endMatchBroadcast(data, matchId);
       await this.removeDiscordIntegration(matchId);
       await this.matchmaking.cancelMatchMakingByMatchId(matchId);
       await this.releaseScrimScheduledNotifications(matchId);
@@ -936,6 +939,106 @@ export class MatchesController {
     }
 
     return null;
+  }
+
+  private async endMatchBroadcast(
+    data: HasuraEventData<matches_set_input>,
+    matchId: string,
+  ) {
+    if (
+      data.op !== "DELETE" &&
+      MatchesController.TERMINAL_STATUSES.includes(data.old?.status)
+    ) {
+      return;
+    }
+
+    const delay = await this.broadcastEndDelaySeconds(data, matchId);
+
+    let scheduled = false;
+    if (delay) {
+      try {
+        await this.scheduledMatchesQueue.add(
+          StopMatchBroadcast.name,
+          { matchId },
+          MatchesController.stopOnDemandServerJobOptions(delay),
+        );
+        scheduled = true;
+      } catch (error) {
+        this.logger.error(
+          `[${matchId}] failed to schedule the broadcast stop: ${
+            (error as Error)?.message
+          }`,
+        );
+      }
+    }
+
+    try {
+      if (data.op === "DELETE") {
+        await this.gameStreamer.stopLive(matchId);
+      } else if (
+        !scheduled ||
+        // A live-mode stream watches the game port, not the delayed TV feed.
+        (await this.gameStreamer.getLiveStreamMode(matchId)) === "live"
+      ) {
+        await this.gameStreamer.stopLiveIfRunning(matchId);
+      }
+    } catch (error) {
+      this.logger.error(
+        `[${matchId}] failed to stop live stream on match end: ${
+          (error as Error)?.message
+        }`,
+      );
+    }
+
+    if (!scheduled) {
+      this.matchRelayService.removeBroadcast(matchId);
+    }
+  }
+
+  // Seconds until TV viewers have seen the end of the match: until the TV feed
+  // runs out, plus however long relay clients keep playing what they buffered.
+  private async broadcastEndDelaySeconds(
+    data: HasuraEventData<matches_set_input>,
+    matchId: string,
+  ): Promise<number> {
+    if (data.op === "DELETE" || data.new.status === "Canceled") {
+      return 0;
+    }
+
+    let feedEndsIn = MatchesController.PLUGIN_TV_STOP_SECONDS;
+
+    try {
+      const { match_maps, match_options_by_pk } = await this.hasura.query({
+        match_maps: {
+          __args: {
+            where: {
+              match_id: { _eq: matchId },
+              status: { _in: MatchesController.IN_PLAY_MAP_STATUSES },
+            },
+            limit: 1,
+          },
+          id: true,
+        },
+        match_options_by_pk: {
+          __args: {
+            id: data.new.match_options_id,
+          },
+          tv_delay: true,
+        },
+      });
+
+      if (match_maps.length > 0) {
+        feedEndsIn = match_options_by_pk?.tv_delay ?? 0;
+      }
+    } catch (error) {
+      this.logger.error(
+        `[${matchId}] failed to check how far behind the TV feed is: ${
+          (error as Error)?.message
+        }`,
+      );
+    }
+
+    return feedEndsIn + this.matchRelayService.playoutSeconds(matchId);
   }
 
   private static stopOnDemandServerJobOptions(delaySeconds = 0) {

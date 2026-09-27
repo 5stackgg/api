@@ -1399,7 +1399,7 @@ export class MatchAssistantService {
     });
   }
 
-  private async hasMatchEnded(matchId: string): Promise<boolean> {
+  public async hasMatchEnded(matchId: string): Promise<boolean> {
     const { matches_by_pk } = await this.hasura.query({
       matches_by_pk: {
         __args: {

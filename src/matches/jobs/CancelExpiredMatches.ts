@@ -9,6 +9,7 @@ import { AppConfig } from "../../configs/types/AppConfig";
 import { RconService } from "../../rcon/rcon.service";
 import { DISCORD_COLORS } from "../../notifications/utilities/constants";
 import { MatchAssistantService } from "../match-assistant/match-assistant.service";
+import { ExpectedPlayers } from "../../discord-bot/enums/ExpectedPlayers";
 
 @UseQueue("Matches", MatchQueues.ScheduledMatches)
 export class CancelExpiredMatches extends WorkerHost {
@@ -310,12 +311,21 @@ export class CancelExpiredMatches extends WorkerHost {
       return;
     }
 
-    const noShows = [
-      ...(match.lineup_1.lineup_players ?? []),
-      ...(match.lineup_2.lineup_players ?? []),
-    ].filter(
-      (lineupPlayer) => lineupPlayer.steam_id && !lineupPlayer.is_connected,
-    );
+    // A side that had a full team connected never needed its substitutes, so
+    // a benched sub who stayed away did not no-show.
+    const fullSide = ExpectedPlayers[match.options.type] / 2;
+    const noShows = [match.lineup_1, match.lineup_2].flatMap((lineup) => {
+      const lineupPlayers = lineup.lineup_players ?? [];
+      const connected = lineupPlayers.filter(
+        (lineupPlayer) => lineupPlayer.is_connected,
+      ).length;
+      if (connected >= fullSide) {
+        return [];
+      }
+      return lineupPlayers.filter(
+        (lineupPlayer) => lineupPlayer.steam_id && !lineupPlayer.is_connected,
+      );
+    });
 
     if (noShows.length === 0) {
       return;
@@ -529,6 +539,7 @@ export class CancelExpiredMatches extends WorkerHost {
           winning_lineup_id: true,
         },
         options: {
+          type: true,
           match_mode: true,
         },
         lineup_1: {

@@ -127,6 +127,17 @@ describe("MatchRelayService", () => {
 
   // CS2 sends tps as a decimal (64.0), not an integer, so the coercion has to
   // accept a fractional part or clients get tps back as a string.
+  it("reports how long clients keep playing once the server stops posting", async () => {
+    await startBroadcastAt(42);
+
+    // Clients sit 7 fragments behind the newest and still have that one to play.
+    expect(service.playoutSeconds(matchId)).toBe(8 * 3);
+  });
+
+  it("has nothing to play out for a broadcast it does not hold", () => {
+    expect(service.playoutSeconds(matchId)).toBe(0);
+  });
+
   it("reports a fractional tps as a number", async () => {
     await post("start", 42, {
       tick: "100",

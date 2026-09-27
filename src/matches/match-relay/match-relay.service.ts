@@ -19,6 +19,10 @@ export class MatchRelayService {
     "protocol",
   ];
 
+  // Like Valve's reference relay, /sync starts a new client this many fragments
+  // behind the newest one, and the client then plays in real time.
+  private static readonly SYNC_LAG_FRAGMENTS = 7;
+
   private readonly gzip = promisify(zlib.gzip);
 
   private readonly broadcasts: {
@@ -33,6 +37,21 @@ export class MatchRelayService {
 
   public removeBroadcast(matchId: string) {
     delete this.broadcasts[matchId];
+  }
+
+  // How long a client keeps playing after the game server stops posting: it is
+  // SYNC_LAG_FRAGMENTS behind the last fragment, plus that fragment itself.
+  // keyframe_interval is the fragment length the game server announced in start.
+  public playoutSeconds(matchId: string): number {
+    const keyframeInterval = Number(
+      this.broadcasts[matchId]?.fragments.get(0)?.start?.keyframe_interval,
+    );
+
+    if (!(keyframeInterval > 0)) {
+      return 0;
+    }
+
+    return (MatchRelayService.SYNC_LAG_FRAGMENTS + 1) * keyframeInterval;
   }
 
   public getStart(response: Response, matchId: string, fragmentIndex: number) {
@@ -107,7 +126,10 @@ export class MatchRelayService {
         : 0;
 
     if (fragmentParam == null) {
-      fragmentIndex = Math.max(0, maxIndex - 7);
+      fragmentIndex = Math.max(
+        0,
+        maxIndex - MatchRelayService.SYNC_LAG_FRAGMENTS,
+      );
 
       if (
         fragmentIndex >= 0 &&
