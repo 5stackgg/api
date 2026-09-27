@@ -21,5 +21,6 @@ WORKDIR /opt/5stack
 COPY --from=builder /build/node_modules ./node_modules
 COPY --from=builder /build/dist ./dist
 COPY --from=builder /build/hasura ./hasura
+COPY --from=builder /build/cloudflare-workers ./cloudflare-workers
 
 CMD [ "node", "dist/src/main.js" ]

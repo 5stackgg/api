@@ -127,8 +127,8 @@ describe("MatchesController — match_events on-demand servers", () => {
       })),
     };
     matchRelay = {
-      removeBroadcast: jest.fn(),
-      playoutSeconds: jest.fn(() => 0),
+      removeBroadcast: jest.fn(async (): Promise<void> => undefined),
+      playoutSeconds: jest.fn(async () => 0),
     };
     inPlayMaps = [];
 
@@ -449,7 +449,7 @@ describe("MatchesController — match_events on-demand servers", () => {
     });
 
     it("lets relay viewers play out what they had buffered", async () => {
-      matchRelay.playoutSeconds.mockReturnValue(24);
+      matchRelay.playoutSeconds.mockResolvedValue(24);
 
       await finish();
 
@@ -469,7 +469,7 @@ describe("MatchesController — match_events on-demand servers", () => {
 
     it("adds the relay play-out on top of tv_delay mid-map", async () => {
       inPlayMaps = [{ id: "map-1" }];
-      matchRelay.playoutSeconds.mockReturnValue(24);
+      matchRelay.playoutSeconds.mockResolvedValue(24);
 
       await finish();
 

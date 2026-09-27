@@ -6,6 +6,9 @@ export type RedisConfig = {
       host: string;
       port: number;
       password: string;
+      enableOfflineQueue?: boolean;
+      maxRetriesPerRequest?: number | null;
+      commandTimeout?: number;
     }
   >;
 };

@@ -30,7 +30,7 @@ export class StopMatchBroadcast extends WorkerHost {
       return;
     }
 
-    this.matchRelay.removeBroadcast(matchId);
+    await this.matchRelay.removeBroadcast(matchId);
 
     if (!(await this.gameStreamer.stopLiveIfRunning(matchId))) {
       return;

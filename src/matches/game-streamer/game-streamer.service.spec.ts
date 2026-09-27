@@ -219,18 +219,46 @@ describe("GameStreamerService", () => {
   describe("buildConnectEnv", () => {
     const server = { host: "game.example.test", port: 27015, tv_port: 27020 };
 
-    it("streams a playcast match from this install's relay", async () => {
+    const playcastUrl = async (
+      relayWorker: string | null,
+      target: Record<string, unknown> = server,
+    ) => {
+      hasura.query.mockResolvedValueOnce({
+        settings_by_pk: relayWorker ? { value: relayWorker } : null,
+      });
       const env = await (service as any).buildConnectEnv(
         "m-1",
-        server,
+        target,
         "secret",
         true,
         "tv",
       );
+      return env.find((e: any) => e.name === "PLAYCAST_URL")?.value;
+    };
 
-      expect(env.find((e: any) => e.name === "PLAYCAST_URL")?.value).toBe(
+    it("streams a playcast match from this install's relay", async () => {
+      expect(await playcastUrl(null)).toBe("https://tv.example.test/m-1");
+    });
+
+    it("streams through the edge relay worker once one is set", async () => {
+      expect(await playcastUrl("https://playcast.acme.gg")).toBe(
+        "https://playcast.acme.gg/m-1",
+      );
+    });
+
+    it("ignores an edge relay setting that is not a bare https origin", async () => {
+      expect(await playcastUrl('https://playcast.acme.gg/"; quit')).toBe(
         "https://tv.example.test/m-1",
       );
+    });
+
+    it("keeps a LAN server's stream on this install's relay", async () => {
+      expect(
+        await playcastUrl("https://playcast.acme.gg", {
+          ...server,
+          server_region: { is_lan: true },
+        }),
+      ).toBe("https://tv.example.test/m-1");
     });
   });
 
