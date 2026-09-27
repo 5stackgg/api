@@ -1,14 +1,18 @@
-// Edge cache in front of a 5stack panel's Playcast relay.
+// Edge cache for a 5stack panel's Playcast relay, deployed as a route on the
+// relay domain itself (tv.example.com/*).
 //
-// Game servers keep posting to the panel; viewers (CS2 clients and the game
-// streamer) read through this worker instead, so every fragment leaves the
-// panel once per Cloudflare location rather than once per viewer.
+// Game servers' posts pass straight through to the panel. Viewers' reads (CS2
+// clients and the game streamer) are cached here, so every fragment leaves the
+// panel once per Cloudflare location rather than once per viewer. A route
+// worker's fetch to its own hostname goes to the origin, never back into the
+// worker.
 //
 // Fragment numbers start over when a new map starts a new broadcast, so a
 // fragment is only cached under the broadcast token the panel reports on
 // /sync. The same url can never be served data from an earlier broadcast.
 
-const VERSION = "1";
+const NAME = "5stack-playcast-relay";
+const VERSION = "2";
 
 const SYNC_CACHE_CONTROL = "public, max-age=3";
 const FRAGMENT_CACHE_CONTROL = "public, max-age=31536000, immutable";
@@ -18,32 +22,38 @@ const CACHED_FIELDS = new Set(["full", "delta"]);
 export default {
   async fetch(request, env, ctx) {
     if (request.method !== "GET" && request.method !== "HEAD") {
-      return new Response(null, { status: 405 });
+      return fetch(request);
     }
 
-    const response = await route(request, env, ctx);
+    const response = await route(request, ctx);
 
     return request.method === "HEAD" ? new Response(null, response) : response;
   },
 };
 
-async function route(request, env, ctx) {
+async function route(request, ctx) {
   const url = new URL(request.url);
-  const origin = String(env.ORIGIN ?? "").replace(/\/+$/, "");
 
+  // What the panel's settings page reads to tell the edge relay is live. Only
+  // the worker answers it: the panel's relay has no such path.
   if (url.pathname === "/health") {
-    return Response.json({ ok: true, origin, version: VERSION });
+    return Response.json(
+      { ok: true, worker: NAME, version: VERSION },
+      {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Cache-Control": "no-store",
+        },
+      },
+    );
   }
 
-  if (!origin) {
-    return new Response("ORIGIN is not configured", { status: 500 });
-  }
-
+  const origin = url.origin;
   const parts = url.pathname.split("/").filter(Boolean);
   const [matchId] = parts;
 
   if (!matchId) {
-    return new Response(null, { status: 404 });
+    return passThrough(`${origin}${url.pathname}${url.search}`);
   }
 
   if (parts.length === 2 && parts[1] === "sync") {

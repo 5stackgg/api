@@ -2657,29 +2657,6 @@ export class GameStreamerService {
     });
   }
 
-  // Same rule as get_match_tv_connection_string: the edge worker is for
-  // viewers out on the internet, never for a LAN server's.
-  private async readPlaycastUrl(
-    matchId: string,
-    isLan: boolean,
-  ): Promise<string> {
-    if (!isLan) {
-      const { settings_by_pk } = await this.hasura.query({
-        settings_by_pk: {
-          __args: { name: "playcast_relay_url" },
-          value: true,
-        },
-      });
-      if (
-        /^https:\/\/[A-Za-z0-9.-]+(:[0-9]+)?$/.test(settings_by_pk?.value ?? "")
-      ) {
-        return `${settings_by_pk.value}/${matchId}`;
-      }
-    }
-
-    return `${this.appConfig.relayDomain}/${matchId}`;
-  }
-
   private async readUsePlaycast(): Promise<boolean> {
     const { settings_by_pk } = await this.hasura.query({
       settings_by_pk: {
@@ -2872,10 +2849,7 @@ export class GameStreamerService {
         return [
           {
             name: "PLAYCAST_URL",
-            value: await this.readPlaycastUrl(
-              matchId,
-              !!server.server_region?.is_lan,
-            ),
+            value: `${this.appConfig.relayDomain}/${matchId}`,
           },
           { name: "PLAYCAST_PASSWORD", value: "" },
         ];

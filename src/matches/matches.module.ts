@@ -68,7 +68,6 @@ import { StopMatchBroadcast } from "./jobs/StopMatchBroadcast";
 import { ReconcileOnDemandServerJobs } from "./jobs/ReconcileOnDemandServerJobs";
 import { MatchRelayController } from "./match-relay/match-relay.controller";
 import { MatchRelayService } from "./match-relay/match-relay.service";
-import { PlaycastRelayService } from "./match-relay/playcast-relay.service";
 import { MatchRelayAuthMiddleware } from "./match-relay/match-relay-auth-middleware";
 import { K8sModule } from "src/k8s/k8s.module";
 import { DiscordTournamentVoiceModule } from "../discord-bot/discord-tournament-voice/discord-tournament-voice.module";
@@ -173,7 +172,6 @@ import { CameraMonitorService } from "./camera/camera-monitor.service";
     MatchEventsGateway,
     MatchAssistantService,
     MatchRelayService,
-    PlaycastRelayService,
     CameraService,
     CameraMonitorService,
     CheckOnDemandServerJob,

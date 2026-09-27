@@ -450,18 +450,6 @@ type Mutation {
 }
 
 type Mutation {
-  deployPlaycastRelay(
-    account_id: String!
-    api_token: String!
-    hostname: String!
-  ): PlaycastRelayOutput
-}
-
-type Mutation {
-  setPlaycastRelay(url: String): PlaycastRelayOutput
-}
-
-type Mutation {
   cancelBackfillSeasonElo: SuccessOutput
 }
 
@@ -1088,11 +1076,6 @@ type ReindexStatusOutput {
   completed: Int!
   failed: Int!
   current_steam_id: String
-}
-
-type PlaycastRelayOutput {
-  url: String
-  ready: Boolean!
 }
 
 type RecomputeEloStartedOutput {

@@ -1,8 +1,6 @@
 import { Controller, Get, Post, Req, Res, Param, Logger } from "@nestjs/common";
 import { Request, Response } from "express";
-import { HasuraAction } from "../../hasura/hasura.controller";
 import { MatchRelayService } from "./match-relay.service";
-import { PlaycastRelayService } from "./playcast-relay.service";
 import { FragmentField } from "./types/fragment.types";
 
 @Controller("match-relay/:id")
@@ -10,27 +8,7 @@ export class MatchRelayController {
   constructor(
     private readonly logger: Logger,
     private readonly matchRelayService: MatchRelayService,
-    private readonly playcastRelay: PlaycastRelayService,
   ) {}
-
-  @HasuraAction()
-  public async deployPlaycastRelay(data: {
-    account_id: string;
-    api_token: string;
-    hostname: string;
-  }) {
-    return this.playcastRelay.deploy(
-      data.account_id?.trim(),
-      data.api_token?.trim(),
-      data.hostname,
-    );
-  }
-
-  @HasuraAction()
-  public async setPlaycastRelay(data: { url?: string | null }) {
-    const url = await this.playcastRelay.use(data.url ?? null);
-    return { url, ready: true };
-  }
 
   @Get("sync")
   public async handleSyncGet(
