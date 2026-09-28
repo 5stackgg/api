@@ -38,6 +38,8 @@ export type SeasonEloBackfillStatus = {
 
 @Injectable()
 export class SeasonEloBackfillService {
+  public static readonly RETRY_DELAY_MS = 15_000;
+
   constructor(
     private readonly logger: Logger,
     private readonly postgres: PostgresService,
@@ -89,14 +91,33 @@ export class SeasonEloBackfillService {
     );
   }
 
-  public async runBackfill(seasonId: string): Promise<void> {
+  // False means run it again later: another backfill holds the lock, or the
+  // season's dates moved mid-run so the matches it rebuilt are no longer its own.
+  public async runBackfill(seasonId: string): Promise<boolean> {
+    const window = await this.fetchSeasonWindow(seasonId);
+    if (!window) {
+      this.logger.warn(`[season-backfill] season ${seasonId} no longer exists`);
+      const queued = await this.getStatus();
+      if (queued.running && queued.season_id === seasonId) {
+        await this.saveStatus(
+          {
+            ...queued,
+            running: false,
+            finished_at: new Date().toISOString(),
+          },
+          FINAL_TTL_SECONDS,
+        );
+      }
+      return true;
+    }
+
     // Single-execution guarantee mirrors the recompute: the lock holder is the
     // only writer, so overlapping runs can't corrupt the chronological rebuild.
     if (!(await this.cache.acquireLock(LOCK_KEY, RUNNING_TTL_SECONDS))) {
       this.logger.warn(
-        "[season-backfill] already running, skipping duplicate",
+        `[season-backfill] another backfill holds the lock, retrying season ${seasonId}`,
       );
-      return;
+      return false;
     }
 
     await this.cache.forget(CANCEL_KEY);
@@ -110,6 +131,7 @@ export class SeasonEloBackfillService {
     await this.saveStatus(status, RUNNING_TTL_SECONDS);
     await this.eloRecompute.setSuppressEvents(true);
 
+    let current = true;
     try {
       // Clean slate for this season only — other seasons' ELO is independent and
       // stays untouched. Per-match recompute below re-inserts with season_id set.
@@ -159,11 +181,19 @@ export class SeasonEloBackfillService {
         await this.postgres.query(`SELECT rebuild_player_season_stats($1)`, [
           seasonId,
         ]);
-        // Durable "done" flag so the self-healing sweeper won't re-enqueue it.
-        await this.postgres.query(
-          `UPDATE seasons SET needs_rebuild = false WHERE id = $1`,
-          [seasonId],
+        // Only clear the flag for the window that was rebuilt; a date edit made
+        // mid-run re-flagged it, and its event deduped onto this still-active job.
+        const cleared = await this.postgres.query<Array<{ id: string }>>(
+          `
+          UPDATE seasons SET needs_rebuild = false
+          WHERE id = $1
+            AND starts_at = $2::timestamptz
+            AND ends_at IS NOT DISTINCT FROM $3::timestamptz
+          RETURNING id
+          `,
+          [seasonId, window.starts_at, window.ends_at],
         );
+        current = cleared.length > 0;
       }
     } finally {
       status.running = false;
@@ -193,6 +223,8 @@ export class SeasonEloBackfillService {
 
       await this.notifyComplete(status);
     }
+
+    return current;
   }
 
   private async notifyComplete(status: SeasonEloBackfillStatus): Promise<void> {
@@ -301,6 +333,19 @@ export class SeasonEloBackfillService {
     await this.cache.put(STATUS_KEY, status, ttl);
   }
 
+  // Text round-trip keeps microseconds, so the values compare exactly when
+  // passed back to Postgres.
+  private async fetchSeasonWindow(
+    seasonId: string,
+  ): Promise<{ starts_at: string; ends_at: string | null } | null> {
+    const rows = await this.postgres.query<
+      Array<{ starts_at: string; ends_at: string | null }>
+    >(
+      `SELECT starts_at::text AS starts_at, ends_at::text AS ends_at FROM seasons WHERE id = $1`,
+      [seasonId],
+    );
+    return rows?.[0] ?? null;
+  }
 
   private async fetchSeasonMatchIds(seasonId: string): Promise<string[]> {
     const rows = await this.postgres.query<Array<{ id: string }>>(

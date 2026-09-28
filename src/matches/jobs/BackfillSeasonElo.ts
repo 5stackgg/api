@@ -1,5 +1,5 @@
 import { WorkerHost } from "@nestjs/bullmq";
-import { Job } from "bullmq";
+import { DelayedError, Job } from "bullmq";
 import { MatchQueues } from "../enums/MatchQueues";
 import { UseQueue } from "../../utilities/QueueProcessors";
 import { SeasonEloBackfillService } from "../season-elo-backfill.service";
@@ -14,6 +14,13 @@ export class BackfillSeasonElo extends WorkerHost {
     if (!job.data?.season_id) {
       return;
     }
-    await this.backfill.runBackfill(job.data.season_id);
+    if (await this.backfill.runBackfill(job.data.season_id)) {
+      return;
+    }
+    await job.moveToDelayed(
+      Date.now() + SeasonEloBackfillService.RETRY_DELAY_MS,
+      job.token,
+    );
+    throw new DelayedError();
   }
 }
