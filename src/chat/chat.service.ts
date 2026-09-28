@@ -1784,11 +1784,12 @@ export class ChatService {
 
   // Match chat is its own notification type, and so its own push category.
   //
-  // Every line typed in-game is relayed by ChatMessageEvent -- all chat into
-  // the match room, team chat into the lineup's team room -- so a live match
-  // fires this per lineup member per line, and the player it reaches is the
-  // one already reading those lines in the game. Sharing a category with direct
-  // messages meant the only way to stop that was to mute DMs too.
+  // Every line typed in-game is relayed -- all chat into the match room by
+  // ChatMessageEvent, team chat into the lineup's team room by
+  // TeamChatMessageEvent -- so a live match fires this per lineup member per
+  // line, and the player it reaches is the one already reading those lines in
+  // the game. Sharing a category with direct messages meant the only way to
+  // stop that was to mute DMs too.
   //
   // The insert, the bell collapse and the read-clear all have to agree on the
   // type or the collapse stops collapsing and the badge never clears.

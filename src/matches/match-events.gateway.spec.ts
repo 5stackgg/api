@@ -210,6 +210,25 @@ describe("MatchEventsGateway.handleMatchEvent dedup", () => {
     expect(store.has(`match-events:${MATCH_1}:msg-1`)).toBe(false);
   });
 
+  it("acks and drops an event it has no handler for", async () => {
+    // how an api that predates teamChat drops team lines: not processed,
+    // and acked so the plugin stops retrying
+    const { gateway, cache, processor, logger } = makeGateway({});
+    const result = await gateway.handleMatchEvent({
+      ...message,
+      data: { event: "teamChat", data: { player: "p", message: "m" } },
+    } as any);
+
+    expect(result).toBe("msg-1");
+    expect(processor.setData).not.toHaveBeenCalled();
+    expect(processor.process).not.toHaveBeenCalled();
+    expect(cache.put).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      "unable to find event handler",
+      "teamChat",
+    );
+  });
+
   it("short-circuits on a dedup hit without processing", async () => {
     const { gateway, processor } = makeGateway({ cacheHit: true });
     const result = await gateway.handleMatchEvent(authedSocket(), event());

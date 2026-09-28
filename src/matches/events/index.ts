@@ -16,6 +16,7 @@ import FlashEvent from "./FlashEvent";
 import ObjectiveEvent from "./ObjectiveEvent";
 import UnusedUtility from "./UnusedUtility";
 import ChatMessageEvent from "./ChatMessageEvent";
+import TeamChatMessageEvent from "./TeamChatMessageEvent";
 import MatchSurrendered from "./MatchSurrendered";
 import MatchAbandoned from "./MatchAbandoned";
 
@@ -26,6 +27,7 @@ export const MatchEvents = {
   updateLineups: MatchUpdatedLineupsEvent,
 
   chat: ChatMessageEvent,
+  teamChat: TeamChatMessageEvent,
 
   /**
    * Player
