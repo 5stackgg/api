@@ -6,6 +6,8 @@ AS $$
 BEGIN
     IF match_type = 'Competitive' OR match_type = 'Premier' OR match_type = 'Faceit' THEN
         RETURN 5;
+    ELSIF match_type = 'Rush' THEN
+        RETURN 3;
     ELSIF match_type = 'Wingman' THEN
         RETURN 2;
     ELSIF match_type = 'Duel' THEN

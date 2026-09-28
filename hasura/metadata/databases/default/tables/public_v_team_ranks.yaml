@@ -22,6 +22,7 @@ select_permissions:
         - max_elo
         - avg_wingman_elo
         - avg_duel_elo
+        - avg_rush_elo
         - avg_faceit_level
         - avg_faceit_elo
         - avg_premier

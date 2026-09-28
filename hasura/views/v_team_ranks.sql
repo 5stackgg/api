@@ -56,6 +56,7 @@ SELECT
     max(e.competitive)::INTEGER AS max_elo,
     avg(e.wingman)::INTEGER AS avg_wingman_elo,
     avg(e.duel)::INTEGER AS avg_duel_elo,
+    avg(e.rush)::INTEGER AS avg_rush_elo,
     round(avg(NULLIF(p.faceit_skill_level, 0)), 2)::FLOAT AS avg_faceit_level,
     avg(NULLIF(p.faceit_elo, 0))::INTEGER AS avg_faceit_elo,
     avg(NULLIF(p.premier_rank, 0))::INTEGER AS avg_premier
@@ -65,7 +66,8 @@ LEFT JOIN LATERAL (
     SELECT
         NULLIF(_team_rank_elo_by_type(p, 'Competitive'), 0) AS competitive,
         NULLIF(_team_rank_elo_by_type(p, 'Wingman'), 0) AS wingman,
-        NULLIF(_team_rank_elo_by_type(p, 'Duel'), 0) AS duel
+        NULLIF(_team_rank_elo_by_type(p, 'Duel'), 0) AS duel,
+        NULLIF(_team_rank_elo_by_type(p, 'Rush'), 0) AS rush
 ) e ON true
 WHERE tr.coach = false
 GROUP BY tr.team_id;

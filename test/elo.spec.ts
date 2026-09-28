@@ -403,6 +403,51 @@ describe("ELO engine (SQL-driven)", () => {
     );
   });
 
+  it("rates a Rush match on its own ladder", async () => {
+    const teamA = await fx.players(3);
+    const teamB = await fx.players(3);
+    const match = await fx.match({ type: "Rush" });
+    for (const steamId of teamA) {
+      await fx.lineupPlayer(match.lineup_1_id, steamId);
+    }
+    for (const steamId of teamB) {
+      await fx.lineupPlayer(match.lineup_2_id, steamId);
+    }
+    await postgres.query(
+      `UPDATE matches SET winning_lineup_id = lineup_1_id,
+         ended_at = now() - interval '1 day' WHERE id = $1`,
+      [match.id],
+    );
+
+    expect(await generate(match.id)).toBe(6);
+
+    const types = await postgres.query<Array<{ type: string }>>(
+      `SELECT DISTINCT "type" FROM player_elo WHERE match_id = $1`,
+      [match.id],
+    );
+    expect(types).toEqual([{ type: "Rush" }]);
+
+    const [profile] = await postgres.query<
+      Array<{
+        elo: Record<string, number | null>;
+        peak: Record<string, number | null>;
+        wins: number;
+        losses: number;
+      }>
+    >(
+      `SELECT get_player_elo(p) AS elo, get_player_peak_elo(p) AS peak,
+              get_total_player_wins_rush(p) AS wins,
+              get_total_player_losses_rush(p) AS losses
+       FROM players p WHERE steam_id = $1`,
+      [teamA[0]],
+    );
+    expect(Number(profile.elo.rush)).toBeGreaterThan(5000);
+    expect(profile.elo.competitive).toBeNull();
+    expect(Number(profile.peak.rush)).toBe(Number(profile.elo.rush));
+    expect(Number(profile.wins)).toBe(1);
+    expect(Number(profile.losses)).toBe(0);
+  });
+
   describe("substitutes", () => {
     const mapFor = async (matchId: string) => {
       const [existing] = await postgres.query<Array<{ id: string }>>(

@@ -9,6 +9,7 @@ BEGIN
     NEW.capacity := CASE NEW.type
         WHEN 'Duel' THEN 2
         WHEN 'Wingman' THEN 4
+        WHEN 'Rush' THEN 6
         ELSE 10
     END;
 

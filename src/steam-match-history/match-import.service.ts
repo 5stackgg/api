@@ -453,6 +453,10 @@ export class MatchImportService {
       return "Competitive";
     }
 
+    if (parsed.game_mode === 6) {
+      return "Rush";
+    }
+
     if (MatchImportService.hasWingmanGameRules(parsed)) {
       return "Wingman";
     }
@@ -836,7 +840,7 @@ export class MatchImportService {
             type: matchType,
             map_pool_id: mapPoolId,
             best_of: 1,
-            mr: matchType === "Wingman" ? 8 : 12,
+            mr: matchType === "Wingman" || matchType === "Rush" ? 8 : 12,
             overtime: false,
             knife_round: false,
             coaches: false,

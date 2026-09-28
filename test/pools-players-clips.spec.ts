@@ -96,6 +96,44 @@ describe("map pools, player guards, and clip counters (SQL-driven)", () => {
       expect(Number(after)).toBe(Number(before));
     });
 
+    it("with pool updates off, still fills a seed pool that has no maps at all", async () => {
+      const rushPool = await fx.seededPool("Rush");
+      const competitivePool = await fx.seededPool("Competitive");
+
+      await postgres.query(
+        `INSERT INTO settings (name, value) VALUES ('update_map_pools', 'false')
+         ON CONFLICT (name) DO UPDATE SET value = 'false'`,
+      );
+      await postgres.query("DELETE FROM _map_pool WHERE map_pool_id = $1", [
+        rushPool,
+      ]);
+      const [removed] = await postgres.query<Array<{ map_id: string }>>(
+        `DELETE FROM _map_pool WHERE map_pool_id = $1 AND map_id =
+           (SELECT map_id FROM _map_pool WHERE map_pool_id = $1 LIMIT 1)
+         RETURNING map_id`,
+        [competitivePool],
+      );
+
+      await postgres.query("SELECT update_map_pools()");
+
+      const rushMaps = await postgres.query<Array<{ name: string }>>(
+        `SELECT m.name FROM _map_pool mp JOIN maps m ON m.id = mp.map_id
+          WHERE mp.map_pool_id = $1`,
+        [rushPool],
+      );
+      expect(rushMaps.map((map) => map.name)).toEqual(["rush_001"]);
+
+      const [{ c: stillRemoved }] = await postgres.query<Array<{ c: string }>>(
+        "SELECT count(*) AS c FROM _map_pool WHERE map_pool_id = $1 AND map_id = $2",
+        [competitivePool, removed.map_id],
+      );
+      expect(Number(stillRemoved)).toBe(0);
+
+      await postgres.query(
+        "UPDATE settings SET value = 'true' WHERE name = 'update_map_pools'",
+      );
+    });
+
     it("does not disturb a Live match's maps", async () => {
       const { poolId, mapIds } = await fx.mapPool(1);
       const match = await fx.match({ mapPoolId: poolId });

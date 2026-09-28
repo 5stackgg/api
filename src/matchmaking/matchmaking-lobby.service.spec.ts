@@ -25,6 +25,7 @@ describe("MatchmakingLobbyService.verifyLobby", () => {
   const matchmakingTypes: e_match_types_enum[] = [
     "Duel",
     "Wingman",
+    "Rush",
     "Competitive",
   ];
 
@@ -140,6 +141,40 @@ describe("MatchmakingLobbyService.verifyLobby", () => {
     });
   });
 
+  describe("Rush (6 players, 3v3)", () => {
+    const type: e_match_types_enum = "Rush";
+
+    it.each([1, 2, 3])(
+      "accepts a party of %i — fits one lineup",
+      async (size) => {
+        await expect(canQueue(type, size)).resolves.toBe(true);
+      },
+    );
+
+    it("accepts a full party of 6", async () => {
+      await expect(canQueue(type, 6)).resolves.toBe(true);
+    });
+
+    it.each([4, 5])(
+      "rejects a party of %i — too big for one lineup, too small for two",
+      async (size) => {
+        await expect(canQueue(type, size)).resolves.toBe(false);
+      },
+    );
+
+    it.each([7, 10, 11])("rejects a party of %i", async (size) => {
+      await expect(canQueue(type, size)).resolves.toBe(false);
+    });
+
+    it("explains the requirement", async () => {
+      await expect(
+        service.verifyLobby(buildLobby(4), captain, type),
+      ).rejects.toThrow(
+        "To join a Rush match, your lobby must have 3 or fewer players, or exactly 6 players. You have 4.",
+      );
+    });
+  });
+
   describe("Competitive (10 players, 5v5)", () => {
     const type: e_match_types_enum = "Competitive";
 
@@ -198,6 +233,7 @@ describe("MatchmakingLobbyService.verifyLobby", () => {
       await expect(queueableTypes(1)).resolves.toEqual([
         "Duel",
         "Wingman",
+        "Rush",
         "Competitive",
       ]);
     });
@@ -206,12 +242,13 @@ describe("MatchmakingLobbyService.verifyLobby", () => {
       await expect(queueableTypes(2)).resolves.toEqual([
         "Duel",
         "Wingman",
+        "Rush",
         "Competitive",
       ]);
     });
 
-    it("3 — Competitive only", async () => {
-      await expect(queueableTypes(3)).resolves.toEqual(["Competitive"]);
+    it("3 — Rush and Competitive", async () => {
+      await expect(queueableTypes(3)).resolves.toEqual(["Rush", "Competitive"]);
     });
 
     it("4 — Wingman and Competitive", async () => {
@@ -225,7 +262,11 @@ describe("MatchmakingLobbyService.verifyLobby", () => {
       await expect(queueableTypes(5)).resolves.toEqual(["Competitive"]);
     });
 
-    it.each([6, 7, 8, 9])("%i — nothing is queueable", async (size) => {
+    it("6 — Rush only", async () => {
+      await expect(queueableTypes(6)).resolves.toEqual(["Rush"]);
+    });
+
+    it.each([7, 8, 9])("%i — nothing is queueable", async (size) => {
       await expect(queueableTypes(size)).resolves.toEqual([]);
     });
 

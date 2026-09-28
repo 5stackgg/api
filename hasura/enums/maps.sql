@@ -2,6 +2,7 @@ insert into e_match_types ("value", "description") values
     ('Competitive', 'The classic 5 vs 5 competitive experience with full team coordination'),
     ('Wingman', 'Team up with a friend and compete in fast-paced 2v2 matches'),
     ('Duel', 'A competitive 1 vs 1 experience, perfect for practicing individual skill'),
+    ('Rush', 'Fast-paced 3 vs 3 matches, pushing room by room'),
     ('Premier', 'Valve Premier matchmaking — 5 vs 5 with CS Rating'),
     ('Faceit', 'FACEIT matchmaking — 5 vs 5 imported from FACEIT')
 on conflict(value) do update set "description" = EXCLUDED."description";
@@ -13,6 +14,7 @@ insert into e_game_cfg_types ("value", "description") values
     ('Competitive', 'Competitive game configuration'),
     ('Wingman', 'Wingman game configuration'),
     ('Duel', 'Duel game configuration'),
+    ('Rush', 'Rush game configuration'),
     ('Global', 'Applies to every match, on top of the type configuration')
 on conflict(value) do update set "description" = EXCLUDED."description";
 
@@ -59,7 +61,8 @@ WITH map_data AS (
         ('de_boulder', null, '/img/maps/screenshots/de_boulder.webp', '/img/maps/icons/de_boulder.svg', null), 
         ('de_debris', null, '/img/maps/screenshots/de_debris.webp', '/img/maps/icons/de_debris.svg', null),
         ('de_eldorado', null, '/img/maps/screenshots/de_eldorado.webp', '/img/maps/icons/de_eldorado.svg', null),
-        ('de_fachwerk', null, '/img/maps/screenshots/de_fachwerk.webp', '/img/maps/icons/de_fachwerk.svg', null)
+        ('de_fachwerk', null, '/img/maps/screenshots/de_fachwerk.webp', '/img/maps/icons/de_fachwerk.svg', null),
+        ('rush_001', null, '/img/maps/screenshots/rush_001.webp', '/img/maps/icons/rush_001.svg', null)
 
     ) AS data(name, workshop_map_id, poster, patch, label)
 ),
@@ -129,7 +132,10 @@ map_type_config AS (
         ('de_poseidon', 'Duel', true),
         ('de_sanctum', 'Duel', true),
         ('de_debris', 'Duel', false),
-        ('de_eldorado', 'Duel', false)
+        ('de_eldorado', 'Duel', false),
+
+        -- Rush maps
+        ('rush_001', 'Rush', true)
 
     ) AS data(name, type, active_pool)
 ),
@@ -174,6 +180,7 @@ insert into e_map_pool_types ("value", "description") values
     ('Competitive', '5 vs 5'),
     ('Wingman', '2 vs 2'),
     ('Duel', '1 vs 1'),
+    ('Rush', '3 vs 3'),
     ('Custom', 'Custom')
 on conflict(value) do update set "description" = EXCLUDED."description";
 
@@ -194,7 +201,7 @@ existing_pools AS (
   FROM map_pools mp
   LEFT JOIN _map_pool mp_rel ON mp.id = mp_rel.map_pool_id
   LEFT JOIN maps m ON mp_rel.map_id = m.id
-  WHERE mp.seed = true AND mp.type IN ('Competitive', 'Wingman', 'Duel') AND mp.enabled = true
+  WHERE mp.seed = true AND mp.type IN ('Competitive', 'Wingman', 'Duel', 'Rush') AND mp.enabled = true
   GROUP BY mp.id, mp.type
 ),
 pools_to_disable AS (
@@ -215,7 +222,8 @@ WITH new_rows AS (
   FROM (VALUES
       ('Competitive', true, true),
       ('Wingman', true, true),
-      ('Duel', true, true)
+      ('Duel', true, true),
+      ('Rush', true, true)
   ) AS data(type, enabled, seed)
 )
 INSERT INTO map_pools ("type", "enabled", "seed")
@@ -248,7 +256,7 @@ begin
         WITH pool_ids AS (
             SELECT id, type
             FROM map_pools
-            WHERE type IN ('Competitive', 'Wingman', 'Duel') and seed = true and enabled = true
+            WHERE type IN ('Competitive', 'Wingman', 'Duel', 'Rush') and seed = true and enabled = true
             ORDER BY type
         )
         INSERT INTO _map_pool (map_id, map_pool_id)
@@ -257,13 +265,25 @@ begin
         JOIN pool_ids p ON (
             (p.type = 'Competitive' AND m.type = 'Competitive' AND m.active_pool = 'true') OR
             (p.type = 'Wingman' AND m.type = 'Wingman' AND m.active_pool = 'true') OR
-            (p.type = 'Duel' AND m.type = 'Duel' AND m.active_pool = 'true')
+            (p.type = 'Duel' AND m.type = 'Duel' AND m.active_pool = 'true') OR
+            (p.type = 'Rush' AND m.type = 'Rush' AND m.active_pool = 'true')
         )
         WHERE m.deleted_at IS NULL
         ON CONFLICT DO NOTHING;
         
         return true;
     end if;
+
+    -- An enabled seed pool with no maps at all was just created for a new match
+    -- type, not emptied by an operator, so it is filled even with updates off.
+    INSERT INTO _map_pool (map_id, map_pool_id)
+    SELECT m.id, p.id
+    FROM map_pools p
+    JOIN maps m ON m.type = p.type AND m.active_pool = 'true' AND m.deleted_at IS NULL
+    WHERE p.seed = true
+      AND p.enabled = true
+      AND NOT EXISTS (SELECT 1 FROM _map_pool mp WHERE mp.map_pool_id = p.id)
+    ON CONFLICT DO NOTHING;
     
     return false;
 end;

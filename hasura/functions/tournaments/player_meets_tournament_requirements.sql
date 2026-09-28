@@ -1,7 +1,7 @@
 -- The rating this tournament's format actually rates on: 2-per-lineup formats
--- run on the Wingman ladder, everything else on Competitive. Season handling
--- mirrors get_player_elo so the number that gates entry is the same number the
--- player sees on their profile.
+-- run on the Wingman ladder, 3-per-lineup on Rush, everything else on
+-- Competitive. Season handling mirrors get_player_elo so the number that gates
+-- entry is the same number the player sees on their profile.
 CREATE OR REPLACE FUNCTION public.get_tournament_player_elo(_tournament_id uuid, _player_steam_id bigint)
 RETURNS numeric
 LANGUAGE plpgsql STABLE
@@ -29,7 +29,11 @@ BEGIN
         public.tournament_max_players_per_lineup(_tournament)
     );
 
-    _elo_type := CASE WHEN _team_size = 2 THEN 'Wingman' ELSE 'Competitive' END;
+    _elo_type := CASE
+        WHEN _team_size = 2 THEN 'Wingman'
+        WHEN _team_size = 3 THEN 'Rush'
+        ELSE 'Competitive'
+    END;
 
     IF public.seasons_enabled() THEN
         RETURN public.get_player_season_elo_by_type(_player, _elo_type, public.get_active_season());

@@ -114,6 +114,16 @@ describe("draft room membership (SQL-driven)", () => {
     expect(await statusOf(draft.id, latecomer)).toBe("Accepted");
   });
 
+  it("seats six in a Rush draft", async () => {
+    const host = await fx.player();
+    const [draft] = await postgres.query<Array<{ capacity: number }>>(
+      `INSERT INTO draft_games (host_steam_id, type)
+       VALUES ($1, 'Rush') RETURNING capacity`,
+      [host],
+    );
+    expect(Number(draft.capacity)).toBe(6);
+  });
+
   it("accepting into a new draft pulls the player out of other open drafts", async () => {
     const first = await createDraft();
     const second = await createDraft();

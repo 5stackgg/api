@@ -103,6 +103,17 @@ describe("MatchImportService.detectMatchType", () => {
       "Wingman",
     );
   });
+
+  it("classifies game_mode 6 as Rush even when rank_type reads 7", () => {
+    const six = Array.from({ length: 6 }, (_, i) => ({
+      steam_id: String(i),
+      name: "x",
+      rank_type: 7,
+    }));
+    expect(
+      detectMatchType(six, { player_count: 6, game_mode: 6, max_rounds: 15 }),
+    ).toBe("Rush");
+  });
 });
 
 describe("MatchImportService.computeStartingSides", () => {

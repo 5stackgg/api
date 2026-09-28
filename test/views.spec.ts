@@ -147,6 +147,44 @@ describe("read-side views and aggregations (SQL-driven)", () => {
     });
   });
 
+  describe("pistol rounds", () => {
+    const pistolRounds = async (type: string, mr: number) => {
+      const match = await fx.match({ type, mr });
+      const [existing] = await postgres.query<Array<{ id: string }>>(
+        "SELECT id FROM match_maps WHERE match_id = $1",
+        [match.id],
+      );
+      const mapId =
+        existing?.id ??
+        (
+          await postgres.query<Array<{ id: string }>>(
+            `INSERT INTO match_maps (match_id, map_id, "order")
+             SELECT $1, id, 1 FROM maps ORDER BY name LIMIT 1 RETURNING id`,
+            [match.id],
+          )
+        )[0].id;
+
+      for (const round of [1, 2, mr + 1]) {
+        await fx.round(mapId, round, { time: T(100 - round) });
+      }
+
+      const [stats] = await postgres.query<Array<{ pistol_rounds: number }>>(
+        `SELECT pistol_rounds FROM v_match_lineup_map_stats
+         WHERE match_map_id = $1 AND match_lineup_id = $2`,
+        [mapId, match.lineup_1_id],
+      );
+      return Number(stats.pistol_rounds);
+    };
+
+    it("counts both halves' opening rounds as pistols", async () => {
+      expect(await pistolRounds("Wingman", 8)).toBe(2);
+    });
+
+    it("counts only round 1 for Rush, which has no halftime", async () => {
+      expect(await pistolRounds("Rush", 8)).toBe(1);
+    });
+  });
+
   // A finished 1v1 with ELO generated, reused by the ledger and profile tests.
   const ratedDuel = async (a: string, b: string, endedDaysAgo = 1) => {
     const match = await fx.match({ type: "Duel" });
@@ -202,7 +240,11 @@ describe("read-side views and aggregations (SQL-driven)", () => {
       );
       expect(profile.elo.duel).toBeGreaterThan(5000);
       // Unplayed types stay null rather than defaulting.
-      expect(profile.elo).toMatchObject({ competitive: null, wingman: null });
+      expect(profile.elo).toMatchObject({
+        competitive: null,
+        wingman: null,
+        rush: null,
+      });
     });
 
     it("profile aggregation switches to season + tournament tracks (seasons on)", async () => {
@@ -218,6 +260,7 @@ describe("read-side views and aggregations (SQL-driven)", () => {
       ]);
       expect(profile.elo.duel).toBeGreaterThan(5000); // active-season ladder
       expect(profile.elo.tournament_duel).toBeNull(); // no tournament matches yet
+      expect(profile.elo).toMatchObject({ rush: null, tournament_rush: null });
     });
   });
 
@@ -271,6 +314,7 @@ describe("read-side views and aggregations (SQL-driven)", () => {
           avg_elo: number;
           avg_wingman_elo: number | null;
           avg_duel_elo: number | null;
+          avg_rush_elo: number | null;
         }>
       >("SELECT * FROM v_team_ranks WHERE team_id = $1", [teamId]);
 
@@ -322,7 +366,7 @@ describe("read-side views and aggregations (SQL-driven)", () => {
       expect(Number(ranks.avg_elo)).toBe(6000);
     });
 
-    it("resolves Wingman and Duel averages independently of Competitive", async () => {
+    it("resolves Wingman, Duel and Rush averages independently of Competitive", async () => {
       const team = await fx.team(0);
       const [solo] = await rosterOf(team.id);
       const { matchId } = await fx.bareMatch(T(60));
@@ -330,7 +374,8 @@ describe("read-side views and aggregations (SQL-driven)", () => {
         `INSERT INTO player_elo (steam_id, match_id, type, "current", change, created_at)
          VALUES ($1, $2, 'Competitive', 6000, 0, now() - interval '1 hour'),
                 ($1, $2, 'Wingman', 3000, 0, now() - interval '1 hour'),
-                ($1, $2, 'Duel', 1000, 0, now() - interval '1 hour')`,
+                ($1, $2, 'Duel', 1000, 0, now() - interval '1 hour'),
+                ($1, $2, 'Rush', 4000, 0, now() - interval '1 hour')`,
         [solo, matchId],
       );
 
@@ -338,6 +383,7 @@ describe("read-side views and aggregations (SQL-driven)", () => {
       expect(Number(ranks.avg_elo)).toBe(6000);
       expect(Number(ranks.avg_wingman_elo)).toBe(3000);
       expect(Number(ranks.avg_duel_elo)).toBe(1000);
+      expect(Number(ranks.avg_rush_elo)).toBe(4000);
     });
   });
 

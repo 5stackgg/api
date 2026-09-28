@@ -40,6 +40,7 @@ export class DiscordBotService {
   > = {
     Duel: undefined,
     Wingman: undefined,
+    Rush: undefined,
     Competitive: undefined,
     Premier: undefined,
     Faceit: undefined,
@@ -179,6 +180,11 @@ export class DiscordBotService {
             new SlashCommandBuilder()
               .setName(ChatCommands.ScheduleDuel)
               .setDescription("Creates a Duel Match"),
+          ),
+          await this.addBaseOptions(
+            new SlashCommandBuilder()
+              .setName(ChatCommands.ScheduleRush)
+              .setDescription("Creates a Rush Match"),
           ),
           new SlashCommandBuilder()
             .setName(ChatCommands.LinkDiscord)

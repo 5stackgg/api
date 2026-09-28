@@ -127,6 +127,13 @@ export class MatchAssistantService {
   }
 
   public async restoreMatchRound(matchId: string, round: number) {
+    if ((await this.getMatchType(matchId)) === "Rush") {
+      this.logger.warn(
+        `[${matchId}] not sending api_restore_round ${round}: Rush matches cannot restore rounds`,
+      );
+      return;
+    }
+
     try {
       this.logger.log(
         `[${matchId}] sending api_restore_round ${round} to server`,
@@ -144,6 +151,23 @@ export class MatchAssistantService {
         error.message,
       );
     }
+  }
+
+  public async getMatchType(
+    matchId: string,
+  ): Promise<e_match_types_enum | undefined> {
+    const { matches_by_pk } = await this.hasura.query({
+      matches_by_pk: {
+        __args: {
+          id: matchId,
+        },
+        options: {
+          type: true,
+        },
+      },
+    });
+
+    return matches_by_pk?.options?.type;
   }
 
   public async knifeSwitch(matchId: string) {
@@ -747,6 +771,10 @@ export class MatchAssistantService {
   }
 
   private static getGameMode(type?: e_match_types_enum): number {
+    if (type === "Rush") {
+      return 6;
+    }
+
     return type === "Wingman" || type === "Duel" ? 2 : 1;
   }
 

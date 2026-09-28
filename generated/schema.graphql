@@ -9535,6 +9535,9 @@ enum e_game_cfg_types_enum {
   """Live game configuration"""
   Live
 
+  """Rush game configuration"""
+  Rush
+
   """Wingman game configuration"""
   Wingman
 }
@@ -11573,6 +11576,9 @@ enum e_map_pool_types_enum {
   """1 vs 1"""
   Duel
 
+  """3 vs 3"""
+  Rush
+
   """2 vs 2"""
   Wingman
 }
@@ -12897,6 +12903,9 @@ enum e_match_types_enum {
 
   """Valve Premier matchmaking — 5 vs 5 with CS Rating"""
   Premier
+
+  """Fast-paced 3 vs 3 matches, pushing room by room"""
+  Rush
 
   """Team up with a friend and compete in fast-paced 2v2 matches"""
   Wingman

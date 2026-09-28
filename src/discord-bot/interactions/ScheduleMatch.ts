@@ -26,6 +26,7 @@ type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
 @BotChatCommand(ChatCommands.ScheduleComp)
 @BotChatCommand(ChatCommands.ScheduleWingMan)
 @BotChatCommand(ChatCommands.ScheduleDuel)
+@BotChatCommand(ChatCommands.ScheduleRush)
 export default class ScheduleMatch extends DiscordInteraction {
   public async handler(interaction: ChatInputCommandInteraction) {
     let matchType: e_match_types_enum;
@@ -43,6 +44,10 @@ export default class ScheduleMatch extends DiscordInteraction {
       case ChatCommands.ScheduleDuel:
         matchType = "Duel";
         mapPoolType = "Duel";
+        break;
+      case ChatCommands.ScheduleRush:
+        matchType = "Rush";
+        mapPoolType = "Rush";
         break;
       default:
         throw Error(`match type not supported ${interaction.type}`);
