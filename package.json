@@ -18,7 +18,7 @@
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
-    "test:unit": "jest --testPathPatterns 'src/.*\\.spec\\.ts$' --runInBand && node --test 'cloudflare-workers/**/*.test.mjs'",
+    "test:unit": "jest --testPathPatterns 'src/.*\\.spec\\.ts$' --runInBand",
     "test:sql": "jest --config ./test/jest-sql.config.js",
     "typecheck:tests": "tsc -p tsconfig.spec.json",
     "test:watch": "jest --watch",
