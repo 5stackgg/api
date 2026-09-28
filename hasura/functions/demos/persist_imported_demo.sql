@@ -395,7 +395,9 @@ BEGIN
   )
   SELECT
     v_match_id, v_match_map_id,
-    v_start_time + ((elem->>'tick')::int::numeric / v_tick_rate::numeric) * interval '1 second',
+    -- One thrower can release several grenades on a tick; 1us apart keeps the (match_map_id, attacker_steam_id, time) PK unique.
+    v_start_time + ((elem->>'tick')::int::numeric / v_tick_rate::numeric) * interval '1 second'
+      + (row_number() OVER (PARTITION BY elem->>'thrower', elem->>'tick' ORDER BY ord) - 1) * interval '1 microsecond',
     COALESCE((elem->>'round')::int, 0),
     -- demoinfocs emits 'HE'; the FK to e_utility_types expects 'HighExplosive'.
     CASE elem->>'type' WHEN 'HE' THEN 'HighExplosive' ELSE elem->>'type' END,
@@ -404,7 +406,7 @@ BEGIN
       det.coords,
       NULLIF(concat_ws(',', elem->>'ox', elem->>'oy', elem->>'oz'), '')
     )
-  FROM jsonb_array_elements(COALESCE(p_parsed->'grenade_throws', '[]'::jsonb)) elem
+  FROM jsonb_array_elements(COALESCE(p_parsed->'grenade_throws', '[]'::jsonb)) WITH ORDINALITY AS g(elem, ord)
   LEFT JOIN LATERAL (
     SELECT NULLIF(concat_ws(',', d->>'x', d->>'y', d->>'z'), '') AS coords
     FROM jsonb_array_elements(COALESCE(p_parsed->'grenade_detonations', '[]'::jsonb)) d
@@ -424,13 +426,15 @@ BEGIN
   )
   SELECT
     v_match_id, v_match_map_id,
-    v_start_time + ((elem->>'tick')::int::numeric / v_tick_rate::numeric) * interval '1 second',
+    -- Same-tick flashbangs from one thrower can blind the same victim; see player_utility above.
+    v_start_time + ((elem->>'tick')::int::numeric / v_tick_rate::numeric) * interval '1 second'
+      + (row_number() OVER (PARTITION BY elem->>'attacker', elem->>'victim', elem->>'tick' ORDER BY ord) - 1) * interval '1 microsecond',
     COALESCE((elem->>'round')::int, 0),
     NULLIF(elem->>'attacker', '')::bigint,
     NULLIF(elem->>'victim', '')::bigint,
     COALESCE((elem->>'duration')::numeric, 0),
     COALESCE((elem->>'team_flash')::boolean, false)
-  FROM jsonb_array_elements(COALESCE(p_parsed->'flashes', '[]'::jsonb)) elem
+  FROM jsonb_array_elements(COALESCE(p_parsed->'flashes', '[]'::jsonb)) WITH ORDINALITY AS f(elem, ord)
   WHERE NULLIF(elem->>'attacker', '') IS NOT NULL
     AND NULLIF(elem->>'victim', '') IS NOT NULL;
 
