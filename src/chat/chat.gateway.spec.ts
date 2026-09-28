@@ -579,7 +579,12 @@ describe("ChatGateway lobby:edit", () => {
     ]);
   });
 
-  it("acks an edit under the requestId it came with", async () => {
+  it("acks an edit under the requestId it came with, with what the server stored", async () => {
+    chat.editMessage.mockResolvedValue({
+      edited: true,
+      message: "fixed as stored",
+      edited_at: "2026-02-03T04:05:06.789Z",
+    });
     const socket = client();
 
     await gateway.editMessage(edit({ requestId: "r-2" }) as any, socket);
@@ -587,7 +592,13 @@ describe("ChatGateway lobby:edit", () => {
     expect(sent(socket)).toEqual([
       {
         event: "chat:ack",
-        data: { requestId: "r-2", messageId: MESSAGE_ID, action: "edit" },
+        data: {
+          requestId: "r-2",
+          messageId: MESSAGE_ID,
+          action: "edit",
+          message: "fixed as stored",
+          edited_at: "2026-02-03T04:05:06.789Z",
+        },
       },
     ]);
   });

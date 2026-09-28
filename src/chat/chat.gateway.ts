@@ -245,7 +245,10 @@ export class ChatGateway {
     }
 
     if (requestId) {
-      this.sendAck(client, "edit", requestId, data.messageId);
+      this.sendAck(client, "edit", requestId, data.messageId, {
+        message: result.message,
+        edited_at: result.edited_at,
+      });
     }
   }
 
@@ -279,11 +282,12 @@ export class ChatGateway {
     action: ChatAction,
     requestId: string,
     messageId: string,
+    extra: Record<string, string> = {},
   ) {
     client.send(
       JSON.stringify({
         event: "chat:ack",
-        data: { requestId, messageId, action },
+        data: { ...extra, requestId, messageId, action },
       }),
     );
   }
