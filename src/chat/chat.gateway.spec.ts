@@ -185,6 +185,29 @@ describe("ChatGateway lobby:chat", () => {
       ]);
     });
 
+    it("tells a gagged sender why, and never relays them", async () => {
+      chat.sendMessageToChat.mockResolvedValue({
+        accepted: false,
+        code: ChatErrorCode.Gagged,
+      });
+      const socket = client();
+
+      await gateway.lobby(
+        {
+          id: "m-1",
+          type: ChatLobbyType.Match,
+          message: "gg",
+          requestId: "r-4",
+        },
+        socket,
+      );
+
+      expect(chat.sendChatToServer).not.toHaveBeenCalled();
+      expect(sent(socket)).toEqual([
+        { event: "chat:error", data: { code: "gagged", requestId: "r-4" } },
+      ]);
+    });
+
     it("says nothing about a refusal that carries no code", async () => {
       chat.sendMessageToChat.mockResolvedValue({ accepted: false });
       const socket = client();
@@ -274,5 +297,140 @@ describe("ChatGateway lobby:chat", () => {
 
       expect(socket.send).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("ChatGateway lobby:delete", () => {
+  const MESSAGE_ID = "3f0c1d2e-4b5a-4c6d-8e7f-9a0b1c2d3e4f";
+
+  let chat: { deleteMessage: jest.Mock };
+  let gateway: ChatGateway;
+
+  const client = (
+    user: any = { steam_id: "1", name: "Mod", role: "moderator" },
+  ) => ({ id: "client-1", user, send: jest.fn() }) as any;
+
+  const sent = (socket: { send: jest.Mock }) =>
+    socket.send.mock.calls.map(([raw]) => JSON.parse(raw));
+
+  beforeEach(() => {
+    chat = { deleteMessage: jest.fn().mockResolvedValue({ deleted: true }) };
+    gateway = new ChatGateway(chat as any);
+  });
+
+  it("ignores a socket that has not signed in", async () => {
+    const socket = client(null);
+
+    await gateway.deleteMessage(
+      {
+        id: "m-1",
+        type: ChatLobbyType.Match,
+        messageId: MESSAGE_ID,
+        requestId: "r-1",
+      },
+      socket,
+    );
+
+    expect(chat.deleteMessage).not.toHaveBeenCalled();
+    expect(socket.send).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["an unknown lobby type", { type: "global", id: "m-1", messageId: "x" }],
+    [
+      "a room id that is not a string",
+      { type: "match", id: 1, messageId: "x" },
+    ],
+    ["a missing message id", { type: "match", id: "m-1" }],
+    ["a missing payload", undefined],
+  ])("ignores %s", async (_, data) => {
+    const socket = client();
+
+    await gateway.deleteMessage(data as any, socket);
+
+    expect(chat.deleteMessage).not.toHaveBeenCalled();
+    expect(socket.send).not.toHaveBeenCalled();
+  });
+
+  it("asks the service to delete as the signed in player", async () => {
+    await gateway.deleteMessage(
+      { id: "m-1", type: ChatLobbyType.Match, messageId: MESSAGE_ID },
+      client(),
+    );
+
+    expect(chat.deleteMessage).toHaveBeenCalledWith(
+      ChatLobbyType.Match,
+      "m-1",
+      MESSAGE_ID,
+      expect.objectContaining({ steam_id: "1" }),
+    );
+  });
+
+  it("acks a deletion under the requestId it came with", async () => {
+    const socket = client();
+
+    await gateway.deleteMessage(
+      {
+        id: "m-1",
+        type: ChatLobbyType.Match,
+        messageId: MESSAGE_ID,
+        requestId: "r-2",
+      },
+      socket,
+    );
+
+    expect(sent(socket)).toEqual([
+      { event: "chat:ack", data: { requestId: "r-2", messageId: MESSAGE_ID } },
+    ]);
+  });
+
+  it("stays quiet for a deletion without a requestId", async () => {
+    const socket = client();
+
+    await gateway.deleteMessage(
+      { id: "m-1", type: ChatLobbyType.Match, messageId: MESSAGE_ID },
+      socket,
+    );
+
+    expect(socket.send).not.toHaveBeenCalled();
+  });
+
+  it.each([ChatErrorCode.NotAllowed, ChatErrorCode.NotFound])(
+    "reports %s under the requestId it came with",
+    async (code) => {
+      chat.deleteMessage.mockResolvedValue({ deleted: false, code });
+      const socket = client();
+
+      await gateway.deleteMessage(
+        {
+          id: "m-1",
+          type: ChatLobbyType.Match,
+          messageId: MESSAGE_ID,
+          requestId: "r-3",
+        },
+        socket,
+      );
+
+      expect(sent(socket)).toEqual([
+        { event: "chat:error", data: { code, requestId: "r-3" } },
+      ]);
+    },
+  );
+
+  it("still reports a refusal without a requestId", async () => {
+    chat.deleteMessage.mockResolvedValue({
+      deleted: false,
+      code: ChatErrorCode.NotAllowed,
+    });
+    const socket = client();
+
+    await gateway.deleteMessage(
+      { id: "x", type: ChatLobbyType.Direct, messageId: MESSAGE_ID },
+      socket,
+    );
+
+    expect(sent(socket)).toEqual([
+      { event: "chat:error", data: { code: "not_allowed" } },
+    ]);
   });
 });

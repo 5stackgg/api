@@ -151,6 +151,49 @@ export class ChatGateway {
     );
   }
 
+  @SubscribeMessage("lobby:delete")
+  async deleteMessage(
+    @MessageBody()
+    data: {
+      id: string;
+      type: ChatLobbyType;
+      messageId: string;
+      requestId?: string;
+    },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    if (!client.user) {
+      return;
+    }
+
+    if (
+      !ChatGateway.isLobbyType(data?.type) ||
+      typeof data.id !== "string" ||
+      typeof data.messageId !== "string"
+    ) {
+      return;
+    }
+
+    const requestId =
+      typeof data.requestId === "string" ? data.requestId : undefined;
+
+    const result = await this.chat.deleteMessage(
+      data.type,
+      data.id,
+      data.messageId,
+      client.user,
+    );
+
+    if (result.deleted === false) {
+      this.sendError(client, result.code, requestId);
+      return;
+    }
+
+    if (requestId) {
+      this.sendAck(client, requestId, data.messageId);
+    }
+  }
+
   private static isLobbyType(value: unknown): value is ChatLobbyType {
     return Object.values(ChatLobbyType).includes(value as ChatLobbyType);
   }

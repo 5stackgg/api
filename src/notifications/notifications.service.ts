@@ -769,6 +769,25 @@ export class NotificationsService {
     );
   }
 
+  // Soft-deleting is also what stops a push still waiting in a bundling window,
+  // since chat delivery skips deleted rows. Rows collapseOlderUnread already
+  // retired stay retired, even when the one that superseded them goes.
+  async retractChatMessage(
+    type: e_notification_types_enum,
+    entityId: string,
+    messageId: string,
+  ) {
+    await this.postgres.query(
+      `UPDATE public.notifications
+          SET deleted_at = now()
+        WHERE type = $1
+          AND entity_id = $2
+          AND data->>'messageId' = $3
+          AND deleted_at IS NULL`,
+      [type, entityId, messageId],
+    );
+  }
+
   // Opening a conversation should clear its badge everywhere, not just in the
   // tab that was open.
   async markConversationRead(

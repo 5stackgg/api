@@ -21,6 +21,7 @@ import { parseDirectRoomId } from "./utilities/directRoomId";
 import { ChatErrorCode } from "./enums/ChatErrorCode";
 import { ChatMessage, ChatMessageSource } from "./types/ChatMessage";
 import { ChatSendResult } from "./types/ChatSendResult";
+import { ChatDeleteResult } from "./types/ChatDeleteResult";
 
 @Injectable()
 export class ChatService {
@@ -574,6 +575,17 @@ export class ChatService {
       return { accepted: false, code: ChatErrorCode.NotAllowed };
     }
 
+    // The game server already enforces a gag on what is typed in game, and a
+    // gag is a sanction on group chat -- a conversation between friends is left
+    // alone.
+    if (
+      source === "web" &&
+      type !== ChatLobbyType.Direct &&
+      (await this.isGagged(player.steam_id))
+    ) {
+      return { accepted: false, code: ChatErrorCode.Gagged };
+    }
+
     const name = await this.redis.get(
       HasuraService.PLAYER_NAME_CACHE_KEY(player.steam_id),
     );
@@ -632,6 +644,7 @@ export class ChatService {
       player,
       message.from.name,
       text,
+      message.id,
     ).catch((error) => {
       this.logger.warn(`unable to notify ${type}:${id} of a message`, error);
     });
@@ -659,6 +672,131 @@ export class ChatService {
     }
 
     return await this.canAccessLobby(type, id, user);
+  }
+
+  private async isGagged(steamId: string): Promise<boolean> {
+    const [row] = await this.postgres.query<Array<{ gagged: boolean }>>(
+      `SELECT public.is_gagged(p) AS gagged
+         FROM public.players p
+        WHERE p.steam_id = $1::bigint`,
+      [String(steamId)],
+    );
+
+    return row?.gagged === true;
+  }
+
+  private static readonly UUID =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  public async deleteMessage(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+    user: User,
+  ): Promise<ChatDeleteResult> {
+    if (type === ChatLobbyType.Direct) {
+      return { deleted: false, code: ChatErrorCode.NotAllowed };
+    }
+
+    const current = await this.getCurrentUser(user.steam_id);
+
+    if (!current) {
+      return { deleted: false, code: ChatErrorCode.NotAllowed };
+    }
+
+    const messageKey = `chat_${type}_${id}`;
+    const raw = ChatService.UUID.test(messageId)
+      ? await this.redis.hget(messageKey, messageId)
+      : null;
+
+    if (!raw) {
+      return { deleted: false, code: ChatErrorCode.NotFound };
+    }
+
+    const message = JSON.parse(raw) as ChatMessage;
+
+    if (!(await this.canDelete(message, type, id, current))) {
+      return { deleted: false, code: ChatErrorCode.NotAllowed };
+    }
+
+    // Audited before it is removed, so no failure part way through can take a
+    // message down without its evidence. A retry finds the row and carries on.
+    await this.recordDeletion(type, id, messageId, message, current);
+
+    await this.redis.hdel(messageKey, messageId);
+
+    void this.to(type, id, "deleted", { id: messageId });
+
+    await this.notifications
+      .retractChatMessage(
+        ChatService.notificationTypeFor(type),
+        `${type}:${id}`,
+        messageId,
+      )
+      .catch((error) => {
+        this.logger.warn(
+          `unable to retract notifications for ${type}:${id} message ${messageId}`,
+          error,
+        );
+      });
+
+    return { deleted: true };
+  }
+
+  private async canDelete(
+    message: ChatMessage,
+    type: ChatLobbyType,
+    id: string,
+    user: User,
+  ): Promise<boolean> {
+    if (!isRoleAbove(user.role, "moderator")) {
+      return false;
+    }
+
+    return await this.canAccessLobby(type, id, user);
+  }
+
+  private async recordDeletion(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+    message: ChatMessage,
+    deletedBy: User,
+  ) {
+    const createdAt = new Date(message.timestamp);
+
+    await this.postgres.query(
+      `INSERT INTO public.chat_message_deletions
+              (message_id, room_type, room_id, author_steam_id, message,
+               message_created_at, source, deleted_by_steam_id)
+            SELECT $1::uuid, $2, $3,
+                   (SELECT steam_id FROM public.players
+                     WHERE steam_id = $4::bigint),
+                   $5, $6::timestamptz, $7, $8::bigint
+       ON CONFLICT (room_type, room_id, message_id) DO NOTHING`,
+      [
+        messageId,
+        type,
+        id,
+        ChatService.authorSteamId(message),
+        String(message.message ?? ""),
+        Number.isNaN(createdAt.getTime()) ? null : createdAt.toISOString(),
+        message.source ?? null,
+        deletedBy.steam_id,
+      ],
+    );
+  }
+
+  // A steam id stored as a JSON number has already been rounded by JSON.parse
+  // onto some other account, and would pin the message on the wrong player.
+  private static authorSteamId(message: ChatMessage): string | null {
+    const steamId: unknown = message.from?.steam_id;
+
+    if (typeof steamId !== "string" || !/^\d{1,20}$/.test(steamId)) {
+      return null;
+    }
+
+    return steamId;
   }
 
   // The name and role caches are separate keys with separate lifetimes, so
@@ -691,6 +829,7 @@ export class ChatService {
     sender: User,
     senderName: string,
     message: string,
+    messageId: string,
   ) {
     const members = await this.getLobbyMemberSteamIds(type, id);
     const senderSteamId = String(sender.steam_id);
@@ -717,6 +856,7 @@ export class ChatService {
         threadLabel: await this.threadLabel(type, id, sender),
         icon: sender.avatar_url,
         senderSteamId,
+        messageId,
       },
     });
 
@@ -1427,7 +1567,7 @@ export class ChatService {
   public async to(
     type: ChatLobbyType,
     id: string,
-    event: "chat" | "list" | "messages" | "joined" | "left",
+    event: "chat" | "deleted" | "list" | "messages" | "joined" | "left",
     data: Record<string, any>,
   ) {
     const users = await this.getAllUsersInLobby(type, id);
