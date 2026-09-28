@@ -789,6 +789,20 @@ export class NotificationsService {
     );
   }
 
+  // `deleted_at IS NULL` is what keeps an edit racing a delete from writing
+  // text back into a row retractChatMessage has already blanked.
+  async updateChatMessagePreview(messageId: string, preview: string) {
+    await this.postgres.query(
+      `UPDATE public.notifications
+          SET message = $2
+        WHERE data->>'messageId' = $1
+          AND type IN ('ChatMessage', 'MatchChatMessage')
+          AND is_read = false
+          AND deleted_at IS NULL`,
+      [messageId, preview],
+    );
+  }
+
   // Opening a conversation should clear its badge everywhere, not just in the
   // tab that was open.
   async markConversationRead(

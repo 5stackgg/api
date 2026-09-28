@@ -6,4 +6,5 @@ export enum ChatErrorCode {
   Invalid = "invalid",
   Gagged = "gagged",
   NotFound = "not_found",
+  WindowClosed = "window_closed",
 }

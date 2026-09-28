@@ -461,3 +461,150 @@ describe("ChatGateway lobby:delete", () => {
     ]);
   });
 });
+
+describe("ChatGateway lobby:edit", () => {
+  const MESSAGE_ID = "3f0c1d2e-4b5a-4c6d-8e7f-9a0b1c2d3e4f";
+
+  let chat: { editMessage: jest.Mock; sendChatToServer: jest.Mock };
+  let gateway: ChatGateway;
+
+  const client = (user: any = { steam_id: "1", name: "Luke", role: "user" }) =>
+    ({ id: "client-1", user, send: jest.fn() }) as any;
+
+  const sent = (socket: { send: jest.Mock }) =>
+    socket.send.mock.calls.map(([raw]) => JSON.parse(raw));
+
+  const edit = (overrides: Record<string, unknown> = {}) => ({
+    id: "m-1",
+    type: ChatLobbyType.Match,
+    messageId: MESSAGE_ID,
+    message: "fixed",
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    chat = {
+      editMessage: jest.fn().mockResolvedValue({
+        edited: true,
+        message: "fixed",
+        edited_at: "2026-01-01T00:00:00.000Z",
+      }),
+      sendChatToServer: jest.fn(),
+    };
+    gateway = new ChatGateway(chat as any);
+  });
+
+  it("ignores a socket that has not signed in", async () => {
+    const socket = client(null);
+
+    await gateway.editMessage(edit({ requestId: "r-1" }) as any, socket);
+
+    expect(chat.editMessage).not.toHaveBeenCalled();
+    expect(socket.send).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["an unknown lobby type", { type: "global" }],
+    ["a room id that is not a string", { id: 1 }],
+    ["a missing message id", { messageId: undefined }],
+    ["a message that is not a string", { message: 5 }],
+    ["a message that is only whitespace", { message: "  \n " }],
+  ])("ignores %s", async (_, overrides) => {
+    const socket = client();
+
+    await gateway.editMessage(edit(overrides) as any, socket);
+
+    expect(chat.editMessage).not.toHaveBeenCalled();
+    expect(socket.send).not.toHaveBeenCalled();
+  });
+
+  it("ignores a missing payload", async () => {
+    await gateway.editMessage(undefined as any, client());
+
+    expect(chat.editMessage).not.toHaveBeenCalled();
+  });
+
+  it("asks the service to edit as the signed in player, with the trimmed text", async () => {
+    await gateway.editMessage(edit({ message: "  fixed  " }) as any, client());
+
+    expect(chat.editMessage).toHaveBeenCalledWith(
+      ChatLobbyType.Match,
+      "m-1",
+      MESSAGE_ID,
+      expect.objectContaining({ steam_id: "1" }),
+      "fixed",
+    );
+  });
+
+  it("refuses an edit over the limit without asking the service", async () => {
+    const socket = client();
+
+    await gateway.editMessage(
+      edit({
+        message: "a".repeat(ChatService.MAX_MESSAGE_LENGTH + 1),
+        requestId: "r-1",
+      }) as any,
+      socket,
+    );
+
+    expect(chat.editMessage).not.toHaveBeenCalled();
+    expect(sent(socket)).toEqual([
+      {
+        event: "chat:error",
+        data: {
+          code: ChatErrorCode.TooLong,
+          action: "edit",
+          max: 2000,
+          requestId: "r-1",
+        },
+      },
+    ]);
+  });
+
+  it("acks an edit under the requestId it came with", async () => {
+    const socket = client();
+
+    await gateway.editMessage(edit({ requestId: "r-2" }) as any, socket);
+
+    expect(sent(socket)).toEqual([
+      {
+        event: "chat:ack",
+        data: { requestId: "r-2", messageId: MESSAGE_ID, action: "edit" },
+      },
+    ]);
+  });
+
+  it("stays quiet for an edit without a requestId", async () => {
+    const socket = client();
+
+    await gateway.editMessage(edit() as any, socket);
+
+    expect(socket.send).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ChatErrorCode.NotAllowed,
+    ChatErrorCode.NotFound,
+    ChatErrorCode.WindowClosed,
+    ChatErrorCode.Gagged,
+  ])("reports %s under the requestId it came with", async (code) => {
+    chat.editMessage.mockResolvedValue({ edited: false, code });
+    const socket = client();
+
+    await gateway.editMessage(edit({ requestId: "r-3" }) as any, socket);
+
+    expect(sent(socket)).toEqual([
+      {
+        event: "chat:error",
+        data: { code, action: "edit", requestId: "r-3" },
+      },
+    ]);
+  });
+
+  it("never relays an edit to the game server", async () => {
+    await gateway.editMessage(edit() as any, client());
+
+    expect(chat.editMessage).toHaveBeenCalled();
+    expect(chat.sendChatToServer).not.toHaveBeenCalled();
+  });
+});

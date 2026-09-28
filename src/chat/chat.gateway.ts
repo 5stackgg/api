@@ -195,6 +195,60 @@ export class ChatGateway {
     }
   }
 
+  @SubscribeMessage("lobby:edit")
+  async editMessage(
+    @MessageBody()
+    data: {
+      id: string;
+      type: ChatLobbyType;
+      messageId: string;
+      message: unknown;
+      requestId?: string;
+    },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    if (!client.user) {
+      return;
+    }
+
+    if (
+      !ChatGateway.isLobbyType(data?.type) ||
+      typeof data.id !== "string" ||
+      typeof data.messageId !== "string"
+    ) {
+      return;
+    }
+
+    const requestId =
+      typeof data.requestId === "string" ? data.requestId : undefined;
+
+    const parsed = ChatService.messageText(data.message);
+
+    if ("error" in parsed) {
+      if (parsed.error === ChatErrorCode.TooLong) {
+        this.sendError(client, "edit", parsed.error, requestId);
+      }
+      return;
+    }
+
+    const result = await this.chat.editMessage(
+      data.type,
+      data.id,
+      data.messageId,
+      client.user,
+      parsed.text,
+    );
+
+    if (result.edited === false) {
+      this.sendError(client, "edit", result.code, requestId);
+      return;
+    }
+
+    if (requestId) {
+      this.sendAck(client, "edit", requestId, data.messageId);
+    }
+  }
+
   private static isLobbyType(value: unknown): value is ChatLobbyType {
     return Object.values(ChatLobbyType).includes(value as ChatLobbyType);
   }

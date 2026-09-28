@@ -38,6 +38,25 @@ describe("ChatService direct messages", () => {
   let queries: Array<{ sql: string; bindings: any[] }>;
   let gagged: boolean;
   let audited: boolean;
+  // The one direct message the fake database holds, if a test put one there.
+  let directMessage:
+    | {
+        id: string;
+        roomId: string;
+        author: string;
+        message: string;
+        open: boolean;
+        editedAt: Date | null;
+      }
+    | undefined;
+
+  const ownsDirectMessage = (bindings: any[]) =>
+    directMessage !== undefined &&
+    directMessage.id === bindings[0] &&
+    directMessage.roomId === bindings[1] &&
+    directMessage.author === bindings[2] &&
+    directMessage.open;
+
   const postgres = {
     query: jest.fn(async (sql: string, bindings: any[]): Promise<any[]> => {
       queries.push({ sql, bindings });
@@ -50,6 +69,53 @@ describe("ChatService direct messages", () => {
         return [{ deleted: audited }];
       }
 
+      if (sql.includes("AS open")) {
+        return directMessage?.id === bindings[0] &&
+          directMessage.roomId === bindings[1]
+          ? [{ author: directMessage.author, open: directMessage.open }]
+          : [];
+      }
+
+      if (sql.includes("UPDATE public.direct_messages")) {
+        if (!ownsDirectMessage(bindings)) {
+          return [];
+        }
+
+        directMessage.message = bindings[4];
+        directMessage.editedAt = new Date("2026-01-01T00:00:00.000Z");
+
+        return [
+          {
+            message: directMessage.message,
+            edited_at: directMessage.editedAt,
+          },
+        ];
+      }
+
+      if (sql.includes("DELETE FROM public.direct_messages")) {
+        if (!ownsDirectMessage(bindings)) {
+          return [];
+        }
+
+        const { id } = directMessage;
+        directMessage = undefined;
+
+        return [{ id }];
+      }
+
+      if (
+        sql.includes("SELECT message, edited_at FROM public.direct_messages")
+      ) {
+        return directMessage?.id === bindings[0]
+          ? [
+              {
+                message: directMessage.message,
+                edited_at: directMessage.editedAt,
+              },
+            ]
+          : [];
+      }
+
       return [];
     }),
   };
@@ -59,6 +125,7 @@ describe("ChatService direct messages", () => {
     collapseOlderUnread: jest.fn(),
     markConversationRead: jest.fn(),
     retractChatMessage: jest.fn().mockResolvedValue(undefined),
+    updateChatMessagePreview: jest.fn().mockResolvedValue(undefined),
   };
 
   const client = (steamId: string) =>
@@ -255,7 +322,10 @@ describe("ChatService direct messages", () => {
     redis.hget.mockResolvedValue(null);
     redis.hgetall.mockResolvedValue({});
     redis.get.mockResolvedValue(null);
+    redis.eval.mockResolvedValue([1, 1]);
     notifications.retractChatMessage.mockResolvedValue(undefined);
+    notifications.updateChatMessagePreview.mockResolvedValue(undefined);
+    directMessage = undefined;
     acceptedFriendships = [[ME, FRIEND]];
     myMatches = ["m-1"];
     otherMatches = ["mm-1"];
@@ -1178,8 +1248,16 @@ describe("ChatService direct messages", () => {
       expect(redis.hdel).not.toHaveBeenCalled();
     });
 
-    it("refuses anyone in a direct conversation", async () => {
+    it("does not let an administrator moderate a direct conversation", async () => {
       role = "administrator";
+      directMessage = {
+        id: MESSAGE_ID,
+        roomId: directRoomId(ME, FRIEND),
+        author: FRIEND,
+        message: "something awful",
+        open: true,
+        editedAt: null,
+      };
 
       await expect(
         service.deleteMessage(
@@ -1190,8 +1268,8 @@ describe("ChatService direct messages", () => {
         ),
       ).resolves.toEqual({ deleted: false, code: ChatErrorCode.NotAllowed });
 
-      expect(redis.hget).not.toHaveBeenCalled();
-      expect(queries).toHaveLength(0);
+      expect(directMessage).toBeDefined();
+      expect(audits()).toHaveLength(0);
     });
 
     it("answers not_found for a message that is not there", async () => {
@@ -1288,6 +1366,628 @@ describe("ChatService direct messages", () => {
           }),
         }),
       );
+    });
+  });
+
+  describe("editing and deleting your own messages", () => {
+    const MESSAGE_ID = "5a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d";
+    const WINDOW = ChatService.SELF_SERVICE_WINDOW_MS;
+
+    let stored: Record<string, Record<string, string>>;
+
+    const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
+
+    const store = (message: Record<string, unknown> = {}, id = "m-1") => {
+      stored[`chat_match_${id}`] = {
+        [MESSAGE_ID]: JSON.stringify({
+          id: MESSAGE_ID,
+          message: "typo",
+          timestamp: ago(60_000),
+          source: "web",
+          from: {
+            role: "user",
+            name: "Me",
+            steam_id: ME,
+            avatar_url: null,
+            profile_url: "https://steamcommunity.com/id/me/",
+          },
+          ...message,
+        }),
+      };
+    };
+
+    const current = (id = "m-1") =>
+      JSON.parse(stored[`chat_match_${id}`]?.[MESSAGE_ID] ?? "null");
+
+    const me = (overrides: Record<string, unknown> = {}) =>
+      ({ steam_id: ME, name: "Me", role: "user", ...overrides }) as any;
+
+    const edit = (text = "fixed", user = me(), id = "m-1") =>
+      service.editMessage(ChatLobbyType.Match, id, MESSAGE_ID, user, text);
+
+    const selfDelete = (user = me(), id = "m-1") =>
+      service.deleteMessage(ChatLobbyType.Match, id, MESSAGE_ID, user);
+
+    const broadcasts = (event: string) =>
+      redis.publish.mock.calls
+        .map(([, payload]) => JSON.parse(payload))
+        .filter((published) => published.event === event);
+
+    const audits = () =>
+      queries.filter(({ sql }) =>
+        sql.includes("INSERT INTO public.chat_message_deletions"),
+      );
+
+    const flush = () => new Promise((resolve) => setImmediate(resolve));
+
+    beforeEach(() => {
+      stored = {};
+      redis.hget.mockImplementation(
+        async (key: string, field: string) => stored[key]?.[field] ?? null,
+      );
+      redis.hgetall.mockImplementation(async (key: string) =>
+        key === "chat:match:m-1"
+          ? { [FRIEND]: JSON.stringify({ user: { steam_id: FRIEND } }) }
+          : {},
+      );
+      redis.hdel.mockImplementation(async (key: string, field: string) => {
+        delete stored[key]?.[field];
+        return 1;
+      });
+      redis.eval.mockImplementation(
+        async (
+          script: string,
+          _keys: number,
+          key: string,
+          field: string,
+          expected: string,
+          next: string,
+        ) => {
+          if (!script.includes("HPEXPIRETIME")) {
+            return [1, 1];
+          }
+
+          if (stored[key]?.[field] !== expected) {
+            return 0;
+          }
+
+          stored[key][field] = next;
+          return 1;
+        },
+      );
+    });
+
+    describe("in a room", () => {
+      it("lets the author change what they wrote within the window", async () => {
+        store();
+        const before = current();
+
+        const result = await edit("  fixed  ");
+
+        expect(result).toEqual({
+          edited: true,
+          message: "fixed",
+          edited_at: expect.any(String),
+        });
+        expect(current()).toEqual({
+          ...before,
+          message: "fixed",
+          edited_at: result.edited ? result.edited_at : undefined,
+        });
+      });
+
+      it("tells the room what the message says now", async () => {
+        store();
+
+        const result = await edit();
+        await flush();
+
+        expect(broadcasts("lobby:match:m-1:edited")).toEqual([
+          {
+            steamId: FRIEND,
+            event: "lobby:match:m-1:edited",
+            data: {
+              id: MESSAGE_ID,
+              message: "fixed",
+              edited_at: result.edited ? result.edited_at : undefined,
+            },
+          },
+        ]);
+        expect(broadcasts("lobby:match:m-1:chat")).toEqual([]);
+      });
+
+      it("rewrites the bell's preview rather than notifying again", async () => {
+        store();
+
+        await edit("<b>fixed</b>");
+        await flush();
+
+        expect(notifications.updateChatMessagePreview).toHaveBeenCalledWith(
+          MESSAGE_ID,
+          "&lt;b&gt;fixed&lt;/b&gt;",
+        );
+        expect(notifications.notifyPlayers).not.toHaveBeenCalled();
+      });
+
+      it("still edits when the preview cannot be rewritten", async () => {
+        store();
+        notifications.updateChatMessagePreview.mockRejectedValue(
+          new Error("database down"),
+        );
+
+        await expect(edit()).resolves.toMatchObject({ edited: true });
+        expect(current().message).toBe("fixed");
+      });
+
+      it("never relays an edit to the game server", async () => {
+        store();
+
+        await edit();
+        await flush();
+
+        expect(rcon.connect).not.toHaveBeenCalled();
+      });
+
+      it.each([
+        ["another player", { steam_id: FRIEND }],
+        ["an administrator", { steam_id: FRIEND, role: "administrator" }],
+      ])("refuses %s", async (_, overrides) => {
+        store();
+        role = (overrides as { role?: string }).role ?? "user";
+
+        await expect(edit("mine now", me(overrides))).resolves.toEqual({
+          edited: false,
+          code: ChatErrorCode.NotAllowed,
+        });
+        expect(current().message).toBe("typo");
+      });
+
+      it.each([
+        ["stored before source was recorded", { source: undefined }],
+        ["relayed from the game", { source: "game" }],
+      ])("refuses a message %s", async (_, overrides) => {
+        store(overrides);
+
+        await expect(edit()).resolves.toEqual({
+          edited: false,
+          code: ChatErrorCode.NotAllowed,
+        });
+        expect(current().message).toBe("typo");
+      });
+
+      it("refuses once the window has closed", async () => {
+        store({ timestamp: ago(WINDOW + 6_000) });
+
+        await expect(edit()).resolves.toEqual({
+          edited: false,
+          code: ChatErrorCode.WindowClosed,
+        });
+        expect(current().message).toBe("typo");
+      });
+
+      it("allows for a few seconds of clock skew between pods", async () => {
+        store({ timestamp: ago(WINDOW + 2_000) });
+
+        await expect(edit()).resolves.toMatchObject({ edited: true });
+      });
+
+      it("keeps a gagged author from editing", async () => {
+        store();
+        gagged = true;
+
+        await expect(edit()).resolves.toEqual({
+          edited: false,
+          code: ChatErrorCode.Gagged,
+        });
+        expect(current().message).toBe("typo");
+      });
+
+      it("refuses an author who can no longer get into the room", async () => {
+        store({}, "m-2");
+
+        await expect(edit("fixed", me(), "m-2")).resolves.toEqual({
+          edited: false,
+          code: ChatErrorCode.NotAllowed,
+        });
+      });
+
+      it("refuses an edit over the limit", async () => {
+        store();
+
+        await expect(
+          edit("a".repeat(ChatService.MAX_MESSAGE_LENGTH + 1)),
+        ).resolves.toEqual({ edited: false, code: ChatErrorCode.TooLong });
+        expect(current().message).toBe("typo");
+      });
+
+      it("answers not_found for a message that is not there", async () => {
+        await expect(edit()).resolves.toEqual({
+          edited: false,
+          code: ChatErrorCode.NotFound,
+        });
+      });
+
+      it("answers not_found for an id that could never be a message", async () => {
+        await expect(
+          service.editMessage(
+            ChatLobbyType.Match,
+            "m-1",
+            "not-a-uuid",
+            me(),
+            "fixed",
+          ),
+        ).resolves.toEqual({ edited: false, code: ChatErrorCode.NotFound });
+        expect(redis.hget).not.toHaveBeenCalled();
+      });
+
+      it("does not bring back a message deleted between the read and the write", async () => {
+        store();
+        redis.hget.mockImplementationOnce(
+          async (key: string, field: string) => {
+            const raw = stored[key][field];
+            delete stored[key][field];
+            return raw;
+          },
+        );
+
+        await expect(edit()).resolves.toEqual({
+          edited: false,
+          code: ChatErrorCode.NotFound,
+        });
+        expect(current()).toBeNull();
+        expect(broadcasts("lobby:match:m-1:edited")).toEqual([]);
+      });
+
+      it("applies an edit on top of one that landed between the read and the write", async () => {
+        store();
+        redis.hget.mockImplementationOnce(
+          async (key: string, field: string) => {
+            const raw = stored[key][field];
+            stored[key][field] = JSON.stringify({
+              ...JSON.parse(raw),
+              message: "other tab",
+              edited_at: new Date().toISOString(),
+            });
+            return raw;
+          },
+        );
+
+        await expect(edit()).resolves.toMatchObject({ edited: true });
+        expect(current().message).toBe("fixed");
+      });
+
+      it("lets the author delete their own message, and audits it", async () => {
+        store();
+
+        await expect(selfDelete()).resolves.toEqual({ deleted: true });
+
+        expect(current()).toBeNull();
+        expect(audits().at(0)?.bindings).toEqual([
+          MESSAGE_ID,
+          "match",
+          "m-1",
+          ME,
+          "typo",
+          expect.any(String),
+          "web",
+          ME,
+        ]);
+        expect(notifications.retractChatMessage).toHaveBeenCalledWith(
+          MESSAGE_ID,
+        );
+      });
+
+      it("lets a gagged author delete their own message", async () => {
+        store();
+        gagged = true;
+
+        await expect(selfDelete()).resolves.toEqual({ deleted: true });
+      });
+
+      it("refuses the author's delete once the window has closed", async () => {
+        store({ timestamp: ago(WINDOW + 6_000) });
+
+        await expect(selfDelete()).resolves.toEqual({
+          deleted: false,
+          code: ChatErrorCode.WindowClosed,
+        });
+        expect(audits()).toHaveLength(0);
+        expect(current().message).toBe("typo");
+      });
+
+      it("refuses the author's delete of a line relayed from the game", async () => {
+        store({ source: "game" });
+
+        await expect(selfDelete()).resolves.toEqual({
+          deleted: false,
+          code: ChatErrorCode.NotAllowed,
+        });
+      });
+
+      it("still lets a moderator delete after the window", async () => {
+        role = "moderator";
+        store({ timestamp: ago(WINDOW * 10) });
+
+        await expect(selfDelete(me({ role: "moderator" }))).resolves.toEqual({
+          deleted: true,
+        });
+      });
+    });
+
+    describe("in a direct conversation", () => {
+      const room = directRoomId(ME, FRIEND);
+
+      const hold = (overrides: Partial<typeof directMessage> = {}) => {
+        directMessage = {
+          id: MESSAGE_ID,
+          roomId: room,
+          author: ME,
+          message: "typo",
+          open: true,
+          editedAt: null,
+          ...overrides,
+        };
+      };
+
+      const editDirect = (user = me()) =>
+        service.editMessage(
+          ChatLobbyType.Direct,
+          room,
+          MESSAGE_ID,
+          user,
+          "fixed",
+        );
+
+      const deleteDirect = (user = me()) =>
+        service.deleteMessage(ChatLobbyType.Direct, room, MESSAGE_ID, user);
+
+      const statements = (verb: string) =>
+        queries.filter(({ sql }) =>
+          sql.includes(`${verb} public.direct_messages`),
+        );
+
+      beforeEach(() => {
+        redis.hgetall.mockImplementation(async (key: string) =>
+          key === `chat:direct:${room}`
+            ? { [FRIEND]: JSON.stringify({ user: { steam_id: FRIEND } }) }
+            : {},
+        );
+      });
+
+      it("lets the author edit within the window", async () => {
+        hold();
+
+        await expect(editDirect()).resolves.toEqual({
+          edited: true,
+          message: "fixed",
+          edited_at: "2026-01-01T00:00:00.000Z",
+        });
+        await flush();
+
+        expect(statements("UPDATE").at(0)?.bindings).toEqual([
+          MESSAGE_ID,
+          room,
+          ME,
+          600,
+          "fixed",
+        ]);
+        expect(broadcasts(`lobby:direct:${room}:edited`)).toEqual([
+          {
+            steamId: FRIEND,
+            event: `lobby:direct:${room}:edited`,
+            data: {
+              id: MESSAGE_ID,
+              message: "fixed",
+              edited_at: "2026-01-01T00:00:00.000Z",
+            },
+          },
+        ]);
+        expect(notifications.updateChatMessagePreview).toHaveBeenCalledWith(
+          MESSAGE_ID,
+          "fixed",
+        );
+      });
+
+      it("is not held back by a gag", async () => {
+        hold();
+        gagged = true;
+
+        await expect(editDirect()).resolves.toMatchObject({ edited: true });
+        expect(
+          queries.some(({ sql }) => sql.includes("public.is_gagged")),
+        ).toBe(false);
+      });
+
+      it("refuses the other party's message", async () => {
+        hold({ author: FRIEND });
+
+        await expect(editDirect()).resolves.toEqual({
+          edited: false,
+          code: ChatErrorCode.NotAllowed,
+        });
+        expect(statements("UPDATE")).toHaveLength(0);
+      });
+
+      it("refuses once the window has closed", async () => {
+        hold({ open: false });
+
+        await expect(editDirect()).resolves.toEqual({
+          edited: false,
+          code: ChatErrorCode.WindowClosed,
+        });
+        await expect(deleteDirect()).resolves.toEqual({
+          deleted: false,
+          code: ChatErrorCode.WindowClosed,
+        });
+        expect(statements("UPDATE")).toHaveLength(0);
+        expect(statements("DELETE FROM")).toHaveLength(0);
+      });
+
+      it("refuses once the friendship is gone, before reading anything", async () => {
+        hold();
+        acceptedFriendships = [];
+
+        await expect(editDirect()).resolves.toEqual({
+          edited: false,
+          code: ChatErrorCode.NotAllowed,
+        });
+        await expect(deleteDirect()).resolves.toEqual({
+          deleted: false,
+          code: ChatErrorCode.NotAllowed,
+        });
+        expect(queries).toHaveLength(0);
+      });
+
+      it("answers not_found for a message that is not there", async () => {
+        await expect(editDirect()).resolves.toEqual({
+          edited: false,
+          code: ChatErrorCode.NotFound,
+        });
+      });
+
+      it("says why when the row changed between the read and the write", async () => {
+        hold();
+        postgres.query.mockImplementationOnce(async (sql, bindings) => {
+          queries.push({ sql, bindings });
+          const row = { author: ME, open: true };
+          directMessage = undefined;
+          return [row];
+        });
+
+        await expect(editDirect()).resolves.toEqual({
+          edited: false,
+          code: ChatErrorCode.NotFound,
+        });
+        expect(broadcasts(`lobby:direct:${room}:edited`)).toEqual([]);
+      });
+
+      it("lets the author delete within the window, without an audit", async () => {
+        hold();
+
+        await expect(deleteDirect()).resolves.toEqual({ deleted: true });
+        await flush();
+
+        expect(directMessage).toBeUndefined();
+        expect(audits()).toHaveLength(0);
+        expect(broadcasts(`lobby:direct:${room}:deleted`)).toEqual([
+          {
+            steamId: FRIEND,
+            event: `lobby:direct:${room}:deleted`,
+            data: { id: MESSAGE_ID },
+          },
+        ]);
+        expect(notifications.retractChatMessage).toHaveBeenCalledWith(
+          MESSAGE_ID,
+        );
+      });
+
+      it("refuses to delete the other party's message", async () => {
+        hold({ author: FRIEND });
+
+        await expect(deleteDirect()).resolves.toEqual({
+          deleted: false,
+          code: ChatErrorCode.NotAllowed,
+        });
+        expect(directMessage).toBeDefined();
+      });
+    });
+
+    describe("while its notifications are still being written", () => {
+      const say = async (type: ChatLobbyType, id: string) => {
+        redis.hget.mockImplementation(async (key: string, field: string) =>
+          key.startsWith("chat:")
+            ? JSON.stringify({ user: { steam_id: ME } })
+            : (stored[key]?.[field] ?? null),
+        );
+
+        const result = await service.sendMessageToChat(type, id, me(), "typo");
+
+        return result.accepted ? result.messageId : undefined;
+      };
+
+      it("gives the rows a room message's edited text", async () => {
+        tournament.roster = [ME, FRIEND];
+        notifications.notifyPlayers.mockImplementationOnce(async () => {
+          const [key] = redis.hset.mock.calls.at(-1);
+          const [field, raw] = redis.hset.mock.calls.at(-1).slice(1);
+          stored[key] = {
+            [field]: JSON.stringify({
+              ...JSON.parse(raw),
+              message: "fixed",
+              edited_at: new Date().toISOString(),
+            }),
+          };
+        });
+
+        const messageId = await say(ChatLobbyType.Tournament, "t-1");
+        await flush();
+        await flush();
+
+        expect(notifications.updateChatMessagePreview).toHaveBeenCalledWith(
+          messageId,
+          "fixed",
+        );
+        expect(notifications.retractChatMessage).not.toHaveBeenCalled();
+      });
+
+      it("leaves the rows alone when the message is unchanged", async () => {
+        tournament.roster = [ME, FRIEND];
+        redis.hset.mockImplementationOnce(
+          async (key: string, field: string, raw: string) => {
+            stored[key] = { [field]: raw };
+          },
+        );
+
+        await say(ChatLobbyType.Tournament, "t-1");
+        await flush();
+        await flush();
+
+        expect(notifications.notifyPlayers).toHaveBeenCalled();
+        expect(notifications.updateChatMessagePreview).not.toHaveBeenCalled();
+        expect(notifications.retractChatMessage).not.toHaveBeenCalled();
+      });
+
+      it("retracts them when a direct message was deleted meanwhile", async () => {
+        const messageId = await say(
+          ChatLobbyType.Direct,
+          directRoomId(ME, FRIEND),
+        );
+        await flush();
+        await flush();
+
+        expect(notifications.retractChatMessage).toHaveBeenCalledWith(
+          messageId,
+        );
+      });
+
+      it("gives them a direct message's edited text", async () => {
+        notifications.notifyPlayers.mockImplementationOnce(async () => {
+          const insert = queries.find(({ sql }) =>
+            sql.includes("INSERT INTO public.direct_messages"),
+          );
+          directMessage = {
+            id: insert.bindings[0],
+            roomId: insert.bindings[1],
+            author: ME,
+            message: "fixed",
+            open: true,
+            editedAt: new Date(),
+          };
+        });
+
+        const messageId = await say(
+          ChatLobbyType.Direct,
+          directRoomId(ME, FRIEND),
+        );
+        await flush();
+        await flush();
+
+        expect(notifications.updateChatMessagePreview).toHaveBeenCalledWith(
+          messageId,
+          "fixed",
+        );
+        expect(notifications.retractChatMessage).not.toHaveBeenCalled();
+      });
     });
   });
 

@@ -22,6 +22,7 @@ import { ChatErrorCode } from "./enums/ChatErrorCode";
 import { ChatMessage, ChatMessageSource } from "./types/ChatMessage";
 import { ChatSendResult } from "./types/ChatSendResult";
 import { ChatDeleteResult } from "./types/ChatDeleteResult";
+import { ChatEditResult } from "./types/ChatEditResult";
 
 @Injectable()
 export class ChatService {
@@ -51,6 +52,39 @@ export class ChatService {
   // website message, and 2000 characters of multibyte text can outgrow an rcon
   // packet.
   public static readonly RCON_MESSAGE_MAX_LENGTH = 240;
+
+  // How long an author may edit or delete what they sent from the website.
+  public static readonly SELF_SERVICE_WINDOW_MS = 600_000;
+
+  // A room message carries the clock of whichever pod stored it, and another
+  // pod may be the one judging the window.
+  private static readonly SELF_SERVICE_CLOCK_SKEW_MS = 5_000;
+
+  private static readonly EDIT_ATTEMPTS = 3;
+
+  // HSET drops a field's expiry, so the absolute expiry is read first and put
+  // back: an edit never extends a message's life. Comparing against the value
+  // that was read and checked keeps an edit from bringing back a message that
+  // expired or was deleted in the meantime, or from overwriting another edit.
+  private static readonly EDIT_ROOM_MESSAGE_SCRIPT = `
+    if redis.call('HGET', KEYS[1], ARGV[1]) ~= ARGV[2] then
+      return 0
+    end
+    local expiresAt = redis.call('HPEXPIRETIME', KEYS[1], 'FIELDS', 1, ARGV[1])[1]
+    redis.call('HSET', KEYS[1], ARGV[1], ARGV[3])
+    if expiresAt > 0 then
+      redis.call('HPEXPIREAT', KEYS[1], expiresAt, 'FIELDS', 1, ARGV[1])
+    end
+    return 1
+  `;
+
+  // Shared by every direct message edit and delete, so the author and window
+  // are judged in the same statement that changes the row, on the database's
+  // clock -- the one created_at was stamped with.
+  private static readonly OWN_RECENT_DIRECT_MESSAGE = `id = $1::uuid
+          AND room_id = $2
+          AND from_steam_id = $3::bigint
+          AND created_at > now() - make_interval(secs => $4::int)`;
 
   // A drafted free agent is on a roster and gets in that way; withdrawn means
   // they left the pool.
@@ -694,8 +728,12 @@ export class ChatService {
     messageId: string,
     user: User,
   ): Promise<ChatDeleteResult> {
+    if (!ChatService.UUID.test(messageId)) {
+      return { deleted: false, code: ChatErrorCode.NotFound };
+    }
+
     if (type === ChatLobbyType.Direct) {
-      return { deleted: false, code: ChatErrorCode.NotAllowed };
+      return await this.deleteDirectMessage(id, messageId, user);
     }
 
     const current = await this.getCurrentUser(user.steam_id);
@@ -705,9 +743,7 @@ export class ChatService {
     }
 
     const messageKey = `chat_${type}_${id}`;
-    const raw = ChatService.UUID.test(messageId)
-      ? await this.redis.hget(messageKey, messageId)
-      : null;
+    const raw = await this.redis.hget(messageKey, messageId);
 
     if (!raw) {
       return { deleted: false, code: ChatErrorCode.NotFound };
@@ -715,39 +751,338 @@ export class ChatService {
 
     const message = JSON.parse(raw) as ChatMessage;
 
-    if (!(await this.canDelete(message, type, id, current))) {
-      return { deleted: false, code: ChatErrorCode.NotAllowed };
+    const refusal = await this.deleteRefusal(message, type, id, current);
+
+    if (refusal) {
+      return { deleted: false, code: refusal };
     }
 
     // Audited before it is removed, so no failure part way through can take a
     // message down without its evidence. A retry finds the row and carries on.
+    // An author removing their own message is audited the same way, or posting
+    // abuse and deleting it would leave nothing behind.
     await this.recordDeletion(type, id, messageId, message, current);
 
     await this.redis.hdel(messageKey, messageId);
 
     void this.to(type, id, "deleted", { id: messageId });
 
+    await this.retractNotifications(type, id, messageId);
+
+    return { deleted: true };
+  }
+
+  private async deleteRefusal(
+    message: ChatMessage,
+    type: ChatLobbyType,
+    id: string,
+    user: User,
+  ): Promise<ChatErrorCode | null> {
+    if (!isRoleAbove(user.role, "moderator")) {
+      const refusal = ChatService.selfServiceRefusal(message, user);
+
+      if (refusal) {
+        return refusal;
+      }
+    }
+
+    if (!(await this.canAccessLobby(type, id, user))) {
+      return ChatErrorCode.NotAllowed;
+    }
+
+    return null;
+  }
+
+  // Only what the author typed on the website is theirs to change: a line
+  // relayed from the game, or one stored before `source` was recorded, is not.
+  // No role gets past this -- nobody edits another player's words.
+  private static selfServiceRefusal(
+    message: ChatMessage,
+    user: User,
+  ): ChatErrorCode | null {
+    if (
+      message.source !== "web" ||
+      ChatService.authorSteamId(message) !== String(user.steam_id)
+    ) {
+      return ChatErrorCode.NotAllowed;
+    }
+
+    const sentAt = new Date(message.timestamp).getTime();
+
+    if (
+      Number.isNaN(sentAt) ||
+      Date.now() - sentAt >
+        ChatService.SELF_SERVICE_WINDOW_MS +
+          ChatService.SELF_SERVICE_CLOCK_SKEW_MS
+    ) {
+      return ChatErrorCode.WindowClosed;
+    }
+
+    return null;
+  }
+
+  public async editMessage(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+    user: User,
+    raw: unknown,
+  ): Promise<ChatEditResult> {
+    const parsed = ChatService.messageText(raw);
+
+    if ("error" in parsed) {
+      return { edited: false, code: parsed.error };
+    }
+
+    if (!ChatService.UUID.test(messageId)) {
+      return { edited: false, code: ChatErrorCode.NotFound };
+    }
+
+    if (type === ChatLobbyType.Direct) {
+      return await this.editDirectMessage(id, messageId, user, parsed.text);
+    }
+
+    const current = await this.getCurrentUser(user.steam_id);
+
+    if (!current) {
+      return { edited: false, code: ChatErrorCode.NotAllowed };
+    }
+
+    return await this.editRoomMessage(
+      type,
+      id,
+      messageId,
+      current,
+      parsed.text,
+    );
+  }
+
+  private async editRoomMessage(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+    user: User,
+    text: string,
+  ): Promise<ChatEditResult> {
+    const messageKey = `chat_${type}_${id}`;
+    let admitted = false;
+
+    for (let attempt = 0; attempt < ChatService.EDIT_ATTEMPTS; attempt++) {
+      const raw = await this.redis.hget(messageKey, messageId);
+
+      if (!raw) {
+        return { edited: false, code: ChatErrorCode.NotFound };
+      }
+
+      const message = JSON.parse(raw) as ChatMessage;
+      const refusal = ChatService.selfServiceRefusal(message, user);
+
+      if (refusal) {
+        return { edited: false, code: refusal };
+      }
+
+      if (!admitted) {
+        if (!(await this.canAccessLobby(type, id, user))) {
+          return { edited: false, code: ChatErrorCode.NotAllowed };
+        }
+
+        if (await this.isGagged(user.steam_id)) {
+          return { edited: false, code: ChatErrorCode.Gagged };
+        }
+
+        admitted = true;
+      }
+
+      const editedAt = new Date().toISOString();
+
+      const swapped = await this.redis.eval(
+        ChatService.EDIT_ROOM_MESSAGE_SCRIPT,
+        1,
+        messageKey,
+        messageId,
+        raw,
+        JSON.stringify({ ...message, message: text, edited_at: editedAt }),
+      );
+
+      if (swapped === 1) {
+        return await this.announceEdit(type, id, messageId, text, editedAt);
+      }
+    }
+
+    this.logger.warn(
+      `gave up editing ${type}:${id} message ${messageId}, it kept changing`,
+    );
+
+    return { edited: false, code: ChatErrorCode.Invalid };
+  }
+
+  private async editDirectMessage(
+    roomId: string,
+    messageId: string,
+    user: User,
+    text: string,
+  ): Promise<ChatEditResult> {
+    if (!(await this.canAccessLobby(ChatLobbyType.Direct, roomId, user))) {
+      return { edited: false, code: ChatErrorCode.NotAllowed };
+    }
+
+    const refusal = await this.directMessageRefusal(roomId, messageId, user);
+
+    if (refusal) {
+      return { edited: false, code: refusal };
+    }
+
+    const [row] = await this.postgres.query<
+      Array<{ message: string; edited_at: Date }>
+    >(
+      `UPDATE public.direct_messages
+          SET message = $5, edited_at = now()
+        WHERE ${ChatService.OWN_RECENT_DIRECT_MESSAGE}
+    RETURNING message, edited_at`,
+      [...ChatService.ownRecentDirectMessage(roomId, messageId, user), text],
+    );
+
+    if (!row) {
+      return {
+        edited: false,
+        code:
+          (await this.directMessageRefusal(roomId, messageId, user)) ??
+          ChatErrorCode.NotFound,
+      };
+    }
+
+    return await this.announceEdit(
+      ChatLobbyType.Direct,
+      roomId,
+      messageId,
+      row.message,
+      new Date(row.edited_at).toISOString(),
+    );
+  }
+
+  private async deleteDirectMessage(
+    roomId: string,
+    messageId: string,
+    user: User,
+  ): Promise<ChatDeleteResult> {
+    if (!(await this.canAccessLobby(ChatLobbyType.Direct, roomId, user))) {
+      return { deleted: false, code: ChatErrorCode.NotAllowed };
+    }
+
+    const refusal = await this.directMessageRefusal(roomId, messageId, user);
+
+    if (refusal) {
+      return { deleted: false, code: refusal };
+    }
+
+    const [row] = await this.postgres.query<Array<{ id: string }>>(
+      `DELETE FROM public.direct_messages
+        WHERE ${ChatService.OWN_RECENT_DIRECT_MESSAGE}
+    RETURNING id::text AS id`,
+      ChatService.ownRecentDirectMessage(roomId, messageId, user),
+    );
+
+    if (!row) {
+      return {
+        deleted: false,
+        code:
+          (await this.directMessageRefusal(roomId, messageId, user)) ??
+          ChatErrorCode.NotFound,
+      };
+    }
+
+    void this.to(ChatLobbyType.Direct, roomId, "deleted", { id: messageId });
+
+    await this.retractNotifications(ChatLobbyType.Direct, roomId, messageId);
+
+    return { deleted: true };
+  }
+
+  private static ownRecentDirectMessage(
+    roomId: string,
+    messageId: string,
+    user: User,
+  ) {
+    return [
+      messageId,
+      roomId,
+      String(user.steam_id),
+      ChatService.SELF_SERVICE_WINDOW_MS / 1000,
+    ];
+  }
+
+  // Read apart from the statement that acts on it, so a refusal can say why.
+  private async directMessageRefusal(
+    roomId: string,
+    messageId: string,
+    user: User,
+  ): Promise<ChatErrorCode | null> {
+    const [row] = await this.postgres.query<
+      Array<{ author: string; open: boolean }>
+    >(
+      `SELECT from_steam_id::text AS author,
+              created_at > now() - make_interval(secs => $3::int) AS open
+         FROM public.direct_messages
+        WHERE id = $1::uuid AND room_id = $2`,
+      [messageId, roomId, ChatService.SELF_SERVICE_WINDOW_MS / 1000],
+    );
+
+    if (!row) {
+      return ChatErrorCode.NotFound;
+    }
+
+    if (row.author !== String(user.steam_id)) {
+      return ChatErrorCode.NotAllowed;
+    }
+
+    if (!row.open) {
+      return ChatErrorCode.WindowClosed;
+    }
+
+    return null;
+  }
+
+  // Never relayed to the game server, and no new notification: the bell rows
+  // already announcing the message just show what it says now.
+  private async announceEdit(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+    text: string,
+    editedAt: string,
+  ): Promise<ChatEditResult> {
+    void this.to(type, id, "edited", {
+      id: messageId,
+      message: text,
+      edited_at: editedAt,
+    });
+
+    await this.notifications
+      .updateChatMessagePreview(
+        messageId,
+        ChatService.notificationPreview(text),
+      )
+      .catch((error) => {
+        this.logger.warn(
+          `unable to update notifications for ${type}:${id} message ${messageId}`,
+          error,
+        );
+      });
+
+    return { edited: true, message: text, edited_at: editedAt };
+  }
+
+  private async retractNotifications(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+  ) {
     await this.notifications.retractChatMessage(messageId).catch((error) => {
       this.logger.warn(
         `unable to retract notifications for ${type}:${id} message ${messageId}`,
         error,
       );
     });
-
-    return { deleted: true };
-  }
-
-  private async canDelete(
-    message: ChatMessage,
-    type: ChatLobbyType,
-    id: string,
-    user: User,
-  ): Promise<boolean> {
-    if (!isRoleAbove(user.role, "moderator")) {
-      return false;
-    }
-
-    return await this.canAccessLobby(type, id, user);
   }
 
   private async recordDeletion(
@@ -839,9 +1174,7 @@ export class ChatService {
 
     await this.notifications.notifyPlayers(notificationType, {
       title: senderName,
-      message: NotificationsService.escapeHtml(
-        message.length > 140 ? `${message.slice(0, 140)}…` : message,
-      ),
+      message: ChatService.notificationPreview(message),
       role: "user",
       entity_id: entityId,
       steamIds: targets,
@@ -864,12 +1197,65 @@ export class ChatService {
       targets,
     );
 
-    // A delete that landed while the rows above were being written retracted
-    // nothing. Its audit row is committed before it retracts, and unlike the
-    // redis field it is not gone just because the message expired or moved.
-    if (type !== ChatLobbyType.Direct && (await this.wasDeleted(messageId))) {
-      await this.notifications.retractChatMessage(messageId);
+    await this.catchUpNotifications(type, id, messageId);
+  }
+
+  // A delete or an edit that landed while the rows were being written had no
+  // rows to act on yet, so whatever became of the message is applied now.
+  //
+  // A room's audit row is what says it was deleted: unlike the redis field, it
+  // is not gone just because the message expired or moved. A direct message
+  // has no audit, but one written moments ago cannot have been pruned yet, so
+  // a missing row was deleted.
+  private async catchUpNotifications(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+  ) {
+    if (type === ChatLobbyType.Direct) {
+      const [row] = await this.postgres.query<
+        Array<{ message: string; edited_at: Date | null }>
+      >(
+        `SELECT message, edited_at FROM public.direct_messages
+          WHERE id = $1::uuid`,
+        [messageId],
+      );
+
+      if (!row) {
+        await this.notifications.retractChatMessage(messageId);
+        return;
+      }
+
+      if (row.edited_at) {
+        await this.notifications.updateChatMessagePreview(
+          messageId,
+          ChatService.notificationPreview(row.message),
+        );
+      }
+
+      return;
     }
+
+    if (await this.wasDeleted(messageId)) {
+      await this.notifications.retractChatMessage(messageId);
+      return;
+    }
+
+    const raw = await this.redis.hget(`chat_${type}_${id}`, messageId);
+    const message = raw ? (JSON.parse(raw) as ChatMessage) : null;
+
+    if (message?.edited_at) {
+      await this.notifications.updateChatMessagePreview(
+        messageId,
+        ChatService.notificationPreview(message.message),
+      );
+    }
+  }
+
+  private static notificationPreview(message: string) {
+    return NotificationsService.escapeHtml(
+      message.length > 140 ? `${message.slice(0, 140)}…` : message,
+    );
   }
 
   private async wasDeleted(messageId: string): Promise<boolean> {
@@ -1395,6 +1781,7 @@ export class ChatService {
         id: string;
         message: string;
         created_at: Date;
+        edited_at: Date | null;
         steam_id: string;
         name: string;
         role: e_player_roles_enum;
@@ -1402,7 +1789,7 @@ export class ChatService {
         profile_url: string | null;
       }>
     >(
-      `SELECT dm.id::text AS id, dm.message, dm.created_at,
+      `SELECT dm.id::text AS id, dm.message, dm.created_at, dm.edited_at,
               p.steam_id::text AS steam_id, p.name, p.role::text AS role,
               p.avatar_url, p.profile_url
          FROM public.direct_messages dm
@@ -1420,6 +1807,9 @@ export class ChatService {
         timestamp: new Date(row.created_at).toISOString(),
         // Nothing relays from the game into a DM.
         source: "web",
+        ...(row.edited_at
+          ? { edited_at: new Date(row.edited_at).toISOString() }
+          : {}),
         from: {
           role: row.role,
           name: row.name,
@@ -1580,7 +1970,14 @@ export class ChatService {
   public async to(
     type: ChatLobbyType,
     id: string,
-    event: "chat" | "deleted" | "list" | "messages" | "joined" | "left",
+    event:
+      | "chat"
+      | "edited"
+      | "deleted"
+      | "list"
+      | "messages"
+      | "joined"
+      | "left",
     data: Record<string, any>,
   ) {
     const users = await this.getAllUsersInLobby(type, id);
