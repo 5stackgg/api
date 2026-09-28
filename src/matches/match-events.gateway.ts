@@ -19,9 +19,11 @@ import type { e_match_status_enum } from "../../generated";
 type MatchBinding = {
   expiresAt: number;
   mapIds: Set<string>;
+  ended: boolean;
 };
 
 export type FiveStackGameServerWebSocketClient = WebSocket.WebSocket & {
+  authentication?: Promise<void>;
   authenticated?: boolean;
   serverId?: string;
   matchBindings?: Map<string, MatchBinding>;
@@ -36,7 +38,7 @@ export class MatchEventsGateway {
   // and kill, which arrive many times a second during a round.
   private static readonly BINDING_TTL_MS = 5 * 1000;
 
-  private static readonly LAST_HOST_TTL_SECONDS = 60 * 60;
+  private static readonly LAST_HOST_TTL_SECONDS = 10 * 60;
 
   private static readonly TERMINAL_STATUSES: readonly e_match_status_enum[] = [
     "Finished",
@@ -46,6 +48,22 @@ export class MatchEventsGateway {
     "Surrendered",
   ];
 
+  // What a server still sends once its match is over: the map Finished that
+  // follows a surrender, post-match chat and players leaving. Anything that
+  // could rewrite the result is refused.
+  private static readonly EVENTS_AFTER_MATCH_END: readonly string[] = [
+    "mapStatus",
+    "chat",
+    "player-disconnected",
+  ];
+
+  // Processors write straight to the match map a payload names, so each of
+  // these has to be a map of the match the event is for.
+  private static readonly PAYLOAD_MAP_ID_KEYS: readonly string[] = [
+    "match_map_id",
+    "map_id",
+  ];
+
   constructor(
     private readonly logger: Logger,
     private readonly moduleRef: ModuleRef,
@@ -53,8 +71,95 @@ export class MatchEventsGateway {
     private readonly cache: CacheService,
   ) {}
 
-  async handleConnection(
+  // Nest binds the message handlers without waiting for this, so handlers wait
+  // on the promise instead of seeing a half-authenticated socket.
+  handleConnection(
     @ConnectedSocket() client: FiveStackGameServerWebSocketClient,
+    request: Request,
+  ) {
+    client.authentication = this.authenticate(client, request);
+  }
+
+  @SubscribeMessage("events")
+  async handleMatchEvent(
+    @ConnectedSocket() client: FiveStackGameServerWebSocketClient,
+    @MessageBody()
+    message: {
+      mapId?: string;
+      matchId: string;
+      messageId: string;
+      data: {
+        event: string;
+        data: Record<string, unknown>;
+      };
+    },
+  ) {
+    await client.authentication;
+
+    if (!client.authenticated || !client.serverId) {
+      return;
+    }
+
+    const { matchId, mapId, messageId } = message;
+    const { data, event } = message.data;
+
+    if (!(await this.isHostedBy(client, matchId, event, data))) {
+      this.logger.warn(
+        "game server event refused: match is not hosted by this server",
+        {
+          serverId: client.serverId,
+          matchId,
+          event,
+        },
+      );
+      // The plugin resends an unacknowledged message every few seconds for as
+      // long as it runs, so a refusal is acknowledged to make it drop it.
+      return messageId;
+    }
+
+    const cacheKey = mapId
+      ? `match-events:${matchId}:${mapId}:${messageId}`
+      : `match-events:${matchId}:${messageId}`;
+
+    if (await this.cache.has(cacheKey)) {
+      return messageId;
+    }
+
+    const Processor = MatchEvents[event as keyof typeof MatchEvents];
+
+    if (!Processor) {
+      this.logger.warn("unable to find event handler", event);
+      return messageId;
+    }
+
+    const processor =
+      await this.moduleRef.resolve<MatchEventProcessor<unknown>>(Processor);
+
+    processor.setData(matchId, data);
+
+    try {
+      await processor.process();
+    } catch (error) {
+      // Do NOT write the dedup entry on failure: leave the key absent so the
+      // game server's redelivery of this messageId is reprocessed instead of
+      // being silently swallowed by the dedup short-circuit for its TTL.
+      this.logger.error(
+        `[${matchId}] error processing game event ${event} (messageId=${messageId}): ${
+          (error as Error)?.message
+        }`,
+        (error as Error)?.stack,
+      );
+      throw error;
+    }
+
+    // Mark processed only after success.
+    await this.cache.put(cacheKey, true, 10);
+
+    return messageId;
+  }
+
+  private async authenticate(
+    client: FiveStackGameServerWebSocketClient,
     request: Request,
   ) {
     try {
@@ -122,139 +227,65 @@ export class MatchEventsGateway {
     }
   }
 
-  @SubscribeMessage("events")
-  async handleMatchEvent(
-    @ConnectedSocket() client: FiveStackGameServerWebSocketClient,
-    @MessageBody()
-    message: {
-      mapId?: string;
-      matchId: string;
-      messageId: string;
-      data: {
-        event: string;
-        data: Record<string, unknown>;
-      };
-    },
-  ) {
-    if (!client.authenticated || !client.serverId) {
-      return;
-    }
-
-    const { matchId, mapId, messageId } = message;
-    const { data, event } = message.data;
-
-    if (!(await this.isHostedBy(client, matchId, data?.match_map_id))) {
-      this.logger.warn(
-        "game server event refused: match is not hosted by this server",
-        {
-          serverId: client.serverId,
-          matchId,
-          event,
-        },
-      );
-      // The plugin resends an unacknowledged message every few seconds for as
-      // long as it runs, so a refusal is acknowledged to make it drop it.
-      return messageId;
-    }
-
-    const cacheKey = mapId
-      ? `match-events:${matchId}:${mapId}:${messageId}`
-      : `match-events:${matchId}:${messageId}`;
-
-    if (await this.cache.has(cacheKey)) {
-      return messageId;
-    }
-
-    const Processor = MatchEvents[event as keyof typeof MatchEvents];
-
-    if (!Processor) {
-      this.logger.warn("unable to find event handler", event);
-      return messageId;
-    }
-
-    const processor =
-      await this.moduleRef.resolve<MatchEventProcessor<unknown>>(Processor);
-
-    processor.setData(matchId, data);
-
-    try {
-      await processor.process();
-    } catch (error) {
-      // Do NOT write the dedup entry on failure: leave the key absent so the
-      // game server's redelivery of this messageId is reprocessed instead of
-      // being silently swallowed by the dedup short-circuit for its TTL.
-      this.logger.error(
-        `[${matchId}] error processing game event ${event} (messageId=${messageId}): ${
-          (error as Error)?.message
-        }`,
-        (error as Error)?.stack,
-      );
-      throw error;
-    }
-
-    // Mark processed only after success.
-    await this.cache.put(cacheKey, true, 10);
-
-    return messageId;
-  }
-
-  // Stats and round events name their match map in the payload, so the map has
-  // to belong to the match too or a server could write into another match
-  // through its own.
   private async isHostedBy(
     client: FiveStackGameServerWebSocketClient,
     matchId: unknown,
-    matchMapId: unknown,
+    event: string,
+    data: Record<string, unknown> | undefined,
   ): Promise<boolean> {
     if (typeof matchId !== "string" || !validate(matchId)) {
       return false;
     }
 
-    if (
-      matchMapId !== undefined &&
-      matchMapId !== null &&
-      typeof matchMapId !== "string"
-    ) {
-      return false;
+    const payloadMapIds: string[] = [];
+    for (const key of MatchEventsGateway.PAYLOAD_MAP_ID_KEYS) {
+      const value = data?.[key];
+      if (value === undefined || value === null) {
+        continue;
+      }
+      if (typeof value !== "string") {
+        return false;
+      }
+      payloadMapIds.push(value.toLowerCase());
     }
 
     const bindingKey = matchId.toLowerCase();
-    const mapId =
-      typeof matchMapId === "string" ? matchMapId.toLowerCase() : undefined;
 
-    const cached = client.matchBindings?.get(bindingKey);
+    let binding = client.matchBindings?.get(bindingKey);
     if (
-      cached &&
-      cached.expiresAt > Date.now() &&
-      (!mapId || cached.mapIds.has(mapId))
+      !binding ||
+      binding.expiresAt <= Date.now() ||
+      !payloadMapIds.every((id) => binding.mapIds.has(id))
     ) {
-      return true;
+      binding = await this.lookupBinding(client.serverId, bindingKey);
+
+      client.matchBindings ??= new Map();
+
+      if (!binding) {
+        client.matchBindings.delete(bindingKey);
+        return false;
+      }
+
+      client.matchBindings.set(bindingKey, binding);
     }
 
-    const mapIds = await this.hostedMatchMapIds(client.serverId, bindingKey);
-
-    client.matchBindings ??= new Map();
-
-    if (!mapIds) {
-      client.matchBindings.delete(bindingKey);
+    if (
+      binding.ended &&
+      !MatchEventsGateway.EVENTS_AFTER_MATCH_END.includes(event)
+    ) {
       return false;
     }
 
-    client.matchBindings.set(bindingKey, {
-      expiresAt: Date.now() + MatchEventsGateway.BINDING_TTL_MS,
-      mapIds,
-    });
-
-    return !mapId || mapIds.has(mapId);
+    return payloadMapIds.every((id) => binding.mapIds.has(id));
   }
 
   // Ending a match clears its server_id while the server is still flushing
-  // late events (the map Finished that follows a surrender, chat, disconnects,
-  // retries), so an ended match stays open to the last server seen hosting it.
-  private async hostedMatchMapIds(
+  // late events, so an ended match stays open to the last server seen hosting
+  // it, for EVENTS_AFTER_MATCH_END only.
+  private async lookupBinding(
     serverId: string,
     matchId: string,
-  ): Promise<Set<string> | null> {
+  ): Promise<MatchBinding | null> {
     const { matches_by_pk: match } = await this.hasura.query({
       matches_by_pk: {
         __args: {
@@ -274,25 +305,33 @@ export class MatchEventsGateway {
 
     const lastHostKey = MatchEventsGateway.lastHostKey(matchId);
 
-    let hosted: boolean;
+    let ended = false;
     if (match.server_id) {
       await this.cache.put(
         lastHostKey,
         match.server_id,
         MatchEventsGateway.LAST_HOST_TTL_SECONDS,
       );
-      hosted = match.server_id === serverId;
+
+      if (match.server_id !== serverId) {
+        return null;
+      }
     } else {
-      hosted =
-        MatchEventsGateway.TERMINAL_STATUSES.includes(match.status) &&
-        (await this.cache.get(lastHostKey)) === serverId;
+      if (
+        !MatchEventsGateway.TERMINAL_STATUSES.includes(match.status) ||
+        (await this.cache.get(lastHostKey)) !== serverId
+      ) {
+        return null;
+      }
+
+      ended = true;
     }
 
-    if (!hosted) {
-      return null;
-    }
-
-    return new Set(match.match_maps.map(({ id }) => id));
+    return {
+      expiresAt: Date.now() + MatchEventsGateway.BINDING_TTL_MS,
+      mapIds: new Set(match.match_maps.map(({ id }) => id)),
+      ended,
+    };
   }
 
   private static lastHostKey(matchId: string) {

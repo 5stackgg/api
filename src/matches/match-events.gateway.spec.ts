@@ -1,5 +1,22 @@
 // Isolate the gateway from its heavy DI imports.
-jest.mock("./events", () => ({ MatchEvents: { testEvent: class {} } }));
+jest.mock("./events", () => {
+  class TestEvent {}
+  return {
+    MatchEvents: Object.fromEntries(
+      [
+        "testEvent",
+        "mapStatus",
+        "chat",
+        "player-disconnected",
+        "surrender",
+        "score",
+        "restoreRound",
+        "techTimeout",
+        "kill",
+      ].map((name) => [name, TestEvent]),
+    ),
+  };
+});
 jest.mock("src/hasura/hasura.service", () => ({ HasuraService: class {} }));
 jest.mock("src/cache/cache.service", () => ({ CacheService: class {} }));
 
@@ -136,21 +153,30 @@ function basic(serverId: string, password: string) {
   } as any;
 }
 
+async function connect(
+  gateway: MatchEventsGateway,
+  client: FiveStackGameServerWebSocketClient,
+  request: any,
+) {
+  gateway.handleConnection(client, request);
+  await client.authentication;
+}
+
 function event(
   overrides: {
     matchId?: unknown;
     messageId?: string;
+    name?: string;
     data?: Record<string, unknown>;
   } = {},
 ) {
   return {
-    matchId: MATCH_1,
-    messageId: "msg-1",
-    data: { event: "testEvent", data: {} },
-    ...overrides,
-    ...(overrides.data
-      ? { data: { event: "testEvent", data: overrides.data } }
-      : {}),
+    matchId: "matchId" in overrides ? overrides.matchId : MATCH_1,
+    messageId: overrides.messageId ?? "msg-1",
+    data: {
+      event: overrides.name ?? "testEvent",
+      data: overrides.data ?? {},
+    },
   } as any;
 }
 
@@ -160,14 +186,12 @@ describe("MatchEventsGateway.handleMatchEvent dedup", () => {
     const result = await gateway.handleMatchEvent(authedSocket(), event());
 
     expect(processor.process).toHaveBeenCalledTimes(1);
-    const dedupPuts = cache.put.mock.calls.filter(([key]) =>
+    const dedupPut = cache.put.mock.calls.findIndex(([key]) =>
       key.endsWith(":msg-1"),
     );
-    expect(dedupPuts).toHaveLength(1);
+    expect(dedupPut).toBeGreaterThanOrEqual(0);
     expect(processor.process.mock.invocationCallOrder[0]).toBeLessThan(
-      cache.put.mock.invocationCallOrder[
-        cache.put.mock.calls.findIndex(([key]) => key.endsWith(":msg-1"))
-      ],
+      cache.put.mock.invocationCallOrder[dedupPut],
     );
     expect(result).toBe("msg-1");
   });
@@ -200,7 +224,7 @@ describe("MatchEventsGateway.handleConnection", () => {
     const { gateway } = makeGateway();
     const client = socket();
 
-    await gateway.handleConnection(client, basic(SERVER_A, "password-a"));
+    await connect(gateway, client, basic(SERVER_A, "password-a"));
 
     expect(client.authenticated).toBe(true);
     expect(client.serverId).toBe(SERVER_A);
@@ -225,7 +249,7 @@ describe("MatchEventsGateway.handleConnection", () => {
     const { gateway } = makeGateway();
     const client = socket();
 
-    await gateway.handleConnection(client, request as any);
+    await connect(gateway, client, request);
 
     expect(client.terminate).toHaveBeenCalledTimes(1);
     expect(client.close).not.toHaveBeenCalled();
@@ -241,7 +265,7 @@ describe("MatchEventsGateway.handleConnection", () => {
     });
     const client = socket();
 
-    await gateway.handleConnection(client, basic("not-a-uuid", "x"));
+    await connect(gateway, client, basic("not-a-uuid", "x"));
 
     expect(client.terminate).toHaveBeenCalledTimes(1);
     expect(client.authenticated).toBeFalsy();
@@ -249,30 +273,36 @@ describe("MatchEventsGateway.handleConnection", () => {
 });
 
 describe("MatchEventsGateway unauthenticated clients", () => {
-  it("ignores events that arrive while auth is still pending and after it fails", async () => {
+  function pendingAuth() {
     let resolveServer: (value: unknown) => void;
-    const { gateway, processor, moduleRef, matchLookups } = makeGateway({
+    const harness = makeGateway({
       serverQuery: () =>
         new Promise((resolve) => {
           resolveServer = resolve;
         }),
     });
+    return {
+      ...harness,
+      finishAuth: () =>
+        resolveServer({
+          servers_by_pk: { id: SERVER_A, api_password: "password-a" },
+        }),
+    };
+  }
+
+  it("never processes events sent while auth is pending or after it failed", async () => {
+    const { gateway, processor, moduleRef, matchLookups, finishAuth } =
+      pendingAuth();
     const client = socket();
 
-    const connecting = gateway.handleConnection(
-      client,
-      basic(SERVER_A, "wrong"),
-    );
+    gateway.handleConnection(client, basic(SERVER_A, "wrong"));
 
-    await expect(
-      gateway.handleMatchEvent(client, event()),
-    ).resolves.toBeUndefined();
+    const raced = gateway.handleMatchEvent(client, event());
+    expect(processor.process).not.toHaveBeenCalled();
 
-    resolveServer!({
-      servers_by_pk: { id: SERVER_A, api_password: "password-a" },
-    });
-    await connecting;
+    finishAuth();
 
+    await expect(raced).resolves.toBeUndefined();
     expect(client.terminate).toHaveBeenCalledTimes(1);
 
     await expect(
@@ -282,6 +312,22 @@ describe("MatchEventsGateway unauthenticated clients", () => {
     expect(matchLookups()).toBe(0);
     expect(moduleRef.resolve).not.toHaveBeenCalled();
     expect(processor.process).not.toHaveBeenCalled();
+  });
+
+  it("holds events sent while auth is pending and processes them once it succeeds", async () => {
+    const { gateway, processor, finishAuth } = pendingAuth();
+    const client = socket();
+
+    gateway.handleConnection(client, basic(SERVER_A, "password-a"));
+
+    const early = gateway.handleMatchEvent(client, event());
+    await Promise.resolve();
+    expect(processor.process).not.toHaveBeenCalled();
+
+    finishAuth();
+
+    await expect(early).resolves.toBe("msg-1");
+    expect(processor.process).toHaveBeenCalledTimes(1);
   });
 
   it("ignores events on a socket that never authenticated", async () => {
@@ -331,27 +377,44 @@ describe("MatchEventsGateway match binding", () => {
     );
   });
 
-  it("refuses its own match when the payload names another match's map", async () => {
+  it.each(["match_map_id", "map_id"])(
+    "refuses its own match when %s names another match's map",
+    async (key) => {
+      const { gateway, processor } = makeGateway();
+
+      await gateway.handleMatchEvent(
+        authedSocket(SERVER_A),
+        event({ name: "techTimeout", data: { [key]: MAP_2 } }),
+      );
+
+      expect(processor.process).not.toHaveBeenCalled();
+    },
+  );
+
+  it("accepts a techTimeout for its own map", async () => {
     const { gateway, processor } = makeGateway();
 
     await gateway.handleMatchEvent(
       authedSocket(SERVER_A),
-      event({ data: { match_map_id: MAP_2 } }),
+      event({ name: "techTimeout", data: { map_id: MAP_1 } }),
     );
 
-    expect(processor.process).not.toHaveBeenCalled();
+    expect(processor.process).toHaveBeenCalledTimes(1);
   });
 
-  it("refuses a match_map_id that is not a string", async () => {
-    const { gateway, processor } = makeGateway();
+  it.each(["match_map_id", "map_id"])(
+    "refuses a %s that is not a string",
+    async (key) => {
+      const { gateway, processor } = makeGateway();
 
-    await gateway.handleMatchEvent(
-      authedSocket(SERVER_A),
-      event({ data: { match_map_id: { _neq: MAP_1 } } }),
-    );
+      await gateway.handleMatchEvent(
+        authedSocket(SERVER_A),
+        event({ data: { [key]: { _neq: MAP_1 } } }),
+      );
 
-    expect(processor.process).not.toHaveBeenCalled();
-  });
+      expect(processor.process).not.toHaveBeenCalled();
+    },
+  );
 
   it("passes a null match_map_id through, since it cannot name another match", async () => {
     const { gateway, processor } = makeGateway();
@@ -409,6 +472,70 @@ describe("MatchEventsGateway match binding", () => {
     expect(matchLookups()).toBe(2);
   });
 
+  it("does not let a warm binding for one match admit another match", async () => {
+    const { gateway, processor } = makeGateway();
+    const client = authedSocket(SERVER_A);
+
+    await gateway.handleMatchEvent(client, event({ messageId: "m1" }));
+    await gateway.handleMatchEvent(
+      client,
+      event({ matchId: MATCH_2, messageId: "m2" }),
+    );
+
+    expect(processor.process).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not let a warm binding admit another match's map", async () => {
+    const { gateway, processor } = makeGateway();
+    const client = authedSocket(SERVER_A);
+
+    await gateway.handleMatchEvent(
+      client,
+      event({ messageId: "m1", data: { match_map_id: MAP_1 } }),
+    );
+    await gateway.handleMatchEvent(
+      client,
+      event({ messageId: "m2", data: { match_map_id: MAP_2 } }),
+    );
+    await gateway.handleMatchEvent(
+      client,
+      event({ messageId: "m3", name: "techTimeout", data: { map_id: MAP_2 } }),
+    );
+
+    expect(processor.process).toHaveBeenCalledTimes(1);
+  });
+
+  it("re-reads a warm binding when the payload names a map it has not seen", async () => {
+    const { gateway, matches, processor, matchLookups } = makeGateway();
+    const client = authedSocket(SERVER_A);
+    const MAP_3 = "33000000-0000-4000-8000-000000000033";
+
+    await gateway.handleMatchEvent(client, event({ messageId: "m1" }));
+    matches[MATCH_1].match_maps.push({ id: MAP_3 });
+    await gateway.handleMatchEvent(
+      client,
+      event({ messageId: "m2", data: { match_map_id: MAP_3 } }),
+    );
+
+    expect(matchLookups()).toBe(2);
+    expect(processor.process).toHaveBeenCalledTimes(2);
+  });
+
+  it("drops a warm binding as soon as a re-read finds the match moved", async () => {
+    const { gateway, matches, processor } = makeGateway();
+    const client = authedSocket(SERVER_A);
+
+    await gateway.handleMatchEvent(client, event({ messageId: "m1" }));
+    matches[MATCH_1].server_id = SERVER_B;
+    await gateway.handleMatchEvent(
+      client,
+      event({ messageId: "m2", data: { match_map_id: MAP_2 } }),
+    );
+    await gateway.handleMatchEvent(client, event({ messageId: "m3" }));
+
+    expect(processor.process).toHaveBeenCalledTimes(1);
+  });
+
   it("does not cache a refusal", async () => {
     const { gateway, matchLookups, matches, processor } = makeGateway();
     const client = authedSocket(SERVER_A);
@@ -424,7 +551,24 @@ describe("MatchEventsGateway match binding", () => {
     expect(processor.process).toHaveBeenCalledTimes(1);
   });
 
+  it("remembers the host for ten minutes", async () => {
+    const { gateway, cache } = makeGateway();
+
+    await gateway.handleMatchEvent(authedSocket(SERVER_A), event());
+
+    expect(cache.put).toHaveBeenCalledWith(
+      `match-events:last-host:${MATCH_1}`,
+      SERVER_A,
+      600,
+    );
+  });
+
   describe("legitimate edge flows", () => {
+    function endMatch(matches: Record<string, MatchRow>, status = "Finished") {
+      matches[MATCH_1].server_id = null;
+      matches[MATCH_1].status = status;
+    }
+
     it("moves with the match: the old server is refused and the new one accepted once the binding expires", async () => {
       const now = jest.spyOn(Date, "now").mockReturnValue(1_000_000);
       const { gateway, matches, processor } = makeGateway();
@@ -466,7 +610,7 @@ describe("MatchEventsGateway match binding", () => {
     });
 
     it.each(["Finished", "Surrendered", "Canceled", "Forfeit", "Tie"])(
-      "lets the last host flush late events after the match ends (%s) and server_id is cleared",
+      "lets the last host flush mapStatus, chat and disconnects after the match ends (%s)",
       async (status) => {
         const { gateway, matches, processor } = makeGateway();
 
@@ -475,17 +619,70 @@ describe("MatchEventsGateway match binding", () => {
           event({ messageId: "m1" }),
         );
 
-        matches[MATCH_1].server_id = null;
-        matches[MATCH_1].status = status;
+        endMatch(matches, status);
+
+        const lateHost = authedSocket(SERVER_A);
+        await gateway.handleMatchEvent(
+          lateHost,
+          event({ messageId: "m2", name: "mapStatus" }),
+        );
+        await gateway.handleMatchEvent(
+          lateHost,
+          event({ messageId: "m3", name: "chat" }),
+        );
+        await gateway.handleMatchEvent(
+          authedSocket(SERVER_A),
+          event({ messageId: "m4", name: "player-disconnected" }),
+        );
+
+        expect(processor.process).toHaveBeenCalledTimes(4);
+      },
+    );
+
+    it.each(["surrender", "score", "restoreRound", "techTimeout", "kill"])(
+      "refuses %s from the last host once the match has ended",
+      async (name) => {
+        const { gateway, matches, processor } = makeGateway();
 
         await gateway.handleMatchEvent(
           authedSocket(SERVER_A),
-          event({ messageId: "m2", data: { match_map_id: MAP_1 } }),
+          event({ messageId: "m1" }),
         );
 
-        expect(processor.process).toHaveBeenCalledTimes(2);
+        endMatch(matches);
+
+        await gateway.handleMatchEvent(
+          authedSocket(SERVER_A),
+          event({ messageId: "m2", name }),
+        );
+
+        expect(processor.process).toHaveBeenCalledTimes(1);
       },
     );
+
+    it("keeps refusing result changes on a connection whose ended binding is cached", async () => {
+      const { gateway, matches, processor, matchLookups } = makeGateway();
+
+      await gateway.handleMatchEvent(
+        authedSocket(SERVER_A),
+        event({ messageId: "m1" }),
+      );
+
+      endMatch(matches);
+
+      const lateHost = authedSocket(SERVER_A);
+      await gateway.handleMatchEvent(
+        lateHost,
+        event({ messageId: "m2", name: "chat" }),
+      );
+      await gateway.handleMatchEvent(
+        lateHost,
+        event({ messageId: "m3", name: "surrender" }),
+      );
+
+      expect(matchLookups()).toBe(2);
+      expect(processor.process).toHaveBeenCalledTimes(2);
+    });
 
     it("keeps an ended match closed to every other server", async () => {
       const { gateway, matches, processor } = makeGateway();
@@ -495,12 +692,11 @@ describe("MatchEventsGateway match binding", () => {
         event({ messageId: "m1" }),
       );
 
-      matches[MATCH_1].server_id = null;
-      matches[MATCH_1].status = "Finished";
+      endMatch(matches);
 
       await gateway.handleMatchEvent(
         authedSocket(SERVER_B),
-        event({ messageId: "m2" }),
+        event({ messageId: "m2", name: "chat" }),
       );
 
       expect(processor.process).toHaveBeenCalledTimes(1);
@@ -517,7 +713,10 @@ describe("MatchEventsGateway match binding", () => {
         },
       });
 
-      await gateway.handleMatchEvent(authedSocket(SERVER_A), event());
+      await gateway.handleMatchEvent(
+        authedSocket(SERVER_A),
+        event({ name: "chat" }),
+      );
 
       expect(processor.process).not.toHaveBeenCalled();
     });
@@ -537,27 +736,28 @@ describe("MatchEventsGateway match binding", () => {
       );
       expect(processor.process).toHaveBeenCalledTimes(2);
 
-      matches[MATCH_1].server_id = null;
-      matches[MATCH_1].status = "Finished";
+      endMatch(matches);
 
       await gateway.handleMatchEvent(
         authedSocket(SERVER_A),
-        event({ messageId: "m3" }),
+        event({ messageId: "m3", name: "chat" }),
       );
       expect(processor.process).toHaveBeenCalledTimes(2);
 
       await gateway.handleMatchEvent(
         authedSocket(SERVER_B),
-        event({ messageId: "m4" }),
+        event({ messageId: "m4", name: "chat" }),
       );
       expect(processor.process).toHaveBeenCalledTimes(3);
     });
 
     it("learns the new host from a refused lookup even if it never posted before the match ended", async () => {
       const { gateway, matches, processor } = makeGateway();
-      const oldServer = authedSocket(SERVER_A);
 
-      await gateway.handleMatchEvent(oldServer, event({ messageId: "m1" }));
+      await gateway.handleMatchEvent(
+        authedSocket(SERVER_A),
+        event({ messageId: "m1" }),
+      );
 
       matches[MATCH_1].server_id = SERVER_B;
       await gateway.handleMatchEvent(
@@ -565,12 +765,11 @@ describe("MatchEventsGateway match binding", () => {
         event({ messageId: "m2" }),
       );
 
-      matches[MATCH_1].server_id = null;
-      matches[MATCH_1].status = "Canceled";
+      endMatch(matches, "Canceled");
 
       await gateway.handleMatchEvent(
         authedSocket(SERVER_A),
-        event({ messageId: "m3" }),
+        event({ messageId: "m3", name: "chat" }),
       );
 
       expect(processor.process).toHaveBeenCalledTimes(1);
@@ -584,12 +783,11 @@ describe("MatchEventsGateway match binding", () => {
         event({ messageId: "m1" }),
       );
 
-      matches[MATCH_1].server_id = null;
-      matches[MATCH_1].status = "WaitingForServer";
+      endMatch(matches, "WaitingForServer");
 
       await gateway.handleMatchEvent(
         authedSocket(SERVER_A),
-        event({ messageId: "m2" }),
+        event({ messageId: "m2", name: "chat" }),
       );
 
       expect(processor.process).toHaveBeenCalledTimes(1);
