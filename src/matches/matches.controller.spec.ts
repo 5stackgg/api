@@ -7,6 +7,22 @@ jest.mock("@kubernetes/client-node", () => ({
 
 import { MatchesController } from "./matches.controller";
 
+// Positional, in constructor order; anything a test does not reach stays {}.
+const controllerWith = (deps: {
+  hasura?: unknown;
+  matchAssistant?: unknown;
+  gameModes?: unknown;
+}) => {
+  const args: any[] = Array.from({ length: 30 }, () => ({}));
+
+  args[1] = deps.hasura ?? {};
+  args[3] = { get: jest.fn(() => ({})) };
+  args[5] = deps.matchAssistant ?? {};
+  args[29] = deps.gameModes ?? {};
+
+  return new (MatchesController as any)(...args) as MatchesController;
+};
+
 describe("MatchesController", () => {
   let controller: MatchesController;
   let matchAssistant: {
@@ -172,6 +188,73 @@ describe("MatchesController", () => {
         success: true,
       });
       expect(notifications.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("current match", () => {
+    const lineup = (id: string) => ({
+      id,
+      name: id,
+      team: null as null,
+      coach_steam_id: null as null,
+      lineup_players: [] as unknown[],
+    });
+
+    const payload = async () => {
+      const hasura = {
+        query: jest.fn(async (query: Record<string, any>) => {
+          if (query.servers_by_pk) {
+            return { servers_by_pk: { current_match: { id: "match-1" } } };
+          }
+
+          if (query.matches_by_pk) {
+            return {
+              matches_by_pk: {
+                id: "match-1",
+                status: "Live",
+                is_tournament_match: false,
+                draft_games: [] as unknown[],
+                server: { server_region: { is_lan: false } },
+                options: { type: "Competitive", game_mode_id: null as null },
+                match_maps: [] as unknown[],
+                lineup_1: lineup("lineup-1"),
+                lineup_2: lineup("lineup-2"),
+                tournament_brackets: [] as unknown[],
+              },
+            };
+          }
+
+          if (query.match_type_cfgs) {
+            return { match_type_cfgs: [] as unknown[] };
+          }
+
+          return { settings_by_pk: null as null };
+        }),
+      };
+
+      const json = jest.fn();
+      const response = { status: jest.fn(() => ({ json })) };
+
+      await controllerWith({
+        hasura,
+        gameModes: {
+          resolveForServer: jest.fn(async (): Promise<null> => null),
+          pluginCfgLayers: jest.fn(async () => [] as unknown[]),
+        },
+      }).getMatchDetails(
+        { params: { serverId: "server-1" }, headers: {} } as any,
+        response as any,
+      );
+
+      expect(response.status).toHaveBeenCalledWith(200);
+
+      return json.mock.calls[0][0];
+    };
+
+    it("advertises team chat relay as a JSON boolean", async () => {
+      // the plugin only relays say_team when this is present, and its
+      // deserializer rejects the whole payload if it arrives as a string
+      expect((await payload()).relay_team_chat).toBe(true);
     });
   });
 });

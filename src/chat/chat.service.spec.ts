@@ -361,6 +361,19 @@ describe("ChatService direct messages", () => {
           : {};
       }
 
+      if (query.match_lineups_by_pk) {
+        return query.match_lineups_by_pk.__args.id === "l-1"
+          ? {
+              match_lineups_by_pk: {
+                match_id: "m-1",
+                coach_steam_id: null,
+                is_on_lineup: true,
+                lineup_players: [{ steam_id: ME }, { steam_id: FRIEND }],
+              },
+            }
+          : {};
+      }
+
       if (query.players) {
         return { players: staff.map((steam_id) => ({ steam_id })) };
       }
@@ -687,6 +700,65 @@ describe("ChatService direct messages", () => {
       );
       expect(relayedLine).toBe(
         `${"😀".repeat(ChatService.RCON_MESSAGE_MAX_LENGTH - 1)}…`,
+      );
+    });
+  });
+
+  describe("notification type", () => {
+    it.each([ChatLobbyType.Match, ChatLobbyType.MatchTeam])(
+      "files %s chat under match chat",
+      (type) => {
+        expect(ChatService.notificationTypeFor(type)).toBe("MatchChatMessage");
+      },
+    );
+
+    it.each([
+      ChatLobbyType.Direct,
+      ChatLobbyType.Tournament,
+      ChatLobbyType.MatchMaking,
+      ChatLobbyType.Draft,
+      ChatLobbyType.Organizer,
+    ])("files %s chat as a plain chat message", (type) => {
+      expect(ChatService.notificationTypeFor(type)).toBe("ChatMessage");
+    });
+
+    it("notifies and collapses a team room line under one type", async () => {
+      await service.sendMessageToChat(
+        ChatLobbyType.MatchTeam,
+        "m-1:l-1",
+        { steam_id: ME, name: "Someone", role } as any,
+        "rotate b",
+        true,
+        "game",
+      );
+
+      for (let tick = 0; tick < 5; tick++) {
+        await new Promise((resolve) => setImmediate(resolve));
+      }
+
+      expect(notifications.notifyPlayers).toHaveBeenCalledWith(
+        "MatchChatMessage",
+        expect.objectContaining({
+          entity_id: "match_team:m-1:l-1",
+          steamIds: [FRIEND],
+        }),
+      );
+      expect(notifications.collapseOlderUnread).toHaveBeenCalledWith(
+        "MatchChatMessage",
+        "match_team:m-1:l-1",
+        [FRIEND],
+      );
+    });
+
+    it("clears a team room's badge under the type it was sent with", async () => {
+      await service.markThreadRead(ChatLobbyType.MatchTeam, "m-1:l-1", {
+        steam_id: ME,
+      } as any);
+
+      expect(notifications.markConversationRead).toHaveBeenCalledWith(
+        "MatchChatMessage",
+        "match_team:m-1:l-1",
+        ME,
       );
     });
   });
