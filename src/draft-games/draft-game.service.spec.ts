@@ -3,7 +3,7 @@ import { User } from "../auth/types/User";
 import { DraftGameService } from "./draft-game.service";
 import { DraftGame } from "./types/DraftGame";
 
-describe("DraftGameService.addDraftPlayer", () => {
+describe("DraftGameService player blocks", () => {
   const host: User = { name: "Host", role: "user", steam_id: "100" };
   const organizer: User = {
     name: "Organizer",
@@ -13,7 +13,10 @@ describe("DraftGameService.addDraftPlayer", () => {
   const target = "300";
 
   let hasura: { query: jest.Mock; mutation: jest.Mock };
-  let playerBlocks: { isBlockedEitherWay: jest.Mock };
+  let playerBlocks: {
+    isBlockedEitherWay: jest.Mock;
+    filterUnblocked: jest.Mock;
+  };
   let service: DraftGameService;
 
   const draftGame = (): DraftGame =>
@@ -38,7 +41,10 @@ describe("DraftGameService.addDraftPlayer", () => {
       query: jest.fn(async () => ({ settings_by_pk: null })),
       mutation: jest.fn(async () => ({})),
     };
-    playerBlocks = { isBlockedEitherWay: jest.fn(async () => true) };
+    playerBlocks = {
+      isBlockedEitherWay: jest.fn(async () => true),
+      filterUnblocked: jest.fn(async () => [host.steam_id, "400"]),
+    };
 
     service = new DraftGameService(
       new Logger("DraftGameServiceTest"),
@@ -91,6 +97,13 @@ describe("DraftGameService.addDraftPlayer", () => {
     );
   });
 
+  it("keeps re-adding somebody already in the draft a no-op", async () => {
+    await service.addDraftPlayer(host, "draft-1", host.steam_id);
+
+    expect(playerBlocks.isBlockedEitherWay).not.toHaveBeenCalled();
+    expect(hasura.mutation).not.toHaveBeenCalled();
+  });
+
   it("does not hold a match organizer's roster edit to the block", async () => {
     await service.addDraftPlayer(organizer, "draft-1", target);
 
@@ -100,5 +113,31 @@ describe("DraftGameService.addDraftPlayer", () => {
         insert_draft_game_players_one: expect.anything(),
       }),
     );
+  });
+
+  describe("Teams-mode roster seeding", () => {
+    const roster = [
+      { steam_id: host.steam_id, lineup: 1 },
+      { steam_id: target, lineup: 1 },
+      { steam_id: "400", lineup: 2 },
+    ];
+
+    it("drops the players on either side of a block with the host", async () => {
+      await expect(
+        service["withoutBlockedPlayers"](host, roster),
+      ).resolves.toEqual([roster[0], roster[2]]);
+      expect(playerBlocks.filterUnblocked).toHaveBeenCalledWith(host.steam_id, [
+        host.steam_id,
+        target,
+        "400",
+      ]);
+    });
+
+    it("leaves a match organizer's roster as sent", async () => {
+      await expect(
+        service["withoutBlockedPlayers"](organizer, roster),
+      ).resolves.toEqual(roster);
+      expect(playerBlocks.filterUnblocked).not.toHaveBeenCalled();
+    });
   });
 });

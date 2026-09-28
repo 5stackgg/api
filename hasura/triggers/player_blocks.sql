@@ -25,6 +25,9 @@ CREATE TRIGGER tbi_player_blocks BEFORE INSERT ON public.player_blocks FOR EACH 
 -- is left holding a way to reach the other. The friendship goes too: it is what
 -- grants DMs and a view into Friends-only lobbies and drafts. Unblocking restores
 -- none of it.
+--
+-- Only the blocker's own bell entries and DM rail change. A cancelled invite
+-- leaves the invitee's bell alone, so retracting theirs would single out a block.
 CREATE OR REPLACE FUNCTION public.tai_player_blocks() RETURNS TRIGGER
     LANGUAGE plpgsql
     AS $$
@@ -51,6 +54,7 @@ BEGIN
        SET deleted_at = now()
      WHERE n.entity_id IN (SELECT id::text FROM gone)
        AND n.type = 'TeamInvite'
+       AND n.steam_id = _a
        AND n.deleted_at IS NULL;
 
     WITH gone AS (
@@ -63,6 +67,7 @@ BEGIN
        SET deleted_at = now()
      WHERE n.entity_id IN (SELECT id::text FROM gone)
        AND n.type = 'TournamentTeamInvite'
+       AND n.steam_id = _a
        AND n.deleted_at IS NULL;
 
     WITH gone AS (
@@ -75,6 +80,7 @@ BEGIN
        SET deleted_at = now()
      WHERE n.entity_id IN (SELECT id::text FROM gone)
        AND n.type = 'TournamentInvite'
+       AND n.steam_id = _a
        AND n.deleted_at IS NULL;
 
     -- A draft invite records no inviter, and the notification is keyed on the
@@ -94,6 +100,7 @@ BEGIN
      WHERE n.entity_id = gone.draft_game_id::text
        AND n.steam_id = gone.steam_id
        AND n.type = 'DraftInvite'
+       AND n.steam_id = _a
        AND n.deleted_at IS NULL;
 
     WITH gone AS (
@@ -110,9 +117,9 @@ BEGIN
      WHERE n.entity_id = gone.utility_practice_session_id::text
        AND n.steam_id = gone.steam_id
        AND n.type = 'UtilityPracticeInvite'
+       AND n.steam_id = _a
        AND n.deleted_at IS NULL;
 
-    -- Only the blocker's own rail: closing the other side's tab would tell them.
     -- The room id must match directRoomId() in src/chat.
     UPDATE public.direct_conversations dc
        SET is_open = false
@@ -125,3 +132,16 @@ $$;
 
 DROP TRIGGER IF EXISTS tai_player_blocks ON public.player_blocks;
 CREATE TRIGGER tai_player_blocks AFTER INSERT ON public.player_blocks FOR EACH ROW EXECUTE FUNCTION public.tai_player_blocks();
+
+-- Organizer rosters that take a player with no invite or consent.
+DROP TRIGGER IF EXISTS tbi_event_players_not_blocked ON public.event_players;
+CREATE TRIGGER tbi_event_players_not_blocked BEFORE INSERT ON public.event_players
+    FOR EACH ROW EXECUTE FUNCTION public.tbi_assert_session_not_blocked('steam_id', 'tournament_organizer');
+
+DROP TRIGGER IF EXISTS tbi_event_organizers_not_blocked ON public.event_organizers;
+CREATE TRIGGER tbi_event_organizers_not_blocked BEFORE INSERT ON public.event_organizers
+    FOR EACH ROW EXECUTE FUNCTION public.tbi_assert_session_not_blocked('steam_id', 'tournament_organizer');
+
+DROP TRIGGER IF EXISTS tbi_tournament_organizers_not_blocked ON public.tournament_organizers;
+CREATE TRIGGER tbi_tournament_organizers_not_blocked BEFORE INSERT ON public.tournament_organizers
+    FOR EACH ROW EXECUTE FUNCTION public.tbi_assert_session_not_blocked('steam_id', 'tournament_organizer');

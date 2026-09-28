@@ -1,4 +1,7 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import { PostgresService } from "./../src/postgres/postgres.service";
+import { PlayerBlocksService } from "./../src/player-blocks/player-blocks.service";
 import { Fixtures } from "./utils/fixtures";
 import { bootMigratedDb, runAsUser, SqlTestDb } from "./utils/sql-test-db";
 
@@ -28,6 +31,8 @@ describe("player blocks (SQL-driven)", () => {
     await postgres.query("DELETE FROM tournaments");
     await postgres.query("DELETE FROM draft_games");
     await postgres.query("DELETE FROM lobbies");
+    await postgres.query("DELETE FROM events");
+    await postgres.query("DELETE FROM league_seasons");
     await postgres.query("DELETE FROM utility_practice_sessions");
     await postgres.query("DELETE FROM match_options");
     await postgres.query("DELETE FROM notifications");
@@ -301,7 +306,25 @@ describe("player blocks (SQL-driven)", () => {
       ).toBe(2);
     });
 
-    it("removes team invites and retracts their bell entries", async () => {
+    it("clearing a lobby invite hands nobody the captaincy", async () => {
+      const [a, b, c] = await fx.players(3);
+      const lobbyA = await createLobby(a);
+      await postgres.query(
+        `INSERT INTO lobby_players (lobby_id, steam_id, invited_by_steam_id, status)
+         VALUES ($1, $2, $3, 'Accepted'), ($1, $4, $3, 'Invited')`,
+        [lobbyA, c, a, b],
+      );
+
+      await block(b, a);
+
+      const captains = await postgres.query<Array<{ steam_id: string }>>(
+        "SELECT steam_id::text FROM lobby_players WHERE lobby_id = $1 AND captain",
+        [lobbyA],
+      );
+      expect(captains.map((row) => row.steam_id)).toEqual([a]);
+    });
+
+    it("removes team invites and retracts the blocker's own bell entry", async () => {
       const team = await fx.team();
       const [b, c] = await fx.players(2);
 
@@ -326,7 +349,26 @@ describe("player blocks (SQL-driven)", () => {
       expect(await notificationDeleted(keptBell)).toBe(false);
     });
 
-    it("removes tournament team invites and tournament invites with their bell entries", async () => {
+    // A cancelled invite leaves the invitee's bell where it is, so a block from
+    // the inviter's side must too, or the vanishing entry names the blocker.
+    it("never touches the blocked player's bell entries", async () => {
+      const team = await fx.team();
+      const b = await fx.player();
+
+      const [invite] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO team_invites (team_id, steam_id, invited_by_player_steam_id)
+         VALUES ($1, $2, $3) RETURNING id`,
+        [team.id, b, team.owner],
+      );
+      const bell = await notify("TeamInvite", b, invite.id);
+
+      await block(team.owner, b);
+
+      expect(await count("team_invites WHERE id = $1", [invite.id])).toBe(0);
+      expect(await notificationDeleted(bell)).toBe(false);
+    });
+
+    it("removes tournament team and registration invites and retracts the blocker's own bell entries", async () => {
       const [organizer, b] = await fx.players(2);
       const tournamentId = await createTournament(organizer);
       const tournamentTeamId = await createTournamentTeam(
@@ -351,7 +393,7 @@ describe("player blocks (SQL-driven)", () => {
         registration.id,
       );
 
-      await block(organizer, b);
+      await block(b, organizer);
 
       expect(
         await count("tournament_team_invites WHERE id = $1", [teamInvite.id]),
@@ -363,7 +405,7 @@ describe("player blocks (SQL-driven)", () => {
       expect(await notificationDeleted(registrationBell)).toBe(true);
     });
 
-    it("removes draft invites from the other party's drafts and retracts the bell entry", async () => {
+    it("removes draft invites into the other party's drafts and retracts the blocker's own bell entry", async () => {
       const [a, b, c] = await fx.players(3);
       const draftA = await createDraft(a);
       await inviteToDraft(draftA, b);
@@ -409,7 +451,7 @@ describe("player blocks (SQL-driven)", () => {
       ).toBe(0);
     });
 
-    it("removes utility practice invites and retracts the bell entry", async () => {
+    it("removes utility practice invites and retracts the blocker's own bell entry", async () => {
       const [a, b, c] = await fx.players(3);
       const session = await createPracticeSession(a);
       await postgres.query(
@@ -420,7 +462,7 @@ describe("player blocks (SQL-driven)", () => {
       const blockedBell = await notify("UtilityPracticeInvite", b, session);
       const keptBell = await notify("UtilityPracticeInvite", c, session);
 
-      await block(a, b);
+      await block(b, a);
 
       expect(
         await count(
@@ -646,6 +688,193 @@ describe("player blocks (SQL-driven)", () => {
       ).toBe(1);
     });
 
+    it("refuses a custom-match organizer putting a blocked player in a lineup, but not a team fill or a match organizer", async () => {
+      const [organizer, b, d] = await fx.players(3);
+      const match = await fx.match({ type: "Competitive", regions: [REGION] });
+      await block(b, organizer);
+      await block(d, organizer);
+
+      await expect(
+        runAsUser(postgres, organizer, "user", (query) =>
+          query(
+            "INSERT INTO match_lineup_players (match_lineup_id, steam_id) VALUES ($1, $2)",
+            [match.lineup_1_id, b],
+          ),
+        ),
+      ).rejects.toThrow(/^player_blocked$/);
+
+      await runAsUser(postgres, organizer, "match_organizer", (query) =>
+        query(
+          "INSERT INTO match_lineup_players (match_lineup_id, steam_id) VALUES ($1, $2)",
+          [match.lineup_1_id, d],
+        ),
+      );
+
+      const team = await fx.team();
+      await runAsUser(postgres, team.owner, "administrator", (query) =>
+        query(
+          "INSERT INTO team_roster (team_id, player_steam_id) VALUES ($1, $2)",
+          [team.id, b],
+        ),
+      );
+      await runAsUser(postgres, organizer, "user", (query) =>
+        query("UPDATE match_lineups SET team_id = $2 WHERE id = $1", [
+          match.lineup_2_id,
+          team.id,
+        ]),
+      );
+
+      expect(
+        await count(
+          "match_lineup_players WHERE match_lineup_id = $1 AND steam_id IN ($2, $3)",
+          [match.lineup_2_id, b, team.owner],
+        ),
+      ).toBe(2);
+      expect(
+        await count(
+          "match_lineup_players WHERE match_lineup_id = $1 AND steam_id = $2",
+          [match.lineup_1_id, d],
+        ),
+      ).toBe(1);
+    });
+
+    it("refuses an outsider on a team-backed tournament roster, but not a teammate", async () => {
+      const [organizer, outsider, mate] = await fx.players(3);
+      const tournamentId = await createTournament(organizer);
+      const team = await fx.team();
+      const tournamentTeamId = await runAsUser(
+        postgres,
+        team.owner,
+        "admin",
+        async (query) => {
+          const [row] = (await query(
+            `INSERT INTO tournament_teams (tournament_id, team_id, name)
+             SELECT $1, id, name FROM teams WHERE id = $2 RETURNING id`,
+            [tournamentId, team.id],
+          )) as Array<{ id: string }>;
+          return row.id;
+        },
+      );
+      await runAsUser(postgres, team.owner, "administrator", (query) =>
+        query(
+          "INSERT INTO team_roster (team_id, player_steam_id) VALUES ($1, $2)",
+          [team.id, mate],
+        ),
+      );
+      await block(outsider, team.owner);
+      await block(mate, team.owner);
+
+      const addToRoster = (steamId: string) =>
+        runAsUser(postgres, team.owner, "user", (query) =>
+          query(
+            `INSERT INTO tournament_team_roster (tournament_team_id, player_steam_id, tournament_id)
+             VALUES ($1, $2, $3)`,
+            [tournamentTeamId, steamId, tournamentId],
+          ),
+        );
+
+      await expect(addToRoster(outsider)).rejects.toThrow(/^player_blocked$/);
+      await addToRoster(mate);
+
+      expect(
+        await count(
+          "tournament_team_roster WHERE tournament_team_id = $1 AND player_steam_id = $2",
+          [tournamentTeamId, mate],
+        ),
+      ).toBe(1);
+    });
+
+    it("refuses an outsider on a league roster, but not a teammate", async () => {
+      const [outsider, mate] = await fx.players(2);
+      const team = await fx.team();
+      await runAsUser(postgres, team.owner, "administrator", (query) =>
+        query(
+          "INSERT INTO team_roster (team_id, player_steam_id) VALUES ($1, $2)",
+          [team.id, mate],
+        ),
+      );
+      const [season] = await postgres.query<Array<{ id: string }>>(
+        "INSERT INTO league_seasons (name) VALUES ($1) RETURNING id",
+        [fx.nextName("season")],
+      );
+      const [leagueTeam] = await postgres.query<Array<{ id: string }>>(
+        "INSERT INTO league_teams (team_id) VALUES ($1) RETURNING id",
+        [team.id],
+      );
+      const [teamSeason] = await postgres.query<Array<{ id: string }>>(
+        `INSERT INTO league_team_seasons (league_season_id, league_team_id)
+         VALUES ($1, $2) RETURNING id`,
+        [season.id, leagueTeam.id],
+      );
+      await block(outsider, team.owner);
+      await block(mate, team.owner);
+
+      const addToRoster = (steamId: string) =>
+        runAsUser(postgres, team.owner, "user", (query) =>
+          query(
+            `INSERT INTO league_team_rosters (league_team_season_id, player_steam_id)
+             VALUES ($1, $2)`,
+            [teamSeason.id, steamId],
+          ),
+        );
+
+      await expect(addToRoster(outsider)).rejects.toThrow(/^player_blocked$/);
+      await addToRoster(mate);
+
+      expect(
+        await count(
+          "league_team_rosters WHERE league_team_season_id = $1 AND player_steam_id = $2",
+          [teamSeason.id, mate],
+        ),
+      ).toBe(1);
+    });
+
+    it("refuses an organizer adding a blocked player to an event or as a co-organizer, but not staff", async () => {
+      const [organizer, b] = await fx.players(2);
+      const [event] = await postgres.query<Array<{ id: string }>>(
+        "INSERT INTO events (name, organizer_steam_id) VALUES ($1, $2) RETURNING id",
+        [fx.nextName("event"), organizer],
+      );
+      const tournamentId = await createTournament(organizer);
+      await block(b, organizer);
+
+      const adds: Array<[string, string]> = [
+        [
+          "INSERT INTO event_players (event_id, steam_id) VALUES ($1, $2)",
+          event.id,
+        ],
+        [
+          "INSERT INTO event_organizers (event_id, steam_id) VALUES ($1, $2)",
+          event.id,
+        ],
+        [
+          "INSERT INTO tournament_organizers (tournament_id, steam_id) VALUES ($1, $2)",
+          tournamentId,
+        ],
+      ];
+
+      for (const [sql, id] of adds) {
+        await expect(
+          runAsUser(postgres, organizer, "user", (query) =>
+            query(sql, [id, b]),
+          ),
+        ).rejects.toThrow(/^player_blocked$/);
+      }
+
+      for (const [sql, id] of adds) {
+        await runAsUser(postgres, organizer, "tournament_organizer", (query) =>
+          query(sql, [id, b]),
+        );
+      }
+
+      expect(
+        await count("event_players WHERE event_id = $1 AND steam_id = $2", [
+          event.id,
+          b,
+        ]),
+      ).toBe(1);
+    });
+
     it("lets everything through again once the block is lifted", async () => {
       const [a, b] = await fx.players(2);
       await block(a, b);
@@ -661,6 +890,95 @@ describe("player blocks (SQL-driven)", () => {
           [a, b],
         ),
       ).toBe(1);
+    });
+  });
+
+  describe("PlayerBlocksService", () => {
+    it("answers from the same functions the triggers use", async () => {
+      const service = new PlayerBlocksService(postgres);
+      const [a, b, c, d] = await fx.players(4);
+      await block(a, b);
+      await block(c, a);
+
+      expect(await service.isBlockedEitherWay(b, a)).toBe(true);
+      expect(await service.isBlockedEitherWay(a, d)).toBe(false);
+      expect(await service.hasBlocked(a, b)).toBe(true);
+      expect(await service.hasBlocked(b, a)).toBe(false);
+      expect(await service.blockedBy(a)).toEqual(new Set([b]));
+      expect(await service.filterUnblocked(a, [c, b, d, a])).toEqual([d, a]);
+    });
+  });
+
+  describe("rolling the migration back", () => {
+    let rollback: SqlTestDb;
+
+    beforeAll(async () => {
+      rollback = await bootMigratedDb("PlayerBlocksRollbackTest");
+    }, 600_000);
+
+    afterAll(async () => {
+      await rollback?.stop();
+    });
+
+    it("leaves no guard that needs the table, and a forward deploy restores all of it", async () => {
+      const pg = rollback.postgres;
+      const rollbackFx = new Fixtures(pg, 76561192810000000n);
+      const [a, b] = await rollbackFx.players(2);
+
+      await pg.query(
+        readFileSync(
+          join(
+            process.cwd(),
+            "hasura/migrations/default/1888000000500_player_blocks/down.sql",
+          ),
+          "utf8",
+        ),
+      );
+
+      await pg.query(
+        `INSERT INTO friends (player_steam_id, other_player_steam_id, status)
+         VALUES ($1, $2, 'Accepted')`,
+        [a, b],
+      );
+      const [lobby] = (await runAsUser(pg, a, "user", (query) =>
+        query("INSERT INTO lobbies (access) VALUES ('Open') RETURNING id"),
+      )) as Array<{ id: string }>;
+      await runAsUser(pg, a, "user", (query) =>
+        query(
+          "INSERT INTO lobby_players (lobby_id, steam_id, invited_by_steam_id) VALUES ($1, $2, $3)",
+          [lobby.id, b, a],
+        ),
+      );
+
+      const [{ digests }] = await pg.query<Array<{ digests: number }>>(
+        `SELECT count(*)::int AS digests FROM migration_hashes.hashes
+          WHERE name LIKE 'hasura/functions/players/%block%'
+             OR name IN ('hasura/triggers/player_blocks', 'hasura/triggers/friends')`,
+      );
+      expect(digests).toBe(0);
+
+      await pg.query(
+        "DELETE FROM hdb_catalog.schema_migrations WHERE version = 1888000000500",
+      );
+      await rollback.hasura.setup();
+
+      await runAsUser(pg, a, "user", (query) =>
+        query(
+          "INSERT INTO player_blocks (blocker_steam_id, blocked_steam_id) VALUES ($1, $2)",
+          [a, b],
+        ),
+      );
+
+      const [{ friendships, invites }] = await pg.query<
+        Array<{ friendships: number; invites: number }>
+      >(
+        `SELECT (SELECT count(*)::int FROM friends
+                  WHERE player_steam_id = $1 AND other_player_steam_id = $2) AS friendships,
+                (SELECT count(*)::int FROM lobby_players
+                  WHERE steam_id = $2 AND status = 'Invited') AS invites`,
+        [a, b],
+      );
+      expect({ friendships, invites }).toEqual({ friendships: 0, invites: 0 });
     });
   });
 });

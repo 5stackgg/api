@@ -41,6 +41,12 @@ RETURNS TRIGGER AS $$
 DECLARE
     remaining_players integer;
 BEGIN
+    -- An invite going away (declined, withdrawn, cleared by a block) is not a
+    -- member leaving, so it hands nobody the captaincy.
+    IF OLD.status <> 'Accepted' THEN
+        RETURN OLD;
+    END IF;
+
     SELECT COUNT(*) INTO remaining_players
     FROM lobby_players
     WHERE lobby_id = OLD.lobby_id
@@ -50,7 +56,8 @@ BEGIN
         DELETE FROM lobbies WHERE id = OLD.lobby_id;
     ELSE
         UPDATE lobby_players SET captain = TRUE
-        WHERE steam_id = (
+        WHERE lobby_id = OLD.lobby_id
+        AND steam_id = (
             SELECT steam_id 
             FROM lobby_players
             WHERE lobby_id = OLD.lobby_id

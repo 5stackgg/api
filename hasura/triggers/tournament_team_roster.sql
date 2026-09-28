@@ -113,7 +113,16 @@ BEGIN
 
         RETURN NULL;
     END IF;
-    
+
+    -- A team-backed roster takes a player with no invite at all, so somebody
+    -- from outside the team is a force-add rather than a lineup pick.
+    IF NOT EXISTS (
+        SELECT 1 FROM team_roster tr
+        WHERE tr.team_id = _team_id AND tr.player_steam_id = NEW.player_steam_id
+    ) THEN
+        PERFORM public.assert_session_not_blocked(NEW.player_steam_id, 'tournament_organizer');
+    END IF;
+
     RETURN NEW;
 END;
 $$;

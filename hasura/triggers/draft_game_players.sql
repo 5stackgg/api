@@ -3,7 +3,6 @@ CREATE OR REPLACE FUNCTION public.tbi_draft_game_players() RETURNS TRIGGER
     AS $$
 DECLARE
     game public.draft_games%ROWTYPE;
-    _session json;
     actor text;
     accepted_count integer;
     player_elo jsonb;
@@ -15,16 +14,13 @@ BEGIN
         NEW.elo_snapshot := COALESCE(NULLIF(player_elo ->> lower(game.type), '')::numeric::integer, 5000);
     END IF;
 
-    _session := NULLIF(current_setting('hasura.user', true), '')::json;
-    actor := _session ->> 'x-hasura-user-id';
+    actor := NULLIF(current_setting('hasura.user', true), '')::json ->> 'x-hasura-user-id';
 
     IF actor IS NULL THEN
         RETURN NEW;
     END IF;
 
-    IF actor::bigint <> NEW.steam_id AND NOT COALESCE(public.is_above_role('match_organizer', _session), false) THEN
-        PERFORM public.assert_not_blocked(actor::bigint, NEW.steam_id);
-    END IF;
+    PERFORM public.assert_session_not_blocked(NEW.steam_id, 'match_organizer');
 
     SELECT count(*) INTO accepted_count
     FROM public.draft_game_players

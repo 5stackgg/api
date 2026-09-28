@@ -289,6 +289,16 @@ describe("hasura table metadata", () => {
       expect(blocks().update_permissions ?? []).toEqual([]);
     });
 
+    it("grants select, insert and delete to user alone, for every role to inherit", () => {
+      expect(
+        ["select", "insert", "delete"].map((operation) =>
+          (blocks()[`${operation}_permissions`] ?? []).map(
+            (entry: { role: string }) => entry.role,
+          ),
+        ),
+      ).toEqual([["user"], ["user"], ["user"]]);
+    });
+
     it("only ever shows a player their own blocks", () => {
       for (const { role, permission } of blocks().select_permissions ?? []) {
         expect({ role, filter: permission.filter }).toEqual({
@@ -337,6 +347,29 @@ describe("hasura table metadata", () => {
         );
 
       expect(reverse).toEqual([]);
+    });
+
+    it("exposes none of the block helpers to GraphQL", () => {
+      const helpers = [
+        "has_blocked_player",
+        "is_blocked_either_way",
+        "assert_not_blocked",
+        "assert_session_not_blocked",
+      ];
+
+      const computed = tables.flatMap(({ file, metadata }) =>
+        (metadata?.computed_fields ?? [])
+          .filter((field: Record<string, any>) =>
+            helpers.includes(field.definition?.function?.name),
+          )
+          .map((field: { name: string }) => `${file}: ${field.name}`),
+      );
+
+      const tracked = readdirSync(
+        join(__dirname, "../../hasura/metadata/databases/default/functions"),
+      ).filter((file) => helpers.some((helper) => file.includes(helper)));
+
+      expect([...computed, ...tracked]).toEqual([]);
     });
   });
 });
