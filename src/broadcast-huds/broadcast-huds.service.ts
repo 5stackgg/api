@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import AdmZip from "adm-zip";
-import { Readable } from "stream";
 import { PostgresService } from "src/postgres/postgres.service";
 import { S3Service } from "src/s3/s3.service";
 import { SystemSettingName } from "src/system/enums/SystemSettingName";
@@ -21,18 +20,14 @@ export type BroadcastHud = {
   is_signed: boolean;
 };
 
-// A HUD bundle is a web app, not a media file: a few hundred KB of JS, CSS and
-// images. The cap is generous against that and still small enough that holding
-// one in memory to inspect it is unremarkable.
 const MAX_ARCHIVE_BYTES = 64 * 1024 * 1024;
 
-// Inlined into the row as a data URL, so it rides every listing query. Anything
-// larger than this is a bundle shipping a poster instead of a thumbnail.
 const MAX_THUMBNAIL_BYTES = 512 * 1024;
 
-// Mac zips carry these; JTs Hud Manager ignores them on extract and so must the
-// validation, or a bundle zipped on a Mac is rejected for files its author
-// never added.
+const BUNDLE_URL_TTL_SECONDS = 60 * 60;
+
+// JTs Hud Manager skips these on extract, so a bundle zipped on a Mac must not
+// be rejected for them.
 const ARCHIVE_JUNK = /(^|\/)(__MACOSX\/|\.DS_Store$|Thumbs\.db$|\._)/;
 
 @Injectable()
@@ -43,35 +38,36 @@ export class BroadcastHudsService {
     private readonly s3: S3Service,
   ) {}
 
-  // Which HUD the pod should boot. Falls back through the legacy setting so an
-  // instance that never opens the new page keeps exactly the layout it had:
-  // default_hud_mode named a *variant* of the one bundled HUD, which is now the
-  // pair of seeded builtin rows.
   public async resolveDefault(): Promise<BroadcastHud | null> {
-    const [preferred] = await this.postgres.query<Array<{ value: string }>>(
-      `SELECT value FROM public.settings WHERE name = $1 LIMIT 1`,
-      [SystemSettingName.DefaultBroadcastHud],
+    const preferred = await this.getSetting(
+      SystemSettingName.DefaultBroadcastHud,
     );
 
-    if (preferred?.value) {
-      const hud = await this.bySlug(preferred.value);
+    if (preferred) {
+      const hud = await this.bySlug(preferred);
       if (hud?.enabled) {
         return hud;
       }
-      // Not an error worth failing a stream over -- a HUD can be deleted or
-      // disabled while it is still named as the default.
       this.logger.warn(
-        `default broadcast hud "${preferred.value}" is missing or disabled — falling back`,
+        `default broadcast hud "${preferred}" is missing or disabled, falling back`,
       );
     }
 
-    const [legacy] = await this.postgres.query<Array<{ value: string }>>(
-      `SELECT value FROM public.settings WHERE name = $1 LIMIT 1`,
-      [SystemSettingName.DefaultHudMode],
-    );
+    const legacy = await this.getSetting(SystemSettingName.DefaultHudMode);
 
-    const variant = legacy?.value === "vertical" ? "vertical" : "horizontal";
-    return await this.bySlug(`default-${variant}`);
+    return await this.bySlug(
+      legacy === "vertical" ? "default-vertical" : "default-horizontal",
+    );
+  }
+
+  public async resolveEnabled(slug: string): Promise<BroadcastHud> {
+    const hud = await this.bySlug(BroadcastHudsService.normalizeSlug(slug));
+
+    if (!hud || !hud.enabled) {
+      throw new Error(`no enabled broadcast hud named "${slug}"`);
+    }
+
+    return hud;
   }
 
   public async bySlug(slug: string): Promise<BroadcastHud | null> {
@@ -86,19 +82,17 @@ export class BroadcastHudsService {
     return hud ?? null;
   }
 
-  // The archive is served whole; JTs Hud Manager inside the pod does the
-  // extracting. See import() for why we still read it here.
-  public async bundle(
-    slug: string,
-  ): Promise<{ stream: Readable; size: number } | null> {
-    const hud = await this.bySlug(slug);
-    if (!hud || !hud.enabled || !hud.storage_key) {
+  public async bundleUrl(hud: BroadcastHud): Promise<string | null> {
+    if (!hud.storage_key) {
       return null;
     }
-    return {
-      stream: await this.s3.get(hud.storage_key),
-      size: Number(hud.size_bytes ?? 0),
-    };
+
+    return await this.s3.getPresignedUrl(
+      hud.storage_key,
+      undefined,
+      BUNDLE_URL_TTL_SECONDS,
+      "get",
+    );
   }
 
   public async import(
@@ -108,7 +102,7 @@ export class BroadcastHudsService {
   ): Promise<BroadcastHud> {
     const parsed = this.inspect(archive, originalName);
 
-    const slug = await this.availableSlug(parsed.suggestedSlug);
+    const slug = await this.availableSlug(this.slugify(parsed.name));
     const storageKey = `broadcast-huds/${slug}.zip`;
 
     await this.s3.put(storageKey, archive, "application/zip");
@@ -125,7 +119,7 @@ export class BroadcastHudsService {
                    is_signed`,
         [
           slug,
-          parsed.jthudId,
+          parsed.folder ?? slug,
           parsed.name,
           parsed.author,
           parsed.version,
@@ -140,13 +134,7 @@ export class BroadcastHudsService {
       );
       return hud;
     } catch (error) {
-      // The object is written before the row so a successful insert can never
-      // point at nothing. If the insert is what failed, take the object back
-      // out rather than leaving an orphan for the s3 sweeper to puzzle over.
-      await this.s3.remove(storageKey).catch(() => {
-        // Nothing useful to do about a failed cleanup here -- the insert error
-        // below is the one the caller needs.
-      });
+      await this.s3.remove(storageKey);
       throw error;
     }
   }
@@ -167,28 +155,33 @@ export class BroadcastHudsService {
       [slug],
     );
 
-    if (hud.storage_key) {
-      await this.s3.remove(hud.storage_key).catch((error) => {
-        // The row is gone, so the HUD is gone as far as everything else is
-        // concerned; a stranded object is a storage cost, not a correctness bug.
-        this.logger.warn(
-          `removed broadcast hud ${slug} but its object survived: ${
-            (error as Error)?.message ?? error
-          }`,
-        );
-      });
+    if (hud.storage_key && !(await this.s3.remove(hud.storage_key))) {
+      this.logger.warn(
+        `removed broadcast hud ${slug} but could not delete ${hud.storage_key}`,
+      );
     }
   }
 
-  // Read the archive well enough to describe it, and refuse the shapes JTs Hud
-  // Manager would mishandle.
-  //
-  // This is the only archive handling on our side -- we do not extract. It
-  // exists because JTHud's own upload-zip writes entries with
-  // `path.join(hudDir, relativePath)` and no traversal guard, and takes the
-  // hud id straight from the archive when hud.json sits one level deep. The
-  // panel is the only thing that ever uploads to it, so the panel is where a
-  // hostile archive has to be stopped.
+  private static normalizeSlug(slug: string): string {
+    if (slug === "vertical") {
+      return "default-vertical";
+    }
+    if (slug === "horizontal" || slug === "default") {
+      return "default-horizontal";
+    }
+    return slug;
+  }
+
+  private async getSetting(name: SystemSettingName): Promise<string | null> {
+    const [setting] = await this.postgres.query<Array<{ value: string }>>(
+      `SELECT value FROM public.settings WHERE name = $1 LIMIT 1`,
+      [name],
+    );
+    return setting?.value || null;
+  }
+
+  // JTs Hud Manager's upload-zip extracts with no traversal guard, and the pod
+  // hands it whatever we stored, so hostile archives have to be refused here.
   private inspect(archive: Buffer, originalName: string) {
     if (archive.length === 0) {
       throw new BadRequestException("the uploaded file is empty");
@@ -230,8 +223,6 @@ export class BroadcastHudsService {
       }
     }
 
-    // The same rule JTHud applies, so what we accept is exactly what it can
-    // install: hud.json at the root, or inside a single top-level folder.
     const manifest = entries.find(
       (entry) =>
         !entry.isDirectory &&
@@ -244,38 +235,32 @@ export class BroadcastHudsService {
       );
     }
 
-    const nested = manifest.entryName !== "hud.json";
-    const prefix = nested
-      ? manifest.entryName.replace(/\/hud\.json$/, "") + "/"
-      : "";
+    // JTs Hud Manager installs a nested bundle under its folder name, and a
+    // root-level one under the posted filename, which the pod sends as <slug>.zip.
+    const folder =
+      manifest.entryName === "hud.json"
+        ? null
+        : manifest.entryName.replace(/\/hud\.json$/, "");
+    const prefix = folder ? `${folder}/` : "";
 
-    // Mirror of JTHud's own derivation, so the id we record is the id it will
-    // create. Nested wins because that branch ignores the filename entirely.
-    const jthudId = nested
-      ? prefix.slice(0, -1)
-      : originalName
-          .replace(/\.zip$/i, "")
-          .replace(/[^a-zA-Z0-9_-]/g, "-")
-          .toLowerCase();
-
-    if (!/^[A-Za-z0-9_-]+$/.test(jthudId)) {
+    if (folder && !/^[A-Za-z0-9_-]+$/.test(folder)) {
       throw new BadRequestException(
-        `"${jthudId}" cannot be used as a HUD id — rename the folder inside the archive`,
+        `"${folder}" cannot be used as a HUD id — rename the folder inside the archive`,
       );
     }
 
     const isSigned = entries.some(
       (entry) =>
         !entry.isDirectory &&
-        (entry.entryName === "key" || entry.entryName === prefix + "key"),
+        (entry.entryName === "key" || entry.entryName === `${prefix}key`),
     );
 
-    // A signed bundle's hud.json is a signature envelope rather than plain
-    // JSON. We do not verify it -- JTHud does that on install, against the key
-    // beside it -- so failing to parse is expected here, not an error.
+    // A signed bundle's hud.json is a signature envelope, not JSON.
     let hudJson: Record<string, unknown> | null = null;
     try {
-      const parsed = JSON.parse(manifest.getData().toString("utf-8")) as unknown;
+      const parsed = JSON.parse(
+        manifest.getData().toString("utf-8"),
+      ) as unknown;
       if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
         hudJson = parsed as Record<string, unknown>;
       }
@@ -288,18 +273,15 @@ export class BroadcastHudsService {
       return typeof value === "string" && value.trim() ? value.trim() : null;
     };
 
-    const name = text("name") ?? jthudId;
-
     return {
-      jthudId,
-      name,
+      folder,
+      name: text("name") ?? folder ?? originalName.replace(/\.zip$/i, ""),
       author: text("author"),
       version: text("version"),
       description: text("description"),
       isSigned,
       hudJson,
       thumbnail: this.readThumbnail(entries, prefix),
-      suggestedSlug: this.slugify(name),
     };
   }
 
@@ -338,9 +320,6 @@ export class BroadcastHudsService {
     return slug || "hud";
   }
 
-  // The slug is unique and lands in a URL, so a second import of a HUD by the
-  // same name gets a suffix rather than an error the operator has to resolve by
-  // renaming a file.
   private async availableSlug(base: string): Promise<string> {
     for (let attempt = 0; attempt < 50; attempt++) {
       const candidate = attempt === 0 ? base : `${base}-${attempt + 1}`;

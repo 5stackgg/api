@@ -70,18 +70,12 @@ export enum SystemSettingName {
   GameServerPluginRuntime = "public.game_server_plugin_runtime",
   GameServerPluginRuntimeLocked = "game_server_plugin_runtime_locked",
   GamePluginRegistryUrl = "game_plugin_registry_url",
+  DefaultBroadcastHud = "public.default_broadcast_hud",
+  DefaultHudMode = "default_hud_mode",
   // VAPID identifies this panel to the browser push services. The keypair is
   // self-generated -- there is no vendor to register with -- so it is stored
   // here rather than demanding an env var of every operator. The private half
   // is never exposed to any role; see public_settings.yaml.
-  // Which row of broadcast_huds the game-streamer pod boots. `public.`-prefixed
-  // deliberately, unlike the legacy default_hud_mode it supersedes: the HUD
-  // pickers in the demo player and the stream deck are not administrator-only
-  // surfaces, and the value is a HUD slug -- it reveals nothing.
-  DefaultBroadcastHud = "public.default_broadcast_hud",
-  // Superseded by DefaultBroadcastHud. Still read as the fallback so an
-  // instance that never opens the new settings page keeps the layout it had.
-  DefaultHudMode = "default_hud_mode",
   WebPushPublicKey = "web_push_public_key",
   WebPushPrivateKey = "web_push_private_key",
   // Off until the map-assets worker is deployed: a build published before the

@@ -2,14 +2,8 @@ import AdmZip from "adm-zip";
 import { crc32 } from "zlib";
 import { BroadcastHudsService } from "./broadcast-huds.service";
 
-// The panel is the only thing that ever uploads to JTs Hud Manager's
-// upload-zip, and that endpoint extracts with no traversal guard and takes the
-// hud id straight out of the archive. So these are the tests for the only place
-// a hostile bundle can be stopped.
-describe("BroadcastHudsService.import", () => {
-  const zipOf = (
-    files: Array<[string, string | Buffer]>,
-  ): Buffer => {
+describe("BroadcastHudsService", () => {
+  const zipOf = (files: Array<[string, string | Buffer]>): Buffer => {
     const zip = new AdmZip();
     for (const [name, content] of files) {
       zip.addFile(
@@ -20,11 +14,8 @@ describe("BroadcastHudsService.import", () => {
     return zip.toBuffer();
   };
 
-  // AdmZip's *writer* sanitises entry names -- it strips leading slashes and
-  // resolves away `..` -- so a hostile archive cannot be built with it, and a
-  // test that tried would silently assert nothing. Real zips have no such
-  // manners, so these are emitted byte by byte: stored (uncompressed) entries
-  // with whatever name we say.
+  // AdmZip's writer strips leading slashes and `..`, so hostile entries have
+  // to be written by hand.
   const rawZipOf = (files: Array<[string, string]>): Buffer => {
     const locals: Array<Buffer> = [];
     const centrals: Array<Buffer> = [];
@@ -89,10 +80,15 @@ describe("BroadcastHudsService.import", () => {
   };
 
   const manifest = (extra: Record<string, unknown> = {}) =>
-    JSON.stringify({ name: "Test Hud", author: "Someone", version: "1.2.3", ...extra });
+    JSON.stringify({
+      name: "Test Hud",
+      author: "Someone",
+      version: "1.2.3",
+      ...extra,
+    });
 
   let postgres: { query: jest.Mock };
-  let s3: { put: jest.Mock; remove: jest.Mock; get: jest.Mock };
+  let s3: { put: jest.Mock; remove: jest.Mock; getPresignedUrl: jest.Mock };
   let logger: { warn: jest.Mock; log: jest.Mock; error: jest.Mock };
   let service: BroadcastHudsService;
   let inserted: Array<unknown> | null;
@@ -105,14 +101,13 @@ describe("BroadcastHudsService.import", () => {
           inserted = params;
           return [{ slug: params[0], jthud_id: params[1] }];
         }
-        // No existing rows -- every slug is free unless a test says otherwise.
         return [];
       }),
     };
     s3 = {
       put: jest.fn().mockResolvedValue(undefined),
-      remove: jest.fn().mockResolvedValue(undefined),
-      get: jest.fn(),
+      remove: jest.fn().mockResolvedValue(true),
+      getPresignedUrl: jest.fn().mockResolvedValue("https://s3.test/signed"),
     };
     logger = { warn: jest.fn(), log: jest.fn(), error: jest.fn() };
     service = new BroadcastHudsService(
@@ -151,7 +146,7 @@ describe("BroadcastHudsService.import", () => {
     };
   };
 
-  it("accepts hud.json at the root and takes the hud id from the filename", async () => {
+  it("installs a root-level bundle under its slug", async () => {
     await service.import(
       zipOf([
         ["hud.json", manifest()],
@@ -161,8 +156,7 @@ describe("BroadcastHudsService.import", () => {
     );
 
     const p = paramsByName();
-    // Mirrors JTHud's own sanitise: non-alphanumerics to dashes, lowercased.
-    expect(p.jthudId).toBe("my-cool-hud");
+    expect(p.jthudId).toBe("test-hud");
     expect(p.slug).toBe("test-hud");
     expect(p.name).toBe("Test Hud");
     expect(p.author).toBe("Someone");
@@ -181,8 +175,6 @@ describe("BroadcastHudsService.import", () => {
         ["my_hud/hud.json", manifest()],
         ["my_hud/index.html", "<html></html>"],
       ]),
-      // Deliberately different from the folder: JTHud ignores the filename in
-      // this branch, so we must too or we would record an id it never creates.
       "ignored-name.zip",
     );
 
@@ -207,11 +199,9 @@ describe("BroadcastHudsService.import", () => {
       ["hud.json", manifest()],
       ["../../etc/cron.d/pwn", "* * * * * root sh"],
     ]);
-    // Guard the guard: prove the hostile name really survived into the archive,
-    // so this test cannot quietly start passing for the wrong reason.
-    expect(
-      new AdmZip(archive).getEntries().map((e) => e.entryName),
-    ).toContain("../../etc/cron.d/pwn");
+    expect(new AdmZip(archive).getEntries().map((e) => e.entryName)).toContain(
+      "../../etc/cron.d/pwn",
+    );
 
     await expect(service.import(archive, "x.zip")).rejects.toThrow(
       /escapes it/i,
@@ -224,9 +214,9 @@ describe("BroadcastHudsService.import", () => {
       ["hud.json", manifest()],
       ["/etc/passwd", "root"],
     ]);
-    expect(
-      new AdmZip(archive).getEntries().map((e) => e.entryName),
-    ).toContain("/etc/passwd");
+    expect(new AdmZip(archive).getEntries().map((e) => e.entryName)).toContain(
+      "/etc/passwd",
+    );
 
     await expect(service.import(archive, "x.zip")).rejects.toThrow(
       /absolute path/i,
@@ -272,7 +262,6 @@ describe("BroadcastHudsService.import", () => {
   it("records a signed bundle, and still imports it when hud.json will not parse", async () => {
     await service.import(
       zipOf([
-        // A signed bundle's hud.json is a signature envelope, not plain JSON.
         ["hud.json", "-----BEGIN SIGNED-----\nnot json\n"],
         ["key", "-----BEGIN PUBLIC KEY-----"],
       ]),
@@ -282,7 +271,6 @@ describe("BroadcastHudsService.import", () => {
     const p = paramsByName();
     expect(p.isSigned).toBe(true);
     expect(p.hudJson).toBeNull();
-    // Nothing to read a name out of, so the id it will install under is the name.
     expect(p.name).toBe("signed-hud");
   });
 
@@ -317,6 +305,7 @@ describe("BroadcastHudsService.import", () => {
 
     await service.import(zipOf([["hud.json", manifest()]]), "x.zip");
     expect(paramsByName().slug).toBe("test-hud-2");
+    expect(paramsByName().jthudId).toBe("test-hud-2");
   });
 
   it("takes the stored object back out if the row insert fails", async () => {
@@ -331,5 +320,62 @@ describe("BroadcastHudsService.import", () => {
       service.import(zipOf([["hud.json", manifest()]]), "x.zip"),
     ).rejects.toThrow(/constraint violation/);
     expect(s3.remove).toHaveBeenCalledWith("broadcast-huds/test-hud.zip");
+  });
+  it("warns when a removed hud's archive cannot be deleted", async () => {
+    postgres.query.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM public.broadcast_huds")) {
+        return [
+          {
+            slug: "test-hud",
+            source: "imported",
+            storage_key: "broadcast-huds/test-hud.zip",
+          },
+        ];
+      }
+      return [];
+    });
+    s3.remove.mockResolvedValue(false);
+
+    await service.remove("test-hud");
+
+    expect(s3.remove).toHaveBeenCalledWith("broadcast-huds/test-hud.zip");
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("could not delete"),
+    );
+  });
+
+  it("resolves the legacy layout names onto the builtin rows", async () => {
+    postgres.query.mockImplementation(
+      async (_sql: string, params: Array<unknown>) => [
+        { slug: params[0], enabled: true },
+      ],
+    );
+
+    await expect(service.resolveEnabled("vertical")).resolves.toMatchObject({
+      slug: "default-vertical",
+    });
+    await expect(service.resolveEnabled("default")).resolves.toMatchObject({
+      slug: "default-horizontal",
+    });
+  });
+
+  it("refuses a disabled hud", async () => {
+    postgres.query.mockResolvedValue([{ slug: "test-hud", enabled: false }]);
+
+    await expect(service.resolveEnabled("test-hud")).rejects.toThrow(
+      /no enabled broadcast hud/,
+    );
+  });
+
+  it("presigns the archive of an imported hud only", async () => {
+    await expect(
+      service.bundleUrl({
+        storage_key: "broadcast-huds/test-hud.zip",
+      } as never),
+    ).resolves.toBe("https://s3.test/signed");
+    await expect(
+      service.bundleUrl({ storage_key: null } as never),
+    ).resolves.toBeNull();
+    expect(s3.getPresignedUrl).toHaveBeenCalledTimes(1);
   });
 });
