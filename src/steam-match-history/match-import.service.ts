@@ -68,10 +68,13 @@ export class MatchImportService {
     const { demoUrl, matchStartTime, externalId, sourceObjectKey, shareCode } =
       options;
 
+    // Recorded on a 5Stack server: that match already lives in 5Stack (or was
+    // removed on purpose), so never import a copy of it.
+    if (MatchImportService.isFiveStackServer(parsed.server_name)) {
+      return { matchId: null, skipped: "recorded on a 5Stack server" };
+    }
     if (MatchImportService.isFaceitServer(parsed.server_name)) {
       source = "faceit";
-    } else if (MatchImportService.isFiveStackServer(parsed.server_name)) {
-      source = "5stack";
     }
 
     let file = demoUrl ?? `external/${source}/${sourceKey}.dem`;
@@ -85,9 +88,11 @@ export class MatchImportService {
           MatchImportService.extractFaceitMatchId(sourceKey))
         : null;
 
-    const existing = externalId
-      ? await this.findExistingExternalMatch(source, externalId)
-      : await this.findExistingByFile(file);
+    const existing =
+      (externalId
+        ? await this.findExistingExternalMatch(source, externalId)
+        : await this.findExistingByFile(file)) ??
+      (await this.findSameMatch(parsed, players));
     if (existing) {
       // Re-import: the match already exists, but still refresh every player's
       // current faceit elo and re-snapshot this match's rank history.
@@ -658,6 +663,75 @@ export class MatchImportService {
       [source, externalId],
     );
     return rows.at(0)?.id ?? null;
+  }
+
+  // The same match brought in another way (share code vs upload, renamed file,
+  // a second uploader): same map, same round-by-round winners, most of the players.
+  private async findSameMatch(
+    parsed: ParsedDemo,
+    players: ParsedPlayer[],
+  ): Promise<string | null> {
+    const winners = MatchImportService.roundWinnerSequence(parsed);
+    const steamIds = players.map((p) => p.steam_id);
+    if (!parsed.map_name || winners.length === 0 || steamIds.length === 0) {
+      return null;
+    }
+    const rows = await this.postgres.query<Array<{ match_id: string }>>(
+      `WITH lineups AS (
+         SELECT lp.match_lineup_id AS id, count(DISTINCT lp.steam_id) AS n
+           FROM public.match_lineup_players lp
+          WHERE lp.steam_id = ANY($3::bigint[])
+          GROUP BY lp.match_lineup_id
+       ),
+       candidates AS (
+         SELECT match_id
+           FROM (
+             SELECT m.id AS match_id, l.n
+               FROM lineups l JOIN public.matches m ON m.lineup_1_id = l.id
+             UNION ALL
+             SELECT m.id, l.n
+               FROM lineups l JOIN public.matches m ON m.lineup_2_id = l.id
+           ) per_lineup
+          GROUP BY match_id
+         HAVING sum(n) >= $4
+       )
+       SELECT mm.match_id
+         FROM candidates c
+         JOIN public.match_maps mm ON mm.match_id = c.match_id
+         JOIN public.maps m ON m.id = mm.map_id
+        WHERE m.name = $1
+          AND (SELECT string_agg(r.winning_side::text, ',' ORDER BY r.round)
+                 FROM public.match_map_rounds r
+                WHERE r.match_map_id = mm.id) = $2
+        LIMIT 1`,
+      [
+        parsed.map_name,
+        winners.join(","),
+        steamIds,
+        Math.ceil(steamIds.length * 0.8),
+      ],
+    );
+    return rows.at(0)?.match_id ?? null;
+  }
+
+  // Round winners in order ("CT"/"TERRORIST"); [] when a played round has no
+  // known winner, since a gap would make the sequence unreliable to compare.
+  static roundWinnerSequence(parsed: ParsedDemo): string[] {
+    const rounds = [...(parsed.round_ticks ?? [])].sort(
+      (a, b) => a.round - b.round,
+    );
+    // A round still running when the demo stopped has no winner yet.
+    while (rounds.length > 0 && !rounds[rounds.length - 1].winner) {
+      rounds.pop();
+    }
+    const winners = rounds.map((r) =>
+      /^t/i.test(r.winner ?? "")
+        ? "TERRORIST"
+        : /^c/i.test(r.winner ?? "")
+          ? "CT"
+          : null,
+    );
+    return winners.includes(null) ? [] : (winners as string[]);
   }
 
   private async findExistingByFile(file: string): Promise<string | null> {

@@ -256,3 +256,62 @@ describe("MatchImportService.computeStartingSides", () => {
     expect(sides.get("A")).toBe("T");
   });
 });
+
+describe("MatchImportService duplicate guards", () => {
+  const rounds = (...winners: Array<string | undefined>) => ({
+    round_ticks: winners.map((winner, i) => ({
+      round: i + 1,
+      start_tick: i * 100,
+      end_tick: i * 100 + 99,
+      winner,
+    })),
+  });
+
+  it("builds the round winner sequence in round order", () => {
+    const parsed = rounds("CT", "T", "TERRORIST", "ct");
+    parsed.round_ticks.reverse();
+    expect(MatchImportService.roundWinnerSequence(parsed as never)).toEqual([
+      "CT",
+      "TERRORIST",
+      "TERRORIST",
+      "CT",
+    ]);
+  });
+
+  it("drops a round still running when the demo stopped", () => {
+    expect(
+      MatchImportService.roundWinnerSequence(
+        rounds("CT", "T", undefined) as never,
+      ),
+    ).toEqual(["CT", "TERRORIST"]);
+  });
+
+  it("gives up on the sequence when a played round has no winner", () => {
+    expect(
+      MatchImportService.roundWinnerSequence(
+        rounds("CT", undefined, "T") as never,
+      ),
+    ).toEqual([]);
+  });
+
+  it("never imports a demo recorded on a 5Stack server", async () => {
+    // Rejected before any dependency is touched, so no Nest wiring is needed.
+    const service = Object.create(
+      MatchImportService.prototype,
+    ) as MatchImportService;
+    await expect(
+      service.importExternalDemo(
+        {
+          server_name: "5Stack.gg",
+          players: [{ steam_id: "76561198000000001", name: "a" }],
+          ...rounds("CT"),
+        } as never,
+        "valve",
+        "upload",
+      ),
+    ).resolves.toEqual({
+      matchId: null,
+      skipped: "recorded on a 5Stack server",
+    });
+  });
+});
