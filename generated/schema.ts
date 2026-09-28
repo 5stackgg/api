@@ -933,6 +933,11 @@ export interface TelemetryVersionCount {
     __typename: 'TelemetryVersionCount'
 }
 
+export interface TestDownloadResponse {
+    error: (Scalars['String'] | null)
+    __typename: 'TestDownloadResponse'
+}
+
 export interface TestUploadResponse {
     error: (Scalars['String'] | null)
     __typename: 'TestUploadResponse'
@@ -2008,6 +2013,183 @@ export interface awards_variance_fields {
     created_by_steam_id: (Scalars['Float'] | null)
     silhouette: (Scalars['Float'] | null)
     __typename: 'awards_variance_fields'
+}
+
+
+/** columns and relationships of "broadcast_huds" */
+export interface broadcast_huds {
+    author: (Scalars['String'] | null)
+    created_at: Scalars['timestamptz']
+    description: (Scalars['String'] | null)
+    enabled: Scalars['Boolean']
+    hud_json: (Scalars['jsonb'] | null)
+    id: Scalars['uuid']
+    is_signed: Scalars['Boolean']
+    jthud_id: Scalars['String']
+    name: Scalars['String']
+    size_bytes: (Scalars['bigint'] | null)
+    slug: Scalars['String']
+    source: Scalars['String']
+    storage_key: (Scalars['String'] | null)
+    thumbnail: (Scalars['String'] | null)
+    updated_at: Scalars['timestamptz']
+    uploaded_by_steam_id: (Scalars['bigint'] | null)
+    variant: (Scalars['String'] | null)
+    version: (Scalars['String'] | null)
+    __typename: 'broadcast_huds'
+}
+
+
+/** aggregated selection of "broadcast_huds" */
+export interface broadcast_huds_aggregate {
+    aggregate: (broadcast_huds_aggregate_fields | null)
+    nodes: broadcast_huds[]
+    __typename: 'broadcast_huds_aggregate'
+}
+
+
+/** aggregate fields of "broadcast_huds" */
+export interface broadcast_huds_aggregate_fields {
+    avg: (broadcast_huds_avg_fields | null)
+    count: Scalars['Int']
+    max: (broadcast_huds_max_fields | null)
+    min: (broadcast_huds_min_fields | null)
+    stddev: (broadcast_huds_stddev_fields | null)
+    stddev_pop: (broadcast_huds_stddev_pop_fields | null)
+    stddev_samp: (broadcast_huds_stddev_samp_fields | null)
+    sum: (broadcast_huds_sum_fields | null)
+    var_pop: (broadcast_huds_var_pop_fields | null)
+    var_samp: (broadcast_huds_var_samp_fields | null)
+    variance: (broadcast_huds_variance_fields | null)
+    __typename: 'broadcast_huds_aggregate_fields'
+}
+
+
+/** aggregate avg on columns */
+export interface broadcast_huds_avg_fields {
+    size_bytes: (Scalars['Float'] | null)
+    uploaded_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'broadcast_huds_avg_fields'
+}
+
+
+/** unique or primary key constraints on table "broadcast_huds" */
+export type broadcast_huds_constraint = 'broadcast_huds_pkey' | 'broadcast_huds_slug_key'
+
+
+/** aggregate max on columns */
+export interface broadcast_huds_max_fields {
+    author: (Scalars['String'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    description: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    jthud_id: (Scalars['String'] | null)
+    name: (Scalars['String'] | null)
+    size_bytes: (Scalars['bigint'] | null)
+    slug: (Scalars['String'] | null)
+    source: (Scalars['String'] | null)
+    storage_key: (Scalars['String'] | null)
+    thumbnail: (Scalars['String'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    uploaded_by_steam_id: (Scalars['bigint'] | null)
+    variant: (Scalars['String'] | null)
+    version: (Scalars['String'] | null)
+    __typename: 'broadcast_huds_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface broadcast_huds_min_fields {
+    author: (Scalars['String'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    description: (Scalars['String'] | null)
+    id: (Scalars['uuid'] | null)
+    jthud_id: (Scalars['String'] | null)
+    name: (Scalars['String'] | null)
+    size_bytes: (Scalars['bigint'] | null)
+    slug: (Scalars['String'] | null)
+    source: (Scalars['String'] | null)
+    storage_key: (Scalars['String'] | null)
+    thumbnail: (Scalars['String'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    uploaded_by_steam_id: (Scalars['bigint'] | null)
+    variant: (Scalars['String'] | null)
+    version: (Scalars['String'] | null)
+    __typename: 'broadcast_huds_min_fields'
+}
+
+
+/** response of any mutation on the table "broadcast_huds" */
+export interface broadcast_huds_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: broadcast_huds[]
+    __typename: 'broadcast_huds_mutation_response'
+}
+
+
+/** select columns of table "broadcast_huds" */
+export type broadcast_huds_select_column = 'author' | 'created_at' | 'description' | 'enabled' | 'hud_json' | 'id' | 'is_signed' | 'jthud_id' | 'name' | 'size_bytes' | 'slug' | 'source' | 'storage_key' | 'thumbnail' | 'updated_at' | 'uploaded_by_steam_id' | 'variant' | 'version'
+
+
+/** aggregate stddev on columns */
+export interface broadcast_huds_stddev_fields {
+    size_bytes: (Scalars['Float'] | null)
+    uploaded_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'broadcast_huds_stddev_fields'
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface broadcast_huds_stddev_pop_fields {
+    size_bytes: (Scalars['Float'] | null)
+    uploaded_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'broadcast_huds_stddev_pop_fields'
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface broadcast_huds_stddev_samp_fields {
+    size_bytes: (Scalars['Float'] | null)
+    uploaded_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'broadcast_huds_stddev_samp_fields'
+}
+
+
+/** aggregate sum on columns */
+export interface broadcast_huds_sum_fields {
+    size_bytes: (Scalars['bigint'] | null)
+    uploaded_by_steam_id: (Scalars['bigint'] | null)
+    __typename: 'broadcast_huds_sum_fields'
+}
+
+
+/** update columns of table "broadcast_huds" */
+export type broadcast_huds_update_column = 'author' | 'created_at' | 'description' | 'enabled' | 'hud_json' | 'id' | 'is_signed' | 'jthud_id' | 'name' | 'size_bytes' | 'slug' | 'source' | 'storage_key' | 'thumbnail' | 'updated_at' | 'uploaded_by_steam_id' | 'variant' | 'version'
+
+
+/** aggregate var_pop on columns */
+export interface broadcast_huds_var_pop_fields {
+    size_bytes: (Scalars['Float'] | null)
+    uploaded_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'broadcast_huds_var_pop_fields'
+}
+
+
+/** aggregate var_samp on columns */
+export interface broadcast_huds_var_samp_fields {
+    size_bytes: (Scalars['Float'] | null)
+    uploaded_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'broadcast_huds_var_samp_fields'
+}
+
+
+/** aggregate variance on columns */
+export interface broadcast_huds_variance_fields {
+    size_bytes: (Scalars['Float'] | null)
+    uploaded_by_steam_id: (Scalars['Float'] | null)
+    __typename: 'broadcast_huds_variance_fields'
 }
 
 
@@ -12052,6 +12234,90 @@ export interface lobby_players_variance_fields {
 }
 
 
+/** columns and relationships of "map_asset_builds" */
+export interface map_asset_builds {
+    build_id: Scalars['String']
+    created_at: Scalars['timestamptz']
+    error: (Scalars['String'] | null)
+    failed: (Scalars['jsonb'] | null)
+    failed_view: (Scalars['jsonb'] | null)
+    finished_at: (Scalars['timestamptz'] | null)
+    manifest: (Scalars['String'] | null)
+    maps: (Scalars['jsonb'] | null)
+    started_at: (Scalars['timestamptz'] | null)
+    status: Scalars['String']
+    updated_at: Scalars['timestamptz']
+    __typename: 'map_asset_builds'
+}
+
+
+/** aggregated selection of "map_asset_builds" */
+export interface map_asset_builds_aggregate {
+    aggregate: (map_asset_builds_aggregate_fields | null)
+    nodes: map_asset_builds[]
+    __typename: 'map_asset_builds_aggregate'
+}
+
+
+/** aggregate fields of "map_asset_builds" */
+export interface map_asset_builds_aggregate_fields {
+    count: Scalars['Int']
+    max: (map_asset_builds_max_fields | null)
+    min: (map_asset_builds_min_fields | null)
+    __typename: 'map_asset_builds_aggregate_fields'
+}
+
+
+/** unique or primary key constraints on table "map_asset_builds" */
+export type map_asset_builds_constraint = 'map_asset_builds_pkey'
+
+
+/** aggregate max on columns */
+export interface map_asset_builds_max_fields {
+    build_id: (Scalars['String'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    error: (Scalars['String'] | null)
+    finished_at: (Scalars['timestamptz'] | null)
+    manifest: (Scalars['String'] | null)
+    started_at: (Scalars['timestamptz'] | null)
+    status: (Scalars['String'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'map_asset_builds_max_fields'
+}
+
+
+/** aggregate min on columns */
+export interface map_asset_builds_min_fields {
+    build_id: (Scalars['String'] | null)
+    created_at: (Scalars['timestamptz'] | null)
+    error: (Scalars['String'] | null)
+    finished_at: (Scalars['timestamptz'] | null)
+    manifest: (Scalars['String'] | null)
+    started_at: (Scalars['timestamptz'] | null)
+    status: (Scalars['String'] | null)
+    updated_at: (Scalars['timestamptz'] | null)
+    __typename: 'map_asset_builds_min_fields'
+}
+
+
+/** response of any mutation on the table "map_asset_builds" */
+export interface map_asset_builds_mutation_response {
+    /** number of rows affected by the mutation */
+    affected_rows: Scalars['Int']
+    /** data from the rows affected by the mutation */
+    returning: map_asset_builds[]
+    __typename: 'map_asset_builds_mutation_response'
+}
+
+
+/** select columns of table "map_asset_builds" */
+export type map_asset_builds_select_column = 'build_id' | 'created_at' | 'error' | 'failed' | 'failed_view' | 'finished_at' | 'manifest' | 'maps' | 'started_at' | 'status' | 'updated_at'
+
+
+/** update columns of table "map_asset_builds" */
+export type map_asset_builds_update_column = 'build_id' | 'created_at' | 'error' | 'failed' | 'failed_view' | 'finished_at' | 'manifest' | 'maps' | 'started_at' | 'status' | 'updated_at'
+
+
 /** columns and relationships of "map_callouts" */
 export interface map_callouts {
     boxes: Scalars['jsonb']
@@ -15024,6 +15290,8 @@ export interface mutation_root {
     backfillUtilityLaunchSeeds: (UtilityLaunchSeedBackfillOutput | null)
     /** Launch a Vulkan shader pre-bake Job on a GPU node */
     bakeShaders: (SuccessOutput | null)
+    /** Build and publish map assets from a node's CS2 install (5stack.gg only) */
+    buildMapAssets: (SuccessOutput | null)
     /** callForOrganizer */
     callForOrganizer: (SuccessOutput | null)
     /** Request cancellation of the in-progress season ELO backfill (admin only). Stops after the current match. */
@@ -15115,6 +15383,10 @@ export interface mutation_root {
     delete_awards: (awards_mutation_response | null)
     /** delete single row from the table: "awards" */
     delete_awards_by_pk: (awards | null)
+    /** delete data from the table: "broadcast_huds" */
+    delete_broadcast_huds: (broadcast_huds_mutation_response | null)
+    /** delete single row from the table: "broadcast_huds" */
+    delete_broadcast_huds_by_pk: (broadcast_huds | null)
     /** delete data from the table: "chat_read_state" */
     delete_chat_read_state: (chat_read_state_mutation_response | null)
     /** delete single row from the table: "chat_read_state" */
@@ -15505,6 +15777,10 @@ export interface mutation_root {
     delete_lobby_players: (lobby_players_mutation_response | null)
     /** delete single row from the table: "lobby_players" */
     delete_lobby_players_by_pk: (lobby_players | null)
+    /** delete data from the table: "map_asset_builds" */
+    delete_map_asset_builds: (map_asset_builds_mutation_response | null)
+    /** delete single row from the table: "map_asset_builds" */
+    delete_map_asset_builds_by_pk: (map_asset_builds | null)
     /** delete data from the table: "map_callouts" */
     delete_map_callouts: (map_callouts_mutation_response | null)
     /** delete single row from the table: "map_callouts" */
@@ -15941,6 +16217,10 @@ export interface mutation_root {
     insert_awards: (awards_mutation_response | null)
     /** insert a single row into the table: "awards" */
     insert_awards_one: (awards | null)
+    /** insert data into the table: "broadcast_huds" */
+    insert_broadcast_huds: (broadcast_huds_mutation_response | null)
+    /** insert a single row into the table: "broadcast_huds" */
+    insert_broadcast_huds_one: (broadcast_huds | null)
     /** insert data into the table: "chat_read_state" */
     insert_chat_read_state: (chat_read_state_mutation_response | null)
     /** insert a single row into the table: "chat_read_state" */
@@ -16333,6 +16613,10 @@ export interface mutation_root {
     insert_lobby_players: (lobby_players_mutation_response | null)
     /** insert a single row into the table: "lobby_players" */
     insert_lobby_players_one: (lobby_players | null)
+    /** insert data into the table: "map_asset_builds" */
+    insert_map_asset_builds: (map_asset_builds_mutation_response | null)
+    /** insert a single row into the table: "map_asset_builds" */
+    insert_map_asset_builds_one: (map_asset_builds | null)
     /** insert data into the table: "map_callouts" */
     insert_map_callouts: (map_callouts_mutation_response | null)
     /** insert a single row into the table: "map_callouts" */
@@ -16926,6 +17210,7 @@ export interface mutation_root {
     /** Pull the game plugin registry into this panel's catalog */
     syncPluginRegistry: (SyncPluginRegistryOutput | null)
     syncSteamFriends: (SuccessOutput | null)
+    testDownload: (TestDownloadResponse | null)
     /** Test FACEIT Data + Downloads API connectivity for the current admin */
     testFaceitIntegration: (FaceitTestOutput | null)
     testUpload: (TestUploadResponse | null)
@@ -16970,6 +17255,12 @@ export interface mutation_root {
     update_awards_by_pk: (awards | null)
     /** update multiples rows of table: "awards" */
     update_awards_many: ((awards_mutation_response | null)[] | null)
+    /** update data of the table: "broadcast_huds" */
+    update_broadcast_huds: (broadcast_huds_mutation_response | null)
+    /** update single row of the table: "broadcast_huds" */
+    update_broadcast_huds_by_pk: (broadcast_huds | null)
+    /** update multiples rows of table: "broadcast_huds" */
+    update_broadcast_huds_many: ((broadcast_huds_mutation_response | null)[] | null)
     /** update data of the table: "chat_read_state" */
     update_chat_read_state: (chat_read_state_mutation_response | null)
     /** update single row of the table: "chat_read_state" */
@@ -17556,6 +17847,12 @@ export interface mutation_root {
     update_lobby_players_by_pk: (lobby_players | null)
     /** update multiples rows of table: "lobby_players" */
     update_lobby_players_many: ((lobby_players_mutation_response | null)[] | null)
+    /** update data of the table: "map_asset_builds" */
+    update_map_asset_builds: (map_asset_builds_mutation_response | null)
+    /** update single row of the table: "map_asset_builds" */
+    update_map_asset_builds_by_pk: (map_asset_builds | null)
+    /** update multiples rows of table: "map_asset_builds" */
+    update_map_asset_builds_many: ((map_asset_builds_mutation_response | null)[] | null)
     /** update data of the table: "map_callouts" */
     update_map_callouts: (map_callouts_mutation_response | null)
     /** update single row of the table: "map_callouts" */
@@ -26684,6 +26981,12 @@ export interface query_root {
     awards_aggregate: awards_aggregate
     /** fetch data from the table: "awards" using primary key columns */
     awards_by_pk: (awards | null)
+    /** fetch data from the table: "broadcast_huds" */
+    broadcast_huds: broadcast_huds[]
+    /** fetch aggregated fields from the table: "broadcast_huds" */
+    broadcast_huds_aggregate: broadcast_huds_aggregate
+    /** fetch data from the table: "broadcast_huds" using primary key columns */
+    broadcast_huds_by_pk: (broadcast_huds | null)
     /** fetch data from the table: "chat_read_state" */
     chat_read_state: chat_read_state[]
     /** fetch aggregated fields from the table: "chat_read_state" */
@@ -27333,6 +27636,12 @@ export interface query_root {
     lobby_players_aggregate: lobby_players_aggregate
     /** fetch data from the table: "lobby_players" using primary key columns */
     lobby_players_by_pk: (lobby_players | null)
+    /** fetch data from the table: "map_asset_builds" */
+    map_asset_builds: map_asset_builds[]
+    /** fetch aggregated fields from the table: "map_asset_builds" */
+    map_asset_builds_aggregate: map_asset_builds_aggregate
+    /** fetch data from the table: "map_asset_builds" using primary key columns */
+    map_asset_builds_by_pk: (map_asset_builds | null)
     /** fetch data from the table: "map_callouts" */
     map_callouts: map_callouts[]
     /** fetch aggregated fields from the table: "map_callouts" */
@@ -29075,6 +29384,14 @@ export interface subscription_root {
     awards_by_pk: (awards | null)
     /** fetch data from the table in a streaming manner: "awards" */
     awards_stream: awards[]
+    /** fetch data from the table: "broadcast_huds" */
+    broadcast_huds: broadcast_huds[]
+    /** fetch aggregated fields from the table: "broadcast_huds" */
+    broadcast_huds_aggregate: broadcast_huds_aggregate
+    /** fetch data from the table: "broadcast_huds" using primary key columns */
+    broadcast_huds_by_pk: (broadcast_huds | null)
+    /** fetch data from the table in a streaming manner: "broadcast_huds" */
+    broadcast_huds_stream: broadcast_huds[]
     /** fetch data from the table: "chat_read_state" */
     chat_read_state: chat_read_state[]
     /** fetch aggregated fields from the table: "chat_read_state" */
@@ -29877,6 +30194,14 @@ export interface subscription_root {
     lobby_players_by_pk: (lobby_players | null)
     /** fetch data from the table in a streaming manner: "lobby_players" */
     lobby_players_stream: lobby_players[]
+    /** fetch data from the table: "map_asset_builds" */
+    map_asset_builds: map_asset_builds[]
+    /** fetch aggregated fields from the table: "map_asset_builds" */
+    map_asset_builds_aggregate: map_asset_builds_aggregate
+    /** fetch data from the table: "map_asset_builds" using primary key columns */
+    map_asset_builds_by_pk: (map_asset_builds | null)
+    /** fetch data from the table in a streaming manner: "map_asset_builds" */
+    map_asset_builds_stream: map_asset_builds[]
     /** fetch data from the table: "map_callouts" */
     map_callouts: map_callouts[]
     /** fetch aggregated fields from the table: "map_callouts" */
@@ -36653,6 +36978,7 @@ export interface utility_drift_results_variance_fields {
 /** columns and relationships of "utility_drift_scans" */
 export interface utility_drift_scans {
     broken: Scalars['Int']
+    caveats: (Scalars['jsonb'] | null)
     created_at: Scalars['timestamptz']
     failure_reason: (Scalars['String'] | null)
     finished_at: (Scalars['timestamptz'] | null)
@@ -36782,7 +37108,7 @@ export interface utility_drift_scans_mutation_response {
 
 
 /** select columns of table "utility_drift_scans" */
-export type utility_drift_scans_select_column = 'broken' | 'created_at' | 'failure_reason' | 'finished_at' | 'from_revision' | 'id' | 'lineups' | 'map_name' | 'max_distance' | 'moved' | 'requested_by_steam_id' | 'scanned' | 'started_at' | 'status' | 'to_revision' | 'unchanged' | 'unsimulatable' | 'updated_at'
+export type utility_drift_scans_select_column = 'broken' | 'caveats' | 'created_at' | 'failure_reason' | 'finished_at' | 'from_revision' | 'id' | 'lineups' | 'map_name' | 'max_distance' | 'moved' | 'requested_by_steam_id' | 'scanned' | 'started_at' | 'status' | 'to_revision' | 'unchanged' | 'unsimulatable' | 'updated_at'
 
 
 /** aggregate stddev on columns */
@@ -36842,7 +37168,7 @@ export interface utility_drift_scans_sum_fields {
 
 
 /** update columns of table "utility_drift_scans" */
-export type utility_drift_scans_update_column = 'broken' | 'created_at' | 'failure_reason' | 'finished_at' | 'from_revision' | 'id' | 'lineups' | 'map_name' | 'max_distance' | 'moved' | 'requested_by_steam_id' | 'scanned' | 'started_at' | 'status' | 'to_revision' | 'unchanged' | 'unsimulatable' | 'updated_at'
+export type utility_drift_scans_update_column = 'broken' | 'caveats' | 'created_at' | 'failure_reason' | 'finished_at' | 'from_revision' | 'id' | 'lineups' | 'map_name' | 'max_distance' | 'moved' | 'requested_by_steam_id' | 'scanned' | 'started_at' | 'status' | 'to_revision' | 'unchanged' | 'unsimulatable' | 'updated_at'
 
 
 /** aggregate var_pop on columns */
@@ -46654,6 +46980,12 @@ export interface TelemetryVersionCountGenqlSelection{
     __scalar?: boolean | number
 }
 
+export interface TestDownloadResponseGenqlSelection{
+    error?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
 export interface TestUploadResponseGenqlSelection{
     error?: boolean | number
     __typename?: boolean | number
@@ -48184,6 +48516,265 @@ _contains?: (Scalars['bigint'][] | null),_eq?: (Scalars['bigint'][] | null),_gt?
 
 /** Boolean expression to compare columns of type "bigint". All fields are combined with logical 'AND'. */
 export interface bigint_comparison_exp {_eq?: (Scalars['bigint'] | null),_gt?: (Scalars['bigint'] | null),_gte?: (Scalars['bigint'] | null),_in?: (Scalars['bigint'][] | null),_is_null?: (Scalars['Boolean'] | null),_lt?: (Scalars['bigint'] | null),_lte?: (Scalars['bigint'] | null),_neq?: (Scalars['bigint'] | null),_nin?: (Scalars['bigint'][] | null)}
+
+
+/** columns and relationships of "broadcast_huds" */
+export interface broadcast_hudsGenqlSelection{
+    author?: boolean | number
+    created_at?: boolean | number
+    description?: boolean | number
+    enabled?: boolean | number
+    hud_json?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    id?: boolean | number
+    is_signed?: boolean | number
+    jthud_id?: boolean | number
+    name?: boolean | number
+    size_bytes?: boolean | number
+    slug?: boolean | number
+    source?: boolean | number
+    storage_key?: boolean | number
+    thumbnail?: boolean | number
+    updated_at?: boolean | number
+    uploaded_by_steam_id?: boolean | number
+    variant?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "broadcast_huds" */
+export interface broadcast_huds_aggregateGenqlSelection{
+    aggregate?: broadcast_huds_aggregate_fieldsGenqlSelection
+    nodes?: broadcast_hudsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "broadcast_huds" */
+export interface broadcast_huds_aggregate_fieldsGenqlSelection{
+    avg?: broadcast_huds_avg_fieldsGenqlSelection
+    count?: { __args: {columns?: (broadcast_huds_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: broadcast_huds_max_fieldsGenqlSelection
+    min?: broadcast_huds_min_fieldsGenqlSelection
+    stddev?: broadcast_huds_stddev_fieldsGenqlSelection
+    stddev_pop?: broadcast_huds_stddev_pop_fieldsGenqlSelection
+    stddev_samp?: broadcast_huds_stddev_samp_fieldsGenqlSelection
+    sum?: broadcast_huds_sum_fieldsGenqlSelection
+    var_pop?: broadcast_huds_var_pop_fieldsGenqlSelection
+    var_samp?: broadcast_huds_var_samp_fieldsGenqlSelection
+    variance?: broadcast_huds_variance_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** append existing jsonb value of filtered columns with new jsonb value */
+export interface broadcast_huds_append_input {hud_json?: (Scalars['jsonb'] | null)}
+
+
+/** aggregate avg on columns */
+export interface broadcast_huds_avg_fieldsGenqlSelection{
+    size_bytes?: boolean | number
+    uploaded_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Boolean expression to filter rows from the table "broadcast_huds". All fields are combined with a logical 'AND'. */
+export interface broadcast_huds_bool_exp {_and?: (broadcast_huds_bool_exp[] | null),_not?: (broadcast_huds_bool_exp | null),_or?: (broadcast_huds_bool_exp[] | null),author?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),description?: (String_comparison_exp | null),enabled?: (Boolean_comparison_exp | null),hud_json?: (jsonb_comparison_exp | null),id?: (uuid_comparison_exp | null),is_signed?: (Boolean_comparison_exp | null),jthud_id?: (String_comparison_exp | null),name?: (String_comparison_exp | null),size_bytes?: (bigint_comparison_exp | null),slug?: (String_comparison_exp | null),source?: (String_comparison_exp | null),storage_key?: (String_comparison_exp | null),thumbnail?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null),uploaded_by_steam_id?: (bigint_comparison_exp | null),variant?: (String_comparison_exp | null),version?: (String_comparison_exp | null)}
+
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export interface broadcast_huds_delete_at_path_input {hud_json?: (Scalars['String'][] | null)}
+
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export interface broadcast_huds_delete_elem_input {hud_json?: (Scalars['Int'] | null)}
+
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export interface broadcast_huds_delete_key_input {hud_json?: (Scalars['String'] | null)}
+
+
+/** input type for incrementing numeric columns in table "broadcast_huds" */
+export interface broadcast_huds_inc_input {size_bytes?: (Scalars['bigint'] | null),uploaded_by_steam_id?: (Scalars['bigint'] | null)}
+
+
+/** input type for inserting data into table "broadcast_huds" */
+export interface broadcast_huds_insert_input {author?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),hud_json?: (Scalars['jsonb'] | null),id?: (Scalars['uuid'] | null),is_signed?: (Scalars['Boolean'] | null),jthud_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),size_bytes?: (Scalars['bigint'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),storage_key?: (Scalars['String'] | null),thumbnail?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),uploaded_by_steam_id?: (Scalars['bigint'] | null),variant?: (Scalars['String'] | null),version?: (Scalars['String'] | null)}
+
+
+/** aggregate max on columns */
+export interface broadcast_huds_max_fieldsGenqlSelection{
+    author?: boolean | number
+    created_at?: boolean | number
+    description?: boolean | number
+    id?: boolean | number
+    jthud_id?: boolean | number
+    name?: boolean | number
+    size_bytes?: boolean | number
+    slug?: boolean | number
+    source?: boolean | number
+    storage_key?: boolean | number
+    thumbnail?: boolean | number
+    updated_at?: boolean | number
+    uploaded_by_steam_id?: boolean | number
+    variant?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface broadcast_huds_min_fieldsGenqlSelection{
+    author?: boolean | number
+    created_at?: boolean | number
+    description?: boolean | number
+    id?: boolean | number
+    jthud_id?: boolean | number
+    name?: boolean | number
+    size_bytes?: boolean | number
+    slug?: boolean | number
+    source?: boolean | number
+    storage_key?: boolean | number
+    thumbnail?: boolean | number
+    updated_at?: boolean | number
+    uploaded_by_steam_id?: boolean | number
+    variant?: boolean | number
+    version?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "broadcast_huds" */
+export interface broadcast_huds_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: broadcast_hudsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "broadcast_huds" */
+export interface broadcast_huds_on_conflict {constraint: broadcast_huds_constraint,update_columns?: broadcast_huds_update_column[],where?: (broadcast_huds_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "broadcast_huds". */
+export interface broadcast_huds_order_by {author?: (order_by | null),created_at?: (order_by | null),description?: (order_by | null),enabled?: (order_by | null),hud_json?: (order_by | null),id?: (order_by | null),is_signed?: (order_by | null),jthud_id?: (order_by | null),name?: (order_by | null),size_bytes?: (order_by | null),slug?: (order_by | null),source?: (order_by | null),storage_key?: (order_by | null),thumbnail?: (order_by | null),updated_at?: (order_by | null),uploaded_by_steam_id?: (order_by | null),variant?: (order_by | null),version?: (order_by | null)}
+
+
+/** primary key columns input for table: broadcast_huds */
+export interface broadcast_huds_pk_columns_input {id: Scalars['uuid']}
+
+
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export interface broadcast_huds_prepend_input {hud_json?: (Scalars['jsonb'] | null)}
+
+
+/** input type for updating data in table "broadcast_huds" */
+export interface broadcast_huds_set_input {author?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),hud_json?: (Scalars['jsonb'] | null),id?: (Scalars['uuid'] | null),is_signed?: (Scalars['Boolean'] | null),jthud_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),size_bytes?: (Scalars['bigint'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),storage_key?: (Scalars['String'] | null),thumbnail?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),uploaded_by_steam_id?: (Scalars['bigint'] | null),variant?: (Scalars['String'] | null),version?: (Scalars['String'] | null)}
+
+
+/** aggregate stddev on columns */
+export interface broadcast_huds_stddev_fieldsGenqlSelection{
+    size_bytes?: boolean | number
+    uploaded_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_pop on columns */
+export interface broadcast_huds_stddev_pop_fieldsGenqlSelection{
+    size_bytes?: boolean | number
+    uploaded_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate stddev_samp on columns */
+export interface broadcast_huds_stddev_samp_fieldsGenqlSelection{
+    size_bytes?: boolean | number
+    uploaded_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** Streaming cursor of the table "broadcast_huds" */
+export interface broadcast_huds_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: broadcast_huds_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface broadcast_huds_stream_cursor_value_input {author?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),description?: (Scalars['String'] | null),enabled?: (Scalars['Boolean'] | null),hud_json?: (Scalars['jsonb'] | null),id?: (Scalars['uuid'] | null),is_signed?: (Scalars['Boolean'] | null),jthud_id?: (Scalars['String'] | null),name?: (Scalars['String'] | null),size_bytes?: (Scalars['bigint'] | null),slug?: (Scalars['String'] | null),source?: (Scalars['String'] | null),storage_key?: (Scalars['String'] | null),thumbnail?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null),uploaded_by_steam_id?: (Scalars['bigint'] | null),variant?: (Scalars['String'] | null),version?: (Scalars['String'] | null)}
+
+
+/** aggregate sum on columns */
+export interface broadcast_huds_sum_fieldsGenqlSelection{
+    size_bytes?: boolean | number
+    uploaded_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+export interface broadcast_huds_updates {
+/** append existing jsonb value of filtered columns with new jsonb value */
+_append?: (broadcast_huds_append_input | null),
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+_delete_at_path?: (broadcast_huds_delete_at_path_input | null),
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+_delete_elem?: (broadcast_huds_delete_elem_input | null),
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+_delete_key?: (broadcast_huds_delete_key_input | null),
+/** increments the numeric columns with given value of the filtered values */
+_inc?: (broadcast_huds_inc_input | null),
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+_prepend?: (broadcast_huds_prepend_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (broadcast_huds_set_input | null),
+/** filter the rows which have to be updated */
+where: broadcast_huds_bool_exp}
+
+
+/** aggregate var_pop on columns */
+export interface broadcast_huds_var_pop_fieldsGenqlSelection{
+    size_bytes?: boolean | number
+    uploaded_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate var_samp on columns */
+export interface broadcast_huds_var_samp_fieldsGenqlSelection{
+    size_bytes?: boolean | number
+    uploaded_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate variance on columns */
+export interface broadcast_huds_variance_fieldsGenqlSelection{
+    size_bytes?: boolean | number
+    uploaded_by_steam_id?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
 
 
 /** Boolean expression to compare columns of type "bytea". All fields are combined with logical 'AND'. */
@@ -65047,6 +65638,162 @@ export interface lobby_players_variance_fieldsGenqlSelection{
 export interface lobby_players_variance_order_by {invited_by_steam_id?: (order_by | null),steam_id?: (order_by | null)}
 
 
+/** columns and relationships of "map_asset_builds" */
+export interface map_asset_buildsGenqlSelection{
+    build_id?: boolean | number
+    created_at?: boolean | number
+    error?: boolean | number
+    failed?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    failed_view?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    finished_at?: boolean | number
+    manifest?: boolean | number
+    maps?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
+    started_at?: boolean | number
+    status?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregated selection of "map_asset_builds" */
+export interface map_asset_builds_aggregateGenqlSelection{
+    aggregate?: map_asset_builds_aggregate_fieldsGenqlSelection
+    nodes?: map_asset_buildsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate fields of "map_asset_builds" */
+export interface map_asset_builds_aggregate_fieldsGenqlSelection{
+    count?: { __args: {columns?: (map_asset_builds_select_column[] | null), distinct?: (Scalars['Boolean'] | null)} } | boolean | number
+    max?: map_asset_builds_max_fieldsGenqlSelection
+    min?: map_asset_builds_min_fieldsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** append existing jsonb value of filtered columns with new jsonb value */
+export interface map_asset_builds_append_input {failed?: (Scalars['jsonb'] | null),failed_view?: (Scalars['jsonb'] | null),maps?: (Scalars['jsonb'] | null)}
+
+
+/** Boolean expression to filter rows from the table "map_asset_builds". All fields are combined with a logical 'AND'. */
+export interface map_asset_builds_bool_exp {_and?: (map_asset_builds_bool_exp[] | null),_not?: (map_asset_builds_bool_exp | null),_or?: (map_asset_builds_bool_exp[] | null),build_id?: (String_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),error?: (String_comparison_exp | null),failed?: (jsonb_comparison_exp | null),failed_view?: (jsonb_comparison_exp | null),finished_at?: (timestamptz_comparison_exp | null),manifest?: (String_comparison_exp | null),maps?: (jsonb_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (String_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export interface map_asset_builds_delete_at_path_input {failed?: (Scalars['String'][] | null),failed_view?: (Scalars['String'][] | null),maps?: (Scalars['String'][] | null)}
+
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export interface map_asset_builds_delete_elem_input {failed?: (Scalars['Int'] | null),failed_view?: (Scalars['Int'] | null),maps?: (Scalars['Int'] | null)}
+
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export interface map_asset_builds_delete_key_input {failed?: (Scalars['String'] | null),failed_view?: (Scalars['String'] | null),maps?: (Scalars['String'] | null)}
+
+
+/** input type for inserting data into table "map_asset_builds" */
+export interface map_asset_builds_insert_input {build_id?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),error?: (Scalars['String'] | null),failed?: (Scalars['jsonb'] | null),failed_view?: (Scalars['jsonb'] | null),finished_at?: (Scalars['timestamptz'] | null),manifest?: (Scalars['String'] | null),maps?: (Scalars['jsonb'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** aggregate max on columns */
+export interface map_asset_builds_max_fieldsGenqlSelection{
+    build_id?: boolean | number
+    created_at?: boolean | number
+    error?: boolean | number
+    finished_at?: boolean | number
+    manifest?: boolean | number
+    started_at?: boolean | number
+    status?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** aggregate min on columns */
+export interface map_asset_builds_min_fieldsGenqlSelection{
+    build_id?: boolean | number
+    created_at?: boolean | number
+    error?: boolean | number
+    finished_at?: boolean | number
+    manifest?: boolean | number
+    started_at?: boolean | number
+    status?: boolean | number
+    updated_at?: boolean | number
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** response of any mutation on the table "map_asset_builds" */
+export interface map_asset_builds_mutation_responseGenqlSelection{
+    /** number of rows affected by the mutation */
+    affected_rows?: boolean | number
+    /** data from the rows affected by the mutation */
+    returning?: map_asset_buildsGenqlSelection
+    __typename?: boolean | number
+    __scalar?: boolean | number
+}
+
+
+/** on_conflict condition type for table "map_asset_builds" */
+export interface map_asset_builds_on_conflict {constraint: map_asset_builds_constraint,update_columns?: map_asset_builds_update_column[],where?: (map_asset_builds_bool_exp | null)}
+
+
+/** Ordering options when selecting data from "map_asset_builds". */
+export interface map_asset_builds_order_by {build_id?: (order_by | null),created_at?: (order_by | null),error?: (order_by | null),failed?: (order_by | null),failed_view?: (order_by | null),finished_at?: (order_by | null),manifest?: (order_by | null),maps?: (order_by | null),started_at?: (order_by | null),status?: (order_by | null),updated_at?: (order_by | null)}
+
+
+/** primary key columns input for table: map_asset_builds */
+export interface map_asset_builds_pk_columns_input {build_id: Scalars['String']}
+
+
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export interface map_asset_builds_prepend_input {failed?: (Scalars['jsonb'] | null),failed_view?: (Scalars['jsonb'] | null),maps?: (Scalars['jsonb'] | null)}
+
+
+/** input type for updating data in table "map_asset_builds" */
+export interface map_asset_builds_set_input {build_id?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),error?: (Scalars['String'] | null),failed?: (Scalars['jsonb'] | null),failed_view?: (Scalars['jsonb'] | null),finished_at?: (Scalars['timestamptz'] | null),manifest?: (Scalars['String'] | null),maps?: (Scalars['jsonb'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+
+/** Streaming cursor of the table "map_asset_builds" */
+export interface map_asset_builds_stream_cursor_input {
+/** Stream column input with initial value */
+initial_value: map_asset_builds_stream_cursor_value_input,
+/** cursor ordering */
+ordering?: (cursor_ordering | null)}
+
+
+/** Initial value of the column from where the streaming should start */
+export interface map_asset_builds_stream_cursor_value_input {build_id?: (Scalars['String'] | null),created_at?: (Scalars['timestamptz'] | null),error?: (Scalars['String'] | null),failed?: (Scalars['jsonb'] | null),failed_view?: (Scalars['jsonb'] | null),finished_at?: (Scalars['timestamptz'] | null),manifest?: (Scalars['String'] | null),maps?: (Scalars['jsonb'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+
+export interface map_asset_builds_updates {
+/** append existing jsonb value of filtered columns with new jsonb value */
+_append?: (map_asset_builds_append_input | null),
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+_delete_at_path?: (map_asset_builds_delete_at_path_input | null),
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+_delete_elem?: (map_asset_builds_delete_elem_input | null),
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+_delete_key?: (map_asset_builds_delete_key_input | null),
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+_prepend?: (map_asset_builds_prepend_input | null),
+/** sets the columns of the filtered rows to the given values */
+_set?: (map_asset_builds_set_input | null),
+/** filter the rows which have to be updated */
+where: map_asset_builds_bool_exp}
+
+
 /** columns and relationships of "map_callouts" */
 export interface map_calloutsGenqlSelection{
     boxes?: { __args: {
@@ -70371,6 +71118,8 @@ export interface mutation_rootGenqlSelection{
     backfillUtilityLaunchSeeds?: (UtilityLaunchSeedBackfillOutputGenqlSelection & { __args?: {limit?: (Scalars['Int'] | null)} })
     /** Launch a Vulkan shader pre-bake Job on a GPU node */
     bakeShaders?: (SuccessOutputGenqlSelection & { __args: {game_server_node_id: Scalars['uuid']} })
+    /** Build and publish map assets from a node's CS2 install (5stack.gg only) */
+    buildMapAssets?: (SuccessOutputGenqlSelection & { __args: {game_server_node_id: Scalars['uuid']} })
     /** callForOrganizer */
     callForOrganizer?: (SuccessOutputGenqlSelection & { __args: {match_id: Scalars['String']} })
     /** Request cancellation of the in-progress season ELO backfill (admin only). Stops after the current match. */
@@ -70484,6 +71233,12 @@ export interface mutation_rootGenqlSelection{
     where: awards_bool_exp} })
     /** delete single row from the table: "awards" */
     delete_awards_by_pk?: (awardsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** delete data from the table: "broadcast_huds" */
+    delete_broadcast_huds?: (broadcast_huds_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: broadcast_huds_bool_exp} })
+    /** delete single row from the table: "broadcast_huds" */
+    delete_broadcast_huds_by_pk?: (broadcast_hudsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** delete data from the table: "chat_read_state" */
     delete_chat_read_state?: (chat_read_state_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -71070,6 +71825,12 @@ export interface mutation_rootGenqlSelection{
     where: lobby_players_bool_exp} })
     /** delete single row from the table: "lobby_players" */
     delete_lobby_players_by_pk?: (lobby_playersGenqlSelection & { __args: {lobby_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** delete data from the table: "map_asset_builds" */
+    delete_map_asset_builds?: (map_asset_builds_mutation_responseGenqlSelection & { __args: {
+    /** filter the rows which have to be deleted */
+    where: map_asset_builds_bool_exp} })
+    /** delete single row from the table: "map_asset_builds" */
+    delete_map_asset_builds_by_pk?: (map_asset_buildsGenqlSelection & { __args: {build_id: Scalars['String']} })
     /** delete data from the table: "map_callouts" */
     delete_map_callouts?: (map_callouts_mutation_responseGenqlSelection & { __args: {
     /** filter the rows which have to be deleted */
@@ -71754,6 +72515,18 @@ export interface mutation_rootGenqlSelection{
     object: awards_insert_input, 
     /** upsert condition */
     on_conflict?: (awards_on_conflict | null)} })
+    /** insert data into the table: "broadcast_huds" */
+    insert_broadcast_huds?: (broadcast_huds_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: broadcast_huds_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (broadcast_huds_on_conflict | null)} })
+    /** insert a single row into the table: "broadcast_huds" */
+    insert_broadcast_huds_one?: (broadcast_hudsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: broadcast_huds_insert_input, 
+    /** upsert condition */
+    on_conflict?: (broadcast_huds_on_conflict | null)} })
     /** insert data into the table: "chat_read_state" */
     insert_chat_read_state?: (chat_read_state_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -72926,6 +73699,18 @@ export interface mutation_rootGenqlSelection{
     object: lobby_players_insert_input, 
     /** upsert condition */
     on_conflict?: (lobby_players_on_conflict | null)} })
+    /** insert data into the table: "map_asset_builds" */
+    insert_map_asset_builds?: (map_asset_builds_mutation_responseGenqlSelection & { __args: {
+    /** the rows to be inserted */
+    objects: map_asset_builds_insert_input[], 
+    /** upsert condition */
+    on_conflict?: (map_asset_builds_on_conflict | null)} })
+    /** insert a single row into the table: "map_asset_builds" */
+    insert_map_asset_builds_one?: (map_asset_buildsGenqlSelection & { __args: {
+    /** the row to be inserted */
+    object: map_asset_builds_insert_input, 
+    /** upsert condition */
+    on_conflict?: (map_asset_builds_on_conflict | null)} })
     /** insert data into the table: "map_callouts" */
     insert_map_callouts?: (map_callouts_mutation_responseGenqlSelection & { __args: {
     /** the rows to be inserted */
@@ -74379,6 +75164,7 @@ export interface mutation_rootGenqlSelection{
     /** Pull the game plugin registry into this panel's catalog */
     syncPluginRegistry?: SyncPluginRegistryOutputGenqlSelection
     syncSteamFriends?: SuccessOutputGenqlSelection
+    testDownload?: TestDownloadResponseGenqlSelection
     /** Test FACEIT Data + Downloads API connectivity for the current admin */
     testFaceitIntegration?: FaceitTestOutputGenqlSelection
     testUpload?: TestUploadResponseGenqlSelection
@@ -74479,6 +75265,44 @@ export interface mutation_rootGenqlSelection{
     update_awards_many?: (awards_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: awards_updates[]} })
+    /** update data of the table: "broadcast_huds" */
+    update_broadcast_huds?: (broadcast_huds_mutation_responseGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (broadcast_huds_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (broadcast_huds_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (broadcast_huds_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (broadcast_huds_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (broadcast_huds_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (broadcast_huds_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (broadcast_huds_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: broadcast_huds_bool_exp} })
+    /** update single row of the table: "broadcast_huds" */
+    update_broadcast_huds_by_pk?: (broadcast_hudsGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (broadcast_huds_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (broadcast_huds_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (broadcast_huds_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (broadcast_huds_delete_key_input | null), 
+    /** increments the numeric columns with given value of the filtered values */
+    _inc?: (broadcast_huds_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (broadcast_huds_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (broadcast_huds_set_input | null), pk_columns: broadcast_huds_pk_columns_input} })
+    /** update multiples rows of table: "broadcast_huds" */
+    update_broadcast_huds_many?: (broadcast_huds_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: broadcast_huds_updates[]} })
     /** update data of the table: "chat_read_state" */
     update_chat_read_state?: (chat_read_state_mutation_responseGenqlSelection & { __args: {
     /** increments the numeric columns with given value of the filtered values */
@@ -76129,6 +76953,40 @@ export interface mutation_rootGenqlSelection{
     update_lobby_players_many?: (lobby_players_mutation_responseGenqlSelection & { __args: {
     /** updates to execute, in order */
     updates: lobby_players_updates[]} })
+    /** update data of the table: "map_asset_builds" */
+    update_map_asset_builds?: (map_asset_builds_mutation_responseGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (map_asset_builds_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (map_asset_builds_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (map_asset_builds_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (map_asset_builds_delete_key_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (map_asset_builds_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (map_asset_builds_set_input | null), 
+    /** filter the rows which have to be updated */
+    where: map_asset_builds_bool_exp} })
+    /** update single row of the table: "map_asset_builds" */
+    update_map_asset_builds_by_pk?: (map_asset_buildsGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (map_asset_builds_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (map_asset_builds_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (map_asset_builds_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (map_asset_builds_delete_key_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (map_asset_builds_prepend_input | null), 
+    /** sets the columns of the filtered rows to the given values */
+    _set?: (map_asset_builds_set_input | null), pk_columns: map_asset_builds_pk_columns_input} })
+    /** update multiples rows of table: "map_asset_builds" */
+    update_map_asset_builds_many?: (map_asset_builds_mutation_responseGenqlSelection & { __args: {
+    /** updates to execute, in order */
+    updates: map_asset_builds_updates[]} })
     /** update data of the table: "map_callouts" */
     update_map_callouts?: (map_callouts_mutation_responseGenqlSelection & { __args: {
     /** append existing jsonb value of filtered columns with new jsonb value */
@@ -77783,16 +78641,36 @@ export interface mutation_rootGenqlSelection{
     updates: utility_drift_results_updates[]} })
     /** update data of the table: "utility_drift_scans" */
     update_utility_drift_scans?: (utility_drift_scans_mutation_responseGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (utility_drift_scans_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (utility_drift_scans_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (utility_drift_scans_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (utility_drift_scans_delete_key_input | null), 
     /** increments the numeric columns with given value of the filtered values */
     _inc?: (utility_drift_scans_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (utility_drift_scans_prepend_input | null), 
     /** sets the columns of the filtered rows to the given values */
     _set?: (utility_drift_scans_set_input | null), 
     /** filter the rows which have to be updated */
     where: utility_drift_scans_bool_exp} })
     /** update single row of the table: "utility_drift_scans" */
     update_utility_drift_scans_by_pk?: (utility_drift_scansGenqlSelection & { __args: {
+    /** append existing jsonb value of filtered columns with new jsonb value */
+    _append?: (utility_drift_scans_append_input | null), 
+    /** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+    _delete_at_path?: (utility_drift_scans_delete_at_path_input | null), 
+    /** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+    _delete_elem?: (utility_drift_scans_delete_elem_input | null), 
+    /** delete key/value pair or string element. key/value pairs are matched based on their key value */
+    _delete_key?: (utility_drift_scans_delete_key_input | null), 
     /** increments the numeric columns with given value of the filtered values */
     _inc?: (utility_drift_scans_inc_input | null), 
+    /** prepend existing jsonb value of filtered columns with new jsonb value */
+    _prepend?: (utility_drift_scans_prepend_input | null), 
     /** sets the columns of the filtered rows to the given values */
     _set?: (utility_drift_scans_set_input | null), pk_columns: utility_drift_scans_pk_columns_input} })
     /** update multiples rows of table: "utility_drift_scans" */
@@ -90257,6 +91135,32 @@ export interface query_rootGenqlSelection{
     where?: (awards_bool_exp | null)} })
     /** fetch data from the table: "awards" using primary key columns */
     awards_by_pk?: (awardsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table: "broadcast_huds" */
+    broadcast_huds?: (broadcast_hudsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (broadcast_huds_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (broadcast_huds_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (broadcast_huds_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "broadcast_huds" */
+    broadcast_huds_aggregate?: (broadcast_huds_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (broadcast_huds_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (broadcast_huds_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (broadcast_huds_bool_exp | null)} })
+    /** fetch data from the table: "broadcast_huds" using primary key columns */
+    broadcast_huds_by_pk?: (broadcast_hudsGenqlSelection & { __args: {id: Scalars['uuid']} })
     /** fetch data from the table: "chat_read_state" */
     chat_read_state?: (chat_read_stateGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -92986,6 +93890,32 @@ export interface query_rootGenqlSelection{
     where?: (lobby_players_bool_exp | null)} })
     /** fetch data from the table: "lobby_players" using primary key columns */
     lobby_players_by_pk?: (lobby_playersGenqlSelection & { __args: {lobby_id: Scalars['uuid'], steam_id: Scalars['bigint']} })
+    /** fetch data from the table: "map_asset_builds" */
+    map_asset_builds?: (map_asset_buildsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (map_asset_builds_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (map_asset_builds_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (map_asset_builds_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "map_asset_builds" */
+    map_asset_builds_aggregate?: (map_asset_builds_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (map_asset_builds_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (map_asset_builds_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (map_asset_builds_bool_exp | null)} })
+    /** fetch data from the table: "map_asset_builds" using primary key columns */
+    map_asset_builds_by_pk?: (map_asset_buildsGenqlSelection & { __args: {build_id: Scalars['String']} })
     /** fetch data from the table: "map_callouts" */
     map_callouts?: (map_calloutsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -98141,6 +99071,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (awards_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (awards_bool_exp | null)} })
+    /** fetch data from the table: "broadcast_huds" */
+    broadcast_huds?: (broadcast_hudsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (broadcast_huds_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (broadcast_huds_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (broadcast_huds_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "broadcast_huds" */
+    broadcast_huds_aggregate?: (broadcast_huds_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (broadcast_huds_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (broadcast_huds_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (broadcast_huds_bool_exp | null)} })
+    /** fetch data from the table: "broadcast_huds" using primary key columns */
+    broadcast_huds_by_pk?: (broadcast_hudsGenqlSelection & { __args: {id: Scalars['uuid']} })
+    /** fetch data from the table in a streaming manner: "broadcast_huds" */
+    broadcast_huds_stream?: (broadcast_hudsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (broadcast_huds_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (broadcast_huds_bool_exp | null)} })
     /** fetch data from the table: "chat_read_state" */
     chat_read_state?: (chat_read_stateGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -101611,6 +102575,40 @@ export interface subscription_rootGenqlSelection{
     cursor: (lobby_players_stream_cursor_input | null)[], 
     /** filter the rows returned */
     where?: (lobby_players_bool_exp | null)} })
+    /** fetch data from the table: "map_asset_builds" */
+    map_asset_builds?: (map_asset_buildsGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (map_asset_builds_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (map_asset_builds_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (map_asset_builds_bool_exp | null)} })
+    /** fetch aggregated fields from the table: "map_asset_builds" */
+    map_asset_builds_aggregate?: (map_asset_builds_aggregateGenqlSelection & { __args?: {
+    /** distinct select on columns */
+    distinct_on?: (map_asset_builds_select_column[] | null), 
+    /** limit the number of rows returned */
+    limit?: (Scalars['Int'] | null), 
+    /** skip the first n rows. Use only with order_by */
+    offset?: (Scalars['Int'] | null), 
+    /** sort the rows by one or more columns */
+    order_by?: (map_asset_builds_order_by[] | null), 
+    /** filter the rows returned */
+    where?: (map_asset_builds_bool_exp | null)} })
+    /** fetch data from the table: "map_asset_builds" using primary key columns */
+    map_asset_builds_by_pk?: (map_asset_buildsGenqlSelection & { __args: {build_id: Scalars['String']} })
+    /** fetch data from the table in a streaming manner: "map_asset_builds" */
+    map_asset_builds_stream?: (map_asset_buildsGenqlSelection & { __args: {
+    /** maximum number of rows returned in a single batch */
+    batch_size: Scalars['Int'], 
+    /** cursor to stream the results returned by the query */
+    cursor: (map_asset_builds_stream_cursor_input | null)[], 
+    /** filter the rows returned */
+    where?: (map_asset_builds_bool_exp | null)} })
     /** fetch data from the table: "map_callouts" */
     map_callouts?: (map_calloutsGenqlSelection & { __args?: {
     /** distinct select on columns */
@@ -115388,6 +116386,9 @@ export interface utility_drift_results_variance_order_by {distance?: (order_by |
 /** columns and relationships of "utility_drift_scans" */
 export interface utility_drift_scansGenqlSelection{
     broken?: boolean | number
+    caveats?: { __args: {
+    /** JSON select path */
+    path?: (Scalars['String'] | null)} } | boolean | number
     created_at?: boolean | number
     failure_reason?: boolean | number
     finished_at?: boolean | number
@@ -115463,6 +116464,10 @@ export interface utility_drift_scans_aggregate_fieldsGenqlSelection{
 }
 
 
+/** append existing jsonb value of filtered columns with new jsonb value */
+export interface utility_drift_scans_append_input {caveats?: (Scalars['jsonb'] | null)}
+
+
 /** aggregate avg on columns */
 export interface utility_drift_scans_avg_fieldsGenqlSelection{
     broken?: boolean | number
@@ -115479,7 +116484,19 @@ export interface utility_drift_scans_avg_fieldsGenqlSelection{
 
 
 /** Boolean expression to filter rows from the table "utility_drift_scans". All fields are combined with a logical 'AND'. */
-export interface utility_drift_scans_bool_exp {_and?: (utility_drift_scans_bool_exp[] | null),_not?: (utility_drift_scans_bool_exp | null),_or?: (utility_drift_scans_bool_exp[] | null),broken?: (Int_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),failure_reason?: (String_comparison_exp | null),finished_at?: (timestamptz_comparison_exp | null),from_revision?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),lineups?: (Int_comparison_exp | null),map_name?: (String_comparison_exp | null),max_distance?: (float8_comparison_exp | null),moved?: (Int_comparison_exp | null),requested_by?: (players_bool_exp | null),requested_by_steam_id?: (bigint_comparison_exp | null),results?: (utility_drift_results_bool_exp | null),results_aggregate?: (utility_drift_results_aggregate_bool_exp | null),scanned?: (Int_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (String_comparison_exp | null),to_revision?: (String_comparison_exp | null),unchanged?: (Int_comparison_exp | null),unsimulatable?: (Int_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+export interface utility_drift_scans_bool_exp {_and?: (utility_drift_scans_bool_exp[] | null),_not?: (utility_drift_scans_bool_exp | null),_or?: (utility_drift_scans_bool_exp[] | null),broken?: (Int_comparison_exp | null),caveats?: (jsonb_comparison_exp | null),created_at?: (timestamptz_comparison_exp | null),failure_reason?: (String_comparison_exp | null),finished_at?: (timestamptz_comparison_exp | null),from_revision?: (String_comparison_exp | null),id?: (uuid_comparison_exp | null),lineups?: (Int_comparison_exp | null),map_name?: (String_comparison_exp | null),max_distance?: (float8_comparison_exp | null),moved?: (Int_comparison_exp | null),requested_by?: (players_bool_exp | null),requested_by_steam_id?: (bigint_comparison_exp | null),results?: (utility_drift_results_bool_exp | null),results_aggregate?: (utility_drift_results_aggregate_bool_exp | null),scanned?: (Int_comparison_exp | null),started_at?: (timestamptz_comparison_exp | null),status?: (String_comparison_exp | null),to_revision?: (String_comparison_exp | null),unchanged?: (Int_comparison_exp | null),unsimulatable?: (Int_comparison_exp | null),updated_at?: (timestamptz_comparison_exp | null)}
+
+
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+export interface utility_drift_scans_delete_at_path_input {caveats?: (Scalars['String'][] | null)}
+
+
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+export interface utility_drift_scans_delete_elem_input {caveats?: (Scalars['Int'] | null)}
+
+
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+export interface utility_drift_scans_delete_key_input {caveats?: (Scalars['String'] | null)}
 
 
 /** input type for incrementing numeric columns in table "utility_drift_scans" */
@@ -115487,7 +116504,7 @@ export interface utility_drift_scans_inc_input {broken?: (Scalars['Int'] | null)
 
 
 /** input type for inserting data into table "utility_drift_scans" */
-export interface utility_drift_scans_insert_input {broken?: (Scalars['Int'] | null),created_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),from_revision?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),lineups?: (Scalars['Int'] | null),map_name?: (Scalars['String'] | null),max_distance?: (Scalars['float8'] | null),moved?: (Scalars['Int'] | null),requested_by?: (players_obj_rel_insert_input | null),requested_by_steam_id?: (Scalars['bigint'] | null),results?: (utility_drift_results_arr_rel_insert_input | null),scanned?: (Scalars['Int'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),to_revision?: (Scalars['String'] | null),unchanged?: (Scalars['Int'] | null),unsimulatable?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface utility_drift_scans_insert_input {broken?: (Scalars['Int'] | null),caveats?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),from_revision?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),lineups?: (Scalars['Int'] | null),map_name?: (Scalars['String'] | null),max_distance?: (Scalars['float8'] | null),moved?: (Scalars['Int'] | null),requested_by?: (players_obj_rel_insert_input | null),requested_by_steam_id?: (Scalars['bigint'] | null),results?: (utility_drift_results_arr_rel_insert_input | null),scanned?: (Scalars['Int'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),to_revision?: (Scalars['String'] | null),unchanged?: (Scalars['Int'] | null),unsimulatable?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate max on columns */
@@ -115562,15 +116579,19 @@ export interface utility_drift_scans_on_conflict {constraint: utility_drift_scan
 
 
 /** Ordering options when selecting data from "utility_drift_scans". */
-export interface utility_drift_scans_order_by {broken?: (order_by | null),created_at?: (order_by | null),failure_reason?: (order_by | null),finished_at?: (order_by | null),from_revision?: (order_by | null),id?: (order_by | null),lineups?: (order_by | null),map_name?: (order_by | null),max_distance?: (order_by | null),moved?: (order_by | null),requested_by?: (players_order_by | null),requested_by_steam_id?: (order_by | null),results_aggregate?: (utility_drift_results_aggregate_order_by | null),scanned?: (order_by | null),started_at?: (order_by | null),status?: (order_by | null),to_revision?: (order_by | null),unchanged?: (order_by | null),unsimulatable?: (order_by | null),updated_at?: (order_by | null)}
+export interface utility_drift_scans_order_by {broken?: (order_by | null),caveats?: (order_by | null),created_at?: (order_by | null),failure_reason?: (order_by | null),finished_at?: (order_by | null),from_revision?: (order_by | null),id?: (order_by | null),lineups?: (order_by | null),map_name?: (order_by | null),max_distance?: (order_by | null),moved?: (order_by | null),requested_by?: (players_order_by | null),requested_by_steam_id?: (order_by | null),results_aggregate?: (utility_drift_results_aggregate_order_by | null),scanned?: (order_by | null),started_at?: (order_by | null),status?: (order_by | null),to_revision?: (order_by | null),unchanged?: (order_by | null),unsimulatable?: (order_by | null),updated_at?: (order_by | null)}
 
 
 /** primary key columns input for table: utility_drift_scans */
 export interface utility_drift_scans_pk_columns_input {id: Scalars['uuid']}
 
 
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+export interface utility_drift_scans_prepend_input {caveats?: (Scalars['jsonb'] | null)}
+
+
 /** input type for updating data in table "utility_drift_scans" */
-export interface utility_drift_scans_set_input {broken?: (Scalars['Int'] | null),created_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),from_revision?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),lineups?: (Scalars['Int'] | null),map_name?: (Scalars['String'] | null),max_distance?: (Scalars['float8'] | null),moved?: (Scalars['Int'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),scanned?: (Scalars['Int'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),to_revision?: (Scalars['String'] | null),unchanged?: (Scalars['Int'] | null),unsimulatable?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface utility_drift_scans_set_input {broken?: (Scalars['Int'] | null),caveats?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),from_revision?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),lineups?: (Scalars['Int'] | null),map_name?: (Scalars['String'] | null),max_distance?: (Scalars['float8'] | null),moved?: (Scalars['Int'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),scanned?: (Scalars['Int'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),to_revision?: (Scalars['String'] | null),unchanged?: (Scalars['Int'] | null),unsimulatable?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate stddev on columns */
@@ -115627,7 +116648,7 @@ ordering?: (cursor_ordering | null)}
 
 
 /** Initial value of the column from where the streaming should start */
-export interface utility_drift_scans_stream_cursor_value_input {broken?: (Scalars['Int'] | null),created_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),from_revision?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),lineups?: (Scalars['Int'] | null),map_name?: (Scalars['String'] | null),max_distance?: (Scalars['float8'] | null),moved?: (Scalars['Int'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),scanned?: (Scalars['Int'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),to_revision?: (Scalars['String'] | null),unchanged?: (Scalars['Int'] | null),unsimulatable?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null)}
+export interface utility_drift_scans_stream_cursor_value_input {broken?: (Scalars['Int'] | null),caveats?: (Scalars['jsonb'] | null),created_at?: (Scalars['timestamptz'] | null),failure_reason?: (Scalars['String'] | null),finished_at?: (Scalars['timestamptz'] | null),from_revision?: (Scalars['String'] | null),id?: (Scalars['uuid'] | null),lineups?: (Scalars['Int'] | null),map_name?: (Scalars['String'] | null),max_distance?: (Scalars['float8'] | null),moved?: (Scalars['Int'] | null),requested_by_steam_id?: (Scalars['bigint'] | null),scanned?: (Scalars['Int'] | null),started_at?: (Scalars['timestamptz'] | null),status?: (Scalars['String'] | null),to_revision?: (Scalars['String'] | null),unchanged?: (Scalars['Int'] | null),unsimulatable?: (Scalars['Int'] | null),updated_at?: (Scalars['timestamptz'] | null)}
 
 
 /** aggregate sum on columns */
@@ -115645,8 +116666,18 @@ export interface utility_drift_scans_sum_fieldsGenqlSelection{
 }
 
 export interface utility_drift_scans_updates {
+/** append existing jsonb value of filtered columns with new jsonb value */
+_append?: (utility_drift_scans_append_input | null),
+/** delete the field or element with specified path (for JSON arrays, negative integers count from the end) */
+_delete_at_path?: (utility_drift_scans_delete_at_path_input | null),
+/** delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array */
+_delete_elem?: (utility_drift_scans_delete_elem_input | null),
+/** delete key/value pair or string element. key/value pairs are matched based on their key value */
+_delete_key?: (utility_drift_scans_delete_key_input | null),
 /** increments the numeric columns with given value of the filtered values */
 _inc?: (utility_drift_scans_inc_input | null),
+/** prepend existing jsonb value of filtered columns with new jsonb value */
+_prepend?: (utility_drift_scans_prepend_input | null),
 /** sets the columns of the filtered rows to the given values */
 _set?: (utility_drift_scans_set_input | null),
 /** filter the rows which have to be updated */
@@ -128023,6 +129054,14 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     
 
 
+    const TestDownloadResponse_possibleTypes: string[] = ['TestDownloadResponse']
+    export const isTestDownloadResponse = (obj?: { __typename?: any } | null): obj is TestDownloadResponse => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isTestDownloadResponse"')
+      return TestDownloadResponse_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
     const TestUploadResponse_possibleTypes: string[] = ['TestUploadResponse']
     export const isTestUploadResponse = (obj?: { __typename?: any } | null): obj is TestUploadResponse => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isTestUploadResponse"')
@@ -128867,6 +129906,118 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const isawards_variance_fields = (obj?: { __typename?: any } | null): obj is awards_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "isawards_variance_fields"')
       return awards_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const broadcast_huds_possibleTypes: string[] = ['broadcast_huds']
+    export const isbroadcast_huds = (obj?: { __typename?: any } | null): obj is broadcast_huds => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isbroadcast_huds"')
+      return broadcast_huds_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const broadcast_huds_aggregate_possibleTypes: string[] = ['broadcast_huds_aggregate']
+    export const isbroadcast_huds_aggregate = (obj?: { __typename?: any } | null): obj is broadcast_huds_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isbroadcast_huds_aggregate"')
+      return broadcast_huds_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const broadcast_huds_aggregate_fields_possibleTypes: string[] = ['broadcast_huds_aggregate_fields']
+    export const isbroadcast_huds_aggregate_fields = (obj?: { __typename?: any } | null): obj is broadcast_huds_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isbroadcast_huds_aggregate_fields"')
+      return broadcast_huds_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const broadcast_huds_avg_fields_possibleTypes: string[] = ['broadcast_huds_avg_fields']
+    export const isbroadcast_huds_avg_fields = (obj?: { __typename?: any } | null): obj is broadcast_huds_avg_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isbroadcast_huds_avg_fields"')
+      return broadcast_huds_avg_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const broadcast_huds_max_fields_possibleTypes: string[] = ['broadcast_huds_max_fields']
+    export const isbroadcast_huds_max_fields = (obj?: { __typename?: any } | null): obj is broadcast_huds_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isbroadcast_huds_max_fields"')
+      return broadcast_huds_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const broadcast_huds_min_fields_possibleTypes: string[] = ['broadcast_huds_min_fields']
+    export const isbroadcast_huds_min_fields = (obj?: { __typename?: any } | null): obj is broadcast_huds_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isbroadcast_huds_min_fields"')
+      return broadcast_huds_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const broadcast_huds_mutation_response_possibleTypes: string[] = ['broadcast_huds_mutation_response']
+    export const isbroadcast_huds_mutation_response = (obj?: { __typename?: any } | null): obj is broadcast_huds_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isbroadcast_huds_mutation_response"')
+      return broadcast_huds_mutation_response_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const broadcast_huds_stddev_fields_possibleTypes: string[] = ['broadcast_huds_stddev_fields']
+    export const isbroadcast_huds_stddev_fields = (obj?: { __typename?: any } | null): obj is broadcast_huds_stddev_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isbroadcast_huds_stddev_fields"')
+      return broadcast_huds_stddev_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const broadcast_huds_stddev_pop_fields_possibleTypes: string[] = ['broadcast_huds_stddev_pop_fields']
+    export const isbroadcast_huds_stddev_pop_fields = (obj?: { __typename?: any } | null): obj is broadcast_huds_stddev_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isbroadcast_huds_stddev_pop_fields"')
+      return broadcast_huds_stddev_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const broadcast_huds_stddev_samp_fields_possibleTypes: string[] = ['broadcast_huds_stddev_samp_fields']
+    export const isbroadcast_huds_stddev_samp_fields = (obj?: { __typename?: any } | null): obj is broadcast_huds_stddev_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isbroadcast_huds_stddev_samp_fields"')
+      return broadcast_huds_stddev_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const broadcast_huds_sum_fields_possibleTypes: string[] = ['broadcast_huds_sum_fields']
+    export const isbroadcast_huds_sum_fields = (obj?: { __typename?: any } | null): obj is broadcast_huds_sum_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isbroadcast_huds_sum_fields"')
+      return broadcast_huds_sum_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const broadcast_huds_var_pop_fields_possibleTypes: string[] = ['broadcast_huds_var_pop_fields']
+    export const isbroadcast_huds_var_pop_fields = (obj?: { __typename?: any } | null): obj is broadcast_huds_var_pop_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isbroadcast_huds_var_pop_fields"')
+      return broadcast_huds_var_pop_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const broadcast_huds_var_samp_fields_possibleTypes: string[] = ['broadcast_huds_var_samp_fields']
+    export const isbroadcast_huds_var_samp_fields = (obj?: { __typename?: any } | null): obj is broadcast_huds_var_samp_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isbroadcast_huds_var_samp_fields"')
+      return broadcast_huds_var_samp_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const broadcast_huds_variance_fields_possibleTypes: string[] = ['broadcast_huds_variance_fields']
+    export const isbroadcast_huds_variance_fields = (obj?: { __typename?: any } | null): obj is broadcast_huds_variance_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "isbroadcast_huds_variance_fields"')
+      return broadcast_huds_variance_fields_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -135619,6 +136770,54 @@ export type SubscriptionGenqlSelection = subscription_rootGenqlSelection
     export const islobby_players_variance_fields = (obj?: { __typename?: any } | null): obj is lobby_players_variance_fields => {
       if (!obj?.__typename) throw new Error('__typename is missing in "islobby_players_variance_fields"')
       return lobby_players_variance_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_asset_builds_possibleTypes: string[] = ['map_asset_builds']
+    export const ismap_asset_builds = (obj?: { __typename?: any } | null): obj is map_asset_builds => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds"')
+      return map_asset_builds_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_asset_builds_aggregate_possibleTypes: string[] = ['map_asset_builds_aggregate']
+    export const ismap_asset_builds_aggregate = (obj?: { __typename?: any } | null): obj is map_asset_builds_aggregate => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds_aggregate"')
+      return map_asset_builds_aggregate_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_asset_builds_aggregate_fields_possibleTypes: string[] = ['map_asset_builds_aggregate_fields']
+    export const ismap_asset_builds_aggregate_fields = (obj?: { __typename?: any } | null): obj is map_asset_builds_aggregate_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds_aggregate_fields"')
+      return map_asset_builds_aggregate_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_asset_builds_max_fields_possibleTypes: string[] = ['map_asset_builds_max_fields']
+    export const ismap_asset_builds_max_fields = (obj?: { __typename?: any } | null): obj is map_asset_builds_max_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds_max_fields"')
+      return map_asset_builds_max_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_asset_builds_min_fields_possibleTypes: string[] = ['map_asset_builds_min_fields']
+    export const ismap_asset_builds_min_fields = (obj?: { __typename?: any } | null): obj is map_asset_builds_min_fields => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds_min_fields"')
+      return map_asset_builds_min_fields_possibleTypes.includes(obj.__typename)
+    }
+    
+
+
+    const map_asset_builds_mutation_response_possibleTypes: string[] = ['map_asset_builds_mutation_response']
+    export const ismap_asset_builds_mutation_response = (obj?: { __typename?: any } | null): obj is map_asset_builds_mutation_response => {
+      if (!obj?.__typename) throw new Error('__typename is missing in "ismap_asset_builds_mutation_response"')
+      return map_asset_builds_mutation_response_possibleTypes.includes(obj.__typename)
     }
     
 
@@ -149967,6 +151166,53 @@ export const enumAwardsUpdateColumn = {
    updated_at: 'updated_at' as const
 }
 
+export const enumBroadcastHudsConstraint = {
+   broadcast_huds_pkey: 'broadcast_huds_pkey' as const,
+   broadcast_huds_slug_key: 'broadcast_huds_slug_key' as const
+}
+
+export const enumBroadcastHudsSelectColumn = {
+   author: 'author' as const,
+   created_at: 'created_at' as const,
+   description: 'description' as const,
+   enabled: 'enabled' as const,
+   hud_json: 'hud_json' as const,
+   id: 'id' as const,
+   is_signed: 'is_signed' as const,
+   jthud_id: 'jthud_id' as const,
+   name: 'name' as const,
+   size_bytes: 'size_bytes' as const,
+   slug: 'slug' as const,
+   source: 'source' as const,
+   storage_key: 'storage_key' as const,
+   thumbnail: 'thumbnail' as const,
+   updated_at: 'updated_at' as const,
+   uploaded_by_steam_id: 'uploaded_by_steam_id' as const,
+   variant: 'variant' as const,
+   version: 'version' as const
+}
+
+export const enumBroadcastHudsUpdateColumn = {
+   author: 'author' as const,
+   created_at: 'created_at' as const,
+   description: 'description' as const,
+   enabled: 'enabled' as const,
+   hud_json: 'hud_json' as const,
+   id: 'id' as const,
+   is_signed: 'is_signed' as const,
+   jthud_id: 'jthud_id' as const,
+   name: 'name' as const,
+   size_bytes: 'size_bytes' as const,
+   slug: 'slug' as const,
+   source: 'source' as const,
+   storage_key: 'storage_key' as const,
+   thumbnail: 'thumbnail' as const,
+   updated_at: 'updated_at' as const,
+   uploaded_by_steam_id: 'uploaded_by_steam_id' as const,
+   variant: 'variant' as const,
+   version: 'version' as const
+}
+
 export const enumChatReadStateConstraint = {
    chat_read_state_pkey: 'chat_read_state_pkey' as const
 }
@@ -152516,6 +153762,38 @@ export const enumLobbyPlayersUpdateColumn = {
    lobby_id: 'lobby_id' as const,
    status: 'status' as const,
    steam_id: 'steam_id' as const
+}
+
+export const enumMapAssetBuildsConstraint = {
+   map_asset_builds_pkey: 'map_asset_builds_pkey' as const
+}
+
+export const enumMapAssetBuildsSelectColumn = {
+   build_id: 'build_id' as const,
+   created_at: 'created_at' as const,
+   error: 'error' as const,
+   failed: 'failed' as const,
+   failed_view: 'failed_view' as const,
+   finished_at: 'finished_at' as const,
+   manifest: 'manifest' as const,
+   maps: 'maps' as const,
+   started_at: 'started_at' as const,
+   status: 'status' as const,
+   updated_at: 'updated_at' as const
+}
+
+export const enumMapAssetBuildsUpdateColumn = {
+   build_id: 'build_id' as const,
+   created_at: 'created_at' as const,
+   error: 'error' as const,
+   failed: 'failed' as const,
+   failed_view: 'failed_view' as const,
+   finished_at: 'finished_at' as const,
+   manifest: 'manifest' as const,
+   maps: 'maps' as const,
+   started_at: 'started_at' as const,
+   status: 'status' as const,
+   updated_at: 'updated_at' as const
 }
 
 export const enumMapCalloutsConstraint = {
@@ -155871,6 +157149,7 @@ export const enumUtilityDriftScansConstraint = {
 
 export const enumUtilityDriftScansSelectColumn = {
    broken: 'broken' as const,
+   caveats: 'caveats' as const,
    created_at: 'created_at' as const,
    failure_reason: 'failure_reason' as const,
    finished_at: 'finished_at' as const,
@@ -155892,6 +157171,7 @@ export const enumUtilityDriftScansSelectColumn = {
 
 export const enumUtilityDriftScansUpdateColumn = {
    broken: 'broken' as const,
+   caveats: 'caveats' as const,
    created_at: 'created_at' as const,
    failure_reason: 'failure_reason' as const,
    finished_at: 'finished_at' as const,

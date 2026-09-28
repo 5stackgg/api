@@ -990,6 +990,10 @@ type TelemetryVersionCount {
   version: String!
 }
 
+type TestDownloadResponse {
+  error: String
+}
+
 type TestUploadResponse {
   error: String
 }
@@ -3299,6 +3303,503 @@ input bigint_comparison_exp {
   _lte: bigint
   _neq: bigint
   _nin: [bigint!]
+}
+
+"""
+columns and relationships of "broadcast_huds"
+"""
+type broadcast_huds {
+  author: String
+  created_at: timestamptz!
+  description: String
+  enabled: Boolean!
+  hud_json(
+    """JSON select path"""
+    path: String
+  ): jsonb
+  id: uuid!
+  is_signed: Boolean!
+  jthud_id: String!
+  name: String!
+  size_bytes: bigint
+  slug: String!
+  source: String!
+  storage_key: String
+  thumbnail: String
+  updated_at: timestamptz!
+  uploaded_by_steam_id: bigint
+  variant: String
+  version: String
+}
+
+"""
+aggregated selection of "broadcast_huds"
+"""
+type broadcast_huds_aggregate {
+  aggregate: broadcast_huds_aggregate_fields
+  nodes: [broadcast_huds!]!
+}
+
+"""
+aggregate fields of "broadcast_huds"
+"""
+type broadcast_huds_aggregate_fields {
+  avg: broadcast_huds_avg_fields
+  count(columns: [broadcast_huds_select_column!], distinct: Boolean): Int!
+  max: broadcast_huds_max_fields
+  min: broadcast_huds_min_fields
+  stddev: broadcast_huds_stddev_fields
+  stddev_pop: broadcast_huds_stddev_pop_fields
+  stddev_samp: broadcast_huds_stddev_samp_fields
+  sum: broadcast_huds_sum_fields
+  var_pop: broadcast_huds_var_pop_fields
+  var_samp: broadcast_huds_var_samp_fields
+  variance: broadcast_huds_variance_fields
+}
+
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input broadcast_huds_append_input {
+  hud_json: jsonb
+}
+
+"""aggregate avg on columns"""
+type broadcast_huds_avg_fields {
+  size_bytes: Float
+  uploaded_by_steam_id: Float
+}
+
+"""
+Boolean expression to filter rows from the table "broadcast_huds". All fields are combined with a logical 'AND'.
+"""
+input broadcast_huds_bool_exp {
+  _and: [broadcast_huds_bool_exp!]
+  _not: broadcast_huds_bool_exp
+  _or: [broadcast_huds_bool_exp!]
+  author: String_comparison_exp
+  created_at: timestamptz_comparison_exp
+  description: String_comparison_exp
+  enabled: Boolean_comparison_exp
+  hud_json: jsonb_comparison_exp
+  id: uuid_comparison_exp
+  is_signed: Boolean_comparison_exp
+  jthud_id: String_comparison_exp
+  name: String_comparison_exp
+  size_bytes: bigint_comparison_exp
+  slug: String_comparison_exp
+  source: String_comparison_exp
+  storage_key: String_comparison_exp
+  thumbnail: String_comparison_exp
+  updated_at: timestamptz_comparison_exp
+  uploaded_by_steam_id: bigint_comparison_exp
+  variant: String_comparison_exp
+  version: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "broadcast_huds"
+"""
+enum broadcast_huds_constraint {
+  """
+  unique or primary key constraint on columns "id"
+  """
+  broadcast_huds_pkey
+
+  """
+  unique or primary key constraint on columns "slug"
+  """
+  broadcast_huds_slug_key
+}
+
+"""
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input broadcast_huds_delete_at_path_input {
+  hud_json: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input broadcast_huds_delete_elem_input {
+  hud_json: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input broadcast_huds_delete_key_input {
+  hud_json: String
+}
+
+"""
+input type for incrementing numeric columns in table "broadcast_huds"
+"""
+input broadcast_huds_inc_input {
+  size_bytes: bigint
+  uploaded_by_steam_id: bigint
+}
+
+"""
+input type for inserting data into table "broadcast_huds"
+"""
+input broadcast_huds_insert_input {
+  author: String
+  created_at: timestamptz
+  description: String
+  enabled: Boolean
+  hud_json: jsonb
+  id: uuid
+  is_signed: Boolean
+  jthud_id: String
+  name: String
+  size_bytes: bigint
+  slug: String
+  source: String
+  storage_key: String
+  thumbnail: String
+  updated_at: timestamptz
+  uploaded_by_steam_id: bigint
+  variant: String
+  version: String
+}
+
+"""aggregate max on columns"""
+type broadcast_huds_max_fields {
+  author: String
+  created_at: timestamptz
+  description: String
+  id: uuid
+  jthud_id: String
+  name: String
+  size_bytes: bigint
+  slug: String
+  source: String
+  storage_key: String
+  thumbnail: String
+  updated_at: timestamptz
+  uploaded_by_steam_id: bigint
+  variant: String
+  version: String
+}
+
+"""aggregate min on columns"""
+type broadcast_huds_min_fields {
+  author: String
+  created_at: timestamptz
+  description: String
+  id: uuid
+  jthud_id: String
+  name: String
+  size_bytes: bigint
+  slug: String
+  source: String
+  storage_key: String
+  thumbnail: String
+  updated_at: timestamptz
+  uploaded_by_steam_id: bigint
+  variant: String
+  version: String
+}
+
+"""
+response of any mutation on the table "broadcast_huds"
+"""
+type broadcast_huds_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [broadcast_huds!]!
+}
+
+"""
+on_conflict condition type for table "broadcast_huds"
+"""
+input broadcast_huds_on_conflict {
+  constraint: broadcast_huds_constraint!
+  update_columns: [broadcast_huds_update_column!]! = []
+  where: broadcast_huds_bool_exp
+}
+
+"""Ordering options when selecting data from "broadcast_huds"."""
+input broadcast_huds_order_by {
+  author: order_by
+  created_at: order_by
+  description: order_by
+  enabled: order_by
+  hud_json: order_by
+  id: order_by
+  is_signed: order_by
+  jthud_id: order_by
+  name: order_by
+  size_bytes: order_by
+  slug: order_by
+  source: order_by
+  storage_key: order_by
+  thumbnail: order_by
+  updated_at: order_by
+  uploaded_by_steam_id: order_by
+  variant: order_by
+  version: order_by
+}
+
+"""primary key columns input for table: broadcast_huds"""
+input broadcast_huds_pk_columns_input {
+  id: uuid!
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input broadcast_huds_prepend_input {
+  hud_json: jsonb
+}
+
+"""
+select columns of table "broadcast_huds"
+"""
+enum broadcast_huds_select_column {
+  """column name"""
+  author
+
+  """column name"""
+  created_at
+
+  """column name"""
+  description
+
+  """column name"""
+  enabled
+
+  """column name"""
+  hud_json
+
+  """column name"""
+  id
+
+  """column name"""
+  is_signed
+
+  """column name"""
+  jthud_id
+
+  """column name"""
+  name
+
+  """column name"""
+  size_bytes
+
+  """column name"""
+  slug
+
+  """column name"""
+  source
+
+  """column name"""
+  storage_key
+
+  """column name"""
+  thumbnail
+
+  """column name"""
+  updated_at
+
+  """column name"""
+  uploaded_by_steam_id
+
+  """column name"""
+  variant
+
+  """column name"""
+  version
+}
+
+"""
+input type for updating data in table "broadcast_huds"
+"""
+input broadcast_huds_set_input {
+  author: String
+  created_at: timestamptz
+  description: String
+  enabled: Boolean
+  hud_json: jsonb
+  id: uuid
+  is_signed: Boolean
+  jthud_id: String
+  name: String
+  size_bytes: bigint
+  slug: String
+  source: String
+  storage_key: String
+  thumbnail: String
+  updated_at: timestamptz
+  uploaded_by_steam_id: bigint
+  variant: String
+  version: String
+}
+
+"""aggregate stddev on columns"""
+type broadcast_huds_stddev_fields {
+  size_bytes: Float
+  uploaded_by_steam_id: Float
+}
+
+"""aggregate stddev_pop on columns"""
+type broadcast_huds_stddev_pop_fields {
+  size_bytes: Float
+  uploaded_by_steam_id: Float
+}
+
+"""aggregate stddev_samp on columns"""
+type broadcast_huds_stddev_samp_fields {
+  size_bytes: Float
+  uploaded_by_steam_id: Float
+}
+
+"""
+Streaming cursor of the table "broadcast_huds"
+"""
+input broadcast_huds_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: broadcast_huds_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input broadcast_huds_stream_cursor_value_input {
+  author: String
+  created_at: timestamptz
+  description: String
+  enabled: Boolean
+  hud_json: jsonb
+  id: uuid
+  is_signed: Boolean
+  jthud_id: String
+  name: String
+  size_bytes: bigint
+  slug: String
+  source: String
+  storage_key: String
+  thumbnail: String
+  updated_at: timestamptz
+  uploaded_by_steam_id: bigint
+  variant: String
+  version: String
+}
+
+"""aggregate sum on columns"""
+type broadcast_huds_sum_fields {
+  size_bytes: bigint
+  uploaded_by_steam_id: bigint
+}
+
+"""
+update columns of table "broadcast_huds"
+"""
+enum broadcast_huds_update_column {
+  """column name"""
+  author
+
+  """column name"""
+  created_at
+
+  """column name"""
+  description
+
+  """column name"""
+  enabled
+
+  """column name"""
+  hud_json
+
+  """column name"""
+  id
+
+  """column name"""
+  is_signed
+
+  """column name"""
+  jthud_id
+
+  """column name"""
+  name
+
+  """column name"""
+  size_bytes
+
+  """column name"""
+  slug
+
+  """column name"""
+  source
+
+  """column name"""
+  storage_key
+
+  """column name"""
+  thumbnail
+
+  """column name"""
+  updated_at
+
+  """column name"""
+  uploaded_by_steam_id
+
+  """column name"""
+  variant
+
+  """column name"""
+  version
+}
+
+input broadcast_huds_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: broadcast_huds_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: broadcast_huds_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: broadcast_huds_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: broadcast_huds_delete_key_input
+
+  """increments the numeric columns with given value of the filtered values"""
+  _inc: broadcast_huds_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: broadcast_huds_prepend_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: broadcast_huds_set_input
+
+  """filter the rows which have to be updated"""
+  where: broadcast_huds_bool_exp!
+}
+
+"""aggregate var_pop on columns"""
+type broadcast_huds_var_pop_fields {
+  size_bytes: Float
+  uploaded_by_steam_id: Float
+}
+
+"""aggregate var_samp on columns"""
+type broadcast_huds_var_samp_fields {
+  size_bytes: Float
+  uploaded_by_steam_id: Float
+}
+
+"""aggregate variance on columns"""
+type broadcast_huds_variance_fields {
+  size_bytes: Float
+  uploaded_by_steam_id: Float
 }
 
 scalar bytea
@@ -33459,6 +33960,349 @@ input lobby_players_variance_order_by {
 }
 
 """
+columns and relationships of "map_asset_builds"
+"""
+type map_asset_builds {
+  build_id: String!
+  created_at: timestamptz!
+  error: String
+  failed(
+    """JSON select path"""
+    path: String
+  ): jsonb
+  failed_view(
+    """JSON select path"""
+    path: String
+  ): jsonb
+  finished_at: timestamptz
+  manifest: String
+  maps(
+    """JSON select path"""
+    path: String
+  ): jsonb
+  started_at: timestamptz
+  status: String!
+  updated_at: timestamptz!
+}
+
+"""
+aggregated selection of "map_asset_builds"
+"""
+type map_asset_builds_aggregate {
+  aggregate: map_asset_builds_aggregate_fields
+  nodes: [map_asset_builds!]!
+}
+
+"""
+aggregate fields of "map_asset_builds"
+"""
+type map_asset_builds_aggregate_fields {
+  count(columns: [map_asset_builds_select_column!], distinct: Boolean): Int!
+  max: map_asset_builds_max_fields
+  min: map_asset_builds_min_fields
+}
+
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input map_asset_builds_append_input {
+  failed: jsonb
+  failed_view: jsonb
+  maps: jsonb
+}
+
+"""
+Boolean expression to filter rows from the table "map_asset_builds". All fields are combined with a logical 'AND'.
+"""
+input map_asset_builds_bool_exp {
+  _and: [map_asset_builds_bool_exp!]
+  _not: map_asset_builds_bool_exp
+  _or: [map_asset_builds_bool_exp!]
+  build_id: String_comparison_exp
+  created_at: timestamptz_comparison_exp
+  error: String_comparison_exp
+  failed: jsonb_comparison_exp
+  failed_view: jsonb_comparison_exp
+  finished_at: timestamptz_comparison_exp
+  manifest: String_comparison_exp
+  maps: jsonb_comparison_exp
+  started_at: timestamptz_comparison_exp
+  status: String_comparison_exp
+  updated_at: timestamptz_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "map_asset_builds"
+"""
+enum map_asset_builds_constraint {
+  """
+  unique or primary key constraint on columns "build_id"
+  """
+  map_asset_builds_pkey
+}
+
+"""
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input map_asset_builds_delete_at_path_input {
+  failed: [String!]
+  failed_view: [String!]
+  maps: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input map_asset_builds_delete_elem_input {
+  failed: Int
+  failed_view: Int
+  maps: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input map_asset_builds_delete_key_input {
+  failed: String
+  failed_view: String
+  maps: String
+}
+
+"""
+input type for inserting data into table "map_asset_builds"
+"""
+input map_asset_builds_insert_input {
+  build_id: String
+  created_at: timestamptz
+  error: String
+  failed: jsonb
+  failed_view: jsonb
+  finished_at: timestamptz
+  manifest: String
+  maps: jsonb
+  started_at: timestamptz
+  status: String
+  updated_at: timestamptz
+}
+
+"""aggregate max on columns"""
+type map_asset_builds_max_fields {
+  build_id: String
+  created_at: timestamptz
+  error: String
+  finished_at: timestamptz
+  manifest: String
+  started_at: timestamptz
+  status: String
+  updated_at: timestamptz
+}
+
+"""aggregate min on columns"""
+type map_asset_builds_min_fields {
+  build_id: String
+  created_at: timestamptz
+  error: String
+  finished_at: timestamptz
+  manifest: String
+  started_at: timestamptz
+  status: String
+  updated_at: timestamptz
+}
+
+"""
+response of any mutation on the table "map_asset_builds"
+"""
+type map_asset_builds_mutation_response {
+  """number of rows affected by the mutation"""
+  affected_rows: Int!
+
+  """data from the rows affected by the mutation"""
+  returning: [map_asset_builds!]!
+}
+
+"""
+on_conflict condition type for table "map_asset_builds"
+"""
+input map_asset_builds_on_conflict {
+  constraint: map_asset_builds_constraint!
+  update_columns: [map_asset_builds_update_column!]! = []
+  where: map_asset_builds_bool_exp
+}
+
+"""Ordering options when selecting data from "map_asset_builds"."""
+input map_asset_builds_order_by {
+  build_id: order_by
+  created_at: order_by
+  error: order_by
+  failed: order_by
+  failed_view: order_by
+  finished_at: order_by
+  manifest: order_by
+  maps: order_by
+  started_at: order_by
+  status: order_by
+  updated_at: order_by
+}
+
+"""primary key columns input for table: map_asset_builds"""
+input map_asset_builds_pk_columns_input {
+  build_id: String!
+}
+
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input map_asset_builds_prepend_input {
+  failed: jsonb
+  failed_view: jsonb
+  maps: jsonb
+}
+
+"""
+select columns of table "map_asset_builds"
+"""
+enum map_asset_builds_select_column {
+  """column name"""
+  build_id
+
+  """column name"""
+  created_at
+
+  """column name"""
+  error
+
+  """column name"""
+  failed
+
+  """column name"""
+  failed_view
+
+  """column name"""
+  finished_at
+
+  """column name"""
+  manifest
+
+  """column name"""
+  maps
+
+  """column name"""
+  started_at
+
+  """column name"""
+  status
+
+  """column name"""
+  updated_at
+}
+
+"""
+input type for updating data in table "map_asset_builds"
+"""
+input map_asset_builds_set_input {
+  build_id: String
+  created_at: timestamptz
+  error: String
+  failed: jsonb
+  failed_view: jsonb
+  finished_at: timestamptz
+  manifest: String
+  maps: jsonb
+  started_at: timestamptz
+  status: String
+  updated_at: timestamptz
+}
+
+"""
+Streaming cursor of the table "map_asset_builds"
+"""
+input map_asset_builds_stream_cursor_input {
+  """Stream column input with initial value"""
+  initial_value: map_asset_builds_stream_cursor_value_input!
+
+  """cursor ordering"""
+  ordering: cursor_ordering
+}
+
+"""Initial value of the column from where the streaming should start"""
+input map_asset_builds_stream_cursor_value_input {
+  build_id: String
+  created_at: timestamptz
+  error: String
+  failed: jsonb
+  failed_view: jsonb
+  finished_at: timestamptz
+  manifest: String
+  maps: jsonb
+  started_at: timestamptz
+  status: String
+  updated_at: timestamptz
+}
+
+"""
+update columns of table "map_asset_builds"
+"""
+enum map_asset_builds_update_column {
+  """column name"""
+  build_id
+
+  """column name"""
+  created_at
+
+  """column name"""
+  error
+
+  """column name"""
+  failed
+
+  """column name"""
+  failed_view
+
+  """column name"""
+  finished_at
+
+  """column name"""
+  manifest
+
+  """column name"""
+  maps
+
+  """column name"""
+  started_at
+
+  """column name"""
+  status
+
+  """column name"""
+  updated_at
+}
+
+input map_asset_builds_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: map_asset_builds_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: map_asset_builds_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: map_asset_builds_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: map_asset_builds_delete_key_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: map_asset_builds_prepend_input
+
+  """sets the columns of the filtered rows to the given values"""
+  _set: map_asset_builds_set_input
+
+  """filter the rows which have to be updated"""
+  where: map_asset_builds_bool_exp!
+}
+
+"""
 columns and relationships of "map_callouts"
 """
 type map_callouts {
@@ -44401,6 +45245,11 @@ type mutation_root {
   """Launch a Vulkan shader pre-bake Job on a GPU node"""
   bakeShaders(game_server_node_id: uuid!): SuccessOutput
 
+  """
+  Build and publish map assets from a node's CS2 install (5stack.gg only)
+  """
+  buildMapAssets(game_server_node_id: uuid!): SuccessOutput
+
   """callForOrganizer"""
   callForOrganizer(match_id: String!): SuccessOutput
 
@@ -44611,6 +45460,19 @@ type mutation_root {
   delete single row from the table: "awards"
   """
   delete_awards_by_pk(id: uuid!): awards
+
+  """
+  delete data from the table: "broadcast_huds"
+  """
+  delete_broadcast_huds(
+    """filter the rows which have to be deleted"""
+    where: broadcast_huds_bool_exp!
+  ): broadcast_huds_mutation_response
+
+  """
+  delete single row from the table: "broadcast_huds"
+  """
+  delete_broadcast_huds_by_pk(id: uuid!): broadcast_huds
 
   """
   delete data from the table: "chat_read_state"
@@ -45880,6 +46742,19 @@ type mutation_root {
   delete single row from the table: "lobby_players"
   """
   delete_lobby_players_by_pk(lobby_id: uuid!, steam_id: bigint!): lobby_players
+
+  """
+  delete data from the table: "map_asset_builds"
+  """
+  delete_map_asset_builds(
+    """filter the rows which have to be deleted"""
+    where: map_asset_builds_bool_exp!
+  ): map_asset_builds_mutation_response
+
+  """
+  delete single row from the table: "map_asset_builds"
+  """
+  delete_map_asset_builds_by_pk(build_id: String!): map_asset_builds
 
   """
   delete data from the table: "map_callouts"
@@ -47324,6 +48199,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: awards_on_conflict
   ): awards
+
+  """
+  insert data into the table: "broadcast_huds"
+  """
+  insert_broadcast_huds(
+    """the rows to be inserted"""
+    objects: [broadcast_huds_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: broadcast_huds_on_conflict
+  ): broadcast_huds_mutation_response
+
+  """
+  insert a single row into the table: "broadcast_huds"
+  """
+  insert_broadcast_huds_one(
+    """the row to be inserted"""
+    object: broadcast_huds_insert_input!
+
+    """upsert condition"""
+    on_conflict: broadcast_huds_on_conflict
+  ): broadcast_huds
 
   """
   insert data into the table: "chat_read_state"
@@ -49474,6 +50371,28 @@ type mutation_root {
     """upsert condition"""
     on_conflict: lobby_players_on_conflict
   ): lobby_players
+
+  """
+  insert data into the table: "map_asset_builds"
+  """
+  insert_map_asset_builds(
+    """the rows to be inserted"""
+    objects: [map_asset_builds_insert_input!]!
+
+    """upsert condition"""
+    on_conflict: map_asset_builds_on_conflict
+  ): map_asset_builds_mutation_response
+
+  """
+  insert a single row into the table: "map_asset_builds"
+  """
+  insert_map_asset_builds_one(
+    """the row to be inserted"""
+    object: map_asset_builds_insert_input!
+
+    """upsert condition"""
+    on_conflict: map_asset_builds_on_conflict
+  ): map_asset_builds
 
   """
   insert data into the table: "map_callouts"
@@ -52096,6 +53015,7 @@ type mutation_root {
   """Pull the game plugin registry into this panel's catalog"""
   syncPluginRegistry: SyncPluginRegistryOutput
   syncSteamFriends: SuccessOutput
+  testDownload: TestDownloadResponse
 
   """Test FACEIT Data + Downloads API connectivity for the current admin"""
   testFaceitIntegration: FaceitTestOutput
@@ -52278,6 +53198,82 @@ type mutation_root {
     """updates to execute, in order"""
     updates: [awards_updates!]!
   ): [awards_mutation_response]
+
+  """
+  update data of the table: "broadcast_huds"
+  """
+  update_broadcast_huds(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: broadcast_huds_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: broadcast_huds_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: broadcast_huds_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: broadcast_huds_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: broadcast_huds_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: broadcast_huds_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: broadcast_huds_set_input
+
+    """filter the rows which have to be updated"""
+    where: broadcast_huds_bool_exp!
+  ): broadcast_huds_mutation_response
+
+  """
+  update single row of the table: "broadcast_huds"
+  """
+  update_broadcast_huds_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: broadcast_huds_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: broadcast_huds_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: broadcast_huds_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: broadcast_huds_delete_key_input
+
+    """increments the numeric columns with given value of the filtered values"""
+    _inc: broadcast_huds_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: broadcast_huds_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: broadcast_huds_set_input
+    pk_columns: broadcast_huds_pk_columns_input!
+  ): broadcast_huds
+
+  """
+  update multiples rows of table: "broadcast_huds"
+  """
+  update_broadcast_huds_many(
+    """updates to execute, in order"""
+    updates: [broadcast_huds_updates!]!
+  ): [broadcast_huds_mutation_response]
 
   """
   update data of the table: "chat_read_state"
@@ -55534,6 +56530,76 @@ type mutation_root {
   ): [lobby_players_mutation_response]
 
   """
+  update data of the table: "map_asset_builds"
+  """
+  update_map_asset_builds(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: map_asset_builds_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: map_asset_builds_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: map_asset_builds_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: map_asset_builds_delete_key_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: map_asset_builds_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: map_asset_builds_set_input
+
+    """filter the rows which have to be updated"""
+    where: map_asset_builds_bool_exp!
+  ): map_asset_builds_mutation_response
+
+  """
+  update single row of the table: "map_asset_builds"
+  """
+  update_map_asset_builds_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: map_asset_builds_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: map_asset_builds_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: map_asset_builds_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: map_asset_builds_delete_key_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: map_asset_builds_prepend_input
+
+    """sets the columns of the filtered rows to the given values"""
+    _set: map_asset_builds_set_input
+    pk_columns: map_asset_builds_pk_columns_input!
+  ): map_asset_builds
+
+  """
+  update multiples rows of table: "map_asset_builds"
+  """
+  update_map_asset_builds_many(
+    """updates to execute, in order"""
+    updates: [map_asset_builds_updates!]!
+  ): [map_asset_builds_mutation_response]
+
+  """
   update data of the table: "map_callouts"
   """
   update_map_callouts(
@@ -58711,8 +59777,29 @@ type mutation_root {
   update data of the table: "utility_drift_scans"
   """
   update_utility_drift_scans(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: utility_drift_scans_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: utility_drift_scans_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: utility_drift_scans_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: utility_drift_scans_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: utility_drift_scans_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: utility_drift_scans_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: utility_drift_scans_set_input
@@ -58725,8 +59812,29 @@ type mutation_root {
   update single row of the table: "utility_drift_scans"
   """
   update_utility_drift_scans_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: utility_drift_scans_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: utility_drift_scans_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+    """
+    _delete_elem: utility_drift_scans_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: utility_drift_scans_delete_key_input
+
     """increments the numeric columns with given value of the filtered values"""
     _inc: utility_drift_scans_inc_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: utility_drift_scans_prepend_input
 
     """sets the columns of the filtered rows to the given values"""
     _set: utility_drift_scans_set_input
@@ -81945,6 +83053,49 @@ type query_root {
   awards_by_pk(id: uuid!): awards
 
   """
+  fetch data from the table: "broadcast_huds"
+  """
+  broadcast_huds(
+    """distinct select on columns"""
+    distinct_on: [broadcast_huds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [broadcast_huds_order_by!]
+
+    """filter the rows returned"""
+    where: broadcast_huds_bool_exp
+  ): [broadcast_huds!]!
+
+  """
+  fetch aggregated fields from the table: "broadcast_huds"
+  """
+  broadcast_huds_aggregate(
+    """distinct select on columns"""
+    distinct_on: [broadcast_huds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [broadcast_huds_order_by!]
+
+    """filter the rows returned"""
+    where: broadcast_huds_bool_exp
+  ): broadcast_huds_aggregate!
+
+  """fetch data from the table: "broadcast_huds" using primary key columns"""
+  broadcast_huds_by_pk(id: uuid!): broadcast_huds
+
+  """
   fetch data from the table: "chat_read_state"
   """
   chat_read_state(
@@ -86582,6 +87733,51 @@ type query_root {
 
   """fetch data from the table: "lobby_players" using primary key columns"""
   lobby_players_by_pk(lobby_id: uuid!, steam_id: bigint!): lobby_players
+
+  """
+  fetch data from the table: "map_asset_builds"
+  """
+  map_asset_builds(
+    """distinct select on columns"""
+    distinct_on: [map_asset_builds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [map_asset_builds_order_by!]
+
+    """filter the rows returned"""
+    where: map_asset_builds_bool_exp
+  ): [map_asset_builds!]!
+
+  """
+  fetch aggregated fields from the table: "map_asset_builds"
+  """
+  map_asset_builds_aggregate(
+    """distinct select on columns"""
+    distinct_on: [map_asset_builds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [map_asset_builds_order_by!]
+
+    """filter the rows returned"""
+    where: map_asset_builds_bool_exp
+  ): map_asset_builds_aggregate!
+
+  """
+  fetch data from the table: "map_asset_builds" using primary key columns
+  """
+  map_asset_builds_by_pk(build_id: String!): map_asset_builds
 
   """
   fetch data from the table: "map_callouts"
@@ -95416,6 +96612,63 @@ type subscription_root {
   ): [awards!]!
 
   """
+  fetch data from the table: "broadcast_huds"
+  """
+  broadcast_huds(
+    """distinct select on columns"""
+    distinct_on: [broadcast_huds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [broadcast_huds_order_by!]
+
+    """filter the rows returned"""
+    where: broadcast_huds_bool_exp
+  ): [broadcast_huds!]!
+
+  """
+  fetch aggregated fields from the table: "broadcast_huds"
+  """
+  broadcast_huds_aggregate(
+    """distinct select on columns"""
+    distinct_on: [broadcast_huds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [broadcast_huds_order_by!]
+
+    """filter the rows returned"""
+    where: broadcast_huds_bool_exp
+  ): broadcast_huds_aggregate!
+
+  """fetch data from the table: "broadcast_huds" using primary key columns"""
+  broadcast_huds_by_pk(id: uuid!): broadcast_huds
+
+  """
+  fetch data from the table in a streaming manner: "broadcast_huds"
+  """
+  broadcast_huds_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [broadcast_huds_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: broadcast_huds_bool_exp
+  ): [broadcast_huds!]!
+
+  """
   fetch data from the table: "chat_read_state"
   """
   chat_read_state(
@@ -101363,6 +102616,65 @@ type subscription_root {
     """filter the rows returned"""
     where: lobby_players_bool_exp
   ): [lobby_players!]!
+
+  """
+  fetch data from the table: "map_asset_builds"
+  """
+  map_asset_builds(
+    """distinct select on columns"""
+    distinct_on: [map_asset_builds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [map_asset_builds_order_by!]
+
+    """filter the rows returned"""
+    where: map_asset_builds_bool_exp
+  ): [map_asset_builds!]!
+
+  """
+  fetch aggregated fields from the table: "map_asset_builds"
+  """
+  map_asset_builds_aggregate(
+    """distinct select on columns"""
+    distinct_on: [map_asset_builds_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [map_asset_builds_order_by!]
+
+    """filter the rows returned"""
+    where: map_asset_builds_bool_exp
+  ): map_asset_builds_aggregate!
+
+  """
+  fetch data from the table: "map_asset_builds" using primary key columns
+  """
+  map_asset_builds_by_pk(build_id: String!): map_asset_builds
+
+  """
+  fetch data from the table in a streaming manner: "map_asset_builds"
+  """
+  map_asset_builds_stream(
+    """maximum number of rows returned in a single batch"""
+    batch_size: Int!
+
+    """cursor to stream the results returned by the query"""
+    cursor: [map_asset_builds_stream_cursor_input]!
+
+    """filter the rows returned"""
+    where: map_asset_builds_bool_exp
+  ): [map_asset_builds!]!
 
   """
   fetch data from the table: "map_callouts"
@@ -125822,6 +127134,10 @@ columns and relationships of "utility_drift_scans"
 """
 type utility_drift_scans {
   broken: Int!
+  caveats(
+    """JSON select path"""
+    path: String
+  ): jsonb
   created_at: timestamptz!
   failure_reason: String
   finished_at: timestamptz
@@ -125905,6 +127221,11 @@ type utility_drift_scans_aggregate_fields {
   variance: utility_drift_scans_variance_fields
 }
 
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input utility_drift_scans_append_input {
+  caveats: jsonb
+}
+
 """aggregate avg on columns"""
 type utility_drift_scans_avg_fields {
   broken: Float
@@ -125925,6 +127246,7 @@ input utility_drift_scans_bool_exp {
   _not: utility_drift_scans_bool_exp
   _or: [utility_drift_scans_bool_exp!]
   broken: Int_comparison_exp
+  caveats: jsonb_comparison_exp
   created_at: timestamptz_comparison_exp
   failure_reason: String_comparison_exp
   finished_at: timestamptz_comparison_exp
@@ -125958,6 +127280,27 @@ enum utility_drift_scans_constraint {
 }
 
 """
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input utility_drift_scans_delete_at_path_input {
+  caveats: [String!]
+}
+
+"""
+delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+"""
+input utility_drift_scans_delete_elem_input {
+  caveats: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input utility_drift_scans_delete_key_input {
+  caveats: String
+}
+
+"""
 input type for incrementing numeric columns in table "utility_drift_scans"
 """
 input utility_drift_scans_inc_input {
@@ -125976,6 +127319,7 @@ input type for inserting data into table "utility_drift_scans"
 """
 input utility_drift_scans_insert_input {
   broken: Int
+  caveats: jsonb
   created_at: timestamptz
   failure_reason: String
   finished_at: timestamptz
@@ -126074,6 +127418,7 @@ input utility_drift_scans_on_conflict {
 """Ordering options when selecting data from "utility_drift_scans"."""
 input utility_drift_scans_order_by {
   broken: order_by
+  caveats: order_by
   created_at: order_by
   failure_reason: order_by
   finished_at: order_by
@@ -126100,12 +127445,20 @@ input utility_drift_scans_pk_columns_input {
   id: uuid!
 }
 
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input utility_drift_scans_prepend_input {
+  caveats: jsonb
+}
+
 """
 select columns of table "utility_drift_scans"
 """
 enum utility_drift_scans_select_column {
   """column name"""
   broken
+
+  """column name"""
+  caveats
 
   """column name"""
   created_at
@@ -126164,6 +127517,7 @@ input type for updating data in table "utility_drift_scans"
 """
 input utility_drift_scans_set_input {
   broken: Int
+  caveats: jsonb
   created_at: timestamptz
   failure_reason: String
   finished_at: timestamptz
@@ -126233,6 +127587,7 @@ input utility_drift_scans_stream_cursor_input {
 """Initial value of the column from where the streaming should start"""
 input utility_drift_scans_stream_cursor_value_input {
   broken: Int
+  caveats: jsonb
   created_at: timestamptz
   failure_reason: String
   finished_at: timestamptz
@@ -126270,6 +127625,9 @@ update columns of table "utility_drift_scans"
 enum utility_drift_scans_update_column {
   """column name"""
   broken
+
+  """column name"""
+  caveats
 
   """column name"""
   created_at
@@ -126324,8 +127682,29 @@ enum utility_drift_scans_update_column {
 }
 
 input utility_drift_scans_updates {
+  """append existing jsonb value of filtered columns with new jsonb value"""
+  _append: utility_drift_scans_append_input
+
+  """
+  delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+  """
+  _delete_at_path: utility_drift_scans_delete_at_path_input
+
+  """
+  delete the array element with specified index (negative integers count from the end). throws an error if top level container is not an array
+  """
+  _delete_elem: utility_drift_scans_delete_elem_input
+
+  """
+  delete key/value pair or string element. key/value pairs are matched based on their key value
+  """
+  _delete_key: utility_drift_scans_delete_key_input
+
   """increments the numeric columns with given value of the filtered values"""
   _inc: utility_drift_scans_inc_input
+
+  """prepend existing jsonb value of filtered columns with new jsonb value"""
+  _prepend: utility_drift_scans_prepend_input
 
   """sets the columns of the filtered rows to the given values"""
   _set: utility_drift_scans_set_input
