@@ -19,6 +19,7 @@ export class SendSanctionNotifications extends WorkerHost {
     }>,
   ): Promise<void> {
     await this.notifications.notifyBannedPlayer(job.data);
+    await this.notifications.notifyWarnedPlayer(job.data);
     await this.notifications.notifyMatchPlayersOfSanction(job.data);
     await this.notifications.notifyAdminsOfBan(job.data);
   }

@@ -61,7 +61,13 @@ export const PUSH_CATEGORIES: Record<string, e_notification_types_enum[]> = {
     "DraftInvite",
   ],
   utility: ["UtilityPracticeInvite", "UtilityPracticeReady"],
-  account: ["NameChangeApproved", "NameChangeDenied", "PlayerSanctioned", "AwardGranted"],
+  account: [
+    "NameChangeApproved",
+    "NameChangeDenied",
+    "PlayerSanctioned",
+    "PlayerWarning",
+    "AwardGranted",
+  ],
   news: ["NewsPublished"],
   staff_moderation: ["MatchSupport", "MatchAbandoned", "NameChangeRequest"],
   staff_infrastructure: [

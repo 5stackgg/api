@@ -45,9 +45,10 @@ export class SanctionsController {
     serverId?: string | null;
     steam_id: string;
     type: SanctionType;
+    sanction_id?: string | null;
     user: User;
   }) {
-    const { serverId, steam_id, type, user } = data;
+    const { serverId, steam_id, type, sanction_id, user } = data;
 
     if (!user || !isRoleAbove(user.role, "moderator")) {
       throw Error("you are not allowed to remove sanctions");
@@ -57,6 +58,7 @@ export class SanctionsController {
       serverId,
       steamId: steam_id,
       type,
+      sanctionId: sanction_id,
     });
   }
 

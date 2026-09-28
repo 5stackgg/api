@@ -529,6 +529,13 @@ export class TypeSenseService {
           deaths: true,
         },
         sanctions_aggregate: {
+          __args: {
+            where: {
+              type: {
+                _neq: "warning",
+              },
+            },
+          },
           aggregate: {
             count: true,
           },

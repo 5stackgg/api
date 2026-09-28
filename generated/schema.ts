@@ -5662,7 +5662,7 @@ export interface e_notification_types_aggregate_fields {
 /** unique or primary key constraints on table "e_notification_types" */
 export type e_notification_types_constraint = 'e_notification_types_pkey'
 
-export type e_notification_types_enum = 'AwardGranted' | 'ChatMessage' | 'ClipReady' | 'DedicatedServerRconStatus' | 'DedicatedServerStatus' | 'DraftInvite' | 'EloRecompute' | 'EventReminder' | 'FormTeamSuggestion' | 'GameNodeStatus' | 'GameUpdate' | 'LeagueMatchUnscheduled' | 'LeagueProposalAccepted' | 'LeagueProposalDeclined' | 'LeagueProposalReceived' | 'LeagueRegistrationDecision' | 'LeagueRosterUndersized' | 'MatchAbandoned' | 'MatchChatMessage' | 'MatchImported' | 'MatchStatsReady' | 'MatchStatusChange' | 'MatchSupport' | 'NadeDriftScanFinished' | 'NadePracticeInvite' | 'NadePracticeReady' | 'NameChangeApproved' | 'NameChangeDenied' | 'NameChangeRequest' | 'NewsPublished' | 'PlayerReindex' | 'PlayerSanctioned' | 'ScrimAlertMatch' | 'ScrimMatchCanceled' | 'ScrimMatchScheduled' | 'ScrimRequestAccepted' | 'ScrimRequestCountered' | 'ScrimRequestDeclined' | 'ScrimRequestExpired' | 'ScrimRequestReceived' | 'ScrimTimeChanged' | 'SeasonEnded' | 'StorageScan' | 'TeamInvite' | 'TournamentCheckInClosing' | 'TournamentCheckInMissed' | 'TournamentCheckInOpen' | 'TournamentCreated' | 'TournamentInvite' | 'TournamentPartySignup' | 'TournamentReminder' | 'TournamentTeamInvite' | 'UtilityDriftScanFinished' | 'UtilityPracticeInvite' | 'UtilityPracticeReady'
+export type e_notification_types_enum = 'AwardGranted' | 'ChatMessage' | 'ClipReady' | 'DedicatedServerRconStatus' | 'DedicatedServerStatus' | 'DraftInvite' | 'EloRecompute' | 'EventReminder' | 'FormTeamSuggestion' | 'GameNodeStatus' | 'GameUpdate' | 'LeagueMatchUnscheduled' | 'LeagueProposalAccepted' | 'LeagueProposalDeclined' | 'LeagueProposalReceived' | 'LeagueRegistrationDecision' | 'LeagueRosterUndersized' | 'MatchAbandoned' | 'MatchChatMessage' | 'MatchImported' | 'MatchStatsReady' | 'MatchStatusChange' | 'MatchSupport' | 'NadeDriftScanFinished' | 'NadePracticeInvite' | 'NadePracticeReady' | 'NameChangeApproved' | 'NameChangeDenied' | 'NameChangeRequest' | 'NewsPublished' | 'PlayerReindex' | 'PlayerSanctioned' | 'PlayerWarning' | 'ScrimAlertMatch' | 'ScrimMatchCanceled' | 'ScrimMatchScheduled' | 'ScrimRequestAccepted' | 'ScrimRequestCountered' | 'ScrimRequestDeclined' | 'ScrimRequestExpired' | 'ScrimRequestReceived' | 'ScrimTimeChanged' | 'SeasonEnded' | 'StorageScan' | 'TeamInvite' | 'TournamentCheckInClosing' | 'TournamentCheckInMissed' | 'TournamentCheckInOpen' | 'TournamentCreated' | 'TournamentInvite' | 'TournamentPartySignup' | 'TournamentReminder' | 'TournamentTeamInvite' | 'UtilityDriftScanFinished' | 'UtilityPracticeInvite' | 'UtilityPracticeReady'
 
 
 /** aggregate max on columns */
@@ -6209,7 +6209,7 @@ export interface e_sanction_types_aggregate_fields {
 /** unique or primary key constraints on table "e_sanction_types" */
 export type e_sanction_types_constraint = 'e_sanction_types_pkey'
 
-export type e_sanction_types_enum = 'ban' | 'gag' | 'mute' | 'silence'
+export type e_sanction_types_enum = 'ban' | 'gag' | 'mute' | 'silence' | 'warning'
 
 
 /** aggregate max on columns */
@@ -75184,7 +75184,7 @@ export interface mutation_rootGenqlSelection{
     uninstallGamePlugin?: (SuccessOutputGenqlSelection & { __args: {force?: (Scalars['Boolean'] | null), slug: Scalars['String']} })
     unlinkDiscord?: SuccessOutputGenqlSelection
     unlinkSteamMatchHistory?: SuccessOutputGenqlSelection
-    unsanctionServerPlayer?: (SanctionResultGenqlSelection & { __args: {serverId?: (Scalars['String'] | null), steam_id: Scalars['String'], type: Scalars['String']} })
+    unsanctionServerPlayer?: (SanctionResultGenqlSelection & { __args: {sanction_id?: (Scalars['uuid'] | null), serverId?: (Scalars['String'] | null), steam_id: Scalars['String'], type: Scalars['String']} })
     /** Owner-only patch for clip title / visibility / target_steam_id. */
     updateClip?: (SuccessOutputGenqlSelection & { __args: {clip_id: Scalars['uuid'], target_steam_id?: (Scalars['String'] | null), title?: (Scalars['String'] | null), visibility?: (Scalars['String'] | null)} })
     updateCs?: (SuccessOutputGenqlSelection & { __args?: {game?: (Scalars['String'] | null), game_server_node_id?: (Scalars['uuid'] | null)} })
@@ -152215,6 +152215,7 @@ export const enumENotificationTypesEnum = {
    NewsPublished: 'NewsPublished' as const,
    PlayerReindex: 'PlayerReindex' as const,
    PlayerSanctioned: 'PlayerSanctioned' as const,
+   PlayerWarning: 'PlayerWarning' as const,
    ScrimAlertMatch: 'ScrimAlertMatch' as const,
    ScrimMatchCanceled: 'ScrimMatchCanceled' as const,
    ScrimMatchScheduled: 'ScrimMatchScheduled' as const,
@@ -152382,7 +152383,8 @@ export const enumESanctionTypesEnum = {
    ban: 'ban' as const,
    gag: 'gag' as const,
    mute: 'mute' as const,
-   silence: 'silence' as const
+   silence: 'silence' as const,
+   warning: 'warning' as const
 }
 
 export const enumESanctionTypesSelectColumn = {

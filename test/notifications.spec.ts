@@ -404,6 +404,12 @@ describe("notifications (SQL-driven)", () => {
       expect(posted).toEqual([]);
     });
 
+    it("keeps a warning between the player and staff", async () => {
+      await notify("PlayerWarning", "toxic in voice");
+
+      expect(posted).toEqual([]);
+    });
+
     it("still relays the types that are meant for it", async () => {
       // Guards the test itself: if the webhook never fired for any type, every
       // assertion above would pass for the wrong reason.

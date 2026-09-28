@@ -40,6 +40,7 @@ const PATH_BY_TYPE: Record<string, (entityId: string) => string> = {
   NameChangeApproved: () => `/settings`,
   NameChangeDenied: () => `/settings`,
   NameChangeRequest: (id) => `/players/${id}`,
+  PlayerWarning: (id) => `/players/${id}`,
   // A league notification is keyed by a bracket or a team's season entry,
   // neither of which is addressable on its own -- the season id that would
   // build /league/seasons/:id is not on the row.

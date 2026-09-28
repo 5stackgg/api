@@ -149,6 +149,64 @@ describe("hasura table metadata", () => {
     ).toEqual(["administrator"]);
   });
 
+  // A warning is a private note between the player and staff; every other
+  // sanction stays on the public record.
+  describe("player_sanctions warnings", () => {
+    const sanctions = () =>
+      tables.find(({ file }) => file === "public_player_sanctions.yaml")
+        ?.metadata;
+
+    const selectFilter = (role: string) =>
+      blocksByRole(sanctions(), "select_permissions").get(role)?.filter;
+
+    it("hides warnings from guests", () => {
+      expect(selectFilter("guest")).toEqual({
+        _and: [
+          { deleted_at: { _is_null: true } },
+          { type: { _neq: "warning" } },
+        ],
+      });
+    });
+
+    it("shows a user only their own warnings", () => {
+      expect(selectFilter("user")).toEqual({
+        _and: [
+          { deleted_at: { _is_null: true } },
+          {
+            _or: [
+              { type: { _neq: "warning" } },
+              { player_steam_id: { _eq: "X-Hasura-User-Id" } },
+            ],
+          },
+        ],
+      });
+    });
+
+    it("shows moderators every warning", () => {
+      expect(selectFilter("moderator")).toEqual({
+        deleted_at: { _is_null: true },
+      });
+    });
+
+    it("only defines select for the roles that change what is visible", () => {
+      expect(
+        [...blocksByRole(sanctions(), "select_permissions").keys()].sort(),
+      ).toEqual(["guest", "moderator", "user"]);
+    });
+
+    it("never lets a moderator give a warning an end date", () => {
+      expect(
+        blocksByRole(sanctions(), "update_permissions").get("moderator")
+          ?.filter,
+      ).toEqual({
+        _and: [
+          { deleted_at: { _is_null: true } },
+          { type: { _neq: "warning" } },
+        ],
+      });
+    });
+  });
+
   it("never lists the same name as both a column and a computed field", () => {
     const problems: Array<string> = [];
 

@@ -50,6 +50,7 @@ describe("discord routing", () => {
     "ChatMessage",
     "MatchChatMessage",
     "PlayerSanctioned",
+    "PlayerWarning",
     "MatchImported",
   ])("keeps %s off discord", (type) => {
     expect(NotificationsService.relaysToDiscord(type)).toBe(false);
@@ -230,7 +231,7 @@ describe("NotificationsService", () => {
   });
 
   describe("notifyMatchPlayersOfSanction", () => {
-    it.each(["mute", "gag", "silence"])(
+    it.each(["mute", "gag", "silence", "warning"])(
       "keeps a %s between the player and staff",
       async (type) => {
         await service.notifyMatchPlayersOfSanction(sanction(type));
@@ -250,6 +251,63 @@ describe("NotificationsService", () => {
       expect(notification.message).toContain(
         `<a href="${webDomain}/players/76561198000000001">keith</a>, was banned. (cheating)`,
       );
+    });
+  });
+
+  describe("warnings", () => {
+    const signedIn = () =>
+      hasura.query.mockResolvedValue({
+        players_by_pk: { last_sign_in_at: "2026-09-01T00:00:00.000Z" },
+      });
+
+    it("tells only the warned player, with the reason escaped", async () => {
+      signedIn();
+
+      await service.notifyWarnedPlayer({
+        ...sanction("warning"),
+        reason: `<b>spam</b> & "toxic"`,
+      });
+
+      expect(notifyPlayers).toHaveBeenCalledTimes(1);
+      const [type, notification] = notifyPlayers.mock.calls[0];
+      expect(type).toBe("PlayerWarning");
+      expect(notification).toEqual({
+        title: "You received a warning",
+        message: "&lt;b&gt;spam&lt;/b&gt; &amp; &quot;toxic&quot;",
+        role: "user",
+        entity_id: "76561198000000001",
+        steamIds: ["76561198000000001"],
+      });
+    });
+
+    it("skips a player who has never signed in", async () => {
+      hasura.query.mockResolvedValue({
+        players_by_pk: { last_sign_in_at: null },
+      });
+
+      await service.notifyWarnedPlayer(sanction("warning"));
+
+      expect(notifyPlayers).not.toHaveBeenCalled();
+    });
+
+    it.each(["ban", "mute", "gag", "silence"])("ignores a %s", async (type) => {
+      signedIn();
+
+      await service.notifyWarnedPlayer(sanction(type));
+
+      expect(hasura.query).not.toHaveBeenCalled();
+      expect(notifyPlayers).not.toHaveBeenCalled();
+    });
+
+    it("never reaches admins or the banned-player notice", async () => {
+      signedIn();
+
+      await service.notifyBannedPlayer(sanction("warning"));
+      await service.notifyAdminsOfBan(sanction("warning"));
+
+      expect(hasura.query).not.toHaveBeenCalled();
+      expect(hasura.mutation).not.toHaveBeenCalled();
+      expect(postgres.query).not.toHaveBeenCalled();
     });
   });
 });

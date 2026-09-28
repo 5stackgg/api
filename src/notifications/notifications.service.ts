@@ -281,6 +281,37 @@ export class NotificationsService {
     this.logger.log(`notified banned player ${sanction.steamId}`);
   }
 
+  async notifyWarnedPlayer(sanction: {
+    sanctionId: string;
+    steamId: string;
+    type: string;
+    reason?: string | null;
+  }): Promise<void> {
+    if (sanction.type !== "warning") {
+      return;
+    }
+
+    const { players_by_pk } = await this.hasura.query({
+      players_by_pk: {
+        __args: { steam_id: sanction.steamId },
+        last_sign_in_at: true,
+      },
+    });
+    if (!players_by_pk?.last_sign_in_at) {
+      return;
+    }
+
+    await this.notifyPlayers("PlayerWarning", {
+      title: "You received a warning",
+      message: NotificationsService.escapeHtml(sanction.reason),
+      role: "user",
+      entity_id: sanction.steamId,
+      steamIds: [sanction.steamId],
+    });
+
+    this.logger.log(`notified warned player ${sanction.steamId}`);
+  }
+
   async send(
     type: e_notification_types_enum,
     notification: {

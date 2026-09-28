@@ -1136,6 +1136,19 @@ describe("notificationUrl", () => {
     ).toBe("/matches/m-1");
   });
 
+  it("lands a warning on the warned player's profile, whatever the reason says", () => {
+    expect(
+      notificationUrl(
+        {
+          type: "PlayerWarning",
+          message: "&lt;a href=&quot;/elsewhere&quot;&gt;read&lt;/a&gt;",
+          entity_id: "76561198000000001",
+        },
+        webDomain,
+      ),
+    ).toBe("/players/76561198000000001");
+  });
+
   it("strips the reminder window off a tournament entity id", () => {
     expect(
       notificationUrl(
