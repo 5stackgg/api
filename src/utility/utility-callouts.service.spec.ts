@@ -146,3 +146,170 @@ describe("auto naming", () => {
     ).resolves.toBe("");
   });
 });
+
+describe("UtilityCalloutsService.calloutsUrl", () => {
+  const originalCdn = process.env.MAP_MESH_CDN;
+  const originalFetch = global.fetch;
+
+  const pointer = {
+    version: 1,
+    build: "25537370",
+    manifest: "25537370/manifest.json",
+  };
+  const manifest = {
+    version: 1,
+    build: "25537370",
+    maps: {
+      de_mirage: { callouts: "25000000/de_mirage.callouts.json" },
+      de_nuke: { callouts: "25537370/de_nuke.callouts.json" },
+      de_vertigo: { tri: "25537370/de_vertigo.tri.gz" },
+    },
+  };
+
+  const respond = (body: unknown, status = 200) => ({
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => body,
+  });
+
+  let files: Record<string, { body?: unknown; status: number }>;
+  let fetchMock: jest.Mock;
+  let service: UtilityCalloutsService;
+
+  const fetched = (key: string) =>
+    fetchMock.mock.calls.filter(
+      ([url]) => url === `https://demo-dl.5stack.gg/maps/${key}`,
+    ).length;
+
+  beforeEach(() => {
+    delete process.env.MAP_MESH_CDN;
+    files = {
+      "latest.json": { body: pointer, status: 200 },
+      "25537370/manifest.json": { body: manifest, status: 200 },
+    };
+    fetchMock = jest.fn(async (url: string) => {
+      const key = url.replace("https://demo-dl.5stack.gg/maps/", "");
+      const file = files[key] ?? { status: 404 };
+      return respond(file.body, file.status);
+    });
+    global.fetch = fetchMock as any;
+    service = new UtilityCalloutsService(
+      { warn: jest.fn() } as never,
+      null as never,
+    );
+  });
+
+  afterEach(() => {
+    if (originalCdn === undefined) {
+      delete process.env.MAP_MESH_CDN;
+    } else {
+      process.env.MAP_MESH_CDN = originalCdn;
+    }
+    global.fetch = originalFetch;
+    jest.restoreAllMocks();
+  });
+
+  it("keeps MAP_MESH_CDN as a flat directory", async () => {
+    process.env.MAP_MESH_CDN = "https://mirror.test/maps/1";
+
+    await expect(service.calloutsUrl("de_mirage")).resolves.toBe(
+      "https://mirror.test/maps/1/de_mirage.callouts.json",
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("reads the key the latest manifest names, deduped into an older build", async () => {
+    await expect(service.calloutsUrl("de_mirage")).resolves.toBe(
+      "https://demo-dl.5stack.gg/maps/25000000/de_mirage.callouts.json",
+    );
+    await expect(service.calloutsUrl("de_nuke")).resolves.toBe(
+      "https://demo-dl.5stack.gg/maps/25537370/de_nuke.callouts.json",
+    );
+    expect(fetched("latest.json")).toBe(1);
+    expect(fetched("25537370/manifest.json")).toBe(1);
+  });
+
+  it("falls back to the pinned build for a map the manifest does not list", async () => {
+    await expect(service.calloutsUrl("de_unknown")).resolves.toBe(
+      "https://demo-dl.5stack.gg/maps/24957633/de_unknown.callouts.json",
+    );
+  });
+
+  it("falls back per asset when the map's entry has no callouts", async () => {
+    await expect(service.calloutsUrl("de_vertigo")).resolves.toBe(
+      "https://demo-dl.5stack.gg/maps/24957633/de_vertigo.callouts.json",
+    );
+  });
+
+  it("follows the manifest revision latest.json names", async () => {
+    files["latest.json"] = {
+      body: { ...pointer, manifest: "25537370/manifest.r2.json" },
+      status: 200,
+    };
+    files["25537370/manifest.r2.json"] = {
+      body: {
+        ...manifest,
+        maps: { de_anubis: { callouts: "25537370/de_anubis.callouts.json" } },
+      },
+      status: 200,
+    };
+
+    await expect(service.calloutsUrl("de_anubis")).resolves.toBe(
+      "https://demo-dl.5stack.gg/maps/25537370/de_anubis.callouts.json",
+    );
+    expect(fetched("25537370/manifest.json")).toBe(0);
+  });
+
+  it.each([
+    ["latest.json", { ...pointer, version: 2 }],
+    ["25537370/manifest.json", { ...manifest, version: 2 }],
+  ])("treats an unknown %s version like an outage", async (key, body) => {
+    files[key] = { body, status: 200 };
+
+    await expect(service.calloutsUrl("de_nuke")).resolves.toBe(
+      "https://demo-dl.5stack.gg/maps/24957633/de_nuke.callouts.json",
+    );
+  });
+
+  it("falls back to the pinned build when latest.json is unreachable", async () => {
+    files["latest.json"] = { status: 502 };
+
+    await expect(service.calloutsUrl("de_mirage")).resolves.toBe(
+      "https://demo-dl.5stack.gg/maps/24957633/de_mirage.callouts.json",
+    );
+    await service.calloutsUrl("de_nuke");
+    expect(fetched("latest.json")).toBe(1);
+  });
+
+  it("keeps the last manifest through a failed refresh", async () => {
+    const now = jest.spyOn(Date, "now").mockReturnValue(1_000_000);
+    await service.calloutsUrl("de_nuke");
+
+    files["latest.json"] = { status: 502 };
+    now.mockReturnValue(1_000_000 + 11 * 60 * 1000);
+
+    await expect(service.calloutsUrl("de_nuke")).resolves.toBe(
+      "https://demo-dl.5stack.gg/maps/25537370/de_nuke.callouts.json",
+    );
+    expect(fetched("latest.json")).toBe(2);
+  });
+
+  it("syncs from the resolved URL", async () => {
+    files["25000000/de_mirage.callouts.json"] = {
+      body: {
+        callouts: [{ name: "Palace", boxes: [box([0, 0, 0], [10, 10, 10])] }],
+      },
+      status: 200,
+    };
+    const write = jest
+      .spyOn(service as any, "write")
+      .mockResolvedValue(undefined);
+
+    await expect(service.sync("de_mirage_night")).resolves.toBe(1);
+    expect(write).toHaveBeenCalledWith(
+      "de_mirage",
+      [{ name: "Palace", boxes: [box([0, 0, 0], [10, 10, 10])] }],
+      "cdn",
+    );
+  });
+});

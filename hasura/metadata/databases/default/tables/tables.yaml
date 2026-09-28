@@ -102,6 +102,7 @@
 - "!include public_league_teams.yaml"
 - "!include public_lobbies.yaml"
 - "!include public_lobby_players.yaml"
+- "!include public_map_asset_builds.yaml"
 - "!include public_map_callouts.yaml"
 - "!include public_map_pools.yaml"
 - "!include public_maps.yaml"

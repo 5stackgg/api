@@ -34,7 +34,8 @@ type Modules =
   | "Scrims"
   | "Chat"
   | "Utility"
-  | "Voice";
+  | "Voice"
+  | "MapAssets";
 
 export type UseQueueOptions = {
   concurrency?: number;

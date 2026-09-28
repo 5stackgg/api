@@ -1,5 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PostgresService } from "../postgres/postgres.service";
+import {
+  MapAssetsManifest,
+  MapAssetsPointer,
+  MapAssetsService,
+} from "../map-assets/map-assets.service";
 
 export type CalloutBox = {
   min: [number, number, number];
@@ -24,13 +29,13 @@ type CalloutRow = {
 
 @Injectable()
 export class UtilityCalloutsService {
-  // Callouts are published beside the collision meshes under one CS2 build, so
-  // this has to move with the browser's pin (web/nuxt.config.ts
-  // public.mapMeshCdn) and the demo parser's default -- otherwise the panel and
-  // the API can name the same throw differently after a map patch. Override
-  // with MAP_MESH_CDN.
-  private static readonly DEFAULT_CDN =
-    "https://demo-dl.5stack.gg/maps/24957633";
+  // Callouts resolve the same way the panel and the demo parser resolve meshes
+  // (latest.json -> that build's manifest), otherwise the two can name the same
+  // throw differently after a map patch. MAP_MESH_CDN pins a flat
+  // <base>/<map>.callouts.json directory instead.
+  private static readonly LATEST_TTL_MS = 10 * 60 * 1000;
+
+  private static readonly LATEST_RETRY_MS = 30 * 1000;
 
   // How far outside every place volume a point may sit and still be named. The
   // volumes do not tile a map, and a grenade rests on top of geometry as often
@@ -71,6 +76,13 @@ export class UtilityCalloutsService {
     string,
     { rows: CalloutRow[]; expires: number }
   >();
+
+  private latest: { manifest: MapAssetsManifest | null; expires: number } = {
+    manifest: null,
+    expires: 0,
+  };
+
+  private readonly manifests = new Map<string, MapAssetsManifest>();
 
   constructor(
     private readonly logger: Logger,
@@ -120,8 +132,8 @@ export class UtilityCalloutsService {
 
   /**
    * Pull the published extract for one map. Best effort on purpose: the CDN is
-   * not on the critical path of anything, and a jsDelivr blip must leave the
-   * rows already in the table alone rather than emptying the table.
+   * not on the critical path of anything, and a CDN blip must leave the rows
+   * already in the table alone rather than emptying the table.
    */
   public async sync(mapName: string): Promise<number> {
     const map = UtilityCalloutsService.normalizeMapName(mapName);
@@ -129,11 +141,13 @@ export class UtilityCalloutsService {
       return 0;
     }
 
-    const base = process.env.MAP_MESH_CDN || UtilityCalloutsService.DEFAULT_CDN;
-
     let callouts: MapCallout[];
     try {
-      const response = await fetch(`${base}/${map}.callouts.json`);
+      const url = await this.calloutsUrl(map);
+      if (!url) {
+        return 0;
+      }
+      const response = await fetch(url);
       if (!response.ok) {
         return 0;
       }
@@ -152,6 +166,69 @@ export class UtilityCalloutsService {
 
     await this.write(map, callouts, "cdn");
     return callouts.length;
+  }
+
+  public async calloutsUrl(map: string): Promise<string | null> {
+    const base = process.env.MAP_MESH_CDN;
+    if (base) {
+      return `${base}/${map}.callouts.json`;
+    }
+
+    return MapAssetsService.assetUrl(
+      await this.latestManifest(),
+      map,
+      "callouts",
+    );
+  }
+
+  // A failed refresh keeps serving the last manifest that loaded; only a
+  // process that has never read latest.json falls back to the pinned build.
+  // latest.json may name a manifest revision (<build>/manifest.r2.json), so its
+  // key is followed as given.
+  private async latestManifest(): Promise<MapAssetsManifest | null> {
+    if (this.latest.expires > Date.now()) {
+      return this.latest.manifest;
+    }
+
+    try {
+      const pointer =
+        await MapAssetsService.fetchIndex<MapAssetsPointer>("latest.json");
+      if (pointer && pointer.version !== MapAssetsService.INDEX_VERSION) {
+        throw new Error(`latest.json is version ${pointer.version}`);
+      }
+      if (!MapAssetsService.isSafeKey(pointer?.manifest)) {
+        throw new Error("latest.json names no manifest");
+      }
+
+      let manifest = this.manifests.get(pointer.manifest);
+      if (!manifest) {
+        manifest = await MapAssetsService.fetchIndex<MapAssetsManifest>(
+          pointer.manifest,
+        );
+        if (!manifest?.maps) {
+          throw new Error(`${pointer.manifest} is not published`);
+        }
+        if (manifest.version !== MapAssetsService.INDEX_VERSION) {
+          throw new Error(`${pointer.manifest} is version ${manifest.version}`);
+        }
+        this.manifests.set(pointer.manifest, manifest);
+      }
+
+      this.latest = {
+        manifest,
+        expires: Date.now() + UtilityCalloutsService.LATEST_TTL_MS,
+      };
+    } catch (error) {
+      this.logger.warn(
+        `unable to resolve the latest map assets: ${(error as Error)?.message}`,
+      );
+      this.latest = {
+        manifest: this.latest.manifest,
+        expires: Date.now() + UtilityCalloutsService.LATEST_RETRY_MS,
+      };
+    }
+
+    return this.latest.manifest;
   }
 
   public async syncAll(): Promise<{ maps: number; callouts: number }> {

@@ -1,0 +1,21 @@
+table:
+  name: map_asset_builds
+  schema: public
+select_permissions:
+  - role: administrator
+    permission:
+      columns:
+        - build_id
+        - status
+        - started_at
+        - finished_at
+        - manifest
+        - maps
+        - failed
+        - failed_view
+        - error
+        - created_at
+        - updated_at
+      filter: {}
+      allow_aggregations: true
+    comment: ""

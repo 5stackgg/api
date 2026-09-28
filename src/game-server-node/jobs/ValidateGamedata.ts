@@ -9,11 +9,13 @@ import {
   GameServerNodeService,
   GamedataValidationEntry,
 } from "../game-server-node.service";
+import { MapAssetsService } from "src/map-assets/map-assets.service";
 
 type ValidateGamedataData = {
   gameServerNodeId: string;
   buildId: number;
   branch?: string;
+  buildMapAssets?: boolean;
 };
 
 const GAMEDATA_ROUTING = {
@@ -36,11 +38,31 @@ export class ValidateGamedata extends WorkerHost {
     protected readonly logger: Logger,
     protected readonly notifications: NotificationsService,
     protected readonly gameServerNodeService: GameServerNodeService,
+    protected readonly mapAssets: MapAssetsService,
   ) {
     super();
   }
 
+  // The map-assets build for a new CS2 version waits for this validation,
+  // pass or fail, so the two never share the node's install at once.
   async process(job: Job<ValidateGamedataData>): Promise<void> {
+    try {
+      await this.validate(job);
+    } finally {
+      if (job.data.buildMapAssets) {
+        await this.mapAssets
+          .queueBuild(job.data.gameServerNodeId, job.data.buildId)
+          .catch((error) => {
+            this.logger.warn(
+              `[map-assets] unable to queue build ${job.data.buildId}`,
+              error,
+            );
+          });
+      }
+    }
+  }
+
+  private async validate(job: Job<ValidateGamedataData>): Promise<void> {
     const { gameServerNodeId, buildId } = job.data;
     const branch = job.data.branch ?? "public";
 

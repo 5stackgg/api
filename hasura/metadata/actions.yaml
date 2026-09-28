@@ -165,6 +165,14 @@ actions:
     permissions:
       - role: administrator
     comment: Launch a Vulkan shader pre-bake Job on a GPU node
+  - name: buildMapAssets
+    definition:
+      kind: synchronous
+      handler: '{{HASURA_GRAPHQL_ACTIONS_HOOK}}'
+      forward_client_headers: true
+    permissions:
+      - role: administrator
+    comment: Build and publish map assets from a node's CS2 install (5stack.gg only)
   - name: callForOrganizer
     definition:
       kind: synchronous
