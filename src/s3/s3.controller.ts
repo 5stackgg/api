@@ -52,6 +52,35 @@ export class S3Controller {
     }
   }
 
+  // Reads back the file testUpload wrote, the way a download is served: through
+  // a presigned link. The browser can't do this itself, since most buckets
+  // don't allow the panel's site to read them directly.
+  @HasuraAction()
+  public async testDownload() {
+    try {
+      const response = await fetch(
+        await this.s3.getPresignedUrl("hello.txt", undefined, 60, "get"),
+      );
+
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText}`);
+      }
+
+      if (!(await response.text()).startsWith("world")) {
+        throw new Error(
+          "the test file came back different from what was written",
+        );
+      }
+
+      return {};
+    } catch (error) {
+      this.logger.error(`Failed to download file from S3: ${error.message}`);
+      return {
+        error: error.message,
+      };
+    }
+  }
+
   @HasuraAction()
   public async getTestUploadLink() {
     try {
