@@ -252,6 +252,56 @@ export class ChatGateway {
     }
   }
 
+  @SubscribeMessage("lobby:react")
+  async react(
+    @MessageBody()
+    data: {
+      id: string;
+      type: ChatLobbyType;
+      messageId: string;
+      reaction: unknown;
+      requestId?: string;
+    },
+    @ConnectedSocket() client: FiveStackWebSocketClient,
+  ) {
+    if (!client.user) {
+      return;
+    }
+
+    if (
+      !ChatGateway.isLobbyType(data?.type) ||
+      typeof data.id !== "string" ||
+      typeof data.messageId !== "string"
+    ) {
+      return;
+    }
+
+    const requestId =
+      typeof data.requestId === "string" ? data.requestId : undefined;
+
+    if (!ChatService.isReaction(data.reaction)) {
+      this.sendError(client, "react", ChatErrorCode.Invalid, requestId);
+      return;
+    }
+
+    const result = await this.chat.toggleReaction(
+      data.type,
+      data.id,
+      data.messageId,
+      data.reaction,
+      client.user,
+    );
+
+    if (result.toggled === false) {
+      this.sendError(client, "react", result.code, requestId);
+      return;
+    }
+
+    if (requestId) {
+      this.sendAck(client, "react", requestId, data.messageId);
+    }
+  }
+
   private static isLobbyType(value: unknown): value is ChatLobbyType {
     return Object.values(ChatLobbyType).includes(value as ChatLobbyType);
   }

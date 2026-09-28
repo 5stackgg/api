@@ -12,6 +12,7 @@
 - "!include public_custom_pages.yaml"
 - "!include public_db_backups.yaml"
 - "!include public_direct_conversations.yaml"
+- "!include public_direct_message_reactions.yaml"
 - "!include public_direct_messages.yaml"
 - "!include public_draft_game_picks.yaml"
 - "!include public_draft_game_players.yaml"

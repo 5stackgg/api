@@ -687,6 +687,319 @@ describe("chat edits and self deletes (SQL-driven)", () => {
     });
   });
 
+  describe("reactions", () => {
+    const reactionsKey = (matchId: string, type = "match") =>
+      `chat_reactions_${type}_${matchId}`;
+
+    const reactionsExpireAt = async (
+      matchId: string,
+      id: string,
+      type = "match",
+    ) =>
+      (
+        (await redis.call(
+          "HPEXPIRETIME",
+          reactionsKey(matchId, type),
+          "FIELDS",
+          1,
+          id,
+        )) as number[]
+      )[0];
+
+    const player = (index: number) =>
+      ({
+        steam_id: String(76561199620000000n + BigInt(index)),
+        name: `Player ${index}`,
+        role: "user",
+      }) as any;
+
+    const seat = (matchId: string, user: any, type = "match") =>
+      redis.hset(
+        `chat:${type}:${matchId}`,
+        user.steam_id,
+        JSON.stringify({ user: { steam_id: user.steam_id } }),
+      );
+
+    const react = (
+      matchId: string,
+      id: string,
+      user: any,
+      reaction = "heart",
+      type = ChatLobbyType.Match,
+    ) => chat.toggleReaction(type, matchId, id, reaction, user);
+
+    const stored = async (matchId: string, id: string, type = "match") =>
+      JSON.parse((await redis.hget(reactionsKey(matchId, type), id)) ?? "null");
+
+    it("gives reactions the message's own expiry, through an edit", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      await seat(matchId, user);
+
+      const sent = await chat.sendMessageToChat(
+        ChatLobbyType.Match,
+        matchId,
+        user,
+        "typo",
+        true,
+      );
+      const id = sent.accepted ? sent.messageId : "";
+      const expiry = await expiresAt(matchId, id);
+
+      await react(matchId, id, user);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      await react(matchId, id, user, "fire");
+
+      expect(expiry).toBeGreaterThan(Date.now());
+      expect(await reactionsExpireAt(matchId, id)).toBe(expiry);
+
+      await edit(matchId, id, user);
+
+      expect(await expiresAt(matchId, id)).toBe(expiry);
+      expect(await reactionsExpireAt(matchId, id)).toBe(expiry);
+      expect(await stored(matchId, id)).toEqual({
+        heart: [user.steam_id],
+        fire: [user.steam_id],
+      });
+    });
+
+    it("keeps an expiry to the millisecond, and none for a message with none", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      await seat(matchId, user);
+      const timed = await place(matchId, user);
+      const untimed = await place(matchId, user);
+      const at = Date.now() + 123_457;
+      await redis.call("HPEXPIREAT", key(matchId), at, "FIELDS", 1, timed);
+
+      await react(matchId, timed, user);
+      await react(matchId, untimed, user);
+
+      expect(await reactionsExpireAt(matchId, timed)).toBe(at);
+      expect(await reactionsExpireAt(matchId, untimed)).toBe(-1);
+    });
+
+    it("lets reactions go when the message does", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      await seat(matchId, user);
+      const id = await place(matchId, user);
+      await redis.call("HPEXPIRE", key(matchId), 150, "FIELDS", 1, id);
+
+      await react(matchId, id, user);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      expect(await redis.exists(reactionsKey(matchId))).toBe(0);
+    });
+
+    it("counts twenty players reacting at once exactly", async () => {
+      const matchId = randomUUID();
+      const id = await place(matchId, await author());
+      const players = Array.from({ length: 20 }, (_, index) => player(index));
+      await Promise.all(players.map((user) => seat(matchId, user)));
+
+      const on = await Promise.all(
+        players.flatMap((user) => [
+          react(matchId, id, user, "heart"),
+          react(matchId, id, user, "fire"),
+        ]),
+      );
+
+      expect(on.every((result) => result.toggled)).toBe(true);
+
+      const state = await stored(matchId, id);
+      expect([...state.heart].sort()).toEqual(
+        players.map(({ steam_id }) => steam_id).sort(),
+      );
+      expect(state.fire).toHaveLength(20);
+
+      await Promise.all(
+        players.flatMap((user) => [
+          react(matchId, id, user, "heart"),
+          react(matchId, id, user, "fire"),
+        ]),
+      );
+
+      expect(await redis.hexists(reactionsKey(matchId), id)).toBe(0);
+    });
+
+    it("cancels one player's toggles out in pairs, however they race", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      await seat(matchId, user);
+      const id = await place(matchId, user);
+
+      await Promise.all(
+        Array.from({ length: 6 }, () => react(matchId, id, user)),
+      );
+
+      expect(await redis.hexists(reactionsKey(matchId), id)).toBe(0);
+    });
+
+    it("stores steam ids as strings, whole", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      await seat(matchId, user);
+      const id = await place(matchId, user);
+
+      await react(matchId, id, user);
+
+      expect(await redis.hget(reactionsKey(matchId), id)).toBe(
+        JSON.stringify({ heart: [user.steam_id] }),
+      );
+    });
+
+    it("gives a message that is not there no reactions", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      await seat(matchId, user);
+      const expired = await place(matchId, user);
+      await redis.call("HPEXPIRE", key(matchId), 1, "FIELDS", 1, expired);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+
+      for (const id of [randomUUID(), expired]) {
+        await expect(react(matchId, id, user)).resolves.toEqual({
+          toggled: false,
+          code: ChatErrorCode.NotFound,
+        });
+      }
+
+      expect(await redis.exists(reactionsKey(matchId))).toBe(0);
+    });
+
+    it("refuses the ninth toggle in a second, and allows more once it passes", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      await seat(matchId, user);
+      const id = await place(matchId, user);
+
+      for (let toggle = 0; toggle < ChatService.REACTION_RATE_LIMIT; toggle++) {
+        await expect(react(matchId, id, user)).resolves.toMatchObject({
+          toggled: true,
+        });
+      }
+
+      await expect(react(matchId, id, user)).resolves.toEqual({
+        toggled: false,
+        code: ChatErrorCode.RateLimited,
+      });
+
+      const ttl = await redis.pttl(`chat:reaction-rate:${user.steam_id}`);
+      expect(ttl).toBeGreaterThan(0);
+      expect(ttl).toBeLessThanOrEqual(1_000);
+
+      await new Promise((resolve) => setTimeout(resolve, ttl + 50));
+
+      await expect(react(matchId, id, user)).resolves.toMatchObject({
+        toggled: true,
+      });
+    });
+
+    it("takes a message's reactions with it when it is deleted", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      await seat(matchId, user);
+      const id = await place(matchId, user);
+      const kept = await place(matchId, user);
+
+      await react(matchId, id, user);
+      await react(matchId, kept, user);
+
+      await expect(
+        chat.deleteMessage(ChatLobbyType.Match, matchId, id, user),
+      ).resolves.toEqual({ deleted: true });
+
+      expect(await redis.hexists(reactionsKey(matchId), id)).toBe(0);
+      expect(await stored(matchId, kept)).toEqual({ heart: [user.steam_id] });
+    });
+
+    it("puts each message's reactions in the room's history", async () => {
+      const user = await author();
+      const matchId = randomUUID();
+      await seat(matchId, user);
+      const reacted = await place(matchId, user);
+      const quiet = await place(matchId, user);
+
+      await react(matchId, reacted, user, "wow");
+
+      const history = await chat["getMessages"](ChatLobbyType.Match, matchId);
+
+      expect(
+        Object.fromEntries(history.map(({ id, reactions }) => [id, reactions])),
+      ).toEqual({
+        [reacted]: { wow: [user.steam_id] },
+        [quiet]: {},
+      });
+    });
+
+    it("carries reactions from a draft into its match in the same step", async () => {
+      const organizer = { ...(await author()), role: "match_organizer" };
+      const draftId = randomUUID();
+      const matchId = randomUUID();
+      const id = randomUUID();
+      await seat(draftId, organizer, "draft");
+      await redis.hset(`chat_draft_${draftId}`, id, written(id, organizer));
+
+      await react(draftId, id, organizer, "sad", ChatLobbyType.Draft);
+
+      await chat.migrateLobbyMessages(
+        ChatLobbyType.Draft,
+        draftId,
+        ChatLobbyType.Match,
+        matchId,
+      );
+
+      expect(await stored(matchId, id)).toEqual({
+        sad: [organizer.steam_id],
+      });
+      expect(await expiresAt(matchId, id)).toBeGreaterThan(Date.now());
+      expect(await reactionsExpireAt(matchId, id)).toBe(
+        await expiresAt(matchId, id),
+      );
+      expect(await redis.exists(reactionsKey(draftId, "draft"))).toBe(0);
+      expect(await chat["getMessages"](ChatLobbyType.Match, matchId)).toEqual([
+        expect.objectContaining({
+          id,
+          reactions: { sad: [organizer.steam_id] },
+        }),
+      ]);
+
+      await seat(draftId, organizer, "draft");
+
+      await expect(
+        react(draftId, id, organizer, "sad", ChatLobbyType.Draft),
+      ).resolves.toEqual({ toggled: false, code: ChatErrorCode.NotFound });
+      expect(await redis.exists(reactionsKey(draftId, "draft"))).toBe(0);
+    });
+
+    it("leaves no reactions behind when the match room keeps nothing", async () => {
+      const organizer = { ...(await author()), role: "match_organizer" };
+      const draftId = randomUUID();
+      const matchId = randomUUID();
+      const id = randomUUID();
+      await seat(draftId, organizer, "draft");
+      await redis.hset(`chat_draft_${draftId}`, id, written(id, organizer));
+      await react(draftId, id, organizer, "sad", ChatLobbyType.Draft);
+
+      chat.updateChatMessageTTL(ChatLobbyType.Match, 0);
+
+      try {
+        await chat.migrateLobbyMessages(
+          ChatLobbyType.Draft,
+          draftId,
+          ChatLobbyType.Match,
+          matchId,
+        );
+      } finally {
+        chat.updateChatMessageTTL(ChatLobbyType.Match, 60 * 60);
+      }
+
+      expect(await redis.exists(key(matchId))).toBe(0);
+      expect(await redis.exists(reactionsKey(matchId))).toBe(0);
+      expect(await redis.exists(reactionsKey(draftId, "draft"))).toBe(0);
+    });
+  });
+
   describe("the bell's preview", () => {
     const row = async (
       steamId: string,

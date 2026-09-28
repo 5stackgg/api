@@ -7,4 +7,5 @@ export enum ChatErrorCode {
   Gagged = "gagged",
   NotFound = "not_found",
   WindowClosed = "window_closed",
+  RateLimited = "rate_limited",
 }

@@ -14,10 +14,11 @@ describe("ChatService direct messages", () => {
     hset: jest.fn(),
     hget: jest.fn().mockResolvedValue(null),
     hgetall: jest.fn().mockResolvedValue({}),
-    hdel: jest.fn(),
+    hdel: jest.fn().mockResolvedValue(1),
     get: jest.fn().mockResolvedValue(null),
     set: jest.fn(),
     del: jest.fn(),
+    keys: jest.fn().mockResolvedValue([]),
     expire: jest.fn(),
     zadd: jest.fn(),
     zrevrange: jest.fn().mockResolvedValue([]),
@@ -39,6 +40,8 @@ describe("ChatService direct messages", () => {
   let gagged: boolean;
   let audited: boolean;
   let editAuditIds: string[];
+  let directReactions: Record<string, string[]> | null;
+  let directReactionFailure: (Error & { code?: string }) | undefined;
   // The one direct message the fake database holds, if a test put one there.
   let directMessage:
     | {
@@ -68,6 +71,20 @@ describe("ChatService direct messages", () => {
 
       if (sql.includes("SELECT 1 FROM public.chat_message_deletions")) {
         return [{ deleted: audited }];
+      }
+
+      if (sql.includes("INSERT INTO public.direct_message_reactions")) {
+        if (directReactionFailure) {
+          throw directReactionFailure;
+        }
+        return [];
+      }
+
+      if (sql.includes("SELECT reactions.reactions")) {
+        return directMessage?.id === bindings[0] &&
+          directMessage.roomId === bindings[1]
+          ? [{ reactions: directReactions }]
+          : [];
       }
 
       if (sql.includes("INSERT INTO public.chat_message_edits")) {
@@ -328,6 +345,7 @@ describe("ChatService direct messages", () => {
     // room would otherwise leave them seated for every test after it.
     redis.hget.mockResolvedValue(null);
     redis.hgetall.mockResolvedValue({});
+    redis.hdel.mockResolvedValue(1);
     redis.get.mockResolvedValue(null);
     redis.eval.mockResolvedValue([1, 1]);
     notifications.retractChatMessage.mockResolvedValue(undefined);
@@ -348,6 +366,8 @@ describe("ChatService direct messages", () => {
     gagged = false;
     audited = false;
     editAuditIds = [];
+    directReactions = null;
+    directReactionFailure = undefined;
     rcon.send.mockResolvedValue(undefined);
     rcon.connect.mockResolvedValue(rcon);
 
@@ -2191,6 +2211,547 @@ describe("ChatService direct messages", () => {
           "fixed",
         );
         expect(notifications.retractChatMessage).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("reactions", () => {
+    const MESSAGE_ID = "7b1c2d3e-4f5a-4b6c-8d7e-9f0a1b2c3d4e";
+    const ROOM = "chat_match_m-1";
+    const REACTIONS = "chat_reactions_match_m-1";
+
+    let hashes: Record<string, Record<string, string>>;
+    let rates: Record<string, number>;
+
+    const as = (steamId: string, overrides: Record<string, unknown> = {}) =>
+      ({
+        steam_id: steamId,
+        name: "Someone",
+        role: "user",
+        ...overrides,
+      }) as any;
+
+    const react = (
+      reaction: unknown = "heart",
+      user = as(ME),
+      type = ChatLobbyType.Match,
+      id = "m-1",
+      messageId = MESSAGE_ID,
+    ) => service.toggleReaction(type, id, messageId, reaction, user);
+
+    const broadcasts = (event: string) =>
+      redis.publish.mock.calls
+        .map(([, payload]) => JSON.parse(payload))
+        .filter((published) => published.event === event);
+
+    const toggles = () =>
+      redis.eval.mock.calls.filter(([script]) => script.includes("cjson"));
+
+    const flush = () => new Promise((resolve) => setImmediate(resolve));
+
+    beforeEach(() => {
+      rates = {};
+      hashes = {
+        [ROOM]: {
+          [MESSAGE_ID]: JSON.stringify({
+            id: MESSAGE_ID,
+            message: "gg",
+            timestamp: new Date().toISOString(),
+            source: "web",
+            from: { role: "user", name: "Friend", steam_id: FRIEND },
+          }),
+        },
+      };
+
+      // Everyone asked about is seated in the room; who may be in it at all
+      // is the joining tests' subject.
+      redis.hget.mockImplementation(async (key: string, field: string) => {
+        if (key.startsWith("chat:")) {
+          return JSON.stringify({ user: { steam_id: field } });
+        }
+        return hashes[key]?.[field] ?? null;
+      });
+      redis.hgetall.mockImplementation(async (key: string) => {
+        if (key === "chat:match:m-1") {
+          return { [FRIEND]: JSON.stringify({ user: { steam_id: FRIEND } }) };
+        }
+        return { ...hashes[key] };
+      });
+      redis.hdel.mockImplementation(async (key: string, field: string) => {
+        delete hashes[key]?.[field];
+        return 1;
+      });
+      redis.eval.mockImplementation(
+        async (script: string, _keys: number, ...args: any[]) => {
+          if (script.includes("INCR")) {
+            const [key] = args;
+            rates[key] = (rates[key] ?? 0) + 1;
+            return rates[key];
+          }
+
+          if (script.includes("cjson")) {
+            const [roomKey, reactionsKey, messageId, reaction, steamId] = args;
+
+            if (!hashes[roomKey]?.[messageId]) {
+              return null;
+            }
+
+            const state = JSON.parse(hashes[reactionsKey]?.[messageId] ?? "{}");
+            const holders: string[] = state[reaction] ?? [];
+            state[reaction] = holders.includes(steamId)
+              ? holders.filter((holder) => holder !== steamId)
+              : [...holders, steamId];
+            if (state[reaction].length === 0) {
+              delete state[reaction];
+            }
+
+            hashes[reactionsKey] = {
+              ...hashes[reactionsKey],
+              [messageId]: JSON.stringify(state),
+            };
+            return JSON.stringify(state);
+          }
+
+          return [1, 1];
+        },
+      );
+    });
+
+    it("toggles a reaction on and then off", async () => {
+      await expect(react()).resolves.toEqual({
+        toggled: true,
+        reactions: { heart: [ME] },
+      });
+      await expect(react()).resolves.toEqual({
+        toggled: true,
+        reactions: {},
+      });
+    });
+
+    it("sends the room the message's whole reaction state", async () => {
+      await react("heart", as(FRIEND));
+      await react("fire", as(FRIEND));
+      await react("heart");
+      await flush();
+
+      expect(broadcasts("lobby:match:m-1:reaction").at(-1)).toEqual({
+        steamId: FRIEND,
+        event: "lobby:match:m-1:reaction",
+        data: {
+          id: MESSAGE_ID,
+          reactions: { heart: [FRIEND, ME], fire: [FRIEND] },
+        },
+      });
+    });
+
+    it("hands the toggle both hashes and who reacted", async () => {
+      await react("laugh");
+
+      expect(toggles()[0].slice(1)).toEqual([
+        2,
+        ROOM,
+        REACTIONS,
+        MESSAGE_ID,
+        "laugh",
+        ME,
+      ]);
+    });
+
+    it("accepts every reaction on the list", async () => {
+      for (const reaction of ChatService.REACTIONS) {
+        await expect(react(reaction)).resolves.toMatchObject({
+          toggled: true,
+        });
+      }
+
+      expect(ChatService.REACTIONS).toEqual([
+        "thumbsup",
+        "heart",
+        "laugh",
+        "fire",
+        "wow",
+        "sad",
+      ]);
+    });
+
+    it.each([
+      ["one that is not on the list", "party"],
+      ["a different case", "HEART"],
+      ["an object key", "__proto__"],
+      ["an empty string", ""],
+      ["a number", 5],
+      ["null", null],
+    ])("refuses %s as invalid before anything else", async (_, reaction) => {
+      await expect(react(reaction)).resolves.toEqual({
+        toggled: false,
+        code: ChatErrorCode.Invalid,
+      });
+
+      expect(redis.eval).not.toHaveBeenCalled();
+      expect(hashes[REACTIONS]).toBeUndefined();
+    });
+
+    it("answers not_found for an id that could never be a message", async () => {
+      await expect(
+        react("heart", as(ME), ChatLobbyType.Match, "m-1", "not-a-uuid"),
+      ).resolves.toEqual({ toggled: false, code: ChatErrorCode.NotFound });
+      expect(toggles()).toHaveLength(0);
+    });
+
+    it("gives a message that is gone no reactions", async () => {
+      delete hashes[ROOM][MESSAGE_ID];
+
+      await expect(react()).resolves.toEqual({
+        toggled: false,
+        code: ChatErrorCode.NotFound,
+      });
+      await flush();
+
+      expect(hashes[REACTIONS]).toBeUndefined();
+      expect(broadcasts("lobby:match:m-1:reaction")).toEqual([]);
+    });
+
+    it("refuses someone who cannot get into the room", async () => {
+      hashes["chat_match_m-2"] = hashes[ROOM];
+
+      await expect(
+        react("heart", as(ME), ChatLobbyType.Match, "m-2"),
+      ).resolves.toEqual({ toggled: false, code: ChatErrorCode.NotAllowed });
+      expect(toggles()).toHaveLength(0);
+    });
+
+    it("refuses someone who is not in the room", async () => {
+      redis.hget.mockImplementation(async (key: string, field: string) =>
+        key.startsWith("chat:") ? null : (hashes[key]?.[field] ?? null),
+      );
+
+      await expect(react()).resolves.toEqual({
+        toggled: false,
+        code: ChatErrorCode.NotAllowed,
+      });
+      expect(toggles()).toHaveLength(0);
+    });
+
+    it("keeps a gagged player from reacting in a group room", async () => {
+      gagged = true;
+
+      await expect(react()).resolves.toEqual({
+        toggled: false,
+        code: ChatErrorCode.Gagged,
+      });
+      expect(toggles()).toHaveLength(0);
+    });
+
+    it("lets through eight toggles a second and refuses the ninth", async () => {
+      for (let toggle = 0; toggle < ChatService.REACTION_RATE_LIMIT; toggle++) {
+        await expect(react()).resolves.toMatchObject({ toggled: true });
+      }
+
+      await expect(react()).resolves.toEqual({
+        toggled: false,
+        code: ChatErrorCode.RateLimited,
+      });
+      await flush();
+
+      expect(toggles()).toHaveLength(ChatService.REACTION_RATE_LIMIT);
+      expect(broadcasts("lobby:match:m-1:reaction")).toHaveLength(
+        ChatService.REACTION_RATE_LIMIT,
+      );
+      await expect(react("heart", as(FRIEND))).resolves.toMatchObject({
+        toggled: true,
+      });
+    });
+
+    it("counts toggles per player, in a window that starts with the first", async () => {
+      await react();
+
+      const rate = redis.eval.mock.calls.find(([script]) =>
+        script.includes("INCR"),
+      );
+
+      expect(rate.slice(1)).toEqual([1, `chat:reaction-rate:${ME}`, 1_000]);
+      expect(rate[0]).toContain("PEXPIRE");
+    });
+
+    it("never notifies anyone or relays to the game", async () => {
+      await react();
+      await flush();
+
+      expect(notifications.notifyPlayers).not.toHaveBeenCalled();
+      expect(rcon.connect).not.toHaveBeenCalled();
+      expect(broadcasts("lobby:match:m-1:chat")).toEqual([]);
+    });
+
+    it("clears a message's reactions when it is deleted", async () => {
+      await react();
+      role = "moderator";
+
+      await expect(
+        service.deleteMessage(
+          ChatLobbyType.Match,
+          "m-1",
+          MESSAGE_ID,
+          as(ME, { role: "moderator" }),
+        ),
+      ).resolves.toEqual({ deleted: true });
+
+      expect(redis.hdel).toHaveBeenCalledWith(REACTIONS, MESSAGE_ID);
+      expect(hashes[REACTIONS][MESSAGE_ID]).toBeUndefined();
+    });
+
+    it("clears a message's reactions when its author deletes it", async () => {
+      hashes[ROOM][MESSAGE_ID] = JSON.stringify({
+        ...JSON.parse(hashes[ROOM][MESSAGE_ID]),
+        from: { role: "user", name: "Me", steam_id: ME },
+      });
+      await react("heart", as(FRIEND));
+
+      await expect(
+        service.deleteMessage(ChatLobbyType.Match, "m-1", MESSAGE_ID, as(ME)),
+      ).resolves.toEqual({ deleted: true });
+
+      expect(hashes[REACTIONS][MESSAGE_ID]).toBeUndefined();
+    });
+
+    it("still announces a delete when its reactions cannot be cleared", async () => {
+      await react();
+      role = "moderator";
+      redis.hdel.mockImplementation(async (key: string, field: string) => {
+        if (key === REACTIONS) {
+          throw new Error("connection reset");
+        }
+        delete hashes[key]?.[field];
+        return 1;
+      });
+
+      await expect(
+        service.deleteMessage(
+          ChatLobbyType.Match,
+          "m-1",
+          MESSAGE_ID,
+          as(ME, { role: "moderator" }),
+        ),
+      ).resolves.toEqual({ deleted: true });
+      await flush();
+
+      expect(broadcasts("lobby:match:m-1:deleted")).toHaveLength(1);
+      expect(notifications.retractChatMessage).toHaveBeenCalledWith(MESSAGE_ID);
+    });
+
+    it("puts each message's reactions in the room's history", async () => {
+      const quiet = "8c2d3e4f-5a6b-4c7d-9e8f-0a1b2c3d4e5f";
+      hashes[ROOM][quiet] = JSON.stringify({
+        id: quiet,
+        message: "later",
+        timestamp: new Date(Date.now() + 1_000).toISOString(),
+        source: "web",
+        from: { role: "user", name: "Friend", steam_id: FRIEND },
+      });
+      await react("fire");
+
+      const history = await service["getMessages"](ChatLobbyType.Match, "m-1");
+
+      expect(
+        history.map(({ id, reactions }: any) => ({ id, reactions })),
+      ).toEqual([
+        { id: MESSAGE_ID, reactions: { fire: [ME] } },
+        { id: quiet, reactions: {} },
+      ]);
+    });
+
+    it("sends a new message out with no reactions, and stores none", async () => {
+      await service.sendMessageToChat(ChatLobbyType.Match, "m-1", as(ME), "hi");
+      await flush();
+
+      const [chat] = broadcasts("lobby:match:m-1:chat");
+      const stored = JSON.parse(
+        redis.hset.mock.calls.find(([key]) => key === ROOM)[2],
+      );
+
+      expect(chat.data.reactions).toEqual({});
+      expect(stored).not.toHaveProperty("reactions");
+    });
+
+    it("moves reactions with a draft's messages into its match", async () => {
+      await react("fire");
+      redis.eval.mockResolvedValueOnce(1);
+
+      await service.migrateLobbyMessages(
+        ChatLobbyType.Draft,
+        "d-1",
+        ChatLobbyType.Match,
+        "m-1",
+      );
+      await flush();
+
+      const move = redis.eval.mock.calls.find(([script]) =>
+        script.includes("HGETALL"),
+      );
+
+      expect(move.slice(1)).toEqual([
+        4,
+        "chat_draft_d-1",
+        ROOM,
+        "chat_reactions_draft_d-1",
+        REACTIONS,
+        3600,
+      ]);
+      expect(broadcasts("lobby:match:m-1:messages")).toEqual([
+        expect.objectContaining({
+          data: {
+            id: "m-1",
+            messages: [
+              expect.objectContaining({
+                id: MESSAGE_ID,
+                reactions: { fire: [ME] },
+              }),
+            ],
+          },
+        }),
+      ]);
+    });
+
+    describe("in a direct conversation", () => {
+      const room = directRoomId(ME, FRIEND);
+
+      const reactDirect = (reaction = "heart", user = as(ME)) =>
+        react(reaction, user, ChatLobbyType.Direct, room);
+
+      beforeEach(() => {
+        directMessage = {
+          id: MESSAGE_ID,
+          roomId: room,
+          author: FRIEND,
+          message: "gg",
+          open: true,
+          editedAt: null,
+        };
+        directReactions = { heart: [ME] };
+        redis.hgetall.mockImplementation(async (key: string) =>
+          key === `chat:direct:${room}`
+            ? { [FRIEND]: JSON.stringify({ user: { steam_id: FRIEND } }) }
+            : {},
+        );
+      });
+
+      it("toggles in one statement scoped to the conversation, then reads the state", async () => {
+        await expect(reactDirect()).resolves.toEqual({
+          toggled: true,
+          reactions: { heart: [ME] },
+        });
+        await flush();
+
+        const toggle = queries.find(({ sql }) =>
+          sql.includes("INSERT INTO public.direct_message_reactions"),
+        );
+
+        expect(toggle.bindings).toEqual([MESSAGE_ID, ME, "heart", room]);
+        expect(toggle.sql).toContain(
+          "DELETE FROM public.direct_message_reactions",
+        );
+        expect(broadcasts(`lobby:direct:${room}:reaction`)).toEqual([
+          {
+            steamId: FRIEND,
+            event: `lobby:direct:${room}:reaction`,
+            data: { id: MESSAGE_ID, reactions: { heart: [ME] } },
+          },
+        ]);
+      });
+
+      it("answers with an empty state once the last reaction is gone", async () => {
+        directReactions = null;
+
+        await expect(reactDirect()).resolves.toEqual({
+          toggled: true,
+          reactions: {},
+        });
+      });
+
+      it("is not held back by a gag", async () => {
+        gagged = true;
+
+        await expect(reactDirect()).resolves.toMatchObject({ toggled: true });
+        expect(
+          queries.some(({ sql }) => sql.includes("public.is_gagged")),
+        ).toBe(false);
+      });
+
+      it("refuses once the friendship is gone", async () => {
+        acceptedFriendships = [];
+
+        await expect(reactDirect()).resolves.toEqual({
+          toggled: false,
+          code: ChatErrorCode.NotAllowed,
+        });
+        expect(
+          queries.some(({ sql }) => sql.includes("direct_message_reactions")),
+        ).toBe(false);
+      });
+
+      it("answers not_found for a message that is not in the conversation", async () => {
+        directMessage = undefined;
+
+        await expect(reactDirect()).resolves.toEqual({
+          toggled: false,
+          code: ChatErrorCode.NotFound,
+        });
+        await flush();
+
+        expect(broadcasts(`lobby:direct:${room}:reaction`)).toEqual([]);
+      });
+
+      it("answers not_found when the message is deleted under the toggle", async () => {
+        directReactionFailure = Object.assign(
+          new Error("violates foreign key constraint"),
+          { code: "23503" },
+        );
+
+        await expect(reactDirect()).resolves.toEqual({
+          toggled: false,
+          code: ChatErrorCode.NotFound,
+        });
+      });
+
+      it("lets any other failure through", async () => {
+        directReactionFailure = new Error("database down");
+
+        await expect(reactDirect()).rejects.toThrow("database down");
+      });
+
+      it("puts reactions in the conversation's history", async () => {
+        postgres.query.mockResolvedValueOnce([
+          {
+            id: "dm-1",
+            message: "old",
+            created_at: new Date("2026-01-01T00:00:00Z"),
+            reactions: { heart: [FRIEND] },
+            steam_id: ME,
+            name: "Someone",
+            role: "user",
+            avatar_url: null,
+            profile_url: null,
+          },
+          {
+            id: "dm-2",
+            message: "older",
+            created_at: new Date("2025-12-31T00:00:00Z"),
+            reactions: null,
+            steam_id: ME,
+            name: "Someone",
+            role: "user",
+            avatar_url: null,
+            profile_url: null,
+          },
+        ]);
+
+        const history = await service["getDirectMessages"](room);
+
+        expect(
+          history.map(({ id, reactions }: any) => ({ id, reactions })),
+        ).toEqual([
+          { id: "dm-2", reactions: {} },
+          { id: "dm-1", reactions: { heart: [FRIEND] } },
+        ]);
       });
     });
   });

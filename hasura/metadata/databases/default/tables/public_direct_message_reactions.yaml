@@ -1,0 +1,3 @@
+table:
+  name: direct_message_reactions
+  schema: public

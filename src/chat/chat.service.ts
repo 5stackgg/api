@@ -23,6 +23,8 @@ import { ChatMessage, ChatMessageSource } from "./types/ChatMessage";
 import { ChatSendResult } from "./types/ChatSendResult";
 import { ChatDeleteResult } from "./types/ChatDeleteResult";
 import { ChatEditResult } from "./types/ChatEditResult";
+import { ChatReactions } from "./types/ChatReactions";
+import { ChatReactResult } from "./types/ChatReactResult";
 
 @Injectable()
 export class ChatService {
@@ -90,18 +92,112 @@ export class ChatService {
 
   private static readonly EDIT_RECEIPT_TTL_MS = 60 * 60 * 1000;
 
-  // One step, so an edit or a delete in the old room lands either before the
-  // move and is carried with it, or after it and finds nothing -- never on a
-  // copy that is about to be thrown away or written back.
+  // One step, so an edit, a delete or a reaction in the old room lands either
+  // before the move and is carried with it, or after it and finds nothing --
+  // never on a copy that is about to be thrown away or written back.
+  //
+  // A room TTL of 0 drops a moved message at once, and its reactions must not
+  // then be left behind with no expiry at all.
   private static readonly MOVE_ROOM_MESSAGES_SCRIPT = `
     local messages = redis.call('HGETALL', KEYS[1])
     for i = 1, #messages, 2 do
       redis.call('HSET', KEYS[2], messages[i], messages[i + 1])
       redis.call('HEXPIRE', KEYS[2], ARGV[1], 'FIELDS', 1, messages[i])
+      local reactions = redis.call('HGET', KEYS[3], messages[i])
+      local expiresAt = redis.call('HPEXPIRETIME', KEYS[2], 'FIELDS', 1, messages[i])[1]
+      if reactions and expiresAt ~= -2 then
+        redis.call('HSET', KEYS[4], messages[i], reactions)
+        if expiresAt > 0 then
+          redis.call('HPEXPIREAT', KEYS[4], expiresAt, 'FIELDS', 1, messages[i])
+        end
+      end
     end
-    redis.call('DEL', KEYS[1])
+    redis.call('DEL', KEYS[1], KEYS[3])
     return #messages / 2
   `;
+
+  // The web maps each id to its glyph; laugh is 😂.
+  public static readonly REACTIONS = [
+    "thumbsup",
+    "heart",
+    "laugh",
+    "fire",
+    "wow",
+    "sad",
+  ] as const;
+
+  // Every toggle is a broadcast to the whole room, so this is what keeps one
+  // client from flooding everyone else in it.
+  public static readonly REACTION_RATE_LIMIT = 8;
+
+  private static readonly REACTION_RATE_WINDOW_MS = 1_000;
+
+  private static readonly REACTION_RATE_SCRIPT = `
+    local count = redis.call('INCR', KEYS[1])
+    if count == 1 then
+      redis.call('PEXPIRE', KEYS[1], ARGV[1])
+    end
+    return count
+  `;
+
+  // Reactions live beside the messages rather than inside their JSON, so they
+  // never contend with an edit's compare-and-set. A message that is gone gets
+  // none: they would outlive it with no expiry. HSET drops the field's expiry,
+  // so the reactions are given the message's own, and go when it does.
+  private static readonly TOGGLE_ROOM_REACTION_SCRIPT = `
+    if redis.call('HEXISTS', KEYS[1], ARGV[1]) == 0 then
+      return false
+    end
+    local stored = redis.call('HGET', KEYS[2], ARGV[1])
+    local reactions = {}
+    if stored then
+      reactions = cjson.decode(stored)
+    end
+    local reactors = {}
+    local removed = false
+    for _, steamId in ipairs(reactions[ARGV[2]] or {}) do
+      if steamId == ARGV[3] then
+        removed = true
+      else
+        table.insert(reactors, steamId)
+      end
+    end
+    if not removed then
+      table.insert(reactors, ARGV[3])
+    end
+    if #reactors == 0 then
+      reactions[ARGV[2]] = nil
+    else
+      reactions[ARGV[2]] = reactors
+    end
+    if next(reactions) == nil then
+      redis.call('HDEL', KEYS[2], ARGV[1])
+      return '{}'
+    end
+    local encoded = cjson.encode(reactions)
+    redis.call('HSET', KEYS[2], ARGV[1], encoded)
+    local expiresAt = redis.call('HPEXPIRETIME', KEYS[1], 'FIELDS', 1, ARGV[1])[1]
+    if expiresAt > 0 then
+      redis.call('HPEXPIREAT', KEYS[2], expiresAt, 'FIELDS', 1, ARGV[1])
+    end
+    return encoded
+  `;
+
+  // Each direct message's reactions as one object, for a query that has the
+  // message as `dm`.
+  private static readonly DIRECT_MESSAGE_REACTIONS = `LEFT JOIN LATERAL (
+            SELECT jsonb_object_agg(grouped.reaction, grouped.steam_ids)
+                     AS reactions
+              FROM (
+                SELECT r.reaction,
+                       jsonb_agg(r.steam_id::text
+                                 ORDER BY r.created_at, r.steam_id)
+                         AS steam_ids
+                  FROM public.direct_message_reactions r
+                 WHERE r.message_id = dm.id
+                 GROUP BY r.reaction
+              ) grouped
+          ) reactions ON true`;
 
   // Shared by every direct message edit and delete, so the author and window
   // are judged in the same statement that changes the row, on the database's
@@ -483,14 +579,38 @@ export class ChatService {
       return await this.getDirectMessages(id);
     }
 
-    const messagesObject = await this.redis.hgetall(`chat_${type}_${id}`);
+    return await this.getRoomMessages(type, id);
+  }
 
-    return Object.values(messagesObject)
-      .map((value) => JSON.parse(value))
+  // Both hashes are asked for at once, so this is still one round trip. A
+  // reaction landing between the two reads is harmless: the room is sent the
+  // message's whole reaction state every time one changes.
+  private async getRoomMessages(
+    type: ChatLobbyType,
+    id: string,
+  ): Promise<ChatMessage[]> {
+    const [messages, reactions] = await Promise.all([
+      this.redis.hgetall(`chat_${type}_${id}`),
+      this.redis.hgetall(ChatService.reactionsKey(type, id)),
+    ]);
+
+    return Object.entries(messages)
+      .map(
+        ([messageId, value]): ChatMessage => ({
+          ...(JSON.parse(value) as ChatMessage),
+          reactions: reactions[messageId]
+            ? JSON.parse(reactions[messageId])
+            : {},
+        }),
+      )
       .sort(
         (a, b) =>
           new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
       );
+  }
+
+  private static reactionsKey(type: ChatLobbyType, id: string) {
+    return `chat_reactions_${type}_${id}`;
   }
 
   private async refreshClientUser(client: FiveStackWebSocketClient) {
@@ -690,10 +810,12 @@ export class ChatService {
       );
     }
 
-    void this.to(type, id, "chat", message);
+    const outgoing: ChatMessage = { ...message, reactions: {} };
+
+    void this.to(type, id, "chat", outgoing);
 
     if (type === ChatLobbyType.Direct) {
-      void this.deliverDirectMessage(id, player, message);
+      void this.deliverDirectMessage(id, player, outgoing);
     }
 
     // Best effort, and never allowed to take a message delivery down with it.
@@ -790,6 +912,18 @@ export class ChatService {
 
     await this.redis.hdel(messageKey, messageId);
 
+    // Never allowed to stop the delete being announced: left behind, the
+    // reactions still expire with the message, and nothing reads reactions
+    // for a message that is gone.
+    await this.redis
+      .hdel(ChatService.reactionsKey(type, id), messageId)
+      .catch((error) => {
+        this.logger.warn(
+          `unable to clear reactions for ${type}:${id} message ${messageId}`,
+          error,
+        );
+      });
+
     void this.to(type, id, "deleted", { id: messageId });
 
     await this.retractNotifications(type, id, messageId);
@@ -880,6 +1014,145 @@ export class ChatService {
       current,
       parsed.text,
     );
+  }
+
+  public static isReaction(
+    value: unknown,
+  ): value is (typeof ChatService.REACTIONS)[number] {
+    return (ChatService.REACTIONS as readonly unknown[]).includes(value);
+  }
+
+  // Never a notification and never relayed to the game: the room is sent the
+  // message's whole reaction state, so a client that missed a toggle is right
+  // again with the next one.
+  public async toggleReaction(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+    reaction: unknown,
+    user: User,
+  ): Promise<ChatReactResult> {
+    if (!ChatService.isReaction(reaction)) {
+      return { toggled: false, code: ChatErrorCode.Invalid };
+    }
+
+    if (!ChatService.UUID.test(messageId)) {
+      return { toggled: false, code: ChatErrorCode.NotFound };
+    }
+
+    if (!(await this.withinReactionRate(user.steam_id))) {
+      return { toggled: false, code: ChatErrorCode.RateLimited };
+    }
+
+    if (!(await this.canPostIn(type, id, user))) {
+      return { toggled: false, code: ChatErrorCode.NotAllowed };
+    }
+
+    if (type !== ChatLobbyType.Direct && (await this.isGagged(user.steam_id))) {
+      return { toggled: false, code: ChatErrorCode.Gagged };
+    }
+
+    const reactions =
+      type === ChatLobbyType.Direct
+        ? await this.toggleDirectReaction(id, messageId, reaction, user)
+        : await this.toggleRoomReaction(type, id, messageId, reaction, user);
+
+    if (!reactions) {
+      return { toggled: false, code: ChatErrorCode.NotFound };
+    }
+
+    void this.to(type, id, "reaction", { id: messageId, reactions });
+
+    return { toggled: true, reactions };
+  }
+
+  private async withinReactionRate(steamId: string): Promise<boolean> {
+    const count = await this.redis.eval(
+      ChatService.REACTION_RATE_SCRIPT,
+      1,
+      `chat:reaction-rate:${steamId}`,
+      ChatService.REACTION_RATE_WINDOW_MS,
+    );
+
+    return Number(count) <= ChatService.REACTION_RATE_LIMIT;
+  }
+
+  private async toggleRoomReaction(
+    type: ChatLobbyType,
+    id: string,
+    messageId: string,
+    reaction: string,
+    user: User,
+  ): Promise<ChatReactions | null> {
+    const state = await this.redis.eval(
+      ChatService.TOGGLE_ROOM_REACTION_SCRIPT,
+      2,
+      `chat_${type}_${id}`,
+      ChatService.reactionsKey(type, id),
+      messageId,
+      reaction,
+      String(user.steam_id),
+    );
+
+    if (typeof state !== "string") {
+      return null;
+    }
+
+    return JSON.parse(state) as ChatReactions;
+  }
+
+  private async toggleDirectReaction(
+    roomId: string,
+    messageId: string,
+    reaction: string,
+    user: User,
+  ): Promise<ChatReactions | null> {
+    try {
+      await this.postgres.query(
+        `WITH message AS (
+           SELECT id FROM public.direct_messages
+            WHERE id = $1::uuid AND room_id = $4
+         ), removed AS (
+           DELETE FROM public.direct_message_reactions r
+            USING message
+            WHERE r.message_id = message.id
+              AND r.steam_id = $2::bigint
+              AND r.reaction = $3
+        RETURNING 1
+         )
+         INSERT INTO public.direct_message_reactions
+                (message_id, steam_id, reaction)
+              SELECT message.id, $2::bigint, $3
+                FROM message
+               WHERE NOT EXISTS (SELECT 1 FROM removed)
+         ON CONFLICT DO NOTHING`,
+        [messageId, String(user.steam_id), reaction, roomId],
+      );
+    } catch (error) {
+      // A message deleted after the statement found it fails the foreign
+      // key, rather than matching nothing.
+      if (error?.code === "23503") {
+        return null;
+      }
+
+      throw error;
+    }
+
+    const [row] = await this.postgres.query<
+      Array<{ reactions: ChatReactions | null }>
+    >(
+      `SELECT reactions.reactions
+         FROM public.direct_messages dm
+         ${ChatService.DIRECT_MESSAGE_REACTIONS}
+        WHERE dm.id = $1::uuid AND dm.room_id = $2`,
+      [messageId, roomId],
+    );
+
+    if (!row) {
+      return null;
+    }
+
+    return row.reactions ?? {};
   }
 
   private async editRoomMessage(
@@ -1887,6 +2160,7 @@ export class ChatService {
         message: string;
         created_at: Date;
         edited_at: Date | null;
+        reactions: ChatReactions | null;
         steam_id: string;
         name: string;
         role: e_player_roles_enum;
@@ -1895,10 +2169,12 @@ export class ChatService {
       }>
     >(
       `SELECT dm.id::text AS id, dm.message, dm.created_at, dm.edited_at,
+              reactions.reactions,
               p.steam_id::text AS steam_id, p.name, p.role::text AS role,
               p.avatar_url, p.profile_url
          FROM public.direct_messages dm
          JOIN public.players p ON p.steam_id = dm.from_steam_id
+         ${ChatService.DIRECT_MESSAGE_REACTIONS}
         WHERE dm.room_id = $1
         ORDER BY dm.created_at DESC, dm.seq DESC
         LIMIT 200`,
@@ -1915,6 +2191,7 @@ export class ChatService {
         ...(row.edited_at
           ? { edited_at: new Date(row.edited_at).toISOString() }
           : {}),
+        reactions: row.reactions ?? {},
         from: {
           role: row.role,
           name: row.name,
@@ -2079,6 +2356,7 @@ export class ChatService {
       | "chat"
       | "edited"
       | "deleted"
+      | "reaction"
       | "list"
       | "messages"
       | "joined"
@@ -2407,13 +2685,13 @@ export class ChatService {
     toType: ChatLobbyType,
     toId: string,
   ) {
-    const toKey = `chat_${toType}_${toId}`;
-
     const moved = await this.redis.eval(
       ChatService.MOVE_ROOM_MESSAGES_SCRIPT,
-      2,
+      4,
       `chat_${fromType}_${fromId}`,
-      toKey,
+      `chat_${toType}_${toId}`,
+      ChatService.reactionsKey(fromType, fromId),
+      ChatService.reactionsKey(toType, toId),
       this.ttlFor(toType),
     );
 
@@ -2423,13 +2701,7 @@ export class ChatService {
       return;
     }
 
-    const merged = await this.redis.hgetall(toKey);
-    const messages = Object.values(merged)
-      .map((value) => JSON.parse(value))
-      .sort(
-        (a, b) =>
-          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-      );
+    const messages = await this.getRoomMessages(toType, toId);
 
     void this.to(toType, toId, "messages", { id: toId, messages });
   }
