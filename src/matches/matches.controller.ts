@@ -2537,11 +2537,21 @@ export class MatchesController {
       };
     }
 
+    if (!match.is_in_lineup) {
+      throw Error("only players in this match can contact support");
+    }
+
+    // The requester stays plain text: notificationUrl takes the first href as
+    // where the push lands, and that has to be the match.
+    const requester = NotificationsService.escapeHtml(
+      data.user.name ?? data.user.steam_id,
+    );
+
     void this.notifications.send(
       "MatchSupport",
       {
-        message: `Match Assistanced Required <a href="${this.appConfig.webDomain}/matches/${data.match_id}">${data.match_id}</a>`,
-        title: "Match Assistanced Required",
+        message: `<b>${requester}</b> requested assistance in match <a href="${this.appConfig.webDomain}/matches/${data.match_id}">${data.match_id}</a>`,
+        title: "Match Assistance Required",
         role: "match_organizer",
         entity_id: data.match_id,
       },

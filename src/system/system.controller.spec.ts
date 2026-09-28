@@ -6,7 +6,11 @@ import { SystemController } from "./system.controller";
 describe("SystemController names", () => {
   let controller: SystemController;
   let hasura: { query: jest.Mock; mutation: jest.Mock };
-  let notifications: { send: jest.Mock; notifyPlayers: jest.Mock };
+  let notifications: {
+    send: jest.Mock;
+    notifyPlayers: jest.Mock;
+    playerProfileLink: jest.Mock;
+  };
   let player: { name: string; name_registered: boolean } | null;
 
   const user = (steamId: string, role: string | null = "user") =>
@@ -25,7 +29,14 @@ describe("SystemController names", () => {
       mutation: jest.fn(async () => ({})),
     };
 
-    notifications = { send: jest.fn(), notifyPlayers: jest.fn() };
+    notifications = {
+      send: jest.fn(),
+      notifyPlayers: jest.fn(),
+      playerProfileLink: jest.fn(
+        (steamId: string, name: string) =>
+          `<a href="https://5stack.test/players/${steamId}">${name}</a>`,
+      ),
+    };
 
     controller = new SystemController(
       {} as any,
@@ -105,6 +116,13 @@ describe("SystemController names", () => {
       expect(notifications.send).toHaveBeenCalled();
       const [, notification] = notifications.send.mock.calls[0];
       expect(notification.entity_id).toBe("76561198000000001");
+      expect(notifications.playerProfileLink).toHaveBeenCalledWith(
+        "76561198000000001",
+        "current",
+      );
+      expect(notification.message).toContain(
+        '<a href="https://5stack.test/players/76561198000000001">current</a>',
+      );
     });
 
     it("ignores a steam id the caller does not own", async () => {
@@ -118,6 +136,14 @@ describe("SystemController names", () => {
 
       const [, notification] = notifications.send.mock.calls[0];
       expect(notification.entity_id).toBe("76561198000000001");
+      expect(notifications.playerProfileLink).toHaveBeenCalledWith(
+        "76561198000000001",
+        "current",
+      );
+      expect(notifications.playerProfileLink).not.toHaveBeenCalledWith(
+        "76561198000000002",
+        expect.anything(),
+      );
     });
 
     it("lets an administrator file a request for another player", async () => {
@@ -129,6 +155,10 @@ describe("SystemController names", () => {
 
       const [, notification] = notifications.send.mock.calls[0];
       expect(notification.entity_id).toBe("76561198000000002");
+      expect(notifications.playerProfileLink).toHaveBeenCalledWith(
+        "76561198000000002",
+        "current",
+      );
     });
 
     it("rejects a blank name", async () => {
