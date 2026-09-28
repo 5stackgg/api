@@ -603,6 +603,34 @@ describe("direct messages (SQL-driven)", () => {
       expect(count).toBe("0");
     });
 
+    it("takes a conversation off both rails once its only message is deleted", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      const id = await sent(room, me);
+
+      await chat.deleteMessage(ChatLobbyType.Direct, room, id, as(me));
+
+      expect(await chat.getDirectConversations(as(friend))).toEqual([]);
+      expect(await chat.getDirectConversations(as(me))).toEqual([]);
+    });
+
+    it("keeps a conversation that still has messages", async () => {
+      const me = await fx.player();
+      const friend = await fx.player();
+      const room = directRoomId(me, friend);
+      await sent(room, friend, "hello");
+      const id = await sent(room, me);
+
+      await chat.deleteMessage(ChatLobbyType.Direct, room, id, as(me));
+
+      expect(
+        (await chat.getDirectConversations(as(friend))).map(
+          ({ roomId }) => roomId,
+        ),
+      ).toEqual([room]);
+    });
+
     it("answers not_found once it is gone", async () => {
       const me = await fx.player();
       const friend = await fx.player();

@@ -507,8 +507,6 @@ describe("ChatGateway lobby:edit", () => {
     ["an unknown lobby type", { type: "global" }],
     ["a room id that is not a string", { id: 1 }],
     ["a missing message id", { messageId: undefined }],
-    ["a message that is not a string", { message: 5 }],
-    ["a message that is only whitespace", { message: "  \n " }],
   ])("ignores %s", async (_, overrides) => {
     const socket = client();
 
@@ -516,6 +514,26 @@ describe("ChatGateway lobby:edit", () => {
 
     expect(chat.editMessage).not.toHaveBeenCalled();
     expect(socket.send).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["only whitespace", "  \n "],
+    ["not a string", 5],
+  ])("answers an edit that is %s with invalid", async (_, message) => {
+    const socket = client();
+
+    await gateway.editMessage(
+      edit({ message, requestId: "r-4" }) as any,
+      socket,
+    );
+
+    expect(chat.editMessage).not.toHaveBeenCalled();
+    expect(sent(socket)).toEqual([
+      {
+        event: "chat:error",
+        data: { code: ChatErrorCode.Invalid, action: "edit", requestId: "r-4" },
+      },
+    ]);
   });
 
   it("ignores a missing payload", async () => {

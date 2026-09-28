@@ -224,10 +224,10 @@ export class ChatGateway {
 
     const parsed = ChatService.messageText(data.message);
 
+    // Unlike a send, clearing the box is an ordinary thing to do to an edit,
+    // so the client is told rather than left waiting.
     if ("error" in parsed) {
-      if (parsed.error === ChatErrorCode.TooLong) {
-        this.sendError(client, "edit", parsed.error, requestId);
-      }
+      this.sendError(client, "edit", parsed.error, requestId);
       return;
     }
 

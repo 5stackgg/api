@@ -789,16 +789,18 @@ export class NotificationsService {
     );
   }
 
-  // `deleted_at IS NULL` is what keeps an edit racing a delete from writing
-  // text back into a row retractChatMessage has already blanked.
+  // Read and collapsed rows too: the bell keeps read rows on show, and a
+  // recipient can restore a collapsed one, so either would otherwise keep the
+  // text the author took back. A preview is never empty, which is what tells a
+  // row retractChatMessage blanked apart -- an edit racing a delete must not
+  // write text back into it.
   async updateChatMessagePreview(messageId: string, preview: string) {
     await this.postgres.query(
       `UPDATE public.notifications
           SET message = $2
         WHERE data->>'messageId' = $1
           AND type IN ('ChatMessage', 'MatchChatMessage')
-          AND is_read = false
-          AND deleted_at IS NULL`,
+          AND message <> ''`,
       [messageId, preview],
     );
   }

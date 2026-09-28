@@ -280,7 +280,9 @@ describe("chat edits and self deletes (SQL-driven)", () => {
       ]);
 
       expect(deleted).toEqual({ deleted: true });
-      expect([true, false]).toContain(edited.edited);
+      if (edited.edited === false) {
+        expect(edited.code).toBe(ChatErrorCode.NotFound);
+      }
       expect(await redis.hexists(key(matchId), id)).toBe(0);
     }
 
@@ -345,6 +347,12 @@ describe("chat edits and self deletes (SQL-driven)", () => {
         edited_at: result.edited ? result.edited_at : undefined,
       }),
     ]);
+    expect(await expiresAt(matchId, id)).toBeGreaterThan(Date.now());
+    expect(await redis.exists(`chat_draft_${draftId}`)).toBe(0);
+
+    await expect(
+      chat.editMessage(ChatLobbyType.Draft, draftId, id, user, "again"),
+    ).resolves.toEqual({ edited: false, code: ChatErrorCode.NotFound });
   });
 
   it("audits an author deleting their own message", async () => {
@@ -420,7 +428,9 @@ describe("chat edits and self deletes (SQL-driven)", () => {
       expect(await text(unread)).toBe("&lt;b&gt;fixed&lt;/b&gt;");
     });
 
-    it("rewrites only unread, live rows for that message", async () => {
+    // A read row stays in the bell, and a collapsed one can be restored by
+    // its recipient, so neither may keep the text the author took back.
+    it("rewrites every row for that message, read or collapsed", async () => {
       const reader = await fx.player("Reader");
       const messageId = randomUUID();
       const unread = await row(reader, messageId);
@@ -431,9 +441,31 @@ describe("chat edits and self deletes (SQL-driven)", () => {
       await notifications.updateChatMessagePreview(messageId, "fixed");
 
       expect(await text(unread)).toBe("fixed");
-      expect(await text(read)).toBe("typo");
-      expect(await text(collapsed)).toBe("typo");
+      expect(await text(read)).toBe("fixed");
+      expect(await text(collapsed)).toBe("fixed");
       expect(await text(other)).toBe("typo");
+    });
+
+    it("leaves a row retracted mid-edit blank", async () => {
+      const reader = await fx.player("Reader");
+      const messageId = randomUUID();
+      const id = await row(reader, messageId);
+      let pending: Promise<void> = Promise.resolve();
+
+      await postgres.transaction(async (client) => {
+        await client.query(
+          `UPDATE notifications SET deleted_at = now(), message = ''
+            WHERE id = $1::uuid`,
+          [id],
+        );
+
+        pending = notifications.updateChatMessagePreview(messageId, "fixed");
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      });
+
+      await pending;
+
+      expect(await text(id)).toBe("");
     });
 
     it("leaves a retracted row blank when the edit lands after the delete", async () => {
@@ -455,8 +487,7 @@ describe("chat edits and self deletes (SQL-driven)", () => {
           `EXPLAIN UPDATE notifications SET message = 'x'
             WHERE data->>'messageId' = $1
               AND type IN ('ChatMessage', 'MatchChatMessage')
-              AND is_read = false
-              AND deleted_at IS NULL`,
+              AND message <> ''`,
           [randomUUID()],
         );
 

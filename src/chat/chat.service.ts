@@ -78,6 +78,19 @@ export class ChatService {
     return 1
   `;
 
+  // One step, so an edit or a delete in the old room lands either before the
+  // move and is carried with it, or after it and finds nothing -- never on a
+  // copy that is about to be thrown away or written back.
+  private static readonly MOVE_ROOM_MESSAGES_SCRIPT = `
+    local messages = redis.call('HGETALL', KEYS[1])
+    for i = 1, #messages, 2 do
+      redis.call('HSET', KEYS[2], messages[i], messages[i + 1])
+      redis.call('HEXPIRE', KEYS[2], ARGV[1], 'FIELDS', 1, messages[i])
+    end
+    redis.call('DEL', KEYS[1])
+    return #messages / 2
+  `;
+
   // Shared by every direct message edit and delete, so the author and window
   // are judged in the same statement that changes the row, on the database's
   // clock -- the one created_at was stamped with.
@@ -990,6 +1003,17 @@ export class ChatService {
           ChatErrorCode.NotFound,
       };
     }
+
+    // Deleting the first message of a conversation would otherwise leave an
+    // empty tab on the recipient's rail, telling them something was sent.
+    await this.postgres.query(
+      `DELETE FROM public.direct_conversations
+        WHERE room_id = $1
+          AND NOT EXISTS (
+            SELECT 1 FROM public.direct_messages WHERE room_id = $1
+          )`,
+      [roomId],
+    );
 
     void this.to(ChatLobbyType.Direct, roomId, "deleted", { id: messageId });
 
@@ -2302,28 +2326,19 @@ export class ChatService {
     toType: ChatLobbyType,
     toId: string,
   ) {
-    const fromKey = `chat_${fromType}_${fromId}`;
     const toKey = `chat_${toType}_${toId}`;
 
-    const messagesObject = await this.redis.hgetall(fromKey);
+    const moved = await this.redis.eval(
+      ChatService.MOVE_ROOM_MESSAGES_SCRIPT,
+      2,
+      `chat_${fromType}_${fromId}`,
+      toKey,
+      this.ttlFor(toType),
+    );
 
-    for (const [field, message] of Object.entries(messagesObject)) {
-      await this.redis.hset(toKey, field, message);
-      await this.redis.sendCommand(
-        new Redis.Command("HEXPIRE", [
-          toKey,
-          this.ttlFor(toType),
-          "FIELDS",
-          1,
-          field,
-        ]),
-      );
-    }
-
-    await this.redis.del(fromKey);
     await this.removeLobby(fromType, fromId);
 
-    if (Object.keys(messagesObject).length === 0) {
+    if (moved === 0) {
       return;
     }
 

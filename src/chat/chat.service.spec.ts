@@ -1948,15 +1948,42 @@ describe("ChatService direct messages", () => {
       });
 
       it("retracts them when a direct message was deleted meanwhile", async () => {
-        const messageId = await say(
-          ChatLobbyType.Direct,
-          directRoomId(ME, FRIEND),
-        );
+        const room = directRoomId(ME, FRIEND);
+        notifications.notifyPlayers.mockImplementationOnce(async () => {
+          const insert = queries.find(({ sql }) =>
+            sql.includes("INSERT INTO public.direct_messages"),
+          );
+          directMessage = {
+            id: insert.bindings[0],
+            roomId: room,
+            author: ME,
+            message: "typo",
+            open: true,
+            editedAt: null,
+          };
+
+          await expect(
+            service.deleteMessage(
+              ChatLobbyType.Direct,
+              room,
+              insert.bindings[0],
+              me(),
+            ),
+          ).resolves.toEqual({ deleted: true });
+        });
+
+        const messageId = await say(ChatLobbyType.Direct, room);
         await flush();
         await flush();
 
-        expect(notifications.retractChatMessage).toHaveBeenCalledWith(
+        expect(notifications.retractChatMessage).toHaveBeenCalledTimes(2);
+        expect(notifications.retractChatMessage).toHaveBeenLastCalledWith(
           messageId,
+        );
+        expect(
+          notifications.retractChatMessage.mock.invocationCallOrder[1],
+        ).toBeGreaterThan(
+          notifications.collapseOlderUnread.mock.invocationCallOrder[0],
         );
       });
 
