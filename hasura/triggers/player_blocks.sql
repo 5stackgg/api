@@ -126,6 +126,18 @@ BEGIN
      WHERE dc.room_id = LEAST(_a, _b)::text || ':' || GREATEST(_a, _b)::text
        AND dc.steam_id = _a;
 
+    -- Chat hides what the blocked player said from the blocker, so their bell
+    -- previews go the way NotificationsService.retractChatMessage takes them:
+    -- blanked as well, since a recipient can restore their own deleted rows,
+    -- and a push still waiting in its bundling window skips a deleted row.
+    UPDATE public.notifications n
+       SET deleted_at = COALESCE(n.deleted_at, now()),
+           message = ''
+     WHERE n.steam_id = _a
+       AND n.type IN ('ChatMessage', 'MatchChatMessage')
+       AND n.data->>'senderSteamId' = _b::text
+       AND (n.deleted_at IS NULL OR n.message <> '');
+
     RETURN NULL;
 END;
 $$;

@@ -161,6 +161,37 @@ describe("ChatService direct messages", () => {
     ),
   });
 
+  // [blocker, blocked]
+  let blocks: Array<[string, string]>;
+
+  const playerBlocks = {
+    isBlockedEitherWay: jest.fn(async (a: string, b: string) =>
+      blocks.some(
+        ([blocker, blocked]) =>
+          (blocker === a && blocked === b) || (blocker === b && blocked === a),
+      ),
+    ),
+    blockedBy: jest.fn(
+      async (viewer: string) =>
+        new Set(
+          blocks
+            .filter(([blocker]) => blocker === viewer)
+            .map(([, blocked]) => blocked),
+        ),
+    ),
+    blockedAmong: jest.fn(async (viewers: string[], authors: string[]) => {
+      const found = new Map<string, Set<string>>();
+
+      for (const [blocker, blocked] of blocks) {
+        if (viewers.includes(blocker) && authors.includes(blocked)) {
+          found.set(blocker, (found.get(blocker) ?? new Set()).add(blocked));
+        }
+      }
+
+      return found;
+    }),
+  };
+
   const notifications = {
     notifyPlayers: jest.fn(),
     collapseOlderUnread: jest.fn(),
@@ -385,6 +416,7 @@ describe("ChatService direct messages", () => {
     editAuditIds = [];
     directReactions = null;
     directReactionFailure = undefined;
+    blocks = [];
     rcon.send.mockResolvedValue(undefined);
     rcon.connect.mockResolvedValue(rcon);
 
@@ -395,6 +427,7 @@ describe("ChatService direct messages", () => {
       postgres as any,
       { getConnection: () => redis } as any,
       notifications as any,
+      playerBlocks as any,
     );
   });
 
@@ -2925,6 +2958,446 @@ describe("ChatService direct messages", () => {
       } as any);
 
       expect(cursorWrites()).toHaveLength(0);
+    });
+  });
+
+  describe("blocking", () => {
+    const MESSAGE_ID = "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f";
+    const room = directRoomId(ME, FRIEND);
+
+    let seated: string[];
+    let hashes: Record<string, Record<string, string>>;
+    let lines: number;
+
+    const as = (steamId: string) =>
+      ({
+        steam_id: steamId,
+        name: "Someone",
+        role: "user",
+        avatar_url: null,
+        profile_url: null,
+      }) as any;
+
+    const flush = () => new Promise((resolve) => setImmediate(resolve));
+
+    const published = () =>
+      redis.publish.mock.calls.map(([, payload]) => JSON.parse(payload));
+
+    const recipientsOf = (event: string) =>
+      published()
+        .filter((sent) => sent.event === event)
+        .map((sent) => sent.steamId)
+        .sort();
+
+    const say = (from: string, message: string, id = `line-${++lines}`) => {
+      hashes["chat_match_m-1"] ??= {};
+      hashes["chat_match_m-1"][id] = JSON.stringify({
+        id,
+        message,
+        timestamp: new Date(Date.now() - 60_000 + lines * 1_000).toISOString(),
+        source: "web",
+        from: { role: "user", name: "Someone", steam_id: from },
+      });
+      return id;
+    };
+
+    beforeEach(() => {
+      seated = [ME, FRIEND, STRANGER];
+      hashes = {};
+      lines = 0;
+
+      redis.hgetall.mockImplementation(async (key: string) => {
+        if (key.startsWith("chat:")) {
+          return Object.fromEntries(
+            seated.map((steamId) => [
+              steamId,
+              JSON.stringify({ user: { steam_id: steamId } }),
+            ]),
+          );
+        }
+        return { ...hashes[key] };
+      });
+      redis.hget.mockImplementation(async (key: string, field: string) => {
+        if (key.startsWith("chat:")) {
+          return seated.includes(field)
+            ? JSON.stringify({ user: { steam_id: field } })
+            : null;
+        }
+        return hashes[key]?.[field] ?? null;
+      });
+      redis.hset.mockImplementation(
+        async (key: string, field: string, value: string) => {
+          hashes[key] ??= {};
+          hashes[key][field] = value;
+          return 1;
+        },
+      );
+      redis.hdel.mockImplementation(async (key: string, field: string) => {
+        delete hashes[key]?.[field];
+        return 1;
+      });
+    });
+
+    describe.each([
+      ["the player blocked their friend", ME, FRIEND],
+      ["their friend blocked the player", FRIEND, ME],
+    ])("a direct conversation once %s", (_, blocker, blocked) => {
+      beforeEach(() => {
+        // The block deletes the friendship in the database. It is left in
+        // place here so the block is the only thing refusing.
+        blocks = [[blocker, blocked]];
+      });
+
+      it.each([ME, FRIEND])("keeps %s from joining", async (steamId) => {
+        await service.joinMatchLobby(
+          client(steamId),
+          ChatLobbyType.Direct,
+          room,
+        );
+
+        expect(redis.eval).not.toHaveBeenCalled();
+      });
+
+      it.each([ME, FRIEND])("refuses a message from %s", async (steamId) => {
+        await expect(
+          service.sendMessageToChat(
+            ChatLobbyType.Direct,
+            room,
+            as(steamId),
+            "still there?",
+          ),
+        ).resolves.toEqual({
+          accepted: false,
+          code: ChatErrorCode.NotAllowed,
+        });
+
+        expect(
+          queries.some(({ sql }) =>
+            sql.includes("INSERT INTO public.direct_messages"),
+          ),
+        ).toBe(false);
+        expect(redis.publish).not.toHaveBeenCalled();
+      });
+
+      it.each([ME, FRIEND])(
+        "refuses %s editing their own message",
+        async (steamId) => {
+          directMessage = {
+            id: MESSAGE_ID,
+            roomId: room,
+            author: steamId,
+            message: "typo",
+            open: true,
+            editedAt: null,
+          };
+
+          await expect(
+            service.editMessage(
+              ChatLobbyType.Direct,
+              room,
+              MESSAGE_ID,
+              as(steamId),
+              "fixed",
+            ),
+          ).resolves.toEqual({
+            edited: false,
+            code: ChatErrorCode.NotAllowed,
+          });
+
+          expect(directMessage.message).toBe("typo");
+          expect(redis.publish).not.toHaveBeenCalled();
+        },
+      );
+
+      it.each([ME, FRIEND])("refuses %s reacting", async (steamId) => {
+        directMessage = {
+          id: MESSAGE_ID,
+          roomId: room,
+          author: steamId === ME ? FRIEND : ME,
+          message: "gg",
+          open: true,
+          editedAt: null,
+        };
+        redis.eval.mockResolvedValue(1);
+
+        await expect(
+          service.toggleReaction(
+            ChatLobbyType.Direct,
+            room,
+            MESSAGE_ID,
+            "heart",
+            as(steamId),
+          ),
+        ).resolves.toEqual({ toggled: false, code: ChatErrorCode.NotAllowed });
+
+        expect(
+          queries.some(({ sql }) =>
+            sql.includes("INSERT INTO public.direct_message_reactions"),
+          ),
+        ).toBe(false);
+        expect(redis.publish).not.toHaveBeenCalled();
+      });
+
+      it.each([ME, FRIEND])(
+        "keeps %s from marking it read",
+        async (steamId) => {
+          await expect(
+            service.markThreadRead(ChatLobbyType.Direct, room, as(steamId)),
+          ).resolves.toBeNull();
+
+          expect(
+            queries.some(({ sql }) => sql.includes("chat_read_state")),
+          ).toBe(false);
+        },
+      );
+    });
+
+    it("lets the same pair back into their conversation once unblocked", async () => {
+      await service.joinMatchLobby(client(ME), ChatLobbyType.Direct, room);
+
+      expect(redis.eval).toHaveBeenCalled();
+      expect(playerBlocks.isBlockedEitherWay).toHaveBeenCalledWith(ME, FRIEND);
+    });
+
+    describe("history", () => {
+      const historyOf = async (steamId: string) => {
+        const socket = client(steamId);
+
+        await service.joinMatchLobby(socket, ChatLobbyType.Match, "m-1");
+
+        const sent = socket.send.mock.calls
+          .map(([payload]: [string]) => JSON.parse(payload))
+          .find(({ event }: any) => event === "lobby:match:m-1:messages");
+
+        return sent.data.messages.map(({ message }: any) => message);
+      };
+
+      it("leaves out what the viewer blocked, for the viewer only", async () => {
+        say(FRIEND, "from friend");
+        say(STRANGER, "from stranger");
+        say(ME, "from me");
+        blocks = [[ME, FRIEND]];
+
+        expect(await historyOf(ME)).toEqual(["from stranger", "from me"]);
+        expect(await historyOf(FRIEND)).toEqual([
+          "from friend",
+          "from stranger",
+          "from me",
+        ]);
+        expect(await historyOf(STRANGER)).toEqual([
+          "from friend",
+          "from stranger",
+          "from me",
+        ]);
+        expect(playerBlocks.blockedBy).toHaveBeenCalledWith(ME);
+      });
+
+      it("hides nothing from the player a block is aimed at", async () => {
+        say(FRIEND, "from friend");
+        blocks = [[FRIEND, ME]];
+
+        expect(await historyOf(ME)).toEqual(["from friend"]);
+      });
+
+      it("re-sends a moved draft's history to each player without what they blocked", async () => {
+        say(FRIEND, "from friend");
+        say(STRANGER, "from stranger");
+        blocks = [[ME, FRIEND]];
+        redis.eval.mockResolvedValueOnce(2);
+
+        await service.migrateLobbyMessages(
+          ChatLobbyType.Draft,
+          "d-1",
+          ChatLobbyType.Match,
+          "m-1",
+        );
+        await flush();
+
+        const resent = Object.fromEntries(
+          published()
+            .filter(({ event }) => event === "lobby:match:m-1:messages")
+            .map(({ steamId, data }) => [
+              steamId,
+              data.messages.map(({ message }: any) => message),
+            ]),
+        );
+
+        expect(resent).toEqual({
+          [ME]: ["from stranger"],
+          [FRIEND]: ["from friend", "from stranger"],
+          [STRANGER]: ["from friend", "from stranger"],
+        });
+        expect(playerBlocks.blockedAmong).toHaveBeenCalledTimes(1);
+        expect(playerBlocks.blockedAmong).toHaveBeenCalledWith(
+          [ME, FRIEND, STRANGER],
+          [FRIEND, STRANGER],
+        );
+      });
+    });
+
+    describe("live", () => {
+      beforeEach(() => {
+        redis.eval.mockImplementation(async (script: string) => {
+          if (script.includes("INCR")) {
+            return 1;
+          }
+          if (script.includes("cjson")) {
+            return JSON.stringify({ heart: [STRANGER] });
+          }
+          return 1;
+        });
+      });
+
+      it("never sends a line or its edit to a player who blocked its author", async () => {
+        blocks = [[ME, FRIEND]];
+
+        const sent = await service.sendMessageToChat(
+          ChatLobbyType.Match,
+          "m-1",
+          as(FRIEND),
+          "hello",
+        );
+        await flush();
+
+        expect(recipientsOf("lobby:match:m-1:chat")).toEqual(
+          [FRIEND, STRANGER].sort(),
+        );
+        expect(playerBlocks.blockedAmong).toHaveBeenCalledWith(
+          [ME, FRIEND, STRANGER],
+          [FRIEND],
+        );
+
+        await expect(
+          service.editMessage(
+            ChatLobbyType.Match,
+            "m-1",
+            sent.accepted ? sent.messageId : "",
+            as(FRIEND),
+            "hello again",
+          ),
+        ).resolves.toMatchObject({ edited: true });
+        await flush();
+
+        expect(recipientsOf("lobby:match:m-1:edited")).toEqual(
+          [FRIEND, STRANGER].sort(),
+        );
+      });
+
+      it("still sends the blocker's own lines to the player they blocked", async () => {
+        blocks = [[ME, FRIEND]];
+
+        await service.sendMessageToChat(
+          ChatLobbyType.Match,
+          "m-1",
+          as(ME),
+          "hello",
+        );
+        await flush();
+
+        expect(recipientsOf("lobby:match:m-1:chat")).toEqual(
+          [ME, FRIEND, STRANGER].sort(),
+        );
+      });
+
+      it("sends a hidden line's delete and reactions to everyone, with nothing in them to read", async () => {
+        blocks = [[ME, FRIEND]];
+        const id = say(FRIEND, "hidden", MESSAGE_ID);
+
+        await service.toggleReaction(
+          ChatLobbyType.Match,
+          "m-1",
+          id,
+          "heart",
+          as(STRANGER),
+        );
+
+        await service.deleteMessage(ChatLobbyType.Match, "m-1", id, as(FRIEND));
+        await flush();
+
+        for (const event of ["reaction", "deleted"]) {
+          const sent = published().filter(
+            (published) => published.event === `lobby:match:m-1:${event}`,
+          );
+
+          expect(sent.map(({ steamId }) => steamId).sort()).toEqual(
+            [ME, FRIEND, STRANGER].sort(),
+          );
+
+          for (const { data } of sent) {
+            expect(JSON.stringify(data)).not.toContain("hidden");
+            expect(Object.keys(data).sort()).toEqual(
+              event === "reaction" ? ["id", "reactions"] : ["id"],
+            );
+          }
+        }
+      });
+    });
+
+    describe("notifications", () => {
+      const sayInTournament = async (from: string) => {
+        tournament.roster = [ME, FRIEND, STRANGER];
+
+        await service.sendMessageToChat(
+          ChatLobbyType.Tournament,
+          "t-1",
+          as(from),
+          "hello",
+        );
+
+        await flush();
+        await flush();
+      };
+
+      it("writes none for a player who blocked the sender", async () => {
+        blocks = [[ME, FRIEND]];
+
+        await sayInTournament(FRIEND);
+
+        expect(notifications.notifyPlayers).toHaveBeenCalledWith(
+          "ChatMessage",
+          expect.objectContaining({ steamIds: [STRANGER] }),
+        );
+        expect(notifications.collapseOlderUnread).toHaveBeenCalledWith(
+          "ChatMessage",
+          "tournament:t-1",
+          [STRANGER],
+        );
+      });
+
+      it("writes none at all when everyone else blocked the sender", async () => {
+        blocks = [
+          [ME, FRIEND],
+          [STRANGER, FRIEND],
+        ];
+
+        await sayInTournament(FRIEND);
+
+        expect(notifications.notifyPlayers).not.toHaveBeenCalled();
+      });
+
+      it("still notifies the player a block is aimed at", async () => {
+        blocks = [[FRIEND, ME]];
+
+        await sayInTournament(FRIEND);
+
+        expect(
+          notifications.notifyPlayers.mock.calls[0][1].steamIds.sort(),
+        ).toEqual([ME, STRANGER].sort());
+      });
+    });
+
+    it("asks the rail for the caller's own blocks only", async () => {
+      await service.getDirectConversations(as(ME));
+
+      const [rail] = queries.filter(({ sql }) =>
+        sql.includes("FROM public.direct_conversations dc"),
+      );
+
+      expect(rail.bindings).toEqual([ME]);
+      expect(rail.sql).toMatch(
+        /NOT EXISTS \([\s\S]*public\.player_blocks pb[\s\S]*pb\.blocker_steam_id = dc\.steam_id/,
+      );
+      expect(rail.sql).not.toContain("pb.blocked_steam_id = dc.steam_id");
     });
   });
 });

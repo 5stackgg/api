@@ -15,6 +15,7 @@ import {
 import { isRoleAbove, rolesAtOrAbove } from "src/utilities/isRoleAbove";
 import { NotificationsService } from "src/notifications/notifications.service";
 import { PostgresService } from "src/postgres/postgres.service";
+import { PlayerBlocksService } from "src/player-blocks/player-blocks.service";
 import { chatThreadKey } from "src/notifications/push/notification-delivery";
 import { SystemSettingName } from "src/system/enums/SystemSettingName";
 import { parseDirectRoomId } from "./utilities/directRoomId";
@@ -273,6 +274,7 @@ export class ChatService {
     private readonly postgres: PostgresService,
     private readonly redisManager: RedisManagerService,
     private readonly notifications: NotificationsService,
+    private readonly playerBlocks: PlayerBlocksService,
   ) {
     this.redis = this.redisManager.getConnection();
   }
@@ -336,7 +338,7 @@ export class ChatService {
         event: `lobby:${type}:${id}:messages`,
         data: {
           id,
-          messages: await this.getMessages(type, id),
+          messages: await this.historyFor(type, id, String(user.steam_id)),
         },
       }),
     );
@@ -576,6 +578,15 @@ export class ChatService {
           return false;
         }
 
+        if (
+          await this.playerBlocks.isBlockedEitherWay(
+            String(user.steam_id),
+            otherSteamId,
+          )
+        ) {
+          return false;
+        }
+
         break;
       }
       default:
@@ -584,6 +595,44 @@ export class ChatService {
     }
 
     return true;
+  }
+
+  // Hiding is one-directional: what the viewer blocked is left out, what
+  // blocked the viewer is not, so nothing here tells anyone they were blocked.
+  private async historyFor(
+    type: ChatLobbyType,
+    id: string,
+    viewer: string,
+  ): Promise<ChatMessage[]> {
+    const [messages, blocked] = await Promise.all([
+      this.getMessages(type, id),
+      this.playerBlocks.blockedBy(viewer),
+    ]);
+
+    return ChatService.withoutAuthors(messages, blocked);
+  }
+
+  private static withoutAuthors(
+    messages: ChatMessage[],
+    blocked: Set<string> | undefined,
+  ): ChatMessage[] {
+    if (!blocked || blocked.size === 0) {
+      return messages;
+    }
+
+    return messages.filter(
+      (message) => !blocked.has(ChatService.authorSteamId(message)),
+    );
+  }
+
+  private static authorsOf(messages: ChatMessage[]): string[] {
+    return [
+      ...new Set(
+        messages
+          .map((message) => ChatService.authorSteamId(message))
+          .filter((steamId): steamId is string => steamId !== null),
+      ),
+    ];
   }
 
   // A room's history, from whichever store holds it. DMs are durable and live
@@ -838,7 +887,7 @@ export class ChatService {
 
     const outgoing: ChatMessage = { ...message, reactions: {} };
 
-    void this.to(type, id, "chat", outgoing);
+    void this.to(type, id, "chat", outgoing, message.from.steam_id);
 
     if (type === ChatLobbyType.Direct) {
       void this.deliverDirectMessage(id, player, outgoing);
@@ -1263,7 +1312,14 @@ export class ChatService {
       );
 
       if (swapped === 1) {
-        return await this.announceEdit(type, id, messageId, text, editedAt);
+        return await this.announceEdit(
+          type,
+          id,
+          messageId,
+          String(user.steam_id),
+          text,
+          editedAt,
+        );
       }
 
       await this.discardEdit(auditId);
@@ -1315,6 +1371,7 @@ export class ChatService {
       ChatLobbyType.Direct,
       roomId,
       messageId,
+      String(user.steam_id),
       row.message,
       new Date(row.edited_at).toISOString(),
     );
@@ -1419,14 +1476,21 @@ export class ChatService {
     type: ChatLobbyType,
     id: string,
     messageId: string,
+    author: string,
     text: string,
     editedAt: string,
   ): Promise<ChatEditResult> {
-    void this.to(type, id, "edited", {
-      id: messageId,
-      message: text,
-      edited_at: editedAt,
-    });
+    void this.to(
+      type,
+      id,
+      "edited",
+      {
+        id: messageId,
+        message: text,
+        edited_at: editedAt,
+      },
+      author,
+    );
 
     await this.notifications
       .updateChatMessagePreview(
@@ -1587,7 +1651,11 @@ export class ChatService {
     const members = await this.getLobbyMemberSteamIds(type, id);
     const senderSteamId = String(sender.steam_id);
 
-    const targets = members.filter((steamId) => steamId !== senderSteamId);
+    const others = members.filter((steamId) => steamId !== senderSteamId);
+    const hiding = await this.playerBlocks.blockedAmong(others, [
+      senderSteamId,
+    ]);
+    const targets = others.filter((steamId) => !hiding.has(steamId));
 
     if (targets.length === 0) {
       return;
@@ -2341,6 +2409,17 @@ export class ChatService {
           AND other.steam_id <> dc.steam_id
     LEFT JOIN public.players peer ON peer.steam_id = other.steam_id
         WHERE dc.steam_id = $1::bigint
+          -- Only the blocker's rail: the other side's stays as it was, so it
+          -- does not tell them. The room id is directRoomId()'s.
+          AND NOT EXISTS (
+            SELECT 1
+              FROM public.player_blocks pb
+             WHERE pb.blocker_steam_id = dc.steam_id
+               AND dc.room_id =
+                   LEAST(pb.blocker_steam_id, pb.blocked_steam_id)::text
+                   || ':' ||
+                   GREATEST(pb.blocker_steam_id, pb.blocked_steam_id)::text
+          )
         -- The rail's own order. last_message_at only breaks ties between rows
         -- that have never been arranged relative to each other.
         ORDER BY dc.position ASC, dc.last_message_at DESC
@@ -2395,33 +2474,76 @@ export class ChatService {
     }));
   }
 
+  // What someone said never reaches a player who blocked them. History is
+  // per recipient, so it has no way out through here: see resendHistory.
+  public to(
+    type: ChatLobbyType,
+    id: string,
+    event: "chat" | "edited",
+    data: Record<string, any>,
+    author: string,
+  ): Promise<void>;
+  public to(
+    type: ChatLobbyType,
+    id: string,
+    event: "deleted" | "reaction" | "list" | "joined" | "left",
+    data: Record<string, any>,
+  ): Promise<void>;
   public async to(
     type: ChatLobbyType,
     id: string,
-    event:
-      | "chat"
-      | "edited"
-      | "deleted"
-      | "reaction"
-      | "list"
-      | "messages"
-      | "joined"
-      | "left",
+    event: string,
     data: Record<string, any>,
-  ) {
+    author?: string,
+  ): Promise<void> {
     const users = await this.getAllUsersInLobby(type, id);
     const eventName = `lobby:${type}:${id}:${event}`;
 
+    const hiding =
+      author === undefined
+        ? new Map<string, Set<string>>()
+        : await this.playerBlocks.blockedAmong(
+            users.map(({ steamId }) => steamId),
+            [author],
+          );
+
     for (const { steamId } of users) {
-      await this.redis.publish(
-        "send-message-to-steam-id",
-        JSON.stringify({
-          steamId,
-          event: eventName,
-          data,
-        }),
-      );
+      if (hiding.has(steamId)) {
+        continue;
+      }
+
+      await this.publishTo(steamId, eventName, data);
     }
+  }
+
+  private async resendHistory(
+    type: ChatLobbyType,
+    id: string,
+    messages: ChatMessage[],
+  ) {
+    const users = await this.getAllUsersInLobby(type, id);
+    const blocked = await this.playerBlocks.blockedAmong(
+      users.map(({ steamId }) => steamId),
+      ChatService.authorsOf(messages),
+    );
+
+    for (const { steamId } of users) {
+      await this.publishTo(steamId, `lobby:${type}:${id}:messages`, {
+        id,
+        messages: ChatService.withoutAuthors(messages, blocked.get(steamId)),
+      });
+    }
+  }
+
+  private async publishTo(
+    steamId: string,
+    event: string,
+    data: Record<string, any>,
+  ) {
+    await this.redis.publish(
+      "send-message-to-steam-id",
+      JSON.stringify({ steamId, event, data }),
+    );
   }
 
   public async removeFromLobby(
@@ -2749,6 +2871,6 @@ export class ChatService {
 
     const messages = await this.getRoomMessages(toType, toId);
 
-    void this.to(toType, toId, "messages", { id: toId, messages });
+    void this.resendHistory(toType, toId, messages);
   }
 }

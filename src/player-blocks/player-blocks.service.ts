@@ -36,6 +36,41 @@ export class PlayerBlocksService {
     return new Set(rows.map((row) => row.steam_id));
   }
 
+  // blockedBy for many viewers at once, narrowed to `authors`: each viewer who
+  // blocked any of them, mapped to which. Server-side filtering only -- never
+  // hand this to a client.
+  public async blockedAmong(
+    viewers: Array<string>,
+    authors: Array<string>,
+  ): Promise<Map<string, Set<string>>> {
+    const blocked = new Map<string, Set<string>>();
+
+    if (viewers.length === 0 || authors.length === 0) {
+      return blocked;
+    }
+
+    const rows = await this.postgres.query<
+      Array<{ viewer: string; author: string }>
+    >(
+      `SELECT blocker_steam_id::text AS viewer,
+              blocked_steam_id::text AS author
+         FROM public.player_blocks
+        WHERE blocker_steam_id = ANY($1::bigint[])
+          AND blocked_steam_id = ANY($2::bigint[])`,
+      [viewers, authors],
+    );
+
+    for (const { viewer, author } of rows) {
+      if (!blocked.has(viewer)) {
+        blocked.set(viewer, new Set());
+      }
+
+      blocked.get(viewer).add(author);
+    }
+
+    return blocked;
+  }
+
   public async filterUnblocked(
     actor: string,
     candidates: Array<string>,
