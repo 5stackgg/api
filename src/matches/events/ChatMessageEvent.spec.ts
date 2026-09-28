@@ -7,6 +7,7 @@ const LINEUP_ID = "22222222-2222-2222-2222-222222222222";
 const OTHER_MATCH_ID = "33333333-3333-3333-3333-333333333333";
 const SPEAKER = "76561198000000001";
 const COACH = "76561198000000002";
+const TEAMMATE = "76561198000000003";
 
 describe("ChatMessageEvent", () => {
   let processor: ChatMessageEvent;
@@ -33,7 +34,7 @@ describe("ChatMessageEvent", () => {
       id: LINEUP_ID,
       match_id: MATCH_ID,
       coach_steam_id: COACH,
-      lineup_players: [{ steam_id: SPEAKER }],
+      lineup_players: [{ steam_id: SPEAKER }, { steam_id: TEAMMATE }],
     };
 
     hasura = {
@@ -43,7 +44,17 @@ describe("ChatMessageEvent", () => {
         }
 
         if (query.match_lineups_by_pk) {
-          return { match_lineups_by_pk: lineup };
+          const speakerId =
+            query.match_lineups_by_pk.lineup_players.__args.where.steam_id._eq;
+
+          return {
+            match_lineups_by_pk: lineup && {
+              ...lineup,
+              lineup_players: lineup.lineup_players.filter(
+                ({ steam_id }) => steam_id === speakerId,
+              ),
+            },
+          };
         }
 
         throw new Error("unexpected query");
@@ -113,8 +124,6 @@ describe("ChatMessageEvent", () => {
   });
 
   it("lets the lineup's coach speak in its team room", async () => {
-    lineup!.lineup_players = [];
-
     processor.setData(MATCH_ID, {
       player: COACH,
       message: "timeout",
@@ -196,7 +205,7 @@ describe("ChatMessageEvent", () => {
     });
 
     it("drops a speaker who is not on the lineup", async () => {
-      lineup!.lineup_players = [];
+      lineup!.lineup_players = [{ steam_id: TEAMMATE }];
 
       await send({ teamOnly: true, lineupId: LINEUP_ID });
 
@@ -204,7 +213,7 @@ describe("ChatMessageEvent", () => {
     });
 
     it("drops a speaker when the lineup has no coach", async () => {
-      lineup!.lineup_players = [];
+      lineup!.lineup_players = [{ steam_id: TEAMMATE }];
       lineup!.coach_steam_id = null;
 
       await send({ teamOnly: true, lineupId: LINEUP_ID });

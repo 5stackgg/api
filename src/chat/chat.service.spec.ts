@@ -763,6 +763,48 @@ describe("ChatService direct messages", () => {
     });
   });
 
+  describe("live delivery", () => {
+    const present = (key: string, steamIds: string[]) =>
+      redis.hgetall.mockImplementation(async (hash: string) =>
+        hash === key
+          ? Object.fromEntries(
+              steamIds.map((steamId) => [
+                steamId,
+                JSON.stringify({ user: { steam_id: steamId } }),
+              ]),
+            )
+          : {},
+      );
+
+    const deliveredTo = () =>
+      redis.publish.mock.calls
+        .map(([, payload]) => JSON.parse(payload))
+        .filter(({ event }) => event.endsWith(":chat"))
+        .map(({ steamId }) => steamId);
+
+    afterEach(() => {
+      redis.hgetall.mockResolvedValue({});
+    });
+
+    it("keeps a team room's lines from someone no longer on the lineup", async () => {
+      // still present from when they were on it: presence is only cleared on
+      // leave, and outlives a move to the other lineup
+      present("chat:match_team:m-1:l-1", [ME, FRIEND, STRANGER]);
+
+      await service.to(ChatLobbyType.MatchTeam, "m-1:l-1", "chat", {}, ME);
+
+      expect(deliveredTo()).toEqual([ME, FRIEND]);
+    });
+
+    it("still reaches everyone present in a match room", async () => {
+      present("chat:match:m-1", [ME, FRIEND, STRANGER]);
+
+      await service.to(ChatLobbyType.Match, "m-1", "chat", {}, ME);
+
+      expect(deliveredTo()).toEqual([ME, FRIEND, STRANGER]);
+    });
+  });
+
   describe("message text", () => {
     it.each([
       ["a number", 42],

@@ -4,7 +4,7 @@ import { bootMigratedDb, SqlTestDb } from "./utils/sql-test-db";
 
 // Team rooms moved from ChatMessage to MatchChatMessage. The read-clear and the
 // bell collapse look rows up by the new type, so any team row left on the old
-// one would sit unread in the bell forever.
+// one would never clear when its room is read.
 describe("match team chat notification type migration", () => {
   let db: SqlTestDb;
 

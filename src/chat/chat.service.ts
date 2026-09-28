@@ -2539,6 +2539,7 @@ export class ChatService {
   ): Promise<void> {
     const users = await this.getAllUsersInLobby(type, id);
     const eventName = `lobby:${type}:${id}:${event}`;
+    const roster = await this.teamRoomRoster(type, id);
 
     const hiding =
       author === undefined
@@ -2549,6 +2550,10 @@ export class ChatService {
           );
 
     for (const { steamId } of users) {
+      if (roster && !roster.has(String(steamId))) {
+        continue;
+      }
+
       if (hiding.has(steamId)) {
         continue;
       }
@@ -2585,6 +2590,21 @@ export class ChatService {
       "send-message-to-steam-id",
       JSON.stringify({ steamId, event, data }),
     );
+  }
+
+  // Presence outlives membership (see canPostIn), and a team room is the one
+  // whose lines the rest of the match must never see: a player moved to the
+  // other lineup, or benched, would otherwise keep receiving them until their
+  // presence expired.
+  private async teamRoomRoster(
+    type: ChatLobbyType,
+    id: string,
+  ): Promise<Set<string> | null> {
+    if (type !== ChatLobbyType.MatchTeam) {
+      return null;
+    }
+
+    return new Set(await this.getLobbyMemberSteamIds(type, id));
   }
 
   public async removeFromLobby(
